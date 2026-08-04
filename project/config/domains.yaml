@@ -1,0 +1,46 @@
+# Domain-specific scraper configuration
+# Chỉ dùng khi RSS không có hoặc generic extractor không đủ tốt
+
+domains:
+  vnexpress.net:
+    name: "VnExpress"
+    has_rss: true
+    rss_url: https://vnexpress.net/rss/kinh-doanh.rss
+    has_api: true
+    api_url: "https://gw.vnexpress.net/..."
+    api_auth: "header:x-api-key"
+    selectors:
+      article_list: "section.sidebar_1 a.url"
+      title: "h1.title-detail"
+      body: "article.fck_detail p.Normal"
+      date: "span.date"
+      author: "article.fck_detail p.author"
+    rate_limit: "1 request / 3s"
+    anti_bot:
+      user_agent_rotate: true
+      referer_required: true
+    fallback:
+      - trafilatura
+      - readability
+
+  cafef.vn:
+    name: "Cafef"
+    has_rss: true
+    rss_url: https://cafef.vn/rss/trang-chu.rss
+    has_api: false
+    selectors:
+      title: "h1.title"
+      body: "div#mainContent p"
+      date: "span.time"
+    rate_limit: "1 request / 3s"
+
+  ndh.vn:
+    name: "NDH"
+    has_rss: true
+    rss_url: https://ndh.vn/rss
+    has_api: false
+    selectors:
+      title: "h1.post-title"
+      body: "div.post-content p"
+      date: "div.post-meta span.date"
+    rate_limit: "1 request / 3s"

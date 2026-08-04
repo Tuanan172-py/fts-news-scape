@@ -1,0 +1,20 @@
+name: cafef
+enabled: true
+method: api
+rate_limit: 3.0
+timeout: 30
+api:
+  endpoint: "https://cafef.vn/du-lieu/Ajax/PageNew/News.ashx"
+  http_method: GET
+  # symbol inject per watchlist item (lowercase). Type=1 BẮT BUỘC (Type=2 → rỗng, verified 2026-07-24)
+  params:
+    Newstype: 0
+    PageIndex: 1
+    PageSize: 20      # steady-state: cycle 15 phút, dedup skip bài cũ
+    Type: 1
+  headers:
+    Referer: "https://cafef.vn/"
+detail:
+  content_selector: "div#mainContent"
+  max_details_per_cycle: 30
+pitfalls: "List page JS dynamic — chỉ dùng API. /Date(ms[+tz])/ date format. Cần UA + Referer. LinkDetail relative + utm_source."

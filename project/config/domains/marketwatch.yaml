@@ -1,0 +1,11 @@
+name: marketwatch
+enabled: false   # disabled 2026-08-03: focus on cafef + vietstock only
+method: rss
+language: en
+rate_limit: 3.0
+timeout: 30
+rss:
+  feeds:
+    - {url: "https://feeds.content.dowjones.io/public/rss/mw_topstories", name: "MarketWatch Top Stories"}
+detail: {extract_full: false, max_details_per_cycle: 0}
+pitfalls: "Curated 10 items, noise thấp, không cần filter. Detail = paywall Dow Jones → summary-only. Verified 2026-07-25."

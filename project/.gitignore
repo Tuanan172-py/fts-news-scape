@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+
+# Secrets — không bao giờ commit
+config/secrets.yaml
+.env
+
+# Runtime data
+logs/
+data/*.db
+data/*.db-wal
+data/*.db-shm
+data/raw/
+data/dedup_cache.json
+data/notifications/
+data/exports/

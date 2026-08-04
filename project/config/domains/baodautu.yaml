@@ -1,0 +1,16 @@
+name: baodautu
+enabled: false    # DISABLED 2026-07-24: mọi feed trả XML hợp lệ nhưng 0 <item>
+                  # (verified nhiều UA/client) — nguồn RSS dormant giống NDH.
+                  # Bật lại khi feed có items: đổi enabled: true là xong.
+method: rss
+rate_limit: 3.0
+timeout: 30
+rss:
+  feeds:
+    - {url: "https://baodautu.vn/chung-khoan.rss", name: "Báo Đầu tư Chứng khoán"}
+    - {url: "https://baodautu.vn/dau-tu-tai-chinh.rss", name: "Báo Đầu tư Tài chính"}
+    - {url: "https://baodautu.vn/ngan-hang--bao-hiem.rss", name: "Báo Đầu tư Ngân hàng"}
+detail:
+  extract_full: true
+  max_details_per_cycle: 30
+pitfalls: "Feed có 4 dòng trống trước <?xml (đã lstrip trong RSSScraper). 2026-07-24: feeds serve 0 items — dormant."

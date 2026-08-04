@@ -1,0 +1,10 @@
+name: tuoitre
+enabled: false   # disabled 2026-08-03: focus on cafef + vietstock only
+method: rss
+rate_limit: 3.0
+timeout: 30
+rss:
+  feeds:
+    - {url: "https://tuoitre.vn/rss/kinh-doanh.rss", name: "Tuổi Trẻ Kinh doanh"}
+detail: {extract_full: true, max_details_per_cycle: 30}
+pitfalls: "XML minified 1 dòng — feedparser OK. 50 items. Verified 2026-07-25."

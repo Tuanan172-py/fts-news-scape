@@ -1,0 +1,19 @@
+# Global settings — Web Monocle
+database:
+  path: data/monocle.db
+
+logging:
+  level: INFO
+  dir: logs
+
+scheduler:
+  interval_minutes: 15     # polling cycle (spec §6)
+
+http:
+  rate_limit: 3.0          # giây giữa 2 request cùng domain (spec §12)
+  timeout: 30
+  max_retries: 3
+
+export:
+  enabled: true            # tự xuất CSV 'hôm nay' cuối mỗi cycle
+  dir: data/exports        # data/exports/articles-YYYY-MM-DD.csv (ghi đè mỗi cycle)

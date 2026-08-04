@@ -1,0 +1,10 @@
+name: vietnamplus
+enabled: false   # disabled 2026-08-03: focus on cafef + vietstock only
+method: rss
+rate_limit: 3.0
+timeout: 30
+rss:
+  feeds:
+    - {url: "https://www.vietnamplus.vn/rss/kinhte.rss", name: "VietnamPlus Kinh tế"}
+detail: {extract_full: true, max_details_per_cycle: 30}
+pitfalls: "Dùng bản VN (www.), KHÔNG dùng en.vietnamplus.vn. 50 items. Verified 2026-07-25."

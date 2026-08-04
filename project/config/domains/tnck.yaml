@@ -1,0 +1,14 @@
+name: tnck
+enabled: false   # disabled 2026-08-03: focus on cafef + vietstock only
+method: api
+rate_limit: 3.0
+timeout: 30
+api:
+  url_template: "https://api.tinnhanhchungkhoan.vn/api/morenews-zone-{zone}-{page}.html"
+  zones: [4]              # 4 = Thông tin doanh nghiệp
+  pages_per_cycle: 2      # 40 items/page
+  headers:
+    Referer: "https://www.tinnhanhchungkhoan.vn/"
+detail:
+  max_details_per_cycle: 40   # = 1 page đầy; steady-state ít bài mới, cap hiếm khi chạm
+pitfalls: "Response gzip. `date` = epoch seconds (string), `url` relative. `phrase` param BỊ IGNORE (verified 2026-07-24) — ticker tagging client-side. Cần UA browser + Referer + Accept json."

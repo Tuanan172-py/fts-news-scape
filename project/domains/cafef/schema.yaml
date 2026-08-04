@@ -1,0 +1,172 @@
+# Domain Schema Contract — CafeF
+# Mô tả contract giữa CafeF upstream API và hệ thống scraping.
+# Dùng để validate field-level health, detect upstream changes.
+# Cập nhật file này mỗi khi xác nhận upstream thay đổi.
+
+domain: cafef.vn
+method: api
+endpoint: "https://cafef.vn/du-lieu/Ajax/PageNew/News.ashx"
+last_verified: 2026-08-03
+pitfalls:
+  - "List page JS dynamic — chỉ dùng API. /Date(ms[+tz])/ date format."
+  - "Cần UA + Referer. LinkDetail relative + utm_source."
+  - "Type=1 BẮT BUỘC (Type=2 → rỗng, verified 2026-07-24)"
+
+# ---------------------------------------------------------------------------
+# Raw API response structure (những gì upstream trả về)
+# ---------------------------------------------------------------------------
+raw_response:
+  root_key: Data
+  success_field: Success
+  message_field: Message
+  fields:
+    - { name: "Title",       type: "string",  required: true,  min_length: 1,       description: "Tiêu đề bài viết" }
+    - { name: "SubTitle",    type: "string",  required: false, description: "Mô tả ngắn (có thể rỗng)" }
+    - { name: "DeployDate",  type: "string",  required: true,  pattern: "^/Date\\(\\d+(?:[+-]\\d{4})?\\)/$", description: "Epoch ms trong /Date(...)/" }
+    - { name: "LinkDetail",  type: "string",  required: true,  pattern: "^/du-lieu/", description: "Relative path tới bài viết" }
+    - { name: "NewsType",    type: "integer", required: false, values: [0, 1, 2],  description: "Loại tin (0=default)" }
+    - { name: "Image",       type: "string",  required: false, description: "URL ảnh thumbnail" }
+    - { name: "Symbol",      type: "null",    required: false, description: "Luôn null từ API (verified 2026-07-24)" }
+    - { name: "NewsId",      type: "null",    required: false, description: "Luôn null từ API (verified 2026-07-24)" }
+
+request:
+  url_template: "{endpoint}?Newstype=0&PageIndex=1&PageSize=20&Type=1&symbol={symbol}"
+  headers:
+    Referer: "https://cafef.vn/"
+    Accept: "application/json"
+
+# ---------------------------------------------------------------------------
+# Output Article fields (sau khi parse_item)
+# ---------------------------------------------------------------------------
+output_fields:
+  url:
+    source: "urljoin(https://cafef.vn, LinkDetail)"
+    type: "string"
+    required: true
+    health_threshold: 1.0
+
+  title:
+    source: "Title.strip()"
+    type: "string"
+    required: true
+    health_threshold: 1.0
+
+  source_domain:
+    source: "hardcoded(cafef.vn)"
+    type: "string"
+    required: true
+    health_threshold: 1.0
+
+  published_at:
+    source: "parse_cafef_date(DeployDate)"
+    type: "iso8601 string (+07:00)"
+    required: true
+    pattern: "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\+07:00$"
+    health_threshold: 0.95
+
+  summary:
+    source: "SubTitle.strip()"
+    type: "string"
+    required: false
+    health_threshold: 0.3
+
+  content_text:
+    source: "enrich: trafilatura on div#mainContent (deferred → summary)"
+    type: "string"
+    required: false
+    min_length: 50
+    health_threshold: 0.5     # deferred articles use summary as fallback
+
+  content_html:
+    source: "enrich: div#mainContent inner HTML"
+    type: "string"
+    required: false
+    health_threshold: 0.0     # cap-limited (max 30/cycle, ~5% of total)
+
+  symbols:
+    source: "watchlist injection (per-symbol API call)"
+    type: "list[str]"
+    required: false
+    element_pattern: "^[A-Z]{3}$"
+    health_threshold: 0.9
+
+  author:
+    source: "NOT AVAILABLE from API"
+    type: "string"
+    required: false
+    expected_empty: true
+
+  categories:
+    source: "classifier (post-scrape)"
+    type: "list[str]"
+    required: false
+    health_threshold: 0.5     # rule-based classifier — tỷ lệ match tự nhiên
+
+  metadata.image:
+    source: "Image from API"
+    type: "string"
+    required: false
+
+  metadata.news_type:
+    source: "NewsType from API"
+    type: "int"
+    required: false
+
+# ---------------------------------------------------------------------------
+# Enrich detail page
+# ---------------------------------------------------------------------------
+detail_page:
+  url: "{article.url}"
+  selector: "div#mainContent"
+  selector_fallback: "full page HTML"
+  extractor: "trafilatura with BeautifulSoup wrapping"
+  max_per_cycle: 30
+  cap_behavior: "deferred: content_text = summary, metadata.detail_deferred = true"
+
+# ---------------------------------------------------------------------------
+# Watch points — các điểm cần theo dõi vì dễ bị upstream thay đổi
+# ---------------------------------------------------------------------------
+watch_points:
+  - id: cafef-w1
+    field: DeployDate
+    risk: format_change
+    severity: high
+    description: "Nếu /Date()/ format thay đổi → toàn bộ published_at rỗng"
+    check_regex: "^/Date\\(\\d+(?:[+-]\\d{4})?\\)/$"
+
+  - id: cafef-w2
+    field: div#mainContent
+    risk: selector_change
+    severity: medium
+    description: "Nếu CafeF đổi tên class/ID → fallback full-page, chất lượng content_text giảm"
+    check: "detail page có chứa selector target"
+
+  - id: cafef-w3
+    field: api.endpoint
+    risk: url_change
+    severity: high
+    description: "API URL thay đổi → toàn bộ scraper không lấy được dữ liệu"
+    check: "HTTP 200 + JSON parseable"
+
+  - id: cafef-w4
+    field: api.params.Type
+    risk: requirement_change
+    severity: high
+    description: "Type=1 không còn hoạt động → Success: false"
+    check: "Success == true"
+
+  - id: cafef-w5
+    field: LinkDetail
+    risk: format_change
+    severity: medium
+    description: "LinkDetail thành absolute URL → urljoin vẫn hoạt động nhưng cần verify"
+    check_pattern: "^/du-lieu/"
+
+# ---------------------------------------------------------------------------
+# Alert thresholds (so sánh với baseline 7 ngày)
+# ---------------------------------------------------------------------------
+alert_thresholds:
+  article_count_drop_pct: 50
+  field_fill_rate_drop_pct: 20
+  new_article_zero_streak: 3
+  consecutive_failure_streak: 3

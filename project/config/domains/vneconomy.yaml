@@ -1,0 +1,14 @@
+name: vneconomy
+enabled: false   # disabled 2026-08-03: focus on cafef + vietstock only
+method: rss
+rate_limit: 3.0
+timeout: 30
+rss:
+  feeds:
+    - {url: "https://vneconomy.vn/chung-khoan.rss", name: "VnEconomy Chứng khoán"}
+    - {url: "https://vneconomy.vn/tai-chinh.rss", name: "VnEconomy Tài chính"}
+    - {url: "https://vneconomy.vn/thi-truong.rss", name: "VnEconomy Thị trường"}
+detail:
+  extract_full: true
+  max_details_per_cycle: 30
+pitfalls: "Namespace content:encoded được khai báo nhưng item KHÔNG chứa (verified 2026-07-24) — đi đường detail-fetch thường. Thay NDH (dormant) theo quyết định 2026-07-24."

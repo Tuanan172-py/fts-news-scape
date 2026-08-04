@@ -1,0 +1,15 @@
+name: fireant
+enabled: false   # disabled 2026-08-03: focus on cafef + vietstock only
+method: api
+rate_limit: 3.0
+timeout: 30
+auth:
+  type: bearer
+  secret_key: fireant_token     # config/secrets.yaml (gitignored)
+api:
+  list_url: "https://restv2.fireant.vn/posts"
+  params: {type: 1, offset: 0, limit: 20}    # symbol inject per watchlist
+  detail_url_template: "https://restv2.fireant.vn/posts/{post_id}"
+detail:
+  max_details_per_cycle: 30
+pitfalls: "Bearer token BẮT BUỘC (401 nếu thiếu — verified 2026-07-24). Token hết hạn → scraper self-disable + ERROR log, cập nhật thủ công secrets.yaml. List trả content rỗng → cần detail /posts/{id} (SỐ NHIỀU — /post/{id} số ít trả 404, fixed 2026-07-26; field `content` ~5.8k HTML). `date` đã ISO +07:00."

@@ -1,0 +1,18 @@
+name: vietnamnet
+enabled: false   # disabled 2026-08-03: focus on cafef + vietstock only
+method: rss
+rate_limit: 3.0
+timeout: 30
+rss:
+  feeds:
+    # chung-khoan.rss DORMANT (bài mới nhất 2025-01, chỉ sinh noise bài cũ) — gỡ 2026-07-26.
+    # Tin CK vẫn được phủ qua kinh-doanh.rss + filter. Thử lại định kỳ (giống baodautu).
+    # - {url: "https://vietnamnet.vn/rss/chung-khoan.rss", name: "VietnamNet Chứng khoán"}
+    - {url: "https://vietnamnet.vn/rss/kinh-doanh.rss", name: "VietnamNet Kinh doanh"}
+filter:
+  any: ["chứng khoán", "cổ phiếu", "vn-index", "trái phiếu", "niêm yết",
+        "lãi suất", "ngân hàng", "tỷ giá", "doanh nghiệp", "vàng", "hose", "hnx", "upcom",
+        "lợi nhuận", "cổ tức", "vĩ mô", "gdp", "lạm phát", "fed"]
+  drop_unmatched: true
+detail: {extract_full: true, max_details_per_cycle: 30}
+pitfalls: "kinh-doanh 1000 items → BẮT BUỘC filter. Feed chung-khoan.rss ĐÃ GỠ (dormant từ 2025-01, verify 2026-07-26). Nếu noise cao sau 24h: siết filter.any."

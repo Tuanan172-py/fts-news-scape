@@ -1,0 +1,32 @@
+# Watchlist — mã cổ phiếu theo dõi (dùng cho API symbol-based + ticker tagging)
+tickers:
+  - HPG
+  - VNM
+  - VIC
+  - VHM
+  - VCB
+  - BID
+  - CTG
+  - TCB
+  - MBB
+  - VPB
+  - ACB
+  - STB
+  - SHB
+  - HDB
+  - FPT
+  - SSI
+  - VND
+  - HCM
+  - VCI
+  - MWG
+  - MSN
+  - GAS
+  - PLX
+  - POW
+  - GVR
+  - SAB
+  - VJC
+  - VRE
+  - BCM
+  - DGC

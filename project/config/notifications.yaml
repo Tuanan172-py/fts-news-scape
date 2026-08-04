@@ -1,0 +1,204 @@
+# Notify rules — file-based + stdout (spec §11).
+# MỤC TIÊU: phủ TOÀN BỘ thông tin thị trường — cổ phiếu, doanh nghiệp, cơ quan
+# quản lý/sở ban ngành, vĩ mô, vi mô, trong nước & quốc tế — KHÔNG bỏ sót.
+# Chỉ loại tin lá cải thuần (giải trí/tai nạn/đời sống) từ báo tổng hợp.
+#
+# Rule khớp ĐẦU TIÊN thắng. Mỗi rule hỗ trợ: sources / has_symbol / match.any.
+rules:
+  # 1) Mã trong watchlist (30 blue-chip) — highlight riêng, ưu tiên cao nhất.
+  #    Dùng `tickers` (khớp nguyên-token, phân biệt hoa/thường) thay vì substring
+  #    → tránh gán nhầm: VIC⊄Vicem, BID⊄BIDV, SSI⊄passive, VIC⊄VIFC.
+  - tag: "watchlist"
+    tickers:
+      - HPG
+      - VNM
+      - VIC
+      - VHM
+      - VCB
+      - BID
+      - CTG
+      - TCB
+      - MBB
+      - VPB
+      - ACB
+      - STB
+      - SHB
+      - HDB
+      - FPT
+      - SSI
+      - VND
+      - HCM
+      - VCI
+      - MWG
+      - MSN
+      - GAS
+      - PLX
+      - POW
+      - GVR
+      - SAB
+      - VJC
+      - VRE
+      - BCM
+      - DGC
+
+  # 2) Bài gắn BẤT KỲ mã CK nào (kể cả ngoài watchlist: HND, BSR, SAS…)
+  #    → không sót tin của bất cứ mã nào hệ thống nhận diện.
+  - tag: "symbol"
+    has_symbol: true
+
+  # 3) Nguồn ghi TẤT (100% là tin thị trường):
+  #    - tài chính VN chuyên biệt + sàn giao dịch
+  #    - quốc tế EN (tiêu đề tiếng Anh → keyword VN không bắt, phải lọc theo nguồn)
+  #    - báo lớn nhưng ta CHỈ subscribe chuyên mục KINH TẾ/KINH DOANH của họ
+  #      (dantri, vnexpress, tuoitre, thanhnien, znews, vietnamplus, vietnamnet)
+  #      → nội dung bản chất là thị trường, ghi tất để không bỏ sót.
+  #    Chỉ CÒN cafebiz (home.rss trộn lá cải) đi qua keyword filter ở rule 4.
+  - tag: "finance"
+    sources:
+      # tài chính VN chuyên biệt
+      - fireant.vn
+      - tinnhanhchungkhoan.vn
+      - vietstock.vn
+      - vndirect.com.vn
+      - vneconomy.vn
+      - cafef.vn
+      - vietnambiz.vn
+      # sàn giao dịch
+      - hnx.vn
+      - api.hsx.vn
+      # báo lớn — ta chỉ lấy chuyên mục kinh tế/kinh doanh
+      - dantri.com.vn
+      - vnexpress.net
+      - tuoitre.vn
+      - thanhnien.vn
+      - znews.vn
+      - vietnamplus.vn
+      - vietnamnet.vn
+      # quốc tế (EN)
+      - finance.yahoo.com
+      - cnbc.com
+      - federalreserve.gov
+      - marketwatch.com
+      - oilprice.com
+      - barrons.com
+      - investors.com
+      - wsj.com
+
+  # 4) CHỈ cafebiz (home.rss trộn lá cải) → lọc từ khoá kinh tế/thị trường RỘNG.
+  #    Bắt tin doanh nghiệp/chính sách/vĩ mô, loại tin giải trí/tai nạn/đời sống.
+  - tag: "market"
+    match:
+      any:
+        # -- chứng khoán / thị trường vốn --
+        - "chứng khoán"
+        - "cổ phiếu"
+        - "cổ tức"
+        - "niêm yết"
+        - "trái phiếu"
+        - "VN-Index"
+        - "VN30"
+        - "HOSE"
+        - "HNX"
+        - "UPCoM"
+        - "thanh khoản"
+        - "vốn hóa"
+        - "vốn hoá"
+        - "khối ngoại"
+        - "IPO"
+        - "phát hành cổ"
+        - "quỹ đầu tư"
+        - "ETF"
+        # -- doanh nghiệp / vi mô --
+        - "doanh nghiệp"
+        - "doanh thu"
+        - "lợi nhuận"
+        - "thua lỗ"
+        - "phá sản"
+        - "cổ đông"
+        - "đại hội đồng"
+        - "hội đồng quản trị"
+        - "báo cáo tài chính"
+        - "kết quả kinh doanh"
+        - "sáp nhập"
+        - "thâu tóm"
+        - "M&A"
+        - "tập đoàn"
+        - "khởi nghiệp"
+        - "đầu tư"
+        - "rót vốn"
+        - "báo lãi"
+        - "báo lỗ"
+        - "HĐQT"
+        - "CEO"
+        - "doanh nhân"
+        - "tỷ phú"
+        - "nhà máy"
+        - "khởi công"
+        - "dự án"
+        - "xe điện"
+        - "đường bay"
+        # -- ngân hàng / tiền tệ --
+        - "ngân hàng"
+        - "tín dụng"
+        - "lãi suất"
+        - "tỷ giá"
+        - "ngoại hối"
+        - "nợ xấu"
+        - "tiền tệ"
+        # -- cơ quan quản lý / chính sách / sở ban ngành --
+        - "chính phủ"
+        - "thủ tướng"
+        - "quốc hội"
+        - "bộ tài chính"
+        - "bộ công thương"
+        - "bộ kế hoạch"
+        - "ngân hàng nhà nước"
+        - "ủy ban chứng khoán"
+        - "thuế"
+        - "hải quan"
+        - "nghị định"
+        - "thông tư"
+        - "chính sách"
+        - "quy hoạch"
+        # -- vĩ mô trong nước --
+        - "GDP"
+        - "CPI"
+        - "lạm phát"
+        - "tăng trưởng"
+        - "vĩ mô"
+        - "kinh tế"
+        - "xuất khẩu"
+        - "nhập khẩu"
+        - "FDI"
+        - "đầu tư công"
+        - "ngân sách"
+        - "thương mại"
+        - "PMI"
+        # -- ngành kinh tế --
+        - "bất động sản"
+        - "xây dựng"
+        - "năng lượng"
+        - "dầu khí"
+        - "giá điện"
+        - "thép"
+        - "dệt may"
+        - "thủy sản"
+        - "nông nghiệp"
+        - "bán lẻ"
+        - "logistics"
+        - "khu công nghiệp"
+        - "khu đô thị"
+        - "hạ tầng"
+        - "sân bay"
+        - "hàng không"
+        - "công nghệ"
+        - "xăng dầu"
+        - "giá xăng"
+        # -- hàng hoá / quốc tế --
+        - "vàng"
+        - "giá dầu"
+        - "USD"
+        - "Fed"
+        - "thuế quan"
+        - "phố Wall"
+        - "chứng khoán Mỹ"

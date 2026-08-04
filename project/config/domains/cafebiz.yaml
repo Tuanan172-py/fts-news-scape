@@ -1,0 +1,10 @@
+name: cafebiz
+enabled: false   # disabled 2026-08-03: focus on cafef + vietstock only
+method: rss
+rate_limit: 3.0
+timeout: 30
+rss:
+  feeds:
+    - {url: "https://cafebiz.vn/rss/home.rss", name: "CafeBiz"}
+detail: {extract_full: true, max_details_per_cycle: 30}
+pitfalls: "Researcher nói không có RSS — SAI (61 items verified 2026-07-25). home.rss là superset của cau-chuyen-kinh-doanh.rss; zone thi-truong/vi-mo không tồn tại."

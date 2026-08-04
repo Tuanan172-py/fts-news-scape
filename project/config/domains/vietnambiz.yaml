@@ -1,0 +1,12 @@
+name: vietnambiz
+enabled: false   # disabled 2026-08-03: focus on cafef + vietstock only
+method: rss
+rate_limit: 3.0
+timeout: 30
+rss:
+  feeds:
+    - {url: "https://vietnambiz.vn/chung-khoan.rss", name: "VietnamBiz Chứng khoán"}
+    - {url: "https://vietnambiz.vn/tai-chinh.rss", name: "VietnamBiz Tài chính"}
+    - {url: "https://vietnambiz.vn/vi-mo.rss", name: "VietnamBiz Vĩ mô"}
+detail: {extract_full: true, max_details_per_cycle: 30}
+pitfalls: "XML declaration KHAI utf-16 nhưng serve utf-8 bytes — _decode_feed xử lý (strip encoding attr). 30 items/zone. Verified 2026-07-25."

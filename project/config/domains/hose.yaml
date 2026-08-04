@@ -1,0 +1,11 @@
+name: hose
+enabled: false   # disabled 2026-08-03: focus on cafef + vietstock only
+method: rss
+rate_limit: 3.0
+timeout: 30
+rss:
+  feeds:
+    - {url: "https://api.hsx.vn/n/api/v1/News/NewsByCateFeed/21", name: "HOSE Tổ chức niêm yết"}
+    - {url: "https://api.hsx.vn/n/api/v1/News/NewsByCateFeed/22", name: "HOSE Thành viên"}
+detail: {extract_full: false, max_details_per_cycle: 0}
+pitfalls: "LAYER 0 chính thống. Site là React SPA — detail page không parse được, title công bố là signal chính → summary-only. BOM utf-8. 10 items/feed. Verified 2026-07-25 (probe report 02)."

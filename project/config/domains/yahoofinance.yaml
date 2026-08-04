@@ -1,0 +1,42 @@
+name: yahoofinance
+enabled: false   # disabled 2026-08-03: focus on cafef + vietstock only
+method: rss
+language: en
+rate_limit: 3.0
+timeout: 30
+rss:
+  feeds:
+    - {url: "https://finance.yahoo.com/news/rssindex", name: "Yahoo Finance News"}
+# block-list: loại tin lifestyle/personal-finance retail (không liên quan phân tích CK)
+filter:
+  none:
+    - "cd rates"
+    - "add-on cd"
+    - "mortgage"
+    - "refinance"
+    - "heloc"
+    - "home equity"
+    - "high-yield savings"
+    - "savings interest"
+    - "savings account"
+    - "checking account"
+    - "business bank account"
+    - "bank review"
+    - "how much cash"
+    - "student aid"
+    - "tax bill"
+    - "money advice"
+    - "you're probably broke"
+    - "leg up on"
+    - "ease off the gas"
+    - "trump account"
+    - "social security"
+    - "medicare"
+    - "faceTime"
+    - "scammers"
+    - "financial planner"
+    - "retirement"
+    - "401(k)"
+    - "credit card"
+detail: {extract_full: true, max_details_per_cycle: 20}
+pitfalls: "42 items, RSS summary RỖNG hoàn toàn (không có summary/content field) → BẮT BUỘC extract_full để có body. Detail page nhúng script consent nhưng trafilatura vẫn trích được nội dung thật (~2.5k ký tự). filter.none chặn lifestyle/retail-finance. Re-verified 2026-07-26."

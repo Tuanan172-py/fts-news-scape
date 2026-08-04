@@ -1,0 +1,15 @@
+name: vietstock
+enabled: true
+method: rss             # internal API unreachable (verified 2026-07-24) → RSS primary
+rate_limit: 3.0
+timeout: 30
+rss:
+  feeds:
+    - {url: "https://vietstock.vn/0/tin-moi.rss", name: "Vietstock Tin mới"}
+    - {url: "https://vietstock.vn/144/chung-khoan.rss", name: "Vietstock Chứng khoán"}
+    - {url: "https://vietstock.vn/733/doanh-nghiep.rss", name: "Vietstock Doanh nghiệp"}
+    - {url: "https://vietstock.vn/761/kinh-te/vi-mo.rss", name: "Vietstock Vĩ mô"}
+detail:
+  extract_full: true
+  max_details_per_cycle: 30
+pitfalls: "RSS index https://vietstock.vn/rss (60 feeds). pubDate +0700. Description chứa img tag. Internal API (TopPageArticle...) cần browser session — không dùng."
