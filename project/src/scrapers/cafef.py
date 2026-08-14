@@ -4,7 +4,8 @@ CafeF scraper — internal JSON API, symbol-driven theo watchlist.
 Endpoint: GET https://cafef.vn/du-lieu/Ajax/PageNew/News.ashx
 Params bắt buộc: symbol (lowercase), Type=1 (verified 2026-07-24 — Type=2 trả rỗng).
 Date format: /Date(ms_epoch[+tz])/ — parse riêng.
-Detail: div#mainContent giữ raw HTML, trafilatura cho text sạch.
+Detail: server-rendered. enrich() lưu FULL raw page (RawStore, byte-exact) TRƯỚC,
+giữ div#mainContent làm vùng con tham chiếu (content_html), trafilatura cho text sạch.
 """
 
 from __future__ import annotations
@@ -14,7 +15,6 @@ from datetime import datetime
 from urllib.parse import urljoin
 from zoneinfo import ZoneInfo
 
-from bs4 import BeautifulSoup
 from loguru import logger
 
 from src.core.base_scraper import BaseScraper
@@ -22,6 +22,7 @@ from src.core.config import load_watchlist
 from src.core.models import Article
 from src.processor.extractor import extract_text
 from src.scrapers import register
+from src.scrapers.capture_mixin import CaptureMixin
 
 VN_TZ = ZoneInfo("Asia/Ho_Chi_Minh")
 _DATE_RE = re.compile(r"/Date\((\d+)(?:[+-]\d{4})?\)/")
@@ -37,7 +38,7 @@ def parse_cafef_date(raw: str) -> str | None:
 
 
 @register("cafef")
-class CafeFScraper(BaseScraper):
+class CafeFScraper(CaptureMixin, BaseScraper):
     BASE_URL = "https://cafef.vn"
 
     def __init__(self, config, http, dedup):
@@ -52,6 +53,7 @@ class CafeFScraper(BaseScraper):
         self.max_details = detail.get("max_details_per_cycle", 30)
         self.watchlist = config.get("watchlist") or load_watchlist()
         self._details_fetched = 0
+        self._init_capture()  # RawStore + RobotsGate + SourceBackoff
 
     def fetch_list(self) -> list[dict]:
         self._details_fetched = 0
@@ -98,23 +100,15 @@ class CafeFScraper(BaseScraper):
 
     def enrich(self, article: Article) -> None:
         if self._details_fetched >= self.max_details:
-            # quá cap → giữ summary, không fetch (incremental delivery)
+            # quá cap → giữ summary, không fetch (incremental delivery; xem Q1 backfill)
             article.content_text = article.summary
             article.metadata["detail_deferred"] = True
             return
-        html = self.http.get(article.url, referer=f"{self.BASE_URL}/",
-                             timeout=self.config.get("timeout", 30))
+        # RawStore-first capture (byte-exact) + content_html vùng con + validity check
+        html = self._capture_and_extract(article, "cafef.vn",
+                                         f"{self.BASE_URL}/", self.content_selector)
         if html is None:
-            article.content_text = article.summary
-            self.errors.append(f"detail fetch failed: {article.url}")
-            return
+            return  # thất bại/bỏ qua — content_text=summary đã set trong mixin
         self._details_fetched += 1
-
-        node = BeautifulSoup(html, "lxml").select_one(self.content_selector)
-        if node is not None:
-            article.content_html = str(node)
-        else:
-            logger.warning("[cafef] selector '{}' miss on {} — dùng full page",
-                           self.content_selector, article.url)
-            article.content_html = html
+        # cleaning downstream — CHẠY SAU khi raw đã lưu (không vi phạm no-clean)
         article.content_text = extract_text(article.content_html) or article.summary

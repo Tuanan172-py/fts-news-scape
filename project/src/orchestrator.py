@@ -39,6 +39,16 @@ import src.scrapers  # noqa: F401 — trigger @register
 from src.scrapers import REGISTRY
 
 
+def _force_utf8_stdio() -> None:
+    """Ép stdout/stderr sang UTF-8 (Windows: print tiếng Việt qua Task Scheduler
+    bị redirect vào file dùng cp1252 → UnicodeEncodeError làm crash pipeline)."""
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError):
+            pass
+
+
 def build_scraper(cfg: dict, http: HTTPClient, dedup: DedupCache):
     """Factory: domain config → scraper instance. Per-name class > generic method class."""
     cls = REGISTRY.get(cfg["name"]) or REGISTRY.get(f"_{cfg['method']}")
@@ -50,16 +60,20 @@ def build_scraper(cfg: dict, http: HTTPClient, dedup: DedupCache):
 class Orchestrator:
     def __init__(self):
         self.settings = load_settings()
-        setup_logging(self.settings["logging"]["level"],
-                      self.settings["logging"]["dir"])
+        setup_logging(
+            self.settings["logging"]["level"], self.settings["logging"]["dir"]
+        )
         self.store = ArticleStore(self.settings["database"]["path"])
         self.writer = DBWriter(self.store)
         self.http = HTTPClient(
             rate_limit_delay=self.settings["http"]["rate_limit"],
-            max_retries=self.settings["http"]["max_retries"])
+            max_retries=self.settings["http"]["max_retries"],
+        )
         self.dedup = DedupCache(self.store)
         self.heartbeat = Heartbeat(self.store)
-        notif_dir = self.settings.get("notifications", {}).get("dir", "data/notifications")
+        notif_dir = self.settings.get("notifications", {}).get(
+            "dir", "data/notifications"
+        )
         self.notifier = FileNotifier(out_dir=notif_dir)
         self.sentiment = SentimentEngine()
         self._stopped = False
@@ -98,15 +112,19 @@ class Orchestrator:
                 fallback = REGISTRY[f"_{fb_method}"](cfg, self.http, self.dedup)
 
             self.heartbeat.record_start(name)
-            result = (run_with_fallback(primary, fallback) if fallback
-                      else run_with_retry(primary))
+            result = (
+                run_with_fallback(primary, fallback)
+                if fallback
+                else run_with_retry(primary)
+            )
             for a in result.new:
                 for cat in classify_rule_based(a.title, a.content_text):
                     if cat not in a.categories and cat != "uncategorized":
                         a.categories.append(cat)
                 if a.metadata.get("language", "vi") == "vi":
-                    a.sentiment, a.sentiment_score = \
-                        self.sentiment.analyze(a.title, a.content_text)
+                    a.sentiment, a.sentiment_score = self.sentiment.analyze(
+                        a.title, a.content_text
+                    )
                 else:
                     # lexicon VN không áp dụng cho tiếng Anh (Phase 2 decision)
                     a.sentiment, a.sentiment_score = "neutral", 0.0
@@ -115,14 +133,21 @@ class Orchestrator:
             results.append(result)
             all_new.extend(result.new)
 
-        self.notifier.notify_articles(all_new)
-        if results:
-            self.notifier.notify_cycle_summary(results)
-        self.writer.flush()          # đảm bảo bài cycle này đã commit trước export/checkpoint
+        try:
+            self.notifier.notify_articles(all_new)
+            if results:
+                self.notifier.notify_cycle_summary(results)
+        except Exception as e:
+            # notify là tiện ích — không được làm hỏng export (graceful degradation)
+            logger.error("Notify lỗi (bỏ qua): {}: {}", type(e).__name__, e)
+        self.writer.flush()  # đảm bảo bài cycle này đã commit trước export/checkpoint
         self._export_csv()
         self._wal_checkpoint()
-        logger.info("=== Cycle done: {} new articles in {:.0f}s ===",
-                    len(all_new), time.monotonic() - cycle_start)
+        logger.info(
+            "=== Cycle done: {} new articles in {:.0f}s ===",
+            len(all_new),
+            time.monotonic() - cycle_start,
+        )
         return len(all_new)
 
     def _export_csv(self) -> None:
@@ -134,8 +159,9 @@ class Orchestrator:
         out_dir = exp.get("dir", "data/exports")
         try:
             out = Path(out_dir) / f"articles-{datetime.now(VN_TZ):%Y-%m-%d}.csv"
-            _, n = export_csv(db_path=self.settings["database"]["path"],
-                              today=True, out=str(out))
+            _, n = export_csv(
+                db_path=self.settings["database"]["path"], today=True, out=str(out)
+            )
             logger.info("CSV export: {} bài hôm nay -> {}", n, out)
         except Exception as e:
             logger.error("CSV export lỗi (bỏ qua): {}: {}", type(e).__name__, e)
@@ -150,7 +176,7 @@ class Orchestrator:
             logger.warning("WAL checkpoint failed: {}", e)
 
     def shutdown(self) -> None:
-        if self._stopped:   # idempotent — có thể bị gọi từ cả signal handler lẫn finally
+        if self._stopped:  # idempotent — có thể bị gọi từ cả signal handler lẫn finally
             return
         self._stopped = True
         logger.info("Shutting down — flushing writer + WAL checkpoint...")
@@ -168,8 +194,8 @@ class Orchestrator:
         scheduler.add_job(
             self.run_cycle,
             IntervalTrigger(minutes=interval),
-            coalesce=True,              # dồn các lần miss thành 1
-            max_instances=1,            # singleton: không chồng cycle
+            coalesce=True,  # dồn các lần miss thành 1
+            max_instances=1,  # singleton: không chồng cycle
             misfire_grace_time=300,
             next_run_time=datetime.now(VN_TZ),  # chạy ngay lần đầu (tz-aware)
         )
@@ -189,14 +215,17 @@ class Orchestrator:
 
 
 def main(argv: list[str]) -> int:
+    _force_utf8_stdio()
     once = "--once" in argv
     names = [a for a in argv if not a.startswith("--")] or None
 
     orch = Orchestrator()
     if once:
+
         def handle_signal(signum, frame):
             orch.shutdown()
             sys.exit(1)
+
         signal.signal(signal.SIGINT, handle_signal)
         signal.signal(signal.SIGTERM, handle_signal)
         try:

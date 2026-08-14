@@ -11,4 +11,5 @@ apscheduler>=3.10.0,<4.0
 pyvi>=0.1.1
 rapidfuzz>=3.0.0
 truststore>=0.9.0
+readability-lxml>=0.8.1     # D5: text-density fallback cho content_html khi selector miss
 

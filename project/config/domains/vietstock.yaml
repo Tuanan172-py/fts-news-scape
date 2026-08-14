@@ -1,8 +1,9 @@
 name: vietstock
 enabled: true
-method: rss             # internal API unreachable (verified 2026-07-24) → RSS primary
+method: vietstock       # dedicated scraper: RSS list + full raw HTML capture (was: rss)
 rate_limit: 3.0
 timeout: 30
+language: vi
 rss:
   feeds:
     - {url: "https://vietstock.vn/0/tin-moi.rss", name: "Vietstock Tin mới"}
@@ -11,5 +12,13 @@ rss:
     - {url: "https://vietstock.vn/761/kinh-te/vi-mo.rss", name: "Vietstock Vĩ mô"}
 detail:
   extract_full: true
+  content_selector: "div.article-content, div.single_post_content, article"
   max_details_per_cycle: 30
-pitfalls: "RSS index https://vietstock.vn/rss (60 feeds). pubDate +0700. Description chứa img tag. Internal API (TopPageArticle...) cần browser session — không dùng."
+capture:
+  raw_dir: "data/raw_html"       # RawStore lưu full raw HTML byte-exact + .meta.json
+  min_body_bytes: 2048
+compliance:
+  respect_robots: true           # robots.txt disallow /*.js,/*.css,/manager — ta chỉ fetch article
+  proxy_rotation: false
+  proxies: []
+pitfalls: "RSS index https://vietstock.vn/rss (60 feeds). pubDate +0700. Detail server-rendered, img dùng src trực tiếp. Internal API (TopPageArticle...) cần browser session — không dùng."

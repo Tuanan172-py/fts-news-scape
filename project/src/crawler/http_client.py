@@ -70,6 +70,23 @@ class HTTPClient:
         adapter = HTTPAdapter(max_retries=retry_strategy)
         self.session.mount("http://", adapter)
         self.session.mount("https://", adapter)
+        # optional proxy rotation (D4) — off mặc định (pool rỗng → rotate_proxy no-op)
+        self._proxy_pool: list[str] = []
+        self._proxy_idx: int = 0
+
+    def set_proxy_pool(self, proxies: list[str] | None) -> None:
+        """Nạp pool proxy cho rotation (config-gated). Rỗng → tắt."""
+        self._proxy_pool = list(proxies or [])
+        self._proxy_idx = 0
+
+    def rotate_proxy(self) -> None:
+        """Xoay sang proxy kế tiếp trong pool. No-op khi pool rỗng."""
+        if not self._proxy_pool:
+            return
+        self._proxy_idx = (self._proxy_idx + 1) % len(self._proxy_pool)
+        proxy = self._proxy_pool[self._proxy_idx]
+        self.session.proxies = {"http": proxy, "https": proxy}
+        logger.info("rotated proxy → {}", proxy)
 
     def _get_headers(self, referer: str | None = None,
                      extra: dict | None = None) -> dict:

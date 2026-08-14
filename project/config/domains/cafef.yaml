@@ -17,4 +17,11 @@ api:
 detail:
   content_selector: "div#mainContent"
   max_details_per_cycle: 30
-pitfalls: "List page JS dynamic — chỉ dùng API. /Date(ms[+tz])/ date format. Cần UA + Referer. LinkDetail relative + utm_source."
+capture:
+  raw_dir: "data/raw_html"       # RawStore lưu full raw HTML byte-exact + .meta.json
+  min_body_bytes: 2048           # dưới ngưỡng → _looks_complete=False (partial/incomplete_render)
+compliance:
+  respect_robots: true           # RobotsGate gate trước fetch detail (AC9)
+  proxy_rotation: false          # off mặc định; true cần proxies pool
+  proxies: []
+pitfalls: "List page JS dynamic — chỉ dùng API. Detail server-rendered. /Date(ms[+tz])/ date format. Cần UA + Referer. LinkDetail relative + utm_source."

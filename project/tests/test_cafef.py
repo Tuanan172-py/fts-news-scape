@@ -10,27 +10,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import pytest
 
+from _fakes import FakeHTTP
 from src.db.dedup import DedupCache
 from src.db.store import ArticleStore
 from src.scrapers.cafef import CafeFScraper, parse_cafef_date
 
 FIXTURES = Path(__file__).parent / "fixtures"
-
-
-class FakeHTTP:
-    """HTTPClient giả — trả fixture, đếm số call."""
-
-    def __init__(self, list_json=None, detail_html=None):
-        self.list_json = list_json
-        self.detail_html = detail_html
-        self.detail_calls = 0
-
-    def get_json(self, url, **kw):
-        return self.list_json
-
-    def get(self, url, **kw):
-        self.detail_calls += 1
-        return self.detail_html
 
 
 @pytest.fixture
@@ -44,7 +29,8 @@ def fixture_detail():
 
 
 @pytest.fixture
-def env(tmp_path):
+def env(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)  # cô lập RawStore ghi data/raw_html vào tmp
     store = ArticleStore(db_path=str(tmp_path / "t.db"))
     dedup = DedupCache(store, legacy_json_path="")
     yield dedup
@@ -156,10 +142,12 @@ def test_detail_cap_defers(env, fixture_list, fixture_detail):
         assert a.content_text == a.summary
 
 
-def test_selector_miss_falls_back_full_page(env, fixture_list):
+def test_selector_miss_preserves_body(env, fixture_list):
+    # selector #mainContent miss → D5 density fallback (hoặc full page) cho content_html;
+    # raw artifact vẫn được lưu byte-exact (kiểm ở test_cafef_capture).
     http = FakeHTTP(list_json=fixture_list,
                     detail_html="<html><body><p>Nội dung bài viết dài.</p></body></html>")
     scraper = CafeFScraper(_config(), http, env)
     result = scraper.run()
     for a in result.new:
-        assert a.content_html.startswith("<html>")  # full page fallback
+        assert "Nội dung bài viết" in a.content_html  # body được giữ

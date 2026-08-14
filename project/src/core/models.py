@@ -31,6 +31,13 @@ class Article:
 
     content_html giữ HTML nguyên bản (spec §9: không throw away data);
     content_text là text sạch đã bóc tách.
+
+    metadata["capture"] (điền bởi RawStore qua CaptureMixin): con trỏ tới raw
+    artifact + trạng thái thu thập. Keys: html_path, content_sha256, http_status,
+    response_headers (subset), fetch_ts, render_method, capture_status
+    (ok|partial|failed|skipped_robots), missing[], error, images[] (read-only
+    manifest: outer_tag/resolved_url/alt/title/caption). Raw .html là byte-exact,
+    KHÔNG bao giờ bị sửa.
     """
 
     url: str
