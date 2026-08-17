@@ -1,0 +1,63 @@
+# Task lifecycle v1 — machine-readable agent execution states + Definition-of-Done.
+# SPEC ONLY (no runtime). Any provider agent implements this state machine.
+version: "1.0"
+
+states:
+  - STARTED               # work_item claimed from catalog
+  - EXTRACTION_PENDING    # Extractor filling canonical output
+  - VERIFICATION_PENDING  # Verifier/critic checking schema + groundedness
+  - COMPLETE              # DoD satisfied → catalog.mark_done
+  - FAILED_RECOVERABLE    # transient; retry (bounded)
+  - FAILED_PERMANENT      # non-retryable → catalog.mark_failed / held
+
+transitions:
+  - {from: STARTED, to: EXTRACTION_PENDING, on: dispatch}
+  - {from: EXTRACTION_PENDING, to: VERIFICATION_PENDING, on: extracted}
+  - {from: EXTRACTION_PENDING, to: FAILED_RECOVERABLE, on: extract_error}
+  - {from: VERIFICATION_PENDING, to: COMPLETE, on: dod_pass}
+  - {from: VERIFICATION_PENDING, to: EXTRACTION_PENDING, on: refine}      # bounded loop
+  - {from: VERIFICATION_PENDING, to: FAILED_PERMANENT, on: dod_unrecoverable}
+  - {from: FAILED_RECOVERABLE, to: STARTED, on: retry}                    # bounded (max_retries)
+
+# Map to Phase-3 catalog.work_items.status
+catalog_status_map:
+  STARTED: claimed
+  EXTRACTION_PENDING: claimed
+  VERIFICATION_PENDING: claimed
+  COMPLETE: done
+  FAILED_RECOVERABLE: claimed     # stays claimed until retries exhausted
+  FAILED_PERMANENT: failed
+
+# Bounded loops (no unbounded autonomy — guardrail)
+loops:
+  refine:            {trigger: "materiality.confidence < refine_threshold", max_iters: 2}
+  adversarial_verify: {trigger: "critic flags implication overreach",       max_iters: 1}
+  map_reduce:        {trigger: "batch of N articles", note: "parallel extractors → aggregator"}
+
+thresholds:
+  confidence_min: 0.65
+  min_citations: 2
+  refine_threshold: 0.70
+  hitl_auto_above: 0.80      # >0.80 auto-accept; 0.5–0.8 flag review; verifier concern → human
+  hitl_review_below: 0.50
+  max_retries: 2
+
+# Definition-of-Done — the "điểm chạm báo hiệu công việc ĐÃ THỰC SỰ hoàn thành".
+# COMPLETE iff ALL predicates true (machine-checkable against agent-output-v1).
+definition_of_done:
+  - id: schema_valid
+    predicate: "contract_validator(agent_output, agent-output-v1) == PASS"
+  - id: confident
+    predicate: "agent_output.confidence >= thresholds.confidence_min"
+  - id: grounded
+    predicate: "len(agent_output.citations) >= thresholds.min_citations AND each citation.source_span IN work_package.cleaned_text"
+  - id: quality_ok
+    predicate: "agent_output.extraction_quality IN [high, medium]"
+  - id: auditable
+    predicate: "agent_output.processing_metadata has agent_provider, model_used, timestamp"
+
+# Preconditions before an agent may process a work-package (guardrails).
+preconditions:
+  - "work_package.change_state NOT IN [SELECTOR_BROKEN, TEMPLATE_DRIFT]  # else held, skip"
+  - "sha256(read(work_package.raw_html_path)) == work_package.raw_sha256  # integrity"
+  - "idempotency: cache by (article_id, raw_sha256); replay returns cached output"

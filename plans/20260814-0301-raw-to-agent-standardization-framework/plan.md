@@ -18,12 +18,18 @@ already present). Do NOT duplicate `project/docs/design/06-raw-html-capture.md`.
 ## Phases
 | # | Phase | Type | Status | Progress | File |
 |---|-------|------|--------|----------|------|
-| 1 | Storage layers + provenance (Bronze/Silver, partitioning) | IMPL | PLANNED | 0% | [phase-01](phase-01-storage-layers-and-provenance.md) |
-| 2 | HTML change-detection + version log + reconcile | IMPL | PLANNED | 0% | [phase-02](phase-02-change-detection-version-log.md) |
-| 3 | Work-package schema + catalog/index + watermark + validator | IMPL | PLANNED | 0% | [phase-03](phase-03-work-package-catalog-handoff.md) |
-| 4 | [SPEC] Agent I/O contract + output field taxonomy | SPEC | PLANNED | 0% | [phase-04](phase-04-spec-agent-io-and-taxonomy.md) |
-| 5 | [SPEC] Agent orchestration & governance (main/sub, loops, DoD) | SPEC | PLANNED | 0% | [phase-05](phase-05-spec-agent-orchestration-governance.md) |
-| 6 | End-to-end workflow governance + validation/migration | IMPL | PLANNED | 0% | [phase-06](phase-06-e2e-governance-validation-migration.md) |
+| 1 | Storage layers + provenance (Bronze/Silver, partitioning) | IMPL | ✅ DONE | 100% | [phase-01](phase-01-storage-layers-and-provenance.md) |
+| 2 | HTML change-detection + version log + reconcile | IMPL | ✅ DONE | 100% | [phase-02](phase-02-change-detection-version-log.md) |
+| 3 | Work-package schema + catalog/index + watermark + validator | IMPL | ✅ DONE | 100% | [phase-03](phase-03-work-package-catalog-handoff.md) |
+| 4 | [SPEC] Agent I/O contract + output field taxonomy | SPEC | ✅ DONE | 100% | [phase-04](phase-04-spec-agent-io-and-taxonomy.md) |
+| 5 | [SPEC] Agent orchestration & governance (main/sub, loops, DoD) | SPEC | ✅ DONE | 100% | [phase-05](phase-05-spec-agent-orchestration-governance.md) |
+| 6 | End-to-end workflow governance + validation/migration | IMPL | ✅ DONE | 100% | [phase-06](phase-06-e2e-governance-validation-migration.md) |
+
+**Implementation status (2026-08-14):** All phases implemented (producer) / authored (spec). New tests green
+(`test_change_detect`, `test_handoff` — 20 passed) + `scripts/validate_e2e.py` → PASS full chain. Downstream
+runs OFFLINE from WORM Bronze (`src/pipeline`, `src/handoff`, scripts) — capture path untouched (zero regression).
+Docs: `docs/design/07`–`11`, schemas `silver/work-package/agent-output-v1` + `task-lifecycle-v1` + samples + CHANGELOG.
+Deviation: downstream decoupled from `capture_mixin` (offline re-derivable) instead of live-wired — safer, matches medallion.
 
 ## Acceptance → phase map
 - Full raw body of every requested page, byte-exact, immutable → existing capture + P1 (Bronze contract).

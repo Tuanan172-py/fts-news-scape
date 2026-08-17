@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fra.local/schemas/work-package-v1.schema.json",
+  "title": "Work-package v1 — provider-agnostic INPUT contract handed to any agent",
+  "description": "Self-describing per-article package. POINTS to byte-exact Bronze raw (raw_sha256 + raw_html_path); MUST NOT inline raw bytes.",
+  "type": "object",
+  "required": [
+    "schema_version", "article_id", "source_url", "domain",
+    "raw_html_path", "raw_sha256", "cleaned_text", "capture_status", "change_state"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "schema_version": {"type": "string"},
+    "article_id": {"type": "string", "description": "url_title_hash — stable article identity"},
+    "source_url": {"type": "string"},
+    "domain": {"type": "string"},
+    "published_at": {"type": ["string", "null"]},
+    "raw_html_path": {"type": "string", "description": "path to Bronze .html (byte-exact)"},
+    "raw_sha256": {"type": "string", "description": "SHA-256 of Bronze raw bytes — consumer re-verifies"},
+    "cleaned_text": {"type": "string"},
+    "structure": {"type": "object"},
+    "images": {"type": "array", "items": {"type": "object"}},
+    "capture_status": {"type": "string", "enum": ["ok", "partial", "failed", "skipped_robots"]},
+    "change_state": {"type": "string", "enum": [
+      "NEW", "UNCHANGED", "CONTENT_CHANGED", "TEMPLATE_DRIFT", "SELECTOR_BROKEN"
+    ]},
+    "provenance": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "fetch_ts": {"type": "string"},
+        "render_method": {"type": "string"},
+        "scraper_version": {"type": "string"},
+        "silver_schema_version": {"type": "string"}
+      }
+    }
+  }
+}

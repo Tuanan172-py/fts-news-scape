@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fra.local/schemas/agent-output-v1.schema.json",
+  "title": "Agent output v1 — canonical, provider-agnostic analysis result",
+  "description": "Standardized output ANY provider agent must emit. ASCII keys; bilingual labels in docs/design/09. CORE fields required; rest optional (owner decision 2026-08-14).",
+  "type": "object",
+  "required": [
+    "output_schema_version", "article_id", "summary", "implication",
+    "materiality", "confidence", "citations", "processing_metadata"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "output_schema_version": {"type": "string"},
+    "article_id": {"type": "string", "description": "= work-package article_id"},
+    "summary": {
+      "type": "object", "description": "tóm tắt",
+      "required": ["abstractive"],
+      "properties": {
+        "abstractive": {"type": "string"},
+        "key_points": {"type": "array", "items": {"type": "string"}},
+        "key_quotes": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "implication": {
+      "type": "object", "description": "hàm ý / so-what",
+      "required": ["text"],
+      "properties": {
+        "text": {"type": "string"},
+        "affected_parties": {"type": "array", "items": {"type": "string"}},
+        "impact_area": {"type": "string", "enum": [
+          "market", "regulatory", "sentiment", "supply_chain", "geopolitical", "other"
+        ]}
+      }
+    },
+    "materiality": {
+      "type": "object", "description": "mức độ quan trọng",
+      "required": ["score"],
+      "properties": {
+        "score": {"type": "number", "minimum": 0, "maximum": 1},
+        "time_sensitivity": {"type": "string", "enum": [
+          "urgent", "today", "this_week", "this_month", "archive"
+        ]}
+      }
+    },
+    "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+    "citations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["claim", "source_span"],
+        "properties": {
+          "claim": {"type": "string"},
+          "source_span": {"type": "string", "description": "substring of work-package cleaned_text (groundedness)"},
+          "source_offset": {"type": ["integer", "null"]}
+        }
+      }
+    },
+    "processing_metadata": {
+      "type": "object",
+      "required": ["agent_provider", "model_used", "timestamp"],
+      "properties": {
+        "agent_provider": {"type": "string"},
+        "model_used": {"type": "string"},
+        "timestamp": {"type": "string"},
+        "schema_version": {"type": "string"}
+      }
+    },
+    "sentiment": {
+      "type": "object",
+      "properties": {
+        "overall": {"type": "number", "minimum": -1, "maximum": 1},
+        "polarity": {"type": "string", "enum": ["negative", "neutral", "positive"]}
+      }
+    },
+    "event_type": {"type": "string", "enum": [
+      "earnings", "acquisition", "regulatory", "lawsuit", "partnership",
+      "financial_move", "macro", "other"
+    ]},
+    "entities": {
+      "type": "object",
+      "properties": {
+        "companies": {"type": "array", "items": {
+          "type": "object",
+          "required": ["name"],
+          "properties": {
+            "name": {"type": "string"},
+            "ticker": {"type": ["string", "null"]},
+            "sentiment": {"type": ["number", "null"], "minimum": -1, "maximum": 1}
+          }
+        }},
+        "people": {"type": "array", "items": {"type": "object"}},
+        "locations": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "extraction_quality": {"type": "string", "enum": ["high", "medium", "low"]},
+    "processing_notes": {"type": "object"}
+  }
+}

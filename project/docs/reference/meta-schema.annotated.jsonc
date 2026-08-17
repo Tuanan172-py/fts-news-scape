@@ -1,0 +1,94 @@
+// =============================================================================
+// meta-schema.annotated.jsonc  —  BẢN THAM CHIẾU CÓ CHÚ THÍCH (không phải file thật)
+// =============================================================================
+// Đây là bản SAO có chú thích `//` của một file `<url_title_hash>.meta.json` thật.
+// File .meta.json THẬT trên đĩa là JSON CHUẨN (không có //) để `json.loads()` đọc được.
+// Nguồn sinh: src/crawler/raw_store.py  →  RawStore.save()  (dict `cap`, dòng 121-178)
+// Vị trí file thật: data/raw_html/<domain>/<YYYYMMDD>/<url_title_hash>.meta.json
+// Sidecar song sinh: cùng tên `.html` = raw bytes NGUYÊN BẢN (byte-exact, WORM).
+// -----------------------------------------------------------------------------
+// VÍ DỤ 1 — capture THÀNH CÔNG (capture_status = "ok")
+// =============================================================================
+{
+  // ── NHÓM A: ĐỊNH DANH & VỊ TRÍ ───────────────────────────────────────────
+  "source_url": "https://cafef.vn/vn-index-tang-diem-phien-17-08.chn",
+                                    // URL gốc của bài (đúng URL đã fetch)
+  "url_title_hash": "9f3a1c7be2d40a51e7c9b8f2a6d1034e",
+                                    // Khóa content-address = TÊN FILE (.html/.meta.json)
+                                    // băm từ URL+title → cùng bài ghi đè đúng chỗ, không sinh rác
+  "fetch_ts": "2026-08-17T09:12:03+07:00",
+                                    // Thời điểm fetch (ISO-8601, giờ VN). QUYẾT ĐỊNH partition:
+                                    // "2026-08-17" → thư mục .../20260817/  (raw_store.py:40-44)
+  "render_method": "requests",      // Cách render: "requests" (server-rendered) | "playwright"
+                                    //   (chỉ dùng playwright nếu trang cần JS — hiện chưa cần)
+  "html_path": "data/raw_html/cafef.vn/20260817/9f3a1c7be2d40a51e7c9b8f2a6d1034e.html",
+                                    // Đường dẫn file .html raw song sinh (trỏ tới bytes gốc)
+
+  // ── NHÓM B: BẰNG CHỨNG & TOÀN VẸN (provenance) ───────────────────────────
+  "http_status": 200,               // Mã HTTP phản hồi. "ok" cần 200..299 (raw_store.py:157)
+  "content_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                                    // sha256 của raw bytes = BẰNG CHỨNG BẤT BIẾN.
+                                    // Sau này: sha256(read(.html)) phải == giá trị này,
+                                    // nếu khác ⇒ raw đã bị sửa/hỏng. Agent verify hash trước khi xử lý.
+  "content_length_bytes": 114688,   // Số byte THỰC NHẬN của body (len(body))
+                                    // (so với response_headers.content-length = server KHAI BÁO)
+  "encoding": "utf-8",              // Encoding response khai (giữ để decode đúng ở downstream)
+  "response_headers": {             // CHỈ giữ whitelist 6 header (raw_store.py:25)
+                                    //   → ĐÃ LOẠI Set-Cookie/Authorization (vệ sinh PII/secret)
+    "content-type": "text/html; charset=utf-8",
+    "content-length": "114688",     // server KHAI BÁO; đối chiếu với content_length_bytes để bắt truncated
+    "last-modified": "Sun, 17 Aug 2026 02:10:55 GMT",  // mốc sửa nguồn → so phiên bản
+    "etag": "\"6a1f-63b2c9e\"",     // fingerprint phiên bản của server → phát hiện đổi nội dung
+    "server": "nginx",
+    "date": "Sun, 17 Aug 2026 02:12:03 GMT"
+  },
+
+  // ── NHÓM C: CHẤT LƯỢNG & PHỤC HỒI ────────────────────────────────────────
+  "images": [                       // MANIFEST chỉ-đọc (BeautifulSoup scan, raw_store.py:72-105)
+                                    //   Chỉ LIỆT KÊ ảnh; KHÔNG sửa file .html.
+    {
+      "outer_tag": "<img class=\"lazy\" data-src=\"/Images/Uploaded/Share/2026/08/17/vnindex.jpg\" alt=\"Biểu đồ VN-Index\"/>",
+                                    // Tag <img> NGUYÊN BẢN như trong HTML (giữ lazy-load attr)
+      "resolved_url": "https://cafef.vn/Images/Uploaded/Share/2026/08/17/vnindex.jpg",
+                                    // URL đã resolve tuyệt đối theo thứ tự:
+                                    //   src → data-src → data-original → original-src
+                                    //   → document-path → data-lazy → srcset (raw_store.py:28-29,81-91)
+      "alt": "Biểu đồ VN-Index",    // thuộc tính alt (mô tả ảnh)
+      "title": "",                  // thuộc tính title (nếu có)
+      "caption": "VN-Index phiên 17/08"  // text <figcaption> nếu <img> nằm trong <figure>
+    }
+    // ... mỗi <img> một phần tử; ví dụ này có 11 ảnh
+  ],
+  "capture_status": "ok",           // ok      = full (2xx ∧ body>0 ∧ node có text ∧ không marker chặn)
+                                    // partial = có raw nhưng thiếu phần (xem `missing`)
+                                    // failed  = không lấy được (fetch fail / HTTP lỗi)
+  "missing": [],                    // Danh sách CHÍNH XÁC thiếu gì. Rỗng = không thiếu.
+                                    //   giá trị có thể: "article_body" | "incomplete_render"
+                                    //                 | "main_content_node" (capture_mixin.py:104,109)
+  "error": null                     // null khi ok/partial. Khi failed = object (xem VÍ DỤ 2)
+}
+
+// =============================================================================
+// VÍ DỤ 2 — capture THẤT BẠI (capture_status = "failed", vd HTTP 403 chặn)
+// =============================================================================
+// {
+//   "source_url": "https://vietstock.vn/2026/08/bai-bi-chan.htm",
+//   "url_title_hash": "aa10bb...ff",
+//   "fetch_ts": "2026-08-17T09:15:44+07:00",
+//   "render_method": "requests",
+//   "html_path": "data/raw_html/vietstock.vn/20260817/aa10bb...ff.html",
+//   "http_status": 403,               // ngoài 2xx → không "ok"
+//   "content_sha256": null,           // null nếu body rỗng; nếu có body partial vẫn hash + lưu để soi
+//   "content_length_bytes": 0,
+//   "encoding": null,
+//   "response_headers": { "server": "cloudflare", "date": "..." },
+//   "images": [],                     // không scan khi fail
+//   "capture_status": "failed",
+//   "missing": ["article_body"],      // tự set khi fail nếu chưa có (raw_store.py:142-143,164-165)
+//   "error": {                        // object mô tả nguyên nhân
+//     "type": "http_error",           //   "fetch_failed" (response=None) | "http_error" (status ngoài 2xx)
+//     "http_status": 403,
+//     "message": "status 403",
+//     "protection_mechanism": "cloudflare"   // cơ chế chặn nghi ngờ (nếu suy ra được), else null
+//   }
+// }

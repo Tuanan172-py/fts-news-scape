@@ -1,0 +1,39 @@
+{
+  "output_schema_version": "1.0",
+  "article_id": "26b0ebedc2aab4796014d36223cf7f16ff833d7ce0f9b1194a40879dc0366616",
+  "summary": {
+    "abstractive": "8 ngân hàng và 14 doanh nghiệp đầu ngành giảm tổng cộng hơn 21.730 lao động theo báo cáo mới nhất.",
+    "key_points": [
+      "Hơn 6.400 nhân sự rời khỏi báo cáo của 8 ngân hàng",
+      "14 doanh nghiệp đứng đầu giảm 21.730 lao động"
+    ]
+  },
+  "implication": {
+    "text": "Xu hướng tinh giản nhân sự diện rộng có thể phản ánh áp lực chi phí và tự động hóa; tác động tới sức mua và tâm lý thị trường lao động.",
+    "affected_parties": ["ngân hàng", "người lao động", "doanh nghiệp niêm yết"],
+    "impact_area": "market"
+  },
+  "materiality": {
+    "score": 0.62,
+    "time_sensitivity": "this_week"
+  },
+  "confidence": 0.78,
+  "citations": [
+    {"claim": "8 ngân hàng giảm hơn 6.400 nhân sự", "source_span": "Hơn 6.400 nhân sự rời khỏi báo cáo của 8 ngân hàng", "source_offset": 0},
+    {"claim": "14 DN đầu ngành giảm 21.730 lao động", "source_span": "14 DN đứng đầu đã giảm 21.730 lao động", "source_offset": 52}
+  ],
+  "processing_metadata": {
+    "agent_provider": "example-provider",
+    "model_used": "example-model-v1",
+    "timestamp": "2026-08-14T03:05:00+07:00",
+    "schema_version": "1.0"
+  },
+  "sentiment": {"overall": -0.3, "polarity": "negative"},
+  "event_type": "macro",
+  "entities": {
+    "companies": [{"name": "ngân hàng (tổng hợp)", "ticker": null, "sentiment": -0.2}],
+    "people": [],
+    "locations": ["Việt Nam"]
+  },
+  "extraction_quality": "high"
+}

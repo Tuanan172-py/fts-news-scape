@@ -1,0 +1,61 @@
+<!-- =========================================================================
+  raw-html.annotated.html  —  BẢN THAM CHIẾU CÓ CHÚ THÍCH (không phải file thật)
+  ==========================================================================
+  Bản SAO minh hoạ CẤU TRÚC của một file <url_title_hash>.html raw thật.
+  File .html THẬT trên đĩa là BYTE-EXACT: nguyên bản response, KHÔNG một ký tự
+  chú thích nào được chèn (nếu chèn, sha256(file) != content_sha256 đã lưu ⇒
+  toàn bộ kiểm tra toàn vẹn báo "raw bị giả mạo", agent từ chối xử lý).
+
+  LƯU Ý CÚ PHÁP: HTML KHÔNG có comment `//` — comment hợp lệ của HTML là
+  `<!-- ... -->`. Dùng `//` trong .html là sai cú pháp VÀ phá hash. Nên bản
+  annotated này (và mọi chú thích cho raw) dùng `<!-- -->`.
+
+  Nguồn ghi: src/crawler/raw_store.py → _write_atomic(html_path, body)  (dòng 173)
+             body = response.content NGUYÊN BẢN, không decode/strip/rewrite.
+  ========================================================================= -->
+
+<!-- ▼▼▼ TỪ ĐÂY XUỐNG LÀ MINH HOẠ NỘI DUNG RAW — file thật KHÔNG có các <!-- --> này ▼▼▼ -->
+
+<!DOCTYPE html>                    <!-- giữ nguyên doctype nguồn -->
+<html lang="vi">
+<head>
+  <meta charset="utf-8">           <!-- encoding gốc → khớp field meta.json "encoding" -->
+  <title>VN-Index tăng điểm phiên 17/08 | CafeF</title>
+                                   <!-- title góp phần sinh url_title_hash -->
+  <link rel="canonical" href="https://cafef.vn/vn-index-...chn">
+  <!-- ... toàn bộ <head>, script, style GIỮ NGUYÊN — không lược bỏ (no-clean) ... -->
+</head>
+<body>
+  <!-- Toàn bộ chrome trang (header/menu/quảng cáo) GIỮ NGUYÊN.
+       Việc tách "vùng thân bài" KHÔNG xảy ra ở đây — đó là việc của
+       Silver/downstream qua CSS selector; raw giữ trọn trang. -->
+
+  <div class="detail-content afcbc-body">   <!-- ← khối selector trỏ tới (content_html) -->
+    <h1 class="title">VN-Index tăng điểm phiên 17/08</h1>
+    <p class="sapo">Chốt phiên, VN-Index tăng ... </p>
+    <p>Nội dung đoạn 1 giữ nguyên văn bản, dấu, khoảng trắng ...</p>
+
+    <!-- Ảnh lazy-load: attr data-src GIỮ NGUYÊN trong raw (KHÔNG swap sang src).
+         Việc resolve data-src→URL tuyệt đối chỉ ghi trong meta.json "images[]"
+         (read-only manifest), file .html này không bị đụng. -->
+    <figure>
+      <img class="lazy"
+           data-src="/Images/Uploaded/Share/2026/08/17/vnindex.jpg"
+           alt="Biểu đồ VN-Index">   <!-- → images[].outer_tag + resolved_url trong meta.json -->
+      <figcaption>VN-Index phiên 17/08</figcaption>  <!-- → images[].caption -->
+    </figure>
+
+    <table> <!-- bảng số liệu giữ nguyên cấu trúc (thanh khoản, mã tăng/giảm) --> </table>
+  </div>
+
+  <!-- ... phần còn lại của trang (footer, script tracking) GIỮ NGUYÊN ... -->
+</body>
+</html>
+
+<!-- =========================================================================
+  BẤT BIẾN CẦN NHỚ:
+  1. File .html = response.content nguyên bản  → sha256 = content_sha256.
+  2. Lazy-load (data-src) KHÔNG swap trong raw  → chỉ ghi ở meta.json images[].
+  3. Không strip tag / không normalize / không thêm chú thích vào file thật.
+  4. Muốn "đọc có chú thích" → dùng chính file annotated này, KHÔNG sửa artifact.
+  ========================================================================= -->

@@ -71,6 +71,60 @@ CREATE TABLE IF NOT EXISTS scraper_metrics (
   duration_ms INTEGER
 );
 CREATE INDEX IF NOT EXISTS idx_metrics_scraper ON scraper_metrics(scraper_name, ts);
+-- Change-detection version log (phase-02) — append-only, mỗi hàng = 1 bản capture.
+CREATE TABLE IF NOT EXISTS article_versions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  url_title_hash TEXT NOT NULL,
+  source_domain TEXT,
+  captured_at TEXT,
+  content_sha256 TEXT,
+  simhash64 TEXT,
+  dom_path_sig TEXT,
+  capture_status TEXT,
+  prev_version_id INTEGER,
+  hamming_content INTEGER,
+  dom_changed INTEGER,
+  selector_drift INTEGER,
+  state TEXT,
+  recommendation TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_versions_hash ON article_versions(url_title_hash, captured_at);
+CREATE INDEX IF NOT EXISTS idx_versions_state ON article_versions(state, captured_at);
+-- Handoff catalog (phase-03) — hàng đợi việc cho agent, exactly-once.
+CREATE TABLE IF NOT EXISTS work_items (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  article_id TEXT NOT NULL,
+  raw_sha256 TEXT NOT NULL,
+  domain TEXT,
+  package_path TEXT,
+  status TEXT NOT NULL DEFAULT 'pending',   -- pending|claimed|done|failed|held
+  claimed_by TEXT,
+  claimed_at TEXT,
+  done_at TEXT,
+  error TEXT,
+  change_state TEXT,
+  enqueued_at TEXT,
+  UNIQUE(article_id, raw_sha256)
+);
+CREATE INDEX IF NOT EXISTS idx_work_items_status ON work_items(status, enqueued_at);
+-- Agent output store (Vòng 3 infra) — 1 output chuẩn / bản raw (idempotency key).
+-- KHÔNG có LLM ở producer; hàng ghi vào đây do agent NGOÀI (do người dùng điều khiển)
+-- nộp qua ingest → validate(agent-output-v1) + DoD trước khi lưu. dod_pass=1 ⇒ đạt.
+CREATE TABLE IF NOT EXISTS agent_outputs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  article_id TEXT NOT NULL,
+  raw_sha256 TEXT NOT NULL,
+  work_item_id INTEGER,
+  output_json TEXT NOT NULL,     -- toàn bộ agent-output-v1 (nguyên bản agent nộp)
+  agent_provider TEXT,           -- rút từ processing_metadata (audit)
+  model_used TEXT,
+  confidence REAL,
+  dod_pass INTEGER DEFAULT 0,    -- 1 = qua Definition-of-Done; 0 = chưa đạt
+  dod_reasons TEXT,              -- JSON list lý do fail (rỗng nếu pass)
+  created_at TEXT,
+  UNIQUE(article_id, raw_sha256)
+);
+CREATE INDEX IF NOT EXISTS idx_agent_outputs_dod ON agent_outputs(dod_pass, created_at);
 """
 
 
@@ -100,6 +154,88 @@ class ArticleStore:
         try:
             conn.executescript(_SCHEMA)
             conn.commit()
+        finally:
+            conn.close()
+
+    def connect(self) -> sqlite3.Connection:
+        """Public connection (đủ pragmas). Caller tự đóng. Dùng bởi handoff.Catalog."""
+        return self._connect()
+
+    def get_by_hash(self, url_title_hash: str) -> Article | None:
+        conn = self._connect()
+        try:
+            row = conn.execute("SELECT * FROM articles WHERE url_title_hash=?",
+                               (url_title_hash,)).fetchone()
+            return Article.from_row(row) if row else None
+        finally:
+            conn.close()
+
+    # -- change-detection version log (phase-02) ------------------------------
+    def last_version(self, url_title_hash: str) -> dict | None:
+        conn = self._connect()
+        try:
+            row = conn.execute(
+                "SELECT * FROM article_versions WHERE url_title_hash=? "
+                "ORDER BY id DESC LIMIT 1", (url_title_hash,)).fetchone()
+            return dict(row) if row else None
+        finally:
+            conn.close()
+
+    def insert_version(self, row: dict) -> int:
+        cols = ("url_title_hash", "source_domain", "captured_at", "content_sha256",
+                "simhash64", "dom_path_sig", "capture_status", "prev_version_id",
+                "hamming_content", "dom_changed", "selector_drift", "state", "recommendation")
+        conn = self._connect()
+        try:
+            cur = conn.execute(
+                f"INSERT INTO article_versions ({', '.join(cols)}) "
+                f"VALUES ({', '.join('?' for _ in cols)})",
+                tuple(row.get(c) for c in cols))
+            conn.commit()
+            return cur.lastrowid
+        finally:
+            conn.close()
+
+    def changed_since(self, watermark_iso: str = "") -> list[str]:
+        """url_title_hash có bản version state ∈ {NEW,CONTENT_CHANGED} sau watermark."""
+        conn = self._connect()
+        try:
+            rows = conn.execute(
+                "SELECT DISTINCT url_title_hash FROM article_versions "
+                "WHERE state IN ('NEW','CONTENT_CHANGED') AND captured_at >= ?",
+                (watermark_iso,)).fetchall()
+            return [r["url_title_hash"] for r in rows]
+        finally:
+            conn.close()
+
+    # -- agent output store (Vòng 3 infra) ------------------------------------
+    def get_agent_output(self, article_id: str, raw_sha256: str) -> dict | None:
+        """Output đã lưu cho (article_id, raw_sha256) — idempotent replay."""
+        conn = self._connect()
+        try:
+            row = conn.execute(
+                "SELECT * FROM agent_outputs WHERE article_id=? AND raw_sha256=?",
+                (article_id, raw_sha256)).fetchone()
+            return dict(row) if row else None
+        finally:
+            conn.close()
+
+    def insert_agent_output(self, row: dict) -> int:
+        """Upsert 1 output theo UNIQUE(article_id, raw_sha256). Trả row id."""
+        cols = ("article_id", "raw_sha256", "work_item_id", "output_json",
+                "agent_provider", "model_used", "confidence", "dod_pass",
+                "dod_reasons", "created_at")
+        conn = self._connect()
+        try:
+            conn.execute(
+                f"INSERT OR REPLACE INTO agent_outputs ({', '.join(cols)}) "
+                f"VALUES ({', '.join('?' for _ in cols)})",
+                tuple(row.get(c) for c in cols))
+            conn.commit()
+            r = conn.execute(
+                "SELECT id FROM agent_outputs WHERE article_id=? AND raw_sha256=?",
+                (row.get("article_id"), row.get("raw_sha256"))).fetchone()
+            return r["id"] if r else -1
         finally:
             conn.close()
 

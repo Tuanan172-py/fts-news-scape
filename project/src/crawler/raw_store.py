@@ -44,12 +44,18 @@ class RawStore:
             return "unknown-date"
 
     def _dir_for(self, domain: str, yyyymmdd: str) -> str:
+        """
+            Giải thích: Tạo đường dẫn thư mục cho một domain và ngày cụ thể.
+        """
         d = os.path.join(self.base_dir, domain, yyyymmdd)
         os.makedirs(d, exist_ok=True)
         return d
 
     @staticmethod
     def _write_atomic(path: str, data: bytes) -> None:
+        """
+            Giải thích: Ghi dữ liệu vào một tệp tạm thời và sau đó thay thế tệp đích, đảm bảo quy trình đọc - ghi không làm ảnh hướng tệp đích
+        """
         tmp = f"{path}.tmp"
         with open(tmp, "wb") as f:
             f.write(data)

@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fra.local/schemas/silver-v1.schema.json",
+  "title": "Silver record v1 — normalized clean base derived from Bronze raw",
+  "type": "object",
+  "required": [
+    "silver_schema_version", "article_id", "source_url", "domain",
+    "content_sha256", "cleaned_text", "built_from_raw_path"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "silver_schema_version": {"type": "string"},
+    "article_id": {"type": "string", "description": "url_title_hash (SHA-256 of url+title)"},
+    "source_url": {"type": "string"},
+    "domain": {"type": "string"},
+    "content_sha256": {"type": "string", "description": "SHA-256 of Bronze raw bytes (provenance key)"},
+    "cleaned_text": {"type": "string"},
+    "built_from_raw_path": {"type": "string"},
+    "built_at": {"type": "string"},
+    "language": {"type": "string"},
+    "structure": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "headings": {"type": "array", "items": {
+          "type": "object",
+          "required": ["level", "text"],
+          "properties": {"level": {"type": "integer"}, "text": {"type": "string"}}
+        }},
+        "paragraphs": {"type": "array", "items": {"type": "string"}},
+        "tables": {"type": "array", "items": {
+          "type": "array", "items": {"type": "array", "items": {"type": "string"}}
+        }},
+        "links": {"type": "array", "items": {
+          "type": "object",
+          "properties": {"href": {"type": "string"}, "text": {"type": "string"}}
+        }}
+      }
+    },
+    "images": {"type": "array", "items": {"type": "object"}}
+  }
+}
