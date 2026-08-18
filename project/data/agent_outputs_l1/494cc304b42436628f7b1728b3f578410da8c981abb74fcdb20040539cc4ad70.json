@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "494cc304b42436628f7b1728b3f578410da8c981abb74fcdb20040539cc4ad70",
+ "title": "Phân tích kỹ thuật phiên chiều 14/08: Rủi ro ngắn hạn gia tăng",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:28+07:00"
+ }
+}

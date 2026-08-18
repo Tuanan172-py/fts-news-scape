@@ -1,0 +1,9 @@
+# B.yaml — nhóm "vĩ mô/thị trường": chỉ số, sàn, ngành. Giá trị = cột `code`.
+indices:
+  - VNINDEX
+  - HNXINDEX
+exchanges:
+  - HOSE
+industries:
+  - NGAN_HANG
+  - CONG_TY_CHUNG_KHOAN

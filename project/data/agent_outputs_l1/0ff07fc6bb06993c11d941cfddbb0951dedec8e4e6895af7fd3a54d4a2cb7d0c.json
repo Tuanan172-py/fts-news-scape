@@ -1,0 +1,34 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "0ff07fc6bb06993c11d941cfddbb0951dedec8e4e6895af7fd3a54d4a2cb7d0c",
+ "title": "TPBank sắp phát hành hơn 416 triệu cp trả cổ tức, nâng vốn điều lệ lên gần 31,901 tỷ",
+ "recognized": true,
+ "entities": [
+  {
+   "surface": "TPB",
+   "entity_id": "TICKER:TPB",
+   "type": "TICKER",
+   "method": "exact_code",
+   "in_list": true,
+   "confidence": 0.85
+  }
+ ],
+ "categories": {
+  "ticker_company": "done",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [
+  {
+   "source_span": "TPBank sắp phát hành hơn 416 triệu cp trả cổ tức, nâng vốn điều lệ lên gần 31,901 tỷ"
+  }
+ ],
+ "confidence": 0.85,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:27+07:00"
+ }
+}

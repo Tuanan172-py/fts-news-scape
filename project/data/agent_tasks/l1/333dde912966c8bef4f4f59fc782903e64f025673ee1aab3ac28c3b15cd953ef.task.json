@@ -1,0 +1,53 @@
+{
+  "packet_version": "1.0",
+  "layer": "L1_ENTITY_RECOGNITION",
+  "task": "recognize_and_audit",
+  "article_id": "333dde912966c8bef4f4f59fc782903e64f025673ee1aab3ac28c3b15cd953ef",
+  "domain": "vneconomy.vn",
+  "input": {
+    "title": "Xu thế dòng tiền: Nhịp hồi kỹ thuật kết thúc, VN-Index có nguy cơ “thủng đáy” tháng 7?",
+    "entity_catalog_ref": {
+      "entities": "data/entities/entities.json",
+      "taxonomy": "data/entities/taxonomy.json"
+    },
+    "code_first": {
+      "route": "resolved",
+      "relevance": "market",
+      "entities": [
+        {
+          "entity_id": "INDEX:VNINDEX",
+          "type": "INDEX",
+          "code": "VNINDEX",
+          "canonical_name": "VN-Index",
+          "via": "alias"
+        }
+      ],
+      "entity_ids": [
+        "INDEX:VNINDEX"
+      ],
+      "industries": []
+    }
+  },
+  "output_contract": {
+    "schema_name": "l1-entity-output-v1",
+    "schema_path": "schemas/l1-entity-output-v1.schema.json",
+    "checklist_categories": [
+      "ticker_company",
+      "etf_fund",
+      "index",
+      "exchange",
+      "industry_sector"
+    ]
+  },
+  "constraints": {
+    "confidence_min": 0.6,
+    "surface_must_be_substring_of": "input.title",
+    "citation_must_be_substring_of": "input.title",
+    "recognized_true_requires": [
+      "entities>=1",
+      "citations>=1"
+    ],
+    "audit_duty": "xác nhận entity code-first, sửa nếu sai, bổ sung nếu thiếu"
+  },
+  "instructions_ref": "schemas/l1-entity-instructions-v1.md"
+}

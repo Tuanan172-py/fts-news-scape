@@ -1,0 +1,42 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "30e15bc220e916dee25bac2059452753ab0a86088f72674671dd992fd7826113",
+ "title": "Bán nhà máy cồn công suất 50.000 tấn/năm vì không cạnh tranh được với cồn giá rẻ từ Mỹ, lãnh đạo Hóa chất Đức Giang khẳng định \"không lỗ được\"",
+ "recognized": true,
+ "entities": [
+  {
+   "surface": "Hóa chất Đức Giang",
+   "entity_id": "TICKER:DGC",
+   "type": "TICKER",
+   "method": "alias",
+   "in_list": true,
+   "confidence": 0.85
+  },
+  {
+   "surface": "Hóa chất",
+   "entity_id": "IND_GICS3:HOA_CHAT",
+   "type": "INDUSTRY_GICS3",
+   "method": "alias",
+   "in_list": true,
+   "confidence": 0.85
+  }
+ ],
+ "categories": {
+  "ticker_company": "done",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "done"
+ },
+ "citations": [
+  {
+   "source_span": "Bán nhà máy cồn công suất 50.000 tấn/năm vì không cạnh tranh được với cồn giá rẻ từ Mỹ, lãnh đạo Hóa chất Đức Giang khẳng định \"không lỗ được\""
+  }
+ ],
+ "confidence": 0.85,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:28+07:00"
+ }
+}

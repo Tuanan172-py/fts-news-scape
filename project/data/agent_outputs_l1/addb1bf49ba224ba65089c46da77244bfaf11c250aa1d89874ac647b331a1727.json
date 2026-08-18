@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "addb1bf49ba224ba65089c46da77244bfaf11c250aa1d89874ac647b331a1727",
+ "title": "Lãi suất còn neo cao, lạm phát chưa phải là rủi ro lớn",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:29+07:00"
+ }
+}

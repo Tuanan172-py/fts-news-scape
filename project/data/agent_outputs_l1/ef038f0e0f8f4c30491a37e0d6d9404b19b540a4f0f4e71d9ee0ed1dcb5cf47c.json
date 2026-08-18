@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "ef038f0e0f8f4c30491a37e0d6d9404b19b540a4f0f4e71d9ee0ed1dcb5cf47c",
+ "title": "Tổng giám đốc Dragon Capital: \"2026 là một năm rất cực khổ với chúng tôi, thị trường quá nhiều ổ trâu ổ gà\"",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:29+07:00"
+ }
+}

@@ -1,0 +1,42 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "155e2fad7ee111384028352e4b3e8bde1eea1b6f871f93f9c280d3975b82982b",
+ "title": "MSCI tái cơ cấu: Cổ phiếu ngân hàng Việt Nam lên ngôi",
+ "recognized": true,
+ "entities": [
+  {
+   "surface": "Việt Nam",
+   "entity_id": "TICKER:IVS",
+   "type": "TICKER",
+   "method": "alias",
+   "in_list": true,
+   "confidence": 0.85
+  },
+  {
+   "surface": "ngân hàng",
+   "entity_id": "IND_GICS2:NGAN_HANG",
+   "type": "INDUSTRY_GICS2",
+   "method": "alias",
+   "in_list": true,
+   "confidence": 0.85
+  }
+ ],
+ "categories": {
+  "ticker_company": "done",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "done"
+ },
+ "citations": [
+  {
+   "source_span": "MSCI tái cơ cấu: Cổ phiếu ngân hàng Việt Nam lên ngôi"
+  }
+ ],
+ "confidence": 0.85,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:27+07:00"
+ }
+}

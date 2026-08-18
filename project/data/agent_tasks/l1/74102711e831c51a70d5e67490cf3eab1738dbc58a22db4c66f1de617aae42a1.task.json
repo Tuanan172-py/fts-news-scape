@@ -1,0 +1,57 @@
+{
+  "packet_version": "1.0",
+  "layer": "L1_ENTITY_RECOGNITION",
+  "task": "recognize_and_audit",
+  "article_id": "74102711e831c51a70d5e67490cf3eab1738dbc58a22db4c66f1de617aae42a1",
+  "domain": "vneconomy.vn",
+  "input": {
+    "title": "Hoàn thuế VAT tăng 32%, doanh nghiệp đủ điều kiện được ưu tiên xử lý",
+    "entity_catalog_ref": {
+      "entities": "data/entities/entities.json",
+      "taxonomy": "data/entities/taxonomy.json"
+    },
+    "code_first": {
+      "route": "resolved",
+      "relevance": "entity",
+      "entities": [
+        {
+          "entity_id": "TICKER:VAT",
+          "type": "TICKER",
+          "code": "VAT",
+          "canonical_name": "CTCP Viễn thông Vạn Xuân",
+          "via": "code"
+        }
+      ],
+      "entity_ids": [
+        "TICKER:VAT"
+      ],
+      "industries": [
+        "Công nghiệp",
+        "Tư liệu sản xuất",
+        "Xây dựng"
+      ]
+    }
+  },
+  "output_contract": {
+    "schema_name": "l1-entity-output-v1",
+    "schema_path": "schemas/l1-entity-output-v1.schema.json",
+    "checklist_categories": [
+      "ticker_company",
+      "etf_fund",
+      "index",
+      "exchange",
+      "industry_sector"
+    ]
+  },
+  "constraints": {
+    "confidence_min": 0.6,
+    "surface_must_be_substring_of": "input.title",
+    "citation_must_be_substring_of": "input.title",
+    "recognized_true_requires": [
+      "entities>=1",
+      "citations>=1"
+    ],
+    "audit_duty": "xác nhận entity code-first, sửa nếu sai, bổ sung nếu thiếu"
+  },
+  "instructions_ref": "schemas/l1-entity-instructions-v1.md"
+}

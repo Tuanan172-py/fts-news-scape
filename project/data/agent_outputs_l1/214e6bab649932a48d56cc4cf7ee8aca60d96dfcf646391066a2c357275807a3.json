@@ -1,0 +1,34 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "214e6bab649932a48d56cc4cf7ee8aca60d96dfcf646391066a2c357275807a3",
+ "title": "Luật Phát triển đô thị dự kiến được Quốc hội thông qua ngay trong tháng 8",
+ "recognized": true,
+ "entities": [
+  {
+   "surface": "Phát triển đô thị",
+   "entity_id": "TICKER:UDJ",
+   "type": "TICKER",
+   "method": "alias",
+   "in_list": true,
+   "confidence": 0.85
+  }
+ ],
+ "categories": {
+  "ticker_company": "done",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [
+  {
+   "source_span": "Luật Phát triển đô thị dự kiến được Quốc hội thông qua ngay trong tháng 8"
+  }
+ ],
+ "confidence": 0.85,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:28+07:00"
+ }
+}

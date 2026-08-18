@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "edfe1b47dc1a5ddbba63f29748b6fa0241989a2ea55212a53c720c778f7de7b3",
+ "title": "Nhiều nhà đầu tư “kiệt sức” vì bán khống cổ phiếu SpaceX",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:29+07:00"
+ }
+}

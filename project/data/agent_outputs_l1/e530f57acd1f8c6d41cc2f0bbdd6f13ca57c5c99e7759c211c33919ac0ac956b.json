@@ -1,0 +1,34 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "e530f57acd1f8c6d41cc2f0bbdd6f13ca57c5c99e7759c211c33919ac0ac956b",
+ "title": "Nhịp đập Thị trường 14/08: Khối ngoại tiếp tục bán ròng, VN-Index bốc hơi hơn 36 điểm",
+ "recognized": true,
+ "entities": [
+  {
+   "surface": "VN-Index",
+   "entity_id": "INDEX:VNINDEX",
+   "type": "INDEX",
+   "method": "alias",
+   "in_list": true,
+   "confidence": 0.85
+  }
+ ],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "done",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [
+  {
+   "source_span": "Nhịp đập Thị trường 14/08: Khối ngoại tiếp tục bán ròng, VN-Index bốc hơi hơn 36 điểm"
+  }
+ ],
+ "confidence": 0.85,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:29+07:00"
+ }
+}

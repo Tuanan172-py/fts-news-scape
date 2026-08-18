@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "15814b69f76ebadea7841605e036c07dde0a4f0c3f4f6637aa57e246e642fa59",
+ "title": "Tháng 9, TPHCM đấu giá lô đất 6,446m² tại Thủ Thiêm, khởi điểm hơn 1,900 tỷ",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:27+07:00"
+ }
+}

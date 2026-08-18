@@ -1,0 +1,42 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "78894fc67e2aad8f4904219c5bf15af16c7b083b1799112e636fc1901df11391",
+ "title": "Đằng sau 1,2 triệu việc làm: Vingroup, FPT cùng PVN, Viettel ... đang gồng gánh bức tranh lao động ra sao?",
+ "recognized": true,
+ "entities": [
+  {
+   "surface": "FPT",
+   "entity_id": "TICKER:FPT",
+   "type": "TICKER",
+   "method": "exact_code",
+   "in_list": true,
+   "confidence": 0.85
+  },
+  {
+   "surface": "Vingroup",
+   "entity_id": "TICKER:VIC",
+   "type": "TICKER",
+   "method": "alias",
+   "in_list": true,
+   "confidence": 0.85
+  }
+ ],
+ "categories": {
+  "ticker_company": "done",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [
+  {
+   "source_span": "Đằng sau 1,2 triệu việc làm: Vingroup, FPT cùng PVN, Viettel ... đang gồng gánh bức tranh lao động ra sao?"
+  }
+ ],
+ "confidence": 0.85,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:28+07:00"
+ }
+}

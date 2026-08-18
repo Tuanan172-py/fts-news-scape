@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "7f489d06899679ddf1c1027cb1faed00eafc97a42be6a1bdf63efd5d1061b8ec",
+ "title": "Giá vàng hoàn tất một tuần tăng nhờ kỳ vọng Fed giữ nguyên lãi suất",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:28+07:00"
+ }
+}

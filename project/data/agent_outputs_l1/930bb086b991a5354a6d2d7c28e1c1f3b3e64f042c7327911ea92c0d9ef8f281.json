@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "930bb086b991a5354a6d2d7c28e1c1f3b3e64f042c7327911ea92c0d9ef8f281",
+ "title": "HNX bổ nhiệm thêm Phó Tổng giám đốc",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:28+07:00"
+ }
+}

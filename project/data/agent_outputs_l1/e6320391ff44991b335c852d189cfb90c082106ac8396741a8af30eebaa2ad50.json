@@ -1,0 +1,34 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "e6320391ff44991b335c852d189cfb90c082106ac8396741a8af30eebaa2ad50",
+ "title": "Hòa Phát bổ sung nguồn cung bò thịt Brahman từ Thái Lan",
+ "recognized": true,
+ "entities": [
+  {
+   "surface": "Hòa Phát",
+   "entity_id": "TICKER:HPG",
+   "type": "TICKER",
+   "method": "alias",
+   "in_list": true,
+   "confidence": 0.85
+  }
+ ],
+ "categories": {
+  "ticker_company": "done",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [
+  {
+   "source_span": "Hòa Phát bổ sung nguồn cung bò thịt Brahman từ Thái Lan"
+  }
+ ],
+ "confidence": 0.85,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:29+07:00"
+ }
+}

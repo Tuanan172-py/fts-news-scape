@@ -6,7 +6,6 @@ Nguồn dữ liệu (FRA - Data):
   - trading_data/market_caps.parquet, os.xlsx, indices.parquet  -> mã (ticker) + chỉ số
   - company_data/company_name.xlsx, etf_name.xlsx               -> tên doanh nghiệp + ETF
   - industry_classification/industry_classification.xlsx        -> ngành (GICS 3 cấp)
-  - APD_Data_Industry/data/<sector>/                            -> nhóm ngành phân tích (FPA)
 
 Đầu ra (project/data/entities/):
   - entities.json        : master list (1 object / thực thể) — nguồn chân lý
@@ -84,6 +83,9 @@ _LEGAL_PREFIXES = [
     r"Quỹ",
 ]
 _PREFIX_RE = re.compile(r"^(?:%s)\b[\s:.-]*" % "|".join(_LEGAL_PREFIXES), re.IGNORECASE)
+# Đuôi pháp lý: "... - CTCP", "... - Công ty Cổ phần"
+_SUFFIX_RE = re.compile(r"[\s]*[-–]\s*(?:CTCP|Công\s+ty\s+Cổ\s+phần)\s*$", re.IGNORECASE)
+_PAREN_RE = re.compile(r"\(([^)]+)\)")
 _WS_RE = re.compile(r"\s+")
 
 
@@ -92,24 +94,35 @@ def clean_name(name: str) -> str:
 
 
 def short_name(name: str) -> str:
-    """Cắt tiền tố pháp lý ở đầu tên (lặp tối đa 2 lần: vd 'Tập đoàn' sau 'CTCP')."""
-    s = clean_name(name)
+    """Lõi thương hiệu: bỏ phần ngoặc + tiền tố + đuôi pháp lý ('Tập đoàn X - CTCP' → 'X')."""
+    s = _WS_RE.sub(" ", _PAREN_RE.sub("", clean_name(name))).strip()
     for _ in range(2):
         new = _PREFIX_RE.sub("", s).strip()
         if new == s:
             break
         s = new
-    # cắt luôn "Tập đoàn" đứng đầu để lấy lõi thương hiệu
     s = re.sub(r"^Tập\s+đoàn\b[\s:.-]*", "", s, flags=re.IGNORECASE).strip()
+    s = _SUFFIX_RE.sub("", s).strip()
+    s = re.sub(r"[\s\-–]+$", "", s).strip()
     return s or clean_name(name)
 
 
-def make_aliases(canonical: str, code: str) -> list[str]:
-    """Tập surface form duy nhất, giữ thứ tự: tên đầy đủ -> tên rút gọn."""
+def make_aliases(canonical: str, code: str, brand_map: dict | None = None) -> list[str]:
+    """Surface form (giữ thứ tự, unique): tên đầy đủ → tên rút gọn → thương hiệu trong
+    ngoặc → alias thương hiệu bổ sung tay (brand_aliases.yaml)."""
     out: list[str] = []
-    for cand in (clean_name(canonical), short_name(canonical)):
-        if cand and cand not in out:
-            out.append(cand)
+
+    def add(x: str) -> None:
+        x = clean_name(x)
+        if x and x not in out and not x.isdigit() and len(x) >= 2:
+            out.append(x)
+
+    add(clean_name(canonical))
+    add(short_name(canonical))
+    for m in _PAREN_RE.findall(str(canonical)):   # thương hiệu trong ngoặc: (CHOLIMEX)
+        add(m)
+    for b in (brand_map or {}).get(code, []):     # (Vietcombank), (BIDV)...
+        add(b)
     return out
 
 
@@ -127,7 +140,7 @@ def classify_code(code: str, etf_codes: set[str]) -> str:
 
 
 # ----------------------------------------------------------------------------
-# Ánh xạ tĩnh: sàn & chỉ số & nhóm ngành FPA
+# Ánh xạ tĩnh: sàn & chỉ số
 # ----------------------------------------------------------------------------
 EXCHANGES = [
     {"code": "HOSE", "name": "Sở Giao dịch Chứng khoán TP. Hồ Chí Minh",
@@ -147,29 +160,6 @@ INDEX_META = {
     "UPINDEX":  {"name": "UPCoM-Index",    "aliases": ["UPCoM-Index", "UPINDEX", "UPCOM-Index"], "exchange": "UPCOM"},
 }
 
-# Thư mục nhóm ngành phân tích FPA -> (tên VN, có phải ngành thật không)
-FPA_SECTORS = {
-    "Banle":     "Bán lẻ",
-    "BDSCN":     "Bất động sản Khu công nghiệp",
-    "BDSDD":     "Bất động sản Dân dụng",
-    "Cangbien":  "Cảng biển",
-    "Chungkhoan":"Chứng khoán",
-    "Daukhi":    "Dầu khí",
-    "Detmay":    "Dệt may",
-    "Dien":      "Điện",
-    "F&B":       "Thực phẩm & Đồ uống",
-    "Hangkhong": "Hàng không",
-    "HotroGT":   "Hỗ trợ giao thông (Logistics)",
-    "NhuaXD":    "Nhựa xây dựng",
-    "Phanbon":   "Phân bón",
-    "Thep":      "Thép",
-    "Thuysan":   "Thủy sản",
-    "Ximang":    "Xi măng",
-}
-# Thư mục KHÔNG phải ngành (nguồn dữ liệu vĩ mô) -> loại khỏi entity SECTOR
-FPA_MACRO_DIRS = {"Vimo", "GSO", "WorldBank"}
-
-
 def _fold_diacritics(s: str) -> str:
     """Bỏ dấu tiếng Việt: 'Bất động sản' -> 'Bat dong san' (đ/Đ -> d/D)."""
     s = s.replace("đ", "d").replace("Đ", "D")
@@ -183,6 +173,17 @@ def slug(s: str) -> str:
     return s.upper()
 
 
+def _load_brand_aliases() -> dict:
+    """config/entities/brand_aliases.yaml → {code: [alias,...]}. Thiếu file/PyYAML → {}."""
+    path = Path(__file__).resolve().parents[1] / "config" / "entities" / "brand_aliases.yaml"
+    try:
+        import yaml
+        data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        return {str(k).strip(): list(v or []) for k, v in data.items()}
+    except Exception:  # noqa: BLE001 — brand map là tùy chọn
+        return {}
+
+
 # ----------------------------------------------------------------------------
 # Build
 # ----------------------------------------------------------------------------
@@ -190,7 +191,8 @@ def build(data_root: Path, out_dir: Path) -> dict:
     td = data_root / "trading_data"
     cd = data_root / "company_data"
     ic = data_root / "industry_classification"
-    apd = data_root / "APD_Data_Industry" / "data"
+
+    brand_map = _load_brand_aliases()
 
     comp = read_excel(cd / "company_name.xlsx")
     etf = read_excel(cd / "etf_name.xlsx")
@@ -255,7 +257,7 @@ def build(data_root: Path, out_dir: Path) -> dict:
             "type": etype,
             "code": code,
             "canonical_name": canonical,
-            "aliases": make_aliases(canonical, code) if name else [],
+            "aliases": make_aliases(canonical, code, brand_map) if (name or code in brand_map) else [],
             "attributes": attrs,
             "sources": _sources_for(code, comp_name, etf_codes, mc_codes, os_codes, gics),
         }
@@ -296,19 +298,6 @@ def build(data_root: Path, out_dir: Path) -> dict:
     g3 = latest.groupby(["GICS2_name", "GICS3_name"]).ticker.nunique()
     for (p2, name), n in g3.items():
         entities.append(_industry("GICS3", name, clean_name(p2), int(n)))
-
-    # --- 5) SECTOR: nhóm ngành phân tích FPA --------------------------------
-    present = {p.name for p in apd.iterdir() if p.is_dir()} if apd.exists() else set()
-    for folder, vn in FPA_SECTORS.items():
-        entities.append({
-            "entity_id": f"SECTOR_FPA:{slug(folder)}",
-            "type": "SECTOR_FPA",
-            "code": folder,
-            "canonical_name": vn,
-            "aliases": [vn, folder],
-            "attributes": {"available_in_apd": folder in present},
-            "sources": [f"APD_Data_Industry/data/{folder}"],
-        })
 
     # ----- outputs ----------------------------------------------------------
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -395,11 +384,6 @@ def _write_xlsx(path: Path, entities: list[dict]) -> None:
         "ticker_count": e["attributes"].get("ticker_count", ""),
     } for e in entities if e["type"].startswith("INDUSTRY_")]
 
-    sectors = [{
-        "entity_id": e["entity_id"], "code": e["code"], "name": e["canonical_name"],
-        "available_in_apd": e["attributes"].get("available_in_apd", ""),
-    } for e in entities if e["type"] == "SECTOR_FPA"]
-
     indices = [{
         "entity_id": e["entity_id"], "code": e["code"], "name": e["canonical_name"],
         "aliases": " | ".join(e["aliases"]), "exchange": e["attributes"].get("exchange", ""),
@@ -418,17 +402,32 @@ def _write_xlsx(path: Path, entities: list[dict]) -> None:
         "INDEX": "Chỉ số thị trường",
         "EXCHANGE": "Sàn giao dịch",
         "INDUSTRY_GICS1": "Ngành GICS cấp 1", "INDUSTRY_GICS2": "Ngành GICS cấp 2",
-        "INDUSTRY_GICS3": "Ngành GICS cấp 3", "SECTOR_FPA": "Nhóm ngành phân tích FPA",
+        "INDUSTRY_GICS3": "Ngành GICS cấp 3",
     }
     index_rows = [{"type": t, "count": counts[t], "description": desc.get(t, ""),
                    "sheet": _SHEET_OF.get(t, "")} for t in counts]
     index_rows.append({"type": "TỔNG", "count": sum(counts.values()), "description": "", "sheet": ""})
 
+    # Sheet hướng dẫn: người dùng cuối đăng ký bằng giá trị cột `code`.
+    guide = pd.DataFrame([
+        {"Khoá trong file đăng ký": "tickers", "Loại thực thể": "Cổ phiếu / ETF / khác",
+         "Nhập giá trị ở CỘT": "code", "Sheet tra cứu": "Securities", "Ví dụ": "HPG"},
+        {"Khoá trong file đăng ký": "etfs", "Loại thực thể": "Quỹ ETF",
+         "Nhập giá trị ở CỘT": "code", "Sheet tra cứu": "Securities", "Ví dụ": "E1VFVN30"},
+        {"Khoá trong file đăng ký": "indices", "Loại thực thể": "Chỉ số",
+         "Nhập giá trị ở CỘT": "code", "Sheet tra cứu": "Indices", "Ví dụ": "VNINDEX"},
+        {"Khoá trong file đăng ký": "exchanges", "Loại thực thể": "Sàn",
+         "Nhập giá trị ở CỘT": "code", "Sheet tra cứu": "Exchanges", "Ví dụ": "HOSE"},
+        {"Khoá trong file đăng ký": "industries", "Loại thực thể": "Ngành GICS (1/2/3)",
+         "Nhập giá trị ở CỘT": "code", "Sheet tra cứu": "Industries", "Ví dụ": "THEP"},
+    ], columns=["Khoá trong file đăng ký", "Loại thực thể", "Nhập giá trị ở CỘT",
+                "Sheet tra cứu", "Ví dụ"])
+
     sheets = {
+        "_Huong_dan": guide,
         "_Index": pd.DataFrame(index_rows, columns=["type", "count", "sheet", "description"]),
         "Securities": pd.DataFrame(securities),
         "Industries": pd.DataFrame(industries),
-        "Sectors_FPA": pd.DataFrame(sectors),
         "Indices": pd.DataFrame(indices),
         "Exchanges": pd.DataFrame(exchanges),
     }
@@ -441,7 +440,7 @@ def _write_xlsx(path: Path, entities: list[dict]) -> None:
 _SHEET_OF = {
     "TICKER": "Securities", "ETF": "Securities", "SECURITY_OTHER": "Securities",
     "INDUSTRY_GICS1": "Industries", "INDUSTRY_GICS2": "Industries",
-    "INDUSTRY_GICS3": "Industries", "SECTOR_FPA": "Sectors_FPA",
+    "INDUSTRY_GICS3": "Industries",
     "INDEX": "Indices", "EXCHANGE": "Exchanges",
 }
 
@@ -480,7 +479,6 @@ def _write_taxonomy(path: Path, entities: list[dict], latest: pd.DataFrame) -> N
     tax["gics_tree"] = {k: {kk: sorted(vv) for kk, vv in v.items()} for k, v in tree.items()}
     tax["exchanges"] = [e["code"] for e in EXCHANGES]
     tax["indices"] = list(INDEX_META)
-    tax["fpa_sectors"] = FPA_SECTORS
     _write_json(path, tax)
 
 

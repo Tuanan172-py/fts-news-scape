@@ -1,0 +1,34 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "6fac0a1f008085705a4d3f1a203c0d13517528abeef7d61b39e23537aa48a31d",
+ "title": "Hà Nội sắp tìm nhà đầu tư cho khu chức năng đô thị Nam Đại lộ Thăng Long hơn 20,000 tỷ",
+ "recognized": true,
+ "entities": [
+  {
+   "surface": "Thăng Long",
+   "entity_id": "TICKER:TTL",
+   "type": "TICKER",
+   "method": "alias",
+   "in_list": true,
+   "confidence": 0.85
+  }
+ ],
+ "categories": {
+  "ticker_company": "done",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [
+  {
+   "source_span": "Hà Nội sắp tìm nhà đầu tư cho khu chức năng đô thị Nam Đại lộ Thăng Long hơn 20,000 tỷ"
+  }
+ ],
+ "confidence": 0.85,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:28+07:00"
+ }
+}

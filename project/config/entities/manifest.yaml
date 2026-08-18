@@ -1,0 +1,15 @@
+# manifest.yaml — CÔNG TẮC của DEV để bật/tắt đăng ký người dùng.
+# KHÔNG dành cho end-user. End-user chỉ đặt file subscription trong users/<tên>.yaml;
+# DEV quyết định file nào ĐANG ÁP DỤNG tại đây (đặt ngoài thư mục users/).
+#
+#   enabled : false = tắt TOÀN BỘ lớp đăng ký (bỏ qua mọi users/*.yaml).
+#   default : trạng thái cho user CHƯA liệt kê dưới `users` (an toàn: mặc định tắt).
+#   users   : bật/tắt từng người dùng (khoá = tên file, không .yaml).
+
+enabled: true
+default: false
+
+users:
+  AnPT: true
+  A: true
+  B: false        # ví dụ: dev tạm tắt đăng ký của B (file users/B.yaml vẫn giữ nguyên)

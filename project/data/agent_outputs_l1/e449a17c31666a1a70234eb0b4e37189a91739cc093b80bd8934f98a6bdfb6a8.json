@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "e449a17c31666a1a70234eb0b4e37189a91739cc093b80bd8934f98a6bdfb6a8",
+ "title": "UBS: Giá vàng có thể tiếp cận mốc 5.000 USD/oz trong nửa đầu năm 2027",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:29+07:00"
+ }
+}

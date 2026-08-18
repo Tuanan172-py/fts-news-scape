@@ -1,0 +1,42 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "68cfc21df0d66de8f9152481c3b47b31c37ca1e19e17fb12f7918b3a34cfa6fe",
+ "title": "DPM thành lập công ty hóa chất vốn 220 tỷ",
+ "recognized": true,
+ "entities": [
+  {
+   "surface": "DPM",
+   "entity_id": "TICKER:DPM",
+   "type": "TICKER",
+   "method": "exact_code",
+   "in_list": true,
+   "confidence": 0.85
+  },
+  {
+   "surface": "hóa chất",
+   "entity_id": "IND_GICS3:HOA_CHAT",
+   "type": "INDUSTRY_GICS3",
+   "method": "alias",
+   "in_list": true,
+   "confidence": 0.85
+  }
+ ],
+ "categories": {
+  "ticker_company": "done",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "done"
+ },
+ "citations": [
+  {
+   "source_span": "DPM thành lập công ty hóa chất vốn 220 tỷ"
+  }
+ ],
+ "confidence": 0.85,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:28+07:00"
+ }
+}

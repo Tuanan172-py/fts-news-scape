@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0.0",
-  "total_entities": 2135,
+  "total_entities": 2119,
   "by_type": {
     "TICKER": 1981,
     "SECURITY_OTHER": 11,
@@ -9,8 +9,7 @@
     "EXCHANGE": 3,
     "INDUSTRY_GICS1": 11,
     "INDUSTRY_GICS2": 28,
-    "INDUSTRY_GICS3": 51,
-    "SECTOR_FPA": 16
+    "INDUSTRY_GICS3": 51
   },
   "securities_total": 2020,
   "tickers_with_name": 1968,

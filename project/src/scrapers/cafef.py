@@ -15,14 +15,18 @@ from datetime import datetime
 from urllib.parse import urljoin
 from zoneinfo import ZoneInfo
 
+import feedparser
 from loguru import logger
 
 from src.core.base_scraper import BaseScraper
 from src.core.config import load_watchlist
 from src.core.models import Article
+from src.core.tickers import tag_tickers
 from src.processor.extractor import extract_text
 from src.scrapers import register
 from src.scrapers.capture_mixin import CaptureMixin
+# DRY — tái dùng helper RSS (nhánh category feed, bổ sung cho API symbol-driven)
+from src.scrapers.rss_generic import _clean_title, _decode_feed, _parse_entry_date
 
 VN_TZ = ZoneInfo("Asia/Ho_Chi_Minh")
 _DATE_RE = re.compile(r"/Date\((\d+)(?:[+-]\d{4})?\)/")
@@ -52,6 +56,9 @@ class CafeFScraper(CaptureMixin, BaseScraper):
         self.content_selector = detail.get("content_selector", "div#mainContent")
         self.max_details = detail.get("max_details_per_cycle", 30)
         self.watchlist = config.get("watchlist") or load_watchlist()
+        # RSS per-category (tin KHÔNG gắn mã CK: vĩ mô, BĐS, tài chính quốc tế…) —
+        # API symbol-driven bỏ lỡ các mục này. Optional: rỗng ⇒ chỉ chạy API như cũ.
+        self.feeds = config.get("rss", {}).get("feeds", [])
         self._details_fetched = 0
         self._init_capture()  # RawStore + RobotsGate + SourceBackoff
 
@@ -76,9 +83,36 @@ class CafeFScraper(CaptureMixin, BaseScraper):
             for it in rows:
                 it["_symbol"] = sym
                 items.append(it)
+        # Nhánh RSS per-category — bổ sung tin không gắn mã CK.
+        for feed_cfg in self.feeds:
+            feed_url = feed_cfg["url"]
+            feed_name = feed_cfg.get("name", feed_url)
+            raw_bytes = self.http.get_bytes(feed_url, timeout=self.config.get("timeout", 30))
+            if raw_bytes is None:
+                self.errors.append(f"feed fetch failed: {feed_name}")
+                continue
+            feed = feedparser.parse(_decode_feed(raw_bytes))
+            if feed.bozo and not feed.entries:
+                self.errors.append(f"feed parse failed: {feed_name}")
+                continue
+            for e in feed.entries:
+                items.append({
+                    "_rss": True,
+                    "link": (e.get("link") or "").strip(),
+                    "title": (e.get("title") or "").strip(),
+                    "summary": (e.get("summary") or "").strip(),
+                    "author": (e.get("author") or "").strip(),
+                    "published_parsed": e.get("published_parsed"),
+                    "updated_parsed": e.get("updated_parsed"),
+                    "published": e.get("published"),
+                    "updated": e.get("updated"),
+                    "_feed_name": feed_name,
+                })
         return items
 
     def parse_item(self, raw: dict) -> Article | None:
+        if raw.get("_rss"):
+            return self._parse_rss_item(raw)
         title = (raw.get("Title") or "").strip()
         link = (raw.get("LinkDetail") or "").strip()
         if not title or not link:
@@ -96,6 +130,26 @@ class CafeFScraper(CaptureMixin, BaseScraper):
             symbols=[raw["_symbol"]] if raw.get("_symbol") else [],
             metadata={"image": raw.get("Image", ""),
                       "news_type": raw.get("NewsType")},
+        )
+
+    def _parse_rss_item(self, raw: dict) -> Article | None:
+        """Item từ RSS category feed (DRY với vneconomy). Detail vẫn qua enrich() capture."""
+        url = raw["link"]
+        title = _clean_title(raw["title"])
+        if not url or not title:
+            return None
+        summary_text = extract_text(raw["summary"]) if "<" in raw["summary"] \
+            else raw["summary"]
+        return Article(
+            url=urljoin(self.BASE_URL, url),
+            title=title,
+            source_domain="cafef.vn",
+            summary=summary_text,
+            published_at=_parse_entry_date(raw),
+            author=raw.get("author", ""),
+            symbols=tag_tickers(f"{title} {summary_text}", self.watchlist),
+            categories=[raw["_feed_name"]],
+            metadata={"feed_name": raw["_feed_name"], "language": "vi"},
         )
 
     def enrich(self, article: Article) -> None:

@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "c9a032325c74650d06fa5165ae400b2eae01f681f5527b019b5a7376e52a09a6",
+ "title": "Giá vàng tăng vượt 4.400 USD/oz, SPDR Gold Trust mua ròng hơn 7 tấn vàng trong một phiên",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:29+07:00"
+ }
+}

@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0.0",
-  "entity_count": 2135,
+  "entity_count": 2119,
   "entities": [
     {
       "entity_id": "TICKER:A32",
@@ -8,8 +8,7 @@
       "code": "A32",
       "canonical_name": "CTCP 32",
       "aliases": [
-        "CTCP 32",
-        "32"
+        "CTCP 32"
       ],
       "attributes": {
         "gics1": "Hàng tiêu dùng không thiết yếu",
@@ -408,7 +407,8 @@
       "canonical_name": "Ngân hàng TMCP Á Châu",
       "aliases": [
         "Ngân hàng TMCP Á Châu",
-        "Á Châu"
+        "Á Châu",
+        "Ngân hàng Á Châu"
       ],
       "attributes": {
         "gics1": "Tài chính",
@@ -576,7 +576,7 @@
       "canonical_name": "Tổng Công ty Cảng Hàng không Việt Nam - CTCP",
       "aliases": [
         "Tổng Công ty Cảng Hàng không Việt Nam - CTCP",
-        "Cảng Hàng không Việt Nam - CTCP"
+        "Cảng Hàng không Việt Nam"
       ],
       "attributes": {
         "gics1": "Công nghiệp",
@@ -2005,8 +2005,7 @@
       "code": "B82",
       "canonical_name": "CTCP 482",
       "aliases": [
-        "CTCP 482",
-        "482"
+        "CTCP 482"
       ],
       "attributes": {
         "gics1": "Công nghiệp",
@@ -2309,8 +2308,7 @@
       "code": "BCB",
       "canonical_name": "CTCP 397",
       "aliases": [
-        "CTCP 397",
-        "397"
+        "CTCP 397"
       ],
       "attributes": {
         "gics1": "Năng lượng",
@@ -2452,7 +2450,7 @@
       "canonical_name": "Tập đoàn Đầu tư và Phát triển Công nghiệp Becamex - CTCP",
       "aliases": [
         "Tập đoàn Đầu tư và Phát triển Công nghiệp Becamex - CTCP",
-        "Đầu tư và Phát triển Công nghiệp Becamex - CTCP"
+        "Đầu tư và Phát triển Công nghiệp Becamex"
       ],
       "attributes": {
         "gics1": "Bất động sản",
@@ -2596,7 +2594,7 @@
       "canonical_name": "Tổng Công ty Xây dựng Bạch Đằng - CTCP",
       "aliases": [
         "Tổng Công ty Xây dựng Bạch Đằng - CTCP",
-        "Xây dựng Bạch Đằng - CTCP"
+        "Xây dựng Bạch Đằng"
       ],
       "attributes": {
         "gics1": "Công nghiệp",
@@ -3020,7 +3018,8 @@
       "canonical_name": "Tổng Công ty cổ phần Bia - Rượu - Nước giải khát Hà Nội",
       "aliases": [
         "Tổng Công ty cổ phần Bia - Rượu - Nước giải khát Hà Nội",
-        "Bia - Rượu - Nước giải khát Hà Nội"
+        "Bia - Rượu - Nước giải khát Hà Nội",
+        "Habeco"
       ],
       "attributes": {
         "gics1": "Hàng tiêu dùng thiết yếu",
@@ -3158,7 +3157,8 @@
       "canonical_name": "Ngân hàng TMCP Đầu tư và Phát triển Việt Nam",
       "aliases": [
         "Ngân hàng TMCP Đầu tư và Phát triển Việt Nam",
-        "Đầu tư và Phát triển Việt Nam"
+        "Đầu tư và Phát triển Việt Nam",
+        "BIDV"
       ],
       "attributes": {
         "gics1": "Tài chính",
@@ -3669,8 +3669,7 @@
       "code": "BMN",
       "canonical_name": "CTCP 715",
       "aliases": [
-        "CTCP 715",
-        "715"
+        "CTCP 715"
       ],
       "attributes": {
         "gics1": "Công nghiệp",
@@ -4237,7 +4236,9 @@
       "canonical_name": "CTCP - Tổng Công ty Lọc hóa dầu Việt Nam",
       "aliases": [
         "CTCP - Tổng Công ty Lọc hóa dầu Việt Nam",
-        "Lọc hóa dầu Việt Nam"
+        "Lọc hóa dầu Việt Nam",
+        "Lọc hóa dầu Bình Sơn",
+        "Lọc dầu Bình Sơn"
       ],
       "attributes": {
         "gics1": "Năng lượng",
@@ -4990,8 +4991,7 @@
       "code": "C22",
       "canonical_name": "CTCP 22",
       "aliases": [
-        "CTCP 22",
-        "22"
+        "CTCP 22"
       ],
       "attributes": {
         "gics1": "Hàng tiêu dùng thiết yếu",
@@ -5132,8 +5132,7 @@
       "code": "C71",
       "canonical_name": "CTCP 471",
       "aliases": [
-        "CTCP 471",
-        "471"
+        "CTCP 471"
       ],
       "attributes": {
         "gics1": "Công nghiệp",
@@ -5495,7 +5494,7 @@
       "canonical_name": "Tổng Công ty Xây dựng Số 1 - CTCP",
       "aliases": [
         "Tổng Công ty Xây dựng Số 1 - CTCP",
-        "Xây dựng Số 1 - CTCP"
+        "Xây dựng Số 1"
       ],
       "attributes": {
         "gics1": "Công nghiệp",
@@ -6917,7 +6916,8 @@
       "canonical_name": "CTCP Xuất nhập khẩu và Đầu tư Chợ Lớn (CHOLIMEX)",
       "aliases": [
         "CTCP Xuất nhập khẩu và Đầu tư Chợ Lớn (CHOLIMEX)",
-        "Xuất nhập khẩu và Đầu tư Chợ Lớn (CHOLIMEX)"
+        "Xuất nhập khẩu và Đầu tư Chợ Lớn",
+        "CHOLIMEX"
       ],
       "attributes": {
         "gics1": "Hàng tiêu dùng không thiết yếu",
@@ -8005,7 +8005,9 @@
       "canonical_name": "Ngân hàng TMCP Công Thương Việt Nam",
       "aliases": [
         "Ngân hàng TMCP Công Thương Việt Nam",
-        "Công Thương Việt Nam"
+        "Công Thương Việt Nam",
+        "VietinBank",
+        "Vietinbank"
       ],
       "attributes": {
         "gics1": "Tài chính",
@@ -8834,7 +8836,8 @@
       "canonical_name": "CTCP Dược - Trang thiết bị Y tế Bình Định (Bidiphar)",
       "aliases": [
         "CTCP Dược - Trang thiết bị Y tế Bình Định (Bidiphar)",
-        "Dược - Trang thiết bị Y tế Bình Định (Bidiphar)"
+        "Dược - Trang thiết bị Y tế Bình Định",
+        "Bidiphar"
       ],
       "attributes": {
         "gics1": "Y tế",
@@ -8992,7 +8995,8 @@
       "canonical_name": "CTCP Đầu tư Phát triển - Xây dựng (DIC) số 2",
       "aliases": [
         "CTCP Đầu tư Phát triển - Xây dựng (DIC) số 2",
-        "Đầu tư Phát triển - Xây dựng (DIC) số 2"
+        "Đầu tư Phát triển - Xây dựng số 2",
+        "DIC"
       ],
       "attributes": {
         "gics1": "Công nghiệp",
@@ -9040,7 +9044,8 @@
       "canonical_name": "CTCP Xây dựng Công nghiệp (DESCON)",
       "aliases": [
         "CTCP Xây dựng Công nghiệp (DESCON)",
-        "Xây dựng Công nghiệp (DESCON)"
+        "Xây dựng Công nghiệp",
+        "DESCON"
       ],
       "attributes": {
         "has_market_cap": true,
@@ -9198,7 +9203,9 @@
       "canonical_name": "CTCP - Tổng công ty Phân bón Dầu khí Cà Mau",
       "aliases": [
         "CTCP - Tổng công ty Phân bón Dầu khí Cà Mau",
-        "Phân bón Dầu khí Cà Mau"
+        "Phân bón Dầu khí Cà Mau",
+        "Đạm Cà Mau",
+        "Phân bón Cà Mau"
       ],
       "attributes": {
         "gics1": "nan",
@@ -9528,7 +9535,8 @@
       "canonical_name": "CTCP Tập đoàn Hóa chất Đức Giang",
       "aliases": [
         "CTCP Tập đoàn Hóa chất Đức Giang",
-        "Hóa chất Đức Giang"
+        "Hóa chất Đức Giang",
+        "Đức Giang"
       ],
       "attributes": {
         "gics1": "Nguyên vật liệu",
@@ -10971,7 +10979,9 @@
       "canonical_name": "Tổng công ty Phân bón và Hóa chất Dầu khí - CTCP",
       "aliases": [
         "Tổng công ty Phân bón và Hóa chất Dầu khí - CTCP",
-        "Phân bón và Hóa chất Dầu khí - CTCP"
+        "Phân bón và Hóa chất Dầu khí",
+        "Đạm Phú Mỹ",
+        "Phân bón Phú Mỹ"
       ],
       "attributes": {
         "gics1": "nan",
@@ -11685,7 +11695,7 @@
       "canonical_name": "Tổng Công ty Điện lực TKV - CTCP",
       "aliases": [
         "Tổng Công ty Điện lực TKV - CTCP",
-        "Điện lực TKV - CTCP"
+        "Điện lực TKV"
       ],
       "attributes": {
         "gics1": "Dịch vụ công cộng",
@@ -11961,7 +11971,7 @@
       "canonical_name": "Tổng Công ty Dược Việt Nam - CTCP",
       "aliases": [
         "Tổng Công ty Dược Việt Nam - CTCP",
-        "Dược Việt Nam - CTCP"
+        "Dược Việt Nam"
       ],
       "attributes": {
         "gics1": "Y tế",
@@ -12538,7 +12548,8 @@
       "canonical_name": "Ngân hàng TMCP Xuất nhập khẩu Việt Nam",
       "aliases": [
         "Ngân hàng TMCP Xuất nhập khẩu Việt Nam",
-        "Xuất nhập khẩu Việt Nam"
+        "Xuất nhập khẩu Việt Nam",
+        "Eximbank"
       ],
       "attributes": {
         "gics1": "Tài chính",
@@ -12728,7 +12739,7 @@
       "canonical_name": "Tổng Công ty Chuyển phát nhanh Bưu Điện - CTCP",
       "aliases": [
         "Tổng Công ty Chuyển phát nhanh Bưu Điện - CTCP",
-        "Chuyển phát nhanh Bưu Điện - CTCP"
+        "Chuyển phát nhanh Bưu Điện"
       ],
       "attributes": {
         "gics1": "Công nghiệp",
@@ -13221,7 +13232,7 @@
       "canonical_name": "Tổng Công ty Vật liệu Xây dựng số 1 - CTCP",
       "aliases": [
         "Tổng Công ty Vật liệu Xây dựng số 1 - CTCP",
-        "Vật liệu Xây dựng số 1 - CTCP"
+        "Vật liệu Xây dựng số 1"
       ],
       "attributes": {
         "gics1": "Nguyên vật liệu",
@@ -13503,7 +13514,8 @@
       "canonical_name": "CTCP Bán lẻ Kỹ thuật số FPT",
       "aliases": [
         "CTCP Bán lẻ Kỹ thuật số FPT",
-        "Bán lẻ Kỹ thuật số FPT"
+        "Bán lẻ Kỹ thuật số FPT",
+        "FPT Retail"
       ],
       "attributes": {
         "gics1": "Hàng tiêu dùng không thiết yếu",
@@ -14185,8 +14197,7 @@
       "code": "G36",
       "canonical_name": "Tổng Công ty 36 - CTCP",
       "aliases": [
-        "Tổng Công ty 36 - CTCP",
-        "36 - CTCP"
+        "Tổng Công ty 36 - CTCP"
       ],
       "attributes": {
         "gics1": "Công nghiệp",
@@ -14234,7 +14245,10 @@
       "canonical_name": "Tổng Công ty Khí Việt Nam - CTCP",
       "aliases": [
         "Tổng Công ty Khí Việt Nam - CTCP",
-        "Khí Việt Nam - CTCP"
+        "Khí Việt Nam",
+        "PV GAS",
+        "PV Gas",
+        "PVGas"
       ],
       "attributes": {
         "gics1": "Năng lượng",
@@ -14416,7 +14430,7 @@
       "canonical_name": "Tổng Công ty Phát điện 2 - CTCP",
       "aliases": [
         "Tổng Công ty Phát điện 2 - CTCP",
-        "Phát điện 2 - CTCP"
+        "Phát điện 2"
       ],
       "attributes": {
         "gics1": "Dịch vụ công cộng",
@@ -15266,7 +15280,9 @@
       "canonical_name": "Tập đoàn Công nghiệp Cao su Việt Nam - CTCP",
       "aliases": [
         "Tập đoàn Công nghiệp Cao su Việt Nam - CTCP",
-        "Công nghiệp Cao su Việt Nam - CTCP"
+        "Công nghiệp Cao su Việt Nam",
+        "Tập đoàn Công nghiệp Cao su Việt Nam",
+        "Cao su Việt Nam"
       ],
       "attributes": {
         "gics1": "Hàng tiêu dùng không thiết yếu",
@@ -15528,7 +15544,7 @@
       "canonical_name": "Tổng Công ty Xây dựng Hà Nội - CTCP",
       "aliases": [
         "Tổng Công ty Xây dựng Hà Nội - CTCP",
-        "Xây dựng Hà Nội - CTCP"
+        "Xây dựng Hà Nội"
       ],
       "attributes": {
         "gics1": "Công nghiệp",
@@ -16041,7 +16057,8 @@
       "canonical_name": "CTCP Chứng khoán Thành phố Hồ Chí Minh",
       "aliases": [
         "CTCP Chứng khoán Thành phố Hồ Chí Minh",
-        "Chứng khoán Thành phố Hồ Chí Minh"
+        "Chứng khoán Thành phố Hồ Chí Minh",
+        "Chứng khoán HSC"
       ],
       "attributes": {
         "gics1": "Tài chính",
@@ -16229,7 +16246,8 @@
       "canonical_name": "Ngân hàng TMCP Phát triển Thành phố Hồ Chí Minh",
       "aliases": [
         "Ngân hàng TMCP Phát triển Thành phố Hồ Chí Minh",
-        "Phát triển Thành phố Hồ Chí Minh"
+        "Phát triển Thành phố Hồ Chí Minh",
+        "HDBank"
       ],
       "attributes": {
         "gics1": "Tài chính",
@@ -16445,7 +16463,7 @@
       "canonical_name": "Tổng Công ty Tư vấn Xây dựng Thủy lợi Việt Nam - CTCP",
       "aliases": [
         "Tổng Công ty Tư vấn Xây dựng Thủy lợi Việt Nam - CTCP",
-        "Tư vấn Xây dựng Thủy lợi Việt Nam - CTCP"
+        "Tư vấn Xây dựng Thủy lợi Việt Nam"
       ],
       "attributes": {
         "gics1": "Công nghiệp",
@@ -18099,7 +18117,8 @@
       "canonical_name": "CTCP Tập đoàn Hòa Phát",
       "aliases": [
         "CTCP Tập đoàn Hòa Phát",
-        "Hòa Phát"
+        "Hòa Phát",
+        "Hoa Phat"
       ],
       "attributes": {
         "gics1": "Nguyên vật liệu",
@@ -18555,7 +18574,9 @@
       "canonical_name": "CTCP Tập đoàn Hoa Sen",
       "aliases": [
         "CTCP Tập đoàn Hoa Sen",
-        "Hoa Sen"
+        "Hoa Sen",
+        "Tôn Hoa Sen",
+        "Tập đoàn Hoa Sen"
       ],
       "attributes": {
         "gics1": "Nguyên vật liệu",
@@ -18945,7 +18966,7 @@
       "canonical_name": "Tổng Công ty Thương mại Hà Nội - CTCP",
       "aliases": [
         "Tổng Công ty Thương mại Hà Nội - CTCP",
-        "Thương mại Hà Nội - CTCP"
+        "Thương mại Hà Nội"
       ],
       "attributes": {
         "gics1": "Hàng tiêu dùng không thiết yếu",
@@ -19251,7 +19272,7 @@
       "canonical_name": "Tổng Công ty May Hưng Yên - CTCP",
       "aliases": [
         "Tổng Công ty May Hưng Yên - CTCP",
-        "May Hưng Yên - CTCP"
+        "May Hưng Yên"
       ],
       "attributes": {
         "gics1": "Hàng tiêu dùng không thiết yếu",
@@ -19411,7 +19432,9 @@
       "canonical_name": "Tổng Công ty Hàng không Việt Nam - CTCP",
       "aliases": [
         "Tổng Công ty Hàng không Việt Nam - CTCP",
-        "Hàng không Việt Nam - CTCP"
+        "Hàng không Việt Nam",
+        "Vietnam Airlines",
+        "Hãng hàng không Quốc gia"
       ],
       "attributes": {
         "gics1": "Công nghiệp",
@@ -19617,7 +19640,8 @@
       "canonical_name": "CTCP Xây dựng Công nghiệp (ICC)",
       "aliases": [
         "CTCP Xây dựng Công nghiệp (ICC)",
-        "Xây dựng Công nghiệp (ICC)"
+        "Xây dựng Công nghiệp",
+        "ICC"
       ],
       "attributes": {
         "gics1": "Công nghiệp",
@@ -19761,7 +19785,7 @@
       "canonical_name": "Tổng Công ty IDICO - CTCP",
       "aliases": [
         "Tổng Công ty IDICO - CTCP",
-        "IDICO - CTCP"
+        "IDICO"
       ],
       "attributes": {
         "gics1": "Bất động sản",
@@ -20539,7 +20563,8 @@
       "canonical_name": "CTCP Chứng khoán Guotai Haitong (Việt Nam)",
       "aliases": [
         "CTCP Chứng khoán Guotai Haitong (Việt Nam)",
-        "Chứng khoán Guotai Haitong (Việt Nam)"
+        "Chứng khoán Guotai Haitong",
+        "Việt Nam"
       ],
       "attributes": {
         "gics1": "Tài chính",
@@ -20657,7 +20682,7 @@
       "canonical_name": "Tổng Công ty Phát triển Đô thị Kinh Bắc - CTCP",
       "aliases": [
         "Tổng Công ty Phát triển Đô thị Kinh Bắc - CTCP",
-        "Phát triển Đô thị Kinh Bắc - CTCP"
+        "Phát triển Đô thị Kinh Bắc"
       ],
       "attributes": {
         "gics1": "Bất động sản",
@@ -21625,7 +21650,7 @@
       "canonical_name": "Tổng Công ty Khoáng sản TKV - CTCP",
       "aliases": [
         "Tổng Công ty Khoáng sản TKV - CTCP",
-        "Khoáng sản TKV - CTCP"
+        "Khoáng sản TKV"
       ],
       "attributes": {
         "gics1": "Nguyên vật liệu",
@@ -22500,7 +22525,8 @@
       "canonical_name": "CTCP Dược Lâm Đồng (Ladophar)",
       "aliases": [
         "CTCP Dược Lâm Đồng (Ladophar)",
-        "Dược Lâm Đồng (Ladophar)"
+        "Dược Lâm Đồng",
+        "Ladophar"
       ],
       "attributes": {
         "gics1": "Y tế",
@@ -22716,7 +22742,7 @@
       "canonical_name": "Tổng Công ty LICOGI - CTCP",
       "aliases": [
         "Tổng Công ty LICOGI - CTCP",
-        "LICOGI - CTCP"
+        "LICOGI"
       ],
       "attributes": {
         "gics1": "Nguyên vật liệu",
@@ -22812,7 +22838,7 @@
       "canonical_name": "Tổng Công ty Lắp máy Việt Nam - CTCP",
       "aliases": [
         "Tổng Công ty Lắp máy Việt Nam - CTCP",
-        "Lắp máy Việt Nam - CTCP"
+        "Lắp máy Việt Nam"
       ],
       "attributes": {
         "gics1": "Công nghiệp",
@@ -23028,7 +23054,9 @@
       "canonical_name": "Ngân hàng TMCP Lộc Phát Việt Nam",
       "aliases": [
         "Ngân hàng TMCP Lộc Phát Việt Nam",
-        "Lộc Phát Việt Nam"
+        "Lộc Phát Việt Nam",
+        "LPBank",
+        "Ngân hàng Lộc Phát"
       ],
       "attributes": {
         "gics1": "Tài chính",
@@ -23262,7 +23290,7 @@
       "canonical_name": "Tổng Công ty May 10 - CTCP",
       "aliases": [
         "Tổng Công ty May 10 - CTCP",
-        "May 10 - CTCP"
+        "May 10"
       ],
       "attributes": {
         "gics1": "Hàng tiêu dùng không thiết yếu",
@@ -23393,7 +23421,9 @@
       "canonical_name": "Ngân hàng TMCP Quân đội",
       "aliases": [
         "Ngân hàng TMCP Quân đội",
-        "Quân đội"
+        "Quân đội",
+        "MBBank",
+        "MB Bank"
       ],
       "attributes": {
         "gics1": "Tài chính",
@@ -24135,7 +24165,7 @@
       "canonical_name": "Tổng Công ty Đức Giang - CTCP",
       "aliases": [
         "Tổng Công ty Đức Giang - CTCP",
-        "Đức Giang - CTCP"
+        "Đức Giang"
       ],
       "attributes": {
         "gics1": "Hàng tiêu dùng không thiết yếu",
@@ -24323,7 +24353,7 @@
       "canonical_name": "Tổng Công ty Máy và Thiết bị Công nghiệp - CTCP",
       "aliases": [
         "Tổng Công ty Máy và Thiết bị Công nghiệp - CTCP",
-        "Máy và Thiết bị Công nghiệp - CTCP"
+        "Máy và Thiết bị Công nghiệp"
       ],
       "attributes": {
         "gics1": "Công nghiệp",
@@ -24617,7 +24647,7 @@
       "canonical_name": "Tổng Công ty May Nhà Bè - CTCP",
       "aliases": [
         "Tổng Công ty May Nhà Bè - CTCP",
-        "May Nhà Bè - CTCP"
+        "May Nhà Bè"
       ],
       "attributes": {
         "gics1": "Hàng tiêu dùng không thiết yếu",
@@ -24831,7 +24861,8 @@
       "canonical_name": "Ngân hàng TMCP Hàng hải Việt Nam",
       "aliases": [
         "Ngân hàng TMCP Hàng hải Việt Nam",
-        "Hàng hải Việt Nam"
+        "Hàng hải Việt Nam",
+        "Ngân hàng Hàng Hải"
       ],
       "attributes": {
         "gics1": "Tài chính",
@@ -24901,7 +24932,8 @@
       "canonical_name": "CTCP Tập đoàn Masan",
       "aliases": [
         "CTCP Tập đoàn Masan",
-        "Masan"
+        "Masan",
+        "Masan Group"
       ],
       "attributes": {
         "gics1": "Hàng tiêu dùng thiết yếu",
@@ -24990,7 +25022,7 @@
       "canonical_name": "Tổng Công ty Khoáng sản và Thương mại Hà Tĩnh - CTCP",
       "aliases": [
         "Tổng Công ty Khoáng sản và Thương mại Hà Tĩnh - CTCP",
-        "Khoáng sản và Thương mại Hà Tĩnh - CTCP"
+        "Khoáng sản và Thương mại Hà Tĩnh"
       ],
       "attributes": {
         "gics1": "Nguyên vật liệu",
@@ -25252,7 +25284,7 @@
       "canonical_name": "Tổng Công ty Công nghiệp mỏ Việt Bắc TKV - CTCP",
       "aliases": [
         "Tổng Công ty Công nghiệp mỏ Việt Bắc TKV - CTCP",
-        "Công nghiệp mỏ Việt Bắc TKV - CTCP"
+        "Công nghiệp mỏ Việt Bắc TKV"
       ],
       "attributes": {
         "gics1": "Năng lượng",
@@ -25300,7 +25332,7 @@
       "canonical_name": "Tổng Công ty Hàng hải Việt Nam - CTCP",
       "aliases": [
         "Tổng Công ty Hàng hải Việt Nam - CTCP",
-        "Hàng hải Việt Nam - CTCP"
+        "Hàng hải Việt Nam"
       ],
       "attributes": {
         "gics1": "Công nghiệp",
@@ -25346,7 +25378,9 @@
       "canonical_name": "CTCP Đầu tư Thế giới Di động",
       "aliases": [
         "CTCP Đầu tư Thế giới Di động",
-        "Đầu tư Thế giới Di động"
+        "Đầu tư Thế giới Di động",
+        "Thế Giới Di Động",
+        "Thegioididong"
       ],
       "attributes": {
         "gics1": "Hàng tiêu dùng không thiết yếu",
@@ -25432,7 +25466,9 @@
       "canonical_name": "Ngân hàng TMCP Nam Á",
       "aliases": [
         "Ngân hàng TMCP Nam Á",
-        "Nam Á"
+        "Nam Á",
+        "Nam A Bank",
+        "NamABank"
       ],
       "attributes": {
         "gics1": "Tài chính",
@@ -26523,7 +26559,8 @@
       "canonical_name": "CTCP Thép Nam Kim",
       "aliases": [
         "CTCP Thép Nam Kim",
-        "Thép Nam Kim"
+        "Thép Nam Kim",
+        "Nam Kim"
       ],
       "attributes": {
         "gics1": "Nguyên vật liệu",
@@ -26748,8 +26785,7 @@
       "code": "NO1",
       "canonical_name": "CTCP Tập đoàn 911",
       "aliases": [
-        "CTCP Tập đoàn 911",
-        "911"
+        "CTCP Tập đoàn 911"
       ],
       "attributes": {
         "gics1": "Công nghiệp",
@@ -27639,7 +27675,8 @@
       "canonical_name": "Ngân hàng TMCP Phương Đông",
       "aliases": [
         "Ngân hàng TMCP Phương Đông",
-        "Phương Đông"
+        "Phương Đông",
+        "Ngân hàng Phương Đông"
       ],
       "attributes": {
         "gics1": "Tài chính",
@@ -27735,7 +27772,7 @@
       "canonical_name": "Tổng Công ty Dầu Việt Nam - CTCP",
       "aliases": [
         "Tổng Công ty Dầu Việt Nam - CTCP",
-        "Dầu Việt Nam - CTCP"
+        "Dầu Việt Nam"
       ],
       "attributes": {
         "gics1": "Năng lượng",
@@ -28491,7 +28528,7 @@
       "canonical_name": "Tổng Công ty Thương mại Kỹ thuật và Đầu tư - CTCP",
       "aliases": [
         "Tổng Công ty Thương mại Kỹ thuật và Đầu tư - CTCP",
-        "Thương mại Kỹ thuật và Đầu tư - CTCP"
+        "Thương mại Kỹ thuật và Đầu tư"
       ],
       "attributes": {
         "gics1": "Năng lượng",
@@ -28657,7 +28694,7 @@
       "canonical_name": "Tổng Công ty Gas Petrolimex - CTCP",
       "aliases": [
         "Tổng Công ty Gas Petrolimex - CTCP",
-        "Gas Petrolimex - CTCP"
+        "Gas Petrolimex"
       ],
       "attributes": {
         "gics1": "Năng lượng",
@@ -28818,7 +28855,7 @@
       "canonical_name": "Tổng Công ty Phát điện 3 - CTCP",
       "aliases": [
         "Tổng Công ty Phát điện 3 - CTCP",
-        "Phát điện 3 - CTCP"
+        "Phát điện 3"
       ],
       "attributes": {
         "gics1": "Dịch vụ công cộng",
@@ -29076,7 +29113,7 @@
       "canonical_name": "Tổng Công ty Pisico Bình Định - CTCP",
       "aliases": [
         "Tổng Công ty Pisico Bình Định - CTCP",
-        "Pisico Bình Định - CTCP"
+        "Pisico Bình Định"
       ],
       "attributes": {
         "gics1": "Nguyên vật liệu",
@@ -29266,7 +29303,7 @@
       "canonical_name": "Tổng Công ty Hóa dầu Petrolimex - CTCP",
       "aliases": [
         "Tổng Công ty Hóa dầu Petrolimex - CTCP",
-        "Hóa dầu Petrolimex - CTCP"
+        "Hóa dầu Petrolimex"
       ],
       "attributes": {
         "gics1": "Nguyên vật liệu",
@@ -29362,7 +29399,8 @@
       "canonical_name": "Tập đoàn Xăng Dầu Việt Nam",
       "aliases": [
         "Tập đoàn Xăng Dầu Việt Nam",
-        "Xăng Dầu Việt Nam"
+        "Xăng Dầu Việt Nam",
+        "Petrolimex"
       ],
       "attributes": {
         "gics1": "Năng lượng",
@@ -29864,7 +29902,9 @@
       "canonical_name": "Tổng Công ty Điện lực Dầu khí Việt Nam - CTCP",
       "aliases": [
         "Tổng Công ty Điện lực Dầu khí Việt Nam - CTCP",
-        "Điện lực Dầu khí Việt Nam - CTCP"
+        "Điện lực Dầu khí Việt Nam",
+        "PV Power",
+        "PVPower"
       ],
       "attributes": {
         "gics1": "Dịch vụ công cộng",
@@ -30198,7 +30238,7 @@
       "canonical_name": "Tổng Công ty Sản xuất - Xuất nhập khẩu Bình Dương - CTCP",
       "aliases": [
         "Tổng Công ty Sản xuất - Xuất nhập khẩu Bình Dương - CTCP",
-        "Sản xuất - Xuất nhập khẩu Bình Dương - CTCP"
+        "Sản xuất - Xuất nhập khẩu Bình Dương"
       ],
       "attributes": {
         "gics1": "Công nghiệp",
@@ -30979,7 +31019,7 @@
       "canonical_name": "Tổng Công ty Hóa chất và Dịch vụ Dầu khí - CTCP",
       "aliases": [
         "Tổng Công ty Hóa chất và Dịch vụ Dầu khí - CTCP",
-        "Hóa chất và Dịch vụ Dầu khí - CTCP"
+        "Hóa chất và Dịch vụ Dầu khí"
       ],
       "attributes": {
         "gics1": "Năng lượng",
@@ -31027,7 +31067,7 @@
       "canonical_name": "Tổng Công ty Tư vấn thiết kế Dầu khí - CTCP",
       "aliases": [
         "Tổng Công ty Tư vấn thiết kế Dầu khí - CTCP",
-        "Tư vấn thiết kế Dầu khí - CTCP"
+        "Tư vấn thiết kế Dầu khí"
       ],
       "attributes": {
         "gics1": "Công nghiệp",
@@ -32801,7 +32841,8 @@
       "canonical_name": "Tổng Công ty cổ phần Bia - Rượu - Nước giải khát Sài Gòn",
       "aliases": [
         "Tổng Công ty cổ phần Bia - Rượu - Nước giải khát Sài Gòn",
-        "Bia - Rượu - Nước giải khát Sài Gòn"
+        "Bia - Rượu - Nước giải khát Sài Gòn",
+        "Sabeco"
       ],
       "attributes": {
         "gics1": "Hàng tiêu dùng thiết yếu",
@@ -34286,7 +34327,7 @@
       "canonical_name": "Tổng Công ty Thủy sản Việt Nam - CTCP",
       "aliases": [
         "Tổng Công ty Thủy sản Việt Nam - CTCP",
-        "Thủy sản Việt Nam - CTCP"
+        "Thủy sản Việt Nam"
       ],
       "attributes": {
         "gics1": "Hàng tiêu dùng thiết yếu",
@@ -34822,7 +34863,8 @@
       "canonical_name": "Ngân hàng TMCP Sài Gòn - Hà Nội",
       "aliases": [
         "Ngân hàng TMCP Sài Gòn - Hà Nội",
-        "Sài Gòn - Hà Nội"
+        "Sài Gòn - Hà Nội",
+        "Ngân hàng Sài Gòn - Hà Nội"
       ],
       "attributes": {
         "gics1": "Tài chính",
@@ -35316,7 +35358,7 @@
       "canonical_name": "Tổng Công ty Sông Đà - CTCP",
       "aliases": [
         "Tổng Công ty Sông Đà - CTCP",
-        "Sông Đà - CTCP"
+        "Sông Đà"
       ],
       "attributes": {
         "gics1": "Công nghiệp",
@@ -36211,7 +36253,8 @@
       "canonical_name": "Ngân hàng TMCP Đông Nam Á",
       "aliases": [
         "Ngân hàng TMCP Đông Nam Á",
-        "Đông Nam Á"
+        "Đông Nam Á",
+        "SeABank"
       ],
       "attributes": {
         "gics1": "Tài chính",
@@ -36467,7 +36510,8 @@
       "canonical_name": "Ngân hàng TMCP Sài Gòn Tài Lộc",
       "aliases": [
         "Ngân hàng TMCP Sài Gòn Tài Lộc",
-        "Sài Gòn Tài Lộc"
+        "Sài Gòn Tài Lộc",
+        "Sacombank"
       ],
       "attributes": {
         "gics1": "Tài chính",
@@ -37513,7 +37557,7 @@
       "canonical_name": "Tổng Công ty Thiết bị Điện Đông Anh - CTCP",
       "aliases": [
         "Tổng Công ty Thiết bị Điện Đông Anh - CTCP",
-        "Thiết bị Điện Đông Anh - CTCP"
+        "Thiết bị Điện Đông Anh"
       ],
       "attributes": {
         "gics1": "Công nghiệp",
@@ -37701,7 +37745,8 @@
       "canonical_name": "Ngân hàng TMCP Kỹ thương Việt Nam",
       "aliases": [
         "Ngân hàng TMCP Kỹ thương Việt Nam",
-        "Kỹ thương Việt Nam"
+        "Kỹ thương Việt Nam",
+        "Techcombank"
       ],
       "attributes": {
         "gics1": "Tài chính",
@@ -37821,7 +37866,7 @@
       "canonical_name": "Tổng Công ty Cơ khí Xây dựng - CTCP",
       "aliases": [
         "Tổng Công ty Cơ khí Xây dựng - CTCP",
-        "Cơ khí Xây dựng - CTCP"
+        "Cơ khí Xây dựng"
       ],
       "attributes": {
         "gics1": "Công nghiệp",
@@ -39189,7 +39234,7 @@
       "canonical_name": "Tổng Công ty cổ phần Xây dựng Thủy Lợi 4 - CTCP",
       "aliases": [
         "Tổng Công ty cổ phần Xây dựng Thủy Lợi 4 - CTCP",
-        "Xây dựng Thủy Lợi 4 - CTCP"
+        "Xây dựng Thủy Lợi 4"
       ],
       "attributes": {
         "gics1": "Công nghiệp",
@@ -39344,7 +39389,7 @@
       "canonical_name": "Tổng Công ty Thương mại Xuất nhập khẩu Thanh Lễ - CTCP",
       "aliases": [
         "Tổng Công ty Thương mại Xuất nhập khẩu Thanh Lễ - CTCP",
-        "Thương mại Xuất nhập khẩu Thanh Lễ - CTCP"
+        "Thương mại Xuất nhập khẩu Thanh Lễ"
       ],
       "attributes": {
         "gics1": "Hàng tiêu dùng không thiết yếu",
@@ -40036,7 +40081,8 @@
       "canonical_name": "Ngân hàng TMCP Tiên Phong",
       "aliases": [
         "Ngân hàng TMCP Tiên Phong",
-        "Tiên Phong"
+        "Tiên Phong",
+        "TPBank"
       ],
       "attributes": {
         "gics1": "Tài chính",
@@ -40858,7 +40904,7 @@
       "canonical_name": "Tổng Công ty Thăng Long - CTCP",
       "aliases": [
         "Tổng Công ty Thăng Long - CTCP",
-        "Thăng Long - CTCP"
+        "Thăng Long"
       ],
       "attributes": {
         "gics1": "Công nghiệp",
@@ -41356,7 +41402,7 @@
       "canonical_name": "Tổng Công ty Thép Việt Nam - CTCP",
       "aliases": [
         "Tổng Công ty Thép Việt Nam - CTCP",
-        "Thép Việt Nam - CTCP"
+        "Thép Việt Nam"
       ],
       "attributes": {
         "gics1": "Nguyên vật liệu",
@@ -41426,7 +41472,7 @@
       "canonical_name": "Tổng Công ty Việt Thắng - CTCP",
       "aliases": [
         "Tổng Công ty Việt Thắng - CTCP",
-        "Việt Thắng - CTCP"
+        "Việt Thắng"
       ],
       "attributes": {
         "gics1": "Hàng tiêu dùng không thiết yếu",
@@ -42434,7 +42480,8 @@
       "canonical_name": "Ngân hàng TMCP Ngoại thương Việt Nam",
       "aliases": [
         "Ngân hàng TMCP Ngoại thương Việt Nam",
-        "Ngoại thương Việt Nam"
+        "Ngoại thương Việt Nam",
+        "Vietcombank"
       ],
       "attributes": {
         "gics1": "Tài chính",
@@ -42572,7 +42619,9 @@
       "canonical_name": "CTCP Chứng khoán Vietcap",
       "aliases": [
         "CTCP Chứng khoán Vietcap",
-        "Chứng khoán Vietcap"
+        "Chứng khoán Vietcap",
+        "Vietcap",
+        "VietCap"
       ],
       "attributes": {
         "gics1": "Tài chính",
@@ -43135,7 +43184,7 @@
       "canonical_name": "Tổng Công ty Máy động lực và Máy nông nghiệp Việt Nam – CTCP",
       "aliases": [
         "Tổng Công ty Máy động lực và Máy nông nghiệp Việt Nam – CTCP",
-        "Máy động lực và Máy nông nghiệp Việt Nam – CTCP"
+        "Máy động lực và Máy nông nghiệp Việt Nam"
       ],
       "attributes": {
         "gics1": "Công nghiệp",
@@ -43424,7 +43473,7 @@
       "canonical_name": "Tổng Công ty Viglacera - CTCP",
       "aliases": [
         "Tổng Công ty Viglacera - CTCP",
-        "Viglacera - CTCP"
+        "Viglacera"
       ],
       "attributes": {
         "gics1": "Nguyên vật liệu",
@@ -43616,7 +43665,7 @@
       "canonical_name": "Tổng Công ty Tư vấn Xây dựng Việt Nam - CTCP",
       "aliases": [
         "Tổng Công ty Tư vấn Xây dựng Việt Nam - CTCP",
-        "Tư vấn Xây dựng Việt Nam - CTCP"
+        "Tư vấn Xây dựng Việt Nam"
       ],
       "attributes": {
         "gics1": "Công nghiệp",
@@ -43872,7 +43921,8 @@
       "canonical_name": "Ngân hàng TMCP Quốc tế Việt Nam",
       "aliases": [
         "Ngân hàng TMCP Quốc tế Việt Nam",
-        "Quốc tế Việt Nam"
+        "Quốc tế Việt Nam",
+        "Ngân hàng Quốc tế"
       ],
       "attributes": {
         "gics1": "Tài chính",
@@ -43896,7 +43946,8 @@
       "canonical_name": "Tập đoàn VINGROUP - CTCP",
       "aliases": [
         "Tập đoàn VINGROUP - CTCP",
-        "VINGROUP - CTCP"
+        "VINGROUP",
+        "Vingroup"
       ],
       "attributes": {
         "gics1": "Bất động sản",
@@ -43968,7 +44019,7 @@
       "canonical_name": "Tổng Công ty Lâm nghiệp Việt Nam - CTCP",
       "aliases": [
         "Tổng Công ty Lâm nghiệp Việt Nam - CTCP",
-        "Lâm nghiệp Việt Nam - CTCP"
+        "Lâm nghiệp Việt Nam"
       ],
       "attributes": {
         "gics1": "Nguyên vật liệu",
@@ -44230,7 +44281,9 @@
       "canonical_name": "CTCP Hàng không Vietjet",
       "aliases": [
         "CTCP Hàng không Vietjet",
-        "Hàng không Vietjet"
+        "Hàng không Vietjet",
+        "Vietjet",
+        "Vietjet Air"
       ],
       "attributes": {
         "gics1": "Công nghiệp",
@@ -44372,7 +44425,7 @@
       "canonical_name": "Tổng Công ty Chăn Nuôi Việt Nam - CTCP",
       "aliases": [
         "Tổng Công ty Chăn Nuôi Việt Nam - CTCP",
-        "Chăn Nuôi Việt Nam - CTCP"
+        "Chăn Nuôi Việt Nam"
       ],
       "attributes": {
         "gics1": "Hàng tiêu dùng thiết yếu",
@@ -44774,7 +44827,8 @@
       "canonical_name": "CTCP Chứng khoán VNDIRECT",
       "aliases": [
         "CTCP Chứng khoán VNDIRECT",
-        "Chứng khoán VNDIRECT"
+        "Chứng khoán VNDIRECT",
+        "VNDirect"
       ],
       "attributes": {
         "gics1": "Tài chính",
@@ -44942,7 +44996,8 @@
       "canonical_name": "CTCP Sữa Việt Nam",
       "aliases": [
         "CTCP Sữa Việt Nam",
-        "Sữa Việt Nam"
+        "Sữa Việt Nam",
+        "Vinamilk"
       ],
       "attributes": {
         "gics1": "Hàng tiêu dùng thiết yếu",
@@ -45156,7 +45211,7 @@
       "canonical_name": "Tổng Công ty Công Nghiệp Dầu Thực Vật Việt Nam - CTCP",
       "aliases": [
         "Tổng Công ty Công Nghiệp Dầu Thực Vật Việt Nam - CTCP",
-        "Công Nghiệp Dầu Thực Vật Việt Nam - CTCP"
+        "Công Nghiệp Dầu Thực Vật Việt Nam"
       ],
       "attributes": {
         "gics1": "Hàng tiêu dùng thiết yếu",
@@ -45228,7 +45283,8 @@
       "canonical_name": "Ngân hàng TMCP Việt Nam Thịnh Vượng",
       "aliases": [
         "Ngân hàng TMCP Việt Nam Thịnh Vượng",
-        "Việt Nam Thịnh Vượng"
+        "Việt Nam Thịnh Vượng",
+        "VPBank"
       ],
       "attributes": {
         "gics1": "Tài chính",
@@ -45558,7 +45614,8 @@
       "canonical_name": "CTCP Vincom Retail",
       "aliases": [
         "CTCP Vincom Retail",
-        "Vincom Retail"
+        "Vincom Retail",
+        "Vincom"
       ],
       "attributes": {
         "gics1": "Bất động sản",
@@ -45678,7 +45735,7 @@
       "canonical_name": "Tổng Công ty Lương thực Miền Nam - CTCP",
       "aliases": [
         "Tổng Công ty Lương thực Miền Nam - CTCP",
-        "Lương thực Miền Nam - CTCP"
+        "Lương thực Miền Nam"
       ],
       "attributes": {
         "gics1": "Hàng tiêu dùng thiết yếu",
@@ -46765,8 +46822,7 @@
       "code": "X26",
       "canonical_name": "CTCP 26",
       "aliases": [
-        "CTCP 26",
-        "26"
+        "CTCP 26"
       ],
       "attributes": {
         "gics1": "Hàng tiêu dùng không thiết yếu",
@@ -48720,262 +48776,6 @@
       },
       "sources": [
         "industry_classification/industry_classification.xlsx"
-      ]
-    },
-    {
-      "entity_id": "SECTOR_FPA:BANLE",
-      "type": "SECTOR_FPA",
-      "code": "Banle",
-      "canonical_name": "Bán lẻ",
-      "aliases": [
-        "Bán lẻ",
-        "Banle"
-      ],
-      "attributes": {
-        "available_in_apd": true
-      },
-      "sources": [
-        "APD_Data_Industry/data/Banle"
-      ]
-    },
-    {
-      "entity_id": "SECTOR_FPA:BDSCN",
-      "type": "SECTOR_FPA",
-      "code": "BDSCN",
-      "canonical_name": "Bất động sản Khu công nghiệp",
-      "aliases": [
-        "Bất động sản Khu công nghiệp",
-        "BDSCN"
-      ],
-      "attributes": {
-        "available_in_apd": true
-      },
-      "sources": [
-        "APD_Data_Industry/data/BDSCN"
-      ]
-    },
-    {
-      "entity_id": "SECTOR_FPA:BDSDD",
-      "type": "SECTOR_FPA",
-      "code": "BDSDD",
-      "canonical_name": "Bất động sản Dân dụng",
-      "aliases": [
-        "Bất động sản Dân dụng",
-        "BDSDD"
-      ],
-      "attributes": {
-        "available_in_apd": true
-      },
-      "sources": [
-        "APD_Data_Industry/data/BDSDD"
-      ]
-    },
-    {
-      "entity_id": "SECTOR_FPA:CANGBIEN",
-      "type": "SECTOR_FPA",
-      "code": "Cangbien",
-      "canonical_name": "Cảng biển",
-      "aliases": [
-        "Cảng biển",
-        "Cangbien"
-      ],
-      "attributes": {
-        "available_in_apd": true
-      },
-      "sources": [
-        "APD_Data_Industry/data/Cangbien"
-      ]
-    },
-    {
-      "entity_id": "SECTOR_FPA:CHUNGKHOAN",
-      "type": "SECTOR_FPA",
-      "code": "Chungkhoan",
-      "canonical_name": "Chứng khoán",
-      "aliases": [
-        "Chứng khoán",
-        "Chungkhoan"
-      ],
-      "attributes": {
-        "available_in_apd": true
-      },
-      "sources": [
-        "APD_Data_Industry/data/Chungkhoan"
-      ]
-    },
-    {
-      "entity_id": "SECTOR_FPA:DAUKHI",
-      "type": "SECTOR_FPA",
-      "code": "Daukhi",
-      "canonical_name": "Dầu khí",
-      "aliases": [
-        "Dầu khí",
-        "Daukhi"
-      ],
-      "attributes": {
-        "available_in_apd": true
-      },
-      "sources": [
-        "APD_Data_Industry/data/Daukhi"
-      ]
-    },
-    {
-      "entity_id": "SECTOR_FPA:DETMAY",
-      "type": "SECTOR_FPA",
-      "code": "Detmay",
-      "canonical_name": "Dệt may",
-      "aliases": [
-        "Dệt may",
-        "Detmay"
-      ],
-      "attributes": {
-        "available_in_apd": true
-      },
-      "sources": [
-        "APD_Data_Industry/data/Detmay"
-      ]
-    },
-    {
-      "entity_id": "SECTOR_FPA:DIEN",
-      "type": "SECTOR_FPA",
-      "code": "Dien",
-      "canonical_name": "Điện",
-      "aliases": [
-        "Điện",
-        "Dien"
-      ],
-      "attributes": {
-        "available_in_apd": true
-      },
-      "sources": [
-        "APD_Data_Industry/data/Dien"
-      ]
-    },
-    {
-      "entity_id": "SECTOR_FPA:F_B",
-      "type": "SECTOR_FPA",
-      "code": "F&B",
-      "canonical_name": "Thực phẩm & Đồ uống",
-      "aliases": [
-        "Thực phẩm & Đồ uống",
-        "F&B"
-      ],
-      "attributes": {
-        "available_in_apd": true
-      },
-      "sources": [
-        "APD_Data_Industry/data/F&B"
-      ]
-    },
-    {
-      "entity_id": "SECTOR_FPA:HANGKHONG",
-      "type": "SECTOR_FPA",
-      "code": "Hangkhong",
-      "canonical_name": "Hàng không",
-      "aliases": [
-        "Hàng không",
-        "Hangkhong"
-      ],
-      "attributes": {
-        "available_in_apd": true
-      },
-      "sources": [
-        "APD_Data_Industry/data/Hangkhong"
-      ]
-    },
-    {
-      "entity_id": "SECTOR_FPA:HOTROGT",
-      "type": "SECTOR_FPA",
-      "code": "HotroGT",
-      "canonical_name": "Hỗ trợ giao thông (Logistics)",
-      "aliases": [
-        "Hỗ trợ giao thông (Logistics)",
-        "HotroGT"
-      ],
-      "attributes": {
-        "available_in_apd": true
-      },
-      "sources": [
-        "APD_Data_Industry/data/HotroGT"
-      ]
-    },
-    {
-      "entity_id": "SECTOR_FPA:NHUAXD",
-      "type": "SECTOR_FPA",
-      "code": "NhuaXD",
-      "canonical_name": "Nhựa xây dựng",
-      "aliases": [
-        "Nhựa xây dựng",
-        "NhuaXD"
-      ],
-      "attributes": {
-        "available_in_apd": true
-      },
-      "sources": [
-        "APD_Data_Industry/data/NhuaXD"
-      ]
-    },
-    {
-      "entity_id": "SECTOR_FPA:PHANBON",
-      "type": "SECTOR_FPA",
-      "code": "Phanbon",
-      "canonical_name": "Phân bón",
-      "aliases": [
-        "Phân bón",
-        "Phanbon"
-      ],
-      "attributes": {
-        "available_in_apd": true
-      },
-      "sources": [
-        "APD_Data_Industry/data/Phanbon"
-      ]
-    },
-    {
-      "entity_id": "SECTOR_FPA:THEP",
-      "type": "SECTOR_FPA",
-      "code": "Thep",
-      "canonical_name": "Thép",
-      "aliases": [
-        "Thép",
-        "Thep"
-      ],
-      "attributes": {
-        "available_in_apd": true
-      },
-      "sources": [
-        "APD_Data_Industry/data/Thep"
-      ]
-    },
-    {
-      "entity_id": "SECTOR_FPA:THUYSAN",
-      "type": "SECTOR_FPA",
-      "code": "Thuysan",
-      "canonical_name": "Thủy sản",
-      "aliases": [
-        "Thủy sản",
-        "Thuysan"
-      ],
-      "attributes": {
-        "available_in_apd": true
-      },
-      "sources": [
-        "APD_Data_Industry/data/Thuysan"
-      ]
-    },
-    {
-      "entity_id": "SECTOR_FPA:XIMANG",
-      "type": "SECTOR_FPA",
-      "code": "Ximang",
-      "canonical_name": "Xi măng",
-      "aliases": [
-        "Xi măng",
-        "Ximang"
-      ],
-      "attributes": {
-        "available_in_apd": true
-      },
-      "sources": [
-        "APD_Data_Industry/data/Ximang"
       ]
     }
   ]

@@ -1,0 +1,72 @@
+{
+  "packet_version": "1.0",
+  "layer": "L1_ENTITY_RECOGNITION",
+  "task": "recognize_and_audit",
+  "article_id": "62412fde6bf99526d03f96e0c4c2f92859679e3566ef6e06b59967b308318f01",
+  "domain": "cafef.vn",
+  "input": {
+    "title": "Công ty Cổ phần Tập đoàn Hóa chất Đức Giang (HOSE)",
+    "entity_catalog_ref": {
+      "entities": "data/entities/entities.json",
+      "taxonomy": "data/entities/taxonomy.json"
+    },
+    "code_first": {
+      "route": "resolved",
+      "relevance": "entity",
+      "entities": [
+        {
+          "entity_id": "TICKER:DGC",
+          "type": "TICKER",
+          "code": "DGC",
+          "canonical_name": "CTCP Tập đoàn Hóa chất Đức Giang",
+          "via": "alias"
+        },
+        {
+          "entity_id": "EXCHANGE:HOSE",
+          "type": "EXCHANGE",
+          "code": "HOSE",
+          "canonical_name": "Sở Giao dịch Chứng khoán TP. Hồ Chí Minh",
+          "via": "alias"
+        },
+        {
+          "entity_id": "IND_GICS3:HOA_CHAT",
+          "type": "INDUSTRY_GICS3",
+          "code": "HOA_CHAT",
+          "canonical_name": "Hóa chất",
+          "via": "alias"
+        }
+      ],
+      "entity_ids": [
+        "TICKER:DGC",
+        "EXCHANGE:HOSE",
+        "IND_GICS3:HOA_CHAT"
+      ],
+      "industries": [
+        "Hóa chất",
+        "Nguyên vật liệu"
+      ]
+    }
+  },
+  "output_contract": {
+    "schema_name": "l1-entity-output-v1",
+    "schema_path": "schemas/l1-entity-output-v1.schema.json",
+    "checklist_categories": [
+      "ticker_company",
+      "etf_fund",
+      "index",
+      "exchange",
+      "industry_sector"
+    ]
+  },
+  "constraints": {
+    "confidence_min": 0.6,
+    "surface_must_be_substring_of": "input.title",
+    "citation_must_be_substring_of": "input.title",
+    "recognized_true_requires": [
+      "entities>=1",
+      "citations>=1"
+    ],
+    "audit_duty": "xác nhận entity code-first, sửa nếu sai, bổ sung nếu thiếu"
+  },
+  "instructions_ref": "schemas/l1-entity-instructions-v1.md"
+}

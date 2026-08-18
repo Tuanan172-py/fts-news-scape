@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "e795488dd6fbd7192bb1c1ea35e2f08be9a51420995ab1b21a5eb392be0770c0",
+ "title": "IR Awards 2026: Website IR doanh nghiệp Small Cap cải thiện từ những tiêu chí nền tảng",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:29+07:00"
+ }
+}

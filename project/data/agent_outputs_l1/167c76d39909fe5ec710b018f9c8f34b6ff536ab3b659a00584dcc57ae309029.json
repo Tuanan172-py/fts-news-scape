@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "167c76d39909fe5ec710b018f9c8f34b6ff536ab3b659a00584dcc57ae309029",
+ "title": "Nông, lâm, thủy sản xuất siêu lớn khẳng định vai trò “trụ đỡ”",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:27+07:00"
+ }
+}

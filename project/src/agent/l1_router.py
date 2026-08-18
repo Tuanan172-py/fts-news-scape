@@ -39,10 +39,12 @@ def route_article(article: dict, reg: EntityRegistry | None = None) -> dict:
 # Tầng 2 — task-packet handoff (self-describing, agent-agnostic)
 # ---------------------------------------------------------------------------
 def build_l1_task_packet(article: dict, code_first: dict) -> dict:
-    """Gói 1 tiêu đề cần agent nhận diện thành packet tự mô tả."""
+    """Gói 1 tiêu đề cho agent nhận diện + TRA SOÁT. Nhúng kết quả code-first để agent
+    xác nhận/sửa/bổ sung (agent có quyền tra soát ngay cả khi code đã khớp)."""
     return {
         "packet_version": L1_TASK_VERSION,
         "layer": "L1_ENTITY_RECOGNITION",
+        "task": "recognize_and_audit",
         "article_id": article.get("article_id"),
         "domain": article.get("domain"),
         "input": {
@@ -51,10 +53,13 @@ def build_l1_task_packet(article: dict, code_first: dict) -> dict:
                 "entities": "data/entities/entities.json",
                 "taxonomy": "data/entities/taxonomy.json",
             },
-            # kết quả code-first (rỗng entity — vì thế mới handoff)
+            # kết quả code-first để TRA SOÁT: xác nhận / sửa / bổ sung entity bị bỏ sót
             "code_first": {
-                "entity_ids": code_first.get("entity_ids", []),
+                "route": code_first.get("route"),
                 "relevance": code_first.get("relevance"),
+                "entities": code_first.get("entities", []),
+                "entity_ids": code_first.get("entity_ids", []),
+                "industries": code_first.get("industries", []),
             },
         },
         "output_contract": {
@@ -67,6 +72,7 @@ def build_l1_task_packet(article: dict, code_first: dict) -> dict:
             "surface_must_be_substring_of": "input.title",
             "citation_must_be_substring_of": "input.title",
             "recognized_true_requires": ["entities>=1", "citations>=1"],
+            "audit_duty": "xác nhận entity code-first, sửa nếu sai, bổ sung nếu thiếu",
         },
         "instructions_ref": "schemas/l1-entity-instructions-v1.md",
     }
@@ -124,7 +130,7 @@ def check_l1_dod(output: dict, title: str) -> tuple[bool, list[str]]:
         "TICKER": "ticker_company", "SECURITY_OTHER": "ticker_company",
         "ETF": "etf_fund", "INDEX": "index", "EXCHANGE": "exchange",
         "INDUSTRY_GICS1": "industry_sector", "INDUSTRY_GICS2": "industry_sector",
-        "INDUSTRY_GICS3": "industry_sector", "SECTOR_FPA": "industry_sector",
+        "INDUSTRY_GICS3": "industry_sector",
     }
     done_groups = {g for g, v in cats.items() if v == "done"}
     have_groups = {type_group.get(e.get("type")) for e in ents if e.get("in_list")}

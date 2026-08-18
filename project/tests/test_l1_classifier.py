@@ -20,19 +20,12 @@ ENTITIES = [
     {"entity_id": "INDEX:VNINDEX", "type": "INDEX", "code": "VNINDEX",
      "canonical_name": "VN-Index", "aliases": ["VN-Index", "VNINDEX"],
      "attributes": {"exchange": "HOSE"}, "sources": []},
-    {"entity_id": "SECTOR_FPA:THEP", "type": "SECTOR_FPA", "code": "Thep",
-     "canonical_name": "Thép", "aliases": ["Thép", "Thep"], "attributes": {}, "sources": []},
+    {"entity_id": "IND_GICS3:THEP", "type": "INDUSTRY_GICS3", "code": "THEP",
+     "canonical_name": "Thép", "aliases": ["Thép"], "attributes": {"parent": "x"}, "sources": []},
 ]
-GROUPS = {
-    "co_ban": {"include_types": ["TICKER"]},
-    "fta": {"include_types": ["INDEX", "SECTOR_FPA"]},
-    "watch": {"include_entities": ["TICKER:HPG"]},
-}
-
-
 @pytest.fixture
 def reg():
-    return EntityRegistry(ENTITIES, GROUPS)
+    return EntityRegistry(ENTITIES)
 
 
 def test_title_of_from_headings():

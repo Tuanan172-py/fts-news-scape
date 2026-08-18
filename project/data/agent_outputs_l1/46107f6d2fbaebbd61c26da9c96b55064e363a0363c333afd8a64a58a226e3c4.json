@@ -1,0 +1,34 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "46107f6d2fbaebbd61c26da9c96b55064e363a0363c333afd8a64a58a226e3c4",
+ "title": "Động thái mới nhất của Chủ tịch Thế Giới Di Động Nguyễn Đức Tài",
+ "recognized": true,
+ "entities": [
+  {
+   "surface": "Thế Giới Di Động",
+   "entity_id": "TICKER:MWG",
+   "type": "TICKER",
+   "method": "alias",
+   "in_list": true,
+   "confidence": 0.85
+  }
+ ],
+ "categories": {
+  "ticker_company": "done",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [
+  {
+   "source_span": "Động thái mới nhất của Chủ tịch Thế Giới Di Động Nguyễn Đức Tài"
+  }
+ ],
+ "confidence": 0.85,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:28+07:00"
+ }
+}

@@ -25,7 +25,7 @@
           "entity_id": {"type": ["string", "null"], "description": "entity_id trong danh sách, null nếu ngoài danh sách"},
           "type": {"type": "string", "enum": [
             "TICKER", "ETF", "SECURITY_OTHER", "INDEX", "EXCHANGE",
-            "INDUSTRY_GICS1", "INDUSTRY_GICS2", "INDUSTRY_GICS3", "SECTOR_FPA", "UNKNOWN"
+            "INDUSTRY_GICS1", "INDUSTRY_GICS2", "INDUSTRY_GICS3", "UNKNOWN"
           ]},
           "method": {"type": "string", "enum": ["exact_code", "alias", "semantic"],
             "description": "exact_code/alias = code làm được; semantic = suy luận của agent"},

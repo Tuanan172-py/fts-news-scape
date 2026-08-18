@@ -1,0 +1,66 @@
+{
+  "packet_version": "1.0",
+  "layer": "L1_ENTITY_RECOGNITION",
+  "task": "recognize_and_audit",
+  "article_id": "a6bd02d5c9c05a6f7ecb10f3e1ac2be92d71debb7432948040ff3b0ebda39e2a",
+  "domain": "vietstock.vn",
+  "input": {
+    "title": "Giá vàng SJC trong nước đảo chiều giảm 1 triệu đồng mỗi lượng",
+    "entity_catalog_ref": {
+      "entities": "data/entities/entities.json",
+      "taxonomy": "data/entities/taxonomy.json"
+    },
+    "code_first": {
+      "route": "resolved",
+      "relevance": "entity",
+      "entities": [
+        {
+          "entity_id": "TICKER:SJC",
+          "type": "TICKER",
+          "code": "SJC",
+          "canonical_name": "CTCP Sông Đà 1.01",
+          "via": "code"
+        },
+        {
+          "entity_id": "IND_GICS3:NUOC",
+          "type": "INDUSTRY_GICS3",
+          "code": "NUOC",
+          "canonical_name": "Nước",
+          "via": "alias"
+        }
+      ],
+      "entity_ids": [
+        "TICKER:SJC",
+        "IND_GICS3:NUOC"
+      ],
+      "industries": [
+        "Bất động sản",
+        "Nước",
+        "Quản lý và phát triển bất động sản",
+        "Vận hành bất động sản"
+      ]
+    }
+  },
+  "output_contract": {
+    "schema_name": "l1-entity-output-v1",
+    "schema_path": "schemas/l1-entity-output-v1.schema.json",
+    "checklist_categories": [
+      "ticker_company",
+      "etf_fund",
+      "index",
+      "exchange",
+      "industry_sector"
+    ]
+  },
+  "constraints": {
+    "confidence_min": 0.6,
+    "surface_must_be_substring_of": "input.title",
+    "citation_must_be_substring_of": "input.title",
+    "recognized_true_requires": [
+      "entities>=1",
+      "citations>=1"
+    ],
+    "audit_duty": "xác nhận entity code-first, sửa nếu sai, bổ sung nếu thiếu"
+  },
+  "instructions_ref": "schemas/l1-entity-instructions-v1.md"
+}

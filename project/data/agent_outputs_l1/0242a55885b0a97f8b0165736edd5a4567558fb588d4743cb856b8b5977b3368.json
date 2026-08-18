@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "0242a55885b0a97f8b0165736edd5a4567558fb588d4743cb856b8b5977b3368",
+ "title": "5 yếu tố định hình giá vàng từ nay đến cuối năm",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:27+07:00"
+ }
+}

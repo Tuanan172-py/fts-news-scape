@@ -1,0 +1,72 @@
+{
+  "packet_version": "1.0",
+  "layer": "L1_ENTITY_RECOGNITION",
+  "task": "recognize_and_audit",
+  "article_id": "95cef540c2571c58118ea2b5595da1f7eb2787d8c8ecf2624f05f2fba88b2309",
+  "domain": "cafef.vn",
+  "input": {
+    "title": "Ngân hàng Thương mại Cổ phần Sài Gòn Tài Lộc (HOSE)",
+    "entity_catalog_ref": {
+      "entities": "data/entities/entities.json",
+      "taxonomy": "data/entities/taxonomy.json"
+    },
+    "code_first": {
+      "route": "resolved",
+      "relevance": "entity",
+      "entities": [
+        {
+          "entity_id": "TICKER:STB",
+          "type": "TICKER",
+          "code": "STB",
+          "canonical_name": "Ngân hàng TMCP Sài Gòn Tài Lộc",
+          "via": "alias"
+        },
+        {
+          "entity_id": "EXCHANGE:HOSE",
+          "type": "EXCHANGE",
+          "code": "HOSE",
+          "canonical_name": "Sở Giao dịch Chứng khoán TP. Hồ Chí Minh",
+          "via": "alias"
+        },
+        {
+          "entity_id": "IND_GICS2:NGAN_HANG",
+          "type": "INDUSTRY_GICS2",
+          "code": "NGAN_HANG",
+          "canonical_name": "Ngân hàng",
+          "via": "alias"
+        }
+      ],
+      "entity_ids": [
+        "TICKER:STB",
+        "EXCHANGE:HOSE",
+        "IND_GICS2:NGAN_HANG"
+      ],
+      "industries": [
+        "Ngân hàng",
+        "Tài chính"
+      ]
+    }
+  },
+  "output_contract": {
+    "schema_name": "l1-entity-output-v1",
+    "schema_path": "schemas/l1-entity-output-v1.schema.json",
+    "checklist_categories": [
+      "ticker_company",
+      "etf_fund",
+      "index",
+      "exchange",
+      "industry_sector"
+    ]
+  },
+  "constraints": {
+    "confidence_min": 0.6,
+    "surface_must_be_substring_of": "input.title",
+    "citation_must_be_substring_of": "input.title",
+    "recognized_true_requires": [
+      "entities>=1",
+      "citations>=1"
+    ],
+    "audit_duty": "xác nhận entity code-first, sửa nếu sai, bổ sung nếu thiếu"
+  },
+  "instructions_ref": "schemas/l1-entity-instructions-v1.md"
+}

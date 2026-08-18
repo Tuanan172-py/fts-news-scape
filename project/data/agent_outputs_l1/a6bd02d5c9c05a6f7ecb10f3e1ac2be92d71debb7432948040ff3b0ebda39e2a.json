@@ -1,0 +1,42 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "a6bd02d5c9c05a6f7ecb10f3e1ac2be92d71debb7432948040ff3b0ebda39e2a",
+ "title": "Giá vàng SJC trong nước đảo chiều giảm 1 triệu đồng mỗi lượng",
+ "recognized": true,
+ "entities": [
+  {
+   "surface": "SJC",
+   "entity_id": "TICKER:SJC",
+   "type": "TICKER",
+   "method": "exact_code",
+   "in_list": true,
+   "confidence": 0.85
+  },
+  {
+   "surface": "nước",
+   "entity_id": "IND_GICS3:NUOC",
+   "type": "INDUSTRY_GICS3",
+   "method": "alias",
+   "in_list": true,
+   "confidence": 0.85
+  }
+ ],
+ "categories": {
+  "ticker_company": "done",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "done"
+ },
+ "citations": [
+  {
+   "source_span": "Giá vàng SJC trong nước đảo chiều giảm 1 triệu đồng mỗi lượng"
+  }
+ ],
+ "confidence": 0.85,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:29+07:00"
+ }
+}

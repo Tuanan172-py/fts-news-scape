@@ -1,0 +1,42 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "7b6232437e156b3caf6ad410225ae98f1cf737cb23a531579d866b7d96211100",
+ "title": "Tập đoàn Vingroup - Công ty Cổ phần (HOSE)",
+ "recognized": true,
+ "entities": [
+  {
+   "surface": "Vingroup",
+   "entity_id": "TICKER:VIC",
+   "type": "TICKER",
+   "method": "alias",
+   "in_list": true,
+   "confidence": 0.85
+  },
+  {
+   "surface": "HOSE",
+   "entity_id": "EXCHANGE:HOSE",
+   "type": "EXCHANGE",
+   "method": "exact_code",
+   "in_list": true,
+   "confidence": 0.85
+  }
+ ],
+ "categories": {
+  "ticker_company": "done",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "done",
+  "industry_sector": "none"
+ },
+ "citations": [
+  {
+   "source_span": "Tập đoàn Vingroup - Công ty Cổ phần (HOSE)"
+  }
+ ],
+ "confidence": 0.85,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:28+07:00"
+ }
+}

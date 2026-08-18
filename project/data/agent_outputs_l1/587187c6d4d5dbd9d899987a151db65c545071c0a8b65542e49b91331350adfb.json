@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "587187c6d4d5dbd9d899987a151db65c545071c0a8b65542e49b91331350adfb",
+ "title": "Vận hành thị trường carbon: Minh bạch dữ liệu và kỷ luật thị trường",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:28+07:00"
+ }
+}

@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "610c810703d79966f648fbc71cea0e9d275e82e161c1044acca1c187b921d2cd",
+ "title": "Áp lực bán tiếp tục đè nặng",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:28+07:00"
+ }
+}

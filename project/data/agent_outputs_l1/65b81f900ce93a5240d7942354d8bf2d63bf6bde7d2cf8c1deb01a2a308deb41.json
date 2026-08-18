@@ -1,0 +1,58 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "65b81f900ce93a5240d7942354d8bf2d63bf6bde7d2cf8c1deb01a2a308deb41",
+ "title": "Ngân hàng Thương mại cổ phần Đầu tư và Phát triển Việt Nam (HOSE)",
+ "recognized": true,
+ "entities": [
+  {
+   "surface": "Đầu tư và Phát triển Việt Nam",
+   "entity_id": "TICKER:BID",
+   "type": "TICKER",
+   "method": "alias",
+   "in_list": true,
+   "confidence": 0.85
+  },
+  {
+   "surface": "Việt Nam",
+   "entity_id": "TICKER:IVS",
+   "type": "TICKER",
+   "method": "alias",
+   "in_list": true,
+   "confidence": 0.85
+  },
+  {
+   "surface": "HOSE",
+   "entity_id": "EXCHANGE:HOSE",
+   "type": "EXCHANGE",
+   "method": "exact_code",
+   "in_list": true,
+   "confidence": 0.85
+  },
+  {
+   "surface": "Ngân hàng",
+   "entity_id": "IND_GICS2:NGAN_HANG",
+   "type": "INDUSTRY_GICS2",
+   "method": "alias",
+   "in_list": true,
+   "confidence": 0.85
+  }
+ ],
+ "categories": {
+  "ticker_company": "done",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "done",
+  "industry_sector": "done"
+ },
+ "citations": [
+  {
+   "source_span": "Ngân hàng Thương mại cổ phần Đầu tư và Phát triển Việt Nam (HOSE)"
+  }
+ ],
+ "confidence": 0.85,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:28+07:00"
+ }
+}

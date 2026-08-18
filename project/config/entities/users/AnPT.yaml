@@ -1,0 +1,16 @@
+# AUTO-GENERATED từ users/input/AnPT/entities.xlsx — ĐỪNG sửa tay.
+# Chạy lại: python scripts/compile_users.py --all
+tickers:
+- HPG
+- FPT
+- VCB
+- VNM
+- MWG
+etfs:
+- E1VFVN30
+indices:
+- VNINDEX
+- VN30
+industries:
+- THEP
+- NGAN_HANG

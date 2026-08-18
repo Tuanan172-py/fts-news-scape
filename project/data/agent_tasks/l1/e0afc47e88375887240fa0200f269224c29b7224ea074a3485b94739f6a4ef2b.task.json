@@ -1,0 +1,53 @@
+{
+  "packet_version": "1.0",
+  "layer": "L1_ENTITY_RECOGNITION",
+  "task": "recognize_and_audit",
+  "article_id": "e0afc47e88375887240fa0200f269224c29b7224ea074a3485b94739f6a4ef2b",
+  "domain": "vietstock.vn",
+  "input": {
+    "title": "Loạt doanh nghiệp bị hủy giao dịch trên UPCoM trong tháng 8",
+    "entity_catalog_ref": {
+      "entities": "data/entities/entities.json",
+      "taxonomy": "data/entities/taxonomy.json"
+    },
+    "code_first": {
+      "route": "resolved",
+      "relevance": "market",
+      "entities": [
+        {
+          "entity_id": "EXCHANGE:UPCOM",
+          "type": "EXCHANGE",
+          "code": "UPCOM",
+          "canonical_name": "Thị trường giao dịch cổ phiếu công ty đại chúng chưa niêm yết",
+          "via": "alias"
+        }
+      ],
+      "entity_ids": [
+        "EXCHANGE:UPCOM"
+      ],
+      "industries": []
+    }
+  },
+  "output_contract": {
+    "schema_name": "l1-entity-output-v1",
+    "schema_path": "schemas/l1-entity-output-v1.schema.json",
+    "checklist_categories": [
+      "ticker_company",
+      "etf_fund",
+      "index",
+      "exchange",
+      "industry_sector"
+    ]
+  },
+  "constraints": {
+    "confidence_min": 0.6,
+    "surface_must_be_substring_of": "input.title",
+    "citation_must_be_substring_of": "input.title",
+    "recognized_true_requires": [
+      "entities>=1",
+      "citations>=1"
+    ],
+    "audit_duty": "xác nhận entity code-first, sửa nếu sai, bổ sung nếu thiếu"
+  },
+  "instructions_ref": "schemas/l1-entity-instructions-v1.md"
+}

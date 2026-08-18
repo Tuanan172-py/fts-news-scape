@@ -1,0 +1,50 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "3655764fe232eb910f83f20468363ec22302bf8bcc38e4bab8b2c55c6e9cab79",
+ "title": "Công ty Cổ phần Tập đoàn Hóa chất Đức Giang (HOSE)",
+ "recognized": true,
+ "entities": [
+  {
+   "surface": "Hóa chất Đức Giang",
+   "entity_id": "TICKER:DGC",
+   "type": "TICKER",
+   "method": "alias",
+   "in_list": true,
+   "confidence": 0.85
+  },
+  {
+   "surface": "HOSE",
+   "entity_id": "EXCHANGE:HOSE",
+   "type": "EXCHANGE",
+   "method": "exact_code",
+   "in_list": true,
+   "confidence": 0.85
+  },
+  {
+   "surface": "Hóa chất",
+   "entity_id": "IND_GICS3:HOA_CHAT",
+   "type": "INDUSTRY_GICS3",
+   "method": "alias",
+   "in_list": true,
+   "confidence": 0.85
+  }
+ ],
+ "categories": {
+  "ticker_company": "done",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "done",
+  "industry_sector": "done"
+ },
+ "citations": [
+  {
+   "source_span": "Công ty Cổ phần Tập đoàn Hóa chất Đức Giang (HOSE)"
+  }
+ ],
+ "confidence": 0.85,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:28+07:00"
+ }
+}

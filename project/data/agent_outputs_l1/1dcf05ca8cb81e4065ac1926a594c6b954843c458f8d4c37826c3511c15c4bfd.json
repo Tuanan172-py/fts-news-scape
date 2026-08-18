@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "1dcf05ca8cb81e4065ac1926a594c6b954843c458f8d4c37826c3511c15c4bfd",
+ "title": "Khối ngoại tiếp tục xả hàng mạnh, cổ phiếu nào bị bán nhiều nhất?",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:28+07:00"
+ }
+}

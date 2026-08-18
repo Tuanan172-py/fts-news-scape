@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "767a77b959c7c2a9a82d679812507cacb025cd5564652337ddff53c896beef6b",
+ "title": "Giảm \"thực chất\" lãi suất cho vay: Không thể cào bằng, dư địa nằm ở hiệu quả vận hành",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:28+07:00"
+ }
+}

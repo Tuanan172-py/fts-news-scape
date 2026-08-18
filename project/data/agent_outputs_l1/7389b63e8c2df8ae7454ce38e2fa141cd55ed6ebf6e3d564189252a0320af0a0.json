@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "7389b63e8c2df8ae7454ce38e2fa141cd55ed6ebf6e3d564189252a0320af0a0",
+ "title": "Chứng khoán Mỹ mất điểm khi căng thẳng Trung Đông nóng lên, giá dầu vượt 90 USD/thùng",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:28+07:00"
+ }
+}

@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "18ff65d1654916bb281e202ac9975bf4ece026dd1d385ec49562ae23714b5a8e",
+ "title": "Người dân được gì khi tích hợp sổ đỏ trên VNeID?",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:27+07:00"
+ }
+}

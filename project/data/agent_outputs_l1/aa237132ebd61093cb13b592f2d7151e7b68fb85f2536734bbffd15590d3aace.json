@@ -1,0 +1,42 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "aa237132ebd61093cb13b592f2d7151e7b68fb85f2536734bbffd15590d3aace",
+ "title": "Công ty cổ phần Vinhomes (HOSE)",
+ "recognized": true,
+ "entities": [
+  {
+   "surface": "Vinhomes",
+   "entity_id": "TICKER:VHM",
+   "type": "TICKER",
+   "method": "alias",
+   "in_list": true,
+   "confidence": 0.85
+  },
+  {
+   "surface": "HOSE",
+   "entity_id": "EXCHANGE:HOSE",
+   "type": "EXCHANGE",
+   "method": "exact_code",
+   "in_list": true,
+   "confidence": 0.85
+  }
+ ],
+ "categories": {
+  "ticker_company": "done",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "done",
+  "industry_sector": "none"
+ },
+ "citations": [
+  {
+   "source_span": "Công ty cổ phần Vinhomes (HOSE)"
+  }
+ ],
+ "confidence": 0.85,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:29+07:00"
+ }
+}

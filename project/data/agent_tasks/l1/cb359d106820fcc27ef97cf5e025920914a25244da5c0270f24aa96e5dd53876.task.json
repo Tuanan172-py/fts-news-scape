@@ -1,0 +1,64 @@
+{
+  "packet_version": "1.0",
+  "layer": "L1_ENTITY_RECOGNITION",
+  "task": "recognize_and_audit",
+  "article_id": "cb359d106820fcc27ef97cf5e025920914a25244da5c0270f24aa96e5dd53876",
+  "domain": "cafef.vn",
+  "input": {
+    "title": "Công ty cổ phần Đầu tư Thế giới Di động (HOSE)",
+    "entity_catalog_ref": {
+      "entities": "data/entities/entities.json",
+      "taxonomy": "data/entities/taxonomy.json"
+    },
+    "code_first": {
+      "route": "resolved",
+      "relevance": "entity",
+      "entities": [
+        {
+          "entity_id": "TICKER:MWG",
+          "type": "TICKER",
+          "code": "MWG",
+          "canonical_name": "CTCP Đầu tư Thế giới Di động",
+          "via": "alias"
+        },
+        {
+          "entity_id": "EXCHANGE:HOSE",
+          "type": "EXCHANGE",
+          "code": "HOSE",
+          "canonical_name": "Sở Giao dịch Chứng khoán TP. Hồ Chí Minh",
+          "via": "alias"
+        }
+      ],
+      "entity_ids": [
+        "TICKER:MWG",
+        "EXCHANGE:HOSE"
+      ],
+      "industries": [
+        "Bán lẻ",
+        "Hàng tiêu dùng không thiết yếu"
+      ]
+    }
+  },
+  "output_contract": {
+    "schema_name": "l1-entity-output-v1",
+    "schema_path": "schemas/l1-entity-output-v1.schema.json",
+    "checklist_categories": [
+      "ticker_company",
+      "etf_fund",
+      "index",
+      "exchange",
+      "industry_sector"
+    ]
+  },
+  "constraints": {
+    "confidence_min": 0.6,
+    "surface_must_be_substring_of": "input.title",
+    "citation_must_be_substring_of": "input.title",
+    "recognized_true_requires": [
+      "entities>=1",
+      "citations>=1"
+    ],
+    "audit_duty": "xác nhận entity code-first, sửa nếu sai, bổ sung nếu thiếu"
+  },
+  "instructions_ref": "schemas/l1-entity-instructions-v1.md"
+}

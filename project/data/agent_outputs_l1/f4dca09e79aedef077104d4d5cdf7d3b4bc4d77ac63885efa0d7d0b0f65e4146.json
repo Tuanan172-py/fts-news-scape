@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "f4dca09e79aedef077104d4d5cdf7d3b4bc4d77ac63885efa0d7d0b0f65e4146",
+ "title": "Cảnh báo từ vụ Huấn Hoa Hồng: Dữ liệu ngày càng đầy đủ, DN khó giấu dòng tiền ngoài sổ",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:29+07:00"
+ }
+}

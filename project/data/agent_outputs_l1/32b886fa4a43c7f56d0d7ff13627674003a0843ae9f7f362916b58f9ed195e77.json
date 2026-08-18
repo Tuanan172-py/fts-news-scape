@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "32b886fa4a43c7f56d0d7ff13627674003a0843ae9f7f362916b58f9ed195e77",
+ "title": "Tuần 17-21/08/2026: 10 cổ phiếu nóng dưới góc nhìn PTKT của Vietstock",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:28+07:00"
+ }
+}

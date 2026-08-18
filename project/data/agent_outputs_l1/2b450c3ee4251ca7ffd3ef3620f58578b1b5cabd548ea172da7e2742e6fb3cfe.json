@@ -1,0 +1,34 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "2b450c3ee4251ca7ffd3ef3620f58578b1b5cabd548ea172da7e2742e6fb3cfe",
+ "title": "Sân vận động lớn nhất thế giới của Vingroup tham vọng đáp ứng các sự kiện hàng đầu thế giới như Olympic, FIFA World Cup",
+ "recognized": true,
+ "entities": [
+  {
+   "surface": "Vingroup",
+   "entity_id": "TICKER:VIC",
+   "type": "TICKER",
+   "method": "alias",
+   "in_list": true,
+   "confidence": 0.85
+  }
+ ],
+ "categories": {
+  "ticker_company": "done",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [
+  {
+   "source_span": "Sân vận động lớn nhất thế giới của Vingroup tham vọng đáp ứng các sự kiện hàng đầu thế giới như Olympic, FIFA World Cup"
+  }
+ ],
+ "confidence": 0.85,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:28+07:00"
+ }
+}

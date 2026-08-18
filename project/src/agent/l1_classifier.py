@@ -20,7 +20,7 @@ from src.agent.entities import EntityRegistry, load_registry
 L1_SCHEMA_VERSION = "1.0"
 
 _SECURITY = {"TICKER", "ETF", "SECURITY_OTHER"}
-_INDUSTRY = {"INDUSTRY_GICS1", "INDUSTRY_GICS2", "INDUSTRY_GICS3", "SECTOR_FPA"}
+_INDUSTRY = {"INDUSTRY_GICS1", "INDUSTRY_GICS2", "INDUSTRY_GICS3"}
 _MARKET = {"INDEX", "EXCHANGE"}
 
 
@@ -42,7 +42,7 @@ def classify_title(title: str, reg: EntityRegistry | None = None) -> dict:
     ids = [d["entity_id"] for d in dets]
     types = sorted({d["type"] for d in dets})
 
-    # ngành: khớp trực tiếp (INDUSTRY_*/SECTOR_FPA) + suy ra từ GICS của mã đã khớp
+    # ngành: khớp trực tiếp (INDUSTRY_GICS*) + suy ra từ GICS của mã đã khớp
     industries: set[str] = set()
     for d in dets:
         if d["type"] in _INDUSTRY:

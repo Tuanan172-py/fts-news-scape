@@ -1,0 +1,34 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "9578e821011a41a63d860fc439a5f48ca7906de5fe29bfd07f66d13f47971c30",
+ "title": "Doanh thu MWG vượt 111 ngàn tỷ sau 7 tháng, tăng trưởng 29%",
+ "recognized": true,
+ "entities": [
+  {
+   "surface": "MWG",
+   "entity_id": "TICKER:MWG",
+   "type": "TICKER",
+   "method": "exact_code",
+   "in_list": true,
+   "confidence": 0.85
+  }
+ ],
+ "categories": {
+  "ticker_company": "done",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [
+  {
+   "source_span": "Doanh thu MWG vượt 111 ngàn tỷ sau 7 tháng, tăng trưởng 29%"
+  }
+ ],
+ "confidence": 0.85,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:28+07:00"
+ }
+}

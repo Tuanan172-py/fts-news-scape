@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "b58567d3ff7276526a82a55f05f4f08fb11aae5b90a1fe0cec4568d132343f2e",
+ "title": "Xuất khẩu sang Hà Lan phải vượt ''rào cản xanh'' để giữ vững vị thế",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:29+07:00"
+ }
+}

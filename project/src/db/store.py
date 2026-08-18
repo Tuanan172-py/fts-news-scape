@@ -155,6 +155,36 @@ CREATE TABLE IF NOT EXISTS pipeline_state (
   value TEXT,
   updated_at TEXT
 );
+-- L1 entity-recognition (lớp 1 handoff) — code-first + trạng thái audit của agent.
+-- 1 hàng / article. status = trạng thái tra soát của agent (pending → done/failed).
+CREATE TABLE IF NOT EXISTS l1_tasks (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  article_id TEXT NOT NULL UNIQUE,
+  domain TEXT,
+  title TEXT,
+  code_first_json TEXT,          -- kết quả code-first (entities/industries/relevance)
+  route TEXT,                    -- resolved | needs_agent
+  packet_path TEXT,
+  status TEXT NOT NULL DEFAULT 'pending',   -- pending|done|failed
+  enqueued_at TEXT,
+  done_at TEXT,
+  error TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_l1_tasks_status ON l1_tasks(status, enqueued_at);
+-- Output tra soát của agent L1 (l1-entity-output-v1) sau khi qua DoD.
+CREATE TABLE IF NOT EXISTS l1_outputs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  article_id TEXT NOT NULL UNIQUE,
+  output_json TEXT NOT NULL,
+  recognized INTEGER,
+  agent_provider TEXT,
+  model_used TEXT,
+  confidence REAL,
+  dod_pass INTEGER DEFAULT 0,
+  dod_reasons TEXT,
+  created_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_l1_outputs_dod ON l1_outputs(dod_pass, created_at);
 """
 
 
@@ -295,6 +325,69 @@ class ArticleStore:
                 (row.get("article_id"), row.get("raw_sha256")),
             ).fetchone()
             return r["id"] if r else -1
+        finally:
+            conn.close()
+
+    # -- L1 entity-recognition store (lớp 1 handoff) --------------------------
+    def upsert_l1_task(self, row: dict) -> None:
+        """Ghi/nhật kết quả code-first cho 1 article; GIỮ nguyên status nếu đã có."""
+        conn = self._connect()
+        try:
+            conn.execute(
+                "INSERT INTO l1_tasks (article_id, domain, title, code_first_json, "
+                "route, packet_path, status, enqueued_at) "
+                "VALUES (:article_id,:domain,:title,:code_first_json,:route,:packet_path,"
+                "'pending',:enqueued_at) "
+                "ON CONFLICT(article_id) DO UPDATE SET "
+                "domain=excluded.domain, title=excluded.title, "
+                "code_first_json=excluded.code_first_json, route=excluded.route, "
+                "packet_path=excluded.packet_path",
+                {k: row.get(k) for k in
+                 ("article_id", "domain", "title", "code_first_json", "route",
+                  "packet_path", "enqueued_at")},
+            )
+            conn.commit()
+        finally:
+            conn.close()
+
+    def get_l1_task(self, article_id: str) -> dict | None:
+        conn = self._connect()
+        try:
+            r = conn.execute("SELECT * FROM l1_tasks WHERE article_id=?", (article_id,)).fetchone()
+            return dict(r) if r else None
+        finally:
+            conn.close()
+
+    def set_l1_status(self, article_id: str, status: str, *, done_at: str | None = None,
+                      error: str | None = None) -> None:
+        conn = self._connect()
+        try:
+            conn.execute(
+                "UPDATE l1_tasks SET status=?, done_at=?, error=? WHERE article_id=?",
+                (status, done_at, error, article_id))
+            conn.commit()
+        finally:
+            conn.close()
+
+    def insert_l1_output(self, row: dict) -> None:
+        """Upsert output tra soát agent L1 theo UNIQUE(article_id)."""
+        cols = ("article_id", "output_json", "recognized", "agent_provider",
+                "model_used", "confidence", "dod_pass", "dod_reasons", "created_at")
+        conn = self._connect()
+        try:
+            conn.execute(
+                f"INSERT OR REPLACE INTO l1_outputs ({', '.join(cols)}) "
+                f"VALUES ({', '.join('?' for _ in cols)})",
+                tuple(row.get(c) for c in cols))
+            conn.commit()
+        finally:
+            conn.close()
+
+    def get_l1_output(self, article_id: str) -> dict | None:
+        conn = self._connect()
+        try:
+            r = conn.execute("SELECT * FROM l1_outputs WHERE article_id=?", (article_id,)).fetchone()
+            return dict(r) if r else None
         finally:
             conn.close()
 

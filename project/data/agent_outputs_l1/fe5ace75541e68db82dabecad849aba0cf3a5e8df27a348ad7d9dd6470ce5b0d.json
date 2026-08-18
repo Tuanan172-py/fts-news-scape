@@ -1,0 +1,34 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "fe5ace75541e68db82dabecad849aba0cf3a5e8df27a348ad7d9dd6470ce5b0d",
+ "title": "Chủ tịch Thế Giới Di Động “gom” thành công 1 triệu cổ phiếu MWG",
+ "recognized": true,
+ "entities": [
+  {
+   "surface": "MWG",
+   "entity_id": "TICKER:MWG",
+   "type": "TICKER",
+   "method": "exact_code",
+   "in_list": true,
+   "confidence": 0.85
+  }
+ ],
+ "categories": {
+  "ticker_company": "done",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [
+  {
+   "source_span": "Chủ tịch Thế Giới Di Động “gom” thành công 1 triệu cổ phiếu MWG"
+  }
+ ],
+ "confidence": 0.85,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:29+07:00"
+ }
+}

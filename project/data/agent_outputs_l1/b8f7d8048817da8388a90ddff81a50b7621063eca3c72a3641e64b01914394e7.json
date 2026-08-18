@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "b8f7d8048817da8388a90ddff81a50b7621063eca3c72a3641e64b01914394e7",
+ "title": "Đề xuất tích hợp 4 chương trình mục tiêu quốc gia thành chương trình với hơn 800.000 tỷ đồng",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:29+07:00"
+ }
+}

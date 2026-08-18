@@ -1,0 +1,34 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "333dde912966c8bef4f4f59fc782903e64f025673ee1aab3ac28c3b15cd953ef",
+ "title": "Xu thế dòng tiền: Nhịp hồi kỹ thuật kết thúc, VN-Index có nguy cơ “thủng đáy” tháng 7?",
+ "recognized": true,
+ "entities": [
+  {
+   "surface": "VN-Index",
+   "entity_id": "INDEX:VNINDEX",
+   "type": "INDEX",
+   "method": "alias",
+   "in_list": true,
+   "confidence": 0.85
+  }
+ ],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "done",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [
+  {
+   "source_span": "Xu thế dòng tiền: Nhịp hồi kỹ thuật kết thúc, VN-Index có nguy cơ “thủng đáy” tháng 7?"
+  }
+ ],
+ "confidence": 0.85,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:28+07:00"
+ }
+}

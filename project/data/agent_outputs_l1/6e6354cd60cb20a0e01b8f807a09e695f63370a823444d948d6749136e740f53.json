@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "6e6354cd60cb20a0e01b8f807a09e695f63370a823444d948d6749136e740f53",
+ "title": "Hãng chip CXMT trở thành công ty niêm yết đắt giá nhất Trung Quốc",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:28+07:00"
+ }
+}

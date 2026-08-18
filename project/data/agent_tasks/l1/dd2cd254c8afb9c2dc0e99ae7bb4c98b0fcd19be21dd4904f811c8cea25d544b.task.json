@@ -1,0 +1,56 @@
+{
+  "packet_version": "1.0",
+  "layer": "L1_ENTITY_RECOGNITION",
+  "task": "recognize_and_audit",
+  "article_id": "dd2cd254c8afb9c2dc0e99ae7bb4c98b0fcd19be21dd4904f811c8cea25d544b",
+  "domain": "vietstock.vn",
+  "input": {
+    "title": "ĐHĐCĐ DGC: Miễn nhiệm dàn lãnh đạo bị khởi tố",
+    "entity_catalog_ref": {
+      "entities": "data/entities/entities.json",
+      "taxonomy": "data/entities/taxonomy.json"
+    },
+    "code_first": {
+      "route": "resolved",
+      "relevance": "entity",
+      "entities": [
+        {
+          "entity_id": "TICKER:DGC",
+          "type": "TICKER",
+          "code": "DGC",
+          "canonical_name": "CTCP Tập đoàn Hóa chất Đức Giang",
+          "via": "code"
+        }
+      ],
+      "entity_ids": [
+        "TICKER:DGC"
+      ],
+      "industries": [
+        "Hóa chất",
+        "Nguyên vật liệu"
+      ]
+    }
+  },
+  "output_contract": {
+    "schema_name": "l1-entity-output-v1",
+    "schema_path": "schemas/l1-entity-output-v1.schema.json",
+    "checklist_categories": [
+      "ticker_company",
+      "etf_fund",
+      "index",
+      "exchange",
+      "industry_sector"
+    ]
+  },
+  "constraints": {
+    "confidence_min": 0.6,
+    "surface_must_be_substring_of": "input.title",
+    "citation_must_be_substring_of": "input.title",
+    "recognized_true_requires": [
+      "entities>=1",
+      "citations>=1"
+    ],
+    "audit_duty": "xác nhận entity code-first, sửa nếu sai, bổ sung nếu thiếu"
+  },
+  "instructions_ref": "schemas/l1-entity-instructions-v1.md"
+}

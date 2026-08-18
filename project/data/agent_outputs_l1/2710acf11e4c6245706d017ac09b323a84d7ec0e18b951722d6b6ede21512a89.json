@@ -1,0 +1,42 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "2710acf11e4c6245706d017ac09b323a84d7ec0e18b951722d6b6ede21512a89",
+ "title": "Không biến hoạt động đại lý ngân hàng thành “giấy chứng nhận an toàn” cho trái phiếu",
+ "recognized": true,
+ "entities": [
+  {
+   "surface": "ngân hàng",
+   "entity_id": "IND_GICS2:NGAN_HANG",
+   "type": "INDUSTRY_GICS2",
+   "method": "alias",
+   "in_list": true,
+   "confidence": 0.85
+  },
+  {
+   "surface": "giấy",
+   "entity_id": "IND_GICS3:GIAY",
+   "type": "INDUSTRY_GICS3",
+   "method": "alias",
+   "in_list": true,
+   "confidence": 0.85
+  }
+ ],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "done"
+ },
+ "citations": [
+  {
+   "source_span": "Không biến hoạt động đại lý ngân hàng thành “giấy chứng nhận an toàn” cho trái phiếu"
+  }
+ ],
+ "confidence": 0.85,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:28+07:00"
+ }
+}

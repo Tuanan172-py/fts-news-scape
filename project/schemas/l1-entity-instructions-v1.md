@@ -4,16 +4,20 @@ Trạng thái: SPEC/GUIDELINE (không kèm LLM). Đây là **system prompt + che
 BẤT KỲ agent provider nào nhận handoff L1. Runtime chỉ validate output (`l1-entity-output-v1`)
 + chấm DoD; không quy định cách bạn prompt.
 
-Bối cảnh: bước **code-first** (khớp mã + alias) đã chạy trước và KHÔNG khớp được thực thể
-nào cho tiêu đề này (`needs_agent=true`). Nhiệm vụ của bạn: nhận diện thực thể mà code bỏ sót
-(viết tắt, thương hiệu, sai/thiếu dấu, cách gọi khác, hoặc thực thể NGOÀI danh sách).
+Bối cảnh: bước **code-first** (khớp mã + alias) đã chạy trước và gắn sẵn kết quả trong
+`input.code_first`. Nhiệm vụ của bạn = **NHẬN DIỆN + TRA SOÁT**:
+1. **Xác nhận** các entity code-first đã tìm (đúng thì giữ, sai thì bỏ/sửa).
+2. **Bổ sung** entity mà code BỎ SÓT: viết tắt, thương hiệu, sai/thiếu dấu, cách gọi khác.
+3. Đánh dấu entity NGOÀI danh sách (`in_list=false` + `unlisted_candidates`).
+Bạn có **quyền tra soát** kể cả khi code đã khớp (route=`resolved`).
 
 ## 0. Đầu vào (task-packet)
 `data/agent_tasks/l1/<article_id>.task.json` gồm:
 - `input.title` — TIÊU ĐỀ cần nhận diện (CHỈ xử lý tiêu đề, KHÔNG có body).
 - `input.entity_catalog_ref` — trỏ `data/entities/entities.json` (danh sách thực thể chuẩn) +
   `data/entities/taxonomy.json` (các loại + cây ngành). Dùng để ánh xạ & lấy `entity_id`.
-- `input.code_first` — kết quả bước code (rỗng — vì thế mới handoff).
+- `input.code_first` — **kết quả code-first để TRA SOÁT** (`entities`, `entity_ids`,
+  `industries`, `route`). Xác nhận/sửa/bổ sung dựa trên đây.
 - `output_contract` = `l1-entity-output-v1` + checklist bắt buộc.
 
 ## 1. SYSTEM PROMPT (dán khi kích hoạt agent)
@@ -25,7 +29,8 @@ nào cho tiêu đề này (`needs_agent=true`). Nhiệm vụ của bạn: nhận
 > của tiêu đề. Tự chấm `categories` theo checklist. Trả JSON đúng `l1-entity-output-v1`.
 
 ## 2. Quy trình bắt buộc (thứ tự)
-1. Đọc `title`. Liệt kê ứng viên thực thể (surface = chuỗi con nguyên văn).
+0. Đọc `input.code_first`: xác nhận entity đúng, loại entity sai. (TRA SOÁT)
+1. Đọc `title`. Liệt kê ứng viên thực thể (surface = chuỗi con nguyên văn), gồm cả cái code bỏ sót.
 2. Ánh xạ từng ứng viên vào `entities.json`:
    - khớp mã in hoa → `method="exact_code"`; khớp tên/alias → `method="alias"`;
    - nhận ra bằng suy luận (thương hiệu, viết tắt) → `method="semantic"`.

@@ -1,0 +1,77 @@
+{
+  "packet_version": "1.0",
+  "layer": "L1_ENTITY_RECOGNITION",
+  "task": "recognize_and_audit",
+  "article_id": "f6baa563416cfac55d8e754055abbc242baf0d97dfea3f19cde1e2956affb546",
+  "domain": "vietstock.vn",
+  "input": {
+    "title": "MWG, TNG và LCG có gì hấp dẫn?",
+    "entity_catalog_ref": {
+      "entities": "data/entities/entities.json",
+      "taxonomy": "data/entities/taxonomy.json"
+    },
+    "code_first": {
+      "route": "resolved",
+      "relevance": "entity",
+      "entities": [
+        {
+          "entity_id": "TICKER:MWG",
+          "type": "TICKER",
+          "code": "MWG",
+          "canonical_name": "CTCP Đầu tư Thế giới Di động",
+          "via": "code"
+        },
+        {
+          "entity_id": "TICKER:TNG",
+          "type": "TICKER",
+          "code": "TNG",
+          "canonical_name": "CTCP Đầu tư và Thương mại TNG",
+          "via": "code"
+        },
+        {
+          "entity_id": "TICKER:LCG",
+          "type": "TICKER",
+          "code": "LCG",
+          "canonical_name": "CTCP Lizen",
+          "via": "code"
+        }
+      ],
+      "entity_ids": [
+        "TICKER:MWG",
+        "TICKER:TNG",
+        "TICKER:LCG"
+      ],
+      "industries": [
+        "Bán lẻ",
+        "Công nghiệp",
+        "Dệt may & Trang phục, phụ kiện",
+        "Hàng tiêu dùng không thiết yếu",
+        "Hàng tiêu dùng lâu bền và trang phục",
+        "Tư liệu sản xuất",
+        "Xây dựng"
+      ]
+    }
+  },
+  "output_contract": {
+    "schema_name": "l1-entity-output-v1",
+    "schema_path": "schemas/l1-entity-output-v1.schema.json",
+    "checklist_categories": [
+      "ticker_company",
+      "etf_fund",
+      "index",
+      "exchange",
+      "industry_sector"
+    ]
+  },
+  "constraints": {
+    "confidence_min": 0.6,
+    "surface_must_be_substring_of": "input.title",
+    "citation_must_be_substring_of": "input.title",
+    "recognized_true_requires": [
+      "entities>=1",
+      "citations>=1"
+    ],
+    "audit_duty": "xác nhận entity code-first, sửa nếu sai, bổ sung nếu thiếu"
+  },
+  "instructions_ref": "schemas/l1-entity-instructions-v1.md"
+}

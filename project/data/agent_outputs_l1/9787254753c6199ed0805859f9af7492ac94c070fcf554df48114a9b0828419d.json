@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "9787254753c6199ed0805859f9af7492ac94c070fcf554df48114a9b0828419d",
+ "title": "Lãnh đạo mua bán cổ phiếu: Loạt thương vụ đáng chú ý",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:28+07:00"
+ }
+}

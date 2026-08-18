@@ -1,17 +1,16 @@
 """
-l1_route.py — Chạy quy trình L1 2 tầng trên kho silver.
+l1_route.py — TẦNG DETERMINISTIC của lớp L1 (code-first) + phát task-packet handoff.
 
-  Tầng 1 (code-first): khớp mã+alias. Khớp được → ghi 'resolved'.
-  Tầng 2 (handoff)   : không khớp → build task-packet cho agent L1.
+Với mỗi work-package (hoặc silver): chạy code-first (khớp mã+alias) → lưu vào DB
+(l1_tasks) → phát task-packet cho agent tra soát (data/agent_tasks/l1/<id>.task.json).
 
-Đầu ra:
-  - data/agent_tasks/l1/resolved.jsonl        (tin code-first đã nhận diện, tag thẳng)
-  - data/agent_tasks/l1/<article_id>.task.json (mỗi tin cần agent nhận diện)
-  - in bảng tóm tắt split resolved/needs_agent.
+Đây là phần CODE làm hết; việc còn lại là cron kích hoạt agent xử lý các packet,
+rồi nạp kết quả bằng scripts/l1_ingest.py.
 
-Chạy:
+Nguồn (ưu tiên work_packages — output pipeline; fallback silver):
   python scripts/l1_route.py
-  python scripts/l1_route.py --silver data/silver --out data/agent_tasks/l1
+  python scripts/l1_route.py --source data/work_packages --review all
+  python scripts/l1_route.py --review missed          # chỉ phát packet tin code không khớp
 """
 from __future__ import annotations
 
@@ -24,54 +23,56 @@ from collections import Counter
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.agent.entities import load_registry            # noqa: E402
-from src.agent.l1_router import (                        # noqa: E402
-    build_l1_task_packet, route_article, write_l1_packet,
-)
+from src.agent.l1_runner import L1Runner              # noqa: E402
+from src.core.config import load_settings             # noqa: E402
+from src.core.stdio import force_utf8_stdio           # noqa: E402
+from src.db.store import ArticleStore                 # noqa: E402
+
+force_utf8_stdio()
+
+
+def _iter_sources(source: str):
+    pats = [os.path.join(source, "*", "*", "*.json")]
+    files = sorted(f for p in pats for f in glob.glob(p))
+    if not files and source != "data/silver":
+        files = sorted(glob.glob(os.path.join("data/silver", "*", "*", "*.json")))
+    return files
 
 
 def main(argv=None) -> int:
-    if hasattr(sys.stdout, "reconfigure"):
-        sys.stdout.reconfigure(encoding="utf-8")
     ap = argparse.ArgumentParser()
-    ap.add_argument("--silver", default="data/silver")
-    ap.add_argument("--out", default="data/agent_tasks/l1")
+    ap.add_argument("--source", default="data/work_packages")
+    ap.add_argument("--review", choices=["all", "missed"], default="all")
     args = ap.parse_args(argv)
 
-    reg = load_registry()
-    os.makedirs(args.out, exist_ok=True)
-    resolved_path = os.path.join(args.out, "resolved.jsonl")
+    db_path = load_settings().get("database", {}).get("path", "data/monocle.db")
+    runner = L1Runner(ArticleStore(db_path=db_path))
 
     n = 0
     route_ctr, rel_ctr = Counter(), Counter()
     seen: set[str] = set()
+    for f in _iter_sources(args.source):
+        try:
+            art = json.load(open(f, encoding="utf-8"))
+        except Exception:
+            continue
+        aid = art.get("article_id")
+        if not aid or aid in seen:
+            continue
+        seen.add(aid)
+        rec = runner.route_and_export(art, review=args.review)
+        n += 1
+        route_ctr[rec["route"]] += 1
+        rel_ctr[rec["relevance"]] += 1
 
-    with open(resolved_path, "w", encoding="utf-8") as fres:
-        for f in glob.glob(os.path.join(args.silver, "*", "*", "*.json")):
-            try:
-                art = json.load(open(f, encoding="utf-8"))
-            except Exception:
-                continue
-            aid = art.get("article_id")
-            if aid in seen:
-                continue
-            seen.add(aid)
-            rec = route_article(art, reg)
-            n += 1
-            route_ctr[rec["route"]] += 1
-            rel_ctr[rec["relevance"]] += 1
-            if rec["route"] == "resolved":
-                fres.write(json.dumps(rec, ensure_ascii=False) + "\n")
-            else:
-                pkt = build_l1_task_packet(art, rec)
-                write_l1_packet(pkt, args.out)
-
-    print(f"== L1 route {n} tin ==")
-    print(f"resolved (code-first): {route_ctr['resolved']}  -> {resolved_path}")
-    print(f"needs_agent (handoff): {route_ctr['needs_agent']}  -> {args.out}/<id>.task.json")
+    print(f"== L1 route {n} tin (review={args.review}) ==")
+    print(f"resolved (code-first khớp): {route_ctr['resolved']}")
+    print(f"needs_agent (code không khớp): {route_ctr['needs_agent']}")
     print("relevance:", dict(rel_ctr))
+    print(f"packets  -> data/agent_tasks/l1/<article_id>.task.json")
+    print(f"trạng thái + code-first  -> DB l1_tasks (chờ agent tra soát → l1_ingest.py)")
     return 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(main(sys.argv[1:]))

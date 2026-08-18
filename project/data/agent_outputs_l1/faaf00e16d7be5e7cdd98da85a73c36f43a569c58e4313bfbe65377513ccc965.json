@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "faaf00e16d7be5e7cdd98da85a73c36f43a569c58e4313bfbe65377513ccc965",
+ "title": "Vietbank chuẩn bị chào bán hơn 296 triệu cp, nâng vốn điều lệ lên 14,807 tỷ",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:29+07:00"
+ }
+}

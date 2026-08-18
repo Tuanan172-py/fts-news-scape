@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "eea2101823088ca143f420d4f2dcc7cd44dca129fb33d66f40427d868a92e0ff",
+ "title": "Dấu ấn kinh tế thế giới tuần 8-15/8/2026: Eo biển Hormuz vẫn đóng, kỳ vọng lãi suất Fed dịch chuyển",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:29+07:00"
+ }
+}

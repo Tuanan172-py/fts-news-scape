@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "d3933450ac1b91918c06201bfc59d57c15adf83fffaab57c779c9a81fc40d576",
+ "title": "Tuấn Anh Group chào sàn HNX: Hành trình 35 năm và mục tiêu bứt phá hậu niêm yết",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:29+07:00"
+ }
+}

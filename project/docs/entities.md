@@ -5,10 +5,10 @@ Người dùng chỉ cần *config nhóm đối tượng* → agent trả về t
 
 - Sinh dữ liệu: `scripts/build_entities.py`
 - Dữ liệu ra: `data/entities/` (`entities.json`, `entities.csv`, `entities.xlsx`, `taxonomy.json`, `stats.json`)
-- `entities.xlsx`: workbook đa sheet (`_Index`, `Securities`, `Industries`, `Sectors_FPA`,
-  `Indices`, `Exchanges`) — mỗi sheet đồng nhất cột, freeze header + AutoFilter.
-  Bảng phẳng toàn cục để filter: dùng `entities.csv`.
-- Config nhóm: `config/entities/entity_groups.yaml`
+- `entities.xlsx`: workbook đa sheet (`_Huong_dan`, `_Index`, `Securities`, `Industries`,
+  `Indices`, `Exchanges`) — mỗi sheet đồng nhất cột, freeze header + AutoFilter. **Người dùng
+  cuối đăng ký bằng giá trị CỘT `code`** (sheet `_Huong_dan` hướng dẫn). Bảng phẳng: `entities.csv`.
+- Đăng ký người dùng: `config/entities/users/<tên>.yaml` (mỗi người 1 file)
 - Resolver/matcher: `src/agent/entities.py`
 
 ## Nguồn dữ liệu gốc (`FRA - Data/`)
@@ -20,7 +20,6 @@ Người dùng chỉ cần *config nhóm đối tượng* → agent trả về t
 | Tên doanh nghiệp | `company_data/company_name.xlsx` | tên chính thức + alias |
 | Quỹ ETF | `company_data/etf_name.xlsx` | ETF |
 | Ngành | `industry_classification/industry_classification.xlsx` | GICS 3 cấp |
-| Nhóm ngành FPA | `APD_Data_Industry/data/<sector>/` | nhóm ngành phân tích |
 
 Sàn (HOSE/HNX/UPCOM) là tập tĩnh suy ra từ chỉ số (dữ liệu gốc không có cột sàn/mã).
 
@@ -34,8 +33,7 @@ Sàn (HOSE/HNX/UPCOM) là tập tĩnh suy ra từ chỉ số (dữ liệu gốc 
 | `INDEX` | Chỉ số thị trường | 6 |
 | `EXCHANGE` | Sàn giao dịch | 3 |
 | `INDUSTRY_GICS1/2/3` | Ngành GICS 3 cấp | 11 / 28 / 51 |
-| `SECTOR_FPA` | Nhóm ngành phân tích FPA | 16 |
-| **Tổng** | | **2135** |
+| **Tổng** | | **2119** |
 
 ## Schema mỗi thực thể
 
@@ -65,29 +63,42 @@ Sàn (HOSE/HNX/UPCOM) là tập tĩnh suy ra từ chỉ số (dữ liệu gốc 
 
 ## Alias (nhận diện trong tin tức)
 
-`aliases` = `[tên đầy đủ, tên rút gọn]`. Tên rút gọn cắt tiền tố pháp lý
-(`CTCP`, `Ngân hàng TMCP`, `Tổng Công ty`, `Tập đoàn`, `Quỹ ETF`…):
-`"CTCP Tập đoàn Hòa Phát"` → `"Hòa Phát"`. Matcher so khớp không phân biệt hoa/thường & dấu.
+`aliases` gồm: tên đầy đủ → tên rút gọn (cắt tiền tố + đuôi pháp lý: `CTCP`, `Ngân hàng TMCP`,
+`Tổng Công ty`, `Tập đoàn`, `- CTCP`…) → thương hiệu trong ngoặc (`(CHOLIMEX)`) → **alias
+thương hiệu bổ sung tay** (`config/entities/brand_aliases.yaml`: `Vietcombank`, `BIDV`,
+`Vingroup`, `Vietjet`…). Ví dụ: `"Tập đoàn VINGROUP - CTCP"` → `["…","VINGROUP","Vingroup"]`.
+Matcher so khớp không phân biệt hoa/thường & dấu; alias ≥4 ký tự mới được index.
 
-## Config nhóm đối tượng (`entity_groups.yaml`) — BƯỚC SAU (đăng ký), tách khỏi L1
+## Đăng ký người dùng (`config/entities/users/<tên>.yaml`) — BƯỚC SAU (thông báo)
 
-> Đây là lớp ĐĂNG KÝ/THÔNG BÁO, **độc lập** với L1. L1 chỉ nhận diện entity thô; việc gom
-> entity → nhóm người dùng quan tâm là bước sau khi có đăng ký thật. `fta`/`co_ban`/`watch_bluechip`
-> hiện chỉ là **ví dụ khung**, chưa phải nhóm thật.
+> Lớp ĐĂNG KÝ/THÔNG BÁO, **độc lập** với L1. Mỗi người dùng = 1 file, chỉ **liệt kê entity
+> quan tâm theo từng nhóm** (không kèm metadata). Tên file = tên người dùng.
 
-Người dùng khai báo nhóm bằng cách cộng dồn (union) các luật chọn:
-`include_types`, `include_gics1`, `include_sectors`, `include_entities`, `exclude_entities`.
-Ánh xạ entity→nhóm: `registry.groups_for(entity_ids)`.
+**Quy chuẩn: mọi giá trị lấy từ CỘT `code` trong `entities.xlsx`.**
 
-## Sử dụng (L3 agent)
+```yaml
+# config/entities/users/AnPT.yaml
+tickers:    [HPG, FPT, VCB, VNM, MWG]      # code cổ phiếu/ETF -> TICKER/ETF/…:<code>
+etfs:       [E1VFVN30]                      # code quỹ ETF      -> ETF:<code>
+indices:    [VNINDEX, VN30]                 # code chỉ số       -> INDEX:<code>
+exchanges:  [HOSE]                          # code sàn          -> EXCHANGE:<code>
+industries: [THEP, NGAN_HANG]              # code ngành GICS   -> INDUSTRY_GICS*:<code>
+entities:   [TICKER:HPG]                    # (tuỳ chọn) entity_id nguyên bản — cửa thoát
+```
+
+Loader đọc mọi file trong `users/`, ánh xạ mỗi nhóm → `entity_id` (industries nhận **code**
+ngành GICS như THEP/NGAN_HANG, KHÔNG theo tên; báo `subscription_warnings` nếu sai). Ánh xạ tin→người đăng ký:
+`registry.subscribers_for(entity_ids)`.
+
+## Sử dụng
 
 ```python
 from src.agent.entities import load_registry
 reg = load_registry()
 
-reg.resolve_group("co_ban")            # -> set entity_id thuộc nhóm
-reg.match(news_text, group="co_ban")   # -> list thực thể nhận diện, đã lọc theo nhóm
-reg.match(news_text)                   # -> nhận diện toàn bộ (mọi loại)
+reg.resolve_subscription("AnPT")          # -> set entity_id AnPT đăng ký
+reg.subscribers_for(article_entity_ids)   # -> {tên người dùng} cần thông báo
+reg.match(news_text)                      # -> nhận diện thực thể trong text (mọi loại)
 ```
 
 ## Chạy lại khi dữ liệu gốc đổi
@@ -104,49 +115,61 @@ Nhiệm vụ L1: mỗi tin nhận về → nhận diện thực thể trong **ti
 Quy trình **code-first → handoff** (KHÔNG phụ thuộc nhóm đăng ký; map nhóm là bước sau).
 
 ```
-title ─► TẦNG 1  code-first  (src/agent/l1_classifier.detect)  khớp mã + alias
-          │  khớp ≥1 entity ─► RESOLVED (tag thẳng: entities + industries suy từ GICS)
-          └─ không khớp     ─► NEEDS_AGENT
-                                └─► TẦNG 2  handoff (src/agent/l1_router)
-                                     build task-packet ─► [AGENT L1] ─► l1-entity-output-v1
-                                        ─► check_l1_dod (schema + grounding + checklist)
+work_package/silver ─► scripts/l1_route.py (L1Runner)
+   TẦNG 1 code-first (l1_classifier)  khớp mã + alias → suy ngành từ GICS
+      ├─ resolved  (khớp ≥1 entity)
+      └─ needs_agent (code không khớp)
+   → lưu DB l1_tasks (code_first + route + status=pending)
+   → phát task-packet data/agent_tasks/l1/<id>.task.json  (nhúng code_first để AUDIT)
+        └─► [CRON kích hoạt AGENT của bạn — prompt theo l1-entity-instructions-v1.md]
+             → l1-entity-output-v1 (*.json)
+             → scripts/l1_ingest.py (L1Runner.ingest) → check_l1_dod
+                 → l1_outputs + l1_tasks.status = done/failed
 ```
 
 **Tầng 1 — code-first** (`l1_classifier.classify_article`): khớp mã (in hoa, trừ stoplist)
-+ alias tên (fold dấu); suy ngành từ GICS của mã. Output có `needs_agent` (True ⇔ không khớp).
++ alias tên (fold dấu); suy ngành từ GICS của mã. `needs_agent=True` ⇔ không khớp.
 
-**Tầng 2 — handoff cho agent** (`l1_router`):
-- `route_article()` → `route ∈ {resolved, needs_agent}`.
-- `build_l1_task_packet()` → gói self-describing (title + trỏ `entities.json`/`taxonomy.json`
-  + output_contract + checklist), ghi `data/agent_tasks/l1/<id>.task.json`.
+**Tầng 2 — handoff + AUDIT** (`l1_router` + `l1_runner`):
+- `route_and_export()` → lưu `l1_tasks` (code-first + route) + phát task-packet.
+  `--review all` (mặc định) phát packet cho MỌI tin để **agent có quyền tra soát** cả tin
+  resolved; `--review missed` chỉ phát cho `needs_agent`.
+- Packet self-describing: `input.title` + trỏ `entities.json`/`taxonomy.json` +
+  **`input.code_first`** (để agent xác nhận/sửa/bổ sung) + `output_contract` + checklist.
 - Agent đọc **system prompt + checklist**: `schemas/l1-entity-instructions-v1.md`.
-- Agent nộp output theo `schemas/l1-entity-output-v1.schema.json`; gác bằng
-  `check_l1_dod()` (schema + surface/citation ⊂ title + checklist `categories` nhất quán).
+- Ingest gác bằng `check_l1_dod()`: schema `l1-entity-output-v1` + surface/citation ⊂ title +
+  `categories` nhất quán → `l1_tasks.status = done/failed` (idempotent theo article_id).
 
 **Checklist agent** (`categories`, mỗi nhóm ∈ `done|none|out_of_list`):
 `ticker_company` · `etf_fund` · `index` · `exchange` · `industry_sector`
-→ biết nhóm nào **thực hiện được**, nhóm nào **không** (và `out_of_list` = cần bổ sung danh sách).
+→ biết nhóm nào **thực hiện được**, nhóm nào **không** (`out_of_list` = có nhắc nhưng ngoài
+danh sách → `unlisted_candidates`, tín hiệu cần bổ sung).
 
-**Chạy** (kho silver → split):
+**Chạy**:
 ```bash
-python scripts/l1_route.py
-# resolved (code-first) -> data/agent_tasks/l1/resolved.jsonl
-# needs_agent (handoff) -> data/agent_tasks/l1/<article_id>.task.json
+python scripts/l1_route.py                 # code-first + phát packet (DB l1_tasks)
+python scripts/l1_route.py --review missed # chỉ handoff tin code không khớp
+python scripts/l1_ingest.py data/agent_outputs_l1/   # nạp output agent → DoD → done/failed
 ```
 
-**Đo trên 153 silver**: code-first **resolved 86 / 153 (56%)**; **needs_agent 67** → handoff.
-Ví dụ handoff đúng: tiêu đề "...của **Vingroup**..." bị code bỏ sót (alias VIC là tên pháp lý
-đầy đủ, không phải thương hiệu "Vingroup") → chuyển agent nhận diện ngữ nghĩa. Đây cũng là
-lý do nên mở rộng alias thương hiệu (xem "Câu hỏi chưa giải quyết") để giảm tải agent.
+**Đo trên 153 silver (sau khi mở rộng alias thương hiệu)**: code-first **resolved 94 / 153
+(61%)**; **needs_agent 59** → handoff. Alias thương hiệu (`config/entities/brand_aliases.yaml`:
+Vingroup→VIC, Vietcombank→VCB, BIDV→BID, Vietjet→VJC…) giúp code khớp thêm, giảm tải agent.
 
 > `EXCHANGE` (sàn) là tín hiệu yếu (mọi trang hồ sơ DN đều có "(HOSE)") — instructions yêu cầu
 > agent KHÔNG chấm `exchange=done` cho phần "(HOSE)" trong tên trang hồ sơ.
+>
+> **Nối pipeline**: `l1_route.py` là bước deterministic, thêm vào cron/orchestrator ngay sau
+> khi build work_packages. Chỉ còn cron kích hoạt agent + `l1_ingest.py` là khép kín.
 
 ## Câu hỏi chưa giải quyết
 
 - **Sàn theo từng mã**: dữ liệu gốc không có cột sàn (HOSE/HNX/UPCOM) cho mỗi ticker;
   hiện chỉ có 3 thực thể sàn độc lập. Nếu cần gán sàn/mã → bổ sung nguồn listing.
-- **Alias mở rộng**: mới sinh tên đầy đủ + rút gọn. Có thể thêm tên tiếng Anh,
-  tên thương hiệu, viết tắt (vd "Vietcombank") nếu có nguồn.
+- **Alias thương hiệu**: đã thêm `brand_aliases.yaml` (~50 mã lớn). Mở rộng tiếp cho mid/small-cap
+  khi cần (agent L1 tạm thời bù phần code bỏ sót qua `unlisted_candidates`).
 - **11 mã `SECURITY_OTHER`** (quỹ đóng/trái phiếu như `APS12201`, `VFMVF1`) chưa gắn alias —
   xác nhận có cần đưa vào phạm vi nhận diện tin không.
+- **Đăng ký người dùng**: đã theo `config/entities/users/<tên>.yaml`; khi scale nhiều người
+  dùng động → chuyển sang bảng DB, giữ YAML làm nguồn cho nhóm ổn định. Nối `subscribers_for()`
+  vào notifier là bước tiếp.

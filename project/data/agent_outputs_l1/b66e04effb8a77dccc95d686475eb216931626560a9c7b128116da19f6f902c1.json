@@ -1,0 +1,34 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "b66e04effb8a77dccc95d686475eb216931626560a9c7b128116da19f6f902c1",
+ "title": "Cổ phiếu SSB của SeABank được lựa chọn vào rổ MSCI Frontier Markets Index",
+ "recognized": true,
+ "entities": [
+  {
+   "surface": "SSB",
+   "entity_id": "TICKER:SSB",
+   "type": "TICKER",
+   "method": "exact_code",
+   "in_list": true,
+   "confidence": 0.85
+  }
+ ],
+ "categories": {
+  "ticker_company": "done",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [
+  {
+   "source_span": "Cổ phiếu SSB của SeABank được lựa chọn vào rổ MSCI Frontier Markets Index"
+  }
+ ],
+ "confidence": 0.85,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:29+07:00"
+ }
+}

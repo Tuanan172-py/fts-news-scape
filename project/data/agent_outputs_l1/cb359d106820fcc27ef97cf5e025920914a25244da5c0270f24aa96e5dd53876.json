@@ -1,0 +1,42 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "cb359d106820fcc27ef97cf5e025920914a25244da5c0270f24aa96e5dd53876",
+ "title": "Công ty cổ phần Đầu tư Thế giới Di động (HOSE)",
+ "recognized": true,
+ "entities": [
+  {
+   "surface": "Đầu tư Thế giới Di động",
+   "entity_id": "TICKER:MWG",
+   "type": "TICKER",
+   "method": "alias",
+   "in_list": true,
+   "confidence": 0.85
+  },
+  {
+   "surface": "HOSE",
+   "entity_id": "EXCHANGE:HOSE",
+   "type": "EXCHANGE",
+   "method": "exact_code",
+   "in_list": true,
+   "confidence": 0.85
+  }
+ ],
+ "categories": {
+  "ticker_company": "done",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "done",
+  "industry_sector": "none"
+ },
+ "citations": [
+  {
+   "source_span": "Công ty cổ phần Đầu tư Thế giới Di động (HOSE)"
+  }
+ ],
+ "confidence": 0.85,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:29+07:00"
+ }
+}

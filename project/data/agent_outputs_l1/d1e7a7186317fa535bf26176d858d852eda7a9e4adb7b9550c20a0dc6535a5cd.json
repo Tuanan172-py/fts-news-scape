@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "d1e7a7186317fa535bf26176d858d852eda7a9e4adb7b9550c20a0dc6535a5cd",
+ "title": "Cá nhân bắt đáy mua ròng gần 1.300 tỷ đồng phiên cuối tuần",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:29+07:00"
+ }
+}

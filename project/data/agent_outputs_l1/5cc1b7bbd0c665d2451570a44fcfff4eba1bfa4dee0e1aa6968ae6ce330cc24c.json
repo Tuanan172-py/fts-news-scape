@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "5cc1b7bbd0c665d2451570a44fcfff4eba1bfa4dee0e1aa6968ae6ce330cc24c",
+ "title": "Chứng khoán Mỹ tăng 3 tuần liên tiếp, giá dầu tăng 5% cả tuần",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:28+07:00"
+ }
+}

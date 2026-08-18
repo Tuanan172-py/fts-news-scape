@@ -1,0 +1,34 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "663f9509ca713d15c2485dbaa6531f0e0b98585bbcd76efdfc8d34b7e78a8b55",
+ "title": "PMC chốt chi cổ tức tỷ lệ gần 20%",
+ "recognized": true,
+ "entities": [
+  {
+   "surface": "PMC",
+   "entity_id": "TICKER:PMC",
+   "type": "TICKER",
+   "method": "exact_code",
+   "in_list": true,
+   "confidence": 0.85
+  }
+ ],
+ "categories": {
+  "ticker_company": "done",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [
+  {
+   "source_span": "PMC chốt chi cổ tức tỷ lệ gần 20%"
+  }
+ ],
+ "confidence": 0.85,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:28+07:00"
+ }
+}

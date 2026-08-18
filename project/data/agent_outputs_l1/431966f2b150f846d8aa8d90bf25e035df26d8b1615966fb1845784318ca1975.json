@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "431966f2b150f846d8aa8d90bf25e035df26d8b1615966fb1845784318ca1975",
+ "title": "Nhịp đập Thị trường 17/08: Rung lắc quanh mốc 1,720 điểm",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:28+07:00"
+ }
+}

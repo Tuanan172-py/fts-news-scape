@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "a20d9b34b8289cc915d1ab5bb5e850abcb742caf37907f0a994fe0a50639e16d",
+ "title": "Các số liệu kinh tế Mỹ có thể tiếp tục chi phối giá vàng trong tuần này",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:29+07:00"
+ }
+}

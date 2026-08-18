@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "642ad2f5a0b9ab3aee11ce31b15fadfabab14a7a8e666a9e01dbded32986d612",
+ "title": "DeepSeek tung V4 Pro, tăng giá dịch vụ gấp 11 lần, tham vọng định giá 74 tỷ USD",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:28+07:00"
+ }
+}

@@ -1,0 +1,50 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "ab9eac9777311558c25c8adf1dc1b446252a4a109bbd2292d2980561e6945089",
+ "title": "Ngân hàng Thương mại cổ phần Quân đội (HOSE)",
+ "recognized": true,
+ "entities": [
+  {
+   "surface": "Quân đội",
+   "entity_id": "TICKER:MBB",
+   "type": "TICKER",
+   "method": "alias",
+   "in_list": true,
+   "confidence": 0.85
+  },
+  {
+   "surface": "HOSE",
+   "entity_id": "EXCHANGE:HOSE",
+   "type": "EXCHANGE",
+   "method": "exact_code",
+   "in_list": true,
+   "confidence": 0.85
+  },
+  {
+   "surface": "Ngân hàng",
+   "entity_id": "IND_GICS2:NGAN_HANG",
+   "type": "INDUSTRY_GICS2",
+   "method": "alias",
+   "in_list": true,
+   "confidence": 0.85
+  }
+ ],
+ "categories": {
+  "ticker_company": "done",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "done",
+  "industry_sector": "done"
+ },
+ "citations": [
+  {
+   "source_span": "Ngân hàng Thương mại cổ phần Quân đội (HOSE)"
+  }
+ ],
+ "confidence": 0.85,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:29+07:00"
+ }
+}

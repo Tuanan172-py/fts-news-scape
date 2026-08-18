@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "2373c964462493f089488473df030e1c52320e1a9ee29fd7d4f7b5193e2f96b3",
+ "title": "Dược Bình Định chốt chia cổ tức tỷ lệ 20% trước kỳ nghỉ lễ",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:28+07:00"
+ }
+}

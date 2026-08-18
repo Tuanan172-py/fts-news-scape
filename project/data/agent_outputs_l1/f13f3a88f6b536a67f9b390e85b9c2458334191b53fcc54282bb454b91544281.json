@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "f13f3a88f6b536a67f9b390e85b9c2458334191b53fcc54282bb454b91544281",
+ "title": "Vinataba nhận bao nhiêu từ việc di dời nhà máy khỏi “đất vàng” 235 Nguyễn Trãi?",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:29+07:00"
+ }
+}

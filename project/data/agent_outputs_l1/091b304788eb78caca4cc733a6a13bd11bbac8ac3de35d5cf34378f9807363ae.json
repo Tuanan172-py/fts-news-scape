@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "091b304788eb78caca4cc733a6a13bd11bbac8ac3de35d5cf34378f9807363ae",
+ "title": "Vì sao đồng Yên vẫn mất giá bất chấp màn can thiệp lịch sử của Mỹ và Nhật?",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:27+07:00"
+ }
+}

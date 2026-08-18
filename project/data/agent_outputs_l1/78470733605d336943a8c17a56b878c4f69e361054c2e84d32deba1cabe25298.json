@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "78470733605d336943a8c17a56b878c4f69e361054c2e84d32deba1cabe25298",
+ "title": "Sửa Luật Chứng khoán: Chính phủ sẽ quy định chi tiết về cơ chế thử nghiệm có kiểm soát",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:28+07:00"
+ }
+}

@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "411ccda93c21a85de3c2a2b5165c9f191a97b6831030896858687999f2d5881d",
+ "title": "Ai đang dẫn dắt làn sóng mua vàng mới?",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:28+07:00"
+ }
+}

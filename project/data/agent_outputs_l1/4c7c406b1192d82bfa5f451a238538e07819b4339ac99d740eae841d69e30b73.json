@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "4c7c406b1192d82bfa5f451a238538e07819b4339ac99d740eae841d69e30b73",
+ "title": "Vàng qua cơn chao đảo: 4 lực cản trong nửa cuối năm",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:28+07:00"
+ }
+}

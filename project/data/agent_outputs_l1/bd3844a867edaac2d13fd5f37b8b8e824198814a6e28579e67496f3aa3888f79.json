@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "bd3844a867edaac2d13fd5f37b8b8e824198814a6e28579e67496f3aa3888f79",
+ "title": "Phân tích kỹ thuật phiên chiều 17/08: Áp lực bán vẫn còn",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:29+07:00"
+ }
+}

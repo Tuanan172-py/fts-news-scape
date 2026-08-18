@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "7a8c8ef16951acbc8767e9f13db770686558e8d40407826d7369bf3999bbfdbd",
+ "title": "Cổ phiếu SpaceX trồi sụt thất thường, đe dọa toàn thị trường chứng khoán",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:28+07:00"
+ }
+}

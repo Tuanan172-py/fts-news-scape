@@ -1,0 +1,42 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "9968608169ad29f4f76c86479b9033490e539113400ef07cc5ceb7098a5c31b1",
+ "title": "ILB sắp chi hơn 54 tỷ cổ tức tiền mặt, Tân Cảng Sài Gòn nhận gần 28 tỷ",
+ "recognized": true,
+ "entities": [
+  {
+   "surface": "ILB",
+   "entity_id": "TICKER:ILB",
+   "type": "TICKER",
+   "method": "exact_code",
+   "in_list": true,
+   "confidence": 0.85
+  },
+  {
+   "surface": "Cảng Sài Gòn",
+   "entity_id": "TICKER:SGP",
+   "type": "TICKER",
+   "method": "alias",
+   "in_list": true,
+   "confidence": 0.85
+  }
+ ],
+ "categories": {
+  "ticker_company": "done",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [
+  {
+   "source_span": "ILB sắp chi hơn 54 tỷ cổ tức tiền mặt, Tân Cảng Sài Gòn nhận gần 28 tỷ"
+  }
+ ],
+ "confidence": 0.85,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:28+07:00"
+ }
+}

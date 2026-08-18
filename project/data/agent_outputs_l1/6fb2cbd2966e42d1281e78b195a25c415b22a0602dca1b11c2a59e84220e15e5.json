@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "6fb2cbd2966e42d1281e78b195a25c415b22a0602dca1b11c2a59e84220e15e5",
+ "title": "Hai công ty Bcons bị phạt do thi công dự án gây lún, nứt nhà dân",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:28+07:00"
+ }
+}

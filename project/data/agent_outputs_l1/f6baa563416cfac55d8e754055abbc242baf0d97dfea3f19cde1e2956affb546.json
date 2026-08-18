@@ -1,0 +1,50 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "f6baa563416cfac55d8e754055abbc242baf0d97dfea3f19cde1e2956affb546",
+ "title": "MWG, TNG và LCG có gì hấp dẫn?",
+ "recognized": true,
+ "entities": [
+  {
+   "surface": "MWG",
+   "entity_id": "TICKER:MWG",
+   "type": "TICKER",
+   "method": "exact_code",
+   "in_list": true,
+   "confidence": 0.85
+  },
+  {
+   "surface": "TNG",
+   "entity_id": "TICKER:TNG",
+   "type": "TICKER",
+   "method": "exact_code",
+   "in_list": true,
+   "confidence": 0.85
+  },
+  {
+   "surface": "LCG",
+   "entity_id": "TICKER:LCG",
+   "type": "TICKER",
+   "method": "exact_code",
+   "in_list": true,
+   "confidence": 0.85
+  }
+ ],
+ "categories": {
+  "ticker_company": "done",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [
+  {
+   "source_span": "MWG, TNG và LCG có gì hấp dẫn?"
+  }
+ ],
+ "confidence": 0.85,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:29+07:00"
+ }
+}

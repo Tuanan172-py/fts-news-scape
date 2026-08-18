@@ -1,0 +1,50 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "6ed90d30e85115f3e0042e48ac39ee9833ab8ed90f6c226af82c99d219012939",
+ "title": "T&T Group bắt tay Yusys, mở hướng xây dựng hệ sinh thái công nghệ tài chính vươn tầm ASEAN",
+ "recognized": true,
+ "entities": [
+  {
+   "surface": "công nghệ",
+   "entity_id": "IND_GICS1:CONG_NGHE",
+   "type": "INDUSTRY_GICS1",
+   "method": "alias",
+   "in_list": true,
+   "confidence": 0.85
+  },
+  {
+   "surface": "tài chính",
+   "entity_id": "IND_GICS1:TAI_CHINH",
+   "type": "INDUSTRY_GICS1",
+   "method": "alias",
+   "in_list": true,
+   "confidence": 0.85
+  },
+  {
+   "surface": "xây dựng",
+   "entity_id": "IND_GICS3:XAY_DUNG",
+   "type": "INDUSTRY_GICS3",
+   "method": "alias",
+   "in_list": true,
+   "confidence": 0.85
+  }
+ ],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "done"
+ },
+ "citations": [
+  {
+   "source_span": "T&T Group bắt tay Yusys, mở hướng xây dựng hệ sinh thái công nghệ tài chính vươn tầm ASEAN"
+  }
+ ],
+ "confidence": 0.85,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:28+07:00"
+ }
+}

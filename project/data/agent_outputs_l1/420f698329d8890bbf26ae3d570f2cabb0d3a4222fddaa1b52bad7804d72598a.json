@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "420f698329d8890bbf26ae3d570f2cabb0d3a4222fddaa1b52bad7804d72598a",
+ "title": "Người điều khiển UAV xâm nhập vùng cấm bay có thể bị phạt đến 15 năm tù",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:28+07:00"
+ }
+}

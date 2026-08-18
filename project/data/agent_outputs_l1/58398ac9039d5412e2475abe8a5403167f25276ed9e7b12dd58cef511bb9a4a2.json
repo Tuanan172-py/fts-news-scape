@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "58398ac9039d5412e2475abe8a5403167f25276ed9e7b12dd58cef511bb9a4a2",
+ "title": "AI: Cuộc cách mạng có thể kết thúc bằng một cú vỡ bong bóng?",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:28+07:00"
+ }
+}

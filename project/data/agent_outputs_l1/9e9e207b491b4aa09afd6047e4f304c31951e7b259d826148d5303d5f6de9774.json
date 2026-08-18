@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "9e9e207b491b4aa09afd6047e4f304c31951e7b259d826148d5303d5f6de9774",
+ "title": "Mỹ phải vay tiền với giá đắt nhất 25 năm",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:29+07:00"
+ }
+}

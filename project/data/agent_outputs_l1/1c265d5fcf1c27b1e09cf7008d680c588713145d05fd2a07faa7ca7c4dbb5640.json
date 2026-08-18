@@ -1,0 +1,42 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "1c265d5fcf1c27b1e09cf7008d680c588713145d05fd2a07faa7ca7c4dbb5640",
+ "title": "Công ty Cổ phần Chứng khoán Thành phố Hồ Chí Minh (HOSE)",
+ "recognized": true,
+ "entities": [
+  {
+   "surface": "Chứng khoán Thành phố Hồ Chí Minh",
+   "entity_id": "TICKER:HCM",
+   "type": "TICKER",
+   "method": "alias",
+   "in_list": true,
+   "confidence": 0.85
+  },
+  {
+   "surface": "HOSE",
+   "entity_id": "EXCHANGE:HOSE",
+   "type": "EXCHANGE",
+   "method": "exact_code",
+   "in_list": true,
+   "confidence": 0.85
+  }
+ ],
+ "categories": {
+  "ticker_company": "done",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "done",
+  "industry_sector": "none"
+ },
+ "citations": [
+  {
+   "source_span": "Công ty Cổ phần Chứng khoán Thành phố Hồ Chí Minh (HOSE)"
+  }
+ ],
+ "confidence": 0.85,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:28+07:00"
+ }
+}

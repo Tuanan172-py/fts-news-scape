@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "29bb3f288263b64285b044afb3585bcc65f8c31f5ed96395f27480723835090f",
+ "title": "Vẫn còn nhiều áp lực tỷ giá trong cuối năm do đồng USD mạnh lên",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:28+07:00"
+ }
+}

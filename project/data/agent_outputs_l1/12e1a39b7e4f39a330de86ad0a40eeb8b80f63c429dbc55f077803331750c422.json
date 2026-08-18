@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "12e1a39b7e4f39a330de86ad0a40eeb8b80f63c429dbc55f077803331750c422",
+ "title": "Mua bán đều chán nản, thanh khoản rơi xuống mức thấp kỷ lục",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:27+07:00"
+ }
+}

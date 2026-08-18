@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "76d579f36b4e54213f8843fcca30c9e7e1f2e4ae841afb4da0cee0db13429a47",
+ "title": "Làm thủ tục đất đai ở TPHCM không cần phải đến nơi có nhà đất",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:28+07:00"
+ }
+}

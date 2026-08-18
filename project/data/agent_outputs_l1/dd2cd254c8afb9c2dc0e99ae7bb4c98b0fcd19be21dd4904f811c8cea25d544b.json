@@ -1,0 +1,34 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "dd2cd254c8afb9c2dc0e99ae7bb4c98b0fcd19be21dd4904f811c8cea25d544b",
+ "title": "ĐHĐCĐ DGC: Miễn nhiệm dàn lãnh đạo bị khởi tố",
+ "recognized": true,
+ "entities": [
+  {
+   "surface": "DGC",
+   "entity_id": "TICKER:DGC",
+   "type": "TICKER",
+   "method": "exact_code",
+   "in_list": true,
+   "confidence": 0.85
+  }
+ ],
+ "categories": {
+  "ticker_company": "done",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [
+  {
+   "source_span": "ĐHĐCĐ DGC: Miễn nhiệm dàn lãnh đạo bị khởi tố"
+  }
+ ],
+ "confidence": 0.85,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:29+07:00"
+ }
+}

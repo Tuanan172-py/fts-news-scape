@@ -1,0 +1,42 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "f9e849ba0ced3cbe4f542a97e4f50004035bcdcffbde544fde03f506793aead0",
+ "title": "Dời nhà máy khỏi \"đất vàng\", Thuốc lá Việt Nam nhận lãi ròng bán niên cao nhất trong 10 năm",
+ "recognized": true,
+ "entities": [
+  {
+   "surface": "Việt Nam",
+   "entity_id": "TICKER:IVS",
+   "type": "TICKER",
+   "method": "alias",
+   "in_list": true,
+   "confidence": 0.85
+  },
+  {
+   "surface": "Thuốc lá",
+   "entity_id": "IND_GICS3:THUOC_LA",
+   "type": "INDUSTRY_GICS3",
+   "method": "alias",
+   "in_list": true,
+   "confidence": 0.85
+  }
+ ],
+ "categories": {
+  "ticker_company": "done",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "done"
+ },
+ "citations": [
+  {
+   "source_span": "Dời nhà máy khỏi \"đất vàng\", Thuốc lá Việt Nam nhận lãi ròng bán niên cao nhất trong 10 năm"
+  }
+ ],
+ "confidence": 0.85,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:29+07:00"
+ }
+}

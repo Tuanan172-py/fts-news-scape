@@ -1,0 +1,6 @@
+# A.yaml — nhóm "cơ bản": chỉ quan tâm tên doanh nghiệp (mã cổ phiếu).
+tickers:
+  - HPG
+  - HSG
+  - NKG
+  - DGC

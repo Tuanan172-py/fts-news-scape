@@ -6,9 +6,14 @@ timeout: 30
 language: vi
 rss:
   feeds:
+    - {url: "https://vneconomy.vn/tin-moi.rss", name: "VnEconomy Tin mới"}          # firehose bắt hết
     - {url: "https://vneconomy.vn/chung-khoan.rss", name: "VnEconomy Chứng khoán"}
     - {url: "https://vneconomy.vn/tai-chinh.rss", name: "VnEconomy Tài chính"}
     - {url: "https://vneconomy.vn/thi-truong.rss", name: "VnEconomy Thị trường"}
+    - {url: "https://vneconomy.vn/dau-tu.rss", name: "VnEconomy Đầu tư"}
+    - {url: "https://vneconomy.vn/kinh-te-the-gioi.rss", name: "VnEconomy Kinh tế thế giới"}
+    - {url: "https://vneconomy.vn/nhip-cau-doanh-nghiep.rss", name: "VnEconomy Doanh nghiệp"}
+    - {url: "https://vneconomy.vn/dia-oc.rss", name: "VnEconomy Bất động sản"}
 detail:
   extract_full: true
   content_selector: "#article-editor"   # body biên tập (verified 2026-08-17, ổn định 3 section)

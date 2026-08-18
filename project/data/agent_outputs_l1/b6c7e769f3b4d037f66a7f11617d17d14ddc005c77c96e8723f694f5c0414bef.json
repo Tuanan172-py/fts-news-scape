@@ -1,0 +1,50 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "b6c7e769f3b4d037f66a7f11617d17d14ddc005c77c96e8723f694f5c0414bef",
+ "title": "Đúng ngày 15/8, Vinhomes, Vincom Retail và Vinpearl có thay đổi quan trọng",
+ "recognized": true,
+ "entities": [
+  {
+   "surface": "Vinhomes",
+   "entity_id": "TICKER:VHM",
+   "type": "TICKER",
+   "method": "alias",
+   "in_list": true,
+   "confidence": 0.85
+  },
+  {
+   "surface": "Vinpearl",
+   "entity_id": "TICKER:VPL",
+   "type": "TICKER",
+   "method": "alias",
+   "in_list": true,
+   "confidence": 0.85
+  },
+  {
+   "surface": "Vincom Retail",
+   "entity_id": "TICKER:VRE",
+   "type": "TICKER",
+   "method": "alias",
+   "in_list": true,
+   "confidence": 0.85
+  }
+ ],
+ "categories": {
+  "ticker_company": "done",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [
+  {
+   "source_span": "Đúng ngày 15/8, Vinhomes, Vincom Retail và Vinpearl có thay đổi quan trọng"
+  }
+ ],
+ "confidence": 0.85,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:29+07:00"
+ }
+}

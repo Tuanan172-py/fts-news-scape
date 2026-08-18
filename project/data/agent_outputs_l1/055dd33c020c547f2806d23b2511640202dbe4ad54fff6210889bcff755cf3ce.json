@@ -1,0 +1,34 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "055dd33c020c547f2806d23b2511640202dbe4ad54fff6210889bcff755cf3ce",
+ "title": "SHS ra mắt SH Bond: Mở rộng lựa chọn đầu tư, gia tăng hiệu quả dòng tiền",
+ "recognized": true,
+ "entities": [
+  {
+   "surface": "SHS",
+   "entity_id": "TICKER:SHS",
+   "type": "TICKER",
+   "method": "exact_code",
+   "in_list": true,
+   "confidence": 0.85
+  }
+ ],
+ "categories": {
+  "ticker_company": "done",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [
+  {
+   "source_span": "SHS ra mắt SH Bond: Mở rộng lựa chọn đầu tư, gia tăng hiệu quả dòng tiền"
+  }
+ ],
+ "confidence": 0.85,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:27+07:00"
+ }
+}

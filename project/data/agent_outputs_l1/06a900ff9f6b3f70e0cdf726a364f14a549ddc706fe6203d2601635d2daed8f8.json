@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "06a900ff9f6b3f70e0cdf726a364f14a549ddc706fe6203d2601635d2daed8f8",
+ "title": "“Thị trường khá hấp dẫn nhưng rủi ro lãi suất, thuế quan vẫn cần theo dõi”",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:27+07:00"
+ }
+}

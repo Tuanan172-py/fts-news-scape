@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "964fc25b5cd4ad3e7e58a0aeb79a46077b378feae08295892ba7c98960b4852a",
+ "title": "Rủi ro lớn khi dự trữ dầu lửa chiến lược của Mỹ bị rút cạn",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:28+07:00"
+ }
+}

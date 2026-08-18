@@ -7,8 +7,7 @@
     "EXCHANGE": 3,
     "INDUSTRY_GICS1": 11,
     "INDUSTRY_GICS2": 28,
-    "INDUSTRY_GICS3": 51,
-    "SECTOR_FPA": 16
+    "INDUSTRY_GICS3": 51
   },
   "gics_tree": {
     "Bất động sản": {
@@ -153,23 +152,5 @@
     "HNXINDEX",
     "HNX30",
     "UPINDEX"
-  ],
-  "fpa_sectors": {
-    "Banle": "Bán lẻ",
-    "BDSCN": "Bất động sản Khu công nghiệp",
-    "BDSDD": "Bất động sản Dân dụng",
-    "Cangbien": "Cảng biển",
-    "Chungkhoan": "Chứng khoán",
-    "Daukhi": "Dầu khí",
-    "Detmay": "Dệt may",
-    "Dien": "Điện",
-    "F&B": "Thực phẩm & Đồ uống",
-    "Hangkhong": "Hàng không",
-    "HotroGT": "Hỗ trợ giao thông (Logistics)",
-    "NhuaXD": "Nhựa xây dựng",
-    "Phanbon": "Phân bón",
-    "Thep": "Thép",
-    "Thuysan": "Thủy sản",
-    "Ximang": "Xi măng"
-  }
+  ]
 }

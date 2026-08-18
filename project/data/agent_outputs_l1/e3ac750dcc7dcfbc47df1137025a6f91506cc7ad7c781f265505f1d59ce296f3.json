@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "e3ac750dcc7dcfbc47df1137025a6f91506cc7ad7c781f265505f1d59ce296f3",
+ "title": "Thuế 50% cận kề, Mỹ và Canada chạy đua đạt thỏa thuận",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:29+07:00"
+ }
+}

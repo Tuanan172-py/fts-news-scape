@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "c174fa506393f3f124258dc6c5e7b7739aa50090e7ae849705a07ee3387b8a4c",
+ "title": "Nợ công Mỹ sắp chạm ngưỡng 40 nghìn tỷ USD",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:29+07:00"
+ }
+}

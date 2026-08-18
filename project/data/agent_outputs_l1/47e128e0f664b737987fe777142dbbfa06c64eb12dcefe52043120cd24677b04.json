@@ -1,0 +1,34 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "47e128e0f664b737987fe777142dbbfa06c64eb12dcefe52043120cd24677b04",
+ "title": "Chứng khoán Mỹ lập kỷ lục sau báo cáo PPI, dầu sụt giá vì tin tốt về xuất khẩu dầu qua Hormuz",
+ "recognized": true,
+ "entities": [
+  {
+   "surface": "PPI",
+   "entity_id": "TICKER:PPI",
+   "type": "TICKER",
+   "method": "exact_code",
+   "in_list": true,
+   "confidence": 0.85
+  }
+ ],
+ "categories": {
+  "ticker_company": "done",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [
+  {
+   "source_span": "Chứng khoán Mỹ lập kỷ lục sau báo cáo PPI, dầu sụt giá vì tin tốt về xuất khẩu dầu qua Hormuz"
+  }
+ ],
+ "confidence": 0.85,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:28+07:00"
+ }
+}

@@ -1,0 +1,34 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "0931211db40870eb21f6f28eaec7e082bc96ebf41dfaddc142b5fe030c3f4310",
+ "title": "Vingroup có động thái mới tại thị trường Hàn Quốc",
+ "recognized": true,
+ "entities": [
+  {
+   "surface": "Vingroup",
+   "entity_id": "TICKER:VIC",
+   "type": "TICKER",
+   "method": "alias",
+   "in_list": true,
+   "confidence": 0.85
+  }
+ ],
+ "categories": {
+  "ticker_company": "done",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [
+  {
+   "source_span": "Vingroup có động thái mới tại thị trường Hàn Quốc"
+  }
+ ],
+ "confidence": 0.85,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:27+07:00"
+ }
+}

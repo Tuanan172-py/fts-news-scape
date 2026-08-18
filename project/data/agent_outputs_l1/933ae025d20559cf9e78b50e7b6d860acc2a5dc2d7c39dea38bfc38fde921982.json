@@ -1,0 +1,42 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "933ae025d20559cf9e78b50e7b6d860acc2a5dc2d7c39dea38bfc38fde921982",
+ "title": "Giá vàng trong nước tăng trong phiên đầu tuần, SJC lên ngưỡng 144,8 triệu đồng",
+ "recognized": true,
+ "entities": [
+  {
+   "surface": "SJC",
+   "entity_id": "TICKER:SJC",
+   "type": "TICKER",
+   "method": "exact_code",
+   "in_list": true,
+   "confidence": 0.85
+  },
+  {
+   "surface": "nước",
+   "entity_id": "IND_GICS3:NUOC",
+   "type": "INDUSTRY_GICS3",
+   "method": "alias",
+   "in_list": true,
+   "confidence": 0.85
+  }
+ ],
+ "categories": {
+  "ticker_company": "done",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "done"
+ },
+ "citations": [
+  {
+   "source_span": "Giá vàng trong nước tăng trong phiên đầu tuần, SJC lên ngưỡng 144,8 triệu đồng"
+  }
+ ],
+ "confidence": 0.85,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:28+07:00"
+ }
+}

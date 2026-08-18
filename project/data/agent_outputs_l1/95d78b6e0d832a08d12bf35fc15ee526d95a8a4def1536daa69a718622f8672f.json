@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "95d78b6e0d832a08d12bf35fc15ee526d95a8a4def1536daa69a718622f8672f",
+ "title": "Nga bán ra mạnh, dự trữ vàng thấp nhất 6 năm: Chuyện gì đang xảy ra?",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:28+07:00"
+ }
+}

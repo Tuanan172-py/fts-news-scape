@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "16b943742929ca09d5e81035ca72721a8e4c20b452c19eee9e6b4f4c9906dad9",
+ "title": "Doanh nghiệp xuất khẩu giày dép “điêu đứng” do chậm trễ trong cấp C/O",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:27+07:00"
+ }
+}

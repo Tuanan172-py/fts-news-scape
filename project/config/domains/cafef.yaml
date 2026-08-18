@@ -14,6 +14,15 @@ api:
     Type: 1
   headers:
     Referer: "https://cafef.vn/"
+# RSS per-category — bổ sung tin KHÔNG gắn mã CK (API symbol-driven bỏ lỡ vĩ mô/BĐS/quốc tế).
+rss:
+  feeds:
+    - {url: "https://cafef.vn/thi-truong-chung-khoan.rss", name: "CafeF Thị trường CK"}
+    - {url: "https://cafef.vn/tai-chinh-ngan-hang.rss", name: "CafeF Tài chính - Ngân hàng"}
+    - {url: "https://cafef.vn/tai-chinh-quoc-te.rss", name: "CafeF Tài chính quốc tế"}
+    - {url: "https://cafef.vn/vi-mo-dau-tu.rss", name: "CafeF Vĩ mô - Đầu tư"}
+    - {url: "https://cafef.vn/bat-dong-san.rss", name: "CafeF Bất động sản"}
+    - {url: "https://cafef.vn/doanh-nghiep.rss", name: "CafeF Doanh nghiệp"}
 detail:
   content_selector: "div#mainContent"
   max_details_per_cycle: 30
@@ -24,4 +33,4 @@ compliance:
   respect_robots: true           # RobotsGate gate trước fetch detail (AC9)
   proxy_rotation: false          # off mặc định; true cần proxies pool
   proxies: []
-pitfalls: "List page JS dynamic — chỉ dùng API. Detail server-rendered. /Date(ms[+tz])/ date format. Cần UA + Referer. LinkDetail relative + utm_source."
+pitfalls: "List = API symbol-driven (theo watchlist) + RSS per-category (tin không gắn mã CK). Detail server-rendered. /Date(ms[+tz])/ date format. Cần UA + Referer. LinkDetail relative + utm_source. RSS items có shape khác (_rss=True) → parse_item rẽ nhánh."

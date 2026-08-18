@@ -1,0 +1,34 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "ac6e4d22ea93f58908d5c5da921f924041fa2ec7a5ea693a5f4134186804b8ad",
+ "title": "Các cổ phiếu tiêu dùng - bán lẻ thể hiện như thế nào trong năm IPO?",
+ "recognized": true,
+ "entities": [
+  {
+   "surface": "bán lẻ",
+   "entity_id": "IND_GICS2:BAN_LE",
+   "type": "INDUSTRY_GICS2",
+   "method": "alias",
+   "in_list": true,
+   "confidence": 0.85
+  }
+ ],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "done"
+ },
+ "citations": [
+  {
+   "source_span": "Các cổ phiếu tiêu dùng - bán lẻ thể hiện như thế nào trong năm IPO?"
+  }
+ ],
+ "confidence": 0.85,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:29+07:00"
+ }
+}

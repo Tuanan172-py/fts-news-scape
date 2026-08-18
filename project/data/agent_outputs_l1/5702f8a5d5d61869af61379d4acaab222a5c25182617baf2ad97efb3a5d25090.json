@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "5702f8a5d5d61869af61379d4acaab222a5c25182617baf2ad97efb3a5d25090",
+ "title": "Hòn đảo lạ nơi Xuân Trường từng muốn xây tượng Phật cao nhất thế giới",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:28+07:00"
+ }
+}

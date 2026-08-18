@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "16de1c7be27ccc511624ba9420e3984160ee1207a1a332f2bb38a8d1d8747c25",
+ "title": "Cận cảnh lắp đặt 9.500 tấm kính đặc biệt ở nhà ga T2 sân bay Phú Quốc",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:27+07:00"
+ }
+}

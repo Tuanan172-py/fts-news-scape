@@ -1,0 +1,34 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "4c3e977a3593753aefa588fcefb9b4a792d8c49e8d727c19ae8855052b0326e5",
+ "title": "Đẩy mạnh phân cấp, khơi thông nguồn lực và phát triển năng lượng mới",
+ "recognized": true,
+ "entities": [
+  {
+   "surface": "năng lượng",
+   "entity_id": "IND_GICS1:NANG_LUONG",
+   "type": "INDUSTRY_GICS1",
+   "method": "alias",
+   "in_list": true,
+   "confidence": 0.85
+  }
+ ],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "done"
+ },
+ "citations": [
+  {
+   "source_span": "Đẩy mạnh phân cấp, khơi thông nguồn lực và phát triển năng lượng mới"
+  }
+ ],
+ "confidence": 0.85,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:28+07:00"
+ }
+}

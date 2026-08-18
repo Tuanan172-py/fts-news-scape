@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "41d2d360d4144957dedce894dc35e173a0ee7e2b7a4592d9d8ad520d9fe9bdac",
+ "title": "Đồng hành dài lâu để những ước mơ không dang dở",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:28+07:00"
+ }
+}

@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "7439579843bab23da6c2f93e68119ab34e9b65ffc917f21d33a98cc970d37d87",
+ "title": "Giá vàng trượt khỏi đỉnh 2 tháng do nhà đầu tư chốt lời",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:28+07:00"
+ }
+}

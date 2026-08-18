@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "13be92ec6ff752ce5fd304dc480c30b0ac1c047353a59f663c0dc7c7cab749ac",
+ "title": "Giá bạc hôm nay đồng loạt giảm, có loại rẻ hơn 1 triệu đồng/kg",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:27+07:00"
+ }
+}

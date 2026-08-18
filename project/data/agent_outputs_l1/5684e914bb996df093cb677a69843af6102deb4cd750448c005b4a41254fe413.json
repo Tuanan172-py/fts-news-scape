@@ -1,0 +1,42 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "5684e914bb996df093cb677a69843af6102deb4cd750448c005b4a41254fe413",
+ "title": "Danh mục cổ phiếu hơn 18.000 tỷ của chứng khoán VIX: Rót thêm 1.000 tỷ vào Techcombank, giá trị của 9 cổ phiếu chủ chốt bốc hơi 2.400 tỷ so với cuối tháng 6",
+ "recognized": true,
+ "entities": [
+  {
+   "surface": "VIX",
+   "entity_id": "TICKER:VIX",
+   "type": "TICKER",
+   "method": "exact_code",
+   "in_list": true,
+   "confidence": 0.85
+  },
+  {
+   "surface": "Techcombank",
+   "entity_id": "TICKER:TCB",
+   "type": "TICKER",
+   "method": "alias",
+   "in_list": true,
+   "confidence": 0.85
+  }
+ ],
+ "categories": {
+  "ticker_company": "done",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [
+  {
+   "source_span": "Danh mục cổ phiếu hơn 18.000 tỷ của chứng khoán VIX: Rót thêm 1.000 tỷ vào Techcombank, giá trị của 9 cổ phiếu chủ chốt bốc hơi 2.400 tỷ so với cuối tháng 6"
+  }
+ ],
+ "confidence": 0.85,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:28+07:00"
+ }
+}

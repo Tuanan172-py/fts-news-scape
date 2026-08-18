@@ -1,0 +1,50 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "9ffbf940444477fe254d85038ba18004f1fb2a0fdbdce7bf5d1457dfb8adfdd8",
+ "title": "Ngân hàng Thương mại cổ phần Sài Gòn - Hà Nội (HOSE)",
+ "recognized": true,
+ "entities": [
+  {
+   "surface": "Sài Gòn - Hà Nội",
+   "entity_id": "TICKER:SHB",
+   "type": "TICKER",
+   "method": "alias",
+   "in_list": true,
+   "confidence": 0.85
+  },
+  {
+   "surface": "HOSE",
+   "entity_id": "EXCHANGE:HOSE",
+   "type": "EXCHANGE",
+   "method": "exact_code",
+   "in_list": true,
+   "confidence": 0.85
+  },
+  {
+   "surface": "Ngân hàng",
+   "entity_id": "IND_GICS2:NGAN_HANG",
+   "type": "INDUSTRY_GICS2",
+   "method": "alias",
+   "in_list": true,
+   "confidence": 0.85
+  }
+ ],
+ "categories": {
+  "ticker_company": "done",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "done",
+  "industry_sector": "done"
+ },
+ "citations": [
+  {
+   "source_span": "Ngân hàng Thương mại cổ phần Sài Gòn - Hà Nội (HOSE)"
+  }
+ ],
+ "confidence": 0.85,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:29+07:00"
+ }
+}

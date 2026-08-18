@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "d4a23a8c66b76f9d5859990dab501dcc8931074d945dce36bdaed5394f37af03",
+ "title": "Lộ diện công ty holding nắm chi phối Phê La, Katinat, San Fu Lou.... được 1 doanh nghiệp tỷ đô đầu tư lớn",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:29+07:00"
+ }
+}

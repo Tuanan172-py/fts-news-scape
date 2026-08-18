@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "cc19cf01c9e244747f54c40d0c5a87531056f984bb7506748696f9cd12f42f03",
+ "title": "9 nhược điểm của Internet vệ tinh",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:29+07:00"
+ }
+}

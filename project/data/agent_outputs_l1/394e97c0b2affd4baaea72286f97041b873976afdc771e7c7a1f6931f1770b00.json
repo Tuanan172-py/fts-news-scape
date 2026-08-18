@@ -1,0 +1,21 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "394e97c0b2affd4baaea72286f97041b873976afdc771e7c7a1f6931f1770b00",
+ "title": "Công ty của nữ đại gia Chu Thị Thành bán 153 hóa đơn khống, trị giá hơn 841 tỷ đồng",
+ "recognized": false,
+ "entities": [],
+ "categories": {
+  "ticker_company": "none",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "none",
+  "industry_sector": "none"
+ },
+ "citations": [],
+ "confidence": 0.6,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:28+07:00"
+ }
+}

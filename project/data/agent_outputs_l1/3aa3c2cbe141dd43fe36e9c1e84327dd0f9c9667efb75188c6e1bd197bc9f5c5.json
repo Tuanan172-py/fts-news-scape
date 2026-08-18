@@ -1,0 +1,58 @@
+{
+ "l1_output_version": "1.0",
+ "article_id": "3aa3c2cbe141dd43fe36e9c1e84327dd0f9c9667efb75188c6e1bd197bc9f5c5",
+ "title": "Ngân hàng Thương mại Cổ phần Việt Nam Thịnh Vượng (HOSE)",
+ "recognized": true,
+ "entities": [
+  {
+   "surface": "Việt Nam",
+   "entity_id": "TICKER:IVS",
+   "type": "TICKER",
+   "method": "alias",
+   "in_list": true,
+   "confidence": 0.85
+  },
+  {
+   "surface": "Việt Nam Thịnh Vượng",
+   "entity_id": "TICKER:VPB",
+   "type": "TICKER",
+   "method": "alias",
+   "in_list": true,
+   "confidence": 0.85
+  },
+  {
+   "surface": "HOSE",
+   "entity_id": "EXCHANGE:HOSE",
+   "type": "EXCHANGE",
+   "method": "exact_code",
+   "in_list": true,
+   "confidence": 0.85
+  },
+  {
+   "surface": "Ngân hàng",
+   "entity_id": "IND_GICS2:NGAN_HANG",
+   "type": "INDUSTRY_GICS2",
+   "method": "alias",
+   "in_list": true,
+   "confidence": 0.85
+  }
+ ],
+ "categories": {
+  "ticker_company": "done",
+  "etf_fund": "none",
+  "index": "none",
+  "exchange": "done",
+  "industry_sector": "done"
+ },
+ "citations": [
+  {
+   "source_span": "Ngân hàng Thương mại Cổ phần Việt Nam Thịnh Vượng (HOSE)"
+  }
+ ],
+ "confidence": 0.85,
+ "processing_metadata": {
+  "agent_provider": "stub",
+  "model_used": "rule-based",
+  "timestamp": "2026-08-18T15:11:28+07:00"
+ }
+}

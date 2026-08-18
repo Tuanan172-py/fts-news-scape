@@ -22,6 +22,7 @@ Bộ tài liệu chuyên sâu cho hệ thu thập tin tức thị trường ch�
 - [03-source-strategy.md](design/03-source-strategy.md) — chiến lược nguồn, xử encoding/date/dedup/filter
 - [04-sentiment-classification.md](design/04-sentiment-classification.md) — sentiment & phân loại rule-based
 - [05-notification-coverage.md](design/05-notification-coverage.md) — notify: phủ toàn thị trường (sources/has_symbol/keyword), 98% coverage
+- [13-per-user-output-workflow.md](design/13-per-user-output-workflow.md) — quy trình end-to-end lớp NGƯỜI DÙNG: input Excel → compile → L1/agent → CSV output per user
 
 ### 🔧 dev/ — Cho lập trình viên (code chạy thế nào)
 - [01-codebase-guide.md](dev/01-codebase-guide.md) — cây thư mục, tầng, registry, HTTP client
