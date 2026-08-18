@@ -45,9 +45,13 @@ def process_meta(store, meta_path: str, *, silver_dir: str = "data/silver",
                 "reason": "raw_missing"}
     raw_bytes = Path(raw_path).read_bytes()
 
-    # 1) Silver
+    # 1) Silver (+ hard-gate silver-v1: bug #3 — silver hỏng/cleaned rỗng → held)
     silver = SilverBuilder().build(meta, raw_bytes)
     silver_path = write_silver(silver, base_dir=silver_dir)
+    silver_ok, silver_errs = schema_validate(silver, "silver-v1")
+    if not silver_ok:
+        logger.warning("[pipeline] silver invalid {} → held: {}", silver["article_id"],
+                       silver_errs[:2])
 
     # 2) Change-detection version
     cur_fp = fingerprint(silver["cleaned_text"], silver["structure"],
@@ -83,21 +87,20 @@ def process_meta(store, meta_path: str, *, silver_dir: str = "data/silver",
                                          scraper_version=SCRAPER_VERSION)
     package_path = write_package(package, base_dir=package_dir)
 
-    # 4) Validate (hard gate) + enqueue
+    # 4) Validate (hard gate) + enqueue — held nếu silver HOẶC package không hợp lệ
     ok, errors = schema_validate(package, "work-package-v1")
+    held = (not ok) or (not silver_ok)
     enq_status = None
     if do_enqueue:
         cat = Catalog(store)
-        if not ok:
-            logger.warning("[pipeline] package invalid {} → held: {}", hash_, errors[:2])
-            enq_status = cat.enqueue(hash_, meta.get("content_sha256", ""),
-                                     silver["domain"], package_path, state,
-                                     force_held=True)
-        else:
-            enq_status = cat.enqueue(hash_, meta.get("content_sha256", ""),
-                                     silver["domain"], package_path, state)
+        if held:
+            logger.warning("[pipeline] {} → held (silver_ok={} pkg_ok={}): {}",
+                           hash_, silver_ok, ok, (errors or silver_errs)[:2])
+        enq_status = cat.enqueue(hash_, meta.get("content_sha256", ""),
+                                 silver["domain"], package_path, state,
+                                 force_held=held)
 
-    return {"article_id": hash_, "ok": ok, "state": state,
+    return {"article_id": hash_, "ok": ok, "silver_ok": silver_ok, "state": state,
             "recommendation": recommendation, "version_id": version_id,
             "silver_path": silver_path, "package_path": package_path,
-            "enqueue_status": enq_status, "errors": errors}
+            "enqueue_status": enq_status, "errors": errors + silver_errs}

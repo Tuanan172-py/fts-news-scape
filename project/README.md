@@ -27,12 +27,17 @@ python -m venv .venv
 # 2. (Tuỳ chọn) secrets cho FireAnt — thiếu token thì scraper tự disable, không crash
 copy config\secrets.yaml.example config\secrets.yaml   # rồi điền token (docs/skills/fireant.md)
 
-# 3. Chạy liên tục (scheduler 15 phút/cycle)
-python -m src.orchestrator
+# 3. Chạy pipeline ban ngày liên tục (capture 15' + re-derive Silver 30' + drift sáng)
+python -m src.morninger
 
 # Hoặc 1 cycle rồi thoát
 python scripts/run_once.py            # tất cả domain
 python scripts/run_once.py cafef tnck # chọn domain
+
+# Chạy thử từng nhịp riêng (không scheduler)
+python -m src.morninger --once capture   # 1 cycle capture Bronze
+python -m src.morninger --once derive    # 1 lần re-derive Silver tăng dần
+python -m src.morninger --once drift     # 1 lần drift report
 
 # 4. Health check + quality gate
 python -m src.monitor.health
@@ -57,6 +62,8 @@ web-monocle/
 │                              #   vietstock, vnexpress, baodautu, vneconomy
 ├── src/
 │   ├── orchestrator.py        # entry chính: python -m src.orchestrator [--once]
+│   ├── morninger.py           # pipeline ban ngày: capture + re-derive Silver + drift (APScheduler)
+│   ├── pipeline/              # derive.py (incremental Silver), silver_builder, change_detect, run
 │   ├── core/                  # models, base_scraper, config, logging, retry, tickers
 │   ├── crawler/               # http_client (rate limit 3s/domain, retry, UA)
 │   ├── processor/             # extractor (trafilatura), classifier, sentiment, segment

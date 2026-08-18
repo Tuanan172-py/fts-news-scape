@@ -3,12 +3,16 @@
 In ra bài bị loại rồi xoá. Idempotent — chạy lại an toàn.
 Dùng: py scripts/clean_yahoo_lifestyle.py [--dry-run]
 """
+
 import sqlite3
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from src.core.config import load_domain_config
+from src.core.stdio import force_utf8_stdio
+
+force_utf8_stdio()
 
 DRY = "--dry-run" in sys.argv
 

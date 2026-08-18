@@ -6,7 +6,7 @@
   "published_at": "2026-08-13T00:00:00+07:00",
   "raw_html_path": "data/raw_html\\cafef.vn\\20260814\\ab9eac9777311558c25c8adf1dc1b446252a4a109bbd2292d2980561e6945089.html",
   "raw_sha256": "60f63a40c243f10f7b7c87b567f4b13d7e54b5cbdf4e24416133be55d54f8e39",
-  "cleaned_text": "| \n                \n                    | |   THÔNG TIN CÔNG TY   | Thứ 5, 13/08/2026, 00:00 | \n |  \n                    | \n                            \n                                | \n    \n        MBB\n     \n          Ngân hàng Thương mại cổ phần Quân đội (HOSE)\n     \n    \n \n     |  \n                                |  |  \n                                | \n                                        \n                                            | MBB: Bổ nhiệm lại ông Vũ Hồng Phú làm Thành viên Ban Điều hành |  \n                                            |         \n  \nNgân hàng Thương mại Cổ phần Quân Đội thông báo thay đổi nhân sự - Thành viên Ban Điều hành (kèm Nghị quyết) như sau: \n  \n  |  |  |  | \n    \n        |  | \n    \n        |  | \n \n                \n                    (*) Lưu ý: Dữ liệu được tổng hợp từ các nguồn đáng tin cậy, có giá trị tham khảo với các nhà đầu tư.\n                    Tuy nhiên, chúng tôi không chịu trách nhiệm trước mọi rủi ro nào do sử dụng các dữ liệu này.",
+  "cleaned_text": "|  | \n|  | \n|  | \n|  | \n| THÔNG TIN CÔNG TY | Thứ 5, 13/08/2026, 00:00 | \n| \n         MBB\n      Ngân hàng Thương mại cổ phần Quân đội (HOSE) | \n|  | \n|  | \n| Giá hiện tại: MBB |  | 20,0 | -0,15(-0,74%) |  |  | Hồ sơ công ty | GDCĐ lớn & CĐ nội bộ |  | \n| MBB: Bổ nhiệm lại ông Vũ Hồng Phú làm Thành viên Ban Điều hành | \n|  Ngân hàng Thương mại Cổ phần Quân Đội thông báo thay đổi nhân sự - Thành viên Ban Điều hành (kèm Nghị quyết) như sau:  Các tập tin đính kèm  Theo HOSE |",
   "structure": {
     "headings": [
       {
@@ -1691,7 +1691,7 @@
     }
   ],
   "capture_status": "ok",
-  "change_state": "NEW",
+  "change_state": "UNCHANGED",
   "provenance": {
     "fetch_ts": "2026-08-14T17:41:28+07:00",
     "render_method": "requests",

@@ -1,0 +1,33 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "example-article-id",
+  "title": "Vinhomes tăng vốn điều lệ vượt 82.000 tỷ đồng sau trả cổ tức",
+  "recognized": true,
+  "entities": [
+    {
+      "surface": "Vinhomes",
+      "entity_id": "TICKER:VHM",
+      "type": "TICKER",
+      "method": "semantic",
+      "in_list": true,
+      "confidence": 0.95
+    }
+  ],
+  "categories": {
+    "ticker_company": "done",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [
+    {"source_span": "Vinhomes tăng vốn điều lệ vượt 82.000 tỷ đồng sau trả cổ tức"}
+  ],
+  "confidence": 0.95,
+  "processing_metadata": {
+    "agent_provider": "example",
+    "model_used": "example-model",
+    "timestamp": "2026-08-18T10:00:00+07:00"
+  }
+}

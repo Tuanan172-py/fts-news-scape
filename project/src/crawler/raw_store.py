@@ -15,6 +15,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import time
 from datetime import datetime
 from urllib.parse import urljoin
 
@@ -51,15 +52,35 @@ class RawStore:
         os.makedirs(d, exist_ok=True)
         return d
 
+    def paths_for(self, domain: str, url_title_hash: str, fetched_at: str) -> tuple[str, str]:
+        """(html_path, meta_path) dự kiến — KHÔNG tạo thư mục. Dùng để kiểm tra tồn tại
+        (vd refresh bỏ qua capture trùng ngày, tránh ghi đè Bronze)."""
+        d = os.path.join(self.base_dir, domain, self._yyyymmdd(fetched_at))
+        base = os.path.join(d, url_title_hash)
+        return f"{base}.html", f"{base}.meta.json"
+
     @staticmethod
     def _write_atomic(path: str, data: bytes) -> None:
         """
-            Giải thích: Ghi dữ liệu vào một tệp tạm thời và sau đó thay thế tệp đích, đảm bảo quy trình đọc - ghi không làm ảnh hướng tệp đích
+            Giải thích: Ghi dữ liệu vào một tệp tạm thời và sau đó thay thế tệp đích, đảm bảo quy trình đọc - ghi không làm ảnh hướng tệp đích.
+            Fix C: retry os.replace khi PermissionError (Windows: file đang bị OneDrive/AV/reader giữ) → tránh để lại .tmp.
         """
         tmp = f"{path}.tmp"
         with open(tmp, "wb") as f:
             f.write(data)
-        os.replace(tmp, path)  # atomic trên cùng volume
+        last_err: Exception | None = None
+        for attempt in range(3):
+            try:
+                os.replace(tmp, path)  # atomic trên cùng volume
+                return
+            except PermissionError as e:  # Windows file lock — thử lại ngắn
+                last_err = e
+                time.sleep(0.1 * (attempt + 1))
+        try:
+            os.remove(tmp)  # dọn tmp rác trước khi báo lỗi
+        except OSError:
+            pass
+        raise last_err  # type: ignore[misc]
 
     @staticmethod
     def _filter_headers(headers) -> dict:

@@ -1,0 +1,18 @@
+16:52:25 | INFO    | SentimentEngine loaded 316 lexicon entries
+16:52:25 | INFO    | === Cycle start: 2 domains: cafef, vietstock ===
+16:54:03 | INFO    | [cafef] cycle done: fetched=600 new=2 errors=0 in 97.2s
+16:54:33 | INFO    | [vietstock] cycle done: fetched=110 new=6 errors=0 in 30.7s
+16:54:34 | INFO    | Cycle summary: cafef: 2 new | vietstock: 6 new
+16:54:53 | INFO    | CSV export: 108 bài hôm nay -> data\exports\articles-2026-08-17.csv
+16:54:53 | INFO    | === Cycle done: 8 new articles in 148s ===
+16:54:53 | INFO    | Shutting down — flushing writer + WAL checkpoint...
+16:54:54 | INFO    | Shutdown complete.
+[~] TCB: Nghị quyết HĐQT về phê duyệt giao dịch cấp hạn mức thẻ tín dụng cho khách hàng là Người có liên quan của Người nội bộ (chi tiết (https://cafef.vn/du-lieu/TCB-2956973/tcb-nghi-quyet-hdqt-ve-phe-duyet-giao-dich-cap-han-muc-the-tin-dung-cho-khach-hang-la-nguoi-co-lien-quan-cua-nguoi-noi-bo.chn?utm_source=du-lieu))
+[~] HCM: Thông báo thực hiện quyền mua cổ phiếu của tổ chức có liên quan của Người nội bộ Dragon Capital Markets Limited (DC) (chi tiết (https://cafef.vn/du-lieu/HCM-2957006/hcm-thong-bao-thuc-hien-quyen-mua-co-phieu-cua-to-chuc-co-lien-quan-cua-nguoi-noi-bo-dragon-capital-markets-limited-dc.chn?utm_source=du-lieu))
+[-] BlackBerry hồi sinh sau một thập kỷ biến mất khỏi thị trường điện thoại (chi tiết (http://vietstock.vn/2026/08/blackberry-hoi-sinh-sau-mot-thap-ky-bien-mat-khoi-thi-truong-dien-thoai-4264-1481605.htm))
+[~] DPM thành lập công ty hóa chất vốn 220 tỷ (chi tiết (http://vietstock.vn/2026/08/dpm-thanh-lap-cong-ty-hoa-chat-von-220-ty-737-1481582.htm))
+[~] Hơn 43% vốn Xuân Mai Corp đổi chủ, muốn thay tên sau 12 năm (chi tiết (http://vietstock.vn/2026/08/hon-43-von-xuan-mai-corp-doi-chu-muon-thay-ten-sau-12-nam-739-1481555.htm))
+[+] Vừa nhận ghế Tổng Giám đốc, ông Nguyễn Thế An đăng ký mua 1 triệu cp TCO (chi tiết (http://vietstock.vn/2026/08/vua-nhan-ghe-tong-giam-doc-ong-nguyen-the-an-dang-ky-mua-1-trieu-cp-tco-739-1481560.htm))
+[~] Hơn 43% vốn Xuân Mai Corp đổi chủ, muốn thay tên sau 12 năm (chi tiết (http://vietstock.vn/2026/08/hon-43-von-xuan-mai-corp-doi-chu-muon-thay-ten-sau-12-nam-739-1481555.htm))
+[+] Vừa nhận ghế Tổng Giám đốc, ông Nguyễn Thế An đăng ký mua 1 triệu cp TCO (chi tiết (http://vietstock.vn/2026/08/vua-nhan-ghe-tong-giam-doc-ong-nguyen-the-an-dang-ky-mua-1-trieu-cp-tco-739-1481560.htm))
+16:54:34 [cycle] cafef: 2 new | vietstock: 6 new

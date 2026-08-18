@@ -6,7 +6,7 @@
   "published_at": "2026-08-13T17:16:16+07:00",
   "raw_html_path": "data/raw_html\\cafef.vn\\20260814\\bee3ff130a0bbb00fca0f8b7e7d589eb40968bb2c84cb79ce6689838b12ed14d.html",
   "raw_sha256": "5015235dc7ce8dbc1c3d5413c93529292d0f09491bb36ae27b1b2f27966386fe",
-  "cleaned_text": "| \n                \n                    | |   THÔNG TIN CÔNG TY   | Thứ 5, 13/08/2026, 17:16 | \n |  \n                    | \n                            \n                                | \n    \n        MBB\n     \n          Ngân hàng Thương mại cổ phần Quân đội (HOSE)\n     \n    \n \n     |  \n                                |  |  \n                                | \n                                        \n                                            | MBB: Quyết định về thay đổi địa chỉ PGD Bắc Quảng Ngãi |  \n                                            |      Ngân hàng Thương mại Cổ phần Quân Đội công bố Quyết định về thay đổi địa chỉ PGD Bắc Quảng Ngãi như sau: |  |  |  | \n    \n        |  | \n    \n        |  | \n \n                \n                    (*) Lưu ý: Dữ liệu được tổng hợp từ các nguồn đáng tin cậy, có giá trị tham khảo với các nhà đầu tư.\n                    Tuy nhiên, chúng tôi không chịu trách nhiệm trước mọi rủi ro nào do sử dụng các dữ liệu này.",
+  "cleaned_text": "|  | \n|  | \n|  | \n|  | \n| THÔNG TIN CÔNG TY | Thứ 5, 13/08/2026, 17:16 | \n| \n         MBB\n      Ngân hàng Thương mại cổ phần Quân đội (HOSE) | \n|  | \n|  | \n| Giá hiện tại: MBB |  | 20,0 | -0,15(-0,74%) |  |  | Hồ sơ công ty | GDCĐ lớn & CĐ nội bộ |  | \n| MBB: Quyết định về thay đổi địa chỉ PGD Bắc Quảng Ngãi | \n| Ngân hàng Thương mại Cổ phần Quân Đội công bố Quyết định về thay đổi địa chỉ PGD Bắc Quảng Ngãi như sau: Các tập tin đính kèm Theo HOSE |",
   "structure": {
     "headings": [
       {
@@ -1691,7 +1691,7 @@
     }
   ],
   "capture_status": "ok",
-  "change_state": "NEW",
+  "change_state": "UNCHANGED",
   "provenance": {
     "fetch_ts": "2026-08-14T17:41:28+07:00",
     "render_method": "requests",

@@ -1,0 +1,175 @@
+{
+  "types": {
+    "TICKER": 1981,
+    "SECURITY_OTHER": 11,
+    "ETF": 28,
+    "INDEX": 6,
+    "EXCHANGE": 3,
+    "INDUSTRY_GICS1": 11,
+    "INDUSTRY_GICS2": 28,
+    "INDUSTRY_GICS3": 51,
+    "SECTOR_FPA": 16
+  },
+  "gics_tree": {
+    "Bất động sản": {
+      "Quản lý và phát triển bất động sản": [
+        "Bất động sản phức hợp",
+        "Vận hành bất động sản"
+      ]
+    },
+    "Công nghiệp": {
+      "Các dịch vụ thương mại và chuyên biệt": [
+        "Dịch vụ hỗ trợ khác",
+        "Dịch vụ hỗ trợ việc làm và nguồn nhân lực",
+        "Dịch vụ môi trường",
+        "Dịch vụ tư vấn & nghiên cứu",
+        "In thương mại"
+      ],
+      "Cơ sở hạ tầng giao thông vận tải": [
+        "Dịch vụ cảng biển",
+        "Dịch vụ sân bay"
+      ],
+      "Tư liệu sản xuất": [
+        "Công nghiệp đa ngành",
+        "Máy công nghiệp",
+        "Thiết bị điện",
+        "Xây dựng"
+      ],
+      "Vận tải": [
+        "Hỗ trợ vận tải",
+        "Vận tải biển",
+        "Vận tải hàng không",
+        "Vận tải đường bộ & đường sắt"
+      ]
+    },
+    "Công nghệ": {
+      "Công nghệ thông tin tích hợp": [
+        "Công nghệ thông tin tích hợp"
+      ],
+      "Phần cứng": [
+        "Phần cứng"
+      ],
+      "Phần mềm": [
+        "Phần mềm"
+      ]
+    },
+    "Dịch vụ công cộng": {
+      "Dịch vụ công cộng": [
+        "Nước",
+        "Điện"
+      ]
+    },
+    "Dịch vụ viễn thông": {
+      "Dịch vụ viễn thông": [
+        "Dịch vụ viễn thông đa ngành"
+      ]
+    },
+    "Hàng tiêu dùng không thiết yếu": {
+      "Bán lẻ": [
+        "Bán lẻ"
+      ],
+      "Hàng tiêu dùng lâu bền và trang phục": [
+        "Dệt may & Trang phục, phụ kiện",
+        "Khách sạn, nhà hàng & Giải trí",
+        "Đồ gia dụng lâu bền"
+      ],
+      "Truyền thông và xuất bản": [
+        "Truyền thông và xuất bản"
+      ],
+      "Ô tô & Phụ tùng": [
+        "Lốp & Cao su",
+        "Nhà sản xuất ô tô và thiết bị ô tô"
+      ]
+    },
+    "Hàng tiêu dùng thiết yếu": {
+      "Sản phẩm cá nhân & hộ gia đình": [
+        "Sản phẩm gia dụng không lâu bền"
+      ],
+      "Thực phẩm & Đồ uống": [
+        "Thuốc lá",
+        "Thực phẩm",
+        "Đồ uống"
+      ]
+    },
+    "Nguyên vật liệu": {
+      "Giấy và các sản phẩm từ gỗ": [
+        "Giấy",
+        "Gỗ và các sản phẩm từ gỗ"
+      ],
+      "Kim loại & Khai khoáng": [
+        "Kim loại không chứa sắt",
+        "Thép"
+      ],
+      "Nguyên vật liệu": [
+        "Hóa chất",
+        "Phân bón"
+      ],
+      "Vật liệu xây dựng": [
+        "Bao bì và đóng gói",
+        "Vật liệu xây dựng"
+      ]
+    },
+    "Năng lượng": {
+      "Năng lượng": [
+        "Dầu khí",
+        "Than đá và nhiên liệu khác"
+      ]
+    },
+    "Tài chính": {
+      "Bảo hiểm": [
+        "Bảo hiểm"
+      ],
+      "Công ty chứng khoán": [
+        "Công ty chứng khoán"
+      ],
+      "Ngân hàng": [
+        "Ngân hàng"
+      ],
+      "Quỹ": [
+        "Quỹ"
+      ],
+      "Tài chính chuyên biệt khác": [
+        "Tài chính chuyên biệt khác"
+      ]
+    },
+    "Y tế": {
+      "Dược phẩm & Công nghệ sinh học": [
+        "Dược phẩm"
+      ],
+      "Dịch vụ & thiết bị y tế": [
+        "Thiết bị & Vật tư y tế"
+      ]
+    }
+  },
+  "exchanges": [
+    "HOSE",
+    "HNX",
+    "UPCOM"
+  ],
+  "indices": [
+    "VNINDEX",
+    "VN30",
+    "VNXALL",
+    "HNXINDEX",
+    "HNX30",
+    "UPINDEX"
+  ],
+  "fpa_sectors": {
+    "Banle": "Bán lẻ",
+    "BDSCN": "Bất động sản Khu công nghiệp",
+    "BDSDD": "Bất động sản Dân dụng",
+    "Cangbien": "Cảng biển",
+    "Chungkhoan": "Chứng khoán",
+    "Daukhi": "Dầu khí",
+    "Detmay": "Dệt may",
+    "Dien": "Điện",
+    "F&B": "Thực phẩm & Đồ uống",
+    "Hangkhong": "Hàng không",
+    "HotroGT": "Hỗ trợ giao thông (Logistics)",
+    "NhuaXD": "Nhựa xây dựng",
+    "Phanbon": "Phân bón",
+    "Thep": "Thép",
+    "Thuysan": "Thủy sản",
+    "Ximang": "Xi măng"
+  }
+}

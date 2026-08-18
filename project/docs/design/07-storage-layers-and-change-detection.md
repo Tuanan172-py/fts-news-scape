@@ -60,5 +60,20 @@ Downstream (Silver→version→package→catalog) chạy OFFLINE qua `src/pipeli
 KHÔNG chèn vào `capture_mixin`. Lý do: giữ bất biến "scraper không ghi DB", capture nhanh, tránh tranh
 chấp DB từ thread scraper, và re-derive được từ WORM Bronze. (Live wiring = opt-in tương lai.)
 
+## 4. Refresh watch-list — nguồn "lần chụp thứ 2" (fix #1)
+Change-detection chỉ có ý nghĩa khi 1 URL được capture ≥2 lần. Nhưng dedup (`seen_articles`) ở hot
+path chặn re-scrape → nếu không can thiệp, mọi bài kẹt ở NEW (machinery ngủ). `src/pipeline/refresh.py`
+(driver opt-in, offline) **chủ động re-fetch** watch-list URL đã biết (BỎ QUA dedup) → ghi Bronze
+capture mới → `process_meta` → so version trước ⇒ UNCHANGED/CONTENT_CHANGED/TEMPLATE_DRIFT thật.
+Tôn trọng robots + rate limit; KHÔNG sửa hot path. CLI: `scripts/refresh_watchlist.py [limit] [domain...]`.
+
+## 5. Hard-gate + extraction robustness (fix #2, #3)
+- **Silver validate gate:** `process_meta` validate Silver vs `silver-v1` (không chỉ work-package).
+  `cleaned_text` rỗng / silver hỏng → item `held` (không giao agent). `cleaned_text` có `minLength:1`.
+- **Extraction fallback chain:** `SilverBuilder._extract_cleaned` = trafilatura(high) → extract_text/BS4(medium)
+  → join paragraphs(low) → empty. Ghi `extraction_quality ∈ {high,medium,low,empty}` vào Silver.
+- **lang/domain hardening:** `_detect_lang` thêm `en`; `domain` fallback `source_url` netloc (strip `www.`).
+
 ## Unresolved
 - Soft-404 / trang bị gỡ vs template hỏng: hiện gộp vào SELECTOR_BROKEN heuristic — tinh chỉnh khi gặp thực tế.
+- Watch-list selection hiện = N bài mới nhất; có thể nâng thành theo tuổi/độ ưu tiên khi vận hành thực.

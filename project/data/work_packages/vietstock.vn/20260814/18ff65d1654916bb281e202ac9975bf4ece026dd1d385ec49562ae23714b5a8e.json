@@ -3228,7 +3228,7 @@
     }
   ],
   "capture_status": "ok",
-  "change_state": "NEW",
+  "change_state": "UNCHANGED",
   "provenance": {
     "fetch_ts": "2026-08-14T17:42:34+07:00",
     "render_method": "requests",

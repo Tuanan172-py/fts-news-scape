@@ -5,19 +5,35 @@ Cập nhật: 2026-07-24 (Phase 1).
 ## Khởi động / Dừng
 
 ```bash
-# Scheduler liên tục (15 phút/cycle, cycle đầu chạy ngay)
+# Pipeline ban ngày liên tục (capture 15' + re-derive Silver 30' + drift mỗi sáng)
+.venv\Scripts\python.exe -m src.morninger
+
+# Scheduler chỉ capture (15 phút/cycle) — nếu không cần downstream tự động
 .venv\Scripts\python.exe -m src.orchestrator
 
 # 1 cycle rồi thoát (test/cron ngoài)
 .venv\Scripts\python.exe scripts/run_once.py            # tất cả domain
 .venv\Scripts\python.exe scripts/run_once.py cafef tnck # chọn domain
 
+# Chạy thử từng nhịp morninger riêng
+.venv\Scripts\python.exe -m src.morninger --once derive  # re-derive Silver tăng dần (watermark)
+.venv\Scripts\python.exe -m src.morninger --once drift   # drift report
+
 # Dừng: Ctrl+C — graceful (flush DBWriter, WAL checkpoint, rồi thoát)
 ```
 
+**Morninger** chạy 3 nhịp trong 1 tiến trình: capture Bronze (15') → re-derive Silver
+tăng dần bằng watermark `pipeline_state` (30') → drift report mỗi sáng. Checkpoint
+"Silver đầy đủ" = watermark đuổi kịp Bronze mới nhất (backlog=0), ghi `silver_checkpoint`.
+Tại mỗi checkpoint, tự xuất manifest Silver hôm nay ra `data/exports/silver-YYYYMMDD-today.csv`
+(danh sách tin cấp Silver: id/domain/url/state/work_status). Xuất tay: `python scripts/export_silver.py`.
+Xem `python -m src.morninger --once derive` để đọc trạng thái watermark/checkpoint.
+
 **Tự khởi động cùng Windows:** Task Scheduler → Create Task → Trigger "At log on" →
-Action: `C:\...\web-monocle\.venv\Scripts\python.exe -m src.orchestrator`,
-Start in: thư mục project. (Không dùng schedule của Task Scheduler — orchestrator tự quản lý chu kỳ.)
+Action: `C:\...\web-monocle\.venv\Scripts\python.exe -m src.morninger`,
+Start in: thư mục project. (Không dùng schedule của Task Scheduler — morninger tự quản lý 3 nhịp.)
+**Chỉ tạo 1 task** — chạy 2 scheduler cùng lúc sẽ bị advisory lock (`pipeline_state`) từ chối
+(orchestrator/morninger thứ hai log lỗi và thoát) để tránh double-scrape.
 
 ## Health check
 

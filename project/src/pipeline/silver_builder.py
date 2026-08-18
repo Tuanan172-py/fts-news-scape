@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import os
 import re
+from urllib.parse import urlparse
 
 from bs4 import BeautifulSoup
 
@@ -20,13 +21,37 @@ SILVER_SCHEMA_VERSION = "1.0"
 
 # ký tự đặc trưng tiếng Việt (đủ để phân biệt vi vs und cho heuristic nhẹ)
 _VI_CHARS = re.compile(r"[ăâđêôơưÁÀẢÃẠáàảãạấầẩẫậắằẳẵặéèẻẽẹếềểễệíìỉĩịóòỏõọốồổỗộớờởỡợúùủũụứừửữựýỳỷỹỵ]", re.I)
+_EN_STOPWORDS = re.compile(r"\b(the|and|of|to|in|for|is|on|with|that|as|by)\b", re.I)
+# ngưỡng độ dài cleaned_text để chấm chất lượng trích (bug #2)
+_MIN_HIGH = 200   # trafilatura cho ≥ ký tự này → high
+_MIN_OK = 50      # dưới ngưỡng này coi như trích hụt → thử fallback sâu hơn
 
 
 def _detect_lang(text: str) -> str:
     if not text:
         return "und"
     sample = text[:2000]
-    return "vi" if len(_VI_CHARS.findall(sample)) >= 5 else "und"
+    if len(_VI_CHARS.findall(sample)) >= 5:
+        return "vi"
+    # EN heuristic (bug #4a): nhiều chữ ASCII + stopword tiếng Anh
+    ascii_letters = sum(1 for c in sample if c.isascii() and c.isalpha())
+    if ascii_letters >= 20 and _EN_STOPWORDS.search(sample):
+        return "en"
+    return "und"
+
+
+def _domain_of(meta: dict) -> str:
+    """Domain lưu trữ. Ưu tiên path Bronze (đồng bộ partition), fallback source_url
+    netloc (bug #4b: đổi tên thư mục base không còn làm domain rỗng)."""
+    html_path = meta.get("html_path", "")
+    if html_path:
+        parts = html_path.replace("\\", "/").split("/")
+        if "raw_html" in parts:
+            i = parts.index("raw_html")
+            if i + 1 < len(parts):
+                return parts[i + 1]
+    net = urlparse(meta.get("source_url", "")).netloc.lower()
+    return net[4:] if net.startswith("www.") else net
 
 
 def _parse_structure(html: str) -> dict:
@@ -66,31 +91,44 @@ class SilverBuilder:
             html = raw_bytes.decode("utf-8", errors="replace")
 
         url = meta.get("source_url", "")
-        result = extract_content(url, html=html)          # trafilatura (reuse)
-        cleaned = result.get("content") or extract_text(html)
-
-        domain = ""
-        if meta.get("html_path"):
-            # data/raw_html/<domain>/<yyyymmdd>/<hash>.html
-            parts = meta["html_path"].replace("\\", "/").split("/")
-            if "raw_html" in parts:
-                i = parts.index("raw_html")
-                if i + 1 < len(parts):
-                    domain = parts[i + 1]
+        structure = _parse_structure(html)               # parse 1 lần, tái dùng làm fallback
+        cleaned, quality = self._extract_cleaned(url, html, structure)
 
         return {
             "silver_schema_version": self.schema_version,
             "article_id": meta.get("url_title_hash", ""),
             "source_url": url,
-            "domain": domain,
+            "domain": _domain_of(meta),
             "content_sha256": meta.get("content_sha256", ""),
             "cleaned_text": cleaned,
-            "structure": _parse_structure(html),
+            "extraction_quality": quality,               # bug #2: high|medium|low|empty
+            "structure": structure,
             "images": meta.get("images", []),
             "language": _detect_lang(cleaned),
             "built_at": meta.get("fetch_ts", ""),       # từ Bronze → deterministic
             "built_from_raw_path": meta.get("html_path", ""),
         }
+
+    @staticmethod
+    def _extract_cleaned(url: str, html: str, structure: dict) -> tuple[str, str]:
+        """Chuỗi fallback đảm bảo cleaned_text không rỗng khi trang có chữ (bug #2).
+
+        trafilatura(high) → extract_text/BS4(medium) → join paragraphs(low) → empty.
+        Trả (cleaned_text, extraction_quality).
+        """
+        cleaned = (extract_content(url, html=html).get("content") or "").strip()
+        quality = "high"
+        if len(cleaned) < _MIN_HIGH:
+            alt = (extract_text(html) or "").strip()
+            if len(alt) > len(cleaned):
+                cleaned, quality = alt, "medium"
+        if len(cleaned) < _MIN_OK:
+            joined = "\n".join(structure.get("paragraphs", [])).strip()
+            if len(joined) > len(cleaned):
+                cleaned, quality = joined, "low"
+        if not cleaned:
+            quality = "empty"
+        return cleaned, quality
 
 
 def _atomic_write(path: str, data: bytes) -> None:

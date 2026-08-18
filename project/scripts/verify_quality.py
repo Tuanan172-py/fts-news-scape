@@ -14,7 +14,10 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.core.config import load_settings
+from src.core.stdio import force_utf8_stdio
 from src.db.store import ArticleStore
+
+force_utf8_stdio()
 
 
 def verify(domain: str | None, min_body: int) -> int:
@@ -24,7 +27,9 @@ def verify(domain: str | None, min_body: int) -> int:
     args = (domain,) if domain else ()
     rows = conn.execute(
         f"SELECT title, content_text, summary, published_at, source_domain "
-        f"FROM articles {where}", args).fetchall()
+        f"FROM articles {where}",
+        args,
+    ).fetchall()
     conn.close()
 
     if not rows:
@@ -51,8 +56,10 @@ def verify(domain: str | None, min_body: int) -> int:
     pct = ok / len(rows) * 100
     print(f"Domain: {domain or 'ALL'}")
     print(f"Articles: {len(rows)} | Quality-OK: {ok} ({pct:.1f}%)")
-    print(f"Missing — title: {missing['title']}, body(<{min_body}ch): "
-          f"{missing['body']}, date: {missing['date']}")
+    print(
+        f"Missing — title: {missing['title']}, body(<{min_body}ch): "
+        f"{missing['body']}, date: {missing['date']}"
+    )
     print("PASS (>=95%)" if pct >= 95 else "FAIL (<95%)")
     return 0 if pct >= 95 else 2
 

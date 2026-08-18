@@ -11,13 +11,15 @@ Web Monocle thu thập tin tức từ 23 domain qua RSS, API reverse-engineer, v
 
 ## Thư mục Tri thức
 
-- [Datasets](datasets/index.md) — Cơ sở dữ liệu và data stores
-- [Tables](tables/index.md) — Schema các bảng dữ liệu
-- [Pipelines](pipelines/index.md) — Data pipelines và luồng xử lý
-- [Metrics](metrics/index.md) — Chỉ số kinh doanh và kỹ thuật
-- [Playbooks](playbooks/index.md) — Runbook vận hành và triển khai
-- [References](references/index.md) — Tài liệu tham khảo kiến trúc
-- [Configurations](configurations/index.md) — Cấu hình hệ thống
+Toàn bộ OKF concepts nằm dưới [`catalog/`](catalog/) (nhà canonical duy nhất). Bản đồ module↔file: [`MAPPING.md`](MAPPING.md).
+
+- [Datasets](catalog/datasets/index.md) — Cơ sở dữ liệu và data stores
+- [Tables](catalog/tables/index.md) — Schema các bảng dữ liệu
+- [Pipelines](catalog/pipelines/index.md) — Data pipelines và luồng xử lý
+- [Metrics](catalog/metrics/index.md) — Chỉ số kinh doanh và kỹ thuật
+- [Playbooks](catalog/playbooks/index.md) — Runbook vận hành và triển khai
+- [References](catalog/references/index.md) — Tài liệu tham khảo kiến trúc
+- [Configurations](catalog/configurations/index.md) — Cấu hình hệ thống
 
 ## Tài liệu gốc
 

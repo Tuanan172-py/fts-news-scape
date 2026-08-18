@@ -28,4 +28,5 @@ from src.scrapers import (  # noqa: E402,F401
     tnck,
     vietstock,
     vndirect,
+    vneconomy,
 )

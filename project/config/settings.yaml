@@ -17,3 +17,10 @@ http:
 export:
   enabled: true            # tự xuất CSV 'hôm nay' cuối mỗi cycle
   dir: data/exports        # data/exports/articles-YYYY-MM-DD.csv (ghi đè mỗi cycle)
+
+morninger:
+  capture_interval_minutes: 15   # nhịp capture Bronze (job 1)
+  rederive_interval_minutes: 30  # nhịp re-derive Silver tăng dần (job 2)
+  drift_hour: 6                  # giờ chạy drift report mỗi sáng (job 3)
+  drift_minute: 0
+  drift_limit: 100

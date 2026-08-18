@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fra.local/schemas/l1-entity-output-v1.schema.json",
+  "title": "L1 entity-recognition output v1 — provider-agnostic",
+  "description": "Output BẤT KỲ agent nào nhận handoff L1 PHẢI emit. Nhiệm vụ: nhận diện thực thể trong TIÊU ĐỀ (chưa xử lý body) và tự chấm checklist theo từng nhóm thực thể. ASCII keys.",
+  "type": "object",
+  "required": [
+    "l1_output_version", "article_id", "title", "recognized",
+    "entities", "categories", "citations", "confidence", "processing_metadata"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "l1_output_version": {"type": "string"},
+    "article_id": {"type": "string"},
+    "title": {"type": "string", "description": "tiêu đề đã phân tích (nguyên văn)"},
+    "recognized": {"type": "boolean", "description": "có nhận diện được ≥1 thực thể trong tiêu đề không"},
+    "entities": {
+      "type": "array",
+      "description": "các thực thể nhận diện được",
+      "items": {
+        "type": "object",
+        "required": ["surface", "type", "method", "in_list"],
+        "properties": {
+          "surface": {"type": "string", "description": "chuỗi xuất hiện trong tiêu đề (PHẢI là substring của title)"},
+          "entity_id": {"type": ["string", "null"], "description": "entity_id trong danh sách, null nếu ngoài danh sách"},
+          "type": {"type": "string", "enum": [
+            "TICKER", "ETF", "SECURITY_OTHER", "INDEX", "EXCHANGE",
+            "INDUSTRY_GICS1", "INDUSTRY_GICS2", "INDUSTRY_GICS3", "SECTOR_FPA", "UNKNOWN"
+          ]},
+          "method": {"type": "string", "enum": ["exact_code", "alias", "semantic"],
+            "description": "exact_code/alias = code làm được; semantic = suy luận của agent"},
+          "in_list": {"type": "boolean", "description": "có ánh xạ được vào danh sách entity không"},
+          "confidence": {"type": "number", "minimum": 0, "maximum": 1}
+        }
+      }
+    },
+    "categories": {
+      "type": "object",
+      "description": "checklist theo từng nhóm thực thể: nhóm nào THỰC HIỆN được / KHÔNG",
+      "required": ["ticker_company", "etf_fund", "index", "exchange", "industry_sector"],
+      "additionalProperties": false,
+      "properties": {
+        "ticker_company":  {"type": "string", "enum": ["done", "none", "out_of_list"]},
+        "etf_fund":        {"type": "string", "enum": ["done", "none", "out_of_list"]},
+        "index":           {"type": "string", "enum": ["done", "none", "out_of_list"]},
+        "exchange":        {"type": "string", "enum": ["done", "none", "out_of_list"]},
+        "industry_sector": {"type": "string", "enum": ["done", "none", "out_of_list"]}
+      }
+    },
+    "unlisted_candidates": {
+      "type": "array", "items": {"type": "string"},
+      "description": "tên/thương hiệu nhận ra nhưng CHƯA có trong danh sách → đề xuất bổ sung"
+    },
+    "citations": {
+      "type": "array",
+      "description": "bằng chứng: mỗi span PHẢI là substring của title",
+      "items": {"type": "object", "required": ["source_span"],
+        "properties": {"source_span": {"type": "string"}}}
+    },
+    "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+    "processing_metadata": {
+      "type": "object",
+      "required": ["agent_provider", "model_used", "timestamp"],
+      "properties": {
+        "agent_provider": {"type": "string"},
+        "model_used": {"type": "string"},
+        "timestamp": {"type": "string"}
+      }
+    }
+  }
+}

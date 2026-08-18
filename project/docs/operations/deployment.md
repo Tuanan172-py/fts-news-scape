@@ -26,7 +26,10 @@ Phụ thuộc chính: `feedparser`, `requests`, `urllib3`, `truststore`, `trafil
 ## 3. Chạy
 
 ```powershell
-# Scheduler (production) — 1 cycle/15 phút, chạy ngay lần đầu
+# Pipeline ban ngày liên tục (production) — capture + re-derive Silver + drift trong 1 scheduler
+.venv\Scripts\python.exe -m src.morninger
+
+# Scheduler chỉ capture (15 phút) — nếu không cần downstream tự động
 .venv\Scripts\python.exe -m src.orchestrator
 
 # 1 cycle mọi domain rồi thoát (test/cron ngoài)
@@ -70,8 +73,9 @@ Grep được: `grep HPG`, `grep 🔴`.
 
 - **Đơn giản (dev):** chạy trong terminal/`Start-Process`, dừng bằng Ctrl+C (SIGINT → graceful
   shutdown, flush DBWriter).
-- **Bền hơn:** Task Scheduler (Windows) hoặc NSSM để chạy `-m src.orchestrator` như service; đảm
-  bảo **chỉ 1 instance** (không đặt cả scheduler mode lẫn cron `--once`).
+- **Bền hơn:** Task Scheduler (Windows) hoặc NSSM để chạy `-m src.morninger` (pipeline đầy đủ)
+  hoặc `-m src.orchestrator` như service; đảm bảo **chỉ 1 instance** (không đặt cả scheduler mode
+  lẫn cron `--once`).
 - **Cron ngoài:** nếu muốn điều phối bằng cron/Task Scheduler thay APScheduler → dùng `--once`
   mỗi lần chạy, KHÔNG chạy scheduler mode song song.
 

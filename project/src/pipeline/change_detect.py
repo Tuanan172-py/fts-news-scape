@@ -51,15 +51,23 @@ def dom_path_sig(structure: dict) -> str:
     không nhạy với reorder/ad. Trả hex sha1 (12 ký tự)."""
     if not structure:
         return ""
-    heads = sorted(f"h{h.get('level')}" for h in structure.get("headings", []))
+    headings = structure.get("headings", [])
+    paragraphs = structure.get("paragraphs", [])
+    tables = structure.get("tables", [])
+    links = structure.get("links", [])
+    # Fix A: không có nội dung cấu trúc (heading/paragraph/table) ⇒ extraction hụt,
+    # KHÔNG phải DOM thật để fingerprint → trả "" (classify sẽ không nhầm TEMPLATE_DRIFT).
+    if not headings and not paragraphs and not tables:
+        return ""
+    heads = sorted(f"h{h.get('level')}" for h in headings)
     # bucket hoá số lượng để không nhạy thay đổi nhỏ (log-scale)
     def bucket(n: int) -> int:
         return n.bit_length()
     parts = [
         "H:" + ",".join(heads),
-        f"P:{bucket(len(structure.get('paragraphs', [])))}",
-        f"T:{bucket(len(structure.get('tables', [])))}",
-        f"L:{bucket(len(structure.get('links', [])))}",
+        f"P:{bucket(len(paragraphs))}",
+        f"T:{bucket(len(tables))}",
+        f"L:{bucket(len(links))}",
     ]
     joined = "|".join(parts)
     return hashlib.sha1(joined.encode("utf-8")).hexdigest()[:12]
@@ -101,7 +109,10 @@ def classify(prev: dict | None, cur: dict, *,
     # TEMPLATE_DRIFT chỉ do CẤU TRÚC DOM đổi — KHÔNG dựa vào độ lớn thay đổi nội dung
     # (thay đổi nội dung lớn nhưng cùng template vẫn là CONTENT_CHANGED). t_content/
     # t_template giữ cho tương thích + log/tuning tương lai, không quyết định template.
-    dom_changed = bool(prev.get("dom_path_sig")) and prev["dom_path_sig"] != cur["dom_path_sig"]
+    # Fix A: chỉ TEMPLATE_DRIFT khi CẢ HAI sig non-empty & khác nhau. Nếu cur sig rỗng
+    # (extraction hụt cấu trúc) → không nhầm drift; rơi về CONTENT_CHANGED (re_extract).
+    dom_changed = bool(prev.get("dom_path_sig")) and bool(cur.get("dom_path_sig")) \
+        and prev["dom_path_sig"] != cur["dom_path_sig"]
     if dom_changed:
         return "TEMPLATE_DRIFT", "manual_review"
     return "CONTENT_CHANGED", "re_extract"

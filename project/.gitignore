@@ -17,3 +17,4 @@ data/raw/
 data/dedup_cache.json
 data/notifications/
 data/exports/
+data/agent_tasks/l1/     # L1 handoff packets + resolved.jsonl (sinh bởi scripts/l1_route.py)

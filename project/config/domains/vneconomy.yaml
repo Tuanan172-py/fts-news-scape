@@ -1,8 +1,9 @@
 name: vneconomy
-enabled: false   # disabled 2026-08-03: focus on cafef + vietstock only
-method: rss
+enabled: true
+method: vneconomy       # dedicated scraper: RSS list + full raw HTML capture (was: rss)
 rate_limit: 3.0
 timeout: 30
+language: vi
 rss:
   feeds:
     - {url: "https://vneconomy.vn/chung-khoan.rss", name: "VnEconomy Chứng khoán"}
@@ -10,5 +11,13 @@ rss:
     - {url: "https://vneconomy.vn/thi-truong.rss", name: "VnEconomy Thị trường"}
 detail:
   extract_full: true
+  content_selector: "#article-editor"   # body biên tập (verified 2026-08-17, ổn định 3 section)
   max_details_per_cycle: 30
-pitfalls: "Namespace content:encoded được khai báo nhưng item KHÔNG chứa (verified 2026-07-24) — đi đường detail-fetch thường. Thay NDH (dormant) theo quyết định 2026-07-24."
+capture:
+  raw_dir: "data/raw_html"       # RawStore lưu full raw HTML byte-exact + .meta.json
+  min_body_bytes: 2048
+compliance:
+  respect_robots: true           # robots.txt: article cho phép, crawl-delay 1s cho AI bot
+  proxy_rotation: false
+  proxies: []
+pitfalls: "content:encoded khai báo namespace nhưng item KHÔNG chứa (verified 2026-08-17) → detail-fetch bắt buộc. Detail server-rendered, body = #article-editor (thẻ <main>, không phải div). Img src trực tiếp trên premedia.vneconomy.vn (không lazy). h1 trang rỗng → dùng title RSS. pubDate RFC-2822 GMT → feedparser UTC-normalize. Không tag mã CK trong feed → tag_tickers theo watchlist."

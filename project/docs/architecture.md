@@ -2,6 +2,10 @@
 
 Cập nhật: 2026-07-24 (Phase 1 foundation refactor — SQLite-only, standalone).
 
+> 📍 File này mô tả **ingestion Phase-1** (scrape → dedup → sentiment → SQLite). Toàn cảnh
+> end-to-end 3 vòng (Bronze → Silver → change-detect → handoff → agent) xem
+> **[design/00-end-to-end-architecture.md](design/00-end-to-end-architecture.md)**.
+
 ## Kiến trúc tổng thể
 
 ```

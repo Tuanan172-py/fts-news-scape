@@ -6,7 +6,7 @@
   "published_at": "2026-08-14T14:42:59+07:00",
   "raw_html_path": "data/raw_html\\cafef.vn\\20260814\\3655764fe232eb910f83f20468363ec22302bf8bcc38e4bab8b2c55c6e9cab79.html",
   "raw_sha256": "16703da1af43927d3507668d7d14b2430f6e28aa94671fbce6fb2c8a61041255",
-  "cleaned_text": "| \n                \n                    | |   THÔNG TIN CÔNG TY   | Thứ 6, 14/08/2026, 14:42 | \n |  \n                    | \n                            \n                                | \n    \n        DGC\n     \n          Công ty Cổ phần Tập đoàn Hóa chất Đức Giang (HOSE)\n     \n    \n \n     |  \n                                |  |  \n                                | \n                                        \n                                            | DGC: Điều lệ công ty |  \n                                            |      Công ty Cổ phần Tập đoàn Hóa chất Đức Giang thông báo Điều lệ công ty  như sau: |  |  |  | \n    \n        |  | \n    \n        |  | \n \n                \n                    (*) Lưu ý: Dữ liệu được tổng hợp từ các nguồn đáng tin cậy, có giá trị tham khảo với các nhà đầu tư.\n                    Tuy nhiên, chúng tôi không chịu trách nhiệm trước mọi rủi ro nào do sử dụng các dữ liệu này.",
+  "cleaned_text": "|  | \n|  | \n|  | \n|  | \n|  | \n| THÔNG TIN CÔNG TY | Thứ 6, 14/08/2026, 14:42 | \n| \n         DGC\n      Công ty Cổ phần Tập đoàn Hóa chất Đức Giang (HOSE) | \n|  | \n|  | \n| Giá hiện tại: DGC |  | 43,2 | -0,7(-1,59%) |  |  | Hồ sơ công ty | GDCĐ lớn & CĐ nội bộ |  | \n| DGC: Điều lệ công ty | \n| Công ty Cổ phần Tập đoàn Hóa chất Đức Giang thông báo Điều lệ công ty như sau: Các tập tin đính kèm Theo HOSE | \n| Các tin khác | \n|  |",
   "structure": {
     "headings": [
       {
@@ -1691,7 +1691,7 @@
     }
   ],
   "capture_status": "ok",
-  "change_state": "NEW",
+  "change_state": "UNCHANGED",
   "provenance": {
     "fetch_ts": "2026-08-14T17:41:28+07:00",
     "render_method": "requests",

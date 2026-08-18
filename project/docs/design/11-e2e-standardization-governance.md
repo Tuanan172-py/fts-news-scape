@@ -51,10 +51,15 @@ log (không bao giờ giao agent package hỏng). Cùng validator tái dùng cho
   regenerate Silver+packages (idempotent, offline), re-validate, re-enqueue changed.
 - Change log: `schemas/CHANGELOG.md`.
 
-## 6. Vận hành (scripts)
-| Script | Việc |
-|--------|------|
-| `rederive_from_bronze.py [domain] [date]` | driver chính: Bronze→Silver→version→package→catalog |
+## 6. Vận hành
+**Driver chính (prod): `python -m src.morninger`** — scheduler 3 job: capture (15') →
+`derive.rederive_incremental` (30', watermark tăng dần) → `drift.list_drift` (mỗi sáng).
+1 scheduler tại 1 thời điểm (advisory lock `pipeline_state`).
+
+| Script (bổ trợ) | Việc |
+|-----------------|------|
+| `rederive_from_bronze.py [domain] [date]` | **full-scan re-derive** (BẢO TRÌ: sau bump schema/sửa parser), không phải driver ngày |
+| `refresh_watchlist.py [limit] [domain]` | re-fetch watch-list → kích hoạt change-detection |
 | `report_drift.py` | liệt kê TEMPLATE_DRIFT/SELECTOR_BROKEN để reconcile |
 | `validate_e2e.py` | smoke test toàn chuỗi OFFLINE + validate agent-output sample (PASS/FAIL) |
 

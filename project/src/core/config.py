@@ -20,6 +20,13 @@ _DEFAULT_SETTINGS = {
     "logging": {"level": "INFO", "dir": "logs"},
     "scheduler": {"interval_minutes": 15},
     "http": {"rate_limit": 3.0, "timeout": 30, "max_retries": 3},
+    "morninger": {
+        "capture_interval_minutes": 15,
+        "rederive_interval_minutes": 30,
+        "drift_hour": 6,
+        "drift_minute": 0,
+        "drift_limit": 100,
+    },
 }
 
 

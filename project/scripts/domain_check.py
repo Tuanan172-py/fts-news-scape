@@ -27,6 +27,10 @@ import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from src.core.stdio import force_utf8_stdio
+
+force_utf8_stdio()
+
 
 def _build_http_client():
     from src.crawler.http_client import HTTPClient

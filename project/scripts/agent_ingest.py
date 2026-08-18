@@ -18,7 +18,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.agent.runner import AgentRunner
 from src.core.config import load_settings
+from src.core.stdio import force_utf8_stdio
 from src.db.store import ArticleStore
+
+force_utf8_stdio()
 
 
 def _iter_paths(arg: str):
@@ -43,7 +46,9 @@ def main(argv: list[str]) -> int:
             print(f"DONE   {res['article_id']}")
         else:
             failed += 1
-            print(f"FAILED {res.get('article_id')}: {res.get('reasons') or res.get('reason')}")
+            print(
+                f"FAILED {res.get('article_id')}: {res.get('reasons') or res.get('reason')}"
+            )
     print(f"\ningested: done={done} failed={failed}")
     return 0
 

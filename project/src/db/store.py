@@ -12,12 +12,36 @@ import sqlite3
 
 from loguru import logger
 
-from src.core.models import Article
+from datetime import datetime
+
+from src.core.models import VN_TZ, Article, now_vn_iso
+
+
+def _lock_is_stale(ts_iso: str, stale_seconds: int) -> bool:
+    """True nếu timestamp lock quá cũ (chủ cũ có thể đã chết) → cho phép chiếm lại."""
+    try:
+        age = (datetime.now(VN_TZ) - datetime.fromisoformat(ts_iso)).total_seconds()
+    except (ValueError, TypeError):
+        return True
+    return age > stale_seconds
 
 _COLUMNS = (
-    "url", "url_title_hash", "title", "summary", "content_html", "content_text",
-    "published_at", "author", "source_domain", "symbols", "categories",
-    "sentiment", "sentiment_score", "fetched_at", "processed_at", "metadata_json",
+    "url",
+    "url_title_hash",
+    "title",
+    "summary",
+    "content_html",
+    "content_text",
+    "published_at",
+    "author",
+    "source_domain",
+    "symbols",
+    "categories",
+    "sentiment",
+    "sentiment_score",
+    "fetched_at",
+    "processed_at",
+    "metadata_json",
 )
 
 _INSERT_SQL = (
@@ -125,6 +149,12 @@ CREATE TABLE IF NOT EXISTS agent_outputs (
   UNIQUE(article_id, raw_sha256)
 );
 CREATE INDEX IF NOT EXISTS idx_agent_outputs_dod ON agent_outputs(dod_pass, created_at);
+-- Pipeline state (morninger) — key/value bền vững qua restart (watermark/checkpoint).
+CREATE TABLE IF NOT EXISTS pipeline_state (
+  key TEXT PRIMARY KEY,
+  value TEXT,
+  updated_at TEXT
+);
 """
 
 
@@ -164,8 +194,9 @@ class ArticleStore:
     def get_by_hash(self, url_title_hash: str) -> Article | None:
         conn = self._connect()
         try:
-            row = conn.execute("SELECT * FROM articles WHERE url_title_hash=?",
-                               (url_title_hash,)).fetchone()
+            row = conn.execute(
+                "SELECT * FROM articles WHERE url_title_hash=?", (url_title_hash,)
+            ).fetchone()
             return Article.from_row(row) if row else None
         finally:
             conn.close()
@@ -176,21 +207,36 @@ class ArticleStore:
         try:
             row = conn.execute(
                 "SELECT * FROM article_versions WHERE url_title_hash=? "
-                "ORDER BY id DESC LIMIT 1", (url_title_hash,)).fetchone()
+                "ORDER BY id DESC LIMIT 1",
+                (url_title_hash,),
+            ).fetchone()
             return dict(row) if row else None
         finally:
             conn.close()
 
     def insert_version(self, row: dict) -> int:
-        cols = ("url_title_hash", "source_domain", "captured_at", "content_sha256",
-                "simhash64", "dom_path_sig", "capture_status", "prev_version_id",
-                "hamming_content", "dom_changed", "selector_drift", "state", "recommendation")
+        cols = (
+            "url_title_hash",
+            "source_domain",
+            "captured_at",
+            "content_sha256",
+            "simhash64",
+            "dom_path_sig",
+            "capture_status",
+            "prev_version_id",
+            "hamming_content",
+            "dom_changed",
+            "selector_drift",
+            "state",
+            "recommendation",
+        )
         conn = self._connect()
         try:
             cur = conn.execute(
                 f"INSERT INTO article_versions ({', '.join(cols)}) "
                 f"VALUES ({', '.join('?' for _ in cols)})",
-                tuple(row.get(c) for c in cols))
+                tuple(row.get(c) for c in cols),
+            )
             conn.commit()
             return cur.lastrowid
         finally:
@@ -203,7 +249,8 @@ class ArticleStore:
             rows = conn.execute(
                 "SELECT DISTINCT url_title_hash FROM article_versions "
                 "WHERE state IN ('NEW','CONTENT_CHANGED') AND captured_at >= ?",
-                (watermark_iso,)).fetchall()
+                (watermark_iso,),
+            ).fetchall()
             return [r["url_title_hash"] for r in rows]
         finally:
             conn.close()
@@ -215,26 +262,38 @@ class ArticleStore:
         try:
             row = conn.execute(
                 "SELECT * FROM agent_outputs WHERE article_id=? AND raw_sha256=?",
-                (article_id, raw_sha256)).fetchone()
+                (article_id, raw_sha256),
+            ).fetchone()
             return dict(row) if row else None
         finally:
             conn.close()
 
     def insert_agent_output(self, row: dict) -> int:
         """Upsert 1 output theo UNIQUE(article_id, raw_sha256). Trả row id."""
-        cols = ("article_id", "raw_sha256", "work_item_id", "output_json",
-                "agent_provider", "model_used", "confidence", "dod_pass",
-                "dod_reasons", "created_at")
+        cols = (
+            "article_id",
+            "raw_sha256",
+            "work_item_id",
+            "output_json",
+            "agent_provider",
+            "model_used",
+            "confidence",
+            "dod_pass",
+            "dod_reasons",
+            "created_at",
+        )
         conn = self._connect()
         try:
             conn.execute(
                 f"INSERT OR REPLACE INTO agent_outputs ({', '.join(cols)}) "
                 f"VALUES ({', '.join('?' for _ in cols)})",
-                tuple(row.get(c) for c in cols))
+                tuple(row.get(c) for c in cols),
+            )
             conn.commit()
             r = conn.execute(
                 "SELECT id FROM agent_outputs WHERE article_id=? AND raw_sha256=?",
-                (row.get("article_id"), row.get("raw_sha256"))).fetchone()
+                (row.get("article_id"), row.get("raw_sha256")),
+            ).fetchone()
             return r["id"] if r else -1
         finally:
             conn.close()
@@ -256,8 +315,9 @@ class ArticleStore:
             if own:
                 conn.close()
 
-    def insert_batch(self, articles: list[Article],
-                     conn: sqlite3.Connection | None = None) -> int:
+    def insert_batch(
+        self, articles: list[Article], conn: sqlite3.Connection | None = None
+    ) -> int:
         """Insert batch trong 1 transaction (BEGIN IMMEDIATE). Trả về số row mới."""
         if not articles:
             return 0
@@ -283,17 +343,21 @@ class ArticleStore:
             if own:
                 conn.close()
 
-    def get_recent(self, limit: int = 20, source_domain: str | None = None) -> list[Article]:
+    def get_recent(
+        self, limit: int = 20, source_domain: str | None = None
+    ) -> list[Article]:
         conn = self._connect()
         try:
             if source_domain:
                 rows = conn.execute(
                     "SELECT * FROM articles WHERE source_domain=? "
-                    "ORDER BY fetched_at DESC LIMIT ?", (source_domain, limit)).fetchall()
+                    "ORDER BY fetched_at DESC LIMIT ?",
+                    (source_domain, limit),
+                ).fetchall()
             else:
                 rows = conn.execute(
-                    "SELECT * FROM articles ORDER BY fetched_at DESC LIMIT ?",
-                    (limit,)).fetchall()
+                    "SELECT * FROM articles ORDER BY fetched_at DESC LIMIT ?", (limit,)
+                ).fetchall()
             return [Article.from_row(r) for r in rows]
         finally:
             conn.close()
@@ -304,7 +368,9 @@ class ArticleStore:
         try:
             rows = conn.execute(
                 "SELECT source_domain, COUNT(*) AS n FROM articles "
-                "WHERE fetched_at >= ? GROUP BY source_domain", (since_iso,)).fetchall()
+                "WHERE fetched_at >= ? GROUP BY source_domain",
+                (since_iso,),
+            ).fetchall()
             return {r["source_domain"]: r["n"] for r in rows}
         finally:
             conn.close()
@@ -315,3 +381,58 @@ class ArticleStore:
             return conn.execute("SELECT COUNT(*) FROM articles").fetchone()[0]
         finally:
             conn.close()
+
+    # -- pipeline state (morninger watermark/checkpoint) ----------------------
+    def get_state(self, key: str) -> str | None:
+        """Đọc giá trị key từ pipeline_state. None nếu chưa có."""
+        conn = self._connect()
+        try:
+            row = conn.execute(
+                "SELECT value FROM pipeline_state WHERE key=?", (key,)
+            ).fetchone()
+            return row["value"] if row else None
+        finally:
+            conn.close()
+
+    def set_state(self, key: str, value: str) -> None:
+        """Ghi/ghi đè 1 key trong pipeline_state (upsert)."""
+        conn = self._connect()
+        try:
+            conn.execute(
+                "INSERT OR REPLACE INTO pipeline_state (key, value, updated_at) "
+                "VALUES (?, ?, ?)",
+                (key, value, now_vn_iso()),
+            )
+            conn.commit()
+        finally:
+            conn.close()
+
+    # -- advisory scheduler lock (Fix F: chống chạy 2 scheduler cùng lúc) -------
+    def try_acquire_lock(self, name: str, owner: str, stale_seconds: int) -> bool:
+        """Chiếm lock qua pipeline_state (atomic BEGIN IMMEDIATE). True nếu lock trống /
+        của chính owner / đã cũ (stale). False nếu owner khác đang giữ lock còn tươi."""
+        key = f"lock:{name}"
+        conn = self._connect()
+        try:
+            conn.execute("BEGIN IMMEDIATE")
+            row = conn.execute(
+                "SELECT value, updated_at FROM pipeline_state WHERE key=?", (key,)
+            ).fetchone()
+            if row is not None and (row["value"] or "") != owner \
+                    and not _lock_is_stale(row["updated_at"] or "", stale_seconds):
+                conn.rollback()
+                return False
+            conn.execute(
+                "INSERT OR REPLACE INTO pipeline_state (key, value, updated_at) "
+                "VALUES (?, ?, ?)", (key, owner, now_vn_iso()))
+            conn.commit()
+            return True
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            conn.close()
+
+    def refresh_lock(self, name: str, owner: str) -> None:
+        """Nhịp tim giữ lock còn tươi (gọi mỗi cycle của chủ sở hữu lock)."""
+        self.set_state(f"lock:{name}", owner)

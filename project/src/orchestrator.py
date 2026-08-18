@@ -25,6 +25,7 @@ from loguru import logger
 
 from src.core.config import list_domains, load_domain_config, load_settings
 from src.core.logging import setup_logging
+from src.core.proclock import SCHEDULER_LOCK_STALE_SECONDS, lock_owner
 from src.core.retry import run_with_retry, run_with_fallback
 from src.crawler.http_client import HTTPClient
 from src.db.dedup import DedupCache
@@ -77,6 +78,8 @@ class Orchestrator:
         self.notifier = FileNotifier(out_dir=notif_dir)
         self.sentiment = SentimentEngine()
         self._stopped = False
+        self._lock_owner = lock_owner()          # Fix F: định danh giữ scheduler lock
+        self._owns_scheduler_lock = False
         removed = self.dedup.cleanup(max_age_days=30)
         if removed:
             logger.info("Dedup cleanup: removed {} entries >30d", removed)
@@ -87,6 +90,8 @@ class Orchestrator:
         if not names:
             logger.warning("No enabled domain configs in config/domains/")
             return 0
+        if self._owns_scheduler_lock:  # Fix F: nhịp tim giữ lock còn tươi
+            self.store.refresh_lock("scheduler", self._lock_owner)
         cycle_start = time.monotonic()
         logger.info("=== Cycle start: {} domains: {} ===", len(names), ", ".join(names))
 
@@ -188,6 +193,14 @@ class Orchestrator:
     def start_scheduler(self) -> None:
         from apscheduler.schedulers.blocking import BlockingScheduler
         from apscheduler.triggers.interval import IntervalTrigger
+
+        # Fix F: chỉ 1 scheduler được chạy (chống orchestrator + morninger cùng lúc).
+        if not self.store.try_acquire_lock("scheduler", self._lock_owner,
+                                           SCHEDULER_LOCK_STALE_SECONDS):
+            logger.error("Scheduler khác đang chạy (lock trong pipeline_state). "
+                         "Từ chối khởi động để tránh double-scrape.")
+            return
+        self._owns_scheduler_lock = True
 
         interval = self.settings["scheduler"]["interval_minutes"]
         scheduler = BlockingScheduler()

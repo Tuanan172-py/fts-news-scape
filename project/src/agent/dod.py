@@ -24,6 +24,8 @@ _DEFAULT_THRESHOLDS = {
     "quality_ok": ("high", "medium"),
 }
 _HELD_STATES = {"SELECTOR_BROKEN", "TEMPLATE_DRIFT"}
+# Fix D: span quá ngắn (vd "." / "VN") là chuỗi con của gần như mọi bài → groundedness giả.
+_MIN_SPAN_LEN = 20
 
 
 def load_thresholds() -> dict:
@@ -86,7 +88,9 @@ def check_dod(agent_output: dict, work_package: dict,
         reasons.append(f"citations {len(cites)} < {t['min_citations']}")
     for i, c in enumerate(cites):
         span = (c or {}).get("source_span", "")
-        if not span or span not in cleaned:
+        if not span or len(span.strip()) < _MIN_SPAN_LEN:
+            reasons.append(f"citation[{i}] source_span too short (<{_MIN_SPAN_LEN} chars)")
+        elif span not in cleaned:
             reasons.append(f"citation[{i}] not grounded in cleaned_text")
 
     # 4) quality_ok (extraction_quality ∈ {high, medium})

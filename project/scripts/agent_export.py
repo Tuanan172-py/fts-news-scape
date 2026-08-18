@@ -19,7 +19,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.agent.runner import AgentRunner
 from src.core.config import load_settings
+from src.core.stdio import force_utf8_stdio
 from src.db.store import ArticleStore
+
+force_utf8_stdio()
 
 
 def main(argv: list[str]) -> int:
