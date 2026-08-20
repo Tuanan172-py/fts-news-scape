@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "2c1f77553d35688299730fb68811d33ac0e17c8ef0b533c10d044ea1e25b38c4",
+  "title": "Phát huy sức mạnh, T&A Corp chính thức trở thành đối tác phân phối chiến lược TT GENESIS",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

@@ -1,0 +1,462 @@
+{
+  "silver_schema_version": "1.0",
+  "article_id": "4c35e006fc2d3ce31e78831a5630ac22bc19d63cfbf8b11026f3319f2acedc5f",
+  "source_url": "https://cafef.vn/nguoi-than-lanh-dao-vietbank-mua-vao-218-trieu-co-phieu-vbb-188260818082238868.chn",
+  "domain": "cafef.vn",
+  "content_sha256": "a25e27ae61e3933985425af10df3ebe2bf9e2642471f8ad6bd56ae692e1041b4",
+  "cleaned_text": "Người thân lãnh đạo Vietbank mua vào 21,8 triệu cổ phiếu VBB\nBà Trần Thị Lâm báo cáo đã mua 21,8 triệu cổ phiếu VBB trong thời gian từ 24/07-14/08/2026.\nNgân hàng TMCP Việt Nam Thương Tín (Vietbank, mã: VBB, sàn HoSE) công bố đăng ký giao dịch cổ phiếu của người liên quan đến người nội bộ.\nCụ thể, bà Trần Thị Lâm báo cáo đã mua 21,8 triệu cổ phiếu VBB trong thời gian từ 24/07-14/08/2026. Trước đó, bà Lâm đăng ký mua vào 22 triệu cổ phiếu VBB trong thời gian từ 22/07-21/08/2026 với mục đích gia tăng tỷ lệ sở hữu cổ phần.\nLý do bà Lâm không hoàn tất giao dịch là do thị trường không phù hợp. Sau giao dịch, bà Lâm nâng sở hữu tại Vietbank từ 239.748 cổ phiếu (tỷ lệ 0,02%) lên 22,07 triệu cổ phiếu (tỷ lệ 1,86%).\nĐược biết, bà Trần Thị Lâm là mẹ của ông Dương Nhất Nguyên - Chủ tịch HĐQT Vietbank. Ông Dương Nhất Nguyên hiện nắm 56,8 triệu cổ phiếu, tương đương 4,8% vốn VBB.\nVề hoạt động kinh doanh, Vietbank ghi nhận thu nhập lãi thuần hợp nhất gần 994 tỷ đồng, tăng 44,5% so với cùng kỳ năm trước.\nCùng chiều, lãi thuần từ hoạt động kinh doanh ngoại hối tăng 12,3% so với cùng kỳ, lên mức hơn 34,6 tỷ đồng; lãi thuần từ mua bán chứng khoán đầu tư tăng mạnh hơn 9,8 tỷ đồng lên gần 97,8 tỷ đồng. Trong khi đó, lãi thuần từ hoạt động dịch vụ giảm 26,9%, xuống còn gần 25 tỷ đồng.\nKết quả, lợi nhuận trước thuế trong quý II/2026 của Vietbank đạt gần 777 tỷ đồng, gấp 2,9 lần quý II/2025.\nLũy kế 6 tháng đầu năm 2026, Vietbank mang về thu nhập lãi thuần gần 1.761,7 tỷ đồng, tăng 26,7%; lợi nhuận trước thuế đạt 944 tỷ đồng, tăng 83,2% so với cùng kỳ năm 2025.\nTính đến ngày 30/6/2026, tổng tài sản của Vietbank tăng 4,1% so với đầu năm, lên mức hơn 204.825 tỷ đồng. Dư nợ cấp tín dụng đạt 120.294 tỷ đồng, tăng 11%; tiền gửi của khách hàng tăng 2% lên mức 103.893 tỷ đồng.\nAn ninh tiền tệ",
+  "extraction_quality": "high",
+  "structure": {
+    "headings": [
+      {
+        "level": 1,
+        "text": "Người thân lãnh đạo Vietbank mua vào 21,8 triệu cổ phiếu VBB"
+      },
+      {
+        "level": 2,
+        "text": "VBB:"
+      },
+      {
+        "level": 2,
+        "text": "Tin tức sự kiện về: Công ty cổ phần Cao su Việt Nam"
+      },
+      {
+        "level": 3,
+        "text": "CÙNG CHUYÊN MỤC"
+      },
+      {
+        "level": 4,
+        "text": "Tiền mất hút trước \"giờ G\" nâng hạng chứng khoán, điều gì đang xảy ra? Nổi bật"
+      },
+      {
+        "level": 4,
+        "text": "Nghịch lý định giá trên thị trường chứng khoán: 1+1 không bằng 2! Nổi bật"
+      },
+      {
+        "level": 4,
+        "text": "Giá vàng hôm nay 18/8: Tăng mạnh, vượt 4.400 USD/ounce"
+      },
+      {
+        "level": 4,
+        "text": "Nửa cuối năm 2026: Bài toán “đãi cát tìm vàng” trong giai đoạn thị trường biến động"
+      },
+      {
+        "level": 4,
+        "text": "Đúng 3 ngày nữa,  Việt Nam đón một sự kiện cực quan trọng"
+      },
+      {
+        "level": 4,
+        "text": "Chủ tịch một công ty chứng khoán thu nhập trung bình 440 triệu đồng/tháng"
+      }
+    ],
+    "paragraphs": [
+      "MỚI NHẤT!",
+      "Theo Hoàng Lam | 18-08-2026 - 08:22 AM | Thị trường chứng khoán",
+      "Bà Trần Thị Lâm báo cáo đã mua 21,8 triệu cổ phiếu VBB trong thời gian từ 24/07-14/08/2026.",
+      "Ngân hàng TMCP Việt Nam Thương Tín (Vietbank, mã: VBB, sàn HoSE) công bố đăng ký giao dịch cổ phiếu của người liên quan đến người nội bộ.",
+      "Cụ thể, bà Trần Thị Lâm báo cáo đã mua 21,8 triệu cổ phiếu VBB trong thời gian từ 24/07-14/08/2026. Trước đó, bà Lâm đăng ký mua vào 22 triệu cổ phiếu VBB trong thời gian từ 22/07-21/08/2026 với mục đích gia tăng tỷ lệ sở hữu cổ phần.",
+      "Lý do bà Lâm không hoàn tất giao dịch là do thị trường không phù hợp. Sau giao dịch, bà Lâm nâng sở hữu tại Vietbank từ 239.748 cổ phiếu (tỷ lệ 0,02%) lên 22,07 triệu cổ phiếu (tỷ lệ 1,86%).",
+      "Được biết, bà Trần Thị Lâm là mẹ của ông Dương Nhất Nguyên - Chủ tịch HĐQT Vietbank. Ông Dương Nhất Nguyên hiện nắm 56,8 triệu cổ phiếu, tương đương 4,8% vốn VBB.",
+      "Ảnh: VBB",
+      "Về hoạt động kinh doanh, Vietbank ghi nhận thu nhập lãi thuần hợp nhất gần 994 tỷ đồng, tăng 44,5% so với cùng kỳ năm trước.",
+      "Cùng chiều, lãi thuần từ hoạt động kinh doanh ngoại hối tăng 12,3% so với cùng kỳ, lên mức hơn 34,6 tỷ đồng; lãi thuần từ mua bán chứng khoán đầu tư tăng mạnh hơn 9,8 tỷ đồng lên gần 97,8 tỷ đồng. Trong khi đó, lãi thuần từ hoạt động dịch vụ giảm 26,9%, xuống còn gần 25 tỷ đồng.",
+      "Kết quả, lợi nhuận trước thuế trong quý II/2026 của Vietbank đạt gần 777 tỷ đồng, gấp 2,9 lần quý II/2025.",
+      "Lũy kế 6 tháng đầu năm 2026, Vietbank mang về thu nhập lãi thuần gần 1.761,7 tỷ đồng, tăng 26,7%; lợi nhuận trước thuế đạt 944 tỷ đồng, tăng 83,2% so với cùng kỳ năm 2025.",
+      "Tính đến ngày 30/6/2026, tổng tài sản của Vietbank tăng 4,1% so với đầu năm, lên mức hơn 204.825 tỷ đồng. Dư nợ cấp tín dụng đạt 120.294 tỷ đồng, tăng 11%; tiền gửi của khách hàng tăng 2% lên mức 103.893 tỷ đồng.",
+      "Theo Hoàng Lam",
+      "An ninh tiền tệ",
+      "Địa chỉ: Tầng 21 Tòa nhà Center Building. Số 01, phố Nguyễn Huy Tưởng, phường Thanh Xuân, thành phố Hà Nội",
+      "Điện thoại: 024 7309 5555 Máy lẻ 292. Fax: 024-39744082",
+      "Email: info@cafef.vn | Hotline: 0926 864 344",
+      "Chịu trách nhiệm nội dung: Ông Nguyễn Thế Tân",
+      "Liên hệ quảng cáo",
+      "Hotline:",
+      "Email: doanhnghiep@admicro.vn",
+      "© Copyright 2007 - 2026 - Công ty Cổ phần VCCorp.",
+      "Giấy phép thiết lập trang thông tin điện tử tổng hợp trên mạng số 2216/GP-TTĐT do Sở Thông tin và Truyền thông Hà Nội cấp ngày 10 tháng 4 năm 2019."
+    ],
+    "tables": [],
+    "links": [
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "http://liveboard.cafef.vn",
+        "text": "Bảng giá điện tử"
+      },
+      {
+        "href": "/du-lieu/danh-muc-dau-tu.chn",
+        "text": "Danh mục đầu tư"
+      },
+      {
+        "href": "/doc-nhanh.chn",
+        "text": "Đọc nhanh >>"
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "XÃ HỘI"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "CHỨNG KHOÁN"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "BẤT ĐỘNG SẢN"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "DOANH NGHIỆP"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "NGÂN HÀNG"
+      },
+      {
+        "href": "/smart-money.chn",
+        "text": "SMART MONEY"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "TÀI CHÍNH QUỐC TẾ"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "VĨ MÔ"
+      },
+      {
+        "href": "/kinh-te-so.chn",
+        "text": "KINH TẾ SỐ"
+      },
+      {
+        "href": "/thi-truong.chn",
+        "text": "THỊ TRƯỜNG"
+      },
+      {
+        "href": "/song.chn",
+        "text": "SỐNG"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "LIFESTYLE"
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "Xã hội"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "Doanh nghiệp"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "Kinh tế vĩ mô"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "Chứng khoán"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "Tài chính ngân hàng"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "Tài chính quốc tế"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "Tin tức"
+      },
+      {
+        "href": "/du-an.chn",
+        "text": "Dự án"
+      },
+      {
+        "href": "/ban-do-du-an.chn",
+        "text": "Bản đồ dự án"
+      },
+      {
+        "href": "/hang-hoa-nguyen-lieu.chn",
+        "text": "Hàng hóa nguyên liệu"
+      },
+      {
+        "href": "/song.chn",
+        "text": "Sống"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "Lifestyle"
+      },
+      {
+        "href": "/nhom-chu-de/emagazine.chn",
+        "text": "Magazine"
+      },
+      {
+        "href": "/du-lieu.chn",
+        "text": "Dữ liệu"
+      },
+      {
+        "href": "/du-lieu/cafeflists.chn",
+        "text": "F INDEX"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "Thị trường chứng khoán"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Chia sẻ"
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "javascript:;",
+        "text": "VBB:"
+      },
+      {
+        "href": "",
+        "text": "Xem hồ sơ doanh nghiệp"
+      },
+      {
+        "href": "javascript:;",
+        "text": "TIN MỚI"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Theo An ninh tiền tệ Copy link"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Chia sẻ"
+      },
+      {
+        "href": "/vietbank.html",
+        "text": "vietbank,"
+      },
+      {
+        "href": "/vbb.html",
+        "text": "VBB,"
+      },
+      {
+        "href": "/co-phieu.html",
+        "text": "cổ phiếu,"
+      },
+      {
+        "href": "/ngan-hang.html",
+        "text": "ngân hàng"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Công ty cổ phần Cao su Việt Nam"
+      },
+      {
+        "href": "https://s.cafef.vn/tin-doanh-nghiep/VBB/Event.chn",
+        "text": "Xem tất cả >>"
+      },
+      {
+        "href": "/tien-mat-hut-truoc-gio-g-nang-hang-chung-khoan-dieu-gi-dang-xay-ra-188260817220845183.chn",
+        "text": ""
+      },
+      {
+        "href": "/tien-mat-hut-truoc-gio-g-nang-hang-chung-khoan-dieu-gi-dang-xay-ra-188260817220845183.chn",
+        "text": "Tiền mất hút trước \"giờ G\" nâng hạng chứng khoán, điều gì đang xảy ra?"
+      },
+      {
+        "href": "/nghich-ly-dinh-gia-tren-thi-truong-chung-khoan-11-khong-bang-2-188260817010518139.chn",
+        "text": ""
+      },
+      {
+        "href": "/nghich-ly-dinh-gia-tren-thi-truong-chung-khoan-11-khong-bang-2-188260817010518139.chn",
+        "text": "Nghịch lý định giá trên thị trường chứng khoán: 1+1 không bằng 2!"
+      },
+      {
+        "href": "/gia-vang-hom-nay-18-8-tang-manh-vuot-4400-usd-ounce-188260818081007344.chn",
+        "text": ""
+      },
+      {
+        "href": "/gia-vang-hom-nay-18-8-tang-manh-vuot-4400-usd-ounce-188260818081007344.chn",
+        "text": "Giá vàng hôm nay 18/8: Tăng mạnh, vượt 4.400 USD/ounce"
+      },
+      {
+        "href": "/nua-cuoi-nam-2026-bai-toan-dai-cat-tim-vang-trong-giai-doan-thi-truong-bien-dong-188260813151429075.chn",
+        "text": ""
+      },
+      {
+        "href": "/nua-cuoi-nam-2026-bai-toan-dai-cat-tim-vang-trong-giai-doan-thi-truong-bien-dong-188260813151429075.chn",
+        "text": "Nửa cuối năm 2026: Bài toán “đãi cát tìm vàng” trong giai đoạn thị trường biến động"
+      },
+      {
+        "href": "/dung-3-ngay-nua-viet-nam-don-mot-su-kien-cuc-quan-trong-188260818000501547.chn",
+        "text": ""
+      },
+      {
+        "href": "/dung-3-ngay-nua-viet-nam-don-mot-su-kien-cuc-quan-trong-188260818000501547.chn",
+        "text": "Đúng 3 ngày nữa,  Việt Nam đón một sự kiện cực quan trọng"
+      },
+      {
+        "href": "/chu-tich-mot-cong-ty-chung-khoan-thu-nhap-trung-binh-440-trieu-dong-thang-188260817234242073.chn",
+        "text": ""
+      },
+      {
+        "href": "/chu-tich-mot-cong-ty-chung-khoan-thu-nhap-trung-binh-440-trieu-dong-thang-188260817234242073.chn",
+        "text": "Chủ tịch một công ty chứng khoán thu nhập trung bình 440 triệu đồng/tháng"
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "XÃ HỘI"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "CHỨNG KHOÁN"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "BẤT ĐỘNG SẢN"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "DOANH NGHIỆP"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "NGÂN HÀNG"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "TÀI CHÍNH QUỐC TẾ"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "VĨ MÔ"
+      },
+      {
+        "href": "/kinh-te-so.chn",
+        "text": "KINH TẾ SỐ"
+      },
+      {
+        "href": "/thi-truong.chn",
+        "text": "THỊ TRƯỜNG"
+      },
+      {
+        "href": "/song.chn",
+        "text": "SỐNG"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "LIFESTYLE"
+      },
+      {
+        "href": "/du-lieu.chn",
+        "text": "Dữ liệu"
+      },
+      {
+        "href": "/du-lieu/top/ceo.chn",
+        "text": "Top 200"
+      },
+      {
+        "href": "https://www.messenger.com/t/108804609142280",
+        "text": "Chat với tư vấn viên"
+      },
+      {
+        "href": "http://www.vccorp.vn/",
+        "text": ""
+      },
+      {
+        "href": "/static/chinh-sach-bao-mat.html",
+        "text": "Chính sách bảo mật"
+      }
+    ]
+  },
+  "images": [
+    {
+      "outer_tag": "<img alt=\"Người thân lãnh đạo Vietbank mua vào 21,8 triệu cổ phiếu VBB\" data-role=\"cover\" fetchpriority=\"high\" src=\"https://cafefcdn.com/thumb_w/640/203337114487263232/2026/8/18/avatar1787016034392-1787016034794863910064.jpg\" title=\"Người thân lãnh đạo Vietbank mua vào 21,8 triệu cổ phiếu VBB\"/>",
+      "resolved_url": "https://cafefcdn.com/thumb_w/640/203337114487263232/2026/8/18/avatar1787016034392-1787016034794863910064.jpg",
+      "alt": "Người thân lãnh đạo Vietbank mua vào 21,8 triệu cổ phiếu VBB",
+      "title": "Người thân lãnh đạo Vietbank mua vào 21,8 triệu cổ phiếu VBB",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Người thân lãnh đạo Vietbank mua vào 21,8 triệu cổ phiếu VBB - Ảnh 1.\" class=\"\" data-author=\"\" data-nosnippet=\"\" data-original=\"https://cafefcdn.com/203337114487263232/2026/8/18/vbb-1786976949685824586508-1787016034414-1787016035063376983042.jpg\" h=\"573\" height=\"\" id=\"img_240010133053341696\" loading=\"lazy\" photoid=\"240010133053341696\" rel=\"lightbox\" src=\"https://cafefcdn.com/203337114487263232/2026/8/18/vbb-1786976949685824586508-1787016034414-1787016035063376983042.jpg\" style=\"max-width:100%;\" title=\"\" type=\"photo\" w=\"860\" width=\"\"/>",
+      "resolved_url": "https://cafefcdn.com/203337114487263232/2026/8/18/vbb-1786976949685824586508-1787016034414-1787016035063376983042.jpg",
+      "alt": "Người thân lãnh đạo Vietbank mua vào 21,8 triệu cổ phiếu VBB - Ảnh 1.",
+      "title": "",
+      "caption": "Ảnh: VBB"
+    },
+    {
+      "outer_tag": "<img alt='Tiền mất hút trước \"giờ G\" nâng hạng chứng khoán, điều gì đang xảy ra?' height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/17/avatar1786979151613-17869791521231332212086.png\" title='Tiền mất hút trước \"giờ G\" nâng hạng chứng khoán, điều gì đang xảy ra?' width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/17/avatar1786979151613-17869791521231332212086.png",
+      "alt": "Tiền mất hút trước \"giờ G\" nâng hạng chứng khoán, điều gì đang xảy ra?",
+      "title": "Tiền mất hút trước \"giờ G\" nâng hạng chứng khoán, điều gì đang xảy ra?",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Nghịch lý định giá trên thị trường chứng khoán: 1+1 không bằng 2!\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/16/avatar1786903418063-17869034185831343157719.png\" title=\"Nghịch lý định giá trên thị trường chứng khoán: 1+1 không bằng 2!\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/16/avatar1786903418063-17869034185831343157719.png",
+      "alt": "Nghịch lý định giá trên thị trường chứng khoán: 1+1 không bằng 2!",
+      "title": "Nghịch lý định giá trên thị trường chứng khoán: 1+1 không bằng 2!",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Giá vàng hôm nay 18/8: Tăng mạnh, vượt 4.400 USD/ounce\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/avatar1787015366980-17870153675641621638270.jpg\" title=\"Giá vàng hôm nay 18/8: Tăng mạnh, vượt 4.400 USD/ounce\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/avatar1787015366980-17870153675641621638270.jpg",
+      "alt": "Giá vàng hôm nay 18/8: Tăng mạnh, vượt 4.400 USD/ounce",
+      "title": "Giá vàng hôm nay 18/8: Tăng mạnh, vượt 4.400 USD/ounce",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Nửa cuối năm 2026: Bài toán “đãi cát tìm vàng” trong giai đoạn thị trường biến động\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/13/photo1786357418500-17863574186271877710851-17866088712501664324635.png\" title=\"Nửa cuối năm 2026: Bài toán “đãi cát tìm vàng” trong giai đoạn thị trường biến động\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/13/photo1786357418500-17863574186271877710851-17866088712501664324635.png",
+      "alt": "Nửa cuối năm 2026: Bài toán “đãi cát tìm vàng” trong giai đoạn thị trường biến động",
+      "title": "Nửa cuối năm 2026: Bài toán “đãi cát tìm vàng” trong giai đoạn thị trường biến động",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Đúng 3 ngày nữa,  Việt Nam đón một sự kiện cực quan trọng\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/17/avatar1786986257909-1786986258550403043362.jpeg\" title=\"Đúng 3 ngày nữa,  Việt Nam đón một sự kiện cực quan trọng\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/17/avatar1786986257909-1786986258550403043362.jpeg",
+      "alt": "Đúng 3 ngày nữa,  Việt Nam đón một sự kiện cực quan trọng",
+      "title": "Đúng 3 ngày nữa,  Việt Nam đón một sự kiện cực quan trọng",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Chủ tịch một công ty chứng khoán thu nhập trung bình 440 triệu đồng/tháng\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/17/avatar1786984928110-1786984928495260465705.png\" title=\"Chủ tịch một công ty chứng khoán thu nhập trung bình 440 triệu đồng/tháng\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/17/avatar1786984928110-1786984928495260465705.png",
+      "alt": "Chủ tịch một công ty chứng khoán thu nhập trung bình 440 triệu đồng/tháng",
+      "title": "Chủ tịch một công ty chứng khoán thu nhập trung bình 440 triệu đồng/tháng",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Công ty Cổ phần VCCorp\" height=\"49px\" src=\"https://vccorp.mediacdn.vn/vccorp-s.png\" width=\"100px\"/>",
+      "resolved_url": "https://vccorp.mediacdn.vn/vccorp-s.png",
+      "alt": "Công ty Cổ phần VCCorp",
+      "title": "",
+      "caption": ""
+    }
+  ],
+  "language": "vi",
+  "built_at": "2026-08-18T15:25:50+07:00",
+  "built_from_raw_path": "data/raw_html\\cafef.vn\\20260818\\4c35e006fc2d3ce31e78831a5630ac22bc19d63cfbf8b11026f3319f2acedc5f.html"
+}

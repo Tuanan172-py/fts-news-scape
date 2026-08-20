@@ -1,0 +1,37 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "2ecc368877214707324ac0c10a81f45756ca8ff4c684f2ae3b5e9c35a7c7865a",
+  "title": "Tận dụng độ dốc 2.000m, Trung Quốc xây siêu đập mạnh nhất thế giới: Tam Hiệp chưa là gì",
+  "recognized": true,
+  "entities": [
+    {
+      "surface": "Trung Quốc",
+      "entity_id": null,
+      "type": "UNKNOWN",
+      "method": "semantic",
+      "in_list": false,
+      "confidence": 0.8
+    }
+  ],
+  "categories": {
+    "ticker_company": "out_of_list",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [
+    "Trung Quốc"
+  ],
+  "citations": [
+    {
+      "source_span": "Tận dụng độ dốc 2.000m, Trung Quốc xây siêu đập mạnh nhất thế giới: Tam Hiệp chưa là gì"
+    }
+  ],
+  "confidence": 0.95,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

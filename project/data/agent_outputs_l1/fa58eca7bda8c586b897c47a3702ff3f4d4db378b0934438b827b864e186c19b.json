@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "fa58eca7bda8c586b897c47a3702ff3f4d4db378b0934438b827b864e186c19b",
+  "title": "Blog chứng khoán: Cân bằng mong manh",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

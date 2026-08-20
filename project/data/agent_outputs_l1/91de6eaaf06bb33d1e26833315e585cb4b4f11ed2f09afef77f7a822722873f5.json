@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "91de6eaaf06bb33d1e26833315e585cb4b4f11ed2f09afef77f7a822722873f5",
+  "title": "Hà Tĩnh chuẩn bị đấu giá 44 lô đất tại phường Thành Sen",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

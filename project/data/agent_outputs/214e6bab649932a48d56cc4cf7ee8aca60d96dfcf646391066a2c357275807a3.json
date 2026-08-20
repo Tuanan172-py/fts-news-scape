@@ -1,0 +1,55 @@
+{
+  "output_schema_version": "1.0",
+  "article_id": "214e6bab649932a48d56cc4cf7ee8aca60d96dfcf646391066a2c357275807a3",
+  "summary": {
+    "abstractive": "Luật Phát triển đô thị dự kiến được Quốc hội thông qua ngay trong tháng 8 Luật Phát triển đô thị dự kiến được Quốc hội xem xét thông qua ngày 24/08. TPHCM đang chuẩn bị trước hệ thống văn bản triển khai, với 85/101 dự thảo nghị quyết, quyết định đã được Trường ĐH Luật TPHCM góp ý.",
+    "key_points": [
+      "Luật Phát triển đô thị dự kiến được Quốc hội xem xét thông qua ngày 24/08. TPHCM đang chuẩn bị trước hệ thống văn bản triển khai, với 85/101 dự thảo nghị quyết, quyết định đã được Trường ĐH Luật TPHCM",
+      "Chính phủ đã trình dự án Luật lên Quốc hội, Ủy ban Thường vụ Quốc hội ngày 24/07. Đến 29/07, Ủy ban Thường vụ Quốc hội thống nhất dự án đủ điều kiện bổ sung vào chương trình Kỳ họp không thường lệ thứ",
+      "Bà Nguyễn Thị Hằng, Phó Trưởng Phòng Văn bản pháp quy thuộc Sở Tư pháp TPHCM, cho biết phiên bản dự thảo Luật tại thời điểm họp báo gồm 5 chương, 65 điều và vẫn đang được chỉnh lý.",
+      "Trong lúc dự án Luật chưa được thông qua, TPHCM đã bắt đầu chuẩn bị hệ thống văn bản để triển khai. Sở Tư pháp đã hoàn thành dự thảo kế hoạch thi hành Luật cùng danh mục dự kiến các văn bản quy định c"
+    ]
+  },
+  "implication": {
+    "text": "Nội dung bài viết tác động tới nhận định thị trường và hoạt động kinh doanh của các đơn vị liên quan.",
+    "affected_parties": [
+      "nhà đầu tư",
+      "doanh nghiệp niêm yết"
+    ],
+    "impact_area": "market"
+  },
+  "materiality": {
+    "score": 0.65,
+    "time_sensitivity": "this_week"
+  },
+  "confidence": 0.88,
+  "citations": [
+    {
+      "claim": "Thông tin chính được trích xuất từ bài viết: Luật Phát triển đô thị dự kiến được Quốc hội thông...",
+      "source_span": "Luật Phát triển đô thị dự kiến được Quốc hội thông qua ngay trong tháng 8",
+      "source_offset": 0
+    },
+    {
+      "claim": "Thông tin chính được trích xuất từ bài viết: Luật Phát triển đô thị dự kiến được Quốc hội xem x...",
+      "source_span": "Luật Phát triển đô thị dự kiến được Quốc hội xem xét thông qua ngày 24/08",
+      "source_offset": 74
+    },
+    {
+      "claim": "Thông tin chính được trích xuất từ bài viết: TPHCM đang chuẩn bị trước hệ thống văn bản triển k...",
+      "source_span": "TPHCM đang chuẩn bị trước hệ thống văn bản triển khai, với 85/101 dự thảo nghị quyết, quyết định đã được Trường ĐH Luật TPHCM góp ý.",
+      "source_offset": 149
+    }
+  ],
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:37:35.755748+07:00",
+    "schema_version": "1.0"
+  },
+  "sentiment": {
+    "overall": 0.0,
+    "polarity": "neutral"
+  },
+  "event_type": "macro",
+  "extraction_quality": "high"
+}

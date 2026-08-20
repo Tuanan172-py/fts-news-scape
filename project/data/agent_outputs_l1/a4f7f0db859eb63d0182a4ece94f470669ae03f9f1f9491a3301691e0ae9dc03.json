@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "a4f7f0db859eb63d0182a4ece94f470669ae03f9f1f9491a3301691e0ae9dc03",
+  "title": "Chỉ 1 tháng nữa, xã hơn 90.000 dân tại tỉnh định hướng lên TP trực thuộc Trung ương sẽ ‘cất cánh’ lên phường",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

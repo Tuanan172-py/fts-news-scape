@@ -1,0 +1,55 @@
+{
+  "output_schema_version": "1.0",
+  "article_id": "18ff65d1654916bb281e202ac9975bf4ece026dd1d385ec49562ae23714b5a8e",
+  "summary": {
+    "abstractive": "Người dân được gì khi tích hợp sổ đỏ trên VNeID? Người dân được gì khi tích hợp sổ đỏ trên VNeID?",
+    "key_points": [
+      "Người dân được gì khi tích hợp sổ đỏ trên VNeID?",
+      "Người dân có thể thao tác và theo dõi hồ sơ trên hệ thống điện tử và sẽ được giải quyết thủ tục chỉ sau ít phút hoặc trong ngày, tùy vào từng thủ tục thay vì phải chờ đợi nhiều ngày như hiện nay.",
+      "Cục Cảnh sát quản lý hành chính về trật tự xã hội (C06 - Bộ Công an) thông tin, để tích hợp Giấy chứng nhận quyền sử dụng đất (sổ đỏ) lên VNeID, trước hết dữ liệu phải bảo đảm đúng thửa đất, đúng thôn",
+      "Ông Hoàng Kim Hoài, Tổng giám đốc Phúc Điền Land cho biết, Luật Đất đai 2024 quy định dịch vụ công trực tuyến về đất đai được cung cấp cho tổ chức, cá nhân trên môi trường mạng. Giao dịch điện tử về đ"
+    ]
+  },
+  "implication": {
+    "text": "Nội dung bài viết tác động tới nhận định thị trường và hoạt động kinh doanh của các đơn vị liên quan.",
+    "affected_parties": [
+      "nhà đầu tư",
+      "doanh nghiệp niêm yết"
+    ],
+    "impact_area": "market"
+  },
+  "materiality": {
+    "score": 0.65,
+    "time_sensitivity": "this_week"
+  },
+  "confidence": 0.88,
+  "citations": [
+    {
+      "claim": "Thông tin chính được trích xuất từ bài viết: Người dân được gì khi tích hợp sổ đỏ trên VNeID?...",
+      "source_span": "Người dân được gì khi tích hợp sổ đỏ trên VNeID?",
+      "source_offset": 0
+    },
+    {
+      "claim": "Thông tin chính được trích xuất từ bài viết: Người dân được gì khi tích hợp sổ đỏ trên VNeID?...",
+      "source_span": "Người dân được gì khi tích hợp sổ đỏ trên VNeID?",
+      "source_offset": 0
+    },
+    {
+      "claim": "Thông tin chính được trích xuất từ bài viết: Người dân có thể thao tác và theo dõi hồ sơ trên h...",
+      "source_span": "Người dân có thể thao tác và theo dõi hồ sơ trên hệ thống điện tử và sẽ được giải quyết thủ tục chỉ sau ít phút hoặc trong ngày, tùy vào từng thủ tục thay vì phải chờ đợi nhiều ngày như hiện nay.",
+      "source_offset": 98
+    }
+  ],
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:37:35.755748+07:00",
+    "schema_version": "1.0"
+  },
+  "sentiment": {
+    "overall": 0.0,
+    "polarity": "neutral"
+  },
+  "event_type": "macro",
+  "extraction_quality": "high"
+}

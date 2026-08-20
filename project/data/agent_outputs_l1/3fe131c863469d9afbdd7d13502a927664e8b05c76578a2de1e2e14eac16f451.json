@@ -1,0 +1,37 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "3fe131c863469d9afbdd7d13502a927664e8b05c76578a2de1e2e14eac16f451",
+  "title": "Nợ công của Mỹ vượt mốc 40.000 tỷ USD",
+  "recognized": true,
+  "entities": [
+    {
+      "surface": "Mỹ",
+      "entity_id": null,
+      "type": "UNKNOWN",
+      "method": "semantic",
+      "in_list": false,
+      "confidence": 0.8
+    }
+  ],
+  "categories": {
+    "ticker_company": "out_of_list",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [
+    "Mỹ"
+  ],
+  "citations": [
+    {
+      "source_span": "Nợ công của Mỹ vượt mốc 40.000 tỷ USD"
+    }
+  ],
+  "confidence": 0.95,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

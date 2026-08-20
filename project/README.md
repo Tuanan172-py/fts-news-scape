@@ -1,7 +1,7 @@
 # Web Monocle 🕵️
 
 Hệ thống thu thập tin tức chứng khoán Việt Nam đa nguồn — RSS, reverse API, HTML scraping.
-Phục vụ phòng phân tích: nhiều nguồn, dedup, raw HTML bảo toàn, sentiment rule-based.
+Phục vụ phòng phân tích: nhiều nguồn, dedup, raw HTML bảo toàn.
 
 **Standalone** — single machine, SQLite duy nhất, không phụ thuộc dịch vụ ngoài.
 
@@ -118,7 +118,7 @@ Không cần sửa orchestrator/core.
 
 **RSS Quốc tế (5, `language: en`):** CNBC (2 feeds, filter), MarketWatch, Yahoo Finance, Federal Reserve, OilPrice
 
-Chi tiết feed + pitfalls: [`docs/skills/rss-sources.md`](docs/skills/rss-sources.md). Bài EN: sentiment = neutral (lexicon VN không áp dụng — by design).
+Chi tiết feed + pitfalls: [`docs/skills/rss-sources.md`](docs/skills/rss-sources.md). Sentiment rule-based (lexicon VN) **đã gỡ khỏi workflow giai đoạn này** — sentiment "thật" do agent sinh ở lớp output; engine giữ tại `src/processor/sentiment.py` để bật lại khi cần.
 
 ## Trạng thái Phase 1
 

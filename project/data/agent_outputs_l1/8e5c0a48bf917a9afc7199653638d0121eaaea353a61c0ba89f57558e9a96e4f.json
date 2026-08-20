@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "8e5c0a48bf917a9afc7199653638d0121eaaea353a61c0ba89f57558e9a96e4f",
+  "title": "Những người có tên trong danh sách sau đây cần liên hệ ngay với cơ quan Thuế để tránh bị tạm hoãn xuất cảnh",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

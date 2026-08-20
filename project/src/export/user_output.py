@@ -30,8 +30,8 @@ from src.users.compile import DEFAULT_OUTPUT_ROOT
 _GATED_SQL = """
 SELECT a.url_title_hash AS article_id, a.title, a.url, a.source_domain,
        a.published_at, a.fetched_at,
-       l1.output_json AS l1_json, l1.confidence AS l1_confidence,
-       ag.output_json AS agent_json, ag.confidence AS agent_confidence
+       l1.output_json AS l1_json,
+       ag.output_json AS agent_json
 FROM articles a
 JOIN l1_outputs    l1 ON l1.article_id = a.url_title_hash AND l1.dod_pass = 1
 JOIN agent_outputs ag ON ag.article_id = a.url_title_hash AND ag.dod_pass = 1
@@ -40,11 +40,11 @@ JOIN agent_outputs ag ON ag.article_id = a.url_title_hash AND ag.dod_pass = 1
 FINAL_COLUMNS = [
     "article_id", "date", "source_domain", "url", "title", "matched_entities",
     "summary", "key_points", "implication", "impact_area", "materiality_score",
-    "time_sensitivity", "sentiment", "event_type", "confidence",
+    "time_sensitivity", "sentiment", "event_type",
 ]
-L1_COLUMNS = ["article_id", "date", "title", "entities", "l1_confidence", "categories"]
+L1_COLUMNS = ["article_id", "date", "title", "entities", "categories"]
 AGENT_COLUMNS = ["article_id", "date", "summary", "implication",
-                 "materiality_score", "sentiment", "event_type", "confidence"]
+                 "materiality_score", "sentiment", "event_type"]
 
 _SAFE = re.compile(r"[^0-9A-Za-z._-]")
 
@@ -90,7 +90,7 @@ class UserOutputWriter:
             rows = [dict(r) for r in conn.execute(_GATED_SQL)]
         finally:
             conn.close()
-        if date:
+        if date and date != "all":
             d = f"{datetime.now(VN_TZ):%Y-%m-%d}" if date == "today" else date
             rows = [r for r in rows if _row_date(r) == d]
         elif days:
@@ -124,7 +124,7 @@ class UserOutputWriter:
             "implication": impl.get("text"), "impact_area": impl.get("impact_area"),
             "materiality_score": mat.get("score"), "time_sensitivity": mat.get("time_sensitivity"),
             "sentiment": sent.get("polarity") or sent.get("overall"),
-            "event_type": ag.get("event_type"), "confidence": r.get("agent_confidence"),
+            "event_type": ag.get("event_type"),
         }
 
     def _l1_row(self, r: dict) -> dict:
@@ -133,7 +133,7 @@ class UserOutputWriter:
                          for e in (d.get("entities") or []) if e.get("in_list"))
         cats = "; ".join(f"{k}={v}" for k, v in (d.get("categories") or {}).items() if v != "none")
         return {"article_id": r["article_id"], "date": _row_date(r), "title": r.get("title"),
-                "entities": ents, "l1_confidence": r.get("l1_confidence"), "categories": cats}
+                "entities": ents, "categories": cats}
 
     def _agent_row(self, r: dict) -> dict:
         ag = _loads(r["agent_json"])
@@ -143,14 +143,17 @@ class UserOutputWriter:
                 "summary": summ.get("abstractive"), "implication": impl.get("text"),
                 "materiality_score": mat.get("score"),
                 "sentiment": sent.get("polarity") or sent.get("overall"),
-                "event_type": ag.get("event_type"), "confidence": r.get("agent_confidence")}
+                "event_type": ag.get("event_type")}
 
     # -- route + write --------------------------------------------------------
-    def write(self, *, date: str | None = None, days: int | None = None) -> dict[str, int]:
+    def write(self, *, date: str | None = None, days: int | None = None,
+              write_master: bool = True) -> dict[str, int]:
         """Gate + route + ghi CSV per (user, date). Trả {user: số dòng final}. Log 'done'."""
         rows = self.gated_rows(date=date, days=days)
         # bucket[(user, date)] = list of (final_row, l1_row, agent_row, article_id)
         bucket: dict[tuple[str, str], list[tuple]] = {}
+        matched_article_ids: set[str] = set()
+
         for r in rows:
             eset = self._entity_ids(r["l1_json"])
             if not eset:
@@ -162,9 +165,29 @@ class UserOutputWriter:
                 matched = eset & self.reg.resolve_subscription(user)
                 if not matched:
                     continue
+                matched_article_ids.add(r["article_id"])
                 key = (user, _row_date(r))
                 bucket.setdefault(key, []).append(
                     (self._final_row(r, matched), self._l1_row(r), self._agent_row(r), r["article_id"]))
+
+        # Ghi master audit nếu được bật
+        if write_master and rows:
+            master_bucket: dict[str, list[tuple]] = {}
+            for r in rows:
+                d = _row_date(r)
+                eset = self._entity_ids(r["l1_json"])
+                master_bucket.setdefault(d, []).append(
+                    (self._final_row(r, eset), self._l1_row(r), self._agent_row(r), r["article_id"]))
+            for d, items in master_bucket.items():
+                seen, finals, l1s, agents, aids = set(), [], [], [], []
+                for frow, l1row, arow, aid in items:
+                    if aid in seen:
+                        continue
+                    seen.add(aid); finals.append(frow); l1s.append(l1row); agents.append(arow); aids.append(aid)
+                mbase = self.output_root / "_master" / d
+                _atomic_write_csv(mbase / "L1.csv", L1_COLUMNS, l1s)
+                _atomic_write_csv(mbase / "agent.csv", AGENT_COLUMNS, agents)
+                _atomic_write_csv(mbase / "final.csv", FINAL_COLUMNS, finals)
 
         counts: dict[str, int] = {}
         for (user, d), items in sorted(bucket.items()):
@@ -182,6 +205,19 @@ class UserOutputWriter:
             ckpt.mark_written(base.parent, d, aids)                       # mark SAU khi replace
             counts[user] = counts.get(user, 0) + len(finals)
             logger.info("done user={} date={} rows={} (new={})", user, d, len(finals), len(new))
+
+        orphan_count = len(rows) - len(matched_article_ids)
+        if orphan_count > 0:
+            logger.info("diagnostics: {} bài đạt 2 lớp nhưng không có user nào đăng ký (orphan)", orphan_count)
+
         if not counts:
             logger.info("done: không có article đủ 2 layer khớp subscription (date={} days={})", date, days)
+            if date == "today":
+                all_rows = self.gated_rows(date="all")
+                if all_rows:
+                    logger.warning(
+                        "[LƯU Ý BACKLOG] '--date today' trả về 0 bài, nhưng có {} bài đạt 2 layer ở các ngày trước "
+                        "(gần nhất: {}). Gợi ý: chạy với --days 30 hoặc --date all.",
+                        len(all_rows), _row_date(all_rows[-1])
+                    )
         return counts

@@ -1,34 +1,35 @@
 {
- "l1_output_version": "1.0",
- "article_id": "bdc72d715e576157a1261a2883a74bdf51e1dbfcd983f0c2b0098c35752592c6",
- "title": "Ngành bất động sản lãi gần 80.000 tỷ đồng trong 6T2026, một tập đoàn “gánh” 80%",
- "recognized": true,
- "entities": [
-  {
-   "surface": "bất động sản",
-   "entity_id": "IND_GICS1:BAT_DONG_SAN",
-   "type": "INDUSTRY_GICS1",
-   "method": "alias",
-   "in_list": true,
-   "confidence": 0.85
+  "l1_output_version": "1.0",
+  "article_id": "bdc72d715e576157a1261a2883a74bdf51e1dbfcd983f0c2b0098c35752592c6",
+  "title": "Ngành bất động sản lãi gần 80.000 tỷ đồng trong 6T2026, một tập đoàn “gánh” 80%",
+  "recognized": true,
+  "entities": [
+    {
+      "surface": "bất động sản",
+      "entity_id": "IND_GICS1:BAT_DONG_SAN",
+      "type": "INDUSTRY_GICS1",
+      "method": "alias",
+      "in_list": true,
+      "confidence": 0.95
+    }
+  ],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "done"
+  },
+  "unlisted_candidates": [],
+  "citations": [
+    {
+      "source_span": "Ngành bất động sản lãi gần 80.000 tỷ đồng trong 6T2026, một tập đoàn “gánh” 80%"
+    }
+  ],
+  "confidence": 0.95,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
   }
- ],
- "categories": {
-  "ticker_company": "none",
-  "etf_fund": "none",
-  "index": "none",
-  "exchange": "none",
-  "industry_sector": "done"
- },
- "citations": [
-  {
-   "source_span": "Ngành bất động sản lãi gần 80.000 tỷ đồng trong 6T2026, một tập đoàn “gánh” 80%"
-  }
- ],
- "confidence": 0.85,
- "processing_metadata": {
-  "agent_provider": "stub",
-  "model_used": "rule-based",
-  "timestamp": "2026-08-18T15:11:29+07:00"
- }
 }

@@ -1,0 +1,442 @@
+{
+  "silver_schema_version": "1.0",
+  "article_id": "6400ab6d7b5e92c2b4614f40e17889b594465a39139cae82cf835551c620d39b",
+  "source_url": "https://cafef.vn/tong-giam-doc-mot-doanh-nghiep-bi-cam-giao-dich-18-thang-vi-mua-chui-hang-trieu-co-phieu-18826081922240628.chn",
+  "domain": "cafef.vn",
+  "content_sha256": "9e87b58f78f12ab67a47e7babe3e84d15aefeaf34f04252d494f357d2f49df97",
+  "cleaned_text": "Tổng Giám đốc một doanh nghiệp bị cấm giao dịch 18 tháng vì \"mua chui\" hàng triệu cổ phiếu\nCụ thể, sau khi mua gần 3,5 cổ phiếu trong ngày 28/4, tới ngày 5/5, ông Tuấn mới có báo cáo về giao dịch này.\nMới đây, Thanh tra Chứng khoán Nhà nước vừa ban hành Quyết định số 460/QĐ-XPHC về việc xử phạt vi phạm hành chính trong lĩnh vực chứng khoán và thị trường chứng khoán đối với ông Nguyễn Đình Tuấn.\nCụ thể, ông Nguyễn Đình Tuấn, Thành viên HĐQT kiêm Tổng Giám đốc Công ty cổ phần Dược phẩm Trung ương I – Pharbaco (mã: PBC) đã mua 3.491.540 cổ phiếu PBC (tương ứng 34.915.400.000 đồng theo mệnh giá) ngày 28/4/2026 nhưng không báo cáo về việc dự kiến giao dịch.\nTheo quy định, với hành vi này, ông Tuấn bị phạt tiền bằng 1,5% giá trị chứng khoán giao dịch thực tế tính theo mệnh giá, tương ứng gần 524 triệu đồng. Ngoài phạt tiền, ông Tuấn còn bị đình chỉ hoạt động giao dịch chứng khoán trong 18 tháng.\nTrước đó, sau khi mua gần 3,5 cổ phiếu trong ngày 28/4, tới ngày 5/5, ông Tuấn mới có báo cáo về giao dịch này.\nTrong phiên 28/4, PBC ghi nhận khoảng 3,5 cổ phiếu được giao dịch theo phương thức thỏa thuận, với tổng giá trị khoảng 17,5 tỷ đồng. Lượng cổ phiếu này xấp xỉ khối lượng mà ông Tuấn công bố đã hoàn tất mua vào.\nỞ một diễn biến khác, Pharbaco mới đây công bố loạt đơn từ nhiệm của các nhân sự cấp cao. Trong đó, ông Nguyễn Đức Cảnh xin thôi giữ chức Kế toán trưởng vì lý do cá nhân.\nCùng thời điểm, ông Tô Thành Hưng, Thành viên HĐQT kiêm Chủ tịch HĐQT Pharbaco, cũng có đơn xin từ nhiệm. Hai Thành viên HĐQT khác là ông Lê Đức Hoàng và bà Nguyễn Thị Thu Hà cũng đồng loạt xin rút khỏi HĐQT PBC.\nCác nội dung từ nhiệm dự kiến sẽ được trình tại ĐHĐCĐ bất thường sắp tới. Thời gian tổ chức đại hội hiện chưa được công bố, trong khi ngày đăng ký cuối cùng để thực hiện quyền tham dự được ấn định vào 3/9/2026.\nĐược biết, Pharbaco hoạt động trong lĩnh vực sản xuất và kinh doanh dược phẩm. Trên thị trường, cổ phiếu PBC đóng cửa phiên tại mốc 5.300 đồng/cp. \nNhịp sống thị trường",
+  "extraction_quality": "high",
+  "structure": {
+    "headings": [
+      {
+        "level": 1,
+        "text": "Tổng Giám đốc một doanh nghiệp bị cấm giao dịch 18 tháng vì \"mua chui\" hàng triệu cổ phiếu"
+      },
+      {
+        "level": 3,
+        "text": "CÙNG CHUYÊN MỤC"
+      },
+      {
+        "level": 4,
+        "text": "Một công ty chứng khoán \"rót\" gần 1.000 tỷ đồng vào một mã ngân hàng, tạm lãi hơn trăm tỷ Nổi bật"
+      },
+      {
+        "level": 4,
+        "text": "“Dòng tiền lớn” bán ròng 80.000 tỷ đồng cổ phiếu từ đầu năm, chuyên gia lý giải nguyên nhân Nổi bật"
+      },
+      {
+        "level": 4,
+        "text": "Tập đoàn Bảo việt và các doanh nghiệp thành viên để số tiền tương đương hơn 1,38 tỷ USD tại BAOVIET Bank"
+      },
+      {
+        "level": 4,
+        "text": "Bao giờ chứng khoán hết “chán”?"
+      },
+      {
+        "level": 4,
+        "text": "Buồn của môi giới chứng khoán"
+      },
+      {
+        "level": 4,
+        "text": "Vietcap dự phóng lợi nhuận một \"đại gia\" Việt có thể đạt hơn 13.000 tỷ đồng năm 2026"
+      }
+    ],
+    "paragraphs": [
+      "MỚI NHẤT!",
+      "Dương Ngọc | 20-08-2026 - 00:05 AM | Thị trường chứng khoán",
+      "Cụ thể, sau khi mua gần 3,5 cổ phiếu trong ngày 28/4, tới ngày 5/5, ông Tuấn mới có báo cáo về giao dịch này.",
+      "Mới đây, Thanh tra Chứng khoán Nhà nước vừa ban hành Quyết định số 460/QĐ-XPHC về việc xử phạt vi phạm hành chính trong lĩnh vực chứng khoán và thị trường chứng khoán đối với ông Nguyễn Đình Tuấn.",
+      "Cụ thể, ông Nguyễn Đình Tuấn, Thành viên HĐQT kiêm Tổng Giám đốc Công ty cổ phần Dược phẩm Trung ương I – Pharbaco (mã: PBC) đã mua 3.491.540 cổ phiếu PBC (tương ứng 34.915.400.000 đồng theo mệnh giá) ngày 28/4/2026 nhưng không báo cáo về việc dự kiến giao dịch.",
+      "Theo quy định, với hành vi này, ông Tuấn bị phạt tiền bằng 1,5% giá trị chứng khoán giao dịch thực tế tính theo mệnh giá, tương ứng gần 524 triệu đồng. Ngoài phạt tiền, ông Tuấn còn bị đình chỉ hoạt động giao dịch chứng khoán trong 18 tháng.",
+      "Trước đó, sau khi mua  gần 3,5 cổ phiếu trong ngày 28/4, tới ngày 5/5, ông Tuấn mới có báo cáo về giao dịch này.",
+      "Trong phiên 28/4, PBC ghi nhận khoảng 3,5 cổ phiếu được giao dịch theo phương thức thỏa thuận, với tổng giá trị khoảng 17,5 tỷ đồng. Lượng cổ phiếu này xấp xỉ khối lượng mà ông Tuấn công bố đã hoàn tất mua vào.",
+      "Ở một diễn biến khác, Pharbaco mới đây công bố loạt đơn từ nhiệm của các nhân sự cấp cao. Trong đó, ông Nguyễn Đức Cảnh xin thôi giữ chức Kế toán trưởng vì lý do cá nhân.",
+      "Cùng thời điểm, ông Tô Thành Hưng, Thành viên HĐQT kiêm Chủ tịch HĐQT Pharbaco, cũng có đơn xin từ nhiệm. Hai Thành viên HĐQT khác là ông Lê Đức Hoàng và bà Nguyễn Thị Thu Hà cũng đồng loạt xin rút khỏi HĐQT PBC.",
+      "Các nội dung từ nhiệm dự kiến sẽ được trình tại ĐHĐCĐ bất thường sắp tới. Thời gian tổ chức đại hội hiện chưa được công bố, trong khi ngày đăng ký cuối cùng để thực hiện quyền tham dự được ấn định vào 3/9/2026.",
+      "Được biết, Pharbaco hoạt động trong lĩnh vực sản xuất và kinh doanh dược phẩm. Trên thị trường, cổ phiếu PBC đóng cửa phiên tại mốc 5.300 đồng/cp. ﻿",
+      "Dương Ngọc",
+      "Nhịp sống thị trường",
+      "Địa chỉ: Tầng 21 Tòa nhà Center Building. Số 01, phố Nguyễn Huy Tưởng, phường Thanh Xuân, thành phố Hà Nội",
+      "Điện thoại: 024 7309 5555 Máy lẻ 292. Fax: 024-39744082",
+      "Email: info@cafef.vn | Hotline: 0926 864 344",
+      "Chịu trách nhiệm nội dung: Ông Nguyễn Thế Tân",
+      "Liên hệ quảng cáo",
+      "Hotline:",
+      "Email: doanhnghiep@admicro.vn",
+      "© Copyright 2007 - 2026 - Công ty Cổ phần VCCorp.",
+      "Giấy phép thiết lập trang thông tin điện tử tổng hợp trên mạng số 2216/GP-TTĐT do Sở Thông tin và Truyền thông Hà Nội cấp ngày 10 tháng 4 năm 2019."
+    ],
+    "tables": [],
+    "links": [
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "http://liveboard.cafef.vn",
+        "text": "Bảng giá điện tử"
+      },
+      {
+        "href": "/du-lieu/danh-muc-dau-tu.chn",
+        "text": "Danh mục đầu tư"
+      },
+      {
+        "href": "/doc-nhanh.chn",
+        "text": "Đọc nhanh >>"
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "XÃ HỘI"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "CHỨNG KHOÁN"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "BẤT ĐỘNG SẢN"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "DOANH NGHIỆP"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "NGÂN HÀNG"
+      },
+      {
+        "href": "/smart-money.chn",
+        "text": "SMART MONEY"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "TÀI CHÍNH QUỐC TẾ"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "VĨ MÔ"
+      },
+      {
+        "href": "/kinh-te-so.chn",
+        "text": "KINH TẾ SỐ"
+      },
+      {
+        "href": "/thi-truong.chn",
+        "text": "THỊ TRƯỜNG"
+      },
+      {
+        "href": "/song.chn",
+        "text": "SỐNG"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "LIFESTYLE"
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "Xã hội"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "Doanh nghiệp"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "Kinh tế vĩ mô"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "Chứng khoán"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "Tài chính ngân hàng"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "Tài chính quốc tế"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "Tin tức"
+      },
+      {
+        "href": "/du-an.chn",
+        "text": "Dự án"
+      },
+      {
+        "href": "/ban-do-du-an.chn",
+        "text": "Bản đồ dự án"
+      },
+      {
+        "href": "/hang-hoa-nguyen-lieu.chn",
+        "text": "Hàng hóa nguyên liệu"
+      },
+      {
+        "href": "/song.chn",
+        "text": "Sống"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "Lifestyle"
+      },
+      {
+        "href": "/nhom-chu-de/emagazine.chn",
+        "text": "Magazine"
+      },
+      {
+        "href": "/du-lieu.chn",
+        "text": "Dữ liệu"
+      },
+      {
+        "href": "/du-lieu/cafeflists.chn",
+        "text": "F INDEX"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "Thị trường chứng khoán"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Chia sẻ"
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "javascript:;",
+        "text": "TIN MỚI"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Theo Nhịp sống thị trường Copy link"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Chia sẻ"
+      },
+      {
+        "href": "/tong-giam-doc.html",
+        "text": "tổng giám đốc,"
+      },
+      {
+        "href": "/co-phieu.html",
+        "text": "cổ phiếu,"
+      },
+      {
+        "href": "/thanh-tra.html",
+        "text": "thanh tra,"
+      },
+      {
+        "href": "/chung-khoan.html",
+        "text": "chứng khoán,"
+      },
+      {
+        "href": "/nguyen-dinh-tuan.html",
+        "text": "Nguyễn Đình Tuấn,"
+      },
+      {
+        "href": "/thanh-vien-hdqt.html",
+        "text": "thành viên hđqt,"
+      },
+      {
+        "href": "/ceo.html",
+        "text": "CEO"
+      },
+      {
+        "href": "/mot-cong-ty-chung-khoan-rot-gan-1000-ty-dong-vao-mot-ma-ngan-hang-tam-lai-hon-tram-ty-188260819194108166.chn",
+        "text": ""
+      },
+      {
+        "href": "/mot-cong-ty-chung-khoan-rot-gan-1000-ty-dong-vao-mot-ma-ngan-hang-tam-lai-hon-tram-ty-188260819194108166.chn",
+        "text": "Một công ty chứng khoán \"rót\" gần 1.000 tỷ đồng vào một mã ngân hàng, tạm lãi hơn trăm tỷ"
+      },
+      {
+        "href": "/dong-tien-lon-ban-rong-80000-ty-dong-co-phieu-tu-dau-nam-chuyen-gia-ly-giai-nguyen-nhan-188260818221134958.chn",
+        "text": ""
+      },
+      {
+        "href": "/dong-tien-lon-ban-rong-80000-ty-dong-co-phieu-tu-dau-nam-chuyen-gia-ly-giai-nguyen-nhan-188260818221134958.chn",
+        "text": "“Dòng tiền lớn” bán ròng 80.000 tỷ đồng cổ phiếu từ đầu năm, chuyên gia lý giải nguyên nhân"
+      },
+      {
+        "href": "/tap-doan-bao-viet-va-cac-doanh-nghiep-thanh-vien-de-so-tien-tuong-duong-hon-138-ty-usd-tai-baoviet-bank-188260819222501177.chn",
+        "text": ""
+      },
+      {
+        "href": "/tap-doan-bao-viet-va-cac-doanh-nghiep-thanh-vien-de-so-tien-tuong-duong-hon-138-ty-usd-tai-baoviet-bank-188260819222501177.chn",
+        "text": "Tập đoàn Bảo việt và các doanh nghiệp thành viên để số tiền tương đương hơn 1,38 tỷ USD tại BAOVIET Bank"
+      },
+      {
+        "href": "/bao-gio-chung-khoan-het-chan-188260819222309396.chn",
+        "text": ""
+      },
+      {
+        "href": "/bao-gio-chung-khoan-het-chan-188260819222309396.chn",
+        "text": "Bao giờ chứng khoán hết “chán”?"
+      },
+      {
+        "href": "/buon-cua-moi-gioi-chung-khoan-188260819223352405.chn",
+        "text": ""
+      },
+      {
+        "href": "/buon-cua-moi-gioi-chung-khoan-188260819223352405.chn",
+        "text": "Buồn của môi giới chứng khoán"
+      },
+      {
+        "href": "/vietcap-du-phong-loi-nhuan-mot-dai-gia-viet-co-the-dat-hon-13000-ty-dong-nam-2026-188260819222207432.chn",
+        "text": ""
+      },
+      {
+        "href": "/vietcap-du-phong-loi-nhuan-mot-dai-gia-viet-co-the-dat-hon-13000-ty-dong-nam-2026-188260819222207432.chn",
+        "text": "Vietcap dự phóng lợi nhuận một \"đại gia\" Việt có thể đạt hơn 13.000 tỷ đồng năm 2026"
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "XÃ HỘI"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "CHỨNG KHOÁN"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "BẤT ĐỘNG SẢN"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "DOANH NGHIỆP"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "NGÂN HÀNG"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "TÀI CHÍNH QUỐC TẾ"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "VĨ MÔ"
+      },
+      {
+        "href": "/kinh-te-so.chn",
+        "text": "KINH TẾ SỐ"
+      },
+      {
+        "href": "/thi-truong.chn",
+        "text": "THỊ TRƯỜNG"
+      },
+      {
+        "href": "/song.chn",
+        "text": "SỐNG"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "LIFESTYLE"
+      },
+      {
+        "href": "/du-lieu.chn",
+        "text": "Dữ liệu"
+      },
+      {
+        "href": "/du-lieu/top/ceo.chn",
+        "text": "Top 200"
+      },
+      {
+        "href": "https://www.messenger.com/t/108804609142280",
+        "text": "Chat với tư vấn viên"
+      },
+      {
+        "href": "http://www.vccorp.vn/",
+        "text": ""
+      },
+      {
+        "href": "/static/chinh-sach-bao-mat.html",
+        "text": "Chính sách bảo mật"
+      }
+    ]
+  },
+  "images": [
+    {
+      "outer_tag": "<img alt='Tổng Giám đốc một doanh nghiệp bị cấm giao dịch 18 tháng vì \"mua chui\" hàng triệu cổ phiếu' data-role=\"cover\" fetchpriority=\"high\" src=\"https://cafefcdn.com/thumb_w/640/203337114487263232/2026/8/19/avatar1787153006684-1787153006878193119441.jpg\" title='Tổng Giám đốc một doanh nghiệp bị cấm giao dịch 18 tháng vì \"mua chui\" hàng triệu cổ phiếu'/>",
+      "resolved_url": "https://cafefcdn.com/thumb_w/640/203337114487263232/2026/8/19/avatar1787153006684-1787153006878193119441.jpg",
+      "alt": "Tổng Giám đốc một doanh nghiệp bị cấm giao dịch 18 tháng vì \"mua chui\" hàng triệu cổ phiếu",
+      "title": "Tổng Giám đốc một doanh nghiệp bị cấm giao dịch 18 tháng vì \"mua chui\" hàng triệu cổ phiếu",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt='Một công ty chứng khoán \"rót\" gần 1.000 tỷ đồng vào một mã ngân hàng, tạm lãi hơn trăm tỷ' height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787143208992-1787143209345748948081.jpg\" title='Một công ty chứng khoán \"rót\" gần 1.000 tỷ đồng vào một mã ngân hàng, tạm lãi hơn trăm tỷ' width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787143208992-1787143209345748948081.jpg",
+      "alt": "Một công ty chứng khoán \"rót\" gần 1.000 tỷ đồng vào một mã ngân hàng, tạm lãi hơn trăm tỷ",
+      "title": "Một công ty chứng khoán \"rót\" gần 1.000 tỷ đồng vào một mã ngân hàng, tạm lãi hơn trăm tỷ",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"“Dòng tiền lớn” bán ròng 80.000 tỷ đồng cổ phiếu từ đầu năm, chuyên gia lý giải nguyên nhân\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/avatar1787065850401-17870658507661375647030.jpg\" title=\"“Dòng tiền lớn” bán ròng 80.000 tỷ đồng cổ phiếu từ đầu năm, chuyên gia lý giải nguyên nhân\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/avatar1787065850401-17870658507661375647030.jpg",
+      "alt": "“Dòng tiền lớn” bán ròng 80.000 tỷ đồng cổ phiếu từ đầu năm, chuyên gia lý giải nguyên nhân",
+      "title": "“Dòng tiền lớn” bán ròng 80.000 tỷ đồng cổ phiếu từ đầu năm, chuyên gia lý giải nguyên nhân",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Tập đoàn Bảo việt và các doanh nghiệp thành viên để số tiền tương đương hơn 1,38 tỷ USD tại BAOVIET Bank\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787153067159-1787153067681306960942.png\" title=\"Tập đoàn Bảo việt và các doanh nghiệp thành viên để số tiền tương đương hơn 1,38 tỷ USD tại BAOVIET Bank\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787153067159-1787153067681306960942.png",
+      "alt": "Tập đoàn Bảo việt và các doanh nghiệp thành viên để số tiền tương đương hơn 1,38 tỷ USD tại BAOVIET Bank",
+      "title": "Tập đoàn Bảo việt và các doanh nghiệp thành viên để số tiền tương đương hơn 1,38 tỷ USD tại BAOVIET Bank",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Bao giờ chứng khoán hết “chán”?\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787152958323-1787152958761227806230.jpg\" title=\"Bao giờ chứng khoán hết “chán”?\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787152958323-1787152958761227806230.jpg",
+      "alt": "Bao giờ chứng khoán hết “chán”?",
+      "title": "Bao giờ chứng khoán hết “chán”?",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Buồn của môi giới chứng khoán\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787153560424-17871535609919818619-28-0-428-640-crop-1787153665240600737227.jpg\" title=\"Buồn của môi giới chứng khoán\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787153560424-17871535609919818619-28-0-428-640-crop-1787153665240600737227.jpg",
+      "alt": "Buồn của môi giới chứng khoán",
+      "title": "Buồn của môi giới chứng khoán",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt='Vietcap dự phóng lợi nhuận một \"đại gia\" Việt có thể đạt hơn 13.000 tỷ đồng năm 2026' height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787152875638-17871528763411936077984.png\" title='Vietcap dự phóng lợi nhuận một \"đại gia\" Việt có thể đạt hơn 13.000 tỷ đồng năm 2026' width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787152875638-17871528763411936077984.png",
+      "alt": "Vietcap dự phóng lợi nhuận một \"đại gia\" Việt có thể đạt hơn 13.000 tỷ đồng năm 2026",
+      "title": "Vietcap dự phóng lợi nhuận một \"đại gia\" Việt có thể đạt hơn 13.000 tỷ đồng năm 2026",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Công ty Cổ phần VCCorp\" height=\"49px\" src=\"https://vccorp.mediacdn.vn/vccorp-s.png\" width=\"100px\"/>",
+      "resolved_url": "https://vccorp.mediacdn.vn/vccorp-s.png",
+      "alt": "Công ty Cổ phần VCCorp",
+      "title": "",
+      "caption": ""
+    }
+  ],
+  "language": "vi",
+  "built_at": "2026-08-20T09:02:59+07:00",
+  "built_from_raw_path": "data/raw_html\\cafef.vn\\20260820\\6400ab6d7b5e92c2b4614f40e17889b594465a39139cae82cf835551c620d39b.html"
+}

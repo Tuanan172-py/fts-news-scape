@@ -1,3 +1,9 @@
 desktop.ini
 **/desktop.ini
 ~$*.xlsx
+
+# Output per-user hằng ngày (sinh bởi write_user_output.py) — KHÔNG commit
+users/output/
+# Cảnh báo entity nhập sai (auto) — KHÔNG commit
+users/input/*/_unknown.txt
+# GIỮ commit: users/input/<name>/entities.xlsx, users/input/manifest.yaml, users/template/*

@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "cd9933d65c70b717bf91f1a502626faeabfe1b1d4e52587dc8f69d2bd5c667ac",
+  "title": "Nửa cuối năm 2026: Bài toán “đãi cát tìm vàng” trong giai đoạn thị trường biến động",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

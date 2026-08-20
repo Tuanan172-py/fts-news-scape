@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "84e1a429e7441a3095af556bcb1824b07d842472ba3fff30fa7e4f5cacc0c1ee",
+  "title": "Vietstock Daily 19/08/2026: Chưa hết rung lắc?",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "6de79f94f4bec8cc73983ea943a540f63ea12cf1f2f6e1d305427ee5aab78dbf",
+  "title": "Từng gây sốt với mức giá từ hơn 10 triệu đồng/m2, chung cư giá rẻ đình đám một thời ở Hà Nội hiện ra sao sau hơn một thập kỷ sử dụng?",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

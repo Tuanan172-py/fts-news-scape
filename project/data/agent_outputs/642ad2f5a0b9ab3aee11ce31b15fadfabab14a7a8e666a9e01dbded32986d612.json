@@ -1,0 +1,55 @@
+{
+  "output_schema_version": "1.0",
+  "article_id": "642ad2f5a0b9ab3aee11ce31b15fadfabab14a7a8e666a9e01dbded32986d612",
+  "summary": {
+    "abstractive": "DeepSeek tung V4 Pro, tăng giá dịch vụ gấp 11 lần, tham vọng định giá 74 tỷ USD DeepSeek đang chứng minh rằng lợi thế về mô hình chỉ là bước khởi đầu, khả năng kiểm soát chi phí, hạ tầng tính toán, chip và thương mại hóa AI mới là yếu tố quyết định thành công.",
+    "key_points": [
+      "DeepSeek đang chứng minh rằng lợi thế về mô hình chỉ là bước khởi đầu, khả năng kiểm soát chi phí, hạ tầng tính toán, chip và thương mại hóa AI mới là yếu tố quyết định thành công.",
+      "Cuộc đua trí tuệ nhân tạo (AI) tại Trung Quốc tiếp tục nóng lên khi startup DeepSeek chính thức ra mắt mô hình chủ lực V4 Pro, đưa hệ thống này ra khỏi giai đoạn xem trước (preview) và sẵn sàng cạnh t",
+      "DeepSeek tăng tốc cạnh tranh với các đối thủ",
+      "Phiên bản mới mang tên V4-Pro-0813 hiện đã được cung cấp thông qua ứng dụng, website và API của DeepSeek."
+    ]
+  },
+  "implication": {
+    "text": "Nội dung bài viết tác động tới nhận định thị trường và hoạt động kinh doanh của các đơn vị liên quan.",
+    "affected_parties": [
+      "nhà đầu tư",
+      "doanh nghiệp niêm yết"
+    ],
+    "impact_area": "market"
+  },
+  "materiality": {
+    "score": 0.65,
+    "time_sensitivity": "this_week"
+  },
+  "confidence": 0.88,
+  "citations": [
+    {
+      "claim": "Thông tin chính được trích xuất từ bài viết: DeepSeek tung V4 Pro, tăng giá dịch vụ gấp 11 lần,...",
+      "source_span": "DeepSeek tung V4 Pro, tăng giá dịch vụ gấp 11 lần, tham vọng định giá 74 tỷ USD",
+      "source_offset": 0
+    },
+    {
+      "claim": "Thông tin chính được trích xuất từ bài viết: DeepSeek đang chứng minh rằng lợi thế về mô hình c...",
+      "source_span": "DeepSeek đang chứng minh rằng lợi thế về mô hình chỉ là bước khởi đầu, khả năng kiểm soát chi phí, hạ tầng tính toán, chip và thương mại hóa AI mới là yếu tố quyết định thành công.",
+      "source_offset": 80
+    },
+    {
+      "claim": "Thông tin chính được trích xuất từ bài viết: Cuộc đua trí tuệ nhân tạo (AI) tại Trung Quốc tiếp...",
+      "source_span": "Cuộc đua trí tuệ nhân tạo (AI) tại Trung Quốc tiếp tục nóng lên khi startup DeepSeek chính thức ra mắt mô hình chủ lực V4 Pro, đưa hệ thống này ra khỏi giai đoạn xem trước (preview) và sẵn sàng cạnh tranh trực tiếp với ngày càng nhiều đối thủ AI trong nước.",
+      "source_offset": 261
+    }
+  ],
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:37:35.755748+07:00",
+    "schema_version": "1.0"
+  },
+  "sentiment": {
+    "overall": 0.0,
+    "polarity": "neutral"
+  },
+  "event_type": "macro",
+  "extraction_quality": "high"
+}

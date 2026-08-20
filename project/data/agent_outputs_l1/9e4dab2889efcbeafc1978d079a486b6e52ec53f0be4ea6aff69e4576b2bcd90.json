@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "9e4dab2889efcbeafc1978d079a486b6e52ec53f0be4ea6aff69e4576b2bcd90",
+  "title": "Gần 1/5 thanh niên thất nghiệp, sinh viên ra trường rải hàng trăm đơn xin việc mà chỉ được 1-2 công ty phản hồi: Tình cảnh buồn tại nền kinh tế lớn nhất châu Á",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

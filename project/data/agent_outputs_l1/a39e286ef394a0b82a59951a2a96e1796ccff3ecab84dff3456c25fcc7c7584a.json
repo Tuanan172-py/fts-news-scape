@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "a39e286ef394a0b82a59951a2a96e1796ccff3ecab84dff3456c25fcc7c7584a",
+  "title": "Phát hiện một ngôi làng có 50 tấn vàng",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "262918e4a2933d4c0fc03261c5adc0a16d9a6009bbb0760b9b0a92825551d8b6",
+  "title": "Nữ luật sư bị khởi tố vì giúp vợ Phú Lê che giấu vi phạm",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

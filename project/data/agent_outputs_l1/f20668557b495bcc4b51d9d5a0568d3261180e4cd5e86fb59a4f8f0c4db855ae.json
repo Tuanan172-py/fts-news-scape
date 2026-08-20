@@ -1,0 +1,37 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "f20668557b495bcc4b51d9d5a0568d3261180e4cd5e86fb59a4f8f0c4db855ae",
+  "title": "“Nhật Bản nên tăng lãi suất liên tục”",
+  "recognized": true,
+  "entities": [
+    {
+      "surface": "Nhật Bản",
+      "entity_id": null,
+      "type": "UNKNOWN",
+      "method": "semantic",
+      "in_list": false,
+      "confidence": 0.8
+    }
+  ],
+  "categories": {
+    "ticker_company": "out_of_list",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [
+    "Nhật Bản"
+  ],
+  "citations": [
+    {
+      "source_span": "“Nhật Bản nên tăng lãi suất liên tục”"
+    }
+  ],
+  "confidence": 0.95,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

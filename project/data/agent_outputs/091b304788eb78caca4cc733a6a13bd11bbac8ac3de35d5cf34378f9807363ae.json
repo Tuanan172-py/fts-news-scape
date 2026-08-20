@@ -1,0 +1,55 @@
+{
+  "output_schema_version": "1.0",
+  "article_id": "091b304788eb78caca4cc733a6a13bd11bbac8ac3de35d5cf34378f9807363ae",
+  "summary": {
+    "abstractive": "Vì sao đồng Yên vẫn mất giá bất chấp màn can thiệp lịch sử của Mỹ và Nhật? Đồng Yên Nhật đã xóa đi khoảng một nửa mức tăng có được sau đợt can thiệp lịch sử của Mỹ và Nhật chưa đầy hai tuần trước. Những yếu tố nền tảng đã đẩy đồng tiền này xuống mức thấp nhất trong nhiều thập kỷ đang cho thấy sức bền lớn hơn nhiều so với các biện pháp can thiệp ngắn hạn.",
+    "key_points": [
+      "Đồng Yên Nhật đã xóa đi khoảng một nửa mức tăng có được sau đợt can thiệp lịch sử của Mỹ và Nhật chưa đầy hai tuần trước. Những yếu tố nền tảng đã đẩy đồng tiền này xuống mức thấp nhất trong nhiều thậ",
+      "Hiện đồng Yên giao dịch trên mức 159 Yên/USD, sau khi từng phục hồi lên khoảng 155 Yên/USD trong những ngày ngay sau đợt can thiệp, từ mức trên 163 Yên/USD trước đó.",
+      "“Can thiệp đã khiến thị trường lo sợ, nhưng không thể ngăn được các quy luật tài chính, theo đó tiền sẽ chảy về nơi có lợi suất cao nhất... Chừng nào chi phí vay tiền tại Nhật Bản vẫn thấp hơn lợi nhu",
+      "Can thiệp được thị trường, nhưng không thể thay đổi nền tảng"
+    ]
+  },
+  "implication": {
+    "text": "Nội dung bài viết tác động tới nhận định thị trường và hoạt động kinh doanh của các đơn vị liên quan.",
+    "affected_parties": [
+      "nhà đầu tư",
+      "doanh nghiệp niêm yết"
+    ],
+    "impact_area": "market"
+  },
+  "materiality": {
+    "score": 0.65,
+    "time_sensitivity": "this_week"
+  },
+  "confidence": 0.88,
+  "citations": [
+    {
+      "claim": "Thông tin chính được trích xuất từ bài viết: Vì sao đồng Yên vẫn mất giá bất chấp màn can thiệp...",
+      "source_span": "Vì sao đồng Yên vẫn mất giá bất chấp màn can thiệp lịch sử của Mỹ và Nhật?",
+      "source_offset": 0
+    },
+    {
+      "claim": "Thông tin chính được trích xuất từ bài viết: Đồng Yên Nhật đã xóa đi khoảng một nửa mức tăng có...",
+      "source_span": "Đồng Yên Nhật đã xóa đi khoảng một nửa mức tăng có được sau đợt can thiệp lịch sử của Mỹ và Nhật chưa đầy hai tuần trước",
+      "source_offset": 75
+    },
+    {
+      "claim": "Thông tin chính được trích xuất từ bài viết: Những yếu tố nền tảng đã đẩy đồng tiền này xuống m...",
+      "source_span": "Những yếu tố nền tảng đã đẩy đồng tiền này xuống mức thấp nhất trong nhiều thập kỷ đang cho thấy sức bền lớn hơn nhiều so với các biện pháp can thiệp ngắn hạn.",
+      "source_offset": 197
+    }
+  ],
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:37:35.755748+07:00",
+    "schema_version": "1.0"
+  },
+  "sentiment": {
+    "overall": 0.0,
+    "polarity": "neutral"
+  },
+  "event_type": "macro",
+  "extraction_quality": "high"
+}

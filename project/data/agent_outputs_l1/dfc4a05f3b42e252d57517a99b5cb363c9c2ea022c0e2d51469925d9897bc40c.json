@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "dfc4a05f3b42e252d57517a99b5cb363c9c2ea022c0e2d51469925d9897bc40c",
+  "title": "Vì sao nhiều sân bay ngại đón Airbus A380 dù đây là chiếc máy bay chở khách lớn nhất thế giới?",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

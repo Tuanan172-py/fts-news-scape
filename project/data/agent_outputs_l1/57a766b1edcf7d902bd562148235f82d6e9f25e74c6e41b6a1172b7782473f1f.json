@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "57a766b1edcf7d902bd562148235f82d6e9f25e74c6e41b6a1172b7782473f1f",
+  "title": "Hai dự án du lịch sinh thái ở Huế vướng nhiều sai phạm về đất đai, đầu tư",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

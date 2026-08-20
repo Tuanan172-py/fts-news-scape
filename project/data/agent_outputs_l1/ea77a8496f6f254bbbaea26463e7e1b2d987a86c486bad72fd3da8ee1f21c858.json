@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "ea77a8496f6f254bbbaea26463e7e1b2d987a86c486bad72fd3da8ee1f21c858",
+  "title": "Chuỗi cà phê rang xay có tiếng đóng cửa 3 cơ sở tại Hà Nội",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

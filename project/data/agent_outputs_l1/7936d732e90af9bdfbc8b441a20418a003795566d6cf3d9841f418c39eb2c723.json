@@ -1,0 +1,35 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "7936d732e90af9bdfbc8b441a20418a003795566d6cf3d9841f418c39eb2c723",
+  "title": "Buồn của môi giới chứng khoán",
+  "recognized": true,
+  "entities": [
+    {
+      "surface": "chứng khoán",
+      "entity_id": "INDUSTRY_GICS2:Công ty chứng khoán",
+      "type": "INDUSTRY_GICS2",
+      "method": "semantic",
+      "in_list": true,
+      "confidence": 0.9
+    }
+  ],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "done"
+  },
+  "unlisted_candidates": [],
+  "citations": [
+    {
+      "source_span": "Buồn của môi giới chứng khoán"
+    }
+  ],
+  "confidence": 0.95,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

@@ -1,0 +1,442 @@
+{
+  "silver_schema_version": "1.0",
+  "article_id": "5d9b4e28cdafd4e785d6f460ec8b22bf3b9f0afe1cd300a389fc78284d4ac183",
+  "source_url": "https://cafef.vn/tin-vui-ha-noi-trien-khai-du-an-co-hon-8000-can-nha-o-gia-re-188260818223100287.chn",
+  "domain": "cafef.vn",
+  "content_sha256": "3aa8252684b1f1036c7d6d401a3259b8b62e48978a43620a744afa7ebd37e368",
+  "cleaned_text": "Tin vui: Hà Nội triển khai dự án có hơn 8.000 căn nhà ở giá rẻ\nHà Nội vừa khởi công Khu nhà ở xã hội Tiên Dương 2 tại xã Phúc Thịnh, quy mô gần 40 ha, gồm 21 tòa nhà, dự kiến cung cấp hơn 8.000 căn hộ.\nTheo UBND TP Hà Nội, ngày 18/8, dự án đầu tư xây dựng Khu nhà ở xã hội Tiên Dương 2 tại xã Phúc Thịnh, Hà Nội (tên thương mại Evergreen Premium) đã chính thức được khởi công.\nĐây là một trong những dự án trọng điểm của thành phố Hà Nội về thí điểm thực hiện khu nhà ở xã hội tập trung tại xã Phúc Thịnh. Dự án có quy mô gần 40 ha, gồm 21 tòa nhà, dự kiến cung cấp hơn 8.000 căn hộ.\nTheo quy hoạch, Evergreen Premium được đầu tư đồng bộ hệ thống hạ tầng xã hội và tiện ích nội khu, gồm trường mầm non, tiểu học, THCS, trung tâm thương mại - dịch vụ, công viên cây xanh, khu thể thao, bể bơi, khu sinh hoạt cộng đồng, bãi đỗ xe và các không gian công cộng. Theo kế hoạch, dự án dự kiến hoàn thành toàn bộ vào quý IV/2030.\nPhát biểu tại lễ khởi công, lãnh đạo UBND TP Hà Nội cho biết công tác phát triển nhà ở xã hội trên địa bàn Thủ đô đang đạt những kết quả tích cực. Đến nay, Hà Nội đã chấp thuận chủ trương đầu tư 151 dự án với quy mô khoảng 135.400 căn hộ. Riêng 6 tháng đầu năm 2026, thành phố có 30 dự án được khởi công và đang triển khai, với khoảng 24.000 căn hộ.\nTrong năm 2026, Hà Nội đặt mục tiêu khởi công 115 dự án thuộc chương trình phát triển nhà ở, trong đó có các dự án nhà ở xã hội. Phấn đấu hoàn thành tối thiểu 18.700 căn hộ, hướng tới cung ứng khoảng 25.000-27.000 căn hộ ra thị trường.\nThành phố cũng đẩy mạnh cơ chế “làn xanh”, cắt giảm ít nhất 50% thời gian giải quyết thủ tục hành chính trong các lĩnh vực quy hoạch, đất đai, đầu tư và xây dựng.\nĐược biết, Khu nhà ở xã hội Tiên Dương 2 có tổng diện tích gần 40 ha. Trong đó, giai đoạn 1 được triển khai trên diện tích khoảng 9,7 ha, với tổng mức đầu tư gần 3.000 tỷ đồng. Theo quy hoạch, giai đoạn này gồm 5 tòa chung cư cao 20 tầng, cung cấp tổng cộng 2.075 căn hộ nhà ở xã hội.\nNằm trên trục đường Võ Nguyên Giáp, thuộc hành lang đô thị Nhật Tân - Nội Bài, dự án Tiên Dương 2 có lợi thế kết nối với trung tâm Hà Nội, sân bay quốc tế Nội Bài và các khu vực phía Bắc Thủ đô thông qua hệ thống hạ tầng giao thông hiện hữu cùng các tuyến cầu theo quy hoạch như Nhật Tân, Đông Trù và Tứ Liên.\nSau khi hoàn thành, dự án sẽ góp phần bổ sung nguồn cung nhà ở có giá phù hợp trên địa bàn Hà Nội, nhất là cho người thu nhập thấp, công nhân, người lao động và các nhóm đối tượng đủ điều kiện hưởng chính sách nhà ở xã hội.\nNhịp Sống Thị Trường",
+  "extraction_quality": "high",
+  "structure": {
+    "headings": [
+      {
+        "level": 1,
+        "text": "Tin vui: Hà Nội triển khai dự án có hơn 8.000 căn nhà ở giá rẻ"
+      },
+      {
+        "level": 3,
+        "text": "CÙNG CHUYÊN MỤC"
+      },
+      {
+        "level": 4,
+        "text": "Khu vực lõi thủ đô xuất hiện dự án thấp tầng với giá bán chưa đến 110 triệu/m2 sàn xây dựng Nổi bật"
+      },
+      {
+        "level": 4,
+        "text": "Những người chỉ có duy nhất 1 bất động sản đón tin vui Nổi bật"
+      },
+      {
+        "level": 4,
+        "text": "Chuyên gia chỉ thẳng một phân khúc BĐS đang phát triển năng động bậc nhất"
+      },
+      {
+        "level": 4,
+        "text": "ĐHCĐ 2026: Hoàng Quân tập trung 3 mũi tên trong năm 2026"
+      },
+      {
+        "level": 4,
+        "text": "Toàn cảnh loạt dự án phủ khắp Hà Nội như một đại công trường: Tổng mức đầu tư hàng trăm nghìn tỷ, dự kiến hoàn thành trong năm nay"
+      },
+      {
+        "level": 4,
+        "text": "Thanh Hóa phản hồi vụ san gạt cả quả đồi, phân lô bán nền tại nhiều nơi"
+      }
+    ],
+    "paragraphs": [
+      "MỚI NHẤT!",
+      "Lễ Lễ | 18-08-2026 - 22:30 PM | Thị trường Bất động sản",
+      "Hà Nội vừa khởi công Khu nhà ở xã hội Tiên Dương 2 tại xã Phúc Thịnh, quy mô gần 40 ha, gồm 21 tòa nhà, dự kiến cung cấp hơn 8.000 căn hộ.",
+      "Theo UBND TP Hà Nội, ngày 18/8, dự án đầu tư xây dựng Khu nhà ở xã hội Tiên Dương 2 tại xã Phúc Thịnh, Hà Nội (tên thương mại Evergreen Premium) đã chính thức được khởi công.",
+      "Đây là một trong những dự án trọng điểm của thành phố Hà Nội về thí điểm thực hiện khu nhà ở xã hội tập trung tại xã Phúc Thịnh. Dự án có quy mô gần 40 ha, gồm 21 tòa nhà, dự kiến cung cấp hơn 8.000 căn hộ.",
+      "Theo quy hoạch, Evergreen Premium được đầu tư đồng bộ hệ thống hạ tầng xã hội và tiện ích nội khu, gồm trường mầm non, tiểu học, THCS, trung tâm thương mại - dịch vụ, công viên cây xanh, khu thể thao, bể bơi, khu sinh hoạt cộng đồng, bãi đỗ xe và các không gian công cộng. Theo kế hoạch, dự án dự kiến hoàn thành toàn bộ vào quý IV/2030.",
+      "Phát biểu tại lễ khởi công, lãnh đạo UBND TP Hà Nội cho biết công tác phát triển nhà ở xã hội trên địa bàn Thủ đô đang đạt những kết quả tích cực. Đến nay, Hà Nội đã chấp thuận chủ trương đầu tư 151 dự án với quy mô khoảng 135.400 căn hộ. Riêng 6 tháng đầu năm 2026, thành phố có 30 dự án được khởi công và đang triển khai, với khoảng 24.000 căn hộ.",
+      "Trong năm 2026, Hà Nội đặt mục tiêu khởi công 115 dự án thuộc chương trình phát triển nhà ở, trong đó có các dự án nhà ở xã hội. Phấn đấu hoàn thành tối thiểu 18.700 căn hộ, hướng tới cung ứng khoảng 25.000-27.000 căn hộ ra thị trường.",
+      "Thành phố cũng đẩy mạnh cơ chế “làn xanh”, cắt giảm ít nhất 50% thời gian giải quyết thủ tục hành chính trong các lĩnh vực quy hoạch, đất đai, đầu tư và xây dựng.",
+      "Phối cảnh dự án.",
+      "Được biết, Khu nhà ở xã hội Tiên Dương 2 có tổng diện tích gần 40 ha. Trong đó, giai đoạn 1 được triển khai trên diện tích khoảng 9,7 ha, với tổng mức đầu tư gần 3.000 tỷ đồng. Theo quy hoạch, giai đoạn này gồm 5 tòa chung cư cao 20 tầng, cung cấp tổng cộng 2.075 căn hộ nhà ở xã hội.",
+      "Nằm trên trục đường Võ Nguyên Giáp, thuộc hành lang đô thị Nhật Tân - Nội Bài, dự án Tiên Dương 2 có lợi thế kết nối với trung tâm Hà Nội, sân bay quốc tế Nội Bài và các khu vực phía Bắc Thủ đô thông qua hệ thống hạ tầng giao thông hiện hữu cùng các tuyến cầu theo quy hoạch như Nhật Tân, Đông Trù và Tứ Liên.",
+      "Sau khi hoàn thành, dự án sẽ góp phần bổ sung nguồn cung nhà ở có giá phù hợp trên địa bàn Hà Nội, nhất là cho người thu nhập thấp, công nhân, người lao động và các nhóm đối tượng đủ điều kiện hưởng chính sách nhà ở xã hội.",
+      "Lễ Lễ",
+      "Nhịp Sống Thị Trường",
+      "Địa chỉ: Tầng 21 Tòa nhà Center Building. Số 01, phố Nguyễn Huy Tưởng, phường Thanh Xuân, thành phố Hà Nội",
+      "Điện thoại: 024 7309 5555 Máy lẻ 292. Fax: 024-39744082",
+      "Email: info@cafef.vn | Hotline: 0926 864 344",
+      "Chịu trách nhiệm nội dung: Ông Nguyễn Thế Tân",
+      "Liên hệ quảng cáo",
+      "Hotline:",
+      "Email: doanhnghiep@admicro.vn",
+      "© Copyright 2007 - 2026 - Công ty Cổ phần VCCorp.",
+      "Giấy phép thiết lập trang thông tin điện tử tổng hợp trên mạng số 2216/GP-TTĐT do Sở Thông tin và Truyền thông Hà Nội cấp ngày 10 tháng 4 năm 2019."
+    ],
+    "tables": [],
+    "links": [
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "http://liveboard.cafef.vn",
+        "text": "Bảng giá điện tử"
+      },
+      {
+        "href": "/du-lieu/danh-muc-dau-tu.chn",
+        "text": "Danh mục đầu tư"
+      },
+      {
+        "href": "/doc-nhanh.chn",
+        "text": "Đọc nhanh >>"
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "XÃ HỘI"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "CHỨNG KHOÁN"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "BẤT ĐỘNG SẢN"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "DOANH NGHIỆP"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "NGÂN HÀNG"
+      },
+      {
+        "href": "/smart-money.chn",
+        "text": "SMART MONEY"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "TÀI CHÍNH QUỐC TẾ"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "VĨ MÔ"
+      },
+      {
+        "href": "/kinh-te-so.chn",
+        "text": "KINH TẾ SỐ"
+      },
+      {
+        "href": "/thi-truong.chn",
+        "text": "THỊ TRƯỜNG"
+      },
+      {
+        "href": "/song.chn",
+        "text": "SỐNG"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "LIFESTYLE"
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "Xã hội"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "Doanh nghiệp"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "Kinh tế vĩ mô"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "Chứng khoán"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "Tài chính ngân hàng"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "Tài chính quốc tế"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "Tin tức"
+      },
+      {
+        "href": "/du-an.chn",
+        "text": "Dự án"
+      },
+      {
+        "href": "/ban-do-du-an.chn",
+        "text": "Bản đồ dự án"
+      },
+      {
+        "href": "/hang-hoa-nguyen-lieu.chn",
+        "text": "Hàng hóa nguyên liệu"
+      },
+      {
+        "href": "/song.chn",
+        "text": "Sống"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "Lifestyle"
+      },
+      {
+        "href": "/nhom-chu-de/emagazine.chn",
+        "text": "Magazine"
+      },
+      {
+        "href": "/du-lieu.chn",
+        "text": "Dữ liệu"
+      },
+      {
+        "href": "/du-lieu/cafeflists.chn",
+        "text": "F INDEX"
+      },
+      {
+        "href": "/bat-dong-san/thi-truong.chn",
+        "text": "Thị trường"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "Bất động sản"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Chia sẻ"
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "javascript:;",
+        "text": "TIN MỚI"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Theo Nhịp Sống Thị Trường Copy link"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Chia sẻ"
+      },
+      {
+        "href": "/ubnd-tp-ha-noi.html",
+        "text": "UBND TP Hà Nội,"
+      },
+      {
+        "href": "/trung-tam-ha-noi.html",
+        "text": "trung tâm Hà Nội,"
+      },
+      {
+        "href": "/dong-tru.html",
+        "text": "Đông Trù,"
+      },
+      {
+        "href": "/tien-duong.html",
+        "text": "Tiên Dương"
+      },
+      {
+        "href": "/khu-vuc-loi-thu-do-xuat-hien-du-an-thap-tang-voi-gia-ban-chua-den-110-trieu-m2-san-xay-dung-188260725121829103.chn",
+        "text": ""
+      },
+      {
+        "href": "/khu-vuc-loi-thu-do-xuat-hien-du-an-thap-tang-voi-gia-ban-chua-den-110-trieu-m2-san-xay-dung-188260725121829103.chn",
+        "text": "Khu vực lõi thủ đô xuất hiện dự án thấp tầng với giá bán chưa đến 110 triệu/m2 sàn xây dựng"
+      },
+      {
+        "href": "/nhung-nguoi-chi-co-duy-nhat-1-bat-dong-san-don-tin-vui-188260705074907245.chn",
+        "text": ""
+      },
+      {
+        "href": "/nhung-nguoi-chi-co-duy-nhat-1-bat-dong-san-don-tin-vui-188260705074907245.chn",
+        "text": "Những người chỉ có duy nhất 1 bất động sản đón tin vui"
+      },
+      {
+        "href": "/chuyen-gia-chi-thang-mot-phan-khuc-bds-dang-phat-trien-nang-dong-bac-nhat-18826061707053957.chn",
+        "text": ""
+      },
+      {
+        "href": "/chuyen-gia-chi-thang-mot-phan-khuc-bds-dang-phat-trien-nang-dong-bac-nhat-18826061707053957.chn",
+        "text": "Chuyên gia chỉ thẳng một phân khúc BĐS đang phát triển năng động bậc nhất"
+      },
+      {
+        "href": "/dhcd-2026-hoang-quan-tap-trung-3-mui-ten-trong-nam-2026-188260531204205238.chn",
+        "text": ""
+      },
+      {
+        "href": "/dhcd-2026-hoang-quan-tap-trung-3-mui-ten-trong-nam-2026-188260531204205238.chn",
+        "text": "ĐHCĐ 2026: Hoàng Quân tập trung 3 mũi tên trong năm 2026"
+      },
+      {
+        "href": "/toan-canh-loat-du-an-phu-khap-ha-noi-nhu-mot-dai-cong-truong-tong-muc-dau-tu-hang-tram-nghin-ty-du-kien-hoan-thanh-trong-nam-nay-188260518234533753.chn",
+        "text": ""
+      },
+      {
+        "href": "/toan-canh-loat-du-an-phu-khap-ha-noi-nhu-mot-dai-cong-truong-tong-muc-dau-tu-hang-tram-nghin-ty-du-kien-hoan-thanh-trong-nam-nay-188260518234533753.chn",
+        "text": "Toàn cảnh loạt dự án phủ khắp Hà Nội như một đại công trường: Tổng mức đầu tư hàng trăm nghìn tỷ, dự kiến hoàn thành trong năm nay"
+      },
+      {
+        "href": "/thanh-hoa-phan-hoi-vu-san-gat-ca-qua-doi-phan-lo-ban-nen-tai-nhieu-noi-188260520070455274.chn",
+        "text": ""
+      },
+      {
+        "href": "/thanh-hoa-phan-hoi-vu-san-gat-ca-qua-doi-phan-lo-ban-nen-tai-nhieu-noi-188260520070455274.chn",
+        "text": "Thanh Hóa phản hồi vụ san gạt cả quả đồi, phân lô bán nền tại nhiều nơi"
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "XÃ HỘI"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "CHỨNG KHOÁN"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "BẤT ĐỘNG SẢN"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "DOANH NGHIỆP"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "NGÂN HÀNG"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "TÀI CHÍNH QUỐC TẾ"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "VĨ MÔ"
+      },
+      {
+        "href": "/kinh-te-so.chn",
+        "text": "KINH TẾ SỐ"
+      },
+      {
+        "href": "/thi-truong.chn",
+        "text": "THỊ TRƯỜNG"
+      },
+      {
+        "href": "/song.chn",
+        "text": "SỐNG"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "LIFESTYLE"
+      },
+      {
+        "href": "/du-lieu.chn",
+        "text": "Dữ liệu"
+      },
+      {
+        "href": "/du-lieu/top/ceo.chn",
+        "text": "Top 200"
+      },
+      {
+        "href": "https://www.messenger.com/t/108804609142280",
+        "text": "Chat với tư vấn viên"
+      },
+      {
+        "href": "http://www.vccorp.vn/",
+        "text": ""
+      },
+      {
+        "href": "/static/chinh-sach-bao-mat.html",
+        "text": "Chính sách bảo mật"
+      }
+    ]
+  },
+  "images": [
+    {
+      "outer_tag": "<img alt=\"Tin vui: Hà Nội triển khai dự án có hơn 8.000 căn nhà ở giá rẻ- Ảnh 1.\" data-author=\"\" data-original=\"https://cafefcdn.com/203337114487263232/2026/8/18/nha-o-xa-hoi-1-10921-1787067021036-1787067021510868091963.jpg\" h=\"1115\" id=\"#img_240199028984332288\" photoid=\"240199028984332288\" rel=\"lightbox\" src=\"https://cafefcdn.com/203337114487263232/2026/8/18/nha-o-xa-hoi-1-10921-1787067021036-1787067021510868091963.jpg\" title=\"Tin vui: Hà Nội triển khai dự án có hơn 8.000 căn nhà ở giá rẻ- Ảnh 1.\" type=\"photo\" w=\"1507\"/>",
+      "resolved_url": "https://cafefcdn.com/203337114487263232/2026/8/18/nha-o-xa-hoi-1-10921-1787067021036-1787067021510868091963.jpg",
+      "alt": "Tin vui: Hà Nội triển khai dự án có hơn 8.000 căn nhà ở giá rẻ- Ảnh 1.",
+      "title": "Tin vui: Hà Nội triển khai dự án có hơn 8.000 căn nhà ở giá rẻ- Ảnh 1.",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Tin vui: Hà Nội triển khai dự án có hơn 8.000 căn nhà ở giá rẻ- Ảnh 2.\" data-author=\"\" data-original=\"https://cafefcdn.com/203337114487263232/2026/8/18/du-an-1-1787067021037-17870670223511850644096.jpg\" h=\"1115\" id=\"#img_240199030612336640\" photoid=\"240199030612336640\" rel=\"lightbox\" src=\"https://cafefcdn.com/203337114487263232/2026/8/18/du-an-1-1787067021037-17870670223511850644096.jpg\" title=\"Tin vui: Hà Nội triển khai dự án có hơn 8.000 căn nhà ở giá rẻ- Ảnh 2.\" type=\"photo\" w=\"1507\"/>",
+      "resolved_url": "https://cafefcdn.com/203337114487263232/2026/8/18/du-an-1-1787067021037-17870670223511850644096.jpg",
+      "alt": "Tin vui: Hà Nội triển khai dự án có hơn 8.000 căn nhà ở giá rẻ- Ảnh 2.",
+      "title": "Tin vui: Hà Nội triển khai dự án có hơn 8.000 căn nhà ở giá rẻ- Ảnh 2.",
+      "caption": "Phối cảnh dự án."
+    },
+    {
+      "outer_tag": "<img alt=\"Khu vực lõi thủ đô xuất hiện dự án thấp tầng với giá bán chưa đến 110 triệu/m2 sàn xây dựng\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/7/25/avatar1784971566496-17849715668971540595943.png\" title=\"Khu vực lõi thủ đô xuất hiện dự án thấp tầng với giá bán chưa đến 110 triệu/m2 sàn xây dựng\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/7/25/avatar1784971566496-17849715668971540595943.png",
+      "alt": "Khu vực lõi thủ đô xuất hiện dự án thấp tầng với giá bán chưa đến 110 triệu/m2 sàn xây dựng",
+      "title": "Khu vực lõi thủ đô xuất hiện dự án thấp tầng với giá bán chưa đến 110 triệu/m2 sàn xây dựng",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Những người chỉ có duy nhất 1 bất động sản đón tin vui\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/7/5/avatar1783212493223-1783212493706476653347.jpg\" title=\"Những người chỉ có duy nhất 1 bất động sản đón tin vui\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/7/5/avatar1783212493223-1783212493706476653347.jpg",
+      "alt": "Những người chỉ có duy nhất 1 bất động sản đón tin vui",
+      "title": "Những người chỉ có duy nhất 1 bất động sản đón tin vui",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Chuyên gia chỉ thẳng một phân khúc BĐS đang phát triển năng động bậc nhất\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/6/17/avatar1781654664521-1781654664890580752504.png\" title=\"Chuyên gia chỉ thẳng một phân khúc BĐS đang phát triển năng động bậc nhất\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/6/17/avatar1781654664521-1781654664890580752504.png",
+      "alt": "Chuyên gia chỉ thẳng một phân khúc BĐS đang phát triển năng động bậc nhất",
+      "title": "Chuyên gia chỉ thẳng một phân khúc BĐS đang phát triển năng động bậc nhất",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"ĐHCĐ 2026: Hoàng Quân tập trung 3 mũi tên trong năm 2026\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/5/31/avatar1780234781923-17802347827201268011601.jpeg\" title=\"ĐHCĐ 2026: Hoàng Quân tập trung 3 mũi tên trong năm 2026\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/5/31/avatar1780234781923-17802347827201268011601.jpeg",
+      "alt": "ĐHCĐ 2026: Hoàng Quân tập trung 3 mũi tên trong năm 2026",
+      "title": "ĐHCĐ 2026: Hoàng Quân tập trung 3 mũi tên trong năm 2026",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Toàn cảnh loạt dự án phủ khắp Hà Nội như một đại công trường: Tổng mức đầu tư hàng trăm nghìn tỷ, dự kiến hoàn thành trong năm nay\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/5/18/dai-cong-truong-tai-ha-noi-2-17791220708671424783515-83-0-1333-2000-crop-1779122076569377554342.jpg\" title=\"Toàn cảnh loạt dự án phủ khắp Hà Nội như một đại công trường: Tổng mức đầu tư hàng trăm nghìn tỷ, dự kiến hoàn thành trong năm nay\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/5/18/dai-cong-truong-tai-ha-noi-2-17791220708671424783515-83-0-1333-2000-crop-1779122076569377554342.jpg",
+      "alt": "Toàn cảnh loạt dự án phủ khắp Hà Nội như một đại công trường: Tổng mức đầu tư hàng trăm nghìn tỷ, dự kiến hoàn thành trong năm nay",
+      "title": "Toàn cảnh loạt dự án phủ khắp Hà Nội như một đại công trường: Tổng mức đầu tư hàng trăm nghìn tỷ, dự kiến hoàn thành trong năm nay",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Thanh Hóa phản hồi vụ san gạt cả quả đồi, phân lô bán nền tại nhiều nơi\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/5/20/avatar1779235412337-17792354136221367383204.jpg\" title=\"Thanh Hóa phản hồi vụ san gạt cả quả đồi, phân lô bán nền tại nhiều nơi\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/5/20/avatar1779235412337-17792354136221367383204.jpg",
+      "alt": "Thanh Hóa phản hồi vụ san gạt cả quả đồi, phân lô bán nền tại nhiều nơi",
+      "title": "Thanh Hóa phản hồi vụ san gạt cả quả đồi, phân lô bán nền tại nhiều nơi",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Công ty Cổ phần VCCorp\" height=\"49px\" src=\"https://vccorp.mediacdn.vn/vccorp-s.png\" width=\"100px\"/>",
+      "resolved_url": "https://vccorp.mediacdn.vn/vccorp-s.png",
+      "alt": "Công ty Cổ phần VCCorp",
+      "title": "",
+      "caption": ""
+    }
+  ],
+  "language": "vi",
+  "built_at": "2026-08-18T22:40:50+07:00",
+  "built_from_raw_path": "data/raw_html\\cafef.vn\\20260818\\5d9b4e28cdafd4e785d6f460ec8b22bf3b9f0afe1cd300a389fc78284d4ac183.html"
+}

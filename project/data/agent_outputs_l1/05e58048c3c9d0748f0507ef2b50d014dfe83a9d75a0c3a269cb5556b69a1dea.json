@@ -1,0 +1,35 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "05e58048c3c9d0748f0507ef2b50d014dfe83a9d75a0c3a269cb5556b69a1dea",
+  "title": "Ô tô không qua trạm vẫn mất phí 6.600 đồng/tháng: VETC, ePass lý giải bất ngờ",
+  "recognized": true,
+  "entities": [
+    {
+      "surface": "Ô tô",
+      "entity_id": "INDUSTRY_GICS2:Ô tô & Phụ tùng",
+      "type": "INDUSTRY_GICS2",
+      "method": "semantic",
+      "in_list": true,
+      "confidence": 0.9
+    }
+  ],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "done"
+  },
+  "unlisted_candidates": [],
+  "citations": [
+    {
+      "source_span": "Ô tô không qua trạm vẫn mất phí 6.600 đồng/tháng: VETC, ePass lý giải bất ngờ"
+    }
+  ],
+  "confidence": 0.95,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

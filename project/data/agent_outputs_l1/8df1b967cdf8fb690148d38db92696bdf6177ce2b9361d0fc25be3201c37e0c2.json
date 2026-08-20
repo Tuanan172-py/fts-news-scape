@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "8df1b967cdf8fb690148d38db92696bdf6177ce2b9361d0fc25be3201c37e0c2",
+  "title": "Thi công ngày đêm đưa các dự án chống ngập úng về đích",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

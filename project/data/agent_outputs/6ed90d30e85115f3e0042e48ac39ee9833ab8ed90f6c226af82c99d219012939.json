@@ -1,0 +1,55 @@
+{
+  "output_schema_version": "1.0",
+  "article_id": "6ed90d30e85115f3e0042e48ac39ee9833ab8ed90f6c226af82c99d219012939",
+  "summary": {
+    "abstractive": "T&T Group bắt tay Yusys, mở hướng xây dựng hệ sinh thái công nghệ tài chính vươn tầm ASEAN Ngày 12/08, T&T Group và Yusys Technologies – Tập đoàn công nghệ tài chính hàng đầu Trung Quốc đã ký kết Biên bản ghi nhớ hợp tác chiến lược, qua đó đặt nền móng cho việc nghiên cứu các cơ hội hợp tác chiến lược trong lĩnh vực công nghệ tài chính, chuyển đổi số và dịch vụ tài chính tại Việt Nam và các thị tr",
+    "key_points": [
+      "Ngày 12/08, T&T Group và Yusys Technologies – Tập đoàn công nghệ tài chính hàng đầu Trung Quốc đã ký kết Biên bản ghi nhớ hợp tác chiến lược, qua đó đặt nền móng cho việc nghiên cứu các cơ hội hợp tác",
+      "Yusys Technologies là một trong những tập đoàn công nghệ tài chính hàng đầu Trung Quốc, từng xếp hạng 40 trong Top 100 công ty Fintech toàn cầu (IDC FinTech Rankings Top 100) năm 2022 và liên tục nằm ",
+      "Hướng tới liên doanh công nghệ tài chính vươn tầm khu vực",
+      "Mô hình hợp tác được thiết kế theo hướng kết hợp thế mạnh của mỗi bên. Theo đó, Tập đoàn T&T dự kiến hỗ trợ Yusys tiếp cận thị trường, mạng lưới khách hàng, chia sẻ kinh nghiệm triển khai và cung cấp "
+    ]
+  },
+  "implication": {
+    "text": "Nội dung bài viết tác động tới nhận định thị trường và hoạt động kinh doanh của các đơn vị liên quan.",
+    "affected_parties": [
+      "nhà đầu tư",
+      "doanh nghiệp niêm yết"
+    ],
+    "impact_area": "market"
+  },
+  "materiality": {
+    "score": 0.65,
+    "time_sensitivity": "this_week"
+  },
+  "confidence": 0.88,
+  "citations": [
+    {
+      "claim": "Thông tin chính được trích xuất từ bài viết: T&T Group bắt tay Yusys, mở hướng xây dựng hệ sinh...",
+      "source_span": "T&T Group bắt tay Yusys, mở hướng xây dựng hệ sinh thái công nghệ tài chính vươn tầm ASEAN",
+      "source_offset": 0
+    },
+    {
+      "claim": "Thông tin chính được trích xuất từ bài viết: Ngày 12/08, T&T Group và Yusys Technologies – Tập ...",
+      "source_span": "Ngày 12/08, T&T Group và Yusys Technologies – Tập đoàn công nghệ tài chính hàng đầu Trung Quốc đã ký kết Biên bản ghi nhớ hợp tác chiến lược, qua đó đặt nền móng cho việc nghiên cứu các cơ hội hợp tác chiến lược trong lĩnh vực công nghệ tài chính, chuyển đổi số và dịch vụ tài chính tại Việt Nam và các thị trường trọng điểm Đông Nam Á.",
+      "source_offset": 91
+    },
+    {
+      "claim": "Thông tin chính được trích xuất từ bài viết: Yusys Technologies là một trong những tập đoàn côn...",
+      "source_span": "Yusys Technologies là một trong những tập đoàn công nghệ tài chính hàng đầu Trung Quốc, từng xếp hạng 40 trong Top 100 công ty Fintech toàn cầu (IDC FinTech Rankings Top 100) năm 2022 và liên tục nằm trong Top 50 giai đoạn 2021-2023",
+      "source_offset": 518
+    }
+  ],
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:37:35.755748+07:00",
+    "schema_version": "1.0"
+  },
+  "sentiment": {
+    "overall": 0.0,
+    "polarity": "neutral"
+  },
+  "event_type": "macro",
+  "extraction_quality": "high"
+}

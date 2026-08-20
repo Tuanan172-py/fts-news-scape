@@ -35,7 +35,6 @@ loops:
   map_reduce:        {trigger: "batch of N articles", note: "parallel extractors → aggregator"}
 
 thresholds:
-  confidence_min: 0.65
   min_citations: 2
   refine_threshold: 0.70
   hitl_auto_above: 0.80      # >0.80 auto-accept; 0.5–0.8 flag review; verifier concern → human
@@ -47,8 +46,7 @@ thresholds:
 definition_of_done:
   - id: schema_valid
     predicate: "contract_validator(agent_output, agent-output-v1) == PASS"
-  - id: confident
-    predicate: "agent_output.confidence >= thresholds.confidence_min"
+  # confidence (self-reported, calibration kém) KHÔNG còn là predicate DoD — bỏ 2026-08-18.
   - id: grounded
     predicate: "len(agent_output.citations) >= thresholds.min_citations AND each citation.source_span IN work_package.cleaned_text"
   - id: quality_ok

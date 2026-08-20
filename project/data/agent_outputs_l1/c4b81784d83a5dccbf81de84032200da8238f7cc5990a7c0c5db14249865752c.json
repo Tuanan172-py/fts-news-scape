@@ -1,0 +1,37 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "c4b81784d83a5dccbf81de84032200da8238f7cc5990a7c0c5db14249865752c",
+  "title": "Trung Quốc: Tổ chức hơn 40 bàn tiệc mừng con đỗ đại học, bữa tiệc bất ngờ trở thành thảm kịch khiến 5 người tử vong, 17 người bị thương",
+  "recognized": true,
+  "entities": [
+    {
+      "surface": "Trung Quốc",
+      "entity_id": null,
+      "type": "UNKNOWN",
+      "method": "semantic",
+      "in_list": false,
+      "confidence": 0.8
+    }
+  ],
+  "categories": {
+    "ticker_company": "out_of_list",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [
+    "Trung Quốc"
+  ],
+  "citations": [
+    {
+      "source_span": "Trung Quốc: Tổ chức hơn 40 bàn tiệc mừng con đỗ đại học, bữa tiệc bất ngờ trở thành thảm kịch khiến 5 người tử vong, 17 người bị thương"
+    }
+  ],
+  "confidence": 0.95,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

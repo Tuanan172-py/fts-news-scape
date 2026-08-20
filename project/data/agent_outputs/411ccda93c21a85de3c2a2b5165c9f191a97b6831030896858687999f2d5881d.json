@@ -1,0 +1,55 @@
+{
+  "output_schema_version": "1.0",
+  "article_id": "411ccda93c21a85de3c2a2b5165c9f191a97b6831030896858687999f2d5881d",
+  "summary": {
+    "abstractive": "Ai đang dẫn dắt làn sóng mua vàng mới? Ai đang dẫn dắt làn sóng mua vàng mới?",
+    "key_points": [
+      "Ai đang dẫn dắt làn sóng mua vàng mới?",
+      "Giá vàng đang tăng trở lại, tăng khoảng 10% kể từ đầu tháng 8, khi những bất ổn về chính sách tiền tệ Mỹ, địa chính trị và niềm tin vào tài sản dự trữ thúc đẩy nhu cầu. Đáng chú ý, các ngân hàng trung",
+      "Sau nhiều tuần giao dịch quanh 4.000 USD/ounce, giá vàng đã tăng khoảng 400 USD, tương đương 10%, kể từ đầu tháng 8. Nếu đà tăng được duy trì, tháng 8 có thể trở thành một trong những tháng tăng mạnh ",
+      "Đà tăng của vàng được hỗ trợ bởi hàng loạt yếu tố từ Mỹ. Việc Cục Dự trữ Liên bang Mỹ (Fed) duy trì chính sách tiền tệ theo hướng ôn hòa, cùng với dữ liệu việc làm yếu và lạm phát tương đối thấp, đã l"
+    ]
+  },
+  "implication": {
+    "text": "Nội dung bài viết tác động tới nhận định thị trường và hoạt động kinh doanh của các đơn vị liên quan.",
+    "affected_parties": [
+      "nhà đầu tư",
+      "doanh nghiệp niêm yết"
+    ],
+    "impact_area": "market"
+  },
+  "materiality": {
+    "score": 0.65,
+    "time_sensitivity": "this_week"
+  },
+  "confidence": 0.88,
+  "citations": [
+    {
+      "claim": "Thông tin chính được trích xuất từ bài viết: Ai đang dẫn dắt làn sóng mua vàng mới?...",
+      "source_span": "Ai đang dẫn dắt làn sóng mua vàng mới?",
+      "source_offset": 0
+    },
+    {
+      "claim": "Thông tin chính được trích xuất từ bài viết: Ai đang dẫn dắt làn sóng mua vàng mới?...",
+      "source_span": "Ai đang dẫn dắt làn sóng mua vàng mới?",
+      "source_offset": 0
+    },
+    {
+      "claim": "Thông tin chính được trích xuất từ bài viết: Giá vàng đang tăng trở lại, tăng khoảng 10% kể từ ...",
+      "source_span": "Giá vàng đang tăng trở lại, tăng khoảng 10% kể từ đầu tháng 8, khi những bất ổn về chính sách tiền tệ Mỹ, địa chính trị và niềm tin vào tài sản dự trữ thúc đẩy nhu cầu",
+      "source_offset": 78
+    }
+  ],
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:37:35.755748+07:00",
+    "schema_version": "1.0"
+  },
+  "sentiment": {
+    "overall": 0.0,
+    "polarity": "neutral"
+  },
+  "event_type": "macro",
+  "extraction_quality": "high"
+}

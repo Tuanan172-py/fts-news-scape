@@ -1,0 +1,466 @@
+{
+  "silver_schema_version": "1.0",
+  "article_id": "1974cc416aa54ad480a9048dafbef5db2b236b2e1c7ec0204735952ce0556ea7",
+  "source_url": "https://cafef.vn/sau-1-phien-chung-khoan-con-trai-bau-thuy-co-them-hon-340-ty-dong-188260818165816552.chn",
+  "domain": "cafef.vn",
+  "content_sha256": "464cc57ca740772ea6926064e11f40ba3c2200bcf4f2e4d5e038ae42fcf278b5",
+  "cleaned_text": "Sau 1 phiên chứng khoán, con trai bầu Thụy có thêm hơn 340 tỷ đồng\nTPO - Thêm cổ phiếu chứng khoán chính thức lên sàn, là LPS của Chứng khoán LPBank. Trong ngày đầu giao dịch, mã này có thời điểm tăng mạnh gần 17%. Với lượng cổ phiếu đang nắm giữ, ông Nguyễn Xuân Thái, con trai ông Nguyễn Đức Thụy (bầu Thụy), tạm tính có thêm hơn 342 tỷ đồng.\nVN-Index duy trì sắc xanh trong phần lớn thời gian giao dịch nhưng áp lực bán gia tăng về cuối phiên khiến đà tăng bị thu hẹp. Chốt phiên hôm nay (18/8), VN-Index tăng 4,56 điểm (0,26%) lên 1.732 điểm. Toàn thị trường có 129 mã tăng, 167 mã giảm và 76 mã đứng giá.\nThanh khoản HoSE hơn 14.800 tỷ đồng. Khối ngoại tiếp tục bán ròng gần 740 tỷ đồng, tập trung tại nhiều cổ phiếu lớn như VIC, VPB, SSI, VCB và VHM.\nĐáng chú ý, nhóm dầu khí trở thành điểm tựa của thị trường. PLX tăng 6,9% lên 37.950 đồng/cổ phiếu, BSR tăng 4,62%, PVS tăng 3,48%, OIL tăng 3,85% và PVD tăng 1,93%. Trong đó, BSR và GAS được quan tâm sau thông tin PVN dự kiến bán 2-5% vốn tại hai doanh nghiệp này, với lộ trình định giá dự kiến hoàn tất chậm nhất vào tháng 12/2026.\nỞ chiều ngược lại, nhóm tài chính chịu áp lực điều chỉnh. SSI giảm 1,52%, VIX giảm 1,5%, SHS giảm 3,29%, TCB giảm 2,99% và VCI giảm 1,63%.\nHôm nay, hơn 1,4 tỷ cổ phiếu LPS chính thức giao dịch trên HoSE với giá tham chiếu 30.000 đồng/cổ phiếu. Cổ phiếu LPS mở cửa ở mức 32.000 đồng, cao hơn giá tham chiếu 30.000 đồng/cổ phiếu. Đà tăng nhanh chóng được mở rộng, có thời điểm mã này lên 35.200 đồng, tương đương mức tăng gần 17%.\nTuy nhiên, áp lực chốt lời xuất hiện sau đó khiến LPS dần hạ nhiệt. Kết phiên, cổ phiếu dừng ở 31.800 đồng, tăng 1.800 đồng, tương đương 6% so với giá tham chiếu. Khối lượng khớp lệnh đạt khoảng 1,6 triệu đơn vị.\nTheo thông tin công bố, ông Nguyễn Xuân Thái, là con trai của ông Nguyễn Đức Thụy (bầu Thụy) đang sở hữu khoảng 190,02 triệu cổ phiếu LPBS. Sau đợt IPO và thay đổi cơ cấu vốn, tỷ lệ sở hữu của ông Thái tương đương khoảng 13,49% vốn điều lệ, thay vì mức 15% trước đó.\nVới giá tham chiếu 30.000 đồng/cổ phiếu, số cổ phần này có giá trị khoảng 5.700 tỷ đồng. Khi LPS kết phiên ở 31.800 đồng, giá trị số cổ phiếu ông Thái nắm giữ tăng lên khoảng 6.043 tỷ đồng. Như vậy, chỉ tính riêng mức tăng giá trong phiên đầu tiên, giá trị cổ phần của con trai bầu Thụy tăng thêm khoảng 342 tỷ đồng.\nÔng Nguyễn Xuân Thái sinh năm 2003, hiện là thành viên HĐQT Chứng khoán LPBank. Trước đó, ông từng nâng sở hữu tại LPBS lên hơn 190 triệu cổ phiếu sau khi nhận chuyển nhượng thêm hơn 106,7 triệu cổ phiếu hồi tháng 1/2026.\ntienphong.vn",
+  "extraction_quality": "high",
+  "structure": {
+    "headings": [
+      {
+        "level": 1,
+        "text": "Sau 1 phiên chứng khoán, con trai bầu Thụy có thêm hơn 340 tỷ đồng"
+      },
+      {
+        "level": 2,
+        "text": "LPS:"
+      },
+      {
+        "level": 2,
+        "text": "Tin tức sự kiện về: Công ty cổ phần Cao su Việt Nam"
+      },
+      {
+        "level": 3,
+        "text": "CÙNG CHUYÊN MỤC"
+      },
+      {
+        "level": 4,
+        "text": "Phía sau khu “Cao Xà Lá” 11 ha đang nóng trên đường Nguyễn Trãi: Chủ đầu tư từng chi bao nhiêu tiền hỗ trợ cho cuộc di dời? Nổi bật"
+      },
+      {
+        "level": 4,
+        "text": "Novaland bán đi một công ty 5.400 tỷ đồng: Xuất hiện Chủ tịch sinh năm 1997 Nổi bật"
+      },
+      {
+        "level": 4,
+        "text": "Bắt giám đốc sinh năm 1981 “biến” 130 tấn thịt trâu Ấn Độ thành khô bò, livestream bán trên mạng"
+      },
+      {
+        "level": 4,
+        "text": "Chân dung đế chế F&B sở hữu Katinat, Phê La, Si Mer... mà Vietcap vừa chi gần 390 tỷ đồng đầu tư"
+      },
+      {
+        "level": 4,
+        "text": "Bầu Đức tặng quà đặc biệt: Chả ớt xiêm heo ăn chuối và chả thủ heo ăn chuối"
+      },
+      {
+        "level": 4,
+        "text": "Trung Nguyên Legend của ông Đặng Lê Nguyên Vũ 'tham gia' cuộc chơi mới: Đưa cà phê xuống vỉa hè"
+      }
+    ],
+    "paragraphs": [
+      "MỚI NHẤT!",
+      "Việt Linh | 18-08-2026 - 17:20 PM | Doanh nghiệp",
+      "TPO - Thêm cổ phiếu chứng khoán chính thức lên sàn, là LPS của Chứng khoán LPBank. Trong ngày đầu giao dịch, mã này có thời điểm tăng mạnh gần 17%. Với lượng cổ phiếu đang nắm giữ, ông Nguyễn Xuân Thái, con trai ông Nguyễn Đức Thụy (bầu Thụy), tạm tính có thêm hơn 342 tỷ đồng.",
+      "VN-Index duy trì sắc xanh trong phần lớn thời gian giao dịch nhưng áp lực bán gia tăng về cuối phiên khiến đà tăng bị thu hẹp. Chốt phiên hôm nay (18/8), VN-Index tăng 4,56 điểm (0,26%) lên 1.732 điểm. Toàn thị trường có 129 mã tăng, 167 mã giảm và 76 mã đứng giá.",
+      "Thanh khoản HoSE hơn 14.800 tỷ đồng. Khối ngoại tiếp tục bán ròng gần 740 tỷ đồng, tập trung tại nhiều cổ phiếu lớn như VIC, VPB, SSI, VCB và VHM.",
+      "Đáng chú ý, nhóm dầu khí trở thành điểm tựa của thị trường. PLX tăng 6,9% lên 37.950 đồng/cổ phiếu, BSR tăng 4,62%, PVS tăng 3,48%, OIL tăng 3,85% và PVD tăng 1,93%. Trong đó, BSR và GAS được quan tâm sau thông tin PVN dự kiến bán 2-5% vốn tại hai doanh nghiệp này, với lộ trình định giá dự kiến hoàn tất chậm nhất vào tháng 12/2026.",
+      "Ở chiều ngược lại, nhóm tài chính chịu áp lực điều chỉnh. SSI giảm 1,52%, VIX giảm 1,5%, SHS giảm 3,29%, TCB giảm 2,99% và VCI giảm 1,63%.",
+      "Hôm nay, hơn 1,4 tỷ cổ phiếu LPS chính thức giao dịch trên HoSE với giá tham chiếu 30.000 đồng/cổ phiếu. Cổ phiếu LPS mở cửa ở mức 32.000 đồng, cao hơn giá tham chiếu 30.000 đồng/cổ phiếu. Đà tăng nhanh chóng được mở rộng, có thời điểm mã này lên 35.200 đồng, tương đương mức tăng gần 17%.",
+      "Cổ phiếu LPS có phiên giao dịch đầu tiên. Ảnh: HoSE.",
+      "Tuy nhiên, áp lực chốt lời xuất hiện sau đó khiến LPS dần hạ nhiệt. Kết phiên, cổ phiếu dừng ở 31.800 đồng, tăng 1.800 đồng, tương đương 6% so với giá tham chiếu. Khối lượng khớp lệnh đạt khoảng 1,6 triệu đơn vị.",
+      "Theo thông tin công bố, ông Nguyễn Xuân Thái, là con trai của ông Nguyễn Đức Thụy (bầu Thụy) đang sở hữu khoảng 190,02 triệu cổ phiếu LPBS. Sau đợt IPO và thay đổi cơ cấu vốn, tỷ lệ sở hữu của ông Thái tương đương khoảng 13,49% vốn điều lệ, thay vì mức 15% trước đó.",
+      "Với giá tham chiếu 30.000 đồng/cổ phiếu, số cổ phần này có giá trị khoảng 5.700 tỷ đồng. Khi LPS kết phiên ở 31.800 đồng, giá trị số cổ phiếu ông Thái nắm giữ tăng lên khoảng 6.043 tỷ đồng. Như vậy, chỉ tính riêng mức tăng giá trong phiên đầu tiên, giá trị cổ phần của con trai bầu Thụy tăng thêm khoảng 342 tỷ đồng.",
+      "Ông Nguyễn Xuân Thái sinh năm 2003, hiện là thành viên HĐQT Chứng khoán LPBank. Trước đó, ông từng nâng sở hữu tại LPBS lên hơn 190 triệu cổ phiếu sau khi nhận chuyển nhượng thêm hơn 106,7 triệu cổ phiếu hồi tháng 1/2026.",
+      "Việt Linh",
+      "tienphong.vn",
+      "Địa chỉ: Tầng 21 Tòa nhà Center Building. Số 01, phố Nguyễn Huy Tưởng, phường Thanh Xuân, thành phố Hà Nội",
+      "Điện thoại: 024 7309 5555 Máy lẻ 292. Fax: 024-39744082",
+      "Email: info@cafef.vn | Hotline: 0926 864 344",
+      "Chịu trách nhiệm nội dung: Ông Nguyễn Thế Tân",
+      "Liên hệ quảng cáo",
+      "Hotline:",
+      "Email: doanhnghiep@admicro.vn",
+      "© Copyright 2007 - 2026 - Công ty Cổ phần VCCorp.",
+      "Giấy phép thiết lập trang thông tin điện tử tổng hợp trên mạng số 2216/GP-TTĐT do Sở Thông tin và Truyền thông Hà Nội cấp ngày 10 tháng 4 năm 2019."
+    ],
+    "tables": [],
+    "links": [
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "http://liveboard.cafef.vn",
+        "text": "Bảng giá điện tử"
+      },
+      {
+        "href": "/du-lieu/danh-muc-dau-tu.chn",
+        "text": "Danh mục đầu tư"
+      },
+      {
+        "href": "/doc-nhanh.chn",
+        "text": "Đọc nhanh >>"
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "XÃ HỘI"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "CHỨNG KHOÁN"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "BẤT ĐỘNG SẢN"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "DOANH NGHIỆP"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "NGÂN HÀNG"
+      },
+      {
+        "href": "/smart-money.chn",
+        "text": "SMART MONEY"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "TÀI CHÍNH QUỐC TẾ"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "VĨ MÔ"
+      },
+      {
+        "href": "/kinh-te-so.chn",
+        "text": "KINH TẾ SỐ"
+      },
+      {
+        "href": "/thi-truong.chn",
+        "text": "THỊ TRƯỜNG"
+      },
+      {
+        "href": "/song.chn",
+        "text": "SỐNG"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "LIFESTYLE"
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "Xã hội"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "Doanh nghiệp"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "Kinh tế vĩ mô"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "Chứng khoán"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "Tài chính ngân hàng"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "Tài chính quốc tế"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "Tin tức"
+      },
+      {
+        "href": "/du-an.chn",
+        "text": "Dự án"
+      },
+      {
+        "href": "/ban-do-du-an.chn",
+        "text": "Bản đồ dự án"
+      },
+      {
+        "href": "/hang-hoa-nguyen-lieu.chn",
+        "text": "Hàng hóa nguyên liệu"
+      },
+      {
+        "href": "/song.chn",
+        "text": "Sống"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "Lifestyle"
+      },
+      {
+        "href": "/nhom-chu-de/emagazine.chn",
+        "text": "Magazine"
+      },
+      {
+        "href": "/du-lieu.chn",
+        "text": "Dữ liệu"
+      },
+      {
+        "href": "/du-lieu/cafeflists.chn",
+        "text": "F INDEX"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "Doanh nghiệp"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Chia sẻ"
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "javascript:;",
+        "text": "LPS:"
+      },
+      {
+        "href": "",
+        "text": "Xem hồ sơ doanh nghiệp"
+      },
+      {
+        "href": "javascript:;",
+        "text": "TIN MỚI"
+      },
+      {
+        "href": "https://cafef.vn/du-lieu/ceo/ceo_06098/nguyen-duc-thuy.chn",
+        "text": "ông Nguyễn Đức Thụy"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Theo tienphong.vn Copy link"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Chia sẻ"
+      },
+      {
+        "href": "/bau-thuy.html",
+        "text": "bầu Thụy,"
+      },
+      {
+        "href": "/nguyen-duc-thuy.html",
+        "text": "Nguyễn Đức Thụy,"
+      },
+      {
+        "href": "/nguyen-xuan-thai.html",
+        "text": "Nguyễn Xuân Thái,"
+      },
+      {
+        "href": "/lps.html",
+        "text": "lps"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Công ty cổ phần Cao su Việt Nam"
+      },
+      {
+        "href": "https://s.cafef.vn/tin-doanh-nghiep/LPS/Event.chn",
+        "text": "Xem tất cả >>"
+      },
+      {
+        "href": "/phia-sau-khu-cao-xa-la-11-ha-dang-nong-tren-duong-nguyen-trai-chu-dau-tu-tung-chi-bao-nhieu-tien-ho-tro-cho-cuoc-di-doi-188260818110443351.chn",
+        "text": ""
+      },
+      {
+        "href": "/phia-sau-khu-cao-xa-la-11-ha-dang-nong-tren-duong-nguyen-trai-chu-dau-tu-tung-chi-bao-nhieu-tien-ho-tro-cho-cuoc-di-doi-188260818110443351.chn",
+        "text": "Phía sau khu “Cao Xà Lá” 11 ha đang nóng trên đường Nguyễn Trãi: Chủ đầu tư từng chi bao nhiêu tiền hỗ trợ cho cuộc di dời?"
+      },
+      {
+        "href": "/novaland-ban-di-mot-cong-ty-5400-ty-dong-xuat-hien-chu-tich-sinh-nam-1997-188260817230437063.chn",
+        "text": ""
+      },
+      {
+        "href": "/novaland-ban-di-mot-cong-ty-5400-ty-dong-xuat-hien-chu-tich-sinh-nam-1997-188260817230437063.chn",
+        "text": "Novaland bán đi một công ty 5.400 tỷ đồng: Xuất hiện Chủ tịch sinh năm 1997"
+      },
+      {
+        "href": "/bat-giam-doc-sinh-nam-1981-bien-130-tan-thit-trau-an-do-thanh-kho-bo-livestream-ban-tren-mang-188260818154721706.chn",
+        "text": ""
+      },
+      {
+        "href": "/bat-giam-doc-sinh-nam-1981-bien-130-tan-thit-trau-an-do-thanh-kho-bo-livestream-ban-tren-mang-188260818154721706.chn",
+        "text": "Bắt giám đốc sinh năm 1981 “biến” 130 tấn thịt trâu Ấn Độ thành khô bò, livestream bán trên mạng"
+      },
+      {
+        "href": "/chan-dung-de-che-fb-so-huu-katinat-phe-la-si-mer-ma-vietcap-cua-ba-nguyen-thanh-phuong-vua-chi-gan-390-ty-dong-dau-tu-188260818145159833.chn",
+        "text": ""
+      },
+      {
+        "href": "/chan-dung-de-che-fb-so-huu-katinat-phe-la-si-mer-ma-vietcap-cua-ba-nguyen-thanh-phuong-vua-chi-gan-390-ty-dong-dau-tu-188260818145159833.chn",
+        "text": "Chân dung đế chế F&B sở hữu Katinat, Phê La, Si Mer... mà Vietcap vừa chi gần 390 tỷ đồng đầu tư"
+      },
+      {
+        "href": "/bau-duc-tang-qua-dac-biet-cha-ot-xiem-heo-an-chuoi-va-cha-thu-heo-an-chuoi-188260818150111902.chn",
+        "text": ""
+      },
+      {
+        "href": "/bau-duc-tang-qua-dac-biet-cha-ot-xiem-heo-an-chuoi-va-cha-thu-heo-an-chuoi-188260818150111902.chn",
+        "text": "Bầu Đức tặng quà đặc biệt: Chả ớt xiêm heo ăn chuối và chả thủ heo ăn chuối"
+      },
+      {
+        "href": "/trung-nguyen-legend-cua-ong-dang-le-nguyen-vu-tham-gia-cuoc-choi-moi-dua-ca-phe-xuong-via-he-188260818145835092.chn",
+        "text": ""
+      },
+      {
+        "href": "/trung-nguyen-legend-cua-ong-dang-le-nguyen-vu-tham-gia-cuoc-choi-moi-dua-ca-phe-xuong-via-he-188260818145835092.chn",
+        "text": "Trung Nguyên Legend của ông Đặng Lê Nguyên Vũ 'tham gia' cuộc chơi mới: Đưa cà phê xuống vỉa hè"
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "XÃ HỘI"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "CHỨNG KHOÁN"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "BẤT ĐỘNG SẢN"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "DOANH NGHIỆP"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "NGÂN HÀNG"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "TÀI CHÍNH QUỐC TẾ"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "VĨ MÔ"
+      },
+      {
+        "href": "/kinh-te-so.chn",
+        "text": "KINH TẾ SỐ"
+      },
+      {
+        "href": "/thi-truong.chn",
+        "text": "THỊ TRƯỜNG"
+      },
+      {
+        "href": "/song.chn",
+        "text": "SỐNG"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "LIFESTYLE"
+      },
+      {
+        "href": "/du-lieu.chn",
+        "text": "Dữ liệu"
+      },
+      {
+        "href": "/du-lieu/top/ceo.chn",
+        "text": "Top 200"
+      },
+      {
+        "href": "https://www.messenger.com/t/108804609142280",
+        "text": "Chat với tư vấn viên"
+      },
+      {
+        "href": "http://www.vccorp.vn/",
+        "text": ""
+      },
+      {
+        "href": "/static/chinh-sach-bao-mat.html",
+        "text": "Chính sách bảo mật"
+      }
+    ]
+  },
+  "images": [
+    {
+      "outer_tag": "<img alt=\"Sau 1 phiên chứng khoán, con trai bầu Thụy có thêm hơn 340 tỷ đồng\" data-role=\"cover\" fetchpriority=\"high\" src=\"https://cafefcdn.com/thumb_w/640/203337114487263232/2026/8/18/avatar1787047065820-1787047066473284141513.webp\" title=\"Sau 1 phiên chứng khoán, con trai bầu Thụy có thêm hơn 340 tỷ đồng\"/>",
+      "resolved_url": "https://cafefcdn.com/thumb_w/640/203337114487263232/2026/8/18/avatar1787047065820-1787047066473284141513.webp",
+      "alt": "Sau 1 phiên chứng khoán, con trai bầu Thụy có thêm hơn 340 tỷ đồng",
+      "title": "Sau 1 phiên chứng khoán, con trai bầu Thụy có thêm hơn 340 tỷ đồng",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"\" class=\"\" data-original=\"https://cdn.tienphong.vn/images/jIy-L7RZASska78YCD81aYbuq2GLbEznQ5BFyO-YMbcUQWmhmkxyWz87V43VYM3Od2sj2OnlohHHkfQWXlttPZHDlaqpST5c2vNJytPUoV4/anh-man-hinh-2026-08-18-luc-154421.png.avif\" h=\"1115\" height=\"\" rel=\"lightbox\" src=\"https://cdn.tienphong.vn/images/jIy-L7RZASska78YCD81aYbuq2GLbEznQ5BFyO-YMbcUQWmhmkxyWz87V43VYM3Od2sj2OnlohHHkfQWXlttPZHDlaqpST5c2vNJytPUoV4/anh-man-hinh-2026-08-18-luc-154421.png.avif\" title=\"\" type=\"photo\" w=\"1507\" width=\"\"/>",
+      "resolved_url": "https://cdn.tienphong.vn/images/jIy-L7RZASska78YCD81aYbuq2GLbEznQ5BFyO-YMbcUQWmhmkxyWz87V43VYM3Od2sj2OnlohHHkfQWXlttPZHDlaqpST5c2vNJytPUoV4/anh-man-hinh-2026-08-18-luc-154421.png.avif",
+      "alt": "",
+      "title": "",
+      "caption": "Cổ phiếu LPS có phiên giao dịch đầu tiên. Ảnh: HoSE."
+    },
+    {
+      "outer_tag": "<img alt=\"Phía sau khu “Cao Xà Lá” 11 ha đang nóng trên đường Nguyễn Trãi: Chủ đầu tư từng chi bao nhiêu tiền hỗ trợ cho cuộc di dời?\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/avatar1787036559787-1787036560050683448906.jpg\" title=\"Phía sau khu “Cao Xà Lá” 11 ha đang nóng trên đường Nguyễn Trãi: Chủ đầu tư từng chi bao nhiêu tiền hỗ trợ cho cuộc di dời?\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/avatar1787036559787-1787036560050683448906.jpg",
+      "alt": "Phía sau khu “Cao Xà Lá” 11 ha đang nóng trên đường Nguyễn Trãi: Chủ đầu tư từng chi bao nhiêu tiền hỗ trợ cho cuộc di dời?",
+      "title": "Phía sau khu “Cao Xà Lá” 11 ha đang nóng trên đường Nguyễn Trãi: Chủ đầu tư từng chi bao nhiêu tiền hỗ trợ cho cuộc di dời?",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Novaland bán đi một công ty 5.400 tỷ đồng: Xuất hiện Chủ tịch sinh năm 1997\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/17/avatar1786982590165-17869825909811251316510.jpeg\" title=\"Novaland bán đi một công ty 5.400 tỷ đồng: Xuất hiện Chủ tịch sinh năm 1997\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/17/avatar1786982590165-17869825909811251316510.jpeg",
+      "alt": "Novaland bán đi một công ty 5.400 tỷ đồng: Xuất hiện Chủ tịch sinh năm 1997",
+      "title": "Novaland bán đi một công ty 5.400 tỷ đồng: Xuất hiện Chủ tịch sinh năm 1997",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Bắt giám đốc sinh năm 1981 “biến” 130 tấn thịt trâu Ấn Độ thành khô bò, livestream bán trên mạng\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/avatar1787042784703-1787042785089773221199.jpg\" title=\"Bắt giám đốc sinh năm 1981 “biến” 130 tấn thịt trâu Ấn Độ thành khô bò, livestream bán trên mạng\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/avatar1787042784703-1787042785089773221199.jpg",
+      "alt": "Bắt giám đốc sinh năm 1981 “biến” 130 tấn thịt trâu Ấn Độ thành khô bò, livestream bán trên mạng",
+      "title": "Bắt giám đốc sinh năm 1981 “biến” 130 tấn thịt trâu Ấn Độ thành khô bò, livestream bán trên mạng",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Chân dung đế chế F&amp;B sở hữu Katinat, Phê La, Si Mer... mà Vietcap vừa chi gần 390 tỷ đồng đầu tư\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/avatar1787047641017-1787047641555284794370.jpeg\" title=\"Chân dung đế chế F&amp;B sở hữu Katinat, Phê La, Si Mer... mà Vietcap vừa chi gần 390 tỷ đồng đầu tư\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/avatar1787047641017-1787047641555284794370.jpeg",
+      "alt": "Chân dung đế chế F&B sở hữu Katinat, Phê La, Si Mer... mà Vietcap vừa chi gần 390 tỷ đồng đầu tư",
+      "title": "Chân dung đế chế F&B sở hữu Katinat, Phê La, Si Mer... mà Vietcap vừa chi gần 390 tỷ đồng đầu tư",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Bầu Đức tặng quà đặc biệt: Chả ớt xiêm heo ăn chuối và chả thủ heo ăn chuối\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/avatar1787039811401-1787039814097746174491.jpg\" title=\"Bầu Đức tặng quà đặc biệt: Chả ớt xiêm heo ăn chuối và chả thủ heo ăn chuối\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/avatar1787039811401-1787039814097746174491.jpg",
+      "alt": "Bầu Đức tặng quà đặc biệt: Chả ớt xiêm heo ăn chuối và chả thủ heo ăn chuối",
+      "title": "Bầu Đức tặng quà đặc biệt: Chả ớt xiêm heo ăn chuối và chả thủ heo ăn chuối",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Trung Nguyên Legend của ông Đặng Lê Nguyên Vũ 'tham gia' cuộc chơi mới: Đưa cà phê xuống vỉa hè\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/avatar1787039899175-17870398994372127553776.jpg\" title=\"Trung Nguyên Legend của ông Đặng Lê Nguyên Vũ 'tham gia' cuộc chơi mới: Đưa cà phê xuống vỉa hè\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/avatar1787039899175-17870398994372127553776.jpg",
+      "alt": "Trung Nguyên Legend của ông Đặng Lê Nguyên Vũ 'tham gia' cuộc chơi mới: Đưa cà phê xuống vỉa hè",
+      "title": "Trung Nguyên Legend của ông Đặng Lê Nguyên Vũ 'tham gia' cuộc chơi mới: Đưa cà phê xuống vỉa hè",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Công ty Cổ phần VCCorp\" height=\"49px\" src=\"https://vccorp.mediacdn.vn/vccorp-s.png\" width=\"100px\"/>",
+      "resolved_url": "https://vccorp.mediacdn.vn/vccorp-s.png",
+      "alt": "Công ty Cổ phần VCCorp",
+      "title": "",
+      "caption": ""
+    }
+  ],
+  "language": "vi",
+  "built_at": "2026-08-18T17:25:51+07:00",
+  "built_from_raw_path": "data/raw_html\\cafef.vn\\20260818\\1974cc416aa54ad480a9048dafbef5db2b236b2e1c7ec0204735952ce0556ea7.html"
+}

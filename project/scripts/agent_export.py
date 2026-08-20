@@ -12,6 +12,7 @@ Usage:
 
 from __future__ import annotations
 
+import argparse
 import sys
 from pathlib import Path
 
@@ -26,7 +27,21 @@ force_utf8_stdio()
 
 
 def main(argv: list[str]) -> int:
-    limit = int(argv[0]) if argv else 20
+    ap = argparse.ArgumentParser(description="Xuất task-packet cho agent NGOÀI")
+    ap.add_argument("limit_pos", nargs="?", type=int, help="Số lượng việc cần xuất (tùy chọn)")
+    ap.add_argument("--limit", "-n", type=int, help="Tối đa N việc")
+    ap.add_argument("--all", "-a", action="store_true", help="Xuất toàn bộ việc pending")
+    args = ap.parse_args(argv)
+
+    if args.all:
+        limit = 100000
+    elif args.limit is not None:
+        limit = args.limit
+    elif args.limit_pos is not None:
+        limit = args.limit_pos
+    else:
+        limit = 20
+
     db_path = load_settings().get("database", {}).get("path", "data/monocle.db")
     runner = AgentRunner(ArticleStore(db_path=db_path))
     exported = runner.export_tasks(limit=limit)

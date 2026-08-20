@@ -80,12 +80,12 @@ def test_cycle_mixed_success_failure(orch):
     new_count = orch.run_cycle()
     assert new_count == 1  # okdomain 1 bài; boomdomain fail; offdomain skip
 
-    # Article được ghi DB với sentiment + classify
+    # Article được ghi DB + classify (sentiment rule-based đã gỡ khỏi workflow)
     articles = orch.store.get_recent(limit=10)
     assert len(articles) == 1
     a = articles[0]
-    assert a.sentiment == "positive"          # "tăng trần"
-    assert "finance" in a.categories          # classifier wired
+    assert a.sentiment == ""                   # không còn chấm sentiment rule-based
+    assert "finance" in a.categories          # classifier vẫn wired
 
     # Heartbeat: ok + failed, disabled không có record
     conn = orch.store._connect()
@@ -109,7 +109,7 @@ def test_cycle_auto_exports_csv(orch, tmp_path):
     # flush đảm bảo bài cycle này đã commit → có mặt trong CSV
     assert any("HPG" in r["title"] for r in rows)
     assert rows[0]["source_domain"] == "ok.com"
-    assert rows[0]["sentiment"] == "positive"
+    assert rows[0]["sentiment"] == ""              # sentiment rule-based đã gỡ
     assert "offdomain" not in rows
 
 

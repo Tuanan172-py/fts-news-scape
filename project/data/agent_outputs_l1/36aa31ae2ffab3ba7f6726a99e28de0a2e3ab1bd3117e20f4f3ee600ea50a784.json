@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "36aa31ae2ffab3ba7f6726a99e28de0a2e3ab1bd3117e20f4f3ee600ea50a784",
+  "title": "Dịp 2/9 và khai giảng, CSGT toàn quốc sẽ tập trung xử lý các lỗi vi phạm sau, tất cả những ai tham gia giao thông đặc biệt lưu ý!",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

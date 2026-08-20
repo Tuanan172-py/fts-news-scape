@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "22c9cbeea05dd6276577d49e54d2602c3398c74337e92e5ca0a99af2dc356d4d",
+  "title": "Tái định hình mô hình tăng trưởng: Từ “nhiều hơn” sang “tốt hơn”",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

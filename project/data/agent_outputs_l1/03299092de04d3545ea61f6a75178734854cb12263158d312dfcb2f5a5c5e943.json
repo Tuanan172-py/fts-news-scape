@@ -1,0 +1,35 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "03299092de04d3545ea61f6a75178734854cb12263158d312dfcb2f5a5c5e943",
+  "title": "Thủ tướng yêu cầu hoàn thiện 12 dự án luật, tháo gỡ điểm nghẽn cho đầu tư, kinh doanh",
+  "recognized": true,
+  "entities": [
+    {
+      "surface": "gỡ",
+      "entity_id": "INDUSTRY_GICS3:Gỗ và các sản phẩm từ gỗ",
+      "type": "INDUSTRY_GICS3",
+      "method": "semantic",
+      "in_list": true,
+      "confidence": 0.9
+    }
+  ],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "done"
+  },
+  "unlisted_candidates": [],
+  "citations": [
+    {
+      "source_span": "Thủ tướng yêu cầu hoàn thiện 12 dự án luật, tháo gỡ điểm nghẽn cho đầu tư, kinh doanh"
+    }
+  ],
+  "confidence": 0.95,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

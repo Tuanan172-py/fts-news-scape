@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "ad18108ba411bb5dddc8c6b38fa94758efff5c927d0c3c0a3434a1ed46ae1b8b",
+  "title": "Cục Thuế lên tiếng về phản ánh cán bộ vòi vĩnh, gây khó khi làm sạch mã số thuế",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

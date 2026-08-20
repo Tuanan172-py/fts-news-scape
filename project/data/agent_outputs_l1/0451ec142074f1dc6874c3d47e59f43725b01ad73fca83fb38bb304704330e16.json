@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "0451ec142074f1dc6874c3d47e59f43725b01ad73fca83fb38bb304704330e16",
+  "title": "Hà Nội đặt mốc hoàn tất bàn giao đất nông, lâm trường trước ngày 15/9",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

@@ -1,21 +1,45 @@
 {
- "l1_output_version": "1.0",
- "article_id": "7a8c8ef16951acbc8767e9f13db770686558e8d40407826d7369bf3999bbfdbd",
- "title": "Cổ phiếu SpaceX trồi sụt thất thường, đe dọa toàn thị trường chứng khoán",
- "recognized": false,
- "entities": [],
- "categories": {
-  "ticker_company": "none",
-  "etf_fund": "none",
-  "index": "none",
-  "exchange": "none",
-  "industry_sector": "none"
- },
- "citations": [],
- "confidence": 0.6,
- "processing_metadata": {
-  "agent_provider": "stub",
-  "model_used": "rule-based",
-  "timestamp": "2026-08-18T15:11:28+07:00"
- }
+  "l1_output_version": "1.0",
+  "article_id": "7a8c8ef16951acbc8767e9f13db770686558e8d40407826d7369bf3999bbfdbd",
+  "title": "Cổ phiếu SpaceX trồi sụt thất thường, đe dọa toàn thị trường chứng khoán",
+  "recognized": true,
+  "entities": [
+    {
+      "surface": "chứng khoán",
+      "entity_id": "INDUSTRY_GICS2:Công ty chứng khoán",
+      "type": "INDUSTRY_GICS2",
+      "method": "semantic",
+      "in_list": true,
+      "confidence": 0.9
+    },
+    {
+      "surface": "SpaceX",
+      "entity_id": null,
+      "type": "UNKNOWN",
+      "method": "semantic",
+      "in_list": false,
+      "confidence": 0.8
+    }
+  ],
+  "categories": {
+    "ticker_company": "out_of_list",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "done"
+  },
+  "unlisted_candidates": [
+    "SpaceX"
+  ],
+  "citations": [
+    {
+      "source_span": "Cổ phiếu SpaceX trồi sụt thất thường, đe dọa toàn thị trường chứng khoán"
+    }
+  ],
+  "confidence": 0.95,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
 }

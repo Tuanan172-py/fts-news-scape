@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "f2ead735f8de57d7e96c62421c76a39b07df80e98bb6fa99de399055f6062591",
+  "title": "“Thiên tài Huawei” về quê bán ngô, lợi nhuận 1 ngày chỉ 38.000 đồng",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

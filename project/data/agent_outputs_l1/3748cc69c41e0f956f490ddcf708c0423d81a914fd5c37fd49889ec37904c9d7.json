@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "3748cc69c41e0f956f490ddcf708c0423d81a914fd5c37fd49889ec37904c9d7",
+  "title": "Chủ tịch ECB: Châu Âu không thể bỏ lỡ cuộc cách mạng AI",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

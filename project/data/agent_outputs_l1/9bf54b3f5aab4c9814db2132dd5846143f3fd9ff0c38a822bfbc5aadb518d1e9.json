@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "9bf54b3f5aab4c9814db2132dd5846143f3fd9ff0c38a822bfbc5aadb518d1e9",
+  "title": "Ế khách sau 4 tháng đấu giá, khu ‘đất vàng’ sân Chi Lăng giảm hơn 620 tỷ đồng",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

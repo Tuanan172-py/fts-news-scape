@@ -1,0 +1,447 @@
+{
+  "silver_schema_version": "1.0",
+  "article_id": "90c97b66a8fc3e072a216c1d3411c98d3ab54f537958335d4df2d1546595bc42",
+  "source_url": "https://cafef.vn/trung-quoc-phat-trien-cam-bien-sieu-nho-co-the-phat-hien-tau-ngam-vo-thep-o-khoang-cach-nua-cay-so-18826081820245329.chn",
+  "domain": "cafef.vn",
+  "content_sha256": "6a106391eecdb204bb633c2176a54688f73badab5fb898e3c828efca55f43378",
+  "cleaned_text": "Trung Quốc phát triển cảm biến siêu nhỏ có thể phát hiện tàu ngầm vỏ thép ở khoảng cách nửa cây số\nCác nhà khoa học Trung Quốc vừa chế tạo thành công loại cảm biến từ siêu nhỏ với độ nhạy tăng gấp 10 lần. Dù có kích thước chỉ bằng một tế bào da người, thiết bị này về mặt lý thuyết có thể dò tìm tàu ngầm từ xa và tạo ra bước ngoặt lớn cho y học.\nCác nhà khoa học tại Trung Quốc đã nghiên cứu và phát triển thành công một loại cảm biến từ siêu nhạy với mức độ nhiễu cực kỳ thấp, sở hữu khả năng ghi nhận những biến thiên từ trường ở mức siêu yếu. Về mặt lý thuyết, phát minh công nghệ này có thể được ứng dụng trực tiếp vào việc dò tìm các loại tàu ngầm quân sự từ khoảng cách xa hoặc trang bị cho các thiết bị chẩn đoán sinh học y tế thế hệ mới.\nThiết bị mới này vận dụng nguyên lý hoạt động của hiệu ứng Hall để nhận biết sự xuất hiện của từ trường. Theo tuyên bố từ nhóm nghiên cứu, cơ chế mới giúp cảm biến phân biệt chính xác hơn giữa các tín hiệu từ trường yếu ớt từ bên ngoài và nguồn nhiễu nội bộ phát ra từ chính thiết bị.\nĐiều đáng kinh ngạc là cảm biến sở hữu thiết kế vô cùng nhỏ gọn, đồng nghĩa với việc nó hoàn toàn có thể được tích hợp trực tiếp vào các thiết bị điện tử đeo tay quy mô nhỏ như đồng hồ thông minh trong tương lai.\nVề mặt cơ chế, các dòng cảm biến Hall hoạt động dựa trên nguyên lý ghi nhận những thay đổi điện áp cực nhỏ khi dòng điện di chuyển xuyên qua một từ trường. Bất kỳ sự lệch hướng nào của các electron dưới tác động của lực từ cũng sẽ ngay lập tức biểu hiện thành sự biến thiên điện áp trên thiết bị.\nCường độ từ trường càng lớn thì mức độ biến thiên điện áp ghi nhận được sẽ càng cao. Nhờ sở hữu các ưu điểm vượt trội như kích thước nhỏ gọn, chi phí sản xuất thấp, vận hành ở thể rắn và cực kỳ dễ dàng đóng gói lên các vi mạch bán dẫn, cảm biến hiệu ứng Hall từ lâu đã trở thành đối tượng nghiên cứu trọng điểm của giới công nghệ.\nTheo các dữ liệu báo cáo, về mặt lý thuyết, dòng cảm biến từ kiểu mới này có thể dò tìm được tín hiệu từ trường cực kỳ yếu phát ra từ những chiếc tàu ngầm vỏ thép đang di chuyển ở khoảng cách lên tới 500 mét, tương đương 1.640 foot. Đây được xem là một con số vô cùng ấn tượng đối với một thiết bị đo lường có kích thước siêu nhỏ.\nTuy nhiên, rào cản lớn nhất mà các kỹ sư phải đối mặt khi nâng cao độ nhạy của cảm biến Hall chính là hiện tượng nhiễu nền. Khi đẩy độ nhạy lên mức cực đại, chính bản thân các vật liệu từ tính bên trong thiết bị sẽ bắt đầu phát ra những biến động hỗn loạn, tạo ra các tín hiệu giả gây nhiễu.\nHiện tượng này tương tự như việc khi người dùng vặn tăng âm lượng khuếch đại trên một thiết bị âm thanh, tiếng rít nền cũng sẽ tự động tăng theo.\nĐể giải quyết triệt để thách thức này, nhóm nghiên cứu phối hợp giữa Viện Khoa học Vật lý Hợp Phì và Viện Kỹ thuật và Vật liệu Ninh Ba đã áp dụng một phương pháp tiếp cận hoàn toàn mới dựa trên nguyên lý động lực học cấu trúc spin.\nTrong các vật liệu từ tính thông thường, cực tính hiếm khi giữ trạng thái đồng nhất trên toàn bộ thể tích mà phân chia thành các vùng từ hóa ba chiều phức tạp bao gồm các miền từ và vách miền từ. Những cấu trúc nội tại này liên tục biến động theo thời gian, tạo ra hiện tượng nhiễu từ vi mô.\nHình ảnh này có thể được hình dung tương tự như một thảm cỏ bạt ngàn đang rung rinh trước gió, trong đó mỗi sợi cỏ đại diện cho spin của một electron và những khu vực cỏ nghiêng về cùng một hướng đại diện cho một miền từ. Khi gió thổi qua, những gợn sóng lan truyền trên thảm cỏ chính là sự thay đổi của cấu trúc từ.\nNhóm nghiên cứu đã phát hiện ra một quy luật quan trọng: các cấu trúc từ này tiến hóa và di chuyển càng nhanh thì mức độ nhiễu tần số thấp của cảm biến sẽ càng giảm xuống đáng kể.\nTừ phát hiện đó, các nhà khoa học đã chế tạo một loại vật liệu từ tính nhiều lớp đặc biệt gọi là chất bán sắt từ tổng hợp, cho phép các cấu trúc spin di chuyển với tốc độ cực nhanh. Giải pháp này giúp cảm biến duy trì phản hồi Hall mạnh mẽ trước từ trường bên ngoài nhưng đồng thời triệt tiêu được hầu hết các biến động nhiễu không mong muốn từ bên trong.\nKết quả thử nghiệm ghi nhận diện tích hoạt động hiệu dụng của cảm biến chỉ vỏn vẹn 20x20 micromet, tương đương với kích thước của một tế bào da người. Thiết bị đạt khả năng dò tìm từ trường ở mức 15,7 nT/√Hz tại tần số 1 Hz, cải thiện độ nhạy gần một đại lượng, tức gấp khoảng 10 lần so với các dòng cảm biến Hall sắt từ cùng loại trước đây.\nMặc dù khả năng ứng dụng trong việc phát hiện tàu ngầm thu hút sự chú ý lớn từ truyền thông, nhóm tác giả nghiên cứu tỏ ra thận trọng hơn khi nhấn mạnh vào các tiềm năng dân sự và y tế. Thiết bị có thể tạo ra bước ngoặt lớn trong các lĩnh vực ô tô, hiển vi từ tính và đặc biệt là y sinh.\nCảm biến siêu nhỏ này có thể được dùng để chế tạo các hệ thống chụp từ tim siêu gọn, thiết bị đo từ trường não, các cảm biến sinh học tích hợp trên chip phòng thí nghiệm cũng như hệ thống chụp ảnh hiển vi từ tính với độ phân giải siêu cao. Nhóm nghiên cứu tin tưởng rằng nguyên lý giảm nhiễu thông qua động lực học spin nhanh hoàn toàn có thể áp dụng cho nhiều loại vật liệu từ tính khác, mở ra triển vọng giảm nhiễu sâu hơn nữa trong tương lai.\nTham khảo: Sohu\nĐời sống và pháp luật",
+  "extraction_quality": "high",
+  "structure": {
+    "headings": [
+      {
+        "level": 1,
+        "text": "Trung Quốc phát triển cảm biến siêu nhỏ có thể phát hiện tàu ngầm vỏ thép ở khoảng cách nửa cây số"
+      },
+      {
+        "level": 3,
+        "text": "CÙNG CHUYÊN MỤC"
+      },
+      {
+        "level": 4,
+        "text": "Kinh tế lao đao vì ‘quay lưng' với Moscow và viện trợ Ukraine, chính trị gia nước châu Âu kêu gọi quay lại làm ăn với Nga, đòi EU hỗ trợ tiền Nổi bật"
+      },
+      {
+        "level": 4,
+        "text": "Nga phát hiện báu vật quý hiếm chưa từng có, 1 mẩu bằng đầu bút bi giá gần 4 triệu đồng Nổi bật"
+      },
+      {
+        "level": 4,
+        "text": "Nga ra mắt 'pháo đài nổi', sát thủ của xuồng không người lái"
+      },
+      {
+        "level": 4,
+        "text": "Iran nêu điều kiện mở cửa eo biển Hormuz"
+      },
+      {
+        "level": 4,
+        "text": "Loại cả Nhật Bản lẫn châu Âu, tàu điện Trung Quốc được quốc gia Đông Nam Á chốt ngay vì \"hồ sơ đẹp như mơ\""
+      },
+      {
+        "level": 4,
+        "text": "Kinh hoàng hình ảnh ngôi nhà bốc cháy giữa dòng nước lũ"
+      }
+    ],
+    "paragraphs": [
+      "MỚI NHẤT!",
+      "Theo Đức Khương | 18-08-2026 - 23:10 PM | Tài chính quốc tế",
+      "Các nhà khoa học Trung Quốc vừa chế tạo thành công loại cảm biến từ siêu nhỏ với độ nhạy tăng gấp 10 lần. Dù có kích thước chỉ bằng một tế bào da người, thiết bị này về mặt lý thuyết có thể dò tìm tàu ngầm từ xa và tạo ra bước ngoặt lớn cho y học.",
+      "Các nhà khoa học tại Trung Quốc đã nghiên cứu và phát triển thành công một loại cảm biến từ siêu nhạy với mức độ nhiễu cực kỳ thấp, sở hữu khả năng ghi nhận những biến thiên từ trường ở mức siêu yếu. Về mặt lý thuyết, phát minh công nghệ này có thể được ứng dụng trực tiếp vào việc dò tìm các loại tàu ngầm quân sự từ khoảng cách xa hoặc trang bị cho các thiết bị chẩn đoán sinh học y tế thế hệ mới.",
+      "Thiết bị mới này vận dụng nguyên lý hoạt động của hiệu ứng Hall để nhận biết sự xuất hiện của từ trường. Theo tuyên bố từ nhóm nghiên cứu, cơ chế mới giúp cảm biến phân biệt chính xác hơn giữa các tín hiệu từ trường yếu ớt từ bên ngoài và nguồn nhiễu nội bộ phát ra từ chính thiết bị.",
+      "Điều đáng kinh ngạc là cảm biến sở hữu thiết kế vô cùng nhỏ gọn, đồng nghĩa với việc nó hoàn toàn có thể được tích hợp trực tiếp vào các thiết bị điện tử đeo tay quy mô nhỏ như đồng hồ thông minh trong tương lai.",
+      "Các nhà khoa học Trung Quốc phát triển cảm biến từ siêu nhạy, độ nhiễu thấp dựa trên hiệu ứng Hall và vật liệu chất bán sắt từ tổng hợp.",
+      "Về mặt cơ chế, các dòng cảm biến Hall hoạt động dựa trên nguyên lý ghi nhận những thay đổi điện áp cực nhỏ khi dòng điện di chuyển xuyên qua một từ trường. Bất kỳ sự lệch hướng nào của các electron dưới tác động của lực từ cũng sẽ ngay lập tức biểu hiện thành sự biến thiên điện áp trên thiết bị.",
+      "Cường độ từ trường càng lớn thì mức độ biến thiên điện áp ghi nhận được sẽ càng cao. Nhờ sở hữu các ưu điểm vượt trội như kích thước nhỏ gọn, chi phí sản xuất thấp, vận hành ở thể rắn và cực kỳ dễ dàng đóng gói lên các vi mạch bán dẫn, cảm biến hiệu ứng Hall từ lâu đã trở thành đối tượng nghiên cứu trọng điểm của giới công nghệ.",
+      "Theo các dữ liệu báo cáo, về mặt lý thuyết, dòng cảm biến từ kiểu mới này có thể dò tìm được tín hiệu từ trường cực kỳ yếu phát ra từ những chiếc tàu ngầm vỏ thép đang di chuyển ở khoảng cách lên tới 500 mét, tương đương 1.640 foot. Đây được xem là một con số vô cùng ấn tượng đối với một thiết bị đo lường có kích thước siêu nhỏ.",
+      "Tuy nhiên, rào cản lớn nhất mà các kỹ sư phải đối mặt khi nâng cao độ nhạy của cảm biến Hall chính là hiện tượng nhiễu nền. Khi đẩy độ nhạy lên mức cực đại, chính bản thân các vật liệu từ tính bên trong thiết bị sẽ bắt đầu phát ra những biến động hỗn loạn, tạo ra các tín hiệu giả gây nhiễu.",
+      "Hiện tượng này tương tự như việc khi người dùng vặn tăng âm lượng khuếch đại trên một thiết bị âm thanh, tiếng rít nền cũng sẽ tự động tăng theo.",
+      "Về mặt lý thuyết, cảm biến có khả năng phát hiện tín hiệu từ trường cực yếu của tàu ngầm vỏ thép từ khoảng cách tối đa 500 mét (1.640 foot).",
+      "Để giải quyết triệt để thách thức này, nhóm nghiên cứu phối hợp giữa Viện Khoa học Vật lý Hợp Phì và Viện Kỹ thuật và Vật liệu Ninh Ba đã áp dụng một phương pháp tiếp cận hoàn toàn mới dựa trên nguyên lý động lực học cấu trúc spin.",
+      "Trong các vật liệu từ tính thông thường, cực tính hiếm khi giữ trạng thái đồng nhất trên toàn bộ thể tích mà phân chia thành các vùng từ hóa ba chiều phức tạp bao gồm các miền từ và vách miền từ. Những cấu trúc nội tại này liên tục biến động theo thời gian, tạo ra hiện tượng nhiễu từ vi mô.",
+      "Hình ảnh này có thể được hình dung tương tự như một thảm cỏ bạt ngàn đang rung rinh trước gió, trong đó mỗi sợi cỏ đại diện cho spin của một electron và những khu vực cỏ nghiêng về cùng một hướng đại diện cho một miền từ. Khi gió thổi qua, những gợn sóng lan truyền trên thảm cỏ chính là sự thay đổi của cấu trúc từ.",
+      "Nhóm nghiên cứu đã phát hiện ra một quy luật quan trọng: các cấu trúc từ này tiến hóa và di chuyển càng nhanh thì mức độ nhiễu tần số thấp của cảm biến sẽ càng giảm xuống đáng kể.",
+      "Cảm biến có kích thước siêu nhỏ chỉ 20×20 micromet (tương đương một tế bào da người), dễ dàng tích hợp vào chip và các thiết bị đeo thông minh.",
+      "Từ phát hiện đó, các nhà khoa học đã chế tạo một loại vật liệu từ tính nhiều lớp đặc biệt gọi là chất bán sắt từ tổng hợp, cho phép các cấu trúc spin di chuyển với tốc độ cực nhanh. Giải pháp này giúp cảm biến duy trì phản hồi Hall mạnh mẽ trước từ trường bên ngoài nhưng đồng thời triệt tiêu được hầu hết các biến động nhiễu không mong muốn từ bên trong.",
+      "Kết quả thử nghiệm ghi nhận diện tích hoạt động hiệu dụng của cảm biến chỉ vỏn vẹn 20x20 micromet, tương đương với kích thước của một tế bào da người. Thiết bị đạt khả năng dò tìm từ trường ở mức 15,7 nT/√Hz tại tần số 1 Hz, cải thiện độ nhạy gần một đại lượng, tức gấp khoảng 10 lần so với các dòng cảm biến Hall sắt từ cùng loại trước đây.",
+      "Mặc dù khả năng ứng dụng trong việc phát hiện tàu ngầm thu hút sự chú ý lớn từ truyền thông, nhóm tác giả nghiên cứu tỏ ra thận trọng hơn khi nhấn mạnh vào các tiềm năng dân sự và y tế. Thiết bị có thể tạo ra bước ngoặt lớn trong các lĩnh vực ô tô, hiển vi từ tính và đặc biệt là y sinh.",
+      "Cảm biến siêu nhỏ này có thể được dùng để chế tạo các hệ thống chụp từ tim siêu gọn, thiết bị đo từ trường não, các cảm biến sinh học tích hợp trên chip phòng thí nghiệm cũng như hệ thống chụp ảnh hiển vi từ tính với độ phân giải siêu cao. Nhóm nghiên cứu tin tưởng rằng nguyên lý giảm nhiễu thông qua động lực học spin nhanh hoàn toàn có thể áp dụng cho nhiều loại vật liệu từ tính khác, mở ra triển vọng giảm nhiễu sâu hơn nữa trong tương lai.",
+      "Tham khảo: Sohu",
+      "Theo Đức Khương",
+      "Đời sống và pháp luật",
+      "Địa chỉ: Tầng 21 Tòa nhà Center Building. Số 01, phố Nguyễn Huy Tưởng, phường Thanh Xuân, thành phố Hà Nội",
+      "Điện thoại: 024 7309 5555 Máy lẻ 292. Fax: 024-39744082",
+      "Email: info@cafef.vn | Hotline: 0926 864 344",
+      "Chịu trách nhiệm nội dung: Ông Nguyễn Thế Tân",
+      "Liên hệ quảng cáo",
+      "Hotline:",
+      "Email: doanhnghiep@admicro.vn",
+      "© Copyright 2007 - 2026 - Công ty Cổ phần VCCorp.",
+      "Giấy phép thiết lập trang thông tin điện tử tổng hợp trên mạng số 2216/GP-TTĐT do Sở Thông tin và Truyền thông Hà Nội cấp ngày 10 tháng 4 năm 2019."
+    ],
+    "tables": [],
+    "links": [
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "http://liveboard.cafef.vn",
+        "text": "Bảng giá điện tử"
+      },
+      {
+        "href": "/du-lieu/danh-muc-dau-tu.chn",
+        "text": "Danh mục đầu tư"
+      },
+      {
+        "href": "/doc-nhanh.chn",
+        "text": "Đọc nhanh >>"
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "XÃ HỘI"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "CHỨNG KHOÁN"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "BẤT ĐỘNG SẢN"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "DOANH NGHIỆP"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "NGÂN HÀNG"
+      },
+      {
+        "href": "/smart-money.chn",
+        "text": "SMART MONEY"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "TÀI CHÍNH QUỐC TẾ"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "VĨ MÔ"
+      },
+      {
+        "href": "/kinh-te-so.chn",
+        "text": "KINH TẾ SỐ"
+      },
+      {
+        "href": "/thi-truong.chn",
+        "text": "THỊ TRƯỜNG"
+      },
+      {
+        "href": "/song.chn",
+        "text": "SỐNG"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "LIFESTYLE"
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "Xã hội"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "Doanh nghiệp"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "Kinh tế vĩ mô"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "Chứng khoán"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "Tài chính ngân hàng"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "Tài chính quốc tế"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "Tin tức"
+      },
+      {
+        "href": "/du-an.chn",
+        "text": "Dự án"
+      },
+      {
+        "href": "/ban-do-du-an.chn",
+        "text": "Bản đồ dự án"
+      },
+      {
+        "href": "/hang-hoa-nguyen-lieu.chn",
+        "text": "Hàng hóa nguyên liệu"
+      },
+      {
+        "href": "/song.chn",
+        "text": "Sống"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "Lifestyle"
+      },
+      {
+        "href": "/nhom-chu-de/emagazine.chn",
+        "text": "Magazine"
+      },
+      {
+        "href": "/du-lieu.chn",
+        "text": "Dữ liệu"
+      },
+      {
+        "href": "/du-lieu/cafeflists.chn",
+        "text": "F INDEX"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "Tài chính quốc tế"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Chia sẻ"
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "javascript:;",
+        "text": "TIN MỚI"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Theo Đời sống và pháp luật Copy link"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Chia sẻ"
+      },
+      {
+        "href": "/trung-quoc.html",
+        "text": "trung quốc,"
+      },
+      {
+        "href": "/thiet-bi-cam-bien.html",
+        "text": "thiết bị cảm biến"
+      },
+      {
+        "href": "/kinh-te-lao-dao-vi-quay-lung-voi-moscow-va-vien-tro-ukraine-chinh-tri-gia-nuoc-chau-au-keu-goi-quay-lai-lam-an-voi-nga-doi-eu-ho-tro-tien-188260818162947105.chn",
+        "text": ""
+      },
+      {
+        "href": "/kinh-te-lao-dao-vi-quay-lung-voi-moscow-va-vien-tro-ukraine-chinh-tri-gia-nuoc-chau-au-keu-goi-quay-lai-lam-an-voi-nga-doi-eu-ho-tro-tien-188260818162947105.chn",
+        "text": "Kinh tế lao đao vì ‘quay lưng' với Moscow và viện trợ Ukraine, chính trị gia nước châu Âu kêu gọi quay lại làm ăn với Nga, đòi EU hỗ trợ tiền"
+      },
+      {
+        "href": "/nga-phat-hien-bau-vat-quy-hiem-chua-tung-co-1-mau-bang-dau-but-bi-gia-gan-4-trieu-dong-188260818163041634.chn",
+        "text": ""
+      },
+      {
+        "href": "/nga-phat-hien-bau-vat-quy-hiem-chua-tung-co-1-mau-bang-dau-but-bi-gia-gan-4-trieu-dong-188260818163041634.chn",
+        "text": "Nga phát hiện báu vật quý hiếm chưa từng có, 1 mẩu bằng đầu bút bi giá gần 4 triệu đồng"
+      },
+      {
+        "href": "/nga-ra-mat-phao-dai-noi-sat-thu-cua-xuong-khong-nguoi-lai-188260818202311608.chn",
+        "text": ""
+      },
+      {
+        "href": "/nga-ra-mat-phao-dai-noi-sat-thu-cua-xuong-khong-nguoi-lai-188260818202311608.chn",
+        "text": "Nga ra mắt 'pháo đài nổi', sát thủ của xuồng không người lái"
+      },
+      {
+        "href": "/iran-neu-dieu-kien-mo-cua-eo-bien-hormuz-188260818202052452.chn",
+        "text": ""
+      },
+      {
+        "href": "/iran-neu-dieu-kien-mo-cua-eo-bien-hormuz-188260818202052452.chn",
+        "text": "Iran nêu điều kiện mở cửa eo biển Hormuz"
+      },
+      {
+        "href": "/loai-ca-nhat-ban-lan-chau-au-tau-dien-trung-quoc-duoc-quoc-gia-dong-nam-a-chot-ngay-vi-ho-so-dep-nhu-mo-188260818191049617.chn",
+        "text": ""
+      },
+      {
+        "href": "/loai-ca-nhat-ban-lan-chau-au-tau-dien-trung-quoc-duoc-quoc-gia-dong-nam-a-chot-ngay-vi-ho-so-dep-nhu-mo-188260818191049617.chn",
+        "text": "Loại cả Nhật Bản lẫn châu Âu, tàu điện Trung Quốc được quốc gia Đông Nam Á chốt ngay vì \"hồ sơ đẹp như mơ\""
+      },
+      {
+        "href": "/kinh-hoang-hinh-anh-ngoi-nha-boc-chay-giua-dong-nuoc-lu-188260818175256071.chn",
+        "text": ""
+      },
+      {
+        "href": "/kinh-hoang-hinh-anh-ngoi-nha-boc-chay-giua-dong-nuoc-lu-188260818175256071.chn",
+        "text": "Kinh hoàng hình ảnh ngôi nhà bốc cháy giữa dòng nước lũ"
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "XÃ HỘI"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "CHỨNG KHOÁN"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "BẤT ĐỘNG SẢN"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "DOANH NGHIỆP"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "NGÂN HÀNG"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "TÀI CHÍNH QUỐC TẾ"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "VĨ MÔ"
+      },
+      {
+        "href": "/kinh-te-so.chn",
+        "text": "KINH TẾ SỐ"
+      },
+      {
+        "href": "/thi-truong.chn",
+        "text": "THỊ TRƯỜNG"
+      },
+      {
+        "href": "/song.chn",
+        "text": "SỐNG"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "LIFESTYLE"
+      },
+      {
+        "href": "/du-lieu.chn",
+        "text": "Dữ liệu"
+      },
+      {
+        "href": "/du-lieu/top/ceo.chn",
+        "text": "Top 200"
+      },
+      {
+        "href": "https://www.messenger.com/t/108804609142280",
+        "text": "Chat với tư vấn viên"
+      },
+      {
+        "href": "http://www.vccorp.vn/",
+        "text": ""
+      },
+      {
+        "href": "/static/chinh-sach-bao-mat.html",
+        "text": "Chính sách bảo mật"
+      }
+    ]
+  },
+  "images": [
+    {
+      "outer_tag": "<img alt=\"\" class=\"\" data-original=\"https://cafefcdn.com/203337114487263232/2026/8/18/image-1787059449341-17870594495391675525738.jpg\" h=\"608\" height=\"\" rel=\"lightbox\" src=\"https://cafefcdn.com/203337114487263232/2026/8/18/image-1787059449341-17870594495391675525738.jpg\" style=\"max-width:100%;\" title=\"\" type=\"photo\" w=\"1080\" width=\"\"/>",
+      "resolved_url": "https://cafefcdn.com/203337114487263232/2026/8/18/image-1787059449341-17870594495391675525738.jpg",
+      "alt": "",
+      "title": "",
+      "caption": "Các nhà khoa học Trung Quốc phát triển cảm biến từ siêu nhạy, độ nhiễu thấp dựa trên hiệu ứng Hall và vật liệu chất bán sắt từ tổng hợp."
+    },
+    {
+      "outer_tag": "<img alt=\"\" class=\"\" data-original=\"https://cafefcdn.com/203337114487263232/2026/8/18/6c84bca7-b87b-41af-9fd2-6ea1d4e1-1787059450034-178705945017434692216.jpg\" h=\"2160\" height=\"\" rel=\"lightbox\" src=\"https://cafefcdn.com/203337114487263232/2026/8/18/6c84bca7-b87b-41af-9fd2-6ea1d4e1-1787059450034-178705945017434692216.jpg\" style=\"max-width:100%;\" title=\"\" type=\"photo\" w=\"3840\" width=\"\"/>",
+      "resolved_url": "https://cafefcdn.com/203337114487263232/2026/8/18/6c84bca7-b87b-41af-9fd2-6ea1d4e1-1787059450034-178705945017434692216.jpg",
+      "alt": "",
+      "title": "",
+      "caption": "Về mặt lý thuyết, cảm biến có khả năng phát hiện tín hiệu từ trường cực yếu của tàu ngầm vỏ thép từ khoảng cách tối đa 500 mét (1.640 foot)."
+    },
+    {
+      "outer_tag": "<img alt=\"\" class=\"\" data-original=\"https://cafefcdn.com/203337114487263232/2026/8/18/980ac425-8e26-4820-a359-3d42b766-1787059451332-17870594514632053125828.jpg\" h=\"1024\" height=\"\" rel=\"lightbox\" src=\"https://cafefcdn.com/203337114487263232/2026/8/18/980ac425-8e26-4820-a359-3d42b766-1787059451332-17870594514632053125828.jpg\" style=\"max-width:100%;\" title=\"\" type=\"photo\" w=\"1536\" width=\"\"/>",
+      "resolved_url": "https://cafefcdn.com/203337114487263232/2026/8/18/980ac425-8e26-4820-a359-3d42b766-1787059451332-17870594514632053125828.jpg",
+      "alt": "",
+      "title": "",
+      "caption": "Cảm biến có kích thước siêu nhỏ chỉ 20×20 micromet (tương đương một tế bào da người), dễ dàng tích hợp vào chip và các thiết bị đeo thông minh."
+    },
+    {
+      "outer_tag": "<img alt=\"Kinh tế lao đao vì ‘quay lưng' với Moscow và viện trợ Ukraine, chính trị gia nước châu Âu kêu gọi quay lại làm ăn với Nga, đòi EU hỗ trợ tiền\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/avatar1787045331903-17870453324671580693755.jpg\" title=\"Kinh tế lao đao vì ‘quay lưng' với Moscow và viện trợ Ukraine, chính trị gia nước châu Âu kêu gọi quay lại làm ăn với Nga, đòi EU hỗ trợ tiền\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/avatar1787045331903-17870453324671580693755.jpg",
+      "alt": "Kinh tế lao đao vì ‘quay lưng' với Moscow và viện trợ Ukraine, chính trị gia nước châu Âu kêu gọi quay lại làm ăn với Nga, đòi EU hỗ trợ tiền",
+      "title": "Kinh tế lao đao vì ‘quay lưng' với Moscow và viện trợ Ukraine, chính trị gia nước châu Âu kêu gọi quay lại làm ăn với Nga, đòi EU hỗ trợ tiền",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Nga phát hiện báu vật quý hiếm chưa từng có, 1 mẩu bằng đầu bút bi giá gần 4 triệu đồng\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/avatar1787045364740-1787045367434301177147.png\" title=\"Nga phát hiện báu vật quý hiếm chưa từng có, 1 mẩu bằng đầu bút bi giá gần 4 triệu đồng\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/avatar1787045364740-1787045367434301177147.png",
+      "alt": "Nga phát hiện báu vật quý hiếm chưa từng có, 1 mẩu bằng đầu bút bi giá gần 4 triệu đồng",
+      "title": "Nga phát hiện báu vật quý hiếm chưa từng có, 1 mẩu bằng đầu bút bi giá gần 4 triệu đồng",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Nga ra mắt 'pháo đài nổi', sát thủ của xuồng không người lái\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/screenshot-2026-08-18-at-20-22-12-17870593409221804746888-0-76-672-1151-crop-17870593446751990762280.png\" title=\"Nga ra mắt 'pháo đài nổi', sát thủ của xuồng không người lái\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/screenshot-2026-08-18-at-20-22-12-17870593409221804746888-0-76-672-1151-crop-17870593446751990762280.png",
+      "alt": "Nga ra mắt 'pháo đài nổi', sát thủ của xuồng không người lái",
+      "title": "Nga ra mắt 'pháo đài nổi', sát thủ của xuồng không người lái",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Iran nêu điều kiện mở cửa eo biển Hormuz\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/avatar1787059219470-17870592197871681889769.webp\" title=\"Iran nêu điều kiện mở cửa eo biển Hormuz\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/avatar1787059219470-17870592197871681889769.webp",
+      "alt": "Iran nêu điều kiện mở cửa eo biển Hormuz",
+      "title": "Iran nêu điều kiện mở cửa eo biển Hormuz",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt='Loại cả Nhật Bản lẫn châu Âu, tàu điện Trung Quốc được quốc gia Đông Nam Á chốt ngay vì \"hồ sơ đẹp như mơ\"' height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/avatar1787055003916-17870550044041671070975.jpg\" title='Loại cả Nhật Bản lẫn châu Âu, tàu điện Trung Quốc được quốc gia Đông Nam Á chốt ngay vì \"hồ sơ đẹp như mơ\"' width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/avatar1787055003916-17870550044041671070975.jpg",
+      "alt": "Loại cả Nhật Bản lẫn châu Âu, tàu điện Trung Quốc được quốc gia Đông Nam Á chốt ngay vì \"hồ sơ đẹp như mơ\"",
+      "title": "Loại cả Nhật Bản lẫn châu Âu, tàu điện Trung Quốc được quốc gia Đông Nam Á chốt ngay vì \"hồ sơ đẹp như mơ\"",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Kinh hoàng hình ảnh ngôi nhà bốc cháy giữa dòng nước lũ\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/avatar1787050339061-1787050339438299508558.jpg\" title=\"Kinh hoàng hình ảnh ngôi nhà bốc cháy giữa dòng nước lũ\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/avatar1787050339061-1787050339438299508558.jpg",
+      "alt": "Kinh hoàng hình ảnh ngôi nhà bốc cháy giữa dòng nước lũ",
+      "title": "Kinh hoàng hình ảnh ngôi nhà bốc cháy giữa dòng nước lũ",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Công ty Cổ phần VCCorp\" height=\"49px\" src=\"https://vccorp.mediacdn.vn/vccorp-s.png\" width=\"100px\"/>",
+      "resolved_url": "https://vccorp.mediacdn.vn/vccorp-s.png",
+      "alt": "Công ty Cổ phần VCCorp",
+      "title": "",
+      "caption": ""
+    }
+  ],
+  "language": "vi",
+  "built_at": "2026-08-18T23:25:50+07:00",
+  "built_from_raw_path": "data/raw_html\\cafef.vn\\20260818\\90c97b66a8fc3e072a216c1d3411c98d3ab54f537958335d4df2d1546595bc42.html"
+}

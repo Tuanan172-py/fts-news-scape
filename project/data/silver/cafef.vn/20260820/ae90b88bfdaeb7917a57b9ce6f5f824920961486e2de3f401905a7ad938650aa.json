@@ -1,0 +1,434 @@
+{
+  "silver_schema_version": "1.0",
+  "article_id": "ae90b88bfdaeb7917a57b9ce6f5f824920961486e2de3f401905a7ad938650aa",
+  "source_url": "https://cafef.vn/ha-noi-hon-1500-truong-hop-vuot-den-do-bi-csgt-xu-ly-trong-mot-thang-qua-188260820083435187.chn",
+  "domain": "cafef.vn",
+  "content_sha256": "518ea09d2a90650e6c690a2d8990c589c3e81ae87109d4000864edeaf30c4281",
+  "cleaned_text": "Hà Nội: Hơn 1.500 trường hợp vượt đèn đỏ bị CSGT xử lý trong một tháng qua\nTừ 15/7 - 14/8/2026, CSGT Hà Nội xử lý gần 50.400 vi phạm giao thông các loại, trong đó có hơn 1.500 trường hợp vượt đèn đỏ.\n- 20-08-2026Quốc hội tiếp tục thảo luận việc tích hợp các chương trình mục tiêu quốc gia\n- 20-08-2026Giảm áp lực 'đầu vào' về thuế, phí, tín dụng cho doanh nghiệp\n- 19-08-2026Thông báo quan trọng tới tất cả người dân có lương hưu, trợ cấp\nHệ thống camera AI ghi nhận các vi phạm TTATGT trên toàn địa bàn thành phố.\nTrong thời gian trên, lực lượng CSGT và cảnh sát trật tự đã xử lý 49.568 phương tiện vi phạm giao thông đường bộ, tạm giữ 8.347 phương tiện, tước giấy phép lái xe 299 trường hợp và trừ điểm giấy phép lái xe đối với 5.301 trường hợp.\nĐáng chú ý, hệ thống camera AI đã phát hiện hơn 12.800 phương tiện vi phạm, trong đó lập biên bản 410 trường hợp và gửi thông báo phạt nguội đối với 12.460 chủ phương tiện.\nQua công tác xử lý, lực lượng chức năng ghi nhận hơn 6.100 trường hợp vi phạm nồng độ cồn, 2.746 trường hợp chạy quá tốc độ và 1.540 trường hợp vượt đèn đỏ. Ngoài ra, có hơn 9.400 phương tiện dừng, đỗ sai quy định và hơn 11.200 trường hợp vi phạm các quy định về đội mũ bảo hiểm.\nTheo quy định tại Nghị định 168/2024, người điều khiển xe máy không chấp hành hiệu lệnh của đèn tín hiệu giao thông sẽ bị phạt tiền từ 4-6 triệu đồng và trừ 4 điểm giấy phép lái xe; nếu gây tai nạn giao thông, mức phạt từ 10-14 triệu đồng và bị trừ 10 điểm giấy phép lái xe. Đối với ô tô, mức phạt sẽ từ 18-20 triệu đồng, trừ 4 điểm giấy phép lái xe; trường hợp gây tai nạn giao thông, mức phạt từ 20-22 triệu đồng và trừ 10 điểm giấy phép lái xe.\nThời gian tới, CSGT Hà Nội tiếp tục kết hợp xử lý trực tiếp với xử phạt nguội qua hệ thống camera giám sát và nguồn tin do người dân cung cấp; đồng thời phối hợp với chính quyền địa phương rà soát, hoàn thiện dữ liệu phương tiện, tăng cường tuyên truyền, nâng cao ý thức chấp hành pháp luật của người tham gia giao thông.\nVTV",
+  "extraction_quality": "high",
+  "structure": {
+    "headings": [
+      {
+        "level": 1,
+        "text": "Hà Nội: Hơn 1.500 trường hợp vượt đèn đỏ bị CSGT xử lý trong một tháng qua"
+      },
+      {
+        "level": 3,
+        "text": "CÙNG CHUYÊN MỤC"
+      },
+      {
+        "level": 4,
+        "text": "Năm nay, lương, thưởng của người lao động dịp lễ Quốc khánh 2/9 được tính như thế nào theo quy định mới nhất? Nổi bật"
+      },
+      {
+        "level": 4,
+        "text": "[Infographic] Hà Nội lập mới hồ sơ, bản đồ địa giới 126 xã, phường sau sắp xếp Nổi bật"
+      },
+      {
+        "level": 4,
+        "text": "1.500 người Việt học sẽ được Chính phủ cấp học bổng toàn phần ra nước ngoài, đóng góp lớn cho nền kinh tế"
+      },
+      {
+        "level": 4,
+        "text": "Quốc hội tiếp tục thảo luận việc tích hợp các chương trình mục tiêu quốc gia"
+      },
+      {
+        "level": 4,
+        "text": "Giảm áp lực 'đầu vào' về thuế, phí, tín dụng cho doanh nghiệp"
+      },
+      {
+        "level": 4,
+        "text": "GEIT khởi công dự án điện mặt trời mái nhà thứ 10 cùng Tập đoàn Hoa Sen"
+      }
+    ],
+    "paragraphs": [
+      "MỚI NHẤT!",
+      "Theo Quang Hải | 20-08-2026 - 09:55 AM | Kinh tế vĩ mô - Đầu tư",
+      "Từ 15/7 - 14/8/2026, CSGT Hà Nội xử lý gần 50.400 vi phạm giao thông các loại, trong đó có hơn 1.500 trường hợp vượt đèn đỏ.",
+      "Hệ thống camera AI ghi nhận các vi phạm TTATGT trên toàn địa bàn thành phố.",
+      "Trong thời gian trên, lực lượng CSGT và cảnh sát trật tự đã xử lý 49.568 phương tiện vi phạm giao thông đường bộ, tạm giữ 8.347 phương tiện, tước giấy phép lái xe 299 trường hợp và trừ điểm giấy phép lái xe đối với 5.301 trường hợp.",
+      "Đáng chú ý, hệ thống camera AI đã phát hiện hơn 12.800 phương tiện vi phạm, trong đó lập biên bản 410 trường hợp và gửi thông báo phạt nguội đối với 12.460 chủ phương tiện.",
+      "Qua công tác xử lý, lực lượng chức năng ghi nhận hơn 6.100 trường hợp vi phạm nồng độ cồn, 2.746 trường hợp chạy quá tốc độ và 1.540 trường hợp vượt đèn đỏ. Ngoài ra, có hơn 9.400 phương tiện dừng, đỗ sai quy định và hơn 11.200 trường hợp vi phạm các quy định về đội mũ bảo hiểm.",
+      "Theo quy định tại Nghị định 168/2024, người điều khiển xe máy không chấp hành hiệu lệnh của đèn tín hiệu giao thông sẽ bị phạt tiền từ 4-6 triệu đồng và trừ 4 điểm giấy phép lái xe; nếu gây tai nạn giao thông, mức phạt từ 10-14 triệu đồng và bị trừ 10 điểm giấy phép lái xe. Đối với ô tô, mức phạt sẽ từ 18-20 triệu đồng, trừ 4 điểm giấy phép lái xe; trường hợp gây tai nạn giao thông, mức phạt từ 20-22 triệu đồng và trừ 10 điểm giấy phép lái xe.",
+      "Thời gian tới, CSGT Hà Nội tiếp tục kết hợp xử lý trực tiếp với xử phạt nguội qua hệ thống camera giám sát và nguồn tin do người dân cung cấp; đồng thời phối hợp với chính quyền địa phương rà soát, hoàn thiện dữ liệu phương tiện, tăng cường tuyên truyền, nâng cao ý thức chấp hành pháp luật của người tham gia giao thông.",
+      "Theo Quang Hải",
+      "VTV",
+      "Địa chỉ: Tầng 21 Tòa nhà Center Building. Số 01, phố Nguyễn Huy Tưởng, phường Thanh Xuân, thành phố Hà Nội",
+      "Điện thoại: 024 7309 5555 Máy lẻ 292. Fax: 024-39744082",
+      "Email: info@cafef.vn | Hotline: 0926 864 344",
+      "Chịu trách nhiệm nội dung: Ông Nguyễn Thế Tân",
+      "Liên hệ quảng cáo",
+      "Hotline:",
+      "Email: doanhnghiep@admicro.vn",
+      "© Copyright 2007 - 2026 - Công ty Cổ phần VCCorp.",
+      "Giấy phép thiết lập trang thông tin điện tử tổng hợp trên mạng số 2216/GP-TTĐT do Sở Thông tin và Truyền thông Hà Nội cấp ngày 10 tháng 4 năm 2019."
+    ],
+    "tables": [],
+    "links": [
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "http://liveboard.cafef.vn",
+        "text": "Bảng giá điện tử"
+      },
+      {
+        "href": "/du-lieu/danh-muc-dau-tu.chn",
+        "text": "Danh mục đầu tư"
+      },
+      {
+        "href": "/doc-nhanh.chn",
+        "text": "Đọc nhanh >>"
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "XÃ HỘI"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "CHỨNG KHOÁN"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "BẤT ĐỘNG SẢN"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "DOANH NGHIỆP"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "NGÂN HÀNG"
+      },
+      {
+        "href": "/smart-money.chn",
+        "text": "SMART MONEY"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "TÀI CHÍNH QUỐC TẾ"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "VĨ MÔ"
+      },
+      {
+        "href": "/kinh-te-so.chn",
+        "text": "KINH TẾ SỐ"
+      },
+      {
+        "href": "/thi-truong.chn",
+        "text": "THỊ TRƯỜNG"
+      },
+      {
+        "href": "/song.chn",
+        "text": "SỐNG"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "LIFESTYLE"
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "Xã hội"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "Doanh nghiệp"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "Kinh tế vĩ mô"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "Chứng khoán"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "Tài chính ngân hàng"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "Tài chính quốc tế"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "Tin tức"
+      },
+      {
+        "href": "/du-an.chn",
+        "text": "Dự án"
+      },
+      {
+        "href": "/ban-do-du-an.chn",
+        "text": "Bản đồ dự án"
+      },
+      {
+        "href": "/hang-hoa-nguyen-lieu.chn",
+        "text": "Hàng hóa nguyên liệu"
+      },
+      {
+        "href": "/song.chn",
+        "text": "Sống"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "Lifestyle"
+      },
+      {
+        "href": "/nhom-chu-de/emagazine.chn",
+        "text": "Magazine"
+      },
+      {
+        "href": "/du-lieu.chn",
+        "text": "Dữ liệu"
+      },
+      {
+        "href": "/du-lieu/cafeflists.chn",
+        "text": "F INDEX"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "Kinh tế vĩ mô - Đầu tư"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Chia sẻ"
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/quoc-hoi-tiep-tuc-thao-luan-viec-tich-hop-cac-chuong-trinh-muc-tieu-quoc-gia-188260820072038053.chn",
+        "text": "Quốc hội tiếp tục thảo luận việc tích hợp các chương trình mục tiêu quốc gia"
+      },
+      {
+        "href": "/giam-ap-luc-dau-vao-ve-thue-phi-tin-dung-cho-doanh-nghiep-188260819151102582.chn",
+        "text": "Giảm áp lực 'đầu vào' về thuế, phí, tín dụng cho doanh nghiệp"
+      },
+      {
+        "href": "/thong-bao-quan-trong-toi-tat-ca-nguoi-dan-co-luong-huu-tro-cap-188260818151839594.chn",
+        "text": "Thông báo quan trọng tới tất cả người dân có lương hưu, trợ cấp"
+      },
+      {
+        "href": "javascript:;",
+        "text": "TIN MỚI"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Theo VTV Copy link"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Chia sẻ"
+      },
+      {
+        "href": "/ha-noi.html",
+        "text": "hà nội"
+      },
+      {
+        "href": "/nam-nay-luong-thuong-cua-nguoi-lao-dong-dip-le-quoc-khanh-2-9-duoc-tinh-nhu-the-nao-theo-quy-dinh-moi-nhat-188260820091307029.chn",
+        "text": ""
+      },
+      {
+        "href": "/nam-nay-luong-thuong-cua-nguoi-lao-dong-dip-le-quoc-khanh-2-9-duoc-tinh-nhu-the-nao-theo-quy-dinh-moi-nhat-188260820091307029.chn",
+        "text": "Năm nay, lương, thưởng của người lao động dịp lễ Quốc khánh 2/9 được tính như thế nào theo quy định mới nhất?"
+      },
+      {
+        "href": "/infographic-ha-noi-lap-moi-ho-so-ban-do-dia-gioi-126-xa-phuong-sau-sap-xep-188260820074647566.chn",
+        "text": ""
+      },
+      {
+        "href": "/infographic-ha-noi-lap-moi-ho-so-ban-do-dia-gioi-126-xa-phuong-sau-sap-xep-188260820074647566.chn",
+        "text": "[Infographic] Hà Nội lập mới hồ sơ, bản đồ địa giới 126 xã, phường sau sắp xếp"
+      },
+      {
+        "href": "/1500-nguoi-viet-hoc-se-duoc-chinh-phu-cap-hoc-bong-toan-phan-ra-nuoc-ngoai-dong-gop-lon-cho-nen-kinh-te-18826082007035126.chn",
+        "text": ""
+      },
+      {
+        "href": "/1500-nguoi-viet-hoc-se-duoc-chinh-phu-cap-hoc-bong-toan-phan-ra-nuoc-ngoai-dong-gop-lon-cho-nen-kinh-te-18826082007035126.chn",
+        "text": "1.500 người Việt học sẽ được Chính phủ cấp học bổng toàn phần ra nước ngoài, đóng góp lớn cho nền kinh tế"
+      },
+      {
+        "href": "/quoc-hoi-tiep-tuc-thao-luan-viec-tich-hop-cac-chuong-trinh-muc-tieu-quoc-gia-188260820072038053.chn",
+        "text": ""
+      },
+      {
+        "href": "/quoc-hoi-tiep-tuc-thao-luan-viec-tich-hop-cac-chuong-trinh-muc-tieu-quoc-gia-188260820072038053.chn",
+        "text": "Quốc hội tiếp tục thảo luận việc tích hợp các chương trình mục tiêu quốc gia"
+      },
+      {
+        "href": "/giam-ap-luc-dau-vao-ve-thue-phi-tin-dung-cho-doanh-nghiep-188260819151102582.chn",
+        "text": ""
+      },
+      {
+        "href": "/giam-ap-luc-dau-vao-ve-thue-phi-tin-dung-cho-doanh-nghiep-188260819151102582.chn",
+        "text": "Giảm áp lực 'đầu vào' về thuế, phí, tín dụng cho doanh nghiệp"
+      },
+      {
+        "href": "/geit-khoi-cong-du-an-dien-mat-troi-mai-nha-thu-10-cung-tap-doan-hoa-sen-188260820092014694.chn",
+        "text": ""
+      },
+      {
+        "href": "/geit-khoi-cong-du-an-dien-mat-troi-mai-nha-thu-10-cung-tap-doan-hoa-sen-188260820092014694.chn",
+        "text": "GEIT khởi công dự án điện mặt trời mái nhà thứ 10 cùng Tập đoàn Hoa Sen"
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "XÃ HỘI"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "CHỨNG KHOÁN"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "BẤT ĐỘNG SẢN"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "DOANH NGHIỆP"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "NGÂN HÀNG"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "TÀI CHÍNH QUỐC TẾ"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "VĨ MÔ"
+      },
+      {
+        "href": "/kinh-te-so.chn",
+        "text": "KINH TẾ SỐ"
+      },
+      {
+        "href": "/thi-truong.chn",
+        "text": "THỊ TRƯỜNG"
+      },
+      {
+        "href": "/song.chn",
+        "text": "SỐNG"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "LIFESTYLE"
+      },
+      {
+        "href": "/du-lieu.chn",
+        "text": "Dữ liệu"
+      },
+      {
+        "href": "/du-lieu/top/ceo.chn",
+        "text": "Top 200"
+      },
+      {
+        "href": "https://www.messenger.com/t/108804609142280",
+        "text": "Chat với tư vấn viên"
+      },
+      {
+        "href": "http://www.vccorp.vn/",
+        "text": ""
+      },
+      {
+        "href": "/static/chinh-sach-bao-mat.html",
+        "text": "Chính sách bảo mật"
+      }
+    ]
+  },
+  "images": [
+    {
+      "outer_tag": "<img alt=\"Hà Nội: Hơn 1.500 trường hợp vượt đèn đỏ bị CSGT xử lý trong một tháng qua\" data-role=\"cover\" fetchpriority=\"high\" src=\"https://cafefcdn.com/thumb_w/640/203337114487263232/2026/8/20/avatar1787189621325-17871896219181630206999.jpg\" title=\"Hà Nội: Hơn 1.500 trường hợp vượt đèn đỏ bị CSGT xử lý trong một tháng qua\"/>",
+      "resolved_url": "https://cafefcdn.com/thumb_w/640/203337114487263232/2026/8/20/avatar1787189621325-17871896219181630206999.jpg",
+      "alt": "Hà Nội: Hơn 1.500 trường hợp vượt đèn đỏ bị CSGT xử lý trong một tháng qua",
+      "title": "Hà Nội: Hơn 1.500 trường hợp vượt đèn đỏ bị CSGT xử lý trong một tháng qua",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Hà Nội: Hơn 1.500 trường hợp vượt đèn đỏ bị CSGT xử lý trong một tháng qua - Ảnh 1.\" data-author=\"\" data-original=\"https://cafefcdn.com/203337114487263232/2026/8/20/288786-4210216054761833902-g8412826623700084227-273a80b1f504abe8f06c4caa9c2c784b-94883699434448029673444-51288271311221472615984-1787189621291-17871896222962017761052.jpg\" data-role=\"avatar\" decoding=\"async\" fetchpriority=\"high\" id=\"#img_240456141291945984\" photoid=\"240456141291945984\" rel=\"lightbox\" src=\"https://cafefcdn.com/203337114487263232/2026/8/20/288786-4210216054761833902-g8412826623700084227-273a80b1f504abe8f06c4caa9c2c784b-94883699434448029673444-51288271311221472615984-1787189621291-17871896222962017761052.jpg\" title=\"Hà Nội: Hơn 1.500 trường hợp vượt đèn đỏ bị CSGT xử lý trong một tháng qua - Ảnh 1.\"/>",
+      "resolved_url": "https://cafefcdn.com/203337114487263232/2026/8/20/288786-4210216054761833902-g8412826623700084227-273a80b1f504abe8f06c4caa9c2c784b-94883699434448029673444-51288271311221472615984-1787189621291-17871896222962017761052.jpg",
+      "alt": "Hà Nội: Hơn 1.500 trường hợp vượt đèn đỏ bị CSGT xử lý trong một tháng qua - Ảnh 1.",
+      "title": "Hà Nội: Hơn 1.500 trường hợp vượt đèn đỏ bị CSGT xử lý trong một tháng qua - Ảnh 1.",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Năm nay, lương, thưởng của người lao động dịp lễ Quốc khánh 2/9 được tính như thế nào theo quy định mới nhất?\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787191942349-17871919441791618076728.jpeg\" title=\"Năm nay, lương, thưởng của người lao động dịp lễ Quốc khánh 2/9 được tính như thế nào theo quy định mới nhất?\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787191942349-17871919441791618076728.jpeg",
+      "alt": "Năm nay, lương, thưởng của người lao động dịp lễ Quốc khánh 2/9 được tính như thế nào theo quy định mới nhất?",
+      "title": "Năm nay, lương, thưởng của người lao động dịp lễ Quốc khánh 2/9 được tính như thế nào theo quy định mới nhất?",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"[Infographic] Hà Nội lập mới hồ sơ, bản đồ địa giới 126 xã, phường sau sắp xếp\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787186732621-1787186733083191625210-0-161-769-1392-crop-17871867538521766774900.png\" title=\"[Infographic] Hà Nội lập mới hồ sơ, bản đồ địa giới 126 xã, phường sau sắp xếp\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787186732621-1787186733083191625210-0-161-769-1392-crop-17871867538521766774900.png",
+      "alt": "[Infographic] Hà Nội lập mới hồ sơ, bản đồ địa giới 126 xã, phường sau sắp xếp",
+      "title": "[Infographic] Hà Nội lập mới hồ sơ, bản đồ địa giới 126 xã, phường sau sắp xếp",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"1.500 người Việt học sẽ được Chính phủ cấp học bổng toàn phần ra nước ngoài, đóng góp lớn cho nền kinh tế\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787148325166-1787148326788650845429-11zon-1787184079577656581270-46-0-459-660-crop-1787184084256393977408.jpg\" title=\"1.500 người Việt học sẽ được Chính phủ cấp học bổng toàn phần ra nước ngoài, đóng góp lớn cho nền kinh tế\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787148325166-1787148326788650845429-11zon-1787184079577656581270-46-0-459-660-crop-1787184084256393977408.jpg",
+      "alt": "1.500 người Việt học sẽ được Chính phủ cấp học bổng toàn phần ra nước ngoài, đóng góp lớn cho nền kinh tế",
+      "title": "1.500 người Việt học sẽ được Chính phủ cấp học bổng toàn phần ra nước ngoài, đóng góp lớn cho nền kinh tế",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Quốc hội tiếp tục thảo luận việc tích hợp các chương trình mục tiêu quốc gia\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787185153609-1787185154512784839281.jpg\" title=\"Quốc hội tiếp tục thảo luận việc tích hợp các chương trình mục tiêu quốc gia\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787185153609-1787185154512784839281.jpg",
+      "alt": "Quốc hội tiếp tục thảo luận việc tích hợp các chương trình mục tiêu quốc gia",
+      "title": "Quốc hội tiếp tục thảo luận việc tích hợp các chương trình mục tiêu quốc gia",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Giảm áp lực 'đầu vào' về thuế, phí, tín dụng cho doanh nghiệp\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787127038601-1787127039047343455272.jpg\" title=\"Giảm áp lực 'đầu vào' về thuế, phí, tín dụng cho doanh nghiệp\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787127038601-1787127039047343455272.jpg",
+      "alt": "Giảm áp lực 'đầu vào' về thuế, phí, tín dụng cho doanh nghiệp",
+      "title": "Giảm áp lực 'đầu vào' về thuế, phí, tín dụng cho doanh nghiệp",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"GEIT khởi công dự án điện mặt trời mái nhà thứ 10 cùng Tập đoàn Hoa Sen\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787192384055-1787192384490633261922.jpg\" title=\"GEIT khởi công dự án điện mặt trời mái nhà thứ 10 cùng Tập đoàn Hoa Sen\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787192384055-1787192384490633261922.jpg",
+      "alt": "GEIT khởi công dự án điện mặt trời mái nhà thứ 10 cùng Tập đoàn Hoa Sen",
+      "title": "GEIT khởi công dự án điện mặt trời mái nhà thứ 10 cùng Tập đoàn Hoa Sen",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Công ty Cổ phần VCCorp\" height=\"49px\" src=\"https://vccorp.mediacdn.vn/vccorp-s.png\" width=\"100px\"/>",
+      "resolved_url": "https://vccorp.mediacdn.vn/vccorp-s.png",
+      "alt": "Công ty Cổ phần VCCorp",
+      "title": "",
+      "caption": ""
+    }
+  ],
+  "language": "vi",
+  "built_at": "2026-08-20T10:03:01+07:00",
+  "built_from_raw_path": "data/raw_html\\cafef.vn\\20260820\\ae90b88bfdaeb7917a57b9ce6f5f824920961486e2de3f401905a7ad938650aa.html"
+}

@@ -1,0 +1,35 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "261d39c213cf39bbd89d65f42e18beeeee52f19a905601611aea86336e34379d",
+  "title": "DN có cổ phiếu đắt nhất sàn chứng khoán dự chi 480 tỷ thâu tóm công ty nắm khu đất 25.000 m2 tại TP Hồ Chí Minh",
+  "recognized": true,
+  "entities": [
+    {
+      "surface": "chứng khoán",
+      "entity_id": "INDUSTRY_GICS2:Công ty chứng khoán",
+      "type": "INDUSTRY_GICS2",
+      "method": "semantic",
+      "in_list": true,
+      "confidence": 0.9
+    }
+  ],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "done"
+  },
+  "unlisted_candidates": [],
+  "citations": [
+    {
+      "source_span": "DN có cổ phiếu đắt nhất sàn chứng khoán dự chi 480 tỷ thâu tóm công ty nắm khu đất 25.000 m2 tại TP Hồ Chí Minh"
+    }
+  ],
+  "confidence": 0.95,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

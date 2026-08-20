@@ -41,6 +41,9 @@ Bộ tài liệu chuyên sâu cho hệ thu thập tin tức thị trường ch�
 ### 🚀 operations/ — Triển khai & sự cố
 - [deployment.md](operations/deployment.md) — cài, chạy, monitor, backup
 - [troubleshooting.md](operations/troubleshooting.md) — triệu chứng → xử lý
+- [db-health-queries.md](operations/db-health-queries.md) — query DB kiểm tra nhanh trạng thái scrape (dashboard `scripts/db_status.py` + SQL thô)
+- [agent-prompting-guide.md](operations/agent-prompting-guide.md) — prompt mồi + context agent cần đọc + tiêu chí nghiệm thu (DoD) + vòng lặp tới khi hoàn thành
+- [monocle-db-handbook.md](operations/monocle-db-handbook.md) — sổ tay vận hành DB hàng ngày: schema, cookbook query theo tình huống, sự cố, backup/bảo trì (`scripts/dbq.py`)
 
 ## Tài liệu nền (có sẵn)
 - [architecture.md](architecture.md) — kiến trúc + TDR (bản gốc Phase 1)

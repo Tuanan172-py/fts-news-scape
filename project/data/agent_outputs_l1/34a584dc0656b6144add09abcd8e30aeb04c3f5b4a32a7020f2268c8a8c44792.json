@@ -1,0 +1,37 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "34a584dc0656b6144add09abcd8e30aeb04c3f5b4a32a7020f2268c8a8c44792",
+  "title": "Kinh tế UAE “vạ lây” từ chiến tranh Mỹ - Iran",
+  "recognized": true,
+  "entities": [
+    {
+      "surface": "Mỹ",
+      "entity_id": null,
+      "type": "UNKNOWN",
+      "method": "semantic",
+      "in_list": false,
+      "confidence": 0.8
+    }
+  ],
+  "categories": {
+    "ticker_company": "out_of_list",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [
+    "Mỹ"
+  ],
+  "citations": [
+    {
+      "source_span": "Kinh tế UAE “vạ lây” từ chiến tranh Mỹ - Iran"
+    }
+  ],
+  "confidence": 0.95,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

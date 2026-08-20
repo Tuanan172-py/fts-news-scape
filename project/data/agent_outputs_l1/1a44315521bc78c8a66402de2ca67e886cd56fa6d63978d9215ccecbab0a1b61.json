@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "1a44315521bc78c8a66402de2ca67e886cd56fa6d63978d9215ccecbab0a1b61",
+  "title": "Góc nhìn 19/08: Giằng co trong biên độ hẹp?",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

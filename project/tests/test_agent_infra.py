@@ -56,11 +56,20 @@ def test_dod_pass(tmp_path):
     assert ok, reasons
 
 
-def test_dod_low_confidence(tmp_path):
+def test_dod_ignores_low_confidence(tmp_path):
+    # confidence do agent tự khai → KHÔNG còn là gate; thấp vẫn PASS nếu các predicate khác đạt
     wp, _, _ = _make_wp(tmp_path)
-    ok, reasons = check_dod(_make_output(confidence=0.4), wp)
-    assert not ok
-    assert any("confidence" in r for r in reasons)
+    ok, reasons = check_dod(_make_output(confidence=0.1), wp)
+    assert ok, reasons
+
+
+def test_dod_passes_without_confidence(tmp_path):
+    # confidence là optional → thiếu hẳn vẫn PASS
+    wp, _, _ = _make_wp(tmp_path)
+    out = _make_output()
+    del out["confidence"]
+    ok, reasons = check_dod(out, wp)
+    assert ok, reasons
 
 
 def test_dod_ungrounded_citation(tmp_path):
@@ -130,7 +139,7 @@ def test_ingest_fail_marks_failed(tmp_path):
     runner = AgentRunner(store, task_dir=str(tmp_path / "tasks"))
     runner.export_tasks(limit=10)
 
-    res = runner.ingest_output(_make_output(confidence=0.3))
+    res = runner.ingest_output(_make_output(quality="low"))   # extraction_quality=low → DoD fail
     assert res["dod_pass"] is False
     assert Catalog(store).counts().get("failed") == 1
 

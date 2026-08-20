@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "e9d3cdb1b7b0670600541fd2e94b3f7be09b3f0b23fe89bffbd0b65e79c88d6f",
+  "title": "Nâng hạng mở cửa tỷ USD, điều gì khiến dòng vốn ở lại?",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

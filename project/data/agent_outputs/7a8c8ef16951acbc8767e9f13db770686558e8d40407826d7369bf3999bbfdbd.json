@@ -1,0 +1,55 @@
+{
+  "output_schema_version": "1.0",
+  "article_id": "7a8c8ef16951acbc8767e9f13db770686558e8d40407826d7369bf3999bbfdbd",
+  "summary": {
+    "abstractive": "Cổ phiếu SpaceX trồi sụt thất thường, đe dọa toàn thị trường chứng khoán Chỉ 6 tuần sau đợt IPO lớn nhất lịch sử, SpaceX mất 1.2 ngàn tỷ USD vốn hóa dù doanh thu quý 2/2026 tăng 92%. Cú sụt giảm này không dừng lại ở một mã cổ phiếu mà sẽ lan rộng ra báo cáo kết quả kinh doanh của Tesla, Alphabet và cả nhóm công nghệ đang dẫn dắt Phố Wall.",
+    "key_points": [
+      "Chỉ 6 tuần sau đợt IPO lớn nhất lịch sử, SpaceX mất 1.2 ngàn tỷ USD vốn hóa dù doanh thu quý 2/2026 tăng 92%. Cú sụt giảm này không dừng lại ở một mã cổ phiếu mà sẽ lan rộng ra báo cáo kết quả kinh do",
+      "Ngày 12/06/2026, SpaceX niêm yết trên Nasdaq ở giá 135 USD và huy động 75 tỷ USD trong đợt IPO lớn nhất lịch sử. Thị giá leo lên đỉnh 226 USD, đưa vốn hóa vượt 2.1 ngàn tỷ USD và tài sản của nhà sáng ",
+      "Chỉ 6 tuần sau, cổ phiếu giảm trong 13 trên 16 phiên, rơi sâu xuống dưới giá chào bán và chạm 108 USD, thổi bay 1.2 ngàn tỷ USD vốn hóa và kéo tài sản Musk xuống dưới 700 tỷ USD. Ngày 25/7, Elon Musk ",
+      "Báo cáo tài chính quý 2/2026 công bố ngày 04/08 cho thấy doanh thu đạt 7.81 tỷ USD, tăng 92% và vượt dự báo 6.9 tỷ USD của Phố Wall; EBITDA điều chỉnh đạt 3.54 tỷ USD, tăng 191%, với biên 45%. Điểm đá"
+    ]
+  },
+  "implication": {
+    "text": "Nội dung bài viết tác động tới nhận định thị trường và hoạt động kinh doanh của các đơn vị liên quan.",
+    "affected_parties": [
+      "nhà đầu tư",
+      "doanh nghiệp niêm yết"
+    ],
+    "impact_area": "market"
+  },
+  "materiality": {
+    "score": 0.65,
+    "time_sensitivity": "this_week"
+  },
+  "confidence": 0.88,
+  "citations": [
+    {
+      "claim": "Thông tin chính được trích xuất từ bài viết: Cổ phiếu SpaceX trồi sụt thất thường, đe dọa toàn ...",
+      "source_span": "Cổ phiếu SpaceX trồi sụt thất thường, đe dọa toàn thị trường chứng khoán",
+      "source_offset": 0
+    },
+    {
+      "claim": "Thông tin chính được trích xuất từ bài viết: Chỉ 6 tuần sau đợt IPO lớn nhất lịch sử, SpaceX mấ...",
+      "source_span": "Chỉ 6 tuần sau đợt IPO lớn nhất lịch sử, SpaceX mất 1.2 ngàn tỷ USD vốn hóa dù doanh thu quý 2/2026 tăng 92%",
+      "source_offset": 73
+    },
+    {
+      "claim": "Thông tin chính được trích xuất từ bài viết: Cú sụt giảm này không dừng lại ở một mã cổ phiếu m...",
+      "source_span": "Cú sụt giảm này không dừng lại ở một mã cổ phiếu mà sẽ lan rộng ra báo cáo kết quả kinh doanh của Tesla, Alphabet và cả nhóm công nghệ đang dẫn dắt Phố Wall.",
+      "source_offset": 183
+    }
+  ],
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:37:35.755748+07:00",
+    "schema_version": "1.0"
+  },
+  "sentiment": {
+    "overall": 0.0,
+    "polarity": "neutral"
+  },
+  "event_type": "macro",
+  "extraction_quality": "high"
+}

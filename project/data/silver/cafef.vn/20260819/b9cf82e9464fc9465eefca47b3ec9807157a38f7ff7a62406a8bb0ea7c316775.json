@@ -1,0 +1,437 @@
+{
+  "silver_schema_version": "1.0",
+  "article_id": "b9cf82e9464fc9465eefca47b3ec9807157a38f7ff7a62406a8bb0ea7c316775",
+  "source_url": "https://cafef.vn/tao-ra-nhung-co-may-hinh-nguoi-biet-nhao-lon-co-phieu-tang-542-ngay-khi-ipo-188260819100707288.chn",
+  "domain": "cafef.vn",
+  "content_sha256": "ff9e0c247b55eab7389820d481c4520797ee0ca75a20ef60b4b848059639b004",
+  "cleaned_text": "Trầm trồ công nghệ Trung Quốc: Tạo ra những cỗ máy hình người biết nhào lộn, cổ phiếu tăng 542% ngay khi IPO\nCổ phiếu của Unitree Robotics, nhà sản xuất robot Trung Quốc, đã tăng 542% ngay phiên giao dịch đầu tiên sau khi lên sàn.\n- 17-08-2026Chiếm 85% thị phần robot thế giới, Trung Quốc khởi động 'cú sốc toàn cầu' thứ hai\n- 14-08-2026Samsung âm thầm làm robot hình người giá rẻ nhờ tận dụng công nghệ từ máy giặt điều hòa\n- 03-08-2026Robot hình người chính thức đi làm giúp việc ở Mỹ, giá thuê gần 800.000 VNĐ/giờ\n- 03-08-2026Trung Quốc đổ tỷ USD cho robot hình người, tham vọng vượt Mỹ\nTheo bản cáo bạch, nhà sản xuất robot có trụ sở tại Hàng Châu - nổi tiếng toàn cầu với những cỗ máy biết lộn nhào và nhảy múa - đã huy động được khoảng 6,1 tỷ nhân dân tệ (905 triệu USD) trong đợt phát hành cổ phiếu lần đầu ra công chúng (IPO). Giá cổ phiếu đã tăng lên mức 968,1 nhân dân tệ/cổ phiếu, sau khi có lúc chạm đỉnh 1.100 nhân dân tệ trước đó.\nĐợt IPO này cũng có sự hậu thuẫn từ công ty AI Trung Quốc DeepSeek, với khoản đầu tư khoảng 140,8 triệu nhân dân tệ. Trong các nhà đầu tư hiện hữu của Unitree còn có sự góp mặt của gã khổng lồ công nghệ Trung Quốc Tencent.\nDải sản phẩm của Unitree bao gồm các mẫu robot hình người hai chân có khả năng đi lại và thao tác với đồ vật bằng đôi tay khéo léo, cùng với các mẫu robot bốn chân được ứng dụng trong các nhiệm vụ như dò tìm rủi ro nguy hiểm.\nNgay trước thềm niêm yết, vào hôm thứ Hai, Unitree đã trình làng một mẫu robot hình người mới mang tên \"Superman\". Công ty cho biết mẫu robot này có thể bật nhảy cao tới 2 mét từ tư thế đứng yên và chạy với tốc độ tối đa lên đến 12,66 m/s (nhanh hơn cả kỷ lục của huyền thoại điền kinh Usain Bolt).\nUnitree là tên tuổi công nghệ lớn mới nhất của Trung Quốc tiến lên sàn STAR Market (Thượng Hải), nối gót nhà sản xuất chip nhớ CXMT hồi tháng trước - công ty cũng gây chấn động với việc cổ phiếu tăng vọt 466% ngay trong ngày giao dịch đầu tiên.\nHồi tháng 6, Morgan Stanley đã nâng mức dự báo về lượng xuất xưởng robot hình người của Trung Quốc lên 50.000 chiếc trong năm nay, gần gấp đôi so với dự báo trước đó là 28.000 chiếc. Ngân hàng này ước tính thị trường robot hình người của Trung Quốc sẽ tăng trưởng từ mốc 2 tỷ USD trong năm nay lên 15 tỷ USD vào năm 2030.\nNgân hàng này cũng kỳ vọng các dự án thí điểm tại Trung Quốc sẽ bắt đầu chuyển sang giai đoạn triển khai rộng rãi hơn vào nửa cuối năm nay. Trong đó, các mẫu robot hình người với kích thước chuẩn được dự báo sẽ chiếm khoảng 30% lượng xuất xưởng, và tăng lên mức 70% vào năm 2028.\nTham khảo: CNBC\nmarkettimes.vn",
+  "extraction_quality": "high",
+  "structure": {
+    "headings": [
+      {
+        "level": 1,
+        "text": "Trầm trồ công nghệ Trung Quốc: Tạo ra những cỗ máy hình người biết nhào lộn, cổ phiếu tăng 542% ngay khi IPO"
+      },
+      {
+        "level": 3,
+        "text": "CÙNG CHUYÊN MỤC"
+      },
+      {
+        "level": 4,
+        "text": "Ông Trump hoãn áp thuế 50% Canada phút chót Nổi bật"
+      },
+      {
+        "level": 4,
+        "text": "Vịt nuốt vàng: Câu chuyện khó tin nhưng không hiếm gặp Nổi bật"
+      },
+      {
+        "level": 4,
+        "text": "Nga gọi thành tựu của mình là \"độc nhất vô nhị\", chuyên gia: Việc đánh giá toàn diện vẫn còn quá sớm"
+      },
+      {
+        "level": 4,
+        "text": "Cờ Nga kéo lên tại 10 điểm nóng, ông Putin lộ nước cờ bất ngờ: \"Đòn giáng choáng váng\" phá vỡ mắt xích phòng thủ"
+      },
+      {
+        "level": 4,
+        "text": "Ông Trump thử cách tiếp cận mới trong cuộc xung đột với Iran"
+      },
+      {
+        "level": 4,
+        "text": "Tổng thống Trump gọi eo biển Hormuz là lãnh thổ Mỹ, Iran lập tức phản ứng"
+      }
+    ],
+    "paragraphs": [
+      "MỚI NHẤT!",
+      "Hồng Duy | 19-08-2026 - 10:06 AM | Tài chính quốc tế",
+      "Cổ phiếu của Unitree Robotics, nhà sản xuất robot Trung Quốc, đã tăng 542% ngay phiên giao dịch đầu tiên sau khi lên sàn.",
+      "Theo bản cáo bạch, nhà sản xuất robot có trụ sở tại Hàng Châu - nổi tiếng toàn cầu với những cỗ máy biết lộn nhào và nhảy múa - đã huy động được khoảng 6,1 tỷ nhân dân tệ (905 triệu USD) trong đợt phát hành cổ phiếu lần đầu ra công chúng (IPO). Giá cổ phiếu đã tăng lên mức 968,1 nhân dân tệ/cổ phiếu, sau khi có lúc chạm đỉnh 1.100 nhân dân tệ trước đó.",
+      "Đợt IPO này cũng có sự hậu thuẫn từ công ty AI Trung Quốc DeepSeek, với khoản đầu tư khoảng 140,8 triệu nhân dân tệ. Trong các nhà đầu tư hiện hữu của Unitree còn có sự góp mặt của gã khổng lồ công nghệ Trung Quốc Tencent.",
+      "Dải sản phẩm của Unitree bao gồm các mẫu robot hình người hai chân có khả năng đi lại và thao tác với đồ vật bằng đôi tay khéo léo, cùng với các mẫu robot bốn chân được ứng dụng trong các nhiệm vụ như dò tìm rủi ro nguy hiểm.",
+      "Ngay trước thềm niêm yết, vào hôm thứ Hai, Unitree đã trình làng một mẫu robot hình người mới mang tên \"Superman\". Công ty cho biết mẫu robot này có thể bật nhảy cao tới 2 mét từ tư thế đứng yên và chạy với tốc độ tối đa lên đến 12,66 m/s (nhanh hơn cả kỷ lục của huyền thoại điền kinh Usain Bolt).",
+      "Unitree là tên tuổi công nghệ lớn mới nhất của Trung Quốc tiến lên sàn STAR Market (Thượng Hải), nối gót nhà sản xuất chip nhớ CXMT hồi tháng trước - công ty cũng gây chấn động với việc cổ phiếu tăng vọt 466% ngay trong ngày giao dịch đầu tiên.",
+      "Hồi tháng 6, Morgan Stanley đã nâng mức dự báo về lượng xuất xưởng robot hình người của Trung Quốc lên 50.000 chiếc trong năm nay, gần gấp đôi so với dự báo trước đó là 28.000 chiếc. Ngân hàng này ước tính thị trường robot hình người của Trung Quốc sẽ tăng trưởng từ mốc 2 tỷ USD trong năm nay lên 15 tỷ USD vào năm 2030.",
+      "Ngân hàng này cũng kỳ vọng các dự án thí điểm tại Trung Quốc sẽ bắt đầu chuyển sang giai đoạn triển khai rộng rãi hơn vào nửa cuối năm nay. Trong đó, các mẫu robot hình người với kích thước chuẩn được dự báo sẽ chiếm khoảng 30% lượng xuất xưởng, và tăng lên mức 70% vào năm 2028.",
+      "Tham khảo: CNBC﻿",
+      "Hồng Duy",
+      "markettimes.vn",
+      "Địa chỉ: Tầng 21 Tòa nhà Center Building. Số 01, phố Nguyễn Huy Tưởng, phường Thanh Xuân, thành phố Hà Nội",
+      "Điện thoại: 024 7309 5555 Máy lẻ 292. Fax: 024-39744082",
+      "Email: info@cafef.vn | Hotline: 0926 864 344",
+      "Chịu trách nhiệm nội dung: Ông Nguyễn Thế Tân",
+      "Liên hệ quảng cáo",
+      "Hotline:",
+      "Email: doanhnghiep@admicro.vn",
+      "© Copyright 2007 - 2026 - Công ty Cổ phần VCCorp.",
+      "Giấy phép thiết lập trang thông tin điện tử tổng hợp trên mạng số 2216/GP-TTĐT do Sở Thông tin và Truyền thông Hà Nội cấp ngày 10 tháng 4 năm 2019."
+    ],
+    "tables": [],
+    "links": [
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "http://liveboard.cafef.vn",
+        "text": "Bảng giá điện tử"
+      },
+      {
+        "href": "/du-lieu/danh-muc-dau-tu.chn",
+        "text": "Danh mục đầu tư"
+      },
+      {
+        "href": "/doc-nhanh.chn",
+        "text": "Đọc nhanh >>"
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "XÃ HỘI"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "CHỨNG KHOÁN"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "BẤT ĐỘNG SẢN"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "DOANH NGHIỆP"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "NGÂN HÀNG"
+      },
+      {
+        "href": "/smart-money.chn",
+        "text": "SMART MONEY"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "TÀI CHÍNH QUỐC TẾ"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "VĨ MÔ"
+      },
+      {
+        "href": "/kinh-te-so.chn",
+        "text": "KINH TẾ SỐ"
+      },
+      {
+        "href": "/thi-truong.chn",
+        "text": "THỊ TRƯỜNG"
+      },
+      {
+        "href": "/song.chn",
+        "text": "SỐNG"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "LIFESTYLE"
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "Xã hội"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "Doanh nghiệp"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "Kinh tế vĩ mô"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "Chứng khoán"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "Tài chính ngân hàng"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "Tài chính quốc tế"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "Tin tức"
+      },
+      {
+        "href": "/du-an.chn",
+        "text": "Dự án"
+      },
+      {
+        "href": "/ban-do-du-an.chn",
+        "text": "Bản đồ dự án"
+      },
+      {
+        "href": "/hang-hoa-nguyen-lieu.chn",
+        "text": "Hàng hóa nguyên liệu"
+      },
+      {
+        "href": "/song.chn",
+        "text": "Sống"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "Lifestyle"
+      },
+      {
+        "href": "/nhom-chu-de/emagazine.chn",
+        "text": "Magazine"
+      },
+      {
+        "href": "/du-lieu.chn",
+        "text": "Dữ liệu"
+      },
+      {
+        "href": "/du-lieu/cafeflists.chn",
+        "text": "F INDEX"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "Tài chính quốc tế"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Chia sẻ"
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/chiem-85-thi-phan-robot-the-gioi-trung-quoc-khoi-dong-cu-soc-toan-cau-thu-hai-188260817103051678.chn",
+        "text": "Chiếm 85% thị phần robot thế giới, Trung Quốc khởi động 'cú sốc toàn cầu' thứ hai"
+      },
+      {
+        "href": "/samsung-am-tham-lam-robot-hinh-nguoi-gia-re-nho-tan-dung-cong-nghe-tu-may-giat-dieu-hoa-188260814213609288.chn",
+        "text": "Samsung âm thầm làm robot hình người giá rẻ nhờ tận dụng công nghệ từ máy giặt điều hòa"
+      },
+      {
+        "href": "/robot-hinh-nguoi-chinh-thuc-di-lam-giup-viec-o-my-gia-thue-gan-800000-vnd-gio-188260803111200818.chn",
+        "text": "Robot hình người chính thức đi làm giúp việc ở Mỹ, giá thuê gần 800.000 VNĐ/giờ"
+      },
+      {
+        "href": "/trung-quoc-do-ty-usd-cho-robot-hinh-nguoi-tham-vong-vuot-my-188260803065101386.chn",
+        "text": "Trung Quốc đổ tỷ USD cho robot hình người, tham vọng vượt Mỹ"
+      },
+      {
+        "href": "javascript:;",
+        "text": "TIN MỚI"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Theo markettimes.vn Copy link"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Chia sẻ"
+      },
+      {
+        "href": "/ipo.html",
+        "text": "ipo,"
+      },
+      {
+        "href": "/robot.html",
+        "text": "robot"
+      },
+      {
+        "href": "/ong-trump-hoan-ap-thue-50-canada-phut-chot-188260819100735186.chn",
+        "text": ""
+      },
+      {
+        "href": "/ong-trump-hoan-ap-thue-50-canada-phut-chot-188260819100735186.chn",
+        "text": "Ông Trump hoãn áp thuế 50% Canada phút chót"
+      },
+      {
+        "href": "/vit-nuot-vang-cau-chuyen-kho-tin-nhung-khong-hiem-gap-188260819091725969.chn",
+        "text": ""
+      },
+      {
+        "href": "/vit-nuot-vang-cau-chuyen-kho-tin-nhung-khong-hiem-gap-188260819091725969.chn",
+        "text": "Vịt nuốt vàng: Câu chuyện khó tin nhưng không hiếm gặp"
+      },
+      {
+        "href": "/nga-goi-thanh-tuu-cua-minh-la-doc-nhat-vo-nhi-chuyen-gia-viec-danh-gia-toan-dien-van-con-qua-som-188260819090835184.chn",
+        "text": ""
+      },
+      {
+        "href": "/nga-goi-thanh-tuu-cua-minh-la-doc-nhat-vo-nhi-chuyen-gia-viec-danh-gia-toan-dien-van-con-qua-som-188260819090835184.chn",
+        "text": "Nga gọi thành tựu của mình là \"độc nhất vô nhị\", chuyên gia: Việc đánh giá toàn diện vẫn còn quá sớm"
+      },
+      {
+        "href": "/co-nga-keo-len-tai-10-diem-nong-ong-putin-lo-nuoc-co-bat-ngo-don-giang-choang-vang-pha-vo-mat-xich-phong-thu-188260819090506426.chn",
+        "text": ""
+      },
+      {
+        "href": "/co-nga-keo-len-tai-10-diem-nong-ong-putin-lo-nuoc-co-bat-ngo-don-giang-choang-vang-pha-vo-mat-xich-phong-thu-188260819090506426.chn",
+        "text": "Cờ Nga kéo lên tại 10 điểm nóng, ông Putin lộ nước cờ bất ngờ: \"Đòn giáng choáng váng\" phá vỡ mắt xích phòng thủ"
+      },
+      {
+        "href": "/ong-trump-thu-cach-tiep-can-moi-trong-cuoc-xung-dot-voi-iran-188260819090324948.chn",
+        "text": ""
+      },
+      {
+        "href": "/ong-trump-thu-cach-tiep-can-moi-trong-cuoc-xung-dot-voi-iran-188260819090324948.chn",
+        "text": "Ông Trump thử cách tiếp cận mới trong cuộc xung đột với Iran"
+      },
+      {
+        "href": "/tong-thong-trump-goi-eo-bien-hormuz-la-lanh-tho-my-iran-lap-tuc-phan-ung-188260819085446405.chn",
+        "text": ""
+      },
+      {
+        "href": "/tong-thong-trump-goi-eo-bien-hormuz-la-lanh-tho-my-iran-lap-tuc-phan-ung-188260819085446405.chn",
+        "text": "Tổng thống Trump gọi eo biển Hormuz là lãnh thổ Mỹ, Iran lập tức phản ứng"
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "XÃ HỘI"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "CHỨNG KHOÁN"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "BẤT ĐỘNG SẢN"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "DOANH NGHIỆP"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "NGÂN HÀNG"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "TÀI CHÍNH QUỐC TẾ"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "VĨ MÔ"
+      },
+      {
+        "href": "/kinh-te-so.chn",
+        "text": "KINH TẾ SỐ"
+      },
+      {
+        "href": "/thi-truong.chn",
+        "text": "THỊ TRƯỜNG"
+      },
+      {
+        "href": "/song.chn",
+        "text": "SỐNG"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "LIFESTYLE"
+      },
+      {
+        "href": "/du-lieu.chn",
+        "text": "Dữ liệu"
+      },
+      {
+        "href": "/du-lieu/top/ceo.chn",
+        "text": "Top 200"
+      },
+      {
+        "href": "https://www.messenger.com/t/108804609142280",
+        "text": "Chat với tư vấn viên"
+      },
+      {
+        "href": "http://www.vccorp.vn/",
+        "text": ""
+      },
+      {
+        "href": "/static/chinh-sach-bao-mat.html",
+        "text": "Chính sách bảo mật"
+      }
+    ]
+  },
+  "images": [
+    {
+      "outer_tag": "<img alt=\"\" class=\"\" data-original=\"https://cafefcdn.com/203337114487263232/2026/8/19/robot-unitree-roboti-1787108795546-1787108796253597626989.jpg\" h=\"1115\" height=\"\" rel=\"lightbox\" src=\"https://cafefcdn.com/203337114487263232/2026/8/19/robot-unitree-roboti-1787108795546-1787108796253597626989.jpg\" title=\"\" type=\"photo\" w=\"1507\" width=\"\"/>",
+      "resolved_url": "https://cafefcdn.com/203337114487263232/2026/8/19/robot-unitree-roboti-1787108795546-1787108796253597626989.jpg",
+      "alt": "",
+      "title": "",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Ông Trump hoãn áp thuế 50% Canada phút chót\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787108797946-178710879883131100884.png\" title=\"Ông Trump hoãn áp thuế 50% Canada phút chót\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787108797946-178710879883131100884.png",
+      "alt": "Ông Trump hoãn áp thuế 50% Canada phút chót",
+      "title": "Ông Trump hoãn áp thuế 50% Canada phút chót",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Vịt nuốt vàng: Câu chuyện khó tin nhưng không hiếm gặp\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787105808389-178710580896263700134.jpg\" title=\"Vịt nuốt vàng: Câu chuyện khó tin nhưng không hiếm gặp\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787105808389-178710580896263700134.jpg",
+      "alt": "Vịt nuốt vàng: Câu chuyện khó tin nhưng không hiếm gặp",
+      "title": "Vịt nuốt vàng: Câu chuyện khó tin nhưng không hiếm gặp",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt='Nga gọi thành tựu của mình là \"độc nhất vô nhị\", chuyên gia: Việc đánh giá toàn diện vẫn còn quá sớm' height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/thumb-photo2026-08-1822-24-25-17870728-17871052785211908031401-17871052800901196823644.jpg\" title='Nga gọi thành tựu của mình là \"độc nhất vô nhị\", chuyên gia: Việc đánh giá toàn diện vẫn còn quá sớm' width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/thumb-photo2026-08-1822-24-25-17870728-17871052785211908031401-17871052800901196823644.jpg",
+      "alt": "Nga gọi thành tựu của mình là \"độc nhất vô nhị\", chuyên gia: Việc đánh giá toàn diện vẫn còn quá sớm",
+      "title": "Nga gọi thành tựu của mình là \"độc nhất vô nhị\", chuyên gia: Việc đánh giá toàn diện vẫn còn quá sớm",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt='Cờ Nga kéo lên tại 10 điểm nóng, ông Putin lộ nước cờ bất ngờ: \"Đòn giáng choáng váng\" phá vỡ mắt xích phòng thủ' height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787105062715-17871050630231597560068.jpg\" title='Cờ Nga kéo lên tại 10 điểm nóng, ông Putin lộ nước cờ bất ngờ: \"Đòn giáng choáng váng\" phá vỡ mắt xích phòng thủ' width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787105062715-17871050630231597560068.jpg",
+      "alt": "Cờ Nga kéo lên tại 10 điểm nóng, ông Putin lộ nước cờ bất ngờ: \"Đòn giáng choáng váng\" phá vỡ mắt xích phòng thủ",
+      "title": "Cờ Nga kéo lên tại 10 điểm nóng, ông Putin lộ nước cờ bất ngờ: \"Đòn giáng choáng váng\" phá vỡ mắt xích phòng thủ",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Ông Trump thử cách tiếp cận mới trong cuộc xung đột với Iran\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787104949949-17871049507911167672397.jpg\" title=\"Ông Trump thử cách tiếp cận mới trong cuộc xung đột với Iran\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787104949949-17871049507911167672397.jpg",
+      "alt": "Ông Trump thử cách tiếp cận mới trong cuộc xung đột với Iran",
+      "title": "Ông Trump thử cách tiếp cận mới trong cuộc xung đột với Iran",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Tổng thống Trump gọi eo biển Hormuz là lãnh thổ Mỹ, Iran lập tức phản ứng\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787104446071-1787104446909623464978.webp\" title=\"Tổng thống Trump gọi eo biển Hormuz là lãnh thổ Mỹ, Iran lập tức phản ứng\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787104446071-1787104446909623464978.webp",
+      "alt": "Tổng thống Trump gọi eo biển Hormuz là lãnh thổ Mỹ, Iran lập tức phản ứng",
+      "title": "Tổng thống Trump gọi eo biển Hormuz là lãnh thổ Mỹ, Iran lập tức phản ứng",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Công ty Cổ phần VCCorp\" height=\"49px\" src=\"https://vccorp.mediacdn.vn/vccorp-s.png\" width=\"100px\"/>",
+      "resolved_url": "https://vccorp.mediacdn.vn/vccorp-s.png",
+      "alt": "Công ty Cổ phần VCCorp",
+      "title": "",
+      "caption": ""
+    }
+  ],
+  "language": "vi",
+  "built_at": "2026-08-19T10:17:57+07:00",
+  "built_from_raw_path": "data/raw_html\\cafef.vn\\20260819\\b9cf82e9464fc9465eefca47b3ec9807157a38f7ff7a62406a8bb0ea7c316775.html"
+}

@@ -30,7 +30,6 @@
     ]
   },
   "constraints": {
-    "confidence_min": 0.6,
     "surface_must_be_substring_of": "input.title",
     "citation_must_be_substring_of": "input.title",
     "recognized_true_requires": [

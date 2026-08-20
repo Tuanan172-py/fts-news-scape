@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "98be0855ceac3347e24be52c5a8e08e69688ad8c5797a00602159457a324e742",
+  "title": "Loạt doanh nghiệp bị phạt nặng vì chậm công bố nhiều báo cáo, giao dịch \"chui\" với bên liên quan",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

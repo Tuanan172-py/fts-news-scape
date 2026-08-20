@@ -6,7 +6,7 @@
   "type": "object",
   "required": [
     "l1_output_version", "article_id", "title", "recognized",
-    "entities", "categories", "citations", "confidence", "processing_metadata"
+    "entities", "categories", "citations", "processing_metadata"
   ],
   "additionalProperties": true,
   "properties": {
@@ -57,7 +57,8 @@
       "items": {"type": "object", "required": ["source_span"],
         "properties": {"source_span": {"type": "string"}}}
     },
-    "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+    "confidence": {"type": "number", "minimum": 0, "maximum": 1,
+      "description": "OPTIONAL — self-reported, KHÔNG dùng làm gate DoD (bỏ 2026-08-18)"},
     "processing_metadata": {
       "type": "object",
       "required": ["agent_provider", "model_used", "timestamp"],

@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "3a01844101a0b725f315d1f56c66129b7e2b41ad9df825c57f7038162057dc8e",
+  "title": "Sắc đỏ bao phủ thị trường chứng khoán, thanh khoản tiếp tục “teo tóp”",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

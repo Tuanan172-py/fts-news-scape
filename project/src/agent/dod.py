@@ -19,7 +19,6 @@ _SCHEMAS_DIR = Path(__file__).resolve().parents[2] / "schemas"
 
 # Fallback khớp task-lifecycle-v1.yaml §thresholds (nếu không đọc được YAML).
 _DEFAULT_THRESHOLDS = {
-    "confidence_min": 0.65,
     "min_citations": 2,
     "quality_ok": ("high", "medium"),
 }
@@ -35,8 +34,6 @@ def load_thresholds() -> dict:
         import yaml  # optional
         doc = yaml.safe_load((_SCHEMAS_DIR / "task-lifecycle-v1.yaml").read_text("utf-8"))
         th = (doc or {}).get("thresholds", {})
-        if "confidence_min" in th:
-            t["confidence_min"] = float(th["confidence_min"])
         if "min_citations" in th:
             t["min_citations"] = int(th["min_citations"])
     except Exception:  # noqa: BLE001 — spec fallback là hợp lệ
@@ -64,9 +61,10 @@ def verify_preconditions(work_package: dict, *, check_integrity: bool = True) ->
 
 def check_dod(agent_output: dict, work_package: dict,
               thresholds: dict | None = None) -> tuple[bool, list[str]]:
-    """Definition-of-Done. Trả (ok, reasons). ok=True ⇔ TẤT CẢ 5 predicate đạt.
+    """Definition-of-Done. Trả (ok, reasons). ok=True ⇔ TẤT CẢ 4 predicate đạt.
 
-    1 schema_valid | 2 confident | 3 grounded | 4 quality_ok | 5 auditable.
+    1 schema_valid | 2 grounded | 3 quality_ok | 4 auditable.
+    (confidence do agent tự khai, calibration kém → KHÔNG dùng làm gate.)
     """
     t = thresholds or load_thresholds()
     reasons: list[str] = []
@@ -76,12 +74,7 @@ def check_dod(agent_output: dict, work_package: dict,
     if not ok:
         reasons.append(f"schema_invalid: {errs[:2]}")
 
-    # 2) confident
-    conf = agent_output.get("confidence")
-    if not isinstance(conf, (int, float)) or conf < t["confidence_min"]:
-        reasons.append(f"confidence {conf} < {t['confidence_min']}")
-
-    # 3) grounded — ≥ min_citations, mỗi source_span ⊂ cleaned_text
+    # 2) grounded — ≥ min_citations, mỗi source_span ⊂ cleaned_text
     cites = agent_output.get("citations") or []
     cleaned = work_package.get("cleaned_text", "") or ""
     if len(cites) < t["min_citations"]:
@@ -93,12 +86,12 @@ def check_dod(agent_output: dict, work_package: dict,
         elif span not in cleaned:
             reasons.append(f"citation[{i}] not grounded in cleaned_text")
 
-    # 4) quality_ok (extraction_quality ∈ {high, medium})
+    # 3) quality_ok (extraction_quality ∈ {high, medium})
     q = agent_output.get("extraction_quality")
     if q not in t["quality_ok"]:
         reasons.append(f"extraction_quality={q!r} not in {t['quality_ok']}")
 
-    # 5) auditable — processing_metadata đủ provider/model/timestamp
+    # 4) auditable — processing_metadata đủ provider/model/timestamp
     pm = agent_output.get("processing_metadata") or {}
     for k in ("agent_provider", "model_used", "timestamp"):
         if not pm.get(k):

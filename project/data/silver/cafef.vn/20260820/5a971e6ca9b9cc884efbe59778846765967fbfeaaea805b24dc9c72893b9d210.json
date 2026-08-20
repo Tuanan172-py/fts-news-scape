@@ -1,0 +1,434 @@
+{
+  "silver_schema_version": "1.0",
+  "article_id": "5a971e6ca9b9cc884efbe59778846765967fbfeaaea805b24dc9c72893b9d210",
+  "source_url": "https://cafef.vn/mot-khu-cong-nghiep-du-kien-tao-viec-lam-cho-35000-nguoi-nop-ngan-sach-tren-5600-ty-dong-nam-dang-duoc-xem-xet-chap-thuan-dau-tu-tai-tinh-mien-bac-188260820143213118.chn",
+  "domain": "cafef.vn",
+  "content_sha256": "daedaf0fa47b1f26291bf968eeb2d97edf318288f912e3f0563d34a8c053248a",
+  "cleaned_text": "Một khu công nghiệp dự kiến tạo việc làm cho 35.000 người, nộp ngân sách trên 5.600 tỷ đồng/năm đang được xem xét chấp thuận đầu tư tại tỉnh miền Bắc\nDự án khu công nghiệp này được đánh giá là có hiệu quả tích cực về kinh tế - xã hội khi đi vào hoạt động.\nTheo Cổng thông tin điện tử tỉnh Quảng Ninh, sáng 20/8, ông Bùi Văn Khắng - Chủ tịch UBND tỉnh đã chủ trì cuộc họp thành viên UBND tỉnh để cho ý kiến chấp thuận chủ trương đầu tư, chấp thuận nhà đầu tư dự án đầu tư xây dựng và kinh doanh kết cấu hạ tầng Khu công nghiệp ASP Quảng Ninh.\nCụ thể, dự án đầu tư xây dựng và kinh doanh kết cấu hạ tầng khu công nghiệp ASP Quảng Ninh có tổng diện tích 353,5ha tại Khu kinh tế ven biển Quảng Yên, do CPCP Đô thị và công nghiệp ASP đề xuất đầu tư.\nHiện, dự án này đã được Ban Quản lý KKT tỉnh chủ trì, lấy ý kiến tham gia của các sở, ngành, địa phương, đơn vị liên quan và tổng hợp, thẩm định theo quy định.\nDự án được đánh giá có hiệu quả tích cực về kinh tế - xã hội khi đi vào hoạt động; dự kiến tạo việc làm cho khoảng 35.000 lao động; tổng số thuế dự kiến nộp ngân sách nhà nước đạt trên 5.600 tỷ đồng mỗi năm.\nTrên cơ sở ý kiến của các thành viên UBND tỉnh, tại cuộc họp, ông Bùi Văn Khắng yêu cầu Ban Quản lý Khu kinh tế tỉnh tiếp thu đầy đủ các ý kiến tham gia, phối hợp với các sở, ngành, địa phương liên quan tiếp tục rà soát, hoàn thiện hồ sơ dự án bảo đảm chặt chẽ, đúng trình tự, thủ tục và các quy định của pháp luật.\nChủ tịch UBND chỉ ra, Ban Quản lý Khu kinh tế tỉnh cần đặc biệt lưu ý các nội dung liên quan đến quy hoạch, đất đai, môi trường, hạ tầng kỹ thuật và tính khả thi của phương án đầu tư.\nÔng Khắng nhấn mạnh, đây là dự án có quy mô lớn, khi đi vào hoạt động được kỳ vọng tạo thêm động lực phát triển công nghiệp, việc làm và nguồn thu ngân sách cho tỉnh.\nVì vậy, quá trình thẩm định phải đánh giá kỹ năng lực, cam kết của nhà đầu tư; bảo đảm sử dụng đất tiết kiệm, hiệu quả, đồng bộ về hạ tầng và phù hợp với định hướng phát triển Khu kinh tế ven biển Quảng Yên.\nNhịp sống thị trường",
+  "extraction_quality": "high",
+  "structure": {
+    "headings": [
+      {
+        "level": 1,
+        "text": "Một khu công nghiệp dự kiến tạo việc làm cho 35.000 người, nộp ngân sách trên 5.600 tỷ đồng/năm đang được xem xét chấp thuận đầu tư tại tỉnh miền Bắc"
+      },
+      {
+        "level": 3,
+        "text": "CÙNG CHUYÊN MỤC"
+      },
+      {
+        "level": 4,
+        "text": "Năm nay, lương, thưởng của người lao động dịp lễ Quốc khánh 2/9 được tính như thế nào theo quy định mới nhất? Nổi bật"
+      },
+      {
+        "level": 4,
+        "text": "[Infographic] Hà Nội lập mới hồ sơ, bản đồ địa giới 126 xã, phường sau sắp xếp Nổi bật"
+      },
+      {
+        "level": 4,
+        "text": "TPHCM thúc đẩy dự án điện gió ngoài khơi 6.000 MW"
+      },
+      {
+        "level": 4,
+        "text": "Tất cả người dân cả nước đang thuê người giúp việc chú ý mức phạt liên quan BHXH, BHYT"
+      },
+      {
+        "level": 4,
+        "text": "Quy trình, thủ tục miễn, giảm thuế thu nhập doanh nghiệp"
+      },
+      {
+        "level": 4,
+        "text": "Vượt TP.HCM và Hà Nội, địa phương này trở thành nơi có GRDP bình quân cao nhất Việt Nam"
+      }
+    ],
+    "paragraphs": [
+      "MỚI NHẤT!",
+      "Hà Giang | 20-08-2026 - 14:39 PM | Kinh tế vĩ mô - Đầu tư",
+      "Dự án khu công nghiệp này được đánh giá là có hiệu quả tích cực về kinh tế - xã hội khi đi vào hoạt động.",
+      "Ảnh minh hoạ được tạo bởi AI",
+      "Theo Cổng thông tin điện tử tỉnh Quảng Ninh, sáng 20/8, ông Bùi Văn Khắng - Chủ tịch UBND tỉnh đã chủ trì cuộc họp thành viên UBND tỉnh để cho ý kiến chấp thuận chủ trương đầu tư, chấp thuận nhà đầu tư dự án đầu tư xây dựng và kinh doanh kết cấu hạ tầng Khu công nghiệp ASP Quảng Ninh.",
+      "Cụ thể, dự án đầu tư xây dựng và kinh doanh kết cấu hạ tầng khu công nghiệp ASP Quảng Ninh có tổng diện tích 353,5ha tại Khu kinh tế ven biển Quảng Yên, do CPCP Đô thị và công nghiệp ASP đề xuất đầu tư.",
+      "Hiện, dự án này đã được Ban Quản lý KKT tỉnh chủ trì, lấy ý kiến tham gia của các sở, ngành, địa phương, đơn vị liên quan và tổng hợp, thẩm định theo quy định.",
+      "Dự án được đánh giá có hiệu quả tích cực về kinh tế - xã hội khi đi vào hoạt động; dự kiến tạo việc làm cho khoảng 35.000 lao động; tổng số thuế dự kiến nộp ngân sách nhà nước đạt trên 5.600 tỷ đồng mỗi năm.",
+      "Trên cơ sở ý kiến của các thành viên UBND tỉnh, tại cuộc họp, ông Bùi Văn Khắng yêu cầu Ban Quản lý Khu kinh tế tỉnh tiếp thu đầy đủ các ý kiến tham gia, phối hợp với các sở, ngành, địa phương liên quan tiếp tục rà soát, hoàn thiện hồ sơ dự án bảo đảm chặt chẽ, đúng trình tự, thủ tục và các quy định của pháp luật.",
+      "Chủ tịch UBND chỉ ra, Ban Quản lý Khu kinh tế tỉnh cần đặc biệt lưu ý các nội dung liên quan đến quy hoạch, đất đai, môi trường, hạ tầng kỹ thuật và tính khả thi của phương án đầu tư.",
+      "Ông Khắng nhấn mạnh, đây là dự án có quy mô lớn, khi đi vào hoạt động được kỳ vọng tạo thêm động lực phát triển công nghiệp, việc làm và nguồn thu ngân sách cho tỉnh.",
+      "Vì vậy, quá trình thẩm định phải đánh giá kỹ năng lực, cam kết của nhà đầu tư; bảo đảm sử dụng đất tiết kiệm, hiệu quả, đồng bộ về hạ tầng và phù hợp với định hướng phát triển Khu kinh tế ven biển Quảng Yên.",
+      "Hà Giang",
+      "Nhịp sống thị trường",
+      "Địa chỉ: Tầng 21 Tòa nhà Center Building. Số 01, phố Nguyễn Huy Tưởng, phường Thanh Xuân, thành phố Hà Nội",
+      "Điện thoại: 024 7309 5555 Máy lẻ 292. Fax: 024-39744082",
+      "Email: info@cafef.vn | Hotline: 0926 864 344",
+      "Chịu trách nhiệm nội dung: Ông Nguyễn Thế Tân",
+      "Liên hệ quảng cáo",
+      "Hotline:",
+      "Email: doanhnghiep@admicro.vn",
+      "© Copyright 2007 - 2026 - Công ty Cổ phần VCCorp.",
+      "Giấy phép thiết lập trang thông tin điện tử tổng hợp trên mạng số 2216/GP-TTĐT do Sở Thông tin và Truyền thông Hà Nội cấp ngày 10 tháng 4 năm 2019."
+    ],
+    "tables": [],
+    "links": [
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "http://liveboard.cafef.vn",
+        "text": "Bảng giá điện tử"
+      },
+      {
+        "href": "/du-lieu/danh-muc-dau-tu.chn",
+        "text": "Danh mục đầu tư"
+      },
+      {
+        "href": "/doc-nhanh.chn",
+        "text": "Đọc nhanh >>"
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "XÃ HỘI"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "CHỨNG KHOÁN"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "BẤT ĐỘNG SẢN"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "DOANH NGHIỆP"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "NGÂN HÀNG"
+      },
+      {
+        "href": "/smart-money.chn",
+        "text": "SMART MONEY"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "TÀI CHÍNH QUỐC TẾ"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "VĨ MÔ"
+      },
+      {
+        "href": "/kinh-te-so.chn",
+        "text": "KINH TẾ SỐ"
+      },
+      {
+        "href": "/thi-truong.chn",
+        "text": "THỊ TRƯỜNG"
+      },
+      {
+        "href": "/song.chn",
+        "text": "SỐNG"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "LIFESTYLE"
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "Xã hội"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "Doanh nghiệp"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "Kinh tế vĩ mô"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "Chứng khoán"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "Tài chính ngân hàng"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "Tài chính quốc tế"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "Tin tức"
+      },
+      {
+        "href": "/du-an.chn",
+        "text": "Dự án"
+      },
+      {
+        "href": "/ban-do-du-an.chn",
+        "text": "Bản đồ dự án"
+      },
+      {
+        "href": "/hang-hoa-nguyen-lieu.chn",
+        "text": "Hàng hóa nguyên liệu"
+      },
+      {
+        "href": "/song.chn",
+        "text": "Sống"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "Lifestyle"
+      },
+      {
+        "href": "/nhom-chu-de/emagazine.chn",
+        "text": "Magazine"
+      },
+      {
+        "href": "/du-lieu.chn",
+        "text": "Dữ liệu"
+      },
+      {
+        "href": "/du-lieu/cafeflists.chn",
+        "text": "F INDEX"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "Kinh tế vĩ mô - Đầu tư"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Chia sẻ"
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "javascript:;",
+        "text": "TIN MỚI"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Theo Nhịp sống thị trường Copy link"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Chia sẻ"
+      },
+      {
+        "href": "/dau-tu.html",
+        "text": "đầu tư,"
+      },
+      {
+        "href": "/khu-cong-nghiep.html",
+        "text": "khu công nghiệp,"
+      },
+      {
+        "href": "/du-an.html",
+        "text": "dự án,"
+      },
+      {
+        "href": "/ngan-sach.html",
+        "text": "ngân sách,"
+      },
+      {
+        "href": "/ha-tang.html",
+        "text": "hạ tầng"
+      },
+      {
+        "href": "/nam-nay-luong-thuong-cua-nguoi-lao-dong-dip-le-quoc-khanh-2-9-duoc-tinh-nhu-the-nao-theo-quy-dinh-moi-nhat-188260820091307029.chn",
+        "text": ""
+      },
+      {
+        "href": "/nam-nay-luong-thuong-cua-nguoi-lao-dong-dip-le-quoc-khanh-2-9-duoc-tinh-nhu-the-nao-theo-quy-dinh-moi-nhat-188260820091307029.chn",
+        "text": "Năm nay, lương, thưởng của người lao động dịp lễ Quốc khánh 2/9 được tính như thế nào theo quy định mới nhất?"
+      },
+      {
+        "href": "/infographic-ha-noi-lap-moi-ho-so-ban-do-dia-gioi-126-xa-phuong-sau-sap-xep-188260820074647566.chn",
+        "text": ""
+      },
+      {
+        "href": "/infographic-ha-noi-lap-moi-ho-so-ban-do-dia-gioi-126-xa-phuong-sau-sap-xep-188260820074647566.chn",
+        "text": "[Infographic] Hà Nội lập mới hồ sơ, bản đồ địa giới 126 xã, phường sau sắp xếp"
+      },
+      {
+        "href": "/tphcm-thuc-day-du-an-dien-gio-ngoai-khoi-6000-mw-188260820141323917.chn",
+        "text": ""
+      },
+      {
+        "href": "/tphcm-thuc-day-du-an-dien-gio-ngoai-khoi-6000-mw-188260820141323917.chn",
+        "text": "TPHCM thúc đẩy dự án điện gió ngoài khơi 6.000 MW"
+      },
+      {
+        "href": "/tat-ca-nguoi-dan-ca-nuoc-dang-thue-nguoi-giup-viec-chu-y-muc-phat-lien-quan-bhxh-bhyt-188260820102234455.chn",
+        "text": ""
+      },
+      {
+        "href": "/tat-ca-nguoi-dan-ca-nuoc-dang-thue-nguoi-giup-viec-chu-y-muc-phat-lien-quan-bhxh-bhyt-188260820102234455.chn",
+        "text": "Tất cả người dân cả nước đang thuê người giúp việc chú ý mức phạt liên quan BHXH, BHYT"
+      },
+      {
+        "href": "/quy-trinh-thu-tuc-mien-giam-thue-thu-nhap-doanh-nghiep-188260820132757826.chn",
+        "text": ""
+      },
+      {
+        "href": "/quy-trinh-thu-tuc-mien-giam-thue-thu-nhap-doanh-nghiep-188260820132757826.chn",
+        "text": "Quy trình, thủ tục miễn, giảm thuế thu nhập doanh nghiệp"
+      },
+      {
+        "href": "/vuot-tphcm-va-ha-noi-dia-phuong-nay-tro-thanh-noi-co-grdp-binh-quan-cao-nhat-viet-nam-188260820140439287.chn",
+        "text": ""
+      },
+      {
+        "href": "/vuot-tphcm-va-ha-noi-dia-phuong-nay-tro-thanh-noi-co-grdp-binh-quan-cao-nhat-viet-nam-188260820140439287.chn",
+        "text": "Vượt TP.HCM và Hà Nội, địa phương này trở thành nơi có GRDP bình quân cao nhất Việt Nam"
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "XÃ HỘI"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "CHỨNG KHOÁN"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "BẤT ĐỘNG SẢN"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "DOANH NGHIỆP"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "NGÂN HÀNG"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "TÀI CHÍNH QUỐC TẾ"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "VĨ MÔ"
+      },
+      {
+        "href": "/kinh-te-so.chn",
+        "text": "KINH TẾ SỐ"
+      },
+      {
+        "href": "/thi-truong.chn",
+        "text": "THỊ TRƯỜNG"
+      },
+      {
+        "href": "/song.chn",
+        "text": "SỐNG"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "LIFESTYLE"
+      },
+      {
+        "href": "/du-lieu.chn",
+        "text": "Dữ liệu"
+      },
+      {
+        "href": "/du-lieu/top/ceo.chn",
+        "text": "Top 200"
+      },
+      {
+        "href": "https://www.messenger.com/t/108804609142280",
+        "text": "Chat với tư vấn viên"
+      },
+      {
+        "href": "http://www.vccorp.vn/",
+        "text": ""
+      },
+      {
+        "href": "/static/chinh-sach-bao-mat.html",
+        "text": "Chính sách bảo mật"
+      }
+    ]
+  },
+  "images": [
+    {
+      "outer_tag": "<img alt=\"\" class=\"\" data-original=\"https://cafefcdn.com/203337114487263232/2026/8/20/geminigeneratedimagebn38fibn38fibn38-1787211100777-17872111029671765346248.png\" h=\"1115\" height=\"\" rel=\"lightbox\" src=\"https://cafefcdn.com/203337114487263232/2026/8/20/geminigeneratedimagebn38fibn38fibn38-1787211100777-17872111029671765346248.png\" title=\"\" type=\"photo\" w=\"1507\" width=\"\"/>",
+      "resolved_url": "https://cafefcdn.com/203337114487263232/2026/8/20/geminigeneratedimagebn38fibn38fibn38-1787211100777-17872111029671765346248.png",
+      "alt": "",
+      "title": "",
+      "caption": "Ảnh minh hoạ được tạo bởi AI"
+    },
+    {
+      "outer_tag": "<img alt=\"Năm nay, lương, thưởng của người lao động dịp lễ Quốc khánh 2/9 được tính như thế nào theo quy định mới nhất?\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787191942349-17871919441791618076728.jpeg\" title=\"Năm nay, lương, thưởng của người lao động dịp lễ Quốc khánh 2/9 được tính như thế nào theo quy định mới nhất?\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787191942349-17871919441791618076728.jpeg",
+      "alt": "Năm nay, lương, thưởng của người lao động dịp lễ Quốc khánh 2/9 được tính như thế nào theo quy định mới nhất?",
+      "title": "Năm nay, lương, thưởng của người lao động dịp lễ Quốc khánh 2/9 được tính như thế nào theo quy định mới nhất?",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"[Infographic] Hà Nội lập mới hồ sơ, bản đồ địa giới 126 xã, phường sau sắp xếp\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787186732621-1787186733083191625210-0-161-769-1392-crop-17871867538521766774900.png\" title=\"[Infographic] Hà Nội lập mới hồ sơ, bản đồ địa giới 126 xã, phường sau sắp xếp\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787186732621-1787186733083191625210-0-161-769-1392-crop-17871867538521766774900.png",
+      "alt": "[Infographic] Hà Nội lập mới hồ sơ, bản đồ địa giới 126 xã, phường sau sắp xếp",
+      "title": "[Infographic] Hà Nội lập mới hồ sơ, bản đồ địa giới 126 xã, phường sau sắp xếp",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"TPHCM thúc đẩy dự án điện gió ngoài khơi 6.000 MW\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787211138097-17872111383291829499161.webp\" title=\"TPHCM thúc đẩy dự án điện gió ngoài khơi 6.000 MW\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787211138097-17872111383291829499161.webp",
+      "alt": "TPHCM thúc đẩy dự án điện gió ngoài khơi 6.000 MW",
+      "title": "TPHCM thúc đẩy dự án điện gió ngoài khơi 6.000 MW",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Tất cả người dân cả nước đang thuê người giúp việc chú ý mức phạt liên quan BHXH, BHYT\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787196123702-17871961240451263512361.jpg\" title=\"Tất cả người dân cả nước đang thuê người giúp việc chú ý mức phạt liên quan BHXH, BHYT\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787196123702-17871961240451263512361.jpg",
+      "alt": "Tất cả người dân cả nước đang thuê người giúp việc chú ý mức phạt liên quan BHXH, BHYT",
+      "title": "Tất cả người dân cả nước đang thuê người giúp việc chú ý mức phạt liên quan BHXH, BHYT",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Quy trình, thủ tục miễn, giảm thuế thu nhập doanh nghiệp\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787207247728-17872072481721594580674-0-0-757-1211-crop-17872072604821501971318.jpg\" title=\"Quy trình, thủ tục miễn, giảm thuế thu nhập doanh nghiệp\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787207247728-17872072481721594580674-0-0-757-1211-crop-17872072604821501971318.jpg",
+      "alt": "Quy trình, thủ tục miễn, giảm thuế thu nhập doanh nghiệp",
+      "title": "Quy trình, thủ tục miễn, giảm thuế thu nhập doanh nghiệp",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Vượt TP.HCM và Hà Nội, địa phương này trở thành nơi có GRDP bình quân cao nhất Việt Nam\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787209420914-1787209421514997420311.jpg\" title=\"Vượt TP.HCM và Hà Nội, địa phương này trở thành nơi có GRDP bình quân cao nhất Việt Nam\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787209420914-1787209421514997420311.jpg",
+      "alt": "Vượt TP.HCM và Hà Nội, địa phương này trở thành nơi có GRDP bình quân cao nhất Việt Nam",
+      "title": "Vượt TP.HCM và Hà Nội, địa phương này trở thành nơi có GRDP bình quân cao nhất Việt Nam",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Công ty Cổ phần VCCorp\" height=\"49px\" src=\"https://vccorp.mediacdn.vn/vccorp-s.png\" width=\"100px\"/>",
+      "resolved_url": "https://vccorp.mediacdn.vn/vccorp-s.png",
+      "alt": "Công ty Cổ phần VCCorp",
+      "title": "",
+      "caption": ""
+    }
+  ],
+  "language": "vi",
+  "built_at": "2026-08-20T14:47:58+07:00",
+  "built_from_raw_path": "data/raw_html\\cafef.vn\\20260820\\5a971e6ca9b9cc884efbe59778846765967fbfeaaea805b24dc9c72893b9d210.html"
+}

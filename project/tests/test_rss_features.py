@@ -220,15 +220,3 @@ def test_language_metadata_en(dedup):
 def test_language_default_vi(dedup):
     scraper = RSSScraper(_config(), FakeHTTP(FEED_XML), dedup)
     assert scraper.run().new[0].metadata["language"] == "vi"
-
-
-def test_sentiment_skip_logic_for_en():
-    """Logic orchestrator: language != vi → neutral/0.0 không gọi engine."""
-    from src.core.models import Article
-    a = Article(url="https://x.com/1", title="Stocks surge on Fed cut",
-                source_domain="x.com", metadata={"language": "en"})
-    # mô phỏng đúng nhánh trong orchestrator.run_cycle
-    if a.metadata.get("language", "vi") == "vi":
-        raise AssertionError("EN article must skip VN sentiment")
-    a.sentiment, a.sentiment_score = "neutral", 0.0
-    assert (a.sentiment, a.sentiment_score) == ("neutral", 0.0)

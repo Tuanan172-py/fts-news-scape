@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "b17c072cc3e74f90d0bac5b990a130c6075aa189f1dd0e4d624df302b88f71e5",
+  "title": "Phía sau khu “Cao Xà Lá” 11 ha đang nóng trên đường Nguyễn Trãi: Chủ đầu tư từng chi bao nhiêu tiền hỗ trợ cho cuộc di dời?",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

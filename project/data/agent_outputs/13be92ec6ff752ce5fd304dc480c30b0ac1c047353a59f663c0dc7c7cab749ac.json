@@ -1,0 +1,55 @@
+{
+  "output_schema_version": "1.0",
+  "article_id": "13be92ec6ff752ce5fd304dc480c30b0ac1c047353a59f663c0dc7c7cab749ac",
+  "summary": {
+    "abstractive": "Giá bạc hôm nay đồng loạt giảm, có loại rẻ hơn 1 triệu đồng/kg Giá bạc hôm nay đồng loạt giảm, có loại rẻ hơn 1 triệu đồng/kg",
+    "key_points": [
+      "Giá bạc hôm nay đồng loạt giảm, có loại rẻ hơn 1 triệu đồng/kg",
+      "Giá bạc hôm nay (14/8) đồng loạt đi xuống ở cả thị trường trong nước và thế giới, có thương hiệu hạ hơn 1 triệu đồng/kg.",
+      "Tại thị trường trong nước, đầu giờ sáng nay, giá bạc đều được các thương hiệu điều chỉnh giảm.",
+      "Cụ thể, mở cửa phiên giao dịch hôm nay, giá bạc miếng của Tập đoàn Vàng bạc Đá quý Phú Quý được niêm yết ở mức 2,258-2,328 triệu đồng/lượng (mua vào - bán ra), giảm 49.000 đồng/lượng ở cả chiều mua và"
+    ]
+  },
+  "implication": {
+    "text": "Nội dung bài viết tác động tới nhận định thị trường và hoạt động kinh doanh của các đơn vị liên quan.",
+    "affected_parties": [
+      "nhà đầu tư",
+      "doanh nghiệp niêm yết"
+    ],
+    "impact_area": "market"
+  },
+  "materiality": {
+    "score": 0.65,
+    "time_sensitivity": "this_week"
+  },
+  "confidence": 0.88,
+  "citations": [
+    {
+      "claim": "Thông tin chính được trích xuất từ bài viết: Giá bạc hôm nay đồng loạt giảm, có loại rẻ hơn 1 t...",
+      "source_span": "Giá bạc hôm nay đồng loạt giảm, có loại rẻ hơn 1 triệu đồng/kg",
+      "source_offset": 0
+    },
+    {
+      "claim": "Thông tin chính được trích xuất từ bài viết: Giá bạc hôm nay đồng loạt giảm, có loại rẻ hơn 1 t...",
+      "source_span": "Giá bạc hôm nay đồng loạt giảm, có loại rẻ hơn 1 triệu đồng/kg",
+      "source_offset": 0
+    },
+    {
+      "claim": "Thông tin chính được trích xuất từ bài viết: Giá bạc hôm nay (14/8) đồng loạt đi xuống ở cả thị...",
+      "source_span": "Giá bạc hôm nay (14/8) đồng loạt đi xuống ở cả thị trường trong nước và thế giới, có thương hiệu hạ hơn 1 triệu đồng/kg.",
+      "source_offset": 169
+    }
+  ],
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:37:35.755748+07:00",
+    "schema_version": "1.0"
+  },
+  "sentiment": {
+    "overall": 0.0,
+    "polarity": "neutral"
+  },
+  "event_type": "macro",
+  "extraction_quality": "high"
+}

@@ -1,0 +1,37 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "e534d713b25b0ff33bb1de4641e105da23405abed961032bbca09a3319d21ac3",
+  "title": "Người dân Mỹ đổ xô vay trả góp cho hàng hóa thiết yếu",
+  "recognized": true,
+  "entities": [
+    {
+      "surface": "Mỹ",
+      "entity_id": null,
+      "type": "UNKNOWN",
+      "method": "semantic",
+      "in_list": false,
+      "confidence": 0.8
+    }
+  ],
+  "categories": {
+    "ticker_company": "out_of_list",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [
+    "Mỹ"
+  ],
+  "citations": [
+    {
+      "source_span": "Người dân Mỹ đổ xô vay trả góp cho hàng hóa thiết yếu"
+    }
+  ],
+  "confidence": 0.95,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

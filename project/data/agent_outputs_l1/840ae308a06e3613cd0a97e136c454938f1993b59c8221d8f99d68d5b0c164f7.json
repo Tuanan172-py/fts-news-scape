@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "840ae308a06e3613cd0a97e136c454938f1993b59c8221d8f99d68d5b0c164f7",
+  "title": "Quy định mới ‘chung cư có thời hạn’ và bảo đảm quyền tài sản",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

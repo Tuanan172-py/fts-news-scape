@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "5f7ebe8e3f98e5e9ae8184eac14c42d29a5a1f0b11042e0864483fa60f482cae",
+  "title": "Tổng thống Trump tuyên bố “chiến tranh kinh tế” với Iran, UAE cắt quan hệ kinh tế với Iran",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

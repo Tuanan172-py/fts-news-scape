@@ -22,7 +22,6 @@ không quy định cách bạn prompt. Liên kết: [09](../docs/design/09-agent
 ## 3. Ràng buộc CỨNG (nếu vi phạm → ingest đánh trượt, không mark_done)
 | Ràng buộc | Ngưỡng |
 |-----------|--------|
-| `confidence` ≥ | 0.65 |
 | số `citations` ≥ | 2 |
 | mỗi `citations[].source_span` ⊂ `cleaned_text` | bắt buộc |
 | `extraction_quality` ∈ | {high, medium} |

@@ -36,7 +36,7 @@ Bạn có **quyền tra soát** kể cả khi code đã khớp (route=`resolved`
    - nhận ra bằng suy luận (thương hiệu, viết tắt) → `method="semantic"`.
 3. Xác định `in_list` + `entity_id` (null nếu ngoài danh sách → ghi `unlisted_candidates`).
 4. Chấm **checklist `categories`** cho 5 nhóm (mục §3).
-5. Gắn `citations` (≥1 nếu `recognized=true`), `confidence`, `processing_metadata`.
+5. Gắn `citations` (≥1 nếu `recognized=true`), `processing_metadata` (`confidence` tuỳ chọn).
 6. Đặt `recognized = (có ≥1 entity)`.
 
 ## 3. CHECKLIST theo nhóm (`categories`) — nhóm nào THỰC HIỆN được / KHÔNG
@@ -63,7 +63,6 @@ Chấm mỗi nhóm bằng đúng 1 trong: `done` | `none` | `out_of_list`.
 | mỗi `citations[].source_span` ⊂ `title` | bắt buộc |
 | nếu `recognized=true` → số `entities` ≥ 1 và `citations` ≥ 1 | bắt buộc |
 | nếu `recognized=false` → `entities=[]`, mọi `categories` ∈ {none, out_of_list} | bắt buộc |
-| `confidence` ≥ | 0.60 |
 | `processing_metadata` có | agent_provider, model_used, timestamp |
 
 ## 5. Quy trình khép kín (cơ chế handoff)

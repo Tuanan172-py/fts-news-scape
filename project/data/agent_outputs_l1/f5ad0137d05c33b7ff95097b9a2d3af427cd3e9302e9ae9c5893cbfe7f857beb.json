@@ -1,0 +1,37 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "f5ad0137d05c33b7ff95097b9a2d3af427cd3e9302e9ae9c5893cbfe7f857beb",
+  "title": "Nga ra mắt 'pháo đài nổi', sát thủ của xuồng không người lái",
+  "recognized": true,
+  "entities": [
+    {
+      "surface": "Nga",
+      "entity_id": null,
+      "type": "UNKNOWN",
+      "method": "semantic",
+      "in_list": false,
+      "confidence": 0.8
+    }
+  ],
+  "categories": {
+    "ticker_company": "out_of_list",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [
+    "Nga"
+  ],
+  "citations": [
+    {
+      "source_span": "Nga ra mắt 'pháo đài nổi', sát thủ của xuồng không người lái"
+    }
+  ],
+  "confidence": 0.95,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

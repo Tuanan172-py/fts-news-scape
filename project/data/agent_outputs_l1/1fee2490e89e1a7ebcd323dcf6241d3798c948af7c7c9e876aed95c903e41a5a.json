@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "1fee2490e89e1a7ebcd323dcf6241d3798c948af7c7c9e876aed95c903e41a5a",
+  "title": "Bão Lala đổ bộ, xé toạc cả đường cao tốc: Gió giật tới 225 km/h, 100 ngôi nhà đã bị hư hỏng hoặc cuốn trôi",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

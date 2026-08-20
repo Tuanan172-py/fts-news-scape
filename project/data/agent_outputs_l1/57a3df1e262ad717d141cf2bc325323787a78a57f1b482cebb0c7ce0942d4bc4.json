@@ -1,0 +1,37 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "57a3df1e262ad717d141cf2bc325323787a78a57f1b482cebb0c7ce0942d4bc4",
+  "title": "HSBC: Áp lực tỷ giá và điều hành lãi suất trong nửa cuối 2026",
+  "recognized": true,
+  "entities": [
+    {
+      "surface": "HSBC",
+      "entity_id": null,
+      "type": "UNKNOWN",
+      "method": "semantic",
+      "in_list": false,
+      "confidence": 0.8
+    }
+  ],
+  "categories": {
+    "ticker_company": "out_of_list",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [
+    "HSBC"
+  ],
+  "citations": [
+    {
+      "source_span": "HSBC: Áp lực tỷ giá và điều hành lãi suất trong nửa cuối 2026"
+    }
+  ],
+  "confidence": 0.95,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

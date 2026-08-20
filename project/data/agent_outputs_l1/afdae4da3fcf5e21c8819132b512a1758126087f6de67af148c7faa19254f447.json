@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "afdae4da3fcf5e21c8819132b512a1758126087f6de67af148c7faa19254f447",
+  "title": "Theo dấu dòng tiền cá mập 19/08: Tự doanh dè dặt, khối ngoại tiếp tục bán ròng",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

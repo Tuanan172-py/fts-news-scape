@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "69a51c116ce58c973b34828ea8f1b2b98c5333b7ccce92abe8704cc190b465ea",
+  "title": "Khối ngoại bán ròng đều tay, hôm nay xả thêm 800 tỷ",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

@@ -1,0 +1,421 @@
+{
+  "silver_schema_version": "1.0",
+  "article_id": "9ee49fd8365b4228f5460d3ffd8a8a63ed7a0f3df5e47bd073df70efb3c7b929",
+  "source_url": "https://cafef.vn/ha-noi-phan-luong-tu-xa-phuc-vu-nguoi-dan-di-lai-dip-quoc-khanh-2-9-188260819104033088.chn",
+  "domain": "cafef.vn",
+  "content_sha256": "d628cdf27d3b0a4198dfeddcbaaf061f5a44afb67e5f934634522422b0cdb393",
+  "cleaned_text": "Hà Nội phân luồng từ xa phục vụ người dân đi lại dịp Quốc khánh 2-9\nSở Xây dựng Hà Nội vừa thông báo phương án phân luồng giao thông từ xa nhằm hạn chế ùn tắc trên các tuyến đường ra, vào Thủ đô trong dịp nghỉ Quốc khánh 2-9, kéo dài từ ngày 29-8 đến 2-9. Các phương tiện được hướng dẫn lựa chọn nhiều hướng thay thế qua các tuyến quốc lộ, cao tốc và đường vành đai.\nTheo phương án, đối với phương tiện từ Hà Nội đi các tỉnh phía Nam như Hưng Yên, Ninh Bình, Thanh Hóa, ngoài hướng trung tâm Hà Nội - nút giao Pháp Vân - Cầu Giẽ - cao tốc Pháp Vân - Cầu Giẽ, người dân có thể lựa chọn Quốc lộ 1 cũ qua Giải Phóng - Ngọc Hồi; Quốc lộ 6 - Ba La - đường 21B - Quốc lộ 38; hoặc Quốc lộ 6 - Xuân Mai - đường Hồ Chí Minh - đường 21B.\nỞ chiều từ các tỉnh phía Nam về Hà Nội, Sở Xây dựng hướng dẫn các phương tiện chủ động phân tán lưu lượng, giảm tải cho cao tốc Pháp Vân - Cầu Giẽ và nút giao Pháp Vân. Từ nút giao Liêm Tuyền có thể đi đường tỉnh 494 - Quốc lộ 21B - Quốc lộ 6; từ nút giao Vực Vòng có thể đi Quốc lộ 38 - Quốc lộ 21B - Quốc lộ 6 hoặc Quốc lộ 38 - cầu Yên Lệnh - Quốc lộ 39A - đường tỉnh 379 - Vành đai 3.\nVới các phương tiện đi các tỉnh phía Đông Bắc, có thể lựa chọn Vành đai 3 - cầu Thanh Trì - cao tốc Hà Nội - Bắc Giang; cầu Nhật Tân - Võ Nguyên Giáp - Quốc lộ 18; hoặc cầu Chương Dương - Nguyễn Văn Cừ - Hà Huy Tập - Ngô Gia Tự - cầu Đuống.\nĐối với hướng đi các tỉnh phía Bắc, phương tiện có thể qua cầu Thăng Long - Võ Văn Kiệt - Quốc lộ 2 để vào cao tốc Hà Nội - Lào Cai; hoặc lựa chọn Quốc lộ 3, Quốc lộ 32. Các tuyến phía Tây Bắc có thể đi Đại lộ Thăng Long - Tản Lĩnh - Yên Bài - cao tốc Hòa Lạc - Hòa Bình; Quốc lộ 6 qua Xuân Mai hoặc Quốc lộ 32.\nĐối với hướng đi các tỉnh phía Đông như Quảng Ninh, Hải Phòng, phương tiện có thể đi Cổ Linh - Vành đai 3 - cao tốc Hà Nội - Hải Phòng; đường tỉnh 379 hoặc Quốc lộ 5 cũ.\nSở Xây dựng yêu cầu các bến xe, doanh nghiệp vận tải nắm bắt phương án phân luồng từ xa, chủ động điều chỉnh lộ trình, tránh dồn phương tiện về các cửa ngõ. Công an thành phố phối hợp với Cục CSGT và các lực lượng liên quan tổ chức hướng dẫn, điều tiết giao thông; các địa phương bố trí lực lượng phối hợp tại những tuyến có nguy cơ ùn tắc.\nSở Xây dựng cũng đề nghị các tỉnh, thành phố lân cận phối hợp thông tin, hướng dẫn phương tiện lựa chọn hành trình phù hợp, qua đó giảm áp lực giao thông trên các tuyến cửa ngõ Thủ đô trong những ngày cao điểm.\nHà nội mới",
+  "extraction_quality": "high",
+  "structure": {
+    "headings": [
+      {
+        "level": 1,
+        "text": "Hà Nội phân luồng từ xa phục vụ người dân đi lại dịp Quốc khánh 2-9"
+      },
+      {
+        "level": 3,
+        "text": "CÙNG CHUYÊN MỤC"
+      },
+      {
+        "level": 4,
+        "text": "Toàn cảnh 3 siêu sân vận động quy mô chưa từng có tại Việt Nam: Vingroup đang xây sân lớn nhất thế giới, Sun Group phát triển dự án 70.000 chỗ ngay cạnh trung tâm Nổi bật"
+      },
+      {
+        "level": 4,
+        "text": "Có nên mua nhà khi lãi suất tăng cao, bán nhà khi lãi suất giảm: Sếp một công ty bất động sản nói thẳng Nổi bật"
+      },
+      {
+        "level": 4,
+        "text": "Tháng Ngâu, đừng vội tin nhà đất “giảm sốc”"
+      },
+      {
+        "level": 4,
+        "text": "Chính phủ đề xuất ưu tiên bồi thường bằng đất hoặc nhà ở tại chỗ cho người bị thu hồi đất"
+      },
+      {
+        "level": 4,
+        "text": "Đất vùng quê có lô giá khởi điểm gần 5 tỷ: 13 lô còn lại không có người đấu"
+      },
+      {
+        "level": 4,
+        "text": "Đấu giá đất vùng quê: 13 lô còn lại không có người đấu"
+      }
+    ],
+    "paragraphs": [
+      "MỚI NHẤT!",
+      "Theo Tuấn Lương | 19-08-2026 - 10:50 AM | Bất động sản",
+      "Sở Xây dựng Hà Nội vừa thông báo phương án phân luồng giao thông từ xa nhằm hạn chế ùn tắc trên các tuyến đường ra, vào Thủ đô trong dịp nghỉ Quốc khánh 2-9, kéo dài từ ngày 29-8 đến 2-9. Các phương tiện được hướng dẫn lựa chọn nhiều hướng thay thế qua các tuyến quốc lộ, cao tốc và đường vành đai.",
+      "Theo phương án, đối với phương tiện từ Hà Nội đi các tỉnh phía Nam như Hưng Yên, Ninh Bình, Thanh Hóa, ngoài hướng trung tâm Hà Nội - nút giao Pháp Vân - Cầu Giẽ - cao tốc Pháp Vân - Cầu Giẽ, người dân có thể lựa chọn Quốc lộ 1 cũ qua Giải Phóng - Ngọc Hồi; Quốc lộ 6 - Ba La - đường 21B - Quốc lộ 38; hoặc Quốc lộ 6 - Xuân Mai - đường Hồ Chí Minh - đường 21B.",
+      "Ở chiều từ các tỉnh phía Nam về Hà Nội, Sở Xây dựng hướng dẫn các phương tiện chủ động phân tán lưu lượng, giảm tải cho cao tốc Pháp Vân - Cầu Giẽ và nút giao Pháp Vân. Từ nút giao Liêm Tuyền có thể đi đường tỉnh 494 - Quốc lộ 21B - Quốc lộ 6; từ nút giao Vực Vòng có thể đi Quốc lộ 38 - Quốc lộ 21B - Quốc lộ 6 hoặc Quốc lộ 38 - cầu Yên Lệnh - Quốc lộ 39A - đường tỉnh 379 - Vành đai 3.",
+      "Với các phương tiện đi các tỉnh phía Đông Bắc, có thể lựa chọn Vành đai 3 - cầu Thanh Trì - cao tốc Hà Nội - Bắc Giang; cầu Nhật Tân - Võ Nguyên Giáp - Quốc lộ 18; hoặc cầu Chương Dương - Nguyễn Văn Cừ - Hà Huy Tập - Ngô Gia Tự - cầu Đuống.",
+      "Đối với hướng đi các tỉnh phía Bắc, phương tiện có thể qua cầu Thăng Long - Võ Văn Kiệt - Quốc lộ 2 để vào cao tốc Hà Nội - Lào Cai; hoặc lựa chọn Quốc lộ 3, Quốc lộ 32. Các tuyến phía Tây Bắc có thể đi Đại lộ Thăng Long - Tản Lĩnh - Yên Bài - cao tốc Hòa Lạc - Hòa Bình; Quốc lộ 6 qua Xuân Mai hoặc Quốc lộ 32.",
+      "Đối với hướng đi các tỉnh phía Đông như Quảng Ninh, Hải Phòng, phương tiện có thể đi Cổ Linh - Vành đai 3 - cao tốc Hà Nội - Hải Phòng; đường tỉnh 379 hoặc Quốc lộ 5 cũ.",
+      "Sở Xây dựng yêu cầu các bến xe, doanh nghiệp vận tải nắm bắt phương án phân luồng từ xa, chủ động điều chỉnh lộ trình, tránh dồn phương tiện về các cửa ngõ. Công an thành phố phối hợp với Cục CSGT và các lực lượng liên quan tổ chức hướng dẫn, điều tiết giao thông; các địa phương bố trí lực lượng phối hợp tại những tuyến có nguy cơ ùn tắc.",
+      "Sở Xây dựng cũng đề nghị các tỉnh, thành phố lân cận phối hợp thông tin, hướng dẫn phương tiện lựa chọn hành trình phù hợp, qua đó giảm áp lực giao thông trên các tuyến cửa ngõ Thủ đô trong những ngày cao điểm.",
+      "Theo Tuấn Lương",
+      "Hà nội mới",
+      "Địa chỉ: Tầng 21 Tòa nhà Center Building. Số 01, phố Nguyễn Huy Tưởng, phường Thanh Xuân, thành phố Hà Nội",
+      "Điện thoại: 024 7309 5555 Máy lẻ 292. Fax: 024-39744082",
+      "Email: info@cafef.vn | Hotline: 0926 864 344",
+      "Chịu trách nhiệm nội dung: Ông Nguyễn Thế Tân",
+      "Liên hệ quảng cáo",
+      "Hotline:",
+      "Email: doanhnghiep@admicro.vn",
+      "© Copyright 2007 - 2026 - Công ty Cổ phần VCCorp.",
+      "Giấy phép thiết lập trang thông tin điện tử tổng hợp trên mạng số 2216/GP-TTĐT do Sở Thông tin và Truyền thông Hà Nội cấp ngày 10 tháng 4 năm 2019."
+    ],
+    "tables": [],
+    "links": [
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "http://liveboard.cafef.vn",
+        "text": "Bảng giá điện tử"
+      },
+      {
+        "href": "/du-lieu/danh-muc-dau-tu.chn",
+        "text": "Danh mục đầu tư"
+      },
+      {
+        "href": "/doc-nhanh.chn",
+        "text": "Đọc nhanh >>"
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "XÃ HỘI"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "CHỨNG KHOÁN"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "BẤT ĐỘNG SẢN"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "DOANH NGHIỆP"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "NGÂN HÀNG"
+      },
+      {
+        "href": "/smart-money.chn",
+        "text": "SMART MONEY"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "TÀI CHÍNH QUỐC TẾ"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "VĨ MÔ"
+      },
+      {
+        "href": "/kinh-te-so.chn",
+        "text": "KINH TẾ SỐ"
+      },
+      {
+        "href": "/thi-truong.chn",
+        "text": "THỊ TRƯỜNG"
+      },
+      {
+        "href": "/song.chn",
+        "text": "SỐNG"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "LIFESTYLE"
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "Xã hội"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "Doanh nghiệp"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "Kinh tế vĩ mô"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "Chứng khoán"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "Tài chính ngân hàng"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "Tài chính quốc tế"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "Tin tức"
+      },
+      {
+        "href": "/du-an.chn",
+        "text": "Dự án"
+      },
+      {
+        "href": "/ban-do-du-an.chn",
+        "text": "Bản đồ dự án"
+      },
+      {
+        "href": "/hang-hoa-nguyen-lieu.chn",
+        "text": "Hàng hóa nguyên liệu"
+      },
+      {
+        "href": "/song.chn",
+        "text": "Sống"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "Lifestyle"
+      },
+      {
+        "href": "/nhom-chu-de/emagazine.chn",
+        "text": "Magazine"
+      },
+      {
+        "href": "/du-lieu.chn",
+        "text": "Dữ liệu"
+      },
+      {
+        "href": "/du-lieu/cafeflists.chn",
+        "text": "F INDEX"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "Bất động sản"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Chia sẻ"
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "javascript:;",
+        "text": "TIN MỚI"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Theo Hà nội mới Copy link"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Chia sẻ"
+      },
+      {
+        "href": "/phan-luong.html",
+        "text": "phân luồng,"
+      },
+      {
+        "href": "/dai-lo-thang-long.html",
+        "text": "đại lộ thăng long,"
+      },
+      {
+        "href": "/vo-van-kiet.html",
+        "text": "Võ Văn Kiệt,"
+      },
+      {
+        "href": "/thanh-pho-lan-can.html",
+        "text": "thành phố lân cận"
+      },
+      {
+        "href": "/toan-canh-3-sieu-san-van-dong-quy-mo-chua-tung-co-tai-viet-nam-vingroup-dang-xay-san-lon-nhat-the-gioi-sun-group-phat-trien-du-an-70000-cho-ngay-canh-trung-tam-188260809230903717.chn",
+        "text": ""
+      },
+      {
+        "href": "/toan-canh-3-sieu-san-van-dong-quy-mo-chua-tung-co-tai-viet-nam-vingroup-dang-xay-san-lon-nhat-the-gioi-sun-group-phat-trien-du-an-70000-cho-ngay-canh-trung-tam-188260809230903717.chn",
+        "text": "Toàn cảnh 3 siêu sân vận động quy mô chưa từng có tại Việt Nam: Vingroup đang xây sân lớn nhất thế giới, Sun Group phát triển dự án 70.000 chỗ ngay cạnh trung tâm"
+      },
+      {
+        "href": "/co-nen-mua-nha-khi-lai-suat-tang-cao-ban-nha-khi-lai-suat-giam-sep-mot-cong-ty-bat-dong-san-noi-thang-188260819101840049.chn",
+        "text": ""
+      },
+      {
+        "href": "/co-nen-mua-nha-khi-lai-suat-tang-cao-ban-nha-khi-lai-suat-giam-sep-mot-cong-ty-bat-dong-san-noi-thang-188260819101840049.chn",
+        "text": "Có nên mua nhà khi lãi suất tăng cao, bán nhà khi lãi suất giảm: Sếp một công ty bất động sản nói thẳng"
+      },
+      {
+        "href": "/thang-ngau-dung-voi-tin-nha-dat-giam-soc-188260819104428721.chn",
+        "text": ""
+      },
+      {
+        "href": "/thang-ngau-dung-voi-tin-nha-dat-giam-soc-188260819104428721.chn",
+        "text": "Tháng Ngâu, đừng vội tin nhà đất “giảm sốc”"
+      },
+      {
+        "href": "/chinh-phu-de-xuat-uu-tien-boi-thuong-bang-dat-hoac-nha-o-tai-cho-cho-nguoi-bi-thu-hoi-dat-188260819103611001.chn",
+        "text": ""
+      },
+      {
+        "href": "/chinh-phu-de-xuat-uu-tien-boi-thuong-bang-dat-hoac-nha-o-tai-cho-cho-nguoi-bi-thu-hoi-dat-188260819103611001.chn",
+        "text": "Chính phủ đề xuất ưu tiên bồi thường bằng đất hoặc nhà ở tại chỗ cho người bị thu hồi đất"
+      },
+      {
+        "href": "/dat-vung-que-co-lo-gia-khoi-diem-gan-5-ty-13-lo-con-lai-khong-co-nguoi-dau-188260819102109138.chn",
+        "text": ""
+      },
+      {
+        "href": "/dat-vung-que-co-lo-gia-khoi-diem-gan-5-ty-13-lo-con-lai-khong-co-nguoi-dau-188260819102109138.chn",
+        "text": "Đất vùng quê có lô giá khởi điểm gần 5 tỷ: 13 lô còn lại không có người đấu"
+      },
+      {
+        "href": "/dau-gia-dat-vung-que-13-lo-con-lai-khong-co-nguoi-dau-188260819085453768.chn",
+        "text": ""
+      },
+      {
+        "href": "/dau-gia-dat-vung-que-13-lo-con-lai-khong-co-nguoi-dau-188260819085453768.chn",
+        "text": "Đấu giá đất vùng quê: 13 lô còn lại không có người đấu"
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "XÃ HỘI"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "CHỨNG KHOÁN"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "BẤT ĐỘNG SẢN"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "DOANH NGHIỆP"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "NGÂN HÀNG"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "TÀI CHÍNH QUỐC TẾ"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "VĨ MÔ"
+      },
+      {
+        "href": "/kinh-te-so.chn",
+        "text": "KINH TẾ SỐ"
+      },
+      {
+        "href": "/thi-truong.chn",
+        "text": "THỊ TRƯỜNG"
+      },
+      {
+        "href": "/song.chn",
+        "text": "SỐNG"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "LIFESTYLE"
+      },
+      {
+        "href": "/du-lieu.chn",
+        "text": "Dữ liệu"
+      },
+      {
+        "href": "/du-lieu/top/ceo.chn",
+        "text": "Top 200"
+      },
+      {
+        "href": "https://www.messenger.com/t/108804609142280",
+        "text": "Chat với tư vấn viên"
+      },
+      {
+        "href": "http://www.vccorp.vn/",
+        "text": ""
+      },
+      {
+        "href": "/static/chinh-sach-bao-mat.html",
+        "text": "Chính sách bảo mật"
+      }
+    ]
+  },
+  "images": [
+    {
+      "outer_tag": "<img alt=\"Toàn cảnh 3 siêu sân vận động quy mô chưa từng có tại Việt Nam: Vingroup đang xây sân lớn nhất thế giới, Sun Group phát triển dự án 70.000 chỗ ngay cạnh trung tâm\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/9/san-van-dong-2-17862915177881330105608-0-0-1250-2000-crop-1786291522043299858362.jpg\" title=\"Toàn cảnh 3 siêu sân vận động quy mô chưa từng có tại Việt Nam: Vingroup đang xây sân lớn nhất thế giới, Sun Group phát triển dự án 70.000 chỗ ngay cạnh trung tâm\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/9/san-van-dong-2-17862915177881330105608-0-0-1250-2000-crop-1786291522043299858362.jpg",
+      "alt": "Toàn cảnh 3 siêu sân vận động quy mô chưa từng có tại Việt Nam: Vingroup đang xây sân lớn nhất thế giới, Sun Group phát triển dự án 70.000 chỗ ngay cạnh trung tâm",
+      "title": "Toàn cảnh 3 siêu sân vận động quy mô chưa từng có tại Việt Nam: Vingroup đang xây sân lớn nhất thế giới, Sun Group phát triển dự án 70.000 chỗ ngay cạnh trung tâm",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Có nên mua nhà khi lãi suất tăng cao, bán nhà khi lãi suất giảm: Sếp một công ty bất động sản nói thẳng\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787109474396-17871094747421509355260.jpg\" title=\"Có nên mua nhà khi lãi suất tăng cao, bán nhà khi lãi suất giảm: Sếp một công ty bất động sản nói thẳng\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787109474396-17871094747421509355260.jpg",
+      "alt": "Có nên mua nhà khi lãi suất tăng cao, bán nhà khi lãi suất giảm: Sếp một công ty bất động sản nói thẳng",
+      "title": "Có nên mua nhà khi lãi suất tăng cao, bán nhà khi lãi suất giảm: Sếp một công ty bất động sản nói thẳng",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Tháng Ngâu, đừng vội tin nhà đất “giảm sốc”\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787110907088-17871109073811016179670.jpg\" title=\"Tháng Ngâu, đừng vội tin nhà đất “giảm sốc”\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787110907088-17871109073811016179670.jpg",
+      "alt": "Tháng Ngâu, đừng vội tin nhà đất “giảm sốc”",
+      "title": "Tháng Ngâu, đừng vội tin nhà đất “giảm sốc”",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Chính phủ đề xuất ưu tiên bồi thường bằng đất hoặc nhà ở tại chỗ cho người bị thu hồi đất\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787110499963-17871105004181628848982.webp\" title=\"Chính phủ đề xuất ưu tiên bồi thường bằng đất hoặc nhà ở tại chỗ cho người bị thu hồi đất\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787110499963-17871105004181628848982.webp",
+      "alt": "Chính phủ đề xuất ưu tiên bồi thường bằng đất hoặc nhà ở tại chỗ cho người bị thu hồi đất",
+      "title": "Chính phủ đề xuất ưu tiên bồi thường bằng đất hoặc nhà ở tại chỗ cho người bị thu hồi đất",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Đất vùng quê có lô giá khởi điểm gần 5 tỷ: 13 lô còn lại không có người đấu\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787109643103-17871096434232023840471.webp\" title=\"Đất vùng quê có lô giá khởi điểm gần 5 tỷ: 13 lô còn lại không có người đấu\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787109643103-17871096434232023840471.webp",
+      "alt": "Đất vùng quê có lô giá khởi điểm gần 5 tỷ: 13 lô còn lại không có người đấu",
+      "title": "Đất vùng quê có lô giá khởi điểm gần 5 tỷ: 13 lô còn lại không có người đấu",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Đấu giá đất vùng quê: 13 lô còn lại không có người đấu\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787104449102-17871044493881101274110.webp\" title=\"Đấu giá đất vùng quê: 13 lô còn lại không có người đấu\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787104449102-17871044493881101274110.webp",
+      "alt": "Đấu giá đất vùng quê: 13 lô còn lại không có người đấu",
+      "title": "Đấu giá đất vùng quê: 13 lô còn lại không có người đấu",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Công ty Cổ phần VCCorp\" height=\"49px\" src=\"https://vccorp.mediacdn.vn/vccorp-s.png\" width=\"100px\"/>",
+      "resolved_url": "https://vccorp.mediacdn.vn/vccorp-s.png",
+      "alt": "Công ty Cổ phần VCCorp",
+      "title": "",
+      "caption": ""
+    }
+  ],
+  "language": "vi",
+  "built_at": "2026-08-19T11:02:58+07:00",
+  "built_from_raw_path": "data/raw_html\\cafef.vn\\20260819\\9ee49fd8365b4228f5460d3ffd8a8a63ed7a0f3df5e47bd073df70efb3c7b929.html"
+}

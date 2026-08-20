@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "6164e8868dea02c5cdd6c6255b2587d0207bb3d84ebf92071e7fe38cad41e262",
+  "title": "Hà Nội sẽ quy định cụ thể các khoản thu từ khai thác giá trị tăng thêm trong khu vực TOD",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

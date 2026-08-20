@@ -1,0 +1,37 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "0d864a7e543494fb4ca19052013a9b5cbd062f97a9c0aac64aaf5d10aa98ab7b",
+  "title": "Lợi suất trái phiếu leo thang khiến giá vàng trượt dốc, SPDR Gold Trust bán ròng mạnh",
+  "recognized": true,
+  "entities": [
+    {
+      "surface": "giá vàng",
+      "entity_id": null,
+      "type": "UNKNOWN",
+      "method": "semantic",
+      "in_list": false,
+      "confidence": 0.8
+    }
+  ],
+  "categories": {
+    "ticker_company": "out_of_list",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [
+    "giá vàng"
+  ],
+  "citations": [
+    {
+      "source_span": "Lợi suất trái phiếu leo thang khiến giá vàng trượt dốc, SPDR Gold Trust bán ròng mạnh"
+    }
+  ],
+  "confidence": 0.95,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

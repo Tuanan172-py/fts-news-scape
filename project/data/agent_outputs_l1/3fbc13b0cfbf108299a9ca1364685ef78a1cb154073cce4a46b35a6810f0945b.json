@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "3fbc13b0cfbf108299a9ca1364685ef78a1cb154073cce4a46b35a6810f0945b",
+  "title": "Công ty của đại gia Nguyễn Duy Kiên tiếp tục thay Chủ tịch lần thứ 4, nữ tướng SN 1983 được chọn",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

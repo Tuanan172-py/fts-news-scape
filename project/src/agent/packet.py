@@ -22,7 +22,7 @@ _SCHEMAS_DIR = Path(__file__).resolve().parents[2] / "schemas"
 OUTPUT_SCHEMA = "agent-output-v1"
 _OUTPUT_REQUIRED = [
     "output_schema_version", "article_id", "summary", "implication",
-    "materiality", "confidence", "citations", "processing_metadata",
+    "materiality", "citations", "processing_metadata",
 ]
 
 
@@ -45,7 +45,6 @@ def build_task_packet(work_package: dict, *, work_item_id: int | None = None) ->
         },
         # Ràng buộc để agent tự canh trước khi nộp (khớp DoD ở ingest).
         "constraints": {
-            "confidence_min": t["confidence_min"],
             "min_citations": t["min_citations"],
             "citations_must_be_substring_of": "input.cleaned_text",
             "extraction_quality_in": list(t["quality_ok"]),

@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "845dd7db4394168181dd8fb6dc3979933337901a20832fad40c1e6219a51961e",
+  "title": "Van Phuc City - Từ điểm hẹn Tổ Quốc Trong Tim đến điểm đến an cư",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

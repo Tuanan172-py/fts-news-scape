@@ -34,7 +34,6 @@ from src.db.writer import DBWriter
 from src.monitor.heartbeat import Heartbeat
 from src.notifier.file_notify import FileNotifier
 from src.processor.classifier import classify_rule_based
-from src.processor.sentiment import SentimentEngine
 
 import src.scrapers  # noqa: F401 — trigger @register
 from src.scrapers import REGISTRY
@@ -76,7 +75,6 @@ class Orchestrator:
             "dir", "data/notifications"
         )
         self.notifier = FileNotifier(out_dir=notif_dir)
-        self.sentiment = SentimentEngine()
         self._stopped = False
         self._lock_owner = lock_owner()          # Fix F: định danh giữ scheduler lock
         self._owns_scheduler_lock = False
@@ -123,16 +121,12 @@ class Orchestrator:
                 else run_with_retry(primary)
             )
             for a in result.new:
+                # Sentiment rule-based (VN lexicon) đã gỡ khỏi workflow giai đoạn này
+                # (self-lexicon giá trị thấp; sentiment "thật" do agent sinh ở lớp output).
+                # Engine giữ ở src/processor/sentiment.py để bật lại khi cần.
                 for cat in classify_rule_based(a.title, a.content_text):
                     if cat not in a.categories and cat != "uncategorized":
                         a.categories.append(cat)
-                if a.metadata.get("language", "vi") == "vi":
-                    a.sentiment, a.sentiment_score = self.sentiment.analyze(
-                        a.title, a.content_text
-                    )
-                else:
-                    # lexicon VN không áp dụng cho tiếng Anh (Phase 2 decision)
-                    a.sentiment, a.sentiment_score = "neutral", 0.0
                 self.writer.enqueue(a)
             self.heartbeat.record_result(result)
             results.append(result)

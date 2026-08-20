@@ -1,0 +1,444 @@
+{
+  "silver_schema_version": "1.0",
+  "article_id": "ea8affb1c4d9ec6b25e8d31d3e886945375dd2a115293b32157192509508b76d",
+  "source_url": "https://cafef.vn/tu-ngay-1-9-moi-thua-dat-cong-trinh-xay-dungse-co-ma-dinh-danh-rieng-12-chu-so-188260820143420032.chn",
+  "domain": "cafef.vn",
+  "content_sha256": "de47dc29d66207c7a88051e7aa9193fb546d8e00793a4c8fea601ec55d0a250d",
+  "cleaned_text": "Từ ngày 1/9, mỗi thửa đất, công trình xây dựng...sẽ có mã định danh riêng 12 chữ số\nTừ ngày 1/9, mỗi địa điểm tại Việt Nam sẽ được cấp một mã định danh riêng gồm 12 chữ số, tạo lập cơ sở dữ liệu thống nhất trên toàn quốc.\n- 20-08-2026Liên Khương trở lại sau gần 6 tháng: Sân bay hơn 1.000 tỷ đồng sẵn sàng đón những chuyến bay mới\n- 20-08-2026Tỷ phú Phạm Nhật Vượng đang cho xây đại đô thị biển ESG hàng đầu thế giới: Vận hành bằng năng lượng tái tạo, toàn bộ phương tiện chạy trong dự án đều được điện hóa\n- 20-08-2026Việt Nam sẽ có “kỳ quan giải trí” với 200 trò chơi tại thành phố giàu nhất cả nước, \"vượt mặt\" Disneyland Hong Kong và Universal Singapore\nChính phủ vừa ban hành Nghị định số 326/2026/NĐ-CP ngày 19/8/2026 quy định về định danh địa điểm.\nNghị định áp dụng đối với việc định danh các địa điểm trên lãnh thổ Việt Nam, trừ những đối tượng thuộc Danh mục bí mật Nhà nước.\nĐối tượng được định danh gồm thửa đất, công trình kiến trúc, công trình xây dựng, kết cấu xây dựng, địa danh hoặc các cấu trúc vật lý và đối tượng khác thuộc danh mục kèm theo Nghị định.\nMỗi địa điểm chỉ được cấp một mã định danh duy nhất, có cấu trúc thống nhất trên toàn quốc, không trùng lặp và bảo đảm tính liên tục, ổn định lâu dài. Mã định danh địa điểm là dãy số tự nhiên gồm 12 chữ số do Cơ sở dữ liệu định danh địa điểm xác lập.\nĐáng chú ý, đối với những đối tượng có kết cấu theo chiều dài, tiếp giáp dọc đường giao thông và có thể tiếp cận từ bất kỳ vị trí nào trên đoạn đường đó, việc gán định danh được thực hiện tương tự như đối với đường giao thông. Khi đó, địa điểm của đối tượng gồm địa chỉ điểm đầu, điểm cuối, các nút giao, điểm giao cắt trên tuyến hoặc điểm giao cắt với địa giới hành chính cấp tỉnh.\nViệc cấp mã định danh được thực hiện dựa trên dữ liệu từ các cơ sở dữ liệu quốc gia và cơ sở dữ liệu chuyên ngành, bảo đảm kế thừa, đồng bộ và thống nhất, đồng thời không thay thế chức năng quản lý nhà nước của các cơ quan theo quy định pháp luật.\nQuá trình định danh phải tuân thủ các quy định về quốc phòng, an ninh, bảo vệ bí mật nhà nước và quyền, lợi ích hợp pháp của tổ chức, cá nhân.\nCơ quan nhà nước được giao quản lý chuyên ngành đối với đối tượng thuộc danh mục định danh, hoặc cơ quan quản lý cơ sở dữ liệu quốc gia, cơ sở dữ liệu chuyên ngành chứa dữ liệu gốc về sự hình thành, tồn tại và biến động của đối tượng, có trách nhiệm chủ trì rà soát, chuẩn hóa, thu thập và đồng bộ dữ liệu để phục vụ cấp mã định danh.\nTheo Nghị định, Cơ sở dữ liệu định danh địa điểm là cơ sở dữ liệu quốc gia, tập trung và thống nhất trên phạm vi toàn quốc, được chuẩn hóa, lưu trữ và quản lý thông tin về các địa điểm thuộc phạm vi điều chỉnh.\nDữ liệu được lưu trữ gồm mã định danh; đối tượng và địa chỉ địa điểm; lối tiếp cận; mã bưu chính; tọa độ theo hệ tọa độ quốc gia VN-2000 hoặc hệ tọa độ toàn cầu WGS-84; thông tin giấy chứng nhận quyền sử dụng đất nếu có; trạng thái hoạt động; tên địa điểm; thông tin kết cấu, địa không gian ba chiều; cơ quan chủ quản dữ liệu; dấu hiệu nhận biết; thông tin tổ chức, cá nhân sở hữu hoặc sử dụng địa điểm và các thông tin khác được kết nối, chia sẻ từ cơ sở dữ liệu quốc gia, cơ sở dữ liệu chuyên ngành.\nDữ liệu định danh địa điểm được kết nối, chia sẻ và khai thác để phục vụ quản lý nhà nước và phát triển kinh tế - xã hội. Việc khai thác phải đúng mục đích, phạm vi và thẩm quyền; đồng thời không yêu cầu người dân, tổ chức cung cấp lại những thành phần hồ sơ mà thông tin tương ứng đã có trong Cơ sở dữ liệu định danh địa điểm.\nNgười dân và tổ chức có thể khai thác dữ liệu công khai về định danh địa điểm trên ứng dụng định danh quốc gia VNeID. Cơ quan nhà nước, tổ chức chính trị, tổ chức chính trị - xã hội được khai thác dữ liệu phục vụ chức năng, nhiệm vụ thông qua các nền tảng chia sẻ, điều phối dữ liệu quốc gia, nền tảng định danh và xác thực điện tử và các nền tảng tích hợp, chia sẻ dữ liệu khác theo quy định.\nTổ chức, cá nhân cũng được khai thác thông tin của mình trong Cơ sở dữ liệu định danh địa điểm thông qua VNeID. Đối với các trường hợp đặc thù như người mất năng lực hành vi dân sự, người có khó khăn trong nhận thức và làm chủ hành vi, người dưới 14 tuổi, người bị tuyên bố mất tích hoặc người đã chết, việc khai thác thông tin phải thực hiện thông qua hoặc có sự đồng ý của người đại diện hợp pháp, người giám hộ, người quản lý tài sản hoặc người thừa kế theo quy định.\nCác tổ chức, cá nhân không thuộc những nhóm trên có thể khai thác dữ liệu về định danh địa điểm thông qua tổ chức cung cấp dịch vụ xác thực điện tử và phải nộp phí khai thác, sử dụng thông tin. Trường hợp cần khai thác những thông tin khác trong Cơ sở dữ liệu định danh địa điểm, phải có sự đồng ý của chủ sở hữu hoặc người quản lý địa điểm.\nNghị định số 326/2026/NĐ-CP có hiệu lực thi hành từ ngày 1/9/2026.\nNhịp sống thị trường",
+  "extraction_quality": "high",
+  "structure": {
+    "headings": [
+      {
+        "level": 1,
+        "text": "Từ ngày 1/9, mỗi thửa đất, công trình xây dựng...sẽ có mã định danh riêng 12 chữ số"
+      },
+      {
+        "level": 3,
+        "text": "CÙNG CHUYÊN MỤC"
+      },
+      {
+        "level": 4,
+        "text": "Diễn biến mới nhất thị trường chung cư, biệt thự, nhà phố ở TP.HCM Nổi bật"
+      },
+      {
+        "level": 4,
+        "text": "Tỷ phú Phạm Nhật Vượng đang cho xây tòa tháp 108 tầng, sẽ trở thành tòa nhà lấn biển cao nhất thế giới tại siêu đô thị 10 tỷ USD chưa từng có trong lịch sử Nổi bật"
+      },
+      {
+        "level": 4,
+        "text": "Liên Khương trở lại sau gần 6 tháng: Sân bay hơn 1.000 tỷ đồng sẵn sàng đón những chuyến bay mới"
+      },
+      {
+        "level": 4,
+        "text": "Phường Lĩnh Nam công khai phương án quy hoạch chi tiết hai khu đô thị quy mô gần 270ha"
+      },
+      {
+        "level": 4,
+        "text": "Hơn 7.000 doanh nghiệp liên quan các đường dây mua bán hóa đơn ở Đồng Nai"
+      },
+      {
+        "level": 4,
+        "text": "Hà Nội: Xử lý hàng loạt vi phạm lấn chiếm đất nông nghiệp, đất công"
+      }
+    ],
+    "paragraphs": [
+      "MỚI NHẤT!",
+      "Thế Anh | 20-08-2026 - 14:36 PM | Bất động sản",
+      "Từ ngày 1/9, mỗi địa điểm tại Việt Nam sẽ được cấp một mã định danh riêng gồm 12 chữ số, tạo lập cơ sở dữ liệu thống nhất trên toàn quốc.",
+      "Chính phủ vừa ban hành Nghị định số 326/2026/NĐ-CP ngày 19/8/2026 quy định về định danh địa điểm.",
+      "Nghị định áp dụng đối với việc định danh các địa điểm trên lãnh thổ Việt Nam, trừ những đối tượng thuộc Danh mục bí mật Nhà nước.",
+      "Đối tượng được định danh gồm thửa đất, công trình kiến trúc, công trình xây dựng, kết cấu xây dựng, địa danh hoặc các cấu trúc vật lý và đối tượng khác thuộc danh mục kèm theo Nghị định.",
+      "Mỗi địa điểm chỉ được cấp một mã định danh duy nhất, có cấu trúc thống nhất trên toàn quốc, không trùng lặp và bảo đảm tính liên tục, ổn định lâu dài. Mã định danh địa điểm là dãy số tự nhiên gồm 12 chữ số do Cơ sở dữ liệu định danh địa điểm xác lập.",
+      "Đáng chú ý, đối với những đối tượng có kết cấu theo chiều dài, tiếp giáp dọc đường giao thông và có thể tiếp cận từ bất kỳ vị trí nào trên đoạn đường đó, việc gán định danh được thực hiện tương tự như đối với đường giao thông. Khi đó, địa điểm của đối tượng gồm địa chỉ điểm đầu, điểm cuối, các nút giao, điểm giao cắt trên tuyến hoặc điểm giao cắt với địa giới hành chính cấp tỉnh.",
+      "Việc cấp mã định danh được thực hiện dựa trên dữ liệu từ các cơ sở dữ liệu quốc gia và cơ sở dữ liệu chuyên ngành, bảo đảm kế thừa, đồng bộ và thống nhất, đồng thời không thay thế chức năng quản lý nhà nước của các cơ quan theo quy định pháp luật.",
+      "Quá trình định danh phải tuân thủ các quy định về quốc phòng, an ninh, bảo vệ bí mật nhà nước và quyền, lợi ích hợp pháp của tổ chức, cá nhân.",
+      "Cơ quan nhà nước được giao quản lý chuyên ngành đối với đối tượng thuộc danh mục định danh, hoặc cơ quan quản lý cơ sở dữ liệu quốc gia, cơ sở dữ liệu chuyên ngành chứa dữ liệu gốc về sự hình thành, tồn tại và biến động của đối tượng, có trách nhiệm chủ trì rà soát, chuẩn hóa, thu thập và đồng bộ dữ liệu để phục vụ cấp mã định danh.",
+      "Theo Nghị định, Cơ sở dữ liệu định danh địa điểm là cơ sở dữ liệu quốc gia, tập trung và thống nhất trên phạm vi toàn quốc, được chuẩn hóa, lưu trữ và quản lý thông tin về các địa điểm thuộc phạm vi điều chỉnh.",
+      "Dữ liệu được lưu trữ gồm mã định danh; đối tượng và địa chỉ địa điểm; lối tiếp cận; mã bưu chính; tọa độ theo hệ tọa độ quốc gia VN-2000 hoặc hệ tọa độ toàn cầu WGS-84; thông tin giấy chứng nhận quyền sử dụng đất nếu có; trạng thái hoạt động; tên địa điểm; thông tin kết cấu, địa không gian ba chiều; cơ quan chủ quản dữ liệu; dấu hiệu nhận biết; thông tin tổ chức, cá nhân sở hữu hoặc sử dụng địa điểm và các thông tin khác được kết nối, chia sẻ từ cơ sở dữ liệu quốc gia, cơ sở dữ liệu chuyên ngành.",
+      "Dữ liệu định danh địa điểm được kết nối, chia sẻ và khai thác để phục vụ quản lý nhà nước và phát triển kinh tế - xã hội. Việc khai thác phải đúng mục đích, phạm vi và thẩm quyền; đồng thời không yêu cầu người dân, tổ chức cung cấp lại những thành phần hồ sơ mà thông tin tương ứng đã có trong Cơ sở dữ liệu định danh địa điểm.",
+      "Người dân và tổ chức có thể khai thác dữ liệu công khai về định danh địa điểm trên ứng dụng định danh quốc gia VNeID. Cơ quan nhà nước, tổ chức chính trị, tổ chức chính trị - xã hội được khai thác dữ liệu phục vụ chức năng, nhiệm vụ thông qua các nền tảng chia sẻ, điều phối dữ liệu quốc gia, nền tảng định danh và xác thực điện tử và các nền tảng tích hợp, chia sẻ dữ liệu khác theo quy định.",
+      "Tổ chức, cá nhân cũng được khai thác thông tin của mình trong Cơ sở dữ liệu định danh địa điểm thông qua VNeID. Đối với các trường hợp đặc thù như người mất năng lực hành vi dân sự, người có khó khăn trong nhận thức và làm chủ hành vi, người dưới 14 tuổi, người bị tuyên bố mất tích hoặc người đã chết, việc khai thác thông tin phải thực hiện thông qua hoặc có sự đồng ý của người đại diện hợp pháp, người giám hộ, người quản lý tài sản hoặc người thừa kế theo quy định.",
+      "Các tổ chức, cá nhân không thuộc những nhóm trên có thể khai thác dữ liệu về định danh địa điểm thông qua tổ chức cung cấp dịch vụ xác thực điện tử và phải nộp phí khai thác, sử dụng thông tin. Trường hợp cần khai thác những thông tin khác trong Cơ sở dữ liệu định danh địa điểm, phải có sự đồng ý của chủ sở hữu hoặc người quản lý địa điểm.",
+      "Nghị định số 326/2026/NĐ-CP có hiệu lực thi hành từ ngày 1/9/2026.",
+      "Thế Anh",
+      "Nhịp sống thị trường",
+      "Địa chỉ: Tầng 21 Tòa nhà Center Building. Số 01, phố Nguyễn Huy Tưởng, phường Thanh Xuân, thành phố Hà Nội",
+      "Điện thoại: 024 7309 5555 Máy lẻ 292. Fax: 024-39744082",
+      "Email: info@cafef.vn | Hotline: 0926 864 344",
+      "Chịu trách nhiệm nội dung: Ông Nguyễn Thế Tân",
+      "Liên hệ quảng cáo",
+      "Hotline:",
+      "Email: doanhnghiep@admicro.vn",
+      "© Copyright 2007 - 2026 - Công ty Cổ phần VCCorp.",
+      "Giấy phép thiết lập trang thông tin điện tử tổng hợp trên mạng số 2216/GP-TTĐT do Sở Thông tin và Truyền thông Hà Nội cấp ngày 10 tháng 4 năm 2019."
+    ],
+    "tables": [],
+    "links": [
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "http://liveboard.cafef.vn",
+        "text": "Bảng giá điện tử"
+      },
+      {
+        "href": "/du-lieu/danh-muc-dau-tu.chn",
+        "text": "Danh mục đầu tư"
+      },
+      {
+        "href": "/doc-nhanh.chn",
+        "text": "Đọc nhanh >>"
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "XÃ HỘI"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "CHỨNG KHOÁN"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "BẤT ĐỘNG SẢN"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "DOANH NGHIỆP"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "NGÂN HÀNG"
+      },
+      {
+        "href": "/smart-money.chn",
+        "text": "SMART MONEY"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "TÀI CHÍNH QUỐC TẾ"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "VĨ MÔ"
+      },
+      {
+        "href": "/kinh-te-so.chn",
+        "text": "KINH TẾ SỐ"
+      },
+      {
+        "href": "/thi-truong.chn",
+        "text": "THỊ TRƯỜNG"
+      },
+      {
+        "href": "/song.chn",
+        "text": "SỐNG"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "LIFESTYLE"
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "Xã hội"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "Doanh nghiệp"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "Kinh tế vĩ mô"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "Chứng khoán"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "Tài chính ngân hàng"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "Tài chính quốc tế"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "Tin tức"
+      },
+      {
+        "href": "/du-an.chn",
+        "text": "Dự án"
+      },
+      {
+        "href": "/ban-do-du-an.chn",
+        "text": "Bản đồ dự án"
+      },
+      {
+        "href": "/hang-hoa-nguyen-lieu.chn",
+        "text": "Hàng hóa nguyên liệu"
+      },
+      {
+        "href": "/song.chn",
+        "text": "Sống"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "Lifestyle"
+      },
+      {
+        "href": "/nhom-chu-de/emagazine.chn",
+        "text": "Magazine"
+      },
+      {
+        "href": "/du-lieu.chn",
+        "text": "Dữ liệu"
+      },
+      {
+        "href": "/du-lieu/cafeflists.chn",
+        "text": "F INDEX"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "Bất động sản"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Chia sẻ"
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/lien-khuong-tro-lai-sau-gan-6-thang-san-bay-hon-1000-ty-dong-san-sang-don-nhung-chuyen-bay-moi-188260820140941933.chn",
+        "text": "Liên Khương trở lại sau gần 6 tháng: Sân bay hơn 1.000 tỷ đồng sẵn sàng đón những chuyến bay mới"
+      },
+      {
+        "href": "/ty-phu-pham-nhat-vuong-dang-cho-xay-dai-do-thi-bien-esg-hang-dau-the-gioi-van-hanh-bang-nang-luong-tai-tao-toan-bo-phuong-tien-chay-trong-du-an-deu-duoc-dien-hoa-18826082012115653.chn",
+        "text": "Tỷ phú Phạm Nhật Vượng đang cho xây đại đô thị biển ESG hàng đầu thế giới: Vận hành bằng năng lượng tái tạo, toàn bộ phương tiện chạy trong dự án đều được điện hóa"
+      },
+      {
+        "href": "/viet-nam-se-co-ky-quan-giai-tri-voi-200-tro-choi-tai-thanh-pho-giau-nhat-ca-nuoc-vuot-mat-disneyland-hong-kong-va-universal-singapore-188260820110744593.chn",
+        "text": "Việt Nam sẽ có “kỳ quan giải trí” với 200 trò chơi tại thành phố giàu nhất cả nước, \"vượt mặt\" Disneyland Hong Kong và Universal Singapore"
+      },
+      {
+        "href": "javascript:;",
+        "text": "TIN MỚI"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Theo Nhịp sống thị trường Copy link"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Chia sẻ"
+      },
+      {
+        "href": "/cong-trinh.html",
+        "text": "công trình,"
+      },
+      {
+        "href": "/thua-dat.html",
+        "text": "thửa đất,"
+      },
+      {
+        "href": "/ma-dinh-danh.html",
+        "text": "mã định danh"
+      },
+      {
+        "href": "/dien-bien-moi-nhat-thi-truong-chung-cu-biet-thu-nha-pho-o-tphcm-188260820121257346.chn",
+        "text": ""
+      },
+      {
+        "href": "/dien-bien-moi-nhat-thi-truong-chung-cu-biet-thu-nha-pho-o-tphcm-188260820121257346.chn",
+        "text": "Diễn biến mới nhất thị trường chung cư, biệt thự, nhà phố ở TP.HCM"
+      },
+      {
+        "href": "/ty-phu-pham-nhat-vuong-dang-cho-xay-toa-thap-108-tang-se-tro-thanh-toa-nha-lan-bien-cao-nhat-the-gioi-tai-sieu-do-thi-10-ty-usd-chua-tung-co-trong-lich-su-18826082008092263.chn",
+        "text": ""
+      },
+      {
+        "href": "/ty-phu-pham-nhat-vuong-dang-cho-xay-toa-thap-108-tang-se-tro-thanh-toa-nha-lan-bien-cao-nhat-the-gioi-tai-sieu-do-thi-10-ty-usd-chua-tung-co-trong-lich-su-18826082008092263.chn",
+        "text": "Tỷ phú Phạm Nhật Vượng đang cho xây tòa tháp 108 tầng, sẽ trở thành tòa nhà lấn biển cao nhất thế giới tại siêu đô thị 10 tỷ USD chưa từng có trong lịch sử"
+      },
+      {
+        "href": "/lien-khuong-tro-lai-sau-gan-6-thang-san-bay-hon-1000-ty-dong-san-sang-don-nhung-chuyen-bay-moi-188260820140941933.chn",
+        "text": ""
+      },
+      {
+        "href": "/lien-khuong-tro-lai-sau-gan-6-thang-san-bay-hon-1000-ty-dong-san-sang-don-nhung-chuyen-bay-moi-188260820140941933.chn",
+        "text": "Liên Khương trở lại sau gần 6 tháng: Sân bay hơn 1.000 tỷ đồng sẵn sàng đón những chuyến bay mới"
+      },
+      {
+        "href": "/phuong-linh-nam-cong-khai-phuong-an-quy-hoach-chi-tiet-hai-khu-do-thi-quy-mo-gan-270ha-188260820140030823.chn",
+        "text": ""
+      },
+      {
+        "href": "/phuong-linh-nam-cong-khai-phuong-an-quy-hoach-chi-tiet-hai-khu-do-thi-quy-mo-gan-270ha-188260820140030823.chn",
+        "text": "Phường Lĩnh Nam công khai phương án quy hoạch chi tiết hai khu đô thị quy mô gần 270ha"
+      },
+      {
+        "href": "/hon-7000-doanh-nghiep-lien-quan-cac-duong-day-mua-ban-hoa-don-o-dong-nai-188260820135415043.chn",
+        "text": ""
+      },
+      {
+        "href": "/hon-7000-doanh-nghiep-lien-quan-cac-duong-day-mua-ban-hoa-don-o-dong-nai-188260820135415043.chn",
+        "text": "Hơn 7.000 doanh nghiệp liên quan các đường dây mua bán hóa đơn ở Đồng Nai"
+      },
+      {
+        "href": "/ha-noi-xu-ly-hang-loat-vi-pham-lan-chiem-dat-nong-nghiep-dat-cong-188260820135020135.chn",
+        "text": ""
+      },
+      {
+        "href": "/ha-noi-xu-ly-hang-loat-vi-pham-lan-chiem-dat-nong-nghiep-dat-cong-188260820135020135.chn",
+        "text": "Hà Nội: Xử lý hàng loạt vi phạm lấn chiếm đất nông nghiệp, đất công"
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "XÃ HỘI"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "CHỨNG KHOÁN"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "BẤT ĐỘNG SẢN"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "DOANH NGHIỆP"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "NGÂN HÀNG"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "TÀI CHÍNH QUỐC TẾ"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "VĨ MÔ"
+      },
+      {
+        "href": "/kinh-te-so.chn",
+        "text": "KINH TẾ SỐ"
+      },
+      {
+        "href": "/thi-truong.chn",
+        "text": "THỊ TRƯỜNG"
+      },
+      {
+        "href": "/song.chn",
+        "text": "SỐNG"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "LIFESTYLE"
+      },
+      {
+        "href": "/du-lieu.chn",
+        "text": "Dữ liệu"
+      },
+      {
+        "href": "/du-lieu/top/ceo.chn",
+        "text": "Top 200"
+      },
+      {
+        "href": "https://www.messenger.com/t/108804609142280",
+        "text": "Chat với tư vấn viên"
+      },
+      {
+        "href": "http://www.vccorp.vn/",
+        "text": ""
+      },
+      {
+        "href": "/static/chinh-sach-bao-mat.html",
+        "text": "Chính sách bảo mật"
+      }
+    ]
+  },
+  "images": [
+    {
+      "outer_tag": "<img alt=\"Từ ngày 1/9, mỗi thửa đất, công trình xây dựng...sẽ có mã định danh riêng 12 chữ số\" data-role=\"cover\" fetchpriority=\"high\" src=\"https://cafefcdn.com/thumb_w/640/203337114487263232/2026/8/20/avatar1787211213393-1787211213945411730537.jpg\" title=\"Từ ngày 1/9, mỗi thửa đất, công trình xây dựng...sẽ có mã định danh riêng 12 chữ số\"/>",
+      "resolved_url": "https://cafefcdn.com/thumb_w/640/203337114487263232/2026/8/20/avatar1787211213393-1787211213945411730537.jpg",
+      "alt": "Từ ngày 1/9, mỗi thửa đất, công trình xây dựng...sẽ có mã định danh riêng 12 chữ số",
+      "title": "Từ ngày 1/9, mỗi thửa đất, công trình xây dựng...sẽ có mã định danh riêng 12 chữ số",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Diễn biến mới nhất thị trường chung cư, biệt thự, nhà phố ở TP.HCM\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787202731831-17872027321741818066237.png\" title=\"Diễn biến mới nhất thị trường chung cư, biệt thự, nhà phố ở TP.HCM\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787202731831-17872027321741818066237.png",
+      "alt": "Diễn biến mới nhất thị trường chung cư, biệt thự, nhà phố ở TP.HCM",
+      "title": "Diễn biến mới nhất thị trường chung cư, biệt thự, nhà phố ở TP.HCM",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Tỷ phú Phạm Nhật Vượng đang cho xây tòa tháp 108 tầng, sẽ trở thành tòa nhà lấn biển cao nhất thế giới tại siêu đô thị 10 tỷ USD chưa từng có trong lịch sử\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787187790968-17871877916261173951652.png\" title=\"Tỷ phú Phạm Nhật Vượng đang cho xây tòa tháp 108 tầng, sẽ trở thành tòa nhà lấn biển cao nhất thế giới tại siêu đô thị 10 tỷ USD chưa từng có trong lịch sử\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787187790968-17871877916261173951652.png",
+      "alt": "Tỷ phú Phạm Nhật Vượng đang cho xây tòa tháp 108 tầng, sẽ trở thành tòa nhà lấn biển cao nhất thế giới tại siêu đô thị 10 tỷ USD chưa từng có trong lịch sử",
+      "title": "Tỷ phú Phạm Nhật Vượng đang cho xây tòa tháp 108 tầng, sẽ trở thành tòa nhà lấn biển cao nhất thế giới tại siêu đô thị 10 tỷ USD chưa từng có trong lịch sử",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Liên Khương trở lại sau gần 6 tháng: Sân bay hơn 1.000 tỷ đồng sẵn sàng đón những chuyến bay mới\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787209501702-1787209504150136779410.jpg\" title=\"Liên Khương trở lại sau gần 6 tháng: Sân bay hơn 1.000 tỷ đồng sẵn sàng đón những chuyến bay mới\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787209501702-1787209504150136779410.jpg",
+      "alt": "Liên Khương trở lại sau gần 6 tháng: Sân bay hơn 1.000 tỷ đồng sẵn sàng đón những chuyến bay mới",
+      "title": "Liên Khương trở lại sau gần 6 tháng: Sân bay hơn 1.000 tỷ đồng sẵn sàng đón những chuyến bay mới",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Phường Lĩnh Nam công khai phương án quy hoạch chi tiết hai khu đô thị quy mô gần 270ha\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787209145477-1787209145753874539572.jpeg\" title=\"Phường Lĩnh Nam công khai phương án quy hoạch chi tiết hai khu đô thị quy mô gần 270ha\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787209145477-1787209145753874539572.jpeg",
+      "alt": "Phường Lĩnh Nam công khai phương án quy hoạch chi tiết hai khu đô thị quy mô gần 270ha",
+      "title": "Phường Lĩnh Nam công khai phương án quy hoạch chi tiết hai khu đô thị quy mô gần 270ha",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Hơn 7.000 doanh nghiệp liên quan các đường dây mua bán hóa đơn ở Đồng Nai\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787208799857-17872088004171628584858.webp\" title=\"Hơn 7.000 doanh nghiệp liên quan các đường dây mua bán hóa đơn ở Đồng Nai\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787208799857-17872088004171628584858.webp",
+      "alt": "Hơn 7.000 doanh nghiệp liên quan các đường dây mua bán hóa đơn ở Đồng Nai",
+      "title": "Hơn 7.000 doanh nghiệp liên quan các đường dây mua bán hóa đơn ở Đồng Nai",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Hà Nội: Xử lý hàng loạt vi phạm lấn chiếm đất nông nghiệp, đất công\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787208571884-17872085722231344303788.webp\" title=\"Hà Nội: Xử lý hàng loạt vi phạm lấn chiếm đất nông nghiệp, đất công\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787208571884-17872085722231344303788.webp",
+      "alt": "Hà Nội: Xử lý hàng loạt vi phạm lấn chiếm đất nông nghiệp, đất công",
+      "title": "Hà Nội: Xử lý hàng loạt vi phạm lấn chiếm đất nông nghiệp, đất công",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Công ty Cổ phần VCCorp\" height=\"49px\" src=\"https://vccorp.mediacdn.vn/vccorp-s.png\" width=\"100px\"/>",
+      "resolved_url": "https://vccorp.mediacdn.vn/vccorp-s.png",
+      "alt": "Công ty Cổ phần VCCorp",
+      "title": "",
+      "caption": ""
+    }
+  ],
+  "language": "vi",
+  "built_at": "2026-08-20T14:47:58+07:00",
+  "built_from_raw_path": "data/raw_html\\cafef.vn\\20260820\\ea8affb1c4d9ec6b25e8d31d3e886945375dd2a115293b32157192509508b76d.html"
+}

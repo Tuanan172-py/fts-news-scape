@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "132b6eab6af6d2cb918ba597d4e1a8b702cfad12e8b53020e8d10d9152698a6c",
+  "title": "Copy Trading mở ra cơ hội mới cho IB và Affiliate: Không cần là trader chuyên nghiệp vẫn có thể phát triển thu nhập",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "7d8c09988b4365dcda74f8b01d17302a15b482bfb57510d84dd53ee9e443e6bf",
+  "title": "Lời thú nhận của một Gen Z làm nghề nhân viên quan sát mây trời, nhận lương 232 triệu đồng/tháng",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

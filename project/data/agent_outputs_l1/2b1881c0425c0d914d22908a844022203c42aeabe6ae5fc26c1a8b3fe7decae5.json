@@ -1,0 +1,37 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "2b1881c0425c0d914d22908a844022203c42aeabe6ae5fc26c1a8b3fe7decae5",
+  "title": "Trung Quốc rẽ đường lên Bắc cực, né điểm nóng biển Đỏ",
+  "recognized": true,
+  "entities": [
+    {
+      "surface": "Trung Quốc",
+      "entity_id": null,
+      "type": "UNKNOWN",
+      "method": "semantic",
+      "in_list": false,
+      "confidence": 0.8
+    }
+  ],
+  "categories": {
+    "ticker_company": "out_of_list",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [
+    "Trung Quốc"
+  ],
+  "citations": [
+    {
+      "source_span": "Trung Quốc rẽ đường lên Bắc cực, né điểm nóng biển Đỏ"
+    }
+  ],
+  "confidence": 0.95,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

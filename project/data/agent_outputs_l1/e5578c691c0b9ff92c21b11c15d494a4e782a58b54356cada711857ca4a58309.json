@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "e5578c691c0b9ff92c21b11c15d494a4e782a58b54356cada711857ca4a58309",
+  "title": "Từ ngày mai, sân bay Liên Khương được khai thác trở lại",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

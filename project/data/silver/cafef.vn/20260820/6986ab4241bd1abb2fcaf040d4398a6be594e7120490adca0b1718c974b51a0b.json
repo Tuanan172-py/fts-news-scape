@@ -1,0 +1,423 @@
+{
+  "silver_schema_version": "1.0",
+  "article_id": "6986ab4241bd1abb2fcaf040d4398a6be594e7120490adca0b1718c974b51a0b",
+  "source_url": "https://cafef.vn/vn-index-hut-hoi-co-phieu-bat-dong-san-do-lua-18826081917113529.chn",
+  "domain": "cafef.vn",
+  "content_sha256": "668be98303901d3647ef3764a7a07d7c401ecfb73716793f4c309508472a350e",
+  "cleaned_text": "VN-Index hụt hơi, cổ phiếu bất động sản 'đỏ lửa'\nVN-Index tiếp tục điều chỉnh trong phiên giao dịch hôm nay (19/8) khi áp lực bán gia tăng tại nhiều nhóm cổ phiếu lớn. Thanh khoản thấp và khối ngoại bán ròng gần 700 tỷ đồng cho thấy tâm lý thận trọng vẫn chi phối thị trường.\nThị trường chứng khoán chịu sức ép điều chỉnh khi bên bán chiếm ưu thế. Trong phiên chiều, chỉ số có lúc lùi sát 1.720 điểm trước khi hồi phục một phần vào cuối ngày.\nKết phiên, VN-Index giảm 5,33 điểm (0,31%), xuống 1.726 điểm. Đáng chú ý, dòng tiền vẫn chưa cho thấy sự nhập cuộc rõ rệt. Thanh khoản HoSE chỉ tiệm cận 15.000 tỷ đồng.\nTâm điểm của phiên giao dịch nằm ở nhóm bất động sản khi sắc đỏ gần như phủ kín bảng điện. Toàn nhóm có 55 mã giảm giá, trong khi chỉ 12 mã tăng. NTL trở thành một trong những cổ phiếu giảm mạnh nhất khi mất gần 7%. BCM giảm gần 3%; DIG, TCH và KDH cùng giảm quanh 2%. NVL, VRE, PDR và NLG cũng đồng loạt giảm trên 1%.\nMột số điểm sáng vẫn xuất hiện như CLI tăng gần 3%, VPI tăng gần 1% và VGC tăng nhẹ, song chưa đủ sức thay đổi bức tranh chung.\nÁp lực bán cũng lan sang ngân hàng và chứng khoán. VCB, CTG, MSB và BVB giảm giá, trong khi VND mất 1,56%, HCM giảm 1% và FTS giảm 1,6%. \"Tân binh\" nhóm chứng khoán LPS kết phiên đứng tham chiếu.\nỞ chiều ngược lại, LPB, VNM, HPG, TCB góp phần hạn chế mức giảm của VN-Index. Trong phiên thị trường điều chỉnh, PNJ \"ngược dòng\" tăng gần 2%. Đáng chú ý, nhóm nhà đầu tư nước ngoài do Sprucegrove Investment Management đại diện vừa thông báo trở thành cổ đông lớn tại Công ty cổ phần Vàng bạc đá quý Phú Nhuận (PNJ). Trong giai đoạn 5-14/8, nhóm này đã mua thêm khoảng 1,63 triệu cổ phiếu, nâng tổng lượng sở hữu lên 25,81 triệu đơn vị, chiếm 5,04% vốn PNJ.\nVanguard là công ty quản lý tài sản lớn thứ hai thế giới, chỉ sau BlackRock, với khoảng 12.800 tỷ USD đang quản lý tính đến cuối tháng 4/2026.\nHôm nay, nhà đầu tư nước ngoài tiếp tục bán ròng khoảng 685 tỷ đồng. Mã cổ phiếu bị bán mạnh là STB với gần 123 tỷ đồng và VPE gần 99 tỷ đồng. Một số mã khác như GMD, VCE và MSN cũng chịu áp lực bán đáng kể.\nỞ chiều mua, VNM được khối ngoại gom mạnh nhất, với khoảng 61 tỷ đồng. DGW và FRT lần lượt được mua ròng gần 48 tỷ đồng và 33 tỷ đồng.\nTiền Phong",
+  "extraction_quality": "high",
+  "structure": {
+    "headings": [
+      {
+        "level": 1,
+        "text": "VN-Index hụt hơi, cổ phiếu bất động sản 'đỏ lửa'"
+      },
+      {
+        "level": 3,
+        "text": "CÙNG CHUYÊN MỤC"
+      },
+      {
+        "level": 4,
+        "text": "Một công ty chứng khoán \"rót\" gần 1.000 tỷ đồng vào một mã ngân hàng, tạm lãi hơn trăm tỷ Nổi bật"
+      },
+      {
+        "level": 4,
+        "text": "“Dòng tiền lớn” bán ròng 80.000 tỷ đồng cổ phiếu từ đầu năm, chuyên gia lý giải nguyên nhân Nổi bật"
+      },
+      {
+        "level": 4,
+        "text": "Sau khi bắt tay với Elon Musk, tỷ phú Phạm Nhật Vượng tìm nhân tài đưa vệ tinh VN lên quỹ đạo bằng tên lửa"
+      },
+      {
+        "level": 4,
+        "text": "Novaland sẽ dùng hơn 8.000 tỷ đồng từ chào bán cổ phiếu vào mục đích gì?"
+      },
+      {
+        "level": 4,
+        "text": "Một thế lực vẫn tung hàng trăm tỷ mua ròng cổ phiếu phiên 19/8"
+      },
+      {
+        "level": 4,
+        "text": "Phát hiện gần 24 kg vàng tại sân bay “Xứ sở vạn đảo”"
+      }
+    ],
+    "paragraphs": [
+      "MỚI NHẤT!",
+      "Việt Linh | 19-08-2026 - 17:31 PM | Thị trường chứng khoán",
+      "VN-Index tiếp tục điều chỉnh trong phiên giao dịch hôm nay (19/8) khi áp lực bán gia tăng tại nhiều nhóm cổ phiếu lớn. Thanh khoản thấp và khối ngoại bán ròng gần 700 tỷ đồng cho thấy tâm lý thận trọng vẫn chi phối thị trường.",
+      "Thị trường chứng khoán chịu sức ép điều chỉnh khi bên bán chiếm ưu thế. Trong phiên chiều, chỉ số có lúc lùi sát 1.720 điểm trước khi hồi phục một phần vào cuối ngày.",
+      "Kết phiên, VN-Index giảm 5,33 điểm (0,31%), xuống 1.726 điểm. Đáng chú ý, dòng tiền vẫn chưa cho thấy sự nhập cuộc rõ rệt. Thanh khoản HoSE chỉ tiệm cận 15.000 tỷ đồng.",
+      "Tâm điểm của phiên giao dịch nằm ở nhóm bất động sản khi sắc đỏ gần như phủ kín bảng điện. Toàn nhóm có 55 mã giảm giá, trong khi chỉ 12 mã tăng. NTL trở thành một trong những cổ phiếu giảm mạnh nhất khi mất gần 7%. BCM giảm gần 3%; DIG, TCH và KDH cùng giảm quanh 2%. NVL, VRE, PDR và NLG cũng đồng loạt giảm trên 1%.",
+      "Nhóm bất động sản ngập trong sắc đỏ.",
+      "Một số điểm sáng vẫn xuất hiện như CLI tăng gần 3%, VPI tăng gần 1% và VGC tăng nhẹ, song chưa đủ sức thay đổi bức tranh chung.",
+      "Áp lực bán cũng lan sang ngân hàng và chứng khoán. VCB, CTG, MSB và BVB giảm giá, trong khi VND mất 1,56%, HCM giảm 1% và FTS giảm 1,6%. \"Tân binh\" nhóm chứng khoán LPS kết phiên đứng tham chiếu.",
+      "Ở chiều ngược lại, LPB, VNM, HPG, TCB góp phần hạn chế mức giảm của VN-Index. Trong phiên thị trường điều chỉnh, PNJ \"ngược dòng\" tăng gần 2%. Đáng chú ý, nhóm nhà đầu tư nước ngoài do Sprucegrove Investment Management đại diện vừa thông báo trở thành cổ đông lớn tại Công ty cổ phần Vàng bạc đá quý Phú Nhuận (PNJ). Trong giai đoạn 5-14/8, nhóm này đã mua thêm khoảng 1,63 triệu cổ phiếu, nâng tổng lượng sở hữu lên 25,81 triệu đơn vị, chiếm 5,04% vốn PNJ.",
+      "Vanguard là công ty quản lý tài sản lớn thứ hai thế giới, chỉ sau BlackRock, với khoảng 12.800 tỷ USD đang quản lý tính đến cuối tháng 4/2026.",
+      "Hôm nay, nhà đầu tư nước ngoài tiếp tục bán ròng khoảng 685 tỷ đồng. Mã cổ phiếu bị bán mạnh là STB với gần 123 tỷ đồng và VPE gần 99 tỷ đồng. Một số mã khác như GMD, VCE và MSN cũng chịu áp lực bán đáng kể.",
+      "Ở chiều mua, VNM được khối ngoại gom mạnh nhất, với khoảng 61 tỷ đồng. DGW và FRT lần lượt được mua ròng gần 48 tỷ đồng và 33 tỷ đồng.",
+      "Việt Linh",
+      "Tiền Phong",
+      "Địa chỉ: Tầng 21 Tòa nhà Center Building. Số 01, phố Nguyễn Huy Tưởng, phường Thanh Xuân, thành phố Hà Nội",
+      "Điện thoại: 024 7309 5555 Máy lẻ 292. Fax: 024-39744082",
+      "Email: info@cafef.vn | Hotline: 0926 864 344",
+      "Chịu trách nhiệm nội dung: Ông Nguyễn Thế Tân",
+      "Liên hệ quảng cáo",
+      "Hotline:",
+      "Email: doanhnghiep@admicro.vn",
+      "© Copyright 2007 - 2026 - Công ty Cổ phần VCCorp.",
+      "Giấy phép thiết lập trang thông tin điện tử tổng hợp trên mạng số 2216/GP-TTĐT do Sở Thông tin và Truyền thông Hà Nội cấp ngày 10 tháng 4 năm 2019."
+    ],
+    "tables": [],
+    "links": [
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "http://liveboard.cafef.vn",
+        "text": "Bảng giá điện tử"
+      },
+      {
+        "href": "/du-lieu/danh-muc-dau-tu.chn",
+        "text": "Danh mục đầu tư"
+      },
+      {
+        "href": "/doc-nhanh.chn",
+        "text": "Đọc nhanh >>"
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "XÃ HỘI"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "CHỨNG KHOÁN"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "BẤT ĐỘNG SẢN"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "DOANH NGHIỆP"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "NGÂN HÀNG"
+      },
+      {
+        "href": "/smart-money.chn",
+        "text": "SMART MONEY"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "TÀI CHÍNH QUỐC TẾ"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "VĨ MÔ"
+      },
+      {
+        "href": "/kinh-te-so.chn",
+        "text": "KINH TẾ SỐ"
+      },
+      {
+        "href": "/thi-truong.chn",
+        "text": "THỊ TRƯỜNG"
+      },
+      {
+        "href": "/song.chn",
+        "text": "SỐNG"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "LIFESTYLE"
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "Xã hội"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "Doanh nghiệp"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "Kinh tế vĩ mô"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "Chứng khoán"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "Tài chính ngân hàng"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "Tài chính quốc tế"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "Tin tức"
+      },
+      {
+        "href": "/du-an.chn",
+        "text": "Dự án"
+      },
+      {
+        "href": "/ban-do-du-an.chn",
+        "text": "Bản đồ dự án"
+      },
+      {
+        "href": "/hang-hoa-nguyen-lieu.chn",
+        "text": "Hàng hóa nguyên liệu"
+      },
+      {
+        "href": "/song.chn",
+        "text": "Sống"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "Lifestyle"
+      },
+      {
+        "href": "/nhom-chu-de/emagazine.chn",
+        "text": "Magazine"
+      },
+      {
+        "href": "/du-lieu.chn",
+        "text": "Dữ liệu"
+      },
+      {
+        "href": "/du-lieu/cafeflists.chn",
+        "text": "F INDEX"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "Thị trường chứng khoán"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Chia sẻ"
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "javascript:;",
+        "text": "TIN MỚI"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Theo Tiền Phong Copy link"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Chia sẻ"
+      },
+      {
+        "href": "/chung-khoan.html",
+        "text": "chứng khoán,"
+      },
+      {
+        "href": "/co-phieu.html",
+        "text": "cổ  phiếu"
+      },
+      {
+        "href": "/mot-cong-ty-chung-khoan-rot-gan-1000-ty-dong-vao-mot-ma-ngan-hang-tam-lai-hon-tram-ty-188260819194108166.chn",
+        "text": ""
+      },
+      {
+        "href": "/mot-cong-ty-chung-khoan-rot-gan-1000-ty-dong-vao-mot-ma-ngan-hang-tam-lai-hon-tram-ty-188260819194108166.chn",
+        "text": "Một công ty chứng khoán \"rót\" gần 1.000 tỷ đồng vào một mã ngân hàng, tạm lãi hơn trăm tỷ"
+      },
+      {
+        "href": "/dong-tien-lon-ban-rong-80000-ty-dong-co-phieu-tu-dau-nam-chuyen-gia-ly-giai-nguyen-nhan-188260818221134958.chn",
+        "text": ""
+      },
+      {
+        "href": "/dong-tien-lon-ban-rong-80000-ty-dong-co-phieu-tu-dau-nam-chuyen-gia-ly-giai-nguyen-nhan-188260818221134958.chn",
+        "text": "“Dòng tiền lớn” bán ròng 80.000 tỷ đồng cổ phiếu từ đầu năm, chuyên gia lý giải nguyên nhân"
+      },
+      {
+        "href": "/sau-khi-bat-tay-voi-elon-musk-ty-phu-pham-nhat-vuong-tim-nhan-tai-dua-ve-tinh-vn-len-quy-dao-bang-ten-lua-188260819202302988.chn",
+        "text": ""
+      },
+      {
+        "href": "/sau-khi-bat-tay-voi-elon-musk-ty-phu-pham-nhat-vuong-tim-nhan-tai-dua-ve-tinh-vn-len-quy-dao-bang-ten-lua-188260819202302988.chn",
+        "text": "Sau khi bắt tay với Elon Musk, tỷ phú Phạm Nhật Vượng tìm nhân tài đưa vệ tinh VN lên quỹ đạo bằng tên lửa"
+      },
+      {
+        "href": "/novaland-se-dung-hon-8000-ty-dong-tu-chao-ban-co-phieu-vao-muc-dich-gi-188260819193619907.chn",
+        "text": ""
+      },
+      {
+        "href": "/novaland-se-dung-hon-8000-ty-dong-tu-chao-ban-co-phieu-vao-muc-dich-gi-188260819193619907.chn",
+        "text": "Novaland sẽ dùng hơn 8.000 tỷ đồng từ chào bán cổ phiếu vào mục đích gì?"
+      },
+      {
+        "href": "/mot-the-luc-van-tung-hang-tram-ty-mua-rong-co-phieu-phien-19-8-188260819171008289.chn",
+        "text": ""
+      },
+      {
+        "href": "/mot-the-luc-van-tung-hang-tram-ty-mua-rong-co-phieu-phien-19-8-188260819171008289.chn",
+        "text": "Một thế lực vẫn tung hàng trăm tỷ mua ròng cổ phiếu phiên 19/8"
+      },
+      {
+        "href": "/phat-hien-gan-24-kg-vang-tai-san-bay-xu-so-van-dao-188260819162327807.chn",
+        "text": ""
+      },
+      {
+        "href": "/phat-hien-gan-24-kg-vang-tai-san-bay-xu-so-van-dao-188260819162327807.chn",
+        "text": "Phát hiện gần 24 kg vàng tại sân bay “Xứ sở vạn đảo”"
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "XÃ HỘI"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "CHỨNG KHOÁN"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "BẤT ĐỘNG SẢN"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "DOANH NGHIỆP"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "NGÂN HÀNG"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "TÀI CHÍNH QUỐC TẾ"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "VĨ MÔ"
+      },
+      {
+        "href": "/kinh-te-so.chn",
+        "text": "KINH TẾ SỐ"
+      },
+      {
+        "href": "/thi-truong.chn",
+        "text": "THỊ TRƯỜNG"
+      },
+      {
+        "href": "/song.chn",
+        "text": "SỐNG"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "LIFESTYLE"
+      },
+      {
+        "href": "/du-lieu.chn",
+        "text": "Dữ liệu"
+      },
+      {
+        "href": "/du-lieu/top/ceo.chn",
+        "text": "Top 200"
+      },
+      {
+        "href": "https://www.messenger.com/t/108804609142280",
+        "text": "Chat với tư vấn viên"
+      },
+      {
+        "href": "http://www.vccorp.vn/",
+        "text": ""
+      },
+      {
+        "href": "/static/chinh-sach-bao-mat.html",
+        "text": "Chính sách bảo mật"
+      }
+    ]
+  },
+  "images": [
+    {
+      "outer_tag": "<img alt=\"\" class=\"\" data-original=\"https://cdn.tienphong.vn/images/jIy-L7RZASska78YCD81aTHzQ__nejr6jLELoBOz7MIUQWmhmkxyWz87V43VYM3OLQhwgyyv-pjaC54MM9cxRpHDlaqpST5c2vNJytPUoV4/anh-man-hinh-2026-08-19-luc-160522.png.avif\" h=\"1115\" height=\"\" rel=\"lightbox\" src=\"https://cdn.tienphong.vn/images/jIy-L7RZASska78YCD81aTHzQ__nejr6jLELoBOz7MIUQWmhmkxyWz87V43VYM3OLQhwgyyv-pjaC54MM9cxRpHDlaqpST5c2vNJytPUoV4/anh-man-hinh-2026-08-19-luc-160522.png.avif\" title=\"\" type=\"photo\" w=\"1507\" width=\"\"/>",
+      "resolved_url": "https://cdn.tienphong.vn/images/jIy-L7RZASska78YCD81aTHzQ__nejr6jLELoBOz7MIUQWmhmkxyWz87V43VYM3OLQhwgyyv-pjaC54MM9cxRpHDlaqpST5c2vNJytPUoV4/anh-man-hinh-2026-08-19-luc-160522.png.avif",
+      "alt": "",
+      "title": "",
+      "caption": "Nhóm bất động sản ngập trong sắc đỏ."
+    },
+    {
+      "outer_tag": "<img alt='Một công ty chứng khoán \"rót\" gần 1.000 tỷ đồng vào một mã ngân hàng, tạm lãi hơn trăm tỷ' height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787143208992-1787143209345748948081.jpg\" title='Một công ty chứng khoán \"rót\" gần 1.000 tỷ đồng vào một mã ngân hàng, tạm lãi hơn trăm tỷ' width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787143208992-1787143209345748948081.jpg",
+      "alt": "Một công ty chứng khoán \"rót\" gần 1.000 tỷ đồng vào một mã ngân hàng, tạm lãi hơn trăm tỷ",
+      "title": "Một công ty chứng khoán \"rót\" gần 1.000 tỷ đồng vào một mã ngân hàng, tạm lãi hơn trăm tỷ",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"“Dòng tiền lớn” bán ròng 80.000 tỷ đồng cổ phiếu từ đầu năm, chuyên gia lý giải nguyên nhân\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/avatar1787065850401-17870658507661375647030.jpg\" title=\"“Dòng tiền lớn” bán ròng 80.000 tỷ đồng cổ phiếu từ đầu năm, chuyên gia lý giải nguyên nhân\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/avatar1787065850401-17870658507661375647030.jpg",
+      "alt": "“Dòng tiền lớn” bán ròng 80.000 tỷ đồng cổ phiếu từ đầu năm, chuyên gia lý giải nguyên nhân",
+      "title": "“Dòng tiền lớn” bán ròng 80.000 tỷ đồng cổ phiếu từ đầu năm, chuyên gia lý giải nguyên nhân",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Sau khi bắt tay với Elon Musk, tỷ phú Phạm Nhật Vượng tìm nhân tài đưa vệ tinh VN lên quỹ đạo bằng tên lửa\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787145716054-17871457164871550250488.jpg\" title=\"Sau khi bắt tay với Elon Musk, tỷ phú Phạm Nhật Vượng tìm nhân tài đưa vệ tinh VN lên quỹ đạo bằng tên lửa\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787145716054-17871457164871550250488.jpg",
+      "alt": "Sau khi bắt tay với Elon Musk, tỷ phú Phạm Nhật Vượng tìm nhân tài đưa vệ tinh VN lên quỹ đạo bằng tên lửa",
+      "title": "Sau khi bắt tay với Elon Musk, tỷ phú Phạm Nhật Vượng tìm nhân tài đưa vệ tinh VN lên quỹ đạo bằng tên lửa",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Novaland sẽ dùng hơn 8.000 tỷ đồng từ chào bán cổ phiếu vào mục đích gì?\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787142925155-17871429255771509742835.jpg\" title=\"Novaland sẽ dùng hơn 8.000 tỷ đồng từ chào bán cổ phiếu vào mục đích gì?\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787142925155-17871429255771509742835.jpg",
+      "alt": "Novaland sẽ dùng hơn 8.000 tỷ đồng từ chào bán cổ phiếu vào mục đích gì?",
+      "title": "Novaland sẽ dùng hơn 8.000 tỷ đồng từ chào bán cổ phiếu vào mục đích gì?",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Một thế lực vẫn tung hàng trăm tỷ mua ròng cổ phiếu phiên 19/8\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787134179512-17871341798311517620889.png\" title=\"Một thế lực vẫn tung hàng trăm tỷ mua ròng cổ phiếu phiên 19/8\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787134179512-17871341798311517620889.png",
+      "alt": "Một thế lực vẫn tung hàng trăm tỷ mua ròng cổ phiếu phiên 19/8",
+      "title": "Một thế lực vẫn tung hàng trăm tỷ mua ròng cổ phiếu phiên 19/8",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Phát hiện gần 24 kg vàng tại sân bay “Xứ sở vạn đảo”\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787131369087-17871313704391376869246.jpeg\" title=\"Phát hiện gần 24 kg vàng tại sân bay “Xứ sở vạn đảo”\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787131369087-17871313704391376869246.jpeg",
+      "alt": "Phát hiện gần 24 kg vàng tại sân bay “Xứ sở vạn đảo”",
+      "title": "Phát hiện gần 24 kg vàng tại sân bay “Xứ sở vạn đảo”",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Công ty Cổ phần VCCorp\" height=\"49px\" src=\"https://vccorp.mediacdn.vn/vccorp-s.png\" width=\"100px\"/>",
+      "resolved_url": "https://vccorp.mediacdn.vn/vccorp-s.png",
+      "alt": "Công ty Cổ phần VCCorp",
+      "title": "",
+      "caption": ""
+    }
+  ],
+  "language": "vi",
+  "built_at": "2026-08-20T09:02:59+07:00",
+  "built_from_raw_path": "data/raw_html\\cafef.vn\\20260820\\6986ab4241bd1abb2fcaf040d4398a6be594e7120490adca0b1718c974b51a0b.html"
+}

@@ -1,0 +1,430 @@
+{
+  "silver_schema_version": "1.0",
+  "article_id": "ddc40c32320fe1e09c3046b41affa608dad2ac36a93f663f0f16663d973a01fd",
+  "source_url": "https://cafef.vn/nguoi-dan-nga-lam-mot-viec-chua-tung-co-trong-4-nam-33-ty-usd-deu-dan-bien-mat-khoi-ngan-hang-moi-thang-188260820095158123.chn",
+  "domain": "cafef.vn",
+  "content_sha256": "c7dbe3021ab7e45e88393cb186d38101082e969e8bfa78205afc805a7396bc13",
+  "cleaned_text": "Người dân Nga làm một việc chưa từng có trong 4 năm, 3,3 tỷ USD đều đặn 'biến mất' khỏi ngân hàng mỗi tháng\nNgười dân Nga đang rút tiền mặt khỏi hệ thống ngân hàng với tốc độ mạnh nhất trong nhiều năm.\nTheo dữ liệu được các nền tảng tài chính Nga tổng hợp, khoảng 24,4 tỷ euro đã bị rút khỏi hệ thống ngân hàng nước này trong 7 tháng đầu năm. Nhu cầu nắm giữ tiền mặt bắt đầu tăng từ đầu tháng 3 và tiếp tục leo thang, với khoảng 300 tỷ rúp (3,3 tỷ USD) rời khỏi tài khoản ngân hàng mỗi tháng.\nLàn sóng rút tiền diễn ra trong bối cảnh các cuộc tấn công bằng drone của Ukraine nhằm vào nhà máy lọc dầu, kho vận và hạ tầng năng lượng Nga ngày càng dồn dập, khiến người dân lo ngại hoạt động của ngân hàng bị gián đoạn.\nTrong 7 ngân hàng lớn nhất Nga, 5 ngân hàng ghi nhận dòng tiền gửi cá nhân liên tục chảy ra. Gazprombank chịu tác động nặng nhất, mất 299,5 tỷ rúp trong 4 tháng, tương đương khoảng 10,8% tổng tiền gửi.\nRosselkhozbank mất 270,5 tỷ rúp, hơn 15% lượng tiền gửi. Alfa-Bank, ngân hàng tư nhân lớn nhất Nga, ghi nhận dòng tiền rút 179,4 tỷ rúp, tương đương 5,6% tiền gửi.\nSovcombank và VTB cũng chứng kiến dòng tiền chảy ra lần lượt 81,7 tỷ và 20,4 tỷ rúp. Sberbank, ngân hàng lớn nhất Nga, ban đầu vẫn trụ vững, nhưng sau đó cũng chịu áp lực khi 211,6 tỷ rúp bị rút trong tháng 6 và thêm 31,8 tỷ rúp trong tháng 7. T-Bank là ngoại lệ hiếm hoi, khi lượng tiền gửi tăng thêm 193 tỷ rúp.\nNgân hàng Trung ương Nga cho biết lượng tiền mặt lưu thông trong nền kinh tế tăng 643,4 tỷ rúp chỉ riêng trong tháng 7, mức tăng theo tháng lớn nhất từ đầu năm. Trong nửa đầu tháng 8, thêm khoảng 300 tỷ rúp tiếp tục bị rút ra khỏi hệ thống.\nĐằng sau làn sóng này là hai nỗi lo chồng lên nhau. Người dân lo ngại các cuộc tấn công của Ukraine có thể làm gián đoạn hoạt động ngân hàng, thanh toán hoặc hạ tầng tài chính.\nCác ngân hàng Nga cũng bị cuốn sâu vào diễn biến của nền kinh tế. Trong nhiều năm, họ mở rộng cho vay theo định hướng nhà nước với các doanh nghiệp quốc phòng, giúp duy trì sản xuất vũ khí nhưng làm tăng rủi ro nợ xấu và bóp nghẹt nguồn vốn cho khu vực dân sự.\nDoanh nghiệp lớn cũng tìm cách đưa tiền ra ngoài tầm với của cơ quan quản lý trong nước. Riêng quý II năm nay, hơn 9,4 tỷ USD đã chảy khỏi hệ thống ngân hàng Nga.\nĐây không phải lần đầu người Nga ồ ạt rút tiền. Năm 2022, sau khi xung đột ở Ukraine bùng phát và phương Tây áp lệnh trừng phạt, người dân cũng xếp hàng rút tiền mặt.\nKhi đó, Ngân hàng Trung ương Nga nâng lãi suất lên 20% và áp kiểm soát vốn để ổn định hệ thống. Nhưng làn sóng hiện nay được đánh giá kéo dài hơn và có quy mô lớn hơn, cho thấy niềm tin vào hệ thống tài chính đang bị bào mòn.\nBức tranh kinh tế chung cũng không sáng sủa. Theo số liệu chính thức của Nga, GDP chỉ tăng 0,3% trong nửa đầu năm 2026, thấp hơn nhiều so với mức 1,2% cùng kỳ năm trước.\nTheo Euronews\nNhịp sống thị trường",
+  "extraction_quality": "high",
+  "structure": {
+    "headings": [
+      {
+        "level": 1,
+        "text": "Người dân Nga làm một việc chưa từng có trong 4 năm, 3,3 tỷ USD đều đặn 'biến mất' khỏi ngân hàng mỗi tháng"
+      },
+      {
+        "level": 3,
+        "text": "CÙNG CHUYÊN MỤC"
+      },
+      {
+        "level": 4,
+        "text": "Biên bản họp Fed được công bố: Số quan chức ủng hộ tăng lãi suất nhiều hơn 3, nội bộ chia rẽ mạnh Nổi bật"
+      },
+      {
+        "level": 4,
+        "text": "Phát hiện khối bê tông 1.540 tấn được 'nhấc bổng' lên không trung, chuẩn bị mở tuyến đường thủy rút ngắn 560 km Nổi bật"
+      },
+      {
+        "level": 4,
+        "text": "Dubai: Người đàn ông ăn xin lái xe sang sau khi tan ca làm việc"
+      },
+      {
+        "level": 4,
+        "text": "Trung Quốc: Tổ chức hơn 40 bàn tiệc mừng con đỗ đại học, bữa tiệc bất ngờ trở thành thảm kịch khiến 5 người tử vong, 17 người bị thương"
+      },
+      {
+        "level": 4,
+        "text": "Thất tịch hay \"Valentine Trung Quốc\" vốn là ngày phụ nữ cầu sự khéo léo, không phải cầu tình duyên"
+      },
+      {
+        "level": 4,
+        "text": "Truyền thông quốc tế: Trung Quốc giành chiến thắng trước Elon Musk, nhưng Space X vẫn thống trị cuộc đua"
+      }
+    ],
+    "paragraphs": [
+      "MỚI NHẤT!",
+      "Vu Lam | 20-08-2026 - 10:00 AM | Tài chính quốc tế",
+      "Người dân Nga đang rút tiền mặt khỏi hệ thống ngân hàng với tốc độ mạnh nhất trong nhiều năm.",
+      "Theo dữ liệu được các nền tảng tài chính Nga tổng hợp, khoảng 24,4 tỷ euro đã bị rút khỏi hệ thống ngân hàng nước này trong 7 tháng đầu năm. Nhu cầu nắm giữ tiền mặt bắt đầu tăng từ đầu tháng 3 và tiếp tục leo thang, với khoảng 300 tỷ rúp (3,3 tỷ USD) rời khỏi tài khoản ngân hàng mỗi tháng.",
+      "Làn sóng rút tiền diễn ra trong bối cảnh các cuộc tấn công bằng drone của Ukraine nhằm vào nhà máy lọc dầu, kho vận và hạ tầng năng lượng Nga ngày càng dồn dập, khiến người dân lo ngại hoạt động của ngân hàng bị gián đoạn.",
+      "Trong 7 ngân hàng lớn nhất Nga, 5 ngân hàng ghi nhận dòng tiền gửi cá nhân liên tục chảy ra. Gazprombank chịu tác động nặng nhất, mất 299,5 tỷ rúp trong 4 tháng, tương đương khoảng 10,8% tổng tiền gửi.",
+      "Rosselkhozbank mất 270,5 tỷ rúp, hơn 15% lượng tiền gửi. Alfa-Bank, ngân hàng tư nhân lớn nhất Nga, ghi nhận dòng tiền rút 179,4 tỷ rúp, tương đương 5,6% tiền gửi.",
+      "Sovcombank và VTB cũng chứng kiến dòng tiền chảy ra lần lượt 81,7 tỷ và 20,4 tỷ rúp. Sberbank, ngân hàng lớn nhất Nga, ban đầu vẫn trụ vững, nhưng sau đó cũng chịu áp lực khi 211,6 tỷ rúp bị rút trong tháng 6 và thêm 31,8 tỷ rúp trong tháng 7. T-Bank là ngoại lệ hiếm hoi, khi lượng tiền gửi tăng thêm 193 tỷ rúp.",
+      "Ngân hàng Trung ương Nga cho biết lượng tiền mặt lưu thông trong nền kinh tế tăng 643,4 tỷ rúp chỉ riêng trong tháng 7, mức tăng theo tháng lớn nhất từ đầu năm. Trong nửa đầu tháng 8, thêm khoảng 300 tỷ rúp tiếp tục bị rút ra khỏi hệ thống.",
+      "Đằng sau làn sóng này là hai nỗi lo chồng lên nhau. Người dân lo ngại các cuộc tấn công của Ukraine có thể làm gián đoạn hoạt động ngân hàng, thanh toán hoặc hạ tầng tài chính.",
+      "Các ngân hàng Nga cũng bị cuốn sâu vào diễn biến của nền kinh tế. Trong nhiều năm, họ mở rộng cho vay theo định hướng nhà nước với các doanh nghiệp quốc phòng, giúp duy trì sản xuất vũ khí nhưng làm tăng rủi ro nợ xấu và bóp nghẹt nguồn vốn cho khu vực dân sự.",
+      "Doanh nghiệp lớn cũng tìm cách đưa tiền ra ngoài tầm với của cơ quan quản lý trong nước. Riêng quý II năm nay, hơn 9,4 tỷ USD đã chảy khỏi hệ thống ngân hàng Nga.",
+      "Đây không phải lần đầu người Nga ồ ạt rút tiền. Năm 2022, sau khi xung đột ở Ukraine bùng phát và phương Tây áp lệnh trừng phạt, người dân cũng xếp hàng rút tiền mặt.",
+      "Khi đó, Ngân hàng Trung ương Nga nâng lãi suất lên 20% và áp kiểm soát vốn để ổn định hệ thống. Nhưng làn sóng hiện nay được đánh giá kéo dài hơn và có quy mô lớn hơn, cho thấy niềm tin vào hệ thống tài chính đang bị bào mòn.",
+      "Bức tranh kinh tế chung cũng không sáng sủa. Theo số liệu chính thức của Nga, GDP chỉ tăng 0,3% trong nửa đầu năm 2026, thấp hơn nhiều so với mức 1,2% cùng kỳ năm trước.",
+      "Theo Euronews﻿",
+      "Vu Lam",
+      "Nhịp sống thị trường",
+      "Địa chỉ: Tầng 21 Tòa nhà Center Building. Số 01, phố Nguyễn Huy Tưởng, phường Thanh Xuân, thành phố Hà Nội",
+      "Điện thoại: 024 7309 5555 Máy lẻ 292. Fax: 024-39744082",
+      "Email: info@cafef.vn | Hotline: 0926 864 344",
+      "Chịu trách nhiệm nội dung: Ông Nguyễn Thế Tân",
+      "Liên hệ quảng cáo",
+      "Hotline:",
+      "Email: doanhnghiep@admicro.vn",
+      "© Copyright 2007 - 2026 - Công ty Cổ phần VCCorp.",
+      "Giấy phép thiết lập trang thông tin điện tử tổng hợp trên mạng số 2216/GP-TTĐT do Sở Thông tin và Truyền thông Hà Nội cấp ngày 10 tháng 4 năm 2019."
+    ],
+    "tables": [],
+    "links": [
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "http://liveboard.cafef.vn",
+        "text": "Bảng giá điện tử"
+      },
+      {
+        "href": "/du-lieu/danh-muc-dau-tu.chn",
+        "text": "Danh mục đầu tư"
+      },
+      {
+        "href": "/doc-nhanh.chn",
+        "text": "Đọc nhanh >>"
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "XÃ HỘI"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "CHỨNG KHOÁN"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "BẤT ĐỘNG SẢN"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "DOANH NGHIỆP"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "NGÂN HÀNG"
+      },
+      {
+        "href": "/smart-money.chn",
+        "text": "SMART MONEY"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "TÀI CHÍNH QUỐC TẾ"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "VĨ MÔ"
+      },
+      {
+        "href": "/kinh-te-so.chn",
+        "text": "KINH TẾ SỐ"
+      },
+      {
+        "href": "/thi-truong.chn",
+        "text": "THỊ TRƯỜNG"
+      },
+      {
+        "href": "/song.chn",
+        "text": "SỐNG"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "LIFESTYLE"
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "Xã hội"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "Doanh nghiệp"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "Kinh tế vĩ mô"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "Chứng khoán"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "Tài chính ngân hàng"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "Tài chính quốc tế"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "Tin tức"
+      },
+      {
+        "href": "/du-an.chn",
+        "text": "Dự án"
+      },
+      {
+        "href": "/ban-do-du-an.chn",
+        "text": "Bản đồ dự án"
+      },
+      {
+        "href": "/hang-hoa-nguyen-lieu.chn",
+        "text": "Hàng hóa nguyên liệu"
+      },
+      {
+        "href": "/song.chn",
+        "text": "Sống"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "Lifestyle"
+      },
+      {
+        "href": "/nhom-chu-de/emagazine.chn",
+        "text": "Magazine"
+      },
+      {
+        "href": "/du-lieu.chn",
+        "text": "Dữ liệu"
+      },
+      {
+        "href": "/du-lieu/cafeflists.chn",
+        "text": "F INDEX"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "Tài chính quốc tế"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Chia sẻ"
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "javascript:;",
+        "text": "TIN MỚI"
+      },
+      {
+        "href": "https://cafef.vn/nga-vua-nhan-tin-du-5-tuan-lien-tiep-188260819092330727.chn",
+        "text": "Nga vừa nhận tin dữ 5 tuần liên tiếp"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Theo Nhịp sống thị trường Copy link"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Chia sẻ"
+      },
+      {
+        "href": "/tien-gui.html",
+        "text": "Tiền gửi,"
+      },
+      {
+        "href": "/nga.html",
+        "text": "nga"
+      },
+      {
+        "href": "/bien-ban-hop-fed-duoc-cong-bo-so-quan-chuc-ung-ho-tang-lai-suat-nhieu-hon-3-noi-bo-chia-re-manh-188260820083541124.chn",
+        "text": ""
+      },
+      {
+        "href": "/bien-ban-hop-fed-duoc-cong-bo-so-quan-chuc-ung-ho-tang-lai-suat-nhieu-hon-3-noi-bo-chia-re-manh-188260820083541124.chn",
+        "text": "Biên bản họp Fed được công bố: Số quan chức ủng hộ tăng lãi suất nhiều hơn 3, nội bộ chia rẽ mạnh"
+      },
+      {
+        "href": "/phat-hien-khoi-be-tong-1540-tan-duoc-nhac-bong-len-khong-trung-chuan-bi-mo-tuyen-duong-thuy-rut-ngan-560-km-188260819223001946.chn",
+        "text": ""
+      },
+      {
+        "href": "/phat-hien-khoi-be-tong-1540-tan-duoc-nhac-bong-len-khong-trung-chuan-bi-mo-tuyen-duong-thuy-rut-ngan-560-km-188260819223001946.chn",
+        "text": "Phát hiện khối bê tông 1.540 tấn được 'nhấc bổng' lên không trung, chuẩn bị mở tuyến đường thủy rút ngắn 560 km"
+      },
+      {
+        "href": "/dubai-nguoi-dan-ong-an-xin-lai-xe-sang-sau-khi-tan-ca-lam-viec-188260820080017689.chn",
+        "text": ""
+      },
+      {
+        "href": "/dubai-nguoi-dan-ong-an-xin-lai-xe-sang-sau-khi-tan-ca-lam-viec-188260820080017689.chn",
+        "text": "Dubai: Người đàn ông ăn xin lái xe sang sau khi tan ca làm việc"
+      },
+      {
+        "href": "/trung-quoc-to-chuc-hon-40-ban-tiec-mung-con-do-dai-hoc-bua-tiec-bat-ngo-tro-thanh-tham-kich-khien-5-nguoi-tu-vong-17-nguoi-bi-thuong-188260820075845248.chn",
+        "text": ""
+      },
+      {
+        "href": "/trung-quoc-to-chuc-hon-40-ban-tiec-mung-con-do-dai-hoc-bua-tiec-bat-ngo-tro-thanh-tham-kich-khien-5-nguoi-tu-vong-17-nguoi-bi-thuong-188260820075845248.chn",
+        "text": "Trung Quốc: Tổ chức hơn 40 bàn tiệc mừng con đỗ đại học, bữa tiệc bất ngờ trở thành thảm kịch khiến 5 người tử vong, 17 người bị thương"
+      },
+      {
+        "href": "/that-tich-hay-valentine-trung-quoc-von-la-ngay-phu-nu-cau-su-kheo-leo-khong-phai-cau-tinh-duyen-188260820075645845.chn",
+        "text": ""
+      },
+      {
+        "href": "/that-tich-hay-valentine-trung-quoc-von-la-ngay-phu-nu-cau-su-kheo-leo-khong-phai-cau-tinh-duyen-188260820075645845.chn",
+        "text": "Thất tịch hay \"Valentine Trung Quốc\" vốn là ngày phụ nữ cầu sự khéo léo, không phải cầu tình duyên"
+      },
+      {
+        "href": "/truyen-thong-quoc-te-trung-quoc-gianh-chien-thang-truoc-elon-musk-nhung-space-x-van-thong-tri-cuoc-dua-188260820075251898.chn",
+        "text": ""
+      },
+      {
+        "href": "/truyen-thong-quoc-te-trung-quoc-gianh-chien-thang-truoc-elon-musk-nhung-space-x-van-thong-tri-cuoc-dua-188260820075251898.chn",
+        "text": "Truyền thông quốc tế: Trung Quốc giành chiến thắng trước Elon Musk, nhưng Space X vẫn thống trị cuộc đua"
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "XÃ HỘI"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "CHỨNG KHOÁN"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "BẤT ĐỘNG SẢN"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "DOANH NGHIỆP"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "NGÂN HÀNG"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "TÀI CHÍNH QUỐC TẾ"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "VĨ MÔ"
+      },
+      {
+        "href": "/kinh-te-so.chn",
+        "text": "KINH TẾ SỐ"
+      },
+      {
+        "href": "/thi-truong.chn",
+        "text": "THỊ TRƯỜNG"
+      },
+      {
+        "href": "/song.chn",
+        "text": "SỐNG"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "LIFESTYLE"
+      },
+      {
+        "href": "/du-lieu.chn",
+        "text": "Dữ liệu"
+      },
+      {
+        "href": "/du-lieu/top/ceo.chn",
+        "text": "Top 200"
+      },
+      {
+        "href": "https://www.messenger.com/t/108804609142280",
+        "text": "Chat với tư vấn viên"
+      },
+      {
+        "href": "http://www.vccorp.vn/",
+        "text": ""
+      },
+      {
+        "href": "/static/chinh-sach-bao-mat.html",
+        "text": "Chính sách bảo mật"
+      }
+    ]
+  },
+  "images": [
+    {
+      "outer_tag": "<img alt=\"\" class=\"\" data-original=\"https://cafefcdn.com/203337114487263232/2026/8/20/screenshot-2026-08-19-at-232324-1787194263502-1787194263889564065372.png\" h=\"1115\" height=\"\" rel=\"lightbox\" src=\"https://cafefcdn.com/203337114487263232/2026/8/20/screenshot-2026-08-19-at-232324-1787194263502-1787194263889564065372.png\" title=\"\" type=\"photo\" w=\"1507\" width=\"\"/>",
+      "resolved_url": "https://cafefcdn.com/203337114487263232/2026/8/20/screenshot-2026-08-19-at-232324-1787194263502-1787194263889564065372.png",
+      "alt": "",
+      "title": "",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Biên bản họp Fed được công bố: Số quan chức ủng hộ tăng lãi suất nhiều hơn 3, nội bộ chia rẽ mạnh\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787189682089-178718968247081915786.png\" title=\"Biên bản họp Fed được công bố: Số quan chức ủng hộ tăng lãi suất nhiều hơn 3, nội bộ chia rẽ mạnh\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787189682089-178718968247081915786.png",
+      "alt": "Biên bản họp Fed được công bố: Số quan chức ủng hộ tăng lãi suất nhiều hơn 3, nội bộ chia rẽ mạnh",
+      "title": "Biên bản họp Fed được công bố: Số quan chức ủng hộ tăng lãi suất nhiều hơn 3, nội bộ chia rẽ mạnh",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Phát hiện khối bê tông 1.540 tấn được 'nhấc bổng' lên không trung, chuẩn bị mở tuyến đường thủy rút ngắn 560 km\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787153202195-1787153203084984642929.png\" title=\"Phát hiện khối bê tông 1.540 tấn được 'nhấc bổng' lên không trung, chuẩn bị mở tuyến đường thủy rút ngắn 560 km\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787153202195-1787153203084984642929.png",
+      "alt": "Phát hiện khối bê tông 1.540 tấn được 'nhấc bổng' lên không trung, chuẩn bị mở tuyến đường thủy rút ngắn 560 km",
+      "title": "Phát hiện khối bê tông 1.540 tấn được 'nhấc bổng' lên không trung, chuẩn bị mở tuyến đường thủy rút ngắn 560 km",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Dubai: Người đàn ông ăn xin lái xe sang sau khi tan ca làm việc\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787187559370-1787187559619321977910.jpg\" title=\"Dubai: Người đàn ông ăn xin lái xe sang sau khi tan ca làm việc\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787187559370-1787187559619321977910.jpg",
+      "alt": "Dubai: Người đàn ông ăn xin lái xe sang sau khi tan ca làm việc",
+      "title": "Dubai: Người đàn ông ăn xin lái xe sang sau khi tan ca làm việc",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Trung Quốc: Tổ chức hơn 40 bàn tiệc mừng con đỗ đại học, bữa tiệc bất ngờ trở thành thảm kịch khiến 5 người tử vong, 17 người bị thương\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787187462065-17871874623821938602549.png\" title=\"Trung Quốc: Tổ chức hơn 40 bàn tiệc mừng con đỗ đại học, bữa tiệc bất ngờ trở thành thảm kịch khiến 5 người tử vong, 17 người bị thương\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787187462065-17871874623821938602549.png",
+      "alt": "Trung Quốc: Tổ chức hơn 40 bàn tiệc mừng con đỗ đại học, bữa tiệc bất ngờ trở thành thảm kịch khiến 5 người tử vong, 17 người bị thương",
+      "title": "Trung Quốc: Tổ chức hơn 40 bàn tiệc mừng con đỗ đại học, bữa tiệc bất ngờ trở thành thảm kịch khiến 5 người tử vong, 17 người bị thương",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt='Thất tịch hay \"Valentine Trung Quốc\" vốn là ngày phụ nữ cầu sự khéo léo, không phải cầu tình duyên' height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787187347986-1787187348892654639673.jpg\" title='Thất tịch hay \"Valentine Trung Quốc\" vốn là ngày phụ nữ cầu sự khéo léo, không phải cầu tình duyên' width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787187347986-1787187348892654639673.jpg",
+      "alt": "Thất tịch hay \"Valentine Trung Quốc\" vốn là ngày phụ nữ cầu sự khéo léo, không phải cầu tình duyên",
+      "title": "Thất tịch hay \"Valentine Trung Quốc\" vốn là ngày phụ nữ cầu sự khéo léo, không phải cầu tình duyên",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Truyền thông quốc tế: Trung Quốc giành chiến thắng trước Elon Musk, nhưng Space X vẫn thống trị cuộc đua\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787187132813-1787187133094780928480.jpg\" title=\"Truyền thông quốc tế: Trung Quốc giành chiến thắng trước Elon Musk, nhưng Space X vẫn thống trị cuộc đua\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787187132813-1787187133094780928480.jpg",
+      "alt": "Truyền thông quốc tế: Trung Quốc giành chiến thắng trước Elon Musk, nhưng Space X vẫn thống trị cuộc đua",
+      "title": "Truyền thông quốc tế: Trung Quốc giành chiến thắng trước Elon Musk, nhưng Space X vẫn thống trị cuộc đua",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Công ty Cổ phần VCCorp\" height=\"49px\" src=\"https://vccorp.mediacdn.vn/vccorp-s.png\" width=\"100px\"/>",
+      "resolved_url": "https://vccorp.mediacdn.vn/vccorp-s.png",
+      "alt": "Công ty Cổ phần VCCorp",
+      "title": "",
+      "caption": ""
+    }
+  ],
+  "language": "vi",
+  "built_at": "2026-08-20T10:17:57+07:00",
+  "built_from_raw_path": "data/raw_html\\cafef.vn\\20260820\\ddc40c32320fe1e09c3046b41affa608dad2ac36a93f663f0f16663d973a01fd.html"
+}

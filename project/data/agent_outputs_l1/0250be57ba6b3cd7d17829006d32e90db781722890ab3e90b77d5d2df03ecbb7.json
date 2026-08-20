@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "0250be57ba6b3cd7d17829006d32e90db781722890ab3e90b77d5d2df03ecbb7",
+  "title": "Mở lối Vành đai 1, giảm áp lực giao thông nội đô",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "71b20bd3b02ce1055410b3e97141fc3fc96ac9fb740f11aa8333d1ec1537dd78",
+  "title": "PVTrans bầu bổ sung tân Tổng giám đốc vào HĐQT",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

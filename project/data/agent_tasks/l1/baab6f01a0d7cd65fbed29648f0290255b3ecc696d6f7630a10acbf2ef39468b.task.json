@@ -1,0 +1,42 @@
+{
+  "packet_version": "1.0",
+  "layer": "L1_ENTITY_RECOGNITION",
+  "task": "recognize_and_audit",
+  "article_id": "baab6f01a0d7cd65fbed29648f0290255b3ecc696d6f7630a10acbf2ef39468b",
+  "domain": "vietstock.vn",
+  "input": {
+    "title": "MB hoàn tất phát hành 1.2 tỷ cp trả cổ tức, nâng vốn lên hơn 92,600 tỷ, sắp bước vào đợt chào bán tiếp theo",
+    "entity_catalog_ref": {
+      "entities": "data/entities/entities.json",
+      "taxonomy": "data/entities/taxonomy.json"
+    },
+    "code_first": {
+      "route": "needs_agent",
+      "relevance": "none",
+      "entities": [],
+      "entity_ids": [],
+      "industries": []
+    }
+  },
+  "output_contract": {
+    "schema_name": "l1-entity-output-v1",
+    "schema_path": "schemas/l1-entity-output-v1.schema.json",
+    "checklist_categories": [
+      "ticker_company",
+      "etf_fund",
+      "index",
+      "exchange",
+      "industry_sector"
+    ]
+  },
+  "constraints": {
+    "surface_must_be_substring_of": "input.title",
+    "citation_must_be_substring_of": "input.title",
+    "recognized_true_requires": [
+      "entities>=1",
+      "citations>=1"
+    ],
+    "audit_duty": "xác nhận entity code-first, sửa nếu sai, bổ sung nếu thiếu"
+  },
+  "instructions_ref": "schemas/l1-entity-instructions-v1.md"
+}

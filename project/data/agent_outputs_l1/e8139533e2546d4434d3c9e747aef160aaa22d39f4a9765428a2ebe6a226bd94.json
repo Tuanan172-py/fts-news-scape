@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "e8139533e2546d4434d3c9e747aef160aaa22d39f4a9765428a2ebe6a226bd94",
+  "title": "‏Khối đế thương mại hưởng lợi từ xu hướng sống \"all-in-one\", đề cao tiện lợi‏",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

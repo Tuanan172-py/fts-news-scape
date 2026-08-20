@@ -20,7 +20,6 @@ from src.handoff.contract_validator import validate as schema_validate
 
 L1_TASK_VERSION = "1.0"
 L1_OUTPUT_SCHEMA = "l1-entity-output-v1"
-_CONFIDENCE_MIN = 0.60
 _CATEGORY_KEYS = ("ticker_company", "etf_fund", "index", "exchange", "industry_sector")
 
 
@@ -68,7 +67,6 @@ def build_l1_task_packet(article: dict, code_first: dict) -> dict:
             "checklist_categories": list(_CATEGORY_KEYS),
         },
         "constraints": {
-            "confidence_min": _CONFIDENCE_MIN,
             "surface_must_be_substring_of": "input.title",
             "citation_must_be_substring_of": "input.title",
             "recognized_true_requires": ["entities>=1", "citations>=1"],
@@ -136,10 +134,6 @@ def check_l1_dod(output: dict, title: str) -> tuple[bool, list[str]]:
     have_groups = {type_group.get(e.get("type")) for e in ents if e.get("in_list")}
     for g in done_groups - have_groups:
         reasons.append(f"categories.{g}='done' nhưng không có entity in_list thuộc nhóm")
-
-    conf = output.get("confidence")
-    if not isinstance(conf, (int, float)) or conf < _CONFIDENCE_MIN:
-        reasons.append(f"confidence {conf} < {_CONFIDENCE_MIN}")
 
     pm = output.get("processing_metadata") or {}
     for k in ("agent_provider", "model_used", "timestamp"):

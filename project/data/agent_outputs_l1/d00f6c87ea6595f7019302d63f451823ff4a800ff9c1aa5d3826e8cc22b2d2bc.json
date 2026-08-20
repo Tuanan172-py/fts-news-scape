@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "d00f6c87ea6595f7019302d63f451823ff4a800ff9c1aa5d3826e8cc22b2d2bc",
+  "title": "Đồng USD trượt giá xuống mức thấp nhất 2 tháng rưỡi",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "4923fe786671fe6855566695aa9e694e1fb295145b227ab2aa06ffd3de4adf95",
+  "title": "“Dòng tiền lớn” bán ròng 80.000 tỷ đồng cổ phiếu từ đầu năm, chuyên gia lý giải nguyên nhân",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

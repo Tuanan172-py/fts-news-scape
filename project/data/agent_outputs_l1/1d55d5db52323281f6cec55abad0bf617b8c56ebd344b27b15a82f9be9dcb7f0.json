@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "1d55d5db52323281f6cec55abad0bf617b8c56ebd344b27b15a82f9be9dcb7f0",
+  "title": "Người tiêu dùng châu Á đang chi ‘bộn tiền” cho thú cưng",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

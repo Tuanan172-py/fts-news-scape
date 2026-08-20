@@ -1,0 +1,37 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "63acad15bedf7ccd2abbd88b4deb3e657fd296c11869434851ed09bbc67c545b",
+  "title": "Bí thư Tỉnh ủy Gia Lai kiểm tra các dự án trọng điểm tại Phù Mỹ",
+  "recognized": true,
+  "entities": [
+    {
+      "surface": "Mỹ",
+      "entity_id": null,
+      "type": "UNKNOWN",
+      "method": "semantic",
+      "in_list": false,
+      "confidence": 0.8
+    }
+  ],
+  "categories": {
+    "ticker_company": "out_of_list",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [
+    "Mỹ"
+  ],
+  "citations": [
+    {
+      "source_span": "Bí thư Tỉnh ủy Gia Lai kiểm tra các dự án trọng điểm tại Phù Mỹ"
+    }
+  ],
+  "confidence": 0.95,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

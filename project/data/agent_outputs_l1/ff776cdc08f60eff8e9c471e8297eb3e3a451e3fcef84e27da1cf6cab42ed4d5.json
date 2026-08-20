@@ -1,34 +1,35 @@
 {
- "l1_output_version": "1.0",
- "article_id": "ff776cdc08f60eff8e9c471e8297eb3e3a451e3fcef84e27da1cf6cab42ed4d5",
- "title": "Thu nhập từ lãi và dịch vụ tăng tốc, dự phòng rủi ro tạo áp lực lên lợi nhuận ngân hàng nửa đầu năm 2026",
- "recognized": true,
- "entities": [
-  {
-   "surface": "ngân hàng",
-   "entity_id": "IND_GICS2:NGAN_HANG",
-   "type": "INDUSTRY_GICS2",
-   "method": "alias",
-   "in_list": true,
-   "confidence": 0.85
+  "l1_output_version": "1.0",
+  "article_id": "ff776cdc08f60eff8e9c471e8297eb3e3a451e3fcef84e27da1cf6cab42ed4d5",
+  "title": "Thu nhập từ lãi và dịch vụ tăng tốc, dự phòng rủi ro tạo áp lực lên lợi nhuận ngân hàng nửa đầu năm 2026",
+  "recognized": true,
+  "entities": [
+    {
+      "surface": "ngân hàng",
+      "entity_id": "IND_GICS2:NGAN_HANG",
+      "type": "INDUSTRY_GICS2",
+      "method": "alias",
+      "in_list": true,
+      "confidence": 0.95
+    }
+  ],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "done"
+  },
+  "unlisted_candidates": [],
+  "citations": [
+    {
+      "source_span": "Thu nhập từ lãi và dịch vụ tăng tốc, dự phòng rủi ro tạo áp lực lên lợi nhuận ngân hàng nửa đầu năm 2026"
+    }
+  ],
+  "confidence": 0.95,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
   }
- ],
- "categories": {
-  "ticker_company": "none",
-  "etf_fund": "none",
-  "index": "none",
-  "exchange": "none",
-  "industry_sector": "done"
- },
- "citations": [
-  {
-   "source_span": "Thu nhập từ lãi và dịch vụ tăng tốc, dự phòng rủi ro tạo áp lực lên lợi nhuận ngân hàng nửa đầu năm 2026"
-  }
- ],
- "confidence": 0.85,
- "processing_metadata": {
-  "agent_provider": "stub",
-  "model_used": "rule-based",
-  "timestamp": "2026-08-18T15:11:29+07:00"
- }
 }

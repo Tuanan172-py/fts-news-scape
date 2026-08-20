@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "4369603ff798f781d096d895824c260c8124ffa4eb4c64ba04c57ecee4e41145",
+  "title": "Vinaconex chi hơn 75 tỷ gom hơn 19% vốn một doanh nghiệp của tỉnh Đồng Tháp",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

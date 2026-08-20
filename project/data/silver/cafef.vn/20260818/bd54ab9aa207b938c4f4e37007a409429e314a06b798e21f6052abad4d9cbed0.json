@@ -1,0 +1,430 @@
+{
+  "silver_schema_version": "1.0",
+  "article_id": "bd54ab9aa207b938c4f4e37007a409429e314a06b798e21f6052abad4d9cbed0",
+  "source_url": "https://cafef.vn/ocb-toi-uu-trai-nghiem-tai-chinh-tu-du-lieu-va-ai-188260818203009411.chn",
+  "domain": "cafef.vn",
+  "content_sha256": "e0fa5f5e213cc574a24d5ffc43cc525116adb295252fbb1d2c43252a7d6079d6",
+  "cleaned_text": "OCB tối ưu trải nghiệm tài chính từ dữ liệu và AI\nChuyển đổi số trong ngành Ngân hàng đang bước sang một giai đoạn mới, khi trọng tâm không còn dừng ở việc đưa dịch vụ lên môi trường trực tuyến mà chuyển sang khai thác dữ liệu và trí tuệ nhân tạo (AI) để thay đổi cách ngân hàng hiểu khách hàng, ra quyết định và tạo ra giá trị. Đây cũng là hướng tiếp cận mà ngân hàng Phương Đông (OCB) đang theo đuổi.\nTại Sự kiện Chuyển đổi số ngành Ngân hàng 2026, OCB nhấn mạnh nguyên tắc \"Business First – Technology Second\", trong đó công nghệ không phải đích đến mà là phương tiện giải quyết các bài toán kinh doanh cụ thể, nâng cao trải nghiệm khách hàng và hiệu quả vận hành. Mỗi sáng kiến AI được đặt trong mối liên hệ với một nhu cầu thực tế, giá trị mang lại và khả năng đo lường hiệu quả.\nThay vì triển khai AI như những dự án công nghệ độc lập, OCB định hướng tích hợp năng lực này xuyên suốt chuỗi giá trị ngân hàng. Lộ trình được xây dựng theo từng bước, bắt đầu từ việc củng cố nền tảng dữ liệu, hoàn thiện khung quản trị, sau đó mở rộng ứng dụng AI vào hoạt động kinh doanh, vận hành và quản trị rủi ro. Trong đó, dữ liệu được xác định là nền tảng của chiến lược này. OCB chuyển từ cách nhìn dữ liệu như nguồn thông tin phát sinh trong các hệ thống vận hành sang coi đây là một tài sản chiến lược của tổ chức. Ngân hàng xây dựng mô hình quản trị dữ liệu với sự tham gia của cả khối công nghệ và các đơn vị kinh doanh, phân định rõ trách nhiệm của Data Owner, Data Steward và các đơn vị sử dụng dữ liệu; đồng thời quản trị dữ liệu xuyên suốt vòng đời, từ thu thập, chuẩn hóa, lưu trữ, khai thác đến bảo vệ.\nMột bài toán khác được OCB tập trung giải quyết là tình trạng dữ liệu và nguồn lực bị phân tách giữa các đơn vị. Ngân hàng đang thúc đẩy mô hình phối hợp liên chức năng, trong đó chuyên gia kinh doanh, công nghệ và dữ liệu cùng tham gia từ khâu xác định yêu cầu, phát triển giải pháp đến đánh giá sau triển khai. Cách làm này nhằm phá bỏ các \"silo\" dữ liệu và rào cản phối hợp, đồng thời tạo điều kiện để những mô hình hiệu quả được nhân rộng trên toàn tổ chức.\nTrên nền tảng đó, OCB đang chuyển dần từ mô hình lấy sản phẩm làm trung tâm sang lấy khách hàng làm trung tâm. Dữ liệu giao dịch, hành vi và tương tác được kết nối để hình thành góc nhìn toàn diện hơn về khách hàng, qua đó hỗ trợ ngân hàng nhận diện nhu cầu, dự báo hành vi và đưa ra những đề xuất phù hợp hơn. Mục tiêu dài hạn là không chỉ cá nhân hóa ở cấp độ phân khúc mà tiến tới khả năng phục vụ sát hơn với nhu cầu của từng khách hàng.\nNhững định hướng này đang được OCB từng bước chuyển hóa thành các sản phẩm và trải nghiệm thực tế. Trong đó, LinkLine là một ví dụ tiêu biểu cho cách AI và dữ liệu được đưa trực tiếp vào thiết kế sản phẩm tín dụng, đồng thời rút gọn hành trình sử dụng dịch vụ của khách hàng. Đây cũng là một giải pháp được OCB giới thiệu trong sự kiện Chuyển đổi số ngành Ngân hàng 2026.\nOCB Linkline- giải pháp tài chính mới nhất được OCB giới thiệu tại sự kiện.\nThay vì để khách hàng lần lượt lựa chọn, đăng ký và thực hiện quy trình riêng cho từng sản phẩm tín dụng, LinkLine sử dụng dữ liệu đa chiều để phân tích khả năng tài chính và hành vi của từng khách hàng, từ đó đề xuất hạn mức phù hợp. AI được đưa vào ngay trong khâu thẩm định, giúp quá trình đánh giá và đưa ra quyết định được thực hiện trên nền tảng dữ liệu thay vì phụ thuộc hoàn toàn vào các bước xử lý thủ công.\nKhông chỉ rút gọn ở khâu thẩm định, LinkLine còn thiết kế lại toàn bộ hành trình sau khi khách hàng được cấp hạn mức. Chỉ với một lần đăng ký, khách hàng có thể tiếp cận một hạn mức tín dụng liên thông và chủ động lựa chọn hình thức sử dụng phù hợp, từ thẻ tín dụng, vay tín chấp đến vay thấu chi. Khi nhu cầu phát sinh, khách hàng không phải bắt đầu lại một quy trình cấp tín dụng riêng cho từng sản phẩm mà có thể kích hoạt và sử dụng trong hạn mức đã được phê duyệt.\nTrên app OCB OMNI, toàn bộ hạn mức và các khoản sử dụng được theo dõi tập trung, giúp khách hàng chủ động phân bổ nguồn lực theo từng nhu cầu và thời điểm. Cách thiết kế này không chỉ đơn giản hóa thao tác mà còn giảm số lần khách hàng phải cung cấp thông tin, thực hiện hồ sơ và chờ xử lý, qua đó rút ngắn hành trình tiếp cận tín dụng và tạo trải nghiệm liền mạch hơn.\nĐiểm đáng chú ý là công nghệ ở đây không chỉ được dùng để làm nhanh hơn một quy trình có sẵn. Dữ liệu và AI được sử dụng để thiết kế lại quy trình ngay từ đầu, chuyển từ cách cấp tín dụng theo từng sản phẩm sang một hạn mức có khả năng đáp ứng nhiều nhu cầu tài chính khác nhau. Theo kế hoạch, OCB LinkLine dự kiến triển khai từ quý IV/2026, hướng tới khoảng 350.000 khách hàng với tổng dư nợ khoảng 6.000 tỷ đồng.\nBên cạnh sản phẩm này, định hướng ứng dụng dữ liệu và AI của OCB cũng đang được thể hiện trên nhiều giải pháp dành cho khách hàng cá nhân và doanh nghiệp. Liobank ứng dụng Big Data, Machine Learning và chấm điểm hành vi trong hoạt động tín dụng; Open Banking kết nối dịch vụ ngân hàng với hệ thống quản trị của doanh nghiệp thông qua hàng nghìn API linh hoạt; trong khi giải pháp thanh toán số Smart Merchant tập trung quản lý dữ liệu đơn hàng, doanh thu, chi phí và dòng tiền, hướng tới tăng cường ứng dụng AI trong phân tích hành vi khách hàng.\nĐiểm chung của các sáng kiến này là công nghệ không được triển khai như một lớp tính năng độc lập, mà gắn với từng bài toán cụ thể của khách hàng và hoạt động ngân hàng. Từ dữ liệu để hiểu khách hàng, AI để nâng cao chất lượng quyết định đến công nghệ để rút ngắn và thiết kế lại hành trình dịch vụ, OCB đang từng bước chuyển từ số hóa quy trình sang tái thiết kế sản phẩm và trải nghiệm dựa trên dữ liệu.\nTheo cách tiếp cận này, AI không phải đích đến của chuyển đổi số mà đang trở thành một năng lực mới trong cách OCB vận hành và tạo giá trị. Khi nền tảng dữ liệu, mô hình quản trị, cơ chế thử nghiệm và năng lực phối hợp giữa kinh doanh - công nghệ - dữ liệu được kết nối, AI có thêm điều kiện để được mở rộng từ những sáng kiến riêng lẻ thành năng lực phục vụ mục tiêu tăng trưởng, nâng cao hiệu quả và đồng hành sâu hơn với khách hàng.\nAn ninh tiền tệ",
+  "extraction_quality": "high",
+  "structure": {
+    "headings": [
+      {
+        "level": 1,
+        "text": "OCB tối ưu trải nghiệm tài chính từ dữ liệu và AI"
+      },
+      {
+        "level": 3,
+        "text": "CÙNG CHUYÊN MỤC"
+      },
+      {
+        "level": 4,
+        "text": "Giá vàng miếng, vàng nhẫn chiều 18/8 tại SJC, DOJI, PNJ, Bảo Tín Minh Châu, Bảo Tín Mạnh Hải,... Nổi bật"
+      },
+      {
+        "level": 4,
+        "text": "Thống đốc Phạm Đức Ấn giao 6 nhiệm vụ quan trọng cho các ngân hàng Nổi bật"
+      },
+      {
+        "level": 4,
+        "text": "VIB: Cá nhân hóa ở quy mô lớn trên một nền tảng an toàn"
+      },
+      {
+        "level": 4,
+        "text": "LPBank mang giải pháp ngân hàng số AI-First đến sự kiện Chuyển đổi số ngành Ngân hàng năm 2026"
+      },
+      {
+        "level": 4,
+        "text": "Sẵn sàng bùng nổ tại Starbucks Music Concert: SACOMBANK Visa mang đến đặc quyền vé sớm"
+      },
+      {
+        "level": 4,
+        "text": "Techcombank giành “cú đúp” giải thưởng quốc tế Stevie® Awards for Great Employers 2026"
+      }
+    ],
+    "paragraphs": [
+      "MỚI NHẤT!",
+      "Ánh Dương | 18-08-2026 - 20:29 PM | Tài chính - ngân hàng",
+      "Chuyển đổi số trong ngành Ngân hàng đang bước sang một giai đoạn mới, khi trọng tâm không còn dừng ở việc đưa dịch vụ lên môi trường trực tuyến mà chuyển sang khai thác dữ liệu và trí tuệ nhân tạo (AI) để thay đổi cách ngân hàng hiểu khách hàng, ra quyết định và tạo ra giá trị. Đây cũng là hướng tiếp cận mà ngân hàng Phương Đông (OCB) đang theo đuổi.",
+      "Đại diện lãnh đạo OCB giới thiệu các sản phẩm số tại sự kiện.",
+      "Tại Sự kiện Chuyển đổi số ngành Ngân hàng 2026, OCB nhấn mạnh nguyên tắc \"Business First – Technology Second\", trong đó công nghệ không phải đích đến mà là phương tiện giải quyết các bài toán kinh doanh cụ thể, nâng cao trải nghiệm khách hàng và hiệu quả vận hành. Mỗi sáng kiến AI được đặt trong mối liên hệ với một nhu cầu thực tế, giá trị mang lại và khả năng đo lường hiệu quả.",
+      "Thay vì triển khai AI như những dự án công nghệ độc lập, OCB định hướng tích hợp năng lực này xuyên suốt chuỗi giá trị ngân hàng. Lộ trình được xây dựng theo từng bước, bắt đầu từ việc củng cố nền tảng dữ liệu, hoàn thiện khung quản trị, sau đó mở rộng ứng dụng AI vào hoạt động kinh doanh, vận hành và quản trị rủi ro. Trong đó, dữ liệu được xác định là nền tảng của chiến lược này. OCB chuyển từ cách nhìn dữ liệu như nguồn thông tin phát sinh trong các hệ thống vận hành sang coi đây là một tài sản chiến lược của tổ chức. Ngân hàng xây dựng mô hình quản trị dữ liệu với sự tham gia của cả khối công nghệ và các đơn vị kinh doanh, phân định rõ trách nhiệm của Data Owner, Data Steward và các đơn vị sử dụng dữ liệu; đồng thời quản trị dữ liệu xuyên suốt vòng đời, từ thu thập, chuẩn hóa, lưu trữ, khai thác đến bảo vệ.",
+      "Một bài toán khác được OCB tập trung giải quyết là tình trạng dữ liệu và nguồn lực bị phân tách giữa các đơn vị. Ngân hàng đang thúc đẩy mô hình phối hợp liên chức năng, trong đó chuyên gia kinh doanh, công nghệ và dữ liệu cùng tham gia từ khâu xác định yêu cầu, phát triển giải pháp đến đánh giá sau triển khai. Cách làm này nhằm phá bỏ các \"silo\" dữ liệu và rào cản phối hợp, đồng thời tạo điều kiện để những mô hình hiệu quả được nhân rộng trên toàn tổ chức.",
+      "Trên nền tảng đó, OCB đang chuyển dần từ mô hình lấy sản phẩm làm trung tâm sang lấy khách hàng làm trung tâm. Dữ liệu giao dịch, hành vi và tương tác được kết nối để hình thành góc nhìn toàn diện hơn về khách hàng, qua đó hỗ trợ ngân hàng nhận diện nhu cầu, dự báo hành vi và đưa ra những đề xuất phù hợp hơn. Mục tiêu dài hạn là không chỉ cá nhân hóa ở cấp độ phân khúc mà tiến tới khả năng phục vụ sát hơn với nhu cầu của từng khách hàng.",
+      "Những định hướng này đang được OCB từng bước chuyển hóa thành các sản phẩm và trải nghiệm thực tế. Trong đó, LinkLine là một ví dụ tiêu biểu cho cách AI và dữ liệu được đưa trực tiếp vào thiết kế sản phẩm tín dụng, đồng thời rút gọn hành trình sử dụng dịch vụ của khách hàng. Đây cũng là một giải pháp được OCB giới thiệu trong sự kiện Chuyển đổi số ngành Ngân hàng 2026.",
+      "OCB Linkline- giải pháp tài chính mới nhất được OCB giới thiệu tại sự kiện.",
+      "Thay vì để khách hàng lần lượt lựa chọn, đăng ký và thực hiện quy trình riêng cho từng sản phẩm tín dụng, LinkLine sử dụng dữ liệu đa chiều để phân tích khả năng tài chính và hành vi của từng khách hàng, từ đó đề xuất hạn mức phù hợp. AI được đưa vào ngay trong khâu thẩm định, giúp quá trình đánh giá và đưa ra quyết định được thực hiện trên nền tảng dữ liệu thay vì phụ thuộc hoàn toàn vào các bước xử lý thủ công.",
+      "Không chỉ rút gọn ở khâu thẩm định, LinkLine còn thiết kế lại toàn bộ hành trình sau khi khách hàng được cấp hạn mức. Chỉ với một lần đăng ký, khách hàng có thể tiếp cận một hạn mức tín dụng liên thông và chủ động lựa chọn hình thức sử dụng phù hợp, từ thẻ tín dụng, vay tín chấp đến vay thấu chi. Khi nhu cầu phát sinh, khách hàng không phải bắt đầu lại một quy trình cấp tín dụng riêng cho từng sản phẩm mà có thể kích hoạt và sử dụng trong hạn mức đã được phê duyệt.",
+      "Trên app OCB OMNI, toàn bộ hạn mức và các khoản sử dụng được theo dõi tập trung, giúp khách hàng chủ động phân bổ nguồn lực theo từng nhu cầu và thời điểm. Cách thiết kế này không chỉ đơn giản hóa thao tác mà còn giảm số lần khách hàng phải cung cấp thông tin, thực hiện hồ sơ và chờ xử lý, qua đó rút ngắn hành trình tiếp cận tín dụng và tạo trải nghiệm liền mạch hơn.",
+      "Điểm đáng chú ý là công nghệ ở đây không chỉ được dùng để làm nhanh hơn một quy trình có sẵn. Dữ liệu và AI được sử dụng để thiết kế lại quy trình ngay từ đầu, chuyển từ cách cấp tín dụng theo từng sản phẩm sang một hạn mức có khả năng đáp ứng nhiều nhu cầu tài chính khác nhau. Theo kế hoạch, OCB LinkLine dự kiến triển khai từ quý IV/2026, hướng tới khoảng 350.000 khách hàng với tổng dư nợ khoảng 6.000 tỷ đồng.",
+      "Bên cạnh sản phẩm này, định hướng ứng dụng dữ liệu và AI của OCB cũng đang được thể hiện trên nhiều giải pháp dành cho khách hàng cá nhân và doanh nghiệp. Liobank ứng dụng Big Data, Machine Learning và chấm điểm hành vi trong hoạt động tín dụng; Open Banking kết nối dịch vụ ngân hàng với hệ thống quản trị của doanh nghiệp thông qua hàng nghìn API linh hoạt; trong khi giải pháp thanh toán số Smart Merchant tập trung quản lý dữ liệu đơn hàng, doanh thu, chi phí và dòng tiền, hướng tới tăng cường ứng dụng AI trong phân tích hành vi khách hàng.",
+      "Điểm chung của các sáng kiến này là công nghệ không được triển khai như một lớp tính năng độc lập, mà gắn với từng bài toán cụ thể của khách hàng và hoạt động ngân hàng. Từ dữ liệu để hiểu khách hàng, AI để nâng cao chất lượng quyết định đến công nghệ để rút ngắn và thiết kế lại hành trình dịch vụ, OCB đang từng bước chuyển từ số hóa quy trình sang tái thiết kế sản phẩm và trải nghiệm dựa trên dữ liệu.",
+      "Theo cách tiếp cận này, AI không phải đích đến của chuyển đổi số mà đang trở thành một năng lực mới trong cách OCB vận hành và tạo giá trị. Khi nền tảng dữ liệu, mô hình quản trị, cơ chế thử nghiệm và năng lực phối hợp giữa kinh doanh - công nghệ - dữ liệu được kết nối, AI có thêm điều kiện để được mở rộng từ những sáng kiến riêng lẻ thành năng lực phục vụ mục tiêu tăng trưởng, nâng cao hiệu quả và đồng hành sâu hơn với khách hàng.",
+      "Ánh Dương",
+      "An ninh tiền tệ",
+      "Địa chỉ: Tầng 21 Tòa nhà Center Building. Số 01, phố Nguyễn Huy Tưởng, phường Thanh Xuân, thành phố Hà Nội",
+      "Điện thoại: 024 7309 5555 Máy lẻ 292. Fax: 024-39744082",
+      "Email: info@cafef.vn | Hotline: 0926 864 344",
+      "Chịu trách nhiệm nội dung: Ông Nguyễn Thế Tân",
+      "Liên hệ quảng cáo",
+      "Hotline:",
+      "Email: doanhnghiep@admicro.vn",
+      "© Copyright 2007 - 2026 - Công ty Cổ phần VCCorp.",
+      "Giấy phép thiết lập trang thông tin điện tử tổng hợp trên mạng số 2216/GP-TTĐT do Sở Thông tin và Truyền thông Hà Nội cấp ngày 10 tháng 4 năm 2019."
+    ],
+    "tables": [],
+    "links": [
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "http://liveboard.cafef.vn",
+        "text": "Bảng giá điện tử"
+      },
+      {
+        "href": "/du-lieu/danh-muc-dau-tu.chn",
+        "text": "Danh mục đầu tư"
+      },
+      {
+        "href": "/doc-nhanh.chn",
+        "text": "Đọc nhanh >>"
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "XÃ HỘI"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "CHỨNG KHOÁN"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "BẤT ĐỘNG SẢN"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "DOANH NGHIỆP"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "NGÂN HÀNG"
+      },
+      {
+        "href": "/smart-money.chn",
+        "text": "SMART MONEY"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "TÀI CHÍNH QUỐC TẾ"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "VĨ MÔ"
+      },
+      {
+        "href": "/kinh-te-so.chn",
+        "text": "KINH TẾ SỐ"
+      },
+      {
+        "href": "/thi-truong.chn",
+        "text": "THỊ TRƯỜNG"
+      },
+      {
+        "href": "/song.chn",
+        "text": "SỐNG"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "LIFESTYLE"
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "Xã hội"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "Doanh nghiệp"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "Kinh tế vĩ mô"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "Chứng khoán"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "Tài chính ngân hàng"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "Tài chính quốc tế"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "Tin tức"
+      },
+      {
+        "href": "/du-an.chn",
+        "text": "Dự án"
+      },
+      {
+        "href": "/ban-do-du-an.chn",
+        "text": "Bản đồ dự án"
+      },
+      {
+        "href": "/hang-hoa-nguyen-lieu.chn",
+        "text": "Hàng hóa nguyên liệu"
+      },
+      {
+        "href": "/song.chn",
+        "text": "Sống"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "Lifestyle"
+      },
+      {
+        "href": "/nhom-chu-de/emagazine.chn",
+        "text": "Magazine"
+      },
+      {
+        "href": "/du-lieu.chn",
+        "text": "Dữ liệu"
+      },
+      {
+        "href": "/du-lieu/cafeflists.chn",
+        "text": "F INDEX"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "Tài chính - ngân hàng"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Chia sẻ"
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "javascript:;",
+        "text": "TIN MỚI"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Theo An ninh tiền tệ Copy link"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Chia sẻ"
+      },
+      {
+        "href": "/ocb.html",
+        "text": "OCB"
+      },
+      {
+        "href": "/gia-vang-mieng-vang-nhan-chieu-18-8-tai-sjc-doji-pnj-bao-tin-minh-chau-bao-tin-manh-hai-188260818080245527.chn",
+        "text": ""
+      },
+      {
+        "href": "/gia-vang-mieng-vang-nhan-chieu-18-8-tai-sjc-doji-pnj-bao-tin-minh-chau-bao-tin-manh-hai-188260818080245527.chn",
+        "text": "Giá vàng miếng, vàng nhẫn chiều 18/8 tại SJC, DOJI, PNJ, Bảo Tín Minh Châu, Bảo Tín Mạnh Hải,..."
+      },
+      {
+        "href": "/thong-doc-pham-duc-an-giao-6-nhiem-vu-quan-trong-cho-cac-ngan-hang-188260818120521043.chn",
+        "text": ""
+      },
+      {
+        "href": "/thong-doc-pham-duc-an-giao-6-nhiem-vu-quan-trong-cho-cac-ngan-hang-188260818120521043.chn",
+        "text": "Thống đốc Phạm Đức Ấn giao 6 nhiệm vụ quan trọng cho các ngân hàng"
+      },
+      {
+        "href": "/vib-ca-nhan-hoa-o-quy-mo-lon-tren-mot-nen-tang-an-toan-188260818200349345.chn",
+        "text": ""
+      },
+      {
+        "href": "/vib-ca-nhan-hoa-o-quy-mo-lon-tren-mot-nen-tang-an-toan-188260818200349345.chn",
+        "text": "VIB: Cá nhân hóa ở quy mô lớn trên một nền tảng an toàn"
+      },
+      {
+        "href": "/lpbank-mang-giai-phap-ngan-hang-so-ai-first-den-su-kien-chuyen-doi-so-nganh-ngan-hang-nam-2026-188260818174728286.chn",
+        "text": ""
+      },
+      {
+        "href": "/lpbank-mang-giai-phap-ngan-hang-so-ai-first-den-su-kien-chuyen-doi-so-nganh-ngan-hang-nam-2026-188260818174728286.chn",
+        "text": "LPBank mang giải pháp ngân hàng số AI-First đến sự kiện Chuyển đổi số ngành Ngân hàng năm 2026"
+      },
+      {
+        "href": "/san-sang-bung-no-tai-starbucks-music-concert-sacombank-visa-mang-den-dac-quyen-ve-som-188260818174522923.chn",
+        "text": ""
+      },
+      {
+        "href": "/san-sang-bung-no-tai-starbucks-music-concert-sacombank-visa-mang-den-dac-quyen-ve-som-188260818174522923.chn",
+        "text": "Sẵn sàng bùng nổ tại Starbucks Music Concert: SACOMBANK Visa mang đến đặc quyền vé sớm"
+      },
+      {
+        "href": "/techcombank-gianh-cu-dup-giai-thuong-quoc-te-stevie-awards-for-great-employers-2026-188260818185549892.chn",
+        "text": ""
+      },
+      {
+        "href": "/techcombank-gianh-cu-dup-giai-thuong-quoc-te-stevie-awards-for-great-employers-2026-188260818185549892.chn",
+        "text": "Techcombank giành “cú đúp” giải thưởng quốc tế Stevie® Awards for Great Employers 2026"
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "XÃ HỘI"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "CHỨNG KHOÁN"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "BẤT ĐỘNG SẢN"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "DOANH NGHIỆP"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "NGÂN HÀNG"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "TÀI CHÍNH QUỐC TẾ"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "VĨ MÔ"
+      },
+      {
+        "href": "/kinh-te-so.chn",
+        "text": "KINH TẾ SỐ"
+      },
+      {
+        "href": "/thi-truong.chn",
+        "text": "THỊ TRƯỜNG"
+      },
+      {
+        "href": "/song.chn",
+        "text": "SỐNG"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "LIFESTYLE"
+      },
+      {
+        "href": "/du-lieu.chn",
+        "text": "Dữ liệu"
+      },
+      {
+        "href": "/du-lieu/top/ceo.chn",
+        "text": "Top 200"
+      },
+      {
+        "href": "https://www.messenger.com/t/108804609142280",
+        "text": "Chat với tư vấn viên"
+      },
+      {
+        "href": "http://www.vccorp.vn/",
+        "text": ""
+      },
+      {
+        "href": "/static/chinh-sach-bao-mat.html",
+        "text": "Chính sách bảo mật"
+      }
+    ]
+  },
+  "images": [
+    {
+      "outer_tag": "<img alt=\"\" class=\"\" data-author=\"\" data-nosnippet=\"\" data-original=\"https://cafefcdn.com/203337114487263232/2026/8/18/photo-1787059435884-17870594368351796030843-1787059779284-1787059779791347396476.jpeg\" h=\"954\" height=\"\" id=\"img_240183125727682560\" loading=\"lazy\" photoid=\"240183125727682560\" rel=\"lightbox\" src=\"https://cafefcdn.com/203337114487263232/2026/8/18/photo-1787059435884-17870594368351796030843-1787059779284-1787059779791347396476.jpeg\" style=\"max-width:100%;\" title=\"\" type=\"photo\" w=\"1430\" width=\"\"/>",
+      "resolved_url": "https://cafefcdn.com/203337114487263232/2026/8/18/photo-1787059435884-17870594368351796030843-1787059779284-1787059779791347396476.jpeg",
+      "alt": "",
+      "title": "",
+      "caption": "Đại diện lãnh đạo OCB giới thiệu các sản phẩm số tại sự kiện."
+    },
+    {
+      "outer_tag": "<img alt=\"\" class=\"\" data-nosnippet=\"\" data-original=\"https://cafefcdn.com/203337114487263232/2026/8/18/photo-1787059437939-17870594381301056719810-1787059780557-17870597808331329046198.jpeg\" h=\"1097\" height=\"\" loading=\"lazy\" rel=\"lightbox\" src=\"https://cafefcdn.com/203337114487263232/2026/8/18/photo-1787059437939-17870594381301056719810-1787059780557-17870597808331329046198.jpeg\" title=\"\" w=\"1429\" width=\"\"/>",
+      "resolved_url": "https://cafefcdn.com/203337114487263232/2026/8/18/photo-1787059437939-17870594381301056719810-1787059780557-17870597808331329046198.jpeg",
+      "alt": "",
+      "title": "",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Giá vàng miếng, vàng nhẫn chiều 18/8 tại SJC, DOJI, PNJ, Bảo Tín Minh Châu, Bảo Tín Mạnh Hải,...\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/avatar1787040262234-17870402630321060229678.png\" title=\"Giá vàng miếng, vàng nhẫn chiều 18/8 tại SJC, DOJI, PNJ, Bảo Tín Minh Châu, Bảo Tín Mạnh Hải,...\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/avatar1787040262234-17870402630321060229678.png",
+      "alt": "Giá vàng miếng, vàng nhẫn chiều 18/8 tại SJC, DOJI, PNJ, Bảo Tín Minh Châu, Bảo Tín Mạnh Hải,...",
+      "title": "Giá vàng miếng, vàng nhẫn chiều 18/8 tại SJC, DOJI, PNJ, Bảo Tín Minh Châu, Bảo Tín Mạnh Hải,...",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Thống đốc Phạm Đức Ấn giao 6 nhiệm vụ quan trọng cho các ngân hàng\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/avatar1787029447814-178702944846469705275.jpg\" title=\"Thống đốc Phạm Đức Ấn giao 6 nhiệm vụ quan trọng cho các ngân hàng\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/avatar1787029447814-178702944846469705275.jpg",
+      "alt": "Thống đốc Phạm Đức Ấn giao 6 nhiệm vụ quan trọng cho các ngân hàng",
+      "title": "Thống đốc Phạm Đức Ấn giao 6 nhiệm vụ quan trọng cho các ngân hàng",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"VIB: Cá nhân hóa ở quy mô lớn trên một nền tảng an toàn\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/img0278-1787058160367329468158-0-0-894-1430-crop-17870581695751622783955.jpeg\" title=\"VIB: Cá nhân hóa ở quy mô lớn trên một nền tảng an toàn\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/img0278-1787058160367329468158-0-0-894-1430-crop-17870581695751622783955.jpeg",
+      "alt": "VIB: Cá nhân hóa ở quy mô lớn trên một nền tảng an toàn",
+      "title": "VIB: Cá nhân hóa ở quy mô lớn trên một nền tảng an toàn",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"LPBank mang giải pháp ngân hàng số AI-First đến sự kiện Chuyển đổi số ngành Ngân hàng năm 2026\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/photo1787045159805-178704516034184660784-17870500504351734119924.jpg\" title=\"LPBank mang giải pháp ngân hàng số AI-First đến sự kiện Chuyển đổi số ngành Ngân hàng năm 2026\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/photo1787045159805-178704516034184660784-17870500504351734119924.jpg",
+      "alt": "LPBank mang giải pháp ngân hàng số AI-First đến sự kiện Chuyển đổi số ngành Ngân hàng năm 2026",
+      "title": "LPBank mang giải pháp ngân hàng số AI-First đến sự kiện Chuyển đổi số ngành Ngân hàng năm 2026",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Sẵn sàng bùng nổ tại Starbucks Music Concert: SACOMBANK Visa mang đến đặc quyền vé sớm\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/photo1787049322524-17870493227101032990246-17870500499011966605707.jpg\" title=\"Sẵn sàng bùng nổ tại Starbucks Music Concert: SACOMBANK Visa mang đến đặc quyền vé sớm\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/photo1787049322524-17870493227101032990246-17870500499011966605707.jpg",
+      "alt": "Sẵn sàng bùng nổ tại Starbucks Music Concert: SACOMBANK Visa mang đến đặc quyền vé sớm",
+      "title": "Sẵn sàng bùng nổ tại Starbucks Music Concert: SACOMBANK Visa mang đến đặc quyền vé sớm",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Techcombank giành “cú đúp” giải thưởng quốc tế Stevie® Awards for Great Employers 2026\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/avatar1787054082841-17870540833461259279851.jpg\" title=\"Techcombank giành “cú đúp” giải thưởng quốc tế Stevie® Awards for Great Employers 2026\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/avatar1787054082841-17870540833461259279851.jpg",
+      "alt": "Techcombank giành “cú đúp” giải thưởng quốc tế Stevie® Awards for Great Employers 2026",
+      "title": "Techcombank giành “cú đúp” giải thưởng quốc tế Stevie® Awards for Great Employers 2026",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Công ty Cổ phần VCCorp\" height=\"49px\" src=\"https://vccorp.mediacdn.vn/vccorp-s.png\" width=\"100px\"/>",
+      "resolved_url": "https://vccorp.mediacdn.vn/vccorp-s.png",
+      "alt": "Công ty Cổ phần VCCorp",
+      "title": "",
+      "caption": ""
+    }
+  ],
+  "language": "vi",
+  "built_at": "2026-08-18T20:40:50+07:00",
+  "built_from_raw_path": "data/raw_html\\cafef.vn\\20260818\\bd54ab9aa207b938c4f4e37007a409429e314a06b798e21f6052abad4d9cbed0.html"
+}

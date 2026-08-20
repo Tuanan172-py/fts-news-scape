@@ -90,6 +90,23 @@ Loader đọc mọi file trong `users/`, ánh xạ mỗi nhóm → `entity_id` (
 ngành GICS như THEP/NGAN_HANG, KHÔNG theo tên; báo `subscription_warnings` nếu sai). Ánh xạ tin→người đăng ký:
 `registry.subscribers_for(entity_ids)`.
 
+### Công tắc DEV: `config/entities/manifest.yaml` (ngoài `users/`)
+
+End-user chỉ đặt file trong `users/`; **DEV** quyết định file nào ĐANG ÁP DỤNG qua `manifest.yaml`
+(đặt ngoài `users/`, end-user không sửa):
+
+```yaml
+enabled: true        # false = tắt TOÀN BỘ lớp đăng ký
+default: false       # trạng thái cho user chưa liệt kê (an toàn: mặc định tắt)
+users:
+  AnPT: true
+  A: true
+  B: false           # dev tạm tắt B (file users/B.yaml vẫn giữ)
+```
+
+Loader chỉ nạp user được bật (`_user_enabled`): `manifest.users[<tên>]` → fallback `default`;
+`enabled: false` tắt tất. Thiếu file manifest → nạp tất (tương thích cũ).
+
 ## Sử dụng
 
 ```python

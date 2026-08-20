@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "d0d501b2f52a72ce3b45d8b64212b7a9f794568b9eba47b4638eada6dbde5c19",
+  "title": "Nguy cơ lớn đằng sau hiểu lầm \"truyền dịch cho nhanh khỏe\"",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

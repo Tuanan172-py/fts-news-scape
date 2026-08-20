@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "83325479d2735af4f348a6bddd200a172cd5738d84636ad6f65394d09b7e862c",
+  "title": "Thủ tướng: Cắt chi phí trung gian để thuốc đến tay người bệnh giá thấp nhất",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

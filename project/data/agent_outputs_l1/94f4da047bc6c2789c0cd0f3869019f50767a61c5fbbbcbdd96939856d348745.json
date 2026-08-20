@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "94f4da047bc6c2789c0cd0f3869019f50767a61c5fbbbcbdd96939856d348745",
+  "title": "Làn sóng hàng giá rẻ từ Temu, Shein tại châu Âu có dấu hiệu hạ nhiệt",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

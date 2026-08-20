@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "b4cbea73d6007d0fcb1499fc1133dfe0dbaeb027ff18ece9cbd648ce8b67ca01",
+  "title": "Góc nhìn 20/08: Cẩn trọng trước phiên đáo hạn",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

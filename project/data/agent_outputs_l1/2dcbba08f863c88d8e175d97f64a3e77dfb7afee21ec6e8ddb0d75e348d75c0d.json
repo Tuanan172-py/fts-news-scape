@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "2dcbba08f863c88d8e175d97f64a3e77dfb7afee21ec6e8ddb0d75e348d75c0d",
+  "title": "Công an truy tìm 2 người liên quan vụ vận chuyển trái phép hơn 12 triệu USD",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

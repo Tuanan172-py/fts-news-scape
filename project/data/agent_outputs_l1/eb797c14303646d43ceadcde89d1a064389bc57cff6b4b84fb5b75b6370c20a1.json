@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "eb797c14303646d43ceadcde89d1a064389bc57cff6b4b84fb5b75b6370c20a1",
+  "title": "Thủ tướng: Cơ cấu lại nguồn lực hơn 800 ngàn tỷ đồng để giảm 15% chi thường xuyên, tăng 15% chi đầu tư",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

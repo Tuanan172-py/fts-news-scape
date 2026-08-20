@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "580bd5222eb5d6445ff0e75fe84efb191b452e600d4aab4dfb8448cc8c6b367e",
+  "title": "Phép thử sức chống chịu của hệ thống lương thực toàn cầu trước các cú sốc khí hậu",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

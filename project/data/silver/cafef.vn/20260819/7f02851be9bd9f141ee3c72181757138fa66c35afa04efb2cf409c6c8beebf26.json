@@ -1,0 +1,435 @@
+{
+  "silver_schema_version": "1.0",
+  "article_id": "7f02851be9bd9f141ee3c72181757138fa66c35afa04efb2cf409c6c8beebf26",
+  "source_url": "https://cafef.vn/phat-hien-mot-xe-tai-trung-quoc-lien-tuc-di-chuyen-khong-phat-ra-tieng-dong-am-tham-khai-thac-190-trieu-tan-kho-bau-188260818202608014.chn",
+  "domain": "cafef.vn",
+  "content_sha256": "f949a3c6751a8a8e783fb02b85627fed1c1e49a5629c7729757adbb1bc720e01",
+  "cleaned_text": "Phát hiện một xe tải Trung Quốc liên tục di chuyển, không phát ra tiếng động, âm thầm khai thác 190 triệu tấn 'kho báu'\nMột xe tải điện của Trung Quốc với hơn 8.000 chu kỳ sạc đã được triển khai ở mỏ \"kho báu\".\nMẫu xe tải khai mỏ chạy hoàn toàn bằng điện tại Trung Quốc vừa được đưa vào vận hành với bộ pin natri-ion dung lượng 676 kWh, có thể sạc đầy trong 20-25 phút và được thiết kế chịu hơn 8.000 chu kỳ sạc.\nChiếc xe được đưa vào khai thác tại mỏ Tangshan Sanyou, do Hina Battery và Tonly Heavy Industry phối hợp phát triển. Tangshan Sanyou là một mỏ đá vôi với trữ lượng khoảng 190 triệu tấn.\nĐây được giới thiệu là xe tải khai mỏ chạy hoàn toàn bằng pin natri-ion đầu tiên được đưa vào hoạt động thực tế.\nMẫu xe được phát triển trên nền tảng xe tải mỏ TLE120 của Tonly Heavy Industry, sau đó điều chỉnh để tích hợp hệ thống lưu trữ năng lượng quy mô lớn. Khác ôtô điện thông thường, phương tiện trong mỏ thường di chuyển trên những tuyến đường tương đối ngắn nhưng phải chuyên chở tải trọng lớn, làm việc với cường độ cao và lặp lại liên tục.\nVì vậy, khả năng cung cấp dòng điện ổn định cho động cơ, độ bền và thời gian sạc được đặt lên hàng đầu thay vì khả năng tăng tốc.\n\"Trái tim\" của chiếc xe là hệ thống pin Haixing do Hina Battery phát triển, có tổng dung lượng 676 kWh. Các tế bào pin đạt mật độ năng lượng 165 Wh/kg, trong khi kết cấu bộ pin được tối ưu để duy trì dòng điện lớn cho hệ thống truyền động nhưng vẫn đảm bảo ổn định nhiệt.\nNhà sản xuất chưa công bố quãng đường chiếc xe có thể hoạt động sau mỗi lần sạc. Tuy nhiên, một trong những thông số đáng chú ý nhất là khả năng nạp điện từ 0 lên 100% chỉ trong khoảng 20-25 phút.\nTốc độ này đặc biệt quan trọng đối với ngành khai khoáng. Xe tải mỏ thường phải vận hành nhiều giờ liên tục, nên thời gian nằm chờ sạc càng lâu thì hiệu suất khai thác càng giảm. Khả năng bổ sung toàn bộ năng lượng trong chưa đầy nửa giờ cho phép phương tiện nhanh chóng trở lại dây chuyền vận chuyển.\nBộ pin cũng được thiết kế để vượt 8.000 chu kỳ sạc - xả ngay cả trong điều kiện sử dụng và sạc liên tục với cường độ cao. Theo nhóm phát triển, tuổi thọ này được tính toán để gần tương ứng với vòng đời vận hành của chính chiếc xe, qua đó hạn chế nhu cầu thay thế bộ pin trong quá trình sử dụng.\nNếu một chu kỳ tương ứng với một lần sạc - xả hoàn chỉnh mỗi ngày, 8.000 chu kỳ về lý thuyết tương đương gần 22 năm. Trong thực tế, xe tải mỏ có thể trải qua số chu kỳ tương đương cao hơn mỗi ngày, nên tuổi thọ tính theo năm sẽ phụ thuộc đáng kể vào cường độ khai thác.\nMột lợi thế khác của natri-ion là khả năng hoạt động trong môi trường nhiệt độ thấp. So với nhiều loại pin lithium-ion, công nghệ này có thể duy trì hiệu suất tốt hơn khi nhiệt độ giảm, phù hợp với các mỏ lộ thiên tại những khu vực có mùa đông khắc nghiệt.\nNatri cũng là nguyên tố có trữ lượng dồi dào và phân bố rộng hơn lithium. Đây được coi là lợi thế tiềm năng về chi phí và chuỗi cung ứng nếu công nghệ được sản xuất ở quy mô lớn.\nTuy nhiên, natri-ion vẫn có nhược điểm đáng kể về mật độ năng lượng. Điều này thể hiện ngay trên chiếc TLE120 mới.\nCác phiên bản trước của cùng nền tảng sử dụng pin lithium sắt phosphate (LFP) từng được trang bị bộ pin dung lượng tới 801 kWh, cao hơn khoảng 18% so với mức 676 kWh của phiên bản natri-ion. Mật độ năng lượng thấp đồng nghĩa bộ pin natri-ion phải lớn hoặc nặng hơn nếu muốn tích trữ lượng điện tương đương.\nĐây là hạn chế lớn đối với ôtô con, nơi trọng lượng và không gian ảnh hưởng trực tiếp đến tầm hoạt động. Tuy nhiên, với xe tải khai mỏ, bài toán có phần khác.\nPhương tiện hoạt động trên tuyến đường cố định, thường xuyên quay về khu vực có trạm sạc và bản thân đã có kích thước, tải trọng rất lớn. Vì thế, ưu thế về độ bền, khả năng sạc nhanh, hoạt động ở nhiệt độ thấp và chi phí có thể quan trọng hơn việc tối đa hóa mật độ năng lượng.\nChiếc TLE120 tại mỏ Tangshan Sanyou cũng đóng vai trò như một phòng thử nghiệm ngoài thực địa. Thay vì chỉ đánh giá pin trong phòng thí nghiệm, hệ thống sẽ phải chịu tải trọng lớn, bụi, rung động, thay đổi nhiệt độ và quá trình sạc - xả liên tục của hoạt động khai khoáng.\nTheo CPG\nNhịp sống thị trường",
+  "extraction_quality": "high",
+  "structure": {
+    "headings": [
+      {
+        "level": 1,
+        "text": "Phát hiện một xe tải Trung Quốc liên tục di chuyển, không phát ra tiếng động, âm thầm khai thác 190 triệu tấn 'kho báu'"
+      },
+      {
+        "level": 3,
+        "text": "CÙNG CHUYÊN MỤC"
+      },
+      {
+        "level": 4,
+        "text": "Kinh tế lao đao vì ‘quay lưng' với Moscow và viện trợ Ukraine, chính trị gia nước châu Âu kêu gọi quay lại làm ăn với Nga, đòi EU hỗ trợ tiền Nổi bật"
+      },
+      {
+        "level": 4,
+        "text": "Nga phát hiện báu vật quý hiếm chưa từng có, 1 mẩu bằng đầu bút bi giá gần 4 triệu đồng Nổi bật"
+      },
+      {
+        "level": 4,
+        "text": "Trung Quốc phát triển cảm biến siêu nhỏ có thể phát hiện tàu ngầm vỏ thép ở khoảng cách nửa cây số"
+      },
+      {
+        "level": 4,
+        "text": "Nga ra mắt 'pháo đài nổi', sát thủ của xuồng không người lái"
+      },
+      {
+        "level": 4,
+        "text": "Iran nêu điều kiện mở cửa eo biển Hormuz"
+      },
+      {
+        "level": 4,
+        "text": "Loại cả Nhật Bản lẫn châu Âu, tàu điện Trung Quốc được quốc gia Đông Nam Á chốt ngay vì \"hồ sơ đẹp như mơ\""
+      }
+    ],
+    "paragraphs": [
+      "MỚI NHẤT!",
+      "Vu Lam | 19-08-2026 - 00:02 AM | Tài chính quốc tế",
+      "Một xe tải điện của Trung Quốc với hơn 8.000 chu kỳ sạc đã được triển khai ở mỏ \"kho báu\".",
+      "Mẫu xe tải khai mỏ chạy hoàn toàn bằng điện tại Trung Quốc vừa được đưa vào vận hành với bộ pin natri-ion dung lượng 676 kWh, có thể sạc đầy trong 20-25 phút và được thiết kế chịu hơn 8.000 chu kỳ sạc.",
+      "Chiếc xe được đưa vào khai thác tại mỏ Tangshan Sanyou, do Hina Battery và Tonly Heavy Industry phối hợp phát triển. Tangshan Sanyou là một mỏ đá vôi với trữ lượng khoảng 190 triệu tấn.",
+      "Đây được giới thiệu là xe tải khai mỏ chạy hoàn toàn bằng pin natri-ion đầu tiên được đưa vào hoạt động thực tế.",
+      "Mẫu xe được phát triển trên nền tảng xe tải mỏ TLE120 của Tonly Heavy Industry, sau đó điều chỉnh để tích hợp hệ thống lưu trữ năng lượng quy mô lớn. Khác ôtô điện thông thường, phương tiện trong mỏ thường di chuyển trên những tuyến đường tương đối ngắn nhưng phải chuyên chở tải trọng lớn, làm việc với cường độ cao và lặp lại liên tục.",
+      "Vì vậy, khả năng cung cấp dòng điện ổn định cho động cơ, độ bền và thời gian sạc được đặt lên hàng đầu thay vì khả năng tăng tốc.",
+      "\"Trái tim\" của chiếc xe là hệ thống pin Haixing do Hina Battery phát triển, có tổng dung lượng 676 kWh. Các tế bào pin đạt mật độ năng lượng 165 Wh/kg, trong khi kết cấu bộ pin được tối ưu để duy trì dòng điện lớn cho hệ thống truyền động nhưng vẫn đảm bảo ổn định nhiệt.",
+      "Nhà sản xuất chưa công bố quãng đường chiếc xe có thể hoạt động sau mỗi lần sạc. Tuy nhiên, một trong những thông số đáng chú ý nhất là khả năng nạp điện từ 0 lên 100% chỉ trong khoảng 20-25 phút.",
+      "Tốc độ này đặc biệt quan trọng đối với ngành khai khoáng. Xe tải mỏ thường phải vận hành nhiều giờ liên tục, nên thời gian nằm chờ sạc càng lâu thì hiệu suất khai thác càng giảm. Khả năng bổ sung toàn bộ năng lượng trong chưa đầy nửa giờ cho phép phương tiện nhanh chóng trở lại dây chuyền vận chuyển.",
+      "Bộ pin cũng được thiết kế để vượt 8.000 chu kỳ sạc - xả ngay cả trong điều kiện sử dụng và sạc liên tục với cường độ cao. Theo nhóm phát triển, tuổi thọ này được tính toán để gần tương ứng với vòng đời vận hành của chính chiếc xe, qua đó hạn chế nhu cầu thay thế bộ pin trong quá trình sử dụng.",
+      "Nếu một chu kỳ tương ứng với một lần sạc - xả hoàn chỉnh mỗi ngày, 8.000 chu kỳ về lý thuyết tương đương gần 22 năm. Trong thực tế, xe tải mỏ có thể trải qua số chu kỳ tương đương cao hơn mỗi ngày, nên tuổi thọ tính theo năm sẽ phụ thuộc đáng kể vào cường độ khai thác.",
+      "Một lợi thế khác của natri-ion là khả năng hoạt động trong môi trường nhiệt độ thấp. So với nhiều loại pin lithium-ion, công nghệ này có thể duy trì hiệu suất tốt hơn khi nhiệt độ giảm, phù hợp với các mỏ lộ thiên tại những khu vực có mùa đông khắc nghiệt.",
+      "Natri cũng là nguyên tố có trữ lượng dồi dào và phân bố rộng hơn lithium. Đây được coi là lợi thế tiềm năng về chi phí và chuỗi cung ứng nếu công nghệ được sản xuất ở quy mô lớn.",
+      "Tuy nhiên, natri-ion vẫn có nhược điểm đáng kể về mật độ năng lượng. Điều này thể hiện ngay trên chiếc TLE120 mới.",
+      "Các phiên bản trước của cùng nền tảng sử dụng pin lithium sắt phosphate (LFP) từng được trang bị bộ pin dung lượng tới 801 kWh, cao hơn khoảng 18% so với mức 676 kWh của phiên bản natri-ion. Mật độ năng lượng thấp đồng nghĩa bộ pin natri-ion phải lớn hoặc nặng hơn nếu muốn tích trữ lượng điện tương đương.",
+      "Đây là hạn chế lớn đối với ôtô con, nơi trọng lượng và không gian ảnh hưởng trực tiếp đến tầm hoạt động. Tuy nhiên, với xe tải khai mỏ, bài toán có phần khác.",
+      "Phương tiện hoạt động trên tuyến đường cố định, thường xuyên quay về khu vực có trạm sạc và bản thân đã có kích thước, tải trọng rất lớn. Vì thế, ưu thế về độ bền, khả năng sạc nhanh, hoạt động ở nhiệt độ thấp và chi phí có thể quan trọng hơn việc tối đa hóa mật độ năng lượng.",
+      "Chiếc TLE120 tại mỏ Tangshan Sanyou cũng đóng vai trò như một phòng thử nghiệm ngoài thực địa. Thay vì chỉ đánh giá pin trong phòng thí nghiệm, hệ thống sẽ phải chịu tải trọng lớn, bụi, rung động, thay đổi nhiệt độ và quá trình sạc - xả liên tục của hoạt động khai khoáng.",
+      "Theo CPG﻿",
+      "Vu Lam",
+      "Nhịp sống thị trường",
+      "Địa chỉ: Tầng 21 Tòa nhà Center Building. Số 01, phố Nguyễn Huy Tưởng, phường Thanh Xuân, thành phố Hà Nội",
+      "Điện thoại: 024 7309 5555 Máy lẻ 292. Fax: 024-39744082",
+      "Email: info@cafef.vn | Hotline: 0926 864 344",
+      "Chịu trách nhiệm nội dung: Ông Nguyễn Thế Tân",
+      "Liên hệ quảng cáo",
+      "Hotline:",
+      "Email: doanhnghiep@admicro.vn",
+      "© Copyright 2007 - 2026 - Công ty Cổ phần VCCorp.",
+      "Giấy phép thiết lập trang thông tin điện tử tổng hợp trên mạng số 2216/GP-TTĐT do Sở Thông tin và Truyền thông Hà Nội cấp ngày 10 tháng 4 năm 2019."
+    ],
+    "tables": [],
+    "links": [
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "http://liveboard.cafef.vn",
+        "text": "Bảng giá điện tử"
+      },
+      {
+        "href": "/du-lieu/danh-muc-dau-tu.chn",
+        "text": "Danh mục đầu tư"
+      },
+      {
+        "href": "/doc-nhanh.chn",
+        "text": "Đọc nhanh >>"
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "XÃ HỘI"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "CHỨNG KHOÁN"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "BẤT ĐỘNG SẢN"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "DOANH NGHIỆP"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "NGÂN HÀNG"
+      },
+      {
+        "href": "/smart-money.chn",
+        "text": "SMART MONEY"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "TÀI CHÍNH QUỐC TẾ"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "VĨ MÔ"
+      },
+      {
+        "href": "/kinh-te-so.chn",
+        "text": "KINH TẾ SỐ"
+      },
+      {
+        "href": "/thi-truong.chn",
+        "text": "THỊ TRƯỜNG"
+      },
+      {
+        "href": "/song.chn",
+        "text": "SỐNG"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "LIFESTYLE"
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "Xã hội"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "Doanh nghiệp"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "Kinh tế vĩ mô"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "Chứng khoán"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "Tài chính ngân hàng"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "Tài chính quốc tế"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "Tin tức"
+      },
+      {
+        "href": "/du-an.chn",
+        "text": "Dự án"
+      },
+      {
+        "href": "/ban-do-du-an.chn",
+        "text": "Bản đồ dự án"
+      },
+      {
+        "href": "/hang-hoa-nguyen-lieu.chn",
+        "text": "Hàng hóa nguyên liệu"
+      },
+      {
+        "href": "/song.chn",
+        "text": "Sống"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "Lifestyle"
+      },
+      {
+        "href": "/nhom-chu-de/emagazine.chn",
+        "text": "Magazine"
+      },
+      {
+        "href": "/du-lieu.chn",
+        "text": "Dữ liệu"
+      },
+      {
+        "href": "/du-lieu/cafeflists.chn",
+        "text": "F INDEX"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "Tài chính quốc tế"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Chia sẻ"
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "javascript:;",
+        "text": "TIN MỚI"
+      },
+      {
+        "href": "https://cafef.vn/nga-bat-ngo-cau-cuu-khach-hang-lon-nhat-188260818100335018.chn",
+        "text": "Nga bất ngờ 'cầu cứu' khách hàng lớn nhất"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Theo Nhịp sống thị trường Copy link"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Chia sẻ"
+      },
+      {
+        "href": "/khai-thac-mo.html",
+        "text": "khai thác mỏ,"
+      },
+      {
+        "href": "/xe-tai-dien.html",
+        "text": "xe tải điện"
+      },
+      {
+        "href": "/kinh-te-lao-dao-vi-quay-lung-voi-moscow-va-vien-tro-ukraine-chinh-tri-gia-nuoc-chau-au-keu-goi-quay-lai-lam-an-voi-nga-doi-eu-ho-tro-tien-188260818162947105.chn",
+        "text": ""
+      },
+      {
+        "href": "/kinh-te-lao-dao-vi-quay-lung-voi-moscow-va-vien-tro-ukraine-chinh-tri-gia-nuoc-chau-au-keu-goi-quay-lai-lam-an-voi-nga-doi-eu-ho-tro-tien-188260818162947105.chn",
+        "text": "Kinh tế lao đao vì ‘quay lưng' với Moscow và viện trợ Ukraine, chính trị gia nước châu Âu kêu gọi quay lại làm ăn với Nga, đòi EU hỗ trợ tiền"
+      },
+      {
+        "href": "/nga-phat-hien-bau-vat-quy-hiem-chua-tung-co-1-mau-bang-dau-but-bi-gia-gan-4-trieu-dong-188260818163041634.chn",
+        "text": ""
+      },
+      {
+        "href": "/nga-phat-hien-bau-vat-quy-hiem-chua-tung-co-1-mau-bang-dau-but-bi-gia-gan-4-trieu-dong-188260818163041634.chn",
+        "text": "Nga phát hiện báu vật quý hiếm chưa từng có, 1 mẩu bằng đầu bút bi giá gần 4 triệu đồng"
+      },
+      {
+        "href": "/trung-quoc-phat-trien-cam-bien-sieu-nho-co-the-phat-hien-tau-ngam-vo-thep-o-khoang-cach-nua-cay-so-18826081820245329.chn",
+        "text": ""
+      },
+      {
+        "href": "/trung-quoc-phat-trien-cam-bien-sieu-nho-co-the-phat-hien-tau-ngam-vo-thep-o-khoang-cach-nua-cay-so-18826081820245329.chn",
+        "text": "Trung Quốc phát triển cảm biến siêu nhỏ có thể phát hiện tàu ngầm vỏ thép ở khoảng cách nửa cây số"
+      },
+      {
+        "href": "/nga-ra-mat-phao-dai-noi-sat-thu-cua-xuong-khong-nguoi-lai-188260818202311608.chn",
+        "text": ""
+      },
+      {
+        "href": "/nga-ra-mat-phao-dai-noi-sat-thu-cua-xuong-khong-nguoi-lai-188260818202311608.chn",
+        "text": "Nga ra mắt 'pháo đài nổi', sát thủ của xuồng không người lái"
+      },
+      {
+        "href": "/iran-neu-dieu-kien-mo-cua-eo-bien-hormuz-188260818202052452.chn",
+        "text": ""
+      },
+      {
+        "href": "/iran-neu-dieu-kien-mo-cua-eo-bien-hormuz-188260818202052452.chn",
+        "text": "Iran nêu điều kiện mở cửa eo biển Hormuz"
+      },
+      {
+        "href": "/loai-ca-nhat-ban-lan-chau-au-tau-dien-trung-quoc-duoc-quoc-gia-dong-nam-a-chot-ngay-vi-ho-so-dep-nhu-mo-188260818191049617.chn",
+        "text": ""
+      },
+      {
+        "href": "/loai-ca-nhat-ban-lan-chau-au-tau-dien-trung-quoc-duoc-quoc-gia-dong-nam-a-chot-ngay-vi-ho-so-dep-nhu-mo-188260818191049617.chn",
+        "text": "Loại cả Nhật Bản lẫn châu Âu, tàu điện Trung Quốc được quốc gia Đông Nam Á chốt ngay vì \"hồ sơ đẹp như mơ\""
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "XÃ HỘI"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "CHỨNG KHOÁN"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "BẤT ĐỘNG SẢN"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "DOANH NGHIỆP"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "NGÂN HÀNG"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "TÀI CHÍNH QUỐC TẾ"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "VĨ MÔ"
+      },
+      {
+        "href": "/kinh-te-so.chn",
+        "text": "KINH TẾ SỐ"
+      },
+      {
+        "href": "/thi-truong.chn",
+        "text": "THỊ TRƯỜNG"
+      },
+      {
+        "href": "/song.chn",
+        "text": "SỐNG"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "LIFESTYLE"
+      },
+      {
+        "href": "/du-lieu.chn",
+        "text": "Dữ liệu"
+      },
+      {
+        "href": "/du-lieu/top/ceo.chn",
+        "text": "Top 200"
+      },
+      {
+        "href": "https://www.messenger.com/t/108804609142280",
+        "text": "Chat với tư vấn viên"
+      },
+      {
+        "href": "http://www.vccorp.vn/",
+        "text": ""
+      },
+      {
+        "href": "/static/chinh-sach-bao-mat.html",
+        "text": "Chính sách bảo mật"
+      }
+    ]
+  },
+  "images": [
+    {
+      "outer_tag": "<img alt=\"\" class=\"\" data-original=\"https://cafefcdn.com/203337114487263232/2026/8/18/screenshot-2026-08-18-at-164535-1787059516607-17870595168731373514093.png\" h=\"1115\" height=\"\" rel=\"lightbox\" src=\"https://cafefcdn.com/203337114487263232/2026/8/18/screenshot-2026-08-18-at-164535-1787059516607-17870595168731373514093.png\" title=\"\" type=\"photo\" w=\"1507\" width=\"\"/>",
+      "resolved_url": "https://cafefcdn.com/203337114487263232/2026/8/18/screenshot-2026-08-18-at-164535-1787059516607-17870595168731373514093.png",
+      "alt": "",
+      "title": "",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Kinh tế lao đao vì ‘quay lưng' với Moscow và viện trợ Ukraine, chính trị gia nước châu Âu kêu gọi quay lại làm ăn với Nga, đòi EU hỗ trợ tiền\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/avatar1787045331903-17870453324671580693755.jpg\" title=\"Kinh tế lao đao vì ‘quay lưng' với Moscow và viện trợ Ukraine, chính trị gia nước châu Âu kêu gọi quay lại làm ăn với Nga, đòi EU hỗ trợ tiền\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/avatar1787045331903-17870453324671580693755.jpg",
+      "alt": "Kinh tế lao đao vì ‘quay lưng' với Moscow và viện trợ Ukraine, chính trị gia nước châu Âu kêu gọi quay lại làm ăn với Nga, đòi EU hỗ trợ tiền",
+      "title": "Kinh tế lao đao vì ‘quay lưng' với Moscow và viện trợ Ukraine, chính trị gia nước châu Âu kêu gọi quay lại làm ăn với Nga, đòi EU hỗ trợ tiền",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Nga phát hiện báu vật quý hiếm chưa từng có, 1 mẩu bằng đầu bút bi giá gần 4 triệu đồng\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/avatar1787045364740-1787045367434301177147.png\" title=\"Nga phát hiện báu vật quý hiếm chưa từng có, 1 mẩu bằng đầu bút bi giá gần 4 triệu đồng\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/avatar1787045364740-1787045367434301177147.png",
+      "alt": "Nga phát hiện báu vật quý hiếm chưa từng có, 1 mẩu bằng đầu bút bi giá gần 4 triệu đồng",
+      "title": "Nga phát hiện báu vật quý hiếm chưa từng có, 1 mẩu bằng đầu bút bi giá gần 4 triệu đồng",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Trung Quốc phát triển cảm biến siêu nhỏ có thể phát hiện tàu ngầm vỏ thép ở khoảng cách nửa cây số\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/avatar1787059449265-1787059449507864451643.jpg\" title=\"Trung Quốc phát triển cảm biến siêu nhỏ có thể phát hiện tàu ngầm vỏ thép ở khoảng cách nửa cây số\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/avatar1787059449265-1787059449507864451643.jpg",
+      "alt": "Trung Quốc phát triển cảm biến siêu nhỏ có thể phát hiện tàu ngầm vỏ thép ở khoảng cách nửa cây số",
+      "title": "Trung Quốc phát triển cảm biến siêu nhỏ có thể phát hiện tàu ngầm vỏ thép ở khoảng cách nửa cây số",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Nga ra mắt 'pháo đài nổi', sát thủ của xuồng không người lái\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/screenshot-2026-08-18-at-20-22-12-17870593409221804746888-0-76-672-1151-crop-17870593446751990762280.png\" title=\"Nga ra mắt 'pháo đài nổi', sát thủ của xuồng không người lái\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/screenshot-2026-08-18-at-20-22-12-17870593409221804746888-0-76-672-1151-crop-17870593446751990762280.png",
+      "alt": "Nga ra mắt 'pháo đài nổi', sát thủ của xuồng không người lái",
+      "title": "Nga ra mắt 'pháo đài nổi', sát thủ của xuồng không người lái",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Iran nêu điều kiện mở cửa eo biển Hormuz\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/avatar1787059219470-17870592197871681889769.webp\" title=\"Iran nêu điều kiện mở cửa eo biển Hormuz\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/avatar1787059219470-17870592197871681889769.webp",
+      "alt": "Iran nêu điều kiện mở cửa eo biển Hormuz",
+      "title": "Iran nêu điều kiện mở cửa eo biển Hormuz",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt='Loại cả Nhật Bản lẫn châu Âu, tàu điện Trung Quốc được quốc gia Đông Nam Á chốt ngay vì \"hồ sơ đẹp như mơ\"' height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/avatar1787055003916-17870550044041671070975.jpg\" title='Loại cả Nhật Bản lẫn châu Âu, tàu điện Trung Quốc được quốc gia Đông Nam Á chốt ngay vì \"hồ sơ đẹp như mơ\"' width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/avatar1787055003916-17870550044041671070975.jpg",
+      "alt": "Loại cả Nhật Bản lẫn châu Âu, tàu điện Trung Quốc được quốc gia Đông Nam Á chốt ngay vì \"hồ sơ đẹp như mơ\"",
+      "title": "Loại cả Nhật Bản lẫn châu Âu, tàu điện Trung Quốc được quốc gia Đông Nam Á chốt ngay vì \"hồ sơ đẹp như mơ\"",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Công ty Cổ phần VCCorp\" height=\"49px\" src=\"https://vccorp.mediacdn.vn/vccorp-s.png\" width=\"100px\"/>",
+      "resolved_url": "https://vccorp.mediacdn.vn/vccorp-s.png",
+      "alt": "Công ty Cổ phần VCCorp",
+      "title": "",
+      "caption": ""
+    }
+  ],
+  "language": "vi",
+  "built_at": "2026-08-19T00:10:50+07:00",
+  "built_from_raw_path": "data/raw_html\\cafef.vn\\20260819\\7f02851be9bd9f141ee3c72181757138fa66c35afa04efb2cf409c6c8beebf26.html"
+}

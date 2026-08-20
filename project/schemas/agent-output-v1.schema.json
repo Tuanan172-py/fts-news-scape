@@ -6,7 +6,7 @@
   "type": "object",
   "required": [
     "output_schema_version", "article_id", "summary", "implication",
-    "materiality", "confidence", "citations", "processing_metadata"
+    "materiality", "citations", "processing_metadata"
   ],
   "additionalProperties": true,
   "properties": {
@@ -42,7 +42,8 @@
         ]}
       }
     },
-    "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+    "confidence": {"type": "number", "minimum": 0, "maximum": 1,
+      "description": "OPTIONAL — self-reported, KHÔNG dùng làm gate DoD (bỏ 2026-08-18)"},
     "citations": {
       "type": "array",
       "items": {

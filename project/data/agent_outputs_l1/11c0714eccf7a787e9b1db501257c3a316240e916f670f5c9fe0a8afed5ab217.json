@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "11c0714eccf7a787e9b1db501257c3a316240e916f670f5c9fe0a8afed5ab217",
+  "title": "Công ty bầu Đức khởi động deal IPO ngàn tỷ, giá chào bán 60,600 đồng/cp",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

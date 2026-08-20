@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "4a96866eef6b3c749de8babe5fa8e8d6459f39e9be9696903239d4f0269a6c8d",
+  "title": "Iran nêu điều kiện mở cửa eo biển Hormuz",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

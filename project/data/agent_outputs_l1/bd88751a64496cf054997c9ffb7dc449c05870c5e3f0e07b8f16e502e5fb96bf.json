@@ -1,0 +1,37 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "bd88751a64496cf054997c9ffb7dc449c05870c5e3f0e07b8f16e502e5fb96bf",
+  "title": "Vàng thế giới quay đầu giảm khi lợi suất trái phiếu lên đỉnh nhiều thập kỷ",
+  "recognized": true,
+  "entities": [
+    {
+      "surface": "Vàng thế giới",
+      "entity_id": null,
+      "type": "UNKNOWN",
+      "method": "semantic",
+      "in_list": false,
+      "confidence": 0.8
+    }
+  ],
+  "categories": {
+    "ticker_company": "out_of_list",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [
+    "Vàng thế giới"
+  ],
+  "citations": [
+    {
+      "source_span": "Vàng thế giới quay đầu giảm khi lợi suất trái phiếu lên đỉnh nhiều thập kỷ"
+    }
+  ],
+  "confidence": 0.95,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

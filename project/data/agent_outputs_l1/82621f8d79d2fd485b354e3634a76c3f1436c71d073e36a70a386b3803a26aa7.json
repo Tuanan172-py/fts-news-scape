@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "82621f8d79d2fd485b354e3634a76c3f1436c71d073e36a70a386b3803a26aa7",
+  "title": "Quốc gia chủ chốt BRICS âm thầm xây hệ thống thanh toán xuyên biên giới mới, tuyên bố không cần đến SWIFT hay đồng USD",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

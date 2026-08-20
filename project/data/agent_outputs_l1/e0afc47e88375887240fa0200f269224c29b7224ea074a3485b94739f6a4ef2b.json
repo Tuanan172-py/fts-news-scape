@@ -1,34 +1,35 @@
 {
- "l1_output_version": "1.0",
- "article_id": "e0afc47e88375887240fa0200f269224c29b7224ea074a3485b94739f6a4ef2b",
- "title": "Loạt doanh nghiệp bị hủy giao dịch trên UPCoM trong tháng 8",
- "recognized": true,
- "entities": [
-  {
-   "surface": "UPCoM",
-   "entity_id": "EXCHANGE:UPCOM",
-   "type": "EXCHANGE",
-   "method": "alias",
-   "in_list": true,
-   "confidence": 0.85
+  "l1_output_version": "1.0",
+  "article_id": "e0afc47e88375887240fa0200f269224c29b7224ea074a3485b94739f6a4ef2b",
+  "title": "Loạt doanh nghiệp bị hủy giao dịch trên UPCoM trong tháng 8",
+  "recognized": true,
+  "entities": [
+    {
+      "surface": "UPCoM",
+      "entity_id": "EXCHANGE:UPCOM",
+      "type": "EXCHANGE",
+      "method": "alias",
+      "in_list": true,
+      "confidence": 0.95
+    }
+  ],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "done",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [
+    {
+      "source_span": "Loạt doanh nghiệp bị hủy giao dịch trên UPCoM trong tháng 8"
+    }
+  ],
+  "confidence": 0.95,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
   }
- ],
- "categories": {
-  "ticker_company": "none",
-  "etf_fund": "none",
-  "index": "none",
-  "exchange": "done",
-  "industry_sector": "none"
- },
- "citations": [
-  {
-   "source_span": "Loạt doanh nghiệp bị hủy giao dịch trên UPCoM trong tháng 8"
-  }
- ],
- "confidence": 0.85,
- "processing_metadata": {
-  "agent_provider": "stub",
-  "model_used": "rule-based",
-  "timestamp": "2026-08-18T15:11:29+07:00"
- }
 }

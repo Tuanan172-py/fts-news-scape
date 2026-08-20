@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "2691cd769ec8ab16cec63f72c8cf9da7770db5d40ddb4fe474a6f92ccb79b15d",
+  "title": "Đề xuất sửa đổi, bổ sung Quyết định 29/2023/QĐ-TTg để thu hút đầu tư chất lượng cao",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

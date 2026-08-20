@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "4ed84d305a6e3b7cac7e72f7919b6e5846a339cbffca58e9b1fa0869d838724e",
+  "title": "Ủy ban Thường vụ Quốc hội cho ý kiến về dự án Bộ luật Hình sự (sửa đổi)",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

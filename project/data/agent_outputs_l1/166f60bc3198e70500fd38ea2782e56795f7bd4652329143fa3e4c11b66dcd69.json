@@ -1,0 +1,35 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "166f60bc3198e70500fd38ea2782e56795f7bd4652329143fa3e4c11b66dcd69",
+  "title": "Hãng hàng không của tỷ phú Nguyễn Thị Phương Thảo rót 285 tỷ đồng lập công ty mới",
+  "recognized": true,
+  "entities": [
+    {
+      "surface": "hàng không",
+      "entity_id": "INDUSTRY_GICS3:Vận tải hàng không",
+      "type": "INDUSTRY_GICS3",
+      "method": "semantic",
+      "in_list": true,
+      "confidence": 0.9
+    }
+  ],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "done"
+  },
+  "unlisted_candidates": [],
+  "citations": [
+    {
+      "source_span": "Hãng hàng không của tỷ phú Nguyễn Thị Phương Thảo rót 285 tỷ đồng lập công ty mới"
+    }
+  ],
+  "confidence": 0.95,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

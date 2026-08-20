@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "1cf7f417f8ad8911a0a6c45c76bff24d14d073af9936e90bfebcbf1b91da3ca8",
+  "title": "Một doanh nghiệp sắp trả cổ tức tiền mặt cao nhất lịch sử, hơn nửa thập kỷ không “lỡ hẹn” với cổ đông",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

@@ -1,21 +1,37 @@
 {
- "l1_output_version": "1.0",
- "article_id": "db447cb823291b14a0d345293a73eec21d27f5c30af0f21345bd8090a669bb03",
- "title": "Người Mỹ bắt đầu giảm mua thịt bò do giá tăng vọt",
- "recognized": false,
- "entities": [],
- "categories": {
-  "ticker_company": "none",
-  "etf_fund": "none",
-  "index": "none",
-  "exchange": "none",
-  "industry_sector": "none"
- },
- "citations": [],
- "confidence": 0.6,
- "processing_metadata": {
-  "agent_provider": "stub",
-  "model_used": "rule-based",
-  "timestamp": "2026-08-18T15:11:29+07:00"
- }
+  "l1_output_version": "1.0",
+  "article_id": "db447cb823291b14a0d345293a73eec21d27f5c30af0f21345bd8090a669bb03",
+  "title": "Người Mỹ bắt đầu giảm mua thịt bò do giá tăng vọt",
+  "recognized": true,
+  "entities": [
+    {
+      "surface": "Mỹ",
+      "entity_id": null,
+      "type": "UNKNOWN",
+      "method": "semantic",
+      "in_list": false,
+      "confidence": 0.8
+    }
+  ],
+  "categories": {
+    "ticker_company": "out_of_list",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [
+    "Mỹ"
+  ],
+  "citations": [
+    {
+      "source_span": "Người Mỹ bắt đầu giảm mua thịt bò do giá tăng vọt"
+    }
+  ],
+  "confidence": 0.95,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
 }

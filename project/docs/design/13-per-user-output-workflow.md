@@ -116,7 +116,7 @@ của user-workflow — giả định đã sinh `work_items` trong DB.
 | agent | AGENT ngoài (prompt theo `schemas/l1-entity-instructions-v1.md`) | `l1-entity-output-v1` `*.json` |
 | ingest | `scripts/l1_ingest.py <dir>` → `L1Runner.ingest_output()` | `l1_outputs` (+ `dod_pass`), `l1_tasks.status` |
 
-**L1 done** = `l1_outputs.dod_pass=1` (schema + grounding surface/citation ⊂ title + confidence≥0.60).
+**L1 done** = `l1_outputs.dod_pass=1` (schema + grounding surface/citation ⊂ title). `confidence` không còn là gate.
 
 ---
 
@@ -130,7 +130,7 @@ của user-workflow — giả định đã sinh `work_items` trong DB.
 
 **Trường agent phải thêm** (`agent-output-v1`): `summary.abstractive` + `key_points`, `implication.text`
 + `impact_area`, `materiality.score` + `time_sensitivity`, (tuỳ chọn) `sentiment`, `event_type`; `citations`≥2.
-**Agent done** = `agent_outputs.dod_pass=1` (confidence≥0.65, ≥2 citation ⊂ cleaned_text, extraction_quality∈{high,medium}).
+**Agent done** = `agent_outputs.dod_pass=1` (≥2 citation ⊂ cleaned_text, extraction_quality∈{high,medium}). `confidence` không còn là gate.
 
 **Giới hạn phạm vi (tiết kiệm):** chỉ nên export article có entity ∈ `union_subscription(registry, enabled)`
 (`src/pipeline/user_workflow.py::union_subscription`). Article không ai theo dõi → không cần agent.
@@ -147,7 +147,7 @@ của user-workflow — giả định đã sinh `work_items` trong DB.
 2. **Định tuyến** — entity của article = `l1_outputs.entities[in_list].entity_id`;
    `subscribers_for(eset)` ∩ `enabled`; mỗi user lấy `matched = eset ∩ resolve_subscription(user)`.
 3. **Ghi 3 file/ngày** (atomic temp + `os.replace`, utf-8-sig):
-   - `L1.csv` — dump lớp L1 (audit): article_id, date, title, entities, l1_confidence, categories.
+   - `L1.csv` — dump lớp L1 (audit): article_id, date, title, entities, categories.
    - `agent.csv` — dump lớp agent (audit).
    - `final.csv` — **deliverable gated** (xem cột §10).
 4. **Checkpoint** — `src/export/checkpoint.py::mark_written()` cập nhật `_checkpoint.json` **SAU** khi
@@ -160,12 +160,14 @@ Article thiếu 1 lớp, hoặc không ai đăng ký entity → **không** vào 
 ## 10. Định dạng `final.csv`
 
 `article_id, date, source_domain, url, title, matched_entities, summary, key_points, implication,
-impact_area, materiality_score, time_sensitivity, sentiment, event_type, confidence`
+impact_area, materiality_score, time_sensitivity, sentiment, event_type`
 
 - `matched_entities` = **code** các entity user đăng ký MÀ article chạm (join `;`).
 - `summary`←`summary.abstractive`; `key_points`←`summary.key_points`; `implication`←`implication.text`;
-  `materiality_score`←`materiality.score`; `sentiment`←`sentiment.polarity`; `confidence`←agent `confidence`.
+  `materiality_score`←`materiality.score`; `sentiment`←`sentiment.polarity`.
 - Flatten null-safe: field agent tuỳ chọn thiếu → ô rỗng, không lỗi.
+- **`confidence` đã bỏ** (2026-08-18): self-reported, calibration kém → gây hiểu nhầm. Không xuất ra
+  CSV và KHÔNG còn là gate DoD. Chất lượng do grounded citations + schema + `extraction_quality` gác.
 
 ---
 

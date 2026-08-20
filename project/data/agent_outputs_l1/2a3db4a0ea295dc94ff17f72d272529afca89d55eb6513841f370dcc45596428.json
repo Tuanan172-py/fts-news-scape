@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "2a3db4a0ea295dc94ff17f72d272529afca89d55eb6513841f370dcc45596428",
+  "title": "Công ty nông nghiệp của Bầu Đức IPO 18,8 triệu cổ phiếu, giá 60.600 đồng/cổ phiếu",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "366f2fa7429ae1edb882e9a33d0f5fac4a596981d3961de895e6bf877ffac13f",
+  "title": "Nga phát hiện báu vật quý hiếm chưa từng có, 1 mẩu bằng đầu bút bi giá gần 4 triệu đồng",
+  "recognized": true,
+  "entities": [
+    {
+      "surface": "Nga",
+      "entity_id": null,
+      "type": "UNKNOWN",
+      "method": "semantic",
+      "in_list": false,
+      "confidence": 0.8
+    }
+  ],
+  "categories": {
+    "ticker_company": "out_of_list",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [
+    "Nga"
+  ],
+  "citations": [
+    {
+      "source_span": "Nga phát hiện báu vật quý hiếm chưa từng có, 1 mẩu bằng đầu bút bi giá gần 4 triệu đồng"
+    }
+  ],
+  "confidence": 0.95,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

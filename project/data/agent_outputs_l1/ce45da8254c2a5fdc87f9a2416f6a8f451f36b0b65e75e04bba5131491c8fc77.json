@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "ce45da8254c2a5fdc87f9a2416f6a8f451f36b0b65e75e04bba5131491c8fc77",
+  "title": "Ban quản lý khu du lịch Núi Bà Đen cảnh báo khẩn",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

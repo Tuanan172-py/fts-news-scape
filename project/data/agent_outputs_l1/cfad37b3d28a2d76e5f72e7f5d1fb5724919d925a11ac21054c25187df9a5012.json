@@ -1,0 +1,35 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "cfad37b3d28a2d76e5f72e7f5d1fb5724919d925a11ac21054c25187df9a5012",
+  "title": "FPTS muốn vay 1.500 tỷ đồng để đầu tư trái phiếu",
+  "recognized": true,
+  "entities": [
+    {
+      "surface": "FPTS",
+      "entity_id": "TICKER:FTS",
+      "type": "TICKER",
+      "method": "semantic",
+      "in_list": true,
+      "confidence": 0.9
+    }
+  ],
+  "categories": {
+    "ticker_company": "done",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [
+    {
+      "source_span": "FPTS muốn vay 1.500 tỷ đồng để đầu tư trái phiếu"
+    }
+  ],
+  "confidence": 0.95,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

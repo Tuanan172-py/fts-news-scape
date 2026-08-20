@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "99c6fe6f7d7107c5a591c4016a112c46b473992df810ed0caa93d8e044ef01cd",
+  "title": "Shipper trộm két sắt chủ nhà, lấy 31 nhẫn vàng",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

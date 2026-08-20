@@ -1,0 +1,42 @@
+{
+  "packet_version": "1.0",
+  "layer": "L1_ENTITY_RECOGNITION",
+  "task": "recognize_and_audit",
+  "article_id": "7d5085c17d010baaa395560f891229dd0bac7b28794b497de5578806f70d7d25",
+  "domain": "cafef.vn",
+  "input": {
+    "title": "Đất vùng quê có lô giá khởi điểm gần 5 tỷ: 13 lô còn lại không có người đấu",
+    "entity_catalog_ref": {
+      "entities": "data/entities/entities.json",
+      "taxonomy": "data/entities/taxonomy.json"
+    },
+    "code_first": {
+      "route": "needs_agent",
+      "relevance": "none",
+      "entities": [],
+      "entity_ids": [],
+      "industries": []
+    }
+  },
+  "output_contract": {
+    "schema_name": "l1-entity-output-v1",
+    "schema_path": "schemas/l1-entity-output-v1.schema.json",
+    "checklist_categories": [
+      "ticker_company",
+      "etf_fund",
+      "index",
+      "exchange",
+      "industry_sector"
+    ]
+  },
+  "constraints": {
+    "surface_must_be_substring_of": "input.title",
+    "citation_must_be_substring_of": "input.title",
+    "recognized_true_requires": [
+      "entities>=1",
+      "citations>=1"
+    ],
+    "audit_duty": "xác nhận entity code-first, sửa nếu sai, bổ sung nếu thiếu"
+  },
+  "instructions_ref": "schemas/l1-entity-instructions-v1.md"
+}

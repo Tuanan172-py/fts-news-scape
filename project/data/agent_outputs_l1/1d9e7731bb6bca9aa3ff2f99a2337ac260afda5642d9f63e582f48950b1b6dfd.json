@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "1d9e7731bb6bca9aa3ff2f99a2337ac260afda5642d9f63e582f48950b1b6dfd",
+  "title": "Keppel phát cảnh báo về dự án Palm City, bao gồm Palm River",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

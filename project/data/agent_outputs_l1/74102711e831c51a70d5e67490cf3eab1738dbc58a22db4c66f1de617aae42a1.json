@@ -1,34 +1,35 @@
 {
- "l1_output_version": "1.0",
- "article_id": "74102711e831c51a70d5e67490cf3eab1738dbc58a22db4c66f1de617aae42a1",
- "title": "Hoàn thuế VAT tăng 32%, doanh nghiệp đủ điều kiện được ưu tiên xử lý",
- "recognized": true,
- "entities": [
-  {
-   "surface": "VAT",
-   "entity_id": "TICKER:VAT",
-   "type": "TICKER",
-   "method": "exact_code",
-   "in_list": true,
-   "confidence": 0.85
+  "l1_output_version": "1.0",
+  "article_id": "74102711e831c51a70d5e67490cf3eab1738dbc58a22db4c66f1de617aae42a1",
+  "title": "Hoàn thuế VAT tăng 32%, doanh nghiệp đủ điều kiện được ưu tiên xử lý",
+  "recognized": true,
+  "entities": [
+    {
+      "surface": "VAT",
+      "entity_id": "TICKER:VAT",
+      "type": "TICKER",
+      "method": "exact_code",
+      "in_list": true,
+      "confidence": 0.95
+    }
+  ],
+  "categories": {
+    "ticker_company": "done",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [
+    {
+      "source_span": "Hoàn thuế VAT tăng 32%, doanh nghiệp đủ điều kiện được ưu tiên xử lý"
+    }
+  ],
+  "confidence": 0.95,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
   }
- ],
- "categories": {
-  "ticker_company": "done",
-  "etf_fund": "none",
-  "index": "none",
-  "exchange": "none",
-  "industry_sector": "none"
- },
- "citations": [
-  {
-   "source_span": "Hoàn thuế VAT tăng 32%, doanh nghiệp đủ điều kiện được ưu tiên xử lý"
-  }
- ],
- "confidence": 0.85,
- "processing_metadata": {
-  "agent_provider": "stub",
-  "model_used": "rule-based",
-  "timestamp": "2026-08-18T15:11:28+07:00"
- }
 }

@@ -1,0 +1,37 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "426093296780826ae4e5bba9662994057b0ba0a2b0eabbf3c0a8122ca54157b3",
+  "title": "Thất tịch hay \"Valentine Trung Quốc\" vốn là ngày phụ nữ cầu sự khéo léo, không phải cầu tình duyên",
+  "recognized": true,
+  "entities": [
+    {
+      "surface": "Trung Quốc",
+      "entity_id": null,
+      "type": "UNKNOWN",
+      "method": "semantic",
+      "in_list": false,
+      "confidence": 0.8
+    }
+  ],
+  "categories": {
+    "ticker_company": "out_of_list",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [
+    "Trung Quốc"
+  ],
+  "citations": [
+    {
+      "source_span": "Thất tịch hay \"Valentine Trung Quốc\" vốn là ngày phụ nữ cầu sự khéo léo, không phải cầu tình duyên"
+    }
+  ],
+  "confidence": 0.95,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

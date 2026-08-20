@@ -1,0 +1,35 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "9fdc31df280c571c76c81252940c516c69c6a744834910201cf52953935136d4",
+  "title": "Novaland cập nhật tiến độ triển khai Aqua City và nguồn vốn giai đoạn 2026-2027",
+  "recognized": true,
+  "entities": [
+    {
+      "surface": "Novaland",
+      "entity_id": "TICKER:NVL",
+      "type": "TICKER",
+      "method": "semantic",
+      "in_list": true,
+      "confidence": 0.9
+    }
+  ],
+  "categories": {
+    "ticker_company": "done",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [
+    {
+      "source_span": "Novaland cập nhật tiến độ triển khai Aqua City và nguồn vốn giai đoạn 2026-2027"
+    }
+  ],
+  "confidence": 0.95,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

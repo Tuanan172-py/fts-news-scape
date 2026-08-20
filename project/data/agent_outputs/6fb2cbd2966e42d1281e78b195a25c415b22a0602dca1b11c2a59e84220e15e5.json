@@ -1,0 +1,55 @@
+{
+  "output_schema_version": "1.0",
+  "article_id": "6fb2cbd2966e42d1281e78b195a25c415b22a0602dca1b11c2a59e84220e15e5",
+  "summary": {
+    "abstractive": "Hai công ty Bcons bị phạt do thi công dự án gây lún, nứt nhà dân CTCP Đầu tư Xây dựng Bcons và CTCP Địa ốc Bcons bị Sở Xây dựng TPHCM xử phạt sau khi thi công Bcons Center City gây lún, nứt một số nhà lân cận.",
+    "key_points": [
+      "CTCP Đầu tư Xây dựng Bcons và CTCP Địa ốc Bcons bị Sở Xây dựng TPHCM xử phạt sau khi thi công Bcons Center City gây lún, nứt một số nhà lân cận.",
+      "Tại họp báo kinh tế - xã hội TPHCM chiều 13/08, ông Nguyễn Văn Hoan, Phó Trưởng Phòng Phát triển đô thị thuộc Sở Xây dựng TPHCM, thông tin về việc nhà dân bị ảnh hưởng trong quá trình thi công dự án k",
+      "Sở Xây dựng sau đó ban hành hai quyết định xử phạt vi phạm hành chính cùng ngày 07/08. Quyết định số 94 áp dụng với CTCP Đầu tư Xây dựng Bcons, còn Quyết định số 95 áp dụng với CTCP Địa ốc Bcons. Sở đ",
+      "Vụ việc đã kéo dài từ trước khi hai quyết định trên được ban hành. Theo hồ sơ Sở Xây dựng cung cấp trước đó, Bcons Center City thi công theo giấy phép xây dựng số 3728 ngày 27/06/2025 do Sở Xây dựng t"
+    ]
+  },
+  "implication": {
+    "text": "Nội dung bài viết tác động tới nhận định thị trường và hoạt động kinh doanh của các đơn vị liên quan.",
+    "affected_parties": [
+      "nhà đầu tư",
+      "doanh nghiệp niêm yết"
+    ],
+    "impact_area": "market"
+  },
+  "materiality": {
+    "score": 0.65,
+    "time_sensitivity": "this_week"
+  },
+  "confidence": 0.88,
+  "citations": [
+    {
+      "claim": "Thông tin chính được trích xuất từ bài viết: Hai công ty Bcons bị phạt do thi công dự án gây lú...",
+      "source_span": "Hai công ty Bcons bị phạt do thi công dự án gây lún, nứt nhà dân",
+      "source_offset": 0
+    },
+    {
+      "claim": "Thông tin chính được trích xuất từ bài viết: CTCP Đầu tư Xây dựng Bcons và CTCP Địa ốc Bcons bị...",
+      "source_span": "CTCP Đầu tư Xây dựng Bcons và CTCP Địa ốc Bcons bị Sở Xây dựng TPHCM xử phạt sau khi thi công Bcons Center City gây lún, nứt một số nhà lân cận.",
+      "source_offset": 65
+    },
+    {
+      "claim": "Thông tin chính được trích xuất từ bài viết: Tại họp báo kinh tế - xã hội TPHCM chiều 13/08, ôn...",
+      "source_span": "Tại họp báo kinh tế - xã hội TPHCM chiều 13/08, ông Nguyễn Văn Hoan, Phó Trưởng Phòng Phát triển đô thị thuộc Sở Xây dựng TPHCM, thông tin về việc nhà dân bị ảnh hưởng trong quá trình thi công dự án khu dân cư Bình An Đông Tây, tên thương mại Bcons Center City, tại phường Đông Hòa.",
+      "source_offset": 210
+    }
+  ],
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:37:35.755748+07:00",
+    "schema_version": "1.0"
+  },
+  "sentiment": {
+    "overall": 0.0,
+    "polarity": "neutral"
+  },
+  "event_type": "macro",
+  "extraction_quality": "high"
+}

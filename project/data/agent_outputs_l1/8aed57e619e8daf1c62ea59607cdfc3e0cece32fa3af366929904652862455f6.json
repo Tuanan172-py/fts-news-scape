@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "8aed57e619e8daf1c62ea59607cdfc3e0cece32fa3af366929904652862455f6",
+  "title": "Kiểm soát chi phí đầu vào để kiểm soát giá nhà, đất và giá sản phẩm đầu ra",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

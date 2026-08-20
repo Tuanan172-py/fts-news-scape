@@ -1,0 +1,37 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "423450f81a399bd6cef110b538440fde7ac4f2ad33e69e1e6071e88576001b81",
+  "title": "Bắt giám đốc sinh năm 1981 “biến” 130 tấn thịt trâu Ấn Độ thành khô bò, livestream bán trên mạng",
+  "recognized": true,
+  "entities": [
+    {
+      "surface": "Ấn Độ",
+      "entity_id": null,
+      "type": "UNKNOWN",
+      "method": "semantic",
+      "in_list": false,
+      "confidence": 0.8
+    }
+  ],
+  "categories": {
+    "ticker_company": "out_of_list",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [
+    "Ấn Độ"
+  ],
+  "citations": [
+    {
+      "source_span": "Bắt giám đốc sinh năm 1981 “biến” 130 tấn thịt trâu Ấn Độ thành khô bò, livestream bán trên mạng"
+    }
+  ],
+  "confidence": 0.95,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

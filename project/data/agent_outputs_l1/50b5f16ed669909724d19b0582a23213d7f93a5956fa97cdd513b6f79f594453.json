@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "50b5f16ed669909724d19b0582a23213d7f93a5956fa97cdd513b6f79f594453",
+  "title": "TP.Hồ Chí Minh triển khai Đề án chuyển đổi số trong doanh nghiệp nhỏ và vừa",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

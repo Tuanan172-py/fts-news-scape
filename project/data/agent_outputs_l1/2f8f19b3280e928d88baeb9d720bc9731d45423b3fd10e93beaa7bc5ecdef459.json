@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "2f8f19b3280e928d88baeb9d720bc9731d45423b3fd10e93beaa7bc5ecdef459",
+  "title": "Doanh nghiệp của tỷ phú Phạm Nhật Vượng đang cho xây và nghiên cứu  từ tháp đôi cao nhất thế giới đến công trình lấn biển hướng tới Top 10 toàn cầu",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

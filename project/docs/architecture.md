@@ -2,7 +2,7 @@
 
 Cập nhật: 2026-07-24 (Phase 1 foundation refactor — SQLite-only, standalone).
 
-> 📍 File này mô tả **ingestion Phase-1** (scrape → dedup → sentiment → SQLite). Toàn cảnh
+> 📍 File này mô tả **ingestion Phase-1** (scrape → dedup → SQLite). Toàn cảnh
 > end-to-end 3 vòng (Bronze → Silver → change-detect → handoff → agent) xem
 > **[design/00-end-to-end-architecture.md](design/00-end-to-end-architecture.md)**.
 
@@ -33,10 +33,6 @@ Cập nhật: 2026-07-24 (Phase 1 foundation refactor — SQLite-only, standalon
             ┌──────────────────┐
             │   DEDUP          │  Lớp 1: SHA-256(url+title) — bảng seen_articles
             │                  │  Lớp 2: fuzzy title cross-domain (Phase 4)
-            └────────┬─────────┘
-                     ▼
-            ┌──────────────────┐
-            │ SENTIMENT ENGINE │  rule-based tiếng Việt (Phase 4)
             └────────┬─────────┘
                      ▼
             ┌──────────────────┐

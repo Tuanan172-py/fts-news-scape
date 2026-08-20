@@ -1,0 +1,462 @@
+{
+  "silver_schema_version": "1.0",
+  "article_id": "8e5c0a48bf917a9afc7199653638d0121eaaea353a61c0ba89f57558e9a96e4f",
+  "source_url": "https://cafef.vn/nhung-nguoi-co-ten-trong-danh-sach-sau-day-can-lien-he-ngay-voi-co-quan-thue-de-tranh-bi-tam-hoan-xuat-canh-188260819101434058.chn",
+  "domain": "cafef.vn",
+  "content_sha256": "baeaa58e3d67d6bfc16056d6ffa8cf8ef9b28d73cdd369059d086fc0978c3c5f",
+  "cleaned_text": "Những người có tên trong danh sách sau đây cần liên hệ ngay với cơ quan Thuế để tránh bị tạm hoãn xuất cảnh\nThuế thành phố Hải Phòng vừa phát hành loạt thông báo về việc sẽ áp dụng biện pháp tạm hoãn xuất cảnh đối với người đại diện theo pháp luật của 6 doanh nghiệp nếu các đơn vị không hoàn tất thủ tục khôi phục mã số thuế hoặc chấm dứt hiệu lực mã số thuế theo quy định trong vòng 30 ngày.\nNgày 17/8/2026, Thuế thành phố Hải Phòng đã ban hành 6 thông báo liên tiếp, từ số 12462/TB-HPH đến 12467/TB-HPH, liên quan việc sẽ áp dụng biện pháp tạm hoãn xuất cảnh đối với cá nhân và người đại diện theo pháp luật của 6 doanh nghiệp trên địa bàn.\nCác đơn vị được nêu tên gồm Xí nghiệp Tô Hồng, Công ty trách nhiệm hữu hạn vận tải thủy bộ, Xí nghiệp cảng Cửa Cấm Hải Phòng, Công ty TNHH Hoàng Thành, Công ty TNHH Hồ Trần và Công ty cổ phần Quốc tế Gold King Dom.\n| Cá nhân/Người đại diện theo pháp luật  | Doanh nghiệp  | Lý do tạm hoãn xuất cảnh  | \n|---|---|---|\n| Ông Nguyễn Mạnh Hùng  | Công ty cổ phần Quốc tế Gold King Dom  | Doanh nghiệp không hoạt động tại địa chỉ đã đăng ký; đã quá 120 ngày nhưng chưa thực hiện thủ tục khôi phục mã số thuế hoặc chấm dứt hiệu lực mã số thuế  | \n| Bà Trần Thị Thi Tâm  | Công ty TNHH Hồ Trần  | Doanh nghiệp không hoạt động tại địa chỉ đã đăng ký; đã quá 120 ngày nhưng chưa thực hiện thủ tục khôi phục mã số thuế hoặc chấm dứt hiệu lực mã số thuế  | \n| Người đại diện theo pháp luật | Công ty TNHH Hoàng Thành  | Doanh nghiệp còn nợ 348.913.664 đồng tiền thuế, tiền phạt và tiền chậm nộp; đồng thời chưa thực hiện thủ tục khôi phục mã số thuế hoặc chấm dứt hiệu lực mã số thuế  | \n| Người đại diện theo pháp luật  | Công ty trách nhiệm hữu hạn vận tải thủy bộ  | Doanh nghiệp còn nợ 44.217.341 đồng tiền thuế, tiền phạt và tiền chậm nộp; đồng thời chưa thực hiện thủ tục khôi phục mã số thuế hoặc chấm dứt hiệu lực mã số thuế  | \n| Người đại diện theo pháp luật  | Xí nghiệp Tô Hồng  | Đơn vị còn nợ 1.964.545 đồng tiền thuế, tiền phạt và tiền chậm nộp; đồng thời chưa thực hiện thủ tục khôi phục mã số thuế hoặc chấm dứt hiệu lực mã số thuế  | \n| Người đại diện theo pháp luật  | Xí nghiệp cảng Cửa Cấm Hải Phòng  | Đơn vị còn nợ 348.913.664 đồng tiền thuế và tiền chậm nộp; đồng thời chưa thực hiện thủ tục khôi phục mã số thuế hoặc chấm dứt hiệu lực mã số thuế | \nTheo các thông báo, sau 30 ngày kể từ ngày cơ quan thuế thông báo về việc sẽ áp dụng biện pháp tạm hoãn xuất cảnh, nếu doanh nghiệp không có hồ sơ đề nghị khôi phục mã số thuế hoặc chấm dứt hiệu lực mã số thuế theo quy định, cơ quan thuế sẽ thực hiện áp dụng biện pháp tạm hoãn xuất cảnh đối với người đại diện theo pháp luật của doanh nghiệp.\nNhịp sống thị trường",
+  "extraction_quality": "high",
+  "structure": {
+    "headings": [
+      {
+        "level": 1,
+        "text": "Những người có tên trong danh sách sau đây cần liên hệ ngay với cơ quan Thuế để tránh bị tạm hoãn xuất cảnh"
+      },
+      {
+        "level": 3,
+        "text": "CÙNG CHUYÊN MỤC"
+      },
+      {
+        "level": 4,
+        "text": "Hà Nội phân luồng giao thông từ xa, giảm ùn tắc dịp Quốc khánh 2/9 Nổi bật"
+      },
+      {
+        "level": 4,
+        "text": "Hoàn thuế VAT tăng 32%, đạt 64,4% dự toán năm 2026 Nổi bật"
+      },
+      {
+        "level": 4,
+        "text": "Đếm ngược trước thời khắc 'tái xuất' lúc 0h của sân bay quốc tế duy nhất ở Việt Nam mang hình bông hoa"
+      },
+      {
+        "level": 4,
+        "text": "Cuộc chạy đua của 600 người để lập kỷ lục chưa từng có tại tuyến đường sắt 9.000 tỷ đồng trên đảo Việt Nam"
+      },
+      {
+        "level": 4,
+        "text": "Rà soát, điều phối nguồn vật liệu xây dựng thông thường phục vụ các công trình trọng điểm quốc gia"
+      },
+      {
+        "level": 4,
+        "text": "Cận cảnh dự án mở rộng cao tốc xuyên núi hơn 3.200 tỷ trước ngày về đích"
+      }
+    ],
+    "paragraphs": [
+      "MỚI NHẤT!",
+      "Hoàng Nguyễn | 19-08-2026 - 10:14 AM | Kinh tế vĩ mô - Đầu tư",
+      "Thuế thành phố Hải Phòng vừa phát hành loạt thông báo về việc sẽ áp dụng biện pháp tạm hoãn xuất cảnh đối với người đại diện theo pháp luật của 6 doanh nghiệp nếu các đơn vị không hoàn tất thủ tục khôi phục mã số thuế hoặc chấm dứt hiệu lực mã số thuế theo quy định trong vòng 30 ngày.",
+      "Ngày 17/8/2026, Thuế thành phố Hải Phòng đã ban hành 6 thông báo liên tiếp, từ số 12462/TB-HPH đến 12467/TB-HPH, liên quan việc sẽ áp dụng biện pháp tạm hoãn xuất cảnh đối với cá nhân và người đại diện theo pháp luật của 6 doanh nghiệp trên địa bàn.",
+      "Các đơn vị được nêu tên gồm Xí nghiệp Tô Hồng, Công ty trách nhiệm hữu hạn vận tải thủy bộ, Xí nghiệp cảng Cửa Cấm Hải Phòng, Công ty TNHH Hoàng Thành, Công ty TNHH Hồ Trần và Công ty cổ phần Quốc tế Gold King Dom.",
+      "Theo các thông báo, sau 30 ngày kể từ ngày cơ quan thuế thông báo về việc sẽ áp dụng biện pháp tạm hoãn xuất cảnh, nếu doanh nghiệp không có hồ sơ đề nghị khôi phục mã số thuế hoặc chấm dứt hiệu lực mã số thuế theo quy định, cơ quan thuế sẽ thực hiện áp dụng biện pháp tạm hoãn xuất cảnh đối với người đại diện theo pháp luật của doanh nghiệp.",
+      "Hoàng Nguyễn",
+      "Nhịp sống thị trường",
+      "Địa chỉ: Tầng 21 Tòa nhà Center Building. Số 01, phố Nguyễn Huy Tưởng, phường Thanh Xuân, thành phố Hà Nội",
+      "Điện thoại: 024 7309 5555 Máy lẻ 292. Fax: 024-39744082",
+      "Email: info@cafef.vn | Hotline: 0926 864 344",
+      "Chịu trách nhiệm nội dung: Ông Nguyễn Thế Tân",
+      "Liên hệ quảng cáo",
+      "Hotline:",
+      "Email: doanhnghiep@admicro.vn",
+      "© Copyright 2007 - 2026 - Công ty Cổ phần VCCorp.",
+      "Giấy phép thiết lập trang thông tin điện tử tổng hợp trên mạng số 2216/GP-TTĐT do Sở Thông tin và Truyền thông Hà Nội cấp ngày 10 tháng 4 năm 2019."
+    ],
+    "tables": [
+      [
+        [
+          "Cá nhân/Người đại diện theo pháp luật",
+          "Doanh nghiệp",
+          "Lý do tạm hoãn xuất cảnh"
+        ],
+        [
+          "Ông Nguyễn Mạnh Hùng",
+          "Công ty cổ phần Quốc tế Gold King Dom",
+          "Doanh nghiệp không hoạt động tại địa chỉ đã đăng ký; đã quá 120 ngày nhưng chưa thực hiện thủ tục khôi phục mã số thuế hoặc chấm dứt hiệu lực mã số thuế"
+        ],
+        [
+          "Bà Trần Thị Thi Tâm",
+          "Công ty TNHH Hồ Trần",
+          "Doanh nghiệp không hoạt động tại địa chỉ đã đăng ký; đã quá 120 ngày nhưng chưa thực hiện thủ tục khôi phục mã số thuế hoặc chấm dứt hiệu lực mã số thuế"
+        ],
+        [
+          "Người đại diện theo pháp luật",
+          "Công ty TNHH Hoàng Thành",
+          "Doanh nghiệp còn nợ 348.913.664 đồng tiền thuế, tiền phạt và tiền chậm nộp; đồng thời chưa thực hiện thủ tục khôi phục mã số thuế hoặc chấm dứt hiệu lực mã số thuế"
+        ],
+        [
+          "Người đại diện theo pháp luật",
+          "Công ty trách nhiệm hữu hạn vận tải thủy bộ",
+          "Doanh nghiệp còn nợ 44.217.341 đồng tiền thuế, tiền phạt và tiền chậm nộp; đồng thời chưa thực hiện thủ tục khôi phục mã số thuế hoặc chấm dứt hiệu lực mã số thuế"
+        ],
+        [
+          "Người đại diện theo pháp luật",
+          "Xí nghiệp Tô Hồng",
+          "Đơn vị còn nợ 1.964.545 đồng tiền thuế, tiền phạt và tiền chậm nộp; đồng thời chưa thực hiện thủ tục khôi phục mã số thuế hoặc chấm dứt hiệu lực mã số thuế"
+        ],
+        [
+          "Người đại diện theo pháp luật",
+          "Xí nghiệp cảng Cửa Cấm Hải Phòng",
+          "Đơn vị còn nợ 348.913.664 đồng tiền thuế và tiền chậm nộp; đồng thời chưa thực hiện thủ tục khôi phục mã số thuế hoặc chấm dứt hiệu lực mã số thuế"
+        ]
+      ]
+    ],
+    "links": [
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "http://liveboard.cafef.vn",
+        "text": "Bảng giá điện tử"
+      },
+      {
+        "href": "/du-lieu/danh-muc-dau-tu.chn",
+        "text": "Danh mục đầu tư"
+      },
+      {
+        "href": "/doc-nhanh.chn",
+        "text": "Đọc nhanh >>"
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "XÃ HỘI"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "CHỨNG KHOÁN"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "BẤT ĐỘNG SẢN"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "DOANH NGHIỆP"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "NGÂN HÀNG"
+      },
+      {
+        "href": "/smart-money.chn",
+        "text": "SMART MONEY"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "TÀI CHÍNH QUỐC TẾ"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "VĨ MÔ"
+      },
+      {
+        "href": "/kinh-te-so.chn",
+        "text": "KINH TẾ SỐ"
+      },
+      {
+        "href": "/thi-truong.chn",
+        "text": "THỊ TRƯỜNG"
+      },
+      {
+        "href": "/song.chn",
+        "text": "SỐNG"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "LIFESTYLE"
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "Xã hội"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "Doanh nghiệp"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "Kinh tế vĩ mô"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "Chứng khoán"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "Tài chính ngân hàng"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "Tài chính quốc tế"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "Tin tức"
+      },
+      {
+        "href": "/du-an.chn",
+        "text": "Dự án"
+      },
+      {
+        "href": "/ban-do-du-an.chn",
+        "text": "Bản đồ dự án"
+      },
+      {
+        "href": "/hang-hoa-nguyen-lieu.chn",
+        "text": "Hàng hóa nguyên liệu"
+      },
+      {
+        "href": "/song.chn",
+        "text": "Sống"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "Lifestyle"
+      },
+      {
+        "href": "/nhom-chu-de/emagazine.chn",
+        "text": "Magazine"
+      },
+      {
+        "href": "/du-lieu.chn",
+        "text": "Dữ liệu"
+      },
+      {
+        "href": "/du-lieu/cafeflists.chn",
+        "text": "F INDEX"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "Kinh tế vĩ mô - Đầu tư"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Chia sẻ"
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "javascript:;",
+        "text": "TIN MỚI"
+      },
+      {
+        "href": "https://cafef.vn/xuat-hien-tinh-trang-cong-chuc-thue-voi-vinh-gay-kho-de-cho-nguoi-nop-thue-cuc-thue-ra-cong-van-hoa-toc-188260818170409027.chn",
+        "text": "Xuất hiện tình trạng công chức thuế vòi vĩnh, gây khó dễ cho người nộp thuế, Cục Thuế ra công văn hoả tốc"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Theo Nhịp sống thị trường Copy link"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Chia sẻ"
+      },
+      {
+        "href": "/xuat-canh.html",
+        "text": "xuất cảnh,"
+      },
+      {
+        "href": "/thue.html",
+        "text": "thuế,"
+      },
+      {
+        "href": "/hai-phong.html",
+        "text": "Hải Phòng"
+      },
+      {
+        "href": "/ha-noi-phan-luong-giao-thong-tu-xa-giam-un-tac-dip-quoc-khanh-2-9-18826081909025432.chn",
+        "text": ""
+      },
+      {
+        "href": "/ha-noi-phan-luong-giao-thong-tu-xa-giam-un-tac-dip-quoc-khanh-2-9-18826081909025432.chn",
+        "text": "Hà Nội phân luồng giao thông từ xa, giảm ùn tắc dịp Quốc khánh 2/9"
+      },
+      {
+        "href": "/hoan-thue-vat-tang-32-dat-644-du-toan-nam-2026-188260819083104404.chn",
+        "text": ""
+      },
+      {
+        "href": "/hoan-thue-vat-tang-32-dat-644-du-toan-nam-2026-188260819083104404.chn",
+        "text": "Hoàn thuế VAT tăng 32%, đạt 64,4% dự toán năm 2026"
+      },
+      {
+        "href": "/dem-nguoc-truoc-thoi-khac-tai-xuat-luc-0h-cua-san-bay-quoc-te-duy-nhat-o-viet-nam-mang-hinh-bong-hoa-188260818160029221.chn",
+        "text": ""
+      },
+      {
+        "href": "/dem-nguoc-truoc-thoi-khac-tai-xuat-luc-0h-cua-san-bay-quoc-te-duy-nhat-o-viet-nam-mang-hinh-bong-hoa-188260818160029221.chn",
+        "text": "Đếm ngược trước thời khắc 'tái xuất' lúc 0h của sân bay quốc tế duy nhất ở Việt Nam mang hình bông hoa"
+      },
+      {
+        "href": "/cuoc-chay-dua-cua-600-nguoi-de-lap-ky-luc-chua-tung-co-tai-tuyen-duong-sat-9000-ty-dong-tren-dao-viet-nam-188260818160426978.chn",
+        "text": ""
+      },
+      {
+        "href": "/cuoc-chay-dua-cua-600-nguoi-de-lap-ky-luc-chua-tung-co-tai-tuyen-duong-sat-9000-ty-dong-tren-dao-viet-nam-188260818160426978.chn",
+        "text": "Cuộc chạy đua của 600 người để lập kỷ lục chưa từng có tại tuyến đường sắt 9.000 tỷ đồng trên đảo Việt Nam"
+      },
+      {
+        "href": "/ra-soat-dieu-phoi-nguon-vat-lieu-xay-dung-thong-thuong-phuc-vu-cac-cong-trinh-trong-diem-quoc-gia-188260819075314513.chn",
+        "text": ""
+      },
+      {
+        "href": "/ra-soat-dieu-phoi-nguon-vat-lieu-xay-dung-thong-thuong-phuc-vu-cac-cong-trinh-trong-diem-quoc-gia-188260819075314513.chn",
+        "text": "Rà soát, điều phối nguồn vật liệu xây dựng thông thường phục vụ các công trình trọng điểm quốc gia"
+      },
+      {
+        "href": "/can-canh-du-an-mo-rong-cao-toc-xuyen-nui-hon-3200-ty-truoc-ngay-ve-dich-188260819074833117.chn",
+        "text": ""
+      },
+      {
+        "href": "/can-canh-du-an-mo-rong-cao-toc-xuyen-nui-hon-3200-ty-truoc-ngay-ve-dich-188260819074833117.chn",
+        "text": "Cận cảnh dự án mở rộng cao tốc xuyên núi hơn 3.200 tỷ trước ngày về đích"
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "XÃ HỘI"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "CHỨNG KHOÁN"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "BẤT ĐỘNG SẢN"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "DOANH NGHIỆP"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "NGÂN HÀNG"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "TÀI CHÍNH QUỐC TẾ"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "VĨ MÔ"
+      },
+      {
+        "href": "/kinh-te-so.chn",
+        "text": "KINH TẾ SỐ"
+      },
+      {
+        "href": "/thi-truong.chn",
+        "text": "THỊ TRƯỜNG"
+      },
+      {
+        "href": "/song.chn",
+        "text": "SỐNG"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "LIFESTYLE"
+      },
+      {
+        "href": "/du-lieu.chn",
+        "text": "Dữ liệu"
+      },
+      {
+        "href": "/du-lieu/top/ceo.chn",
+        "text": "Top 200"
+      },
+      {
+        "href": "https://www.messenger.com/t/108804609142280",
+        "text": "Chat với tư vấn viên"
+      },
+      {
+        "href": "http://www.vccorp.vn/",
+        "text": ""
+      },
+      {
+        "href": "/static/chinh-sach-bao-mat.html",
+        "text": "Chính sách bảo mật"
+      }
+    ]
+  },
+  "images": [
+    {
+      "outer_tag": "<img alt=\"\" class=\"\" data-original=\"https://cafefcdn.com/203337114487263232/2026/8/19/thue-tp-hai-phong-17710422776511527050047-1771042838610-17710428391271539339334-1787109242296-1787109243137533101205.jpg\" h=\"1115\" height=\"\" rel=\"lightbox\" src=\"https://cafefcdn.com/203337114487263232/2026/8/19/thue-tp-hai-phong-17710422776511527050047-1771042838610-17710428391271539339334-1787109242296-1787109243137533101205.jpg\" title=\"\" type=\"photo\" w=\"1507\" width=\"\"/>",
+      "resolved_url": "https://cafefcdn.com/203337114487263232/2026/8/19/thue-tp-hai-phong-17710422776511527050047-1771042838610-17710428391271539339334-1787109242296-1787109243137533101205.jpg",
+      "alt": "",
+      "title": "",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Hà Nội phân luồng giao thông từ xa, giảm ùn tắc dịp Quốc khánh 2/9\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787104953319-1787104953961655168244.jpg\" title=\"Hà Nội phân luồng giao thông từ xa, giảm ùn tắc dịp Quốc khánh 2/9\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787104953319-1787104953961655168244.jpg",
+      "alt": "Hà Nội phân luồng giao thông từ xa, giảm ùn tắc dịp Quốc khánh 2/9",
+      "title": "Hà Nội phân luồng giao thông từ xa, giảm ùn tắc dịp Quốc khánh 2/9",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Hoàn thuế VAT tăng 32%, đạt 64,4% dự toán năm 2026\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787103029396-1787103031192159291919.jpg\" title=\"Hoàn thuế VAT tăng 32%, đạt 64,4% dự toán năm 2026\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787103029396-1787103031192159291919.jpg",
+      "alt": "Hoàn thuế VAT tăng 32%, đạt 64,4% dự toán năm 2026",
+      "title": "Hoàn thuế VAT tăng 32%, đạt 64,4% dự toán năm 2026",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Đếm ngược trước thời khắc 'tái xuất' lúc 0h của sân bay quốc tế duy nhất ở Việt Nam mang hình bông hoa\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/avatar1787043413204-17870434135391469001817.gif\" title=\"Đếm ngược trước thời khắc 'tái xuất' lúc 0h của sân bay quốc tế duy nhất ở Việt Nam mang hình bông hoa\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/avatar1787043413204-17870434135391469001817.gif",
+      "alt": "Đếm ngược trước thời khắc 'tái xuất' lúc 0h của sân bay quốc tế duy nhất ở Việt Nam mang hình bông hoa",
+      "title": "Đếm ngược trước thời khắc 'tái xuất' lúc 0h của sân bay quốc tế duy nhất ở Việt Nam mang hình bông hoa",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Cuộc chạy đua của 600 người để lập kỷ lục chưa từng có tại tuyến đường sắt 9.000 tỷ đồng trên đảo Việt Nam\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/avatar1787043792409-17870437933361994001178.gif\" title=\"Cuộc chạy đua của 600 người để lập kỷ lục chưa từng có tại tuyến đường sắt 9.000 tỷ đồng trên đảo Việt Nam\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/avatar1787043792409-17870437933361994001178.gif",
+      "alt": "Cuộc chạy đua của 600 người để lập kỷ lục chưa từng có tại tuyến đường sắt 9.000 tỷ đồng trên đảo Việt Nam",
+      "title": "Cuộc chạy đua của 600 người để lập kỷ lục chưa từng có tại tuyến đường sắt 9.000 tỷ đồng trên đảo Việt Nam",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Rà soát, điều phối nguồn vật liệu xây dựng thông thường phục vụ các công trình trọng điểm quốc gia\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787100754510-17871007554331984937713.jpg\" title=\"Rà soát, điều phối nguồn vật liệu xây dựng thông thường phục vụ các công trình trọng điểm quốc gia\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787100754510-17871007554331984937713.jpg",
+      "alt": "Rà soát, điều phối nguồn vật liệu xây dựng thông thường phục vụ các công trình trọng điểm quốc gia",
+      "title": "Rà soát, điều phối nguồn vật liệu xây dựng thông thường phục vụ các công trình trọng điểm quốc gia",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Cận cảnh dự án mở rộng cao tốc xuyên núi hơn 3.200 tỷ trước ngày về đích\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787100484689-17871004854831736628785.jpg\" title=\"Cận cảnh dự án mở rộng cao tốc xuyên núi hơn 3.200 tỷ trước ngày về đích\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787100484689-17871004854831736628785.jpg",
+      "alt": "Cận cảnh dự án mở rộng cao tốc xuyên núi hơn 3.200 tỷ trước ngày về đích",
+      "title": "Cận cảnh dự án mở rộng cao tốc xuyên núi hơn 3.200 tỷ trước ngày về đích",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Công ty Cổ phần VCCorp\" height=\"49px\" src=\"https://vccorp.mediacdn.vn/vccorp-s.png\" width=\"100px\"/>",
+      "resolved_url": "https://vccorp.mediacdn.vn/vccorp-s.png",
+      "alt": "Công ty Cổ phần VCCorp",
+      "title": "",
+      "caption": ""
+    }
+  ],
+  "language": "vi",
+  "built_at": "2026-08-19T10:17:58+07:00",
+  "built_from_raw_path": "data/raw_html\\cafef.vn\\20260819\\8e5c0a48bf917a9afc7199653638d0121eaaea353a61c0ba89f57558e9a96e4f.html"
+}

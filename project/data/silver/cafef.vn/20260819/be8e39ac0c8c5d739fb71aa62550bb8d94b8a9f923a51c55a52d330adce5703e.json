@@ -1,0 +1,428 @@
+{
+  "silver_schema_version": "1.0",
+  "article_id": "be8e39ac0c8c5d739fb71aa62550bb8d94b8a9f923a51c55a52d330adce5703e",
+  "source_url": "https://cafef.vn/mot-the-luc-van-tung-hang-tram-ty-mua-rong-co-phieu-phien-19-8-188260819171008289.chn",
+  "domain": "cafef.vn",
+  "content_sha256": "d40ecd39895a1855583d3f52ff401f8a4512a16698bf686325dc16ee5f54f665",
+  "cleaned_text": "Một thế lực vẫn tung hàng trăm tỷ mua ròng cổ phiếu phiên 19/8\nTự doanh CTCK mua ròng 153 tỷ đồng trên HoSE.\nThị trường tiếp tục có phiên giao dịch 19/8 kém tích cực với thanh khoản ở mức thấp. Áp lực điều chỉnh gia tăng khi chỉ số chính biến động trong biên độ hẹp trên hỗ trợ ngắn hạn quanh 1.720 điểm, lực cầu và áp lực cung đều suy giảm. Kết phiên VN-Index giảm 5,33 điểm (-0,31%) về mức 1.726,69 điểm. Trước bối cảnh đó, khối ngoại tiếp đà bán ròng 684 tỷ đồng trên toàn thị trường.\nTự doanh CTCK mua ròng 153 tỷ đồng trên HoSE.\nCụ thể, nhóm tự doanh CTCK mua ròng mạnh nhất tại FPT với giá trị 21 tỷ đồng, tiếp theo là ACB (20 tỷ đồng), HPG (15 tỷ đồng), LPB và VIC cùng đạt 14 tỷ đồng, VPB (13 tỷ đồng), VNM và HDB cùng đạt 12 tỷ đồng, VHM (11 tỷ đồng) và VJC (7 tỷ đồng).\nỞ chiều ngược lại, FRT là cổ phiếu bị tự doanh CTCK bán ròng mạnh nhất với giá trị 10 tỷ đồng, tiếp theo là MWG (8 tỷ đồng), MCH, FUESSV30 và E1VFVN30 cùng bị bán ròng 3 tỷ đồng, HPA (2 tỷ đồng), trong khi VIX, CTG, HT1 và GAS cùng ghi nhận giá trị bán ròng 1 tỷ đồng.\nNhịp sống thị trường",
+  "extraction_quality": "high",
+  "structure": {
+    "headings": [
+      {
+        "level": 1,
+        "text": "Một thế lực vẫn tung hàng trăm tỷ mua ròng cổ phiếu phiên 19/8"
+      },
+      {
+        "level": 3,
+        "text": "CÙNG CHUYÊN MỤC"
+      },
+      {
+        "level": 4,
+        "text": "Một doanh nghiệp dầu khí đứng trước “núi việc” 7 tỷ USD, lợi nhuận sẽ ra sao? Nổi bật"
+      },
+      {
+        "level": 4,
+        "text": "“Dòng tiền lớn” bán ròng 80.000 tỷ đồng cổ phiếu từ đầu năm, chuyên gia lý giải nguyên nhân Nổi bật"
+      },
+      {
+        "level": 4,
+        "text": "Phát hiện gần 24 kg vàng tại sân bay “Xứ sở vạn đảo”"
+      },
+      {
+        "level": 4,
+        "text": "Sắc đỏ bao phủ thị trường chứng khoán, thanh khoản tiếp tục “teo tóp”"
+      },
+      {
+        "level": 4,
+        "text": "Loạt doanh nghiệp bị phạt nặng vì chậm công bố nhiều báo cáo, giao dịch \"chui\" với bên liên quan"
+      },
+      {
+        "level": 4,
+        "text": "Phiên 19/8: Tiếp đà bán ròng hơn 700 tỷ đồng, khối ngoại \"xả\" mạnh cổ phiếu nào?"
+      }
+    ],
+    "paragraphs": [
+      "MỚI NHẤT!",
+      "An Thái | 19-08-2026 - 17:09 PM | Thị trường chứng khoán",
+      "Tự doanh CTCK mua ròng 153 tỷ đồng trên HoSE.",
+      "Thị trường tiếp tục có phiên giao dịch 19/8 kém tích cực với thanh khoản ở mức thấp. Áp lực điều chỉnh gia tăng khi chỉ số chính biến động trong biên độ hẹp trên hỗ trợ ngắn hạn quanh 1.720 điểm, lực cầu và áp lực cung đều suy giảm. Kết phiên VN-Index giảm 5,33 điểm (-0,31%) về mức 1.726,69 điểm. Trước bối cảnh đó, khối ngoại tiếp đà bán ròng 684 tỷ đồng trên toàn thị trường.",
+      "Tự doanh CTCK mua ròng 153 tỷ đồng trên HoSE.",
+      "Cụ thể, nhóm tự doanh CTCK mua ròng mạnh nhất tại FPT với giá trị 21 tỷ đồng, tiếp theo là ACB (20 tỷ đồng), HPG (15 tỷ đồng), LPB và VIC cùng đạt 14 tỷ đồng, VPB (13 tỷ đồng), VNM và HDB cùng đạt 12 tỷ đồng, VHM (11 tỷ đồng) và VJC (7 tỷ đồng).",
+      "Ở chiều ngược lại, FRT là cổ phiếu bị tự doanh CTCK bán ròng mạnh nhất với giá trị 10 tỷ đồng, tiếp theo là MWG (8 tỷ đồng), MCH, FUESSV30 và E1VFVN30 cùng bị bán ròng 3 tỷ đồng, HPA (2 tỷ đồng), trong khi VIX, CTG, HT1 và GAS cùng ghi nhận giá trị bán ròng 1 tỷ đồng.",
+      "An Thái",
+      "Nhịp sống thị trường",
+      "Địa chỉ: Tầng 21 Tòa nhà Center Building. Số 01, phố Nguyễn Huy Tưởng, phường Thanh Xuân, thành phố Hà Nội",
+      "Điện thoại: 024 7309 5555 Máy lẻ 292. Fax: 024-39744082",
+      "Email: info@cafef.vn | Hotline: 0926 864 344",
+      "Chịu trách nhiệm nội dung: Ông Nguyễn Thế Tân",
+      "Liên hệ quảng cáo",
+      "Hotline:",
+      "Email: doanhnghiep@admicro.vn",
+      "© Copyright 2007 - 2026 - Công ty Cổ phần VCCorp.",
+      "Giấy phép thiết lập trang thông tin điện tử tổng hợp trên mạng số 2216/GP-TTĐT do Sở Thông tin và Truyền thông Hà Nội cấp ngày 10 tháng 4 năm 2019."
+    ],
+    "tables": [],
+    "links": [
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "http://liveboard.cafef.vn",
+        "text": "Bảng giá điện tử"
+      },
+      {
+        "href": "/du-lieu/danh-muc-dau-tu.chn",
+        "text": "Danh mục đầu tư"
+      },
+      {
+        "href": "/doc-nhanh.chn",
+        "text": "Đọc nhanh >>"
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "XÃ HỘI"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "CHỨNG KHOÁN"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "BẤT ĐỘNG SẢN"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "DOANH NGHIỆP"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "NGÂN HÀNG"
+      },
+      {
+        "href": "/smart-money.chn",
+        "text": "SMART MONEY"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "TÀI CHÍNH QUỐC TẾ"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "VĨ MÔ"
+      },
+      {
+        "href": "/kinh-te-so.chn",
+        "text": "KINH TẾ SỐ"
+      },
+      {
+        "href": "/thi-truong.chn",
+        "text": "THỊ TRƯỜNG"
+      },
+      {
+        "href": "/song.chn",
+        "text": "SỐNG"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "LIFESTYLE"
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "Xã hội"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "Doanh nghiệp"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "Kinh tế vĩ mô"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "Chứng khoán"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "Tài chính ngân hàng"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "Tài chính quốc tế"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "Tin tức"
+      },
+      {
+        "href": "/du-an.chn",
+        "text": "Dự án"
+      },
+      {
+        "href": "/ban-do-du-an.chn",
+        "text": "Bản đồ dự án"
+      },
+      {
+        "href": "/hang-hoa-nguyen-lieu.chn",
+        "text": "Hàng hóa nguyên liệu"
+      },
+      {
+        "href": "/song.chn",
+        "text": "Sống"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "Lifestyle"
+      },
+      {
+        "href": "/nhom-chu-de/emagazine.chn",
+        "text": "Magazine"
+      },
+      {
+        "href": "/du-lieu.chn",
+        "text": "Dữ liệu"
+      },
+      {
+        "href": "/du-lieu/cafeflists.chn",
+        "text": "F INDEX"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "Thị trường chứng khoán"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Chia sẻ"
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "javascript:;",
+        "text": "TIN MỚI"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Theo Nhịp sống thị trường Copy link"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Chia sẻ"
+      },
+      {
+        "href": "/co-phieu.html",
+        "text": "cổ phiếu,"
+      },
+      {
+        "href": "/chung-khoan.html",
+        "text": "chứng khoán,"
+      },
+      {
+        "href": "/tu-doanh-ctck.html",
+        "text": "tự doanh ctck"
+      },
+      {
+        "href": "/mot-doanh-nghiep-dau-khi-dung-truoc-nui-viec-7-ty-usd-loi-nhuan-se-ra-sao-188260818221030593.chn",
+        "text": ""
+      },
+      {
+        "href": "/mot-doanh-nghiep-dau-khi-dung-truoc-nui-viec-7-ty-usd-loi-nhuan-se-ra-sao-188260818221030593.chn",
+        "text": "Một doanh nghiệp dầu khí đứng trước “núi việc” 7 tỷ USD, lợi nhuận sẽ ra sao?"
+      },
+      {
+        "href": "/dong-tien-lon-ban-rong-80000-ty-dong-co-phieu-tu-dau-nam-chuyen-gia-ly-giai-nguyen-nhan-188260818221134958.chn",
+        "text": ""
+      },
+      {
+        "href": "/dong-tien-lon-ban-rong-80000-ty-dong-co-phieu-tu-dau-nam-chuyen-gia-ly-giai-nguyen-nhan-188260818221134958.chn",
+        "text": "“Dòng tiền lớn” bán ròng 80.000 tỷ đồng cổ phiếu từ đầu năm, chuyên gia lý giải nguyên nhân"
+      },
+      {
+        "href": "/phat-hien-gan-24-kg-vang-tai-san-bay-xu-so-van-dao-188260819162327807.chn",
+        "text": ""
+      },
+      {
+        "href": "/phat-hien-gan-24-kg-vang-tai-san-bay-xu-so-van-dao-188260819162327807.chn",
+        "text": "Phát hiện gần 24 kg vàng tại sân bay “Xứ sở vạn đảo”"
+      },
+      {
+        "href": "/sac-do-bao-phu-thi-truong-chung-khoan-thanh-khoan-tiep-tuc-teo-top-18826081915275572.chn",
+        "text": ""
+      },
+      {
+        "href": "/sac-do-bao-phu-thi-truong-chung-khoan-thanh-khoan-tiep-tuc-teo-top-18826081915275572.chn",
+        "text": "Sắc đỏ bao phủ thị trường chứng khoán, thanh khoản tiếp tục “teo tóp”"
+      },
+      {
+        "href": "/loat-doanh-nghiep-bi-phat-nang-vi-cham-cong-bo-nhieu-bao-cao-giao-dich-chui-voi-ben-lien-quan-188260819155910694.chn",
+        "text": ""
+      },
+      {
+        "href": "/loat-doanh-nghiep-bi-phat-nang-vi-cham-cong-bo-nhieu-bao-cao-giao-dich-chui-voi-ben-lien-quan-188260819155910694.chn",
+        "text": "Loạt doanh nghiệp bị phạt nặng vì chậm công bố nhiều báo cáo, giao dịch \"chui\" với bên liên quan"
+      },
+      {
+        "href": "/phien-19-8-tiep-da-ban-rong-hon-700-ty-dong-khoi-ngoai-xa-manh-co-phieu-nao-188260819152848201.chn",
+        "text": ""
+      },
+      {
+        "href": "/phien-19-8-tiep-da-ban-rong-hon-700-ty-dong-khoi-ngoai-xa-manh-co-phieu-nao-188260819152848201.chn",
+        "text": "Phiên 19/8: Tiếp đà bán ròng hơn 700 tỷ đồng, khối ngoại \"xả\" mạnh cổ phiếu nào?"
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "XÃ HỘI"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "CHỨNG KHOÁN"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "BẤT ĐỘNG SẢN"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "DOANH NGHIỆP"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "NGÂN HÀNG"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "TÀI CHÍNH QUỐC TẾ"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "VĨ MÔ"
+      },
+      {
+        "href": "/kinh-te-so.chn",
+        "text": "KINH TẾ SỐ"
+      },
+      {
+        "href": "/thi-truong.chn",
+        "text": "THỊ TRƯỜNG"
+      },
+      {
+        "href": "/song.chn",
+        "text": "SỐNG"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "LIFESTYLE"
+      },
+      {
+        "href": "/du-lieu.chn",
+        "text": "Dữ liệu"
+      },
+      {
+        "href": "/du-lieu/top/ceo.chn",
+        "text": "Top 200"
+      },
+      {
+        "href": "https://www.messenger.com/t/108804609142280",
+        "text": "Chat với tư vấn viên"
+      },
+      {
+        "href": "http://www.vccorp.vn/",
+        "text": ""
+      },
+      {
+        "href": "/static/chinh-sach-bao-mat.html",
+        "text": "Chính sách bảo mật"
+      }
+    ]
+  },
+  "images": [
+    {
+      "outer_tag": "<img alt=\"Một thế lực vẫn tung hàng trăm tỷ mua ròng cổ phiếu phiên 19/8\" data-role=\"cover\" fetchpriority=\"high\" src=\"https://cafefcdn.com/thumb_w/640/203337114487263232/2026/8/19/avatar1787134179512-17871341798311517620889.png\" title=\"Một thế lực vẫn tung hàng trăm tỷ mua ròng cổ phiếu phiên 19/8\"/>",
+      "resolved_url": "https://cafefcdn.com/thumb_w/640/203337114487263232/2026/8/19/avatar1787134179512-17871341798311517620889.png",
+      "alt": "Một thế lực vẫn tung hàng trăm tỷ mua ròng cổ phiếu phiên 19/8",
+      "title": "Một thế lực vẫn tung hàng trăm tỷ mua ròng cổ phiếu phiên 19/8",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"\" class=\"\" data-original=\"https://cafefcdn.com/203337114487263232/2026/8/19/image14-1787134181217-1787134181604665021040.png\" h=\"1115\" height=\"\" rel=\"lightbox\" src=\"https://cafefcdn.com/203337114487263232/2026/8/19/image14-1787134181217-1787134181604665021040.png\" title=\"\" type=\"photo\" w=\"1507\" width=\"\"/>",
+      "resolved_url": "https://cafefcdn.com/203337114487263232/2026/8/19/image14-1787134181217-1787134181604665021040.png",
+      "alt": "",
+      "title": "",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Một doanh nghiệp dầu khí đứng trước “núi việc” 7 tỷ USD, lợi nhuận sẽ ra sao?\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/avatar1787065710558-1787065711093257450550.jpg\" title=\"Một doanh nghiệp dầu khí đứng trước “núi việc” 7 tỷ USD, lợi nhuận sẽ ra sao?\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/avatar1787065710558-1787065711093257450550.jpg",
+      "alt": "Một doanh nghiệp dầu khí đứng trước “núi việc” 7 tỷ USD, lợi nhuận sẽ ra sao?",
+      "title": "Một doanh nghiệp dầu khí đứng trước “núi việc” 7 tỷ USD, lợi nhuận sẽ ra sao?",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"“Dòng tiền lớn” bán ròng 80.000 tỷ đồng cổ phiếu từ đầu năm, chuyên gia lý giải nguyên nhân\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/avatar1787065850401-17870658507661375647030.jpg\" title=\"“Dòng tiền lớn” bán ròng 80.000 tỷ đồng cổ phiếu từ đầu năm, chuyên gia lý giải nguyên nhân\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/18/avatar1787065850401-17870658507661375647030.jpg",
+      "alt": "“Dòng tiền lớn” bán ròng 80.000 tỷ đồng cổ phiếu từ đầu năm, chuyên gia lý giải nguyên nhân",
+      "title": "“Dòng tiền lớn” bán ròng 80.000 tỷ đồng cổ phiếu từ đầu năm, chuyên gia lý giải nguyên nhân",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Phát hiện gần 24 kg vàng tại sân bay “Xứ sở vạn đảo”\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787131369087-17871313704391376869246.jpeg\" title=\"Phát hiện gần 24 kg vàng tại sân bay “Xứ sở vạn đảo”\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787131369087-17871313704391376869246.jpeg",
+      "alt": "Phát hiện gần 24 kg vàng tại sân bay “Xứ sở vạn đảo”",
+      "title": "Phát hiện gần 24 kg vàng tại sân bay “Xứ sở vạn đảo”",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Sắc đỏ bao phủ thị trường chứng khoán, thanh khoản tiếp tục “teo tóp”\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787128043516-1787128044142308051177.png\" title=\"Sắc đỏ bao phủ thị trường chứng khoán, thanh khoản tiếp tục “teo tóp”\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787128043516-1787128044142308051177.png",
+      "alt": "Sắc đỏ bao phủ thị trường chứng khoán, thanh khoản tiếp tục “teo tóp”",
+      "title": "Sắc đỏ bao phủ thị trường chứng khoán, thanh khoản tiếp tục “teo tóp”",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt='Loạt doanh nghiệp bị phạt nặng vì chậm công bố nhiều báo cáo, giao dịch \"chui\" với bên liên quan' height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787129921415-17871299219792111513586.png\" title='Loạt doanh nghiệp bị phạt nặng vì chậm công bố nhiều báo cáo, giao dịch \"chui\" với bên liên quan' width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787129921415-17871299219792111513586.png",
+      "alt": "Loạt doanh nghiệp bị phạt nặng vì chậm công bố nhiều báo cáo, giao dịch \"chui\" với bên liên quan",
+      "title": "Loạt doanh nghiệp bị phạt nặng vì chậm công bố nhiều báo cáo, giao dịch \"chui\" với bên liên quan",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt='Phiên 19/8: Tiếp đà bán ròng hơn 700 tỷ đồng, khối ngoại \"xả\" mạnh cổ phiếu nào?' height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787128101471-1787128101981589975412.png\" title='Phiên 19/8: Tiếp đà bán ròng hơn 700 tỷ đồng, khối ngoại \"xả\" mạnh cổ phiếu nào?' width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787128101471-1787128101981589975412.png",
+      "alt": "Phiên 19/8: Tiếp đà bán ròng hơn 700 tỷ đồng, khối ngoại \"xả\" mạnh cổ phiếu nào?",
+      "title": "Phiên 19/8: Tiếp đà bán ròng hơn 700 tỷ đồng, khối ngoại \"xả\" mạnh cổ phiếu nào?",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Công ty Cổ phần VCCorp\" height=\"49px\" src=\"https://vccorp.mediacdn.vn/vccorp-s.png\" width=\"100px\"/>",
+      "resolved_url": "https://vccorp.mediacdn.vn/vccorp-s.png",
+      "alt": "Công ty Cổ phần VCCorp",
+      "title": "",
+      "caption": ""
+    }
+  ],
+  "language": "vi",
+  "built_at": "2026-08-19T17:17:56+07:00",
+  "built_from_raw_path": "data/raw_html\\cafef.vn\\20260819\\be8e39ac0c8c5d739fb71aa62550bb8d94b8a9f923a51c55a52d330adce5703e.html"
+}

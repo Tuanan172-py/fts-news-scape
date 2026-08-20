@@ -1,0 +1,446 @@
+{
+  "silver_schema_version": "1.0",
+  "article_id": "71b20bd3b02ce1055410b3e97141fc3fc96ac9fb740f11aa8333d1ec1537dd78",
+  "source_url": "https://cafef.vn/pvtrans-bau-bo-sung-tan-tong-giam-doc-vao-hdqt-18826082009005105.chn",
+  "domain": "cafef.vn",
+  "content_sha256": "e7f402f3a0f545c1920b2d70abb0e7b4fd4e98af94c966c36d33c4332aa43940",
+  "cleaned_text": "PVTrans bầu bổ sung tân Tổng giám đốc vào HĐQT\nPVTrans lấy ý kiến cổ đông về việc bầu bổ sung tân Tổng giám đốc Nguyễn Thanh Bình vào HĐQT thay ông Trần Ngọc Nguyên.\nTổng Công ty Cổ phần Vận tải Dầu khí (PVTrans, mã: PVT) vừa công bố tài liệu lấy ý kiến cổ đông bằng văn bản về vấn đề nhân sự. Hạn chót nhận phiếu lấy ý kiến cổ đông là 14h ngày 28/08/2026.\nTheo đó, cổ đông PVT sẽ thông qua việc miễn nhiệm Thành viên HĐQT đối với ông Trần Ngọc Nguyên theo đơn từ nhiệm. Trước đó, PVTrans cũng miễn nhiệm chức vụ Tổng Giám đốc đối với ông Trần Ngọc Nguyên kể từ ngày 1/7/2026 do có đơn xin từ nhiệm.\nỞ chiều ngược lại, cổ đông sẽ bầu bổ sung ông Nguyễn Thanh Bình vào HĐQT trong thời gian còn lại nhiệm kỳ 2026-2031. Ông Nguyễn Thanh Bình mới được bổ nhiệm làm Tổng giám đốc PVT từ từ ngày 3/8/2026.\nTân Tổng giám đốc PVT sinh năm 1977, có bằng Cử nhân Kinh tế tại Đại học Kinh tế TP.HCM và Thạc sĩ Quản trị kinh doanh Quốc tế tại Đại học Monash, Australia.\nTrước đó, ông Nguyễn Thanh Bình có nhiều năm công tác tại Tổng Công ty Khí Việt Nam (PV Gas). Trong đó, ông giữ chức Chủ tịch HĐQT PV Gas từ tháng 4-7/2026 trước khi làm Tổng giám đốc PVTrans.\nVề hoạt động kinh doanh, PVT ghi nhận doanh thu thuần 5.714 tỷ đồng trong quý II/2026, tăng 32% so với cùng kỳ năm 2025. Đóng góp hơn một nửa doanh thu là hoạt động dịch vụ vận tải.\nTrừ đi các khoản thuế phí, doanh nghiệp báo lợi nhuận sau thuế 678 tỷ đồng, tăng tới 88% so với cùng kỳ.\nTính chung 6 tháng đầu năm PVT mang về doanh thu thuần 9.892 tỷ đồng và lợi nhuận sau thuế gần 1.066 tỷ đồng, lần lượt tăng 39% và 67% so với cùng kỳ năm 2025.\nAn ninh tiền tệ",
+  "extraction_quality": "high",
+  "structure": {
+    "headings": [
+      {
+        "level": 1,
+        "text": "PVTrans bầu bổ sung tân Tổng giám đốc vào HĐQT"
+      },
+      {
+        "level": 2,
+        "text": "PVT:"
+      },
+      {
+        "level": 2,
+        "text": "Tin tức sự kiện về: Công ty cổ phần Cao su Việt Nam"
+      },
+      {
+        "level": 3,
+        "text": "CÙNG CHUYÊN MỤC"
+      },
+      {
+        "level": 4,
+        "text": "Chưa kịp triển khai, VETC bất ngờ dừng thu phí ví điện tử 6.600 đồng/tháng sau phản ứng của khách hàng Nổi bật"
+      },
+      {
+        "level": 4,
+        "text": "Doanh nghiệp nhà nước sở hữu 117.000 tỷ đồng tài sản bổ nhiệm Chủ tịch mới giữa lúc Bộ Công an điều tra đại án 500kV Nổi bật"
+      },
+      {
+        "level": 4,
+        "text": "Hãng hàng không của tỷ phú Nguyễn Thị Phương Thảo rót 285 tỷ đồng lập công ty mới"
+      },
+      {
+        "level": 4,
+        "text": "Doanh nghiệp 95.000 lao động chuyên khai thác “kho báu” dưới lòng đất Việt Nam được trao cơ chế đặc thù"
+      },
+      {
+        "level": 4,
+        "text": "Xuất khẩu đồ ăn sang Bắc Mỹ tăng trưởng 45% lên hơn 100 triệu USD, một doanh nghiệp trên sàn báo lợi nhuận nửa đầu 2026 tăng 2,4 lần"
+      },
+      {
+        "level": 4,
+        "text": "Tập đoàn Phú Cường lên tiếng về vụ án ở Phú Thọ"
+      }
+    ],
+    "paragraphs": [
+      "MỚI NHẤT!",
+      "Theo Hoàng Lam | 20-08-2026 - 09:00 AM | Doanh nghiệp",
+      "PVTrans lấy ý kiến cổ đông về việc bầu bổ sung tân Tổng giám đốc Nguyễn Thanh Bình vào HĐQT thay ông Trần Ngọc Nguyên.",
+      "Tổng Công ty Cổ phần Vận tải Dầu khí (PVTrans, mã: PVT) vừa công bố tài liệu lấy ý kiến cổ đông bằng văn bản về vấn đề nhân sự. Hạn chót nhận phiếu lấy ý kiến cổ đông là 14h ngày 28/08/2026.",
+      "Theo đó, cổ đông PVT sẽ thông qua việc miễn nhiệm Thành viên HĐQT đối với ông Trần Ngọc Nguyên theo đơn từ nhiệm. Trước đó, PVTrans cũng miễn nhiệm chức vụ Tổng Giám đốc đối với ông Trần Ngọc Nguyên kể từ ngày 1/7/2026 do có đơn xin từ nhiệm.",
+      "Ở chiều ngược lại, cổ đông sẽ bầu bổ sung ông Nguyễn Thanh Bình vào HĐQT trong thời gian còn lại nhiệm kỳ 2026-2031. Ông Nguyễn Thanh Bình mới được bổ nhiệm làm Tổng giám đốc PVT từ từ ngày 3/8/2026.",
+      "Tân Tổng giám đốc PVT sinh năm 1977, có bằng Cử nhân Kinh tế tại Đại học Kinh tế TP.HCM và Thạc sĩ Quản trị kinh doanh Quốc tế tại Đại học Monash, Australia.",
+      "Trước đó, ông Nguyễn Thanh Bình có nhiều năm công tác tại Tổng Công ty Khí Việt Nam (PV Gas). Trong đó, ông giữ chức Chủ tịch HĐQT PV Gas từ tháng 4-7/2026 trước khi làm Tổng giám đốc PVTrans.",
+      "Ảnh minh họa: PVT",
+      "Về hoạt động kinh doanh, PVT ghi nhận doanh thu thuần 5.714 tỷ đồng trong quý II/2026, tăng 32% so với cùng kỳ năm 2025. Đóng góp hơn một nửa doanh thu là hoạt động dịch vụ vận tải.",
+      "Trừ đi các khoản thuế phí, doanh nghiệp báo lợi nhuận sau thuế 678 tỷ đồng, tăng tới 88% so với cùng kỳ.",
+      "Tính chung 6 tháng đầu năm PVT mang về doanh thu thuần 9.892 tỷ đồng và lợi nhuận sau thuế gần 1.066 tỷ đồng, lần lượt tăng 39% và 67% so với cùng kỳ năm 2025.",
+      "Theo Hoàng Lam",
+      "An ninh tiền tệ",
+      "Địa chỉ: Tầng 21 Tòa nhà Center Building. Số 01, phố Nguyễn Huy Tưởng, phường Thanh Xuân, thành phố Hà Nội",
+      "Điện thoại: 024 7309 5555 Máy lẻ 292. Fax: 024-39744082",
+      "Email: info@cafef.vn | Hotline: 0926 864 344",
+      "Chịu trách nhiệm nội dung: Ông Nguyễn Thế Tân",
+      "Liên hệ quảng cáo",
+      "Hotline:",
+      "Email: doanhnghiep@admicro.vn",
+      "© Copyright 2007 - 2026 - Công ty Cổ phần VCCorp.",
+      "Giấy phép thiết lập trang thông tin điện tử tổng hợp trên mạng số 2216/GP-TTĐT do Sở Thông tin và Truyền thông Hà Nội cấp ngày 10 tháng 4 năm 2019."
+    ],
+    "tables": [],
+    "links": [
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "http://liveboard.cafef.vn",
+        "text": "Bảng giá điện tử"
+      },
+      {
+        "href": "/du-lieu/danh-muc-dau-tu.chn",
+        "text": "Danh mục đầu tư"
+      },
+      {
+        "href": "/doc-nhanh.chn",
+        "text": "Đọc nhanh >>"
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "XÃ HỘI"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "CHỨNG KHOÁN"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "BẤT ĐỘNG SẢN"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "DOANH NGHIỆP"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "NGÂN HÀNG"
+      },
+      {
+        "href": "/smart-money.chn",
+        "text": "SMART MONEY"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "TÀI CHÍNH QUỐC TẾ"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "VĨ MÔ"
+      },
+      {
+        "href": "/kinh-te-so.chn",
+        "text": "KINH TẾ SỐ"
+      },
+      {
+        "href": "/thi-truong.chn",
+        "text": "THỊ TRƯỜNG"
+      },
+      {
+        "href": "/song.chn",
+        "text": "SỐNG"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "LIFESTYLE"
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "Xã hội"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "Doanh nghiệp"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "Kinh tế vĩ mô"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "Chứng khoán"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "Tài chính ngân hàng"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "Tài chính quốc tế"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "Tin tức"
+      },
+      {
+        "href": "/du-an.chn",
+        "text": "Dự án"
+      },
+      {
+        "href": "/ban-do-du-an.chn",
+        "text": "Bản đồ dự án"
+      },
+      {
+        "href": "/hang-hoa-nguyen-lieu.chn",
+        "text": "Hàng hóa nguyên liệu"
+      },
+      {
+        "href": "/song.chn",
+        "text": "Sống"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "Lifestyle"
+      },
+      {
+        "href": "/nhom-chu-de/emagazine.chn",
+        "text": "Magazine"
+      },
+      {
+        "href": "/du-lieu.chn",
+        "text": "Dữ liệu"
+      },
+      {
+        "href": "/du-lieu/cafeflists.chn",
+        "text": "F INDEX"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "Doanh nghiệp"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Chia sẻ"
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "javascript:;",
+        "text": "PVT:"
+      },
+      {
+        "href": "",
+        "text": "Xem hồ sơ doanh nghiệp"
+      },
+      {
+        "href": "javascript:;",
+        "text": "TIN MỚI"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Theo An ninh tiền tệ Copy link"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Chia sẻ"
+      },
+      {
+        "href": "/pvtrans.html",
+        "text": "PVTrans,"
+      },
+      {
+        "href": "/tan-tong-giam-doc.html",
+        "text": "tân tổng giám đốc"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Công ty cổ phần Cao su Việt Nam"
+      },
+      {
+        "href": "https://s.cafef.vn/tin-doanh-nghiep/PVT/Event.chn",
+        "text": "Xem tất cả >>"
+      },
+      {
+        "href": "/chua-kip-trien-khai-vetc-bat-ngo-dung-thu-phi-vi-dien-tu-6600-dong-thang-sau-phan-ung-cua-khach-hang-188260820081919581.chn",
+        "text": ""
+      },
+      {
+        "href": "/chua-kip-trien-khai-vetc-bat-ngo-dung-thu-phi-vi-dien-tu-6600-dong-thang-sau-phan-ung-cua-khach-hang-188260820081919581.chn",
+        "text": "Chưa kịp triển khai, VETC bất ngờ dừng thu phí ví điện tử 6.600 đồng/tháng sau phản ứng của khách hàng"
+      },
+      {
+        "href": "/doanh-nghiep-nha-nuoc-so-huu-117000-ty-dong-tai-san-bo-nhiem-chu-tich-moi-giua-luc-bo-cong-an-dieu-tra-dai-an-500kv-188260819215417616.chn",
+        "text": ""
+      },
+      {
+        "href": "/doanh-nghiep-nha-nuoc-so-huu-117000-ty-dong-tai-san-bo-nhiem-chu-tich-moi-giua-luc-bo-cong-an-dieu-tra-dai-an-500kv-188260819215417616.chn",
+        "text": "Doanh nghiệp nhà nước sở hữu 117.000 tỷ đồng tài sản bổ nhiệm Chủ tịch mới giữa lúc Bộ Công an điều tra đại án 500kV"
+      },
+      {
+        "href": "/hang-hang-khong-cua-ty-phu-nguyen-thi-phuong-thao-rot-285-ty-dong-lap-cong-ty-moi-188260819215225949.chn",
+        "text": ""
+      },
+      {
+        "href": "/hang-hang-khong-cua-ty-phu-nguyen-thi-phuong-thao-rot-285-ty-dong-lap-cong-ty-moi-188260819215225949.chn",
+        "text": "Hãng hàng không của tỷ phú Nguyễn Thị Phương Thảo rót 285 tỷ đồng lập công ty mới"
+      },
+      {
+        "href": "/doanh-nghiep-95000-lao-dong-chuyen-khai-thac-kho-bau-duoi-long-dat-viet-nam-duoc-trao-co-che-dac-thu-188260819215833187.chn",
+        "text": ""
+      },
+      {
+        "href": "/doanh-nghiep-95000-lao-dong-chuyen-khai-thac-kho-bau-duoi-long-dat-viet-nam-duoc-trao-co-che-dac-thu-188260819215833187.chn",
+        "text": "Doanh nghiệp 95.000 lao động chuyên khai thác “kho báu” dưới lòng đất Việt Nam được trao cơ chế đặc thù"
+      },
+      {
+        "href": "/xuat-khau-do-an-sang-bac-my-tang-truong-45-len-hon-100-trieu-usd-mot-doanh-nghiep-tren-san-bao-loi-nhuan-nua-dau-2026-tang-24-lan-188260819220510752.chn",
+        "text": ""
+      },
+      {
+        "href": "/xuat-khau-do-an-sang-bac-my-tang-truong-45-len-hon-100-trieu-usd-mot-doanh-nghiep-tren-san-bao-loi-nhuan-nua-dau-2026-tang-24-lan-188260819220510752.chn",
+        "text": "Xuất khẩu đồ ăn sang Bắc Mỹ tăng trưởng 45% lên hơn 100 triệu USD, một doanh nghiệp trên sàn báo lợi nhuận nửa đầu 2026 tăng 2,4 lần"
+      },
+      {
+        "href": "/tap-doan-phu-cuong-len-tieng-ve-vu-an-o-phu-tho-188260819220226558.chn",
+        "text": ""
+      },
+      {
+        "href": "/tap-doan-phu-cuong-len-tieng-ve-vu-an-o-phu-tho-188260819220226558.chn",
+        "text": "Tập đoàn Phú Cường lên tiếng về vụ án ở Phú Thọ"
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "XÃ HỘI"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "CHỨNG KHOÁN"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "BẤT ĐỘNG SẢN"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "DOANH NGHIỆP"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "NGÂN HÀNG"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "TÀI CHÍNH QUỐC TẾ"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "VĨ MÔ"
+      },
+      {
+        "href": "/kinh-te-so.chn",
+        "text": "KINH TẾ SỐ"
+      },
+      {
+        "href": "/thi-truong.chn",
+        "text": "THỊ TRƯỜNG"
+      },
+      {
+        "href": "/song.chn",
+        "text": "SỐNG"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "LIFESTYLE"
+      },
+      {
+        "href": "/du-lieu.chn",
+        "text": "Dữ liệu"
+      },
+      {
+        "href": "/du-lieu/top/ceo.chn",
+        "text": "Top 200"
+      },
+      {
+        "href": "https://www.messenger.com/t/108804609142280",
+        "text": "Chat với tư vấn viên"
+      },
+      {
+        "href": "http://www.vccorp.vn/",
+        "text": ""
+      },
+      {
+        "href": "/static/chinh-sach-bao-mat.html",
+        "text": "Chính sách bảo mật"
+      }
+    ]
+  },
+  "images": [
+    {
+      "outer_tag": "<img alt=\"PVTrans bầu bổ sung tân Tổng giám đốc vào HĐQT - Ảnh 1.\" class=\"\" data-author=\"\" data-nosnippet=\"\" data-original=\"https://cafefcdn.com/203337114487263232/2026/8/20/pvt-17871291974321384790849-1787191228842-1787191229314501636990.jpg\" h=\"404\" height=\"\" id=\"img_240329429454323712\" loading=\"lazy\" photoid=\"240329429454323712\" rel=\"lightbox\" src=\"https://cafefcdn.com/203337114487263232/2026/8/20/pvt-17871291974321384790849-1787191228842-1787191229314501636990.jpg\" style=\"max-width:100%;\" title=\"\" type=\"photo\" w=\"700\" width=\"\"/>",
+      "resolved_url": "https://cafefcdn.com/203337114487263232/2026/8/20/pvt-17871291974321384790849-1787191228842-1787191229314501636990.jpg",
+      "alt": "PVTrans bầu bổ sung tân Tổng giám đốc vào HĐQT - Ảnh 1.",
+      "title": "",
+      "caption": "Ảnh minh họa: PVT"
+    },
+    {
+      "outer_tag": "<img alt=\"Chưa kịp triển khai, VETC bất ngờ dừng thu phí ví điện tử 6.600 đồng/tháng sau phản ứng của khách hàng\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787188716760-178718871714271726397.jpg\" title=\"Chưa kịp triển khai, VETC bất ngờ dừng thu phí ví điện tử 6.600 đồng/tháng sau phản ứng của khách hàng\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787188716760-178718871714271726397.jpg",
+      "alt": "Chưa kịp triển khai, VETC bất ngờ dừng thu phí ví điện tử 6.600 đồng/tháng sau phản ứng của khách hàng",
+      "title": "Chưa kịp triển khai, VETC bất ngờ dừng thu phí ví điện tử 6.600 đồng/tháng sau phản ứng của khách hàng",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Doanh nghiệp nhà nước sở hữu 117.000 tỷ đồng tài sản bổ nhiệm Chủ tịch mới giữa lúc Bộ Công an điều tra đại án 500kV\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787151172191-1787151172634441411437.png\" title=\"Doanh nghiệp nhà nước sở hữu 117.000 tỷ đồng tài sản bổ nhiệm Chủ tịch mới giữa lúc Bộ Công an điều tra đại án 500kV\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787151172191-1787151172634441411437.png",
+      "alt": "Doanh nghiệp nhà nước sở hữu 117.000 tỷ đồng tài sản bổ nhiệm Chủ tịch mới giữa lúc Bộ Công an điều tra đại án 500kV",
+      "title": "Doanh nghiệp nhà nước sở hữu 117.000 tỷ đồng tài sản bổ nhiệm Chủ tịch mới giữa lúc Bộ Công an điều tra đại án 500kV",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Hãng hàng không của tỷ phú Nguyễn Thị Phương Thảo rót 285 tỷ đồng lập công ty mới\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787151021631-1787151022445600974310.jpg\" title=\"Hãng hàng không của tỷ phú Nguyễn Thị Phương Thảo rót 285 tỷ đồng lập công ty mới\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787151021631-1787151022445600974310.jpg",
+      "alt": "Hãng hàng không của tỷ phú Nguyễn Thị Phương Thảo rót 285 tỷ đồng lập công ty mới",
+      "title": "Hãng hàng không của tỷ phú Nguyễn Thị Phương Thảo rót 285 tỷ đồng lập công ty mới",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Doanh nghiệp 95.000 lao động chuyên khai thác “kho báu” dưới lòng đất Việt Nam được trao cơ chế đặc thù\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787151398689-1787151399739584553827.jpg\" title=\"Doanh nghiệp 95.000 lao động chuyên khai thác “kho báu” dưới lòng đất Việt Nam được trao cơ chế đặc thù\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787151398689-1787151399739584553827.jpg",
+      "alt": "Doanh nghiệp 95.000 lao động chuyên khai thác “kho báu” dưới lòng đất Việt Nam được trao cơ chế đặc thù",
+      "title": "Doanh nghiệp 95.000 lao động chuyên khai thác “kho báu” dưới lòng đất Việt Nam được trao cơ chế đặc thù",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Xuất khẩu đồ ăn sang Bắc Mỹ tăng trưởng 45% lên hơn 100 triệu USD, một doanh nghiệp trên sàn báo lợi nhuận nửa đầu 2026 tăng 2,4 lần\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787151805315-1787151806092917950449.jpg\" title=\"Xuất khẩu đồ ăn sang Bắc Mỹ tăng trưởng 45% lên hơn 100 triệu USD, một doanh nghiệp trên sàn báo lợi nhuận nửa đầu 2026 tăng 2,4 lần\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787151805315-1787151806092917950449.jpg",
+      "alt": "Xuất khẩu đồ ăn sang Bắc Mỹ tăng trưởng 45% lên hơn 100 triệu USD, một doanh nghiệp trên sàn báo lợi nhuận nửa đầu 2026 tăng 2,4 lần",
+      "title": "Xuất khẩu đồ ăn sang Bắc Mỹ tăng trưởng 45% lên hơn 100 triệu USD, một doanh nghiệp trên sàn báo lợi nhuận nửa đầu 2026 tăng 2,4 lần",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Tập đoàn Phú Cường lên tiếng về vụ án ở Phú Thọ\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787151692556-17871516933521291847611.png\" title=\"Tập đoàn Phú Cường lên tiếng về vụ án ở Phú Thọ\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787151692556-17871516933521291847611.png",
+      "alt": "Tập đoàn Phú Cường lên tiếng về vụ án ở Phú Thọ",
+      "title": "Tập đoàn Phú Cường lên tiếng về vụ án ở Phú Thọ",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Công ty Cổ phần VCCorp\" height=\"49px\" src=\"https://vccorp.mediacdn.vn/vccorp-s.png\" width=\"100px\"/>",
+      "resolved_url": "https://vccorp.mediacdn.vn/vccorp-s.png",
+      "alt": "Công ty Cổ phần VCCorp",
+      "title": "",
+      "caption": ""
+    }
+  ],
+  "language": "vi",
+  "built_at": "2026-08-20T09:18:04+07:00",
+  "built_from_raw_path": "data/raw_html\\cafef.vn\\20260820\\71b20bd3b02ce1055410b3e97141fc3fc96ac9fb740f11aa8333d1ec1537dd78.html"
+}

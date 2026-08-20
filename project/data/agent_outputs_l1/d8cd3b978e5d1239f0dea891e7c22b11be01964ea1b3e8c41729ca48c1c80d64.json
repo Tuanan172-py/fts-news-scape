@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "d8cd3b978e5d1239f0dea891e7c22b11be01964ea1b3e8c41729ca48c1c80d64",
+  "title": "Quảng Trị - Khánh Hòa mở rộng không gian liên kết du lịch qua đường bay mới",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

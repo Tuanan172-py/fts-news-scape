@@ -42,7 +42,7 @@ def _output(aid, title, ok=True):
         "processing_metadata": {"agent_provider": "x", "model_used": "m", "timestamp": "t"},
     }
     if not ok:
-        o["confidence"] = 0.1  # dưới ngưỡng -> DoD fail
+        o["citations"] = [{"source_span": "chuỗi không nằm trong tiêu đề"}]  # ungrounded -> DoD fail
     return o
 
 

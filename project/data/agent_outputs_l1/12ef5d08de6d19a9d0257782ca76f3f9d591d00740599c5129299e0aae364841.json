@@ -1,0 +1,37 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "12ef5d08de6d19a9d0257782ca76f3f9d591d00740599c5129299e0aae364841",
+  "title": "Phố Wall nhuốm sắc đỏ, S&P 500 giảm 3 phiên liên tiếp",
+  "recognized": true,
+  "entities": [
+    {
+      "surface": "Phố Wall",
+      "entity_id": null,
+      "type": "UNKNOWN",
+      "method": "semantic",
+      "in_list": false,
+      "confidence": 0.8
+    }
+  ],
+  "categories": {
+    "ticker_company": "out_of_list",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [
+    "Phố Wall"
+  ],
+  "citations": [
+    {
+      "source_span": "Phố Wall nhuốm sắc đỏ, S&P 500 giảm 3 phiên liên tiếp"
+    }
+  ],
+  "confidence": 0.95,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

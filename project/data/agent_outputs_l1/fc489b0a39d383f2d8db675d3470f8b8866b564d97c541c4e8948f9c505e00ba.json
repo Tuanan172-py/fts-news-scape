@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "fc489b0a39d383f2d8db675d3470f8b8866b564d97c541c4e8948f9c505e00ba",
+  "title": "Dubai: Người đàn ông ăn xin lái xe sang sau khi tan ca làm việc",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}

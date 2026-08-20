@@ -1,0 +1,55 @@
+{
+  "output_schema_version": "1.0",
+  "article_id": "584d9813d3b52960f71d8780bb6dd7c9bf2fa819f5e5c8d80c1652d04761360e",
+  "summary": {
+    "abstractive": "TẬP SAN IR AWARDS 2026: QUẢN TRỊ NIỀM TIN - KIẾN TẠO GIÁ TRỊ Giám đốc IR, Đầu tư & Quản trị doanh nghiệp MWG: IR là đối thoại để thị trường hiểu câu chuyện đằng sau những con số",
+    "key_points": [
+      "Giám đốc IR, Đầu tư & Quản trị doanh nghiệp MWG: IR là đối thoại để thị trường hiểu câu chuyện đằng sau những con số",
+      "Quan hệ nhà đầu tư (IR) là quá trình đối thoại hai chiều và đồng hành lâu dài giữa doanh nghiệp với cổ đông và cộng đồng đầu tư. Bên cạnh việc chia sẻ những gì doanh nghiệp đã làm được, MWG muốn nhà đ",
+      "CTCP Đầu tư Thế Giới Di Động (HOSE: MWG) không chỉ là doanh nghiệp hàng đầu trong lĩnh vực bán lẻ, mà còn luôn nằm trong nhóm tiên phong về thực hành hoạt động IR với cộng đồng đầu tư.",
+      "Trong bối cảnh thị trường chứng khoán nâng hạng và mở ra cơ hội thu hút dòng vốn nước ngoài, Giám đốc IR, Đầu tư & Quản trị doanh nghiệp tại MWG - bà Lê Thị Thu Trang nhìn nhận xu thế phát triển đang "
+    ]
+  },
+  "implication": {
+    "text": "Nội dung bài viết tác động tới nhận định thị trường và hoạt động kinh doanh của các đơn vị liên quan.",
+    "affected_parties": [
+      "nhà đầu tư",
+      "doanh nghiệp niêm yết"
+    ],
+    "impact_area": "market"
+  },
+  "materiality": {
+    "score": 0.65,
+    "time_sensitivity": "this_week"
+  },
+  "confidence": 0.88,
+  "citations": [
+    {
+      "claim": "Thông tin chính được trích xuất từ bài viết: TẬP SAN IR AWARDS 2026: QUẢN TRỊ NIỀM TIN - KIẾN T...",
+      "source_span": "TẬP SAN IR AWARDS 2026: QUẢN TRỊ NIỀM TIN - KIẾN TẠO GIÁ TRỊ",
+      "source_offset": 0
+    },
+    {
+      "claim": "Thông tin chính được trích xuất từ bài viết: Giám đốc IR, Đầu tư & Quản trị doanh nghiệp MWG: I...",
+      "source_span": "Giám đốc IR, Đầu tư & Quản trị doanh nghiệp MWG: IR là đối thoại để thị trường hiểu câu chuyện đằng sau những con số",
+      "source_offset": 61
+    },
+    {
+      "claim": "Thông tin chính được trích xuất từ bài viết: Quan hệ nhà đầu tư (IR) là quá trình đối thoại hai...",
+      "source_span": "Quan hệ nhà đầu tư (IR) là quá trình đối thoại hai chiều và đồng hành lâu dài giữa doanh nghiệp với cổ đông và cộng đồng đầu tư",
+      "source_offset": 178
+    }
+  ],
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:37:35.755748+07:00",
+    "schema_version": "1.0"
+  },
+  "sentiment": {
+    "overall": 0.0,
+    "polarity": "neutral"
+  },
+  "event_type": "macro",
+  "extraction_quality": "high"
+}

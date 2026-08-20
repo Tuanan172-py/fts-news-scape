@@ -1,0 +1,475 @@
+{
+  "silver_schema_version": "1.0",
+  "article_id": "2bb90143047d37cc89502deb859e01745d93e55cc87147f1ffb46ad5bc475d61",
+  "source_url": "https://cafef.vn/vinhomes-nhan-doi-von-dieu-le-vuot-82000-ty-dong-sau-dot-chia-co-tuc-khung-188260820145741147.chn?utm_source=du-lieu",
+  "domain": "cafef.vn",
+  "content_sha256": "c372965a91f0b55cf7bbb09fa8641ea941b7f8611a6e7d8d85b9785f47779184",
+  "cleaned_text": "Vinhomes nhân đôi vốn điều lệ, vượt 82.000 tỷ đồng sau đợt chia cổ tức “khủng”\nSau đợt phát hành, vốn điều lệ của doanh nghiệp bất động sản này tăng gấp đôi, lên hơn 82.100 tỷ đồng.\n- 18-08-2026Trong quý II, doanh nghiệp liên quan Vinhomes phát hành hơn 2,1 tỷ USD trái phiếu\n- 17-08-2026Đúng ngày 15/8, Vinhomes, Vincom Retail và Vinpearl có thay đổi quan trọng\n- 12-08-2026Vinhomes huy động thêm 2.000 tỷ đồng từ trái phiếu\nỦy ban Chứng khoán Nhà nước (UBCKNN) vừa thông báo đã nhận được báo cáo kết quả phát hành cổ phiếu để trả cổ tức năm 2025 của CTCP Vinhomes (HoSE: VHM).\nSau đợt phát hành, vốn điều lệ của doanh nghiệp bất động sản này tăng gấp đôi, lên hơn 82.100 tỷ đồng.\nTrước đó, Vinhomes chốt ngày 7/8 là ngày đăng ký cuối cùng để thực hiện quyền nhận cổ tức năm 2025 bằng cổ phiếu. Doanh nghiệp phát hành hơn 4,1 tỷ cổ phiếu mới theo tỷ lệ 1:1, tức cổ đông sở hữu 1 cổ phiếu được nhận thêm 1 cổ phiếu.\nNguồn vốn thực hiện được lấy từ lợi nhuận sau thuế chưa phân phối lũy kế đến ngày 31/12/2025. Thời gian dự kiến chuyển giao số cổ phiếu mới cho cổ đông là trước ngày 15/9.\nTheo báo cáo kết quả phát hành, toàn bộ hơn 4,1 tỷ cổ phiếu đã được phân phối cho 34.021 cổ đông. Đợt phát hành không phát sinh cổ phiếu lẻ.\nSau khi hoàn tất, số lượng cổ phiếu VHM đang lưu hành tăng từ hơn 4,1 tỷ đơn vị lên hơn 8,2 tỷ đơn vị. Tương ứng, vốn điều lệ của Vinhomes tăng từ hơn 41.074 tỷ đồng lên khoảng 82.148 tỷ đồng.\nVề hoạt động kinh doanh, Vinhomes ghi nhận lợi nhuận sau thuế nửa đầu năm 2026 đạt hơn 52.000 tỷ đồng, tăng gần 380% so với cùng kỳ năm trước. Kết quả này chủ yếu đến từ việc đẩy mạnh bàn giao tại các đại dự án, đồng thời giúp doanh nghiệp hoàn thành khoảng 87% kế hoạch lợi nhuận cả năm chỉ sau 6 tháng.\nNhịp sống thị trường",
+  "extraction_quality": "high",
+  "structure": {
+    "headings": [
+      {
+        "level": 1,
+        "text": "Vinhomes nhân đôi vốn điều lệ, vượt 82.000 tỷ đồng sau đợt chia cổ tức “khủng”"
+      },
+      {
+        "level": 2,
+        "text": "VHM:"
+      },
+      {
+        "level": 2,
+        "text": "Tin tức sự kiện về: Công ty cổ phần Cao su Việt Nam"
+      },
+      {
+        "level": 3,
+        "text": "CÙNG CHUYÊN MỤC"
+      },
+      {
+        "level": 4,
+        "text": "Nộp ngân sách hàng trăm tỷ năm 2025: Những \"tên tuổi\" hàng đầu ngành dịch vụ tài chính gọi tên ai? Nổi bật"
+      },
+      {
+        "level": 4,
+        "text": "Doanh nghiệp nhà nước sở hữu 117.000 tỷ đồng tài sản bổ nhiệm Chủ tịch mới giữa lúc Bộ Công an điều tra đại án 500kV Nổi bật"
+      },
+      {
+        "level": 4,
+        "text": "CEO tập đoàn doanh thu 5,8 tỷ EUR chỉ cách tiết kiệm 50–60% điện từ chiếu sáng"
+      },
+      {
+        "level": 4,
+        "text": "Công ty của tỷ phú Phạm Nhật Vượng “khoe” Robot mini hình người mới lên trình bất ngờ"
+      },
+      {
+        "level": 4,
+        "text": "PVTrans bầu bổ sung tân Tổng giám đốc vào HĐQT"
+      },
+      {
+        "level": 4,
+        "text": "Chưa kịp triển khai, VETC bất ngờ dừng thu phí ví điện tử 6.600 đồng/tháng sau phản ứng của khách hàng"
+      }
+    ],
+    "paragraphs": [
+      "MỚI NHẤT!",
+      "Yên Chi | 20-08-2026 - 14:57 PM | Doanh nghiệp",
+      "Sau đợt phát hành, vốn điều lệ của doanh nghiệp bất động sản này tăng gấp đôi, lên hơn 82.100 tỷ đồng.",
+      "Ủy ban Chứng khoán Nhà nước (UBCKNN) vừa thông báo đã nhận được báo cáo kết quả phát hành cổ phiếu để trả cổ tức năm 2025 của CTCP Vinhomes (HoSE: VHM).",
+      "Sau đợt phát hành, vốn điều lệ của doanh nghiệp bất động sản này tăng gấp đôi, lên hơn 82.100 tỷ đồng.",
+      "Trước đó, Vinhomes chốt ngày 7/8 là ngày đăng ký cuối cùng để thực hiện quyền nhận cổ tức năm 2025 bằng cổ phiếu. Doanh nghiệp phát hành hơn 4,1 tỷ cổ phiếu mới theo tỷ lệ 1:1, tức cổ đông sở hữu 1 cổ phiếu được nhận thêm 1 cổ phiếu.",
+      "Nguồn vốn thực hiện được lấy từ lợi nhuận sau thuế chưa phân phối lũy kế đến ngày 31/12/2025. Thời gian dự kiến chuyển giao số cổ phiếu mới cho cổ đông là trước ngày 15/9.",
+      "Theo báo cáo kết quả phát hành, toàn bộ hơn 4,1 tỷ cổ phiếu đã được phân phối cho 34.021 cổ đông. Đợt phát hành không phát sinh cổ phiếu lẻ.",
+      "Sau khi hoàn tất, số lượng cổ phiếu VHM đang lưu hành tăng từ hơn 4,1 tỷ đơn vị lên hơn 8,2 tỷ đơn vị. Tương ứng, vốn điều lệ của Vinhomes tăng từ hơn 41.074 tỷ đồng lên khoảng 82.148 tỷ đồng.",
+      "Về hoạt động kinh doanh, Vinhomes ghi nhận lợi nhuận sau thuế nửa đầu năm 2026 đạt hơn 52.000 tỷ đồng, tăng gần 380% so với cùng kỳ năm trước. Kết quả này chủ yếu đến từ việc đẩy mạnh bàn giao tại các đại dự án, đồng thời giúp doanh nghiệp hoàn thành khoảng 87% kế hoạch lợi nhuận cả năm chỉ sau 6 tháng.",
+      "Yên Chi",
+      "Nhịp sống thị trường",
+      "Địa chỉ: Tầng 21 Tòa nhà Center Building. Số 01, phố Nguyễn Huy Tưởng, phường Thanh Xuân, thành phố Hà Nội",
+      "Điện thoại: 024 7309 5555 Máy lẻ 292. Fax: 024-39744082",
+      "Email: info@cafef.vn | Hotline: 0926 864 344",
+      "Chịu trách nhiệm nội dung: Ông Nguyễn Thế Tân",
+      "Liên hệ quảng cáo",
+      "Hotline:",
+      "Email: doanhnghiep@admicro.vn",
+      "© Copyright 2007 - 2026 - Công ty Cổ phần VCCorp.",
+      "Giấy phép thiết lập trang thông tin điện tử tổng hợp trên mạng số 2216/GP-TTĐT do Sở Thông tin và Truyền thông Hà Nội cấp ngày 10 tháng 4 năm 2019."
+    ],
+    "tables": [],
+    "links": [
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "http://liveboard.cafef.vn",
+        "text": "Bảng giá điện tử"
+      },
+      {
+        "href": "/du-lieu/danh-muc-dau-tu.chn",
+        "text": "Danh mục đầu tư"
+      },
+      {
+        "href": "/doc-nhanh.chn",
+        "text": "Đọc nhanh >>"
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "XÃ HỘI"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "CHỨNG KHOÁN"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "BẤT ĐỘNG SẢN"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "DOANH NGHIỆP"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "NGÂN HÀNG"
+      },
+      {
+        "href": "/smart-money.chn",
+        "text": "SMART MONEY"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "TÀI CHÍNH QUỐC TẾ"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "VĨ MÔ"
+      },
+      {
+        "href": "/kinh-te-so.chn",
+        "text": "KINH TẾ SỐ"
+      },
+      {
+        "href": "/thi-truong.chn",
+        "text": "THỊ TRƯỜNG"
+      },
+      {
+        "href": "/song.chn",
+        "text": "SỐNG"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "LIFESTYLE"
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "Xã hội"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "Doanh nghiệp"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "Kinh tế vĩ mô"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "Chứng khoán"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "Tài chính ngân hàng"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "Tài chính quốc tế"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "Tin tức"
+      },
+      {
+        "href": "/du-an.chn",
+        "text": "Dự án"
+      },
+      {
+        "href": "/ban-do-du-an.chn",
+        "text": "Bản đồ dự án"
+      },
+      {
+        "href": "/hang-hoa-nguyen-lieu.chn",
+        "text": "Hàng hóa nguyên liệu"
+      },
+      {
+        "href": "/song.chn",
+        "text": "Sống"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "Lifestyle"
+      },
+      {
+        "href": "/nhom-chu-de/emagazine.chn",
+        "text": "Magazine"
+      },
+      {
+        "href": "/du-lieu.chn",
+        "text": "Dữ liệu"
+      },
+      {
+        "href": "/du-lieu/cafeflists.chn",
+        "text": "F INDEX"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "Doanh nghiệp"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Chia sẻ"
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/trong-quy-ii-doanh-nghiep-lien-quan-vinhomes-phat-hanh-hon-21-ty-usd-trai-phieu-188260818104053644.chn",
+        "text": "Trong quý II, doanh nghiệp liên quan Vinhomes phát hành hơn 2,1 tỷ USD trái phiếu"
+      },
+      {
+        "href": "/vien-ngoc-cua-vingroup-thay-doi-quan-trong-188260817140124505.chn",
+        "text": "Đúng ngày 15/8, Vinhomes, Vincom Retail và Vinpearl có thay đổi quan trọng"
+      },
+      {
+        "href": "/vinhomes-huy-dong-them-2000-ty-dong-tu-trai-phieu-188260812101355402.chn",
+        "text": "Vinhomes huy động thêm 2.000 tỷ đồng từ trái phiếu"
+      },
+      {
+        "href": "javascript:;",
+        "text": "VHM:"
+      },
+      {
+        "href": "",
+        "text": "Xem hồ sơ doanh nghiệp"
+      },
+      {
+        "href": "javascript:;",
+        "text": "TIN MỚI"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Theo Nhịp sống thị trường Copy link"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Chia sẻ"
+      },
+      {
+        "href": "/co-tuc.html",
+        "text": "cổ tức,"
+      },
+      {
+        "href": "/uy-ban-chung-khoan-nha-nuoc.html",
+        "text": "Ủy ban Chứng khoán Nhà nước,"
+      },
+      {
+        "href": "/vinhomes.html",
+        "text": "vinhomes,"
+      },
+      {
+        "href": "/ctcp-vinhomes.html",
+        "text": "CTCP Vinhomes,"
+      },
+      {
+        "href": "/von-dieu-le-vinhomes.html",
+        "text": "vốn điều lệ Vinhomes"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Công ty cổ phần Cao su Việt Nam"
+      },
+      {
+        "href": "https://s.cafef.vn/tin-doanh-nghiep/VHM/Event.chn",
+        "text": "Xem tất cả >>"
+      },
+      {
+        "href": "/nop-ngan-sach-hang-tram-ty-nam-2025-nhung-ten-tuoi-hang-dau-nganh-dich-vu-tai-chinh-goi-ten-ai-188260820114207033.chn",
+        "text": ""
+      },
+      {
+        "href": "/nop-ngan-sach-hang-tram-ty-nam-2025-nhung-ten-tuoi-hang-dau-nganh-dich-vu-tai-chinh-goi-ten-ai-188260820114207033.chn",
+        "text": "Nộp ngân sách hàng trăm tỷ năm 2025: Những \"tên tuổi\" hàng đầu ngành dịch vụ tài chính gọi tên ai?"
+      },
+      {
+        "href": "/doanh-nghiep-nha-nuoc-so-huu-117000-ty-dong-tai-san-bo-nhiem-chu-tich-moi-giua-luc-bo-cong-an-dieu-tra-dai-an-500kv-188260819215417616.chn",
+        "text": ""
+      },
+      {
+        "href": "/doanh-nghiep-nha-nuoc-so-huu-117000-ty-dong-tai-san-bo-nhiem-chu-tich-moi-giua-luc-bo-cong-an-dieu-tra-dai-an-500kv-188260819215417616.chn",
+        "text": "Doanh nghiệp nhà nước sở hữu 117.000 tỷ đồng tài sản bổ nhiệm Chủ tịch mới giữa lúc Bộ Công an điều tra đại án 500kV"
+      },
+      {
+        "href": "/ceo-tap-doan-doanh-thu-58-ty-eur-chi-cach-tiet-kiem-5060-dien-tu-chieu-sang-188260820144446146.chn",
+        "text": ""
+      },
+      {
+        "href": "/ceo-tap-doan-doanh-thu-58-ty-eur-chi-cach-tiet-kiem-5060-dien-tu-chieu-sang-188260820144446146.chn",
+        "text": "CEO tập đoàn doanh thu 5,8 tỷ EUR chỉ cách tiết kiệm 50–60% điện từ chiếu sáng"
+      },
+      {
+        "href": "/ty-phu-pham-nhat-vuong-khoe-robot-mini-hinh-nguoi-moi-len-trinh-bat-ngo-188260820123537564.chn",
+        "text": ""
+      },
+      {
+        "href": "/ty-phu-pham-nhat-vuong-khoe-robot-mini-hinh-nguoi-moi-len-trinh-bat-ngo-188260820123537564.chn",
+        "text": "Công ty của tỷ phú Phạm Nhật Vượng “khoe” Robot mini hình người mới lên trình bất ngờ"
+      },
+      {
+        "href": "/pvtrans-bau-bo-sung-tan-tong-giam-doc-vao-hdqt-18826082009005105.chn",
+        "text": ""
+      },
+      {
+        "href": "/pvtrans-bau-bo-sung-tan-tong-giam-doc-vao-hdqt-18826082009005105.chn",
+        "text": "PVTrans bầu bổ sung tân Tổng giám đốc vào HĐQT"
+      },
+      {
+        "href": "/chua-kip-trien-khai-vetc-bat-ngo-dung-thu-phi-vi-dien-tu-6600-dong-thang-sau-phan-ung-cua-khach-hang-188260820081919581.chn",
+        "text": ""
+      },
+      {
+        "href": "/chua-kip-trien-khai-vetc-bat-ngo-dung-thu-phi-vi-dien-tu-6600-dong-thang-sau-phan-ung-cua-khach-hang-188260820081919581.chn",
+        "text": "Chưa kịp triển khai, VETC bất ngờ dừng thu phí ví điện tử 6.600 đồng/tháng sau phản ứng của khách hàng"
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "XÃ HỘI"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "CHỨNG KHOÁN"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "BẤT ĐỘNG SẢN"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "DOANH NGHIỆP"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "NGÂN HÀNG"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "TÀI CHÍNH QUỐC TẾ"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "VĨ MÔ"
+      },
+      {
+        "href": "/kinh-te-so.chn",
+        "text": "KINH TẾ SỐ"
+      },
+      {
+        "href": "/thi-truong.chn",
+        "text": "THỊ TRƯỜNG"
+      },
+      {
+        "href": "/song.chn",
+        "text": "SỐNG"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "LIFESTYLE"
+      },
+      {
+        "href": "/du-lieu.chn",
+        "text": "Dữ liệu"
+      },
+      {
+        "href": "/du-lieu/top/ceo.chn",
+        "text": "Top 200"
+      },
+      {
+        "href": "https://www.messenger.com/t/108804609142280",
+        "text": "Chat với tư vấn viên"
+      },
+      {
+        "href": "http://www.vccorp.vn/",
+        "text": ""
+      },
+      {
+        "href": "/static/chinh-sach-bao-mat.html",
+        "text": "Chính sách bảo mật"
+      }
+    ]
+  },
+  "images": [
+    {
+      "outer_tag": "<img alt=\"Vinhomes nhân đôi vốn điều lệ, vượt 82.000 tỷ đồng sau đợt chia cổ tức “khủng”\" data-role=\"cover\" fetchpriority=\"high\" src=\"https://cafefcdn.com/thumb_w/640/203337114487263232/2026/8/20/avatar1787212595486-17872125958671523543086.jpg\" title=\"Vinhomes nhân đôi vốn điều lệ, vượt 82.000 tỷ đồng sau đợt chia cổ tức “khủng”\"/>",
+      "resolved_url": "https://cafefcdn.com/thumb_w/640/203337114487263232/2026/8/20/avatar1787212595486-17872125958671523543086.jpg",
+      "alt": "Vinhomes nhân đôi vốn điều lệ, vượt 82.000 tỷ đồng sau đợt chia cổ tức “khủng”",
+      "title": "Vinhomes nhân đôi vốn điều lệ, vượt 82.000 tỷ đồng sau đợt chia cổ tức “khủng”",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"\" class=\"\" data-original=\"https://cafefcdn.com/203337114487263232/2026/8/20/image15-1787212598226-17872125985081130942064.png\" h=\"1115\" height=\"\" rel=\"lightbox\" src=\"https://cafefcdn.com/203337114487263232/2026/8/20/image15-1787212598226-17872125985081130942064.png\" title=\"\" type=\"photo\" w=\"1507\" width=\"\"/>",
+      "resolved_url": "https://cafefcdn.com/203337114487263232/2026/8/20/image15-1787212598226-17872125985081130942064.png",
+      "alt": "",
+      "title": "",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt='Nộp ngân sách hàng trăm tỷ năm 2025: Những \"tên tuổi\" hàng đầu ngành dịch vụ tài chính gọi tên ai?' height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787200830070-17872008306392027591482.jpg\" title='Nộp ngân sách hàng trăm tỷ năm 2025: Những \"tên tuổi\" hàng đầu ngành dịch vụ tài chính gọi tên ai?' width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787200830070-17872008306392027591482.jpg",
+      "alt": "Nộp ngân sách hàng trăm tỷ năm 2025: Những \"tên tuổi\" hàng đầu ngành dịch vụ tài chính gọi tên ai?",
+      "title": "Nộp ngân sách hàng trăm tỷ năm 2025: Những \"tên tuổi\" hàng đầu ngành dịch vụ tài chính gọi tên ai?",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Doanh nghiệp nhà nước sở hữu 117.000 tỷ đồng tài sản bổ nhiệm Chủ tịch mới giữa lúc Bộ Công an điều tra đại án 500kV\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787151172191-1787151172634441411437.png\" title=\"Doanh nghiệp nhà nước sở hữu 117.000 tỷ đồng tài sản bổ nhiệm Chủ tịch mới giữa lúc Bộ Công an điều tra đại án 500kV\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787151172191-1787151172634441411437.png",
+      "alt": "Doanh nghiệp nhà nước sở hữu 117.000 tỷ đồng tài sản bổ nhiệm Chủ tịch mới giữa lúc Bộ Công an điều tra đại án 500kV",
+      "title": "Doanh nghiệp nhà nước sở hữu 117.000 tỷ đồng tài sản bổ nhiệm Chủ tịch mới giữa lúc Bộ Công an điều tra đại án 500kV",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"CEO tập đoàn doanh thu 5,8 tỷ EUR chỉ cách tiết kiệm 50–60% điện từ chiếu sáng\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787211743240-17872117464571688511694.jpg\" title=\"CEO tập đoàn doanh thu 5,8 tỷ EUR chỉ cách tiết kiệm 50–60% điện từ chiếu sáng\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787211743240-17872117464571688511694.jpg",
+      "alt": "CEO tập đoàn doanh thu 5,8 tỷ EUR chỉ cách tiết kiệm 50–60% điện từ chiếu sáng",
+      "title": "CEO tập đoàn doanh thu 5,8 tỷ EUR chỉ cách tiết kiệm 50–60% điện từ chiếu sáng",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Công ty của tỷ phú Phạm Nhật Vượng “khoe” Robot mini hình người mới lên trình bất ngờ\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787209441885-1787209442237405035614.png\" title=\"Công ty của tỷ phú Phạm Nhật Vượng “khoe” Robot mini hình người mới lên trình bất ngờ\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787209441885-1787209442237405035614.png",
+      "alt": "Công ty của tỷ phú Phạm Nhật Vượng “khoe” Robot mini hình người mới lên trình bất ngờ",
+      "title": "Công ty của tỷ phú Phạm Nhật Vượng “khoe” Robot mini hình người mới lên trình bất ngờ",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"PVTrans bầu bổ sung tân Tổng giám đốc vào HĐQT\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787191228775-17871912293131255308141.jpg\" title=\"PVTrans bầu bổ sung tân Tổng giám đốc vào HĐQT\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787191228775-17871912293131255308141.jpg",
+      "alt": "PVTrans bầu bổ sung tân Tổng giám đốc vào HĐQT",
+      "title": "PVTrans bầu bổ sung tân Tổng giám đốc vào HĐQT",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Chưa kịp triển khai, VETC bất ngờ dừng thu phí ví điện tử 6.600 đồng/tháng sau phản ứng của khách hàng\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787188716760-178718871714271726397.jpg\" title=\"Chưa kịp triển khai, VETC bất ngờ dừng thu phí ví điện tử 6.600 đồng/tháng sau phản ứng của khách hàng\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787188716760-178718871714271726397.jpg",
+      "alt": "Chưa kịp triển khai, VETC bất ngờ dừng thu phí ví điện tử 6.600 đồng/tháng sau phản ứng của khách hàng",
+      "title": "Chưa kịp triển khai, VETC bất ngờ dừng thu phí ví điện tử 6.600 đồng/tháng sau phản ứng của khách hàng",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Công ty Cổ phần VCCorp\" height=\"49px\" src=\"https://vccorp.mediacdn.vn/vccorp-s.png\" width=\"100px\"/>",
+      "resolved_url": "https://vccorp.mediacdn.vn/vccorp-s.png",
+      "alt": "Công ty Cổ phần VCCorp",
+      "title": "",
+      "caption": ""
+    }
+  ],
+  "language": "vi",
+  "built_at": "2026-08-20T15:02:56+07:00",
+  "built_from_raw_path": "data/raw_html\\cafef.vn\\20260820\\2bb90143047d37cc89502deb859e01745d93e55cc87147f1ffb46ad5bc475d61.html"
+}

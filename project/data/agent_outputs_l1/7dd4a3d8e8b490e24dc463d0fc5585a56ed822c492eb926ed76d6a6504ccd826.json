@@ -1,0 +1,22 @@
+{
+  "l1_output_version": "1.0",
+  "article_id": "7dd4a3d8e8b490e24dc463d0fc5585a56ed822c492eb926ed76d6a6504ccd826",
+  "title": "Du thuyền chở 4.500 du khách quốc tế cập cảng tàu Hạ Long",
+  "recognized": false,
+  "entities": [],
+  "categories": {
+    "ticker_company": "none",
+    "etf_fund": "none",
+    "index": "none",
+    "exchange": "none",
+    "industry_sector": "none"
+  },
+  "unlisted_candidates": [],
+  "citations": [],
+  "confidence": 0.5,
+  "processing_metadata": {
+    "agent_provider": "gemini",
+    "model_used": "gemini-3.7-flash",
+    "timestamp": "2026-08-20T14:36:57.507663+07:00"
+  }
+}
