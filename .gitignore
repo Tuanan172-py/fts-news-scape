@@ -19,9 +19,25 @@ data/dedup_cache.json
 data/notifications/
 data/exports/
 # Handoff & pipeline artifacts (tái sinh được — KHÔNG commit)
-data/agent_tasks/         # task-packets L1 + bóc tách (l1_route.py / agent_export.py)
-data/agent_outputs/       # output agent bóc tách nộp về
-data/agent_outputs_l1/    # output agent L1 nộp về
-data/silver/              # Silver (dẫn xuất Bronze qua derive)
-data/work_packages/       # work-package cho handoff
-data/raw_html/            # Bronze raw HTML (nặng — tái scrape được)
+# task-packets L1 + bóc tách (l1_route.py / agent_export.py)
+data/agent_tasks/
+# output agent bóc tách nộp về
+data/agent_outputs/
+# output agent L1 nộp về
+data/agent_outputs_l1/
+# Silver (dẫn xuất Bronze qua derive)
+data/silver/
+# work-package cho handoff
+data/work_packages/
+# Bronze raw HTML (nặng — tái scrape được)
+data/raw_html/
+
+# Harness Durable SQLite
+harness.db*
+
+# Python & Environment
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.venv/

@@ -2120,20 +2120,34 @@ IND_GICS3:BAO_BI_VA_DONG_GOI,INDUSTRY_GICS3,BAO_BI_VA_DONG_GOI,Bao bì và đón
 IND_GICS3:VAT_LIEU_XAY_DUNG,INDUSTRY_GICS3,VAT_LIEU_XAY_DUNG,Vật liệu xây dựng,Vật liệu xây dựng,Vật liệu xây dựng,,,,industry_classification/industry_classification.xlsx
 IND_GICS3:LOP_CAO_SU,INDUSTRY_GICS3,LOP_CAO_SU,Lốp & Cao su,Lốp & Cao su,Ô tô & Phụ tùng,,,,industry_classification/industry_classification.xlsx
 IND_GICS3:NHA_SAN_XUAT_O_TO_VA_THIET_BI_O_TO,INDUSTRY_GICS3,NHA_SAN_XUAT_O_TO_VA_THIET_BI_O_TO,Nhà sản xuất ô tô và thiết bị ô tô,Nhà sản xuất ô tô và thiết bị ô tô,Ô tô & Phụ tùng,,,,industry_classification/industry_classification.xlsx
-MACRO_GEO:MY,MACRO_GEO,MY,Mỹ,Mỹ | Hoa Kỳ | US | USA | United States | Nhà Trắng | Washington | Wall Street,,,,,config/entities/aliases/macro_geo.yaml
-MACRO_GEO:TRUNG_QUOC,MACRO_GEO,TRUNG_QUOC,Trung Quốc,Trung Quốc | TQ | China | Bắc Kinh | Thượng Hải | PBOC,,,,,config/entities/aliases/macro_geo.yaml
-MACRO_GEO:EU,MACRO_GEO,EU,Châu Âu,Châu Âu | Liên minh châu Âu | EU | Eurozone | ECB | Frankfurt,,,,,config/entities/aliases/macro_geo.yaml
-MACRO_GEO:NHAT_BAN,MACRO_GEO,NHAT_BAN,Nhật Bản,Nhật Bản | Japan | Tokyo | BOJ | đồng Yên,,,,,config/entities/aliases/macro_geo.yaml
-MACRO_THEME:LAI_SUAT,MACRO_THEME,LAI_SUAT,Lãi suất,lãi suất | lãi suất điều hành | lãi suất tái cấp vốn | lãi suất huy động | lãi suất cho vay | trần lãi suất | lãi suất liên ngân hàng,,,,,config/entities/aliases/macro_geo.yaml
-MACRO_THEME:TY_GIA,MACRO_THEME,TY_GIA,Tỷ giá,tỷ giá | tỷ giá USD/VND | DXY | đồng USD | ngoại tệ | dự trữ ngoại hối | phá giá tiền tệ,,,,,config/entities/aliases/macro_geo.yaml
-MACRO_THEME:LAM_PHAT,MACRO_THEME,LAM_PHAT,Lạm phát,lạm phát | CPI | chỉ số giá tiêu dùng | lạm phát cơ bản,,,,,config/entities/aliases/macro_geo.yaml
-MACRO_THEME:THUE_THUONG_MAI,MACRO_THEME,THUE_THUONG_MAI,Thuế & Thương mại,thuế chống bán phá giá | thuế chống trợ cấp | thuế quan | chiến tranh thương mại | thuế tối thiểu toàn cầu | hàng rào thuế quan,,,,,config/entities/aliases/macro_geo.yaml
+MACRO_GEO:MY,MACRO_GEO,MY,Mỹ,Mỹ | Hoa Kỳ | US | USA | United States | Nhà Trắng | Washington | Wall Street,,,,,config/entities/aliases/nations.yaml
+MACRO_GEO:TRUNG_QUOC,MACRO_GEO,TRUNG_QUOC,Trung Quốc,Trung Quốc | TQ | China | Bắc Kinh | Thượng Hải | PBOC,,,,,config/entities/aliases/nations.yaml
+MACRO_GEO:EU,MACRO_GEO,EU,Châu Âu,Châu Âu | Liên minh châu Âu | EU | Eurozone | Frankfurt,,,,,config/entities/aliases/nations.yaml
+MACRO_GEO:NHAT_BAN,MACRO_GEO,NHAT_BAN,Nhật Bản,Nhật Bản | Japan | Tokyo | đồng Yên,,,,,config/entities/aliases/nations.yaml
+MACRO_GEO:HAN_QUOC,MACRO_GEO,HAN_QUOC,Hàn Quốc,Hàn Quốc | Korea | Seoul | đồng Won,,,,,config/entities/aliases/nations.yaml
+MACRO_GEO:NGA,MACRO_GEO,NGA,Nga,Nga | Russia | Moskva | Điện Kremlin,,,,,config/entities/aliases/nations.yaml
+MACRO_GEO:DONG_NAM_A,MACRO_GEO,DONG_NAM_A,Đông Nam Á,Đông Nam Á | ASEAN | khu vực Đông Nam Á,,,,,config/entities/aliases/nations.yaml
+MACRO_GEO:AN_DO,MACRO_GEO,AN_DO,Ấn Độ,Ấn Độ | India | New Delhi,,,,,config/entities/aliases/nations.yaml
+MACRO_THEME:LAI_SUAT,MACRO_THEME,LAI_SUAT,Lãi suất,lãi suất | lãi suất điều hành | lãi suất tái cấp vốn | lãi suất huy động | lãi suất cho vay | trần lãi suất | lãi suất liên ngân hàng,,,,,config/entities/aliases/themes.yaml
+MACRO_THEME:TY_GIA,MACRO_THEME,TY_GIA,Tỷ giá & Ngoại tệ,tỷ giá | tỷ giá USD/VND | DXY | đồng USD | ngoại tệ | dự trữ ngoại hối | phá giá tiền tệ,,,,,config/entities/aliases/themes.yaml
+MACRO_THEME:LAM_PHAT,MACRO_THEME,LAM_PHAT,Lạm phát & CPI,lạm phát | CPI | chỉ số giá tiêu dùng | lạm phát cơ bản,,,,,config/entities/aliases/themes.yaml
+MACRO_THEME:THUE_THUONG_MAI,MACRO_THEME,THUE_THUONG_MAI,Thuế quan & Thương mại,thuế chống bán phá giá | thuế chống trợ cấp | thuế quan | chiến tranh thương mại | thuế tối thiểu toàn cầu | hàng rào thuế quan,,,,,config/entities/aliases/themes.yaml
+MACRO_THEME:GDP_TANG_TRUONG,MACRO_THEME,GDP_TANG_TRUONG,Tăng trưởng GDP,tăng trưởng GDP | GDP | tăng trưởng kinh tế | tổng sản phẩm quốc nội | suy thoái kinh tế,,,,,config/entities/aliases/themes.yaml
+MACRO_THEME:DAU_TU_CONG,MACRO_THEME,DAU_TU_CONG,Đầu tư công & Hạ tầng,đầu tư công | giải ngân vốn đầu tư công | dự án trọng điểm quốc gia | cao tốc Bắc Nam | sân bay Long Thành,,,,,config/entities/aliases/themes.yaml
+MACRO_THEME:FDI,MACRO_THEME,FDI,Vốn FDI & Đầu tư nước ngoài,FDI | vốn đầu tư nước ngoài | vốn ngoại | doanh nghiệp FDI | thu hút FDI,,,,,config/entities/aliases/themes.yaml
+MACRO_THEME:TIN_DUNG,MACRO_THEME,TIN_DUNG,Tín dụng & Tăng trưởng tín dụng,tín dụng | tăng trưởng tín dụng | room tín dụng | dư nợ tín dụng | nợ xấu,,,,,config/entities/aliases/themes.yaml
+MACRO_THEME:NANG_HANG_TTCK,MACRO_THEME,NANG_HANG_TTCK,Nâng hạng thị trường chứng khoán,nâng hạng thị trường | nâng hạng TTCK | FTSE Russell | MSCI | thị trường mới nổi | Emerging Markets,,,,,config/entities/aliases/themes.yaml
 ASSET_CLASS:TRAI_PHIEU,ASSET_CLASS,TRAI_PHIEU,Trái phiếu,trái phiếu | TPDN | TPCP | trái phiếu doanh nghiệp | trái phiếu chính phủ | trái chủ | lợi suất trái phiếu | coupon | đáo hạn trái phiếu | mua lại trước hạn,,,,,config/entities/aliases/assets.yaml
 ASSET_CLASS:CO_PHIEU,ASSET_CLASS,CO_PHIEU,Cổ phiếu,cổ phiếu | thị trường chứng khoán | TTCK | khớp lệnh | khối ngoại | tự doanh | thanh khoản thị trường | thị trường cơ sở,,,,,config/entities/aliases/assets.yaml
 ASSET_CLASS:VANG,ASSET_CLASS,VANG,Vàng & Kim loại quý,vàng | vàng SJC | vàng nhẫn | giá vàng | vàng miếng | vàng 9999,,,,,config/entities/aliases/assets.yaml
 ASSET_CLASS:DAU_THO,ASSET_CLASS,DAU_THO,Dầu thô & Năng lượng,dầu thô | dầu Brent | dầu WTI | giá dầu | OPEC | xăng dầu,,,,,config/entities/aliases/assets.yaml
 ASSET_CLASS:BAT_DONG_SAN_TAI_SAN,ASSET_CLASS,BAT_DONG_SAN_TAI_SAN,Bất động sản tài sản,bất động sản | nhà đất | địa ốc | căn hộ | đất nền | giá nhà,,,,,config/entities/aliases/assets.yaml
+ASSET_CLASS:TIEN_MA_HOA,ASSET_CLASS,TIEN_MA_HOA,Tiền mã hóa & Tài sản số,tiền mã hóa | tiền số | crypto | cryptocurrency | Bitcoin | BTC | Ethereum | tài sản số,,,,,config/entities/aliases/assets.yaml
+ASSET_CLASS:HANG_HOA_NONG_SAN,ASSET_CLASS,HANG_HOA_NONG_SAN,Hàng hóa & Nông sản,hàng hóa nguyên liệu | nông sản | giá gạo | xuất khẩu gạo | cà phê | giá cà phê | cao su | giá cao su,,,,,config/entities/aliases/assets.yaml
 INSTITUTION:NHNN,INSTITUTION,NHNN,Ngân hàng Nhà nước,Ngân hàng Nhà nước | NHNN | SBV | Thống đốc | thị trường mở | OMO | tín phiếu,,,,,config/entities/aliases/institutions.yaml
-INSTITUTION:UBCKNN,INSTITUTION,UBCKNN,Ủy ban Chứng khoán Nhà nước,Ủy ban Chứng khoán Nhà nước | UBCKNN | SSC | Bộ Tài chính | hệ thống KRX | nâng hạng thị trường,,,,,config/entities/aliases/institutions.yaml
+INSTITUTION:UBCKNN,INSTITUTION,UBCKNN,Ủy ban Chứng khoán Nhà nước,Ủy ban Chứng khoán Nhà nước | UBCKNN | SSC | hệ thống KRX,,,,,config/entities/aliases/institutions.yaml
+INSTITUTION:BO_TAI_CHINH,INSTITUTION,BO_TAI_CHINH,Bộ Tài chính,Bộ Tài chính | BTC | Bộ trưởng Bộ Tài chính | Tổng cục Thuế | Tổng cục Hải quan,,,,,config/entities/aliases/institutions.yaml
 INSTITUTION:FED,INSTITUTION,FED,Cục Dự trữ Liên bang Mỹ,Cục Dự trữ Liên bang | Fed | FED | FOMC | Jerome Powell | lãi suất Fed,,,,,config/entities/aliases/institutions.yaml
 INSTITUTION:ECB,INSTITUTION,ECB,Ngân hàng Trung ương Châu Âu,Ngân hàng Trung ương Châu Âu | ECB | Christine Lagarde,,,,,config/entities/aliases/institutions.yaml
+INSTITUTION:BOJ,INSTITUTION,BOJ,Ngân hàng Trung ương Nhật Bản,Ngân hàng Trung ương Nhật Bản | BOJ | Kazuo Ueda,,,,,config/entities/aliases/institutions.yaml
+INSTITUTION:WB_IMF,INSTITUTION,WB_IMF,Ngân hàng Thế giới & IMF,World Bank | Ngân hàng Thế giới | IMF | Quỹ Tiền tệ Quốc tế,,,,,config/entities/aliases/institutions.yaml

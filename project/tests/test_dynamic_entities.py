@@ -59,8 +59,10 @@ def test_user_subscription_selection_with_new_categories(registry: EntityRegistr
     doc = {
         "industries": ["QUY", "THEP"],
         "macro": ["MY", "TRUNG_QUOC", "LAI_SUAT"],
-        "assets": ["TRAI_PHIEU", "VANG"],
-        "institutions": ["NHNN", "FED"],
+        "nations": ["HAN_QUOC", "NGA", "EU"],
+        "themes": ["DAU_TU_CONG", "FDI", "TIN_DUNG", "TY_GIA"],
+        "assets": ["TRAI_PHIEU", "VANG", "TIEN_MA_HOA", "HANG_HOA_NONG_SAN"],
+        "institutions": ["NHNN", "FED", "BO_TAI_CHINH", "WB_IMF"],
     }
     ids, unknown = registry.select(doc)
     assert not unknown, f"Có unknown entities: {unknown}"
@@ -70,11 +72,18 @@ def test_user_subscription_selection_with_new_categories(registry: EntityRegistr
     assert any("IND_" in eid and "THEP" in eid for eid in ids)
     assert "MACRO_GEO:MY" in ids
     assert "MACRO_GEO:TRUNG_QUOC" in ids
+    assert "MACRO_GEO:HAN_QUOC" in ids
+    assert "MACRO_GEO:NGA" in ids
     assert "MACRO_THEME:LAI_SUAT" in ids
+    assert "MACRO_THEME:DAU_TU_CONG" in ids
+    assert "MACRO_THEME:FDI" in ids
     assert "ASSET_CLASS:TRAI_PHIEU" in ids
     assert "ASSET_CLASS:VANG" in ids
+    assert "ASSET_CLASS:TIEN_MA_HOA" in ids
     assert "INSTITUTION:NHNN" in ids
     assert "INSTITUTION:FED" in ids
+    assert "INSTITUTION:BO_TAI_CHINH" in ids
+    assert "INSTITUTION:WB_IMF" in ids
 
 
 def test_compile_user_with_new_groups(registry: EntityRegistry):
@@ -85,9 +94,10 @@ def test_compile_user_with_new_groups(registry: EntityRegistry):
         doc = {
             "tickers": ["HPG"],
             "industries": ["QUY"],
-            "macro": ["MY"],
+            "nations": ["MY", "HAN_QUOC"],
+            "themes": ["DAU_TU_CONG"],
             "assets": ["TRAI_PHIEU"],
-            "institutions": ["NHNN"],
+            "institutions": ["NHNN", "BO_TAI_CHINH"],
         }
         write_user_xlsx(xlsx_path, doc, {"user": "TestUser"})
         
@@ -98,6 +108,10 @@ def test_compile_user_with_new_groups(registry: EntityRegistry):
         assert len(res["unknown"]) == 0
         assert "TICKER:HPG" in res["ids"]
         assert "MACRO_GEO:MY" in res["ids"]
+        assert "MACRO_GEO:HAN_QUOC" in res["ids"]
+        assert "MACRO_THEME:DAU_TU_CONG" in res["ids"]
         assert "ASSET_CLASS:TRAI_PHIEU" in res["ids"]
         assert "INSTITUTION:NHNN" in res["ids"]
+        assert "INSTITUTION:BO_TAI_CHINH" in res["ids"]
         assert any("QUY" in eid for eid in res["ids"])
+

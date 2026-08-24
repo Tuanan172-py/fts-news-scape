@@ -18,9 +18,16 @@ UBCKNN:
     - "Ủy ban Chứng khoán Nhà nước"
     - "UBCKNN"
     - "SSC"
-    - "Bộ Tài chính"
     - "hệ thống KRX"
-    - "nâng hạng thị trường"
+
+BO_TAI_CHINH:
+  canonical_name: "Bộ Tài chính"
+  aliases:
+    - "Bộ Tài chính"
+    - "BTC"
+    - "Bộ trưởng Bộ Tài chính"
+    - "Tổng cục Thuế"
+    - "Tổng cục Hải quan"
 
 FED:
   canonical_name: "Cục Dự trữ Liên bang Mỹ"
@@ -38,3 +45,18 @@ ECB:
     - "Ngân hàng Trung ương Châu Âu"
     - "ECB"
     - "Christine Lagarde"
+
+BOJ:
+  canonical_name: "Ngân hàng Trung ương Nhật Bản"
+  aliases:
+    - "Ngân hàng Trung ương Nhật Bản"
+    - "BOJ"
+    - "Kazuo Ueda"
+
+WB_IMF:
+  canonical_name: "Ngân hàng Thế giới & IMF"
+  aliases:
+    - "World Bank"
+    - "Ngân hàng Thế giới"
+    - "IMF"
+    - "Quỹ Tiền tệ Quốc tế"

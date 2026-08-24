@@ -8,10 +8,10 @@
     "INDUSTRY_GICS1": 11,
     "INDUSTRY_GICS2": 28,
     "INDUSTRY_GICS3": 51,
-    "MACRO_GEO": 4,
-    "MACRO_THEME": 4,
-    "ASSET_CLASS": 5,
-    "INSTITUTION": 4
+    "MACRO_GEO": 8,
+    "MACRO_THEME": 9,
+    "ASSET_CLASS": 7,
+    "INSTITUTION": 7
   },
   "gics_tree": {
     "Bất động sản": {

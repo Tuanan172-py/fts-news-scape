@@ -194,7 +194,8 @@ def _load_all_domain_aliases() -> dict:
     res = {
         "tickers": {},
         "industries": {},
-        "macro_geo": {},
+        "nations": {},
+        "themes": {},
         "assets": {},
         "institutions": {},
     }
@@ -209,8 +210,23 @@ def _load_all_domain_aliases() -> dict:
     raw_ind = _load_yaml(aliases_dir / "industries.yaml")
     res["industries"] = {str(k).strip(): list(v or []) for k, v in raw_ind.items()}
 
-    # Macro & Geo
-    res["macro_geo"] = _load_yaml(aliases_dir / "macro_geo.yaml")
+    # Nations (Địa chính trị / Quốc gia)
+    raw_nations = _load_yaml(aliases_dir / "nations.yaml")
+    if not raw_nations:
+        # Fallback macro_geo
+        raw_macro = _load_yaml(aliases_dir / "macro_geo.yaml")
+        macro_themes = {"LAI_SUAT", "TY_GIA", "LAM_PHAT", "THUE_THUONG_MAI"}
+        raw_nations = {k: v for k, v in raw_macro.items() if k not in macro_themes}
+    res["nations"] = raw_nations
+
+    # Themes (Chủ đề vĩ mô)
+    raw_themes = _load_yaml(aliases_dir / "themes.yaml")
+    if not raw_themes:
+        # Fallback macro_geo
+        raw_macro = _load_yaml(aliases_dir / "macro_geo.yaml")
+        macro_themes = {"LAI_SUAT", "TY_GIA", "LAM_PHAT", "THUE_THUONG_MAI"}
+        raw_themes = {k: v for k, v in raw_macro.items() if k in macro_themes}
+    res["themes"] = raw_themes
 
     # Assets
     res["assets"] = _load_yaml(aliases_dir / "assets.yaml")
@@ -219,6 +235,7 @@ def _load_all_domain_aliases() -> dict:
     res["institutions"] = _load_yaml(aliases_dir / "institutions.yaml")
 
     return res
+
 
 
 # ----------------------------------------------------------------------------
@@ -338,23 +355,35 @@ def build(data_root: Path, out_dir: Path) -> dict:
     for (p2, name), n in g3.items():
         entities.append(_industry("GICS3", name, clean_name(p2), int(n), ind_aliases))
 
-    # --- 5) MACRO_GEO & MACRO_THEME ------------------------------------------
-    macro_themes = {"LAI_SUAT", "TY_GIA", "LAM_PHAT", "THUE_THUONG_MAI"}
-    for code, info in all_domain_aliases["macro_geo"].items():
-        etype = "MACRO_THEME" if code in macro_themes else "MACRO_GEO"
+    # --- 5) MACRO_GEO (Nations / Geopolitics) --------------------------------
+    for code, info in all_domain_aliases["nations"].items():
         canonical = info.get("canonical_name", code)
         aliases = list(info.get("aliases", [canonical]))
         entities.append({
-            "entity_id": f"{etype}:{code}",
-            "type": etype,
+            "entity_id": f"MACRO_GEO:{code}",
+            "type": "MACRO_GEO",
             "code": code,
             "canonical_name": canonical,
             "aliases": aliases,
-            "attributes": {"category": "macro"},
-            "sources": ["config/entities/aliases/macro_geo.yaml"],
+            "attributes": {"category": "macro_geo"},
+            "sources": ["config/entities/aliases/nations.yaml"],
         })
 
-    # --- 6) ASSET_CLASS -----------------------------------------------------
+    # --- 6) MACRO_THEME (Vĩ mô & Chủ đề kinh tế) ----------------------------
+    for code, info in all_domain_aliases["themes"].items():
+        canonical = info.get("canonical_name", code)
+        aliases = list(info.get("aliases", [canonical]))
+        entities.append({
+            "entity_id": f"MACRO_THEME:{code}",
+            "type": "MACRO_THEME",
+            "code": code,
+            "canonical_name": canonical,
+            "aliases": aliases,
+            "attributes": {"category": "macro_theme"},
+            "sources": ["config/entities/aliases/themes.yaml"],
+        })
+
+    # --- 7) ASSET_CLASS -----------------------------------------------------
     for code, info in all_domain_aliases["assets"].items():
         canonical = info.get("canonical_name", code)
         aliases = list(info.get("aliases", [canonical]))
@@ -368,7 +397,7 @@ def build(data_root: Path, out_dir: Path) -> dict:
             "sources": ["config/entities/aliases/assets.yaml"],
         })
 
-    # --- 7) INSTITUTION -----------------------------------------------------
+    # --- 8) INSTITUTION -----------------------------------------------------
     for code, info in all_domain_aliases["institutions"].items():
         canonical = info.get("canonical_name", code)
         aliases = list(info.get("aliases", [canonical]))
@@ -449,7 +478,7 @@ def _write_csv(path: Path, entities: list[dict]) -> None:
 
 
 def _write_xlsx(path: Path, entities: list[dict]) -> None:
-    """Workbook đa sheet theo loại — dễ phân loại/quan sát (mỗi sheet đồng nhất cột)."""
+    """Workbook đa sheet theo loại — chuẩn legacy dễ tra cứu và đăng ký."""
 
     def alias2(e):
         a = e.get("aliases") or []
@@ -485,10 +514,15 @@ def _write_xlsx(path: Path, entities: list[dict]) -> None:
         "aliases": " | ".join(e["aliases"]),
     } for e in entities if e["type"] == "EXCHANGE"]
 
-    macro = [{
-        "entity_id": e["entity_id"], "type": e["type"], "code": e["code"],
-        "name": e["canonical_name"], "aliases": " | ".join(e["aliases"]),
-    } for e in entities if e["type"] in ("MACRO_GEO", "MACRO_THEME")]
+    nations = [{
+        "entity_id": e["entity_id"], "code": e["code"], "name": e["canonical_name"],
+        "aliases": " | ".join(e["aliases"]),
+    } for e in entities if e["type"] == "MACRO_GEO"]
+
+    themes = [{
+        "entity_id": e["entity_id"], "code": e["code"], "name": e["canonical_name"],
+        "aliases": " | ".join(e["aliases"]),
+    } for e in entities if e["type"] == "MACRO_THEME"]
 
     assets = [{
         "entity_id": e["entity_id"], "code": e["code"], "name": e["canonical_name"],
@@ -529,13 +563,15 @@ def _write_xlsx(path: Path, entities: list[dict]) -> None:
         {"Khoá trong file đăng ký": "exchanges", "Loại thực thể": "Sàn",
          "Nhập giá trị ở CỘT": "code", "Sheet tra cứu": "Exchanges", "Ví dụ": "HOSE"},
         {"Khoá trong file đăng ký": "industries", "Loại thực thể": "Ngành GICS (1/2/3)",
-         "Nhập giá trị ở CỘT": "code", "Sheet tra cứu": "Industries", "Ví dụ": "THEP"},
-        {"Khoá trong file đăng ký": "macro", "Loại thực thể": "Địa chính trị & Vĩ mô",
-         "Nhập giá trị ở CỘT": "code", "Sheet tra cứu": "Macro", "Ví dụ": "MY"},
+         "Nhập giá trị ở CỘT": "code", "Sheet tra cứu": "Industries", "Ví dụ": "THEP, QUY"},
+        {"Khoá trong file đăng ký": "nations", "Loại thực thể": "Địa chính trị / Quốc gia",
+         "Nhập giá trị ở CỘT": "code", "Sheet tra cứu": "Nations", "Ví dụ": "MY, TRUNG_QUOC"},
+        {"Khoá trong file đăng ký": "themes", "Loại thực thể": "Chủ đề Vĩ mô",
+         "Nhập giá trị ở CỘT": "code", "Sheet tra cứu": "Themes", "Ví dụ": "LAI_SUAT, TY_GIA"},
         {"Khoá trong file đăng ký": "assets", "Loại thực thể": "Loại tài sản",
-         "Nhập giá trị ở CỘT": "code", "Sheet tra cứu": "Assets", "Ví dụ": "TRAI_PHIEU"},
+         "Nhập giá trị ở CỘT": "code", "Sheet tra cứu": "Assets", "Ví dụ": "TRAI_PHIEU, VANG"},
         {"Khoá trong file đăng ký": "institutions", "Loại thực thể": "Định chế / Quản lý",
-         "Nhập giá trị ở CỘT": "code", "Sheet tra cứu": "Institutions", "Ví dụ": "NHNN"},
+         "Nhập giá trị ở CỘT": "code", "Sheet tra cứu": "Institutions", "Ví dụ": "NHNN, FED"},
     ], columns=["Khoá trong file đăng ký", "Loại thực thể", "Nhập giá trị ở CỘT",
                 "Sheet tra cứu", "Ví dụ"])
 
@@ -546,7 +582,8 @@ def _write_xlsx(path: Path, entities: list[dict]) -> None:
         "Industries": pd.DataFrame(industries),
         "Indices": pd.DataFrame(indices),
         "Exchanges": pd.DataFrame(exchanges),
-        "Macro": pd.DataFrame(macro),
+        "Nations": pd.DataFrame(nations),
+        "Themes": pd.DataFrame(themes),
         "Assets": pd.DataFrame(assets),
         "Institutions": pd.DataFrame(institutions),
     }
@@ -561,9 +598,10 @@ _SHEET_OF = {
     "INDUSTRY_GICS1": "Industries", "INDUSTRY_GICS2": "Industries",
     "INDUSTRY_GICS3": "Industries",
     "INDEX": "Indices", "EXCHANGE": "Exchanges",
-    "MACRO_GEO": "Macro", "MACRO_THEME": "Macro",
+    "MACRO_GEO": "Nations", "MACRO_THEME": "Themes",
     "ASSET_CLASS": "Assets", "INSTITUTION": "Institutions",
 }
+
 
 
 

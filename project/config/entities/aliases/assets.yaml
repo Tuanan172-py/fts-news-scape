@@ -56,3 +56,27 @@ BAT_DONG_SAN_TAI_SAN:
     - "căn hộ"
     - "đất nền"
     - "giá nhà"
+
+TIEN_MA_HOA:
+  canonical_name: "Tiền mã hóa & Tài sản số"
+  aliases:
+    - "tiền mã hóa"
+    - "tiền số"
+    - "crypto"
+    - "cryptocurrency"
+    - "Bitcoin"
+    - "BTC"
+    - "Ethereum"
+    - "tài sản số"
+
+HANG_HOA_NONG_SAN:
+  canonical_name: "Hàng hóa & Nông sản"
+  aliases:
+    - "hàng hóa nguyên liệu"
+    - "nông sản"
+    - "giá gạo"
+    - "xuất khẩu gạo"
+    - "cà phê"
+    - "giá cà phê"
+    - "cao su"
+    - "giá cao su"

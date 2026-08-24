@@ -183,3 +183,20 @@
 [~] Khi ESG trở thành một phần giá trị xa xỉ: Góc nhìn quốc tế về HAUS (chi tiết (http://vietstock.vn/2026/08/khi-esg-tro-thanh-mot-phan-gia-tri-xa-xi-goc-nhin-quoc-te-ve-haus-4222-1483588.htm))
 [~] Chủ động ứng phó mưa lớn, bảo đảm an toàn công trình thủy lợi (chi tiết (https://vneconomy.vn/chu-dong-ung-pho-mua-lon-bao-dam-an-toan-cong-trinh-thuy-loi.htm))
 16:07:45 [cycle] cafef: 1 new | vietstock: 1 new | vneconomy: 1 new
+16:00:04 | INFO    | === Cycle start: 3 domains: cafef, vietstock, vneconomy ===
+16:02:10 | INFO    | [cafef] cycle done: fetched=900 new=5 errors=0 in 125.5s
+16:02:40 | INFO    | [vietstock] cycle done: fetched=190 new=2 errors=0 in 30.6s
+16:03:02 | INFO    | [vneconomy] cycle done: fetched=400 new=0 errors=0 in 21.2s
+16:03:02 | INFO    | Cycle summary: cafef: 5 new | vietstock: 2 new | vneconomy: 0 new
+16:03:07 | INFO    | CSV export: 568 bài hôm nay -> data\exports\articles-2026-08-24.csv
+16:03:07 | INFO    | === Cycle done: 7 new articles in 183s ===
+16:03:07 | INFO    | Shutting down — flushing writer + WAL checkpoint...
+16:03:09 | INFO    | Shutdown complete.
+🟡 Một bluechip được khối ngoại "gom" hơn trăm tỷ trong phiên VN-Index tăng 20 điểm (chi tiết (https://cafef.vn/mot-bluechip-duoc-khoi-ngoai-gom-hon-tram-ty-trong-phien-vn-index-tang-20-diem-188260824153852566.chn))
+🟡 Chính thức từ hôm nay, hộ kinh doanh, doanh nghiệp có doanh thu tối đa 10 tỷ đồng sẽ được giảm 30% thuế trong hai năm 2026 và 2027 (chi tiết (https://cafef.vn/chinh-thuc-tu-hom-nay-ho-kinh-doanh-doanh-nghiep-co-doanh-thu-toi-da-10-ty-dong-se-duoc-giam-30-thue-trong-hai-nam-2026-va-2027-188260824154421099.chn))
+🟡 Đập bê tông nứt dài 100m nhưng vẫn không dừng thi công, công trình 2,3 tỷ USD hiện đại nhất Viêt Nam tạo thành công lớn (chi tiết (https://cafef.vn/dap-be-tong-nut-dai-100m-nhung-van-khong-dung-thi-cong-cong-trinh-23-ty-usd-hien-dai-nhat-viet-nam-tao-thanh-cong-lon-188260824154657456.chn))
+🟡 Việt Nam sở hữu cây cầu đặc biệt không bắc qua dòng sông nào, tọa lạc trên đỉnh núi cao, lọt top những cây cầu đẹp nhất thế giới (chi tiết (https://cafef.vn/viet-nam-so-huu-cay-cau-dac-biet-khong-bac-qua-dong-song-nao-toa-lac-tren-dinh-nui-cao-lot-top-nhung-cay-cau-dep-nhat-the-gioi-do-sun-group-dau-tu-tai-thanh-pho-dang-song-nhat-nuoc-ta-188260824154133306.chn))
+🟡 Nền tảng thương mại điện tử OneShop của One Mount Group âm thầm rút lui khỏi thị trường (chi tiết (https://cafef.vn/nen-tang-thuong-mai-dien-tu-oneshop-cua-one-mount-group-am-tam-rut-lui-khoi-thi-truong-18826082414250481.chn))
+🟡 Quốc hội thông qua 3 Luật sửa đổi, bổ sung một số điều về lĩnh vực ngân hàng (chi tiết (http://vietstock.vn/2026/08/quoc-hoi-thong-qua-3-luat-sua-doi-bo-sung-mot-so-dieu-ve-linh-vuc-ngan-hang-757-1484400.htm))
+🟡 Thành viên HĐQT độc lập HCM liên tục muốn bán cổ phiếu giữa lúc giá lập đỉnh lịch sử (chi tiết (http://vietstock.vn/2026/08/thanh-vien-hdqt-doc-lap-hcm-lien-tuc-muon-ban-co-phieu-giua-luc-gia-lap-dinh-lich-su-739-1484379.htm))
+16:03:02 [cycle] cafef: 5 new | vietstock: 2 new | vneconomy: 0 new

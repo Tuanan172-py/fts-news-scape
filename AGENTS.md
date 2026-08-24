@@ -46,10 +46,24 @@ python -m src.monitor.health       # health check
 | [docs/GLOSSARY.md](docs/GLOSSARY.md) | Vocabulary (read once). |
 | [docs/HARNESS.md](docs/HARNESS.md) | The collaboration model + change loop + Done definition. |
 | [docs/FEATURE_INTAKE.md](docs/FEATURE_INTAKE.md) | Risk classification → lane (do this before any change). |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Harness↔product boundary (pointer to product docs). |
-| [docs/TEST_MATRIX.md](docs/TEST_MATRIX.md) | Proof vocabulary + live proof table. |
+| [docs/CONTEXT_RULES.md](docs/CONTEXT_RULES.md) | Bounded context & token budgets (Phase × Lane). |
+| [docs/TRACE_SPEC.md](docs/TRACE_SPEC.md) | 3-tier trace schema & scoring specification. |
+| [docs/HARNESS_COMPONENTS.md](docs/HARNESS_COMPONENTS.md) | 11 runtime responsibilities. |
+| [docs/HARNESS_MATURITY.md](docs/HARNESS_MATURITY.md) | H0–H5 maturity ladder & criteria. |
+| [docs/TOOL_REGISTRY.md](docs/TOOL_REGISTRY.md) | Tool manifest & degrade ladder. |
+| [docs/HARNESS_AUDIT.md](docs/HARNESS_AUDIT.md) | Entropy scoring & 6 drift checks. |
+| [docs/IMPROVEMENT_PROTOCOL.md](docs/IMPROVEMENT_PROTOCOL.md) | Closed-loop propose & outcome measurement. |
+| [docs/TEST_MATRIX.md](docs/TEST_MATRIX.md) | Proof vocabulary & live proof table query. |
 | [docs/SESSION-LATEST.md](docs/SESSION-LATEST.md) | "Where am I, what next" — read at start, overwrite at end. |
-| [docs/HARNESS_BACKLOG.md](docs/HARNESS_BACKLOG.md) | Friction reservoir — file pain here. |
-| `harness/HARNESS_RUNBOOK.md`, `harness/HARNESS_BUILD_FROM_SCRATCH.md` | Reference (full/mature harness). |
 
-Maturity: this harness is at **H1 (pure markdown, no database)**. Climb to H2 only when markdown hurts (see docs/HARNESS.md).
+## 5. Harness CLI (Durable Layer H2-H5)
+
+```powershell
+python scripts/harness_cli.py query contract   # Check harness capabilities & schema state
+python scripts/harness_cli.py query matrix     # Query live story proof matrix
+python scripts/harness_cli.py audit            # Run entropy & drift audit
+python scripts/harness_cli.py propose          # Generate self-improvement proposals
+```
+
+Maturity: this harness is at **H2-H5 (Durable SQLite + Active Observability + Auto-Verification + Self-Improvement Protocol)**.
+

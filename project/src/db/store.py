@@ -8,6 +8,7 @@ Ghi hàng loạt đi qua DBWriter (src/db/writer.py) — single-writer pattern.
 from __future__ import annotations
 
 import os
+from pathlib import Path
 import sqlite3
 
 from loguru import logger
@@ -196,18 +197,30 @@ class ArticleStore:
         os.makedirs(os.path.dirname(db_path) or ".", exist_ok=True)
         self.init_schema()
 
-    def _connect(self) -> sqlite3.Connection:
+    def _connect(self, readonly: bool = False) -> sqlite3.Connection:
         """Connection mới với đủ pragmas. Caller tự đóng (hoặc dùng suốt đời thread).
 
         check_same_thread=False: APScheduler chạy job trong worker thread khác
         thread tạo DedupCache; truy cập vẫn tuần tự (max_instances=1) nên an toàn.
         """
-        conn = sqlite3.connect(self.db_path, timeout=5.0, check_same_thread=False)
+        resolved = Path(self.db_path).resolve()
+        if readonly and resolved.exists():
+            uri_path = f"file:{resolved.as_posix()}?mode=ro"
+            conn = sqlite3.connect(uri_path, uri=True, timeout=30.0, check_same_thread=False)
+            conn.execute("PRAGMA busy_timeout=30000")
+            conn.row_factory = sqlite3.Row
+            return conn
+
+        conn = sqlite3.connect(self.db_path, timeout=30.0, check_same_thread=False)
         conn.execute("PRAGMA journal_mode=WAL")
-        conn.execute("PRAGMA busy_timeout=5000")
+        conn.execute("PRAGMA busy_timeout=30000")
         conn.execute("PRAGMA synchronous=NORMAL")
         conn.row_factory = sqlite3.Row
         return conn
+
+    def _connect_ro(self) -> sqlite3.Connection:
+        """Mở connection chỉ đọc (URI mode=ro) để tránh tranh chấp lock."""
+        return self._connect(readonly=True)
 
     def init_schema(self) -> None:
         conn = self._connect()
@@ -222,7 +235,7 @@ class ArticleStore:
         return self._connect()
 
     def get_by_hash(self, url_title_hash: str) -> Article | None:
-        conn = self._connect()
+        conn = self._connect_ro()
         try:
             row = conn.execute(
                 "SELECT * FROM articles WHERE url_title_hash=?", (url_title_hash,)
@@ -233,7 +246,7 @@ class ArticleStore:
 
     # -- change-detection version log (phase-02) ------------------------------
     def last_version(self, url_title_hash: str) -> dict | None:
-        conn = self._connect()
+        conn = self._connect_ro()
         try:
             row = conn.execute(
                 "SELECT * FROM article_versions WHERE url_title_hash=? "
@@ -274,7 +287,7 @@ class ArticleStore:
 
     def changed_since(self, watermark_iso: str = "") -> list[str]:
         """url_title_hash có bản version state ∈ {NEW,CONTENT_CHANGED} sau watermark."""
-        conn = self._connect()
+        conn = self._connect_ro()
         try:
             rows = conn.execute(
                 "SELECT DISTINCT url_title_hash FROM article_versions "
@@ -288,7 +301,7 @@ class ArticleStore:
     # -- agent output store (Vòng 3 infra) ------------------------------------
     def get_agent_output(self, article_id: str, raw_sha256: str) -> dict | None:
         """Output đã lưu cho (article_id, raw_sha256) — idempotent replay."""
-        conn = self._connect()
+        conn = self._connect_ro()
         try:
             row = conn.execute(
                 "SELECT * FROM agent_outputs WHERE article_id=? AND raw_sha256=?",
@@ -351,7 +364,7 @@ class ArticleStore:
             conn.close()
 
     def get_l1_task(self, article_id: str) -> dict | None:
-        conn = self._connect()
+        conn = self._connect_ro()
         try:
             r = conn.execute("SELECT * FROM l1_tasks WHERE article_id=?", (article_id,)).fetchone()
             return dict(r) if r else None
@@ -384,7 +397,7 @@ class ArticleStore:
             conn.close()
 
     def get_l1_output(self, article_id: str) -> dict | None:
-        conn = self._connect()
+        conn = self._connect_ro()
         try:
             r = conn.execute("SELECT * FROM l1_outputs WHERE article_id=?", (article_id,)).fetchone()
             return dict(r) if r else None
@@ -439,7 +452,7 @@ class ArticleStore:
     def get_recent(
         self, limit: int = 20, source_domain: str | None = None
     ) -> list[Article]:
-        conn = self._connect()
+        conn = self._connect_ro()
         try:
             if source_domain:
                 rows = conn.execute(
@@ -457,7 +470,7 @@ class ArticleStore:
 
     def count_by_domain(self, since_iso: str = "") -> dict[str, int]:
         """Số article mỗi domain (fetched_at >= since_iso) — cho metrics/monitoring."""
-        conn = self._connect()
+        conn = self._connect_ro()
         try:
             rows = conn.execute(
                 "SELECT source_domain, COUNT(*) AS n FROM articles "
@@ -469,7 +482,7 @@ class ArticleStore:
             conn.close()
 
     def count(self) -> int:
-        conn = self._connect()
+        conn = self._connect_ro()
         try:
             return conn.execute("SELECT COUNT(*) FROM articles").fetchone()[0]
         finally:
@@ -478,7 +491,7 @@ class ArticleStore:
     # -- pipeline state (morninger watermark/checkpoint) ----------------------
     def get_state(self, key: str) -> str | None:
         """Đọc giá trị key từ pipeline_state. None nếu chưa có."""
-        conn = self._connect()
+        conn = self._connect_ro()
         try:
             row = conn.execute(
                 "SELECT value FROM pipeline_state WHERE key=?", (key,)

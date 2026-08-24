@@ -79,14 +79,15 @@ def build_l1_task_packet(article: dict, code_first: dict) -> dict:
     }
 
 
+from src.core.staging import safe_json_dump
+
+
 def write_l1_packet(packet: dict, base_dir: str = "data/agent_tasks/l1") -> str:
+    """Ghi packet L1 ra đĩa an toàn qua staging (atomic). Trả path."""
     os.makedirs(base_dir, exist_ok=True)
-    path = os.path.join(base_dir, f"{packet['article_id']}.task.json")
-    tmp = f"{path}.tmp"
-    with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(packet, f, ensure_ascii=False, indent=2)
-    os.replace(tmp, path)
-    return path
+    target_path = os.path.join(base_dir, f"{packet['article_id']}.task.json")
+    final_path, _ = safe_json_dump(packet, target_path, indent=2)
+    return str(final_path)
 
 
 # ---------------------------------------------------------------------------

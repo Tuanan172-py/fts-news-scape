@@ -1,7 +1,13 @@
-# TEST_MATRIX.md — Evidence vocabulary + live proof table (news-scape, H1)
+# TEST_MATRIX.md — Evidence Vocabulary + Live Proof Table (H2-H5)
 
 Golden rule: **"No proof = not implemented."** A claim without a mechanical result is a plan, not a fact.
-At H1 this table is hand-maintained (a known friction — moves to a DB query at H2).
+
+> [!TIP]
+> **H2-H5 Queryable Matrix:**
+> Bắt đầu từ cấp độ H2, bảng trạng thái sống được lưu bền vững trong `harness.db` và có thể truy vấn thời gian thực bằng lệnh:
+> ```powershell
+> python scripts/harness_cli.py query matrix
+> ```
 
 ## Status enum
 
@@ -12,6 +18,8 @@ At H1 this table is hand-maintained (a known friction — moves to a DB query at
 | `implemented` | Reached ONLY via a real validation command that ran + is recorded. Never hand-flipped. |
 | `changed` | Previously implemented, since modified (needs re-proof). |
 | `retired` | Removed / superseded. |
+| `blocked` | Halted on an external dependency / Hard Gate / ADR requirement. |
+| `deferred` | Intentionally postponed with explicit reason. |
 
 ## Proof tiers
 
@@ -24,7 +32,7 @@ At H1 this table is hand-maintained (a known friction — moves to a DB query at
 
 A tier is `1` (passed, evidence recorded), `0` (not passed/not run), or `—` (N/A for this story).
 
-## Live proof table
+## Live Proof Table (Snapshot H2)
 
 | Story | Parent/Epic | Status | Unit | Integ | E2E | Platform | Evidence |
 |-------|-------------|--------|:----:|:-----:|:---:|:--------:|----------|
@@ -32,3 +40,4 @@ A tier is `1` (passed, evidence recorded), `0` (not passed/not run), or `—` (N
 | [US-002](stories/US-002-optimize-user-output-format.md) | Per-User Output Workflow | `implemented` | 1 | 1 | — | — | Pytest 13/13 passed + real run 60 rows generated |
 
 > Rule reminder: Stories reach `implemented` ONLY after validation commands run and results are recorded. Never hand-flip.
+

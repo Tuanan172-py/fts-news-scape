@@ -7,6 +7,7 @@ config/domains/ + module scraper, không sửa core.
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import yaml
@@ -48,8 +49,18 @@ def _deep_merge(base: dict, override: dict) -> dict:
 
 
 def load_settings() -> dict:
-    """config/settings.yaml merge lên defaults."""
-    return _deep_merge(_DEFAULT_SETTINGS, _load_yaml(CONFIG_DIR / "settings.yaml"))
+    """config/settings.yaml merge lên defaults + hỗ trợ override từ biến môi trường."""
+    cfg = _deep_merge(_DEFAULT_SETTINGS, _load_yaml(CONFIG_DIR / "settings.yaml"))
+
+    # Hỗ trợ override đường dẫn data ra ngoài OneDrive qua MONOCLE_DATA_DIR hoặc MONOCLE_DB_PATH
+    env_data_dir = os.getenv("MONOCLE_DATA_DIR")
+    env_db_path = os.getenv("MONOCLE_DB_PATH")
+    if env_db_path:
+        cfg.setdefault("database", {})["path"] = env_db_path
+    elif env_data_dir:
+        cfg.setdefault("database", {})["path"] = str(Path(env_data_dir) / "monocle.db")
+
+    return cfg
 
 
 def load_domain_config(name: str) -> dict:

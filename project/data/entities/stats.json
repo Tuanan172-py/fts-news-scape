@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1.0",
-  "total_entities": 2138,
+  "total_entities": 2152,
   "by_type": {
     "TICKER": 1983,
     "SECURITY_OTHER": 11,
@@ -10,10 +10,10 @@
     "INDUSTRY_GICS1": 11,
     "INDUSTRY_GICS2": 28,
     "INDUSTRY_GICS3": 51,
-    "MACRO_GEO": 4,
-    "MACRO_THEME": 4,
-    "ASSET_CLASS": 5,
-    "INSTITUTION": 4
+    "MACRO_GEO": 8,
+    "MACRO_THEME": 9,
+    "ASSET_CLASS": 7,
+    "INSTITUTION": 7
   },
   "securities_total": 2022,
   "tickers_with_name": 1968,

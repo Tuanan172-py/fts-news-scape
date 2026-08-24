@@ -52,11 +52,14 @@ _CATEGORY_TYPES = {
     "etfs": ("ETF", "SECURITY_OTHER"),
     "indices": ("INDEX",),
     "exchanges": ("EXCHANGE",),
+    "nations": ("MACRO_GEO",),
+    "themes": ("MACRO_THEME",),
     "macro": ("MACRO_GEO", "MACRO_THEME"),
     "assets": ("ASSET_CLASS",),
     "institutions": ("INSTITUTION",),
 }
 _INDUSTRY_TYPES = ("INDUSTRY_GICS1", "INDUSTRY_GICS2", "INDUSTRY_GICS3")
+
 
 
 def _fold(s: str) -> str:

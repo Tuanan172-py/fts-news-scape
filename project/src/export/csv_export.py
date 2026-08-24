@@ -17,6 +17,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 from src.core.models import VN_TZ
+from src.core.staging import safe_atomic_write
 
 DB_PATH = "data/monocle.db"
 EXPORT_DIR = "data/exports"
@@ -36,7 +37,13 @@ def _date_prefix(iso: str) -> str:
 def query_rows(db_path: str = DB_PATH, *, today: bool = False,
                days: int | None = None, domains: list[str] | None = None,
                with_symbols: bool = False, limit: int | None = None) -> list:
-    con = sqlite3.connect(db_path)
+    # Mở mode read-only an toàn để không cạnh tranh lock với writer
+    resolved_db = Path(db_path).resolve()
+    if resolved_db.exists():
+        uri_path = f"file:{resolved_db.as_posix()}?mode=ro"
+        con = sqlite3.connect(uri_path, uri=True, timeout=30.0)
+    else:
+        con = sqlite3.connect(db_path, timeout=30.0)
     con.row_factory = sqlite3.Row
     rows = list(con.execute(
         "SELECT * FROM articles ORDER BY fetched_at DESC, id DESC"))
@@ -59,14 +66,21 @@ def query_rows(db_path: str = DB_PATH, *, today: bool = False,
     return rows
 
 
-def write_csv(rows: list, out_path: Path) -> None:
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    with out_path.open("w", encoding="utf-8-sig", newline="") as f:
+def write_csv(rows: list, out_path: Path) -> Path:
+    def _write(f):
         w = csv.writer(f)
         w.writerow(COLUMNS)
         for r in rows:
             keys = r.keys()
             w.writerow([r[c] if c in keys else "" for c in COLUMNS])
+
+    final_path, _ = safe_atomic_write(
+        out_path,
+        _write,
+        fallback_on_lock=True,
+        encoding="utf-8-sig",
+    )
+    return final_path
 
 
 def _auto_name(today: bool, days: int | None) -> Path:
@@ -79,16 +93,16 @@ def export(*, db_path: str = DB_PATH, today: bool = False, days: int | None = No
            domains: list[str] | None = None, with_symbols: bool = False,
            limit: int | None = None, out: str | None = None,
            verbose: bool = False) -> tuple[Path, int]:
-    """Xuất CSV. Trả (đường dẫn, số bài). Không raise lỗi cho caller lo (caller tự bọc)."""
+    """Xuất CSV an toàn qua staging. Trả (đường dẫn thực tế, số bài)."""
     rows = query_rows(db_path, today=today, days=days, domains=domains,
                       with_symbols=with_symbols, limit=limit)
     out_path = Path(out) if out else _auto_name(today, days)
-    write_csv(rows, out_path)
+    final_path = write_csv(rows, out_path)
 
     if verbose:
         by_sent = Counter((r["sentiment"] or "—") for r in rows)
         by_dom = Counter(r["source_domain"] for r in rows)
-        print(f">>> Đã xuất {len(rows)} bài → {out_path.resolve()}")
+        print(f">>> Đã xuất {len(rows)} bài → {final_path.resolve()}")
         print("    Sentiment: " + " | ".join(f"{k}={v}" for k, v in by_sent.most_common()))
         print("    Top nguồn: " + " | ".join(f"{k}={v}" for k, v in by_dom.most_common(8)))
-    return out_path, len(rows)
+    return final_path, len(rows)

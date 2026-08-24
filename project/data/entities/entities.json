@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1.0",
-  "entity_count": 2138,
+  "entity_count": 2152,
   "entities": [
     {
       "entity_id": "TICKER:A32",
@@ -48908,10 +48908,10 @@
         "Wall Street"
       ],
       "attributes": {
-        "category": "macro"
+        "category": "macro_geo"
       },
       "sources": [
-        "config/entities/aliases/macro_geo.yaml"
+        "config/entities/aliases/nations.yaml"
       ]
     },
     {
@@ -48928,10 +48928,10 @@
         "PBOC"
       ],
       "attributes": {
-        "category": "macro"
+        "category": "macro_geo"
       },
       "sources": [
-        "config/entities/aliases/macro_geo.yaml"
+        "config/entities/aliases/nations.yaml"
       ]
     },
     {
@@ -48944,14 +48944,13 @@
         "Liên minh châu Âu",
         "EU",
         "Eurozone",
-        "ECB",
         "Frankfurt"
       ],
       "attributes": {
-        "category": "macro"
+        "category": "macro_geo"
       },
       "sources": [
-        "config/entities/aliases/macro_geo.yaml"
+        "config/entities/aliases/nations.yaml"
       ]
     },
     {
@@ -48963,14 +48962,83 @@
         "Nhật Bản",
         "Japan",
         "Tokyo",
-        "BOJ",
         "đồng Yên"
       ],
       "attributes": {
-        "category": "macro"
+        "category": "macro_geo"
       },
       "sources": [
-        "config/entities/aliases/macro_geo.yaml"
+        "config/entities/aliases/nations.yaml"
+      ]
+    },
+    {
+      "entity_id": "MACRO_GEO:HAN_QUOC",
+      "type": "MACRO_GEO",
+      "code": "HAN_QUOC",
+      "canonical_name": "Hàn Quốc",
+      "aliases": [
+        "Hàn Quốc",
+        "Korea",
+        "Seoul",
+        "đồng Won"
+      ],
+      "attributes": {
+        "category": "macro_geo"
+      },
+      "sources": [
+        "config/entities/aliases/nations.yaml"
+      ]
+    },
+    {
+      "entity_id": "MACRO_GEO:NGA",
+      "type": "MACRO_GEO",
+      "code": "NGA",
+      "canonical_name": "Nga",
+      "aliases": [
+        "Nga",
+        "Russia",
+        "Moskva",
+        "Điện Kremlin"
+      ],
+      "attributes": {
+        "category": "macro_geo"
+      },
+      "sources": [
+        "config/entities/aliases/nations.yaml"
+      ]
+    },
+    {
+      "entity_id": "MACRO_GEO:DONG_NAM_A",
+      "type": "MACRO_GEO",
+      "code": "DONG_NAM_A",
+      "canonical_name": "Đông Nam Á",
+      "aliases": [
+        "Đông Nam Á",
+        "ASEAN",
+        "khu vực Đông Nam Á"
+      ],
+      "attributes": {
+        "category": "macro_geo"
+      },
+      "sources": [
+        "config/entities/aliases/nations.yaml"
+      ]
+    },
+    {
+      "entity_id": "MACRO_GEO:AN_DO",
+      "type": "MACRO_GEO",
+      "code": "AN_DO",
+      "canonical_name": "Ấn Độ",
+      "aliases": [
+        "Ấn Độ",
+        "India",
+        "New Delhi"
+      ],
+      "attributes": {
+        "category": "macro_geo"
+      },
+      "sources": [
+        "config/entities/aliases/nations.yaml"
       ]
     },
     {
@@ -48988,17 +49056,17 @@
         "lãi suất liên ngân hàng"
       ],
       "attributes": {
-        "category": "macro"
+        "category": "macro_theme"
       },
       "sources": [
-        "config/entities/aliases/macro_geo.yaml"
+        "config/entities/aliases/themes.yaml"
       ]
     },
     {
       "entity_id": "MACRO_THEME:TY_GIA",
       "type": "MACRO_THEME",
       "code": "TY_GIA",
-      "canonical_name": "Tỷ giá",
+      "canonical_name": "Tỷ giá & Ngoại tệ",
       "aliases": [
         "tỷ giá",
         "tỷ giá USD/VND",
@@ -49009,17 +49077,17 @@
         "phá giá tiền tệ"
       ],
       "attributes": {
-        "category": "macro"
+        "category": "macro_theme"
       },
       "sources": [
-        "config/entities/aliases/macro_geo.yaml"
+        "config/entities/aliases/themes.yaml"
       ]
     },
     {
       "entity_id": "MACRO_THEME:LAM_PHAT",
       "type": "MACRO_THEME",
       "code": "LAM_PHAT",
-      "canonical_name": "Lạm phát",
+      "canonical_name": "Lạm phát & CPI",
       "aliases": [
         "lạm phát",
         "CPI",
@@ -49027,17 +49095,17 @@
         "lạm phát cơ bản"
       ],
       "attributes": {
-        "category": "macro"
+        "category": "macro_theme"
       },
       "sources": [
-        "config/entities/aliases/macro_geo.yaml"
+        "config/entities/aliases/themes.yaml"
       ]
     },
     {
       "entity_id": "MACRO_THEME:THUE_THUONG_MAI",
       "type": "MACRO_THEME",
       "code": "THUE_THUONG_MAI",
-      "canonical_name": "Thuế & Thương mại",
+      "canonical_name": "Thuế quan & Thương mại",
       "aliases": [
         "thuế chống bán phá giá",
         "thuế chống trợ cấp",
@@ -49047,10 +49115,106 @@
         "hàng rào thuế quan"
       ],
       "attributes": {
-        "category": "macro"
+        "category": "macro_theme"
       },
       "sources": [
-        "config/entities/aliases/macro_geo.yaml"
+        "config/entities/aliases/themes.yaml"
+      ]
+    },
+    {
+      "entity_id": "MACRO_THEME:GDP_TANG_TRUONG",
+      "type": "MACRO_THEME",
+      "code": "GDP_TANG_TRUONG",
+      "canonical_name": "Tăng trưởng GDP",
+      "aliases": [
+        "tăng trưởng GDP",
+        "GDP",
+        "tăng trưởng kinh tế",
+        "tổng sản phẩm quốc nội",
+        "suy thoái kinh tế"
+      ],
+      "attributes": {
+        "category": "macro_theme"
+      },
+      "sources": [
+        "config/entities/aliases/themes.yaml"
+      ]
+    },
+    {
+      "entity_id": "MACRO_THEME:DAU_TU_CONG",
+      "type": "MACRO_THEME",
+      "code": "DAU_TU_CONG",
+      "canonical_name": "Đầu tư công & Hạ tầng",
+      "aliases": [
+        "đầu tư công",
+        "giải ngân vốn đầu tư công",
+        "dự án trọng điểm quốc gia",
+        "cao tốc Bắc Nam",
+        "sân bay Long Thành"
+      ],
+      "attributes": {
+        "category": "macro_theme"
+      },
+      "sources": [
+        "config/entities/aliases/themes.yaml"
+      ]
+    },
+    {
+      "entity_id": "MACRO_THEME:FDI",
+      "type": "MACRO_THEME",
+      "code": "FDI",
+      "canonical_name": "Vốn FDI & Đầu tư nước ngoài",
+      "aliases": [
+        "FDI",
+        "vốn đầu tư nước ngoài",
+        "vốn ngoại",
+        "doanh nghiệp FDI",
+        "thu hút FDI"
+      ],
+      "attributes": {
+        "category": "macro_theme"
+      },
+      "sources": [
+        "config/entities/aliases/themes.yaml"
+      ]
+    },
+    {
+      "entity_id": "MACRO_THEME:TIN_DUNG",
+      "type": "MACRO_THEME",
+      "code": "TIN_DUNG",
+      "canonical_name": "Tín dụng & Tăng trưởng tín dụng",
+      "aliases": [
+        "tín dụng",
+        "tăng trưởng tín dụng",
+        "room tín dụng",
+        "dư nợ tín dụng",
+        "nợ xấu"
+      ],
+      "attributes": {
+        "category": "macro_theme"
+      },
+      "sources": [
+        "config/entities/aliases/themes.yaml"
+      ]
+    },
+    {
+      "entity_id": "MACRO_THEME:NANG_HANG_TTCK",
+      "type": "MACRO_THEME",
+      "code": "NANG_HANG_TTCK",
+      "canonical_name": "Nâng hạng thị trường chứng khoán",
+      "aliases": [
+        "nâng hạng thị trường",
+        "nâng hạng TTCK",
+        "FTSE Russell",
+        "MSCI",
+        "thị trường mới nổi",
+        "Emerging Markets"
+      ],
+      "attributes": {
+        "category": "macro_theme"
+      },
+      "sources": [
+        "config/entities/aliases/themes.yaml"
       ]
     },
     {
@@ -49160,6 +49324,50 @@
       ]
     },
     {
+      "entity_id": "ASSET_CLASS:TIEN_MA_HOA",
+      "type": "ASSET_CLASS",
+      "code": "TIEN_MA_HOA",
+      "canonical_name": "Tiền mã hóa & Tài sản số",
+      "aliases": [
+        "tiền mã hóa",
+        "tiền số",
+        "crypto",
+        "cryptocurrency",
+        "Bitcoin",
+        "BTC",
+        "Ethereum",
+        "tài sản số"
+      ],
+      "attributes": {
+        "category": "asset"
+      },
+      "sources": [
+        "config/entities/aliases/assets.yaml"
+      ]
+    },
+    {
+      "entity_id": "ASSET_CLASS:HANG_HOA_NONG_SAN",
+      "type": "ASSET_CLASS",
+      "code": "HANG_HOA_NONG_SAN",
+      "canonical_name": "Hàng hóa & Nông sản",
+      "aliases": [
+        "hàng hóa nguyên liệu",
+        "nông sản",
+        "giá gạo",
+        "xuất khẩu gạo",
+        "cà phê",
+        "giá cà phê",
+        "cao su",
+        "giá cao su"
+      ],
+      "attributes": {
+        "category": "asset"
+      },
+      "sources": [
+        "config/entities/aliases/assets.yaml"
+      ]
+    },
+    {
       "entity_id": "INSTITUTION:NHNN",
       "type": "INSTITUTION",
       "code": "NHNN",
@@ -49189,9 +49397,26 @@
         "Ủy ban Chứng khoán Nhà nước",
         "UBCKNN",
         "SSC",
+        "hệ thống KRX"
+      ],
+      "attributes": {
+        "category": "institution"
+      },
+      "sources": [
+        "config/entities/aliases/institutions.yaml"
+      ]
+    },
+    {
+      "entity_id": "INSTITUTION:BO_TAI_CHINH",
+      "type": "INSTITUTION",
+      "code": "BO_TAI_CHINH",
+      "canonical_name": "Bộ Tài chính",
+      "aliases": [
         "Bộ Tài chính",
-        "hệ thống KRX",
-        "nâng hạng thị trường"
+        "BTC",
+        "Bộ trưởng Bộ Tài chính",
+        "Tổng cục Thuế",
+        "Tổng cục Hải quan"
       ],
       "attributes": {
         "category": "institution"
@@ -49229,6 +49454,41 @@
         "Ngân hàng Trung ương Châu Âu",
         "ECB",
         "Christine Lagarde"
+      ],
+      "attributes": {
+        "category": "institution"
+      },
+      "sources": [
+        "config/entities/aliases/institutions.yaml"
+      ]
+    },
+    {
+      "entity_id": "INSTITUTION:BOJ",
+      "type": "INSTITUTION",
+      "code": "BOJ",
+      "canonical_name": "Ngân hàng Trung ương Nhật Bản",
+      "aliases": [
+        "Ngân hàng Trung ương Nhật Bản",
+        "BOJ",
+        "Kazuo Ueda"
+      ],
+      "attributes": {
+        "category": "institution"
+      },
+      "sources": [
+        "config/entities/aliases/institutions.yaml"
+      ]
+    },
+    {
+      "entity_id": "INSTITUTION:WB_IMF",
+      "type": "INSTITUTION",
+      "code": "WB_IMF",
+      "canonical_name": "Ngân hàng Thế giới & IMF",
+      "aliases": [
+        "World Bank",
+        "Ngân hàng Thế giới",
+        "IMF",
+        "Quỹ Tiền tệ Quốc tế"
       ],
       "attributes": {
         "category": "institution"
