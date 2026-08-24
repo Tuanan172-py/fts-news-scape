@@ -1,13 +1,17 @@
 {
   "types": {
-    "TICKER": 1981,
+    "TICKER": 1983,
     "SECURITY_OTHER": 11,
     "ETF": 28,
     "INDEX": 6,
     "EXCHANGE": 3,
     "INDUSTRY_GICS1": 11,
     "INDUSTRY_GICS2": 28,
-    "INDUSTRY_GICS3": 51
+    "INDUSTRY_GICS3": 51,
+    "MACRO_GEO": 4,
+    "MACRO_THEME": 4,
+    "ASSET_CLASS": 5,
+    "INSTITUTION": 4
   },
   "gics_tree": {
     "Bất động sản": {

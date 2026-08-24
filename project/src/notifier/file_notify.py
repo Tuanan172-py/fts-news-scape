@@ -74,14 +74,14 @@ class FileNotifier:
                         return tag
         return None
 
-    SENTIMENT_MARKER = {"positive": "[+]", "negative": "[-]", "neutral": "[~]"}
+    SENTIMENT_MARKER = {"positive": "🟢", "negative": "🔴", "neutral": "🟡"}
 
     def format_article(self, a: Article, tag: str = "") -> str:
         """1 dòng/bài, tối giản theo thiết kế gốc:
         <marker> <title> (chi tiết (<url>))
         Metadata (giờ, tag, symbols, nguồn) đã có trong DB — log chỉ để đọc lướt.
         """
-        marker = self.SENTIMENT_MARKER.get(a.sentiment, "[~]")
+        marker = self.SENTIMENT_MARKER.get(a.sentiment, "🟡")
         return f"{marker} {a.title} (chi tiết ({a.url}))"
 
     def notify_articles(self, articles: list[Article]) -> int:

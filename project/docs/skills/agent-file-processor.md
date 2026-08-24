@@ -19,7 +19,15 @@
 
 ---
 
-## 3. Quy trình thực thi 2 tầng
+## 3. Thực thi nhanh qua Native Engine (Khuyến nghị)
+Agent có thể trực tiếp thực thi Native CLI Engine để xử lý hàng loạt packet một cách chuẩn hóa, chống cắt cụt từ và tự động chấm DoD:
+```powershell
+python scripts/agent_process_packets.py --provider antigravity --model gemini-3.7-flash
+```
+
+---
+
+## 4. Quy trình thực thi 2 tầng chi tiết
 
 ### Tầng 1: Hàng đợi L1 (Nhận diện thực thể từ Tiêu đề)
 - **Đầu vào (Input):** `data/agent_tasks/l1/*.task.json`
@@ -39,7 +47,7 @@
 - **Đầu ra (Output):** `data/agent_outputs/<article_id>.json`
 - **Quy tắc xử lý:**
   1. Precondition: Nếu `input.change_state` ∈ {`SELECTOR_BROKEN`, `TEMPLATE_DRIFT`} → Bỏ qua bài viết.
-  2. Sinh `summary.abstractive` (2-4 câu) và `summary.key_points` (2-5 ý).
+  2. Sinh `summary.abstractive` (2-4 câu văn hoàn chỉnh, kết thúc bằng dấu chấm câu, KHÔNG cắt chuỗi thô giữa từ) và `summary.key_points` (2-5 ý hoàn chỉnh).
   3. Xác định `implication` (so-what thị trường), `impact_area`, `materiality.score` (0..1), `time_sensitivity`.
   4. **Grounding:** Tối thiểu **2 citations**, mỗi `source_span` là chuỗi con nguyên văn của `cleaned_text` và **độ dài ≥ 20 ký tự**.
   5. `extraction_quality` ∈ {`high`, `medium`}.

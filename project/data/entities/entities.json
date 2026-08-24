@@ -1,6 +1,6 @@
 {
-  "schema_version": "1.0.0",
-  "entity_count": 2119,
+  "schema_version": "1.1.0",
+  "entity_count": 2138,
   "entities": [
     {
       "entity_id": "TICKER:A32",
@@ -3164,7 +3164,7 @@
         "gics1": "Tài chính",
         "gics2": "Ngân hàng",
         "gics3": "Ngân hàng",
-        "shares_outstanding": 7280065024,
+        "shares_outstanding": 7778262016,
         "has_market_cap": true,
         "listed_universe": true
       },
@@ -6838,7 +6838,7 @@
         "gics1": "Năng lượng",
         "gics2": "Năng lượng",
         "gics3": "Than đá và nhiên liệu khác",
-        "shares_outstanding": 14465000,
+        "shares_outstanding": 14464925,
         "has_market_cap": true,
         "listed_universe": true
       },
@@ -8037,7 +8037,7 @@
         "gics1": "Công nghiệp",
         "gics2": "Tư liệu sản xuất",
         "gics3": "Xây dựng",
-        "shares_outstanding": 62999996,
+        "shares_outstanding": 69300000,
         "has_market_cap": true,
         "listed_universe": true
       },
@@ -12912,7 +12912,7 @@
         "gics1": "Tài chính",
         "gics2": "Tài chính chuyên biệt khác",
         "gics3": "Tài chính chuyên biệt khác",
-        "shares_outstanding": 220251904,
+        "shares_outstanding": 231265104,
         "has_market_cap": true,
         "listed_universe": true
       },
@@ -13442,7 +13442,9 @@
       "canonical_name": "CTCP FPT",
       "aliases": [
         "CTCP FPT",
-        "FPT"
+        "FPT",
+        "FPT Corporation",
+        "Tập đoàn FPT"
       ],
       "attributes": {
         "gics1": "Công nghệ",
@@ -14609,7 +14611,7 @@
         "gics1": "Hàng tiêu dùng không thiết yếu",
         "gics2": "Ô tô & Phụ tùng",
         "gics3": "Nhà sản xuất ô tô và thiết bị ô tô",
-        "shares_outstanding": 29388588,
+        "shares_outstanding": 49388588,
         "has_market_cap": true,
         "listed_universe": true
       },
@@ -15991,7 +15993,7 @@
         "gics1": "Nguyên vật liệu",
         "gics2": "Vật liệu xây dựng",
         "gics3": "Vật liệu xây dựng",
-        "shares_outstanding": 6518547,
+        "shares_outstanding": 7170401,
         "has_market_cap": true,
         "listed_universe": true
       },
@@ -16975,7 +16977,7 @@
         "gics1": "Nguyên vật liệu",
         "gics2": "Giấy và các sản phẩm từ gỗ",
         "gics3": "Giấy",
-        "shares_outstanding": 86554344,
+        "shares_outstanding": 92180376,
         "has_market_cap": true,
         "listed_universe": true
       },
@@ -18118,7 +18120,8 @@
       "aliases": [
         "CTCP Tập đoàn Hòa Phát",
         "Hòa Phát",
-        "Hoa Phat"
+        "Hoa Phat",
+        "Tập đoàn Hòa Phát"
       ],
       "attributes": {
         "gics1": "Nguyên vật liệu",
@@ -23074,6 +23077,22 @@
       ]
     },
     {
+      "entity_id": "TICKER:LPS",
+      "type": "TICKER",
+      "code": "LPS",
+      "canonical_name": "LPS",
+      "aliases": [],
+      "attributes": {
+        "shares_outstanding": 1408668032,
+        "has_market_cap": true,
+        "listed_universe": true
+      },
+      "sources": [
+        "trading_data/market_caps.parquet",
+        "trading_data/os.xlsx"
+      ]
+    },
+    {
       "entity_id": "TICKER:LPT",
       "type": "TICKER",
       "code": "LPT",
@@ -25546,7 +25565,7 @@
         "gics1": "Công nghiệp",
         "gics2": "Tư liệu sản xuất",
         "gics3": "Thiết bị điện",
-        "shares_outstanding": 52593728,
+        "shares_outstanding": 55644160,
         "has_market_cap": true,
         "listed_universe": true
       },
@@ -36380,7 +36399,7 @@
         "gics1": "Tài chính",
         "gics2": "Công ty chứng khoán",
         "gics3": "Công ty chứng khoán",
-        "shares_outstanding": 2501097728,
+        "shares_outstanding": 3001317376,
         "has_market_cap": true,
         "listed_universe": true
       },
@@ -40486,7 +40505,7 @@
         "gics1": "Công nghiệp",
         "gics2": "Tư liệu sản xuất",
         "gics3": "Xây dựng",
-        "shares_outstanding": 40424992,
+        "shares_outstanding": 41224992,
         "has_market_cap": true,
         "listed_universe": true
       },
@@ -41454,7 +41473,7 @@
         "gics1": "Tài chính",
         "gics2": "Công ty chứng khoán",
         "gics3": "Công ty chứng khoán",
-        "shares_outstanding": 228639920,
+        "shares_outstanding": 244644704,
         "has_market_cap": true,
         "listed_universe": true
       },
@@ -42069,6 +42088,22 @@
         "trading_data/market_caps.parquet",
         "trading_data/os.xlsx",
         "industry_classification/industry_classification.xlsx"
+      ]
+    },
+    {
+      "entity_id": "TICKER:V68",
+      "type": "TICKER",
+      "code": "V68",
+      "canonical_name": "V68",
+      "aliases": [],
+      "attributes": {
+        "shares_outstanding": 33000000,
+        "has_market_cap": true,
+        "listed_universe": true
+      },
+      "sources": [
+        "trading_data/market_caps.parquet",
+        "trading_data/os.xlsx"
       ]
     },
     {
@@ -44263,7 +44298,7 @@
         "gics1": "Tài chính",
         "gics2": "Công ty chứng khoán",
         "gics3": "Công ty chứng khoán",
-        "shares_outstanding": 2450287872,
+        "shares_outstanding": 2572802048,
         "has_market_cap": true,
         "listed_universe": true
       },
@@ -46023,7 +46058,7 @@
         "gics1": "Dịch vụ viễn thông",
         "gics2": "Dịch vụ viễn thông",
         "gics3": "Dịch vụ viễn thông đa ngành",
-        "shares_outstanding": 5328403,
+        "shares_outstanding": 5327610,
         "has_market_cap": true,
         "listed_universe": true
       },
@@ -47520,7 +47555,16 @@
       "code": "QUAN_LY_VA_PHAT_TRIEN_BAT_DONG_SAN",
       "canonical_name": "Quản lý và phát triển bất động sản",
       "aliases": [
-        "Quản lý và phát triển bất động sản"
+        "Quản lý và phát triển bất động sản",
+        "bất động sản",
+        "BĐS",
+        "địa ốc",
+        "nhà đất",
+        "thị trường nhà ở",
+        "NOXH",
+        "nhà ở xã hội",
+        "bất động sản khu công nghiệp",
+        "BĐS KCN"
       ],
       "attributes": {
         "parent": "Bất động sản",
@@ -47856,7 +47900,12 @@
       "code": "BAO_HIEM",
       "canonical_name": "Bảo hiểm",
       "aliases": [
-        "Bảo hiểm"
+        "Bảo hiểm",
+        "bảo hiểm",
+        "ngành bảo hiểm",
+        "bảo hiểm nhân thọ",
+        "bảo hiểm phi nhân thọ",
+        "doanh nghiệp bảo hiểm"
       ],
       "attributes": {
         "parent": "Tài chính",
@@ -47872,7 +47921,12 @@
       "code": "CONG_TY_CHUNG_KHOAN",
       "canonical_name": "Công ty chứng khoán",
       "aliases": [
-        "Công ty chứng khoán"
+        "Công ty chứng khoán",
+        "chứng khoán",
+        "công ty chứng khoán",
+        "CTCK",
+        "môi giới chứng khoán",
+        "tự doanh chứng khoán"
       ],
       "attributes": {
         "parent": "Tài chính",
@@ -47888,7 +47942,14 @@
       "code": "NGAN_HANG",
       "canonical_name": "Ngân hàng",
       "aliases": [
-        "Ngân hàng"
+        "Ngân hàng",
+        "ngân hàng",
+        "ngành ngân hàng",
+        "nhà băng",
+        "tổ chức tín dụng",
+        "TCTD",
+        "room tín dụng",
+        "ngân hàng thương mại"
       ],
       "attributes": {
         "parent": "Tài chính",
@@ -47904,7 +47965,16 @@
       "code": "QUY",
       "canonical_name": "Quỹ",
       "aliases": [
-        "Quỹ"
+        "Quỹ",
+        "quỹ",
+        "quỹ đầu tư",
+        "quỹ đầu tư mạo hiểm",
+        "quỹ mở",
+        "quỹ đóng",
+        "quỹ thành viên",
+        "quỹ ngoại",
+        "venture capital",
+        "quỹ hoán đổi danh mục"
       ],
       "attributes": {
         "parent": "Tài chính",
@@ -47936,7 +48006,11 @@
       "code": "DUOC_PHAM_CONG_NGHE_SINH_HOC",
       "canonical_name": "Dược phẩm & Công nghệ sinh học",
       "aliases": [
-        "Dược phẩm & Công nghệ sinh học"
+        "Dược phẩm & Công nghệ sinh học",
+        "dược phẩm",
+        "ngành dược",
+        "thuốc",
+        "công nghệ sinh học"
       ],
       "attributes": {
         "parent": "Y tế",
@@ -47984,7 +48058,12 @@
       "code": "BAO_HIEM",
       "canonical_name": "Bảo hiểm",
       "aliases": [
-        "Bảo hiểm"
+        "Bảo hiểm",
+        "bảo hiểm",
+        "ngành bảo hiểm",
+        "bảo hiểm nhân thọ",
+        "bảo hiểm phi nhân thọ",
+        "doanh nghiệp bảo hiểm"
       ],
       "attributes": {
         "parent": "Bảo hiểm",
@@ -48096,7 +48175,12 @@
       "code": "CONG_TY_CHUNG_KHOAN",
       "canonical_name": "Công ty chứng khoán",
       "aliases": [
-        "Công ty chứng khoán"
+        "Công ty chứng khoán",
+        "chứng khoán",
+        "công ty chứng khoán",
+        "CTCK",
+        "môi giới chứng khoán",
+        "tự doanh chứng khoán"
       ],
       "attributes": {
         "parent": "Công ty chứng khoán",
@@ -48320,7 +48404,15 @@
       "code": "THEP",
       "canonical_name": "Thép",
       "aliases": [
-        "Thép"
+        "Thép",
+        "thép",
+        "ngành thép",
+        "thép xây dựng",
+        "thép cuộn cán nóng",
+        "HRC",
+        "tôn mạ",
+        "thép lá",
+        "phôi thép"
       ],
       "attributes": {
         "parent": "Kim loại & Khai khoáng",
@@ -48368,7 +48460,14 @@
       "code": "NGAN_HANG",
       "canonical_name": "Ngân hàng",
       "aliases": [
-        "Ngân hàng"
+        "Ngân hàng",
+        "ngân hàng",
+        "ngành ngân hàng",
+        "nhà băng",
+        "tổ chức tín dụng",
+        "TCTD",
+        "room tín dụng",
+        "ngân hàng thương mại"
       ],
       "attributes": {
         "parent": "Ngân hàng",
@@ -48384,7 +48483,13 @@
       "code": "DAU_KHI",
       "canonical_name": "Dầu khí",
       "aliases": [
-        "Dầu khí"
+        "Dầu khí",
+        "dầu khí",
+        "ngành dầu khí",
+        "thượng nguồn dầu khí",
+        "hạ nguồn dầu khí",
+        "khí tự nhiên",
+        "xăng dầu"
       ],
       "attributes": {
         "parent": "Năng lượng",
@@ -48480,7 +48585,16 @@
       "code": "QUY",
       "canonical_name": "Quỹ",
       "aliases": [
-        "Quỹ"
+        "Quỹ",
+        "quỹ",
+        "quỹ đầu tư",
+        "quỹ đầu tư mạo hiểm",
+        "quỹ mở",
+        "quỹ đóng",
+        "quỹ thành viên",
+        "quỹ ngoại",
+        "venture capital",
+        "quỹ hoán đổi danh mục"
       ],
       "attributes": {
         "parent": "Quỹ",
@@ -48776,6 +48890,351 @@
       },
       "sources": [
         "industry_classification/industry_classification.xlsx"
+      ]
+    },
+    {
+      "entity_id": "MACRO_GEO:MY",
+      "type": "MACRO_GEO",
+      "code": "MY",
+      "canonical_name": "Mỹ",
+      "aliases": [
+        "Mỹ",
+        "Hoa Kỳ",
+        "US",
+        "USA",
+        "United States",
+        "Nhà Trắng",
+        "Washington",
+        "Wall Street"
+      ],
+      "attributes": {
+        "category": "macro"
+      },
+      "sources": [
+        "config/entities/aliases/macro_geo.yaml"
+      ]
+    },
+    {
+      "entity_id": "MACRO_GEO:TRUNG_QUOC",
+      "type": "MACRO_GEO",
+      "code": "TRUNG_QUOC",
+      "canonical_name": "Trung Quốc",
+      "aliases": [
+        "Trung Quốc",
+        "TQ",
+        "China",
+        "Bắc Kinh",
+        "Thượng Hải",
+        "PBOC"
+      ],
+      "attributes": {
+        "category": "macro"
+      },
+      "sources": [
+        "config/entities/aliases/macro_geo.yaml"
+      ]
+    },
+    {
+      "entity_id": "MACRO_GEO:EU",
+      "type": "MACRO_GEO",
+      "code": "EU",
+      "canonical_name": "Châu Âu",
+      "aliases": [
+        "Châu Âu",
+        "Liên minh châu Âu",
+        "EU",
+        "Eurozone",
+        "ECB",
+        "Frankfurt"
+      ],
+      "attributes": {
+        "category": "macro"
+      },
+      "sources": [
+        "config/entities/aliases/macro_geo.yaml"
+      ]
+    },
+    {
+      "entity_id": "MACRO_GEO:NHAT_BAN",
+      "type": "MACRO_GEO",
+      "code": "NHAT_BAN",
+      "canonical_name": "Nhật Bản",
+      "aliases": [
+        "Nhật Bản",
+        "Japan",
+        "Tokyo",
+        "BOJ",
+        "đồng Yên"
+      ],
+      "attributes": {
+        "category": "macro"
+      },
+      "sources": [
+        "config/entities/aliases/macro_geo.yaml"
+      ]
+    },
+    {
+      "entity_id": "MACRO_THEME:LAI_SUAT",
+      "type": "MACRO_THEME",
+      "code": "LAI_SUAT",
+      "canonical_name": "Lãi suất",
+      "aliases": [
+        "lãi suất",
+        "lãi suất điều hành",
+        "lãi suất tái cấp vốn",
+        "lãi suất huy động",
+        "lãi suất cho vay",
+        "trần lãi suất",
+        "lãi suất liên ngân hàng"
+      ],
+      "attributes": {
+        "category": "macro"
+      },
+      "sources": [
+        "config/entities/aliases/macro_geo.yaml"
+      ]
+    },
+    {
+      "entity_id": "MACRO_THEME:TY_GIA",
+      "type": "MACRO_THEME",
+      "code": "TY_GIA",
+      "canonical_name": "Tỷ giá",
+      "aliases": [
+        "tỷ giá",
+        "tỷ giá USD/VND",
+        "DXY",
+        "đồng USD",
+        "ngoại tệ",
+        "dự trữ ngoại hối",
+        "phá giá tiền tệ"
+      ],
+      "attributes": {
+        "category": "macro"
+      },
+      "sources": [
+        "config/entities/aliases/macro_geo.yaml"
+      ]
+    },
+    {
+      "entity_id": "MACRO_THEME:LAM_PHAT",
+      "type": "MACRO_THEME",
+      "code": "LAM_PHAT",
+      "canonical_name": "Lạm phát",
+      "aliases": [
+        "lạm phát",
+        "CPI",
+        "chỉ số giá tiêu dùng",
+        "lạm phát cơ bản"
+      ],
+      "attributes": {
+        "category": "macro"
+      },
+      "sources": [
+        "config/entities/aliases/macro_geo.yaml"
+      ]
+    },
+    {
+      "entity_id": "MACRO_THEME:THUE_THUONG_MAI",
+      "type": "MACRO_THEME",
+      "code": "THUE_THUONG_MAI",
+      "canonical_name": "Thuế & Thương mại",
+      "aliases": [
+        "thuế chống bán phá giá",
+        "thuế chống trợ cấp",
+        "thuế quan",
+        "chiến tranh thương mại",
+        "thuế tối thiểu toàn cầu",
+        "hàng rào thuế quan"
+      ],
+      "attributes": {
+        "category": "macro"
+      },
+      "sources": [
+        "config/entities/aliases/macro_geo.yaml"
+      ]
+    },
+    {
+      "entity_id": "ASSET_CLASS:TRAI_PHIEU",
+      "type": "ASSET_CLASS",
+      "code": "TRAI_PHIEU",
+      "canonical_name": "Trái phiếu",
+      "aliases": [
+        "trái phiếu",
+        "TPDN",
+        "TPCP",
+        "trái phiếu doanh nghiệp",
+        "trái phiếu chính phủ",
+        "trái chủ",
+        "lợi suất trái phiếu",
+        "coupon",
+        "đáo hạn trái phiếu",
+        "mua lại trước hạn"
+      ],
+      "attributes": {
+        "category": "asset"
+      },
+      "sources": [
+        "config/entities/aliases/assets.yaml"
+      ]
+    },
+    {
+      "entity_id": "ASSET_CLASS:CO_PHIEU",
+      "type": "ASSET_CLASS",
+      "code": "CO_PHIEU",
+      "canonical_name": "Cổ phiếu",
+      "aliases": [
+        "cổ phiếu",
+        "thị trường chứng khoán",
+        "TTCK",
+        "khớp lệnh",
+        "khối ngoại",
+        "tự doanh",
+        "thanh khoản thị trường",
+        "thị trường cơ sở"
+      ],
+      "attributes": {
+        "category": "asset"
+      },
+      "sources": [
+        "config/entities/aliases/assets.yaml"
+      ]
+    },
+    {
+      "entity_id": "ASSET_CLASS:VANG",
+      "type": "ASSET_CLASS",
+      "code": "VANG",
+      "canonical_name": "Vàng & Kim loại quý",
+      "aliases": [
+        "vàng",
+        "vàng SJC",
+        "vàng nhẫn",
+        "giá vàng",
+        "vàng miếng",
+        "vàng 9999"
+      ],
+      "attributes": {
+        "category": "asset"
+      },
+      "sources": [
+        "config/entities/aliases/assets.yaml"
+      ]
+    },
+    {
+      "entity_id": "ASSET_CLASS:DAU_THO",
+      "type": "ASSET_CLASS",
+      "code": "DAU_THO",
+      "canonical_name": "Dầu thô & Năng lượng",
+      "aliases": [
+        "dầu thô",
+        "dầu Brent",
+        "dầu WTI",
+        "giá dầu",
+        "OPEC",
+        "xăng dầu"
+      ],
+      "attributes": {
+        "category": "asset"
+      },
+      "sources": [
+        "config/entities/aliases/assets.yaml"
+      ]
+    },
+    {
+      "entity_id": "ASSET_CLASS:BAT_DONG_SAN_TAI_SAN",
+      "type": "ASSET_CLASS",
+      "code": "BAT_DONG_SAN_TAI_SAN",
+      "canonical_name": "Bất động sản tài sản",
+      "aliases": [
+        "bất động sản",
+        "nhà đất",
+        "địa ốc",
+        "căn hộ",
+        "đất nền",
+        "giá nhà"
+      ],
+      "attributes": {
+        "category": "asset"
+      },
+      "sources": [
+        "config/entities/aliases/assets.yaml"
+      ]
+    },
+    {
+      "entity_id": "INSTITUTION:NHNN",
+      "type": "INSTITUTION",
+      "code": "NHNN",
+      "canonical_name": "Ngân hàng Nhà nước",
+      "aliases": [
+        "Ngân hàng Nhà nước",
+        "NHNN",
+        "SBV",
+        "Thống đốc",
+        "thị trường mở",
+        "OMO",
+        "tín phiếu"
+      ],
+      "attributes": {
+        "category": "institution"
+      },
+      "sources": [
+        "config/entities/aliases/institutions.yaml"
+      ]
+    },
+    {
+      "entity_id": "INSTITUTION:UBCKNN",
+      "type": "INSTITUTION",
+      "code": "UBCKNN",
+      "canonical_name": "Ủy ban Chứng khoán Nhà nước",
+      "aliases": [
+        "Ủy ban Chứng khoán Nhà nước",
+        "UBCKNN",
+        "SSC",
+        "Bộ Tài chính",
+        "hệ thống KRX",
+        "nâng hạng thị trường"
+      ],
+      "attributes": {
+        "category": "institution"
+      },
+      "sources": [
+        "config/entities/aliases/institutions.yaml"
+      ]
+    },
+    {
+      "entity_id": "INSTITUTION:FED",
+      "type": "INSTITUTION",
+      "code": "FED",
+      "canonical_name": "Cục Dự trữ Liên bang Mỹ",
+      "aliases": [
+        "Cục Dự trữ Liên bang",
+        "Fed",
+        "FED",
+        "FOMC",
+        "Jerome Powell",
+        "lãi suất Fed"
+      ],
+      "attributes": {
+        "category": "institution"
+      },
+      "sources": [
+        "config/entities/aliases/institutions.yaml"
+      ]
+    },
+    {
+      "entity_id": "INSTITUTION:ECB",
+      "type": "INSTITUTION",
+      "code": "ECB",
+      "canonical_name": "Ngân hàng Trung ương Châu Âu",
+      "aliases": [
+        "Ngân hàng Trung ương Châu Âu",
+        "ECB",
+        "Christine Lagarde"
+      ],
+      "attributes": {
+        "category": "institution"
+      },
+      "sources": [
+        "config/entities/aliases/institutions.yaml"
       ]
     }
   ]

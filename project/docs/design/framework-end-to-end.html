@@ -1,0 +1,962 @@
+<title>News-Scape Pipeline Framework</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Be+Vietnam+Pro:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+  :root{
+    --bg:#f5f6f8; --surface:#ffffff; --surface-2:#eceef2; --surface-3:#e3e6ec;
+    --ink:#161a21; --ink-soft:#474e5c; --ink-faint:#79818f;
+    --border:#d9dde4; --border-strong:#c3c9d2;
+
+    --bronze:#a3672f; --bronze-soft:#f1e3d3; --bronze-line:#cf9f74;
+    --silver:#586777; --silver-soft:#e0e6ee; --silver-line:#9aa8ba;
+    --gold:#9c7a18; --gold-soft:#efe6c6; --gold-line:#d0b559;
+
+    --human:#33489b; --human-soft:#e2e5f5;
+    --frame:#1f7a71; --frame-soft:#d7ede9;
+    --agent:#8a3b86; --agent-soft:#f0dff0;
+
+    --pass:#2c7a4e; --hold:#a9741a; --fail:#ab3b39;
+
+    --shadow:0 1px 2px rgba(20,26,40,.04), 0 8px 24px -12px rgba(20,26,40,.14);
+    --maxw:1120px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0e1218; --surface:#161b23; --surface-2:#1d232d; --surface-3:#252d39;
+      --ink:#e7eaf0; --ink-soft:#a7afbd; --ink-faint:#6f7887;
+      --border:#29313d; --border-strong:#3a4453;
+
+      --bronze:#d0955a; --bronze-soft:#3a2a1a; --bronze-line:#8a5f38;
+      --silver:#9bacc0; --silver-soft:#232c37; --silver-line:#55637a;
+      --gold:#d3b455; --gold-soft:#332d13; --gold-line:#7a6626;
+
+      --human:#8093ec; --human-soft:#1c2542;
+      --frame:#4fbdae; --frame-soft:#123130;
+      --agent:#cd93cb; --agent-soft:#33203a;
+
+      --pass:#5cb684; --hold:#d5a44b; --fail:#df726d;
+      --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 30px -14px rgba(0,0,0,.6);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0e1218; --surface:#161b23; --surface-2:#1d232d; --surface-3:#252d39;
+    --ink:#e7eaf0; --ink-soft:#a7afbd; --ink-faint:#6f7887;
+    --border:#29313d; --border-strong:#3a4453;
+
+    --bronze:#d0955a; --bronze-soft:#3a2a1a; --bronze-line:#8a5f38;
+    --silver:#9bacc0; --silver-soft:#232c37; --silver-line:#55637a;
+    --gold:#d3b455; --gold-soft:#332d13; --gold-line:#7a6626;
+
+    --human:#8093ec; --human-soft:#1c2542;
+    --frame:#4fbdae; --frame-soft:#123130;
+    --agent:#cd93cb; --agent-soft:#33203a;
+
+    --pass:#5cb684; --hold:#d5a44b; --fail:#df726d;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 30px -14px rgba(0,0,0,.6);
+  }
+
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",sans-serif;
+    font-size:16px; line-height:1.62; letter-spacing:.005em;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 24px}
+  .mono{font-family:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace}
+
+  a{color:var(--human); text-decoration:none}
+  a:hover{text-decoration:underline}
+
+  /* ---------- Header ---------- */
+  header.hero{
+    border-bottom:1px solid var(--border);
+    background:
+      radial-gradient(120% 90% at 88% -10%, color-mix(in srgb, var(--bronze-soft) 55%, transparent), transparent 60%),
+      radial-gradient(120% 90% at 6% 120%, color-mix(in srgb, var(--silver-soft) 60%, transparent), transparent 55%);
+  }
+  .hero-inner{padding:60px 24px 46px}
+  .eyebrow{
+    font-family:"IBM Plex Mono",monospace; font-size:12.5px; font-weight:500;
+    letter-spacing:.18em; text-transform:uppercase; color:var(--ink-faint);
+    display:flex; align-items:center; gap:10px; margin-bottom:20px;
+  }
+  .eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--frame)}
+  h1{
+    font-family:"Fraunces",Georgia,serif; font-weight:600;
+    font-size:clamp(2.1rem,5.2vw,3.5rem); line-height:1.04; letter-spacing:-.015em;
+    margin:0 0 18px; text-wrap:balance; max-width:16ch;
+  }
+  h1 .thin{font-weight:500; font-style:italic; color:var(--bronze)}
+  .lede{font-size:clamp(1.02rem,1.6vw,1.2rem); color:var(--ink-soft); max-width:62ch; margin:0}
+  .hero-meta{
+    display:flex; flex-wrap:wrap; gap:10px 22px; margin-top:26px;
+    font-size:13.5px; color:var(--ink-soft);
+  }
+  .hero-meta b{color:var(--ink); font-weight:600}
+  .hero-meta .mono{font-size:12.5px}
+
+  /* ---------- Section scaffolding ---------- */
+  section{padding:52px 0}
+  section + section{border-top:1px solid var(--border)}
+  .kicker{
+    font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:600;
+    letter-spacing:.16em; text-transform:uppercase; margin:0 0 10px;
+  }
+  h2{
+    font-family:"Fraunces",Georgia,serif; font-weight:600;
+    font-size:clamp(1.5rem,3vw,2.05rem); line-height:1.1; letter-spacing:-.01em;
+    margin:0 0 12px; text-wrap:balance;
+  }
+  h3{
+    font-family:"Fraunces",Georgia,serif; font-weight:600; font-size:1.24rem;
+    margin:0 0 6px; letter-spacing:-.005em;
+  }
+  .section-lede{color:var(--ink-soft); max-width:64ch; margin:0 0 30px}
+
+  /* ---------- Legend ---------- */
+  .legend{
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(215px,1fr));
+    gap:14px; margin-top:8px;
+  }
+  .legend-group{
+    background:var(--surface); border:1px solid var(--border); border-radius:12px;
+    padding:15px 17px; box-shadow:var(--shadow);
+  }
+  .legend-group h4{
+    margin:0 0 11px; font-size:11.5px; font-family:"IBM Plex Mono",monospace;
+    letter-spacing:.12em; text-transform:uppercase; color:var(--ink-faint); font-weight:600;
+  }
+  .legend-row{display:flex; align-items:center; gap:10px; margin:7px 0; font-size:13.5px}
+  .swatch{width:16px;height:16px;border-radius:5px;flex:none;border:1px solid rgba(0,0,0,.12)}
+  .swatch.diamond{border-radius:3px;transform:rotate(45deg);width:13px;height:13px}
+  .chip{
+    display:inline-flex; align-items:center; gap:6px; padding:2px 9px; border-radius:999px;
+    font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:600; letter-spacing:.04em;
+    border:1px solid transparent; white-space:nowrap;
+  }
+  .chip.human{background:var(--human-soft); color:var(--human); border-color:color-mix(in srgb,var(--human) 30%,transparent)}
+  .chip.frame{background:var(--frame-soft); color:var(--frame); border-color:color-mix(in srgb,var(--frame) 30%,transparent)}
+  .chip.agent{background:var(--agent-soft); color:var(--agent); border-color:color-mix(in srgb,var(--agent) 30%,transparent)}
+
+  /* ---------- Figures ---------- */
+  figure{margin:0}
+  .figure-card{
+    background:var(--surface); border:1px solid var(--border); border-radius:16px;
+    padding:22px 20px 8px; box-shadow:var(--shadow); overflow-x:auto;
+  }
+  figure svg{display:block; max-width:100%; height:auto; margin:0 auto; color:var(--ink)}
+  figcaption{
+    color:var(--ink-faint); font-size:13px; padding:14px 6px 12px; text-align:center;
+    max-width:70ch; margin:0 auto; line-height:1.5;
+  }
+  .svg-label{font-family:"IBM Plex Mono","IBM Plex Mono",monospace}
+
+  /* ---------- Loop stage cards ---------- */
+  .loop-head{
+    display:flex; align-items:baseline; flex-wrap:wrap; gap:10px 16px; margin-bottom:6px;
+  }
+  .loop-tag{
+    font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:600; letter-spacing:.1em;
+    padding:4px 11px; border-radius:7px;
+  }
+  .tag-bronze{background:var(--bronze-soft); color:var(--bronze)}
+  .tag-silver{background:var(--silver-soft); color:var(--silver)}
+  .tag-gold{background:var(--gold-soft); color:var(--gold)}
+  .tag-agent{background:var(--agent-soft); color:var(--agent)}
+  .tag-user{background:var(--human-soft); color:var(--human)}
+
+  .steps{display:grid; gap:12px; margin-top:22px}
+  .step{
+    display:grid; grid-template-columns:44px 1fr; gap:16px; align-items:start;
+    background:var(--surface); border:1px solid var(--border); border-radius:13px;
+    padding:16px 18px; box-shadow:var(--shadow); position:relative;
+  }
+  .step-num{
+    font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:14px;
+    width:44px;height:44px; border-radius:10px; display:flex; align-items:center; justify-content:center;
+    background:var(--surface-2); color:var(--ink-soft); border:1px solid var(--border);
+  }
+  .step[data-own="frame"]{border-left:3px solid var(--frame)}
+  .step[data-own="agent"]{border-left:3px solid var(--agent)}
+  .step[data-own="human"]{border-left:3px solid var(--human)}
+  .step-title{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:3px}
+  .step-title h4{margin:0; font-size:15.5px; font-weight:600}
+  .step p{margin:2px 0 0; font-size:14px; color:var(--ink-soft)}
+  .step code, .inline-code{
+    font-family:"IBM Plex Mono",monospace; font-size:12.5px;
+    background:var(--surface-2); padding:1px 6px; border-radius:5px; color:var(--ink);
+    border:1px solid var(--border); white-space:nowrap;
+  }
+  .tech{
+    margin-top:9px; display:flex; flex-wrap:wrap; gap:6px;
+  }
+  .tech span{
+    font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--ink-soft);
+    background:var(--surface-2); border:1px solid var(--border);
+    padding:2px 8px; border-radius:6px;
+  }
+  .tech span b{color:var(--ink); font-weight:600}
+
+  /* ---------- Callout ---------- */
+  .callout{
+    border-radius:12px; padding:15px 18px; margin-top:20px; font-size:14px;
+    border:1px solid var(--border); background:var(--surface-2);
+    display:flex; gap:13px; align-items:flex-start;
+  }
+  .callout .ic{flex:none; font-family:"IBM Plex Mono",monospace; font-weight:700; color:var(--bronze)}
+  .callout.worm{border-left:3px solid var(--bronze)}
+  .callout.gate{border-left:3px solid var(--pass); background:color-mix(in srgb,var(--pass) 7%,var(--surface))}
+  .callout.gate .ic{color:var(--pass)}
+  .callout b{color:var(--ink)}
+
+  /* ---------- Tables ---------- */
+  .table-wrap{overflow-x:auto; border:1px solid var(--border); border-radius:14px; box-shadow:var(--shadow); background:var(--surface)}
+  table{border-collapse:collapse; width:100%; font-size:13.5px; min-width:640px}
+  th,td{text-align:left; padding:12px 15px; border-bottom:1px solid var(--border); vertical-align:top}
+  thead th{
+    font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--ink-faint); font-weight:600; background:var(--surface-2); position:sticky; top:0;
+  }
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:hover{background:var(--surface-2)}
+  td .mono{font-size:12.5px}
+  .state{font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:12px; white-space:nowrap}
+  .rec{display:inline-block; padding:1px 8px; border-radius:6px; font-size:11.5px; font-family:"IBM Plex Mono",monospace; font-weight:600}
+  .rec.go{background:color-mix(in srgb,var(--pass) 16%,transparent); color:var(--pass)}
+  .rec.warn{background:color-mix(in srgb,var(--hold) 18%,transparent); color:var(--hold)}
+  .rec.stop{background:color-mix(in srgb,var(--fail) 16%,transparent); color:var(--fail)}
+  .rec.skip{background:var(--surface-3); color:var(--ink-faint)}
+
+  /* ---------- Invariants ---------- */
+  .inv-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:14px}
+  .inv{
+    background:var(--surface); border:1px solid var(--border); border-radius:13px; padding:17px 18px;
+    box-shadow:var(--shadow); border-top:3px solid var(--bronze);
+  }
+  .inv .id{font-family:"IBM Plex Mono",monospace; font-size:11.5px; font-weight:600; color:var(--bronze); letter-spacing:.06em}
+  .inv h4{margin:6px 0 5px; font-size:15px; font-weight:600}
+  .inv p{margin:0; font-size:13.5px; color:var(--ink-soft)}
+
+  /* ---------- Ownership summary ---------- */
+  .own-cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px; margin-top:8px}
+  .own{background:var(--surface); border:1px solid var(--border); border-radius:15px; padding:20px; box-shadow:var(--shadow)}
+  .own.human{border-top:4px solid var(--human)}
+  .own.frame{border-top:4px solid var(--frame)}
+  .own.agent{border-top:4px solid var(--agent)}
+  .own h3{display:flex; align-items:center; gap:10px}
+  .own .role{font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:3px}
+  .own ul{margin:12px 0 0; padding-left:18px; font-size:13.5px; color:var(--ink-soft)}
+  .own ul li{margin:5px 0}
+  .own ul li b{color:var(--ink)}
+
+  footer{border-top:1px solid var(--border); padding:34px 0 48px; color:var(--ink-faint); font-size:13px}
+  footer .wrap{display:flex; flex-wrap:wrap; gap:8px 20px; justify-content:space-between; align-items:center}
+
+  .note{font-size:12.5px; color:var(--ink-faint); margin-top:10px; font-style:italic}
+
+  @media (max-width:560px){
+    .hero-inner{padding:44px 4px 34px}
+    .step{grid-template-columns:36px 1fr; gap:12px; padding:14px}
+    .step-num{width:36px;height:36px}
+  }
+</style>
+
+<header class="hero">
+  <div class="wrap hero-inner">
+    <div class="eyebrow"><span class="dot"></span> News-Scape · FRA Data Ingestion · Medallion 3 vòng</div>
+    <h1>Từ trang HTML thô đến <span class="thin">bản tin đã kiểm định</span> cho từng người dùng</h1>
+    <p class="lede">Bản đồ end-to-end của pipeline thu thập tin chứng khoán Việt Nam: chụp raw byte-exact,
+      làm sạch tất định, phát hiện đổi cấu trúc, rồi giao cho agent bóc tách — mỗi tầng một hợp đồng, mỗi ranh giới một cổng kiểm.</p>
+    <div class="hero-meta">
+      <span><b>Kiến trúc</b> Medallion — Bronze → Silver → Gold</span>
+      <span><b>Nguyên tắc</b> Producer (code) ↔ Consumer (agent)</span>
+      <span><b>Entrypoint prod</b> <span class="mono">python -m src.morninger</span></span>
+      <span><b>Store</b> <span class="mono">SQLite WAL · data/monocle.db</span></span>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<!-- ============ LEGEND ============ -->
+<section>
+  <div class="wrap">
+    <p class="kicker" style="color:var(--frame)">Cách đọc sơ đồ</p>
+    <h2>Ba trục thông tin trong một khung hình</h2>
+    <p class="section-lede">Mỗi bước được mã hoá đồng thời theo <b>tầng dữ liệu</b> (màu medallion), <b>ai thực thi</b>
+      (viền trái + chip), và <b>kết quả cổng kiểm</b> (pass / hold / fail). Ba trục này lặp lại nhất quán khắp trang.</p>
+    <div class="legend">
+      <div class="legend-group">
+        <h4>Tầng dữ liệu (Medallion)</h4>
+        <div class="legend-row"><span class="swatch" style="background:var(--bronze-soft);border-color:var(--bronze-line)"></span> <b style="color:var(--bronze)">Bronze</b> — raw HTML byte-exact (WORM)</div>
+        <div class="legend-row"><span class="swatch" style="background:var(--silver-soft);border-color:var(--silver-line)"></span> <b style="color:var(--silver)">Silver</b> — clean base tái tạo được</div>
+        <div class="legend-row"><span class="swatch" style="background:var(--gold-soft);border-color:var(--gold-line)"></span> <b style="color:var(--gold)">Gold</b> — output agent (đã kiểm)</div>
+      </div>
+      <div class="legend-group">
+        <h4>Ai thực thi</h4>
+        <div class="legend-row"><span class="chip human">HUMAN</span> con người khai báo / kích hoạt</div>
+        <div class="legend-row"><span class="chip frame">FRAMEWORK</span> script tất định (cron)</div>
+        <div class="legend-row"><span class="chip agent">AGENT</span> LLM ngoài, provider bất kỳ</div>
+      </div>
+      <div class="legend-group">
+        <h4>Cổng kiểm (Gate)</h4>
+        <div class="legend-row"><span class="swatch diamond" style="background:var(--pass)"></span> <b style="color:var(--pass)">PASS</b> → đi tiếp</div>
+        <div class="legend-row"><span class="swatch diamond" style="background:var(--hold)"></span> <b style="color:var(--hold)">HELD</b> → giữ lại, không giao agent</div>
+        <div class="legend-row"><span class="swatch diamond" style="background:var(--fail)"></span> <b style="color:var(--fail)">FAILED</b> → DoD không đạt</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ MASTER DIAGRAM ============ -->
+<section>
+  <div class="wrap">
+    <p class="kicker" style="color:var(--bronze)">Toàn cảnh</p>
+    <h2>Sơ đồ framework end-to-end</h2>
+    <p class="section-lede">Xương sống dọc: dữ liệu chảy từ scraper xuống bản CSV giao cho user. Ba cổng kim cương
+      là điểm kiểm định; nhánh phải là nơi dữ liệu bị <em>giữ</em> hoặc <em>trượt</em>. Đường kẻ đứt ngang là <b>ranh giới producer ↔ agent</b>.</p>
+
+    <figure class="figure-card">
+      <svg viewBox="0 0 940 1580" role="img" aria-label="Sơ đồ dọc end-to-end: Bronze capture, Silver standardize với cổng kiểm, catalog, agent handoff, và output per-user gated" font-family="'IBM Plex Mono', monospace">
+        <defs>
+          <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+          </marker>
+          <marker id="ah-fail" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="var(--fail)"/>
+          </marker>
+          <marker id="ah-hold" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="var(--hold)"/>
+          </marker>
+        </defs>
+
+        <!-- loop bands (left rail) -->
+        <g font-size="11" fill="var(--ink-faint)">
+          <rect x="14" y="44"  width="34" height="356" rx="6" fill="var(--bronze-soft)"/>
+          <rect x="14" y="420" width="34" height="560" rx="6" fill="var(--silver-soft)"/>
+          <rect x="14" y="1058" width="34" height="330" rx="6" fill="var(--agent-soft)"/>
+          <rect x="14" y="1408" width="34" height="150" rx="6" fill="var(--gold-soft)"/>
+          <text transform="rotate(-90 31 222)" x="31" y="222" text-anchor="middle" fill="var(--bronze)" font-weight="600" font-size="11.5" letter-spacing="1">VÒNG 1 · CAPTURE</text>
+          <text transform="rotate(-90 31 700)" x="31" y="700" text-anchor="middle" fill="var(--silver)" font-weight="600" font-size="11.5" letter-spacing="1">VÒNG 2 · STANDARDIZE</text>
+          <text transform="rotate(-90 31 1223)" x="31" y="1223" text-anchor="middle" fill="var(--agent)" font-weight="600" font-size="11.5" letter-spacing="1">VÒNG 3 · HANDOFF</text>
+          <text transform="rotate(-90 31 1483)" x="31" y="1483" text-anchor="middle" fill="var(--gold)" font-weight="600" font-size="11.5" letter-spacing="1">OUTPUT</text>
+        </g>
+
+        <!-- online/offline markers -->
+        <g font-size="10.5" fill="var(--ink-faint)" text-anchor="end">
+          <text x="928" y="58">online · 15′/cycle · tự động</text>
+          <text x="928" y="434">offline · re-derivable · 30′</text>
+          <text x="928" y="1072">bất đồng bộ · prompt của bạn</text>
+        </g>
+
+        <!-- ===== main spine ===== -->
+        <!-- vertical connector color -->
+        <g stroke="currentColor" stroke-width="1.6" fill="none" color="var(--ink-faint)">
+          <line x1="360" y1="112" x2="360" y2="140" marker-end="url(#ah)"/>
+          <line x1="360" y1="196" x2="360" y2="224" marker-end="url(#ah)"/>
+          <line x1="360" y1="286" x2="360" y2="314" marker-end="url(#ah)"/>
+          <line x1="360" y1="372" x2="360" y2="470" marker-end="url(#ah)"/>
+          <line x1="360" y1="526" x2="360" y2="556" marker-end="url(#ah)"/>
+          <line x1="360" y1="628" x2="360" y2="656" marker-end="url(#ah)"/>
+          <line x1="360" y1="712" x2="360" y2="740" marker-end="url(#ah)"/>
+          <line x1="360" y1="796" x2="360" y2="824" marker-end="url(#ah)"/>
+          <line x1="360" y1="896" x2="360" y2="926" marker-end="url(#ah)"/>
+          <line x1="360" y1="982" x2="360" y2="1108" marker-end="url(#ah)"/>
+          <line x1="360" y1="1164" x2="360" y2="1192" marker-end="url(#ah)"/>
+          <line x1="360" y1="1268" x2="360" y2="1298" marker-end="url(#ah)"/>
+          <line x1="360" y1="1354" x2="360" y2="1452" marker-end="url(#ah)"/>
+        </g>
+
+        <!-- node style helpers via inline attrs -->
+        <!-- V1: scrapers -->
+        <g>
+          <rect x="200" y="60" width="320" height="52" rx="10" fill="var(--surface-2)" stroke="var(--frame)" stroke-width="1.5"/>
+          <text x="360" y="82" text-anchor="middle" font-size="13" font-weight="600" fill="var(--ink)">cafef · vietstock · vneconomy scrapers</text>
+          <text x="360" y="99" text-anchor="middle" font-size="10.5" fill="var(--ink-soft)">BaseScraper.run(): fetch_list → parse_item → dedup</text>
+        </g>
+        <!-- V1: capture mixin -->
+        <g>
+          <rect x="200" y="144" width="320" height="52" rx="10" fill="var(--surface-2)" stroke="var(--frame)" stroke-width="1.5"/>
+          <text x="360" y="166" text-anchor="middle" font-size="13" font-weight="600" fill="var(--ink)">CaptureMixin.enrich()</text>
+          <text x="360" y="183" text-anchor="middle" font-size="10.5" fill="var(--ink-soft)">robots gate → rate-limit → backoff → fetch detail</text>
+        </g>
+        <!-- V1: RawStore BRONZE artifact -->
+        <g>
+          <rect x="184" y="224" width="352" height="62" rx="10" fill="var(--bronze-soft)" stroke="var(--bronze)" stroke-width="1.6"/>
+          <text x="360" y="247" text-anchor="middle" font-size="13.5" font-weight="700" fill="var(--bronze)">★ RawStore.save — BRONZE (WORM)</text>
+          <text x="360" y="264" text-anchor="middle" font-size="10.5" fill="var(--ink-soft)">.html byte-exact + .meta.json (14 keys)</text>
+          <text x="360" y="279" text-anchor="middle" font-size="10" fill="var(--ink-faint)">content_sha256 = bằng chứng bất biến · ghi TRƯỚC mọi parse</text>
+        </g>
+        <!-- V1: gate looks_complete -->
+        <g>
+          <polygon points="360,308 424,340 360,372 296,340" fill="var(--surface)" stroke="var(--pass)" stroke-width="1.6"/>
+          <text x="360" y="337" text-anchor="middle" font-size="11.5" font-weight="600" fill="var(--ink)">_looks_</text>
+          <text x="360" y="351" text-anchor="middle" font-size="11.5" font-weight="600" fill="var(--ink)">complete?</text>
+        </g>
+        <!-- V1: articles store -->
+        <g>
+          <rect x="220" y="470" width="280" height="52" rx="10" fill="var(--surface-2)" stroke="var(--frame)" stroke-width="1.5"/>
+          <text x="360" y="492" text-anchor="middle" font-size="13" font-weight="600" fill="var(--ink)">articles (SQLite) + CSV export</text>
+          <text x="360" y="509" text-anchor="middle" font-size="10.5" fill="var(--ink-soft)">classify + sentiment · WAL checkpoint</text>
+        </g>
+
+        <!-- V2: SilverBuilder -->
+        <g>
+          <rect x="176" y="556" width="368" height="72" rx="10" fill="var(--silver-soft)" stroke="var(--silver)" stroke-width="1.6"/>
+          <text x="360" y="579" text-anchor="middle" font-size="13.5" font-weight="700" fill="var(--silver)">SilverBuilder.build(meta, raw_bytes)</text>
+          <text x="360" y="596" text-anchor="middle" font-size="10.5" fill="var(--ink-soft)">decode → trafilatura → NFC/strip → structure</text>
+          <text x="360" y="611" text-anchor="middle" font-size="10" fill="var(--ink-faint)">PURE · DETERMINISTIC · không network, không now()</text>
+        </g>
+        <!-- V2: silver validity gate -->
+        <g>
+          <polygon points="360,640 432,672 360,704 288,672" fill="var(--surface)" stroke="var(--pass)" stroke-width="1.6"/>
+          <text x="360" y="669" text-anchor="middle" font-size="11" font-weight="600" fill="var(--ink)">silver-v1</text>
+          <text x="360" y="683" text-anchor="middle" font-size="11" font-weight="600" fill="var(--ink)">valid?</text>
+        </g>
+        <!-- V2: fingerprint -->
+        <g>
+          <rect x="204" y="724" width="312" height="0"/>
+          <rect x="196" y="740" width="328" height="56" rx="10" fill="var(--surface-2)" stroke="var(--silver)" stroke-width="1.4"/>
+          <text x="360" y="763" text-anchor="middle" font-size="12.5" font-weight="600" fill="var(--ink)">fingerprint: SimHash64 + dom_path_sig</text>
+          <text x="360" y="780" text-anchor="middle" font-size="10.5" fill="var(--ink-soft)">blake2b weighted bit-vote · chữ ký cấu trúc</text>
+        </g>
+        <!-- V2: classify -->
+        <g>
+          <rect x="196" y="824" width="328" height="56" rx="10" fill="var(--surface-2)" stroke="var(--silver)" stroke-width="1.4"/>
+          <text x="360" y="847" text-anchor="middle" font-size="12.5" font-weight="600" fill="var(--ink)">change_detect.classify → article_versions</text>
+          <text x="360" y="864" text-anchor="middle" font-size="10.5" fill="var(--ink-soft)">5 trạng thái · append-only audit trail</text>
+        </g>
+        <!-- V2: work package gate -->
+        <g>
+          <polygon points="360,910 448,942 360,974 272,942" fill="var(--surface)" stroke="var(--pass)" stroke-width="1.6"/>
+          <text x="360" y="939" text-anchor="middle" font-size="11" font-weight="600" fill="var(--ink)">work-package-v1</text>
+          <text x="360" y="953" text-anchor="middle" font-size="11" font-weight="600" fill="var(--ink)">valid?</text>
+        </g>
+        <!-- V2: catalog work_items = pending (Bronze-1 sink of producer) -->
+        <g>
+          <rect x="230" y="982" width="260" height="46" rx="10" fill="var(--surface)" stroke="var(--silver)" stroke-width="1.5"/>
+          <text x="360" y="1004" text-anchor="middle" font-size="12.5" font-weight="600" fill="var(--ink)">work_items = pending</text>
+          <text x="360" y="1020" text-anchor="middle" font-size="10" fill="var(--ink-soft)">Catalog · status có kiểm soát (không mồ côi)</text>
+        </g>
+
+        <!-- boundary line producer|agent at y=1052 -->
+        <g>
+          <line x1="60" y1="1052" x2="900" y2="1052" stroke="var(--agent)" stroke-width="1.4" stroke-dasharray="7 6"/>
+          <rect x="368" y="1042" width="224" height="20" rx="10" fill="var(--bg)"/>
+          <text x="480" y="1056" text-anchor="middle" font-size="10.5" font-weight="600" fill="var(--agent)" letter-spacing=".5">RANH GIỚI PRODUCER ↔ AGENT</text>
+        </g>
+
+        <!-- V3: agent_export -->
+        <g>
+          <rect x="204" y="1108" width="312" height="52" rx="10" fill="var(--surface-2)" stroke="var(--frame)" stroke-width="1.5"/>
+          <text x="360" y="1130" text-anchor="middle" font-size="13" font-weight="600" fill="var(--ink)">agent_export → *.task.json packet</text>
+          <text x="360" y="1147" text-anchor="middle" font-size="10.5" fill="var(--ink-soft)">Catalog.claim atomic (BEGIN IMMEDIATE)</text>
+        </g>
+        <!-- V3: AGENT -->
+        <g>
+          <rect x="192" y="1192" width="336" height="60" rx="10" fill="var(--agent-soft)" stroke="var(--agent)" stroke-width="1.7"/>
+          <text x="360" y="1215" text-anchor="middle" font-size="13.5" font-weight="700" fill="var(--agent)">[[ AGENT NGOÀI ]]</text>
+          <text x="360" y="1232" text-anchor="middle" font-size="10.5" fill="var(--ink-soft)">L1 (entity từ title) + bóc tách (summary/implication)</text>
+          <text x="360" y="1246" text-anchor="middle" font-size="10" fill="var(--ink-faint)">prompt: schemas/*-instructions-v1.md</text>
+        </g>
+        <!-- V3: ingest DoD gate -->
+        <g>
+          <polygon points="360,1282 432,1314 360,1346 288,1314" fill="var(--surface)" stroke="var(--pass)" stroke-width="1.6"/>
+          <text x="360" y="1311" text-anchor="middle" font-size="11" font-weight="600" fill="var(--ink)">agent_ingest</text>
+          <text x="360" y="1325" text-anchor="middle" font-size="11" font-weight="600" fill="var(--ink)">DoD?</text>
+        </g>
+        <!-- OUTPUT: agent_outputs GOLD -->
+        <g>
+          <rect x="212" y="1452" width="296" height="56" rx="10" fill="var(--gold-soft)" stroke="var(--gold)" stroke-width="1.6"/>
+          <text x="360" y="1475" text-anchor="middle" font-size="13" font-weight="700" fill="var(--gold)">final.csv per-user — GOLD</text>
+          <text x="360" y="1492" text-anchor="middle" font-size="10.5" fill="var(--ink-soft)">gate: l1.dod=1 AND agent.dod=1 · scope subscription</text>
+        </g>
+
+        <!-- ===== right-side branches ===== -->
+        <!-- looks_complete partial/failed -->
+        <g color="var(--hold)" stroke="var(--hold)" fill="none" stroke-width="1.4">
+          <line x1="424" y1="340" x2="720" y2="340" marker-end="url(#ah-hold)"/>
+        </g>
+        <rect x="722" y="322" width="150" height="38" rx="8" fill="var(--surface)" stroke="var(--hold)" stroke-width="1.3"/>
+        <text x="797" y="339" text-anchor="middle" font-size="10.5" fill="var(--ink)">partial / failed</text>
+        <text x="797" y="352" text-anchor="middle" font-size="9.5" fill="var(--ink-faint)">vẫn ghi .html để soi</text>
+
+        <!-- silver invalid -> held -->
+        <g color="var(--hold)" stroke="var(--hold)" fill="none" stroke-width="1.4">
+          <line x1="432" y1="672" x2="720" y2="672" marker-end="url(#ah-hold)"/>
+        </g>
+        <rect x="722" y="654" width="150" height="38" rx="8" fill="var(--surface)" stroke="var(--hold)" stroke-width="1.3"/>
+        <text x="797" y="671" text-anchor="middle" font-size="10.5" fill="var(--hold)" font-weight="600">HELD</text>
+        <text x="797" y="684" text-anchor="middle" font-size="9.5" fill="var(--ink-faint)">cleaned_text rỗng</text>
+
+        <!-- package invalid / drift -> held -->
+        <g color="var(--hold)" stroke="var(--hold)" fill="none" stroke-width="1.4">
+          <line x1="448" y1="942" x2="720" y2="942" marker-end="url(#ah-hold)"/>
+        </g>
+        <rect x="722" y="924" width="150" height="38" rx="8" fill="var(--surface)" stroke="var(--hold)" stroke-width="1.3"/>
+        <text x="797" y="941" text-anchor="middle" font-size="10.5" fill="var(--hold)" font-weight="600">HELD</text>
+        <text x="797" y="954" text-anchor="middle" font-size="9.5" fill="var(--ink-faint)">drift / selector broken</text>
+
+        <!-- DoD fail -> failed -->
+        <g color="var(--fail)" stroke="var(--fail)" fill="none" stroke-width="1.4">
+          <line x1="432" y1="1314" x2="720" y2="1314" marker-end="url(#ah-fail)"/>
+        </g>
+        <rect x="722" y="1296" width="150" height="38" rx="8" fill="var(--surface)" stroke="var(--fail)" stroke-width="1.3"/>
+        <text x="797" y="1313" text-anchor="middle" font-size="10.5" fill="var(--fail)" font-weight="600">FAILED</text>
+        <text x="797" y="1326" text-anchor="middle" font-size="9.5" fill="var(--ink-faint)">dod_reasons ghi lại</text>
+
+        <!-- refresh_watchlist feedback (2nd capture) -->
+        <g color="var(--silver)" stroke="var(--silver)" fill="none" stroke-width="1.3" stroke-dasharray="5 4">
+          <path d="M176 592 H96 V250 H184" marker-end="url(#ah)"/>
+        </g>
+        <text x="86" y="430" text-anchor="middle" font-size="9.5" fill="var(--silver)" transform="rotate(-90 86 430)">refresh_watchlist · lần chụp thứ 2</text>
+      </svg>
+      <figcaption>Toàn bộ chuỗi 3 vòng. <b>Raw luôn được ghi trước khi parse</b> (bất biến WORM); Silver là hàm thuần của Bronze nên sửa parser chỉ cần re-derive, không re-scrape. Cổng kim cương chặn dữ liệu hỏng trước ranh giới agent — agent chỉ nhận package đã <span class="mono">pending</span>. Vòng nét đứt bên trái là <span class="mono">refresh_watchlist</span> cấp "lần chụp thứ 2" để change-detection có gì đối chiếu.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ============ VONG 1 BRONZE ============ -->
+<section>
+  <div class="wrap">
+    <div class="loop-head">
+      <span class="loop-tag tag-bronze">VÒNG 1 · BRONZE</span>
+      <span class="chip frame">FRAMEWORK</span>
+    </div>
+    <h2>Capture — trỏ vào HTML & chụp raw byte-exact</h2>
+    <p class="section-lede">Chạy online mỗi 15′. Mục tiêu duy nhất: lấy <b>toàn bộ mã nguồn HTML</b> của trang chi tiết
+      và lưu lại <em>trước mọi xử lý</em>. Điểm chèn là hook <span class="inline-code">enrich()</span> trong template-method của <span class="inline-code">BaseScraper.run()</span>.</p>
+
+    <div class="steps">
+      <div class="step" data-own="frame">
+        <div class="step-num">1</div>
+        <div>
+          <div class="step-title"><h4>Trỏ vào URL bài</h4><span class="chip frame">FRAMEWORK</span></div>
+          <p>Scraper lấy danh sách qua <span class="inline-code">fetch_list()</span> (RSS / reverse-API / HTML), <span class="inline-code">parse_item()</span> → <span class="inline-code">Article</span>, rồi dedup lớp 1 <span class="inline-code">SHA-256(url+title)</span> ở bảng <span class="inline-code">seen_articles</span>.</p>
+          <div class="tech"><span><b>RSS</b> primary</span><span><b>API</b> cafef/tnck/fireant</span><span>dedup 2 lớp (+ fuzzy rapidfuzz)</span></div>
+        </div>
+      </div>
+
+      <div class="step" data-own="frame">
+        <div class="step-num">2</div>
+        <div>
+          <div class="step-title"><h4>Cổng tuân thủ trước khi fetch</h4><span class="chip frame">FRAMEWORK</span></div>
+          <p><span class="inline-code">RobotsGate</span> (cache 24h, fail-open) → <span class="inline-code">RateLimiter</span> 3s/domain → <span class="inline-code">SourceBackoff</span> tạm dừng luỹ thừa <span class="mono">2→4→8→16s</span> khi gặp 429/503.</p>
+          <div class="tech"><span>respect_robots</span><span>rate ≥ <b>3s/domain</b></span><span>backoff exponential</span><span>proxy rotation (off)</span></div>
+        </div>
+      </div>
+
+      <div class="step" data-own="frame">
+        <div class="step-num">3</div>
+        <div>
+          <div class="step-title"><h4>★ Ghi raw — điểm bất biến của cả hệ</h4><span class="chip frame">FRAMEWORK</span></div>
+          <p><span class="inline-code">RawStore.save(response)</span> ghi <span class="inline-code">response.content</span> nguyên bytes qua <span class="mono">.tmp → os.replace</span> (atomic). Kèm <span class="inline-code">.meta.json</span>: header whitelist (loại <span class="mono">Set-Cookie/Authorization</span>), <span class="inline-code">images[]</span> quét read-only. <b>Không decode, không normalize.</b></p>
+          <div class="tech"><span>byte-exact</span><span><b>content_sha256</b> = SHA-256(bytes)</span><span>layout <span class="mono">raw_html/&lt;domain&gt;/&lt;yyyymmdd&gt;/&lt;hash&gt;.html</span></span></div>
+        </div>
+      </div>
+
+      <div class="step" data-own="frame">
+        <div class="step-num">4</div>
+        <div>
+          <div class="step-title"><h4>Bóc vùng con & chấm trạng thái chụp</h4><span class="chip frame">FRAMEWORK</span></div>
+          <p>Chỉ SAU khi raw đã lưu: <span class="inline-code">content_html = select_one(selector)</span>; miss → <span class="inline-code">_density_extract</span> (readability/goose3). <span class="inline-code">_looks_complete</span> kiểm ≥2048 bytes + node non-empty + không marker chặn → gán <span class="mono">capture_status</span>.</p>
+          <div class="tech"><span>ok</span><span>partial + incomplete_render</span><span>failed</span><span>skipped_robots</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout worm">
+      <span class="ic">WORM</span>
+      <div><b>Write-Once-Read-Many.</b> File <span class="inline-code">.html</span> là bytes nguyên của response, <b>không bao giờ bị sửa</b>. Vì raw lưu trước, parser hỏng có thể sửa và chạy lại <em>offline</em> trên artifact đã lưu — không cần hit lại site. <span class="inline-code">sha256(file) == content_sha256</span> là bằng chứng provenance xuyên mọi tầng.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ VONG 2 SILVER — CLEANING ============ -->
+<section>
+  <div class="wrap">
+    <div class="loop-head">
+      <span class="loop-tag tag-silver">VÒNG 2 · SILVER</span>
+      <span class="chip frame">FRAMEWORK</span>
+    </div>
+    <h2>Standardize — làm sạch bằng kỹ thuật gì</h2>
+    <p class="section-lede"><span class="inline-code">SilverBuilder.build(meta, raw_bytes)</span> là hàm <b>THUẦN</b>: chỉ nhận dict + bytes,
+      không mạng, không đọc DB, không đọc clock. Cùng đầu vào → cùng Silver byte-for-byte, nên bump schema chỉ cần <span class="inline-code">rederive_from_bronze.py</span>.</p>
+
+    <figure class="figure-card">
+      <svg viewBox="0 0 900 430" role="img" aria-label="Chuỗi kỹ thuật làm sạch Bronze sang Silver: decode, trafilatura fallback chain, chuẩn hoá, structure, images, rồi cổng hard-field" font-family="'IBM Plex Mono', monospace">
+        <defs>
+          <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+          </marker>
+        </defs>
+        <!-- input -->
+        <rect x="20" y="176" width="120" height="70" rx="10" fill="var(--bronze-soft)" stroke="var(--bronze)" stroke-width="1.5"/>
+        <text x="80" y="205" text-anchor="middle" font-size="12" font-weight="700" fill="var(--bronze)">BRONZE</text>
+        <text x="80" y="222" text-anchor="middle" font-size="9.5" fill="var(--ink-soft)">meta.json</text>
+        <text x="80" y="234" text-anchor="middle" font-size="9.5" fill="var(--ink-soft)">+ raw bytes</text>
+
+        <g stroke="currentColor" color="var(--ink-faint)" stroke-width="1.5" fill="none">
+          <line x1="140" y1="211" x2="176" y2="211" marker-end="url(#a2)"/>
+        </g>
+
+        <!-- pipeline column of technique boxes -->
+        <g font-size="10.5">
+          <!-- N1 decode -->
+          <rect x="178" y="26" width="250" height="40" rx="8" fill="var(--surface-2)" stroke="var(--silver-line)" stroke-width="1.2"/>
+          <text x="190" y="43" font-size="10" font-weight="600" fill="var(--silver)">[N1] decode</text>
+          <text x="190" y="57" font-size="9.5" fill="var(--ink-soft)">meta.encoding · errors="replace" · fallback utf-8</text>
+
+          <!-- C1-C3 trafilatura chain -->
+          <rect x="178" y="74" width="250" height="58" rx="8" fill="var(--surface-2)" stroke="var(--silver-line)" stroke-width="1.2"/>
+          <text x="190" y="91" font-size="10" font-weight="600" fill="var(--silver)">[C1-C3] cleaned_text (HARD)</text>
+          <text x="190" y="105" font-size="9.5" fill="var(--ink-soft)">trafilatura(txt, +tables, −nav/ad/comment)</text>
+          <text x="190" y="118" font-size="9.5" fill="var(--ink-soft)">→ wrap fragment → bs4.get_text (fallback)</text>
+
+          <!-- N3-N5 normalize -->
+          <rect x="178" y="140" width="250" height="44" rx="8" fill="var(--surface-2)" stroke="var(--silver-line)" stroke-width="1.2" stroke-dasharray="4 3"/>
+          <text x="190" y="157" font-size="10" font-weight="600" fill="var(--hold)">[N3-N5] normalize (GAP G1)</text>
+          <text x="190" y="171" font-size="9.5" fill="var(--ink-soft)">NFC + strip ctrl-char + gộp newline</text>
+
+          <!-- S structure -->
+          <rect x="178" y="192" width="250" height="44" rx="8" fill="var(--surface-2)" stroke="var(--silver-line)" stroke-width="1.2"/>
+          <text x="190" y="209" font-size="10" font-weight="600" fill="var(--silver)">[S1-S6] structure (best-effort)</text>
+          <text x="190" y="223" font-size="9.5" fill="var(--ink-soft)">bs4: headings / paragraphs / tables / links</text>
+
+          <!-- images -->
+          <rect x="178" y="244" width="250" height="40" rx="8" fill="var(--surface-2)" stroke="var(--silver-line)" stroke-width="1.2"/>
+          <text x="190" y="261" font-size="10" font-weight="600" fill="var(--silver)">[IMG] images</text>
+          <text x="190" y="275" font-size="9.5" fill="var(--ink-soft)">lọc related/logo → dedup theo resolved_url</text>
+
+          <!-- language -->
+          <rect x="178" y="292" width="250" height="40" rx="8" fill="var(--surface-2)" stroke="var(--silver-line)" stroke-width="1.2"/>
+          <text x="190" y="309" font-size="10" font-weight="600" fill="var(--silver)">[L] language</text>
+          <text x="190" y="323" font-size="9.5" fill="var(--ink-soft)">heuristic ký tự VN (vi / und / en)</text>
+
+          <!-- provenance -->
+          <rect x="178" y="340" width="250" height="40" rx="8" fill="var(--surface-2)" stroke="var(--silver-line)" stroke-width="1.2"/>
+          <text x="190" y="357" font-size="10" font-weight="600" fill="var(--silver)">[P] provenance copy</text>
+          <text x="190" y="371" font-size="9.5" fill="var(--ink-soft)">built_at=fetch_ts · built_from_raw_path</text>
+        </g>
+
+        <!-- arrow to gate -->
+        <g stroke="currentColor" color="var(--ink-faint)" stroke-width="1.5" fill="none">
+          <line x1="428" y1="205" x2="470" y2="205" marker-end="url(#a2)"/>
+        </g>
+
+        <!-- GATE -->
+        <polygon points="540,150 610,205 540,260 470,205" fill="var(--surface)" stroke="var(--pass)" stroke-width="1.7"/>
+        <text x="540" y="200" text-anchor="middle" font-size="10.5" font-weight="600" fill="var(--ink)">hard fields</text>
+        <text x="540" y="214" text-anchor="middle" font-size="10.5" font-weight="600" fill="var(--ink)">đủ?</text>
+
+        <!-- pass to silver -->
+        <g stroke="var(--pass)" color="var(--pass)" stroke-width="1.6" fill="none">
+          <line x1="610" y1="205" x2="656" y2="205" marker-end="url(#a2)"/>
+        </g>
+        <rect x="658" y="164" width="128" height="82" rx="10" fill="var(--silver-soft)" stroke="var(--silver)" stroke-width="1.6"/>
+        <text x="722" y="192" text-anchor="middle" font-size="12" font-weight="700" fill="var(--silver)">SILVER</text>
+        <text x="722" y="209" text-anchor="middle" font-size="9.5" fill="var(--ink-soft)">silver-v1 .json</text>
+        <text x="722" y="223" text-anchor="middle" font-size="9.5" fill="var(--ink-soft)">idempotent write</text>
+        <text x="722" y="237" text-anchor="middle" font-size="9" fill="var(--ink-faint)">partition mirror</text>
+
+        <!-- fail down -->
+        <g stroke="var(--hold)" color="var(--hold)" stroke-width="1.5" fill="none">
+          <path d="M540 260 V300 H660" marker-end="url(#a2)"/>
+        </g>
+        <rect x="662" y="282" width="128" height="38" rx="8" fill="var(--surface)" stroke="var(--hold)" stroke-width="1.3"/>
+        <text x="726" y="299" text-anchor="middle" font-size="10.5" font-weight="600" fill="var(--hold)">HELD</text>
+        <text x="726" y="312" text-anchor="middle" font-size="9" fill="var(--ink-faint)">không giao agent</text>
+
+        <!-- extraction_quality note -->
+        <text x="540" y="300" text-anchor="middle" font-size="9" fill="var(--ink-faint)">extraction_quality ∈ {high,medium,low,empty}</text>
+      </svg>
+      <figcaption>Chuỗi fallback <span class="mono">trafilatura → wrap → bs4</span> đảm bảo <span class="mono">cleaned_text</span> (trường HARD) không rỗng khi còn cứu được; mỗi bậc hạ <span class="mono">extraction_quality</span> một nấc. Hộp nét đứt (<span class="mono">NFC/strip</span>) là gap đã ghi nhận. Chỉ khi đủ trường hard, bản ghi mới thành Silver; rỗng ⇒ <span class="mono">held</span>, không throw để không hỏng cả lô.</figcaption>
+    </figure>
+
+    <div class="callout gate">
+      <span class="ic">GATE</span>
+      <div><b>Silver hard-gate.</b> Trường bắt buộc: <span class="mono">silver_schema_version, article_id, source_url, domain, content_sha256, cleaned_text, built_from_raw_path</span>. Thiếu <span class="mono">cleaned_text</span> (minLength 1) ⇒ item <b>held</b>. <span class="mono">structure/images</span> là best-effort — lỗi không chặn cổng.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CHANGE DETECTION ============ -->
+<section>
+  <div class="wrap">
+    <div class="loop-head">
+      <span class="loop-tag tag-silver">VÒNG 2 · CHANGE-DETECT</span>
+      <span class="chip frame">FRAMEWORK</span>
+    </div>
+    <h2>Log khi HTML đổi — 3 dấu vân tay, 5 trạng thái</h2>
+    <p class="section-lede">Mỗi lần (re)capture ghi một hàng append-only vào <span class="inline-code">article_versions</span>.
+      Ba dấu vân tay thuần/tất định phân biệt "bài đổi nội dung" với "trang đổi template" — quyết định bài đó có được re-extract, bỏ qua, hay đẩy sang người xem lại.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>State (ưu tiên trên→dưới)</th><th>Điều kiện phát hiện</th><th>Dấu vân tay dùng</th><th>Recommendation</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="state" style="color:var(--fail)">SELECTOR_BROKEN</td><td>capture partial / thiếu main_content_node / incomplete_render</td><td class="mono">capture_status</td><td><span class="rec stop">manual_review</span></td></tr>
+          <tr><td class="state">NEW</td><td>chưa có bản trước (baseline FRESH từ 2026-08-14)</td><td class="mono">—</td><td><span class="rec go">re_extract</span></td></tr>
+          <tr><td class="state">UNCHANGED</td><td><span class="mono">content_sha256</span> trùng bản trước</td><td class="mono">content_sha256</td><td><span class="rec skip">skip</span></td></tr>
+          <tr><td class="state" style="color:var(--hold)">TEMPLATE_DRIFT</td><td><span class="mono">dom_path_sig</span> khác — <b>cấu trúc</b> đổi</td><td class="mono">dom_path_sig</td><td><span class="rec warn">manual_review</span></td></tr>
+          <tr><td class="state">CONTENT_CHANGED</td><td>sha khác nhưng DOM giữ nguyên (bất kể lớn/nhỏ)</td><td class="mono">simhash64 + sha</td><td><span class="rec go">re_extract</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">Quyết định chốt: TEMPLATE_DRIFT <b>chỉ</b> do DOM-sig đổi — bài chỉ dài thêm mà cùng template vẫn là CONTENT_CHANGED (tránh false-positive). <span class="mono">simhash64</span> = blake2b token + weighted bit-vote 64-bit, hamming = popcount(xor).</p>
+
+    <div class="steps" style="margin-top:24px">
+      <div class="step" data-own="frame">
+        <div class="step-num">↻</div>
+        <div>
+          <div class="step-title"><h4>Nguồn "lần chụp thứ 2"</h4><span class="chip frame">FRAMEWORK · opt-in</span></div>
+          <p>Dedup ở hot-path chặn re-scrape ⇒ mọi bài kẹt ở NEW. <span class="inline-code">refresh_watchlist.py</span> chủ động re-fetch URL đã biết (bỏ qua dedup, vẫn tôn trọng robots + rate) → Bronze capture mới → so version trước ⇒ trạng thái đổi <em>thật</em>.</p>
+        </div>
+      </div>
+      <div class="step" data-own="frame">
+        <div class="step-num">⚑</div>
+        <div>
+          <div class="step-title"><h4>Đối soát drift</h4><span class="chip frame">FRAMEWORK</span></div>
+          <p><span class="inline-code">report_drift.py</span> liệt kê TEMPLATE_DRIFT / SELECTOR_BROKEN → producer sửa selector → <span class="inline-code">rederive_from_bronze.py</span>. Agent (theo spec) coi package broken/drift là <b>held</b> — không xử lý.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ VONG 3 AGENT ============ -->
+<section>
+  <div class="wrap">
+    <div class="loop-head">
+      <span class="loop-tag tag-agent">VÒNG 3 · HANDOFF</span>
+      <span class="chip frame">FRAMEWORK</span> <span class="chip agent">AGENT</span>
+    </div>
+    <h2>Agent handoff — ranh giới producer ↔ consumer</h2>
+    <p class="section-lede">Producer chỉ <b>export → validate → nghiệm thu</b>. Agent (LLM provider bất kỳ do bạn điều khiển) là hộp đen,
+      bị ràng buộc bởi hai JSON Schema. Handoff <em>exactly-once</em>: enqueue idempotent + claim atomic.</p>
+
+    <div class="steps">
+      <div class="step" data-own="frame">
+        <div class="step-num">1</div>
+        <div>
+          <div class="step-title"><h4>Phát packet</h4><span class="chip frame">FRAMEWORK</span></div>
+          <p><span class="inline-code">agent_export.py</span> claim item <span class="mono">pending</span> (<span class="inline-code">BEGIN IMMEDIATE</span>) → ghi <span class="inline-code">data/agent_tasks/*.task.json</span>. Packet <b>trỏ</b> raw qua <span class="mono">raw_sha256</span>, không nhúng bytes.</p>
+        </div>
+      </div>
+      <div class="step" data-own="agent">
+        <div class="step-num">2</div>
+        <div>
+          <div class="step-title"><h4>L1 — nhận diện thực thể từ TIÊU ĐỀ</h4><span class="chip agent">AGENT</span></div>
+          <p>Chỉ dùng <span class="inline-code">input.title</span>. Xác nhận/bổ sung entity so máy dò <span class="mono">code_first</span>; mỗi <span class="mono">surface</span> phải là chuỗi con nguyên văn của title. Chấm 5 nhóm: ticker/etf/index/exchange/industry. Ghi <span class="inline-code">l1-entity-output-v1</span>.</p>
+          <div class="tech"><span>method: exact_code / alias / semantic</span><span>in_list · unlisted_candidates</span><span>citations ⊂ title</span></div>
+        </div>
+      </div>
+      <div class="step" data-own="agent">
+        <div class="step-num">3</div>
+        <div>
+          <div class="step-title"><h4>Bóc tách — phân tích BODY</h4><span class="chip agent">AGENT</span></div>
+          <p>Phân tích <span class="inline-code">cleaned_text</span>. Sinh <span class="mono">summary.abstractive + key_points</span>, <span class="mono">implication.text + impact_area</span>, <span class="mono">materiality.score + time_sensitivity</span>; tuỳ chọn sentiment/event_type/entities. Ghi <span class="inline-code">agent-output-v1</span>.</p>
+          <div class="tech"><span>bỏ bài nếu change_state ∈ {DRIFT, BROKEN}</span><span>≥2 citations ⊂ cleaned_text · ≥20 ký tự</span></div>
+        </div>
+      </div>
+      <div class="step" data-own="frame">
+        <div class="step-num">4</div>
+        <div>
+          <div class="step-title"><h4>Nạp & chấm DoD</h4><span class="chip frame">FRAMEWORK</span></div>
+          <p><span class="inline-code">agent_ingest.py</span> verify precondition + schema + Definition-of-Done. Đạt → <span class="mono">mark_done</span> (agent_outputs); trượt → <span class="mono">mark_failed</span> + <span class="mono">dod_reasons</span>. Runtime <b>không nhúng LLM</b>.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout gate">
+      <span class="ic">DoD</span>
+      <div><b>Definition-of-Done</b> (bóc tách) — <span class="mono">mark_done</span> ⇔ TẤT CẢ: ① schema PASS · ② <span class="mono">≥2 citations</span> grounded ⊂ cleaned_text (≥20 ký tự) · ③ <span class="mono">extraction_quality ∈ {high, medium}</span> · ④ <span class="mono">processing_metadata</span> đủ. <span class="mono">confidence</span> đã bỏ khỏi gate (2026-08-18: self-report, calibration kém). <b>L1 done</b> = schema + grounding surface/citation ⊂ title.</div>
+    </div>
+
+    <h3 style="margin-top:30px">Catalog status — không state mồ côi</h3>
+    <div class="table-wrap" style="margin-top:12px">
+      <table>
+        <thead><tr><th>work_items.status</th><th>Ý nghĩa</th></tr></thead>
+        <tbody>
+          <tr><td class="state">pending</td><td>đã enqueue, chưa claim</td></tr>
+          <tr><td class="state">claimed</td><td>agent đang xử lý (STARTED / EXTRACTION / VERIFICATION)</td></tr>
+          <tr><td class="state" style="color:var(--pass)">done</td><td>DoD đạt → hoàn thành</td></tr>
+          <tr><td class="state" style="color:var(--fail)">failed</td><td>DoD không đạt (permanent)</td></tr>
+          <tr><td class="state" style="color:var(--hold)">held</td><td>precondition fail: silver/package invalid, TEMPLATE_DRIFT, SELECTOR_BROKEN → không giao agent</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============ OUTPUT PER USER ============ -->
+<section>
+  <div class="wrap">
+    <div class="loop-head">
+      <span class="loop-tag tag-gold">OUTPUT · GOLD</span>
+      <span class="chip human">HUMAN</span> <span class="chip frame">FRAMEWORK</span>
+    </div>
+    <h2>Per-user output — từ Excel đăng ký đến CSV giao</h2>
+    <p class="section-lede">Con người chỉ chạm 2 việc: khai báo entity theo dõi và kích agent. Phần còn lại là chuỗi script
+      tất định. Bản giao cuối <span class="inline-code">final.csv</span> chỉ chứa bài <b>qua cả hai cổng DoD</b> và chạm subscription của user.</p>
+
+    <figure class="figure-card">
+      <svg viewBox="0 0 900 300" role="img" aria-label="Luồng per-user: user nhập Excel, compile sang config, pipeline scrape, hai lớp agent L1 và bóc tách, rồi cổng kép sinh final.csv" font-family="'IBM Plex Mono', monospace">
+        <defs>
+          <marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+          </marker>
+        </defs>
+        <!-- Stage 0 human -->
+        <rect x="16" y="120" width="150" height="66" rx="10" fill="var(--human-soft)" stroke="var(--human)" stroke-width="1.6"/>
+        <text x="91" y="145" text-anchor="middle" font-size="10" font-weight="600" fill="var(--human)">STAGE 0 · HUMAN</text>
+        <text x="91" y="161" text-anchor="middle" font-size="9.5" fill="var(--ink-soft)">entities.xlsx</text>
+        <text x="91" y="174" text-anchor="middle" font-size="9.5" fill="var(--ink-soft)">manifest.yaml</text>
+
+        <g stroke="currentColor" color="var(--ink-faint)" stroke-width="1.5" fill="none"><line x1="166" y1="153" x2="198" y2="153" marker-end="url(#a3)"/></g>
+
+        <!-- Stage 1 compile -->
+        <rect x="200" y="120" width="150" height="66" rx="10" fill="var(--surface-2)" stroke="var(--frame)" stroke-width="1.4"/>
+        <text x="275" y="145" text-anchor="middle" font-size="10" font-weight="600" fill="var(--frame)">STAGE 1</text>
+        <text x="275" y="161" text-anchor="middle" font-size="9.5" fill="var(--ink-soft)">compile_users.py</text>
+        <text x="275" y="174" text-anchor="middle" font-size="9.5" fill="var(--ink-soft)">→ &lt;name&gt;.yaml registry</text>
+
+        <g stroke="currentColor" color="var(--ink-faint)" stroke-width="1.5" fill="none"><line x1="350" y1="153" x2="382" y2="153" marker-end="url(#a3)"/></g>
+
+        <!-- Stage 2 pipeline (compressed) -->
+        <rect x="384" y="120" width="150" height="66" rx="10" fill="var(--silver-soft)" stroke="var(--silver)" stroke-width="1.4"/>
+        <text x="459" y="145" text-anchor="middle" font-size="10" font-weight="600" fill="var(--silver)">STAGE 2 (Vòng 1–2)</text>
+        <text x="459" y="161" text-anchor="middle" font-size="9.5" fill="var(--ink-soft)">scrape → bronze →</text>
+        <text x="459" y="174" text-anchor="middle" font-size="9.5" fill="var(--ink-soft)">silver → work_items</text>
+
+        <g stroke="currentColor" color="var(--ink-faint)" stroke-width="1.5" fill="none"><line x1="534" y1="153" x2="566" y2="153" marker-end="url(#a3)"/></g>
+
+        <!-- Stage 3+4 agent lanes -->
+        <rect x="568" y="70" width="150" height="66" rx="10" fill="var(--agent-soft)" stroke="var(--agent)" stroke-width="1.5"/>
+        <text x="643" y="93" text-anchor="middle" font-size="10" font-weight="600" fill="var(--agent)">STAGE 3 · L1</text>
+        <text x="643" y="109" text-anchor="middle" font-size="9" fill="var(--ink-soft)">route → [AGENT] → ingest</text>
+        <text x="643" y="122" text-anchor="middle" font-size="8.5" fill="var(--ink-faint)">l1_outputs.dod_pass=1</text>
+
+        <rect x="568" y="168" width="150" height="66" rx="10" fill="var(--agent-soft)" stroke="var(--agent)" stroke-width="1.5"/>
+        <text x="643" y="191" text-anchor="middle" font-size="10" font-weight="600" fill="var(--agent)">STAGE 4 · BÓC TÁCH</text>
+        <text x="643" y="207" text-anchor="middle" font-size="9" fill="var(--ink-soft)">export → [AGENT] → ingest</text>
+        <text x="643" y="220" text-anchor="middle" font-size="8.5" fill="var(--ink-faint)">agent_outputs.dod_pass=1</text>
+
+        <g stroke="currentColor" color="var(--ink-faint)" stroke-width="1.4" fill="none">
+          <line x1="718" y1="103" x2="748" y2="103" /><line x1="718" y1="201" x2="748" y2="201"/>
+          <path d="M748 103 V150" /><path d="M748 201 V156"/>
+          <line x1="748" y1="153" x2="770" y2="153" marker-end="url(#a3)"/>
+        </g>
+
+        <!-- gate + output -->
+        <polygon points="785,120 830,153 785,186 740,153" fill="var(--surface)" stroke="var(--pass)" stroke-width="1.6"/>
+        <text x="785" y="150" text-anchor="middle" font-size="8.5" font-weight="600" fill="var(--ink)">cả 2</text>
+        <text x="785" y="161" text-anchor="middle" font-size="8.5" font-weight="600" fill="var(--ink)">dod=1?</text>
+
+        <g stroke="var(--pass)" color="var(--pass)" stroke-width="1.6" fill="none"><line x1="830" y1="153" x2="844" y2="153"/></g>
+        <rect x="800" y="210" width="0" height="0"/>
+        <rect x="742" y="234" width="150" height="52" rx="10" fill="var(--gold-soft)" stroke="var(--gold)" stroke-width="1.6"/>
+        <text x="817" y="256" text-anchor="middle" font-size="10.5" font-weight="700" fill="var(--gold)">final.csv</text>
+        <text x="817" y="271" text-anchor="middle" font-size="8.5" fill="var(--ink-soft)">per user / ngày · scoped</text>
+        <g stroke="var(--pass)" color="var(--pass)" stroke-width="1.5" fill="none"><path d="M817 186 V234" marker-end="url(#a3)"/></g>
+      </svg>
+      <figcaption><b>Cổng kép:</b> <span class="mono">final.csv</span> chỉ nhận bài mà <span class="mono">l1_outputs.dod_pass=1 AND agent_outputs.dod_pass=1</span>, sau đó lọc theo <span class="mono">union subscription</span> của các user đang bật. Idempotent + resume theo <span class="mono">article_id</span>; thiếu một lớp hoặc không ai đăng ký entity ⇒ không vào bản giao.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ============ OWNERSHIP ============ -->
+<section>
+  <div class="wrap">
+    <p class="kicker" style="color:var(--human)">Phân vai</p>
+    <h2>Ai chạy gì — con người, framework, agent</h2>
+    <p class="section-lede">Quy tắc gọn: <b>con người chỉ chạm 2 việc</b> — khai báo entity và cấu hình/kích agent.
+      Mọi thứ còn lại là script tất định chạy được bằng cron. Agent là điểm chặn duy nhất để full-auto.</p>
+
+    <div class="own-cards">
+      <div class="own human">
+        <div class="role">Chạy tay · đầu vào</div>
+        <h3><span class="chip human">HUMAN</span></h3>
+        <ul>
+          <li><b>Khai báo entity</b> — điền <span class="inline-code">entities.xlsx</span> + <span class="inline-code">manifest.yaml</span> (bật/tắt user)</li>
+          <li><b>Tạo template</b> — <span class="inline-code">make_user_template.py</span> (1 lần/user)</li>
+          <li><b>Cấu hình / kích agent</b> — cung cấp prompt, khoá API, chạy lô</li>
+          <li><b>Bảo trì</b> — sửa selector khi drift, chạy <span class="inline-code">rederive_from_bronze.py</span></li>
+        </ul>
+      </div>
+      <div class="own frame">
+        <div class="role">Tất định · cron</div>
+        <h3><span class="chip frame">FRAMEWORK</span></h3>
+        <ul>
+          <li><b>Capture</b> — <span class="inline-code">morninger</span> job mỗi 15′ (Vòng 1)</li>
+          <li><b>Re-derive Silver</b> — mỗi 30′ incremental (Vòng 2)</li>
+          <li><b>Change-detect + drift</b> — version log, báo cáo sáng</li>
+          <li><b>Export / ingest</b> — phát packet, chấm DoD (không nhúng LLM)</li>
+          <li><b>Output writer</b> — gate kép + route + ghi CSV, checkpoint</li>
+        </ul>
+      </div>
+      <div class="own agent">
+        <div class="role">LLM ngoài · provider bất kỳ</div>
+        <h3><span class="chip agent">AGENT</span></h3>
+        <ul>
+          <li><b>L1</b> — nhận diện entity từ title → <span class="inline-code">l1-entity-output-v1</span></li>
+          <li><b>Bóc tách</b> — summary / implication / materiality từ body → <span class="inline-code">agent-output-v1</span></li>
+          <li><b>Ràng buộc</b> — chỉ ghi <span class="mono">.json</span> output; cấm chạy script / sửa DB / sửa packet</li>
+          <li><b>Full-auto</b> — cần adapter <span class="inline-code">scripts/agent_run.py</span> (chưa có) để khép kín cron</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3 style="margin-top:34px">Lịch vận hành hàng ngày</h3>
+    <div class="table-wrap" style="margin-top:12px">
+      <table>
+        <thead><tr><th>Job / bước</th><th>Ai</th><th>Tần suất</th><th>Hàm / lệnh</th></tr></thead>
+        <tbody>
+          <tr><td>scrape → bronze</td><td><span class="chip frame">FRAMEWORK</span></td><td>15′/cycle</td><td class="mono">Orchestrator.run_cycle</td></tr>
+          <tr><td>re-derive Silver (incremental)</td><td><span class="chip frame">FRAMEWORK</span></td><td>30′</td><td class="mono">derive.rederive_incremental</td></tr>
+          <tr><td>drift report</td><td><span class="chip frame">FRAMEWORK</span></td><td>mỗi sáng</td><td class="mono">drift.list_drift</td></tr>
+          <tr><td>khai báo entity + manifest</td><td><span class="chip human">HUMAN</span></td><td>khi đổi danh mục</td><td class="mono">entities.xlsx</td></tr>
+          <tr><td>compile input → config</td><td><span class="chip human">HUMAN</span>/cron</td><td>sau khi đổi input</td><td class="mono">compile_users.py --all</td></tr>
+          <tr><td>phát packet L1 / bóc tách</td><td><span class="chip frame">FRAMEWORK</span></td><td>theo lô</td><td class="mono">l1_route.py · agent_export.py</td></tr>
+          <tr><td>xử lý packet</td><td><span class="chip agent">AGENT</span></td><td>sau mỗi lô</td><td class="mono">prompt: schemas/*-instructions-v1.md</td></tr>
+          <tr><td>nạp + chấm DoD</td><td><span class="chip frame">FRAMEWORK</span></td><td>sau khi agent nộp</td><td class="mono">l1_ingest.py · agent_ingest.py</td></tr>
+          <tr><td>ghi output per-user</td><td><span class="chip frame">FRAMEWORK</span></td><td>cuối ngày / mỗi lô</td><td class="mono">run_user_workflow.py --date today</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============ INVARIANTS ============ -->
+<section>
+  <div class="wrap">
+    <p class="kicker" style="color:var(--bronze)">Hợp đồng</p>
+    <h2>Bất biến toàn hệ — checklist review</h2>
+    <p class="section-lede">Bảy ràng buộc giữ cho hệ tái lập được và exactly-once. Vi phạm bất kỳ điều nào là lỗi kiến trúc, không phải lỗi cấu hình.</p>
+    <div class="inv-grid">
+      <div class="inv"><div class="id">INV-1 · WORM</div><h4>Raw byte-exact bất biến</h4><p>File <span class="mono">.html</span> = response nguyên bytes; <span class="mono">sha256(file) == content_sha256</span>. Không bao giờ sửa.</p></div>
+      <div class="inv"><div class="id">INV-2 · PURE</div><h4>Silver là hàm thuần của Bronze</h4><p>Không network, không đọc DB, không <span class="mono">now()</span> (dùng <span class="mono">fetch_ts</span>) → re-derive giống hệt.</p></div>
+      <div class="inv"><div class="id">INV-3 · POINTER</div><h4>Package trỏ raw, không inline</h4><p>Tham chiếu qua <span class="mono">raw_sha256</span>; không nhúng bytes gốc — 1 nguồn sự thật.</p></div>
+      <div class="inv"><div class="id">INV-4 · GATE</div><h4>Mọi package qua contract_validator</h4><p>PASS mới <span class="mono">pending</span>; else <span class="mono">held</span>. Agent không bao giờ nhận dữ liệu chưa kiểm.</p></div>
+      <div class="inv"><div class="id">INV-5 · VERIFY</div><h4>Agent verify raw_sha256</h4><p>Kiểm trước khi xử lý (chống inject); output qua DoD mới <span class="mono">done</span>.</p></div>
+      <div class="inv"><div class="id">INV-6 · ONCE</div><h4>Handoff exactly-once</h4><p>Enqueue idempotent (<span class="mono">UNIQUE(article_id, raw_sha256)</span>) + claim atomic (<span class="mono">BEGIN IMMEDIATE</span>).</p></div>
+      <div class="inv"><div class="id">INV-7 · ≥2 CAP</div><h4>Change-detect cần ≥2 capture/URL</h4><p><span class="mono">refresh_watchlist</span> cấp nguồn "lần chụp thứ 2" — nếu không, mọi bài kẹt ở NEW.</p></div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>News-Scape · FRA Data Ingestion — bản đồ framework end-to-end 3 vòng.</span>
+    <span class="mono">Bronze (WORM) → Silver (pure) → Gold (DoD-gated) · SQLite WAL</span>
+  </div>
+</footer>

@@ -36,9 +36,12 @@ HUONG_DAN = [
     ("Cách nhập", ""),
     ("1", "Mỗi cột trong sheet 'entities' là 1 nhóm; nhập MỖI giá trị 1 dòng."),
     ("2", "tickers/etfs/indices/exchanges: nhập MÃ (vd HPG, FPT, VNINDEX, HOSE)."),
-    ("3", "industries: nhập MÃ ngành GICS (vd THEP, NGAN_HANG) — dùng code, KHÔNG dùng tên."),
-    ("4", "entities: (nâng cao) entity_id nguyên bản dạng TYPE:CODE (vd TICKER:HPG)."),
-    ("Tra mã", "Xem danh sách hợp lệ trong data/entities/entities.xlsx (sheet Securities/Industries/...)."),
+    ("3", "industries: nhập MÃ ngành GICS (vd THEP, NGAN_HANG, QUY) — dùng code, KHÔNG dùng tên."),
+    ("4", "macro: nhập MÃ địa chính trị/vĩ mô (vd MY, TRUNG_QUOC, EU, LAI_SUAT, TY_GIA, LAM_PHAT)."),
+    ("5", "assets: nhập MÃ loại tài sản (vd TRAI_PHIEU, CO_PHIEU, VANG, DAU_THO, BAT_DONG_SAN_TAI_SAN)."),
+    ("6", "institutions: nhập MÃ định chế (vd NHNN, UBCKNN, FED, ECB)."),
+    ("7", "entities: (nâng cao) entity_id nguyên bản dạng TYPE:CODE (vd TICKER:HPG)."),
+    ("Tra mã", "Xem danh sách hợp lệ trong data/entities/entities.xlsx (sheet Securities/Industries/Macro/Assets/...)."),
     ("Bật/tắt", "Bật/tắt user ở users/input/manifest.yaml (vắng tên = mặc định BẬT)."),
 ]
 
@@ -49,11 +52,12 @@ def build_template(path: Path) -> Path:
     ws = wb.active
     ws.title = "entities"
     ws.append(list(GROUP_KEYS))
-    ws.append(["HPG", "E1VFVN30", "VNINDEX", "HOSE", "THEP", None])
+    ws.append(["HPG", "E1VFVN30", "VNINDEX", "HOSE", "THEP", "MY", "TRAI_PHIEU", "NHNN", None])
     ws.freeze_panes = "A2"
     # dropdown cho exchanges (cột D)
     dv_ex = DataValidation(type="list", formula1='"%s"' % ",".join(EXCHANGES), allow_blank=True)
     ws.add_data_validation(dv_ex); dv_ex.add("D2:D200")
+
 
     ms = wb.create_sheet("meta")
     ms.append(["key", "value"])

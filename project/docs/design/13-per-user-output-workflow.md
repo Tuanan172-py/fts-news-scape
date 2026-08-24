@@ -146,10 +146,9 @@ của user-workflow — giả định đã sinh `work_items` trong DB.
    Lọc theo `--date today|YYYY-MM-DD` hoặc `--days N` (dùng `published_at`, fallback `fetched_at`).
 2. **Định tuyến** — entity của article = `l1_outputs.entities[in_list].entity_id`;
    `subscribers_for(eset)` ∩ `enabled`; mỗi user lấy `matched = eset ∩ resolve_subscription(user)`.
-3. **Ghi 3 file/ngày** (atomic temp + `os.replace`, utf-8-sig):
-   - `L1.csv` — dump lớp L1 (audit): article_id, date, title, entities, categories.
-   - `agent.csv` — dump lớp agent (audit).
-   - `final.csv` — **deliverable gated** (xem cột §10).
+3. **Ghi file** (atomic temp + `os.replace`, utf-8-sig):
+   - Thư mục user (`users/output/<name>/<YYYY-MM-DD>/`): **chỉ ghi duy nhất `final.csv`** (deliverable tinh gọn).
+   - Thư mục audit tập trung (`users/output/_master/<YYYY-MM-DD>/`): ghi đầy đủ cả 3 file `L1.csv`, `agent.csv`, `final.csv`.
 4. **Checkpoint** — `src/export/checkpoint.py::mark_written()` cập nhật `_checkpoint.json` **SAU** khi
    `final.csv` đã replace (crash-safe). `logger.info("done user=… date=… rows=…")`.
 
@@ -159,12 +158,11 @@ Article thiếu 1 lớp, hoặc không ai đăng ký entity → **không** vào 
 
 ## 10. Định dạng `final.csv`
 
-`article_id, date, source_domain, url, title, matched_entities, summary, key_points, implication,
-impact_area, materiality_score, time_sensitivity, sentiment, event_type`
+`date, matched_entities, title, summary, key_points, implication, impact_area, materiality_score, time_sensitivity, sentiment, event_type, url, source_domain, article_id, agent_provider, model_used`
 
+- Cột nghiệp vụ/người dùng đọc đưa lên đầu; cột kỹ thuật/máy đọc đưa về cuối.
 - `matched_entities` = **code** các entity user đăng ký MÀ article chạm (join `;`).
-- `summary`←`summary.abstractive`; `key_points`←`summary.key_points`; `implication`←`implication.text`;
-  `materiality_score`←`materiality.score`; `sentiment`←`sentiment.polarity`.
+- `summary`←`summary.abstractive`; `key_points`←`summary.key_points` (định dạng danh sách gạch đầu dòng `- Point 1\n- Point 2` xuống dòng trong ô); `implication`←`implication.text`; `materiality_score`←`materiality.score`; `sentiment`←`sentiment.polarity`.
 - Flatten null-safe: field agent tuỳ chọn thiếu → ô rỗng, không lỗi.
 - **`confidence` đã bỏ** (2026-08-18): self-reported, calibration kém → gây hiểu nhầm. Không xuất ra
   CSV và KHÔNG còn là gate DoD. Chất lượng do grounded citations + schema + `extraction_quality` gác.

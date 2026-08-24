@@ -1,0 +1,58 @@
+# assets.yaml — alias các loại tài sản và công cụ tài chính.
+# Nạp bởi scripts/build_entities.py → gộp vào entities.json.
+
+TRAI_PHIEU:
+  canonical_name: "Trái phiếu"
+  aliases:
+    - "trái phiếu"
+    - "TPDN"
+    - "TPCP"
+    - "trái phiếu doanh nghiệp"
+    - "trái phiếu chính phủ"
+    - "trái chủ"
+    - "lợi suất trái phiếu"
+    - "coupon"
+    - "đáo hạn trái phiếu"
+    - "mua lại trước hạn"
+
+CO_PHIEU:
+  canonical_name: "Cổ phiếu"
+  aliases:
+    - "cổ phiếu"
+    - "thị trường chứng khoán"
+    - "TTCK"
+    - "khớp lệnh"
+    - "khối ngoại"
+    - "tự doanh"
+    - "thanh khoản thị trường"
+    - "thị trường cơ sở"
+
+VANG:
+  canonical_name: "Vàng & Kim loại quý"
+  aliases:
+    - "vàng"
+    - "vàng SJC"
+    - "vàng nhẫn"
+    - "giá vàng"
+    - "vàng miếng"
+    - "vàng 9999"
+
+DAU_THO:
+  canonical_name: "Dầu thô & Năng lượng"
+  aliases:
+    - "dầu thô"
+    - "dầu Brent"
+    - "dầu WTI"
+    - "giá dầu"
+    - "OPEC"
+    - "xăng dầu"
+
+BAT_DONG_SAN_TAI_SAN:
+  canonical_name: "Bất động sản tài sản"
+  aliases:
+    - "bất động sản"
+    - "nhà đất"
+    - "địa ốc"
+    - "căn hộ"
+    - "đất nền"
+    - "giá nhà"

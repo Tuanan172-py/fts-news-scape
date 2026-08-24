@@ -94,3 +94,7 @@ def test_detail_failure_keeps_summary(env, feed_bytes):
         assert a.metadata["capture"]["capture_status"] == "failed"
         assert a.content_text == a.summary
     assert any("detail fetch failed" in e for e in result.errors)
+
+
+def main():
+    db_path = load_settings().get("database", {}).get("path", "data/monocle.db")

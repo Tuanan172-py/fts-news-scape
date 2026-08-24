@@ -36,6 +36,12 @@ CODE_STOPLIST = frozenset({
     "CEO", "CFO", "COO", "ETF", "IPO", "ROE", "ROA", "EPS", "OTC", "GMT",
 })
 
+# Các từ ngắn (2-3 ký tự) quan trọng được bảo vệ để không bị bộ lọc độ dài loại bỏ.
+PROTECTED_SHORT_WORDS = frozenset({
+    "quy", "my", "us", "eu", "fed", "vang", "dau", "cpi", "gdp",
+    "fomc", "sbv", "ecb", "boj", "omo", "noxh", "hrc", "ctck", "tctd", "bds",
+})
+
 _CODE_RE = re.compile(r"\b[A-Z0-9]{3}\b")
 _WS_RE = re.compile(r"\s+")
 
@@ -46,6 +52,9 @@ _CATEGORY_TYPES = {
     "etfs": ("ETF", "SECURITY_OTHER"),
     "indices": ("INDEX",),
     "exchanges": ("EXCHANGE",),
+    "macro": ("MACRO_GEO", "MACRO_THEME"),
+    "assets": ("ASSET_CLASS",),
+    "institutions": ("INSTITUTION",),
 }
 _INDUSTRY_TYPES = ("INDUSTRY_GICS1", "INDUSTRY_GICS2", "INDUSTRY_GICS3")
 
@@ -61,15 +70,15 @@ def _fold(s: str) -> str:
 class EntityRegistry:
     def __init__(self, entities: list[dict], subscriptions: dict | None = None):
         self.entities = {e["entity_id"]: e for e in entities}
-        # index alias (đã fold) -> entity_id, chỉ alias đủ dài để giảm nhiễu
-        self._alias_index: dict[str, str] = {}
+        # index alias (đã fold) -> list[entity_id], chỉ alias đủ dài hoặc trong whitelist từ ngắn
+        self._alias_index: dict[str, list[str]] = {}
         # tra ngành GICS theo CODE (chuẩn hoá đồng bộ với các nhóm code khác — KHÔNG theo tên)
         self._industry_ids_by_code: dict[str, list[str]] = {}
         for eid, e in self.entities.items():
             for a in e.get("aliases", []):
                 key = _fold(a)
-                if len(key) >= 4:
-                    self._alias_index.setdefault(key, eid)
+                if len(key) >= 4 or key in PROTECTED_SHORT_WORDS:
+                    self._alias_index.setdefault(key, []).append(eid)
             if e["type"] in _INDUSTRY_TYPES:
                 self._industry_ids_by_code.setdefault(e["code"], []).append(eid)
 
@@ -96,11 +105,11 @@ class EntityRegistry:
 
         for cat, types in _CATEGORY_TYPES.items():
             for code in doc.get(cat) or []:
-                hit = next((f"{t}:{code}" for t in types if f"{t}:{code}" in self.entities), None)
+                c_clean = str(code).strip().upper()
+                hit = next((f"{t}:{c_clean}" for t in types if f"{t}:{c_clean}" in self.entities), None)
                 ids.add(hit) if hit else unknown.append((cat, str(code)))
 
-        # industries: chỉ theo CODE ngành (vd THEP, NGAN_HANG) — đồng bộ với các nhóm code khác,
-        # KHÔNG khớp theo tên. Viết hoa để so khớp không phân biệt hoa/thường (code trong data in hoa).
+        # industries: chỉ theo CODE ngành (vd THEP, NGAN_HANG, QUY)
         for val in doc.get("industries") or []:
             hits = self._industry_ids_by_code.get(str(val).strip().upper())
             ids.update(hits) if hits else unknown.append(("industries", str(val)))
@@ -128,17 +137,18 @@ class EntityRegistry:
         for m in _CODE_RE.findall(text):
             if m in CODE_STOPLIST:
                 continue
-            for etype in ("TICKER", "ETF", "SECURITY_OTHER", "INDEX"):
+            for etype in ("TICKER", "ETF", "SECURITY_OTHER", "INDEX", "MACRO_GEO", "MACRO_THEME", "ASSET_CLASS", "INSTITUTION"):
                 eid = f"{etype}:{m}"
                 if eid in self.entities and eid not in seen:
                     seen.add(eid); out.append({"entity_id": eid, "via": "code"})
                     break
         folded = _fold(text)
-        for key, eid in self._alias_index.items():
-            if eid in seen:
-                continue
+        for key, eids in self._alias_index.items():
             if re.search(r"\b" + re.escape(key) + r"\b", folded):
-                seen.add(eid); out.append({"entity_id": eid, "via": "alias"})
+                for eid in eids:
+                    if eid not in seen:
+                        seen.add(eid)
+                        out.append({"entity_id": eid, "via": "alias"})
         result = []
         for o in out:
             e = self.entities[o["entity_id"]]
@@ -147,6 +157,7 @@ class EntityRegistry:
                 "canonical_name": e["canonical_name"], "via": o["via"],
             })
         return result
+
 
     # ---- text matching (tương thích ngược) -------------------------------
     def match(self, text: str) -> list[dict]:

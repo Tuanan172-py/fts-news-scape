@@ -25,7 +25,8 @@
           "entity_id": {"type": ["string", "null"], "description": "entity_id trong danh sách, null nếu ngoài danh sách"},
           "type": {"type": "string", "enum": [
             "TICKER", "ETF", "SECURITY_OTHER", "INDEX", "EXCHANGE",
-            "INDUSTRY_GICS1", "INDUSTRY_GICS2", "INDUSTRY_GICS3", "UNKNOWN"
+            "INDUSTRY_GICS1", "INDUSTRY_GICS2", "INDUSTRY_GICS3",
+            "MACRO_GEO", "MACRO_THEME", "ASSET_CLASS", "INSTITUTION", "UNKNOWN"
           ]},
           "method": {"type": "string", "enum": ["exact_code", "alias", "semantic"],
             "description": "exact_code/alias = code làm được; semantic = suy luận của agent"},
@@ -38,15 +39,19 @@
       "type": "object",
       "description": "checklist theo từng nhóm thực thể: nhóm nào THỰC HIỆN được / KHÔNG",
       "required": ["ticker_company", "etf_fund", "index", "exchange", "industry_sector"],
-      "additionalProperties": false,
+      "additionalProperties": true,
       "properties": {
         "ticker_company":  {"type": "string", "enum": ["done", "none", "out_of_list"]},
         "etf_fund":        {"type": "string", "enum": ["done", "none", "out_of_list"]},
         "index":           {"type": "string", "enum": ["done", "none", "out_of_list"]},
         "exchange":        {"type": "string", "enum": ["done", "none", "out_of_list"]},
-        "industry_sector": {"type": "string", "enum": ["done", "none", "out_of_list"]}
+        "industry_sector": {"type": "string", "enum": ["done", "none", "out_of_list"]},
+        "macro_geo":       {"type": "string", "enum": ["done", "none", "out_of_list"]},
+        "asset_class":     {"type": "string", "enum": ["done", "none", "out_of_list"]},
+        "institution":     {"type": "string", "enum": ["done", "none", "out_of_list"]}
       }
     },
+
     "unlisted_candidates": {
       "type": "array", "items": {"type": "string"},
       "description": "tên/thương hiệu nhận ra nhưng CHƯA có trong danh sách → đề xuất bổ sung"

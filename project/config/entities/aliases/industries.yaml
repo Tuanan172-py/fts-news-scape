@@ -1,0 +1,72 @@
+# industries.yaml — alias cụm từ mở rộng cho các mã ngành GICS.
+# Định dạng: <INDUSTRY_CODE>: [alias1, alias2, ...]
+# Nạp bởi scripts/build_entities.py → gộp vào entities.json.
+
+QUY:
+  - "quỹ"
+  - "quỹ đầu tư"
+  - "quỹ đầu tư mạo hiểm"
+  - "quỹ mở"
+  - "quỹ đóng"
+  - "quỹ thành viên"
+  - "quỹ ngoại"
+  - "venture capital"
+  - "quỹ hoán đổi danh mục"
+
+THEP:
+  - "thép"
+  - "ngành thép"
+  - "thép xây dựng"
+  - "thép cuộn cán nóng"
+  - "HRC"
+  - "tôn mạ"
+  - "thép lá"
+  - "phôi thép"
+
+NGAN_HANG:
+  - "ngân hàng"
+  - "ngành ngân hàng"
+  - "nhà băng"
+  - "tổ chức tín dụng"
+  - "TCTD"
+  - "room tín dụng"
+  - "ngân hàng thương mại"
+
+QUAN_LY_VA_PHAT_TRIEN_BAT_DONG_SAN:
+  - "bất động sản"
+  - "BĐS"
+  - "địa ốc"
+  - "nhà đất"
+  - "thị trường nhà ở"
+  - "NOXH"
+  - "nhà ở xã hội"
+  - "bất động sản khu công nghiệp"
+  - "BĐS KCN"
+
+CONG_TY_CHUNG_KHOAN:
+  - "chứng khoán"
+  - "công ty chứng khoán"
+  - "CTCK"
+  - "môi giới chứng khoán"
+  - "tự doanh chứng khoán"
+
+BAO_HIEM:
+  - "bảo hiểm"
+  - "ngành bảo hiểm"
+  - "bảo hiểm nhân thọ"
+  - "bảo hiểm phi nhân thọ"
+  - "doanh nghiệp bảo hiểm"
+
+DAU_KHI:
+  - "dầu khí"
+  - "ngành dầu khí"
+  - "thượng nguồn dầu khí"
+  - "hạ nguồn dầu khí"
+  - "khí tự nhiên"
+  - "xăng dầu"
+
+DUOC_PHAM_CONG_NGHE_SINH_HOC:
+  - "dược phẩm"
+  - "ngành dược"
+  - "thuốc"
+  - "công nghệ sinh học"

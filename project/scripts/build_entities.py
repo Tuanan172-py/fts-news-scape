@@ -41,12 +41,17 @@ import pandas as pd
 # ----------------------------------------------------------------------------
 # Cấu hình đường dẫn mặc định
 # ----------------------------------------------------------------------------
-DEFAULT_DATA_ROOT = Path(
-    r"C:\Users\An Thanh Pham\OneDrive - fpts.com.vn\FRA - Data"
-)
+_POSSIBLE_DATA_ROOTS = [
+    Path(r"C:\Users\anpt\OneDrive - fpts.com.vn\FRA - Data"),
+    Path(r"C:\Users\An Thanh Pham\OneDrive - fpts.com.vn\FRA - Data"),
+    Path(__file__).resolve().parents[2] / "FRA - Data",
+]
+DEFAULT_DATA_ROOT = next((p for p in _POSSIBLE_DATA_ROOTS if p.exists()), _POSSIBLE_DATA_ROOTS[0])
 DEFAULT_OUT = Path(__file__).resolve().parents[1] / "data" / "entities"
+ALIASES_DIR = Path(__file__).resolve().parents[1] / "config" / "entities" / "aliases"
 
-SCHEMA_VERSION = "1.0.0"
+SCHEMA_VERSION = "1.1.0"
+
 
 
 # ----------------------------------------------------------------------------
@@ -173,15 +178,47 @@ def slug(s: str) -> str:
     return s.upper()
 
 
-def _load_brand_aliases() -> dict:
-    """config/entities/brand_aliases.yaml → {code: [alias,...]}. Thiếu file/PyYAML → {}."""
-    path = Path(__file__).resolve().parents[1] / "config" / "entities" / "brand_aliases.yaml"
+def _load_yaml(path: Path) -> dict:
+    if not path.exists():
+        return {}
     try:
         import yaml
-        data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
-        return {str(k).strip(): list(v or []) for k, v in data.items()}
-    except Exception:  # noqa: BLE001 — brand map là tùy chọn
+        return yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    except Exception:
         return {}
+
+
+def _load_all_domain_aliases() -> dict:
+    """Nạp toàn bộ alias từ config/entities/aliases/ (và fallback brand_aliases.yaml)."""
+    aliases_dir = ALIASES_DIR
+    res = {
+        "tickers": {},
+        "industries": {},
+        "macro_geo": {},
+        "assets": {},
+        "institutions": {},
+    }
+    # Tickers
+    t_path = aliases_dir / "tickers.yaml"
+    if not t_path.exists():
+        t_path = aliases_dir.parent / "brand_aliases.yaml"
+    raw_tickers = _load_yaml(t_path)
+    res["tickers"] = {str(k).strip(): list(v or []) for k, v in raw_tickers.items()}
+
+    # Industries
+    raw_ind = _load_yaml(aliases_dir / "industries.yaml")
+    res["industries"] = {str(k).strip(): list(v or []) for k, v in raw_ind.items()}
+
+    # Macro & Geo
+    res["macro_geo"] = _load_yaml(aliases_dir / "macro_geo.yaml")
+
+    # Assets
+    res["assets"] = _load_yaml(aliases_dir / "assets.yaml")
+
+    # Institutions
+    res["institutions"] = _load_yaml(aliases_dir / "institutions.yaml")
+
+    return res
 
 
 # ----------------------------------------------------------------------------
@@ -192,7 +229,9 @@ def build(data_root: Path, out_dir: Path) -> dict:
     cd = data_root / "company_data"
     ic = data_root / "industry_classification"
 
-    brand_map = _load_brand_aliases()
+    all_domain_aliases = _load_all_domain_aliases()
+    brand_map = all_domain_aliases["tickers"]
+    ind_aliases = all_domain_aliases["industries"]
 
     comp = read_excel(cd / "company_name.xlsx")
     etf = read_excel(cd / "etf_name.xlsx")
@@ -291,13 +330,58 @@ def build(data_root: Path, out_dir: Path) -> dict:
     # --- 4) INDUSTRY: ngành GICS 3 cấp --------------------------------------
     g1 = latest.groupby("GICS1_name").ticker.nunique()
     for name, n in g1.items():
-        entities.append(_industry("GICS1", name, None, int(n)))
+        entities.append(_industry("GICS1", name, None, int(n), ind_aliases))
     g2 = latest.groupby(["GICS1_name", "GICS2_name"]).ticker.nunique()
     for (p1, name), n in g2.items():
-        entities.append(_industry("GICS2", name, clean_name(p1), int(n)))
+        entities.append(_industry("GICS2", name, clean_name(p1), int(n), ind_aliases))
     g3 = latest.groupby(["GICS2_name", "GICS3_name"]).ticker.nunique()
     for (p2, name), n in g3.items():
-        entities.append(_industry("GICS3", name, clean_name(p2), int(n)))
+        entities.append(_industry("GICS3", name, clean_name(p2), int(n), ind_aliases))
+
+    # --- 5) MACRO_GEO & MACRO_THEME ------------------------------------------
+    macro_themes = {"LAI_SUAT", "TY_GIA", "LAM_PHAT", "THUE_THUONG_MAI"}
+    for code, info in all_domain_aliases["macro_geo"].items():
+        etype = "MACRO_THEME" if code in macro_themes else "MACRO_GEO"
+        canonical = info.get("canonical_name", code)
+        aliases = list(info.get("aliases", [canonical]))
+        entities.append({
+            "entity_id": f"{etype}:{code}",
+            "type": etype,
+            "code": code,
+            "canonical_name": canonical,
+            "aliases": aliases,
+            "attributes": {"category": "macro"},
+            "sources": ["config/entities/aliases/macro_geo.yaml"],
+        })
+
+    # --- 6) ASSET_CLASS -----------------------------------------------------
+    for code, info in all_domain_aliases["assets"].items():
+        canonical = info.get("canonical_name", code)
+        aliases = list(info.get("aliases", [canonical]))
+        entities.append({
+            "entity_id": f"ASSET_CLASS:{code}",
+            "type": "ASSET_CLASS",
+            "code": code,
+            "canonical_name": canonical,
+            "aliases": aliases,
+            "attributes": {"category": "asset"},
+            "sources": ["config/entities/aliases/assets.yaml"],
+        })
+
+    # --- 7) INSTITUTION -----------------------------------------------------
+    for code, info in all_domain_aliases["institutions"].items():
+        canonical = info.get("canonical_name", code)
+        aliases = list(info.get("aliases", [canonical]))
+        entities.append({
+            "entity_id": f"INSTITUTION:{code}",
+            "type": "INSTITUTION",
+            "code": code,
+            "canonical_name": canonical,
+            "aliases": aliases,
+            "attributes": {"category": "institution"},
+            "sources": ["config/entities/aliases/institutions.yaml"],
+        })
+
 
     # ----- outputs ----------------------------------------------------------
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -325,14 +409,20 @@ def _sources_for(code, comp_name, etf_codes, mc_codes, os_codes, gics):
     return s
 
 
-def _industry(level: str, name: str, parent: str | None, n_tickers: int) -> dict:
+def _industry(level: str, name: str, parent: str | None, n_tickers: int, ind_aliases_map: dict | None = None) -> dict:
     name = clean_name(name)
+    ind_code = slug(name)
+    aliases = [name]
+    if ind_aliases_map and ind_code in ind_aliases_map:
+        for a in ind_aliases_map[ind_code]:
+            if a not in aliases:
+                aliases.append(a)
     return {
-        "entity_id": f"IND_{level}:{slug(name)}",
+        "entity_id": f"IND_{level}:{ind_code}",
         "type": f"INDUSTRY_{level}",
-        "code": slug(name),
+        "code": ind_code,
         "canonical_name": name,
-        "aliases": [name],
+        "aliases": aliases,
         "attributes": {"parent": parent, "ticker_count": n_tickers},
         "sources": ["industry_classification/industry_classification.xlsx"],
     }
@@ -380,6 +470,7 @@ def _write_xlsx(path: Path, entities: list[dict]) -> None:
     industries = [{
         "entity_id": e["entity_id"], "level": e["type"].replace("INDUSTRY_", ""),
         "code": e["code"], "name": e["canonical_name"],
+        "aliases": " | ".join(e["aliases"]),
         "parent": e["attributes"].get("parent", ""),
         "ticker_count": e["attributes"].get("ticker_count", ""),
     } for e in entities if e["type"].startswith("INDUSTRY_")]
@@ -394,6 +485,21 @@ def _write_xlsx(path: Path, entities: list[dict]) -> None:
         "aliases": " | ".join(e["aliases"]),
     } for e in entities if e["type"] == "EXCHANGE"]
 
+    macro = [{
+        "entity_id": e["entity_id"], "type": e["type"], "code": e["code"],
+        "name": e["canonical_name"], "aliases": " | ".join(e["aliases"]),
+    } for e in entities if e["type"] in ("MACRO_GEO", "MACRO_THEME")]
+
+    assets = [{
+        "entity_id": e["entity_id"], "code": e["code"], "name": e["canonical_name"],
+        "aliases": " | ".join(e["aliases"]),
+    } for e in entities if e["type"] == "ASSET_CLASS"]
+
+    institutions = [{
+        "entity_id": e["entity_id"], "code": e["code"], "name": e["canonical_name"],
+        "aliases": " | ".join(e["aliases"]),
+    } for e in entities if e["type"] == "INSTITUTION"]
+
     counts = Counter(e["type"] for e in entities)
     desc = {
         "TICKER": "Cổ phiếu niêm yết (mã 3 ký tự)",
@@ -403,6 +509,10 @@ def _write_xlsx(path: Path, entities: list[dict]) -> None:
         "EXCHANGE": "Sàn giao dịch",
         "INDUSTRY_GICS1": "Ngành GICS cấp 1", "INDUSTRY_GICS2": "Ngành GICS cấp 2",
         "INDUSTRY_GICS3": "Ngành GICS cấp 3",
+        "MACRO_GEO": "Địa chính trị & Quốc gia",
+        "MACRO_THEME": "Chủ đề Vĩ mô",
+        "ASSET_CLASS": "Loại tài sản & Công cụ tài chính",
+        "INSTITUTION": "Định chế & Cơ quan quản lý",
     }
     index_rows = [{"type": t, "count": counts[t], "description": desc.get(t, ""),
                    "sheet": _SHEET_OF.get(t, "")} for t in counts]
@@ -420,6 +530,12 @@ def _write_xlsx(path: Path, entities: list[dict]) -> None:
          "Nhập giá trị ở CỘT": "code", "Sheet tra cứu": "Exchanges", "Ví dụ": "HOSE"},
         {"Khoá trong file đăng ký": "industries", "Loại thực thể": "Ngành GICS (1/2/3)",
          "Nhập giá trị ở CỘT": "code", "Sheet tra cứu": "Industries", "Ví dụ": "THEP"},
+        {"Khoá trong file đăng ký": "macro", "Loại thực thể": "Địa chính trị & Vĩ mô",
+         "Nhập giá trị ở CỘT": "code", "Sheet tra cứu": "Macro", "Ví dụ": "MY"},
+        {"Khoá trong file đăng ký": "assets", "Loại thực thể": "Loại tài sản",
+         "Nhập giá trị ở CỘT": "code", "Sheet tra cứu": "Assets", "Ví dụ": "TRAI_PHIEU"},
+        {"Khoá trong file đăng ký": "institutions", "Loại thực thể": "Định chế / Quản lý",
+         "Nhập giá trị ở CỘT": "code", "Sheet tra cứu": "Institutions", "Ví dụ": "NHNN"},
     ], columns=["Khoá trong file đăng ký", "Loại thực thể", "Nhập giá trị ở CỘT",
                 "Sheet tra cứu", "Ví dụ"])
 
@@ -430,6 +546,9 @@ def _write_xlsx(path: Path, entities: list[dict]) -> None:
         "Industries": pd.DataFrame(industries),
         "Indices": pd.DataFrame(indices),
         "Exchanges": pd.DataFrame(exchanges),
+        "Macro": pd.DataFrame(macro),
+        "Assets": pd.DataFrame(assets),
+        "Institutions": pd.DataFrame(institutions),
     }
     with pd.ExcelWriter(path, engine="openpyxl") as xw:
         for name, df in sheets.items():
@@ -442,7 +561,10 @@ _SHEET_OF = {
     "INDUSTRY_GICS1": "Industries", "INDUSTRY_GICS2": "Industries",
     "INDUSTRY_GICS3": "Industries",
     "INDEX": "Indices", "EXCHANGE": "Exchanges",
+    "MACRO_GEO": "Macro", "MACRO_THEME": "Macro",
+    "ASSET_CLASS": "Assets", "INSTITUTION": "Institutions",
 }
+
 
 
 def _format_workbook(path: Path, sheets: dict) -> None:

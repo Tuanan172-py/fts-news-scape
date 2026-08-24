@@ -1,0 +1,532 @@
+{
+  "silver_schema_version": "1.0",
+  "article_id": "832d2e444572ee7372003ded95256e0659c5ffd98419cd90e5b93b4e3b4a938a",
+  "source_url": "https://cafef.vn/hinh-anh-duong-bang-nghin-ty-san-bay-phu-cat-sap-ve-dich-188260820154830546.chn",
+  "domain": "cafef.vn",
+  "content_sha256": "9e1e860e8f442bc2749d32e3a48158316aa018e47d3816c285e3e884839f7c25",
+  "cleaned_text": "Dự án xây dựng đường cất hạ cánh số 2 và các công trình đồng bộ tại Cảng hàng không Phù Cát, tỉnh Gia Lai có tổng vốn đầu tư hơn 3.200 tỷ đồng. Công trường đường cất - hạ cánh số 2 đang bước vào chặng nước rút, khi các hạng mục cuối được khẩn trương hoàn thiện để sẵn sàng cho chuyến bay hiệu chuẩn dự kiến vào đầu tháng 9 năm nay.\nDự án do Ban Quản lý dự án giao thông và dân dụng tỉnh Gia Lai làm chủ đầu tư. Gói thầu xây lắp chính có giá trị gần 2.000 tỷ đồng, do Liên danh Tổng Công ty Xây dựng Trường Sơn - ACC - DACINCO đảm nhận.\nSau gần một năm thi công, đến nay các hạng mục chính của dự án cơ bản hoàn thành, trong đó đường cất - hạ cánh số 2 đã hoàn thiện phần kết cấu bê tông.\nÔng Võ Văn Chín - Trưởng phòng Dự án 1, Ban Quản lý dự án các công trình giao thông và dân dụng tỉnh Gia Lai - cho biết: Đơn vị đang tập trung hoàn tất những phần việc còn lại, phấn đấu đưa đường băng vào bay hiệu chuẩn ngay đầu tháng 9 tới đây.\nTheo ghi nhận của PV Tiền Phong, những ngày này, không khí thi công tại công trường diễn ra khẩn trương. Các công nhân đang tập trung xử lý những công việc cuối như làm sạch bề mặt đường băng, thi công rãnh chống trượt, lắp đặt hệ thống điện, đèn tín hiệu và các thiết bị điều khiển bay.\nTrên công trường, luôn duy trì hơn 800 cán bộ, kỹ sư, công nhân cùng hàng trăm thiết bị cơ giới được duy trì, chia thành hơn 30 mũi thi công, làm việc đồng loạt trên nhiều hạng mục.\nHệ thống cáp điện đang được khẩn trương lắp đặt, phục vụ các thiết bị chiếu sáng và điều khiển trên đường băng.\nCác công nhân đang tập trung thi công rãnh chống trượt (hay rãnh kháng trượt), hoàn thiện mặt đường băng.\nTừng rãnh chống trượt cũng được công nhân tranh thủ làm sạch, vệ sinh kỹ.\nCông nhân phun nước vệ sinh mặt đường băng, chuẩn bị cho các bước hoàn thiện cuối.\nMặt đường cất hạ cánh số 2 đã cơ bản hoàn thiện, bề mặt bê tông được vệ sinh, làm sạch để chuẩn bị cho các bước kiểm tra, hiệu chuẩn.\nSân bay Phù Cát sau khi hoàn thành nâng cấp có thể đảm bảo tiếp nhận các loại tàu bay Code C như: A320, A321 và tương đương (có thể tiếp nhận các loại tàu bay Code E khi có nhu cầu). Năng lực khai thác được nâng lên sẽ mở thêm dư địa để Gia Lai tăng kết nối hàng không, thu hút du khách, mở rộng thị trường và tạo động lực phát triển kinh tế - du lịch trong thời gian tới.",
+  "extraction_quality": "high",
+  "structure": {
+    "headings": [
+      {
+        "level": 1,
+        "text": "Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích"
+      },
+      {
+        "level": 3,
+        "text": "CÙNG CHUYÊN MỤC"
+      },
+      {
+        "level": 4,
+        "text": "Cá nhân, hộ kinh doanh, doanh nghiệp có thể bị Cơ quan Thuế phạt tiền lên đến 70 triệu đồng nếu nhầm lẫn điều này Nổi bật"
+      },
+      {
+        "level": 4,
+        "text": "Năm nay, lương, thưởng của người lao động dịp lễ Quốc khánh 2/9 được tính như thế nào theo quy định mới nhất? Nổi bật"
+      },
+      {
+        "level": 4,
+        "text": "TPHCM cảnh báo tin giả về sắp xếp đơn vị hành chính"
+      },
+      {
+        "level": 4,
+        "text": "Một chương trình chỉ có ý nghĩa khi nguồn lực quốc gia được chuyển hóa thành năng lực phát triển"
+      },
+      {
+        "level": 4,
+        "text": "Cách tính số người thuộc tỷ lệ được nâng lương trước hạn"
+      },
+      {
+        "level": 4,
+        "text": "Công an phát thông báo nóng tới tất cả người dân đang bật mạng di động 4G/5G liên tục 24/7"
+      }
+    ],
+    "paragraphs": [
+      "MỚI NHẤT!",
+      "Theo Trương Định | 20-08-2026 - 16:27 PM | Kinh tế vĩ mô - Đầu tư",
+      "Dự án xây dựng đường cất hạ cánh số 2 và các công trình đồng bộ tại Cảng hàng không Phù Cát, tỉnh Gia Lai có tổng vốn đầu tư hơn 3.200 tỷ đồng. Công trường đường cất - hạ cánh số 2 đang bước vào chặng nước rút, khi các hạng mục cuối được khẩn trương hoàn thiện để sẵn sàng cho chuyến bay hiệu chuẩn dự kiến vào đầu tháng 9 năm nay.",
+      "Dự án do Ban Quản lý dự án giao thông và dân dụng tỉnh Gia Lai làm chủ đầu tư. Gói thầu xây lắp chính có giá trị gần 2.000 tỷ đồng, do Liên danh Tổng Công ty Xây dựng Trường Sơn - ACC - DACINCO đảm nhận.",
+      "Sau gần một năm thi công, đến nay các hạng mục chính của dự án cơ bản hoàn thành, trong đó đường cất - hạ cánh số 2 đã hoàn thiện phần kết cấu bê tông.",
+      "Ông Võ Văn Chín - Trưởng phòng Dự án 1, Ban Quản lý dự án các công trình giao thông và dân dụng tỉnh Gia Lai - cho biết: Đơn vị đang tập trung hoàn tất những phần việc còn lại, phấn đấu đưa đường băng vào bay hiệu chuẩn ngay đầu tháng 9 tới đây.",
+      "Theo ghi nhận của PV Tiền Phong, những ngày này, không khí thi công tại công trường diễn ra khẩn trương. Các công nhân đang tập trung xử lý những công việc cuối như làm sạch bề mặt đường băng, thi công rãnh chống trượt, lắp đặt hệ thống điện, đèn tín hiệu và các thiết bị điều khiển bay.",
+      "Trên công trường, luôn duy trì hơn 800 cán bộ, kỹ sư, công nhân cùng hàng trăm thiết bị cơ giới được duy trì, chia thành hơn 30 mũi thi công, làm việc đồng loạt trên nhiều hạng mục.",
+      "Hệ thống cáp điện đang được khẩn trương lắp đặt, phục vụ các thiết bị chiếu sáng và điều khiển trên đường băng.",
+      "Các công nhân đang tập trung thi công rãnh chống trượt (hay rãnh kháng trượt), hoàn thiện mặt đường băng.",
+      "Từng rãnh chống trượt cũng được công nhân tranh thủ làm sạch, vệ sinh kỹ.",
+      "Công nhân phun nước vệ sinh mặt đường băng, chuẩn bị cho các bước hoàn thiện cuối.",
+      "Mặt đường cất hạ cánh số 2 đã cơ bản hoàn thiện, bề mặt bê tông được vệ sinh, làm sạch để chuẩn bị cho các bước kiểm tra, hiệu chuẩn.",
+      "Sân bay Phù Cát sau khi hoàn thành nâng cấp có thể đảm bảo tiếp nhận các loại tàu bay Code C như: A320, A321 và tương đương (có thể tiếp nhận các loại tàu bay Code E khi có nhu cầu). Năng lực khai thác được nâng lên sẽ mở thêm dư địa để Gia Lai tăng kết nối hàng không, thu hút du khách, mở rộng thị trường và tạo động lực phát triển kinh tế - du lịch trong thời gian tới.",
+      "Theo Trương Định",
+      "Tiền Phong",
+      "Địa chỉ: Tầng 21 Tòa nhà Center Building. Số 01, phố Nguyễn Huy Tưởng, phường Thanh Xuân, thành phố Hà Nội",
+      "Điện thoại: 024 7309 5555 Máy lẻ 292. Fax: 024-39744082",
+      "Email: info@cafef.vn | Hotline: 0926 864 344",
+      "Chịu trách nhiệm nội dung: Ông Nguyễn Thế Tân",
+      "Liên hệ quảng cáo",
+      "Hotline:",
+      "Email: doanhnghiep@admicro.vn",
+      "© Copyright 2007 - 2026 - Công ty Cổ phần VCCorp.",
+      "Giấy phép thiết lập trang thông tin điện tử tổng hợp trên mạng số 2216/GP-TTĐT do Sở Thông tin và Truyền thông Hà Nội cấp ngày 10 tháng 4 năm 2019."
+    ],
+    "tables": [],
+    "links": [
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "http://liveboard.cafef.vn",
+        "text": "Bảng giá điện tử"
+      },
+      {
+        "href": "/du-lieu/danh-muc-dau-tu.chn",
+        "text": "Danh mục đầu tư"
+      },
+      {
+        "href": "/doc-nhanh.chn",
+        "text": "Đọc nhanh >>"
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "XÃ HỘI"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "CHỨNG KHOÁN"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "BẤT ĐỘNG SẢN"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "DOANH NGHIỆP"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "NGÂN HÀNG"
+      },
+      {
+        "href": "/smart-money.chn",
+        "text": "SMART MONEY"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "TÀI CHÍNH QUỐC TẾ"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "VĨ MÔ"
+      },
+      {
+        "href": "/kinh-te-so.chn",
+        "text": "KINH TẾ SỐ"
+      },
+      {
+        "href": "/thi-truong.chn",
+        "text": "THỊ TRƯỜNG"
+      },
+      {
+        "href": "/song.chn",
+        "text": "SỐNG"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "LIFESTYLE"
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "Xã hội"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "Doanh nghiệp"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "Kinh tế vĩ mô"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "Chứng khoán"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "Tài chính ngân hàng"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "Tài chính quốc tế"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "Tin tức"
+      },
+      {
+        "href": "/du-an.chn",
+        "text": "Dự án"
+      },
+      {
+        "href": "/ban-do-du-an.chn",
+        "text": "Bản đồ dự án"
+      },
+      {
+        "href": "/hang-hoa-nguyen-lieu.chn",
+        "text": "Hàng hóa nguyên liệu"
+      },
+      {
+        "href": "/song.chn",
+        "text": "Sống"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "Lifestyle"
+      },
+      {
+        "href": "/nhom-chu-de/emagazine.chn",
+        "text": "Magazine"
+      },
+      {
+        "href": "/du-lieu.chn",
+        "text": "Dữ liệu"
+      },
+      {
+        "href": "/du-lieu/cafeflists.chn",
+        "text": "F INDEX"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "Kinh tế vĩ mô - Đầu tư"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Chia sẻ"
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "javascript:;",
+        "text": "TIN MỚI"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Theo Tiền Phong Copy link"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Chia sẻ"
+      },
+      {
+        "href": "/san-bay.html",
+        "text": "sân bay"
+      },
+      {
+        "href": "/ca-nhan-ho-kinh-doanh-doanh-nghiep-co-the-bi-co-quan-thue-phat-tien-len-den-70-trieu-dong-neu-nham-lan-dieu-nay-188260820145105171.chn",
+        "text": ""
+      },
+      {
+        "href": "/ca-nhan-ho-kinh-doanh-doanh-nghiep-co-the-bi-co-quan-thue-phat-tien-len-den-70-trieu-dong-neu-nham-lan-dieu-nay-188260820145105171.chn",
+        "text": "Cá nhân, hộ kinh doanh, doanh nghiệp có thể bị Cơ quan Thuế phạt tiền lên đến 70 triệu đồng nếu nhầm lẫn điều này"
+      },
+      {
+        "href": "/nam-nay-luong-thuong-cua-nguoi-lao-dong-dip-le-quoc-khanh-2-9-duoc-tinh-nhu-the-nao-theo-quy-dinh-moi-nhat-188260820091307029.chn",
+        "text": ""
+      },
+      {
+        "href": "/nam-nay-luong-thuong-cua-nguoi-lao-dong-dip-le-quoc-khanh-2-9-duoc-tinh-nhu-the-nao-theo-quy-dinh-moi-nhat-188260820091307029.chn",
+        "text": "Năm nay, lương, thưởng của người lao động dịp lễ Quốc khánh 2/9 được tính như thế nào theo quy định mới nhất?"
+      },
+      {
+        "href": "/tphcm-canh-bao-tin-gia-ve-sap-xep-don-vi-hanh-chinh-188260820092710716.chn",
+        "text": ""
+      },
+      {
+        "href": "/tphcm-canh-bao-tin-gia-ve-sap-xep-don-vi-hanh-chinh-188260820092710716.chn",
+        "text": "TPHCM cảnh báo tin giả về sắp xếp đơn vị hành chính"
+      },
+      {
+        "href": "/mot-chuong-trinh-chi-co-y-nghia-khi-nguon-luc-quoc-gia-duoc-chuyen-hoa-thanh-nang-luc-phat-trien-188260820133442871.chn",
+        "text": ""
+      },
+      {
+        "href": "/mot-chuong-trinh-chi-co-y-nghia-khi-nguon-luc-quoc-gia-duoc-chuyen-hoa-thanh-nang-luc-phat-trien-188260820133442871.chn",
+        "text": "Một chương trình chỉ có ý nghĩa khi nguồn lực quốc gia được chuyển hóa thành năng lực phát triển"
+      },
+      {
+        "href": "/cach-tinh-so-nguoi-thuoc-ty-le-duoc-nang-luong-truoc-han-188260820135941077.chn",
+        "text": ""
+      },
+      {
+        "href": "/cach-tinh-so-nguoi-thuoc-ty-le-duoc-nang-luong-truoc-han-188260820135941077.chn",
+        "text": "Cách tính số người thuộc tỷ lệ được nâng lương trước hạn"
+      },
+      {
+        "href": "/cong-an-phat-thong-bao-nong-toi-tat-ca-nguoi-dan-dang-bat-mang-di-dong-4g-5g-lien-tuc-24-7-188260820144136269.chn",
+        "text": ""
+      },
+      {
+        "href": "/cong-an-phat-thong-bao-nong-toi-tat-ca-nguoi-dan-dang-bat-mang-di-dong-4g-5g-lien-tuc-24-7-188260820144136269.chn",
+        "text": "Công an phát thông báo nóng tới tất cả người dân đang bật mạng di động 4G/5G liên tục 24/7"
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "XÃ HỘI"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "CHỨNG KHOÁN"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "BẤT ĐỘNG SẢN"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "DOANH NGHIỆP"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "NGÂN HÀNG"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "TÀI CHÍNH QUỐC TẾ"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "VĨ MÔ"
+      },
+      {
+        "href": "/kinh-te-so.chn",
+        "text": "KINH TẾ SỐ"
+      },
+      {
+        "href": "/thi-truong.chn",
+        "text": "THỊ TRƯỜNG"
+      },
+      {
+        "href": "/song.chn",
+        "text": "SỐNG"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "LIFESTYLE"
+      },
+      {
+        "href": "/du-lieu.chn",
+        "text": "Dữ liệu"
+      },
+      {
+        "href": "/du-lieu/top/ceo.chn",
+        "text": "Top 200"
+      },
+      {
+        "href": "https://www.messenger.com/t/108804609142280",
+        "text": "Chat với tư vấn viên"
+      },
+      {
+        "href": "http://www.vccorp.vn/",
+        "text": ""
+      },
+      {
+        "href": "/static/chinh-sach-bao-mat.html",
+        "text": "Chính sách bảo mật"
+      }
+    ]
+  },
+  "images": [
+    {
+      "outer_tag": "<img alt=\"Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 1.\" class=\"\" data-original=\"https://cdn.tienphong.vn/images/J8P6XsLuuv5WixFINEmM5qNta58a3PrxasPIv4D8K6_Xmhd5yheYxAou9VC4-x885fdksqzWqAO55mSSctl9mA/tp-c_img-9996.jpg.avif\" h=\"1115\" height=\"\" rel=\"lightbox\" src=\"https://cdn.tienphong.vn/images/J8P6XsLuuv5WixFINEmM5qNta58a3PrxasPIv4D8K6_Xmhd5yheYxAou9VC4-x885fdksqzWqAO55mSSctl9mA/tp-c_img-9996.jpg.avif\" title=\"Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 1.\" type=\"photo\" w=\"1507\" width=\"\"/>",
+      "resolved_url": "https://cdn.tienphong.vn/images/J8P6XsLuuv5WixFINEmM5qNta58a3PrxasPIv4D8K6_Xmhd5yheYxAou9VC4-x885fdksqzWqAO55mSSctl9mA/tp-c_img-9996.jpg.avif",
+      "alt": "Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 1.",
+      "title": "Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 1.",
+      "caption": "Dự án do Ban Quản lý dự án giao thông và dân dụng tỉnh Gia Lai làm chủ đầu tư. Gói thầu xây lắp chính có giá trị gần 2.000 tỷ đồng, do Liên danh Tổng Công ty Xây dựng Trường Sơn - ACC - DACINCO đảm nhận."
+    },
+    {
+      "outer_tag": "<img alt=\"Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 2.\" class=\"\" data-original=\"https://cdn.tienphong.vn/images/J8P6XsLuuv5WixFINEmM5qNta58a3PrxasPIv4D8K68baCwJzUdUUj9EjX5X6Nrkny3I70vJ7Z6Y0ax-GvailA/tp-c_img-9935.jpg.avif\" h=\"1115\" height=\"\" rel=\"lightbox\" src=\"https://cdn.tienphong.vn/images/J8P6XsLuuv5WixFINEmM5qNta58a3PrxasPIv4D8K68baCwJzUdUUj9EjX5X6Nrkny3I70vJ7Z6Y0ax-GvailA/tp-c_img-9935.jpg.avif\" title=\"Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 2.\" type=\"photo\" w=\"1507\" width=\"\"/>",
+      "resolved_url": "https://cdn.tienphong.vn/images/J8P6XsLuuv5WixFINEmM5qNta58a3PrxasPIv4D8K68baCwJzUdUUj9EjX5X6Nrkny3I70vJ7Z6Y0ax-GvailA/tp-c_img-9935.jpg.avif",
+      "alt": "Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 2.",
+      "title": "Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 2.",
+      "caption": "Sau gần một năm thi công, đến nay các hạng mục chính của dự án cơ bản hoàn thành, trong đó đường cất - hạ cánh số 2 đã hoàn thiện phần kết cấu bê tông."
+    },
+    {
+      "outer_tag": "<img alt=\"Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 3.\" class=\"\" data-original=\"https://cdn.tienphong.vn/images/J8P6XsLuuv5WixFINEmM5qNta58a3PrxasPIv4D8K6-YPMBC8jcVReQtRgPLsG4qyXTHdx7KFCvTgfj4CW3MDg/tp-c_img-9928.jpg.avif\" h=\"1115\" height=\"\" rel=\"lightbox\" src=\"https://cdn.tienphong.vn/images/J8P6XsLuuv5WixFINEmM5qNta58a3PrxasPIv4D8K6-YPMBC8jcVReQtRgPLsG4qyXTHdx7KFCvTgfj4CW3MDg/tp-c_img-9928.jpg.avif\" title=\"Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 3.\" type=\"photo\" w=\"1507\" width=\"\"/>",
+      "resolved_url": "https://cdn.tienphong.vn/images/J8P6XsLuuv5WixFINEmM5qNta58a3PrxasPIv4D8K6-YPMBC8jcVReQtRgPLsG4qyXTHdx7KFCvTgfj4CW3MDg/tp-c_img-9928.jpg.avif",
+      "alt": "Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 3.",
+      "title": "Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 3.",
+      "caption": "Ông Võ Văn Chín - Trưởng phòng Dự án 1, Ban Quản lý dự án các công trình giao thông và dân dụng tỉnh Gia Lai - cho biết: Đơn vị đang tập trung hoàn tất những phần việc còn lại, phấn đấu đưa đường băng vào bay hiệu chuẩn ngay đầu tháng 9 tới đây."
+    },
+    {
+      "outer_tag": "<img alt=\"Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 4.\" class=\"\" data-original=\"https://cdn.tienphong.vn/images/J8P6XsLuuv5WixFINEmM5qNta58a3PrxasPIv4D8K6_ueFVidroe-uvMSEUbuNv2dVeQ-HIlTPYU0rSwPnqAWg/tp-c-img-9981.jpg.avif\" h=\"1115\" height=\"\" rel=\"lightbox\" src=\"https://cdn.tienphong.vn/images/J8P6XsLuuv5WixFINEmM5qNta58a3PrxasPIv4D8K6_ueFVidroe-uvMSEUbuNv2dVeQ-HIlTPYU0rSwPnqAWg/tp-c-img-9981.jpg.avif\" title=\"Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 4.\" type=\"photo\" w=\"1507\" width=\"\"/>",
+      "resolved_url": "https://cdn.tienphong.vn/images/J8P6XsLuuv5WixFINEmM5qNta58a3PrxasPIv4D8K6_ueFVidroe-uvMSEUbuNv2dVeQ-HIlTPYU0rSwPnqAWg/tp-c-img-9981.jpg.avif",
+      "alt": "Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 4.",
+      "title": "Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 4.",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 5.\" class=\"\" data-original=\"https://cdn.tienphong.vn/images/J8P6XsLuuv5WixFINEmM5qNta58a3PrxasPIv4D8K68zORdcagf8xjflYddA5pwpE2dcoonFb2IFgK3vSV4yig/tp-c_img-9987.jpg.avif\" h=\"1115\" height=\"\" rel=\"lightbox\" src=\"https://cdn.tienphong.vn/images/J8P6XsLuuv5WixFINEmM5qNta58a3PrxasPIv4D8K68zORdcagf8xjflYddA5pwpE2dcoonFb2IFgK3vSV4yig/tp-c_img-9987.jpg.avif\" title=\"Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 5.\" type=\"photo\" w=\"1507\" width=\"\"/>",
+      "resolved_url": "https://cdn.tienphong.vn/images/J8P6XsLuuv5WixFINEmM5qNta58a3PrxasPIv4D8K68zORdcagf8xjflYddA5pwpE2dcoonFb2IFgK3vSV4yig/tp-c_img-9987.jpg.avif",
+      "alt": "Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 5.",
+      "title": "Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 5.",
+      "caption": "Theo ghi nhận của PV Tiền Phong, những ngày này, không khí thi công tại công trường diễn ra khẩn trương. Các công nhân đang tập trung xử lý những công việc cuối như làm sạch bề mặt đường băng, thi công rãnh chống trượt, lắp đặt hệ thống điện, đèn tín hiệu và các thiết bị điều khiển bay."
+    },
+    {
+      "outer_tag": "<img alt=\"Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 6.\" class=\"\" data-original=\"https://cdn.tienphong.vn/images/J8P6XsLuuv5WixFINEmM5qNta58a3PrxasPIv4D8K68zORdcagf8xjflYddA5pwpny3I70vJ7Z6Y0ax-GvailA/tp-c_img-9985.jpg.avif\" h=\"1115\" height=\"\" rel=\"lightbox\" src=\"https://cdn.tienphong.vn/images/J8P6XsLuuv5WixFINEmM5qNta58a3PrxasPIv4D8K68zORdcagf8xjflYddA5pwpny3I70vJ7Z6Y0ax-GvailA/tp-c_img-9985.jpg.avif\" title=\"Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 6.\" type=\"photo\" w=\"1507\" width=\"\"/>",
+      "resolved_url": "https://cdn.tienphong.vn/images/J8P6XsLuuv5WixFINEmM5qNta58a3PrxasPIv4D8K68zORdcagf8xjflYddA5pwpny3I70vJ7Z6Y0ax-GvailA/tp-c_img-9985.jpg.avif",
+      "alt": "Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 6.",
+      "title": "Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 6.",
+      "caption": "Trên công trường, luôn duy trì hơn 800 cán bộ, kỹ sư, công nhân cùng hàng trăm thiết bị cơ giới được duy trì, chia thành hơn 30 mũi thi công, làm việc đồng loạt trên nhiều hạng mục."
+    },
+    {
+      "outer_tag": "<img alt=\"Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 7.\" class=\"\" data-original=\"https://cdn.tienphong.vn/images/J8P6XsLuuv5WixFINEmM5qNta58a3PrxasPIv4D8K69zKhNpilaSKJHp2UsljC1sny3I70vJ7Z6Y0ax-GvailA/tp-c_img-9945.jpg.avif\" h=\"1115\" height=\"\" rel=\"lightbox\" src=\"https://cdn.tienphong.vn/images/J8P6XsLuuv5WixFINEmM5qNta58a3PrxasPIv4D8K69zKhNpilaSKJHp2UsljC1sny3I70vJ7Z6Y0ax-GvailA/tp-c_img-9945.jpg.avif\" title=\"Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 7.\" type=\"photo\" w=\"1507\" width=\"\"/>",
+      "resolved_url": "https://cdn.tienphong.vn/images/J8P6XsLuuv5WixFINEmM5qNta58a3PrxasPIv4D8K69zKhNpilaSKJHp2UsljC1sny3I70vJ7Z6Y0ax-GvailA/tp-c_img-9945.jpg.avif",
+      "alt": "Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 7.",
+      "title": "Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 7.",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 8.\" class=\"\" data-original=\"https://cdn.tienphong.vn/images/J8P6XsLuuv5WixFINEmM5qNta58a3PrxasPIv4D8K6-JyA01aUBIsJKwvxgUkuYyMxjwuvuKha_30w204UCq7g/tp-c_img-9953.jpg.avif\" h=\"1115\" height=\"\" rel=\"lightbox\" src=\"https://cdn.tienphong.vn/images/J8P6XsLuuv5WixFINEmM5qNta58a3PrxasPIv4D8K6-JyA01aUBIsJKwvxgUkuYyMxjwuvuKha_30w204UCq7g/tp-c_img-9953.jpg.avif\" title=\"Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 8.\" type=\"photo\" w=\"1507\" width=\"\"/>",
+      "resolved_url": "https://cdn.tienphong.vn/images/J8P6XsLuuv5WixFINEmM5qNta58a3PrxasPIv4D8K6-JyA01aUBIsJKwvxgUkuYyMxjwuvuKha_30w204UCq7g/tp-c_img-9953.jpg.avif",
+      "alt": "Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 8.",
+      "title": "Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 8.",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 9.\" class=\"\" data-original=\"https://cdn.tienphong.vn/images/J8P6XsLuuv5WixFINEmM5qNta58a3PrxasPIv4D8K69zKhNpilaSKJHp2UsljC1sdVeQ-HIlTPYU0rSwPnqAWg/tp-c_img-9941.jpg.avif\" h=\"1115\" height=\"\" rel=\"lightbox\" src=\"https://cdn.tienphong.vn/images/J8P6XsLuuv5WixFINEmM5qNta58a3PrxasPIv4D8K69zKhNpilaSKJHp2UsljC1sdVeQ-HIlTPYU0rSwPnqAWg/tp-c_img-9941.jpg.avif\" title=\"Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 9.\" type=\"photo\" w=\"1507\" width=\"\"/>",
+      "resolved_url": "https://cdn.tienphong.vn/images/J8P6XsLuuv5WixFINEmM5qNta58a3PrxasPIv4D8K69zKhNpilaSKJHp2UsljC1sdVeQ-HIlTPYU0rSwPnqAWg/tp-c_img-9941.jpg.avif",
+      "alt": "Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 9.",
+      "title": "Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 9.",
+      "caption": "Hệ thống cáp điện đang được khẩn trương lắp đặt, phục vụ các thiết bị chiếu sáng và điều khiển trên đường băng."
+    },
+    {
+      "outer_tag": "<img alt=\"Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 10.\" class=\"\" data-original=\"https://cdn.tienphong.vn/images/J8P6XsLuuv5WixFINEmM5qNta58a3PrxasPIv4D8K6_MIOUkbriWiWk4PEJwuR6s-MHPF-CLUeljWVimwaJMeg/tp-c_img-0004.jpg.avif\" h=\"1115\" height=\"\" rel=\"lightbox\" src=\"https://cdn.tienphong.vn/images/J8P6XsLuuv5WixFINEmM5qNta58a3PrxasPIv4D8K6_MIOUkbriWiWk4PEJwuR6s-MHPF-CLUeljWVimwaJMeg/tp-c_img-0004.jpg.avif\" title=\"Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 10.\" type=\"photo\" w=\"1507\" width=\"\"/>",
+      "resolved_url": "https://cdn.tienphong.vn/images/J8P6XsLuuv5WixFINEmM5qNta58a3PrxasPIv4D8K6_MIOUkbriWiWk4PEJwuR6s-MHPF-CLUeljWVimwaJMeg/tp-c_img-0004.jpg.avif",
+      "alt": "Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 10.",
+      "title": "Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 10.",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 11.\" class=\"\" data-original=\"https://cdn.tienphong.vn/images/J8P6XsLuuv5WixFINEmM5qNta58a3PrxasPIv4D8K6_MIOUkbriWiWk4PEJwuR6s5fdksqzWqAO55mSSctl9mA/tp-c_img-0006.jpg.avif\" h=\"1115\" height=\"\" rel=\"lightbox\" src=\"https://cdn.tienphong.vn/images/J8P6XsLuuv5WixFINEmM5qNta58a3PrxasPIv4D8K6_MIOUkbriWiWk4PEJwuR6s5fdksqzWqAO55mSSctl9mA/tp-c_img-0006.jpg.avif\" title=\"Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 11.\" type=\"photo\" w=\"1507\" width=\"\"/>",
+      "resolved_url": "https://cdn.tienphong.vn/images/J8P6XsLuuv5WixFINEmM5qNta58a3PrxasPIv4D8K6_MIOUkbriWiWk4PEJwuR6s5fdksqzWqAO55mSSctl9mA/tp-c_img-0006.jpg.avif",
+      "alt": "Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 11.",
+      "title": "Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 11.",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 12.\" class=\"\" data-original=\"https://cdn.tienphong.vn/images/J8P6XsLuuv5WixFINEmM5qNta58a3PrxasPIv4D8K69VgSMH4xvfzhzsX5tJ6FlWXUEgSM4I-mK6cZ2Da4ypFw/tp-c_img-0010.jpg.avif\" h=\"1115\" height=\"\" rel=\"lightbox\" src=\"https://cdn.tienphong.vn/images/J8P6XsLuuv5WixFINEmM5qNta58a3PrxasPIv4D8K69VgSMH4xvfzhzsX5tJ6FlWXUEgSM4I-mK6cZ2Da4ypFw/tp-c_img-0010.jpg.avif\" title=\"Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 12.\" type=\"photo\" w=\"1507\" width=\"\"/>",
+      "resolved_url": "https://cdn.tienphong.vn/images/J8P6XsLuuv5WixFINEmM5qNta58a3PrxasPIv4D8K69VgSMH4xvfzhzsX5tJ6FlWXUEgSM4I-mK6cZ2Da4ypFw/tp-c_img-0010.jpg.avif",
+      "alt": "Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 12.",
+      "title": "Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 12.",
+      "caption": "Các công nhân đang tập trung thi công rãnh chống trượt (hay rãnh kháng trượt), hoàn thiện mặt đường băng."
+    },
+    {
+      "outer_tag": "<img alt=\"Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 13.\" class=\"\" data-original=\"https://cdn.tienphong.vn/images/J8P6XsLuuv5WixFINEmM5qNta58a3PrxasPIv4D8K6_QjN7o4Cmek7bn64lNg7pUny3I70vJ7Z6Y0ax-GvailA/tp-c_img-9965.jpg.avif\" h=\"1115\" height=\"\" rel=\"lightbox\" src=\"https://cdn.tienphong.vn/images/J8P6XsLuuv5WixFINEmM5qNta58a3PrxasPIv4D8K6_QjN7o4Cmek7bn64lNg7pUny3I70vJ7Z6Y0ax-GvailA/tp-c_img-9965.jpg.avif\" title=\"Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 13.\" type=\"photo\" w=\"1507\" width=\"\"/>",
+      "resolved_url": "https://cdn.tienphong.vn/images/J8P6XsLuuv5WixFINEmM5qNta58a3PrxasPIv4D8K6_QjN7o4Cmek7bn64lNg7pUny3I70vJ7Z6Y0ax-GvailA/tp-c_img-9965.jpg.avif",
+      "alt": "Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 13.",
+      "title": "Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 13.",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 14.\" class=\"\" data-original=\"https://cdn.tienphong.vn/images/J8P6XsLuuv5WixFINEmM5qNta58a3PrxasPIv4D8K6_QjN7o4Cmek7bn64lNg7pUGVxf5tUgmE6wnOhvmxwfuw/tp-c_img-9969.jpg.avif\" h=\"1115\" height=\"\" rel=\"lightbox\" src=\"https://cdn.tienphong.vn/images/J8P6XsLuuv5WixFINEmM5qNta58a3PrxasPIv4D8K6_QjN7o4Cmek7bn64lNg7pUGVxf5tUgmE6wnOhvmxwfuw/tp-c_img-9969.jpg.avif\" title=\"Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 14.\" type=\"photo\" w=\"1507\" width=\"\"/>",
+      "resolved_url": "https://cdn.tienphong.vn/images/J8P6XsLuuv5WixFINEmM5qNta58a3PrxasPIv4D8K6_QjN7o4Cmek7bn64lNg7pUGVxf5tUgmE6wnOhvmxwfuw/tp-c_img-9969.jpg.avif",
+      "alt": "Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 14.",
+      "title": "Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 14.",
+      "caption": "Từng rãnh chống trượt cũng được công nhân tranh thủ làm sạch, vệ sinh kỹ."
+    },
+    {
+      "outer_tag": "<img alt=\"Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 15.\" class=\"\" data-original=\"https://cdn.tienphong.vn/images/J8P6XsLuuv5WixFINEmM5qNta58a3PrxasPIv4D8K6_Xmhd5yheYxAou9VC4-x88dVeQ-HIlTPYU0rSwPnqAWg/tp-c_img-9991.jpg.avif\" h=\"1115\" height=\"\" rel=\"lightbox\" src=\"https://cdn.tienphong.vn/images/J8P6XsLuuv5WixFINEmM5qNta58a3PrxasPIv4D8K6_Xmhd5yheYxAou9VC4-x88dVeQ-HIlTPYU0rSwPnqAWg/tp-c_img-9991.jpg.avif\" title=\"Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 15.\" type=\"photo\" w=\"1507\" width=\"\"/>",
+      "resolved_url": "https://cdn.tienphong.vn/images/J8P6XsLuuv5WixFINEmM5qNta58a3PrxasPIv4D8K6_Xmhd5yheYxAou9VC4-x88dVeQ-HIlTPYU0rSwPnqAWg/tp-c_img-9991.jpg.avif",
+      "alt": "Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 15.",
+      "title": "Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 15.",
+      "caption": "Công nhân phun nước vệ sinh mặt đường băng, chuẩn bị cho các bước hoàn thiện cuối."
+    },
+    {
+      "outer_tag": "<img alt=\"Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 16.\" class=\"\" data-original=\"https://cdn.tienphong.vn/images/J8P6XsLuuv5WixFINEmM5qNta58a3PrxasPIv4D8K69RabBIDly0LtNyU3pKvY50ny3I70vJ7Z6Y0ax-GvailA/tp-c_img-9975.jpg.avif\" h=\"1115\" height=\"\" rel=\"lightbox\" src=\"https://cdn.tienphong.vn/images/J8P6XsLuuv5WixFINEmM5qNta58a3PrxasPIv4D8K69RabBIDly0LtNyU3pKvY50ny3I70vJ7Z6Y0ax-GvailA/tp-c_img-9975.jpg.avif\" title=\"Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 16.\" type=\"photo\" w=\"1507\" width=\"\"/>",
+      "resolved_url": "https://cdn.tienphong.vn/images/J8P6XsLuuv5WixFINEmM5qNta58a3PrxasPIv4D8K69RabBIDly0LtNyU3pKvY50ny3I70vJ7Z6Y0ax-GvailA/tp-c_img-9975.jpg.avif",
+      "alt": "Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 16.",
+      "title": "Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 16.",
+      "caption": "Mặt đường cất hạ cánh số 2 đã cơ bản hoàn thiện, bề mặt bê tông được vệ sinh, làm sạch để chuẩn bị cho các bước kiểm tra, hiệu chuẩn."
+    },
+    {
+      "outer_tag": "<img alt=\"Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 17.\" class=\"\" data-original=\"https://cdn.tienphong.vn/images/J8P6XsLuuv5WixFINEmM5qNta58a3PrxasPIv4D8K68baCwJzUdUUj9EjX5X6NrkdVeQ-HIlTPYU0rSwPnqAWg/tp-c_img-9931.jpg.avif\" h=\"1115\" height=\"\" rel=\"lightbox\" src=\"https://cdn.tienphong.vn/images/J8P6XsLuuv5WixFINEmM5qNta58a3PrxasPIv4D8K68baCwJzUdUUj9EjX5X6NrkdVeQ-HIlTPYU0rSwPnqAWg/tp-c_img-9931.jpg.avif\" title=\"Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 17.\" type=\"photo\" w=\"1507\" width=\"\"/>",
+      "resolved_url": "https://cdn.tienphong.vn/images/J8P6XsLuuv5WixFINEmM5qNta58a3PrxasPIv4D8K68baCwJzUdUUj9EjX5X6NrkdVeQ-HIlTPYU0rSwPnqAWg/tp-c_img-9931.jpg.avif",
+      "alt": "Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 17.",
+      "title": "Hình ảnh đường băng nghìn tỷ sân bay Phù Cát sắp về đích- Ảnh 17.",
+      "caption": "Sân bay Phù Cát sau khi hoàn thành nâng cấp có thể đảm bảo tiếp nhận các loại tàu bay Code C như: A320, A321 và tương đương (có thể tiếp nhận các loại tàu bay Code E khi có nhu cầu). Năng lực khai thác được nâng lên sẽ mở thêm dư địa để Gia Lai tăng kết nối hàng không, thu hút du khách, mở rộng thị trường và tạo động lực phát triển kinh tế - du lịch trong thời gian tới."
+    },
+    {
+      "outer_tag": "<img alt=\"Cá nhân, hộ kinh doanh, doanh nghiệp có thể bị Cơ quan Thuế phạt tiền lên đến 70 triệu đồng nếu nhầm lẫn điều này\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787212233209-17872122336291217280254.jpeg\" title=\"Cá nhân, hộ kinh doanh, doanh nghiệp có thể bị Cơ quan Thuế phạt tiền lên đến 70 triệu đồng nếu nhầm lẫn điều này\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787212233209-17872122336291217280254.jpeg",
+      "alt": "Cá nhân, hộ kinh doanh, doanh nghiệp có thể bị Cơ quan Thuế phạt tiền lên đến 70 triệu đồng nếu nhầm lẫn điều này",
+      "title": "Cá nhân, hộ kinh doanh, doanh nghiệp có thể bị Cơ quan Thuế phạt tiền lên đến 70 triệu đồng nếu nhầm lẫn điều này",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Năm nay, lương, thưởng của người lao động dịp lễ Quốc khánh 2/9 được tính như thế nào theo quy định mới nhất?\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787191942349-17871919441791618076728.jpeg\" title=\"Năm nay, lương, thưởng của người lao động dịp lễ Quốc khánh 2/9 được tính như thế nào theo quy định mới nhất?\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787191942349-17871919441791618076728.jpeg",
+      "alt": "Năm nay, lương, thưởng của người lao động dịp lễ Quốc khánh 2/9 được tính như thế nào theo quy định mới nhất?",
+      "title": "Năm nay, lương, thưởng của người lao động dịp lễ Quốc khánh 2/9 được tính như thế nào theo quy định mới nhất?",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"TPHCM cảnh báo tin giả về sắp xếp đơn vị hành chính\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787192762831-17871927635121402656968.webp\" title=\"TPHCM cảnh báo tin giả về sắp xếp đơn vị hành chính\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787192762831-17871927635121402656968.webp",
+      "alt": "TPHCM cảnh báo tin giả về sắp xếp đơn vị hành chính",
+      "title": "TPHCM cảnh báo tin giả về sắp xếp đơn vị hành chính",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Một chương trình chỉ có ý nghĩa khi nguồn lực quốc gia được chuyển hóa thành năng lực phát triển\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787207627482-1787207627754816284750.jpg\" title=\"Một chương trình chỉ có ý nghĩa khi nguồn lực quốc gia được chuyển hóa thành năng lực phát triển\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787207627482-1787207627754816284750.jpg",
+      "alt": "Một chương trình chỉ có ý nghĩa khi nguồn lực quốc gia được chuyển hóa thành năng lực phát triển",
+      "title": "Một chương trình chỉ có ý nghĩa khi nguồn lực quốc gia được chuyển hóa thành năng lực phát triển",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Cách tính số người thuộc tỷ lệ được nâng lương trước hạn\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787209157647-1787209158048556699705.jpg\" title=\"Cách tính số người thuộc tỷ lệ được nâng lương trước hạn\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787209157647-1787209158048556699705.jpg",
+      "alt": "Cách tính số người thuộc tỷ lệ được nâng lương trước hạn",
+      "title": "Cách tính số người thuộc tỷ lệ được nâng lương trước hạn",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Công an phát thông báo nóng tới tất cả người dân đang bật mạng di động 4G/5G liên tục 24/7\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787211637833-1787211638377765293305.jpg\" title=\"Công an phát thông báo nóng tới tất cả người dân đang bật mạng di động 4G/5G liên tục 24/7\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787211637833-1787211638377765293305.jpg",
+      "alt": "Công an phát thông báo nóng tới tất cả người dân đang bật mạng di động 4G/5G liên tục 24/7",
+      "title": "Công an phát thông báo nóng tới tất cả người dân đang bật mạng di động 4G/5G liên tục 24/7",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Công ty Cổ phần VCCorp\" height=\"49px\" src=\"https://vccorp.mediacdn.vn/vccorp-s.png\" width=\"100px\"/>",
+      "resolved_url": "https://vccorp.mediacdn.vn/vccorp-s.png",
+      "alt": "Công ty Cổ phần VCCorp",
+      "title": "",
+      "caption": ""
+    }
+  ],
+  "language": "vi",
+  "built_at": "2026-08-20T16:32:57+07:00",
+  "built_from_raw_path": "data/raw_html\\cafef.vn\\20260820\\832d2e444572ee7372003ded95256e0659c5ffd98419cd90e5b93b4e3b4a938a.html"
+}

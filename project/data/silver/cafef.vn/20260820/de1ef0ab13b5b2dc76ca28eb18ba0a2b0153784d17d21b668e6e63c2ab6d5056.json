@@ -1,0 +1,436 @@
+{
+  "silver_schema_version": "1.0",
+  "article_id": "de1ef0ab13b5b2dc76ca28eb18ba0a2b0153784d17d21b668e6e63c2ab6d5056",
+  "source_url": "https://cafef.vn/cong-ty-con-cua-hoa-chat-duc-giang-don-tin-vui-188260820171626583.chn",
+  "domain": "cafef.vn",
+  "content_sha256": "8419c6ebd060fadfa4479d749f4e8e22093f5212f505830dc6d3c7cb97521473",
+  "cleaned_text": "Công ty con của Hóa chất Đức Giang đón tin vui\nThông tin tích cực về tình trạng cổ phiếu xuất hiện sau giai đoạn PAT có nhiều biến động đáng chú ý ở bộ máy lãnh đạo.\nSở Giao dịch Chứng khoán Hà Nội (HNX) mới đây thông báo đưa cổ phiếu PAT của CTCP Phốt pho Apatit Việt Nam ra khỏi diện cảnh báo kể từ ngày 24/8/2026.\nTheo HNX, Phốt pho Apatit Việt Nam đã công bố Nghị quyết Đại hội đồng cổ đông (ĐHĐCĐ) thường niên năm 2026, qua đó đáp ứng điều kiện để cổ phiếu được đưa ra khỏi diện cảnh báo theo quy định.\nPhốt pho Apatit Việt Nam là doanh nghiệp thuộc hệ sinh thái Tập đoàn Hóa chất Đức Giang (mã: DGC). Hiện Công ty TNHH MTV Hóa chất Đức Giang Lào Cai - đơn vị do DGC sở hữu 100% vốn - đang nắm 51% vốn điều lệ PAT.\nThông tin tích cực về tình trạng cổ phiếu xuất hiện sau giai đoạn PAT có nhiều biến động đáng chú ý ở bộ máy lãnh đạo.\nCuối tháng 7, PAT công bố thông tin bất thường cho biết doanh nghiệp nhận được thông tin từ Cơ quan Cảnh sát điều tra - Bộ Công an về việc khởi tố bị can và áp dụng biện pháp cấm đi khỏi nơi cư trú đối với ông Lưu Bách Đạt, khi đó là Chủ tịch HĐQT PAT.\nÔng Đạt bị khởi tố về tội “Gây ô nhiễm môi trường”. Cùng thời điểm, ông cũng đang đảm nhiệm vị trí Thành viên HĐQT kiêm Tổng Giám đốc Tập đoàn Hóa chất Đức Giang.\nSau biến động này, PAT nhanh chóng kiện toàn bộ máy quản trị. Công ty miễn nhiệm chức danh Chủ tịch HĐQT đối với ông Lưu Bách Đạt và bổ nhiệm ông Đỗ Thành Công giữ vị trí Chủ tịch HĐQT.\nÔng Đỗ Thành Công sinh năm 1991, có trình độ kỹ sư hóa và từng đảm nhiệm vị trí Phó Giám đốc Nhà máy Phốt pho vàng và Axit thực phẩm thuộc Công ty TNHH MTV Hóa chất Đức Giang Lào Cai. Thông tin doanh nghiệp công bố cuối tháng 7 ghi nhận ông Công được bổ nhiệm giữ chức Chủ tịch HĐQT PAT.\nTrong khi bộ máy lãnh đạo có nhiều thay đổi, hoạt động kinh doanh của Phốt pho Apatit Việt Nam trong quý 2 lại ghi nhận sự cải thiện đáng kể.\nCụ thể, doanh thu thuần quý 2/2026 đạt khoảng 517 tỷ đồng, tăng hơn 8% so với cùng kỳ năm trước. Lợi nhuận gộp đạt hơn 129 tỷ đồng, tăng 28%, trong khi biên lợi nhuận gộp cải thiện từ 21,1% lên khoảng 25%. Nhờ đó, lợi nhuận sau thuế quý 2 đạt gần 110 tỷ đồng, tăng hơn 41% so với cùng kỳ.\nLũy kế 6 tháng đầu năm 2026, PAT ghi nhận doanh thu thuần hơn 939 tỷ đồng, tăng khoảng 3%. Lợi nhuận sau thuế đạt hơn 156 tỷ đồng, giảm gần 4% so với cùng kỳ.\nNhịp sống thị trường",
+  "extraction_quality": "high",
+  "structure": {
+    "headings": [
+      {
+        "level": 1,
+        "text": "Công ty con của Hóa chất Đức Giang đón tin vui"
+      },
+      {
+        "level": 3,
+        "text": "CÙNG CHUYÊN MỤC"
+      },
+      {
+        "level": 4,
+        "text": "Bao giờ chứng khoán hết “chán”? Nổi bật"
+      },
+      {
+        "level": 4,
+        "text": "Một công ty chứng khoán \"rót\" gần 1.000 tỷ đồng vào một mã ngân hàng, tạm lãi hơn trăm tỷ Nổi bật"
+      },
+      {
+        "level": 4,
+        "text": "Phiên 20/8: Khối ngoại bán ròng hơn 600 tỷ đồng trên HOSE, cổ phiếu nào bị \"xả\" mạnh nhất?"
+      },
+      {
+        "level": 4,
+        "text": "Miễn nhiệm TGĐ Nguyễn Khánh Linh"
+      },
+      {
+        "level": 4,
+        "text": "Hiếm có: Giá vàng trong nước mua vào bằng giá thế giới, bạc cũng giảm độ vênh"
+      },
+      {
+        "level": 4,
+        "text": "Lộ diện thêm cá mập trở lại là cổ đông lớn tại PNJ"
+      }
+    ],
+    "paragraphs": [
+      "MỚI NHẤT!",
+      "Ngọc Ly | 20-08-2026 - 17:17 PM | Thị trường chứng khoán",
+      "Thông tin tích cực về tình trạng cổ phiếu xuất hiện sau giai đoạn PAT có nhiều biến động đáng chú ý ở bộ máy lãnh đạo.",
+      "Sở Giao dịch Chứng khoán Hà Nội (HNX) mới đây thông báo đưa cổ phiếu PAT của CTCP Phốt pho Apatit Việt Nam ra khỏi diện cảnh báo kể từ ngày 24/8/2026.",
+      "Theo HNX, Phốt pho Apatit Việt Nam đã công bố Nghị quyết Đại hội đồng cổ đông (ĐHĐCĐ) thường niên năm 2026, qua đó đáp ứng điều kiện để cổ phiếu được đưa ra khỏi diện cảnh báo theo quy định.",
+      "Phốt pho Apatit Việt Nam là doanh nghiệp thuộc hệ sinh thái Tập đoàn Hóa chất Đức Giang (mã: DGC). Hiện Công ty TNHH MTV Hóa chất Đức Giang Lào Cai - đơn vị do DGC sở hữu 100% vốn - đang nắm 51% vốn điều lệ PAT.",
+      "Thông tin tích cực về tình trạng cổ phiếu xuất hiện sau giai đoạn PAT có nhiều biến động đáng chú ý ở bộ máy lãnh đạo.",
+      "Cuối tháng 7, PAT công bố thông tin bất thường cho biết doanh nghiệp nhận được thông tin từ Cơ quan Cảnh sát điều tra - Bộ Công an về việc khởi tố bị can và áp dụng biện pháp cấm đi khỏi nơi cư trú đối với ông Lưu Bách Đạt, khi đó là Chủ tịch HĐQT PAT.",
+      "Ông Đạt bị khởi tố về tội “Gây ô nhiễm môi trường”. Cùng thời điểm, ông cũng đang đảm nhiệm vị trí Thành viên HĐQT kiêm Tổng Giám đốc Tập đoàn Hóa chất Đức Giang.",
+      "Sau biến động này, PAT nhanh chóng kiện toàn bộ máy quản trị. Công ty miễn nhiệm chức danh Chủ tịch HĐQT đối với ông Lưu Bách Đạt và bổ nhiệm ông Đỗ Thành Công giữ vị trí Chủ tịch HĐQT.",
+      "Ông Đỗ Thành Công sinh năm 1991, có trình độ kỹ sư hóa và từng đảm nhiệm vị trí Phó Giám đốc Nhà máy Phốt pho vàng và Axit thực phẩm thuộc Công ty TNHH MTV Hóa chất Đức Giang Lào Cai. Thông tin doanh nghiệp công bố cuối tháng 7 ghi nhận ông Công được bổ nhiệm giữ chức Chủ tịch HĐQT PAT.",
+      "Trong khi bộ máy lãnh đạo có nhiều thay đổi, hoạt động kinh doanh của Phốt pho Apatit Việt Nam trong quý 2 lại ghi nhận sự cải thiện đáng kể.",
+      "Cụ thể, doanh thu thuần quý 2/2026 đạt khoảng 517 tỷ đồng, tăng hơn 8% so với cùng kỳ năm trước. Lợi nhuận gộp đạt hơn 129 tỷ đồng, tăng 28%, trong khi biên lợi nhuận gộp cải thiện từ 21,1% lên khoảng 25%. Nhờ đó, lợi nhuận sau thuế quý 2 đạt gần 110 tỷ đồng, tăng hơn 41% so với cùng kỳ.",
+      "Lũy kế 6 tháng đầu năm 2026, PAT ghi nhận doanh thu thuần hơn 939 tỷ đồng, tăng khoảng 3%. Lợi nhuận sau thuế đạt hơn 156 tỷ đồng, giảm gần 4% so với cùng kỳ.",
+      "Ngọc Ly",
+      "Nhịp sống thị trường",
+      "Địa chỉ: Tầng 21 Tòa nhà Center Building. Số 01, phố Nguyễn Huy Tưởng, phường Thanh Xuân, thành phố Hà Nội",
+      "Điện thoại: 024 7309 5555 Máy lẻ 292. Fax: 024-39744082",
+      "Email: info@cafef.vn | Hotline: 0926 864 344",
+      "Chịu trách nhiệm nội dung: Ông Nguyễn Thế Tân",
+      "Liên hệ quảng cáo",
+      "Hotline:",
+      "Email: doanhnghiep@admicro.vn",
+      "© Copyright 2007 - 2026 - Công ty Cổ phần VCCorp.",
+      "Giấy phép thiết lập trang thông tin điện tử tổng hợp trên mạng số 2216/GP-TTĐT do Sở Thông tin và Truyền thông Hà Nội cấp ngày 10 tháng 4 năm 2019."
+    ],
+    "tables": [],
+    "links": [
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "http://liveboard.cafef.vn",
+        "text": "Bảng giá điện tử"
+      },
+      {
+        "href": "/du-lieu/danh-muc-dau-tu.chn",
+        "text": "Danh mục đầu tư"
+      },
+      {
+        "href": "/doc-nhanh.chn",
+        "text": "Đọc nhanh >>"
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "XÃ HỘI"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "CHỨNG KHOÁN"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "BẤT ĐỘNG SẢN"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "DOANH NGHIỆP"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "NGÂN HÀNG"
+      },
+      {
+        "href": "/smart-money.chn",
+        "text": "SMART MONEY"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "TÀI CHÍNH QUỐC TẾ"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "VĨ MÔ"
+      },
+      {
+        "href": "/kinh-te-so.chn",
+        "text": "KINH TẾ SỐ"
+      },
+      {
+        "href": "/thi-truong.chn",
+        "text": "THỊ TRƯỜNG"
+      },
+      {
+        "href": "/song.chn",
+        "text": "SỐNG"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "LIFESTYLE"
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "Xã hội"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "Doanh nghiệp"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "Kinh tế vĩ mô"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "Chứng khoán"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "Tài chính ngân hàng"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "Tài chính quốc tế"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "Tin tức"
+      },
+      {
+        "href": "/du-an.chn",
+        "text": "Dự án"
+      },
+      {
+        "href": "/ban-do-du-an.chn",
+        "text": "Bản đồ dự án"
+      },
+      {
+        "href": "/hang-hoa-nguyen-lieu.chn",
+        "text": "Hàng hóa nguyên liệu"
+      },
+      {
+        "href": "/song.chn",
+        "text": "Sống"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "Lifestyle"
+      },
+      {
+        "href": "/nhom-chu-de/emagazine.chn",
+        "text": "Magazine"
+      },
+      {
+        "href": "/du-lieu.chn",
+        "text": "Dữ liệu"
+      },
+      {
+        "href": "/du-lieu/cafeflists.chn",
+        "text": "F INDEX"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "Thị trường chứng khoán"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Chia sẻ"
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "javascript:;",
+        "text": "TIN MỚI"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Theo Nhịp sống thị trường Copy link"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Chia sẻ"
+      },
+      {
+        "href": "/hoa-chat.html",
+        "text": "hóa chất,"
+      },
+      {
+        "href": "/pat.html",
+        "text": "PAT,"
+      },
+      {
+        "href": "/duc-giang.html",
+        "text": "đức giang,"
+      },
+      {
+        "href": "/apatit.html",
+        "text": "apatit,"
+      },
+      {
+        "href": "/tin-vui.html",
+        "text": "tin vui"
+      },
+      {
+        "href": "/bao-gio-chung-khoan-het-chan-188260819222309396.chn",
+        "text": ""
+      },
+      {
+        "href": "/bao-gio-chung-khoan-het-chan-188260819222309396.chn",
+        "text": "Bao giờ chứng khoán hết “chán”?"
+      },
+      {
+        "href": "/mot-cong-ty-chung-khoan-rot-gan-1000-ty-dong-vao-mot-ma-ngan-hang-tam-lai-hon-tram-ty-188260819194108166.chn",
+        "text": ""
+      },
+      {
+        "href": "/mot-cong-ty-chung-khoan-rot-gan-1000-ty-dong-vao-mot-ma-ngan-hang-tam-lai-hon-tram-ty-188260819194108166.chn",
+        "text": "Một công ty chứng khoán \"rót\" gần 1.000 tỷ đồng vào một mã ngân hàng, tạm lãi hơn trăm tỷ"
+      },
+      {
+        "href": "/phien-20-8-khoi-ngoai-ban-rong-hon-600-ty-dong-tren-hose-co-phieu-nao-bi-xa-manh-nhat-188260820154406132.chn",
+        "text": ""
+      },
+      {
+        "href": "/phien-20-8-khoi-ngoai-ban-rong-hon-600-ty-dong-tren-hose-co-phieu-nao-bi-xa-manh-nhat-188260820154406132.chn",
+        "text": "Phiên 20/8: Khối ngoại bán ròng hơn 600 tỷ đồng trên HOSE, cổ phiếu nào bị \"xả\" mạnh nhất?"
+      },
+      {
+        "href": "/mien-nhiem-tgd-nguyen-khanh-linh-188260820150034615.chn",
+        "text": ""
+      },
+      {
+        "href": "/mien-nhiem-tgd-nguyen-khanh-linh-188260820150034615.chn",
+        "text": "Miễn nhiệm TGĐ Nguyễn Khánh Linh"
+      },
+      {
+        "href": "/hiem-co-gia-vang-trong-nuoc-mua-vao-bang-gia-the-gioi-bac-cung-giam-do-venh-188260820144402606.chn",
+        "text": ""
+      },
+      {
+        "href": "/hiem-co-gia-vang-trong-nuoc-mua-vao-bang-gia-the-gioi-bac-cung-giam-do-venh-188260820144402606.chn",
+        "text": "Hiếm có: Giá vàng trong nước mua vào bằng giá thế giới, bạc cũng giảm độ vênh"
+      },
+      {
+        "href": "/lo-dien-them-ca-map-tro-lai-la-co-dong-lon-tai-pnj-188260820144218261.chn",
+        "text": ""
+      },
+      {
+        "href": "/lo-dien-them-ca-map-tro-lai-la-co-dong-lon-tai-pnj-188260820144218261.chn",
+        "text": "Lộ diện thêm cá mập trở lại là cổ đông lớn tại PNJ"
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "XÃ HỘI"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "CHỨNG KHOÁN"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "BẤT ĐỘNG SẢN"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "DOANH NGHIỆP"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "NGÂN HÀNG"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "TÀI CHÍNH QUỐC TẾ"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "VĨ MÔ"
+      },
+      {
+        "href": "/kinh-te-so.chn",
+        "text": "KINH TẾ SỐ"
+      },
+      {
+        "href": "/thi-truong.chn",
+        "text": "THỊ TRƯỜNG"
+      },
+      {
+        "href": "/song.chn",
+        "text": "SỐNG"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "LIFESTYLE"
+      },
+      {
+        "href": "/du-lieu.chn",
+        "text": "Dữ liệu"
+      },
+      {
+        "href": "/du-lieu/top/ceo.chn",
+        "text": "Top 200"
+      },
+      {
+        "href": "https://www.messenger.com/t/108804609142280",
+        "text": "Chat với tư vấn viên"
+      },
+      {
+        "href": "http://www.vccorp.vn/",
+        "text": ""
+      },
+      {
+        "href": "/static/chinh-sach-bao-mat.html",
+        "text": "Chính sách bảo mật"
+      }
+    ]
+  },
+  "images": [
+    {
+      "outer_tag": "<img alt=\"Công ty con của Hóa chất Đức Giang đón tin vui\" data-role=\"cover\" fetchpriority=\"high\" src=\"https://cafefcdn.com/thumb_w/640/203337114487263232/2026/8/20/avatar1787220941581-178722094238120959242.jpg\" title=\"Công ty con của Hóa chất Đức Giang đón tin vui\"/>",
+      "resolved_url": "https://cafefcdn.com/thumb_w/640/203337114487263232/2026/8/20/avatar1787220941581-178722094238120959242.jpg",
+      "alt": "Công ty con của Hóa chất Đức Giang đón tin vui",
+      "title": "Công ty con của Hóa chất Đức Giang đón tin vui",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Bao giờ chứng khoán hết “chán”?\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787152958323-1787152958761227806230.jpg\" title=\"Bao giờ chứng khoán hết “chán”?\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787152958323-1787152958761227806230.jpg",
+      "alt": "Bao giờ chứng khoán hết “chán”?",
+      "title": "Bao giờ chứng khoán hết “chán”?",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt='Một công ty chứng khoán \"rót\" gần 1.000 tỷ đồng vào một mã ngân hàng, tạm lãi hơn trăm tỷ' height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787143208992-1787143209345748948081.jpg\" title='Một công ty chứng khoán \"rót\" gần 1.000 tỷ đồng vào một mã ngân hàng, tạm lãi hơn trăm tỷ' width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787143208992-1787143209345748948081.jpg",
+      "alt": "Một công ty chứng khoán \"rót\" gần 1.000 tỷ đồng vào một mã ngân hàng, tạm lãi hơn trăm tỷ",
+      "title": "Một công ty chứng khoán \"rót\" gần 1.000 tỷ đồng vào một mã ngân hàng, tạm lãi hơn trăm tỷ",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt='Phiên 20/8: Khối ngoại bán ròng hơn 600 tỷ đồng trên HOSE, cổ phiếu nào bị \"xả\" mạnh nhất?' height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787215415836-17872154163751354375123.jpg\" title='Phiên 20/8: Khối ngoại bán ròng hơn 600 tỷ đồng trên HOSE, cổ phiếu nào bị \"xả\" mạnh nhất?' width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787215415836-17872154163751354375123.jpg",
+      "alt": "Phiên 20/8: Khối ngoại bán ròng hơn 600 tỷ đồng trên HOSE, cổ phiếu nào bị \"xả\" mạnh nhất?",
+      "title": "Phiên 20/8: Khối ngoại bán ròng hơn 600 tỷ đồng trên HOSE, cổ phiếu nào bị \"xả\" mạnh nhất?",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Miễn nhiệm TGĐ Nguyễn Khánh Linh\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/thumb-rqw-17872127749038925923-1787212776551605610438-167-22-552-638-crop-1787212790841688785329.jpeg\" title=\"Miễn nhiệm TGĐ Nguyễn Khánh Linh\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/thumb-rqw-17872127749038925923-1787212776551605610438-167-22-552-638-crop-1787212790841688785329.jpeg",
+      "alt": "Miễn nhiệm TGĐ Nguyễn Khánh Linh",
+      "title": "Miễn nhiệm TGĐ Nguyễn Khánh Linh",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Hiếm có: Giá vàng trong nước mua vào bằng giá thế giới, bạc cũng giảm độ vênh\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787212289539-1787212290147308056732.png\" title=\"Hiếm có: Giá vàng trong nước mua vào bằng giá thế giới, bạc cũng giảm độ vênh\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787212289539-1787212290147308056732.png",
+      "alt": "Hiếm có: Giá vàng trong nước mua vào bằng giá thế giới, bạc cũng giảm độ vênh",
+      "title": "Hiếm có: Giá vàng trong nước mua vào bằng giá thế giới, bạc cũng giảm độ vênh",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Lộ diện thêm cá mập trở lại là cổ đông lớn tại PNJ\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787211696057-17872116966051048105259.png\" title=\"Lộ diện thêm cá mập trở lại là cổ đông lớn tại PNJ\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787211696057-17872116966051048105259.png",
+      "alt": "Lộ diện thêm cá mập trở lại là cổ đông lớn tại PNJ",
+      "title": "Lộ diện thêm cá mập trở lại là cổ đông lớn tại PNJ",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Công ty Cổ phần VCCorp\" height=\"49px\" src=\"https://vccorp.mediacdn.vn/vccorp-s.png\" width=\"100px\"/>",
+      "resolved_url": "https://vccorp.mediacdn.vn/vccorp-s.png",
+      "alt": "Công ty Cổ phần VCCorp",
+      "title": "",
+      "caption": ""
+    }
+  ],
+  "language": "vi",
+  "built_at": "2026-08-20T17:32:56+07:00",
+  "built_from_raw_path": "data/raw_html\\cafef.vn\\20260820\\de1ef0ab13b5b2dc76ca28eb18ba0a2b0153784d17d21b668e6e63c2ab6d5056.html"
+}

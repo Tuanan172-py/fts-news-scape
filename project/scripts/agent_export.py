@@ -1,8 +1,7 @@
 """
 Xuất task-packet cho agent NGOÀI (Vòng 3 infra, không LLM).
 
-Claim work_items pending → ghi data/agent_tasks/<article_id>.task.json. Đưa packet
-này cho agent của bạn (prompt tự viết từ schemas/agent-instructions-v1.md), nhận
+Claim work_items pending → ghi data/agent_tasks/<article_id>.task.json. Phát hành packet cho agents thực thi (prompt tự viết từ schemas/agent-instructions-v1.md), nhận
 agent-output-v1 rồi nạp lại bằng scripts/agent_ingest.py.
 
 Usage:

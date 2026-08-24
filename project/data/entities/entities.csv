@@ -574,7 +574,7 @@ TICKER:FMC,TICKER,FMC,CTCP Thực phẩm Sao Ta,CTCP Thực phẩm Sao Ta | Th�
 TICKER:FOC,TICKER,FOC,CTCP Dịch vụ Trực tuyến FPT,CTCP Dịch vụ Trực tuyến FPT | Dịch vụ Trực tuyến FPT,,Hàng tiêu dùng không thiết yếu,Truyền thông và xuất bản,Truyền thông và xuất bản,company_data/company_name.xlsx ; trading_data/market_caps.parquet ; trading_data/os.xlsx ; industry_classification/industry_classification.xlsx
 TICKER:FOX,TICKER,FOX,CTCP Viễn thông FPT,CTCP Viễn thông FPT | Viễn thông FPT,,Dịch vụ viễn thông,Dịch vụ viễn thông,Dịch vụ viễn thông đa ngành,company_data/company_name.xlsx ; trading_data/market_caps.parquet ; trading_data/os.xlsx ; industry_classification/industry_classification.xlsx
 TICKER:FPC,TICKER,FPC,CTCP Full Power,CTCP Full Power | Full Power,,,,,company_data/company_name.xlsx ; trading_data/market_caps.parquet
-TICKER:FPT,TICKER,FPT,CTCP FPT,CTCP FPT | FPT,,Công nghệ,Phần mềm,Phần mềm,company_data/company_name.xlsx ; trading_data/market_caps.parquet ; trading_data/os.xlsx ; industry_classification/industry_classification.xlsx
+TICKER:FPT,TICKER,FPT,CTCP FPT,CTCP FPT | FPT | FPT Corporation | Tập đoàn FPT,,Công nghệ,Phần mềm,Phần mềm,company_data/company_name.xlsx ; trading_data/market_caps.parquet ; trading_data/os.xlsx ; industry_classification/industry_classification.xlsx
 TICKER:FRC,TICKER,FRC,CTCP Lâm đặc sản Xuất khẩu Quảng Nam,CTCP Lâm đặc sản Xuất khẩu Quảng Nam | Lâm đặc sản Xuất khẩu Quảng Nam,,Nguyên vật liệu,Giấy và các sản phẩm từ gỗ,Gỗ và các sản phẩm từ gỗ,company_data/company_name.xlsx ; trading_data/market_caps.parquet ; trading_data/os.xlsx ; industry_classification/industry_classification.xlsx
 TICKER:FRM,TICKER,FRM,CTCP Lâm Nghiệp Sài Gòn,CTCP Lâm Nghiệp Sài Gòn | Lâm Nghiệp Sài Gòn,,Nguyên vật liệu,Giấy và các sản phẩm từ gỗ,Gỗ và các sản phẩm từ gỗ,company_data/company_name.xlsx ; trading_data/market_caps.parquet ; trading_data/os.xlsx ; industry_classification/industry_classification.xlsx
 TICKER:FRT,TICKER,FRT,CTCP Bán lẻ Kỹ thuật số FPT,CTCP Bán lẻ Kỹ thuật số FPT | Bán lẻ Kỹ thuật số FPT | FPT Retail,,Hàng tiêu dùng không thiết yếu,Bán lẻ,Bán lẻ,company_data/company_name.xlsx ; trading_data/market_caps.parquet ; trading_data/os.xlsx ; industry_classification/industry_classification.xlsx
@@ -778,7 +778,7 @@ TICKER:HPA,TICKER,HPA,CTCP Phát triển Nông nghiệp Hòa Phát,CTCP Phát tr
 TICKER:HPB,TICKER,HPB,CTCP Bao bì PP,CTCP Bao bì PP | Bao bì PP,,Nguyên vật liệu,Vật liệu xây dựng,Bao bì và đóng gói,company_data/company_name.xlsx ; trading_data/market_caps.parquet ; trading_data/os.xlsx ; industry_classification/industry_classification.xlsx
 TICKER:HPC,TICKER,HPC,Công ty Cổ phần Chứng khoán Hải Phòng,Công ty Cổ phần Chứng khoán Hải Phòng | Chứng khoán Hải Phòng,,,,,company_data/company_name.xlsx ; trading_data/market_caps.parquet
 TICKER:HPD,TICKER,HPD,CTCP Thủy điện ĐăK Đoa,CTCP Thủy điện ĐăK Đoa | Thủy điện ĐăK Đoa,,Dịch vụ công cộng,Dịch vụ công cộng,Điện,company_data/company_name.xlsx ; trading_data/market_caps.parquet ; trading_data/os.xlsx ; industry_classification/industry_classification.xlsx
-TICKER:HPG,TICKER,HPG,CTCP Tập đoàn Hòa Phát,CTCP Tập đoàn Hòa Phát | Hòa Phát | Hoa Phat,,Nguyên vật liệu,Kim loại & Khai khoáng,Thép,company_data/company_name.xlsx ; trading_data/market_caps.parquet ; trading_data/os.xlsx ; industry_classification/industry_classification.xlsx
+TICKER:HPG,TICKER,HPG,CTCP Tập đoàn Hòa Phát,CTCP Tập đoàn Hòa Phát | Hòa Phát | Hoa Phat | Tập đoàn Hòa Phát,,Nguyên vật liệu,Kim loại & Khai khoáng,Thép,company_data/company_name.xlsx ; trading_data/market_caps.parquet ; trading_data/os.xlsx ; industry_classification/industry_classification.xlsx
 TICKER:HPH,TICKER,HPH,CTCP Hóa Chất Hưng Phát Hà Bắc,CTCP Hóa Chất Hưng Phát Hà Bắc | Hóa Chất Hưng Phát Hà Bắc,,Nguyên vật liệu,Nguyên vật liệu,Hóa chất,company_data/company_name.xlsx ; trading_data/market_caps.parquet ; trading_data/os.xlsx ; industry_classification/industry_classification.xlsx
 TICKER:HPI,TICKER,HPI,CTCP Khu công nghiệp Hiệp Phước,CTCP Khu công nghiệp Hiệp Phước | Khu công nghiệp Hiệp Phước,,Bất động sản,Quản lý và phát triển bất động sản,Vận hành bất động sản,company_data/company_name.xlsx ; trading_data/market_caps.parquet ; trading_data/os.xlsx ; industry_classification/industry_classification.xlsx
 TICKER:HPL,TICKER,HPL,CTCP Bến xe Tàu Phà Cần Thơ,CTCP Bến xe Tàu Phà Cần Thơ | Bến xe Tàu Phà Cần Thơ,,,,,company_data/company_name.xlsx ; trading_data/market_caps.parquet
@@ -990,6 +990,7 @@ TICKER:LMI,TICKER,LMI,CTCP Đầu tư Xây dựng Lắp máy IDICO,CTCP Đầu t
 TICKER:LNC,TICKER,LNC,CTCP Lệ Ninh,CTCP Lệ Ninh | Lệ Ninh,,Hàng tiêu dùng không thiết yếu,Ô tô & Phụ tùng,Lốp & Cao su,company_data/company_name.xlsx ; trading_data/market_caps.parquet ; trading_data/os.xlsx ; industry_classification/industry_classification.xlsx
 TICKER:LO5,TICKER,LO5,CTCP Lilama 5,CTCP Lilama 5 | Lilama 5,,Công nghiệp,Tư liệu sản xuất,Xây dựng,company_data/company_name.xlsx ; trading_data/market_caps.parquet ; trading_data/os.xlsx ; industry_classification/industry_classification.xlsx
 TICKER:LPB,TICKER,LPB,Ngân hàng TMCP Lộc Phát Việt Nam,Ngân hàng TMCP Lộc Phát Việt Nam | Lộc Phát Việt Nam | LPBank | Ngân hàng Lộc Phát,,Tài chính,Ngân hàng,Ngân hàng,company_data/company_name.xlsx ; trading_data/market_caps.parquet ; trading_data/os.xlsx ; industry_classification/industry_classification.xlsx
+TICKER:LPS,TICKER,LPS,LPS,,,,,,trading_data/market_caps.parquet ; trading_data/os.xlsx
 TICKER:LPT,TICKER,LPT,CTCP Thương mại và Sản xuất Lập Phương Thành,CTCP Thương mại và Sản xuất Lập Phương Thành | Thương mại và Sản xuất Lập Phương Thành,,Hàng tiêu dùng không thiết yếu,Bán lẻ,Bán lẻ,company_data/company_name.xlsx ; trading_data/market_caps.parquet ; trading_data/os.xlsx ; industry_classification/industry_classification.xlsx
 TICKER:LQN,TICKER,LQN,CTCP Licogi Quảng Ngãi,CTCP Licogi Quảng Ngãi | Licogi Quảng Ngãi,,Nguyên vật liệu,Vật liệu xây dựng,Vật liệu xây dựng,company_data/company_name.xlsx ; trading_data/market_caps.parquet ; trading_data/os.xlsx ; industry_classification/industry_classification.xlsx
 TICKER:LSG,TICKER,LSG,CTCP Bất động sản Sài Gòn Vina,CTCP Bất động sản Sài Gòn Vina | Bất động sản Sài Gòn Vina,,Bất động sản,Quản lý và phát triển bất động sản,Bất động sản phức hợp,company_data/company_name.xlsx ; trading_data/market_caps.parquet ; trading_data/os.xlsx ; industry_classification/industry_classification.xlsx
@@ -1802,6 +1803,7 @@ TICKER:V11,TICKER,V11,CTCP Xây dựng Số 11,CTCP Xây dựng Số 11 | Xây d
 TICKER:V12,TICKER,V12,CTCP Xây dựng Số 12,CTCP Xây dựng Số 12 | Xây dựng Số 12,,Công nghiệp,Tư liệu sản xuất,Xây dựng,company_data/company_name.xlsx ; trading_data/market_caps.parquet ; trading_data/os.xlsx ; industry_classification/industry_classification.xlsx
 TICKER:V15,TICKER,V15,CTCP Xây dựng Số 15,CTCP Xây dựng Số 15 | Xây dựng Số 15,,Công nghiệp,Các dịch vụ thương mại và chuyên biệt,Dịch vụ hỗ trợ khác,company_data/company_name.xlsx ; trading_data/market_caps.parquet ; trading_data/os.xlsx ; industry_classification/industry_classification.xlsx
 TICKER:V21,TICKER,V21,CTCP Vinaconex 21,CTCP Vinaconex 21 | Vinaconex 21,,Bất động sản,Quản lý và phát triển bất động sản,Bất động sản phức hợp,company_data/company_name.xlsx ; trading_data/market_caps.parquet ; trading_data/os.xlsx ; industry_classification/industry_classification.xlsx
+TICKER:V68,TICKER,V68,V68,,,,,,trading_data/market_caps.parquet ; trading_data/os.xlsx
 TICKER:VAB,TICKER,VAB,Ngân hàng TMCP Việt Á,Ngân hàng TMCP Việt Á | Việt Á,,Tài chính,Ngân hàng,Ngân hàng,company_data/company_name.xlsx ; trading_data/market_caps.parquet ; trading_data/os.xlsx ; industry_classification/industry_classification.xlsx
 TICKER:VAF,TICKER,VAF,CTCP Phân lân Nung chảy Văn Điển,CTCP Phân lân Nung chảy Văn Điển | Phân lân Nung chảy Văn Điển,,nan,nan,nan,company_data/company_name.xlsx ; trading_data/market_caps.parquet ; trading_data/os.xlsx ; industry_classification/industry_classification.xlsx
 TICKER:VAT,TICKER,VAT,CTCP Viễn thông Vạn Xuân,CTCP Viễn thông Vạn Xuân | Viễn thông Vạn Xuân,,Công nghiệp,Tư liệu sản xuất,Xây dựng,company_data/company_name.xlsx ; trading_data/market_caps.parquet ; industry_classification/industry_classification.xlsx
@@ -2039,7 +2041,7 @@ IND_GICS1:NGUYEN_VAT_LIEU,INDUSTRY_GICS1,NGUYEN_VAT_LIEU,Nguyên vật liệu,Ng
 IND_GICS1:NANG_LUONG,INDUSTRY_GICS1,NANG_LUONG,Năng lượng,Năng lượng,,,,,industry_classification/industry_classification.xlsx
 IND_GICS1:TAI_CHINH,INDUSTRY_GICS1,TAI_CHINH,Tài chính,Tài chính,,,,,industry_classification/industry_classification.xlsx
 IND_GICS1:Y_TE,INDUSTRY_GICS1,Y_TE,Y tế,Y tế,,,,,industry_classification/industry_classification.xlsx
-IND_GICS2:QUAN_LY_VA_PHAT_TRIEN_BAT_DONG_SAN,INDUSTRY_GICS2,QUAN_LY_VA_PHAT_TRIEN_BAT_DONG_SAN,Quản lý và phát triển bất động sản,Quản lý và phát triển bất động sản,Bất động sản,,,,industry_classification/industry_classification.xlsx
+IND_GICS2:QUAN_LY_VA_PHAT_TRIEN_BAT_DONG_SAN,INDUSTRY_GICS2,QUAN_LY_VA_PHAT_TRIEN_BAT_DONG_SAN,Quản lý và phát triển bất động sản,Quản lý và phát triển bất động sản | bất động sản | BĐS | địa ốc | nhà đất | thị trường nhà ở | NOXH | nhà ở xã hội | bất động sản khu công nghiệp | BĐS KCN,Bất động sản,,,,industry_classification/industry_classification.xlsx
 IND_GICS2:CAC_DICH_VU_THUONG_MAI_VA_CHUYEN_BIET,INDUSTRY_GICS2,CAC_DICH_VU_THUONG_MAI_VA_CHUYEN_BIET,Các dịch vụ thương mại và chuyên biệt,Các dịch vụ thương mại và chuyên biệt,Công nghiệp,,,,industry_classification/industry_classification.xlsx
 IND_GICS2:CO_SO_HA_TANG_GIAO_THONG_VAN_TAI,INDUSTRY_GICS2,CO_SO_HA_TANG_GIAO_THONG_VAN_TAI,Cơ sở hạ tầng giao thông vận tải,Cơ sở hạ tầng giao thông vận tải,Công nghiệp,,,,industry_classification/industry_classification.xlsx
 IND_GICS2:TU_LIEU_SAN_XUAT,INDUSTRY_GICS2,TU_LIEU_SAN_XUAT,Tư liệu sản xuất,Tư liệu sản xuất,Công nghiệp,,,,industry_classification/industry_classification.xlsx
@@ -2060,22 +2062,22 @@ IND_GICS2:KIM_LOAI_KHAI_KHOANG,INDUSTRY_GICS2,KIM_LOAI_KHAI_KHOANG,Kim loại & 
 IND_GICS2:NGUYEN_VAT_LIEU,INDUSTRY_GICS2,NGUYEN_VAT_LIEU,Nguyên vật liệu,Nguyên vật liệu,Nguyên vật liệu,,,,industry_classification/industry_classification.xlsx
 IND_GICS2:VAT_LIEU_XAY_DUNG,INDUSTRY_GICS2,VAT_LIEU_XAY_DUNG,Vật liệu xây dựng,Vật liệu xây dựng,Nguyên vật liệu,,,,industry_classification/industry_classification.xlsx
 IND_GICS2:NANG_LUONG,INDUSTRY_GICS2,NANG_LUONG,Năng lượng,Năng lượng,Năng lượng,,,,industry_classification/industry_classification.xlsx
-IND_GICS2:BAO_HIEM,INDUSTRY_GICS2,BAO_HIEM,Bảo hiểm,Bảo hiểm,Tài chính,,,,industry_classification/industry_classification.xlsx
-IND_GICS2:CONG_TY_CHUNG_KHOAN,INDUSTRY_GICS2,CONG_TY_CHUNG_KHOAN,Công ty chứng khoán,Công ty chứng khoán,Tài chính,,,,industry_classification/industry_classification.xlsx
-IND_GICS2:NGAN_HANG,INDUSTRY_GICS2,NGAN_HANG,Ngân hàng,Ngân hàng,Tài chính,,,,industry_classification/industry_classification.xlsx
-IND_GICS2:QUY,INDUSTRY_GICS2,QUY,Quỹ,Quỹ,Tài chính,,,,industry_classification/industry_classification.xlsx
+IND_GICS2:BAO_HIEM,INDUSTRY_GICS2,BAO_HIEM,Bảo hiểm,Bảo hiểm | bảo hiểm | ngành bảo hiểm | bảo hiểm nhân thọ | bảo hiểm phi nhân thọ | doanh nghiệp bảo hiểm,Tài chính,,,,industry_classification/industry_classification.xlsx
+IND_GICS2:CONG_TY_CHUNG_KHOAN,INDUSTRY_GICS2,CONG_TY_CHUNG_KHOAN,Công ty chứng khoán,Công ty chứng khoán | chứng khoán | công ty chứng khoán | CTCK | môi giới chứng khoán | tự doanh chứng khoán,Tài chính,,,,industry_classification/industry_classification.xlsx
+IND_GICS2:NGAN_HANG,INDUSTRY_GICS2,NGAN_HANG,Ngân hàng,Ngân hàng | ngân hàng | ngành ngân hàng | nhà băng | tổ chức tín dụng | TCTD | room tín dụng | ngân hàng thương mại,Tài chính,,,,industry_classification/industry_classification.xlsx
+IND_GICS2:QUY,INDUSTRY_GICS2,QUY,Quỹ,Quỹ | quỹ | quỹ đầu tư | quỹ đầu tư mạo hiểm | quỹ mở | quỹ đóng | quỹ thành viên | quỹ ngoại | venture capital | quỹ hoán đổi danh mục,Tài chính,,,,industry_classification/industry_classification.xlsx
 IND_GICS2:TAI_CHINH_CHUYEN_BIET_KHAC,INDUSTRY_GICS2,TAI_CHINH_CHUYEN_BIET_KHAC,Tài chính chuyên biệt khác,Tài chính chuyên biệt khác,Tài chính,,,,industry_classification/industry_classification.xlsx
-IND_GICS2:DUOC_PHAM_CONG_NGHE_SINH_HOC,INDUSTRY_GICS2,DUOC_PHAM_CONG_NGHE_SINH_HOC,Dược phẩm & Công nghệ sinh học,Dược phẩm & Công nghệ sinh học,Y tế,,,,industry_classification/industry_classification.xlsx
+IND_GICS2:DUOC_PHAM_CONG_NGHE_SINH_HOC,INDUSTRY_GICS2,DUOC_PHAM_CONG_NGHE_SINH_HOC,Dược phẩm & Công nghệ sinh học,Dược phẩm & Công nghệ sinh học | dược phẩm | ngành dược | thuốc | công nghệ sinh học,Y tế,,,,industry_classification/industry_classification.xlsx
 IND_GICS2:DICH_VU_THIET_BI_Y_TE,INDUSTRY_GICS2,DICH_VU_THIET_BI_Y_TE,Dịch vụ & thiết bị y tế,Dịch vụ & thiết bị y tế,Y tế,,,,industry_classification/industry_classification.xlsx
 IND_GICS3:BAN_LE,INDUSTRY_GICS3,BAN_LE,Bán lẻ,Bán lẻ,Bán lẻ,,,,industry_classification/industry_classification.xlsx
-IND_GICS3:BAO_HIEM,INDUSTRY_GICS3,BAO_HIEM,Bảo hiểm,Bảo hiểm,Bảo hiểm,,,,industry_classification/industry_classification.xlsx
+IND_GICS3:BAO_HIEM,INDUSTRY_GICS3,BAO_HIEM,Bảo hiểm,Bảo hiểm | bảo hiểm | ngành bảo hiểm | bảo hiểm nhân thọ | bảo hiểm phi nhân thọ | doanh nghiệp bảo hiểm,Bảo hiểm,,,,industry_classification/industry_classification.xlsx
 IND_GICS3:DICH_VU_HO_TRO_KHAC,INDUSTRY_GICS3,DICH_VU_HO_TRO_KHAC,Dịch vụ hỗ trợ khác,Dịch vụ hỗ trợ khác,Các dịch vụ thương mại và chuyên biệt,,,,industry_classification/industry_classification.xlsx
 IND_GICS3:DICH_VU_HO_TRO_VIEC_LAM_VA_NGUON_NHAN_LUC,INDUSTRY_GICS3,DICH_VU_HO_TRO_VIEC_LAM_VA_NGUON_NHAN_LUC,Dịch vụ hỗ trợ việc làm và nguồn nhân lực,Dịch vụ hỗ trợ việc làm và nguồn nhân lực,Các dịch vụ thương mại và chuyên biệt,,,,industry_classification/industry_classification.xlsx
 IND_GICS3:DICH_VU_MOI_TRUONG,INDUSTRY_GICS3,DICH_VU_MOI_TRUONG,Dịch vụ môi trường,Dịch vụ môi trường,Các dịch vụ thương mại và chuyên biệt,,,,industry_classification/industry_classification.xlsx
 IND_GICS3:DICH_VU_TU_VAN_NGHIEN_CUU,INDUSTRY_GICS3,DICH_VU_TU_VAN_NGHIEN_CUU,Dịch vụ tư vấn & nghiên cứu,Dịch vụ tư vấn & nghiên cứu,Các dịch vụ thương mại và chuyên biệt,,,,industry_classification/industry_classification.xlsx
 IND_GICS3:IN_THUONG_MAI,INDUSTRY_GICS3,IN_THUONG_MAI,In thương mại,In thương mại,Các dịch vụ thương mại và chuyên biệt,,,,industry_classification/industry_classification.xlsx
 IND_GICS3:CONG_NGHE_THONG_TIN_TICH_HOP,INDUSTRY_GICS3,CONG_NGHE_THONG_TIN_TICH_HOP,Công nghệ thông tin tích hợp,Công nghệ thông tin tích hợp,Công nghệ thông tin tích hợp,,,,industry_classification/industry_classification.xlsx
-IND_GICS3:CONG_TY_CHUNG_KHOAN,INDUSTRY_GICS3,CONG_TY_CHUNG_KHOAN,Công ty chứng khoán,Công ty chứng khoán,Công ty chứng khoán,,,,industry_classification/industry_classification.xlsx
+IND_GICS3:CONG_TY_CHUNG_KHOAN,INDUSTRY_GICS3,CONG_TY_CHUNG_KHOAN,Công ty chứng khoán,Công ty chứng khoán | chứng khoán | công ty chứng khoán | CTCK | môi giới chứng khoán | tự doanh chứng khoán,Công ty chứng khoán,,,,industry_classification/industry_classification.xlsx
 IND_GICS3:DICH_VU_CANG_BIEN,INDUSTRY_GICS3,DICH_VU_CANG_BIEN,Dịch vụ cảng biển,Dịch vụ cảng biển,Cơ sở hạ tầng giao thông vận tải,,,,industry_classification/industry_classification.xlsx
 IND_GICS3:DICH_VU_SAN_BAY,INDUSTRY_GICS3,DICH_VU_SAN_BAY,Dịch vụ sân bay,Dịch vụ sân bay,Cơ sở hạ tầng giao thông vận tải,,,,industry_classification/industry_classification.xlsx
 IND_GICS3:DUOC_PHAM,INDUSTRY_GICS3,DUOC_PHAM,Dược phẩm,Dược phẩm,Dược phẩm & Công nghệ sinh học,,,,industry_classification/industry_classification.xlsx
@@ -2089,17 +2091,17 @@ IND_GICS3:DET_MAY_TRANG_PHUC_PHU_KIEN,INDUSTRY_GICS3,DET_MAY_TRANG_PHUC_PHU_KIEN
 IND_GICS3:KHACH_SAN_NHA_HANG_GIAI_TRI,INDUSTRY_GICS3,KHACH_SAN_NHA_HANG_GIAI_TRI,"Khách sạn, nhà hàng & Giải trí","Khách sạn, nhà hàng & Giải trí",Hàng tiêu dùng lâu bền và trang phục,,,,industry_classification/industry_classification.xlsx
 IND_GICS3:DO_GIA_DUNG_LAU_BEN,INDUSTRY_GICS3,DO_GIA_DUNG_LAU_BEN,Đồ gia dụng lâu bền,Đồ gia dụng lâu bền,Hàng tiêu dùng lâu bền và trang phục,,,,industry_classification/industry_classification.xlsx
 IND_GICS3:KIM_LOAI_KHONG_CHUA_SAT,INDUSTRY_GICS3,KIM_LOAI_KHONG_CHUA_SAT,Kim loại không chứa sắt,Kim loại không chứa sắt,Kim loại & Khai khoáng,,,,industry_classification/industry_classification.xlsx
-IND_GICS3:THEP,INDUSTRY_GICS3,THEP,Thép,Thép,Kim loại & Khai khoáng,,,,industry_classification/industry_classification.xlsx
+IND_GICS3:THEP,INDUSTRY_GICS3,THEP,Thép,Thép | thép | ngành thép | thép xây dựng | thép cuộn cán nóng | HRC | tôn mạ | thép lá | phôi thép,Kim loại & Khai khoáng,,,,industry_classification/industry_classification.xlsx
 IND_GICS3:HOA_CHAT,INDUSTRY_GICS3,HOA_CHAT,Hóa chất,Hóa chất,Nguyên vật liệu,,,,industry_classification/industry_classification.xlsx
 IND_GICS3:PHAN_BON,INDUSTRY_GICS3,PHAN_BON,Phân bón,Phân bón,Nguyên vật liệu,,,,industry_classification/industry_classification.xlsx
-IND_GICS3:NGAN_HANG,INDUSTRY_GICS3,NGAN_HANG,Ngân hàng,Ngân hàng,Ngân hàng,,,,industry_classification/industry_classification.xlsx
-IND_GICS3:DAU_KHI,INDUSTRY_GICS3,DAU_KHI,Dầu khí,Dầu khí,Năng lượng,,,,industry_classification/industry_classification.xlsx
+IND_GICS3:NGAN_HANG,INDUSTRY_GICS3,NGAN_HANG,Ngân hàng,Ngân hàng | ngân hàng | ngành ngân hàng | nhà băng | tổ chức tín dụng | TCTD | room tín dụng | ngân hàng thương mại,Ngân hàng,,,,industry_classification/industry_classification.xlsx
+IND_GICS3:DAU_KHI,INDUSTRY_GICS3,DAU_KHI,Dầu khí,Dầu khí | dầu khí | ngành dầu khí | thượng nguồn dầu khí | hạ nguồn dầu khí | khí tự nhiên | xăng dầu,Năng lượng,,,,industry_classification/industry_classification.xlsx
 IND_GICS3:THAN_DA_VA_NHIEN_LIEU_KHAC,INDUSTRY_GICS3,THAN_DA_VA_NHIEN_LIEU_KHAC,Than đá và nhiên liệu khác,Than đá và nhiên liệu khác,Năng lượng,,,,industry_classification/industry_classification.xlsx
 IND_GICS3:PHAN_CUNG,INDUSTRY_GICS3,PHAN_CUNG,Phần cứng,Phần cứng,Phần cứng,,,,industry_classification/industry_classification.xlsx
 IND_GICS3:PHAN_MEM,INDUSTRY_GICS3,PHAN_MEM,Phần mềm,Phần mềm,Phần mềm,,,,industry_classification/industry_classification.xlsx
 IND_GICS3:BAT_DONG_SAN_PHUC_HOP,INDUSTRY_GICS3,BAT_DONG_SAN_PHUC_HOP,Bất động sản phức hợp,Bất động sản phức hợp,Quản lý và phát triển bất động sản,,,,industry_classification/industry_classification.xlsx
 IND_GICS3:VAN_HANH_BAT_DONG_SAN,INDUSTRY_GICS3,VAN_HANH_BAT_DONG_SAN,Vận hành bất động sản,Vận hành bất động sản,Quản lý và phát triển bất động sản,,,,industry_classification/industry_classification.xlsx
-IND_GICS3:QUY,INDUSTRY_GICS3,QUY,Quỹ,Quỹ,Quỹ,,,,industry_classification/industry_classification.xlsx
+IND_GICS3:QUY,INDUSTRY_GICS3,QUY,Quỹ,Quỹ | quỹ | quỹ đầu tư | quỹ đầu tư mạo hiểm | quỹ mở | quỹ đóng | quỹ thành viên | quỹ ngoại | venture capital | quỹ hoán đổi danh mục,Quỹ,,,,industry_classification/industry_classification.xlsx
 IND_GICS3:SAN_PHAM_GIA_DUNG_KHONG_LAU_BEN,INDUSTRY_GICS3,SAN_PHAM_GIA_DUNG_KHONG_LAU_BEN,Sản phẩm gia dụng không lâu bền,Sản phẩm gia dụng không lâu bền,Sản phẩm cá nhân & hộ gia đình,,,,industry_classification/industry_classification.xlsx
 IND_GICS3:THUOC_LA,INDUSTRY_GICS3,THUOC_LA,Thuốc lá,Thuốc lá,Thực phẩm & Đồ uống,,,,industry_classification/industry_classification.xlsx
 IND_GICS3:THUC_PHAM,INDUSTRY_GICS3,THUC_PHAM,Thực phẩm,Thực phẩm,Thực phẩm & Đồ uống,,,,industry_classification/industry_classification.xlsx
@@ -2118,3 +2120,20 @@ IND_GICS3:BAO_BI_VA_DONG_GOI,INDUSTRY_GICS3,BAO_BI_VA_DONG_GOI,Bao bì và đón
 IND_GICS3:VAT_LIEU_XAY_DUNG,INDUSTRY_GICS3,VAT_LIEU_XAY_DUNG,Vật liệu xây dựng,Vật liệu xây dựng,Vật liệu xây dựng,,,,industry_classification/industry_classification.xlsx
 IND_GICS3:LOP_CAO_SU,INDUSTRY_GICS3,LOP_CAO_SU,Lốp & Cao su,Lốp & Cao su,Ô tô & Phụ tùng,,,,industry_classification/industry_classification.xlsx
 IND_GICS3:NHA_SAN_XUAT_O_TO_VA_THIET_BI_O_TO,INDUSTRY_GICS3,NHA_SAN_XUAT_O_TO_VA_THIET_BI_O_TO,Nhà sản xuất ô tô và thiết bị ô tô,Nhà sản xuất ô tô và thiết bị ô tô,Ô tô & Phụ tùng,,,,industry_classification/industry_classification.xlsx
+MACRO_GEO:MY,MACRO_GEO,MY,Mỹ,Mỹ | Hoa Kỳ | US | USA | United States | Nhà Trắng | Washington | Wall Street,,,,,config/entities/aliases/macro_geo.yaml
+MACRO_GEO:TRUNG_QUOC,MACRO_GEO,TRUNG_QUOC,Trung Quốc,Trung Quốc | TQ | China | Bắc Kinh | Thượng Hải | PBOC,,,,,config/entities/aliases/macro_geo.yaml
+MACRO_GEO:EU,MACRO_GEO,EU,Châu Âu,Châu Âu | Liên minh châu Âu | EU | Eurozone | ECB | Frankfurt,,,,,config/entities/aliases/macro_geo.yaml
+MACRO_GEO:NHAT_BAN,MACRO_GEO,NHAT_BAN,Nhật Bản,Nhật Bản | Japan | Tokyo | BOJ | đồng Yên,,,,,config/entities/aliases/macro_geo.yaml
+MACRO_THEME:LAI_SUAT,MACRO_THEME,LAI_SUAT,Lãi suất,lãi suất | lãi suất điều hành | lãi suất tái cấp vốn | lãi suất huy động | lãi suất cho vay | trần lãi suất | lãi suất liên ngân hàng,,,,,config/entities/aliases/macro_geo.yaml
+MACRO_THEME:TY_GIA,MACRO_THEME,TY_GIA,Tỷ giá,tỷ giá | tỷ giá USD/VND | DXY | đồng USD | ngoại tệ | dự trữ ngoại hối | phá giá tiền tệ,,,,,config/entities/aliases/macro_geo.yaml
+MACRO_THEME:LAM_PHAT,MACRO_THEME,LAM_PHAT,Lạm phát,lạm phát | CPI | chỉ số giá tiêu dùng | lạm phát cơ bản,,,,,config/entities/aliases/macro_geo.yaml
+MACRO_THEME:THUE_THUONG_MAI,MACRO_THEME,THUE_THUONG_MAI,Thuế & Thương mại,thuế chống bán phá giá | thuế chống trợ cấp | thuế quan | chiến tranh thương mại | thuế tối thiểu toàn cầu | hàng rào thuế quan,,,,,config/entities/aliases/macro_geo.yaml
+ASSET_CLASS:TRAI_PHIEU,ASSET_CLASS,TRAI_PHIEU,Trái phiếu,trái phiếu | TPDN | TPCP | trái phiếu doanh nghiệp | trái phiếu chính phủ | trái chủ | lợi suất trái phiếu | coupon | đáo hạn trái phiếu | mua lại trước hạn,,,,,config/entities/aliases/assets.yaml
+ASSET_CLASS:CO_PHIEU,ASSET_CLASS,CO_PHIEU,Cổ phiếu,cổ phiếu | thị trường chứng khoán | TTCK | khớp lệnh | khối ngoại | tự doanh | thanh khoản thị trường | thị trường cơ sở,,,,,config/entities/aliases/assets.yaml
+ASSET_CLASS:VANG,ASSET_CLASS,VANG,Vàng & Kim loại quý,vàng | vàng SJC | vàng nhẫn | giá vàng | vàng miếng | vàng 9999,,,,,config/entities/aliases/assets.yaml
+ASSET_CLASS:DAU_THO,ASSET_CLASS,DAU_THO,Dầu thô & Năng lượng,dầu thô | dầu Brent | dầu WTI | giá dầu | OPEC | xăng dầu,,,,,config/entities/aliases/assets.yaml
+ASSET_CLASS:BAT_DONG_SAN_TAI_SAN,ASSET_CLASS,BAT_DONG_SAN_TAI_SAN,Bất động sản tài sản,bất động sản | nhà đất | địa ốc | căn hộ | đất nền | giá nhà,,,,,config/entities/aliases/assets.yaml
+INSTITUTION:NHNN,INSTITUTION,NHNN,Ngân hàng Nhà nước,Ngân hàng Nhà nước | NHNN | SBV | Thống đốc | thị trường mở | OMO | tín phiếu,,,,,config/entities/aliases/institutions.yaml
+INSTITUTION:UBCKNN,INSTITUTION,UBCKNN,Ủy ban Chứng khoán Nhà nước,Ủy ban Chứng khoán Nhà nước | UBCKNN | SSC | Bộ Tài chính | hệ thống KRX | nâng hạng thị trường,,,,,config/entities/aliases/institutions.yaml
+INSTITUTION:FED,INSTITUTION,FED,Cục Dự trữ Liên bang Mỹ,Cục Dự trữ Liên bang | Fed | FED | FOMC | Jerome Powell | lãi suất Fed,,,,,config/entities/aliases/institutions.yaml
+INSTITUTION:ECB,INSTITUTION,ECB,Ngân hàng Trung ương Châu Âu,Ngân hàng Trung ương Châu Âu | ECB | Christine Lagarde,,,,,config/entities/aliases/institutions.yaml

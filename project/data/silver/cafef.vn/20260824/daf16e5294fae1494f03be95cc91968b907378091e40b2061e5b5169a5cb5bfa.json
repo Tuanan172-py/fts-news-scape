@@ -1,0 +1,470 @@
+{
+  "silver_schema_version": "1.0",
+  "article_id": "daf16e5294fae1494f03be95cc91968b907378091e40b2061e5b5169a5cb5bfa",
+  "source_url": "https://cafef.vn/vinamilk-masan-cung-loat-co-phieu-ban-le-tieu-dung-duoc-ftse-russell-goi-ten-hang-tram-trieu-usd-co-the-cho-do-vao-188260823012227953.chn?utm_source=du-lieu",
+  "domain": "cafef.vn",
+  "content_sha256": "940c34ef9ac01b63738db84fc859dc1274e8c5843c81485bfccdf94b7fa23173",
+  "cleaned_text": "Vinamilk, Masan cùng loạt cổ phiếu bán lẻ, tiêu dùng được FTSE Russell gọi tên, hàng trăm triệu USD có thể chờ đổ vào\nHàng loạt doanh nghiệp lớn trong lĩnh vực bán lẻ, tiêu dùng và thực phẩm được FTSE Russell gọi tên trong kỳ rà soát tháng 9/2026, trong đó riêng 4 cổ phiếu thuộc nhóm Small Cap có thể hút hơn 155 triệu USD theo ước tính của SSI Research.\nFTSE Russell vừa công bố kết quả rà soát bán niên tháng 9/2026 của bộ chỉ số FTSE Global Equity Index Series (GEIS). Việt Nam có tổng cộng 117 cổ phiếu được thêm mới, gồm 27 mã thuộc Large Cap, Mid Cap và Small Cap, cùng 90 mã Micro Cap.\nTrong nhóm bán lẻ, tiêu dùng và thực phẩm, 4 cái tên đáng chú ý thuộc Small Cap gồm Masan Group (MSN), Vinamilk (VNM), Masan Consumer (MCH) và Vincom Retail (VRE).\nĐáng chú ý, trước thời điểm FTSE Russell công bố kết quả chính thức ngày 21/8, SSI Research đã đưa ra danh sách dự báo 27 cổ phiếu Việt Nam vào FTSE All-Cap và danh sách này trùng với kết quả chính thức sau đó. Bảng ước tính của SSI Research sử dụng dữ liệu đến ngày 5/8/2026.\nTheo đó, SSI Research ước tính MSN có thể thu hút khoảng 50,4 triệu USD, VNM 45,4 triệu USD, MCH 36,4 triệu USD và VRE 23,4 triệu USD trong toàn bộ lộ trình đưa Việt Nam vào GEIS.\nTổng cộng, 4 cổ phiếu này có thể đón khoảng 155,6 triệu USD, tương đương khoảng hơn 4.000 tỷ đồng. Trong đó, MSN tương đương khoảng 1.305 tỷ đồng, VNM 1.176 tỷ đồng, MCH 943 tỷ đồng và VRE khoảng 606 tỷ đồng.\nFTSE Russell cho biết việc đưa Việt Nam vào GEIS được thực hiện qua 4 giai đoạn, tương ứng 10% vào tháng 9/2026, 20% vào tháng 3/2027, 35% vào tháng 6/2027 và 35% còn lại vào tháng 9/2027.\nNếu mở rộng xuống nhóm Micro Cap, danh sách còn có nhiều doanh nghiệp liên quan đến bán lẻ, tiêu dùng và thực phẩm như FPT Retail (FRT), Digiworld (DGW), KIDO (KDC), TTC AgriS (SBT), PAN Group (PAN), Nafoods (NAF), Dabaco (DBC) và BAF Việt Nam (BAF). Một số doanh nghiệp thực phẩm, thủy sản như Vĩnh Hoàn (VHC) và Nam Việt (ANV) cũng được bổ sung.\nTrong khi đó, hai tên tuổi lớn của ngành bán lẻ là Thế Giới Di Động (MWG) và PNJ không xuất hiện trong danh sách 117 cổ phiếu được bổ sung lần này.\nViệc vắng mặt nhiều khả năng liên quan đến các tiêu chí đầu tư của FTSE, trong đó có yêu cầu về dư địa sở hữu nước ngoài đối với cổ phiếu mới tham gia GEIS.\nViệt Nam sẽ chính thức được FTSE Russell nâng từ thị trường cận biên lên thị trường mới nổi thứ cấp từ khi thị trường mở cửa ngày 21/9/2026.\nNhịp sống thị trường",
+  "extraction_quality": "high",
+  "structure": {
+    "headings": [
+      {
+        "level": 1,
+        "text": "Vinamilk, Masan cùng loạt cổ phiếu bán lẻ, tiêu dùng được FTSE Russell gọi tên, hàng trăm triệu USD có thể chờ đổ vào"
+      },
+      {
+        "level": 2,
+        "text": "VNM&MSN&MCH&VRE:"
+      },
+      {
+        "level": 2,
+        "text": "Tin tức sự kiện về: Công ty cổ phần Cao su Việt Nam"
+      },
+      {
+        "level": 3,
+        "text": "CÙNG CHUYÊN MỤC"
+      },
+      {
+        "level": 4,
+        "text": "Doanh nghiệp liên quan Chủ tịch Đặng Thành Tâm mua 10 triệu cổ phiếu KBC Nổi bật"
+      },
+      {
+        "level": 4,
+        "text": "Một cổ phiếu “tím lịm” 4 phiên liên tiếp, tăng hơn 30% trong ít ngày Nổi bật"
+      },
+      {
+        "level": 4,
+        "text": "Mercedes-Benz Vietnam Star Automobile: Chuẩn mực mới của sự sang trọng"
+      },
+      {
+        "level": 4,
+        "text": "100 doanh nghiệp tư nhân nộp ngân sách lớn nhất Việt Nam: Tổng nộp 390.700 tỷ đồng, đóng góp gần 15% ngân sách quốc gia"
+      },
+      {
+        "level": 4,
+        "text": "Đón đầu làn sóng đầu tư công nghiệp chất lượng cao"
+      },
+      {
+        "level": 4,
+        "text": "Quốc hội thông qua Luật Dầu khí mới: PetroVietnam được giao thêm quyền, mở rộng ưu đãi"
+      }
+    ],
+    "paragraphs": [
+      "MỚI NHẤT!",
+      "Anh Khôi | 23-08-2026 - 01:22 AM | Doanh nghiệp",
+      "Hàng loạt doanh nghiệp lớn trong lĩnh vực bán lẻ, tiêu dùng và thực phẩm được FTSE Russell gọi tên trong kỳ rà soát tháng 9/2026, trong đó riêng 4 cổ phiếu thuộc nhóm Small Cap có thể hút hơn 155 triệu USD theo ước tính của SSI Research.",
+      "FTSE Russell vừa công bố kết quả rà soát bán niên tháng 9/2026 của bộ chỉ số FTSE Global Equity Index Series (GEIS). Việt Nam có tổng cộng 117 cổ phiếu được thêm mới, gồm 27 mã thuộc Large Cap, Mid Cap và Small Cap, cùng 90 mã Micro Cap.",
+      "Trong nhóm bán lẻ, tiêu dùng và thực phẩm, 4 cái tên đáng chú ý thuộc Small Cap gồm Masan Group (MSN), Vinamilk (VNM), Masan Consumer (MCH) và Vincom Retail (VRE).",
+      "Đáng chú ý, trước thời điểm FTSE Russell công bố kết quả chính thức ngày 21/8, SSI Research đã đưa ra danh sách dự báo 27 cổ phiếu Việt Nam vào FTSE All-Cap và danh sách này trùng với kết quả chính thức sau đó. Bảng ước tính của SSI Research sử dụng dữ liệu đến ngày 5/8/2026.",
+      "Theo đó, SSI Research ước tính MSN có thể thu hút khoảng 50,4 triệu USD, VNM 45,4 triệu USD, MCH 36,4 triệu USD và VRE 23,4 triệu USD trong toàn bộ lộ trình đưa Việt Nam vào GEIS.",
+      "Tổng cộng, 4 cổ phiếu này có thể đón khoảng 155,6 triệu USD, tương đương khoảng hơn 4.000 tỷ đồng. Trong đó, MSN tương đương khoảng 1.305 tỷ đồng, VNM 1.176 tỷ đồng, MCH 943 tỷ đồng và VRE khoảng 606 tỷ đồng.",
+      "FTSE Russell cho biết việc đưa Việt Nam vào GEIS được thực hiện qua 4 giai đoạn, tương ứng 10% vào tháng 9/2026, 20% vào tháng 3/2027, 35% vào tháng 6/2027 và 35% còn lại vào tháng 9/2027.",
+      "Nếu mở rộng xuống nhóm Micro Cap, danh sách còn có nhiều doanh nghiệp liên quan đến bán lẻ, tiêu dùng và thực phẩm như FPT Retail (FRT), Digiworld (DGW), KIDO (KDC), TTC AgriS (SBT), PAN Group (PAN), Nafoods (NAF), Dabaco (DBC) và BAF Việt Nam (BAF). Một số doanh nghiệp thực phẩm, thủy sản như Vĩnh Hoàn (VHC) và Nam Việt (ANV) cũng được bổ sung.",
+      "Trong khi đó, hai tên tuổi lớn của ngành bán lẻ là Thế Giới Di Động (MWG) và PNJ không xuất hiện trong danh sách 117 cổ phiếu được bổ sung lần này.",
+      "Việc vắng mặt nhiều khả năng liên quan đến các tiêu chí đầu tư của FTSE, trong đó có yêu cầu về dư địa sở hữu nước ngoài đối với cổ phiếu mới tham gia GEIS.",
+      "Việt Nam sẽ chính thức được FTSE Russell nâng từ thị trường cận biên lên thị trường mới nổi thứ cấp từ khi thị trường mở cửa ngày 21/9/2026.",
+      "Anh Khôi",
+      "Nhịp sống thị trường",
+      "Địa chỉ: Tầng 21 Tòa nhà Center Building. Số 01, phố Nguyễn Huy Tưởng, phường Thanh Xuân, thành phố Hà Nội",
+      "Điện thoại: 024 7309 5555 Máy lẻ 292. Fax: 024-39744082",
+      "Email: info@cafef.vn | Hotline: 0926 864 344",
+      "Chịu trách nhiệm nội dung: Ông Nguyễn Thế Tân",
+      "Liên hệ quảng cáo",
+      "Hotline:",
+      "Email: doanhnghiep@admicro.vn",
+      "© Copyright 2007 - 2026 - Công ty Cổ phần VCCorp.",
+      "Giấy phép thiết lập trang thông tin điện tử tổng hợp trên mạng số 2216/GP-TTĐT do Sở Thông tin và Truyền thông Hà Nội cấp ngày 10 tháng 4 năm 2019."
+    ],
+    "tables": [],
+    "links": [
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "http://liveboard.cafef.vn",
+        "text": "Bảng giá điện tử"
+      },
+      {
+        "href": "/du-lieu/danh-muc-dau-tu.chn",
+        "text": "Danh mục đầu tư"
+      },
+      {
+        "href": "/doc-nhanh.chn",
+        "text": "Đọc nhanh >>"
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "XÃ HỘI"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "CHỨNG KHOÁN"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "BẤT ĐỘNG SẢN"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "DOANH NGHIỆP"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "NGÂN HÀNG"
+      },
+      {
+        "href": "/smart-money.chn",
+        "text": "SMART MONEY"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "TÀI CHÍNH QUỐC TẾ"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "VĨ MÔ"
+      },
+      {
+        "href": "/kinh-te-so.chn",
+        "text": "KINH TẾ SỐ"
+      },
+      {
+        "href": "/thi-truong.chn",
+        "text": "THỊ TRƯỜNG"
+      },
+      {
+        "href": "/song.chn",
+        "text": "SỐNG"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "LIFESTYLE"
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "Xã hội"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "Doanh nghiệp"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "Kinh tế vĩ mô"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "Chứng khoán"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "Tài chính ngân hàng"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "Tài chính quốc tế"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "Tin tức"
+      },
+      {
+        "href": "/du-an.chn",
+        "text": "Dự án"
+      },
+      {
+        "href": "/ban-do-du-an.chn",
+        "text": "Bản đồ dự án"
+      },
+      {
+        "href": "/hang-hoa-nguyen-lieu.chn",
+        "text": "Hàng hóa nguyên liệu"
+      },
+      {
+        "href": "/song.chn",
+        "text": "Sống"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "Lifestyle"
+      },
+      {
+        "href": "/nhom-chu-de/emagazine.chn",
+        "text": "Magazine"
+      },
+      {
+        "href": "/du-lieu.chn",
+        "text": "Dữ liệu"
+      },
+      {
+        "href": "/du-lieu/cafeflists.chn",
+        "text": "F INDEX"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "Doanh nghiệp"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Chia sẻ"
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "javascript:;",
+        "text": "VNM&MSN&MCH&VRE:"
+      },
+      {
+        "href": "",
+        "text": "Xem hồ sơ doanh nghiệp"
+      },
+      {
+        "href": "javascript:;",
+        "text": "TIN MỚI"
+      },
+      {
+        "href": "https://cafef.vn/du-lieu/hose/msn-cong-ty-co-phan-tap-doan-masan.chn",
+        "text": "Masan Group"
+      },
+      {
+        "href": "https://cafef.vn/du-lieu/hose/vnm-cong-ty-co-phan-sua-viet-nam.chn",
+        "text": "Vinamilk"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Theo Nhịp sống thị trường Copy link"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Chia sẻ"
+      },
+      {
+        "href": "/ssi-research.html",
+        "text": "SSI Research,"
+      },
+      {
+        "href": "/ftse-russell.html",
+        "text": "ftse russell,"
+      },
+      {
+        "href": "/masan.html",
+        "text": "masan,"
+      },
+      {
+        "href": "/vinamilk.html",
+        "text": "vinamilk"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Công ty cổ phần Cao su Việt Nam"
+      },
+      {
+        "href": "https://s.cafef.vn/tin-doanh-nghiep/VNM&MSN&MCH&VRE/Event.chn",
+        "text": "Xem tất cả >>"
+      },
+      {
+        "href": "/doanh-nghiep-lien-quan-chu-tich-dang-thanh-tam-mua-10-trieu-co-phieu-kbc-188260822090854151.chn",
+        "text": ""
+      },
+      {
+        "href": "/doanh-nghiep-lien-quan-chu-tich-dang-thanh-tam-mua-10-trieu-co-phieu-kbc-188260822090854151.chn",
+        "text": "Doanh nghiệp liên quan Chủ tịch Đặng Thành Tâm mua 10 triệu cổ phiếu KBC"
+      },
+      {
+        "href": "/mot-co-phieu-tim-lim-4-phien-lien-tiep-tang-hon-30-trong-it-ngay-188260822080404176.chn",
+        "text": ""
+      },
+      {
+        "href": "/mot-co-phieu-tim-lim-4-phien-lien-tiep-tang-hon-30-trong-it-ngay-188260822080404176.chn",
+        "text": "Một cổ phiếu “tím lịm” 4 phiên liên tiếp, tăng hơn 30% trong ít ngày"
+      },
+      {
+        "href": "/mercedes-benz-vietnam-star-automobile-chuan-muc-moi-cua-su-sang-trong-188260824084541144.chn",
+        "text": ""
+      },
+      {
+        "href": "/mercedes-benz-vietnam-star-automobile-chuan-muc-moi-cua-su-sang-trong-188260824084541144.chn",
+        "text": "Mercedes-Benz Vietnam Star Automobile: Chuẩn mực mới của sự sang trọng"
+      },
+      {
+        "href": "/100-doanh-nghiep-tu-nhan-nop-ngan-sach-lon-nhat-viet-nam-tong-nop-390700-ty-dong-dong-gop-gan-15-ngan-sach-quoc-gia-188260824081137431.chn",
+        "text": ""
+      },
+      {
+        "href": "/100-doanh-nghiep-tu-nhan-nop-ngan-sach-lon-nhat-viet-nam-tong-nop-390700-ty-dong-dong-gop-gan-15-ngan-sach-quoc-gia-188260824081137431.chn",
+        "text": "100 doanh nghiệp tư nhân nộp ngân sách lớn nhất Việt Nam: Tổng nộp 390.700 tỷ đồng, đóng góp gần 15% ngân sách quốc gia"
+      },
+      {
+        "href": "/don-dau-lan-song-dau-tu-cong-nghiep-chat-luong-cao-188260822134959237.chn",
+        "text": ""
+      },
+      {
+        "href": "/don-dau-lan-song-dau-tu-cong-nghiep-chat-luong-cao-188260822134959237.chn",
+        "text": "Đón đầu làn sóng đầu tư công nghiệp chất lượng cao"
+      },
+      {
+        "href": "/quoc-hoi-thong-qua-luat-dau-khi-moi-petrovietnam-duoc-giao-them-quyen-mo-rong-uu-dai-188260824064728937.chn",
+        "text": ""
+      },
+      {
+        "href": "/quoc-hoi-thong-qua-luat-dau-khi-moi-petrovietnam-duoc-giao-them-quyen-mo-rong-uu-dai-188260824064728937.chn",
+        "text": "Quốc hội thông qua Luật Dầu khí mới: PetroVietnam được giao thêm quyền, mở rộng ưu đãi"
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "XÃ HỘI"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "CHỨNG KHOÁN"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "BẤT ĐỘNG SẢN"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "DOANH NGHIỆP"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "NGÂN HÀNG"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "TÀI CHÍNH QUỐC TẾ"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "VĨ MÔ"
+      },
+      {
+        "href": "/kinh-te-so.chn",
+        "text": "KINH TẾ SỐ"
+      },
+      {
+        "href": "/thi-truong.chn",
+        "text": "THỊ TRƯỜNG"
+      },
+      {
+        "href": "/song.chn",
+        "text": "SỐNG"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "LIFESTYLE"
+      },
+      {
+        "href": "/du-lieu.chn",
+        "text": "Dữ liệu"
+      },
+      {
+        "href": "/du-lieu/top/ceo.chn",
+        "text": "Top 200"
+      },
+      {
+        "href": "https://www.messenger.com/t/108804609142280",
+        "text": "Chat với tư vấn viên"
+      },
+      {
+        "href": "http://www.vccorp.vn/",
+        "text": ""
+      },
+      {
+        "href": "/static/chinh-sach-bao-mat.html",
+        "text": "Chính sách bảo mật"
+      }
+    ]
+  },
+  "images": [
+    {
+      "outer_tag": "<img alt=\"Vinamilk, Masan cùng loạt cổ phiếu bán lẻ, tiêu dùng được FTSE Russell gọi tên, hàng trăm triệu USD có thể chờ đổ vào\" data-role=\"cover\" fetchpriority=\"high\" src=\"https://cafefcdn.com/thumb_w/640/203337114487263232/2026/8/22/avatar1787422770581-17874227709651956571738.jpg\" title=\"Vinamilk, Masan cùng loạt cổ phiếu bán lẻ, tiêu dùng được FTSE Russell gọi tên, hàng trăm triệu USD có thể chờ đổ vào\"/>",
+      "resolved_url": "https://cafefcdn.com/thumb_w/640/203337114487263232/2026/8/22/avatar1787422770581-17874227709651956571738.jpg",
+      "alt": "Vinamilk, Masan cùng loạt cổ phiếu bán lẻ, tiêu dùng được FTSE Russell gọi tên, hàng trăm triệu USD có thể chờ đổ vào",
+      "title": "Vinamilk, Masan cùng loạt cổ phiếu bán lẻ, tiêu dùng được FTSE Russell gọi tên, hàng trăm triệu USD có thể chờ đổ vào",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"\" class=\"\" data-original=\"https://cafefcdn.com/203337114487263232/2026/8/22/ssi-du-doan-ftse-russel-1787422771654-1787422771901127329947.jpg\" h=\"1115\" height=\"\" rel=\"lightbox\" src=\"https://cafefcdn.com/203337114487263232/2026/8/22/ssi-du-doan-ftse-russel-1787422771654-1787422771901127329947.jpg\" title=\"\" type=\"photo\" w=\"1507\" width=\"\"/>",
+      "resolved_url": "https://cafefcdn.com/203337114487263232/2026/8/22/ssi-du-doan-ftse-russel-1787422771654-1787422771901127329947.jpg",
+      "alt": "",
+      "title": "",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Doanh nghiệp liên quan Chủ tịch Đặng Thành Tâm mua 10 triệu cổ phiếu KBC\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/22/avatar1787364506900-17873645195261662992296.jpg\" title=\"Doanh nghiệp liên quan Chủ tịch Đặng Thành Tâm mua 10 triệu cổ phiếu KBC\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/22/avatar1787364506900-17873645195261662992296.jpg",
+      "alt": "Doanh nghiệp liên quan Chủ tịch Đặng Thành Tâm mua 10 triệu cổ phiếu KBC",
+      "title": "Doanh nghiệp liên quan Chủ tịch Đặng Thành Tâm mua 10 triệu cổ phiếu KBC",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Một cổ phiếu “tím lịm” 4 phiên liên tiếp, tăng hơn 30% trong ít ngày\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/22/avatar1787360581521-1787360582009520729126.png\" title=\"Một cổ phiếu “tím lịm” 4 phiên liên tiếp, tăng hơn 30% trong ít ngày\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/22/avatar1787360581521-1787360582009520729126.png",
+      "alt": "Một cổ phiếu “tím lịm” 4 phiên liên tiếp, tăng hơn 30% trong ít ngày",
+      "title": "Một cổ phiếu “tím lịm” 4 phiên liên tiếp, tăng hơn 30% trong ít ngày",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Mercedes-Benz Vietnam Star Automobile: Chuẩn mực mới của sự sang trọng\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/24/photo1787365517649-17873655178841519410075-1787535944129528050529.jpg\" title=\"Mercedes-Benz Vietnam Star Automobile: Chuẩn mực mới của sự sang trọng\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/24/photo1787365517649-17873655178841519410075-1787535944129528050529.jpg",
+      "alt": "Mercedes-Benz Vietnam Star Automobile: Chuẩn mực mới của sự sang trọng",
+      "title": "Mercedes-Benz Vietnam Star Automobile: Chuẩn mực mới của sự sang trọng",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"100 doanh nghiệp tư nhân nộp ngân sách lớn nhất Việt Nam: Tổng nộp 390.700 tỷ đồng, đóng góp gần 15% ngân sách quốc gia\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/24/photo-2026-08-22-14-09-47-1787533634767999067264-0-0-1200-1920-crop-17875336368102045935820.jpg\" title=\"100 doanh nghiệp tư nhân nộp ngân sách lớn nhất Việt Nam: Tổng nộp 390.700 tỷ đồng, đóng góp gần 15% ngân sách quốc gia\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/24/photo-2026-08-22-14-09-47-1787533634767999067264-0-0-1200-1920-crop-17875336368102045935820.jpg",
+      "alt": "100 doanh nghiệp tư nhân nộp ngân sách lớn nhất Việt Nam: Tổng nộp 390.700 tỷ đồng, đóng góp gần 15% ngân sách quốc gia",
+      "title": "100 doanh nghiệp tư nhân nộp ngân sách lớn nhất Việt Nam: Tổng nộp 390.700 tỷ đồng, đóng góp gần 15% ngân sách quốc gia",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Đón đầu làn sóng đầu tư công nghiệp chất lượng cao\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/22/photo1787311873156-17873118732831508202996-1787381401519920199137.jpg\" title=\"Đón đầu làn sóng đầu tư công nghiệp chất lượng cao\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/22/photo1787311873156-17873118732831508202996-1787381401519920199137.jpg",
+      "alt": "Đón đầu làn sóng đầu tư công nghiệp chất lượng cao",
+      "title": "Đón đầu làn sóng đầu tư công nghiệp chất lượng cao",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Quốc hội thông qua Luật Dầu khí mới: PetroVietnam được giao thêm quyền, mở rộng ưu đãi\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/23/avatar1787528719247-17875287195521289388485.jpg\" title=\"Quốc hội thông qua Luật Dầu khí mới: PetroVietnam được giao thêm quyền, mở rộng ưu đãi\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/23/avatar1787528719247-17875287195521289388485.jpg",
+      "alt": "Quốc hội thông qua Luật Dầu khí mới: PetroVietnam được giao thêm quyền, mở rộng ưu đãi",
+      "title": "Quốc hội thông qua Luật Dầu khí mới: PetroVietnam được giao thêm quyền, mở rộng ưu đãi",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Công ty Cổ phần VCCorp\" height=\"49px\" src=\"https://vccorp.mediacdn.vn/vccorp-s.png\" width=\"100px\"/>",
+      "resolved_url": "https://vccorp.mediacdn.vn/vccorp-s.png",
+      "alt": "Công ty Cổ phần VCCorp",
+      "title": "",
+      "caption": ""
+    }
+  ],
+  "language": "vi",
+  "built_at": "2026-08-24T09:02:57+07:00",
+  "built_from_raw_path": "data/raw_html\\cafef.vn\\20260824\\daf16e5294fae1494f03be95cc91968b907378091e40b2061e5b5169a5cb5bfa.html"
+}

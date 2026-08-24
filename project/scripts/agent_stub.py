@@ -80,18 +80,36 @@ def stub_l1(packet: dict, reg) -> dict:
 def stub_agent(packet: dict) -> dict:
     inp = packet.get("input") or {}
     text = (inp.get("cleaned_text") or packet.get("cleaned_text") or "").strip()
-    s1, s2 = text[:80].strip(), text[80:180].strip()
+    
+    import re
+    sentences = [s.strip() for s in re.split(r'(?<=[.!?\n])\s+', text) if len(s.strip()) >= 20]
+    if len(sentences) >= 2:
+        s1 = sentences[0]
+        s2 = sentences[1]
+        abstractive = " ".join(sentences[:3])
+        key_points = sentences[:3]
+    elif len(sentences) == 1:
+        s1 = sentences[0]
+        s2 = sentences[0]
+        abstractive = sentences[0]
+        key_points = [sentences[0]]
+    else:
+        s1 = text if len(text) >= 20 else (text + " " * (20 - len(text)))
+        s2 = s1
+        abstractive = text or "N/A"
+        key_points = [s1]
+
     return {
         "output_schema_version": "1.0", "article_id": packet["article_id"],
-        "summary": {"abstractive": (text[:200] or "N/A"),
-                    "key_points": [s1[:60]] if s1 else ["N/A"]},
+        "summary": {"abstractive": (abstractive or "N/A"),
+                    "key_points": key_points},
         "implication": {"text": "Bản tóm tắt tự động (stub) — chưa phân tích ngữ nghĩa.",
                         "affected_parties": ["thị trường"], "impact_area": "market"},
         "materiality": {"score": 0.5, "time_sensitivity": "this_week"},
         "confidence": 0.7, "event_type": "other",
         "sentiment": {"overall": 0.0, "polarity": "neutral"},
-        "citations": [{"claim": "trích 1", "source_span": s1, "source_offset": 0},
-                      {"claim": "trích 2", "source_span": s2, "source_offset": 80}],
+        "citations": [{"claim": "trích 1", "source_span": s1, "source_offset": max(0, text.find(s1))},
+                      {"claim": "trích 2", "source_span": s2, "source_offset": max(0, text.find(s2))}],
         "extraction_quality": "medium",
         "processing_metadata": {"agent_provider": "stub", "model_used": "rule-based",
                                 "timestamp": now_vn_iso()},

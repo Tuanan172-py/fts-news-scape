@@ -1,0 +1,40 @@
+# institutions.yaml — alias định chế, cơ quan quản lý và ngân hàng trung ương.
+# Nạp bởi scripts/build_entities.py → gộp vào entities.json.
+
+NHNN:
+  canonical_name: "Ngân hàng Nhà nước"
+  aliases:
+    - "Ngân hàng Nhà nước"
+    - "NHNN"
+    - "SBV"
+    - "Thống đốc"
+    - "thị trường mở"
+    - "OMO"
+    - "tín phiếu"
+
+UBCKNN:
+  canonical_name: "Ủy ban Chứng khoán Nhà nước"
+  aliases:
+    - "Ủy ban Chứng khoán Nhà nước"
+    - "UBCKNN"
+    - "SSC"
+    - "Bộ Tài chính"
+    - "hệ thống KRX"
+    - "nâng hạng thị trường"
+
+FED:
+  canonical_name: "Cục Dự trữ Liên bang Mỹ"
+  aliases:
+    - "Cục Dự trữ Liên bang"
+    - "Fed"
+    - "FED"
+    - "FOMC"
+    - "Jerome Powell"
+    - "lãi suất Fed"
+
+ECB:
+  canonical_name: "Ngân hàng Trung ương Châu Âu"
+  aliases:
+    - "Ngân hàng Trung ương Châu Âu"
+    - "ECB"
+    - "Christine Lagarde"

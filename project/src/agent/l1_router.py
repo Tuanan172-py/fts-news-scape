@@ -20,7 +20,10 @@ from src.handoff.contract_validator import validate as schema_validate
 
 L1_TASK_VERSION = "1.0"
 L1_OUTPUT_SCHEMA = "l1-entity-output-v1"
-_CATEGORY_KEYS = ("ticker_company", "etf_fund", "index", "exchange", "industry_sector")
+_CATEGORY_KEYS = (
+    "ticker_company", "etf_fund", "index", "exchange",
+    "industry_sector", "macro_geo", "asset_class", "institution",
+)
 
 
 # ---------------------------------------------------------------------------
@@ -129,6 +132,9 @@ def check_l1_dod(output: dict, title: str) -> tuple[bool, list[str]]:
         "ETF": "etf_fund", "INDEX": "index", "EXCHANGE": "exchange",
         "INDUSTRY_GICS1": "industry_sector", "INDUSTRY_GICS2": "industry_sector",
         "INDUSTRY_GICS3": "industry_sector",
+        "MACRO_GEO": "macro_geo", "MACRO_THEME": "macro_geo",
+        "ASSET_CLASS": "asset_class",
+        "INSTITUTION": "institution",
     }
     done_groups = {g for g, v in cats.items() if v == "done"}
     have_groups = {type_group.get(e.get("type")) for e in ents if e.get("in_list")}
@@ -141,3 +147,4 @@ def check_l1_dod(output: dict, title: str) -> tuple[bool, list[str]]:
             reasons.append(f"processing_metadata.{k} missing")
 
     return (not reasons), reasons
+

@@ -1,0 +1,427 @@
+{
+  "silver_schema_version": "1.0",
+  "article_id": "f8bbf0cf45274513ea7ff11e45548272f43e762e2c29404325b98e3c6035d065",
+  "source_url": "https://cafef.vn/acb-duoc-cap-phep-thanh-lap-cong-ty-bao-hiem-phi-nhan-tho-188260821103547629.chn",
+  "domain": "cafef.vn",
+  "content_sha256": "dcdb215057bb89e5b680e0a71034dcd48fbcb29825d4270def8b606e1797887c",
+  "cleaned_text": "ACB được cấp phép thành lập công ty bảo hiểm phi nhân thọ\nCông ty TNHH Bảo hiểm Phi Nhân thọ ACB được thành lập với vốn điều lệ 500 tỷ đồng do ACBA góp 91% và ACBS góp 9%.\nNgân hàng TMCP Á Châu (MCK: ACB) vừa công bố thông tin về việc nhận được Giấy phép kinh doanh bảo hiểm từ Bộ Tài chính.\nTheo Giấy phép số 104/GP/KDBH cấp ngày 12/8/2026, Bộ Tài chính cho phép Công ty TNHH Quản lý nợ và khai thác tài sản Ngân hàng Á Châu (ACBA) và Công ty TNHH Chứng khoán ACB (ACBS) thành lập Công ty TNHH Bảo hiểm Phi Nhân thọ ACB (viết tắt là ACB Insurance).\nACB Insurance có vốn điều lệ 500 tỷ đồng do ACBA góp 91% và ACBS góp 9% còn lại. Doanh nghiệp có trụ sở chính tại 743/1-745-747 Hồng Bàng, phường Bình Tây, TP.HCM.\nACB Insurance được phép kinh doanh cá loại hình bảo hiểm phi nhân thọ, bảo hiểm sức khỏe, bảo hiểm tài sản, bảo hiểm xe cơ giới, bảo hiểm cháy nổ...\nCả ACBA và ACBS đều là công ty con của ACB. Do đó, ACB sẽ gián tiếp sở hữu ACB Insurance.\nTrước đó, hồi tháng 11/2025, cổ đông ACB đã thông qua đề án thành lập công ty con trong lĩnh vực bảo hiểm phi nhân thọ.\nTại đề án thành lập công ty, ACB Insurance được định hướng chiến lược tập trung vào các sản phẩm bảo hiểm tài sản và cháy nổ và con người – những phân khúc có nhu cầu cao và biên lợi nhuận ổn định.\nVề triển vọng doanh thu, doanh thu từ phí bảo hiểm gốc dự kiến tăng trường mạnh mẽ qua từng năm, đạt 2.300 tỷ đồng vào năm 2030, tương ứng với tốc độ tăng trưởng kép hàng năm (CAGR) trên 50%.\nBên cạnh đó, hoạt động nhượng tái bảo hiểm sẽ triển khai nhằm giảm thiểu rủi ro từ các hợp đồng có giá trị lớn và sản phẩm mới. Tỷ lệ nhượng tái/ doanh số gốc phát sinh từ năm 2027 và dự kiến đạt 22% vào năm 2030.\nCông ty sẽ tận dụng nguồn vốn hiện có để đầu tư nhằm đa dạng hóa nguồn thu, lợi nhuận hoạt động tài chính dự kiến đạt 8 tỷ đồng năm 2026 và kỳ vọng đạt 58 tỷ đồng năm 2030.\nChi phí trực tiếp cho hoạt động kinh doanh bảo hiểm dự kiến duy trì trên 70% doanh thu thuần. Chi phí vận hành liên quan đầu tư vào hệ thống, công nghệ, số hóa và nhân sự được ưu tiên, dự kiến CIR duy trì > 40% qua các năm.\nBiên lợi nhuận gộp từ hoạt động bảo hiểm dự kiến duy trì trên 20% trong giai đoạn 2026-2030 với mục tiêu nhất quán trong chiến lược thiết kế sản phẩm, định phí phù hợp với rủi ro, và năng lực kiểm soát tổn thất hiệu quả.\nSau 5 năm hoạt động, ACB Insurance dự kiến đạt lợi nhuận trước thuế 365 tỷ đồng, tương ứng với tốc độ tăng trưởng bình quân trên 50%/năm. Tổng tài sản dự kiến tăng hơn gấp ba lần, vượt mốc 2.000 tỷ đồng vào năm thứ năm. Tỷ suất sinh lời trên vốn chủ sở hữu (ROE) được kỳ vọng duy trì ở mức cao, trên 20% vào cuối năm 2030.\nAn ninh tiền tệ",
+  "extraction_quality": "high",
+  "structure": {
+    "headings": [
+      {
+        "level": 1,
+        "text": "ACB được cấp phép thành lập công ty bảo hiểm phi nhân thọ"
+      },
+      {
+        "level": 3,
+        "text": "CÙNG CHUYÊN MỤC"
+      },
+      {
+        "level": 4,
+        "text": "Giá vàng miếng, vàng nhẫn trơn sáng 21/8 tại SJC, PNJ, DOJI, Bảo Tín Minh Châu đồng loạt tăng Nổi bật"
+      },
+      {
+        "level": 4,
+        "text": "Ngân hàng Nhà nước: Sẽ tái cấp vốn cho các ngân hàng để hỗ trợ thanh khoản Nổi bật"
+      },
+      {
+        "level": 4,
+        "text": "Bệnh viện Bạch Mai và Techcombank hợp tác xây dựng hệ sinh thái tài chính y tế hiện đại, nâng cao hiệu quả vận hành và trải nghiệm người bệnh"
+      },
+      {
+        "level": 4,
+        "text": "Đấu trường AI Kinh doanh - The NextX: chuyên gia từ McKinsey, NTU Singapore,… làm giám khảo vòng chung kết"
+      },
+      {
+        "level": 4,
+        "text": "Cộng hưởng hệ sinh thái: Cuộc chơi mới của ngành ngân hàng"
+      },
+      {
+        "level": 4,
+        "text": "LPBank: Hành trình 18 năm kiến tạo một ngân hàng hiện đại, hiệu quả và bền vững"
+      }
+    ],
+    "paragraphs": [
+      "MỚI NHẤT!",
+      "Theo Hà Ly | 21-08-2026 - 11:35 AM | Tài chính - ngân hàng",
+      "Công ty TNHH Bảo hiểm Phi Nhân thọ ACB được thành lập với vốn điều lệ 500 tỷ đồng do ACBA góp 91% và ACBS góp 9%.",
+      "Ngân hàng TMCP Á Châu (MCK: ACB) vừa công bố thông tin về việc nhận được Giấy phép kinh doanh bảo hiểm từ Bộ Tài chính.",
+      "Theo Giấy phép số 104/GP/KDBH cấp ngày 12/8/2026, Bộ Tài chính cho phép Công ty TNHH Quản lý nợ và khai thác tài sản Ngân hàng Á Châu (ACBA) và Công ty TNHH Chứng khoán ACB (ACBS) thành lập Công ty TNHH Bảo hiểm Phi Nhân thọ ACB (viết tắt là ACB Insurance).",
+      "ACB Insurance có vốn điều lệ 500 tỷ đồng do ACBA góp 91% và ACBS góp 9% còn lại. Doanh nghiệp có trụ sở chính tại 743/1-745-747 Hồng Bàng, phường Bình Tây, TP.HCM.",
+      "ACB Insurance được phép kinh doanh cá loại hình bảo hiểm phi nhân thọ, bảo hiểm sức khỏe, bảo hiểm tài sản, bảo hiểm xe cơ giới, bảo hiểm cháy nổ...",
+      "Cả ACBA và ACBS đều là công ty con của ACB. Do đó, ACB sẽ gián tiếp sở hữu ACB Insurance.",
+      "Ảnh: ACB",
+      "Trước đó, hồi tháng 11/2025, cổ đông ACB đã thông qua đề án thành lập công ty con trong lĩnh vực bảo hiểm phi nhân thọ.",
+      "Tại đề án thành lập công ty, ACB Insurance được định hướng chiến lược tập trung vào các sản phẩm bảo hiểm tài sản và cháy nổ và con người – những phân khúc có nhu cầu cao và biên lợi nhuận ổn định.",
+      "Về triển vọng doanh thu, doanh thu từ phí bảo hiểm gốc dự kiến tăng trường mạnh mẽ qua từng năm, đạt 2.300 tỷ đồng vào năm 2030, tương ứng với tốc độ tăng trưởng kép hàng năm (CAGR) trên 50%.",
+      "Bên cạnh đó, hoạt động nhượng tái bảo hiểm sẽ triển khai nhằm giảm thiểu rủi ro từ các hợp đồng có giá trị lớn và sản phẩm mới. Tỷ lệ nhượng tái/ doanh số gốc phát sinh từ năm 2027 và dự kiến đạt 22% vào năm 2030.",
+      "Công ty sẽ tận dụng nguồn vốn hiện có để đầu tư nhằm đa dạng hóa nguồn thu, lợi nhuận hoạt động tài chính dự kiến đạt 8 tỷ đồng năm 2026 và kỳ vọng đạt 58 tỷ đồng năm 2030.",
+      "Chi phí trực tiếp cho hoạt động kinh doanh bảo hiểm dự kiến duy trì trên 70% doanh thu thuần. Chi phí vận hành liên quan đầu tư vào hệ thống, công nghệ, số hóa và nhân sự được ưu tiên, dự kiến CIR duy trì > 40% qua các năm.",
+      "Biên lợi nhuận gộp từ hoạt động bảo hiểm dự kiến duy trì trên 20% trong giai đoạn 2026-2030 với mục tiêu nhất quán trong chiến lược thiết kế sản phẩm, định phí phù hợp với rủi ro, và năng lực kiểm soát tổn thất hiệu quả.",
+      "Sau 5 năm hoạt động, ACB Insurance dự kiến đạt lợi nhuận trước thuế 365 tỷ đồng, tương ứng với tốc độ tăng trưởng bình quân trên 50%/năm. Tổng tài sản dự kiến tăng hơn gấp ba lần, vượt mốc 2.000 tỷ đồng vào năm thứ năm. Tỷ suất sinh lời trên vốn chủ sở hữu (ROE) được kỳ vọng duy trì ở mức cao, trên 20% vào cuối năm 2030.",
+      "Theo Hà Ly",
+      "An ninh tiền tệ",
+      "Địa chỉ: Tầng 21 Tòa nhà Center Building. Số 01, phố Nguyễn Huy Tưởng, phường Thanh Xuân, thành phố Hà Nội",
+      "Điện thoại: 024 7309 5555 Máy lẻ 292. Fax: 024-39744082",
+      "Email: info@cafef.vn | Hotline: 0926 864 344",
+      "Chịu trách nhiệm nội dung: Ông Nguyễn Thế Tân",
+      "Liên hệ quảng cáo",
+      "Hotline:",
+      "Email: doanhnghiep@admicro.vn",
+      "© Copyright 2007 - 2026 - Công ty Cổ phần VCCorp.",
+      "Giấy phép thiết lập trang thông tin điện tử tổng hợp trên mạng số 2216/GP-TTĐT do Sở Thông tin và Truyền thông Hà Nội cấp ngày 10 tháng 4 năm 2019."
+    ],
+    "tables": [],
+    "links": [
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "http://liveboard.cafef.vn",
+        "text": "Bảng giá điện tử"
+      },
+      {
+        "href": "/du-lieu/danh-muc-dau-tu.chn",
+        "text": "Danh mục đầu tư"
+      },
+      {
+        "href": "/doc-nhanh.chn",
+        "text": "Đọc nhanh >>"
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "XÃ HỘI"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "CHỨNG KHOÁN"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "BẤT ĐỘNG SẢN"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "DOANH NGHIỆP"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "NGÂN HÀNG"
+      },
+      {
+        "href": "/smart-money.chn",
+        "text": "SMART MONEY"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "TÀI CHÍNH QUỐC TẾ"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "VĨ MÔ"
+      },
+      {
+        "href": "/kinh-te-so.chn",
+        "text": "KINH TẾ SỐ"
+      },
+      {
+        "href": "/thi-truong.chn",
+        "text": "THỊ TRƯỜNG"
+      },
+      {
+        "href": "/song.chn",
+        "text": "SỐNG"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "LIFESTYLE"
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "Xã hội"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "Doanh nghiệp"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "Kinh tế vĩ mô"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "Chứng khoán"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "Tài chính ngân hàng"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "Tài chính quốc tế"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "Tin tức"
+      },
+      {
+        "href": "/du-an.chn",
+        "text": "Dự án"
+      },
+      {
+        "href": "/ban-do-du-an.chn",
+        "text": "Bản đồ dự án"
+      },
+      {
+        "href": "/hang-hoa-nguyen-lieu.chn",
+        "text": "Hàng hóa nguyên liệu"
+      },
+      {
+        "href": "/song.chn",
+        "text": "Sống"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "Lifestyle"
+      },
+      {
+        "href": "/nhom-chu-de/emagazine.chn",
+        "text": "Magazine"
+      },
+      {
+        "href": "/du-lieu.chn",
+        "text": "Dữ liệu"
+      },
+      {
+        "href": "/du-lieu/cafeflists.chn",
+        "text": "F INDEX"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "Tài chính - ngân hàng"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Chia sẻ"
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "javascript:;",
+        "text": "TIN MỚI"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Theo An ninh tiền tệ Copy link"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Chia sẻ"
+      },
+      {
+        "href": "/bao-hiem.html",
+        "text": "bảo hiểm,"
+      },
+      {
+        "href": "/acb.html",
+        "text": "ACB"
+      },
+      {
+        "href": "/gia-vang-mieng-vang-nhan-tron-sang-21-8-tai-sjc-pnj-doji-bao-tin-minh-chau-dong-loat-tang-188260821071237129.chn",
+        "text": ""
+      },
+      {
+        "href": "/gia-vang-mieng-vang-nhan-tron-sang-21-8-tai-sjc-pnj-doji-bao-tin-minh-chau-dong-loat-tang-188260821071237129.chn",
+        "text": "Giá vàng miếng, vàng nhẫn trơn sáng 21/8 tại SJC, PNJ, DOJI, Bảo Tín Minh Châu đồng loạt tăng"
+      },
+      {
+        "href": "/ngan-hang-nha-nuoc-se-tai-cap-von-cho-cac-ngan-hang-de-ho-tro-thanh-khoan-188260820144848175.chn",
+        "text": ""
+      },
+      {
+        "href": "/ngan-hang-nha-nuoc-se-tai-cap-von-cho-cac-ngan-hang-de-ho-tro-thanh-khoan-188260820144848175.chn",
+        "text": "Ngân hàng Nhà nước: Sẽ tái cấp vốn cho các ngân hàng để hỗ trợ thanh khoản"
+      },
+      {
+        "href": "/benh-vien-bach-mai-va-techcombank-hop-tac-xay-dung-he-sinh-thai-tai-chinh-y-te-hien-dai-nang-cao-hieu-qua-van-hanh-va-trai-nghiem-nguoi-benh-188260821102846477.chn",
+        "text": ""
+      },
+      {
+        "href": "/benh-vien-bach-mai-va-techcombank-hop-tac-xay-dung-he-sinh-thai-tai-chinh-y-te-hien-dai-nang-cao-hieu-qua-van-hanh-va-trai-nghiem-nguoi-benh-188260821102846477.chn",
+        "text": "Bệnh viện Bạch Mai và Techcombank hợp tác xây dựng hệ sinh thái tài chính y tế hiện đại, nâng cao hiệu quả vận hành và trải nghiệm người bệnh"
+      },
+      {
+        "href": "/dau-truong-ai-kinh-doanh-the-nextx-chuyen-gia-tu-mckinsey-ntu-singapore-lam-giam-khao-vong-chung-ket-188260821095455953.chn",
+        "text": ""
+      },
+      {
+        "href": "/dau-truong-ai-kinh-doanh-the-nextx-chuyen-gia-tu-mckinsey-ntu-singapore-lam-giam-khao-vong-chung-ket-188260821095455953.chn",
+        "text": "Đấu trường AI Kinh doanh - The NextX: chuyên gia từ McKinsey, NTU Singapore,… làm giám khảo vòng chung kết"
+      },
+      {
+        "href": "/cong-huong-he-sinh-thai-cuoc-choi-moi-cua-nganh-ngan-hang-188260820214200451.chn",
+        "text": ""
+      },
+      {
+        "href": "/cong-huong-he-sinh-thai-cuoc-choi-moi-cua-nganh-ngan-hang-188260820214200451.chn",
+        "text": "Cộng hưởng hệ sinh thái: Cuộc chơi mới của ngành ngân hàng"
+      },
+      {
+        "href": "/lpbank-hanh-trinh-18-nam-kien-tao-mot-ngan-hang-hien-dai-hieu-qua-va-ben-vung-188260820143403668.chn",
+        "text": ""
+      },
+      {
+        "href": "/lpbank-hanh-trinh-18-nam-kien-tao-mot-ngan-hang-hien-dai-hieu-qua-va-ben-vung-188260820143403668.chn",
+        "text": "LPBank: Hành trình 18 năm kiến tạo một ngân hàng hiện đại, hiệu quả và bền vững"
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "XÃ HỘI"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "CHỨNG KHOÁN"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "BẤT ĐỘNG SẢN"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "DOANH NGHIỆP"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "NGÂN HÀNG"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "TÀI CHÍNH QUỐC TẾ"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "VĨ MÔ"
+      },
+      {
+        "href": "/kinh-te-so.chn",
+        "text": "KINH TẾ SỐ"
+      },
+      {
+        "href": "/thi-truong.chn",
+        "text": "THỊ TRƯỜNG"
+      },
+      {
+        "href": "/song.chn",
+        "text": "SỐNG"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "LIFESTYLE"
+      },
+      {
+        "href": "/du-lieu.chn",
+        "text": "Dữ liệu"
+      },
+      {
+        "href": "/du-lieu/top/ceo.chn",
+        "text": "Top 200"
+      },
+      {
+        "href": "https://www.messenger.com/t/108804609142280",
+        "text": "Chat với tư vấn viên"
+      },
+      {
+        "href": "http://www.vccorp.vn/",
+        "text": ""
+      },
+      {
+        "href": "/static/chinh-sach-bao-mat.html",
+        "text": "Chính sách bảo mật"
+      }
+    ]
+  },
+  "images": [
+    {
+      "outer_tag": "<img alt=\"ACB được cấp phép thành lập công ty bảo hiểm phi nhân thọ - Ảnh 1.\" class=\"\" data-author=\"\" data-nosnippet=\"\" data-original=\"https://cafefcdn.com/203337114487263232/2026/8/21/acb-17872807238831792010300-1787283309788-17872833105261317515674.jpg\" h=\"715\" height=\"\" id=\"img_240647195161952256\" loading=\"lazy\" photoid=\"240647195161952256\" rel=\"lightbox\" src=\"https://cafefcdn.com/203337114487263232/2026/8/21/acb-17872807238831792010300-1787283309788-17872833105261317515674.jpg\" style=\"max-width:100%;\" title=\"\" type=\"photo\" w=\"1327\" width=\"\"/>",
+      "resolved_url": "https://cafefcdn.com/203337114487263232/2026/8/21/acb-17872807238831792010300-1787283309788-17872833105261317515674.jpg",
+      "alt": "ACB được cấp phép thành lập công ty bảo hiểm phi nhân thọ - Ảnh 1.",
+      "title": "",
+      "caption": "Ảnh: ACB"
+    },
+    {
+      "outer_tag": "<img alt=\"Giá vàng miếng, vàng nhẫn trơn sáng 21/8 tại SJC, PNJ, DOJI, Bảo Tín Minh Châu đồng loạt tăng\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/21/avatar1787281168543-17872811694271315575085.png\" title=\"Giá vàng miếng, vàng nhẫn trơn sáng 21/8 tại SJC, PNJ, DOJI, Bảo Tín Minh Châu đồng loạt tăng\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/21/avatar1787281168543-17872811694271315575085.png",
+      "alt": "Giá vàng miếng, vàng nhẫn trơn sáng 21/8 tại SJC, PNJ, DOJI, Bảo Tín Minh Châu đồng loạt tăng",
+      "title": "Giá vàng miếng, vàng nhẫn trơn sáng 21/8 tại SJC, PNJ, DOJI, Bảo Tín Minh Châu đồng loạt tăng",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Ngân hàng Nhà nước: Sẽ tái cấp vốn cho các ngân hàng để hỗ trợ thanh khoản\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787215484413-1787215484859657222067.jpg\" title=\"Ngân hàng Nhà nước: Sẽ tái cấp vốn cho các ngân hàng để hỗ trợ thanh khoản\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787215484413-1787215484859657222067.jpg",
+      "alt": "Ngân hàng Nhà nước: Sẽ tái cấp vốn cho các ngân hàng để hỗ trợ thanh khoản",
+      "title": "Ngân hàng Nhà nước: Sẽ tái cấp vốn cho các ngân hàng để hỗ trợ thanh khoản",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Bệnh viện Bạch Mai và Techcombank hợp tác xây dựng hệ sinh thái tài chính y tế hiện đại, nâng cao hiệu quả vận hành và trải nghiệm người bệnh\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/21/photo1787223457574-1787223457821185169010-1787282927808427625531.jpg\" title=\"Bệnh viện Bạch Mai và Techcombank hợp tác xây dựng hệ sinh thái tài chính y tế hiện đại, nâng cao hiệu quả vận hành và trải nghiệm người bệnh\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/21/photo1787223457574-1787223457821185169010-1787282927808427625531.jpg",
+      "alt": "Bệnh viện Bạch Mai và Techcombank hợp tác xây dựng hệ sinh thái tài chính y tế hiện đại, nâng cao hiệu quả vận hành và trải nghiệm người bệnh",
+      "title": "Bệnh viện Bạch Mai và Techcombank hợp tác xây dựng hệ sinh thái tài chính y tế hiện đại, nâng cao hiệu quả vận hành và trải nghiệm người bệnh",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Đấu trường AI Kinh doanh - The NextX: chuyên gia từ McKinsey, NTU Singapore,… làm giám khảo vòng chung kết\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/21/photo1787213384852-1787213385125955557222-1787280897346307593557.jpg\" title=\"Đấu trường AI Kinh doanh - The NextX: chuyên gia từ McKinsey, NTU Singapore,… làm giám khảo vòng chung kết\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/21/photo1787213384852-1787213385125955557222-1787280897346307593557.jpg",
+      "alt": "Đấu trường AI Kinh doanh - The NextX: chuyên gia từ McKinsey, NTU Singapore,… làm giám khảo vòng chung kết",
+      "title": "Đấu trường AI Kinh doanh - The NextX: chuyên gia từ McKinsey, NTU Singapore,… làm giám khảo vòng chung kết",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Cộng hưởng hệ sinh thái: Cuộc chơi mới của ngành ngân hàng\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/photo1787219153221-17872191534311804215470-17872369298541120906397.jpg\" title=\"Cộng hưởng hệ sinh thái: Cuộc chơi mới của ngành ngân hàng\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/photo1787219153221-17872191534311804215470-17872369298541120906397.jpg",
+      "alt": "Cộng hưởng hệ sinh thái: Cuộc chơi mới của ngành ngân hàng",
+      "title": "Cộng hưởng hệ sinh thái: Cuộc chơi mới của ngành ngân hàng",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"LPBank: Hành trình 18 năm kiến tạo một ngân hàng hiện đại, hiệu quả và bền vững\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/photo1786005577033-1786005577222638395251-17872112456211771411082.png\" title=\"LPBank: Hành trình 18 năm kiến tạo một ngân hàng hiện đại, hiệu quả và bền vững\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/photo1786005577033-1786005577222638395251-17872112456211771411082.png",
+      "alt": "LPBank: Hành trình 18 năm kiến tạo một ngân hàng hiện đại, hiệu quả và bền vững",
+      "title": "LPBank: Hành trình 18 năm kiến tạo một ngân hàng hiện đại, hiệu quả và bền vững",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Công ty Cổ phần VCCorp\" height=\"49px\" src=\"https://vccorp.mediacdn.vn/vccorp-s.png\" width=\"100px\"/>",
+      "resolved_url": "https://vccorp.mediacdn.vn/vccorp-s.png",
+      "alt": "Công ty Cổ phần VCCorp",
+      "title": "",
+      "caption": ""
+    }
+  ],
+  "language": "vi",
+  "built_at": "2026-08-21T11:47:56+07:00",
+  "built_from_raw_path": "data/raw_html\\cafef.vn\\20260821\\f8bbf0cf45274513ea7ff11e45548272f43e762e2c29404325b98e3c6035d065.html"
+}

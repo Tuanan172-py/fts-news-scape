@@ -26,10 +26,10 @@ DEFAULT_OUTPUT_ROOT = REPO_ROOT / "users" / "output"
 USERS_CONFIG_DIR = PROJECT_ROOT / "config" / "entities" / "users"
 
 # Nhóm hợp lệ trong sheet `entities` — khớp đúng key của EntityRegistry.select().
-GROUP_KEYS = ("tickers", "etfs", "indices", "exchanges", "industries", "entities")
+GROUP_KEYS = ("tickers", "etfs", "indices", "exchanges", "industries", "macro", "assets", "institutions", "entities")
 # Nhóm dùng MÃ (in hoa) — chuẩn hoá để khớp entity_id (code uppercase trong entities.json).
-# industries dùng CODE ngành GICS (THEP, NGAN_HANG) nên cũng viết hoa.
-_UPPER_GROUPS = ("tickers", "etfs", "indices", "exchanges", "industries")
+_UPPER_GROUPS = ("tickers", "etfs", "indices", "exchanges", "industries", "macro", "assets", "institutions")
+
 
 
 # ---- Excel I/O ----------------------------------------------------------------

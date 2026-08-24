@@ -1,0 +1,416 @@
+{
+  "silver_schema_version": "1.0",
+  "article_id": "99f2b93bb740623a69b528384dcbb86ce07c38591ffa2ce3fcc72986b3b4d62e",
+  "source_url": "https://cafef.vn/infographic-buc-tranh-ve-sun-phuquoc-airways-sau-gan-1-nam-hoat-dong-188260821151621751.chn",
+  "domain": "cafef.vn",
+  "content_sha256": "bf614051e0c37349899e636851693a41271e49d4fc498b202bb744d3e911a4e3",
+  "cleaned_text": "Hàng triệu lượt khách, đội bay mở rộng lên 32 tàu, mạng bay liên tục mở rộng từ Phú Quốc tới các trung tâm du lịch - kinh tế lớn của Việt Nam, 7 thị trường quốc tế, ký kết hợp đồng tỷ đô mua 40 tàu bay Boeing là những con số đủ để hãng bay trẻ nhất Việt Nam đang trở thành một hiện tượng đáng chú ý.",
+  "extraction_quality": "high",
+  "structure": {
+    "headings": [
+      {
+        "level": 1,
+        "text": "Infographic: Bức tranh về Sun PhuQuoc Airways sau gần 1 năm hoạt động"
+      },
+      {
+        "level": 3,
+        "text": "CÙNG CHUYÊN MỤC"
+      },
+      {
+        "level": 4,
+        "text": "FPT tạo việc làm cho 88.553 người, đứng Top 2 khối doanh nghiệp tư nhân Nổi bật"
+      },
+      {
+        "level": 4,
+        "text": "Bộ sưu tập công trình kỷ lục thế giới mà ông Phạm Nhật Vượng đang muốn xây: Từ SVĐ lớn nhất hành tinh, biển hồ nhân tạo 800ha, công viên 300 sân Tennis - Pickleball - Padel... Nổi bật"
+      },
+      {
+        "level": 4,
+        "text": "Tin vui cho cổ đông Hóa chất Đức Giang"
+      },
+      {
+        "level": 4,
+        "text": "Viettel sắp chi hơn 1.184 tỷ đồng mua 118 triệu cổ phiếu một ngân hàng"
+      },
+      {
+        "level": 4,
+        "text": "Khởi tố chủ cơ sở bán thiết bị vệ sinh, doanh thu hơn 80 tỷ đồng nhưng trốn thuế"
+      },
+      {
+        "level": 4,
+        "text": "4 thương vụ IPO Việt Nam huy động 830 triệu USD, tất cả đều lọt Top 10 Đông Nam Á"
+      }
+    ],
+    "paragraphs": [
+      "MỚI NHẤT!",
+      "Ánh Dương | 21-08-2026 - 15:30 PM | Doanh nghiệp",
+      "Hàng triệu lượt khách, đội bay mở rộng lên 32 tàu, mạng bay liên tục mở rộng từ Phú Quốc tới các trung tâm du lịch - kinh tế lớn của Việt Nam, 7 thị trường quốc tế, ký kết hợp đồng tỷ đô mua 40 tàu bay Boeing là những con số đủ để hãng bay trẻ nhất Việt Nam đang trở thành một hiện tượng đáng chú ý.",
+      "Ánh Dương",
+      "Thanh Niên Việt",
+      "Địa chỉ: Tầng 21 Tòa nhà Center Building. Số 01, phố Nguyễn Huy Tưởng, phường Thanh Xuân, thành phố Hà Nội",
+      "Điện thoại: 024 7309 5555 Máy lẻ 292. Fax: 024-39744082",
+      "Email: info@cafef.vn | Hotline: 0926 864 344",
+      "Chịu trách nhiệm nội dung: Ông Nguyễn Thế Tân",
+      "Liên hệ quảng cáo",
+      "Hotline:",
+      "Email: doanhnghiep@admicro.vn",
+      "© Copyright 2007 - 2026 - Công ty Cổ phần VCCorp.",
+      "Giấy phép thiết lập trang thông tin điện tử tổng hợp trên mạng số 2216/GP-TTĐT do Sở Thông tin và Truyền thông Hà Nội cấp ngày 10 tháng 4 năm 2019."
+    ],
+    "tables": [],
+    "links": [
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "http://liveboard.cafef.vn",
+        "text": "Bảng giá điện tử"
+      },
+      {
+        "href": "/du-lieu/danh-muc-dau-tu.chn",
+        "text": "Danh mục đầu tư"
+      },
+      {
+        "href": "/doc-nhanh.chn",
+        "text": "Đọc nhanh >>"
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "XÃ HỘI"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "CHỨNG KHOÁN"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "BẤT ĐỘNG SẢN"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "DOANH NGHIỆP"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "NGÂN HÀNG"
+      },
+      {
+        "href": "/smart-money.chn",
+        "text": "SMART MONEY"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "TÀI CHÍNH QUỐC TẾ"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "VĨ MÔ"
+      },
+      {
+        "href": "/kinh-te-so.chn",
+        "text": "KINH TẾ SỐ"
+      },
+      {
+        "href": "/thi-truong.chn",
+        "text": "THỊ TRƯỜNG"
+      },
+      {
+        "href": "/song.chn",
+        "text": "SỐNG"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "LIFESTYLE"
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "Xã hội"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "Doanh nghiệp"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "Kinh tế vĩ mô"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "Chứng khoán"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "Tài chính ngân hàng"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "Tài chính quốc tế"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "Tin tức"
+      },
+      {
+        "href": "/du-an.chn",
+        "text": "Dự án"
+      },
+      {
+        "href": "/ban-do-du-an.chn",
+        "text": "Bản đồ dự án"
+      },
+      {
+        "href": "/hang-hoa-nguyen-lieu.chn",
+        "text": "Hàng hóa nguyên liệu"
+      },
+      {
+        "href": "/song.chn",
+        "text": "Sống"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "Lifestyle"
+      },
+      {
+        "href": "/nhom-chu-de/emagazine.chn",
+        "text": "Magazine"
+      },
+      {
+        "href": "/du-lieu.chn",
+        "text": "Dữ liệu"
+      },
+      {
+        "href": "/du-lieu/cafeflists.chn",
+        "text": "F INDEX"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "Doanh nghiệp"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Chia sẻ"
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "javascript:;",
+        "text": "TIN MỚI"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Theo Thanh Niên Việt Copy link"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Chia sẻ"
+      },
+      {
+        "href": "/sun-phuquoc-airways.html",
+        "text": "Sun PhuQuoc Airways"
+      },
+      {
+        "href": "/fpt-tao-viec-lam-cho-88553-nguoi-dung-top-2-khoi-doanh-nghiep-tu-nhan-188260821143718055.chn",
+        "text": ""
+      },
+      {
+        "href": "/fpt-tao-viec-lam-cho-88553-nguoi-dung-top-2-khoi-doanh-nghiep-tu-nhan-188260821143718055.chn",
+        "text": "FPT tạo việc làm cho 88.553 người, đứng Top 2 khối doanh nghiệp tư nhân"
+      },
+      {
+        "href": "/bo-suu-tap-cong-trinh-ky-luc-the-gioi-ma-ong-pham-nhat-vuong-dang-muon-xay-tu-svd-lon-nhat-hanh-tinh-bien-ho-nhan-tao-800ha-cong-vien-300-san-tennis-pickleball-padel-188260821071450656.chn",
+        "text": ""
+      },
+      {
+        "href": "/bo-suu-tap-cong-trinh-ky-luc-the-gioi-ma-ong-pham-nhat-vuong-dang-muon-xay-tu-svd-lon-nhat-hanh-tinh-bien-ho-nhan-tao-800ha-cong-vien-300-san-tennis-pickleball-padel-188260821071450656.chn",
+        "text": "Bộ sưu tập công trình kỷ lục thế giới mà ông Phạm Nhật Vượng đang muốn xây: Từ SVĐ lớn nhất hành tinh, biển hồ nhân tạo 800ha, công viên 300 sân Tennis - Pickleball - Padel..."
+      },
+      {
+        "href": "/tin-vui-cho-co-dong-hoa-chat-duc-giang-188260821150111887.chn",
+        "text": ""
+      },
+      {
+        "href": "/tin-vui-cho-co-dong-hoa-chat-duc-giang-188260821150111887.chn",
+        "text": "Tin vui cho cổ đông Hóa chất Đức Giang"
+      },
+      {
+        "href": "/viettel-sap-chi-hon-1184-ty-dong-mua-118-trieu-co-phieu-mot-ngan-hang-18826082114130586.chn",
+        "text": ""
+      },
+      {
+        "href": "/viettel-sap-chi-hon-1184-ty-dong-mua-118-trieu-co-phieu-mot-ngan-hang-18826082114130586.chn",
+        "text": "Viettel sắp chi hơn 1.184 tỷ đồng mua 118 triệu cổ phiếu một ngân hàng"
+      },
+      {
+        "href": "/khoi-to-chu-co-so-ban-thiet-bi-ve-sinh-doanh-thu-hon-80-ty-dong-nhung-tron-thue-188260821135621072.chn",
+        "text": ""
+      },
+      {
+        "href": "/khoi-to-chu-co-so-ban-thiet-bi-ve-sinh-doanh-thu-hon-80-ty-dong-nhung-tron-thue-188260821135621072.chn",
+        "text": "Khởi tố chủ cơ sở bán thiết bị vệ sinh, doanh thu hơn 80 tỷ đồng nhưng trốn thuế"
+      },
+      {
+        "href": "/4-thuong-vu-ipo-viet-nam-huy-dong-830-trieu-usd-tat-ca-deu-lot-top-10-dong-nam-a-188260821140038732.chn",
+        "text": ""
+      },
+      {
+        "href": "/4-thuong-vu-ipo-viet-nam-huy-dong-830-trieu-usd-tat-ca-deu-lot-top-10-dong-nam-a-188260821140038732.chn",
+        "text": "4 thương vụ IPO Việt Nam huy động 830 triệu USD, tất cả đều lọt Top 10 Đông Nam Á"
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "XÃ HỘI"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "CHỨNG KHOÁN"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "BẤT ĐỘNG SẢN"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "DOANH NGHIỆP"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "NGÂN HÀNG"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "TÀI CHÍNH QUỐC TẾ"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "VĨ MÔ"
+      },
+      {
+        "href": "/kinh-te-so.chn",
+        "text": "KINH TẾ SỐ"
+      },
+      {
+        "href": "/thi-truong.chn",
+        "text": "THỊ TRƯỜNG"
+      },
+      {
+        "href": "/song.chn",
+        "text": "SỐNG"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "LIFESTYLE"
+      },
+      {
+        "href": "/du-lieu.chn",
+        "text": "Dữ liệu"
+      },
+      {
+        "href": "/du-lieu/top/ceo.chn",
+        "text": "Top 200"
+      },
+      {
+        "href": "https://www.messenger.com/t/108804609142280",
+        "text": "Chat với tư vấn viên"
+      },
+      {
+        "href": "http://www.vccorp.vn/",
+        "text": ""
+      },
+      {
+        "href": "/static/chinh-sach-bao-mat.html",
+        "text": "Chính sách bảo mật"
+      }
+    ]
+  },
+  "images": [
+    {
+      "outer_tag": "<img alt=\"Infographic: Bức tranh về Sun PhuQuoc Airways sau gần 1 năm hoạt động    \" data-role=\"cover\" fetchpriority=\"high\" src=\"https://cafefcdn.com/thumb_w/640/203337114487263232/2026/8/21/photo1787286345588-17872863457221668467598-178730018345648647795.jpg\" title=\"Infographic: Bức tranh về Sun PhuQuoc Airways sau gần 1 năm hoạt động    \"/>",
+      "resolved_url": "https://cafefcdn.com/thumb_w/640/203337114487263232/2026/8/21/photo1787286345588-17872863457221668467598-178730018345648647795.jpg",
+      "alt": "Infographic: Bức tranh về Sun PhuQuoc Airways sau gần 1 năm hoạt động    ",
+      "title": "Infographic: Bức tranh về Sun PhuQuoc Airways sau gần 1 năm hoạt động    ",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"‏Infographic: Bức tranh về Sun PhuQuoc Airways sau gần 1 năm hoạt động    ‏ - Ảnh 1.\" class=\"\" data-original=\"https://cafefcdn.com/203337114487263232/2026/8/21/spa-emagazineemag-vie-1-1787286359595313514156-1787300188609-1787300189494839579406.jpg\" h=\"9728\" height=\"\" id=\"img_240659015278436352\" photoid=\"240659015278436352\" rel=\"lightbox\" src=\"https://cafefcdn.com/203337114487263232/2026/8/21/spa-emagazineemag-vie-1-1787286359595313514156-1787300188609-1787300189494839579406.jpg\" style=\"max-width:100%;\" title=\"‏Infographic: Bức tranh về Sun PhuQuoc Airways sau gần 1 năm hoạt động    ‏ - Ảnh 1.\" type=\"photo\" w=\"948\" width=\"\"/>",
+      "resolved_url": "https://cafefcdn.com/203337114487263232/2026/8/21/spa-emagazineemag-vie-1-1787286359595313514156-1787300188609-1787300189494839579406.jpg",
+      "alt": "‏Infographic: Bức tranh về Sun PhuQuoc Airways sau gần 1 năm hoạt động    ‏ - Ảnh 1.",
+      "title": "‏Infographic: Bức tranh về Sun PhuQuoc Airways sau gần 1 năm hoạt động    ‏ - Ảnh 1.",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"FPT tạo việc làm cho 88.553 người, đứng Top 2 khối doanh nghiệp tư nhân\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/21/avatar1787297741004-17872977414662012736190.jpg\" title=\"FPT tạo việc làm cho 88.553 người, đứng Top 2 khối doanh nghiệp tư nhân\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/21/avatar1787297741004-17872977414662012736190.jpg",
+      "alt": "FPT tạo việc làm cho 88.553 người, đứng Top 2 khối doanh nghiệp tư nhân",
+      "title": "FPT tạo việc làm cho 88.553 người, đứng Top 2 khối doanh nghiệp tư nhân",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Bộ sưu tập công trình kỷ lục thế giới mà ông Phạm Nhật Vượng đang muốn xây: Từ SVĐ lớn nhất hành tinh, biển hồ nhân tạo 800ha, công viên 300 sân Tennis - Pickleball - Padel...\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/21/avatar1787279850218-1787279850718741489941.jpg\" title=\"Bộ sưu tập công trình kỷ lục thế giới mà ông Phạm Nhật Vượng đang muốn xây: Từ SVĐ lớn nhất hành tinh, biển hồ nhân tạo 800ha, công viên 300 sân Tennis - Pickleball - Padel...\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/21/avatar1787279850218-1787279850718741489941.jpg",
+      "alt": "Bộ sưu tập công trình kỷ lục thế giới mà ông Phạm Nhật Vượng đang muốn xây: Từ SVĐ lớn nhất hành tinh, biển hồ nhân tạo 800ha, công viên 300 sân Tennis - Pickleball - Padel...",
+      "title": "Bộ sưu tập công trình kỷ lục thế giới mà ông Phạm Nhật Vượng đang muốn xây: Từ SVĐ lớn nhất hành tinh, biển hồ nhân tạo 800ha, công viên 300 sân Tennis - Pickleball - Padel...",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Tin vui cho cổ đông Hóa chất Đức Giang\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/21/avatar1787299179411-17872991800801140993561.jpg\" title=\"Tin vui cho cổ đông Hóa chất Đức Giang\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/21/avatar1787299179411-17872991800801140993561.jpg",
+      "alt": "Tin vui cho cổ đông Hóa chất Đức Giang",
+      "title": "Tin vui cho cổ đông Hóa chất Đức Giang",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Viettel sắp chi hơn 1.184 tỷ đồng mua 118 triệu cổ phiếu một ngân hàng\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/21/avatar1787296307247-1787296308071278136982.jpg\" title=\"Viettel sắp chi hơn 1.184 tỷ đồng mua 118 triệu cổ phiếu một ngân hàng\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/21/avatar1787296307247-1787296308071278136982.jpg",
+      "alt": "Viettel sắp chi hơn 1.184 tỷ đồng mua 118 triệu cổ phiếu một ngân hàng",
+      "title": "Viettel sắp chi hơn 1.184 tỷ đồng mua 118 triệu cổ phiếu một ngân hàng",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Khởi tố chủ cơ sở bán thiết bị vệ sinh, doanh thu hơn 80 tỷ đồng nhưng trốn thuế\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/21/avatar1787295303196-17872953036231869989217.jpg\" title=\"Khởi tố chủ cơ sở bán thiết bị vệ sinh, doanh thu hơn 80 tỷ đồng nhưng trốn thuế\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/21/avatar1787295303196-17872953036231869989217.jpg",
+      "alt": "Khởi tố chủ cơ sở bán thiết bị vệ sinh, doanh thu hơn 80 tỷ đồng nhưng trốn thuế",
+      "title": "Khởi tố chủ cơ sở bán thiết bị vệ sinh, doanh thu hơn 80 tỷ đồng nhưng trốn thuế",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"4 thương vụ IPO Việt Nam huy động 830 triệu USD, tất cả đều lọt Top 10 Đông Nam Á\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/21/avatar1787295576508-1787295576978522574495.jpg\" title=\"4 thương vụ IPO Việt Nam huy động 830 triệu USD, tất cả đều lọt Top 10 Đông Nam Á\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/21/avatar1787295576508-1787295576978522574495.jpg",
+      "alt": "4 thương vụ IPO Việt Nam huy động 830 triệu USD, tất cả đều lọt Top 10 Đông Nam Á",
+      "title": "4 thương vụ IPO Việt Nam huy động 830 triệu USD, tất cả đều lọt Top 10 Đông Nam Á",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Công ty Cổ phần VCCorp\" height=\"49px\" src=\"https://vccorp.mediacdn.vn/vccorp-s.png\" width=\"100px\"/>",
+      "resolved_url": "https://vccorp.mediacdn.vn/vccorp-s.png",
+      "alt": "Công ty Cổ phần VCCorp",
+      "title": "",
+      "caption": ""
+    }
+  ],
+  "language": "vi",
+  "built_at": "2026-08-21T15:48:31+07:00",
+  "built_from_raw_path": "data/raw_html\\cafef.vn\\20260821\\99f2b93bb740623a69b528384dcbb86ce07c38591ffa2ce3fcc72986b3b4d62e.html"
+}

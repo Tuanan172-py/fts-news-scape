@@ -6,11 +6,47 @@ tickers:
 - VCB
 - VNM
 - MWG
+- AAA
+- HCM
+- VIC
+- SSI
+- OIL
+- BSR
+- VHM
+- GMD
+- VIB
+- VPB
+- BID
+- CTG
+- VIX
+- TLG
+- PET
+- DHA
+- LPB
 etfs:
 - E1VFVN30
 indices:
 - VNINDEX
 - VN30
+- UPINDEX
+- VNXALL
+exchanges:
+- HOSE
+- HNX
+- UPCOM
 industries:
 - THEP
 - NGAN_HANG
+- DAU_KHI
+- QUY
+- XAY_DUNG
+- CONG_TY_CHUNG_KHOAN
+- BAO_HIEM
+- DIEN
+- NUOC
+- PHAN_BON
+- THUC_PHAM
+- VAN_TAI
+- BAN_LE
+- CONG_TY_CHUNG_KHOAN
+- CONG_NGHE

@@ -1,0 +1,42 @@
+{
+  "packet_version": "1.0",
+  "layer": "L1_ENTITY_RECOGNITION",
+  "task": "recognize_and_audit",
+  "article_id": "8ef357a58bed0c9b3ec6e65edc2a4f59dce7bff24e146b74b3c2061fd9a2cfe2",
+  "domain": "cafef.vn",
+  "input": {
+    "title": "Phường Lĩnh Nam công khai phương án quy hoạch chi tiết hai khu đô thị quy mô gần 270ha",
+    "entity_catalog_ref": {
+      "entities": "data/entities/entities.json",
+      "taxonomy": "data/entities/taxonomy.json"
+    },
+    "code_first": {
+      "route": "needs_agent",
+      "relevance": "none",
+      "entities": [],
+      "entity_ids": [],
+      "industries": []
+    }
+  },
+  "output_contract": {
+    "schema_name": "l1-entity-output-v1",
+    "schema_path": "schemas/l1-entity-output-v1.schema.json",
+    "checklist_categories": [
+      "ticker_company",
+      "etf_fund",
+      "index",
+      "exchange",
+      "industry_sector"
+    ]
+  },
+  "constraints": {
+    "surface_must_be_substring_of": "input.title",
+    "citation_must_be_substring_of": "input.title",
+    "recognized_true_requires": [
+      "entities>=1",
+      "citations>=1"
+    ],
+    "audit_duty": "xác nhận entity code-first, sửa nếu sai, bổ sung nếu thiếu"
+  },
+  "instructions_ref": "schemas/l1-entity-instructions-v1.md"
+}

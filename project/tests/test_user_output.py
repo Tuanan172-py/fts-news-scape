@@ -28,16 +28,31 @@ def test_gate_and_routing(tmp_path):
     counts = UserOutputWriter(store, reg, output_root=tmp_path / "out").write(date=DATE)
     assert counts == {"AnPT": 1}
 
+    # Đọc trực tiếp kiểm tra header column order
+    with open(tmp_path / "out" / "AnPT" / DATE / "final.csv", encoding="utf-8-sig", newline="") as f:
+        header = next(csv.reader(f))
+    assert header[0] == "date"
+    assert header[1] == "matched_entities"
+    assert header[2] == "title"
+    assert header[-3:] == ["article_id", "agent_provider", "model_used"]
+
     rows = _read(tmp_path / "out" / "AnPT" / DATE / "final.csv")
     assert len(rows) == 1 and rows[0]["article_id"] == "a1"
+    assert rows[0]["date"] == DATE
     assert rows[0]["matched_entities"] == "HPG"
     assert rows[0]["summary"].startswith("Tóm tắt")
+    assert rows[0]["key_points"].startswith("- ")
     assert rows[0]["event_type"] == "macro" and rows[0]["impact_area"] == "market"
     # Bob không có bài → không tạo thư mục
     assert not (tmp_path / "out" / "Bob").exists()
-    # file per-layer cũng tồn tại
-    assert (tmp_path / "out" / "AnPT" / DATE / "L1.csv").exists()
-    assert (tmp_path / "out" / "AnPT" / DATE / "agent.csv").exists()
+    # Thư mục user chỉ có duy nhất final.csv (không có L1.csv hay agent.csv)
+    assert (tmp_path / "out" / "AnPT" / DATE / "final.csv").exists()
+    assert not (tmp_path / "out" / "AnPT" / DATE / "L1.csv").exists()
+    assert not (tmp_path / "out" / "AnPT" / DATE / "agent.csv").exists()
+    # Thư mục _master có đầy đủ cả 3 file
+    assert (tmp_path / "out" / "_master" / DATE / "final.csv").exists()
+    assert (tmp_path / "out" / "_master" / DATE / "L1.csv").exists()
+    assert (tmp_path / "out" / "_master" / DATE / "agent.csv").exists()
 
 
 def test_enabled_filter(tmp_path):

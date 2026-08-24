@@ -1,0 +1,424 @@
+{
+  "silver_schema_version": "1.0",
+  "article_id": "5afe3b0ce642797a9bb2dd1d3bff11d2440692296304fb3961f32c9020fc6904",
+  "source_url": "https://cafef.vn/co-phieu-pnj-nong-truoc-buoi-hop-bat-thuong-188260820165934089.chn",
+  "domain": "cafef.vn",
+  "content_sha256": "7a9b1ef8cde415426753f326ceeae888d8e25c2b26eebfbed4dedb2b0f052066",
+  "cleaned_text": "Cổ phiếu PNJ 'nóng' trước buổi họp bất thường\nVN-Index tăng hơn 7 điểm trong phiên giao dịch hôm nay (20/8) nhưng thanh khoản vẫn thấp, cho thấy dòng tiền chưa thực sự trở lại. Đáng chú ý, cổ phiếu PNJ bật tăng mạnh sau khi nhóm nhà đầu tư ngoại nâng sở hữu trở lại trên 5%.\nThị trường chứng khoán Việt Nam khép lại phiên 20/8 với sắc xanh khi VN-Index tăng 7,55 điểm (0,44%), lên 1.734 điểm. Tuy nhiên, đà hồi phục chưa thực sự thuyết phục khi tổng giá trị giao dịch chỉ quanh 13.500 tỷ đồng, trong khi nhà đầu tư nước ngoài tiếp tục bán ròng.\nThị trường hồi phục nhưng thanh khoản thấp cho thấy tâm lý nhà đầu tư vẫn thận trọng. Dòng tiền hiện chủ yếu tập trung ở một số cổ phiếu lớn và những mã có câu chuyện riêng, thay vì lan tỏa trên diện rộng.\nĐộng lực chính của thị trường đến từ nhóm cổ phiếu vốn hóa lớn. VN30 tăng 11,33 điểm với 23 mã tăng. VIC tăng 1%, VHM tăng 0,58%; MBB tăng 1,75%, CTG tăng 1,3%, VCB tăng 0,7%. MSN tăng 2,6%, VNM tăng 1,4% và FPT tăng 1,3%.\nỞ chiều ngược lại, nhiều cổ phiếu vẫn chịu áp lực bán, cho thấy dòng tiền chưa lan tỏa rộng. Trong nhóm bất động sản, bên cạnh VIC, VHM và VRE tăng giá, BCM giảm 1,93%, IDC giảm 1,85%, KDH giảm 1,44% và DXG giảm 0,91%.\nCổ phiếu PNJ trở thành điểm sáng khi tăng 4,48%, lên 37.300 đồng/cổ phiếu, với hơn 5,6 triệu đơn vị được sang tay. So với vùng đáy khoảng 30.000 đồng/cổ phiếu hồi giữa tháng 7, thị giá PNJ đã phục hồi khoảng 23%.\nĐáng chú ý, diễn biến tăng giá của PNJ diễn ra cùng thời điểm một số nhóm nhà đầu tư nước ngoài gia tăng sở hữu tại doanh nghiệp.\nSau phiên giao dịch ngày 13/8, nhóm quỹ liên quan do T. Rowe Price Associates đại diện mua thêm hơn 525.000 cổ phiếu PNJ, nâng tổng sở hữu lên gần 26 triệu cổ phiếu, tương đương 5,07% vốn. Qua đó, nhóm này trở lại vị thế cổ đông lớn tại PNJ sau khi tỷ lệ sở hữu giảm xuống dưới 5% vào cuối tháng 7.\nTrong nhóm, Trp Sicav Global Value Equity Fund mua thêm 288.300 cổ phiếu; Select Investment Series III Sicav - T. Rowe Price Global Value Equity Fund tăng 154.000 cổ phiếu và T. Rowe Price Global Value Equity Fund tăng 63.100 cổ phiếu.\nTrước đó, nhóm Vanguard cũng nâng sở hữu PNJ từ 24,18 triệu lên 25,81 triệu cổ phiếu, tương ứng tăng tỷ lệ nắm giữ từ 4,72% lên 5,04%, qua đó trở thành cổ đông lớn.\nTrong khi đó, khối ngoại hôm nay tiếp tục bán ròng phiên thứ 6 liên tiếp với giá trị hơn 554 tỷ đồng. VIC, VPB, VIX, SSI, VHM và HPG chịu áp lực bán đáng kể, trong khi MSN, VNM, DCM và FPT được mua ròng.\nTiền Phong",
+  "extraction_quality": "high",
+  "structure": {
+    "headings": [
+      {
+        "level": 1,
+        "text": "Cổ phiếu PNJ 'nóng' trước buổi họp bất thường"
+      },
+      {
+        "level": 3,
+        "text": "CÙNG CHUYÊN MỤC"
+      },
+      {
+        "level": 4,
+        "text": "Bao giờ chứng khoán hết “chán”? Nổi bật"
+      },
+      {
+        "level": 4,
+        "text": "Một công ty chứng khoán \"rót\" gần 1.000 tỷ đồng vào một mã ngân hàng, tạm lãi hơn trăm tỷ Nổi bật"
+      },
+      {
+        "level": 4,
+        "text": "Nhóm CTCK tung 600 tỷ đồng gom cổ phiếu phiên đáo hạn phái sinh, mã nào là tâm điểm?"
+      },
+      {
+        "level": 4,
+        "text": "Loạt câu hỏi sau 'thương vụ' thu phí tài khoản giao thông bất thành"
+      },
+      {
+        "level": 4,
+        "text": "Công ty con của Hóa chất Đức Giang đón tin vui"
+      },
+      {
+        "level": 4,
+        "text": "Phiên 20/8: Khối ngoại bán ròng hơn 600 tỷ đồng trên HOSE, cổ phiếu nào bị \"xả\" mạnh nhất?"
+      }
+    ],
+    "paragraphs": [
+      "MỚI NHẤT!",
+      "Theo Việt Linh | 20-08-2026 - 17:38 PM | Thị trường chứng khoán",
+      "VN-Index tăng hơn 7 điểm trong phiên giao dịch hôm nay (20/8) nhưng thanh khoản vẫn thấp, cho thấy dòng tiền chưa thực sự trở lại. Đáng chú ý, cổ phiếu PNJ bật tăng mạnh sau khi nhóm nhà đầu tư ngoại nâng sở hữu trở lại trên 5%.",
+      "Thị trường chứng khoán Việt Nam khép lại phiên 20/8 với sắc xanh khi VN-Index tăng 7,55 điểm (0,44%), lên 1.734 điểm. Tuy nhiên, đà hồi phục chưa thực sự thuyết phục khi tổng giá trị giao dịch chỉ quanh 13.500 tỷ đồng, trong khi nhà đầu tư nước ngoài tiếp tục bán ròng.",
+      "Thị trường hồi phục nhưng thanh khoản thấp cho thấy tâm lý nhà đầu tư vẫn thận trọng. Dòng tiền hiện chủ yếu tập trung ở một số cổ phiếu lớn và những mã có câu chuyện riêng, thay vì lan tỏa trên diện rộng.",
+      "Động lực chính của thị trường đến từ nhóm cổ phiếu vốn hóa lớn. VN30 tăng 11,33 điểm với 23 mã tăng. VIC tăng 1%, VHM tăng 0,58%; MBB tăng 1,75%, CTG tăng 1,3%, VCB tăng 0,7%. MSN tăng 2,6%, VNM tăng 1,4% và FPT tăng 1,3%.",
+      "Ở chiều ngược lại, nhiều cổ phiếu vẫn chịu áp lực bán, cho thấy dòng tiền chưa lan tỏa rộng. Trong nhóm bất động sản, bên cạnh VIC, VHM và VRE tăng giá, BCM giảm 1,93%, IDC giảm 1,85%, KDH giảm 1,44% và DXG giảm 0,91%.",
+      "So với vùng đáy khoảng 30.000 đồng/cổ phiếu hồi giữa tháng 7, thị giá PNJ đã phục hồi khoảng 23%.",
+      "Cổ phiếu PNJ trở thành điểm sáng khi tăng 4,48%, lên 37.300 đồng/cổ phiếu, với hơn 5,6 triệu đơn vị được sang tay. So với vùng đáy khoảng 30.000 đồng/cổ phiếu hồi giữa tháng 7, thị giá PNJ đã phục hồi khoảng 23%.",
+      "Đáng chú ý, diễn biến tăng giá của PNJ diễn ra cùng thời điểm một số nhóm nhà đầu tư nước ngoài gia tăng sở hữu tại doanh nghiệp.",
+      "Sau phiên giao dịch ngày 13/8, nhóm quỹ liên quan do T. Rowe Price Associates đại diện mua thêm hơn 525.000 cổ phiếu PNJ, nâng tổng sở hữu lên gần 26 triệu cổ phiếu, tương đương 5,07% vốn. Qua đó, nhóm này trở lại vị thế cổ đông lớn tại PNJ sau khi tỷ lệ sở hữu giảm xuống dưới 5% vào cuối tháng 7.",
+      "Trong nhóm, Trp Sicav Global Value Equity Fund mua thêm 288.300 cổ phiếu; Select Investment Series III Sicav - T. Rowe Price Global Value Equity Fund tăng 154.000 cổ phiếu và T. Rowe Price Global Value Equity Fund tăng 63.100 cổ phiếu.",
+      "Trước đó, nhóm Vanguard cũng nâng sở hữu PNJ từ 24,18 triệu lên 25,81 triệu cổ phiếu, tương ứng tăng tỷ lệ nắm giữ từ 4,72% lên 5,04%, qua đó trở thành cổ đông lớn.",
+      "Trong khi đó, khối ngoại hôm nay tiếp tục bán ròng phiên thứ 6 liên tiếp với giá trị hơn 554 tỷ đồng. VIC, VPB, VIX, SSI, VHM và HPG chịu áp lực bán đáng kể, trong khi MSN, VNM, DCM và FPT được mua ròng.",
+      "Theo Việt Linh",
+      "Tiền Phong",
+      "Địa chỉ: Tầng 21 Tòa nhà Center Building. Số 01, phố Nguyễn Huy Tưởng, phường Thanh Xuân, thành phố Hà Nội",
+      "Điện thoại: 024 7309 5555 Máy lẻ 292. Fax: 024-39744082",
+      "Email: info@cafef.vn | Hotline: 0926 864 344",
+      "Chịu trách nhiệm nội dung: Ông Nguyễn Thế Tân",
+      "Liên hệ quảng cáo",
+      "Hotline:",
+      "Email: doanhnghiep@admicro.vn",
+      "© Copyright 2007 - 2026 - Công ty Cổ phần VCCorp.",
+      "Giấy phép thiết lập trang thông tin điện tử tổng hợp trên mạng số 2216/GP-TTĐT do Sở Thông tin và Truyền thông Hà Nội cấp ngày 10 tháng 4 năm 2019."
+    ],
+    "tables": [],
+    "links": [
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "http://liveboard.cafef.vn",
+        "text": "Bảng giá điện tử"
+      },
+      {
+        "href": "/du-lieu/danh-muc-dau-tu.chn",
+        "text": "Danh mục đầu tư"
+      },
+      {
+        "href": "/doc-nhanh.chn",
+        "text": "Đọc nhanh >>"
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "XÃ HỘI"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "CHỨNG KHOÁN"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "BẤT ĐỘNG SẢN"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "DOANH NGHIỆP"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "NGÂN HÀNG"
+      },
+      {
+        "href": "/smart-money.chn",
+        "text": "SMART MONEY"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "TÀI CHÍNH QUỐC TẾ"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "VĨ MÔ"
+      },
+      {
+        "href": "/kinh-te-so.chn",
+        "text": "KINH TẾ SỐ"
+      },
+      {
+        "href": "/thi-truong.chn",
+        "text": "THỊ TRƯỜNG"
+      },
+      {
+        "href": "/song.chn",
+        "text": "SỐNG"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "LIFESTYLE"
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "Xã hội"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "Doanh nghiệp"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "Kinh tế vĩ mô"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "Chứng khoán"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "Tài chính ngân hàng"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "Tài chính quốc tế"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "Tin tức"
+      },
+      {
+        "href": "/du-an.chn",
+        "text": "Dự án"
+      },
+      {
+        "href": "/ban-do-du-an.chn",
+        "text": "Bản đồ dự án"
+      },
+      {
+        "href": "/hang-hoa-nguyen-lieu.chn",
+        "text": "Hàng hóa nguyên liệu"
+      },
+      {
+        "href": "/song.chn",
+        "text": "Sống"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "Lifestyle"
+      },
+      {
+        "href": "/nhom-chu-de/emagazine.chn",
+        "text": "Magazine"
+      },
+      {
+        "href": "/du-lieu.chn",
+        "text": "Dữ liệu"
+      },
+      {
+        "href": "/du-lieu/cafeflists.chn",
+        "text": "F INDEX"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "Thị trường chứng khoán"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Chia sẻ"
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "javascript:;",
+        "text": "TIN MỚI"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Theo Tiền Phong Copy link"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Chia sẻ"
+      },
+      {
+        "href": "/chung-khoan.html",
+        "text": "chứng khoán,"
+      },
+      {
+        "href": "/co-phieu.html",
+        "text": "cổ  phiếu"
+      },
+      {
+        "href": "/bao-gio-chung-khoan-het-chan-188260819222309396.chn",
+        "text": ""
+      },
+      {
+        "href": "/bao-gio-chung-khoan-het-chan-188260819222309396.chn",
+        "text": "Bao giờ chứng khoán hết “chán”?"
+      },
+      {
+        "href": "/mot-cong-ty-chung-khoan-rot-gan-1000-ty-dong-vao-mot-ma-ngan-hang-tam-lai-hon-tram-ty-188260819194108166.chn",
+        "text": ""
+      },
+      {
+        "href": "/mot-cong-ty-chung-khoan-rot-gan-1000-ty-dong-vao-mot-ma-ngan-hang-tam-lai-hon-tram-ty-188260819194108166.chn",
+        "text": "Một công ty chứng khoán \"rót\" gần 1.000 tỷ đồng vào một mã ngân hàng, tạm lãi hơn trăm tỷ"
+      },
+      {
+        "href": "/nhom-ctck-tung-600-ty-dong-gom-co-phieu-phien-dao-han-phai-sinh-ma-nao-la-tam-diem-188260820172838187.chn",
+        "text": ""
+      },
+      {
+        "href": "/nhom-ctck-tung-600-ty-dong-gom-co-phieu-phien-dao-han-phai-sinh-ma-nao-la-tam-diem-188260820172838187.chn",
+        "text": "Nhóm CTCK tung 600 tỷ đồng gom cổ phiếu phiên đáo hạn phái sinh, mã nào là tâm điểm?"
+      },
+      {
+        "href": "/loat-cau-hoi-sau-thuong-vu-thu-phi-tai-khoan-giao-thong-bat-thanh-18826082017063851.chn",
+        "text": ""
+      },
+      {
+        "href": "/loat-cau-hoi-sau-thuong-vu-thu-phi-tai-khoan-giao-thong-bat-thanh-18826082017063851.chn",
+        "text": "Loạt câu hỏi sau 'thương vụ' thu phí tài khoản giao thông bất thành"
+      },
+      {
+        "href": "/cong-ty-con-cua-hoa-chat-duc-giang-don-tin-vui-188260820171626583.chn",
+        "text": ""
+      },
+      {
+        "href": "/cong-ty-con-cua-hoa-chat-duc-giang-don-tin-vui-188260820171626583.chn",
+        "text": "Công ty con của Hóa chất Đức Giang đón tin vui"
+      },
+      {
+        "href": "/phien-20-8-khoi-ngoai-ban-rong-hon-600-ty-dong-tren-hose-co-phieu-nao-bi-xa-manh-nhat-188260820154406132.chn",
+        "text": ""
+      },
+      {
+        "href": "/phien-20-8-khoi-ngoai-ban-rong-hon-600-ty-dong-tren-hose-co-phieu-nao-bi-xa-manh-nhat-188260820154406132.chn",
+        "text": "Phiên 20/8: Khối ngoại bán ròng hơn 600 tỷ đồng trên HOSE, cổ phiếu nào bị \"xả\" mạnh nhất?"
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "XÃ HỘI"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "CHỨNG KHOÁN"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "BẤT ĐỘNG SẢN"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "DOANH NGHIỆP"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "NGÂN HÀNG"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "TÀI CHÍNH QUỐC TẾ"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "VĨ MÔ"
+      },
+      {
+        "href": "/kinh-te-so.chn",
+        "text": "KINH TẾ SỐ"
+      },
+      {
+        "href": "/thi-truong.chn",
+        "text": "THỊ TRƯỜNG"
+      },
+      {
+        "href": "/song.chn",
+        "text": "SỐNG"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "LIFESTYLE"
+      },
+      {
+        "href": "/du-lieu.chn",
+        "text": "Dữ liệu"
+      },
+      {
+        "href": "/du-lieu/top/ceo.chn",
+        "text": "Top 200"
+      },
+      {
+        "href": "https://www.messenger.com/t/108804609142280",
+        "text": "Chat với tư vấn viên"
+      },
+      {
+        "href": "http://www.vccorp.vn/",
+        "text": ""
+      },
+      {
+        "href": "/static/chinh-sach-bao-mat.html",
+        "text": "Chính sách bảo mật"
+      }
+    ]
+  },
+  "images": [
+    {
+      "outer_tag": "<img alt=\"Cổ phiếu PNJ 'nóng' trước buổi họp bất thường- Ảnh 1.\" data-original=\"https://cdn.tienphong.vn/images/jIy-L7RZASska78YCD81aQNf8eUzw0b24EgImPr2A5QUQWmhmkxyWz87V43VYM3Oi-1gHLkq98uZKl0jatWE0JHDlaqpST5c2vNJytPUoV4/anh-man-hinh-2026-08-20-luc-160220.png.avif\" h=\"1115\" rel=\"https://cdn.tienphong.vn/images/jIy-L7RZASska78YCD81aQNf8eUzw0b24EgImPr2A5QUQWmhmkxyWz87V43VYM3Oi-1gHLkq98uZKl0jatWE0JHDlaqpST5c2vNJytPUoV4/anh-man-hinh-2026-08-20-luc-160220.png.avif\" src=\"https://cdn.tienphong.vn/images/jIy-L7RZASska78YCD81aQNf8eUzw0b24EgImPr2A5QUQWmhmkxyWz87V43VYM3Oi-1gHLkq98uZKl0jatWE0JHDlaqpST5c2vNJytPUoV4/anh-man-hinh-2026-08-20-luc-160220.png.avif\" title=\"Cổ phiếu PNJ 'nóng' trước buổi họp bất thường- Ảnh 1.\" type=\"photo\" w=\"1507\"/>",
+      "resolved_url": "https://cdn.tienphong.vn/images/jIy-L7RZASska78YCD81aQNf8eUzw0b24EgImPr2A5QUQWmhmkxyWz87V43VYM3Oi-1gHLkq98uZKl0jatWE0JHDlaqpST5c2vNJytPUoV4/anh-man-hinh-2026-08-20-luc-160220.png.avif",
+      "alt": "Cổ phiếu PNJ 'nóng' trước buổi họp bất thường- Ảnh 1.",
+      "title": "Cổ phiếu PNJ 'nóng' trước buổi họp bất thường- Ảnh 1.",
+      "caption": "So với vùng đáy khoảng 30.000 đồng/cổ phiếu hồi giữa tháng 7, thị giá PNJ đã phục hồi khoảng 23%."
+    },
+    {
+      "outer_tag": "<img alt=\"Bao giờ chứng khoán hết “chán”?\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787152958323-1787152958761227806230.jpg\" title=\"Bao giờ chứng khoán hết “chán”?\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787152958323-1787152958761227806230.jpg",
+      "alt": "Bao giờ chứng khoán hết “chán”?",
+      "title": "Bao giờ chứng khoán hết “chán”?",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt='Một công ty chứng khoán \"rót\" gần 1.000 tỷ đồng vào một mã ngân hàng, tạm lãi hơn trăm tỷ' height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787143208992-1787143209345748948081.jpg\" title='Một công ty chứng khoán \"rót\" gần 1.000 tỷ đồng vào một mã ngân hàng, tạm lãi hơn trăm tỷ' width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/19/avatar1787143208992-1787143209345748948081.jpg",
+      "alt": "Một công ty chứng khoán \"rót\" gần 1.000 tỷ đồng vào một mã ngân hàng, tạm lãi hơn trăm tỷ",
+      "title": "Một công ty chứng khoán \"rót\" gần 1.000 tỷ đồng vào một mã ngân hàng, tạm lãi hơn trăm tỷ",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Nhóm CTCK tung 600 tỷ đồng gom cổ phiếu phiên đáo hạn phái sinh, mã nào là tâm điểm?\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787221639102-1787221639438233880009.png\" title=\"Nhóm CTCK tung 600 tỷ đồng gom cổ phiếu phiên đáo hạn phái sinh, mã nào là tâm điểm?\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787221639102-1787221639438233880009.png",
+      "alt": "Nhóm CTCK tung 600 tỷ đồng gom cổ phiếu phiên đáo hạn phái sinh, mã nào là tâm điểm?",
+      "title": "Nhóm CTCK tung 600 tỷ đồng gom cổ phiếu phiên đáo hạn phái sinh, mã nào là tâm điểm?",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Loạt câu hỏi sau 'thương vụ' thu phí tài khoản giao thông bất thành\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787220331033-1787220331457132979205.webp\" title=\"Loạt câu hỏi sau 'thương vụ' thu phí tài khoản giao thông bất thành\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787220331033-1787220331457132979205.webp",
+      "alt": "Loạt câu hỏi sau 'thương vụ' thu phí tài khoản giao thông bất thành",
+      "title": "Loạt câu hỏi sau 'thương vụ' thu phí tài khoản giao thông bất thành",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Công ty con của Hóa chất Đức Giang đón tin vui\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787220941581-178722094238120959242.jpg\" title=\"Công ty con của Hóa chất Đức Giang đón tin vui\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787220941581-178722094238120959242.jpg",
+      "alt": "Công ty con của Hóa chất Đức Giang đón tin vui",
+      "title": "Công ty con của Hóa chất Đức Giang đón tin vui",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt='Phiên 20/8: Khối ngoại bán ròng hơn 600 tỷ đồng trên HOSE, cổ phiếu nào bị \"xả\" mạnh nhất?' height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787215415836-17872154163751354375123.jpg\" title='Phiên 20/8: Khối ngoại bán ròng hơn 600 tỷ đồng trên HOSE, cổ phiếu nào bị \"xả\" mạnh nhất?' width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787215415836-17872154163751354375123.jpg",
+      "alt": "Phiên 20/8: Khối ngoại bán ròng hơn 600 tỷ đồng trên HOSE, cổ phiếu nào bị \"xả\" mạnh nhất?",
+      "title": "Phiên 20/8: Khối ngoại bán ròng hơn 600 tỷ đồng trên HOSE, cổ phiếu nào bị \"xả\" mạnh nhất?",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Công ty Cổ phần VCCorp\" height=\"49px\" src=\"https://vccorp.mediacdn.vn/vccorp-s.png\" width=\"100px\"/>",
+      "resolved_url": "https://vccorp.mediacdn.vn/vccorp-s.png",
+      "alt": "Công ty Cổ phần VCCorp",
+      "title": "",
+      "caption": ""
+    }
+  ],
+  "language": "vi",
+  "built_at": "2026-08-21T09:32:58+07:00",
+  "built_from_raw_path": "data/raw_html\\cafef.vn\\20260821\\5afe3b0ce642797a9bb2dd1d3bff11d2440692296304fb3961f32c9020fc6904.html"
+}

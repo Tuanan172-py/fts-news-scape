@@ -1,0 +1,443 @@
+{
+  "silver_schema_version": "1.0",
+  "article_id": "3b44826ff2cb079478af3c13effbd743c35b9f61da95d2214dfb0f73498a9247",
+  "source_url": "https://cafef.vn/bo-trang-suc-kim-cuong-hon-25-ty-dong-cua-ba-truong-my-lan-da-co-chu-moi-188260821114148289.chn",
+  "domain": "cafef.vn",
+  "content_sha256": "77019d21d981b8779c897f655d53fa40ec0bb86d7ee51f04aea545f6f6e0fba2",
+  "cleaned_text": "Bộ trang sức kim cương hơn 25 tỷ đồng của bà Trương Mỹ Lan đã có chủ mới\nNgày 21-8, Trung tâm Dịch vụ đấu giá tài sản TPHCM đã tổ chức buổi đấu giá 3 món trang sức kim cương tự nhiên của bà Trương Mỹ Lan.\nTổng giá trị ba món trang sức kim cương hơn 25 tỷ đồng này đều bị thất lạc hồ sơ mua bán, hóa đơn và có kết quả giám định mẫu của Viện Đá quý - vàng và trang sức Việt. Các tài sản này được lưu giữ tại Kho bạc Nhà nước khu vực II.\nCác phiên đấu giá chỉ có 1 khách hàng tham gia là bà T.T.T.H (ngụ phường Gò Vấp, TPHCM), đã nộp đủ tiền đặt trước và đủ điều kiện tham gia đấu giá theo quy định.\nTài sản thứ nhất đưa ra đấu giá là 2 bông tai đính đá, gồm: 2 viên kim cương 10,58 mm và 10,7 mm, 2 vỏ hoa tai với giá khởi điểm hơn 9,4 tỷ đồng, tiền đặt trước (20%) hơn 1,8 tỷ đồng.\nPhiên đấu giá diễn vào 8 giờ 30 phút. Giá trúng đấu giá hơn 9,4 tỷ đồng.\nTài sản thứ hai đưa ra đấu giá là dây chuyền đính đá gồm viên kim cương mặt dây chuyền 12,67 mm, 5 viên kim cương 3,5-4 mm, 5 viên kim cương 6,5-7 mm, 4 viên kim cương 4,2 mm, 1 viên kim cương 5,7 mm và 1 dây chuyền, giá khởi điểm hơn 8,8 tỷ đồng. Tiền đặt trước (20%) hơn 1,7 tỷ đồng.\nPhiên đấu giá diễn ra lúc 9 giờ. Giá trúng đấu giá hơn hơn 8,8 tỷ đồng.\nTài sản thứ ba là 1 nhẫn đính đá màu trắng, gồm: 1 viên kim cương 14,1 mm và nhẫn, được định giá hơn 6,6 tỷ đồng. Tiền đặt trước (20%) hơn 1,3 tỷ đồng.\nPhiên đấu giá diễn ra lúc 9 giờ 30 phút. Khách hàng trả giá 6,7 tỷ đồng. Như vậy, tài sản có giá trúng đấu giá hơn 6,7 tỷ đồng.\nBà Trương Mỹ Lan hiện đang chấp hành án tù chung thân về nhiều tội danh trong vụ án Vạn Thịnh Phát. Ở giai đoạn 2 của vụ án, tòa buộc bà bồi hoàn toàn bộ 30.081 tỷ đồng cho 43.108 bị hại và người có quyền lợi, nghĩa vụ liên quan nhận chuyển nhượng trái phiếu.\nTrước đó, tại phiên xét xử giai đoạn 2, bà Trương Mỹ Lan đề nghị tòa trả lại bộ trang sức kim cương gồm dây chuyền, nhẫn, đôi bông tai do mẹ tặng làm kỷ niệm và hai túi xách Hermès bạch tạng.\nTuy nhiên, HĐXX xác định đây là tài sản có nguồn gốc từ tiền phạm tội nên tiếp tục thu giữ để bảo đảm thi hành án.\nSài Gòn Giải Phóng",
+  "extraction_quality": "high",
+  "structure": {
+    "headings": [
+      {
+        "level": 1,
+        "text": "Bộ trang sức kim cương hơn 25 tỷ đồng của bà Trương Mỹ Lan đã có chủ mới"
+      },
+      {
+        "level": 2,
+        "text": "Podcast bản tin tối 14-8: Dự kiến ngày 21-8, đấu giá 3 trang sức kim cương của bà Trương Mỹ Lan"
+      },
+      {
+        "level": 2,
+        "text": "Bộ trang sức kim cương của bà Trương Mỹ Lan được định giá gần 25 tỷ đồng"
+      },
+      {
+        "level": 2,
+        "text": "Bộ trang sức kim cương của bà Trương Mỹ Lan được định giá gần 25 tỷ đồng"
+      },
+      {
+        "level": 3,
+        "text": "CÙNG CHUYÊN MỤC"
+      },
+      {
+        "level": 4,
+        "text": "CTCK chỉ ra chất xúc tác quan trọng giúp VN-Index tiến lên vùng 2.000 điểm Nổi bật"
+      },
+      {
+        "level": 4,
+        "text": "Điều gì có thể khiến dòng vốn ngoại đảo chiều trong nửa cuối năm? Nổi bật"
+      },
+      {
+        "level": 4,
+        "text": "EVNNPT có tân Chủ tịch HĐTV"
+      },
+      {
+        "level": 4,
+        "text": "PNJ tím lịm và đã ‘thở phào’?"
+      },
+      {
+        "level": 4,
+        "text": "DN có doanh thu chỉ kém Petrolimex, Vingroup và vượt xa Hòa Phát, Thế Giới Di Động... sắp chi 260 tỷ đồng trả cổ tức"
+      },
+      {
+        "level": 4,
+        "text": "Doanh nghiệp dược lớn nhất sàn chứng khoán chốt ngày trả cổ tức 5.000 đồng/cp"
+      }
+    ],
+    "paragraphs": [
+      "MỚI NHẤT!",
+      "Theo NGUYỄN TÂN - SONG MAI | 21-08-2026 - 11:41 AM | Thị trường chứng khoán",
+      "Ngày 21-8, Trung tâm Dịch vụ đấu giá tài sản TPHCM đã tổ chức buổi đấu giá 3 món trang sức kim cương tự nhiên của bà Trương Mỹ Lan.",
+      "Tổng giá trị ba món trang sức kim cương hơn 25 tỷ đồng này đều bị thất lạc hồ sơ mua bán, hóa đơn và có kết quả giám định mẫu của Viện Đá quý - vàng và trang sức Việt. Các tài sản này được lưu giữ tại Kho bạc Nhà nước khu vực II.",
+      "Các phiên đấu giá chỉ có 1 khách hàng tham gia là bà T.T.T.H (ngụ phường Gò Vấp, TPHCM), đã nộp đủ tiền đặt trước và đủ điều kiện tham gia đấu giá theo quy định.",
+      "Tài sản thứ nhất đưa ra đấu giá là 2 bông tai đính đá, gồm: 2 viên kim cương 10,58 mm và 10,7 mm, 2 vỏ hoa tai với giá khởi điểm hơn 9,4 tỷ đồng, tiền đặt trước (20%) hơn 1,8 tỷ đồng.",
+      "Phiên đấu giá diễn vào 8 giờ 30 phút. Giá trúng đấu giá hơn 9,4 tỷ đồng.",
+      "Tài sản thứ hai đưa ra đấu giá là dây chuyền đính đá gồm viên kim cương mặt dây chuyền 12,67 mm, 5 viên kim cương 3,5-4 mm, 5 viên kim cương 6,5-7 mm, 4 viên kim cương 4,2 mm, 1 viên kim cương 5,7 mm và 1 dây chuyền, giá khởi điểm hơn 8,8 tỷ đồng. Tiền đặt trước (20%) hơn 1,7 tỷ đồng.",
+      "Phiên đấu giá diễn ra lúc 9 giờ. Giá trúng đấu giá hơn hơn 8,8 tỷ đồng.",
+      "Tài sản thứ ba là 1 nhẫn đính đá màu trắng, gồm: 1 viên kim cương 14,1 mm và nhẫn, được định giá hơn 6,6 tỷ đồng. Tiền đặt trước (20%) hơn 1,3 tỷ đồng.",
+      "Phiên đấu giá diễn ra lúc 9 giờ 30 phút. Khách hàng trả giá 6,7 tỷ đồng. Như vậy, tài sản có giá trúng đấu giá hơn 6,7 tỷ đồng.",
+      "Bà Trương Mỹ Lan hiện đang chấp hành án tù chung thân về nhiều tội danh trong vụ án Vạn Thịnh Phát. Ở giai đoạn 2 của vụ án, tòa buộc bà bồi hoàn toàn bộ 30.081 tỷ đồng cho 43.108 bị hại và người có quyền lợi, nghĩa vụ liên quan nhận chuyển nhượng trái phiếu.",
+      "Trước đó, tại phiên xét xử giai đoạn 2, bà Trương Mỹ Lan đề nghị tòa trả lại bộ trang sức kim cương gồm dây chuyền, nhẫn, đôi bông tai do mẹ tặng làm kỷ niệm và hai túi xách Hermès bạch tạng.",
+      "Tuy nhiên, HĐXX xác định đây là tài sản có nguồn gốc từ tiền phạm tội nên tiếp tục thu giữ để bảo đảm thi hành án.",
+      "Theo NGUYỄN TÂN - SONG MAI",
+      "Sài Gòn Giải Phóng",
+      "Địa chỉ: Tầng 21 Tòa nhà Center Building. Số 01, phố Nguyễn Huy Tưởng, phường Thanh Xuân, thành phố Hà Nội",
+      "Điện thoại: 024 7309 5555 Máy lẻ 292. Fax: 024-39744082",
+      "Email: info@cafef.vn | Hotline: 0926 864 344",
+      "Chịu trách nhiệm nội dung: Ông Nguyễn Thế Tân",
+      "Liên hệ quảng cáo",
+      "Hotline:",
+      "Email: doanhnghiep@admicro.vn",
+      "© Copyright 2007 - 2026 - Công ty Cổ phần VCCorp.",
+      "Giấy phép thiết lập trang thông tin điện tử tổng hợp trên mạng số 2216/GP-TTĐT do Sở Thông tin và Truyền thông Hà Nội cấp ngày 10 tháng 4 năm 2019."
+    ],
+    "tables": [],
+    "links": [
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "http://liveboard.cafef.vn",
+        "text": "Bảng giá điện tử"
+      },
+      {
+        "href": "/du-lieu/danh-muc-dau-tu.chn",
+        "text": "Danh mục đầu tư"
+      },
+      {
+        "href": "/doc-nhanh.chn",
+        "text": "Đọc nhanh >>"
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "XÃ HỘI"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "CHỨNG KHOÁN"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "BẤT ĐỘNG SẢN"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "DOANH NGHIỆP"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "NGÂN HÀNG"
+      },
+      {
+        "href": "/smart-money.chn",
+        "text": "SMART MONEY"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "TÀI CHÍNH QUỐC TẾ"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "VĨ MÔ"
+      },
+      {
+        "href": "/kinh-te-so.chn",
+        "text": "KINH TẾ SỐ"
+      },
+      {
+        "href": "/thi-truong.chn",
+        "text": "THỊ TRƯỜNG"
+      },
+      {
+        "href": "/song.chn",
+        "text": "SỐNG"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "LIFESTYLE"
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "Xã hội"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "Doanh nghiệp"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "Kinh tế vĩ mô"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "Chứng khoán"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "Tài chính ngân hàng"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "Tài chính quốc tế"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "Tin tức"
+      },
+      {
+        "href": "/du-an.chn",
+        "text": "Dự án"
+      },
+      {
+        "href": "/ban-do-du-an.chn",
+        "text": "Bản đồ dự án"
+      },
+      {
+        "href": "/hang-hoa-nguyen-lieu.chn",
+        "text": "Hàng hóa nguyên liệu"
+      },
+      {
+        "href": "/song.chn",
+        "text": "Sống"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "Lifestyle"
+      },
+      {
+        "href": "/nhom-chu-de/emagazine.chn",
+        "text": "Magazine"
+      },
+      {
+        "href": "/du-lieu.chn",
+        "text": "Dữ liệu"
+      },
+      {
+        "href": "/du-lieu/cafeflists.chn",
+        "text": "F INDEX"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "Thị trường chứng khoán"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Chia sẻ"
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "javascript:;",
+        "text": "TIN MỚI"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Theo Sài Gòn Giải Phóng Copy link"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Chia sẻ"
+      },
+      {
+        "href": "/kim-cuong.html",
+        "text": "kim cương,"
+      },
+      {
+        "href": "/truong-my-lan.html",
+        "text": "trương mỹ lan"
+      },
+      {
+        "href": "/ctck-chi-ra-chat-xuc-tac-quan-trong-giup-vn-index-tien-len-vung-2000-diem-188260820220251249.chn",
+        "text": ""
+      },
+      {
+        "href": "/ctck-chi-ra-chat-xuc-tac-quan-trong-giup-vn-index-tien-len-vung-2000-diem-188260820220251249.chn",
+        "text": "CTCK chỉ ra chất xúc tác quan trọng giúp VN-Index tiến lên vùng 2.000 điểm"
+      },
+      {
+        "href": "/dieu-gi-co-the-khien-dong-von-ngoai-dao-chieu-trong-nua-cuoi-nam-188260820223554025.chn",
+        "text": ""
+      },
+      {
+        "href": "/dieu-gi-co-the-khien-dong-von-ngoai-dao-chieu-trong-nua-cuoi-nam-188260820223554025.chn",
+        "text": "Điều gì có thể khiến dòng vốn ngoại đảo chiều trong nửa cuối năm?"
+      },
+      {
+        "href": "/evnnpt-co-tan-chu-tich-hdtv-18826082111124269.chn",
+        "text": ""
+      },
+      {
+        "href": "/evnnpt-co-tan-chu-tich-hdtv-18826082111124269.chn",
+        "text": "EVNNPT có tân Chủ tịch HĐTV"
+      },
+      {
+        "href": "/pnj-tim-lim-va-da-tho-phao-188260821111212328.chn",
+        "text": ""
+      },
+      {
+        "href": "/pnj-tim-lim-va-da-tho-phao-188260821111212328.chn",
+        "text": "PNJ tím lịm và đã ‘thở phào’?"
+      },
+      {
+        "href": "/dn-co-doanh-thu-chi-kem-petrolimex-vingroup-va-vuot-xa-hoa-phat-the-gioi-di-dong-sap-chi-260-ty-dong-tra-co-tuc-188260821111152904.chn",
+        "text": ""
+      },
+      {
+        "href": "/dn-co-doanh-thu-chi-kem-petrolimex-vingroup-va-vuot-xa-hoa-phat-the-gioi-di-dong-sap-chi-260-ty-dong-tra-co-tuc-188260821111152904.chn",
+        "text": "DN có doanh thu chỉ kém Petrolimex, Vingroup và vượt xa Hòa Phát, Thế Giới Di Động... sắp chi 260 tỷ đồng trả cổ tức"
+      },
+      {
+        "href": "/doanh-nghiep-duoc-lon-nhat-san-chung-khoan-chot-ngay-tra-co-tuc-5000-dong-cp-188260821102557329.chn",
+        "text": ""
+      },
+      {
+        "href": "/doanh-nghiep-duoc-lon-nhat-san-chung-khoan-chot-ngay-tra-co-tuc-5000-dong-cp-188260821102557329.chn",
+        "text": "Doanh nghiệp dược lớn nhất sàn chứng khoán chốt ngày trả cổ tức 5.000 đồng/cp"
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "XÃ HỘI"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "CHỨNG KHOÁN"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "BẤT ĐỘNG SẢN"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "DOANH NGHIỆP"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "NGÂN HÀNG"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "TÀI CHÍNH QUỐC TẾ"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "VĨ MÔ"
+      },
+      {
+        "href": "/kinh-te-so.chn",
+        "text": "KINH TẾ SỐ"
+      },
+      {
+        "href": "/thi-truong.chn",
+        "text": "THỊ TRƯỜNG"
+      },
+      {
+        "href": "/song.chn",
+        "text": "SỐNG"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "LIFESTYLE"
+      },
+      {
+        "href": "/du-lieu.chn",
+        "text": "Dữ liệu"
+      },
+      {
+        "href": "/du-lieu/top/ceo.chn",
+        "text": "Top 200"
+      },
+      {
+        "href": "https://www.messenger.com/t/108804609142280",
+        "text": "Chat với tư vấn viên"
+      },
+      {
+        "href": "http://www.vccorp.vn/",
+        "text": ""
+      },
+      {
+        "href": "/static/chinh-sach-bao-mat.html",
+        "text": "Chính sách bảo mật"
+      }
+    ]
+  },
+  "images": [
+    {
+      "outer_tag": "<img alt=\"\" class=\"\" data-original=\"https://cafefcdn.com/203337114487263232/2026/8/21/trang-suc-kim-cuong-8722-1666jpg-1787287249023-17872872493751804387455.webp\" h=\"1115\" height=\"\" rel=\"lightbox\" src=\"https://cafefcdn.com/203337114487263232/2026/8/21/trang-suc-kim-cuong-8722-1666jpg-1787287249023-17872872493751804387455.webp\" title=\"\" type=\"photo\" w=\"1507\" width=\"\"/>",
+      "resolved_url": "https://cafefcdn.com/203337114487263232/2026/8/21/trang-suc-kim-cuong-8722-1666jpg-1787287249023-17872872493751804387455.webp",
+      "alt": "",
+      "title": "",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"\" class=\"\" data-original=\"https://cafefcdn.com/203337114487263232/2026/8/21/trung-tam-dau-gia-8735-8908jpg-1787287251354-1787287251767733325291.webp\" h=\"1115\" height=\"\" rel=\"lightbox\" src=\"https://cafefcdn.com/203337114487263232/2026/8/21/trung-tam-dau-gia-8735-8908jpg-1787287251354-1787287251767733325291.webp\" title=\"\" type=\"photo\" w=\"1507\" width=\"\"/>",
+      "resolved_url": "https://cafefcdn.com/203337114487263232/2026/8/21/trung-tam-dau-gia-8735-8908jpg-1787287251354-1787287251767733325291.webp",
+      "alt": "",
+      "title": "",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"CTCK chỉ ra chất xúc tác quan trọng giúp VN-Index tiến lên vùng 2.000 điểm\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787238121183-17872381227981703939673.jpg\" title=\"CTCK chỉ ra chất xúc tác quan trọng giúp VN-Index tiến lên vùng 2.000 điểm\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787238121183-17872381227981703939673.jpg",
+      "alt": "CTCK chỉ ra chất xúc tác quan trọng giúp VN-Index tiến lên vùng 2.000 điểm",
+      "title": "CTCK chỉ ra chất xúc tác quan trọng giúp VN-Index tiến lên vùng 2.000 điểm",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Điều gì có thể khiến dòng vốn ngoại đảo chiều trong nửa cuối năm?\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787240106845-17872401074561381347866.jpg\" title=\"Điều gì có thể khiến dòng vốn ngoại đảo chiều trong nửa cuối năm?\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787240106845-17872401074561381347866.jpg",
+      "alt": "Điều gì có thể khiến dòng vốn ngoại đảo chiều trong nửa cuối năm?",
+      "title": "Điều gì có thể khiến dòng vốn ngoại đảo chiều trong nửa cuối năm?",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"EVNNPT có tân Chủ tịch HĐTV\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/21/avatar1787285540467-17872855410341827054858.png\" title=\"EVNNPT có tân Chủ tịch HĐTV\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/21/avatar1787285540467-17872855410341827054858.png",
+      "alt": "EVNNPT có tân Chủ tịch HĐTV",
+      "title": "EVNNPT có tân Chủ tịch HĐTV",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"PNJ tím lịm và đã ‘thở phào’?\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/21/avatar1787285479849-1787285480422928419363.jpg\" title=\"PNJ tím lịm và đã ‘thở phào’?\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/21/avatar1787285479849-1787285480422928419363.jpg",
+      "alt": "PNJ tím lịm và đã ‘thở phào’?",
+      "title": "PNJ tím lịm và đã ‘thở phào’?",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"DN có doanh thu chỉ kém Petrolimex, Vingroup và vượt xa Hòa Phát, Thế Giới Di Động... sắp chi 260 tỷ đồng trả cổ tức\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/21/avatar1787285464527-1787285465109435205611.jpg\" title=\"DN có doanh thu chỉ kém Petrolimex, Vingroup và vượt xa Hòa Phát, Thế Giới Di Động... sắp chi 260 tỷ đồng trả cổ tức\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/21/avatar1787285464527-1787285465109435205611.jpg",
+      "alt": "DN có doanh thu chỉ kém Petrolimex, Vingroup và vượt xa Hòa Phát, Thế Giới Di Động... sắp chi 260 tỷ đồng trả cổ tức",
+      "title": "DN có doanh thu chỉ kém Petrolimex, Vingroup và vượt xa Hòa Phát, Thế Giới Di Động... sắp chi 260 tỷ đồng trả cổ tức",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Doanh nghiệp dược lớn nhất sàn chứng khoán chốt ngày trả cổ tức 5.000 đồng/cp\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/21/avatar1787282705267-1787282705939847855554.jpg\" title=\"Doanh nghiệp dược lớn nhất sàn chứng khoán chốt ngày trả cổ tức 5.000 đồng/cp\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/21/avatar1787282705267-1787282705939847855554.jpg",
+      "alt": "Doanh nghiệp dược lớn nhất sàn chứng khoán chốt ngày trả cổ tức 5.000 đồng/cp",
+      "title": "Doanh nghiệp dược lớn nhất sàn chứng khoán chốt ngày trả cổ tức 5.000 đồng/cp",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Công ty Cổ phần VCCorp\" height=\"49px\" src=\"https://vccorp.mediacdn.vn/vccorp-s.png\" width=\"100px\"/>",
+      "resolved_url": "https://vccorp.mediacdn.vn/vccorp-s.png",
+      "alt": "Công ty Cổ phần VCCorp",
+      "title": "",
+      "caption": ""
+    }
+  ],
+  "language": "vi",
+  "built_at": "2026-08-21T11:47:56+07:00",
+  "built_from_raw_path": "data/raw_html\\cafef.vn\\20260821\\3b44826ff2cb079478af3c13effbd743c35b9f61da95d2214dfb0f73498a9247.html"
+}

@@ -21,6 +21,9 @@ L1_SCHEMA_VERSION = "1.0"
 
 _SECURITY = {"TICKER", "ETF", "SECURITY_OTHER"}
 _INDUSTRY = {"INDUSTRY_GICS1", "INDUSTRY_GICS2", "INDUSTRY_GICS3"}
+_ASSET = {"ASSET_CLASS"}
+_INST = {"INSTITUTION"}
+_MACRO = {"MACRO_GEO", "MACRO_THEME"}
 _MARKET = {"INDEX", "EXCHANGE"}
 
 
@@ -52,21 +55,30 @@ def classify_title(title: str, reg: EntityRegistry | None = None) -> dict:
             if attrs.get(k):
                 industries.add(attrs[k])
 
-    # mức độ liên quan (ưu tiên có mã/DN > ngành > chỉ mang tính thị trường)
+    # mức độ liên quan (ưu tiên có mã/DN > ngành > tài sản > định chế > vĩ mô > thị trường)
     tset = set(types)
     if _SECURITY & tset:
         relevance = "entity"
     elif _INDUSTRY & tset:
         relevance = "industry"
+    elif _ASSET & tset:
+        relevance = "asset"
+    elif _INST & tset:
+        relevance = "institution"
+    elif _MACRO & tset:
+        relevance = "macro"
     elif _MARKET & tset:
         relevance = "market"
     else:
         relevance = "none"
 
-    # entity chính: mã/DN đầu tiên, không thì entity đầu tiên bất kỳ
+    # entity chính: mã/DN đầu tiên, sau đó tới ngành/tài sản, không thì entity đầu tiên bất kỳ
     primary = next((d["entity_id"] for d in dets if d["type"] in _SECURITY), None)
+    if primary is None:
+        primary = next((d["entity_id"] for d in dets if d["type"] in _INDUSTRY or d["type"] in _ASSET), None)
     if primary is None and dets:
         primary = dets[0]["entity_id"]
+
 
     return {
         "l1_schema_version": L1_SCHEMA_VERSION,

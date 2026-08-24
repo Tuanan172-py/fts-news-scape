@@ -128,8 +128,11 @@ Master audit: `users/output/_master/<ngày>/final.csv` (toàn bộ bài đạt 2
 
 # 2. Cho Agent chạy Skill agent-file-processor...
 
-# 3. Nạp & Xuất kết quả (hỗ trợ backlog 30 ngày):
+# 3. Nạp, Xuất kết quả và TỰ ĐỘNG DỌN DẸP packet trung gian (tiết kiệm I/O OneDrive):
 .\scripts\run_daily.ps1 -Mode ingest -Days 30
+
+# Nếu muốn GIỮ LẠI các file task packet và output JSON sau khi nạp:
+.\scripts\run_daily.ps1 -Mode ingest -Days 30 -KeepPackets
 ```
 
 Đã ingest riêng ở bước 4/7 rồi thì bỏ `--l1-dir/--agent-dir` (idempotent, không double-mark).

@@ -5,9 +5,9 @@ user_output.py — Ghi output CUỐI cho từng user (CSV theo ngày), gate "đ�
     l1_outputs.dod_pass = 1  (L1 agent-reviewed)  AND  agent_outputs.dod_pass = 1
 
 Định tuyến: entity nhận diện (l1_outputs.entities[in_list]) → subscribers_for() → chỉ user
-đăng ký entity liên quan (và đang BẬT) mới nhận article. 3 file/ngày để tránh I/O coupling:
-    users/output/<name>/<YYYY-MM-DD>/{L1.csv, agent.csv, final.csv}
-final.csv = bản gated deliverable; L1.csv/agent.csv = dump từng layer (audit).
+đăng ký entity liên quan (và đang BẬT) mới nhận article.
+- Thư mục user: users/output/<name>/<YYYY-MM-DD>/final.csv (deliverable tinh gọn).
+- Thư mục audit tập trung: users/output/_master/<YYYY-MM-DD>/{L1.csv, agent.csv, final.csv}.
 
 Idempotent: rewrite toàn tập per (user, date) + checkpoint theo article_id (crash-safe).
 Không notify — chỉ log "done".
@@ -38,13 +38,15 @@ JOIN agent_outputs ag ON ag.article_id = a.url_title_hash AND ag.dod_pass = 1
 """
 
 FINAL_COLUMNS = [
-    "article_id", "date", "source_domain", "url", "title", "matched_entities",
-    "summary", "key_points", "implication", "impact_area", "materiality_score",
-    "time_sensitivity", "sentiment", "event_type",
+    "date", "matched_entities", "title", "summary", "key_points",
+    "implication", "impact_area", "materiality_score", "time_sensitivity",
+    "sentiment", "event_type", "url", "source_domain",
+    "article_id", "agent_provider", "model_used",
 ]
-L1_COLUMNS = ["article_id", "date", "title", "entities", "categories"]
+L1_COLUMNS = ["article_id", "date", "title", "entities", "categories", "agent_provider", "model_used"]
 AGENT_COLUMNS = ["article_id", "date", "summary", "implication",
-                 "materiality_score", "sentiment", "event_type"]
+                 "materiality_score", "sentiment", "event_type",
+                 "agent_provider", "model_used"]
 
 _SAFE = re.compile(r"[^0-9A-Za-z._-]")
 
@@ -115,35 +117,76 @@ class UserOutputWriter:
         ag = _loads(r["agent_json"])
         summ, impl, mat = ag.get("summary") or {}, ag.get("implication") or {}, ag.get("materiality") or {}
         sent = ag.get("sentiment") or {}
+        meta = ag.get("processing_metadata") or {}
+        raw_key_points = summ.get("key_points") or []
+        key_points_formatted = "\n".join(f"- {p}" for p in raw_key_points if p) if raw_key_points else ""
         return {
-            "article_id": r["article_id"], "date": _row_date(r),
-            "source_domain": r.get("source_domain"), "url": r.get("url"), "title": r.get("title"),
+            "date": _row_date(r),
             "matched_entities": self._codes(matched),
+            "title": r.get("title"),
             "summary": summ.get("abstractive"),
-            "key_points": "; ".join(summ.get("key_points") or []),
-            "implication": impl.get("text"), "impact_area": impl.get("impact_area"),
-            "materiality_score": mat.get("score"), "time_sensitivity": mat.get("time_sensitivity"),
+            "key_points": key_points_formatted,
+            "implication": impl.get("text"),
+            "impact_area": impl.get("impact_area"),
+            "materiality_score": mat.get("score"),
+            "time_sensitivity": mat.get("time_sensitivity"),
             "sentiment": sent.get("polarity") or sent.get("overall"),
             "event_type": ag.get("event_type"),
+            "url": r.get("url"),
+            "source_domain": r.get("source_domain"),
+            "article_id": r["article_id"],
+            "agent_provider": meta.get("agent_provider") or "unknown",
+            "model_used": meta.get("model_used") or "unknown",
         }
 
     def _l1_row(self, r: dict) -> dict:
         d = _loads(r["l1_json"])
+        meta = d.get("processing_metadata") or {}
         ents = "; ".join(f"{e.get('entity_id')}({e.get('type')})"
                          for e in (d.get("entities") or []) if e.get("in_list"))
         cats = "; ".join(f"{k}={v}" for k, v in (d.get("categories") or {}).items() if v != "none")
         return {"article_id": r["article_id"], "date": _row_date(r), "title": r.get("title"),
-                "entities": ents, "categories": cats}
+                "entities": ents, "categories": cats,
+                "agent_provider": meta.get("agent_provider") or "unknown",
+                "model_used": meta.get("model_used") or "unknown"}
 
     def _agent_row(self, r: dict) -> dict:
         ag = _loads(r["agent_json"])
         summ, impl, mat = ag.get("summary") or {}, ag.get("implication") or {}, ag.get("materiality") or {}
         sent = ag.get("sentiment") or {}
+        meta = ag.get("processing_metadata") or {}
         return {"article_id": r["article_id"], "date": _row_date(r),
                 "summary": summ.get("abstractive"), "implication": impl.get("text"),
                 "materiality_score": mat.get("score"),
                 "sentiment": sent.get("polarity") or sent.get("overall"),
-                "event_type": ag.get("event_type")}
+                "event_type": ag.get("event_type"),
+                "agent_provider": meta.get("agent_provider") or "unknown",
+                "model_used": meta.get("model_used") or "unknown"}
+
+    def _passes_noise_filter(self, matched_eids: set[str], r: dict) -> bool:
+        """Lọc rác: nếu chỉ match các thực thể diện rộng (MACRO/ASSET), yêu cầu xuất hiện ở title hoặc materiality >= 3."""
+        broad_types = {"MACRO_GEO", "MACRO_THEME", "ASSET_CLASS"}
+        matched_types = {self.reg.get(eid)["type"] for eid in matched_eids if self.reg.get(eid)}
+        # Nếu có ít nhất 1 entity cụ thể (TICKER, ETF, INDUSTRY, INDEX, EXCHANGE, INSTITUTION) -> Pass luôn
+        if any(t not in broad_types for t in matched_types):
+            return True
+        # Nếu chỉ có broad entities -> kiểm tra materiality score >= 3
+        ag = _loads(r.get("agent_json"))
+        mat_score = (ag.get("materiality") or {}).get("score") or 0
+        try:
+            if float(mat_score) >= 3:
+                return True
+        except (ValueError, TypeError):
+            pass
+        # Hoặc alias của entity xuất hiện ngay trong title
+        title_lower = (r.get("title") or "").lower()
+        for eid in matched_eids:
+            ent = self.reg.get(eid)
+            if ent:
+                for a in ent.get("aliases", []):
+                    if len(a) >= 2 and a.lower() in title_lower:
+                        return True
+        return False
 
     # -- route + write --------------------------------------------------------
     def write(self, *, date: str | None = None, days: int | None = None,
@@ -165,10 +208,13 @@ class UserOutputWriter:
                 matched = eset & self.reg.resolve_subscription(user)
                 if not matched:
                     continue
+                if not self._passes_noise_filter(matched, r):
+                    continue
                 matched_article_ids.add(r["article_id"])
                 key = (user, _row_date(r))
                 bucket.setdefault(key, []).append(
                     (self._final_row(r, matched), self._l1_row(r), self._agent_row(r), r["article_id"]))
+
 
         # Ghi master audit nếu được bật
         if write_master and rows:
@@ -199,9 +245,7 @@ class UserOutputWriter:
                 seen.add(aid); finals.append(frow); l1s.append(l1row); agents.append(arow); aids.append(aid)
             base = self.output_root / _safe_name(user) / d
             new = ckpt.filter_new(base.parent, d, aids)
-            _atomic_write_csv(base / "L1.csv", L1_COLUMNS, l1s)
-            _atomic_write_csv(base / "agent.csv", AGENT_COLUMNS, agents)
-            _atomic_write_csv(base / "final.csv", FINAL_COLUMNS, finals)  # deliverable ghi cuối
+            _atomic_write_csv(base / "final.csv", FINAL_COLUMNS, finals)  # deliverable duy nhất cho user
             ckpt.mark_written(base.parent, d, aids)                       # mark SAU khi replace
             counts[user] = counts.get(user, 0) + len(finals)
             logger.info("done user={} date={} rows={} (new={})", user, d, len(finals), len(new))

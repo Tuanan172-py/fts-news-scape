@@ -1,17 +1,21 @@
 {
-  "schema_version": "1.0.0",
-  "total_entities": 2119,
+  "schema_version": "1.1.0",
+  "total_entities": 2138,
   "by_type": {
-    "TICKER": 1981,
+    "TICKER": 1983,
     "SECURITY_OTHER": 11,
     "ETF": 28,
     "INDEX": 6,
     "EXCHANGE": 3,
     "INDUSTRY_GICS1": 11,
     "INDUSTRY_GICS2": 28,
-    "INDUSTRY_GICS3": 51
+    "INDUSTRY_GICS3": 51,
+    "MACRO_GEO": 4,
+    "MACRO_THEME": 4,
+    "ASSET_CLASS": 5,
+    "INSTITUTION": 4
   },
-  "securities_total": 2020,
+  "securities_total": 2022,
   "tickers_with_name": 1968,
   "tickers_with_gics": 1917
 }

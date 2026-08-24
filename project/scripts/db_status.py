@@ -89,12 +89,12 @@ def main(argv):
     _print("7) Hàng đợi handoff — work_items theo status",
            _rows(c, "select status,count(*) n from work_items group by status order by n desc"))
 
-    _print("8) Lớp L1 (nhận diện entity) — l1_tasks & l1_outputs",
-           _rows(c, "select 'l1_tasks' bang,status trang_thai,count(*) n from l1_tasks group by status "
-                    "union all select 'l1_outputs',('dod_pass='||dod_pass),count(*) from l1_outputs group by dod_pass"))
+    _print("8) Lớp L1 (nhận diện entity) — l1_tasks & l1_outputs (theo provider)",
+           _rows(c, "select 'l1_tasks' bang, '-' provider, '-' model, status trang_thai, count(*) n from l1_tasks group by status "
+                    "union all select 'l1_outputs', coalesce(agent_provider, 'unknown'), coalesce(model_used, 'unknown'), ('dod_pass='||dod_pass), count(*) from l1_outputs group by agent_provider, model_used, dod_pass"))
 
-    _print("9) Lớp bóc tách — agent_outputs theo dod_pass",
-           _rows(c, "select ('dod_pass='||dod_pass) trang_thai,count(*) n from agent_outputs group by dod_pass"))
+    _print("9) Lớp bóc tách — agent_outputs (theo provider & DoD)",
+           _rows(c, "select coalesce(agent_provider, 'unknown') provider, coalesce(model_used, 'unknown') model, ('dod_pass='||dod_pass) trang_thai, count(*) n from agent_outputs group by agent_provider, model_used, dod_pass"))
 
     c.close()
     print("\n(gợi ý) tin mới chưa lên Silver → chạy: python -m src.morninger --once derive")

@@ -1,4 +1,4 @@
-# Phiếu giao việc cho AGENT CÓ CÔNG CỤ FILE (tự đọc packet, tự ghi output)
+# Hanoff cho AGENT CÓ quyền thực thi với file FILE (tự đọc packet, tự ghi output)
 
 Cập nhật: 2026-08-20 · Đối tượng: agent có tool đọc/ghi file cục bộ (Claude Code, Cursor, MCP filesystem…).
 Khác [agent-prompting-guide](agent-prompting-guide.md) (kiểu copy-paste): ở đây agent **TỰ GHI FILE** —
@@ -52,14 +52,14 @@ Chỗ vận hành trong chu kỳ: chạy `run_daily.ps1 -Mode emit` (phát packe
 >    `done` (có ≥1 entity in_list=true đúng nhóm) | `none` (không nhắc) | `out_of_list` (nhắc nhưng ngoài DS).
 > 4. `citations`: ≥1 nếu `recognized=true`, mỗi `source_span` là chuỗi con của `title`.
 > 5. `recognized = (có ≥1 entity)`.
-> Ghi kết quả (đúng `schemas/l1-entity-output-v1.schema.json`) ra
+> Ghi kết quả (đúng format `schemas/l1-entity-output-v1.schema.json`) ra
 > `data/agent_outputs_l1/<article_id>.json`.
 >
 > **HÀNG ĐỢI 2 — BÓC TÁCH (phân tích BODY).**
 > Đọc mọi `data/agent_tasks/*.task.json` (KHÔNG đệ quy, bỏ qua `l1/`). Phân tích `input.cleaned_text`.
 > Nếu `input.change_state` ∈ {SELECTOR_BROKEN, TEMPLATE_DRIFT} → bỏ qua bài đó (đã bị giữ ở nguồn).
 > Với mỗi file, theo thứ tự:
-> 1. `summary.abstractive` (2-4 câu, trung thực, không bịa) + `summary.key_points` (2-5 ý).
+> 1. `summary.abstractive` (2-4 câu, trung thực, không suy diễn) + `summary.key_points` (2-5 ý).
 > 2. `implication.text` ("so-what" cho thị trường) + `impact_area`
 >    ∈ {market, regulatory, sentiment, supply_chain, geopolitical, other}.
 > 3. `materiality.score` (0..1) + `time_sensitivity` ∈ {urgent, today, this_week, this_month, archive}.

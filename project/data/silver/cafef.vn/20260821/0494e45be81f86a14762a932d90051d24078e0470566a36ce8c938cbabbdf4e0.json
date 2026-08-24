@@ -1,0 +1,509 @@
+{
+  "silver_schema_version": "1.0",
+  "article_id": "0494e45be81f86a14762a932d90051d24078e0470566a36ce8c938cbabbdf4e0",
+  "source_url": "https://cafef.vn/duong-tam-trinh-hon-3350-ty-dong-tang-toc-nhieu-hang-muc-bat-dau-lo-dien-188260821103157729.chn",
+  "domain": "cafef.vn",
+  "content_sha256": "88a9944ac9a17d9c625001ffd09d8e22fece2856bc375fb4265989d9d40c1756",
+  "cleaned_text": "Mặt bằng cơ bản được bàn giao từ tháng 7/2026 đang tạo điều kiện để dự án mở rộng đường Tam Trinh tăng tốc. Trên công trường, nhiều máy móc, nhân lực được huy động, các hạng mục cống ngầm và hạ tầng kỹ thuật đang từng bước được triển khai sau nhiều năm chờ đợi.\nVới tổng mức đầu tư được phê duyệt hơn 3.350 tỷ đồng, dự án mở rộng đường Tam Trinh (dài khoảng 3,5km) được khởi công lần đầu hồi tháng 10/2016. Sau nhiều năm đình trệ vì gặp nhiều dự án chính thức tái khởi động vào ngày 6/8/2024.\nSau thời gian dài vướng mắc, đến tháng 7/2026, công tác giải phóng mặt bằng tại nhiều khu vực cơ bản được hoàn tất, tạo điều kiện để các đơn vị thi công đồng loạt đưa máy móc, nhân lực vào triển khai.\nTheo ghi nhận của PV Báo Đại đoàn kết tại công trường, nhiều đoạn tuyến đã có mặt bằng sạch, hình hài của tuyến đường rộng hàng chục mét dần rõ nét. Tại các vị trí đang triển khai hạ tầng kỹ thuật, công nhân tập trung thi công hệ thống cống ngầm, san nền và hoàn thiện các hạng mục nền đường.\nNhiều căn nhà sau khi được sửa sang, cải tạo sau công tác giải phóng mặt bằng phục vụ dự án mở rộng đường Tam Trinh.\nĐể triển khai dự án, khoảng 1.600 hộ dân cùng nhiều cơ quan, tổ chức thuộc diện phải giải phóng mặt bằng. Đây cũng là nguyên nhân khiến dự án nhiều lần chậm tiến độ trong suốt thời gian qua.\nVật liệu xây dựng được tập kết dọc tuyến Tam Trinh, phục vụ công tác thi công, cải tạo các công trình sau giải phóng mặt bằng.\nNhiều vị trí trên đường Tam Trinh đang được lát đá vỉa hè, từng bước hoàn thiện diện mạo tuyến đường.\nTuyến đường đi qua các phường Hoàng Mai, Tương Mai và Vĩnh Tuy, được quy hoạch với mặt cắt ngang từ 40-55m, tương đương 6 làn xe tùy từng đoạn.\nMáy móc được huy động, khẩn trương thi công các hạng mục trên đường Tam Trinh.\nTrước đó, tại buổi tiếp xúc cử tri phường Vĩnh Tuy chiều 24/7, Phó Chủ tịch Thường trực UBND TP Hà Nội Dương Đức Tuấn cùng Tổ đại biểu số 3 HĐND thành phố ghi nhận những kết quả trong công tác giải phóng mặt bằng. Cử tri đánh giá việc tháo gỡ được nút thắt kéo dài nhiều năm là kết quả của sự vào cuộc của chính quyền và sự đồng thuận của người dân.\nKhi hoàn thành, đường Tam Trinh được kỳ vọng sẽ trở thành trục giao thông quan trọng ở phía Nam Hà Nội, tăng khả năng kết nối giữa Vành đai 2, Vành đai 3 và cao tốc Pháp Vân - Cầu Giẽ.",
+  "extraction_quality": "high",
+  "structure": {
+    "headings": [
+      {
+        "level": 1,
+        "text": "Đường Tam Trinh hơn 3.350 tỷ đồng tăng tốc, nhiều hạng mục bắt đầu lộ diện"
+      },
+      {
+        "level": 3,
+        "text": "CÙNG CHUYÊN MỤC"
+      },
+      {
+        "level": 4,
+        "text": "Dự án quảng trường gần 200 tỷ ra sao sau 'tối hậu thư' của lãnh đạo TP Huế? Nổi bật"
+      },
+      {
+        "level": 4,
+        "text": "Tin vui: Từ 20/8, một địa điểm ở Trung Quốc chính thức miễn thị thực cho người dân Việt Nam Nổi bật"
+      },
+      {
+        "level": 4,
+        "text": "Đề án '1 triệu căn nhà ở xã hội' đã hoàn thành được 77%"
+      },
+      {
+        "level": 4,
+        "text": "Thời điểm kê khai hóa đơn điều chỉnh thuế GTGT"
+      },
+      {
+        "level": 4,
+        "text": "Vượt Mỹ, Đức và gần như toàn bộ châu Âu, Việt Nam thành công vào top 3 dẫn đầu thế giới trong một lĩnh vực quan trọng"
+      },
+      {
+        "level": 4,
+        "text": "Cải cách thủ tục hành chính thuế theo hướng thực chất"
+      }
+    ],
+    "paragraphs": [
+      "MỚI NHẤT!",
+      "Theo Lê Khánh | 21-08-2026 - 11:07 AM | Kinh tế vĩ mô - Đầu tư",
+      "Mặt bằng cơ bản được bàn giao từ tháng 7/2026 đang tạo điều kiện để dự án mở rộng đường Tam Trinh tăng tốc. Trên công trường, nhiều máy móc, nhân lực được huy động, các hạng mục cống ngầm và hạ tầng kỹ thuật đang từng bước được triển khai sau nhiều năm chờ đợi.",
+      "Video: Lê Khánh.",
+      "Với tổng mức đầu tư được phê duyệt hơn 3.350 tỷ đồng, dự án mở rộng đường Tam Trinh (dài khoảng 3,5km) được khởi công lần đầu hồi tháng 10/2016. Sau nhiều năm đình trệ vì gặp nhiều dự án chính thức tái khởi động vào ngày 6/8/2024.",
+      "Sau thời gian dài vướng mắc, đến tháng 7/2026, công tác giải phóng mặt bằng tại nhiều khu vực cơ bản được hoàn tất, tạo điều kiện để các đơn vị thi công đồng loạt đưa máy móc, nhân lực vào triển khai.",
+      "Theo ghi nhận của PV Báo Đại đoàn kết tại công trường, nhiều đoạn tuyến đã có mặt bằng sạch, hình hài của tuyến đường rộng hàng chục mét dần rõ nét. Tại các vị trí đang triển khai hạ tầng kỹ thuật, công nhân tập trung thi công hệ thống cống ngầm, san nền và hoàn thiện các hạng mục nền đường.",
+      "Nhiều căn nhà sau khi được sửa sang, cải tạo sau công tác giải phóng mặt bằng phục vụ dự án mở rộng đường Tam Trinh.",
+      "Vật liệu xây dựng được tập kết dọc tuyến Tam Trinh, phục vụ công tác thi công, cải tạo các công trình sau giải phóng mặt bằng.",
+      "Tuyến đường đi qua các phường Hoàng Mai, Tương Mai và Vĩnh Tuy, được quy hoạch với mặt cắt ngang từ 40-55m, tương đương 6 làn xe tùy từng đoạn.",
+      "Trước đó, tại buổi tiếp xúc cử tri phường Vĩnh Tuy chiều 24/7, Phó Chủ tịch Thường trực UBND TP Hà Nội Dương Đức Tuấn cùng Tổ đại biểu số 3 HĐND thành phố ghi nhận những kết quả trong công tác giải phóng mặt bằng. Cử tri đánh giá việc tháo gỡ được nút thắt kéo dài nhiều năm là kết quả của sự vào cuộc của chính quyền và sự đồng thuận của người dân.",
+      "Khi hoàn thành, đường Tam Trinh được kỳ vọng sẽ trở thành trục giao thông quan trọng ở phía Nam Hà Nội, tăng khả năng kết nối giữa Vành đai 2, Vành đai 3 và cao tốc Pháp Vân - Cầu Giẽ.",
+      "Theo Lê Khánh",
+      "Báo Đại Đoàn Kết",
+      "Địa chỉ: Tầng 21 Tòa nhà Center Building. Số 01, phố Nguyễn Huy Tưởng, phường Thanh Xuân, thành phố Hà Nội",
+      "Điện thoại: 024 7309 5555 Máy lẻ 292. Fax: 024-39744082",
+      "Email: info@cafef.vn | Hotline: 0926 864 344",
+      "Chịu trách nhiệm nội dung: Ông Nguyễn Thế Tân",
+      "Liên hệ quảng cáo",
+      "Hotline:",
+      "Email: doanhnghiep@admicro.vn",
+      "© Copyright 2007 - 2026 - Công ty Cổ phần VCCorp.",
+      "Giấy phép thiết lập trang thông tin điện tử tổng hợp trên mạng số 2216/GP-TTĐT do Sở Thông tin và Truyền thông Hà Nội cấp ngày 10 tháng 4 năm 2019."
+    ],
+    "tables": [],
+    "links": [
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "http://liveboard.cafef.vn",
+        "text": "Bảng giá điện tử"
+      },
+      {
+        "href": "/du-lieu/danh-muc-dau-tu.chn",
+        "text": "Danh mục đầu tư"
+      },
+      {
+        "href": "/doc-nhanh.chn",
+        "text": "Đọc nhanh >>"
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "XÃ HỘI"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "CHỨNG KHOÁN"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "BẤT ĐỘNG SẢN"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "DOANH NGHIỆP"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "NGÂN HÀNG"
+      },
+      {
+        "href": "/smart-money.chn",
+        "text": "SMART MONEY"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "TÀI CHÍNH QUỐC TẾ"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "VĨ MÔ"
+      },
+      {
+        "href": "/kinh-te-so.chn",
+        "text": "KINH TẾ SỐ"
+      },
+      {
+        "href": "/thi-truong.chn",
+        "text": "THỊ TRƯỜNG"
+      },
+      {
+        "href": "/song.chn",
+        "text": "SỐNG"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "LIFESTYLE"
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "Xã hội"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "Doanh nghiệp"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "Kinh tế vĩ mô"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "Chứng khoán"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "Tài chính ngân hàng"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "Tài chính quốc tế"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "Tin tức"
+      },
+      {
+        "href": "/du-an.chn",
+        "text": "Dự án"
+      },
+      {
+        "href": "/ban-do-du-an.chn",
+        "text": "Bản đồ dự án"
+      },
+      {
+        "href": "/hang-hoa-nguyen-lieu.chn",
+        "text": "Hàng hóa nguyên liệu"
+      },
+      {
+        "href": "/song.chn",
+        "text": "Sống"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "Lifestyle"
+      },
+      {
+        "href": "/nhom-chu-de/emagazine.chn",
+        "text": "Magazine"
+      },
+      {
+        "href": "/du-lieu.chn",
+        "text": "Dữ liệu"
+      },
+      {
+        "href": "/du-lieu/cafeflists.chn",
+        "text": "F INDEX"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "Kinh tế vĩ mô - Đầu tư"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Chia sẻ"
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "javascript:;",
+        "text": "TIN MỚI"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Theo Báo Đại Đoàn Kết Copy link"
+      },
+      {
+        "href": "javascript:;",
+        "text": "Chia sẻ"
+      },
+      {
+        "href": "/duong-tam-trinh.html",
+        "text": "đường Tam Trinh"
+      },
+      {
+        "href": "/du-an-quang-truong-gan-200-ty-ra-sao-sau-toi-hau-thu-cua-lanh-dao-tp-hue-188260821074844088.chn",
+        "text": ""
+      },
+      {
+        "href": "/du-an-quang-truong-gan-200-ty-ra-sao-sau-toi-hau-thu-cua-lanh-dao-tp-hue-188260821074844088.chn",
+        "text": "Dự án quảng trường gần 200 tỷ ra sao sau 'tối hậu thư' của lãnh đạo TP Huế?"
+      },
+      {
+        "href": "/tin-vui-tu-20-8-mot-dia-diem-o-trung-quoc-chinh-thuc-mien-thi-thuc-cho-nguoi-dan-viet-nam-188260820221706985.chn",
+        "text": ""
+      },
+      {
+        "href": "/tin-vui-tu-20-8-mot-dia-diem-o-trung-quoc-chinh-thuc-mien-thi-thuc-cho-nguoi-dan-viet-nam-188260820221706985.chn",
+        "text": "Tin vui: Từ 20/8, một địa điểm ở Trung Quốc chính thức miễn thị thực cho người dân Việt Nam"
+      },
+      {
+        "href": "/de-an-1-trieu-can-nha-o-xa-hoi-da-hoan-thanh-duoc-77-188260821104237534.chn",
+        "text": ""
+      },
+      {
+        "href": "/de-an-1-trieu-can-nha-o-xa-hoi-da-hoan-thanh-duoc-77-188260821104237534.chn",
+        "text": "Đề án '1 triệu căn nhà ở xã hội' đã hoàn thành được 77%"
+      },
+      {
+        "href": "/thoi-diem-ke-khai-hoa-don-dieu-chinh-thue-gtgt-188260821103325181.chn",
+        "text": ""
+      },
+      {
+        "href": "/thoi-diem-ke-khai-hoa-don-dieu-chinh-thue-gtgt-188260821103325181.chn",
+        "text": "Thời điểm kê khai hóa đơn điều chỉnh thuế GTGT"
+      },
+      {
+        "href": "/vuot-my-duc-va-gan-nhu-toan-bo-chau-au-viet-nam-thanh-cong-vao-top-3-dan-dau-the-gioi-trong-mot-linh-vuc-quan-trong-188260821102813761.chn",
+        "text": ""
+      },
+      {
+        "href": "/vuot-my-duc-va-gan-nhu-toan-bo-chau-au-viet-nam-thanh-cong-vao-top-3-dan-dau-the-gioi-trong-mot-linh-vuc-quan-trong-188260821102813761.chn",
+        "text": "Vượt Mỹ, Đức và gần như toàn bộ châu Âu, Việt Nam thành công vào top 3 dẫn đầu thế giới trong một lĩnh vực quan trọng"
+      },
+      {
+        "href": "/cai-cach-thu-tuc-hanh-chinh-thue-theo-huong-thuc-chat-188260821092938403.chn",
+        "text": ""
+      },
+      {
+        "href": "/cai-cach-thu-tuc-hanh-chinh-thue-theo-huong-thuc-chat-188260821092938403.chn",
+        "text": "Cải cách thủ tục hành chính thuế theo hướng thực chất"
+      },
+      {
+        "href": "javascript:;",
+        "text": ""
+      },
+      {
+        "href": "/",
+        "text": ""
+      },
+      {
+        "href": "/xa-hoi.chn",
+        "text": "XÃ HỘI"
+      },
+      {
+        "href": "/thi-truong-chung-khoan.chn",
+        "text": "CHỨNG KHOÁN"
+      },
+      {
+        "href": "/bat-dong-san.chn",
+        "text": "BẤT ĐỘNG SẢN"
+      },
+      {
+        "href": "/doanh-nghiep.chn",
+        "text": "DOANH NGHIỆP"
+      },
+      {
+        "href": "/tai-chinh-ngan-hang.chn",
+        "text": "NGÂN HÀNG"
+      },
+      {
+        "href": "/tai-chinh-quoc-te.chn",
+        "text": "TÀI CHÍNH QUỐC TẾ"
+      },
+      {
+        "href": "/vi-mo-dau-tu.chn",
+        "text": "VĨ MÔ"
+      },
+      {
+        "href": "/kinh-te-so.chn",
+        "text": "KINH TẾ SỐ"
+      },
+      {
+        "href": "/thi-truong.chn",
+        "text": "THỊ TRƯỜNG"
+      },
+      {
+        "href": "/song.chn",
+        "text": "SỐNG"
+      },
+      {
+        "href": "/lifestyle.chn",
+        "text": "LIFESTYLE"
+      },
+      {
+        "href": "/du-lieu.chn",
+        "text": "Dữ liệu"
+      },
+      {
+        "href": "/du-lieu/top/ceo.chn",
+        "text": "Top 200"
+      },
+      {
+        "href": "https://www.messenger.com/t/108804609142280",
+        "text": "Chat với tư vấn viên"
+      },
+      {
+        "href": "http://www.vccorp.vn/",
+        "text": ""
+      },
+      {
+        "href": "/static/chinh-sach-bao-mat.html",
+        "text": "Chính sách bảo mật"
+      }
+    ]
+  },
+  "images": [
+    {
+      "outer_tag": "<img alt=\"\" class=\"\" data-original=\"https://cafefcdn.com/203337114487263232/2026/8/21/2c99c54d-43c7-443e-b9c3-9cc4ce744764-1787283059895-1787283060468201613081.jpg\" h=\"1115\" height=\"\" rel=\"lightbox\" src=\"https://cafefcdn.com/203337114487263232/2026/8/21/2c99c54d-43c7-443e-b9c3-9cc4ce744764-1787283059895-1787283060468201613081.jpg\" title=\"\" type=\"photo\" w=\"1507\" width=\"\"/>",
+      "resolved_url": "https://cafefcdn.com/203337114487263232/2026/8/21/2c99c54d-43c7-443e-b9c3-9cc4ce744764-1787283059895-1787283060468201613081.jpg",
+      "alt": "",
+      "title": "",
+      "caption": "Với tổng mức đầu tư được phê duyệt hơn 3.350 tỷ đồng, dự án mở rộng đường Tam Trinh (dài khoảng 3,5km) được khởi công lần đầu hồi tháng 10/2016. Sau nhiều năm đình trệ vì gặp nhiều dự án chính thức tái khởi động vào ngày 6/8/2024."
+    },
+    {
+      "outer_tag": "<img alt=\"\" class=\"\" data-original=\"https://cafefcdn.com/203337114487263232/2026/8/21/a13bdc27-d3b0-4519-bbf2-987e8846d9ae-1787283061198-1787283061571488666218.jpg\" h=\"1115\" height=\"\" rel=\"lightbox\" src=\"https://cafefcdn.com/203337114487263232/2026/8/21/a13bdc27-d3b0-4519-bbf2-987e8846d9ae-1787283061198-1787283061571488666218.jpg\" title=\"\" type=\"photo\" w=\"1507\" width=\"\"/>",
+      "resolved_url": "https://cafefcdn.com/203337114487263232/2026/8/21/a13bdc27-d3b0-4519-bbf2-987e8846d9ae-1787283061198-1787283061571488666218.jpg",
+      "alt": "",
+      "title": "",
+      "caption": "Sau thời gian dài vướng mắc, đến tháng 7/2026, công tác giải phóng mặt bằng tại nhiều khu vực cơ bản được hoàn tất, tạo điều kiện để các đơn vị thi công đồng loạt đưa máy móc, nhân lực vào triển khai."
+    },
+    {
+      "outer_tag": "<img alt=\"\" class=\"\" data-original=\"https://cafefcdn.com/203337114487263232/2026/8/21/713ca863-68be-4ed7-a96b-09af23d579a5-1787283062220-17872830630741620732658.jpg\" h=\"1115\" height=\"\" rel=\"lightbox\" src=\"https://cafefcdn.com/203337114487263232/2026/8/21/713ca863-68be-4ed7-a96b-09af23d579a5-1787283062220-17872830630741620732658.jpg\" title=\"\" type=\"photo\" w=\"1507\" width=\"\"/>",
+      "resolved_url": "https://cafefcdn.com/203337114487263232/2026/8/21/713ca863-68be-4ed7-a96b-09af23d579a5-1787283062220-17872830630741620732658.jpg",
+      "alt": "",
+      "title": "",
+      "caption": "Theo ghi nhận của PV Báo Đại đoàn kết tại công trường, nhiều đoạn tuyến đã có mặt bằng sạch, hình hài của tuyến đường rộng hàng chục mét dần rõ nét. Tại các vị trí đang triển khai hạ tầng kỹ thuật, công nhân tập trung thi công hệ thống cống ngầm, san nền và hoàn thiện các hạng mục nền đường."
+    },
+    {
+      "outer_tag": "<img alt=\"\" class=\"\" data-original=\"https://cafefcdn.com/203337114487263232/2026/8/21/dad07825-b9ef-4609-a9e8-716dd075cb65-1787283063946-17872830643052040912563.jpg\" h=\"1115\" height=\"\" rel=\"lightbox\" src=\"https://cafefcdn.com/203337114487263232/2026/8/21/dad07825-b9ef-4609-a9e8-716dd075cb65-1787283063946-17872830643052040912563.jpg\" title=\"\" type=\"photo\" w=\"1507\" width=\"\"/>",
+      "resolved_url": "https://cafefcdn.com/203337114487263232/2026/8/21/dad07825-b9ef-4609-a9e8-716dd075cb65-1787283063946-17872830643052040912563.jpg",
+      "alt": "",
+      "title": "",
+      "caption": "Nhiều căn nhà sau khi được sửa sang, cải tạo sau công tác giải phóng mặt bằng phục vụ dự án mở rộng đường Tam Trinh."
+    },
+    {
+      "outer_tag": "<img alt=\"\" class=\"\" data-original=\"https://cafefcdn.com/203337114487263232/2026/8/21/cc0e43e0-d55a-4c3e-8318-060b569a36e9-1787283064985-1787283065712684055529.jpg\" h=\"1115\" height=\"\" rel=\"lightbox\" src=\"https://cafefcdn.com/203337114487263232/2026/8/21/cc0e43e0-d55a-4c3e-8318-060b569a36e9-1787283064985-1787283065712684055529.jpg\" title=\"\" type=\"photo\" w=\"1507\" width=\"\"/>",
+      "resolved_url": "https://cafefcdn.com/203337114487263232/2026/8/21/cc0e43e0-d55a-4c3e-8318-060b569a36e9-1787283064985-1787283065712684055529.jpg",
+      "alt": "",
+      "title": "",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"\" class=\"\" data-original=\"https://cafefcdn.com/203337114487263232/2026/8/21/44c2e506-bcd2-493e-a73c-07a6a5c9bbac-1787283066387-17872830666541073098467.jpg\" h=\"1115\" height=\"\" rel=\"lightbox\" src=\"https://cafefcdn.com/203337114487263232/2026/8/21/44c2e506-bcd2-493e-a73c-07a6a5c9bbac-1787283066387-17872830666541073098467.jpg\" title=\"\" type=\"photo\" w=\"1507\" width=\"\"/>",
+      "resolved_url": "https://cafefcdn.com/203337114487263232/2026/8/21/44c2e506-bcd2-493e-a73c-07a6a5c9bbac-1787283066387-17872830666541073098467.jpg",
+      "alt": "",
+      "title": "",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"\" class=\"\" data-original=\"https://cafefcdn.com/203337114487263232/2026/8/21/de0e985d-c2ec-4711-8eef-0af8af457f7d-1787283067228-17872830674862055066842.jpg\" h=\"1115\" height=\"\" rel=\"lightbox\" src=\"https://cafefcdn.com/203337114487263232/2026/8/21/de0e985d-c2ec-4711-8eef-0af8af457f7d-1787283067228-17872830674862055066842.jpg\" title=\"\" type=\"photo\" w=\"1507\" width=\"\"/>",
+      "resolved_url": "https://cafefcdn.com/203337114487263232/2026/8/21/de0e985d-c2ec-4711-8eef-0af8af457f7d-1787283067228-17872830674862055066842.jpg",
+      "alt": "",
+      "title": "",
+      "caption": "Vật liệu xây dựng được tập kết dọc tuyến Tam Trinh, phục vụ công tác thi công, cải tạo các công trình sau giải phóng mặt bằng."
+    },
+    {
+      "outer_tag": "<img alt=\"\" class=\"\" data-original=\"https://cafefcdn.com/203337114487263232/2026/8/21/883b7edc-b602-47e8-956d-5792ba5c269d-1787283068207-17872830685201368054817.jpg\" h=\"1115\" height=\"\" rel=\"lightbox\" src=\"https://cafefcdn.com/203337114487263232/2026/8/21/883b7edc-b602-47e8-956d-5792ba5c269d-1787283068207-17872830685201368054817.jpg\" title=\"\" type=\"photo\" w=\"1507\" width=\"\"/>",
+      "resolved_url": "https://cafefcdn.com/203337114487263232/2026/8/21/883b7edc-b602-47e8-956d-5792ba5c269d-1787283068207-17872830685201368054817.jpg",
+      "alt": "",
+      "title": "",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"\" class=\"\" data-original=\"https://cafefcdn.com/203337114487263232/2026/8/21/c00b2857-4241-46bb-99c1-4c7cf9b3c423-1787283068943-17872830694262025813765.jpg\" h=\"1115\" height=\"\" rel=\"lightbox\" src=\"https://cafefcdn.com/203337114487263232/2026/8/21/c00b2857-4241-46bb-99c1-4c7cf9b3c423-1787283068943-17872830694262025813765.jpg\" title=\"\" type=\"photo\" w=\"1507\" width=\"\"/>",
+      "resolved_url": "https://cafefcdn.com/203337114487263232/2026/8/21/c00b2857-4241-46bb-99c1-4c7cf9b3c423-1787283068943-17872830694262025813765.jpg",
+      "alt": "",
+      "title": "",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"\" class=\"\" data-original=\"https://cafefcdn.com/203337114487263232/2026/8/21/4196ce6c-7d8e-431f-b9c2-cc9a2efc2899-1787283069959-1787283070296352527913.jpg\" h=\"1115\" height=\"\" rel=\"lightbox\" src=\"https://cafefcdn.com/203337114487263232/2026/8/21/4196ce6c-7d8e-431f-b9c2-cc9a2efc2899-1787283069959-1787283070296352527913.jpg\" title=\"\" type=\"photo\" w=\"1507\" width=\"\"/>",
+      "resolved_url": "https://cafefcdn.com/203337114487263232/2026/8/21/4196ce6c-7d8e-431f-b9c2-cc9a2efc2899-1787283069959-1787283070296352527913.jpg",
+      "alt": "",
+      "title": "",
+      "caption": "Tuyến đường đi qua các phường Hoàng Mai, Tương Mai và Vĩnh Tuy, được quy hoạch với mặt cắt ngang từ 40-55m, tương đương 6 làn xe tùy từng đoạn."
+    },
+    {
+      "outer_tag": "<img alt=\"\" class=\"\" data-original=\"https://cafefcdn.com/203337114487263232/2026/8/21/cc0e43e0-d55a-4c3e-8318-060b569a36e9-1787283070853-1787283071602746510868.jpg\" h=\"1115\" height=\"\" rel=\"lightbox\" src=\"https://cafefcdn.com/203337114487263232/2026/8/21/cc0e43e0-d55a-4c3e-8318-060b569a36e9-1787283070853-1787283071602746510868.jpg\" title=\"\" type=\"photo\" w=\"1507\" width=\"\"/>",
+      "resolved_url": "https://cafefcdn.com/203337114487263232/2026/8/21/cc0e43e0-d55a-4c3e-8318-060b569a36e9-1787283070853-1787283071602746510868.jpg",
+      "alt": "",
+      "title": "",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"\" class=\"\" data-original=\"https://cafefcdn.com/203337114487263232/2026/8/21/daf130dc-59ea-45e7-a1f1-743c5934bf5b-1787283072643-1787283072902521960913.jpg\" h=\"1115\" height=\"\" rel=\"lightbox\" src=\"https://cafefcdn.com/203337114487263232/2026/8/21/daf130dc-59ea-45e7-a1f1-743c5934bf5b-1787283072643-1787283072902521960913.jpg\" title=\"\" type=\"photo\" w=\"1507\" width=\"\"/>",
+      "resolved_url": "https://cafefcdn.com/203337114487263232/2026/8/21/daf130dc-59ea-45e7-a1f1-743c5934bf5b-1787283072643-1787283072902521960913.jpg",
+      "alt": "",
+      "title": "",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"\" class=\"\" data-original=\"https://cafefcdn.com/203337114487263232/2026/8/21/e5e3e0e7-6e4b-4380-9830-eb5e23709f38-1787283073465-17872830739781158317780.jpg\" h=\"1115\" height=\"\" rel=\"lightbox\" src=\"https://cafefcdn.com/203337114487263232/2026/8/21/e5e3e0e7-6e4b-4380-9830-eb5e23709f38-1787283073465-17872830739781158317780.jpg\" title=\"\" type=\"photo\" w=\"1507\" width=\"\"/>",
+      "resolved_url": "https://cafefcdn.com/203337114487263232/2026/8/21/e5e3e0e7-6e4b-4380-9830-eb5e23709f38-1787283073465-17872830739781158317780.jpg",
+      "alt": "",
+      "title": "",
+      "caption": "Trước đó, tại buổi tiếp xúc cử tri phường Vĩnh Tuy chiều 24/7, Phó Chủ tịch Thường trực UBND TP Hà Nội Dương Đức Tuấn cùng Tổ đại biểu số 3 HĐND thành phố ghi nhận những kết quả trong công tác giải phóng mặt bằng. Cử tri đánh giá việc tháo gỡ được nút thắt kéo dài nhiều năm là kết quả của sự vào cuộc của chính quyền và sự đồng thuận của người dân."
+    },
+    {
+      "outer_tag": "<img alt=\"\" class=\"\" data-original=\"https://cafefcdn.com/203337114487263232/2026/8/21/0cc84f94-f40c-4ceb-8655-789ac84ee154-1787283074737-1787283075047121805478.jpg\" h=\"1115\" height=\"\" rel=\"lightbox\" src=\"https://cafefcdn.com/203337114487263232/2026/8/21/0cc84f94-f40c-4ceb-8655-789ac84ee154-1787283074737-1787283075047121805478.jpg\" title=\"\" type=\"photo\" w=\"1507\" width=\"\"/>",
+      "resolved_url": "https://cafefcdn.com/203337114487263232/2026/8/21/0cc84f94-f40c-4ceb-8655-789ac84ee154-1787283074737-1787283075047121805478.jpg",
+      "alt": "",
+      "title": "",
+      "caption": "Khi hoàn thành, đường Tam Trinh được kỳ vọng sẽ trở thành trục giao thông quan trọng ở phía Nam Hà Nội, tăng khả năng kết nối giữa Vành đai 2, Vành đai 3 và cao tốc Pháp Vân - Cầu Giẽ."
+    },
+    {
+      "outer_tag": "<img alt=\"Dự án quảng trường gần 200 tỷ ra sao sau 'tối hậu thư' của lãnh đạo TP Huế?\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/21/avatar1787273283477-1787273284280746663350.jpg\" title=\"Dự án quảng trường gần 200 tỷ ra sao sau 'tối hậu thư' của lãnh đạo TP Huế?\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/21/avatar1787273283477-1787273284280746663350.jpg",
+      "alt": "Dự án quảng trường gần 200 tỷ ra sao sau 'tối hậu thư' của lãnh đạo TP Huế?",
+      "title": "Dự án quảng trường gần 200 tỷ ra sao sau 'tối hậu thư' của lãnh đạo TP Huế?",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Tin vui: Từ 20/8, một địa điểm ở Trung Quốc chính thức miễn thị thực cho người dân Việt Nam\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787238995526-17872389967331871814865.jpeg\" title=\"Tin vui: Từ 20/8, một địa điểm ở Trung Quốc chính thức miễn thị thực cho người dân Việt Nam\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/20/avatar1787238995526-17872389967331871814865.jpeg",
+      "alt": "Tin vui: Từ 20/8, một địa điểm ở Trung Quốc chính thức miễn thị thực cho người dân Việt Nam",
+      "title": "Tin vui: Từ 20/8, một địa điểm ở Trung Quốc chính thức miễn thị thực cho người dân Việt Nam",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Đề án '1 triệu căn nhà ở xã hội' đã hoàn thành được 77%\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/21/avatar1787283710844-17872837114931682306717.jpg\" title=\"Đề án '1 triệu căn nhà ở xã hội' đã hoàn thành được 77%\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/21/avatar1787283710844-17872837114931682306717.jpg",
+      "alt": "Đề án '1 triệu căn nhà ở xã hội' đã hoàn thành được 77%",
+      "title": "Đề án '1 triệu căn nhà ở xã hội' đã hoàn thành được 77%",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Thời điểm kê khai hóa đơn điều chỉnh thuế GTGT\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/21/avatar1787283129780-1787283130215342073145.jpg\" title=\"Thời điểm kê khai hóa đơn điều chỉnh thuế GTGT\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/21/avatar1787283129780-1787283130215342073145.jpg",
+      "alt": "Thời điểm kê khai hóa đơn điều chỉnh thuế GTGT",
+      "title": "Thời điểm kê khai hóa đơn điều chỉnh thuế GTGT",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Vượt Mỹ, Đức và gần như toàn bộ châu Âu, Việt Nam thành công vào top 3 dẫn đầu thế giới trong một lĩnh vực quan trọng \" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/21/avatar1787282756150-17872827565401878404667.jpg\" title=\"Vượt Mỹ, Đức và gần như toàn bộ châu Âu, Việt Nam thành công vào top 3 dẫn đầu thế giới trong một lĩnh vực quan trọng \" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/21/avatar1787282756150-17872827565401878404667.jpg",
+      "alt": "Vượt Mỹ, Đức và gần như toàn bộ châu Âu, Việt Nam thành công vào top 3 dẫn đầu thế giới trong một lĩnh vực quan trọng ",
+      "title": "Vượt Mỹ, Đức và gần như toàn bộ châu Âu, Việt Nam thành công vào top 3 dẫn đầu thế giới trong một lĩnh vực quan trọng ",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Cải cách thủ tục hành chính thuế theo hướng thực chất\" height=\"139\" loading=\"lazy\" src=\"https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/21/avatar1787279356270-1787279358117817237826.webp\" title=\"Cải cách thủ tục hành chính thuế theo hướng thực chất\" width=\"223\"/>",
+      "resolved_url": "https://cafefcdn.com/zoom/223_140/203337114487263232/2026/8/21/avatar1787279356270-1787279358117817237826.webp",
+      "alt": "Cải cách thủ tục hành chính thuế theo hướng thực chất",
+      "title": "Cải cách thủ tục hành chính thuế theo hướng thực chất",
+      "caption": ""
+    },
+    {
+      "outer_tag": "<img alt=\"Công ty Cổ phần VCCorp\" height=\"49px\" src=\"https://vccorp.mediacdn.vn/vccorp-s.png\" width=\"100px\"/>",
+      "resolved_url": "https://vccorp.mediacdn.vn/vccorp-s.png",
+      "alt": "Công ty Cổ phần VCCorp",
+      "title": "",
+      "caption": ""
+    }
+  ],
+  "language": "vi",
+  "built_at": "2026-08-21T11:18:00+07:00",
+  "built_from_raw_path": "data/raw_html\\cafef.vn\\20260821\\0494e45be81f86a14762a932d90051d24078e0470566a36ce8c938cbabbdf4e0.html"
+}

@@ -1,15 +1,14 @@
-<#
-run_daily.ps1 — Chạy chu kỳ per-user (input -> final.csv) theo runbook.
-Xem: docs/operations/daily-runbook-per-user.md
+﻿<#
+run_daily.ps1 - Run per-user cycle (input -> final.csv) according to runbook.
+See: docs/operations/daily-runbook-per-user.md
 
-Ví dụ:
-  .\scripts\run_daily.ps1                       # FULL bằng stub (test toàn luồng, không cần LLM)
-  .\scripts\run_daily.ps1 -Agent api            # FULL bằng adapter thật (cần scripts/agent_run.py)
-  .\scripts\run_daily.ps1 -Mode emit            # chỉ phát packet (mốc sáng, agent thủ công)
-  .\scripts\run_daily.ps1 -Mode ingest          # chỉ nạp + ghi output (mốc chiều, sau khi agent nộp)
-  .\scripts\run_daily.ps1 -Review all -Date 2026-08-18 -NoCompile
-
-Cắm Task Scheduler: powershell.exe -File <path>\scripts\run_daily.ps1 ; Start in: thư mục project.
+Examples:
+  .\scripts\run_daily.ps1                        # FULL with stub
+  .\scripts\run_daily.ps1 -Agent api             # FULL with LLM adapter
+  .\scripts\run_daily.ps1 -Mode emit             # Emit task packets
+  .\scripts\run_daily.ps1 -Mode emit -ExportLimit 0 # Emit all pending packets
+  .\scripts\run_daily.ps1 -Mode ingest -Days 30  # Ingest and write output for last 30 days
+  .\scripts\run_daily.ps1 -Mode ingest -Date all # Ingest and write output for all dates
 #>
 [CmdletBinding()]
 param(
@@ -19,27 +18,34 @@ param(
   [string]$Date        = 'today',
   [int]$Days           = 0,
   [int]$ExportLimit    = 0,
-  [switch]$NoCompile
+  [switch]$NoCompile,
+  [switch]$KeepPackets
 )
 
 $ErrorActionPreference = 'Stop'
-# Chạy từ thư mục project (cha của scripts/)
 $Root = Split-Path -Parent $PSScriptRoot
 Set-Location $Root
 
-$Py       = Join-Path $Root '.venv\Scripts\python.exe'
-if (-not (Test-Path $Py)) {
-  # fallback to python in PATH
-  $Py = 'python'
+# Python executable - ignore broken .venv shim if active in shell
+$Py = (Get-Command python -ErrorAction SilentlyContinue | Where-Object {
+    $_.Source -notlike '*\.venv\*' -and $_.Source -notlike '*An Thanh Pham*'
+} | Select-Object -First 1 -ExpandProperty Source)
+
+if (-not $Py -or -not (Test-Path $Py)) {
+    if (Test-Path 'C:\Users\anpt\AppData\Local\anaconda3\python.exe') {
+        $Py = 'C:\Users\anpt\AppData\Local\anaconda3\python.exe'
+    } else {
+        $Py = 'python'
+    }
 }
 $L1Out    = 'data/agent_outputs_l1'
 $AgentOut = 'data/agent_outputs'
 
-function Step([string]$Label, [string[]]$Args) {
+function Step([string]$Label, [string[]]$CommandArgs) {
   Write-Host "`n=== $Label ===" -ForegroundColor Cyan
-  Write-Host "  $Py $($Args -join ' ')" -ForegroundColor DarkGray
-  & $Py @Args
-  if ($LASTEXITCODE -ne 0) { throw "TRƯỢT ở bước: $Label (exit $LASTEXITCODE)" }
+  Write-Host "  $Py $($CommandArgs -join ' ')" -ForegroundColor DarkGray
+  & $Py @CommandArgs
+  if ($LASTEXITCODE -ne 0) { throw "FAILED at step: $Label (exit $LASTEXITCODE)" }
 }
 
 function Emit {
@@ -61,7 +67,7 @@ function RunAgents {
     'api' {
       $adapter = Join-Path $Root 'scripts/agent_run.py'
       if (-not (Test-Path $adapter)) {
-        throw "Chưa có scripts/agent_run.py (adapter LLM). Dùng -Agent stub, hoặc -Mode emit rồi xử lý agent thủ công. Xem runbook §3(C)."
+        throw "Missing scripts/agent_run.py. Use -Agent stub or -Mode emit for manual agent execution."
       }
       Step 'agent_run L1'   @('scripts/agent_run.py','--queue','l1','--out',$L1Out)
       Step 'agent_run main' @('scripts/agent_run.py','--queue','main','--out',$AgentOut)
@@ -81,27 +87,53 @@ function Ingest {
   }
 }
 
-Write-Host "run_daily: Mode=$Mode Agent=$Agent Review=$Review Date=$Date NoCompile=$NoCompile" -ForegroundColor Yellow
+function CleanPackets {
+  if ($KeepPackets) {
+    Write-Host "`n[KeepPackets] Retaining task packets and output files." -ForegroundColor DarkGray
+    return
+  }
+  Write-Host "`n=== Cleaning up task packets & intermediate outputs (OneDrive sync optimization) ===" -ForegroundColor Cyan
+  $taskFiles = @(Get-ChildItem -Path 'data/agent_tasks' -Filter '*.task.json' -Recurse -File -ErrorAction SilentlyContinue)
+  $outL1Files = @(Get-ChildItem -Path 'data/agent_outputs_l1' -Filter '*.json' -File -ErrorAction SilentlyContinue)
+  $outAgentFiles = @(Get-ChildItem -Path 'data/agent_outputs' -Filter '*.json' -File -ErrorAction SilentlyContinue)
+
+  $delTasks = 0
+  $delOutputs = 0
+  foreach ($f in $taskFiles) {
+    Remove-Item -LiteralPath $f.FullName -Force -ErrorAction SilentlyContinue
+    $delTasks++
+  }
+  foreach ($f in ($outL1Files + $outAgentFiles)) {
+    Remove-Item -LiteralPath $f.FullName -Force -ErrorAction SilentlyContinue
+    $delOutputs++
+  }
+  Write-Host "  Deleted $delTasks task packets and $delOutputs intermediate output files." -ForegroundColor Green
+  Write-Host "  Workspace cleaned successfully." -ForegroundColor Green
+}
+
+Write-Host "run_daily: Mode=$Mode Agent=$Agent Review=$Review Date=$Date Days=$Days ExportLimit=$ExportLimit KeepPackets=$KeepPackets NoCompile=$NoCompile" -ForegroundColor Yellow
 
 switch ($Mode) {
   'emit' {
     Emit
-    Write-Host "`n[emit xong] Packet ở data/agent_tasks/l1/ và data/agent_tasks/." -ForegroundColor Green
-    Write-Host "→ Cho agent xử lý (runbook §3), nộp *.json vào $L1Out và $AgentOut," -ForegroundColor Green
-    Write-Host "  rồi chạy: .\scripts\run_daily.ps1 -Mode ingest -Date $Date" -ForegroundColor Green
+    Write-Host "`n[EMIT DONE] Packets ready in data/agent_tasks/l1/ and data/agent_tasks/." -ForegroundColor Green
+    Write-Host "-> Process with Skill agent-file-processor," -ForegroundColor Green
+    Write-Host "   then run: .\scripts\run_daily.ps1 -Mode ingest -Days 30" -ForegroundColor Green
   }
   'ingest' {
     Ingest
+    CleanPackets
   }
   'full' {
     Emit
     RunAgents
     Ingest
+    CleanPackets
   }
 }
 
-Write-Host "`n=== db_status (kiểm tra tiến độ) ===" -ForegroundColor Cyan
+Write-Host "`n=== db_status (progress check) ===" -ForegroundColor Cyan
 & $Py 'scripts/db_status.py'
 
-Write-Host "`nrun_daily HOÀN TẤT (Mode=$Mode)." -ForegroundColor Green
-Write-Host "Output: users/output/<user>/<ngày>/final.csv" -ForegroundColor Green
+Write-Host "`nrun_daily COMPLETED (Mode=$Mode)." -ForegroundColor Green
+Write-Host "Output: users/output/<user>/<date>/final.csv and users/output/_master/<date>/final.csv" -ForegroundColor Green

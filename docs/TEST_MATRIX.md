@@ -28,6 +28,7 @@ A tier is `1` (passed, evidence recorded), `0` (not passed/not run), or `—` (N
 
 | Story | Parent/Epic | Status | Unit | Integ | E2E | Platform | Evidence |
 |-------|-------------|--------|:----:|:-----:|:---:|:--------:|----------|
-| [US-001](stories/US-001-gold-agent-output-contract.md) | Phase 3 — Gold / agent-extract | `in_progress` | 0 | — | — | — | validation cmd defined, NOT yet run (see story) |
+| [US-001](stories/US-001-gold-agent-output-contract.md) | Phase 3 — Gold / agent-extract | `planned` | 0 | — | — | — | Hard gate (blocked on contract decision + ADR) |
+| [US-002](stories/US-002-optimize-user-output-format.md) | Per-User Output Workflow | `implemented` | 1 | 1 | — | — | Pytest 13/13 passed + real run 60 rows generated |
 
-> Rule reminder: US-001 stays `in_progress` until its validation command actually runs and its output is recorded here. Do not mark `implemented` prematurely.
+> Rule reminder: Stories reach `implemented` ONLY after validation commands run and results are recorded. Never hand-flip.

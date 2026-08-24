@@ -150,3 +150,36 @@
 [~] Sửa Luật hỗ trợ doanh nghiệp nhỏ và vừa: Tái cấu trúc chính sách để tạo đột phá thực chất (chi tiết (https://vneconomy.vn/sua-luat-ho-tro-doanh-nghiep-nho-va-vua-tai-cau-truc-chinh-sach-de-tao-dot-pha-thuc-chat.htm))
 [+] Xuất khẩu sang Hà Lan phải vượt ''hàng rào xanh'' để giữ vững vị thế (chi tiết (https://vneconomy.vn/xuat-khau-sang-ha-lan-phai-vuot-hang-rao-xanh-de-giu-vung-vi-the.htm))
 16:56:47 [cycle] cafef: FAILED (retries exhausted: cafef: ['list fetch failed for symbol HPG', 'list fetch faile…) | vietstock: 1 new | vneconomy: 20 new
+16:00:05 | INFO    | === Cycle start: 3 domains: cafef, vietstock, vneconomy ===
+16:02:05 | INFO    | [cafef] cycle done: fetched=900 new=4 errors=0 in 120.1s
+16:02:32 | INFO    | [vietstock] cycle done: fetched=190 new=1 errors=0 in 27.5s
+16:03:12 | INFO    | [vneconomy] cycle done: fetched=400 new=5 errors=0 in 39.3s
+16:03:12 | INFO    | Cycle summary: cafef: 4 new | vietstock: 1 new | vneconomy: 5 new
+16:03:31 | INFO    | CSV export: 317 bài hôm nay -> data\exports\articles-2026-08-20.csv
+16:03:31 | INFO    | === Cycle done: 10 new articles in 207s ===
+16:03:31 | INFO    | Shutting down — flushing writer + WAL checkpoint...
+16:03:32 | INFO    | Shutdown complete.
+[~] VCI: 21.8.2026, niêm yết bổ sung 4.600.000 cp (chi tiết (https://cafef.vn/du-lieu/VCI-2959385/vci-2182026-niem-yet-bo-sung-4600000-cp.chn?utm_source=du-lieu))
+[~] Phiên 20/8: Khối ngoại bán ròng hơn 600 tỷ đồng trên HOSE, cổ phiếu nào bị "xả" mạnh nhất? (chi tiết (https://cafef.vn/phien-20-8-khoi-ngoai-ban-rong-hon-600-ty-dong-tren-hose-co-phieu-nao-bi-xa-manh-nhat-188260820154406132.chn))
+[~] Ngân hàng Nhà nước: Sẽ tái cấp vốn cho các ngân hàng để hỗ trợ thanh khoản (chi tiết (https://cafef.vn/ngan-hang-nha-nuoc-se-tai-cap-von-cho-cac-ngan-hang-de-ho-tro-thanh-khoan-188260820144848175.chn))
+[~] TPHCM cảnh báo tin giả về sắp xếp đơn vị hành chính (chi tiết (https://cafef.vn/tphcm-canh-bao-tin-gia-ve-sap-xep-don-vi-hanh-chinh-188260820092710716.chn))
+[~] Giá xăng, dầu đồng loạt tăng từ 15h ngày 20/8 (chi tiết (http://vietstock.vn/2026/08/gia-xang-dau-dong-loat-tang-tu-15h-ngay-208-34-1483139.htm))
+[~] Xăng dầu đồng loạt tăng giá (chi tiết (https://vneconomy.vn/xang-dau-dong-loat-tang-gia-1300423.htm))
+[~] Giá nhiên liệu tăng, lợi nhuận các hãng hàng không quốc tế đồng loạt giảm (chi tiết (https://vneconomy.vn/gia-nhien-lieu-tang-loi-nhuan-cac-hang-hang-khong-quoc-te-dong-loat-giam.htm))
+[~] Giá nhiên liệu tăng, lợi nhuận các hãng hàng không quốc tế đồng loạt giảm (chi tiết (https://vneconomy.vn/gia-nhien-lieu-tang-loi-nhuan-cac-hang-hang-khong-quoc-te-dong-loat-giam.htm))
+[~] Cuộc đua nhiên liệu hạt nhân: Từ mỏ uranium đến đại dương và Mặt trăng (chi tiết (https://vneconomy.vn/cuoc-dua-nhien-lieu-hat-nhan-tu-mo-uranium-den-dai-duong-va-mat-trang.htm))
+[~] Giá nhiên liệu tăng, lợi nhuận các hãng hàng không quốc tế đồng loạt giảm (chi tiết (https://vneconomy.vn/gia-nhien-lieu-tang-loi-nhuan-cac-hang-hang-khong-quoc-te-dong-loat-giam.htm))
+16:03:12 [cycle] cafef: 4 new | vietstock: 1 new | vneconomy: 5 new
+16:04:59 | INFO    | === Cycle start: 3 domains: cafef, vietstock, vneconomy ===
+16:06:50 | INFO    | [cafef] cycle done: fetched=900 new=1 errors=0 in 111.1s
+16:07:18 | INFO    | [vietstock] cycle done: fetched=190 new=1 errors=0 in 27.6s
+16:07:45 | INFO    | [vneconomy] cycle done: fetched=400 new=1 errors=0 in 27.2s
+16:07:45 | INFO    | Cycle summary: cafef: 1 new | vietstock: 1 new | vneconomy: 1 new
+16:07:49 | INFO    | CSV export: 324 bài hôm nay -> data\exports\articles-2026-08-21.csv
+16:07:49 | INFO    | === Cycle done: 3 new articles in 170s ===
+16:07:49 | INFO    | Shutting down — flushing writer + WAL checkpoint...
+16:07:51 | INFO    | Shutdown complete.
+[~] Cơ quan Thuế phát đi thông báo mới (chi tiết (https://cafef.vn/co-quan-thue-phat-di-thong-bao-moi-188260821150531359.chn))
+[~] Khi ESG trở thành một phần giá trị xa xỉ: Góc nhìn quốc tế về HAUS (chi tiết (http://vietstock.vn/2026/08/khi-esg-tro-thanh-mot-phan-gia-tri-xa-xi-goc-nhin-quoc-te-ve-haus-4222-1483588.htm))
+[~] Chủ động ứng phó mưa lớn, bảo đảm an toàn công trình thủy lợi (chi tiết (https://vneconomy.vn/chu-dong-ung-pho-mua-lon-bao-dam-an-toan-cong-trinh-thuy-loi.htm))
+16:07:45 [cycle] cafef: 1 new | vietstock: 1 new | vneconomy: 1 new
