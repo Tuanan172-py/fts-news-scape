@@ -11,10 +11,20 @@
       "taxonomy": "data/entities/taxonomy.json"
     },
     "code_first": {
-      "route": "needs_agent",
-      "relevance": "none",
-      "entities": [],
-      "entity_ids": [],
+      "route": "resolved",
+      "relevance": "institution",
+      "entities": [
+        {
+          "entity_id": "INSTITUTION:UBCKNN",
+          "type": "INSTITUTION",
+          "code": "UBCKNN",
+          "canonical_name": "Ủy ban Chứng khoán Nhà nước",
+          "via": "alias"
+        }
+      ],
+      "entity_ids": [
+        "INSTITUTION:UBCKNN"
+      ],
       "industries": []
     }
   },
@@ -26,7 +36,10 @@
       "etf_fund",
       "index",
       "exchange",
-      "industry_sector"
+      "industry_sector",
+      "macro_geo",
+      "asset_class",
+      "institution"
     ]
   },
   "constraints": {

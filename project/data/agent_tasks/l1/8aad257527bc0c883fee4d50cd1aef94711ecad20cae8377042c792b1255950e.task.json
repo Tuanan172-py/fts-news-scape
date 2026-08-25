@@ -11,10 +11,28 @@
       "taxonomy": "data/entities/taxonomy.json"
     },
     "code_first": {
-      "route": "needs_agent",
-      "relevance": "none",
-      "entities": [],
-      "entity_ids": [],
+      "route": "resolved",
+      "relevance": "macro",
+      "entities": [
+        {
+          "entity_id": "MACRO_GEO:MY",
+          "type": "MACRO_GEO",
+          "code": "MY",
+          "canonical_name": "Mỹ",
+          "via": "alias"
+        },
+        {
+          "entity_id": "MACRO_THEME:THUE_THUONG_MAI",
+          "type": "MACRO_THEME",
+          "code": "THUE_THUONG_MAI",
+          "canonical_name": "Thuế quan & Thương mại",
+          "via": "alias"
+        }
+      ],
+      "entity_ids": [
+        "MACRO_GEO:MY",
+        "MACRO_THEME:THUE_THUONG_MAI"
+      ],
       "industries": []
     }
   },
@@ -26,7 +44,10 @@
       "etf_fund",
       "index",
       "exchange",
-      "industry_sector"
+      "industry_sector",
+      "macro_geo",
+      "asset_class",
+      "institution"
     ]
   },
   "constraints": {

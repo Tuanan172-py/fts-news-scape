@@ -12,51 +12,60 @@ Maturity **H1**: pure markdown, no database, no CLI. The 8+1 loop below is done 
 
 A single request produces up to two outputs: a **product delta** (code/config/docs in `project/`) and a **harness delta** (a backlog/decision/doc that makes next time easier).
 
-## 2. Request-class loops
+## 2. Request-Class Loops & Per-Prompt Lifecycle
 
-### Read-only loop
-Read only the files needed → answer, separating fact vs inference → STOP. No file/DB/config mutation. No intake, no story, no trace.
-
-### Change loop (8 + 1 steps, markdown-adapted)
+Mọi prompt/yêu cầu đều đi qua 3 bước cốt lõi: **Classify (3 Tiers) → Execute & Proof → Harness Closure**.
 
 ```
-1. Classify   Confirm this is a CHANGE (else read-only). Check WIP=1 (§3).
-2. Intake     Classify per docs/FEATURE_INTAKE.md → state Lane / Reason / Docs / Story / Validation.
-3. Context    Read OKF (AGENTS.md §2) + the exact files for the lane. Stop when the path is clear.
-4. Story      tiny → skip packet (note intake inline). normal/high-risk → create docs/stories/US-XXX.md from template.
-5. Implement  Smallest real slice + a validation command within the lane.
-6. Self-check Product truth? validation ran? architecture boundary respected? next agent unblocked?
-7. Proof      Fill the story's validation table + docs/TEST_MATRIX.md row. "No proof = not implemented."
-8. Friction   Fix in place OR add a docs/HARNESS_BACKLOG.md entry.
-9. Handoff    Overwrite docs/SESSION-LATEST.md (see §4).
+1. Classify   Phân loại vào 1 trong 3 cấp độ: Tiny / Normal / High-Risk. Ghi nhận intake qua harness_cli.
+2. Context    Đọc tài liệu theo ma trận docs/CONTEXT_RULES.md (ngân sách token tương ứng với Lane).
+3. Execute    - Tiny: Trả lời hoặc patch code trực tiếp.
+              - Normal: WIP=1, lập docs/stories/US-XXX.md, code và chạy unit/integ test.
+              - High-Risk: Dừng tại Hard Gate, lập ADR docs/decisions/, xin phê duyệt của người dùng.
+4. Proof      Chạy lệnh test cơ học và kiểm chứng.
+5. Trace      Ghi nhận bản ghi trace (Minimal / Standard / Detailed) vào harness.db qua harness_cli trace.
+6. Closure    BẮT BUỘC xuất Bảng Nghiệm thu Đóng phiên (Harness Closure Table).
 ```
 
-## 3. WIP = 1 (interrupt discipline)
+## 3. WIP = 1 (Interrupt Discipline)
 
 At most **one** story `in_progress`. On interruption:
 1. Do NOT abandon the current story silently.
 2. Set it `blocked` or `deferred` with a one-line reason (and `Depends On:` if applicable).
 3. Create/parks the new story, finish it, then resume the old one (read its notes first).
 
-Honor-system only at H1 (no git-hook — that is an H2 candidate, tracked in the backlog).
+## 4. Step 6 — Mandatory Harness Closure Protocol
 
-## 4. Step 9 — Session handoff (SESSION-LATEST.md)
+Ở cuối **MỖI CÂU TRẢ LỜI / PHIÊN THỰC THI**, Agent bắt buộc xuất bảng định tuyến lưu vết:
 
-At the END of every change session, regardless of outcome (`completed`/`blocked`/`partial`), **overwrite** [SESSION-LATEST.md](SESSION-LATEST.md) with 6 fields: Current story · Status · Blocker · Next Action · Files changed · Last commit. Keep it a single screen. Overwrite, never append (no dashboard growth).
+```markdown
+### 📋 Harness Closure Protocol
 
-## 5. Proof rule
+| File / Component | Updated? | Reason & Evidence |
+|:---|:---:|:---|
+| `harness.db` *(Trace & Intake)* | **Yes** | Ghi nhận Trace #ID (Lane: `Tiny/Normal/High-Risk`, Score: 1.0). |
+| `docs/stories/US-XXX.md` | **Yes / No** | [Lý do cụ thể: Tạo mới / Cập nhật / Không cần (tác vụ Tiny)] |
+| `docs/TEST_MATRIX.md` | **Yes / No** | [Lý do cụ thể: Chạy X tests passed / Chưa có test mới] |
+| `docs/decisions/NNNN-*.md` | **Yes / No** | [Lý do cụ thể: Lập ADR do đổi kiến trúc / Không chạm Hard Gate] |
+| `docs/SESSION-LATEST.md` | **Yes / No** | [Lý do cụ thể: Cập nhật trạng thái handoff / Không đổi] |
+| `docs/HARNESS_BACKLOG.md` | **Yes / No** | [Lý do cụ thể: Ghi nhận ma sát / Không phát sinh ma sát] |
+```
 
-Status enum + proof tiers live in [TEST_MATRIX.md](TEST_MATRIX.md). A story reaches `implemented` ONLY after a real validation command ran and is recorded. Never hand-flip a proof row.
+## 5. Proof Rule
 
-## 6. Decisions (high-risk)
+Status enum + proof tiers live in [TEST_MATRIX.md](TEST_MATRIX.md). A story reaches `implemented` ONLY after a real validation command ran and is recorded in `harness.db`. Never hand-flip a proof row.
 
-When changing architecture / a public data contract / a hard-gate area → record an ADR: a file in [decisions/](decisions/) from [templates/decision.md](templates/decision.md). A trace note does NOT replace an ADR.
+## 6. Decisions (High-Risk)
+
+When changing architecture / a public data contract / a hard-gate area → record an ADR: a file in [decisions/](decisions/). A trace note does NOT replace an ADR.
 
 ## 7. Definition of Done
 
-**Read-only done:** answer has repo evidence, separates fact vs inference, repo unchanged.
+**Done criteria:**
+1. Tác vụ hoàn thành đúng yêu cầu, có bằng chứng thực nghiệm rõ ràng.
+2. Trace bền vững đã được nạp vào `harness.db` (`score_trace` $\ge 0.75$, `score_context` $\ge 0.8$).
+3. Bảng **Harness Closure Protocol** được xuất đầy đủ ở cuối phản hồi.
 
-**Change done:** change complete (or blocker clearly recorded); story + TEST_MATRIX current; a validation command ran (if one exists); SESSION-LATEST overwritten; friction filed if any; the final answer states *what changed* and *what was not done*.
 
 ## 8. Growth rule + climb-to-H2 signal
 

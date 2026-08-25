@@ -4,15 +4,16 @@ Tài liệu này chuẩn hóa định dạng nhật ký thực thi (Trace) của
 
 ---
 
-## 1. Ba Cấp độ Trace (Trace Tiers)
+## 1. Ba Cấp độ Trace (Per-Prompt Trace Tiers)
 
-Mỗi lần chạy Change Loop, Agent phải ghi lại một bản ghi trace tương ứng với làn rủi ro:
+Mỗi prompt / phiên tương tác của Agent BẮT BUỘC phải ghi lại một bản ghi trace vào CSDL `harness.db` theo cấp độ tương ứng:
 
-| Cấp độ Trace | Áp dụng cho Lane | Các trường bắt buộc | Mục tiêu |
+| Cấp độ Trace | Áp dụng cho Lane | Các trường bắt buộc | Mục tiêu & Bản chất tác vụ |
 |:---|:---:|:---|:---|
-| **Tier 1: Minimal** | `tiny` | `task_summary`, `outcome`, `files_changed` | Tinh gọn, ghi nhận nhanh thay đổi cục bộ. |
-| **Tier 2: Standard** | `normal` | `task_summary`, `story_id`, `actions_taken`, `files_read`, `files_changed`, `outcome`, `friction` | Đầy đủ để tái hiện quy trình và đo lường context. |
-| **Tier 3: Detailed** | `high-risk` | Toàn bộ trường Standard + `intake_id`, `score_context`, `score_trace`, `error_msg`, `intervention` | Phục vụ kiểm toán an toàn kiến trúc nghiêm ngặt. |
+| **Tier 1: Minimal** | `tiny` | `task_summary`, `outcome`, `files_read` hoặc `files_changed` | Ghi nhận nhanh các phiên hỏi đáp, tra cứu kiến trúc, chẩn đoán lỗi, hoặc patch 1-2 dòng. |
+| **Tier 2: Standard** | `normal` | `task_summary`, `story_id`, `actions_taken`, `files_read`, `files_changed`, `outcome`, `friction` | Đầy đủ cho các tính năng mới, refactor module, đo lường ngữ cảnh và bằng chứng kiểm thử. |
+| **Tier 3: Detailed** | `high-risk` | Toàn bộ trường Standard + `intake_id`, `score_context`, `score_trace`, `error_msg`, `intervention` | Phục vụ kiểm toán an toàn kiến trúc nghiêm ngặt (Hard Gate, ADR, Schema). |
+
 
 ---
 

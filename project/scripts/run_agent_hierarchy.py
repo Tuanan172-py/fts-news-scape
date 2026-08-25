@@ -59,17 +59,30 @@ def get_output_counts() -> tuple[int, int]:
 
 
 def run_export() -> bool:
-    """Chạy export task packets từ work_items."""
-    print("🚀 [Step 1] Đang xuất task packets từ work_items (agent_export)...")
-    res = subprocess.run(
+    """Chạy export task packets từ work_items và l1_route."""
+    print("🚀 [Step 1] Đang đồng bộ L1 Tasks và xuất task packets từ work_items...")
+    # 1. Đồng bộ l1_route
+    res_l1 = subprocess.run(
+        [sys.executable, str(PROJECT_ROOT / "scripts" / "l1_route.py")],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        cwd=str(PROJECT_ROOT),
+    )
+    if res_l1.returncode != 0:
+        print(f"⚠️ Cảnh báo L1 route:\n{res_l1.stderr}", file=sys.stderr)
+
+    # 2. Xuất agent_export cho Gold
+    res_gold = subprocess.run(
         [sys.executable, str(PROJECT_ROOT / "scripts" / "agent_export.py")],
         capture_output=True,
         text=True,
         encoding="utf-8",
+        cwd=str(PROJECT_ROOT),
     )
-    print(res.stdout.strip())
-    if res.returncode != 0:
-        print(f"❌ Export thất bại:\n{res.stderr}", file=sys.stderr)
+    print(res_gold.stdout.strip())
+    if res_gold.returncode != 0:
+        print(f"❌ Export thất bại:\n{res_gold.stderr}", file=sys.stderr)
         return False
     return True
 
@@ -79,20 +92,24 @@ def run_ingest() -> bool:
     print("\n🔍 [Step 2] Đang nghiệm thu Definition-of-Done (DoD Ingest)...")
 
     # Ingest L1
+    l1_out_dir = "data/agent_outputs_l1"
     res_l1 = subprocess.run(
-        [sys.executable, str(PROJECT_ROOT / "scripts" / "l1_ingest.py")],
+        [sys.executable, "scripts/l1_ingest.py", l1_out_dir],
         capture_output=True,
         text=True,
         encoding="utf-8",
+        cwd=str(PROJECT_ROOT),
     )
     print(f"  • L1 Ingest:\n    {res_l1.stdout.strip()}")
 
     # Ingest Gold
+    gold_out_dir = "data/agent_outputs"
     res_gold = subprocess.run(
-        [sys.executable, str(PROJECT_ROOT / "scripts" / "agent_ingest.py")],
+        [sys.executable, "scripts/agent_ingest.py", gold_out_dir],
         capture_output=True,
         text=True,
         encoding="utf-8",
+        cwd=str(PROJECT_ROOT),
     )
     print(f"  • Gold Ingest:\n    {res_gold.stdout.strip()}")
 
@@ -105,13 +122,14 @@ def run_user_delivery() -> bool:
     res = subprocess.run(
         [
             sys.executable,
-            str(PROJECT_ROOT / "scripts" / "write_user_output.py"),
+            "scripts/write_user_output.py",
             "--date",
             "all",
         ],
         capture_output=True,
         text=True,
         encoding="utf-8",
+        cwd=str(PROJECT_ROOT),
     )
     print(res.stdout.strip())
     return res.returncode == 0

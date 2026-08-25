@@ -200,3 +200,51 @@
 🟡 Quốc hội thông qua 3 Luật sửa đổi, bổ sung một số điều về lĩnh vực ngân hàng (chi tiết (http://vietstock.vn/2026/08/quoc-hoi-thong-qua-3-luat-sua-doi-bo-sung-mot-so-dieu-ve-linh-vuc-ngan-hang-757-1484400.htm))
 🟡 Thành viên HĐQT độc lập HCM liên tục muốn bán cổ phiếu giữa lúc giá lập đỉnh lịch sử (chi tiết (http://vietstock.vn/2026/08/thanh-vien-hdqt-doc-lap-hcm-lien-tuc-muon-ban-co-phieu-giua-luc-gia-lap-dinh-lich-su-739-1484379.htm))
 16:03:02 [cycle] cafef: 5 new | vietstock: 2 new | vneconomy: 0 new
+16:00:04 | INFO    | === Cycle start: 3 domains: cafef, vietstock, vneconomy ===
+16:02:43 | INFO    | [cafef] cycle done: fetched=900 new=17 errors=0 in 159.1s
+16:03:31 | INFO    | [vietstock] cycle done: fetched=190 new=7 errors=0 in 47.9s
+16:04:37 | INFO    | [vneconomy] cycle done: fetched=400 new=14 errors=0 in 66.3s
+🟡 SSI: Nghị quyết HĐQT thông qua ngày ĐKCC lập danh sách cổ đông trả cổ tức bằng tiền, phát hành cp tăng vốn cổ phần (chi tiết (https://cafef.vn/du-lieu/SSI-2940001/ssi-nghi-quyet-hdqt-thong-qua-ngay-dkcc-lap-danh-sach-co-dong-tra-co-tuc-bang-tien-phat-hanh-cp-tang-von-co-phan.chn?utm_source=du-lieu))
+🟡 Cổ đông mua IPO Điện Máy Xanh gần hết lãi (chi tiết (https://cafef.vn/co-dong-mua-ipo-dien-may-xanh-gan-het-lai-188260825151440744.chn))
+🟡 Không phải VietinBank hay BIDV, đây mới là ngân hàng có nhiều tiền gửi giá rẻ nhất, bằng cả Techcombank, VPBank, ACB, Sacombank cộng lại (chi tiết (https://cafef.vn/khong-phai-vietinbank-hay-bidv-day-moi-la-ngan-hang-co-nhieu-tien-gui-gia-re-nhat-bang-ca-techcombank-vpbank-acb-sacombank-cong-lai-188260825155512256.chn))
+🟡 Có nên đầu tư vàng bạc lúc này? (chi tiết (https://cafef.vn/co-nen-dau-tu-vang-bac-luc-nay-188260825144001827.chn))
+🟡 Gặp khủng hoảng tồi tệ nhất trong 40 năm, nông dân vùng ‘vựa ngô' Mỹ chịu cảnh một cổ đôi ba tròng (chi tiết (https://cafef.vn/gap-khung-hoang-toi-te-nhat-trong-40-nam-nong-dan-vung-vua-ngo-my-chiu-canh-mot-co-doi-ba-trong-188260825152559429.chn))
+🟡 Muốn đẩy Iran khỏi hệ thống tài chính toàn cầu, Mỹ có thể phải đối đầu với loạt siêu cường kinh tế (chi tiết (https://cafef.vn/muon-day-iran-khoi-he-thong-tai-chinh-toan-cau-my-co-the-phai-doi-dau-voi-loat-sieu-cuong-kinh-te-18826082515133726.chn))
+🟡 18/22 mảnh vỡ dạt bờ được dự đoán chính xác, vị trí máy bay MH370 sắp có cơ hội sáng tỏ? (chi tiết (https://cafef.vn/18-22-manh-vo-dat-bo-duoc-du-doan-chinh-xac-vi-tri-may-bay-mh370-sap-co-co-hoi-sang-to-188260825150555357.chn))
+🟡 Cơ quan thuế thông báo: Loạt doanh nghiệp có tên trong danh sách sau bị phong tỏa tài khoản ngân hàng (chi tiết (https://cafef.vn/co-quan-thue-thong-bao-loat-doanh-nghiep-co-ten-trong-danh-sach-sau-bi-phong-toa-tai-khoan-ngan-hang-188260825152720025.chn))
+🟡 Quảng Ninh trở thành thành phố trực thuộc Trung ương từ 1/9 (chi tiết (https://cafef.vn/quang-ninh-tro-thanh-thanh-pho-truc-thuoc-trung-uong-tu-1-9-188260825135627187.chn))
+🟡 Điều chưa từng có trong lịch sử, Việt Nam lọt top 4 thống trị ngành đóng tàu toàn cầu, liên tiếp lập kỷ lục với tàu lớn nhất thế giới (chi tiết (https://cafef.vn/dieu-chua-tung-co-trong-lich-su-viet-nam-lot-top-4-thong-tri-nganh-dong-tau-toan-cau-lien-tiep-lap-ky-luc-voi-tau-lon-nhat-the-gioi-188260825152032843.chn))
+🟡 Thông tin mới về sân bay quốc tế 86 năm tuổi của Việt Nam do người Pháp xây dựng (chi tiết (https://cafef.vn/thong-tin-moi-ve-san-bay-quoc-te-86-nam-tuoi-cua-viet-nam-do-nguoi-phap-xay-dung-188260825150318805.chn))
+🟡 CĐT Mitsubishi Corporation công bố ưu đãi mùa Vu Lan cho khách hàng Monrei Saigon (chi tiết (https://cafef.vn/cdt-mitsubishi-corporation-cong-bo-uu-dai-mua-vu-lan-cho-khach-hang-monrei-saigon-188260825144457674.chn))
+🟡 Dấu ấn QLASSIC trong hành trình phát triển của SkyWorld (chi tiết (https://cafef.vn/dau-an-qlassic-trong-hanh-trinh-phat-trien-cua-skyworld-18826082514285969.chn))
+🟡 Siêu dự án gần 20.000 tỷ đồng lớn nhất Tây Nguyên của FLC đón tin vui (chi tiết (https://cafef.vn/sieu-du-an-gan-20000-ty-dong-lon-nhat-tay-nguyen-cua-flc-don-tin-vui-188260825151618036.chn))
+🟡 Chủ tịch Tập đoàn BRG Nguyễn Thị Nga nhận nhiệm vụ đặc biệt (chi tiết (https://cafef.vn/chu-tich-tap-doan-brg-nguyen-thi-nga-nhan-nhiem-vu-dac-biet-188260825153836345.chn))
+🟡 Đơn vị quản lý Khu đô thị Louis thông tin gì về vụ bảo vệ đánh shipper (chi tiết (https://cafef.vn/don-vi-quan-ly-khu-do-thi-louis-thong-tin-gi-ve-vu-bao-ve-danh-shipper-188260825144506416.chn))
+🟡 CII muốn làm tuyến đường 20.000 tỷ đồng ven biển phía Nam, đề xuất thanh toán bằng 500 ha đất (chi tiết (https://cafef.vn/cii-muon-lam-tuyen-duong-20000-ty-dong-ven-bien-phia-nam-de-xuat-thanh-toan-bang-500-ha-dat-188260825150709761.chn))
+🟡 Vietcap tiếp tục trao tặng 8,000 cây, thành công khép lại Go Green Go Up mùa 2 (chi tiết (http://vietstock.vn/2026/08/vietcap-tiep-tuc-trao-tang-8000-cay-thanh-cong-khep-lai-go-green-go-up-mua-2-830-1484784.htm))
+🟡 Tân Cảng Sóng Thần chốt chia cổ tức cao nhất 5 năm (chi tiết (http://vietstock.vn/2026/08/tan-cang-song-than-chot-chia-co-tuc-cao-nhat-5-nam-738-1484821.htm))
+🟡 Xung đột chính sách giữa Fed và Bộ Tài chính Mỹ: Những điều nhà đầu tư cần biết (chi tiết (http://vietstock.vn/2026/08/xung-dot-chinh-sach-giua-fed-va-bo-tai-chinh-my-nhung-dieu-nha-dau-tu-can-biet-775-1484841.htm))
+🟡 Giá vàng SJC vọt lên 150.6 triệu đồng/lượng: Thời điểm chốt lời hay tiếp tục nắm giữ? (chi tiết (http://vietstock.vn/2026/08/gia-vang-sjc-vot-len-1506-trieu-dongluong-thoi-diem-chot-loi-hay-tiep-tuc-nam-giu-759-1484758.htm))
+🟡 SHB năm thứ tư liên tiếp được Global Finance vinh danh "Ngân hàng có hoạt động Tài trợ Bền vững tốt nhất Việt Nam" (chi tiết (http://vietstock.vn/2026/08/shb-nam-thu-tu-lien-tiep-duoc-global-finance-vinh-danh-ngan-hang-co-hoat-dong-tai-tro-ben-vung-tot-nhat-viet-nam-757-1484836.htm))
+🟡 Dự án từng gắn với RESCO, ITC và RCL vẫn là đất trống sau 22 năm (chi tiết (http://vietstock.vn/2026/08/du-an-tung-gan-voi-resco-itc-va-rcl-van-la-dat-trong-sau-22-nam-4222-1484492.htm))
+🟡 TPHCM chuẩn bị đấu giá khu đất hơn 90ha tại phường Bến Cát, khởi điểm 2,756 tỷ (chi tiết (http://vietstock.vn/2026/08/tphcm-chuan-bi-dau-gia-khu-dat-hon-90ha-tai-phuong-ben-cat-khoi-diem-2756-ty-4222-1484777.htm))
+🟡 Kỳ họp không thường lệ thứ nhất Quốc hội khóa XVI: Từ quyết sách đến động lực tăng trưởng (chi tiết (https://vneconomy.vn/ky-hop-khong-thuong-le-thu-nhat-quoc-hoi-khoa-xvi-tu-quyet-sach-den-dong-luc-tang-truong.htm))
+🟡 Dự kiến liên thông hơn 400 xét nghiệm, điện quang giữa các cơ sở khám chữa bệnh bảo hiểm y tế (chi tiết (https://vneconomy.vn/du-kien-lien-thong-hon-400-xet-nghiem-dien-quang-giua-cac-co-so-kham-chua-benh-bao-hiem-y-te.htm))
+🟡 Cảng Mỹ Thủy gần 15.000 tỷ đồng đang triển khai đến đâu? (chi tiết (https://vneconomy.vn/cang-my-thuy-gan-15000-ty-dong-dang-trien-khai-den-dau.htm))
+🟡 Việt Nam - Chile thúc đẩy kết nối chuỗi cung ứng, mở rộng thương mại và đầu tư (chi tiết (https://vneconomy.vn/viet-nam-chile-thuc-day-ket-noi-chuoi-cung-ung-mo-rong-thuong-mai-va-dau-tu.htm))
+🟡 Cảnh báo ngập lụt, lũ quét tiếp tục đe dọa nhiều khu vực Thanh Hóa, Nghệ An (chi tiết (https://vneconomy.vn/canh-bao-ngap-lut-lu-quet-tiep-tuc-de-doa-nhieu-khu-vuc-thanh-hoa-nghe-an.htm))
+🟡 Thị trường thiết bị làm sạch tăng nhiệt, người Việt chuộng yếu tố “thông minh” (chi tiết (https://vneconomy.vn/thi-truong-thiet-bi-lam-sach-tang-nhiet-nguoi-viet-chuong-yeu-to-thong-minh.htm))
+🟡 Năng lực điều trị ung thư đang thay đổi mạnh nhờ y học chính xác (chi tiết (https://vneconomy.vn/nang-luc-dieu-tri-ung-thu-dang-thay-doi-manh-nho-y-hoc-chinh-xac.htm))
+🟡 Doanh nghiệp siêu nhỏ và hoạt động trong lĩnh vực bất động sản có tỷ lệ đóng cửa cao nhất (chi tiết (https://vneconomy.vn/doanh-nghiep-sieu-nho-va-hoat-dong-trong-linh-vuc-bat-dong-san-co-ty-le-dong-cua-cao-nhat.htm))
+🟡 Trụ “còng lưng” đỡ điểm, cổ phiếu vẫn giảm la liệt (chi tiết (https://vneconomy.vn/tru-cong-lung-do-diem-co-phieu-van-giam-la-liet.htm))
+🟡 Thủ tướng Lê Minh Hưng: Doanh nghiệp nhỏ và vừa phải là nền tảng vững chắc cho nền kinh tế (chi tiết (https://vneconomy.vn/thu-tuong-le-minh-hung-doanh-nghiep-nho-va-vua-phai-la-nen-tang-vung-chac-cho-nen-kinh-te.htm))16:04:37 | INFO    | Cycle summary: cafef: 17 new | vietstock: 7 new | vneconomy: 14 new
+16:04:40 | INFO    | CSV export: 765 bài hôm nay -> data\exports\articles-2026-08-25.csv
+16:04:40 | INFO    | === Cycle done: 38 new articles in 276s ===
+16:04:40 | INFO    | Shutting down — flushing writer + WAL checkpoint...
+16:04:41 | INFO    | Shutdown complete.
+
+🟡 Doanh nghiệp siêu nhỏ và hoạt động trong lĩnh vực bất động sản có tỷ lệ đóng cửa cao nhất (chi tiết (https://vneconomy.vn/doanh-nghiep-sieu-nho-va-hoat-dong-trong-linh-vuc-bat-dong-san-co-ty-le-dong-cua-cao-nhat.htm))
+🟡 Thủ tướng Lê Minh Hưng: Doanh nghiệp nhỏ và vừa phải là nền tảng vững chắc cho nền kinh tế (chi tiết (https://vneconomy.vn/thu-tuong-le-minh-hung-doanh-nghiep-nho-va-vua-phai-la-nen-tang-vung-chac-cho-nen-kinh-te.htm))
+🟡 Cảnh báo ngập lụt, lũ quét tiếp tục đe dọa nhiều khu vực Thanh Hóa, Nghệ An (chi tiết (https://vneconomy.vn/canh-bao-ngap-lut-lu-quet-tiep-tuc-de-doa-nhieu-khu-vuc-thanh-hoa-nghe-an.htm))
+🟡 Cư dân dịch chuyển về phía Nam trung tâm, shophouse khối đế Đà Nẵng thêm dư địa (chi tiết (https://vneconomy.vn/cu-dan-dich-chuyen-ve-phia-nam-trung-tam-shophouse-khoi-de-da-nang-them-du-dia.htm))
+16:04:37 [cycle] cafef: 17 new | vietstock: 7 new | vneconomy: 14 new

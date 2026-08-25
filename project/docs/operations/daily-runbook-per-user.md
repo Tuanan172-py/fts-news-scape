@@ -9,7 +9,7 @@ machine trong `data/monocle.db`; bạn hỏi tiến độ bằng `db_status.py`,
 **idempotent** — chạy trùng vô hại. `write_user_output` là **cổng JOIN**: chỉ bài đủ
 `l1_outputs.dod_pass=1 AND agent_outputs.dod_pass=1` mới vào `final.csv`; bài dở dang tự vào vòng sau.
 
-Quy ước: mọi lệnh chạy tại thư mục `project/`, dùng `.venv\Scripts\python.exe` (không dùng `python` trần).
+Quy ước: mọi lệnh chạy tại thư mục `project/`, dùng `python` (sau khi kích hoạt venv `.\.venv\Scripts\Activate.ps1`) hoặc trỏ trực tiếp `.\.venv\Scripts\python.exe`.
 
 ---
 
@@ -185,8 +185,10 @@ Phiếu dán sẵn: [agent-runner-prompt.md](agent-runner-prompt.md).
 ### Xem bài trượt DoD để sửa trúng
 
 ```powershell
-.venv\Scripts\python.exe -c "import sqlite3;[print(dict(r)) for r in sqlite3.connect('data/monocle.db').execute('select article_id,dod_pass,dod_reasons from l1_outputs where dod_pass=0 limit 20')]"
-#   đổi l1_outputs → agent_outputs cho lớp bóc tách
+python scripts/dbq.py "select article_id,dod_pass,dod_reasons from l1_outputs where dod_pass=0 limit 20"
+# Hoặc:
+python -c "import sqlite3; [print(r) for r in sqlite3.connect('data/monocle.db').execute('select article_id,dod_pass,dod_reasons from l1_outputs where dod_pass=0 limit 20')]"
+# (đổi l1_outputs → agent_outputs cho lớp bóc tách)
 ```
 
 Sửa đúng điểm trong `dod_reasons` → nộp lại file → chạy lại `*_ingest`. Bài đã `dod_pass=1` nạp lại = cached.

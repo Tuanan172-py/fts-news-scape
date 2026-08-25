@@ -11,11 +11,23 @@
       "taxonomy": "data/entities/taxonomy.json"
     },
     "code_first": {
-      "route": "needs_agent",
-      "relevance": "none",
-      "entities": [],
-      "entity_ids": [],
-      "industries": []
+      "route": "resolved",
+      "relevance": "industry",
+      "entities": [
+        {
+          "entity_id": "IND_GICS2:DUOC_PHAM_CONG_NGHE_SINH_HOC",
+          "type": "INDUSTRY_GICS2",
+          "code": "DUOC_PHAM_CONG_NGHE_SINH_HOC",
+          "canonical_name": "Dược phẩm & Công nghệ sinh học",
+          "via": "alias"
+        }
+      ],
+      "entity_ids": [
+        "IND_GICS2:DUOC_PHAM_CONG_NGHE_SINH_HOC"
+      ],
+      "industries": [
+        "Dược phẩm & Công nghệ sinh học"
+      ]
     }
   },
   "output_contract": {
@@ -26,7 +38,10 @@
       "etf_fund",
       "index",
       "exchange",
-      "industry_sector"
+      "industry_sector",
+      "macro_geo",
+      "asset_class",
+      "institution"
     ]
   },
   "constraints": {

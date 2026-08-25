@@ -11,11 +11,47 @@
       "taxonomy": "data/entities/taxonomy.json"
     },
     "code_first": {
-      "route": "needs_agent",
-      "relevance": "none",
-      "entities": [],
-      "entity_ids": [],
-      "industries": []
+      "route": "resolved",
+      "relevance": "industry",
+      "entities": [
+        {
+          "entity_id": "IND_GICS2:QUY",
+          "type": "INDUSTRY_GICS2",
+          "code": "QUY",
+          "canonical_name": "Quỹ",
+          "via": "alias"
+        },
+        {
+          "entity_id": "IND_GICS3:QUY",
+          "type": "INDUSTRY_GICS3",
+          "code": "QUY",
+          "canonical_name": "Quỹ",
+          "via": "alias"
+        },
+        {
+          "entity_id": "MACRO_GEO:MY",
+          "type": "MACRO_GEO",
+          "code": "MY",
+          "canonical_name": "Mỹ",
+          "via": "alias"
+        },
+        {
+          "entity_id": "ASSET_CLASS:TRAI_PHIEU",
+          "type": "ASSET_CLASS",
+          "code": "TRAI_PHIEU",
+          "canonical_name": "Trái phiếu",
+          "via": "alias"
+        }
+      ],
+      "entity_ids": [
+        "IND_GICS2:QUY",
+        "IND_GICS3:QUY",
+        "MACRO_GEO:MY",
+        "ASSET_CLASS:TRAI_PHIEU"
+      ],
+      "industries": [
+        "Quỹ"
+      ]
     }
   },
   "output_contract": {
@@ -26,7 +62,10 @@
       "etf_fund",
       "index",
       "exchange",
-      "industry_sector"
+      "industry_sector",
+      "macro_geo",
+      "asset_class",
+      "institution"
     ]
   },
   "constraints": {

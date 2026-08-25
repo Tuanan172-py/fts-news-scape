@@ -20,3 +20,9 @@ Ranh giới quyền hạn bất biến cho MỌI Subagent trong hệ thống New
 - **Chuỗi con nguyên văn**: Mọi `source_span` trong mảng `citations[]` BẮT BUỘC phải là chuỗi con nguyên văn (exact substring) lấy từ `cleaned_text` (Gold) hoặc `title` (L1).
 - **Độ dài tối thiểu**: Mỗi `source_span` của Gold Extraction phải có độ dài **$\ge 20$ ký tự**.
 - **Không suy diễn ngoài văn bản**: Tuyệt đối không bịa đặt số liệu, mã cổ phiếu hoặc sự kiện không xuất hiện trong bài viết.
+
+## 4. Ràng buộc Schema Enum & Danh tính Người dùng (Enums & User Identity)
+- **Event Type Enum (Gold)**: `event_type` trong Gold Output chỉ được phép là 1 trong các giá trị: `['earnings', 'acquisition', 'regulatory', 'lawsuit', 'partnership', 'financial_move', 'macro', 'other']`. Tuyệt đối không dùng các giá trị ngoài schema (như `operations`).
+- **Entity Method Enum (L1)**: `method` trong L1 Output chỉ được phép là 1 trong: `['exact_code', 'alias', 'semantic']`.
+- **Zero Hallucination User Manifest**: Khi phân tích hoặc báo cáo phân phối tin, chỉ được phép tham chiếu các người dùng thực tế được định nghĩa trong `config/entities/users/` và `users/input/manifest.yaml` (hiện tại: `AnPT`). Tuyệt đối không bịa đặt người dùng hư cấu.
+

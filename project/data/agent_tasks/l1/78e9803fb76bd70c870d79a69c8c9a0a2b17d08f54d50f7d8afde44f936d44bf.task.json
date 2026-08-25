@@ -11,10 +11,20 @@
       "taxonomy": "data/entities/taxonomy.json"
     },
     "code_first": {
-      "route": "needs_agent",
-      "relevance": "none",
-      "entities": [],
-      "entity_ids": [],
+      "route": "resolved",
+      "relevance": "asset",
+      "entities": [
+        {
+          "entity_id": "ASSET_CLASS:BAT_DONG_SAN_TAI_SAN",
+          "type": "ASSET_CLASS",
+          "code": "BAT_DONG_SAN_TAI_SAN",
+          "canonical_name": "Bất động sản tài sản",
+          "via": "alias"
+        }
+      ],
+      "entity_ids": [
+        "ASSET_CLASS:BAT_DONG_SAN_TAI_SAN"
+      ],
       "industries": []
     }
   },
@@ -26,7 +36,10 @@
       "etf_fund",
       "index",
       "exchange",
-      "industry_sector"
+      "industry_sector",
+      "macro_geo",
+      "asset_class",
+      "institution"
     ]
   },
   "constraints": {

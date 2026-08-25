@@ -26,7 +26,7 @@ description: Nhận diện thực thể chứng khoán Việt Nam từ tiêu đ�
 ## 3. Quy chuẩn Output JSON
 Ghi vào `data/agent_outputs_l1/<article_id>.json`:
 - `recognized`: `true` nếu tìm thấy $\ge 1$ thực thể, `false` nếu không có.
-- `entities`: Mảng các thực thể với `surface` (chuỗi con nguyên văn của tiêu đề), `entity_id`, `type`, `confidence` ($\ge 0.85$).
+- `entities`: Mảng các thực thể với `surface` (chuỗi con nguyên văn của tiêu đề), `entity_id`, `type`, `method` (chỉ chọn 1 trong: `exact_code`, `alias`, `semantic`), `in_list` (`true`/`false`), `confidence` ($\ge 0.85$).
 - `categories`: Đánh dấu `done` cho các nhóm có thực thể, `none` cho nhóm trống.
 - `citations`: Trích dẫn `source_span` là chuỗi con nguyên văn của tiêu đề.
 - `processing_metadata`:

@@ -6,20 +6,23 @@ Anh em (ngắn hơn): [db-health-queries.md](db-health-queries.md) · dashboard:
 ---
 
 ## 0. Ba cách chạy query
-
+ 
 ```powershell
-cd "…\FRA_DataIngestion - news-scape\project"
+cd project
 $env:PYTHONUTF8 = "1"
-$py = ".\.venv\Scripts\python.exe"
+
+# Tự động trỏ python venv (nếu có) hoặc python trên hệ thống:
+$py = if (Test-Path ".\.venv\Scripts\python.exe") { ".\.venv\Scripts\python.exe" } else { "python" }
 ```
 1. **Ad-hoc 1 câu (khuyên dùng)** — `scripts/dbq.py`, MẶC ĐỊNH read-only (không thể lỡ tay sửa):
    ```powershell
    & $py scripts/dbq.py "select status,count(*) n from work_items group by status"
+   # Hoặc: python scripts/dbq.py "select status,count(*) n from work_items group by status"
    ```
 2. **Dashboard tổng** — `scripts/db_status.py` (9 mục sức khoẻ).
 3. **GUI** — mở `data/monocle.db` bằng **DB Browser for SQLite** (tốt cho query phức tạp/nhiều cột).
 
-> ⚠️ `sqlite3` CLI & alias `python` có thể chưa có trên PATH → dùng `dbq.py`/`db_status.py` qua venv là chắc.
+> 💡 Có thể kích hoạt venv trước: `.\.venv\Scripts\Activate.ps1` rồi dùng trực tiếp lệnh `python`.
 
 ---
 

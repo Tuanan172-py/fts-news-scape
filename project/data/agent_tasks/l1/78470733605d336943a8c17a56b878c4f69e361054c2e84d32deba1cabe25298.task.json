@@ -11,11 +11,48 @@
       "taxonomy": "data/entities/taxonomy.json"
     },
     "code_first": {
-      "route": "needs_agent",
-      "relevance": "none",
-      "entities": [],
-      "entity_ids": [],
-      "industries": []
+      "route": "resolved",
+      "relevance": "industry",
+      "entities": [
+        {
+          "entity_id": "IND_GICS2:CONG_TY_CHUNG_KHOAN",
+          "type": "INDUSTRY_GICS2",
+          "code": "CONG_TY_CHUNG_KHOAN",
+          "canonical_name": "Công ty chứng khoán",
+          "via": "alias"
+        },
+        {
+          "entity_id": "IND_GICS3:CONG_TY_CHUNG_KHOAN",
+          "type": "INDUSTRY_GICS3",
+          "code": "CONG_TY_CHUNG_KHOAN",
+          "canonical_name": "Công ty chứng khoán",
+          "via": "alias"
+        },
+        {
+          "entity_id": "IND_GICS2:QUY",
+          "type": "INDUSTRY_GICS2",
+          "code": "QUY",
+          "canonical_name": "Quỹ",
+          "via": "alias"
+        },
+        {
+          "entity_id": "IND_GICS3:QUY",
+          "type": "INDUSTRY_GICS3",
+          "code": "QUY",
+          "canonical_name": "Quỹ",
+          "via": "alias"
+        }
+      ],
+      "entity_ids": [
+        "IND_GICS2:CONG_TY_CHUNG_KHOAN",
+        "IND_GICS3:CONG_TY_CHUNG_KHOAN",
+        "IND_GICS2:QUY",
+        "IND_GICS3:QUY"
+      ],
+      "industries": [
+        "Công ty chứng khoán",
+        "Quỹ"
+      ]
     }
   },
   "output_contract": {
@@ -26,7 +63,10 @@
       "etf_fund",
       "index",
       "exchange",
-      "industry_sector"
+      "industry_sector",
+      "macro_geo",
+      "asset_class",
+      "institution"
     ]
   },
   "constraints": {

@@ -23,6 +23,11 @@ tickers:
 - PET
 - DHA
 - LPB
+- GEX
+- HDB
+- STB
+- VCI
+- VCK
 etfs:
 - E1VFVN30
 indices:

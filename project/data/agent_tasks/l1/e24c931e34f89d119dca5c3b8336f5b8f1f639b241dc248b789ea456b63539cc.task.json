@@ -11,10 +11,28 @@
       "taxonomy": "data/entities/taxonomy.json"
     },
     "code_first": {
-      "route": "needs_agent",
-      "relevance": "none",
-      "entities": [],
-      "entity_ids": [],
+      "route": "resolved",
+      "relevance": "institution",
+      "entities": [
+        {
+          "entity_id": "MACRO_THEME:LAM_PHAT",
+          "type": "MACRO_THEME",
+          "code": "LAM_PHAT",
+          "canonical_name": "Lạm phát & CPI",
+          "via": "alias"
+        },
+        {
+          "entity_id": "INSTITUTION:FED",
+          "type": "INSTITUTION",
+          "code": "FED",
+          "canonical_name": "Cục Dự trữ Liên bang Mỹ",
+          "via": "alias"
+        }
+      ],
+      "entity_ids": [
+        "MACRO_THEME:LAM_PHAT",
+        "INSTITUTION:FED"
+      ],
       "industries": []
     }
   },
@@ -26,7 +44,10 @@
       "etf_fund",
       "index",
       "exchange",
-      "industry_sector"
+      "industry_sector",
+      "macro_geo",
+      "asset_class",
+      "institution"
     ]
   },
   "constraints": {

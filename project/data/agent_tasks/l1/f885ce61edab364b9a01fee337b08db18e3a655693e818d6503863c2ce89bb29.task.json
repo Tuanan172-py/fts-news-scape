@@ -11,10 +11,20 @@
       "taxonomy": "data/entities/taxonomy.json"
     },
     "code_first": {
-      "route": "needs_agent",
-      "relevance": "none",
-      "entities": [],
-      "entity_ids": [],
+      "route": "resolved",
+      "relevance": "macro",
+      "entities": [
+        {
+          "entity_id": "MACRO_GEO:NHAT_BAN",
+          "type": "MACRO_GEO",
+          "code": "NHAT_BAN",
+          "canonical_name": "Nhật Bản",
+          "via": "alias"
+        }
+      ],
+      "entity_ids": [
+        "MACRO_GEO:NHAT_BAN"
+      ],
       "industries": []
     }
   },
@@ -26,7 +36,10 @@
       "etf_fund",
       "index",
       "exchange",
-      "industry_sector"
+      "industry_sector",
+      "macro_geo",
+      "asset_class",
+      "institution"
     ]
   },
   "constraints": {

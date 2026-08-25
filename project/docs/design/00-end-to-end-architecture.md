@@ -112,26 +112,32 @@ flowchart LR
 
 ---
 
-## 5. VÒNG 3 — Agent handoff (hạ tầng, không LLM tại producer)
+## 5. VÒNG 3 — Agent handoff (Tầng Gold — 2 Lớp Nghiệp Vụ Trí Tuệ)
 
 ```mermaid
 flowchart LR
   P[(work_items pending)] --> EXP[agent_export<br/>Catalog.claim]
-  EXP --> TP[data/agent_tasks/*.task.json]
-  TP --> AG[[AGENT cua ban<br/>prompt tu agent-instructions-v1.md]]
-  AG --> OUT[agent-output-v1 *.json]
-  OUT --> ING[agent_ingest]
+  EXP --> TP["data/agent_tasks/*.task.json<br/>(Clean Paragraphs Only)"]
+  TP --> AG[[TẦNG GOLD: AGENTS REALM<br/>Lớp 1: Entities + Lớp 2: Content]]
+  AG --> OUT[agent-output-v1 & l1-entity-output-v1]
+  OUT --> ING[agent_ingest + l1_ingest]
   ING --> PRE{preconditions<br/>+ schema + DoD}
   PRE -->|PASS| DONE[(mark_done - agent_outputs)]
-  PRE -->|FAIL| FAIL[(mark_failed - dod_reasons)]
+  PRE -->|FAIL| FAIL[(mark_failed - dod_reasons / Self-Healing)]
 ```
 
-**Taxonomy OUTPUT** (`agent-output-v1`): `summary`(tóm tắt) → `implication`(hàm ý) → `materiality`(mức độ quan trọng) + `confidence` + `citations` (CORE) · sentiment/event_type/entities+ticker (optional).
+**Phân công Trách nhiệm & 2 Lớp Nghiệp vụ Tầng Gold:**
+- **Lớp 1 (Xác định Thực thể — Entity Recognition)**: Nhận diện mã CP (3 ký tự in hoa), doanh nghiệp, sàn niêm yết, ngành, chỉ số (`l1-entity-output-v1`).
+- **Lớp 2 (Xử lý Nội dung & Ngữ nghĩa — Content Processing)**: Tóm tắt súc tích, viết hàm ý thị trường (`implication`), chấm điểm `materiality_score` động (`0.1 - 1.0`), phân loại `sentiment`, và trích xuất `citations` ($\ge 2$ trích dẫn $\ge 20$ ký tự) (`agent-output-v1`).
 
-**Definition-of-Done** — `mark_done` ⇔ TẤT CẢ: ① schema PASS · ② `confidence ≥ 0.65` · ③ `≥2 citations` grounded ⊂ `cleaned_text` · ④ `extraction_quality ∈ {high,medium}` · ⑤ `processing_metadata` đủ.
+**Quy chuẩn Payload Đoạn văn Sạch (Clean Paragraph Payload Invariant):**
+- Dữ liệu `cleaned_text` trong Task Packet gửi cho Agent **BẮT BUỘC chỉ chứa các khối đoạn văn nội dung chính (`<p>...</p>`)**, đã loại bỏ 100% rác thông tin (bài liên quan, tác giả vặt, quảng cáo, menu điều hướng) tại Silver để Agent không nhận thông tin rác, tối ưu 40–60% token input và triệt tiêu ảo giác trích dẫn.
+- Bản gốc `raw_html` luôn được bảo toàn bất biến (WORM) tại Bronze để audit và đối chiếu SHA256.
 
-- **Module:** `src/agent/{dod,packet,runner}.py`, `scripts/{agent_export,agent_ingest}.py`.
-- **Ranh giới:** producer chỉ export/validate/nghiệm thu; agent (prompt của bạn) là hộp đen. Chi tiết: [09-agent-io-contract](09-agent-io-contract.md), [10-agent-orchestration-governance](10-agent-orchestration-governance.md), [12-agent-infrastructure](12-agent-infrastructure.md).
+**Definition-of-Done** — `mark_done` ⇔ TẤT CẢ: ① schema PASS · ② `confidence ≥ 0.65` · ③ `≥2 citations` grounded ⊂ `cleaned_text` (độ dài $\ge 20$ ký tự nguyên văn) · ④ `extraction_quality ∈ {high,medium}` · ⑤ `processing_metadata` đủ.
+
+- **Module:** `src/agent/{dod,packet,runner}.py`, `scripts/{agent_export,agent_ingest,run_agent_hierarchy}.py`.
+- **Ranh giới:** producer chỉ export/validate/nghiệm thu; agent là bộ não nhận thức 2 lớp. Chi tiết: [09-agent-io-contract](09-agent-io-contract.md), [10-agent-orchestration-governance](10-agent-orchestration-governance.md), [15-antigravity-multi-agent-orchestration](15-antigravity-multi-agent-orchestration.md).
 
 ---
 

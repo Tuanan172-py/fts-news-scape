@@ -6,12 +6,18 @@ Cập nhật: 2026-08-24 · Trạng thái: **ACTIVE / PRODUCTION SPEC** · Kèm:
 
 ---
 
-## 1. Mục tiêu & Nguyên lý Thiết kế
+## 1. Mục tiêu & Nguyên lý Thiết kế Cốt lõi
 
-1. **All-Flash Efficiency**: Toàn bộ các Subagent đều sử dụng model `flash` để đạt tốc độ xử lý nhanh (< 1s/bài), chi phí thấp, và tận dụng khả năng hiểu tiếng Việt tài chính xuất sắc.
-2. **Cognitive Financial Intelligence**: Chấm điểm `materiality_score` biến thiên thực tế (0.1 - 1.0), phân loại `sentiment` (`positive`, `negative`, `neutral`), viết `implication` thực tế và trích xuất $\ge 2$ grounded citations $\ge 20$ ký tự.
-3. **I/O Isolation & Guardrails**: Ràng buộc quyền hạn cứng theo `.agents/rules/01-subagent-guardrails.md` — Subagent chỉ đọc `data/agent_tasks/` và chỉ ghi `data/agent_outputs/`.
-4. **Self-Healing Loop**: Cơ chế tự sửa lỗi tức thì khi phát hiện bài viết bị trượt Definition-of-Done (DoD).
+1. **Ranh giới Phân công (Scripts vs Gold Agents)**:
+   - **Scripts Automate**: Đảm nhiệm toàn bộ phần hạ tầng từ thu thập Bronze (raw_html bất biến), chuẩn hóa Silver, đóng gói task packets, kiểm tra cổng DoD Ingest và xuất Deliverable `final.csv`.
+   - **Gold Agents (2 Lớp Nghiệp vụ Trí tuệ)**: Đảm nhận trọn vẹn cả **(1) Xác định Thực thể (Entity Recognition)** và **(2) Xử lý Nội dung & Ngữ nghĩa (Content Processing)**.
+2. **Quy chuẩn Payload Đoạn văn Sạch (Clean Paragraph Payload Invariant)**:
+   - Bản gốc raw_html được bảo toàn tại Bronze để audit/grounding.
+   - Dữ liệu `cleaned_text` trong Task Packet chuyển giao cho Agent **BẮT BUỘC chỉ chứa các khối đoạn văn nội dung chính (Main Body Paragraphs: `<p>...</p>`)**, loại bỏ 100% rác thông tin (bài liên quan, tên tác giả vặt, quảng cáo, menu điều hướng) để Agent không bị nhận thông tin rác, tối ưu token burn và đảm bảo trích dẫn chuẩn xác.
+3. **All-Flash Efficiency**: Toàn bộ các Subagent đều sử dụng model `flash` để đạt tốc độ xử lý nhanh (< 1s/bài), chi phí thấp, và tận dụng khả năng hiểu tiếng Việt tài chính xuất sắc.
+4. **Cognitive Financial Intelligence**: Chấm điểm `materiality_score` biến thiên thực tế (0.1 - 1.0), phân loại `sentiment` (`positive`, `negative`, `neutral`), viết `implication` thực tế và trích xuất $\ge 2$ grounded citations $\ge 20$ ký tự.
+5. **I/O Isolation & Guardrails**: Ràng buộc quyền hạn cứng theo `.agents/rules/01-subagent-guardrails.md` — Subagent chỉ đọc `data/agent_tasks/` và chỉ ghi `data/agent_outputs/`.
+6. **Self-Healing Loop**: Cơ chế tự sửa lỗi tức thì khi phát hiện bài viết bị trượt Definition-of-Done (DoD).
 
 ---
 

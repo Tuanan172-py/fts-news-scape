@@ -2,12 +2,12 @@
 name: gold-financial-analyst
 description: Chuyên viên bóc tách và phân tích ngữ nghĩa sâu tin tức tài chính, chấm điểm materiality_score, phân loại sentiment và trích dẫn citations chuẩn DoD.
 ---
-
 # Gold Financial Analyst Skill
 
 > **Mục đích:** Hướng dẫn Subagent Flash thực hiện suy luận tài chính chuyên sâu từ toàn văn bài viết (`cleaned_text`).
 
 ## 1. Đầu vào & Kiểm tra Tiền điều kiện (Preconditions)
+
 - **Đầu vào**: Các task packet trong `data/agent_tasks/*.task.json` (bỏ qua thư mục con `l1/`).
 - **Precondition Check**:
   - Nếu `input.change_state` ∈ {`SELECTOR_BROKEN`, `TEMPLATE_DRIFT`} $\rightarrow$ Bỏ qua bài viết, không xử lý.
@@ -32,9 +32,13 @@ description: Chuyên viên bóc tách và phân tích ngữ nghĩa sâu tin tứ
    - Tối thiểu **2 trích dẫn**.
    - Mỗi `source_span` **BẮT BUỘC là chuỗi con NGUYÊN VĂN** của `cleaned_text` với độ dài **$\ge 20$ ký tự**.
    - `source_offset`: Vị trí bắt đầu của chuỗi con trong `cleaned_text`.
+6. **Phân loại Sự kiện (`event_type`) — Ràng buộc Schema Enum**:
+   - `event_type` CHỈ ĐƯỢC PHÉP là 1 trong: `earnings`, `acquisition`, `regulatory`, `lawsuit`, `partnership`, `financial_move`, `macro`, `other`. Tuyệt đối không dùng các giá trị ngoài schema.
 
 ## 3. Quy chuẩn Output JSON
+
 Ghi vào `data/agent_outputs/<article_id>.json`:
+
 ```json
 {
   "output_schema_version": "1.0",

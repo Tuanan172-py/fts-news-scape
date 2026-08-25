@@ -138,7 +138,9 @@ soạn output → ghi <id>.json → l1_ingest.py / agent_ingest.py
 
 - **Xem lý do trượt** để sửa trúng:
   ```powershell
-  .\.venv\Scripts\python.exe -c "import sqlite3;[print(dict(r)) for r in sqlite3.connect('data/monocle.db').execute(\"select article_id,dod_pass,dod_reasons from l1_outputs where dod_pass=0 limit 20\")]"
+  python scripts/dbq.py "select article_id,dod_pass,dod_reasons from l1_outputs where dod_pass=0 limit 20"
+  # Hoặc:
+  python -c "import sqlite3; [print(r) for r in sqlite3.connect('data/monocle.db').execute('select article_id,dod_pass,dod_reasons from l1_outputs where dod_pass=0 limit 20')]"
   ```
   (đổi `l1_outputs`→`agent_outputs` cho lớp bóc tách.)
 - **Idempotent**: bài đã `dod_pass=1` → nạp lại trả cached, KHÔNG xử lý lại → an toàn chạy trùng.

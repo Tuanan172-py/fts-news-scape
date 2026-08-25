@@ -4,14 +4,17 @@ The classification gate. Run this at step 2 of the change loop. Humans do NOT ra
 
 ## 1. Input type (where the work lands)
 
-| Type | Use when | Artifact |
-|------|----------|----------|
-| New spec | Turn a project spec into harness docs | product docs + stories |
-| Spec slice | Implement one behavior from a spec/phase | 1 story packet |
-| Change request | Change/fix/tune existing behavior | story packet or direct patch (tiny) |
-| New initiative | Large area, many stories (e.g. a whole Phase) | initiative note (free text) + stories. NO epic folders — use `Parent / Epic` field. |
-| Maintenance | Dependency / perf / security / ops | story or decision |
-| Harness improvement | Improve how humans+agents collaborate | update a `docs/*` or a backlog entry |
+| Type | Use when | Artifact & Route |
+|------|----------|------------------|
+| **QA Inquiry / Architecture** | Hỏi đáp, tra cứu kiến trúc, định hướng kỹ thuật | Trả lời trực tiếp + Minimal Trace `harness.db` (Tiny) |
+| **Diagnostic / Exploration** | Khảo sát lỗi, phân tích nguyên nhân, rà soát hệ thống | Báo cáo chẩn đoán + Minimal/Standard Trace (Tiny/Normal) |
+| **New spec** | Biến tài liệu đặc tả thành tài liệu sản phẩm và Story | product docs + stories (Normal/High-Risk) |
+| **Spec slice** | Triển khai 1 hành vi / tính năng từ tài liệu đặc tả | 1 story packet (Normal) |
+| **Change request** | Thay đổi, tinh chỉnh, sửa lỗi mã nguồn | story packet hoặc direct patch + Trace |
+| **New initiative** | Khu vực tính năng lớn, bao gồm nhiều Stories | initiative note + stories (High-Risk) |
+| **Maintenance** | Nâng cấp thư viện, tối ưu hiệu năng, bảo trì CSDL | story hoặc decision + Trace |
+| **Harness improvement** | Cải tiến quy trình làm việc giữa Người và Agent | update docs/* + ADR nếu đổi quy chuẩn cốt lõi |
+
 
 ## 2. Risk checklist — mark EVERY applicable flag (news-scape-specific)
 
