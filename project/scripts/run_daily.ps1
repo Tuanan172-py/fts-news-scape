@@ -1,4 +1,4 @@
-﻿<#
+<#
 run_daily.ps1 - Run per-user cycle (input -> final.csv) according to runbook.
 See: docs/operations/daily-runbook-per-user.md
 
@@ -136,4 +136,5 @@ Write-Host "`n=== db_status (progress check) ===" -ForegroundColor Cyan
 & $Py 'scripts/db_status.py'
 
 Write-Host "`nrun_daily COMPLETED (Mode=$Mode)." -ForegroundColor Green
-Write-Host "Output: users/output/<user>/<date>/final.csv and users/output/_master/<date>/final.csv" -ForegroundColor Green
+Write-Host "Output: users/output/<user>/<date>.csv and users/output/_master/<date>.csv" -ForegroundColor Green
+

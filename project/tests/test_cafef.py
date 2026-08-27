@@ -122,11 +122,13 @@ def test_list_fetch_failure_one_symbol_continues(env, fixture_list):
 def test_detail_404_keeps_summary(env, fixture_list):
     http = FakeHTTP(list_json=fixture_list, detail_html=None)  # get → None
     scraper = CafeFScraper(_config(), http, env)
+    scraper.backoff = None  # disable backoff sleep in unit test
     result = scraper.run()
     assert len(result.new) > 0
     for a in result.new:
         assert a.content_text == a.summary  # fallback
     assert any("detail fetch failed" in e for e in result.errors)
+
 
 
 def test_detail_cap_defers(env, fixture_list, fixture_detail):

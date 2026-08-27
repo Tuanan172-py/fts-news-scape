@@ -21,6 +21,12 @@ from __future__ import annotations
 import signal
 import sys
 from datetime import datetime, timedelta
+from pathlib import Path
+
+# Đảm bảo project root luôn có trong sys.path khi chạy trực tiếp `python morninger.py`
+_project_root = str(Path(__file__).resolve().parent.parent)
+if _project_root not in sys.path:
+    sys.path.insert(0, _project_root)
 
 from loguru import logger
 

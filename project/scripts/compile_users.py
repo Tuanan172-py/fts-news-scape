@@ -33,12 +33,12 @@ def main(argv: list[str]) -> int:
     results = compile_all(args.input_root)
     on = enabled_users(args.input_root)
     if not results:
-        print(f"Không thấy user nào trong {args.input_root} (cần <name>/entities.xlsx)")
+        print(f"Không thấy user nào trong {args.input_root} (cần <name>_news.csv hoặc <name>.csv)")
         return 0
     for r in results:
         flag = "BẬT " if r["name"] in on else "tắt "
         n_unknown = len(r["unknown"])
-        extra = f" | {n_unknown} entity không map (xem _unknown.txt)" if n_unknown else ""
+        extra = f" | {n_unknown} entity không map (xem _unknown/{r['name']}_unknown.txt)" if n_unknown else ""
         print(f"[{flag}] {r['name']}: {len(r['ids'])} entity → {r['yaml_path']}{extra}")
     print(f"\ncompiled={len(results)} users; enabled={sorted(on)}")
     return 0

@@ -6,7 +6,7 @@ Cung cấp cầu nối điều phối khép kín:
 2. Thống kê hàng đợi task cho Subagents L1 và Gold.
 3. Chạy Ingest kiểm tra Definition-of-Done (DoD) sau khi Subagents hoàn thành.
 4. Báo cáo các bài trượt DoD (nếu có) để kích hoạt Auto-Healing.
-5. Tự động biên dịch và xuất deliverables cá nhân hóa (users/output/<user>/<date>/final.csv).
+5. Tự động biên dịch và xuất deliverables cá nhân hóa (users/output/<user>/<YYYY-MM-DD>.csv).
 
 Usage:
     python scripts/run_agent_hierarchy.py --status

@@ -24,7 +24,7 @@ def test_idempotent_double_write(tmp_path):
     w.write(date=DATE)
     w.write(date=DATE)                                       # chạy lại
 
-    final = tmp_path / "out" / "AnPT" / DATE / "final.csv"
+    final = tmp_path / "out" / "AnPT" / f"{DATE}.csv"
     assert len(_read(final)) == 1                            # không nhân đôi
     cp = json.loads((tmp_path / "out" / "AnPT" / "_checkpoint.json").read_text(encoding="utf-8"))
     assert "a1" in cp["written"][DATE]
@@ -41,8 +41,9 @@ def test_resume_adds_new_article(tmp_path):
     k.seed_article(store, "a2"); k.seed_l1(store, "a2", ["TICKER:HPG"]); k.seed_agent(store, "a2")
     w.write(date=DATE)
 
-    rows = _read(tmp_path / "out" / "AnPT" / DATE / "final.csv")
+    rows = _read(tmp_path / "out" / "AnPT" / f"{DATE}.csv")
     ids = sorted(r["article_id"] for r in rows)
     assert ids == ["a1", "a2"]                              # đủ 2, không trùng
     cp = json.loads((tmp_path / "out" / "AnPT" / "_checkpoint.json").read_text(encoding="utf-8"))
     assert set(cp["written"][DATE]) == {"a1", "a2"}
+

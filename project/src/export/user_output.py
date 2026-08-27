@@ -216,7 +216,7 @@ class UserOutputWriter:
                     (self._final_row(r, matched), self._l1_row(r), self._agent_row(r), r["article_id"]))
 
 
-        # Ghi master audit nếu được bật
+        # Ghi master audit nếu được bật (dạng phẳng: users/output/_master/{YYYY-MM-DD}.csv)
         if write_master and rows:
             master_bucket: dict[str, list[tuple]] = {}
             for r in rows:
@@ -230,10 +230,10 @@ class UserOutputWriter:
                     if aid in seen:
                         continue
                     seen.add(aid); finals.append(frow); l1s.append(l1row); agents.append(arow); aids.append(aid)
-                mbase = self.output_root / "_master" / d
-                _atomic_write_csv(mbase / "L1.csv", L1_COLUMNS, l1s)
-                _atomic_write_csv(mbase / "agent.csv", AGENT_COLUMNS, agents)
-                _atomic_write_csv(mbase / "final.csv", FINAL_COLUMNS, finals)
+                mbase = self.output_root / "_master"
+                _atomic_write_csv(mbase / f"{d}.csv", FINAL_COLUMNS, finals)
+                _atomic_write_csv(mbase / f"{d}_L1.csv", L1_COLUMNS, l1s)
+                _atomic_write_csv(mbase / f"{d}_agent.csv", AGENT_COLUMNS, agents)
 
         counts: dict[str, int] = {}
         for (user, d), items in sorted(bucket.items()):
@@ -243,12 +243,13 @@ class UserOutputWriter:
                 if aid in seen:
                     continue
                 seen.add(aid); finals.append(frow); l1s.append(l1row); agents.append(arow); aids.append(aid)
-            base = self.output_root / _safe_name(user) / d
-            new = ckpt.filter_new(base.parent, d, aids)
-            _atomic_write_csv(base / "final.csv", FINAL_COLUMNS, finals)  # deliverable duy nhất cho user
-            ckpt.mark_written(base.parent, d, aids)                       # mark SAU khi replace
+            user_dir = self.output_root / _safe_name(user)
+            file_path = user_dir / f"{d}.csv"  # deliverable duy nhất và phẳng cho user
+            new = ckpt.filter_new(user_dir, d, aids)
+            _atomic_write_csv(file_path, FINAL_COLUMNS, finals)
+            ckpt.mark_written(user_dir, d, aids)                       # mark SAU khi replace
             counts[user] = counts.get(user, 0) + len(finals)
-            logger.info("done user={} date={} rows={} (new={})", user, d, len(finals), len(new))
+            logger.info("done user={} date={} rows={} (new={}) file={}", user, d, len(finals), len(new), file_path.name)
 
         orphan_count = len(rows) - len(matched_article_ids)
         if orphan_count > 0:

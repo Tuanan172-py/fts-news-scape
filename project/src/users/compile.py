@@ -19,9 +19,11 @@ import openpyxl
 import yaml
 
 # src/users/compile.py → parents[2] = project/ ; repo root = project/..
+# src/users/compile.py → parents[2] = project/ ; repo root = project/..
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 REPO_ROOT = PROJECT_ROOT.parent
-DEFAULT_INPUT_ROOT = REPO_ROOT / "users" / "input"
+DEFAULT_SUBSCRIPTIONS_ROOT = REPO_ROOT / "users" / "subscriptions"
+DEFAULT_INPUT_ROOT = DEFAULT_SUBSCRIPTIONS_ROOT if DEFAULT_SUBSCRIPTIONS_ROOT.exists() else (REPO_ROOT / "users" / "input")
 DEFAULT_OUTPUT_ROOT = REPO_ROOT / "users" / "output"
 USERS_CONFIG_DIR = PROJECT_ROOT / "config" / "entities" / "users"
 
@@ -31,9 +33,79 @@ GROUP_KEYS = ("tickers", "etfs", "indices", "exchanges", "industries", "nations"
 _UPPER_GROUPS = ("tickers", "etfs", "indices", "exchanges", "industries", "nations", "themes", "macro", "assets", "institutions")
 
 
+def _user_from_filename(filename: str) -> str:
+    """Tách username từ tên file: 'AnPT_news.csv' -> 'AnPT', 'AnPT.csv' -> 'AnPT'."""
+    stem = Path(filename).stem
+    if stem.lower().endswith("_news"):
+        return stem[:-5]
+    return stem
 
 
-# ---- Excel I/O ----------------------------------------------------------------
+# ---- CSV & Excel I/O ----------------------------------------------------------
+def read_user_csv(path: str | Path) -> tuple[dict, dict]:
+    """Đọc file CSV đăng ký danh mục của user → (doc, meta).
+    
+    Hỗ trợ 2 định dạng:
+    1. Định dạng Ma trận ngang (Horizontal): Header gồm các nhóm (tickers, industries, themes...).
+    2. Định dạng Tidy dọc (Vertical): Header gồm 'category'/'type' và 'code'/'value' (tùy chọn 'note').
+    """
+    import csv
+    path = Path(path)
+    doc: dict[str, list[str]] = {}
+    meta: dict = {"user": _user_from_filename(path.name)}
+    
+    with path.open("r", encoding="utf-8-sig", errors="replace") as f:
+        # Bỏ qua các dòng comment (#) ở đầu file nếu có
+        lines = [line for line in f if line.strip() and not line.strip().startswith("#")]
+    
+    if not lines:
+        return _normalize(doc), meta
+
+    reader = csv.reader(lines)
+    rows = [r for r in reader if any(cell.strip() for cell in r)]
+    if not rows:
+        return _normalize(doc), meta
+
+    headers = [h.strip().lower() for h in rows[0]]
+    
+    # Kiểm tra kiểu Vertical (category, code)
+    if "category" in headers or "group" in headers or "type" in headers:
+        cat_idx = headers.index("category") if "category" in headers else (headers.index("group") if "group" in headers else headers.index("type"))
+        code_idx = headers.index("code") if "code" in headers else (headers.index("value") if "value" in headers else (1 if len(headers) > 1 else 0))
+        for r in rows[1:]:
+            if len(r) > max(cat_idx, code_idx):
+                c = r[cat_idx].strip().lower()
+                v = r[code_idx].strip()
+                if c in GROUP_KEYS and v:
+                    doc.setdefault(c, []).append(v)
+    else:
+        # Kiểu Horizontal (mỗi cột là 1 nhóm)
+        col_idx = {h: i for i, h in enumerate(headers) if h in GROUP_KEYS}
+        for r in rows[1:]:
+            for key, idx in col_idx.items():
+                if idx < len(r) and r[idx].strip():
+                    doc.setdefault(key, []).append(r[idx].strip())
+
+    return _normalize(doc), meta
+
+
+def write_user_csv(path: str | Path, doc: dict, meta: dict | None = None) -> Path:
+    """Ghi danh mục user ra file CSV (dạng horizontal ma trận ngang)."""
+    import csv
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    
+    cols = [doc.get(k, []) for k in GROUP_KEYS]
+    max_rows = max((len(c) for c in cols), default=0)
+    
+    with path.open("w", encoding="utf-8-sig", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(list(GROUP_KEYS))
+        for i in range(max_rows):
+            w.writerow([cols[j][i] if i < len(cols[j]) else "" for j in range(len(GROUP_KEYS))])
+    return path
+
+
 def read_user_xlsx(path: str | Path) -> tuple[dict, dict]:
     """Đọc entities.xlsx → (doc, meta). doc: {group: [values]}; meta: {key: value}."""
     wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
@@ -84,6 +156,16 @@ def write_user_xlsx(path: str | Path, doc: dict, meta: dict | None = None) -> Pa
     return path
 
 
+def read_user_file(path: str | Path) -> tuple[dict, dict]:
+    """Tự động nhận diện định dạng file (.csv hoặc .xlsx) và đọc (doc, meta)."""
+    p = Path(path)
+    if p.suffix.lower() == ".csv":
+        return read_user_csv(p)
+    if p.suffix.lower() in (".xlsx", ".xlsm"):
+        return read_user_xlsx(p)
+    raise ValueError(f"Không hỗ trợ định dạng file: {p.suffix}")
+
+
 def _normalize(doc: dict) -> dict:
     """Chuẩn hoá: strip + upper cho nhóm dùng mã (gồm industries); giữ nguyên entities (entity_id)."""
     out: dict[str, list[str]] = {}
@@ -99,7 +181,7 @@ def _normalize(doc: dict) -> dict:
 
 # ---- compile ------------------------------------------------------------------
 _YAML_HEADER = (
-    "# AUTO-GENERATED từ users/input/{name}/entities.xlsx — ĐỪNG sửa tay.\n"
+    "# AUTO-GENERATED từ users/subscriptions/{name}_news.csv — ĐỪNG sửa tay.\n"
     "# Chạy lại: python scripts/compile_users.py --all\n"
 )
 
@@ -113,46 +195,80 @@ def _write_yaml(yaml_path: Path, name: str, doc: dict) -> None:
     yaml_path.write_text(_YAML_HEADER.format(name=name) + body, encoding="utf-8")
 
 
-def compile_user(name: str, xlsx_path: str | Path, registry,
+def compile_user(name: str, file_path: str | Path, registry,
                  *, users_config_dir: str | Path = USERS_CONFIG_DIR,
                  input_dir: str | Path | None = None) -> dict:
-    """Compile 1 user: xlsx → yaml (+ _unknown.txt). Trả record {name, yaml_path, ids, unknown}."""
-    doc, meta = read_user_xlsx(xlsx_path)
+    """Compile 1 user: file (csv/xlsx) → yaml (+ _unknown.txt). Trả record {name, yaml_path, ids, unknown}."""
+    doc, meta = read_user_file(file_path)
     ids, unknown = registry.select(doc)
     yaml_path = Path(users_config_dir) / f"{name}.yaml"
     _write_yaml(yaml_path, name, doc)
 
     if input_dir is not None:
-        unk_file = Path(input_dir) / "_unknown.txt"
+        in_p = Path(input_dir)
+        # Nếu in_p là thư mục gốc subscriptions/ -> lưu vào subscriptions/_unknown/{name}_unknown.txt
+        # Nếu in_p là thư mục riêng user (cũ) -> lưu vào in_p/_unknown.txt
+        if in_p.is_dir() and (in_p / f"{name}_news.csv").exists() or (in_p / f"{name}.csv").exists() or in_p.name in ("subscriptions", "input"):
+            unk_dir = in_p / "_unknown"
+            unk_dir.mkdir(parents=True, exist_ok=True)
+            unk_file = unk_dir / f"{name}_unknown.txt"
+        else:
+            unk_file = in_p / "_unknown.txt"
+
         if unknown:
             lines = [f"{cat}: {val} — không tìm thấy trong danh sách entity" for cat, val in unknown]
             unk_file.write_text("\n".join(lines) + "\n", encoding="utf-8")
         elif unk_file.exists():
             unk_file.unlink()  # sạch cảnh báo cũ khi user đã sửa
+            
     return {"name": name, "yaml_path": str(yaml_path), "ids": ids,
             "unknown": unknown, "meta": meta}
 
 
-def compile_all(input_root: str | Path = DEFAULT_INPUT_ROOT, registry=None,
+def compile_all(input_root: str | Path | None = None, registry=None,
                 *, users_config_dir: str | Path = USERS_CONFIG_DIR) -> list[dict]:
-    """Quét mọi users/input/<name>/entities.xlsx (bỏ folder `_*`) → compile. Trả list record.
+    """Quét mọi file đăng ký trong users/subscriptions/ (hoặc users/input/) → compile. Trả list record.
 
     Sau khi ghi yaml, xoá cache registry để lần load sau nạp subscription mới.
     """
     if registry is None:
         from src.agent.entities import load_registry
         registry = load_registry()
+        
+    if input_root is None:
+        if DEFAULT_SUBSCRIPTIONS_ROOT.exists():
+            input_root = DEFAULT_SUBSCRIPTIONS_ROOT
+        elif (REPO_ROOT / "users" / "input").exists():
+            input_root = REPO_ROOT / "users" / "input"
+        else:
+            input_root = DEFAULT_SUBSCRIPTIONS_ROOT
     input_root = Path(input_root)
     results: list[dict] = []
+    processed_users: set[str] = set()
+
     if input_root.exists():
+        # 1. Quét các file phẳng (*.csv, *.xlsx) trực tiếp trong thư mục subscriptions/
+        for p in sorted(input_root.iterdir()):
+            if p.is_file() and not p.name.startswith("_"):
+                if p.suffix.lower() in (".csv", ".xlsx", ".xlsm"):
+                    uname = _user_from_filename(p.name)
+                    if uname and uname not in processed_users:
+                        results.append(compile_user(uname, p, registry,
+                                                    users_config_dir=users_config_dir, input_dir=input_root))
+                        processed_users.add(uname)
+
+        # 2. Quét các thư mục con (hỗ trợ backward compatibility với cấu trúc cũ input/<name>/entities.xlsx)
         for d in sorted(p for p in input_root.iterdir() if p.is_dir()):
-            if d.name.startswith("_"):
+            if d.name.startswith("_") or d.name in processed_users:
                 continue
-            xlsx = d / "entities.xlsx"
-            if not xlsx.exists():
-                continue
-            results.append(compile_user(d.name, xlsx, registry,
-                                        users_config_dir=users_config_dir, input_dir=d))
+            candidates = [d / "entities.csv", d / f"{d.name}_news.csv", d / f"{d.name}.csv", d / "entities.xlsx"]
+            for target_file in candidates:
+                if target_file.exists():
+                    results.append(compile_user(d.name, target_file, registry,
+                                                users_config_dir=users_config_dir, input_dir=d))
+                    processed_users.add(d.name)
+                    break
+
     try:  # invalidate lru_cache để subscription mới có hiệu lực
         from src.agent.entities import load_registry
         load_registry.cache_clear()
@@ -162,26 +278,47 @@ def compile_all(input_root: str | Path = DEFAULT_INPUT_ROOT, registry=None,
 
 
 # ---- manifest bật/tắt user ----------------------------------------------------
-def load_manifest(input_root: str | Path = DEFAULT_INPUT_ROOT) -> dict[str, bool]:
-    """Đọc users/input/manifest.yaml → {name: enabled}. Thiếu file/khoá = {}."""
-    path = Path(input_root) / "manifest.yaml"
-    if not path.exists():
-        return {}
-    data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
-    users = data.get("users") or {}
-    return {str(k): bool(v) for k, v in users.items()}
+def load_manifest(input_root: str | Path | None = None) -> dict[str, bool]:
+    """Đọc manifest.yaml từ thư mục đăng ký (subscriptions hoặc input) → {name: enabled}."""
+    if input_root is None:
+        candidates = [
+            DEFAULT_SUBSCRIPTIONS_ROOT / "manifest.yaml",
+            REPO_ROOT / "users" / "input" / "manifest.yaml",
+        ]
+    else:
+        candidates = [
+            Path(input_root) / "manifest.yaml",
+            DEFAULT_SUBSCRIPTIONS_ROOT / "manifest.yaml",
+            REPO_ROOT / "users" / "input" / "manifest.yaml",
+        ]
+
+    for path in candidates:
+        if path.exists():
+            data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+            users = data.get("users") or {}
+            return {str(k): bool(v) for k, v in users.items()}
+    return {}
 
 
-def enabled_users(input_root: str | Path = DEFAULT_INPUT_ROOT,
+def enabled_users(input_root: str | Path | None = None,
                   names: list[str] | None = None) -> set[str]:
     """Tập user BẬT: manifest quyết định; vắng tên trong manifest = mặc định BẬT.
 
-    `names` = danh sách user ứng viên (vd tên folder input). None → suy từ manifest keys.
+    `names` = danh sách user ứng viên. None → suy từ các file đăng ký và manifest keys.
     """
     manifest = load_manifest(input_root)
     if names is None:
-        root = Path(input_root)
-        names = [p.name for p in root.iterdir()
-                 if p.is_dir() and not p.name.startswith("_")] if root.exists() else []
-        names = sorted(set(names) | set(manifest))
+        names_found: set[str] = set()
+        root = Path(input_root) if input_root else (
+            DEFAULT_SUBSCRIPTIONS_ROOT if DEFAULT_SUBSCRIPTIONS_ROOT.exists() else (REPO_ROOT / "users" / "input")
+        )
+        if root.exists():
+            for p in root.iterdir():
+                if not p.name.startswith("_"):
+                    if p.is_file() and p.suffix.lower() in (".csv", ".xlsx"):
+                        names_found.add(_user_from_filename(p.name))
+                    elif p.is_dir():
+                        names_found.add(p.name)
+        names = sorted(names_found | set(manifest))
     return {n for n in names if manifest.get(n, True)}
+

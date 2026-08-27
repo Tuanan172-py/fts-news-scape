@@ -88,7 +88,9 @@ def test_tickers_tagged(env, feed_bytes, detail_html):
 
 def test_detail_failure_keeps_summary(env, feed_bytes):
     http = FakeHTTP(feed_bytes=feed_bytes, detail_html=None)  # get_response → None
-    result = VnEconomyScraper(_config(), http, env).run()
+    scraper = VnEconomyScraper(_config(), http, env)
+    scraper.backoff = None  # disable backoff sleep in unit test
+    result = scraper.run()
     assert len(result.new) > 0
     for a in result.new:
         assert a.metadata["capture"]["capture_status"] == "failed"
@@ -96,5 +98,5 @@ def test_detail_failure_keeps_summary(env, feed_bytes):
     assert any("detail fetch failed" in e for e in result.errors)
 
 
-def main():
-    db_path = load_settings().get("database", {}).get("path", "data/monocle.db")
+
+

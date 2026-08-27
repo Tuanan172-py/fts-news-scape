@@ -13,3 +13,11 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+import pytest
+from src.crawler.backoff import SourceBackoff
+
+@pytest.fixture(autouse=True)
+def fast_tests(monkeypatch):
+    """Disable backoff sleep during tests to run suite instantaneously."""
+    monkeypatch.setattr(SourceBackoff, "before_fetch", lambda self, domain: None)

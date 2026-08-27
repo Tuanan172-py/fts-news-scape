@@ -19,6 +19,7 @@ Phụ thuộc chính: `feedparser`, `requests`, `urllib3`, `truststore`, `trafil
    ```powershell
    Copy-Item config/secrets.yaml.example config/secrets.yaml
    ```
+
    Sửa `fireant_token: "<token>"`. File này **gitignored** — không commit. Lấy token:
    [../skills/fireant.md](../skills/fireant.md). (Dán kèm hay không kèm "Bearer " đều được — code tự cắt.)
 2. Kiểm tra `config/settings.yaml` (interval 15 phút, rate 3s) và `config/watchlist.yaml` (30 mã).
@@ -48,6 +49,7 @@ Phụ thuộc chính: `feedparser`, `requests`, `urllib3`, `truststore`, `trafil
 # Trạng thái scraper + exit code (0 = OK, 1 = có vấn đề)
 .venv\Scripts\python.exe -m src.monitor.health
 ```
+
 Ngưỡng: `consecutive_failures ≥ 3` → CRITICAL; `status=failed` → FAILED; last_run > 30 phút →
 STALE. Dữ liệu từ bảng `scraper_heartbeat` + `scraper_metrics`.
 

@@ -5,32 +5,36 @@ desktop.ini
 # Output per-user hằng ngày (sinh bởi write_user_output.py) — KHÔNG commit
 users/output/
 # Cảnh báo entity nhập sai (auto) — KHÔNG commit
+users/subscriptions/_unknown/
 users/input/*/_unknown.txt
-# GIỮ commit: users/input/<name>/entities.xlsx, users/input/manifest.yaml, users/template/*
+# GIỮ commit: users/subscriptions/*.csv, users/subscriptions/manifest.yaml, users/subscriptions/_template_news.csv
 
 
 # Runtime data
 logs/
-data/*.db
-data/*.db-wal
-data/*.db-shm
-data/raw/
-data/dedup_cache.json
-data/notifications/
-data/exports/
+**/logs/
+*.db
+*.db-wal
+*.db-shm
+**/data/raw/
+**/data/dedup_cache.json
+**/data/notifications/
+**/data/exports/
+**/data/archive_conflicts/
 # Handoff & pipeline artifacts (tái sinh được — KHÔNG commit)
 # task-packets L1 + bóc tách (l1_route.py / agent_export.py)
-data/agent_tasks/
+**/data/agent_tasks/
 # output agent bóc tách nộp về
-data/agent_outputs/
+**/data/agent_outputs/
 # output agent L1 nộp về
-data/agent_outputs_l1/
+**/data/agent_outputs_l1/
 # Silver (dẫn xuất Bronze qua derive)
-data/silver/
+**/data/silver/
 # work-package cho handoff
-data/work_packages/
+**/data/work_packages/
 # Bronze raw HTML (nặng — tái scrape được)
-data/raw_html/
+**/data/raw_html/
+project/src/data/
 
 # Harness Durable SQLite
 harness.db*

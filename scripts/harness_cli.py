@@ -560,7 +560,7 @@ def build_parser() -> argparse.ArgumentParser:
     
     # intake
     intake_p = subparsers.add_parser("intake", help="Classify and record a new task request")
-    intake_p.add_argument("--type", required=True, choices=["new_spec", "spec_slice", "change_request", "new_initiative", "maintenance", "harness_improvement"])
+    intake_p.add_argument("--type", required=True, choices=["new_spec", "spec_slice", "change_request", "new_initiative", "maintenance", "harness_improvement", "qa_inquiry", "diagnostic", "exploration"])
     intake_p.add_argument("--summary", required=True, help="Short summary of the request")
     intake_p.add_argument("--lane", required=True, choices=["tiny", "normal", "high-risk"])
     intake_p.add_argument("--flags", default="[]", help="JSON array or comma-separated list of risk flags")

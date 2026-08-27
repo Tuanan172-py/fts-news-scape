@@ -1,4 +1,4 @@
-# AUTO-GENERATED từ users/input/AnPT/entities.xlsx — ĐỪNG sửa tay.
+# AUTO-GENERATED từ users/subscriptions/AnPT_news.csv — ĐỪNG sửa tay.
 # Chạy lại: python scripts/compile_users.py --all
 tickers:
 - HPG

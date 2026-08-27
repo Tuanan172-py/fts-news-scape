@@ -1,0 +1,21 @@
+﻿# ==============================================================================
+# HƯỚNG DẪN ĐĂNG KÝ DANH MỤC THEO DÕI TIN TỨC (NEWS-SCAPE)
+# ==============================================================================
+# 1. Đặt tên file theo cú pháp: {username}_news.csv (Ví dụ: AnPT_news.csv, Bob_news.csv).
+# 2. File CSV gồm các cột tương ứng với các nhóm thực thể:
+#    - tickers: Mã cổ phiếu 3 ký tự (vd: HPG, FPT, VNM, MWG...)
+#    - etfs: Mã quỹ ETF (vd: E1VFVN30, FUEVFVND...)
+#    - indices: Mã chỉ số thị trường (vd: VNINDEX, VN30, HNX30...)
+#    - exchanges: Mã sàn giao dịch (HOSE, HNX, UPCOM)
+#    - industries: Mã ngành GICS (vd: THEP, NGAN_HANG, BAT_DONG_SAN, BAN_LE...)
+#    - nations: Mã quốc gia/địa chính trị (vd: MY, TRUNG_QUOC, EU, NHAT_BAN...)
+#    - themes: Mã chủ đề vĩ mô (vd: LAI_SUAT, TY_GIA, LAM_PHAT, DAU_TU_CONG, FDI...)
+#    - assets: Mã loại tài sản (vd: TRAI_PHIEU, CO_PHIEU, VANG, DAU_THO...)
+#    - institutions: Mã định chế/ngân hàng TW (vd: NHNN, UBCKNN, BO_TAI_CHINH, FED...)
+# 3. Tra cứu toàn bộ mã hợp lệ tại file: data/entities/entities.xlsx hoặc entities.json
+# 4. Bật/tắt nhận tin tại: users/subscriptions/manifest.yaml (mặc định không ghi là BẬT)
+# ==============================================================================
+tickers,etfs,indices,exchanges,industries,nations,themes,macro,assets,institutions,entities
+HPG,E1VFVN30,VNINDEX,HOSE,THEP,MY,LAI_SUAT,TRAI_PHIEU,NHNN,
+FPT,,VN30,HNX,NGAN_HANG,TRUNG_QUOC,TY_GIA,VANG,UBCKNN,
+MWG,,,,BAT_DONG_SAN,EU,DAU_TU_CONG,,,

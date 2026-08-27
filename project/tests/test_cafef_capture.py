@@ -94,9 +94,11 @@ def test_order_raw_saved_before_extract(env, fixture_list, fixture_detail, monke
 def test_detail_404_records_failed(env, fixture_list):
     http = FakeHTTP(list_json=fixture_list, detail_html=None)  # get_response → None
     scraper = CafeFScraper(_config(), http, env)
+    scraper.backoff = None  # disable backoff sleep in unit test
     result = scraper.run()
     assert len(result.new) > 0
     for a in result.new:
         assert a.metadata["capture"]["capture_status"] == "failed"
         assert a.content_text == a.summary
     assert any("detail fetch failed" in e for e in result.errors)
+
