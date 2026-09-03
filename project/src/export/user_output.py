@@ -24,6 +24,7 @@ from pathlib import Path
 from loguru import logger
 
 from src.core.models import VN_TZ
+from src.core.staging import safe_atomic_write
 from src.export import checkpoint as ckpt
 from src.users.compile import DEFAULT_OUTPUT_ROOT
 
@@ -67,14 +68,13 @@ def _row_date(r: dict) -> str:
 
 
 def _atomic_write_csv(path: Path, columns: list[str], rows: list[dict]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_suffix(path.suffix + ".tmp")
-    with tmp.open("w", encoding="utf-8-sig", newline="") as f:
+    def _write(f):
         w = csv.DictWriter(f, fieldnames=columns, extrasaction="ignore")
         w.writeheader()
         for row in rows:
             w.writerow(row)
-    os.replace(tmp, path)
+
+    safe_atomic_write(path, _write, encoding="utf-8-sig", fallback_on_lock=True)
 
 
 class UserOutputWriter:
@@ -87,7 +87,7 @@ class UserOutputWriter:
 
     # -- query gated ----------------------------------------------------------
     def gated_rows(self, *, date: str | None = None, days: int | None = None) -> list[dict]:
-        conn = self.store.connect()
+        conn = self.store._connect_ro()
         try:
             rows = [dict(r) for r in conn.execute(_GATED_SQL)]
         finally:
@@ -164,17 +164,17 @@ class UserOutputWriter:
                 "model_used": meta.get("model_used") or "unknown"}
 
     def _passes_noise_filter(self, matched_eids: set[str], r: dict) -> bool:
-        """Lọc rác: nếu chỉ match các thực thể diện rộng (MACRO/ASSET), yêu cầu xuất hiện ở title hoặc materiality >= 3."""
+        """Lọc rác: nếu chỉ match các thực thể diện rộng (MACRO/ASSET), yêu cầu xuất hiện ở title hoặc materiality >= 0.6."""
         broad_types = {"MACRO_GEO", "MACRO_THEME", "ASSET_CLASS"}
         matched_types = {self.reg.get(eid)["type"] for eid in matched_eids if self.reg.get(eid)}
         # Nếu có ít nhất 1 entity cụ thể (TICKER, ETF, INDUSTRY, INDEX, EXCHANGE, INSTITUTION) -> Pass luôn
         if any(t not in broad_types for t in matched_types):
             return True
-        # Nếu chỉ có broad entities -> kiểm tra materiality score >= 3
+        # Nếu chỉ có broad entities -> kiểm tra materiality score >= 0.6 (Rule 02 & agent-output-v1 standard)
         ag = _loads(r.get("agent_json"))
         mat_score = (ag.get("materiality") or {}).get("score") or 0
         try:
-            if float(mat_score) >= 3:
+            if float(mat_score) >= 0.6:
                 return True
         except (ValueError, TypeError):
             pass

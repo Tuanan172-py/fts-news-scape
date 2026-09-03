@@ -1,4 +1,5 @@
 """
+[LEGACY / COLD BACKUP - NOT IN PRODUCTION PIPELINE]
 Word segmentation wrapper — tokenizer-agnostic seam.
 
 pyvi primary (cài nhẹ trên Windows). underthesea nâng cấp sau nếu cần

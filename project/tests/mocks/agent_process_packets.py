@@ -1,18 +1,9 @@
 """
-agent_process_packets.py — Native Engine xử lý task packets cho Agent (L1 + Body Extraction).
-
-Tích hợp:
-1. Nhận diện thực thể Tiêu đề L1 (exact code, alias, registry).
-2. Bóc tách nội dung Body với bộ tách câu hoàn chỉnh (Sentence-Boundary Aware).
-3. Tuyệt đối KHÔNG cắt cụt từ/chuỗi thô (loại bỏ hoàn toàn [:80], [:120]).
-4. Tự động kiểm tra Preconditions & Definition-of-Done (DoD) trước khi ghi file.
-5. Hỗ trợ tùy chọn --provider và --model linh hoạt.
-
-Usage:
-    python scripts/agent_process_packets.py
-    python scripts/agent_process_packets.py --provider antigravity --model gemini-3.7-flash
-    python scripts/agent_process_packets.py --queue l1
-    python scripts/agent_process_packets.py --queue body
+[TEST FIXTURE / MOCK UTILITY - NOT FOR PRODUCTION PIPELINE]
+agent_process_packets.py — Mock Engine phục vụ kiểm thử tích hợp và benchmark offline.
+LƯU Ý: Tuyệt đối tuân thủ Invariant Rule 05 & Rule 6C (No Script Emulation in Production).
+Mọi xử lý ngữ nghĩa, suy luận và bóc tách thực thể trong môi trường thật là vùng trí tuệ
+độc quyền của Subagents LLM (Flash/Pro) được kích hoạt qua invoke_subagent.
 """
 from __future__ import annotations
 

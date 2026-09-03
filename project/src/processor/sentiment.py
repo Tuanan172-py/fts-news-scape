@@ -1,5 +1,9 @@
 """
+[LEGACY / COLD BACKUP - NOT IN PRODUCTION PIPELINE]
 Sentiment engine — rule-based tiếng Việt cho tin tài chính (spec §9, không LLM).
+LƯU Ý: Trong kiến trúc Antigravity 2.0 (Rule 05 & Rule 6C), phân loại sentiment và ngữ nghĩa
+được đảm nhiệm độc quyền bởi Subagent Gold (Flash/Pro) qua invoke_subagent.
+Module này được lưu trữ phục vụ benchmark/fallback offline.
 
 Pipeline: pyvi segment → n-gram match (trigram > bigram > unigram, longest-first)
 vào lexicon (finance_terms override lexicon chung) → negation flip → mean score

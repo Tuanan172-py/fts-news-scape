@@ -11,5 +11,3 @@ default: false
 
 users:
   AnPT: true
-  A: true
-  B: false        # ví dụ: dev tạm tắt đăng ký của B (file users/B.yaml vẫn giữ nguyên)

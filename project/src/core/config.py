@@ -16,9 +16,12 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 CONFIG_DIR = PROJECT_ROOT / "config"
 DOMAINS_DIR = CONFIG_DIR / "domains"
 
+DATA_DIR = PROJECT_ROOT / "data"
+LOGS_DIR = PROJECT_ROOT / "logs"
+
 _DEFAULT_SETTINGS = {
-    "database": {"path": "data/monocle.db"},
-    "logging": {"level": "INFO", "dir": "logs"},
+    "database": {"path": str(DATA_DIR / "monocle.db")},
+    "logging": {"level": "INFO", "dir": str(LOGS_DIR)},
     "scheduler": {"interval_minutes": 15},
     "http": {"rate_limit": 3.0, "timeout": 30, "max_retries": 3},
     "morninger": {

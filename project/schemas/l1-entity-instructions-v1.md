@@ -35,7 +35,7 @@ Bạn có **quyền tra soát** kể cả khi code đã khớp (route=`resolved`
    - khớp mã in hoa → `method="exact_code"`; khớp tên/alias → `method="alias"`;
    - nhận ra bằng suy luận (thương hiệu, viết tắt) → `method="semantic"`.
 3. Xác định `in_list` + `entity_id` (null nếu ngoài danh sách → ghi `unlisted_candidates`).
-4. Chấm **checklist `categories`** cho 5 nhóm (mục §3).
+4. Chấm **checklist `categories`** cho 8 nhóm (mục §3).
 5. Gắn `citations` (≥1 nếu `recognized=true`), `processing_metadata` (`confidence` tuỳ chọn).
 6. Đặt `recognized = (có ≥1 entity)`.
 
@@ -49,6 +49,9 @@ Chấm mỗi nhóm bằng đúng 1 trong: `done` | `none` | `out_of_list`.
 | `index` (chỉ số) | như trên | | |
 | `exchange` (sàn) | như trên | | |
 | `industry_sector` (ngành/nhóm ngành) | như trên | | |
+| `macro_geo` (quốc gia / địa chính trị) | như trên | | |
+| `asset_class` (loại tài sản / hàng hóa) | như trên | | |
+| `institution` (định chế / cơ quan quản lý) | như trên | | |
 
 - `done` ⇒ phải có ≥1 phần tử `entities` thuộc nhóm đó với `in_list=true`.
 - `out_of_list` ⇒ ghi rõ ở `unlisted_candidates` (tín hiệu cần bổ sung danh sách).

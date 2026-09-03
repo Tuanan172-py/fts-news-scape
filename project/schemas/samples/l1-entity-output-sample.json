@@ -18,7 +18,10 @@
     "etf_fund": "none",
     "index": "none",
     "exchange": "none",
-    "industry_sector": "none"
+    "industry_sector": "none",
+    "macro_geo": "none",
+    "asset_class": "none",
+    "institution": "none"
   },
   "unlisted_candidates": [],
   "citations": [

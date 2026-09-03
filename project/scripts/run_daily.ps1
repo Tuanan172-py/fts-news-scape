@@ -64,13 +64,11 @@ function RunAgents {
       Step 'agent_stub L1'    @('scripts/agent_stub.py','--queue','l1','--out',$L1Out)
       Step 'agent_stub main'  @('scripts/agent_stub.py','--queue','main','--out',$AgentOut)
     }
-    'api' {
-      $adapter = Join-Path $Root 'scripts/agent_run.py'
-      if (-not (Test-Path $adapter)) {
-        throw "Missing scripts/agent_run.py. Use -Agent stub or -Mode emit for manual agent execution."
-      }
-      Step 'agent_run L1'   @('scripts/agent_run.py','--queue','l1','--out',$L1Out)
-      Step 'agent_run main' @('scripts/agent_run.py','--queue','main','--out',$AgentOut)
+    'hierarchy' {
+      Step 'run_agent_hierarchy export' @('scripts/run_agent_hierarchy.py','--export')
+    }
+    default {
+      Write-Host "Subagent processing mode: Packets ready for invoke_subagent." -ForegroundColor Cyan
     }
   }
 }
@@ -117,7 +115,7 @@ switch ($Mode) {
   'emit' {
     Emit
     Write-Host "`n[EMIT DONE] Packets ready in data/agent_tasks/l1/ and data/agent_tasks/." -ForegroundColor Green
-    Write-Host "-> Process with Skill agent-file-processor," -ForegroundColor Green
+    Write-Host "-> Process with Subagents (.agents/skills/gold-financial-analyst & l1-entity-matcher)," -ForegroundColor Green
     Write-Host "   then run: .\scripts\run_daily.ps1 -Mode ingest -Days 30" -ForegroundColor Green
   }
   'ingest' {

@@ -15,6 +15,7 @@ from loguru import logger
 
 from datetime import datetime
 
+from src.core.config import PROJECT_ROOT
 from src.core.models import VN_TZ, Article, now_vn_iso
 
 
@@ -192,9 +193,16 @@ CREATE INDEX IF NOT EXISTS idx_l1_outputs_dod ON l1_outputs(dod_pass, created_at
 class ArticleStore:
     """SQLite article store, schema v2. Thread nào cần thì tự mở connection riêng."""
 
-    def __init__(self, db_path: str = "data/monocle.db"):
-        self.db_path = db_path
-        os.makedirs(os.path.dirname(db_path) or ".", exist_ok=True)
+    def __init__(self, db_path: str | Path | None = None):
+        if db_path is None:
+            self.db_path = str(PROJECT_ROOT / "data" / "monocle.db")
+        else:
+            p = Path(db_path)
+            if not p.is_absolute() and not str(p).startswith("file:"):
+                self.db_path = str((PROJECT_ROOT / p).resolve())
+            else:
+                self.db_path = str(p)
+        os.makedirs(os.path.dirname(self.db_path) or ".", exist_ok=True)
         self.init_schema()
 
     def _connect(self, readonly: bool = False) -> sqlite3.Connection:
