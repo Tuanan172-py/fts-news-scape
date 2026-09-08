@@ -20,8 +20,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from loguru import logger
 
 from src.core.config import load_settings
+from src.core.stdio import force_utf8_stdio
 from src.db.store import ArticleStore
 from src.pipeline.run import process_meta
+
+force_utf8_stdio()
 
 RAW_DIR = Path("data/raw_html")
 

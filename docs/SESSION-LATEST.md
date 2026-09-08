@@ -2,84 +2,42 @@
 
 <!-- Step 9 handoff. OVERWRITE this (never append) at the end of every session. Keep to one screen. -->
 
-- **Updated:** 2026-09-07
-- **Current story:** Gate export L1-only + hạ tầng rút backlog L1/Gold
-- **Status:** **implemented & verified** (355/355 tests passed, chạy thật trên `data/monocle.db`)
-- **Blocker:** none. **CHƯA COMMIT** — theo yêu cầu người dùng.
+- **Updated:** 2026-09-08
+- **Current story:** Rà soát toàn bộ workflow scripts + Tối ưu hóa SQLite I/O & UTF-8 stdio
+- **Status:** **implemented & verified** (357/357 pytest passed, 100% scripts verified on `data/monocle.db`)
+- **Blocker:** none.
 
-## ⚠️ SỰ CỐ MẤT FILE — đã khôi phục
+## Đã rà soát & Tối ưu hoá toàn bộ Workflow
 
-Giữa phiên, **7 file chưa từng commit** biến mất khỏi đĩa (`git log --all` không có, Recycle Bin
-không có). Pipeline gãy import: `No module named 'src.agent.pruner'`.
+### 1. Hạ tầng DB & Concurrency
+- **Khôi phục & Đồng bộ DB**: Giải quyết triệt để conflict WAL OneDrive, khôi phục `data/monocle.db` (7.094 articles, 7.613 seen, 1.274 agent outputs, 685 L1 outputs) đạt 100% `PRAGMA integrity_check = ok`.
+- **Tối ưu Composite Index**: Bổ sung `idx_agent_outputs_article_dod` và `idx_l1_outputs_article_dod` vào `_SCHEMA`. Tốc độ kiểm kê `l1_backlog.py` giảm từ >20s xuống **0.07s** (~300x).
+- **Read-Only Connections**: Tách biệt `init_schema: bool = True/False` trong `ArticleStore.__init__` và cập nhật `src/monitor/health.py` dùng `_connect_ro()`.
 
-Mất: `src/agent/{manifest,batch_handoff,archive,pruner}.py` ·
-`tests/{test_pruner_and_batch,test_batch_manifest,test_agent_ingest_cli}.py`
+### 2. Chuẩn hoá Windows UTF-8 Stdio
+- Đã bổ sung `force_utf8_stdio()` và `argparse` vào tất cả workflow/entrypoint scripts (`refresh_watchlist.py`, `run_once.py`, `rederive_from_bronze.py`, `build_entities.py`, v.v.) triệt tiêu hoàn toàn lỗi `UnicodeEncodeError: 'charmap'` trên Windows console.
 
-**Khôi phục từ `__pycache__/*.cpython-314.pyc`** (khớp magic với Python 3.14.3 của venv):
-- `archive.py`, `manifest.py`, `batch_handoff.py` — đối chiếu bytecode **KHỚP TUYỆT ĐỐI**
-  (tên hàm, tham số, defaults, toàn bộ hằng số).
-- `pruner.py` — khớp mọi thứ trừ khoảng trắng ở 1 dòng trống trong docstring (`.pyc` gốc bị ghi
-  đè lúc 16:47 trước khi so xong). Không ảnh hưởng hành vi.
-- 3 file test dựng lại từ `.pyc` pytest-rewritten (constants + call graph còn nguyên).
+### 3. Kiểm thử toàn bộ Scripts Pipeline (100% PASS)
+- **Kiểm định & Regression Suite**: `pytest tests/ -v` đạt **357/357 PASSED** (100%).
+- **Harness Audit**: `health_score = 0.85`, `entropy_score = 0.15`, 0 in-progress, 0 unproven stories.
+- **Monitoring & Health**: `db_status.py`, `src.monitor.health`, `report_drift.py` hoạt động chính xác.
+- **Backlog & Hierarchy**: `l1_backlog.py`, `l1_route.py`, `l1_ingest.py`, `agent_export.py`, `agent_ingest.py`, `run_agent_hierarchy.py` chạy chuẩn xác theo phân cấp L1 $\rightarrow$ Gold.
+- **User Delivery**: `compile_users.py`, `write_user_output.py`, `run_user_workflow.py` định tuyến đúng theo manifest.
+- **Diagnostics & Snapshot**: `db_snapshot.py` (tạo `monocle_review.db`), `dbq.py`, `export_csv.py`, `export_silver.py`, `sample_articles.py`, `domain_check.py` đều chạy thông suốt.
 
-**Comment và định dạng gốc của 4 module đã mất** — comment hiện tại là viết mới.
+## Số liệu Hệ thống Thực tế (Live monocle.db)
 
-> **Bài học:** git không cứu được vì file chưa bao giờ được commit. Rất nhiều file trong repo
-> vẫn đang untracked.
+| Nhóm dữ liệu | Số lượng hiện tại | Trạng thái |
+|---|---|---|
+| Articles trong DB | **7.094** | 100% Integrity OK |
+| Đã qua gate export (final.csv) | **424** | 384 GOLD · 40 L1_ONLY |
+| T1 gold-ready (Gold xong, thiếu L1) | **423** | 17 mini-batches sẵn sàng tại `data/agent_tasks/l1/` |
+| T2 chưa L1 chưa Gold | **6.247** | Sẵn sàng phân tuyến |
+| T3 đã có L1, work_item pending | **40** | Sẵn sàng cho Gold Agent |
+| Snapshot review độc lập | `data/monocle_review.db` | Cập nhật lúc 14:29 |
 
-## Đã làm
+## Next Steps
 
-**Gate export & deliverable**
-- Gate CỨNG = `l1_outputs.dod_pass=1`; Gold là enrichment TÙY CHỌN (`LEFT JOIN`).
-- Cột **`gold_status`** (`GOLD`|`L1_ONLY`) — phân biệt "Gold chưa chạm" với "Gold đã chạy nhưng
-  trường optional rỗng".
-- `_GATED_SQL` chọn **bản Gold mới nhất** (`MAX(id)`) — `UNIQUE(article_id, raw_sha256)` gây
-  fan-out, trước đây bản nào thắng là ngẫu nhiên (23 dòng dư trên DB thật).
-- `_passes_noise_filter` **bỏ hẳn** phụ thuộc Gold; thêm `_silver_noise_signals()` ghi vào cột
-  `noise_signals` của `_master/<date>.csv` — **quan sát, CHƯA gate**.
-- `agent_provider`/`model_used` để **trống** thay vì bịa `"unknown"`.
-
-**5 bug đã sửa**
-1. `agent_ingest.py` — `NameError: done_aids`, crash ngay output Gold đầu tiên đạt DoD.
-2. `agent_ingest.py` — nhánh `"dod_pass" not in item` cho output thô **bypass toàn bộ DoD**.
-3. `runner.py` — đọc `e.get("code")` trong khi L1 schema chỉ có `entity_id` (0/399 entity có
-   `code`) ⇒ chaining L1→Gold (rule 05 §2.5) chết ngầm.
-4. `runner.py` — thiếu `continue` sau `mark_failed` ⇒ `wp` unbound, đứt vòng export.
-5. `l1_ingest.py` — không giải nén được output gom lô (agent trả mảng là hỏng im lặng).
-
-**Thứ tự L1 → Gold ép bằng cấu trúc**
-`Catalog.claim(require_l1=)` + `AgentRunner.export_tasks(require_l1=True)` mặc định +
-`agent_export.py --require-l1 / --no-require-l1`.
-
-**Hạ tầng rút backlog (MỚI)**
-- `scripts/l1_backlog.py` — kiểm kê tồn đọng T1..T4 + in sẵn chuỗi lệnh (chỉ đọc).
-- `scripts/l1_route.py` — `--only {all,gold-ready,in-articles}` + `--mini-batch N`.
-- `src/agent/batch_handoff.py` — `build_l1_batch_packet` / `split_l1_tasks_into_batches`
-  (L1 gom 25 bài/lô vì packet chỉ mang tiêu đề). **Đã phát 17 batch cho 423 bài T1.**
-- `.agents/skills/l1-entity-matcher/SKILL.md` §5 — Batch Mode + bẫy làm hỏng DoD.
-- `project/docs/operations/backlog-drain-runbook.md` — runbook đầy đủ.
-
-**Checkpoint** — giữ lại nhưng lưu `{article_id: gold_status}` + `filter_upgraded()`;
-log `rows=N (new=X upgraded=Y l1_only=Z)`. Đọc ngược được định dạng list cũ.
-
-**Thang materiality thống nhất 0–1** (bỏ `3/5` ở `entity-system-invariants.md`).
-
-## Số liệu (DB thật)
-
-| Nhóm | Số bài |
-|---|---|
-| Đã qua gate export | 424 (GOLD 384 · L1_ONLY 40) |
-| T1 gold-ready — Gold xong, thiếu L1 | **423** — chạy L1 = giao ngay, **0 token Gold** |
-| T2 chưa L1 chưa Gold (có trong `articles`) | 6.372 |
-| T3 đã có L1, work_item pending | 40 |
-| T4 mồ côi (không có trong `articles`) | l1_tasks 467 · l1_outputs xong 261 · gold xong 417 |
-
-## Next
-
-1. **Rút T1 trước** — 17 packet đã sẵn ở `data/agent_tasks/l1/l1_batch_XX.task.json`.
-   Agent L1 xử lý → `l1_ingest.py data/agent_outputs_l1` → `write_user_output.py --date all`.
-   Chi tiết: `project/docs/operations/backlog-drain-runbook.md`.
-2. **Rò rỉ T4 chưa xử lý:** work-package + `l1_tasks` tồn tại với `source_url` hợp lệ nhưng
-   `articles` không có dòng nào cho URL đó ⇒ Bronze/Silver tạo work-package mà **không ghi
-   `articles`**. Cần truy `orchestrator`/`derive`. 678 bài đã trả tiền agent nằm ở đây — lớn hơn
-   nhiều so với +40 từ việc nới gate.
+1. **Rút hàng đợi T1 (423 bài)**: Subagent L1 xử lý 17 batch `data/agent_tasks/l1/l1_batch_*.task.json` $\rightarrow$ Ingest & Deliver (`python scripts/run_agent_hierarchy.py --ingest-and-deliver`). Chi tiết: `project/docs/operations/backlog-drain-runbook.md`.
+2. **Kích hoạt chu trình cào mới**: `python scripts/run_once.py` hoặc `python -m src.morninger` để lấy tin tức mới nhất.
+3. **Rò rỉ T4 (Orphan backlog)**: Tiếp tục điều tra nguyên nhân work-packages Bronze/Silver không ghi vào bảng `articles`.

@@ -169,6 +169,7 @@ CREATE TABLE IF NOT EXISTS agent_outputs (
   UNIQUE(article_id, raw_sha256)
 );
 CREATE INDEX IF NOT EXISTS idx_agent_outputs_dod ON agent_outputs(dod_pass, created_at);
+CREATE INDEX IF NOT EXISTS idx_agent_outputs_article_dod ON agent_outputs(article_id, dod_pass);
 -- Pipeline state (morninger) — key/value bền vững qua restart (watermark/checkpoint).
 CREATE TABLE IF NOT EXISTS pipeline_state (
   key TEXT PRIMARY KEY,
@@ -205,6 +206,7 @@ CREATE TABLE IF NOT EXISTS l1_outputs (
   created_at TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_l1_outputs_dod ON l1_outputs(dod_pass, created_at);
+CREATE INDEX IF NOT EXISTS idx_l1_outputs_article_dod ON l1_outputs(article_id, dod_pass);
 
 -- Báo cáo định kỳ (NSO/Cục Thống kê) — design 16.
 -- KHÔNG dùng bảng articles: khoá nghiệp vụ là (report_type, period), KHÔNG phải
@@ -236,9 +238,16 @@ CREATE INDEX IF NOT EXISTS idx_periodic_period
 class ArticleStore:
     """SQLite article store, schema v2. Thread nào cần thì tự mở connection riêng."""
 
-    def __init__(self, db_path: str | Path | None = None):
+    def __init__(self, db_path: str | Path | None = None, init_schema: bool = True):
         if db_path is None:
-            self.db_path = str(PROJECT_ROOT / "data" / "monocle.db")
+            env_db = os.getenv("MONOCLE_DB_PATH")
+            env_dir = os.getenv("MONOCLE_DATA_DIR")
+            if env_db:
+                self.db_path = env_db
+            elif env_dir:
+                self.db_path = str(Path(env_dir) / "monocle.db")
+            else:
+                self.db_path = str(PROJECT_ROOT / "data" / "monocle.db")
         else:
             p = Path(db_path)
             if not p.is_absolute() and not str(p).startswith("file:"):
@@ -246,7 +255,8 @@ class ArticleStore:
             else:
                 self.db_path = str(p)
         os.makedirs(os.path.dirname(self.db_path) or ".", exist_ok=True)
-        self.init_schema()
+        if init_schema:
+            self.init_schema()
 
     def _connect(self, readonly: bool = False) -> sqlite3.Connection:
         """Connection mới với đủ pragmas. Caller tự đóng (hoặc dùng suốt đời thread).

@@ -34,7 +34,7 @@ import src.scrapers  # noqa: F401 — trigger @register
 
 def diagnose(names: list[str] | None = None, enrich_test: bool = True) -> int:
     setup_logging("WARNING", "logs")  # tắt log INFO ồn ào
-    store = ArticleStore("data/monocle.db")
+    store = ArticleStore()
     dedup = DedupCache(store)
     http = HTTPClient(rate_limit_delay=3.0, max_retries=3)
 

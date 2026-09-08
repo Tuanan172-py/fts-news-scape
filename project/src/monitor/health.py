@@ -23,7 +23,7 @@ def check(store: ArticleStore) -> tuple[list[dict], bool]:
     # ts lưu ISO +07:00 → tính cutoff cùng format trong Python, tránh lệch
     # múi giờ của datetime('now') phía SQLite
     cutoff_24h = (now - timedelta(days=1)).isoformat(timespec="seconds")
-    conn = store._connect()
+    conn = store._connect_ro()
     try:
         rows = conn.execute(
             "SELECT h.*, COALESCE(m.n24, 0) AS articles_24h FROM scraper_heartbeat h "
@@ -61,7 +61,7 @@ def check(store: ArticleStore) -> tuple[list[dict], bool]:
 
 def main() -> int:
     settings = load_settings()
-    store = ArticleStore(settings["database"]["path"])
+    store = ArticleStore(settings["database"]["path"], init_schema=False)
     report, all_ok = check(store)
     if not report:
         print("No heartbeat data — chưa có scraper nào chạy.")

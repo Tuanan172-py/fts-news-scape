@@ -38,6 +38,9 @@ from pathlib import Path
 
 import pandas as pd
 
+from src.core.stdio import force_utf8_stdio
+force_utf8_stdio()
+
 # ----------------------------------------------------------------------------
 # Cấu hình đường dẫn mặc định
 # ----------------------------------------------------------------------------

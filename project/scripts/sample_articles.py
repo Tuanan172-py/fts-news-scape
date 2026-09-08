@@ -234,7 +234,7 @@ def _compact_card(scraper, raw, a, sentiment_engine) -> list[str]:
 
 def dump(only: list[str] | None = None, n: int = 2) -> int:
     setup_logging("ERROR", "logs")
-    store = ArticleStore("data/monocle.db")
+    store = ArticleStore()
     dedup = DedupCache(store)
     http = HTTPClient(rate_limit_delay=3.0, max_retries=3)
     sentiment_engine = SentimentEngine()
