@@ -29,6 +29,29 @@ Nó đồng bộ theo file, không hiểu ràng buộc toàn vẹn của git.
 Phân vai này khớp thực tế đang chạy và **loại bỏ nhu cầu đồng bộ `data/`** giữa hai máy:
 A phát triển bằng fixture trong git, B giữ dữ liệu sản xuất.
 
+## 1b. Lệnh nào chạy trên máy nào
+
+Bảng này tồn tại vì đã có lần hỏi nhầm — mục §2 dưới đây tuy tiêu đề là "máy B" nhưng có
+một lệnh dùng cho cả hai.
+
+| Lệnh | Máy A (dev) | Máy B (vận hành) |
+|---|---|---|
+| `git clone … C:\dev\news-scape` | ✅ | ❌ |
+| `git init --separate-git-dir C:\gitdirs\news-scape.git` | ❌ — đã ngoài OneDrive rồi | ✅ |
+| `setx MONOCLE_DATA_DIR` / `MONOCLE_DB_PATH` | tuỳ chọn (chỉ khi giữ bản `data/` để audit) | ✅ bắt buộc |
+| `py -3.14 -m venv …` + `pip install -r requirements.txt` | ✅ | ✅ — **mỗi máy một venv riêng** |
+| OneDrive → Choose folders → bỏ chọn repo | ✅ | ❌ |
+| `attrib -U +P` (Always keep on this device) | ❌ | ✅ |
+
+**Thứ tự giữa hai máy — đảo là mất dữ liệu:**
+
+1. A: clone ra `C:\dev\news-scape`, copy `data/` sang chỗ riêng, `pytest` xanh.
+2. A: bỏ chọn thư mục repo trong OneDrive (**không** xoá/đổi tên).
+3. B: chạy §2 dưới đây.
+4. B: xác nhận xong **mới** xoá `project\data` cũ trong OneDrive.
+
+Làm bước 4 trước bước 1–2 sẽ xoá luôn Bronze trong bản OneDrive của máy A.
+
 ## 2. Máy B: giữ repo trên OneDrive nhưng phải đẩy 3 thứ ra ngoài
 
 Working tree (file `.py`, `.yaml`, `.md` — nhỏ, text) ở trong OneDrive là **hợp lý**:
@@ -168,6 +191,7 @@ mà không phụ thuộc trí nhớ, thêm GitHub Actions chạy `pytest` trên 
 | `ImportError` module vừa viết xong | file mới bị OneDrive xoá | `git checkout` nếu đã commit; nếu chưa — đã mất |
 | `.venv` rỗng / `pyvenv.cfg` trỏ máy khác | venv trong vùng sync | dựng lại venv **ngoài** OneDrive |
 | `OSError: Invalid argument` khi đọc Bronze | Files On-Demand dehydrate | "Always keep on this device", hoặc chuyển `data/` ra ngoài |
+| `git add` báo `read error while indexing …: Invalid argument` | cùng nguyên nhân: file là placeholder chưa hydrate | `attrib -U +P "<file>"` rồi `certutil -hashfile <file> SHA256` để ép tải, sau đó `git add` lại |
 | merge-base lùi cả tháng, commit trùng tiêu đề | lịch sử đã push bị rewrite | dừng lại, so tree hash trước khi merge (xem `reports/06`) |
 
 ## Câu hỏi còn mở
