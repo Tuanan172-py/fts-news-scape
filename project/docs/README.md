@@ -11,6 +11,7 @@ Bộ tài liệu chuyên sâu cho hệ thu thập tin tức thị trường ch�
 | Kiến trúc sư / tech lead | thư mục [design/](design/) + [decisions.md](decisions.md) |
 | Dev sắp sửa code | [dev/01-codebase-guide.md](dev/01-codebase-guide.md) |
 | Muốn thêm nguồn tin | [dev/03-adding-a-source.md](dev/03-adding-a-source.md) |
+| Làm việc trên 2 máy (dev + vận hành) | [dev/07-two-machine-workflow.md](dev/07-two-machine-workflow.md) |
 | Vận hành / trực hệ thống | [operations/deployment.md](operations/deployment.md) + [operations/troubleshooting.md](operations/troubleshooting.md) |
 | Tìm hiểu 1 domain cụ thể | [domains/README.md](domains/README.md) |
 
@@ -30,6 +31,8 @@ Bộ tài liệu chuyên sâu cho hệ thu thập tin tức thị trường ch�
 - [03-adding-a-source.md](dev/03-adding-a-source.md) — thêm nguồn RSS/API (có checklist)
 - [04-testing.md](dev/04-testing.md) — bản đồ 112 test, FakeHTTP, fixtures
 - [05-known-issues.md](dev/05-known-issues.md) — vấn đề đã biết & nợ kỹ thuật
+- [06-raw-html-capture-guide.md](dev/06-raw-html-capture-guide.md) — hướng dẫn capture Bronze byte-exact
+- [07-two-machine-workflow.md](dev/07-two-machine-workflow.md) — quy trình 2 máy: dev qua GitHub + vận hành trên OneDrive
 
 ### 🌐 domains/ — Chi tiết từng nguồn
 - [README.md](domains/README.md) — ma trận 23 domain + watchlist + settings
