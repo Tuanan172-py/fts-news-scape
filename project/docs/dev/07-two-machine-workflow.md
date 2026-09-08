@@ -22,12 +22,22 @@ Nó đồng bộ theo file, không hiểu ràng buộc toàn vẹn của git.
 | | **Máy A — dev** | **Máy B (FPA-AnPT) — vận hành** |
 |---|---|---|
 | Vị trí repo | `C:\dev\news-scape` — **ngoài** OneDrive | working tree **trong** OneDrive |
-| Kênh trao đổi | **chỉ GitHub** | GitHub (OneDrive chỉ là backup file) |
+| Kênh trao đổi | **chỉ GitHub** | GitHub cho mã nguồn; **SharePoint là mặt bằng review** cho người dùng khác |
 | Việc chính | phát triển scraper, test, contract, docs | chạy pipeline thật, Bronze, DB, báo cáo ngày |
 | Cần `data/` ? | **không** — test dùng fixture, zero-network | **có** — là nguồn sự thật duy nhất |
 
 Phân vai này khớp thực tế đang chạy và **loại bỏ nhu cầu đồng bộ `data/`** giữa hai máy:
 A phát triển bằng fixture trong git, B giữ dữ liệu sản xuất.
+
+> ⚠️ **Thư mục OneDrive của máy B KHÔNG phải chỉ là backup.** Nó đồng bộ lên SharePoint và
+> **người dùng khác đọc trực tiếp ở đó** — báo cáo ngày, file đăng ký danh mục, kết quả đầu
+> ra. Hệ quả bắt buộc nhớ:
+>
+> - **Không xoá bất cứ thứ gì** trong thư mục đó để "dọn dẹp". Xoá local ⇒ xoá trên
+>   SharePoint (vào Recycle Bin ~93 ngày rồi mất hẳn).
+> - Mỗi lần **bỏ track** một file trong `project/data/`: `git pull` ở máy B sẽ xoá nó khỏi
+>   working tree, và lệnh xoá đó lan lên SharePoint. Đã xảy ra một lần — `e4d281a` bỏ track
+>   4 file `data/reports/daily/*.md`, khôi phục ở `396e591`.
 
 ## 1b. Lệnh nào chạy trên máy nào
 
@@ -38,52 +48,73 @@ một lệnh dùng cho cả hai.
 |---|---|---|
 | `git clone … C:\dev\news-scape` | ✅ | ❌ |
 | `git init --separate-git-dir C:\gitdirs\news-scape.git` | ❌ — đã ngoài OneDrive rồi | ✅ |
-| `setx MONOCLE_DATA_DIR` / `MONOCLE_DB_PATH` | tuỳ chọn (chỉ khi giữ bản `data/` để audit) | ✅ bắt buộc |
-| `py -3.14 -m venv …` + `pip install -r requirements.txt` | ✅ | ✅ — **mỗi máy một venv riêng** |
-| OneDrive → Choose folders → bỏ chọn repo | ✅ | ❌ |
+| `setx MONOCLE_DB_PATH` (chỉ đổi đường dẫn DB) | ❌ | ✅ bắt buộc |
+| `python -m venv …` + `pip install -r requirements.txt` | ✅ | ✅ — **mỗi máy một venv riêng, dùng interpreter có sẵn của máy đó** |
+| OneDrive → Choose folders → bỏ chọn repo | ✅ | ❌ — B phải giữ để người khác review |
 | `attrib -U +P` (Always keep on this device) | ❌ | ✅ |
+| Xoá bớt file trong thư mục OneDrive | ❌ | ❌ — **không bao giờ** |
 
-**Thứ tự giữa hai máy — đảo là mất dữ liệu:**
+**Thứ tự giữa hai máy:**
 
-1. A: clone ra `C:\dev\news-scape`, copy `data/` sang chỗ riêng, `pytest` xanh.
-2. A: bỏ chọn thư mục repo trong OneDrive (**không** xoá/đổi tên).
-3. B: chạy §2 dưới đây.
-4. B: xác nhận xong **mới** xoá `project\data` cũ trong OneDrive.
+1. A: clone ra `C:\dev\news-scape`, `pytest` xanh.
+2. A: bỏ chọn thư mục repo trong OneDrive (**không** xoá/đổi tên) — bắt buộc trước bước 4,
+   vì `.git` của A là **thư mục** còn của B đã thành **file**, sync hai thứ trùng tên nhưng
+   khác loại là ca không có cách hoà giải đúng.
+3. B: chạy §2.
+4. B: bật lại sync.
 
-Làm bước 4 trước bước 1–2 sẽ xoá luôn Bronze trong bản OneDrive của máy A.
+Không có bước xoá. Thư mục OneDrive của B giữ nguyên toàn bộ nội dung.
 
-## 2. Máy B: giữ repo trên OneDrive nhưng phải đẩy 3 thứ ra ngoài
+## 2. Máy B: cái gì ở lại SharePoint, cái gì ra ngoài
 
-Working tree (file `.py`, `.yaml`, `.md` — nhỏ, text) ở trong OneDrive là **hợp lý**:
-OneDrive trở thành backup thật sự. Nhưng ba thứ sau **bắt buộc** ra ngoài, vì cả ba đã
-từng bị phá:
+Nguyên tắc phân loại — **không** phải "đẩy hết ra ngoài cho an toàn":
+
+| | Ở LẠI thư mục OneDrive | RA NGOÀI |
+|---|---|---|
+| Vì sao | người khác review qua SharePoint | sync 2 chiều **phá hỏng** chúng |
+| Gồm | working tree, `project/data/raw_html`, `silver`, `work_packages`, `reports/daily`, `users/**` | `.git`, `.venv`, `monocle.db` |
+
+Chỉ **ba** thứ ra ngoài, và mỗi thứ vì một lý do đã chứng kiến tận mắt:
 
 ```cmd
-:: 1) .git ra ngoai — working tree van o nguyen cho
+:: 1) .git — sync file-by-file lam hong rang buoc ref<->object
+::    (da gap: "bad object refs/stash", ".git/config" mat tracking)
 cd "C:\Users\anpt\OneDrive - fpts.com.vn\FRA_DataIngestion - news-scape"
 git init --separate-git-dir C:\gitdirs\news-scape.git
 ::    -> .git tro thanh 1 FILE chua "gitdir: C:\gitdirs\news-scape.git"
 
-:: 2) data/ ra ngoai (Bronze + DB)
-setx MONOCLE_DATA_DIR "C:\data\news-scape"
-setx MONOCLE_DB_PATH  "C:\data\news-scape\monocle.db"
-robocopy "project\data" "C:\data\news-scape" /E /COPY:DAT /R:1 /W:1
+:: 2) monocle.db — SQLite WAL = 3 file (.db/.db-wal/.db-shm) phai nhat quan,
+::    sync doc lap tung file trong luc dang ghi => hong DB / conflict copy
+mkdir C:\data\news-scape
+copy "project\data\monocle.db" "C:\data\news-scape\"
+setx MONOCLE_DB_PATH "C:\data\news-scape\monocle.db"
 
-:: 3) venv ra ngoai
-py -3.14 -m venv C:\venvs\news-scape
-C:\venvs\news-scape\Scripts\pip install -r project\requirements.txt
+:: 3) venv — chua duong dan tuyet doi, khong the dung chung 2 may
+::    (da gap: site-packages con 2 goi, pyvenv.cfg tro sang may kia)
+::    Dung interpreter co san tren may nay — xem "py -0p"
+"C:\Users\anpt\AppData\Local\anaconda3\python.exe" -m venv C:\venvs\news-scape
+C:\venvs\news-scape\Scripts\python -m pip install -r project\requirements.txt pytest
 ```
 
-Thêm: chuột phải thư mục repo → **"Always keep on this device"**. Files On-Demand
-dehydrate file thành placeholder trên cloud là nguyên nhân 3 mục "FAIL" giả trong
-`reports/06` (`OSError: Invalid argument` khi đọc Bronze cũ).
+> ⚠️ **`MONOCLE_DATA_DIR` / `MONOCLE_DB_PATH` chỉ đổi đường dẫn DATABASE**, không di dời
+> `raw_html/`, `silver/`, `work_packages/`, `reports/`. Xem `src/core/config.py:58-64` —
+> cả hai biến chỉ ghi vào `cfg["database"]["path"]`. Vậy **đặt `MONOCLE_DB_PATH` là đủ**;
+> `MONOCLE_DATA_DIR` thừa, và `robocopy` cả `project\data` cũng thừa (chỉ cần copy file
+> `.db`). Bronze/Silver vẫn ở nguyên trong OneDrive để người dùng review — đúng như mong
+> muốn.
 
-`MONOCLE_DATA_DIR` / `MONOCLE_DB_PATH` đã được hỗ trợ sẵn — `src/core/config.py:58-60`,
-không phải sửa code. Kiểm chứng sau khi set:
+Thêm: chuột phải thư mục repo → **"Always keep on this device"** (hoặc
+`attrib -U +P /s /d "<repo>\*"`). Files On-Demand dehydrate file thành placeholder là
+nguyên nhân 3 mục "FAIL" giả trong `reports/06` và lỗi
+`git add: read error while indexing ...: Invalid argument`.
+
+Kiểm chứng sau khi set (phải mở **cửa sổ cmd mới** — `setx` không ăn vào cửa sổ cũ):
 
 ```cmd
 python -c "from src.core.config import load_settings; print(load_settings()['database']['path'])"
 ```
+
+Kỳ vọng: in ra `C:\data\news-scape\monocle.db`.
 
 ## 3. Máy A: rời OneDrive — một cái bẫy chết người
 
@@ -140,16 +171,20 @@ Ba điều cấm:
   Đó là nguyên nhân sự cố #2.
 - ⛔ **Không khôi phục file bằng cách copy giữa hai máy.** Chỉ khôi phục bằng git.
   Copy thủ công đã sinh ra 42 xung đột add/add ở `215de5f`.
+- ⛔ **Không xoá, không bỏ track file trong thư mục OneDrive của máy B** mà chưa hỏi — nó
+  là mặt bằng review trên SharePoint, xoá local là xoá của người khác.
 - ⛔ **Không commit `data/`, `.venv`, `daily_log.txt`, `data/reports/`** — đã có rule
   trong `.gitignore`, đừng `git add -f`.
 
 ## 6. Trao đổi dữ liệu (không đi qua git)
 
-`data/` bị gitignore và **phải** như vậy: Bronze là HTML bên thứ ba có bản quyền, lưu
-WORM nội bộ, không phát tán.
-
 - **Máy B là nguồn sự thật** cho `data/raw_html/`, `data/raw_reports/`, `data/silver/`,
   `monocle.db`.
+- Bronze/Silver **ở lại thư mục OneDrive của máy B** và đồng bộ lên SharePoint — đó là nơi
+  người dùng khác review. Đây là quyết định của chủ dự án, ghi lại 2026-09-08.
+- Đánh đổi đã biết và đã chấp nhận: Bronze là HTML bên thứ ba có bản quyền; đưa lên
+  SharePoint doanh nghiệp là mở rộng phạm vi lưu trữ so với "chỉ nội bộ máy chạy". Quyền
+  truy cập thư mục SharePoint chính là ranh giới phát tán — rà soát quyền chia sẻ định kỳ.
 - Máy A cần dữ liệu để audit → xin snapshot **một chiều** (zip hoặc robocopy), không bao
   giờ sync hai chiều.
 - Fixture trong `tests/fixtures/` là **hợp đồng dữ liệu** giữa hai máy. Đã chứng minh:
