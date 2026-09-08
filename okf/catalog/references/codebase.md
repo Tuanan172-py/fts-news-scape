@@ -76,11 +76,24 @@ trước khi fetch chi tiết) · `backoff.py` (`SourceBackoff` cool-down cấp 
 `writer.py` (`DBWriter` single-writer) · `dedup.py` (`DedupCache` 2 lớp) ·
 `snapshot.py` (bản chụp point-in-time không chặn ghi).
 
-# `src/pipeline/` — Vòng 2 (8 file)
+# `src/pipeline/` — Vòng 2 (9 file)
 
 `silver_builder.py` · `change_detect.py` · `run.py` (`process_meta` — 1 artifact qua cả chuỗi) ·
 `derive.py` (tăng dần theo watermark) · `drift.py` · `refresh.py` (re-fetch kích hoạt
-change-detect) · `user_workflow.py` (orchestrator lớp người dùng).
+change-detect) · `user_workflow.py` (orchestrator lớp người dùng) ·
+`periodic_reports.py` (**ngoài** vòng 2 — driver báo cáo định kỳ NSO, xem
+[pipeline](../pipelines/periodic_reports.md)).
+
+`silver_builder.py` có nhánh JSON generic: Content-Type là JSON ⇒ `_html_from_json()` rút HTML
+từ các trường `content` / `originalContent` / `body_html`… nên Bronze JSON (fireant) ra Silver được.
+
+# API nền tảng thêm 2026-09-07
+
+| Hàm | File | Vì sao tồn tại |
+|---|---|---|
+| `resolve_source_domain(name)` | `src/core/config.py` | Nguồn sự thật cho host của domain: dotted → `domains/<name>/schema.yaml` khoá `domain:` → netloc `base_url` → legacy `<name>.vn`. Sửa bẫy cũ `tnck` → `tnck.vn` (không khớp gì trong DB ⇒ báo cáo 0 bài) |
+| `RawStore.save_binary(...)` | `src/crawler/raw_store.py` | Lưu file nhị phân (`.xlsx`/`.docx`/`.pdf`) WORM; meta ghi `.binmeta.json` để `derive` không quét trúng |
+| `scripts/maintenance/backfill_deferred.py` | scripts | Thay `enrich_deferred.py` (đã xoá — nó fetch lại từ mạng, **mù Bronze**). Đọc Bronze đã có, kể cả Bronze JSON; `--dates-only` vá `published_at` thiếu |
 
 # `src/handoff/` — ranh giới producer↔agent (4 file)
 

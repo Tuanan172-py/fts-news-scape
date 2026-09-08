@@ -1,9 +1,10 @@
 # Tables Index
 
-10 bảng trong [Web Monocle DB](../datasets/web_monocle_db.md), nhóm theo tầng medallion.
+11 bảng trong [Web Monocle DB](../datasets/web_monocle_db.md), nhóm theo tầng medallion.
 
 ## Bronze / ingestion
 
+- [periodic_reports](periodic_reports.md) — báo cáo định kỳ NSO, dedup theo `(report_type, period)` — **ngoài** vòng đời bài báo
 - [articles](articles.md) — bảng trung tâm, 17 cột, khoá nghiệp vụ `url_title_hash`
 - [seen_articles](seen_articles.md) — cache dedup lớp 1 (SHA-256)
 - [scraper_heartbeat](scraper_heartbeat.md) — trạng thái hiện thời từng scraper

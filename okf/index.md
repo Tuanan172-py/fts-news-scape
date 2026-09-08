@@ -5,13 +5,13 @@ okf_version: "0.2"
 
 Kho tri thức của hệ thống **Web Monocle** (repo `FRA_DataIngestion — news-scape`) — nền tảng thu
 thập, chuẩn hoá và phân tích tin tức thị trường Việt Nam. Chuẩn **Open Knowledge Format (OKF)
-v0.2**. Cập nhật gần nhất: **2026-09-07**.
+v0.2**. Cập nhật gần nhất: **2026-09-08**.
 
 ## Tổng quan hệ thống
 
 Kiến trúc **medallion 3 vòng**, standalone (1 máy, 1 SQLite, không dịch vụ ngoài):
 
-1. **Vòng 1 — Capture (Bronze).** 7/24 domain đang bật, thu qua RSS + reverse API + HTML
+1. **Vòng 1 — Capture (Bronze).** 8/24 domain đang bật, thu qua RSS + reverse API + HTML
    listing; mỗi bài lưu raw HTML **byte-exact (WORM)** trước mọi xử lý; dedup SHA-256.
 2. **Vòng 2 — Standardize (Silver).** Bronze → clean base → change-detection 5 trạng thái →
    work-package → hàng đợi handoff. Toàn bộ **re-derivable**.
@@ -26,9 +26,9 @@ dùng, định tuyến bằng ontology 2.152 thực thể.
 Toàn bộ concept nằm dưới [`catalog/`](catalog/) (nhà canonical duy nhất). Bản đồ module↔file:
 [`MAPPING.md`](MAPPING.md). Lịch sử: [`log.md`](log.md).
 
-- [Datasets](catalog/datasets/index.md) — Bronze raw store, Silver/work-package, SQLite DB, deliverable
-- [Tables](catalog/tables/index.md) — 10 bảng SQLite
-- [Pipelines](catalog/pipelines/index.md) — morninger, capture, silver derive, agent handoff, user output
+- [Datasets](catalog/datasets/index.md) — Bronze raw store, Bronze báo cáo định kỳ, Silver/work-package, SQLite DB, deliverable
+- [Tables](catalog/tables/index.md) — 11 bảng SQLite
+- [Pipelines](catalog/pipelines/index.md) — morninger, capture, silver derive, agent handoff, user output, báo cáo định kỳ NSO
 - [Metrics](catalog/metrics/index.md) — throughput, dedup, health, backlog, DoD pass rate
 - [Playbooks](catalog/playbooks/index.md) — deployment, runbook, chu kỳ agent hằng ngày
 - [References](catalog/references/index.md) — kiến trúc, mã nguồn, hợp đồng agent

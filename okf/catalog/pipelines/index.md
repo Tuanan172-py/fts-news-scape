@@ -20,6 +20,10 @@ Luồng xử lý, xếp theo 3 vòng của [kiến trúc end-to-end](../referenc
 - [Agent Handoff](agent_handoff.md) — 2 lớp agent, export/ingest packet, cổng DoD
 - [User Output Workflow](user_output.md) — gate 2 lớp, định tuyến entity, ghi CSV người dùng
 
+## Ngoài chu kỳ (opt-in, tần suất thấp)
+
+- [Periodic Reports (NSO)](periodic_reports.md) — báo cáo KTXH định kỳ + file số liệu gốc; **không** chạy trong cycle 15′, dedup theo kỳ chứ không theo URL
+
 ## Legacy
 
 - [Sentiment Pipeline](sentiment_pipeline.md) — ⚠️ *deprecated*: sentiment rule-based đã gỡ khỏi

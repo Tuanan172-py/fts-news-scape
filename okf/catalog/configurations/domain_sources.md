@@ -1,7 +1,7 @@
 ---
 type: Configuration
 title: Domain Sources
-description: 24 file YAML cấu hình nguồn tin trong config/domains/ — 7 đang bật (Bronze-first), 17 tắt có chủ đích.
+description: 24 file YAML cấu hình nguồn tin trong config/domains/ — 8 đang bật (Bronze-first), 16 tắt có chủ đích.
 resource: project/config/domains/
 tags: [config, yaml, domains, sources]
 status: stable
@@ -26,10 +26,10 @@ sources_last_checked: 2026-09-07
 Mỗi nguồn tin = 1 file YAML trong `config/domains/`. `list_domains()` chỉ trả về domain có
 `enabled: true`; `build_scraper()` tra `method` trong [REGISTRY](../references/codebase.md).[^config-loader]
 
-# Trạng thái (2026-09-07): 24 config, **7 enabled**
+# Trạng thái (2026-09-08): 24 config, **8 enabled**
 
 > **Enabled ≡ có Bronze capture.** Hệ thống là Bronze-first: mỗi bài phải có raw HTML byte-exact
-> (`RawStore.save` trước mọi parse). `method: rss` generic **không** lưu Bronze, nên 17 domain
+> (`RawStore.save` trước mọi parse). `method: rss` generic **không** lưu Bronze, nên 16 domain
 > còn lại **cố ý tắt** — bật lại cần research từng trang + scraper có capture, không phải đổi
 > `enabled: true`.
 

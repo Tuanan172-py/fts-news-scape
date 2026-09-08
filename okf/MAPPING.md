@@ -20,6 +20,8 @@ DB/logs.
 |---|---|
 | `project/src/crawler/raw_store.py`, `robots.py`, `backoff.py` | [catalog/datasets/bronze_raw_html.md](catalog/datasets/bronze_raw_html.md) |
 | `project/src/scrapers/**`, `core/base_scraper.py` | [catalog/configurations/source_strategy.md](catalog/configurations/source_strategy.md), [catalog/references/codebase.md](catalog/references/codebase.md) |
+| `project/src/pipeline/periodic_reports.py`, `scripts/fetch_periodic_reports.py` | [catalog/pipelines/periodic_reports.md](catalog/pipelines/periodic_reports.md), [catalog/tables/periodic_reports.md](catalog/tables/periodic_reports.md), [catalog/datasets/bronze_periodic_reports.md](catalog/datasets/bronze_periodic_reports.md) |
+| `project/src/core/config.py` (`resolve_source_domain`) | [catalog/configurations/domain_sources.md](catalog/configurations/domain_sources.md), [catalog/references/codebase.md](catalog/references/codebase.md) |
 | `project/src/db/dedup.py` | [catalog/tables/seen_articles.md](catalog/tables/seen_articles.md), [catalog/metrics/dedup_rate.md](catalog/metrics/dedup_rate.md) |
 | `project/src/db/writer.py` | [catalog/pipelines/db_writer.md](catalog/pipelines/db_writer.md) |
 | `project/src/monitor/heartbeat.py`, `health.py` | [catalog/tables/scraper_heartbeat.md](catalog/tables/scraper_heartbeat.md), [catalog/tables/scraper_metrics.md](catalog/tables/scraper_metrics.md), [catalog/metrics/scraper_health.md](catalog/metrics/scraper_health.md) |

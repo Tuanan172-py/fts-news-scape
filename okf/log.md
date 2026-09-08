@@ -1,5 +1,20 @@
 # OKF Changelog
 
+## 2026-09-08 (Mo rong nguon tin + bao cao dinh ky NSO)
+
+Dong bo OKF voi dot mo rong nguon (`7bb46ba`, `75b8b6c`) va hop nhat 2 may (`e4d281a`).
+
+- **New**: `tables/periodic_reports.md` — bang thu 11, dedup theo `(report_type, period)` chu KHONG theo URL
+- **New**: `datasets/bronze_periodic_reports.md` — kho WORM thu hai `data/raw_reports/**` (HTML + `.xlsx`), va **vi sao** phai tach root khoi `data/raw_html/`
+- **New**: `pipelines/periodic_reports.md` — nhanh xu ly thu tu, NGOAI cycle 15'; NSO khong phai domain thu 25
+- **Update**: `index.md` — 7/24 → **8/24 domain enabled** (them fireant); them bao cao dinh ky vao ban do thu muc
+- **Update**: `tables/index.md`, `datasets/index.md` — 10 → **11 bang**
+- **Update**: `pipelines/index.md` — them muc "Ngoai chu ky"
+- **Update**: `configurations/domain_sources.md` — 7 → **8 enabled**, 17 → 16 tat
+- **Update**: `references/codebase.md` — `src/pipeline/` 8 → 9 file; them bang 3 API nen tang moi: `resolve_source_domain()`, `RawStore.save_binary()`, `backfill_deferred.py` (thay `enrich_deferred.py` da xoa vi mu Bronze)
+- **Update**: `MAPPING.md` — anh xa driver NSO va `resolve_source_domain`
+- **Total**: 28 → 31 concepts
+
 ## 2026-09-07 (Full refresh — đồng bộ với kiến trúc 3 vòng)
 
 Toàn bộ KB được rà lại theo code hiện hành (13 file `stale`, 3 `no-source`). **22 → 41 concept.**
