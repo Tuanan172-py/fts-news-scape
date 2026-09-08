@@ -34,3 +34,7 @@ data/work_packages/
 data/raw_html/
 # Bronze bao cao dinh ky NSO (HTML + .xlsx/.docx)
 data/raw_reports/
+# Report ngay do domain_check/daily_reporter sinh (output chay may)
+data/reports/
+# Log chay may cua morninger/daily (khong vao git)
+daily_log.txt

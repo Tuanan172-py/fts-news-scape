@@ -4,7 +4,7 @@ Tests TBTC (thoibaotaichinhvietnam.vn) — config-level trên RssCaptureScraper.
 KHÔNG có scraper riêng: nguồn này chỉ là 1 file YAML chạy trên class generic
 `rss_capture` của phase-01. Test ở đây bảo vệ chính bản config đó.
 
-Fixtures thật, captured live 2026-09-07.
+Fixtures thật: feed tải live, trang detail tái tạo TỪ BRONZE đã capture.
 """
 
 import sys
@@ -113,23 +113,25 @@ def test_content_selector_hits(env, feed_bytes, detail_html):
 def test_real_category_from_meta(env, feed_bytes, detail_html):
     """Feed gộp chung → tên feed không phải chuyên mục. Chuyên mục thật lấy từ
     <meta property="article:section">, và phải đứng ĐẦU danh sách categories."""
+    import re
+    expected = re.search(r'article:section"\s+content="([^"]+)"', detail_html).group(1)
     http = FakeHTTP(feed_bytes=feed_bytes, detail_html=detail_html)
     result = _scraper(_config(), http, env).run()
     captured = [a for a in result.new
                 if a.metadata["capture"]["capture_status"] == "ok"]
     assert captured
     a = captured[0]
-    assert a.categories[0] == "Chính sách tài chính"
+    assert a.categories[0] == expected
     assert "TBTC Tin mới" in a.categories       # tên feed vẫn giữ làm nguồn gốc
 
 
 def test_inline_not_used_when_capture_ok(env, feed_bytes, detail_html):
     """Feed CÓ content:encoded — nhưng Bronze phải đến từ trang detail, không phải inline."""
+    assert b"content:encoded" in feed_bytes, "fixture phải giữ content:encoded"
     http = FakeHTTP(feed_bytes=feed_bytes, detail_html=detail_html)
     result = _scraper(_config(), http, env).run()
     a = [x for x in result.new
          if x.metadata["capture"]["capture_status"] == "ok"][0]
-    # content_html cắt ra từ trang detail đã capture, không phải chuỗi inline của feed
     assert Path(a.metadata["capture"]["html_path"]).read_text(encoding="utf-8") == detail_html
     assert "_inline_html" not in a.metadata
     assert http.detail_calls > 0, "phải fetch detail dù feed đã có content:encoded"

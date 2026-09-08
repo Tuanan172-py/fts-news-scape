@@ -30,6 +30,16 @@ DETAIL_HTML = (
     "</div></body></html>"
 )
 
+BAODAUTU_HTML = (
+    '<html><body><main class="main_content">'
+    '<div class="title-detail">Tiêu đề</div>'
+    '<span class="post-time"> - 06/09/2026 19:55</span>'
+    '<div id="content_detail_news"><p>'
+    + ("Thân bài đủ dài để vượt ngưỡng kiểm tra. " * 12)
+    + 'Ngày 28/8/2026 có trong thân bài.</p></div>'
+    '</main></body></html>'
+)
+
 
 @pytest.fixture
 def env(tmp_path, monkeypatch):
@@ -50,7 +60,7 @@ def _row(store, h):
     conn = store.connect()
     try:
         return conn.execute(
-            "SELECT content_text, metadata_json FROM articles "
+            "SELECT content_text, published_at, metadata_json FROM articles "
             "WHERE url_title_hash=?", (h,)).fetchone()
     finally:
         conn.close()
@@ -136,18 +146,7 @@ def test_enrich_deferred_is_gone():
         "→ vi phạm Bronze-first. Dùng backfill_deferred.py.")
 
 
-# -- khôi phục published_at + Bronze JSON (thêm 2026-09-07) -------------------
-
-BAODAUTU_HTML = (
-    '<html><body><main class="main_content">'
-    '<div class="title-detail">Tiêu đề</div>'
-    '<span class="post-time"> - 06/09/2026 19:55</span>'
-    '<div id="content_detail_news"><p>'
-    + ("Thân bài đủ dài để vượt ngưỡng kiểm tra. " * 12)
-    + 'Ngày 28/8/2026 có trong thân bài.</p></div>'
-    '</main></body></html>'
-)
-
+# -- khôi phục published_at + Bronze JSON ------------------------------------
 
 def test_recover_date_from_scope_selector(tmp_path):
     """baodautu KHÔNG có <time>/meta/JSON-LD — ngày là text thuần trong span.post-time."""
@@ -194,3 +193,30 @@ def test_extract_from_json_bronze(tmp_path):
     html, text = backfill._extract_from_bronze(str(p), "div.khong-lien-quan")
     assert "Nội dung thật" in text
     assert "postID" not in text      # không rò key JSON
+
+
+def test_dates_only_mode(env):
+    """--dates-only: chỉ sửa published_at rỗng, KHÔNG đụng content.
+
+    Dùng bài baodautu vì đó là nguồn duy nhất mà ngày CHỈ có ở trang detail
+    (không <time>/meta/JSON-LD) — chính là ca mà chế độ này sinh ra để chữa.
+    """
+    store, _a, tmp, db = env
+    bdt = Article(url="https://baodautu.vn/bai-test-d123456.html",
+                  title="Bài baodautu thiếu ngày",
+                  source_domain="baodautu.vn",
+                  summary="Tóm tắt ngắn",
+                  content_text="Tóm tắt ngắn",
+                  published_at="",                     # ← cột rỗng, cần chữa
+                  metadata={"language": "vi"})
+    store.insert(bdt)
+    d = tmp / "data" / "raw_html" / "baodautu.vn" / "20260907"
+    d.mkdir(parents=True)
+    (d / f"{bdt.url_title_hash}.html").write_text(BAODAUTU_HTML, encoding="utf-8")
+
+    backfill.main("baodautu.vn", limit=10, do_fetch=False, dry_run=False,
+                  db_path=db, dates_only=True)
+
+    r = _row(store, bdt.url_title_hash)
+    assert r["published_at"] == "2026-09-06T19:55:00+07:00"
+    assert r["content_text"] == "Tóm tắt ngắn"      # content KHÔNG bị đụng

@@ -38,6 +38,9 @@ A tier is `1` (passed, evidence recorded), `0` (not passed/not run), or `—` (N
 |-------|-------------|--------|:----:|:-----:|:---:|:--------:|----------|
 | [US-001](stories/US-001-gold-agent-output-contract.md) | Phase 3 — Gold / agent-extract | `planned` | 0 | — | — | — | Hard gate (blocked on contract decision + ADR) |
 | [US-002](stories/US-002-optimize-user-output-format.md) | Per-User Output Workflow | `implemented` | 1 | 1 | — | — | Pytest 13/13 passed + real run 60 rows generated |
+| [US-003](stories/US-003-antigravity-multi-agent-hierarchy.md) | Antigravity Multi-Agent Hierarchy | `implemented` | 0 | 0 | — | — | Story tồn tại nhưng CHƯA có dòng proof — nợ từ phiên trước |
+| US-004 · US-006 · US-007 | Batch processing / manifest / payload optimization | `lost` | — | — | — | — | **File story MẤT** trong sự cố 2026-09-07 (untracked, không khôi phục được) — xem US-008 §6 |
+| [US-008](stories/US-008-l1-only-gate-and-backlog-tooling.md) | Per-User Output + Multi-Agent Hierarchy | `implemented` | 1 | 1 | 0 | — | 355 passed · export thật 424 dòng (GOLD 384/L1_ONLY 40) · 17 batch cho 423 bài T1 · commit `9c06234` |
 
 > Rule reminder: Stories reach `implemented` ONLY after validation commands run and results are recorded. Never hand-flip.
 

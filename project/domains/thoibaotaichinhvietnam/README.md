@@ -73,9 +73,10 @@ Disallow: /ajax/ /sp/ /services/ /utilities/ /apiservice@/ /apicenter@/ /widgets
 
 ## 6. Vai trò trong hệ thống
 
-NSO (`nso.gov.vn`) hiện **bị chặn network** (TCP reset, xem phase-05). TBTC là nguồn
-**proxy chính** cho số liệu KTXH / giải ngân đầu tư công — đăng lại báo cáo trong vòng
-vài giờ, có transport hoạt động và ngày sạch.
+NSO (`nso.gov.vn`) **KHÔNG còn bị chặn** — chẩn đoán TCP reset ban đầu ở phase-05 chỉ là
+chập chờn; G1 chạy lại 2026-09-07 đạt **12/12 PASS**, đã build driver riêng
+(`src/pipeline/periodic_reports.py`, design 16). TBTC vẫn giữ vai trò **proxy bổ sung** cho số
+liệu KTXH / giải ngân đầu tư công — đăng lại báo cáo trong vài giờ, transport ổn định, ngày sạch.
 
 ## 7. Bảo trì
 

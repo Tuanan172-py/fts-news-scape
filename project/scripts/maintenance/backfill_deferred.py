@@ -19,19 +19,19 @@ Script này Bronze-first tuyệt đối
    `content_text` TỪ FILE ĐÓ, không chạm mạng. Đây là đường đi mặc định sau khi
    `scripts/refresh_watchlist.py` đã kéo Bronze về.
 2. Chỉ khi CHƯA có Bronze và bật `--fetch`: fetch qua `RawStore` (robots + rate limit
-   + backoff đầy đủ) để **ghi Bronze trước**, rồi mới dựng content.
+   đầy đủ) để **ghi Bronze trước**, rồi mới dựng content.
 3. TUYỆT ĐỐI không bao giờ ghi `content_text` mà không có Bronze tương ứng.
 
 Quy trình khuyến nghị cho nguồn mới:
     python scripts/refresh_watchlist.py 300 <host>       # kéo Bronze cho backlog
     python -m src.morninger --once derive                 # Bronze → Silver
-    python scripts/maintenance/backfill_deferred.py <host>  # Silver/Bronze → cột DB
+    python scripts/maintenance/backfill_deferred.py <host>  # Bronze → cột DB
 
 Usage:
     python scripts/maintenance/backfill_deferred.py                 # mọi domain, 100 bài
     python scripts/maintenance/backfill_deferred.py vietnambiz.vn
     python scripts/maintenance/backfill_deferred.py vietnambiz.vn --limit 500
-    python scripts/maintenance/backfill_deferred.py vietnambiz.vn --fetch   # cho phép fetch nếu thiếu Bronze
+    python scripts/maintenance/backfill_deferred.py fireant.vn --fetch   # fetch nếu thiếu Bronze
     python scripts/maintenance/backfill_deferred.py --dry-run
     python scripts/maintenance/backfill_deferred.py baodautu.vn --dates-only --limit 500
 

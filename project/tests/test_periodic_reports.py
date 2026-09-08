@@ -6,6 +6,7 @@ Bất biến chính:
 - `modified` đổi → revision MỚI, không ghi đè bản cũ
 - không parse được kỳ → HELD + cảnh báo, TUYỆT ĐỐI không đoán bừa
 - attachment nhị phân lưu byte-exact, không parse
+- Bronze ở ROOT RIÊNG data/raw_reports/ — derive của bài báo không nuốt nhầm
 """
 
 import hashlib
@@ -145,6 +146,8 @@ def test_extract_attachments():
     assert len(got) == 2, "phải bỏ link không phải file và link trùng"
     assert any(u.endswith("02-Bieu-T8.2026.xlsx") for u in urls)
     assert all(u.startswith("https://www.nso.gov.vn/") for u in urls)  # đã urljoin
+    # tên file GIỮ NGUYÊN case gốc (chỉ hạ chữ khi so khớp đuôi)
+    assert any(a["filename"] == "02-Bieu-T8.2026.xlsx" for a in got)
 
 
 # -- run() ------------------------------------------------------------------
@@ -279,5 +282,6 @@ def test_binary_meta_suffix_not_scanned_by_derive(env):
     root = tmp / "data/raw_reports/nso.gov.vn"
     plain = sorted(p.name for p in root.rglob("*.meta.json")
                    if not p.name.endswith(".binmeta.json"))
-    assert plain == ["monthly-2026-08-r1.meta.json"],         "chi trang HTML moi dung .meta.json"
+    assert plain == ["monthly-2026-08-r1.meta.json"], \
+        "chi trang HTML moi dung .meta.json"
     assert len(list(root.rglob("*.binmeta.json"))) == 2

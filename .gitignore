@@ -32,10 +32,14 @@ logs/
 **/data/agent_outputs_l1/
 # Silver (dẫn xuất Bronze qua derive)
 **/data/silver/
+# Report ngay do domain_check/daily_reporter sinh
+**/data/reports/
 # work-package cho handoff
 **/data/work_packages/
 # Bronze raw HTML (nặng — tái scrape được)
 **/data/raw_html/
+# Bronze bao cao dinh ky NSO (HTML + .xlsx/.docx)
+**/data/raw_reports/
 project/src/data/
 
 # Harness Durable SQLite

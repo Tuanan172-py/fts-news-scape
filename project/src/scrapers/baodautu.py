@@ -12,7 +12,11 @@ giải ngân đầu tư công / FDI / hạ tầng nên không thể bỏ.
 
 List: trang 1 = `{base}/{slug}-d{id}/` (CÓ dấu / cuối)
       trang N = `{base}/{slug}-d{id}/p{N}`  (⚠️ THÊM / cuối → 404)
-      item = div.thumbblock, link = a.title_thumb_square, sapo = div.sapo_thumb_news
+      ⚠️ item KHÔNG phải `div.thumbblock` — class `thumbblock` nằm trên thẻ <a> ẢNH
+      (select("div.thumbblock") trả 0 node dù chuỗi xuất hiện 35 lần). Item thật là
+      thẻ <article>; trong đó link ảnh (KHÔNG có text) đứng TRƯỚC link tiêu đề nên
+      select_one() sẽ vớ phải link ảnh → mất sạch bài. Phải duyệt hết anchor và lấy
+      cái đầu tiên vừa có text vừa khớp link_pattern.
       KHÔNG có ngày đăng trên listing → published_at điền ở enrich() từ trang detail.
 
 Detail: body = #content_detail_news

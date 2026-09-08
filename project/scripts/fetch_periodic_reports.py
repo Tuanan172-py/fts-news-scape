@@ -4,7 +4,7 @@ Thu thập báo cáo định kỳ NSO (Cục Thống kê) — design 16.
 OFFLINE, opt-in, tần suất thấp. KHÔNG nằm trong cycle 15 phút của orchestrator.
 NSO công bố ~ngày 3 hàng tháng lúc ~09:00 (verified 2026-09-07) → lịch khuyến nghị:
 cron ngày 2-6 hàng tháng, 2 lần/ngày (08:00 & 14:00 giờ VN), cộng 1 lần/tuần để bắt
-báo cáo quý/năm.
+báo cáo quý/năm. Xem scripts/run_periodic_reports.ps1.
 
 Usage:
     python scripts/fetch_periodic_reports.py                    # 20 bài mới nhất

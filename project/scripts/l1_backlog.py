@@ -62,6 +62,13 @@ QUERIES: dict[str, str] = {
         JOIN work_items w ON w.article_id = a.url_title_hash AND w.status = 'pending'
         WHERE {_HAS_L1} AND {_NO_GOLD}""",
 
+    # -- Kẹt: claimed nhưng không bao giờ được đòi lại (claim() chỉ đọc 'pending')
+    "stuck_claimed": "SELECT COUNT(*) FROM work_items WHERE status = 'claimed'",
+    "stuck_claimed_no_gold": """SELECT COUNT(DISTINCT w.article_id) FROM work_items w
+        JOIN articles a ON a.url_title_hash = w.article_id
+        WHERE w.status = 'claimed' AND NOT EXISTS
+        (SELECT 1 FROM agent_outputs ag WHERE ag.article_id = w.article_id AND ag.dod_pass = 1)""",
+
     # -- T4: rò rỉ — đã tốn công agent nhưng không bao giờ giao được ------------
     "t4_l1task_orphan": """SELECT COUNT(*) FROM l1_tasks t WHERE NOT EXISTS
         (SELECT 1 FROM articles a WHERE a.url_title_hash = t.article_id)""",
@@ -76,7 +83,6 @@ QUERIES: dict[str, str] = {
     "l1_tasks_failed": "SELECT COUNT(*) FROM l1_tasks WHERE status = 'failed'",
     "l1_out_dod_fail": "SELECT COUNT(*) FROM l1_outputs WHERE dod_pass = 0",
     "work_items_pending": "SELECT COUNT(*) FROM work_items WHERE status = 'pending'",
-    "work_items_claimed": "SELECT COUNT(*) FROM work_items WHERE status = 'claimed'",
     "gold_out_dod_fail": "SELECT COUNT(*) FROM agent_outputs WHERE dod_pass = 0",
 }
 
@@ -121,12 +127,17 @@ def render(m: dict[str, int], packets: dict[str, int]) -> str:
     add(f"    ├─ l1_outputs xong {m['t4_l1out_orphan']:>6}  ĐÃ tốn công agent, vẫn không giao được")
     add(f"    └─ gold xong       {m['t4_gold_orphan']:>6}  ĐÃ tốn token Gold, vẫn không giao được")
     add("")
+    add(f"KẸT work_items status='claimed': {m['stuck_claimed']} "
+        f"(trong đó {m['stuck_claimed_no_gold']} chưa có Gold và CÓ trong articles)")
+    add("    claim() chỉ đọc status='pending' và không có cơ chế đòi lại claim treo")
+    add("    => nhóm này vô hình với hàng đợi Gold. KHÔNG nằm trong T3 ở trên.")
+    add("")
     add("-" * 78)
     add("HÀNG ĐỢI THÔ")
     add("-" * 78)
     add(f"l1_tasks   pending={m['l1_tasks_pending']:<6} failed={m['l1_tasks_failed']:<6} "
         f"l1_outputs dod_pass=0: {m['l1_out_dod_fail']}")
-    add(f"work_items pending={m['work_items_pending']:<6} claimed={m['work_items_claimed']:<6} "
+    add(f"work_items pending={m['work_items_pending']:<6} "
         f"agent_outputs dod_pass=0: {m['gold_out_dod_fail']}")
     add(f"packet trên đĩa: L1 lẻ={packets['l1_single']}  L1 lô={packets['l1_batch']}  "
         f"Gold lẻ={packets['gold_single']}  Gold lô={packets['gold_batch']}")

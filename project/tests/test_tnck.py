@@ -1,10 +1,10 @@
 """
 Tests TnckScraper — zone JSON API + Bronze full raw HTML capture.
 
-Fixtures thật (zone 1, captured live 2026-09-07). Không chạm mạng.
+Fixtures thật: zone list tải live, trang detail tái tạo TỪ BRONZE đã capture.
 
 ⚠️ FakeHTTP.get_json() BỎ QUA url và trả cùng list_json cho MỌI lần gọi
-(tests/_fakes.py:39-40). Với 9 zone thật, fetch_list sẽ phát lại 1 zone 9 lần →
+(tests/_fakes.py). Với 9 zone thật, fetch_list sẽ phát lại 1 zone 9 lần →
 item trùng 9×. Vì vậy mọi test ở đây cấu hình **đúng 1 zone**.
 """
 

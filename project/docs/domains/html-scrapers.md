@@ -32,8 +32,8 @@ Re-verify 2026-09-07, **8/8 URL**: 200, ~1.2 KB, **0 `<item>`**. Mọi feed tr�
 <link>https://baodautu.vn//.rss</link>   <!-- double-slash, không có category -->
 ```
 
-Generator phía server hỏng. `rssMain.html` trả HTML homepage 34 KB. **Đừng probe lại.**
-(Chẩn đoán 2026-07-24 "dormant, có thể bật lại" là sai và đã tồn tại 14 tháng.)
+Generator RSS phía server hỏng. `rssMain.html` trả HTML homepage 34 KB, không phải feed.
+**Đừng probe lại.** (Chẩn đoán 2026-07-24 "dormant, có thể bật lại" là sai, đã tồn tại 14 tháng.)
 
 ### URL
 
@@ -53,7 +53,7 @@ Loại d80 "Quảng bá" (PR).
 `<div>` (dù chuỗi xuất hiện 35 lần trong HTML). Item thật là thẻ **`<article>`**.
 Trong mỗi `<article>`, link ảnh (**không có text**) đứng **trước** link tiêu đề → `select_one()`
 vớ phải link ảnh rồi bỏ qua ⇒ **mất sạch bài**. Phải duyệt hết anchor và lọc theo
-text + `link_pattern` (`-d\d+\.html`).
+text + `link_pattern` (`-d\d+\.html`). Có test `test_div_thumbblock_would_match_nothing`.
 
 **2. `.content` là chuỗi template JavaScript.** Source có
 `<div class="content">'+content+'</div>'` của widget bình luận. Selector `.content` bắt nhầm node
@@ -71,11 +71,24 @@ Parse fail → `published_at = ""` **+** ghi `missing: ["published_at"]`. **Khô
 `respect_robots: true` + `rate_limit: 3.0`. **Không** bật `proxy_rotation`: HTML scraping đã lộ
 hơn RSS, bật proxy là vượt từ *tương thích* sang *né tránh* — cần maintainer duyệt.
 
+### Backfill bài deferred
+
+Bài vượt `max_details_per_cycle` chỉ có summary VÀ **không có `published_at`** (vì ngày chỉ có ở
+detail). Chữa bằng quy trình 3 bước + `--dates-only`:
+
+```bash
+python scripts/refresh_watchlist.py 500 baodautu.vn
+python -m src.morninger --once derive
+python scripts/maintenance/backfill_deferred.py baodautu.vn --limit 600
+python scripts/maintenance/backfill_deferred.py baodautu.vn --dates-only --limit 600
+```
+Kết quả thực tế 2026-09-07: `verify_quality` **27.5% → 99.1% PASS**.
+
 ### Sitemap backstop (chưa dùng)
 
 `sitemaps/news-{YYYY}-{M}.xml` — 348 `<url>` cho 1-7/9 ≈ **50 bài/ngày**. Nhưng `<loc>` bị đệm
 khoảng trắng, `<lastmod>` **chỉ có ngày**, **không có category**. Chỉ mở sub-phase 04b nếu
-date-parse < 98% hoặc miss rate > 5%. (Hiện date-parse = **100%**.)
+date-parse < 98% hoặc miss rate > 5%. (Hiện date-parse = **100%** trên bài mới.)
 
 Chi tiết đầy đủ: [`domains/baodautu/README.md`](../../domains/baodautu/README.md) ·
 [`domains/baodautu/schema.yaml`](../../domains/baodautu/schema.yaml)

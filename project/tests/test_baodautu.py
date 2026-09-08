@@ -2,7 +2,7 @@
 Tests BaodautuScraper — HTML listing + Bronze full raw HTML capture.
 
 Nguồn HTML-listing đầu tiên của repo (RSS của baodautu hỏng vĩnh viễn ở server).
-Fixtures thật, captured live 2026-09-07. Không chạm mạng.
+Fixtures thật: listing tải live, trang detail tái tạo TỪ BRONZE đã capture.
 """
 
 import sys
@@ -71,7 +71,7 @@ def _scraper(cfg, http, dedup):
 
 
 def _http(listing_html, detail_html):
-    # listing đi qua get() với URL chứa "-d"; detail đi qua get_response()
+    # listing đi qua get() với URL chứa "-d2"; detail đi qua get_response()
     return FakeHTTP(listing_html=listing_html, detail_html=detail_html,
                     listing_match="-d2")
 
@@ -97,6 +97,16 @@ def test_listing_parsed(env, listing_html, detail_html):
     for it in items:
         assert it["link"] and it["title"]
         assert it["_cat_name"] == "Toàn cảnh đầu tư"
+
+
+def test_div_thumbblock_would_match_nothing(listing_html):
+    """Bẫy: class `thumbblock` nằm trên thẻ <a> ẢNH, KHÔNG phải <div>.
+    Kế hoạch gốc ghi item_selector='div.thumbblock' và sẽ khớp 0 node."""
+    from bs4 import BeautifulSoup
+    soup = BeautifulSoup(listing_html, "lxml")
+    assert "thumbblock" in listing_html            # chuỗi CÓ trong HTML
+    assert soup.select("div.thumbblock") == []      # nhưng div.thumbblock = 0 node
+    assert len(soup.select("article")) > 10         # item thật là <article>
 
 
 def test_capture_happy_path(env, listing_html, detail_html):

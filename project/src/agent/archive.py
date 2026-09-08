@@ -6,16 +6,14 @@ from __future__ import annotations
 import shutil
 from datetime import datetime
 from pathlib import Path
+
 from loguru import logger
 
 from src.core.models import VN_TZ
 
 
-def archive_task_packet(
-    article_id: str,
-    task_dir: str | Path,
-    archive_date: str | None = None,
-) -> Path | None:
+def archive_task_packet(article_id: str, task_dir: str | Path,
+                        archive_date: str | None = None) -> Path | None:
     """Di chuyen 1 file task.json tu task_dir sang task_dir/archive/date/"""
     task_dir = Path(task_dir)
     src_file = task_dir / f"{article_id}.task.json"
@@ -38,11 +36,8 @@ def archive_task_packet(
         return None
 
 
-def archive_completed_tasks(
-    article_ids: list[str],
-    task_dir: str | Path,
-    archive_date: str | None = None,
-) -> int:
+def archive_completed_tasks(article_ids, task_dir: str | Path,
+                            archive_date: str | None = None) -> int:
     """Di chuyen danh sach cac bai viet hoan thanh sang archive."""
     cnt = 0
     if not archive_date:

@@ -12,7 +12,7 @@ from src.core.models import VN_TZ, now_vn_iso
 from src.core.staging import safe_json_dump
 
 
-def format_short_time(iso_str: str | None) -> str:
+def format_short_time(iso_str: str) -> str:
     """Format ISO timestamp sang 'DD/MM HH:MM' de hien thi tren table."""
     if not iso_str:
         return "--/-- --:--"
@@ -70,7 +70,7 @@ def create_batch_manifest(
     timestamp_str = now.strftime("%Y%m%d_%H%M%S")
     batch_id = f"BATCH_{batch_type.upper()}_{timestamp_str}"
 
-    articles_summary = []
+    articles_summary: list[dict[str, Any]] = []
     for idx, t in enumerate(tasks, start=1):
         inp = t.get("input") or {}
         article_id = t.get("article_id") or inp.get("article_id", "")
@@ -104,34 +104,32 @@ def create_batch_manifest(
 def print_batch_summary_table(manifest: dict[str, Any], max_rows: int = 25) -> None:
     """In bang tom tat danh sach tin cua batch len Terminal truc quan."""
     batch_id = manifest.get("batch_id", "UNKNOWN")
-    size = manifest.get("batch_size", 0)
+    batch_size = manifest.get("batch_size", 0)
     order = manifest.get("order", "desc")
-    btype = manifest.get("batch_type", "gold").upper()
+    batch_type = manifest.get("batch_type", "gold").upper()
     articles = manifest.get("articles", [])
 
     if not articles:
         return
 
-    border = "=" * 88
-    print(border)
-    print(f"📦 [{btype} BATCH] {batch_id} ({size} tin moi nhat, order={order})")
-    print(border)
+    print("=" * 88)
+    print(f"📦 [{batch_type} BATCH] {batch_id} ({batch_size} tin moi nhat, order={order})")
+    print()
     print(f" {'STT':^3} | {'Nguon':<8} | {'Thoi gian':^11} | {'Tieu de'}")
     print("-" * 5 + "+" + "-" * 10 + "+" + "-" * 13 + "+" + "-" * 57)
 
     for item in articles[:max_rows]:
         seq = str(item.get("seq", "")).rjust(3)
         domain = (item.get("domain") or "")[:8].ljust(8)
-        st = format_short_time(item.get("time")).center(11)
-        raw_title = item.get("title") or ""
-        title = raw_title if len(raw_title) <= 55 else raw_title[:52] + "..."
-        print(f" {seq} | {domain} | {st} | {title}")
+        ts = format_short_time(item.get("time")).center(11)
+        title = item.get("title") or ""
+        title = title if len(title) <= 55 else title[:52] + "..."
+        print(f" {seq} | {domain} | {ts} | {title}")
 
     if len(articles) > max_rows:
-        remain = len(articles) - max_rows
-        print(f" ... va con {remain} bai viet nua trong batch_manifest.json")
+        print(f" ... va con {len(articles) - max_rows} bai viet nua trong batch_manifest.json")
 
-    print(border)
+    print("=" * 88)
 
 
 def load_batch_manifest(batch_dir: str | Path) -> dict[str, Any] | None:

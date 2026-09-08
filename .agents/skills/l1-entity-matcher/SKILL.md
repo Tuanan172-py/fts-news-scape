@@ -88,3 +88,51 @@ Ghi kết quả vào `data/agent_outputs_l1/<article_id>.json`:
   }
 }
 ```
+
+---
+
+## 5. Chế độ Gom Lô Siêu Tốc (Consolidated Batch Mode)
+
+Packet L1 chỉ mang **tiêu đề**, không mang `cleaned_text`, nên gom lô được **25 bài/file** (Gold chỉ 5–10).
+
+Khi nhận file task dạng gom lô `data/agent_tasks/l1/l1_batch_XX.task.json`:
+
+1. **Một lần đọc duy nhất**: Gọi `view_file` đọc toàn bộ `l1_batch_XX.task.json`.
+2. **Tra soát theo `code_first`**: Mỗi task trong `tasks[]` đã có sẵn kết quả khớp bằng code
+   (`code_first.entity_ids`, `code_first.industries`, `code_first.relevance`). Nhiệm vụ là
+   **XÁC NHẬN / SỬA / BỔ SUNG**, không nhận diện lại từ đầu:
+   - `entity_ids` đúng → giữ, `method: "exact_code"` hoặc `"alias"`.
+   - Code bắt nhầm (vd "quyết định" → `Quỹ`) → **BỎ**.
+   - Code bỏ sót (đặc biệt tên thương hiệu, chủ đề vĩ mô, loại tài sản) → **THÊM**, `method: "semantic"`.
+3. **Một lần ghi duy nhất**: Ghi kết quả cả lô vào
+   `data/agent_outputs_l1/l1_batch_XX.output.json` dưới dạng **mảng JSON** các object
+   `l1-entity-output-v1` (đúng schema ở §4):
+
+```json
+[
+  { "l1_output_version": "1.0", "article_id": "<article_id_1>", "title": "...", "recognized": true, "entities": [], "categories": {}, "citations": [], "processing_metadata": {} },
+  { "l1_output_version": "1.0", "article_id": "<article_id_2>", "...": "..." }
+]
+```
+
+> 25 bài/lô ⇒ giảm ~96% số lần gọi công cụ I/O so với xử lý từng file lẻ.
+
+### Bẫy làm hỏng DoD (đọc kỹ trước khi ghi)
+
+- `entities[].surface` và `citations[].source_span` **BẮT BUỘC là chuỗi con NGUYÊN VĂN của
+  `tasks[i].title`** — copy y nguyên, không sửa hoa/thường, không bỏ dấu, không rút gọn.
+- `recognized: true` ⇒ phải có **≥1 entity VÀ ≥1 citation**. Không nhận ra gì thì
+  `recognized: false`, `entities: []`, `citations: []`, mọi `categories` là `"none"`.
+- `categories.<nhóm> = "done"` ⇒ phải có **≥1 entity `in_list: true` thuộc đúng nhóm đó**.
+  Khai `done` mà không có entity tương ứng là **DoD FAIL**.
+- Entity nhận ra nhưng KHÔNG có trong catalog ⇒ `in_list: false`, `entity_id: null`, và đưa vào
+  `unlisted_candidates` — đừng bịa `entity_id`.
+- `processing_metadata` phải đủ `agent_provider`, `model_used`, `timestamp` (ISO, giờ VN).
+
+### Nạp kết quả
+
+```bash
+python scripts/l1_ingest.py data/agent_outputs_l1
+```
+`l1_ingest.py` tự giải nén mảng JSON gom lô, chấm DoD từng bài, ghi `l1_outputs` và chuyển
+`l1_tasks.status` → `done`/`failed`, rồi archive packet đã xong.

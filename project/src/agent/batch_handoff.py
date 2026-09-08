@@ -172,7 +172,7 @@ def split_l1_tasks_into_batches(
 def unpack_batch_output(batch_output: dict | list | str | Path) -> list[dict]:
     """
     Giải nén output gom lô của Subagent thành danh sách các record agent-output-v1 đơn lẻ.
-    
+
     Hỗ trợ 3 format phổ biến:
     1. List các objects: [ {"article_id": "..."}, ... ]
     2. Dict có key 'outputs' hoặc 'results': { "batch_id": "...", "outputs": [ ... ] }

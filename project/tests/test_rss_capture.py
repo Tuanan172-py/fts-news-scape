@@ -1,10 +1,10 @@
 """
 Tests RssCaptureScraper — RSS list + Bronze full raw HTML capture (method: rss_capture).
 
-Fixtures thật (vietnambiz, captured live 2026-09-07). Không chạm mạng.
-Bao phủ: registry, capture happy path (byte-exact), selector hit, fallback
-content:encoded khi capture fail, cap max_details, feed chết bị cô lập,
-và filter kế thừa từ RSSScraper.
+Fixtures thật (vietnambiz, tái tạo TỪ BRONZE đã capture). Không chạm mạng.
+Bao phủ: registry, kế thừa RSSScraper, capture happy path (byte-exact), selector hit,
+regression selector mặc định, fallback content:encoded khi capture fail, cap
+max_details, feed chết bị cô lập, filter kế thừa, và tuỳ chọn category_meta.
 """
 
 import sys
@@ -51,7 +51,7 @@ def _config(**over):
         "detail": {"content_selector": "div.vnbcbc-body",
                    "max_details_per_cycle": 30},
         "watchlist": ["VIX", "FPT", "VNM"],
-        "fuzzy_dedup": False,   # fixture có 3 bài khác hẳn nhau; tắt cho tiền định
+        "fuzzy_dedup": False,   # fixture có 3 bài khác nhau; tắt cho tiền định
     }
     cfg.update(over)
     return cfg
@@ -120,6 +120,7 @@ def test_content_selector_hits(env, feed_bytes, detail_html):
 def test_default_article_selector_would_break(env, feed_bytes, detail_html):
     """Regression cho audit 01 §A2: trang vietnambiz KHÔNG có thẻ <article>,
     nên default 'article' làm mọi bài thành partial. Selector là BẮT BUỘC."""
+    assert "<article" not in detail_html, "fixture phải giữ đặc điểm không có <article>"
     cfg = _config(detail={"max_details_per_cycle": 30})   # không có content_selector
     http = FakeHTTP(feed_bytes=feed_bytes, detail_html=detail_html)
     result = _scraper(cfg, http, env).run()
@@ -139,7 +140,7 @@ def test_detail_failure_keeps_summary(env, feed_bytes):
     assert any("detail fetch failed" in e for e in result.errors)
 
 
-def test_inline_content_fallback_on_failure(env, detail_html):
+def test_inline_content_fallback_on_failure(env):
     """content:encoded chỉ là body DỰ PHÒNG khi capture fail — không bao giờ là Bronze."""
     body = "<p>" + ("Nội dung đầy đủ trong feed. " * 40) + "</p>"
     feed = (
