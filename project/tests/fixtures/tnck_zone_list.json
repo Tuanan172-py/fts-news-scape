@@ -1,0 +1,103 @@
+{
+  "data": {
+    "contents": [
+      {
+        "content_id": 397158,
+        "title": "Nhận định thị trường phiên giao dịch ngày 8/9: Chờ quá trình kiểm định hỗ trợ",
+        "sub_title": "",
+        "description": "(ĐTCK)&nbsp;Áp lực bán lan rộng trên các nhóm ngành lớn, trong khi khối ngoại quay lại bán ròng. Tuy nhiên, thanh khoản vẫn ở mức thấp, cho thấy phiên giảm chủ yếu phản ánh sự thận trọng của dòng tiền mới hơn là bán tháo.",
+        "date": 1788778376,
+        "update_time": 1788778376,
+        "avatar_url": "https://image.tinnhanhchungkhoan.vn/w200/Uploaded/2026/bpikpjik/2021_06_04/thi-truong-chung-khoan-14-8902.jpg",
+        "avatar_description": "",
+        "url": "/nhan-dinh-thi-truong-phien-giao-dich-ngay-89-cho-qua-trinh-kiem-dinh-ho-tro-post397158.html",
+        "redirect_link": "",
+        "frame_link": "",
+        "display_type": 0,
+        "attributes": 0,
+        "content_type": "",
+        "content_icon": "",
+        "source": "",
+        "source_url": "",
+        "show_title": true,
+        "show_sapo": true,
+        "show_avatar": true,
+        "show_comment": true,
+        "show_ads": true,
+        "show_audio": true,
+        "zone": {
+          "zone_id": 13,
+          "parent_id": 1,
+          "name": "Nhận định",
+          "url": "/nhan-dinh/"
+        }
+      },
+      {
+        "content_id": 397159,
+        "title": "Sự kiện chứng khoán đáng chú ý ngày 8/9",
+        "sub_title": "",
+        "description": "(ĐTCK) Thông tin lịch sự kiện chứng khoán đáng chú ý ngày 8/9 về các doanh nghiệp niêm yết trên thị trường chứng khoán.",
+        "date": 1788778372,
+        "update_time": 1788778372,
+        "avatar_url": "https://image.tinnhanhchungkhoan.vn/w200/Uploaded/2026/bpikpjik/2021_06_16/thi-truong-chung-khoan-4-1515.jpg",
+        "avatar_description": "",
+        "url": "/su-kien-chung-khoan-dang-chu-y-ngay-89-post397159.html",
+        "redirect_link": "",
+        "frame_link": "",
+        "display_type": 0,
+        "attributes": 0,
+        "content_type": "",
+        "content_icon": "",
+        "source": "",
+        "source_url": "",
+        "show_title": true,
+        "show_sapo": true,
+        "show_avatar": true,
+        "show_comment": true,
+        "show_ads": true,
+        "show_audio": true,
+        "zone": {
+          "zone_id": 1,
+          "parent_id": 0,
+          "name": "Chứng khoán",
+          "url": "/chung-khoan/"
+        }
+      },
+      {
+        "content_id": 397147,
+        "title": "Thị trường tài chính 24h: Cổ phiếu chứng khoán có thể là tâm điểm",
+        "sub_title": "",
+        "description": "(ĐTCK) VN-Index giảm mạnh; Công ty tài chính: Lãi tăng, nợ xấu cũng tăng; Cổ phiếu chứng khoán: Chỉ báo thị trường; Dòng tiền chờ tín hiệu mới; Chạy đua tìm vốn!...là những thông tin đáng chú ý của thị trường trong 24h qua.",
+        "date": 1788778369,
+        "update_time": 1788778369,
+        "avatar_url": "https://image.tinnhanhchungkhoan.vn/w200/Uploaded/2026/bpikpjik/2021_06_16/thi-truong-chung-khoan-6-4932.jpg",
+        "avatar_description": "",
+        "url": "/thi-truong-tai-chinh-24h-co-phieu-chung-khoan-co-the-la-tam-diem-post397147.html",
+        "redirect_link": "",
+        "frame_link": "",
+        "display_type": 0,
+        "attributes": 0,
+        "content_type": "",
+        "content_icon": "",
+        "source": "",
+        "source_url": "",
+        "show_title": true,
+        "show_sapo": true,
+        "show_avatar": true,
+        "show_comment": true,
+        "show_ads": true,
+        "show_audio": true,
+        "zone": {
+          "zone_id": 1,
+          "parent_id": 0,
+          "name": "Chứng khoán",
+          "url": "/chung-khoan/"
+        }
+      }
+    ],
+    "load_more": true
+  },
+  "error_code": 0,
+  "error_message": "Success",
+  "server_time": 1788792472
+}

@@ -11,6 +11,7 @@ Nguồn (ưu tiên work_packages — output pipeline; fallback silver):
   python scripts/l1_route.py
   python scripts/l1_route.py --source data/work_packages --review all
   python scripts/l1_route.py --review missed          # chỉ phát packet tin code không khớp
+  python scripts/l1_route.py --only gold-ready --all  # ƯU TIÊN: bài đã có Gold nhưng thiếu L1
 """
 from __future__ import annotations
 
@@ -48,6 +49,14 @@ def main(argv=None) -> int:
     ap.add_argument("--order", choices=["desc", "asc"], default="desc", help="Thứ tự: desc (mới nhất trước), asc (cũ nhất trước)")
     ap.add_argument("--all", "-a", action="store_true", help="Xuất toàn bộ bài chưa hoàn thành")
     ap.add_argument("--no-skip-done", action="store_true", help="Không bỏ qua các bài đã có status=done")
+    ap.add_argument("--only", choices=["all", "gold-ready", "in-articles"], default="all",
+                    help="gold-ready: CHỈ bài đã có agent_outputs.dod_pass=1 nhưng thiếu L1 "
+                         "— xong L1 là giao được NGAY, đầy đủ (ưu tiên #1). "
+                         "in-articles: bài có mặt trong bảng `articles` — loại nhóm work-package "
+                         "mồ côi (không có dòng `articles` ⇒ vĩnh viễn không vào final.csv)")
+    ap.add_argument("--mini-batch", "-m", type=int, default=None,
+                    help="Gom lô thành l1_batch_XX.task.json (khuyến nghị 25). Packet L1 chỉ có "
+                         "tiêu đề nên lô lớn hơn Gold được; giảm ~96%% số tool call của agent")
     args = ap.parse_args(argv)
 
     if args.all:
@@ -72,6 +81,34 @@ def main(argv=None) -> int:
         finally:
             conn.close()
 
+    # --only: thu hẹp phạm vi theo mức "lời" khi rút backlog.
+    #   gold-ready  = Gold đã xong nhưng thiếu L1 → công Gold đang nằm không, xong L1 là giao ngay.
+    #   in-articles = có dòng trong `articles` → loại work-package mồ côi (không có `articles`
+    #                 thì gate `articles ⨝ l1_outputs` không bao giờ chạm tới, chạy L1 là phí).
+    _ONLY_SQL = {
+        "gold-ready": """
+            SELECT DISTINCT a.url_title_hash AS article_id
+            FROM articles a
+            JOIN agent_outputs ag ON ag.article_id = a.url_title_hash AND ag.dod_pass = 1
+            WHERE NOT EXISTS (SELECT 1 FROM l1_outputs l1
+                              WHERE l1.article_id = a.url_title_hash AND l1.dod_pass = 1)
+        """,
+        "in-articles": """
+            SELECT a.url_title_hash AS article_id
+            FROM articles a
+            WHERE NOT EXISTS (SELECT 1 FROM l1_outputs l1
+                              WHERE l1.article_id = a.url_title_hash AND l1.dod_pass = 1)
+        """,
+    }
+    only_aids: set[str] | None = None
+    if args.only in _ONLY_SQL:
+        conn = store.connect()
+        try:
+            only_aids = {r["article_id"] for r in conn.execute(_ONLY_SQL[args.only])}
+        finally:
+            conn.close()
+        print(f"[only={args.only}] {len(only_aids)} bài lọt bộ lọc")
+
     n = 0
     route_ctr, rel_ctr = Counter(), Counter()
     seen: set[str] = set()
@@ -86,6 +123,8 @@ def main(argv=None) -> int:
         aid = art.get("article_id")
         if not aid or aid in seen or aid in done_aids:
             continue
+        if only_aids is not None and aid not in only_aids:
+            continue
         seen.add(aid)
         rec = runner.route_and_export(art, review=args.review)
         n += 1
@@ -98,6 +137,13 @@ def main(argv=None) -> int:
                 "domain": art.get("domain", ""),
                 "time": art.get("published_at") or art.get("fetch_ts") or art.get("captured_at") or "",
                 "path": rec["packet_path"],
+                # code_first đi kèm để packet gom lô giữ được nhiệm vụ TRA SOÁT
+                "code_first": {
+                    "route": rec.get("route"),
+                    "relevance": rec.get("relevance"),
+                    "entity_ids": rec.get("entity_ids", []),
+                    "industries": rec.get("industries", []),
+                },
             })
 
     print(f"== L1 route {n} tin (review={args.review}, order={args.order}, skipped_done={len(done_aids)}) ==")
@@ -111,6 +157,14 @@ def main(argv=None) -> int:
         from src.agent.manifest import create_batch_manifest, print_batch_summary_table
         manifest = create_batch_manifest(exported_tasks, runner.task_dir, batch_type="l1", order=args.order)
         print_batch_summary_table(manifest)
+        if args.mini_batch and args.mini_batch > 0:
+            from src.agent.batch_handoff import split_l1_tasks_into_batches
+            batches = split_l1_tasks_into_batches(
+                exported_tasks, batch_size=args.mini_batch, base_dir=runner.task_dir)
+            print(f"📦 Đã đóng gói {len(batches)} mini-batch L1 (size={args.mini_batch}) "
+                  f"→ {runner.task_dir}/l1_batch_XX.task.json")
+            print(f"   Agent đọc l1_batch_XX.task.json, ghi 1 mảng JSON vào "
+                  f"data/agent_outputs_l1/l1_batch_XX.output.json")
 
     return 0
 

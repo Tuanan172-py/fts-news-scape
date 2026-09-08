@@ -205,6 +205,31 @@ CREATE TABLE IF NOT EXISTS l1_outputs (
   created_at TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_l1_outputs_dod ON l1_outputs(dod_pass, created_at);
+
+-- Báo cáo định kỳ (NSO/Cục Thống kê) — design 16.
+-- KHÔNG dùng bảng articles: khoá nghiệp vụ là (report_type, period), KHÔNG phải
+-- url_title_hash. Cùng một báo cáo được NSO mirror ở nhiều path với slug khác nhau
+-- (đã gặp slug sai năm + hậu tố -2), nên dedup theo URL là sai về bản chất.
+CREATE TABLE IF NOT EXISTS periodic_reports (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  source TEXT NOT NULL,              -- 'nso'
+  report_type TEXT NOT NULL,         -- monthly | quarterly | annual
+  period TEXT NOT NULL,              -- 2026-08 | 2026-Q2 | 2026
+  title TEXT NOT NULL,
+  source_url TEXT NOT NULL,
+  remote_id TEXT,                    -- wp post id
+  published_at TEXT,                 -- ISO +07:00
+  modified_at TEXT,                  -- ISO +07:00 — đổi = bản hiệu đính
+  html_path TEXT,                    -- Bronze HTML
+  attachments_json TEXT,             -- [{url, path, sha256, bytes, content_type}]
+  capture_status TEXT,
+  revision INTEGER DEFAULT 1,        -- tăng khi modified_at đổi
+  created_at TEXT,
+  updated_at TEXT,
+  UNIQUE(source, report_type, period, revision)
+);
+CREATE INDEX IF NOT EXISTS idx_periodic_period
+  ON periodic_reports(source, report_type, period);
 """
 
 

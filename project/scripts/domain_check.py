@@ -27,6 +27,7 @@ import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from src.core.config import resolve_source_domain
 from src.core.stdio import force_utf8_stdio
 
 force_utf8_stdio()
@@ -149,7 +150,7 @@ def cmd_validate(domain: str | None = None, store=None):
 
     exit_code = 0
     for dom in domains:
-        source_domain = f"{dom}.vn" if "." not in dom else dom
+        source_domain = resolve_source_domain(dom)
 
         articles = []
         if store:

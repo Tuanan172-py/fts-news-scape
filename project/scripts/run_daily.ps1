@@ -26,6 +26,40 @@ $ErrorActionPreference = 'Stop'
 $Root = Split-Path -Parent $PSScriptRoot
 Set-Location $Root
 
+# --- Single-instance lock: chan 2 run chong nhau (Task Scheduler trung gio + chay tay) ---
+# Hai run song song se doc DB nua chung (bai co L1 nhung agent_ingest chua commit) va ghi de
+# output/checkpoint cua nhau. Giu handle voi FileShare::Read suot vong doi script: run khac
+# khong the mo de GHI (bi chan), nhung van DOC duoc lock de bao ai dang giu.
+$LockDir  = Join-Path $Root 'data'
+$LockPath = Join-Path $LockDir '.pipeline.lock'
+if (-not (Test-Path $LockDir)) { New-Item -ItemType Directory -Force -Path $LockDir | Out-Null }
+$LockStream = $null
+try {
+  $LockStream = [System.IO.File]::Open(
+    $LockPath,
+    [System.IO.FileMode]::OpenOrCreate,
+    [System.IO.FileAccess]::Write,
+    [System.IO.FileShare]::Read)
+} catch {
+  $holder = ''
+  try {
+    $rs = [System.IO.File]::Open($LockPath, [System.IO.FileMode]::Open,
+                                 [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite)
+    $sr = New-Object System.IO.StreamReader($rs)
+    $holder = $sr.ReadToEnd().Trim()
+    $sr.Close(); $rs.Dispose()
+  } catch {}
+  Write-Host "run_daily: MOT RUN KHAC DANG CHAY - thoat de tranh doc DB nua chung / ghi de output." -ForegroundColor Red
+  Write-Host "  lock : $LockPath" -ForegroundColor DarkGray
+  if ($holder) { Write-Host "  giu boi: $holder" -ForegroundColor DarkGray }
+  Write-Host "  Neu chac chan khong con run nao, xoa file lock roi chay lai." -ForegroundColor DarkGray
+  exit 2
+}
+$LockStream.SetLength(0)
+$LockBytes = [System.Text.Encoding]::UTF8.GetBytes("pid=$PID started=$(Get-Date -Format o) mode=$Mode date=$Date days=$Days")
+$LockStream.Write($LockBytes, 0, $LockBytes.Length)
+$LockStream.Flush()
+
 # Python executable - ignore broken .venv shim if active in shell
 $Py = (Get-Command python -ErrorAction SilentlyContinue | Where-Object {
     $_.Source -notlike '*\.venv\*' -and $_.Source -notlike '*An Thanh Pham*'
@@ -111,6 +145,8 @@ function CleanPackets {
 
 Write-Host "run_daily: Mode=$Mode Agent=$Agent Review=$Review Date=$Date Days=$Days ExportLimit=$ExportLimit KeepPackets=$KeepPackets NoCompile=$NoCompile" -ForegroundColor Yellow
 
+try {
+
 switch ($Mode) {
   'emit' {
     Emit
@@ -137,6 +173,12 @@ if ($Days -gt 0) {
   & $Py 'scripts/monitor_daily.py' --date all --save-md
 } else {
   & $Py 'scripts/monitor_daily.py' --date $Date --save-md
+}
+
+}
+finally {
+  if ($LockStream) { $LockStream.Close(); $LockStream.Dispose() }
+  Remove-Item -LiteralPath $LockPath -Force -ErrorAction SilentlyContinue
 }
 
 Write-Host "`nrun_daily COMPLETED (Mode=$Mode)." -ForegroundColor Green

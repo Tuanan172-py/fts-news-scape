@@ -1,6 +1,6 @@
 # Thiết kế — Quy trình end-to-end lớp NGƯỜI DÙNG (input → output)
 
-Cập nhật: 2026-08-18 · Đối tượng: dev/vận hành muốn chạy từ input user tới khi có CSV output.
+Cập nhật: 2026-09-07 · Đối tượng: dev/vận hành muốn chạy từ input user tới khi có CSV output.
 Tham chiếu chéo: [00-end-to-end-architecture](00-end-to-end-architecture.md),
 [09-agent-io-contract](09-agent-io-contract.md), [10-agent-orchestration-governance](10-agent-orchestration-governance.md).
 
@@ -11,8 +11,12 @@ Tham chiếu chéo: [00-end-to-end-architecture](00-end-to-end-architecture.md),
 Input cấp cao nhất = **thư mục theo user**. Hệ thống chạy các lớp agent rồi xuất **CSV cuối cho từng
 user**, lọc theo entity user đăng ký, phân theo ngày. Idempotent, resume theo `article_id`.
 
-Quyết định thiết kế (chốt 2026-08-18):
-- **Gate output** = `l1_outputs.dod_pass=1` **AND** `agent_outputs.dod_pass=1` (L1 phải agent-reviewed).
+Quyết định thiết kế (chốt 2026-08-18, **sửa 2026-09-07**):
+- **Gate output** = `l1_outputs.dod_pass=1` **CHỈ** (L1 phải agent-reviewed). Định tuyến dựa entity
+  của L1 nên thiếu L1 là không map được user nào ⇒ đây là gate CỨNG duy nhất.
+  `agent_outputs.dod_pass=1` là **enrichment TÙY CHỌN**: thiếu thì trường Gold để chuỗi rỗng và
+  cột `gold_status=L1_ONLY`; vòng sau Gold về thì bài được ghi đè đầy đủ (rewrite toàn tập).
+  *(Trước 2026-09-07 gate là AND cả 2 lớp — bài chỉ có L1 bị giữ lại, giao hàng trễ vô ích.)*
 - **Phạm vi agent** = chỉ article có entity giao với **union subscription** của user đang bật.
 - **Scrape TÁCH** khỏi workflow (`--skip-scrape` mặc định — giả định cron đã scrape).
 - **Bật/tắt user** = `users/input/manifest.yaml` (vắng tên = mặc định BẬT).
@@ -31,8 +35,8 @@ STAGE 2  scrape → bronze(raw_html) → silver → work_packages(work_items)   
    │
 STAGE 3  L1:  l1_route.py → packet → [AGENT] → l1_ingest.py → l1_outputs.dod_pass=1
    │
-STAGE 4  Agent: agent_export.py(scoped) → packet → [AGENT] → agent_ingest.py → agent_outputs.dod_pass=1
-   │           GATE: cả 2 dod_pass=1
+STAGE 4  Agent: agent_export.py(--require-l1) → packet → [AGENT] → agent_ingest.py → agent_outputs.dod_pass=1
+   │           GATE: l1 dod_pass=1 (CỨNG) · agent dod_pass=1 (TÙY CHỌN → gold_status)
 STAGE 5  → subscribers_for(entities) ∩ enabled → users/output/<name>/<YYYY-MM-DD>/{L1,agent,final}.csv
                                                  + _checkpoint.json · log "done"
 ```
@@ -142,28 +146,59 @@ của user-workflow — giả định đã sinh `work_items` trong DB.
 `scripts/write_user_output.py` → `src/export/user_output.py::UserOutputWriter.write()`:
 
 1. **`gated_rows()`** — JOIN (`_GATED_SQL`):
-   `articles ⨝ l1_outputs(dod_pass=1) ⨝ agent_outputs(dod_pass=1)` trên `url_title_hash`.
+   `articles ⨝ l1_outputs(dod_pass=1)` **LEFT JOIN** `agent_outputs(dod_pass=1)` trên `url_title_hash`.
+   `agent_outputs` UNIQUE theo `(article_id, raw_sha256)` nên 1 bài tái-capture có nhiều dòng đạt
+   DoD → subquery `MAX(id)` chọn **bản Gold mới nhất**, tránh fan-out không xác định.
    Lọc theo `--date today|YYYY-MM-DD` hoặc `--days N` (dùng `published_at`, fallback `fetched_at`).
 2. **Định tuyến** — entity của article = `l1_outputs.entities[in_list].entity_id`;
    `subscribers_for(eset)` ∩ `enabled`; mỗi user lấy `matched = eset ∩ resolve_subscription(user)`.
 3. **Ghi file** (atomic temp + `os.replace`, utf-8-sig):
    - Thư mục user (`users/output/<name>/<YYYY-MM-DD>/`): **chỉ ghi duy nhất `final.csv`** (deliverable tinh gọn).
-   - Thư mục audit tập trung (`users/output/_master/<YYYY-MM-DD>/`): ghi đầy đủ cả 3 file `L1.csv`, `agent.csv`, `final.csv`.
+   - Thư mục audit tập trung (`users/output/_master/`): `<date>.csv`, `<date>_L1.csv`, `<date>_agent.csv`.
+     `_master/<date>.csv` dùng `MASTER_COLUMNS` = `FINAL_COLUMNS` + **`noise_signals`** — tín hiệu
+     nhiễu TẤT ĐỊNH từ Silver (`alias_title`, `alias_body`, `body_len`, `code_in_symbols`, `cats`),
+     **chỉ để quan sát, CHƯA dùng làm gate**. Gom số liệu thật trước, chọn ngưỡng sau.
+     `_master/<date>_agent.csv` chỉ chứa bài `gold_status=GOLD`.
 4. **Checkpoint** — `src/export/checkpoint.py::mark_written()` cập nhật `_checkpoint.json` **SAU** khi
    `final.csv` đã replace (crash-safe). `logger.info("done user=… date=… rows=…")`.
 
-Article thiếu 1 lớp, hoặc không ai đăng ký entity → **không** vào `final.csv`.
+Article thiếu **L1**, hoặc không ai đăng ký entity → **không** vào `final.csv`.
+Article có L1 nhưng chưa có Gold → **vẫn vào**, `gold_status=L1_ONLY`, trường Gold rỗng.
+
+**Lọc rác (`_passes_noise_filter`)** — KHÔNG đọc bất kỳ trường Gold nào: pass nếu match ≥1 entity
+cụ thể (TICKER/ETF/INDEX/EXCHANGE/INDUSTRY/INSTITUTION), hoặc — khi chỉ match entity diện rộng
+(`MACRO_GEO`/`MACRO_THEME`/`ASSET_CLASS`) — alias của entity xuất hiện trong `title`.
 
 ---
 
 ## 10. Định dạng `final.csv`
 
-`date, matched_entities, title, summary, key_points, implication, impact_area, materiality_score, time_sensitivity, sentiment, event_type, url, source_domain, article_id, agent_provider, model_used`
+`date, matched_entities, title, summary, key_points, implication, impact_area, time_sensitivity, sentiment, event_type, gold_status, url, source_domain, article_id, agent_provider, model_used`
 
 - Cột nghiệp vụ/người dùng đọc đưa lên đầu; cột kỹ thuật/máy đọc đưa về cuối.
 - `matched_entities` = **code** các entity user đăng ký MÀ article chạm (join `;`).
 - `summary`←`summary.abstractive`; `key_points`←`summary.key_points` (định dạng danh sách gạch đầu dòng `- Point 1\n- Point 2` xuống dòng trong ô); `implication`←`implication.text`; `materiality_score`←`materiality.score`; `sentiment`←`sentiment.polarity`.
+- `gold_status` ∈ `GOLD` | `L1_ONLY` — phân biệt "Gold chưa chạm bài" với "Gold đã chạy nhưng
+  trường optional rỗng" (`sentiment`/`event_type`/`impact_area`/`time_sensitivity` là optional
+  trong `agent-output-v1`). Không có cột này thì ô rỗng là nhập nhằng.
 - Flatten null-safe: field agent tuỳ chọn thiếu → ô rỗng, không lỗi.
+- **`materiality_score` tạm ẩn khỏi `final.csv`** (2026-09-07) theo mô hình CORE/DETAIL bên dưới.
+  Vẫn được agent sinh, vẫn lưu đủ trong `agent_outputs.output_json` và cột `materiality_score`
+  của `_master/<date>_agent.csv`. Bật lại = thêm 1 dòng vào `FINAL_COLUMNS`, không migration.
+
+### 10.1 Mô hình CORE / DETAIL (chốt 2026-09-07)
+
+Tách **hợp đồng LƯU TRỮ** (`agent-output-v1`, không đổi) khỏi **hợp đồng GIAO HÀNG** (`FINAL_COLUMNS`).
+
+| Tầng | Ai làm | Trường | Vai trò |
+|---|---|---|---|
+| Bronze/Silver | code (tất định) | `article_id, title, url, source_domain, date, cleaned_text` | CORE — luôn có |
+| L1 | agent | `entities[].entity_id` + `in_list`, `categories` | **CORE — gate CỨNG** |
+| Gold | agent | `summary.abstractive`, `summary.key_points`, `citations`≥2 | CORE — gate MỀM |
+| Gold | agent | `implication`, `materiality`, `sentiment`, `event_type` | DETAIL |
+
+Không đổi `agent-output-v1`: đổi Data Contract là HIGH-RISK hard gate (`AGENTS.md` §Cấp 3) cần ADR.
+Ẩn/hiện cột ở tầng giao hàng là thay đổi rẻ và có thể đảo ngược.
 - **`confidence` đã bỏ** (2026-08-18): self-reported, calibration kém → gây hiểu nhầm. Không xuất ra
   CSV và KHÔNG còn là gate DoD. Chất lượng do grounded citations + schema + `extraction_quality` gác.
 
@@ -177,6 +212,9 @@ KHÔNG tự scrape, KHÔNG tự chạy agent (handoff bất đồng bộ).
 ```bash
 # 1 lần khi user đổi danh mục
 python scripts/compile_users.py --all
+
+# ƯU TIÊN khi rút backlog: bài đã có Gold nhưng thiếu L1 — xong L1 là giao được ngay
+python scripts/l1_route.py --only gold-ready --all
 
 # mỗi chu kỳ (sau khi cron scrape xong):
 python scripts/l1_route.py --review missed          # phát packet L1
@@ -196,8 +234,17 @@ Chỉ ghi output từ dữ liệu đã ingest sẵn: `python scripts/write_user_
 
 - **DB**: `l1_outputs`/`agent_outputs` UNIQUE theo article → ingest lại trả **cached**, không double-mark.
 - **File**: `write()` rewrite **toàn tập** per (user, ngày) + dedupe theo `article_id` → chạy lại **không nhân đôi**.
-- **Checkpoint**: `_checkpoint.json.written[date] = [article_id…]`; thứ tự **replace file → mark** đảm bảo
-  ngắt giữa chừng vẫn an toàn (lần sau ghi lại phần còn thiếu). Resume theo `article_id` (yêu cầu đã chốt).
+- **Checkpoint**: `_checkpoint.json.written[date] = {article_id: gold_status}`; thứ tự
+  **replace file → mark** đảm bảo ngắt giữa chừng vẫn an toàn (lần sau ghi lại phần còn thiếu).
+  Định dạng cũ (list id) vẫn đọc được (status rỗng).
+
+  **Checkpoint có cần không? (rà 2026-09-07)** — Nó KHÔNG quyết định nội dung output: idempotency
+  đến từ rewrite toàn tập + `os.replace` + dedupe `article_id`. Vai trò thật là **sổ cái giao hàng**:
+  nguồn duy nhất trả lời "bài nào mới" và "bài nào vừa được Gold bổ sung". Với gate L1-only, một bài
+  có thể giao ở `L1_ONLY` rồi vòng sau mới `GOLD` — nếu chỉ lưu list id thì "đã ghi" không còn đồng
+  nghĩa "đã giao đủ". Vì vậy **giữ checkpoint** nhưng lưu kèm `gold_status`;
+  `ckpt.filter_upgraded()` cho ra danh sách bài vừa nâng cấp, hiện trong log
+  `rows=N (new=X upgraded=Y l1_only=Z)`.
 
 ---
 

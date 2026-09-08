@@ -1,16 +1,18 @@
 # Metrics Index
 
-Các chỉ số kinh doanh và kỹ thuật của hệ thống Web Monocle.
+Định nghĩa chỉ số + cách tính. **Không** lưu giá trị runtime — giá trị nằm ở DB/logs.
 
-## Ingestion
+## Ingestion (Vòng 1)
 
-- [Articles Per Day](articles_per_day.md) — Số lượng bài báo thu thập mỗi ngày
-- [Dedup Rate](dedup_rate.md) — Tỷ lệ khử trùng lặp hiệu quả
+- [Articles Per Day](articles_per_day.md) — throughput thu thập theo nguồn
+- [Dedup Rate](dedup_rate.md) — hiệu quả khử trùng lặp
+- [Scraper Health](scraper_health.md) — trạng thái, error rate, latency
 
-## NLP & Sentiment
+## Pipeline (Vòng 2 & 3)
 
-- [Sentiment Distribution](sentiment_distribution.md) — Phân phối cảm xúc theo nguồn
+- [Silver Backlog & Handoff Queue](silver_backlog.md) — tồn đọng Bronze→Silver và hàng đợi agent
+- [DoD Pass Rate](dod_pass_rate.md) — tỷ lệ output agent qua cổng DoD
 
-## Monitoring
+## Nội dung (Gold)
 
-- [Scraper Health](scraper_health.md) — Uptime, error rate, latency của scraper
+- [Sentiment Distribution](sentiment_distribution.md) — phân phối cảm xúc (nguồn: `agent_outputs`)

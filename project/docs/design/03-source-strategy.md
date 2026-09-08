@@ -9,6 +9,22 @@ xử lý các bẫy encoding/date/dedup ra sao".
 site đổi giao diện. API dùng cho nguồn không có RSS đủ sâu (cần theo mã CK) hoặc nguồn
 môi giới. HTML tĩnh gần như không dùng (chỉ ở bước bóc chi tiết qua trafilatura).
 
+### Cập nhật 2026-09-07 — tầng `rss_capture` (Bronze-first)
+
+TDR-001 xếp hạng cách **lấy danh sách bài**. Nó không nói gì về **lưu trữ**, và từ khi có tầng
+Bronze (design 06/07) thì "danh sách" là chưa đủ: mỗi bài phải có raw HTML byte-exact.
+
+| Tier | `method` | Class | Bronze? |
+|---|---|---|---|
+| 1 | `rss` | `RSSScraper` | ❌ **không** — `enrich()` không gọi `RawStore` |
+| **1b** | **`rss_capture`** | **`RssCaptureScraper`** (kế thừa `RSSScraper`) | ✅ **có** |
+| 2 | `api` / per-name | scraper riêng (cafef, tnck, fireant, vndirect) | tuỳ scraper |
+| 3 | per-name HTML | scraper riêng — **baodautu (đã build 2026-09-07)** | ✅ (ngoại lệ TDR-001 có chủ ý) |
+
+**Mọi nguồn mới dùng tier 1b trở lên.** Tier 1 chỉ còn tồn tại cho các domain lịch sử đang
+disabled. Đây là lý do ~19 domain tắt từ 2026-08-03: mở rộng nguồn giờ là **Bronze-first**, cần
+research riêng từng trang, không phải bật hàng loạt feed RSS.
+
 Kết quả phân bổ 23 domain: **18 RSS** (gồm cả hose/hnx) + **4 API custom** (cafef, tnck,
 vndirect, fireant) + **1 disabled** (baodautu).
 
@@ -22,7 +38,9 @@ khoán; nguồn nào feed quá rộng (vietnamnet kinh-doanh 1000 items) thì b�
 ### Nhóm B — API môi giới/chuyên trang (cafef, tnck, vndirect, fireant)
 Response JSON, cần code riêng vì schema khác nhau:
 - **cafef / fireant** — theo **mã watchlist** (1 request/mã/cycle). fireant cần Bearer token.
-- **tnck** — theo **zone × page** (không theo mã; tag ticker client-side).
+- **tnck** — theo **zone × page** (không theo mã; tag ticker client-side). Từ 2026-09-07:
+  9 zone + Bronze capture; **không có RSS** nên API là route duy nhất; `source_domain` non-www
+  khác tên config `tnck` → dùng `resolve_source_domain()`.
 - **vndirect** — 1 request lấy cả trang, nội dung nhúng sẵn; là **aggregator** (link báo gốc).
 
 Chi tiết + quirk: [../domains/api-scrapers.md](../domains/api-scrapers.md).
@@ -90,7 +108,12 @@ gây hiểu nhầm rằng engine "đã phân tích" bài tiếng Anh.
 
 Stockbiz (endpoint chết), Lao Động (anti-bot JS), Saigon Times (feed rỗng), Kitco/Investing.com
 (không RSS/bị chặn), nguoiquansat/vietnamfinance/markettimes (không RSS), Reuters (RSS chết ~2020),
-NDH (dormant → thay bằng vneconomy), baodautu (feed rỗng → disabled, có thể bật lại).
+NDH (dormant → thay bằng vneconomy).
+
+**baodautu — chẩn đoán lại 2026-09-07:** trước ghi "feed rỗng → disabled, có thể bật lại".
+Sai. RSS hỏng **vĩnh viễn ở server** (mọi feed trả cùng channel rỗng `Trang chủ` + `<link>`
+dị dạng `https://baodautu.vn//.rss`). Không phải dormant, không bao giờ tự khỏi.
+→ Đã build **HTML listing scraper** (tier 3).
 
 ## 7. Câu hỏi mở
 

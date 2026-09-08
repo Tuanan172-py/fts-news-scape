@@ -1,45 +1,71 @@
 ---
 type: SQLite Table
 title: seen_articles
-description: Bảng kỹ thuật quản lý trạng thái xử lý và khử trùng lặp dữ liệu qua SHA-256 hash.
+description: Cache khử trùng lặp lớp 1 — hash SHA-256(url+title) đã đi qua pipeline.
 resource: "project/data/monocle.db (table: seen_articles)"
 tags: [deduplication, sqlite, internal]
 status: stable
 generated:
-  by: human:anpt
-  at: 2026-08-03T10:00:00Z
+  at: 2026-09-07T00:00:00Z
 sources:
+  - id: dedup
+    resource: project/src/db/dedup.py
+    title: DedupCache — 2-layer dedup
+  - id: db-store
+    resource: project/src/db/store.py
+    title: ArticleStore schema DDL
   - id: data-model
     resource: project/docs/dev/02-data-model-and-db.md
     title: Data Model & DB Design
-  - id: dedup
-    resource: project/src/db/dedup.py
-    title: 2-layer dedup implementation
-sources_last_checked: 2026-08-03
+sources_last_checked: 2026-09-07
 ---
 
-Bảng `seen_articles` đóng vai trò là "Lớp 1" trong cơ chế Deduplication (khử trùng lặp) của hệ thống Web Monocle.[^dedup]
+Bảng `seen_articles` là **lớp 1** của cơ chế dedup. Mỗi bài đi qua pipeline sinh 1 hash
+SHA-256(`url` + `title`); hash đã có ⇒ bỏ qua, không fetch trang chi tiết, không ghi
+[articles](articles.md).[^dedup]
 
-Mỗi khi một tin tức mới đi vào pipeline, một mã băm duy nhất bằng thuật toán SHA-256 sẽ được sinh ra từ việc ghép chuỗi `url` và `title`. Bảng này làm nhiệm vụ lưu trữ các mã băm đã từng đi qua hệ thống (exact match) giúp tiết kiệm tài nguyên lưu trữ và loại bỏ các thao tác API dư thừa đối với các nguồn tin cập nhật liên tục.[^dedup]
+Dedup 2 lớp:[^dedup]
+1. **Lớp 1 (exact)** — `seen_articles.hash` + UNIQUE `articles.url_title_hash`.
+2. **Lớp 2 (fuzzy)** — so tiêu đề đã normalize (`title_norm`) bằng `rapidfuzz`, bật qua
+   config domain `fuzzy_dedup: true`; bắt trường hợp cùng bài nhưng URL khác (tracking params).
 
-Cơ chế dedup có 2 lớp:
-1. **Lớp 1 (DB)**: Kiểm tra `url_title_hash` trong `seen_articles` và `articles.url_title_hash` UNIQUE constraint
-2. **Lớp 2 (Fuzzy)**: So sánh title bằng `rapidfuzz` nếu config `fuzzy_dedup: true` — phát hiện cùng bài nhưng URL khác nhau do tracking params[^dedup]
-
-Cả 2 lớp đều hoạt động trong [DedupCache](../references/dedup_cache.md) được khởi tạo từ đầu chu kỳ, cache toàn bộ hash vào memory để tra cứu O(1).[^dedup]
+`DedupCache` nạp toàn bộ hash vào memory đầu chu kỳ để tra cứu O(1), ghi ngược lại DB trong
+cùng SQLite (WAL-safe) — không còn file JSON như bản cũ.[^dedup]
 
 # Schema
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
-| `hash_id` | TEXT | PRIMARY KEY | SHA-256(`url` + `title`) |
-| `title_norm` | TEXT | | Title đã normalize (lowercase, bỏ dấu) |
+| `hash` | TEXT | PRIMARY KEY | SHA-256(`url` + `title`) |
+| `title_norm` | TEXT | | Tiêu đề đã normalize (lowercase, bỏ dấu) — đầu vào fuzzy |
 | `source_domain` | TEXT | | Tên miền nguồn |
-| `seen_at` | TEXT | NOT NULL | Thời điểm đánh dấu đã xử lý |
+| `seen_at` | REAL | | Epoch seconds thời điểm đánh dấu |
+
+**Index:** `idx_seen_source` trên `(source_domain, seen_at)`
+
+⚠️ Khoá chính tên là `hash` (KHÔNG phải `hash_id`) và `seen_at` là **REAL epoch**, không phải
+chuỗi ISO như các bảng khác.
+
+# Common Query Patterns
+
+### Số hash đã thấy theo nguồn trong 24h
+
+```sql
+SELECT source_domain, COUNT(*) AS seen
+FROM seen_articles
+WHERE seen_at >= strftime('%s', 'now', '-1 day')
+GROUP BY source_domain
+ORDER BY seen DESC;
+```
 
 # Joins
 
-- JOIN với [articles](articles.md) qua `hash_id = url_title_hash` để trace bài báo đã xử lý
+- [articles](articles.md) qua `hash = url_title_hash`
 
+# Metrics
+
+- [Dedup Rate](../metrics/dedup_rate.md)
+
+[^dedup]: [DedupCache implementation](project/src/db/dedup.py)
+[^db-store]: [ArticleStore schema DDL](project/src/db/store.py)
 [^data-model]: [Data Model & DB Design](project/docs/dev/02-data-model-and-db.md)
-[^dedup]: [Dedup implementation](project/src/db/dedup.py)

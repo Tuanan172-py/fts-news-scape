@@ -232,7 +232,7 @@ def test_batch_ingest_end_to_end(tmp_path):
 
     tasks_dir = tmp_path / "agent_tasks"
     runner = AgentRunner(store, task_dir=str(tasks_dir))
-    runner.export_tasks(limit=10)
+    runner.export_tasks(limit=10, require_l1=False)
 
     s1 = "Thị trường chứng khoán ngày 05/09 ghi nhận áp lực bán gia tăng trên diện rộng khi chỉ số VN-Index điều chỉnh nhẹ."
     s2 = "Nhóm bất động sản phân hóa."

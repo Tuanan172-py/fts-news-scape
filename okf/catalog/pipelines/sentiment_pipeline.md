@@ -1,13 +1,12 @@
 ---
 type: Python Pipeline
 title: Sentiment Analysis Pipeline
-description: Pipeline phân tích cảm xúc tiếng Việt rule-based — pyvi segment → n-gram lexicon match → negation flip → scoring.
+description: "[LEGACY/COLD BACKUP] Engine sentiment rule-based tiếng Việt — đã gỡ khỏi workflow production; classifier vẫn chạy."
 resource: project/src/processor/sentiment.py
-tags: [pipeline, sentiment, nlp, vietnamese, classification]
-status: stable
+tags: [pipeline, sentiment, nlp, vietnamese, classification, legacy]
+status: deprecated
 generated:
-  by: human:anpt
-  at: 2026-08-04T00:00:00Z
+  at: 2026-09-07T00:00:00Z
 sources:
   - id: sentiment
     resource: project/src/processor/sentiment.py
@@ -18,8 +17,18 @@ sources:
   - id: sentiment-design
     resource: project/docs/design/04-sentiment-classification.md
     title: Sentiment Classification Design
-sources_last_checked: 2026-08-04
+sources_last_checked: 2026-09-07
 ---
+
+> ⚠️ **TRẠNG THÁI (2026-09): sentiment rule-based ĐÃ GỠ khỏi workflow production.**
+> `src/processor/sentiment.py` và `segment.py` được đánh dấu *LEGACY / COLD BACKUP* ngay trong
+> docstring: engine vẫn nằm trong repo để bật lại khi cần, nhưng `Orchestrator.run_cycle` **không
+> gọi nữa**. Sentiment dùng cho deliverable do agent Lớp 2 sinh — xem
+> [agent_outputs](../tables/agent_outputs.md). Cột `articles.sentiment` / `sentiment_score` chỉ
+> còn giá trị lịch sử.
+>
+> **Vẫn đang chạy:** bước classify (`classify_rule_based` trong `src/processor/classifier.py`) —
+> gắn `categories` cho mỗi bài mới trong mỗi cycle.
 
 Pipeline Sentiment Analysis là hệ thống phân tích cảm xúc **rule-based** (không dùng LLM/Machine Learning), được thiết kế riêng cho tiếng Việt trong lĩnh vực chứng khoán.[^sentiment-design]
 
@@ -106,8 +115,13 @@ Một article có thể có nhiều category. Mặc định: `["uncategorized"]`
 
 # Quan hệ
 
-- Được gọi bởi [Orchestrator](ingestion_scheduler.md) sau bước classify
-- Ghi kết quả vào [articles.sentiment](../tables/articles.md) và [articles.sentiment_score](../tables/articles.md)
+- **Classify** (còn chạy): [Capture Orchestrator](ingestion_scheduler.md) gọi mỗi cycle → ghi
+  `articles.categories`.
+- **Sentiment** (đã gỡ): trước đây ghi `articles.sentiment` / `sentiment_score`. Nay thay bằng
+  [Agent Handoff](agent_handoff.md) → [agent_outputs](../tables/agent_outputs.md) →
+  cột `sentiment` trong [User Deliverables](../datasets/user_deliverables.md).
+- Muốn bật lại: gọi `SentimentEngine` trong `run_cycle` và khôi phục lexicon
+  `data/lexicon/*.tsv`.
 
 [^sentiment]: [Sentiment engine](project/src/processor/sentiment.py)
 [^classifier]: [Rule-based classifier](project/src/processor/classifier.py)

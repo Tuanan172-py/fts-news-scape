@@ -49,16 +49,26 @@ def main(argv: list[str]) -> int:
     runner = L1Runner(ArticleStore(db_path=db_path), task_dir=args.task_dir)
     done = failed = 0
     done_aids: list[str] = []
+    from src.agent.batch_handoff import unpack_batch_output
+
     for path in _iter_paths(args.target):
-        res = runner.ingest_output(str(path))
-        if res.get("dod_pass"):
-            done += 1
-            if res.get("article_id"):
-                done_aids.append(res["article_id"])
-            print(f"DONE   {res.get('article_id')}")
-        else:
+        # unpack_batch_output bao cả 3 dạng: mảng, {outputs|results: [...]}, object đơn lẻ.
+        # Không có nó thì agent trả cả lô trong 1 file là ingest hỏng im lặng.
+        items = unpack_batch_output(path)
+        if not items:
             failed += 1
-            print(f"FAILED {res.get('article_id')}: {res.get('reasons') or res.get('reason')}")
+            print(f"FAILED {path}: không đọc được l1-entity-output (thiếu article_id)")
+            continue
+        for item in items:
+            res = runner.ingest_output(item)
+            if res.get("dod_pass"):
+                done += 1
+                if res.get("article_id"):
+                    done_aids.append(res["article_id"])
+                print(f"DONE   {res.get('article_id')}")
+            else:
+                failed += 1
+                print(f"FAILED {res.get('article_id')}: {res.get('reasons') or res.get('reason')}")
 
     if done_aids and not args.no_archive:
         from src.agent.archive import archive_completed_tasks

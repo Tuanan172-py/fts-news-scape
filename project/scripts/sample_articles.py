@@ -61,10 +61,17 @@ GROUPS = {
     },
     "03-vn-press-rss": {
         "title": "Báo chí Việt Nam (RSS)",
-        "desc": "Phủ rộng tin kinh tế/CK tiếng Việt — generic RSSScraper, sentiment lexicon VN.",
-        "domains": ["vietstock", "vneconomy", "vnexpress", "vietnambiz", "dantri",
-                    "tuoitre", "thanhnien", "znews", "cafebiz", "vietnamplus",
-                    "vietnamnet", "baodautu"],
+        "desc": "Phủ rộng tin kinh tế/CK tiếng Việt. Nguồn đang bật đều có Bronze capture "
+                "(rss_capture / scraper riêng); các nguồn còn lại là RSSScraper generic.",
+        "domains": ["vietstock", "vneconomy", "vietnambiz", "thoibaotaichinhvietnam",
+                    "vnexpress", "dantri", "tuoitre", "thanhnien", "znews",
+                    "cafebiz", "vietnamplus", "vietnamnet"],
+    },
+    "05-vn-press-html": {
+        "title": "Báo chí Việt Nam (HTML listing)",
+        "desc": "Không có RSS lẫn API — ngoại lệ TDR-001, scrape trang chuyên mục. "
+                "Xem docs/domains/html-scrapers.md.",
+        "domains": ["baodautu"],
     },
     "04-intl-rss": {
         "title": "Quốc tế (RSS, tiếng Anh)",
@@ -185,7 +192,7 @@ def _full_pipeline_block(cfg, scraper, raw, a, dedup, sentiment_engine) -> list[
         if had_inline:
             path = "dùng `content:encoded` sẵn trong feed"
         elif a.metadata.get("detail_deferred"):
-            path = "quá cap detail → giữ summary (`detail_deferred`, enrich_deferred bù sau)"
+            path = "quá cap detail → giữ summary (`detail_deferred`, backfill_deferred bù sau)"
         elif not (cfg.get("detail") or {}).get("extract_full", True) and cfg.get("method") == "rss":
             path = "summary-only by design (`extract_full: false`)"
         else:

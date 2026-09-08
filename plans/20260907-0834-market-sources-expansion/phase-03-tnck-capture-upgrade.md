@@ -246,6 +246,11 @@ thresholds: `url`/`title`/`source_domain` 1.0, `published_at` 0.98.
 
 ### Step 5 — `tests/test_tnck.py`
 Fixtures: `tnck_zone_list.json` + `tnck_detail_page.html`. `FakeHTTP(list_json=…, detail_html=…)`.
+
+> ⚠️ **Trap (audit 01 §A5):** `FakeHTTP.get_json()` (`tests/_fakes.py:39-40`) ignores the URL and
+> returns the same `list_json` for every call. With 9 zones configured, `fetch_list()` replays one
+> zone 9× → 9× duplicate items. **Configure a single zone in the test `_config()`**, or assert on
+> the post-dedup set, otherwise every count assertion is wrong.
 Cases:
 - `test_registered` — `REGISTRY["tnck"] is TnckScraper`
 - `test_capture_happy_path` — `capture_status == "ok"`;

@@ -57,8 +57,14 @@ class Catalog:
         finally:
             conn.close()
 
-    def claim(self, worker_id: str, order: str = "desc") -> dict | None:
-        """Claim 1 item pending → claimed (atomic). None nếu hết việc."""
+    def claim(self, worker_id: str, order: str = "desc", *,
+              require_l1: bool = False) -> dict | None:
+        """Claim 1 item pending → claimed (atomic). None nếu hết việc.
+
+        require_l1=True: chỉ bốc bài đã có `l1_outputs.dod_pass=1`. Gold chạy TRƯỚC L1 thì
+        packet không nhúng được `input.l1_entities` (rule 05 §2.5) và bài cũng không định
+        tuyến được cho user nào (routing dựa entity của L1) → tốn token vô ích.
+        """
         conn = self.store.connect()
         try:
             conn.execute("BEGIN IMMEDIATE")
@@ -67,8 +73,13 @@ class Catalog:
                 if order.lower() == "desc"
                 else "ORDER BY enqueued_at ASC, id ASC"
             )
+            l1_clause = (
+                " AND EXISTS (SELECT 1 FROM l1_outputs l1"
+                " WHERE l1.article_id = work_items.article_id AND l1.dod_pass = 1)"
+                if require_l1 else ""
+            )
             row = conn.execute(
-                f"SELECT * FROM work_items WHERE status='pending' {order_clause} LIMIT 1"
+                f"SELECT * FROM work_items WHERE status='pending'{l1_clause} {order_clause} LIMIT 1"
             ).fetchone()
             if row is None:
                 conn.commit()

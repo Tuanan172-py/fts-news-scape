@@ -273,7 +273,12 @@ Chứng minh toàn bộ AC trên site thật.
   `PYTHONUTF8=1` để in tiếng Việt qua stdout redirect).
 - **Config:** block `capture{raw_dir,min_body_bytes}` + `compliance{respect_robots,proxy_rotation,proxies}`.
 - **Artifact:** `data/raw_html/` (gitignored, giữ toàn bộ — Q2). Rà soát rotation nếu đĩa phình.
-- **Backfill bài hoãn:** hiện tái dùng `scripts/enrich_deferred.py` (Q1: capture trong cap).
+- **Backfill bài hoãn (Bronze-first, 3 bước):**
+  `scripts/refresh_watchlist.py <n> <host>` (kéo Bronze, bỏ qua dedup) →
+  `python -m src.morninger --once derive` (Bronze → Silver) →
+  `scripts/maintenance/backfill_deferred.py <host>` (cập nhật cột DB **từ file Bronze**, không chạm mạng).
+  ⚠️ `enrich_deferred.py` cũ đã **XOÁ 2026-09-07**: nó ghi `content_text` mà **không** tạo Bronze
+  artifact — vi phạm Bronze-first.
 
 ---
 

@@ -1,0 +1,201 @@
+# Domain Schema Contract — Báo Đầu Tư (baodautu.vn)
+# Nguồn HTML-listing ĐẦU TIÊN của repo. Không có RSS, không có API.
+# Đây là baseline duy nhất để phát hiện drift — nguồn KHÔNG có hợp đồng upstream nào.
+
+domain: baodautu.vn
+method: html_listing            # HTML listing (list) + full raw HTML capture (detail)
+last_verified: 2026-09-07
+
+rss:
+  exists: false
+  broken: true
+  note: >
+    RSS HỎNG VĨNH VIỄN Ở SERVER (verified 2026-09-07, 8/8 URL), KHÔNG phải dormant.
+    Mọi feed trả CÙNG channel rỗng: <title>Trang chủ</title> +
+    <link>https://baodautu.vn//.rss</link> (double-slash, không category), 0 <item>.
+    rssMain.html trả HTML homepage 34KB. Generator server hỏng. ĐỪNG PROBE LẠI.
+
+robots:
+  policy: "User-agent: * / Allow: /"
+  disallow: []
+  crawl_delay: null
+  note: >
+    Hoàn toàn permissive. Vẫn giữ respect_robots:true (RobotsGate cache 24h — permissive
+    hôm nay không có nghĩa permissive mãi) và rate_limit 3.0s. KHÔNG bật proxy_rotation:
+    HTML scraping đã lộ hơn RSS, bật proxy là vượt từ tương thích sang né tránh.
+
+pitfalls:
+  - "⚠️ Class `thumbblock` nằm trên thẻ <a> ẢNH, KHÔNG phải <div>. select('div.thumbblock') trả 0 node dù chuỗi xuất hiện 35 lần. Item thật là thẻ <article>."
+  - "⚠️ Mỗi <article> có NHIỀU <a>: link ảnh (a.thumbblock, KHÔNG có text) đứng TRƯỚC link tiêu đề. select_one() sẽ vớ phải link ảnh → mất sạch bài. Phải duyệt hết và lọc theo text + link_pattern."
+  - "⚠️ Pagination: trang 1 = `…-d<N>/` (CÓ / cuối); trang >1 = `…-d<N>/p<N>` (THÊM / cuối → 404)."
+  - "⚠️ Body: KHÔNG dùng `.content` — source có chuỗi template JS `<div class=\"content\">'+content+'</div>'` của widget bình luận. Chỉ #content_detail_news."
+  - "Trang detail KHÔNG có <h1> → title lấy từ listing; div.title-detail chỉ để đối chiếu."
+  - "KHÔNG có <time>, KHÔNG có article:published_time, KHÔNG có JSON-LD. Ngày là text thuần dd/MM/yyyy HH:mm trong span.post-time (NGOÀI #content_detail_news)."
+  - "Listing KHÔNG có ngày đăng → published_at chỉ lấy được ở trang detail; không thể lọc/xếp theo độ mới trước khi fetch."
+  - "Slug d5 có HAI dấu gạch ngang: ngan-hang--bao-hiem (dễ bị 'sửa' nhầm thành một)."
+  - "Paragraph mã hoá HTML entity (&ecirc;)."
+
+listing:
+  page1_url: "https://baodautu.vn/{slug}-d{id}/"      # CÓ dấu / cuối
+  pageN_url: "https://baodautu.vn/{slug}-d{id}/p{n}"  # KHÔNG có / cuối → thêm vào là 404
+  item_selector: "article"
+  link_selector: "a[href]"
+  link_pattern: '-d\d+\.html'
+  sapo_selector: "div.sapo_thumb_news, div.desc_list_news_home"
+  category_label_selector: "span.cl_green"
+  pagination_selector: "a.pagation_item"     # (sic — upstream viết thiếu chữ 'in')
+  observed:
+    article_blocks_per_page: 29
+    blocks_with_link: 28
+    unique_article_links_page1: 31
+  categories:
+    - { slug: "toan-canh-dau-tu",    id: 2,  name: "Toàn cảnh đầu tư" }
+    - { slug: "thoi-su-dau-tu",      id: 1,  name: "Thời sự Đầu tư" }
+    - { slug: "dau-tu-tai-chinh",    id: 6,  name: "Đầu tư tài chính" }
+    - { slug: "kinh-doanh",          id: 3,  name: "Kinh doanh" }
+    - { slug: "ngan-hang--bao-hiem", id: 5,  name: "Ngân hàng & Bảo hiểm" }
+    - { slug: "dau-tu-va-phap-luat", id: 41, name: "Đầu tư và Pháp luật" }
+  excluded:
+    - { slug: "muc-thong-tin-quang-ba", id: 80, reason: "PR trả tiền" }
+  unused_ids: [54, 4, 77, 52, 10, 8, 53, 55, 27, 9, 78, 76, 36]
+
+detail_page:
+  body_selector: "#content_detail_news"
+  title_selector: "div.title-detail"        # đối chiếu — trang KHÔNG có <h1>
+  sapo_selector: "div.sapo_detail"
+  tags_selector: "div.tag_detail > .tag_detail_item"
+  author_selector: "a.author"               # a.author.cl_green
+  date_scope_selector: "span.post-time"     # text: " - 07/09/2026 10:38"
+  date_format: "dd/MM/yyyy HH:mm (text thuần, giả định +07:00)"
+  wrapper: "main.main_content.main_detail"
+  forbidden_selector: ".content"            # ⚠️ chuỗi template JS của widget bình luận
+
+output_fields:
+  url:
+    source: "urljoin(base, listing anchor href)"
+    type: "string"
+    required: true
+    health_threshold: 1.0
+  title:
+    source: "listing anchor text"
+    type: "string"
+    required: true
+    health_threshold: 1.0
+  source_domain:
+    source: "hằng số"
+    type: "string"
+    required: true
+    expected_value: "baodautu.vn"
+  published_at:
+    source: "enrich: _parse_detail_date(html, span.post-time) → ISO +07:00"
+    type: "iso8601 string (+07:00)"
+    required: false          # rỗng khi không parse được — KHÔNG bịa
+    pattern: "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\+07:00$"
+    health_threshold: 0.98
+  summary:
+    source: "listing div.sapo_thumb_news"
+    type: "string"
+    required: false
+    health_threshold: 0.85
+  author:
+    source: "enrich: a.author"
+    type: "string"
+    required: false
+    health_threshold: 0.7
+  content_text:
+    source: "enrich: extract_text(#content_detail_news)"
+    type: "string"
+    required: false
+    min_length: 50
+    health_threshold: 0.7
+  content_html:
+    source: "enrich: select_one('#content_detail_news')"
+    type: "string"
+    required: false
+    health_threshold: 0.2
+  categories:
+    source: "tên chuyên mục từ config listing.categories"
+    type: "list[str]"
+    required: false
+    health_threshold: 1.0
+  metadata.listing_url:
+    source: "URL trang listing đã sinh ra item"
+    type: "string"
+    required: false
+  metadata.capture:
+    source: "RawStore.save()"
+    type: "dict"
+    required: true
+    health_threshold: 1.0
+
+capture:
+  raw_dir: "data/raw_html/baodautu.vn/<yyyymmdd>/<url_title_hash>.{html,meta.json}"
+  render_method: "requests (server-rendered)"
+  content_selector: "#content_detail_news"
+  min_body_bytes: 2048
+  max_per_cycle: 30
+  expected_capture_status: "ok"
+
+sitemap_backstop:
+  index: "https://baodautu.vn/sitemap.xml"
+  monthly: "https://baodautu.vn/sitemaps/news-{YYYY}-{M}.xml"
+  categories: "https://baodautu.vn/sitemaps/categories.xml"
+  observed: "102 KB / 348 <url> cho 2026-09-01..07 ≈ 50 bài/ngày"
+  limitations: "<loc> bị đệm khoảng trắng (cần .strip()); <lastmod> CHỈ có ngày; KHÔNG có category"
+  status: "CHƯA DÙNG — chỉ mở sub-phase 04b nếu date-parse < 98% hoặc miss rate > 5%"
+
+watch_points:
+  - id: bdt-w1
+    field: listing item structure (article / a / link_pattern)
+    risk: template_change
+    severity: high
+    description: >
+      Nguồn KHÔNG có hợp đồng upstream — đây là rủi ro thường trực của HTML scraping.
+      Đổi template → 0 item. Scraper ghi error "listing 0 items (template drift?)" rõ ràng
+      thay vì im lặng.
+    check: "mỗi chuyên mục trả >= 10 item/cycle"
+
+  - id: bdt-w2
+    field: content_selector #content_detail_news
+    risk: selector_drift
+    severity: high
+    description: "Đổi id body → capture_status=partial → SELECTOR_BROKEN → agent HOLD bài."
+    check: "tỉ lệ .meta.json có missing[incomplete_render] < 2%"
+
+  - id: bdt-w3
+    field: date text trong span.post-time
+    risk: structure_change
+    severity: high
+    description: >
+      Không có metadata ngày dự phòng nào (không <time>/meta/JSON-LD). Mất span.post-time
+      là mất published_at hoàn toàn → phải mở sub-phase 04b (sitemap lastmod, độ chính xác NGÀY).
+    check: "tỉ lệ .meta.json có missing[published_at] < 2%"
+
+  - id: bdt-w4
+    field: pagination URL form
+    risk: url_change
+    severity: medium
+    description: "`…/p<N>` không dấu / cuối. Ai đó 'chuẩn hoá' thêm / vào là 404 toàn bộ trang >1."
+    check: "HTTP 200 cho …-d2/p2 và 404 cho …-d2/p2/"
+
+  - id: bdt-w5
+    field: category id d<N>
+    risk: url_change
+    severity: high
+    description: "Id chuyên mục đổi khi site tái cấu trúc → 404 từng chuyên mục."
+    check: "diagnose_sources.py baodautu — 6 chuyên mục đều có item"
+
+  - id: bdt-w6
+    field: RSS resurrection
+    risk: behaviour_change
+    severity: low
+    description: >
+      Nếu upstream SỬA generator RSS thì có thể cân nhắc quay lại rss_capture (rẻ hơn, bền hơn).
+      Kiểm tra định kỳ ~6 tháng/lần.
+    check: "curl https://baodautu.vn/chung-khoan.rss | grep -c '<item>'  → hiện = 0"
+
+alert_thresholds:
+  article_count_drop_pct: 40      # chặt hơn mặc định — HTML scraping dễ vỡ âm thầm
+  field_fill_rate_drop_pct: 20
+  new_article_zero_streak: 2      # 2 cycle liền 0 bài là bất thường với ~50 bài/ngày
+  consecutive_failure_streak: 3

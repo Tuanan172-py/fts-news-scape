@@ -14,8 +14,8 @@
 | Date | 2026-09-07 |
 | Description | NSO (`nso.gov.vn`) is **network-unreachable** from this machine and from a second egress path. This phase writes **no scraper**. It is a gate: prove connectivity from the actual deployment host first. If it opens, NSO gets its own component design — it does **not** fit `BaseScraper.run()` and must **not** become a 24th domain YAML. If it stays shut, close it as WONTFIX-for-now and lean on TBTC + baodautu, which republish the monthly KTXH report within hours. |
 | Priority | **P3** — blocked; value is high but currently unrealisable |
-| Implementation status | ⛔ Blocked (gate G1 not attempted) |
-| Review status | 🔲 Not reviewed |
+| Implementation status | 🟢 **G1 PASS (re-run 12/12 probe = 200)**. **G2 MỞ 2026-09-07 theo owner** → design doc: [`docs/design/16-periodic-report-scraper.md`](../../project/docs/design/16-periodic-report-scraper.md). Vẫn KHÔNG viết scraper — chờ owner duyệt phạm vi v1. |
+| Review status | 🟡 Cần owner quyết G2 |
 
 ## Key insights
 
@@ -199,3 +199,123 @@ On G1 FAIL → 90-day re-check; TBTC/baodautu carry the macro beat in the meanti
 8. **Is a journalistic proxy (TBTC/baodautu) acceptable for macro numbers**, or does the use case
    genuinely require primary-source data tables? If the latter, G1 becomes a hard project
    dependency rather than a nice-to-have. **Owner decision.**
+
+
+---
+
+## KẾT QUẢ GATE G1 — 2026-09-07 15:03 UTC: **PASS** (đảo ngược kết luận ban đầu)
+
+### NSO nay TRUY CẬP ĐƯỢC qua HTTPS
+
+| Probe | ~08:40 UTC (research) | **15:03 UTC (G1)** |
+|---|---|---|
+| `https://www.nso.gov.vn/` | `curl (35) Connection reset` | ✅ **200**, 2.07s |
+| `https://nso.gov.vn/` | reset | ✅ **301** (redirect chuẩn) |
+| `http://www.nso.gov.vn/` (:80) | `curl (56) reset` | ❌ vẫn **reset** |
+| `https://www.gso.gov.vn/` | timeout 20s | ❌ vẫn **timeout** (host cũ, IP khác: 210.245.31.100) |
+
+**Ổn định:** 3 request liên tiếp → 200 / 200 / 200, 1.24–1.36s.
+**Kết luận:** chặn trước đó là **tạm thời/không liên tục**, không phải chặn vĩnh viễn.
+Chỉ cổng **:443 mới đi được**; :80 vẫn RST. `gso.gov.vn` là host **legacy**, đã chết —
+dùng `nso.gov.vn`.
+
+⚠️ **Cảnh báo:** chỉ mới chứng minh từ **workstation này**, và cùng host này đã fail 6 giờ
+trước. Trước khi commit vào NSO, cần chạy lại G1 **từ chính máy deploy** vài lần trong ngày
+để loại trừ tính chập chờn.
+
+### Dữ liệu G1 thu được (đầu vào cho G2)
+
+- **robots.txt** (200, 824 B) — WordPress site. `User-agent: *` chỉ Disallow
+  `/wp-admin/`, `/readme.html`, `/license.txt`, `/wp-admin/admin-ajax.php`, `/wp-admin/images/*`.
+  → **Trang bài viết ĐƯỢC PHÉP.** Phần còn lại là blocklist các agent hút site
+  (Teleport, EmailCollector, WebZIP, BlackWidow…) — ta không thuộc nhóm đó.
+- **Trang đích báo cáo KTXH hàng tháng:**
+  `https://www.nso.gov.vn/bao-cao-tinh-hinh-kinh-te-xa-hoi-hang-thang/` (200, 85.878 B)
+- **Mẫu URL báo cáo:** `https://www.nso.gov.vn/bai-top/{YYYY}/{MM}/bao-cao-tinh-hinh-kinh-te-xa-hoi-{slug}/`
+  — có cả biến thể tháng, quý (`quy-i-nam-2026`, `quy-ii-va-sau-thang-dau-nam-2026`).
+- **`sitemap.xml` → 301** (chưa lần theo).
+
+### ✅ Bằng chứng CỦNG CỐ luận điểm "dedup theo (report_type, period), KHÔNG theo URL"
+
+Trong danh sách báo cáo có mục tháng 6/2026 nhưng slug là:
+```
+/bai-top/2026/06/bao-cao-tinh-hinh-kinh-te-xa-hoi-thang-nam-va-5-thang-dau-nam-2025-2/
+```
+→ slug ghi **2025** (sai năm) và có hậu tố **`-2`** (dấu hiệu bài bị đăng trùng rồi WordPress
+tự thêm số). Slug **không suy ra được** từ (loại báo cáo, kỳ báo cáo).
+Đây chính xác là lý do khoá dedup phải là **(report_type, period)**, và là lý do NSO
+**không** vừa với `fetch_list → parse_item → dedup(url,title) → enrich`.
+
+### Trạng thái: DỪNG ở G2 — cần owner quyết
+
+Theo đúng thiết kế phase-05, **không có dòng code NSO nào được viết**:
+- ❌ không có `config/domains/nso.yaml` — NSO **không phải** domain thứ 25
+- ❌ không có `src/scrapers/nso.py`
+- ❌ không thêm headless browser / TLS-impersonation
+
+**Gate G2 cần owner duyệt một design doc `PeriodicReportScraper`** gồm:
+1. Khoá dedup `(report_type, period)` — **không** dùng `url_title_hash`.
+2. Capture attachment nhị phân (PDF/XLSX) như Bronze artifact hạng nhất.
+3. Lịch chạy tần suất thấp (vài lần/tháng quanh cửa sổ công bố), **không** nhịp 15 phút.
+4. Quan hệ với `RawStore` / Silver / handoff catalog.
+
+**Khuyến nghị:** vẫn giữ TBTC (chính) + baodautu (phụ) làm nguồn proxy KTXH — cả hai đã
+chạy và đã chứng minh phủ đúng beat (TBTC: *"Infographics 8 tháng giải ngân vốn đầu tư công
+đạt 509.557,5 tỷ đồng"*; baodautu: *"Vốn FDI vào Việt Nam tăng mạnh, 8 tháng vượt 40 tỷ USD"*).
+NSO chỉ nên xây khi cần **số liệu gốc** (bảng XLSX), không phải để lấy tin.
+
+### Việc cần làm tiếp
+- [ ] Chạy lại G1 **từ máy deploy**, nhiều lần trong ngày (loại trừ chập chờn).
+- [ ] Owner quyết: có mở G2 (viết design doc `PeriodicReportScraper`) hay không.
+- [ ] Nếu mở G2: khảo sát 1 trang báo cáo chi tiết để xác định vị trí + định dạng attachment.
+
+
+---
+
+## G1 RE-RUN (owner yêu cầu) — 2026-09-07 15:21–15:35 UTC: **12/12 PASS**
+
+```
+1  15:21:00Z  https=200/1.30s  http80=RST  robots=200
+2  15:22:13Z  https=200/1.38s  http80=RST  robots=200
+3  15:23:26Z  https=200/1.39s  http80=RST  robots=200
+4  15:24:39Z  https=200/1.23s  http80=RST  robots=200
+5  15:25:52Z  https=200/1.37s  http80=RST  robots=200
+6  15:27:05Z  https=200/1.31s  http80=RST  robots=200
+7  15:28:18Z  https=200/1.34s  http80=RST  robots=200
+8  15:29:31Z  https=200/1.28s  http80=RST  robots=200
+9  15:30:44Z  https=200/1.36s  http80=RST  robots=200
+10 15:31:57Z  https=200/1.37s  http80=RST  robots=200
+11 15:33:10Z  https=200/1.35s  http80=RST  robots=200
+12 15:34:23Z  https=200/1.30s  http80=RST  robots=200
+```
+
+**HTTPS ổn định 100% — 12/12, không một lần fail** (1.23–1.39 s), trải 14 phút.
+**:80 luôn RST** — bắt buộc dùng https.
+⚠️ Vẫn cần chạy lại **từ máy deploy** trước khi triển khai (workstation này đã fail lúc ~08:40).
+
+## GATE G2 — ĐÃ MỞ (owner duyệt 2026-09-07)
+
+Design doc: **[`docs/design/16-periodic-report-scraper.md`](../../project/docs/design/16-periodic-report-scraper.md)**
+
+### Phát hiện đổi cục diện: NSO là **WordPress có REST API công khai**
+`GET /wp-json/wp/v2/posts?tags=727` — tag **727** = "Báo cáo tình hình kinh tế - xã hội",
+**337 bài**. Trả JSON có `date`/`modified` ISO, `slug`, `title`, `content`, `tags`,
+`gso_document_type`; hỗ trợ `after=`/`page=` → incremental sync tự nhiên.
+→ Không phải scrape HTML mò như phase-05 giả định ban đầu.
+
+**Nhịp công bố xác minh:** ngày **3** hàng tháng, ~09:00 (2026-09-03, 08-03, 07-03).
+
+**Attachment CHỈ có trên trang HTML render**, không có trong `content.rendered` của API
+(`acf: []`, `featured_media: 0`):
+```
+/wp-content/uploads/2026/09/01-Loi-van-T8.2026-final.docx
+/wp-content/uploads/2026/09/02-Bieu-T8.2026.xlsx   ← bảng số liệu, giá trị cao nhất
+```
+→ kiến trúc **lai**: API để phát hiện/metadata, HTML để lấy attachment.
+
+**robots:** `User-agent: *` chỉ chặn `/wp-admin/`, `/readme.html`, `/license.txt`.
+`/wp-json/` và `/wp-content/uploads/` **được phép**.
+
+### Trạng thái: vẫn CHƯA viết code
+Design doc §8 có 5 câu hỏi cần owner chốt (phạm vi v1, có cần XLSX gốc không,
+bảng riêng hay dùng `articles`, series khác, ai chạy G1 trên máy deploy).

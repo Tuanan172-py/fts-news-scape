@@ -1,5 +1,9 @@
 ﻿# US-002 — Optimize user output format and clean structure
 
+> **SUPERSEDED một phần (2026-09-07):** hợp đồng cột `final.csv` đã đổi — `materiality_score` tạm ẩn
+> (mô hình CORE/DETAIL), thêm `gold_status`. Gate export nới từ "đủ 2 lớp" xuống **L1-only**.
+> Nguồn đúng hiện tại: `project/docs/design/13-per-user-output-workflow.md` §9–§10.1.
+
 - **Status:** implemented
 - **Lane:** normal
 - **Parent / Epic:** Per-User Output Workflow

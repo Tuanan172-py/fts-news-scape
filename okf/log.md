@@ -1,5 +1,47 @@
 # OKF Changelog
 
+## 2026-09-07 (Full refresh — đồng bộ với kiến trúc 3 vòng)
+
+Toàn bộ KB được rà lại theo code hiện hành (13 file `stale`, 3 `no-source`). **22 → 41 concept.**
+
+**Mới (19):**
+- `datasets/bronze_raw_html.md` — Bronze WORM, meta 14 khoá
+- `datasets/silver_work_packages.md` — silver-v1, work-package-v1, task packet, pruner/batch
+- `datasets/user_deliverables.md` — CSV per-user + `_master`
+- `tables/article_versions.md`, `work_items.md`, `agent_outputs.md`, `l1_tasks.md`,
+  `l1_outputs.md`, `pipeline_state.md` — 6 bảng chưa từng có trong KB
+- `pipelines/morninger.md`, `silver_derive.md`, `agent_handoff.md`, `user_output.md`
+- `configurations/entity_registry.md`, `user_subscriptions.md`
+- `references/agent_contracts.md`
+- `playbooks/daily_agent_run.md`
+- `metrics/dod_pass_rate.md`, `silver_backlog.md`
+
+**Sửa sai so với code (quan trọng):**
+- `articles`: cột là `metadata_json` (không phải `metadata`); index thật là
+  `idx_articles_published` / `idx_articles_source`
+- `seen_articles`: PK là `hash` (không phải `hash_id`), `seen_at` là REAL epoch
+- `scraper_metrics`: **không có** cột `id`
+- `scraper_heartbeat`: `status ∈ {running, ok, failed}` — không có `error`
+- `web_monocle_db`: 5 → **10 bảng**; **không tồn tại** bảng `schema_version`
+- `settings.md`: viết lại theo YAML thật (khối `morninger`; bỏ các khoá không tồn tại)
+- `notifications.md`: cấu trúc thật là danh sách `rules` (4 rule, khớp-đầu-tiên-thắng), output là
+  `data/notifications/YYYY-MM-DD.log` — không có `tiers`/`prefix`/file `.txt`
+- `secrets.md`: khoá là `fireant_token` cấp gốc
+- `domain_sources` / `source_strategy`: 23 → **24 config, 7 enabled**; giải thích quy tắc
+  Bronze-first
+- `scraper_health`: bỏ truy vấn uptime sai (heartbeat chỉ 1 hàng/scraper), thay bằng
+  `scraper_metrics`
+- `sentiment_distribution`: nguồn tính chuyển sang `agent_outputs`
+
+**Đánh dấu deprecated:** `pipelines/sentiment_pipeline.md` — engine rule-based đã gỡ khỏi
+workflow (chỉ `classify_rule_based` còn chạy).
+
+**Cấu trúc:** `configurations/monocle_config.md` → `secrets.md` (khớp link ở index, sửa link
+gãy). Mọi `index.md` viết lại. `MAPPING.md` mở rộng cho Vòng 2/3 và lớp người dùng.
+
+**Provenance:** `sources[]` của metrics trỏ về **file code có thật** thay vì file `.md` khác →
+`okf_check` hết cảnh báo `no-source`.
+
 ## 2026-08-04 (Fix Session)
 - **Fix**: Sửa toàn bộ frontmatter — `generated` từ string → object `{ by, at }`, `status: active` → `status: stable`, `sources[].url` → `sources[].resource`
 - **Fix**: Thêm footnote definitions cho tất cả concept, sửa footnote label khớp với `sources[].id`

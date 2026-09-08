@@ -58,8 +58,7 @@ web-monocle/
 │   ├── watchlist.yaml         # Mã cổ phiếu theo dõi
 │   ├── notifications.yaml     # Rule notify (file-based)
 │   ├── secrets.yaml.example   # Template secrets (secrets.yaml gitignored)
-│   └── domains/               # Per-domain configs: cafef, tnck, fireant,
-│                              #   vietstock, vnexpress, baodautu, vneconomy
+│   └── domains/               # 23 per-domain configs (4 enabled — xem "Nguồn tin")
 ├── src/
 │   ├── orchestrator.py        # entry chính: python -m src.orchestrator [--once]
 │   ├── morninger.py           # pipeline ban ngày: capture + re-derive Silver + drift (APScheduler)
@@ -71,7 +70,8 @@ web-monocle/
 │   ├── monitor/               # heartbeat + health check CLI
 │   ├── notifier/              # file-based notify
 │   └── scrapers/              # per-domain scrapers + registry (@register)
-├── scripts/                   # run_once, verify_quality, enrich_deferred, watch_24h
+├── scripts/                   # run_once, verify_quality, refresh_watchlist, watch_24h
+│   └── maintenance/           # backfill_deferred (Bronze-first), repair_dates, ...
 ├── tests/                     # 79 tests + fixtures thật (captured live)
 ├── docs/                      # architecture, runbook, skills/ per-domain
 │   └── skills/                # cafef.md, tnck.md, fireant.md, rss-sources.md
@@ -83,8 +83,11 @@ web-monocle/
 
 ## Thêm domain mới (mục tiêu ~30 phút)
 
-1. Tạo `config/domains/<name>.yaml` (`name`, `method: rss|api|html`, `rate_limit`, endpoints/feeds/selectors)
-2. Nếu `method: rss` → xong (generic RSSScraper, Phase 5). Nếu API/HTML → viết `src/scrapers/<name>.py`:
+1. Tạo `config/domains/<name>.yaml` (`name`, `method`, `rate_limit`, endpoints/feeds/selectors)
+2. Nếu nguồn **có RSS** → `method: rss_capture` → **xong, 0 dòng code** (generic
+   `RssCaptureScraper`, có Bronze capture). ⚠️ `content_selector` là **bắt buộc** — selector miss
+   ⇒ `capture_status: partial` ⇒ `SELECTOR_BROKEN` ⇒ agent hold bài.
+   Nếu API/HTML riêng → viết `src/scrapers/<name>.py`:
 
 ```python
 from src.scrapers import register
@@ -110,13 +113,36 @@ Không cần sửa orchestrator/core.
 - **Graceful degradation** — scraper lỗi không crash pipeline; lỗi gom vào `ScrapeResult.errors`
 - **Graceful shutdown** — SIGINT/SIGTERM → DBWriter flush queue, không corrupt DB
 
-## Nguồn tin (20 domains — Phase 2 expansion 2026-07-25)
+## Nguồn tin — 24 config, **8 enabled** (cập nhật 2026-09-07)
 
-**API (3):** cafef.vn (News.ashx, watchlist), tinnhanhchungkhoan.vn (zone), fireant.vn (bearer token — cần secrets.yaml)
+> **Enabled ≡ có Bronze capture.** Hệ thống là Bronze-first: mỗi bài phải có raw HTML byte-exact
+> (`RawStore.save` trước mọi parse). `method: rss` generic **không** lưu Bronze, nên 19 domain còn
+> lại **cố ý tắt** từ 2026-08-03 — bật lại cần research riêng từng trang + scraper có capture,
+> không phải đổi `enabled: true`.
 
-**RSS Việt Nam (12):** vietstock (4 feeds), vnexpress, vneconomy (3), vietnambiz (3 — chứng khoán/tài chính/vĩ mô), dantri, vietnamnet (2, keyword filter), tuoitre, thanhnien, znews, cafebiz, vietnamplus, baodautu (disabled — dormant)
+**Đang chạy (8):**
 
-**RSS Quốc tế (5, `language: en`):** CNBC (2 feeds, filter), MarketWatch, Yahoo Finance, Federal Reserve, OilPrice
+| Domain | Method | Ghi chú |
+|---|---|---|
+| cafef.vn | `api` + capture | News.ashx theo watchlist + 6 RSS chuyên mục |
+| vietstock.vn | `vietstock` (RSS + capture) | 8 feeds |
+| vneconomy.vn | `vneconomy` (RSS + capture) | 8 feeds, body `#article-editor` |
+| **vietnambiz.vn** | **`rss_capture`** | 6 feeds, body `div.vnbcbc-body` — nguồn đầu tiên dùng class generic mới |
+| **thoibaotaichinhvietnam.vn** | **`rss_capture`** | 1 feed (RSS chuyên mục của họ là ảo), chuyên mục thật từ `meta article:section` |
+| **tinnhanhchungkhoan.vn** | `tnck` (zone API + capture) | 9 zone; không có RSS; `source_domain` non-www ≠ tên config `tnck` |
+| **baodautu.vn** | `baodautu` (**HTML listing** + capture) | RSS hỏng vĩnh viễn → scraper HTML đầu tiên của repo; 6 chuyên mục |
+| **fireant.vn** | `fireant` (API + capture **JSON**) | Bearer token; web là SPA nên Bronze là JSON; mã CK gắn sẵn. ⚠️ xem ghi chú tuân thủ |
+
+**Đang tắt (16):** vndirect, hose, hnx, vnexpress, tuoitre, thanhnien,
+znews, cafebiz, vietnamplus, dantri, vietnamnet (VN) · cnbc, marketwatch, fed, oilprice,
+yahoofinance (quốc tế, `language: en`).
+
+**Ngoài danh sách domain:** **NSO / Cục Thống kê** — báo cáo KTXH định kỳ (tháng/quý/năm).
+Không phải domain: driver riêng `src/pipeline/periodic_reports.py`, dedup theo
+`(report_type, period)`, Bronze gồm HTML **+ file .xlsx/.docx** đính kèm.
+Chạy: `python scripts/fetch_periodic_reports.py`. Xem [`docs/design/16-periodic-report-scraper.md`](docs/design/16-periodic-report-scraper.md).
+
+Kế hoạch mở rộng: [`plans/20260907-0834-market-sources-expansion/plan.md`](plans/20260907-0834-market-sources-expansion/plan.md)
 
 Chi tiết feed + pitfalls: [`docs/skills/rss-sources.md`](docs/skills/rss-sources.md). Sentiment rule-based (lexicon VN) **đã gỡ khỏi workflow giai đoạn này** — sentiment "thật" do agent sinh ở lớp output; engine giữ tại `src/processor/sentiment.py` để bật lại khi cần.
 

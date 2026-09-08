@@ -1,14 +1,49 @@
 name: tnck
-enabled: false   # disabled 2026-08-03: focus on cafef + vietstock only
-method: api
+enabled: true            # RE-ENABLED 2026-09-07 (tắt 2026-08-03 "focus cafef+vietstock")
+method: tnck             # scraper riêng: zone API list + full raw HTML capture (was: api)
 rate_limit: 3.0
 timeout: 30
+language: vi
+base_url: "https://www.tinnhanhchungkhoan.vn/"
 api:
   url_template: "https://api.tinnhanhchungkhoan.vn/api/morenews-zone-{zone}-{page}.html"
-  zones: [4]              # 4 = Thông tin doanh nghiệp
-  pages_per_cycle: 2      # 40 items/page
+  # Zone map quét đầy đủ 1..45 ngày 2026-09-07 (researcher-03 §1.2).
+  # Bộ 9 zone cho beat: điều tra doanh nghiệp / tranh chấp cổ đông / pháp lý chứng khoán.
+  zones: [1, 4, 6, 11, 21, 26, 29, 33, 39]
+  #        │  │  │  │   │   │   │   │   └─ 39 Vĩ mô
+  #        │  │  │  │   │   │   │   └───── 33 Pháp đình
+  #        │  │  │  │   │   │   └───────── 29 Đại hội cổ đông  ← tranh chấp cổ đông
+  #        │  │  │  │   │   └───────────── 26 Mua bán - Sáp nhập (M&A)
+  #        │  │  │  │   └───────────────── 21 Pháp luật        ← pháp lý chứng khoán
+  #        │  │  │  └───────────────────── 11 Trái phiếu
+  #        │  │  └──────────────────────── 6  Tiền tệ
+  #        │  └─────────────────────────── 4  Thông tin doanh nghiệp
+  #        └────────────────────────────── 1  Chứng khoán
+  #
+  # HOÃN (quyết sau 7 ngày đo thực tế):
+  #   8  "Điều tra"  — tên hợp beat nhưng nội dung LỆCH sang hình sự/tiêu dùng chung
+  #                    (mẫu 2026-09-07: "Bộ Công an: Huấn...", "Fanpage tích xanh giả mạo...").
+  #                    Tín hiệu pháp lý DN thực tế nằm ở 21/33/26/29.
+  #   13 "Nhận định" · 36 "Đầu tư" · 43 "Thương trường"
+  # ĐÃ LOẠI:
+  #   27/45 "Doanh nghiệp tự giới thiệu" + 32 "Sản Phẩm" — PR trả tiền.
+  #   14 (item KHÔNG có object `zone`, nội dung tạp) · 16 "Vietnam Investment Review"
+  #      (thông báo số báo in) · 10 "Tòa soạn" (3 item) · 15/18/19/20 rỗng.
+  #   34 trùng "Chứng khoán"(1) · 12 trùng "Quốc tế"(9) · 42 trùng "Quy hoạch"(2)
+  #   · 24 trùng "Doanh nhân"(3) · 38 trùng "Địa ốc"(30) · 35 trùng "Chính trị"(7).
+  pages_per_cycle: 1      # 40 item/page — nhịp 15' thì page 2 gần như 100% trùng
   headers:
     Referer: "https://www.tinnhanhchungkhoan.vn/"
+    Accept: "application/json"
 detail:
-  max_details_per_cycle: 40   # = 1 page đầy; steady-state ít bài mới, cap hiếm khi chạm
-pitfalls: "Response gzip. `date` = epoch seconds (string), `url` relative. `phrase` param BỊ IGNORE (verified 2026-07-24) — ticker tagging client-side. Cần UA browser + Referer + Accept json."
+  extract_full: true
+  content_selector: "div.article__body"   # div.article__body.cms-body (verified 2026-09-07)
+  max_details_per_cycle: 40
+capture:
+  raw_dir: "data/raw_html"
+  min_body_bytes: 2048
+compliance:
+  respect_robots: true
+  proxy_rotation: false
+  proxies: []
+pitfalls: "KHÔNG CÓ RSS (/rss.html = 13 bytes; /rss/*.rss, /chung-khoan.rss = 302) — API zone là route DUY NHẤT, đừng probe lại. Response gzip. `date` = epoch GIÂY, JSON NUMBER (docs cũ ghi 'string' — SAI, sửa 2026-09-07); int() nhận cả hai. `url` relative → urljoin host www. `phrase` param BỊ SERVER IGNORE — không filter ticker được, tag client-side. robots www: Disallow /api/ NHƯNG api.tinnhanhchungkhoan.vn là HOST KHÁC (robots riêng, rỗng); bài /<slug>-post<NNN>.html được phép; không khai Crawl-delay. source_domain chuẩn hoá NON-WWW = tinnhanhchungkhoan.vn (Bronze partition + verify_quality dùng host này) NHƯNG article.url giữ host www (đổi URL = đổi url_title_hash = đổi định danh bài). Quảng cáo nằm trong div[id^=adsWeb_] BÊN TRONG div.article__body — strip ở Silver, KHÔNG đụng Bronze. Verified live 2026-09-07."

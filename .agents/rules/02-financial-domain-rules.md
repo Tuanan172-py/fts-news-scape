@@ -5,7 +5,11 @@ trigger: always_on
 
 Quy tắc định lượng và tiêu chuẩn suy luận tài chính cho Subagent Gold Analyst trên Antigravity 2.0:
 
-## 1. Thang điểm Trọng yếu Tài chính — `materiality_score` (0.1 -> 1.0)
+## 1. Thang điểm Trọng yếu Tài chính — `materiality_score`
+
+**THANG DUY NHẤT: số thực 0–1** (`agent-output-v1`: `materiality.score`, `minimum: 0`,
+`maximum: 1`). Khoảng khuyến nghị khi chấm là `0.1 → 1.0`. Tuyệt đối KHÔNG dùng thang khác
+(3/5, 1–5, phần trăm) ở bất kỳ rule, doc hay code nào — đã từng lệch và gây hiểu nhầm ngưỡng.
 
 | Dải điểm | Phân cấp | Tiêu chuẩn sự kiện thực tế |
 | :--- | :--- | :--- |

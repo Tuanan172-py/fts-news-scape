@@ -101,10 +101,9 @@ done
 curl -sL https://thoibaotaichinhvietnam.vn/robots.txt
 ```
 Resolves researcher-03 open question #5 (volume/day not measured; 25 items is a page cap).
-If any category is a firehose, add `filter.any` — but note `RssCaptureScraper` as specified in
-phase-01 does **not** implement `filter`. If filtering turns out to be needed, port the
-`filter`/`block_terms` block from `RSSScraper.parse_item` into `RssCaptureScraper` (phase-01
-change, not a fork here).
+If any category is a firehose, add `filter.any` / `filter.none` **directly in this YAML** —
+`RssCaptureScraper` subclasses `RSSScraper` (audit 01 §A1), so filtering and `link_rewrites`
+are inherited and need no code change anywhere.
 
 ### Step 2 — `config/domains/thoibaotaichinhvietnam.yaml`
 ```yaml
@@ -237,9 +236,8 @@ may run in parallel with phase-04).
 
 1. **TBTC volume/day** (researcher-03 §Unresolved #5) — 25 items/feed is a page cap, not a rate.
    Resolved by Step 1; determines whether `max_details_per_cycle: 40` and the 9-feed set are right.
-2. **Filtering** — `RssCaptureScraper` as specced has no `filter.any`/`none`. If Step 1 shows a
-   noisy category, that is a **phase-01 change** (port the block from `RSSScraper.parse_item`),
-   not a local fork. Decide before shipping.
+2. ~~Filtering~~ — **RESOLVED** (audit 01 §A1): `RssCaptureScraper` subclasses `RSSScraper`, so
+   `filter.any` / `filter.none` are inherited. A noisy category is a YAML edit here, not a code change.
 3. **Category set** — 9 chosen for market signal; `bat-dong-san` and `phap-luat` are plausible
    additions. Revisit after a week of data. Needs an owner call.
 4. **Overlap accounting** — TBTC + baodautu + vneconomy all cover đầu tư công. Is near-duplicate

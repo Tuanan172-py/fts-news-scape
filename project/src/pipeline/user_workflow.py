@@ -83,7 +83,7 @@ def run(*, input_root: str | Path = DEFAULT_INPUT_ROOT,
         ok, fail = _ingest_dir(a.ingest_output, agent_outputs_dir)
         logger.info("agent ingest: ok={} fail={}", ok, fail)
 
-    # 5. output cuối per user (gate đủ 2 layer + checkpoint)
+    # 5. output cuối per user (gate tối thiểu L1, Gold là enrichment tùy chọn + checkpoint)
     from src.export.user_output import UserOutputWriter
     # enabled là input-driven & authoritative: tập rỗng = KHÔNG user nào (đừng đổi thành None=all).
     writer = UserOutputWriter(store, reg, output_root=output_root, enabled=enabled)

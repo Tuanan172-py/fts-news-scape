@@ -51,6 +51,7 @@ def test_gate_and_routing(tmp_path):
     assert "materiality_score" not in row_map["a1"]
     assert row_map["a1"]["agent_provider"] == "p"
     assert row_map["a1"]["model_used"] == "m"
+    assert row_map["a1"]["gold_status"] == "GOLD"
 
     # a2: chỉ L1, thiếu gold -> các trường gold để ""
     assert row_map["a2"]["date"] == DATE
@@ -65,6 +66,7 @@ def test_gate_and_routing(tmp_path):
     assert row_map["a2"]["event_type"] == ""
     assert row_map["a2"]["agent_provider"] == ""
     assert row_map["a2"]["model_used"] == ""
+    assert row_map["a2"]["gold_status"] == "L1_ONLY"
 
     # Bob không có bài → không tạo thư mục
     assert not (tmp_path / "out" / "Bob").exists()
@@ -140,5 +142,43 @@ def test_l1_only_export_fallback_empty_gold(tmp_path):
     assert r["event_type"] == ""
     assert r["agent_provider"] == ""
     assert r["model_used"] == ""
+    assert r["gold_status"] == "L1_ONLY"
 
 
+
+
+def test_noise_filter_broad_entity_no_gold_dependency(tmp_path):
+    """Bài chỉ match entity diện rộng: quyết định CHỈ dựa alias-in-title, không đọc trường Gold."""
+    store = k.make_store(tmp_path)
+    reg = k.make_registry({"AnPT": {"ASSET_CLASS:VANG"}})
+
+    # alias "vàng" CÓ trong title + không có Gold  -> vẫn lọt
+    k.seed_article(store, "b_pass", title="Giá vàng lập đỉnh mới")
+    k.seed_l1(store, "b_pass", ["ASSET_CLASS:VANG"], title="Giá vàng lập đỉnh mới",
+              etype="ASSET_CLASS")
+    # alias KHÔNG trong title, dù ĐÃ có Gold materiality 0.6 -> bị loại (không còn nhánh materiality)
+    k.seed_article(store, "b_drop", title="Thị trường phiên chiều")
+    k.seed_l1(store, "b_drop", ["ASSET_CLASS:VANG"], title="Thị trường phiên chiều",
+              etype="ASSET_CLASS")
+    k.seed_agent(store, "b_drop")
+
+    UserOutputWriter(store, reg, output_root=tmp_path / "out").write(date=DATE)
+    rows = _read(tmp_path / "out" / "AnPT" / f"{DATE}.csv")
+    assert {r["article_id"] for r in rows} == {"b_pass"}
+    assert rows[0]["gold_status"] == "L1_ONLY"
+
+
+def test_multiple_gold_rows_picks_latest(tmp_path):
+    """Bài tái-capture có nhiều dòng agent_outputs dod_pass=1 -> chọn bản MỚI NHẤT, xác định."""
+    store = k.make_store(tmp_path)
+    reg = k.make_registry({"AnPT": {"TICKER:HPG"}})
+    k.seed_article(store, "dup")
+    k.seed_l1(store, "dup", ["TICKER:HPG"])
+    k.seed_agent(store, "dup", raw_sha256="sha_old", summary="BAN CU")
+    k.seed_agent(store, "dup", raw_sha256="sha_new", summary="BAN MOI")
+
+    UserOutputWriter(store, reg, output_root=tmp_path / "out").write(date=DATE)
+    rows = _read(tmp_path / "out" / "AnPT" / f"{DATE}.csv")
+    assert len(rows) == 1
+    assert rows[0]["summary"] == "BAN MOI"
+    assert rows[0]["gold_status"] == "GOLD"

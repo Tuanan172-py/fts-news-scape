@@ -1,83 +1,94 @@
 ---
 type: Reference
 title: Chiến lược Nguồn tin (Source Strategy)
-description: Cấu trúc phân nhóm và ưu tiên phương thức thu thập dữ liệu từ 23 domain tin tức chứng khoán.
+description: Nguyên tắc chọn & xử lý nguồn — Bronze-first, thứ tự ưu tiên phương thức, phân nhóm 24 domain.
 resource: project/docs/design/03-source-strategy.md
-tags: [source-strategy, architecture, rss, api]
+tags: [source-strategy, architecture, rss, api, bronze-first]
 status: stable
 generated:
-  by: human:anpt
-  at: 2026-08-03T10:00:00Z
+  at: 2026-09-07T00:00:00Z
 sources:
   - id: source-strategy
     resource: project/docs/design/03-source-strategy.md
     title: Source Strategy Document
-    author: human:anpt
-  - id: domain-configs
-    resource: project/config/domains/
-    title: Domain YAML configurations
-sources_last_checked: 2026-08-04
+  - id: rss-sources
+    resource: project/docs/skills/rss-sources.md
+    title: Feed + pitfalls từng nguồn
+  - id: domains-readme
+    resource: project/docs/domains/README.md
+    title: Domain playbooks
+  - id: readme
+    resource: project/README.md
+    title: Project README — bảng nguồn tin
+sources_last_checked: 2026-09-07
 ---
 
-Tài liệu này xác định nguyên tắc lựa chọn và xử lý các nguồn tin tức chứng khoán để phục vụ phòng phân tích. Hệ thống xử lý tổng cộng 23 domain được cấu hình thông qua framework nội bộ.[^source-strategy]
+# Nguyên tắc số 1 — Bronze-first
 
-## Nguyên tắc Ưu tiên (TDR-001)
+Một domain chỉ được `enabled` khi scraper của nó **lưu được raw HTML byte-exact** xuống
+[Bronze](../datasets/bronze_raw_html.md). Lý do: mọi tầng dưới là hàm thuần của Bronze; không có
+raw thì không re-derive được, không có `raw_sha256` để agent verify, không change-detection.
 
-**RSS > Reverse API > HTML Scraping**
+Hệ quả: `method: rss` generic (`RssGenericScraper`) **không** lưu Bronze ⇒ 17 domain dùng nó bị
+tắt từ 2026-08-03. Bật lại = viết/đổi sang scraper có capture, **không phải** đổi `enabled`.
 
-1. **RSS** được ưu tiên vì độ bao phủ rộng, thiết lập nhanh và ít bị hỏng (break) khi trang web thay đổi giao diện.
-2. **API (Reverse Engineering)** chỉ được sử dụng cho các nguồn không hỗ trợ RSS theo mã chứng khoán (VD: trang của công ty môi giới).
-3. **HTML tĩnh** hiếm khi được sử dụng, ngoại trừ bước bóc tách văn bản sâu (enrichment) thông qua Trafilatura.[^source-strategy]
+# Thứ tự ưu tiên phương thức (TDR-001)
 
-## Phân loại Nguồn
+`rss_capture` **>** reverse API **>** HTML listing
 
-### Nhóm A — Báo Việt Nam qua RSS (13 nguồn)
+1. **`rss_capture`** — có RSS thì dùng: 0 dòng code, chỉ config; đã kèm Bronze capture.
+2. **Reverse API** — cho nguồn không có RSS theo mã CK hoặc RSS không đủ (cafef, tnck, fireant,
+   vndirect). Mỗi nguồn schema riêng ⇒ phải viết scraper.
+3. **HTML listing** — phương án cuối, chỉ khi RSS hỏng vĩnh viễn (baodautu là ca đầu tiên).
+4. **Trafilatura** luôn dùng ở bước bóc `content_text` từ raw đã lưu — không phải "phương thức
+   thu thập".
 
-Sử dụng chung class `RSSScraper`. Cấu hình nằm trong file YAML riêng cho mỗi domain tại `config/domains/`.
+# Phân nhóm 24 domain
 
-| Domain | Trạng thái | Ghi chú |
+## Nhóm A — VN có capture (7, đang chạy)
+
+| Domain | `method` | Đặc điểm |
 |---|---|---|
-| vietstock.vn | ✅ Active | |
-| vnexpress.net | ⏸️ Disabled (2026-08-03) | Kinh doanh RSS |
-| vneconomy.vn | ⏸️ Disabled | |
-| vietnambiz.vn | ⏸️ Disabled | |
-| dantri.com.vn | ⏸️ Disabled | |
-| vietnamnet.vn | ⏸️ Disabled | |
-| tuoitre.vn | ⏸️ Disabled | |
-| thanhnien.vn | ⏸️ Disabled | |
-| znews.vn | ⏸️ Disabled | |
-| cafebiz.vn | ⏸️ Disabled | |
-| vietnamplus.vn | ⏸️ Disabled | |
-| baodautu.vn | ⏸️ Disabled | Dormant |
+| cafef.vn | `api` + capture | News.ashx theo watchlist + 6 RSS chuyên mục |
+| vietstock.vn | `vietstock` | RSS 8 feed + capture |
+| vneconomy.vn | `vneconomy` | RSS 8 feed + capture, body `#article-editor` |
+| vietnambiz.vn | `rss_capture` | 6 feed; `quoc-te.rss` đã chết (0 item) |
+| thoibaotaichinhvietnam.vn | `rss_capture` | 1 feed thật; RSS chuyên mục của họ là ảo |
+| tinnhanhchungkhoan.vn | `tnck` | zone JSON API, 9 zone, không có RSS |
+| baodautu.vn | `baodautu` | HTML listing, 6 chuyên mục |
 
-### Nhóm B — API Môi giới / Chuyên trang (6 nguồn)
+## Nhóm B — VN chưa có capture (12, tắt)
 
-Trả về JSON, yêu cầu code riêng vì mỗi nguồn có Schema khác nhau.
+vnexpress, tuoitre, thanhnien, znews, cafebiz, vietnamplus, dantri, vietnamnet (báo tổng hợp,
+chỉ subscribe chuyên mục kinh tế) · hose, hnx (sàn — hnx từng lỗi cert chain) · fireant (cần
+Bearer token) · vndirect (aggregator).
 
-| Domain | Method | Trạng thái | Đặc điểm |
-|---|---|---|---|
-| cafef.vn | API | ✅ Active | Tìm theo mã Watchlist, 1 request/mã/chu kỳ |
-| fireant.vn | API | ⏸️ Disabled | Cần Bearer token, tìm theo mã |
-| tinnhanhchungkhoan.vn | API | ⏸️ Disabled | Lấy theo zone × page, tag ticker ở client |
-| vndirect.com.vn | API | ⏸️ Disabled | Aggregator, lấy cả trang 1 lần, nội dung nhúng sẵn |
-| hose (HOSE) | API | ⏸️ Disabled | Công bố thông tin sàn |
-| hnx (HNX) | API | ⏸️ Disabled | Công bố thông tin sàn, lỗi cert chain |
+## Nhóm C — Quốc tế (5, tắt)
 
-### Nhóm C — Nguồn Tiếng Anh Quốc tế (5 nguồn)
+cnbc, marketwatch, yahoofinance, fed, oilprice — `language: en`; tiêu đề tiếng Anh nên rule lọc
+theo **nguồn**, không theo từ khoá tiếng Việt.
 
-| Domain | Method | Trạng thái |
-|---|---|---|
-| cnbc.com | RSS | ⏸️ Disabled |
-| marketwatch.com | RSS | ⏸️ Disabled |
-| finance.yahoo.com | RSS | ⏸️ Disabled |
-| federalreserve.gov | RSS | ⏸️ Disabled |
-| oilprice.com | RSS | ⏸️ Disabled |
+# Ràng buộc tuân thủ
 
-## Trạng thái hiện tại (2026-08-04)
+- `rate_limit ≥ 3.0` giây/domain; `timeout ≤ 30` giây; retry 3 lần.
+- `compliance.respect_robots: true` — [RobotsGate](../references/codebase.md) kiểm tra
+  robots.txt **trước** khi fetch trang chi tiết.
+- `SourceBackoff` hạ nhịp cấp-source khi bị throttle.
+- Chỉ chạy **một** tiến trình scheduler (advisory lock) — chạy 2 tiến trình nhân đôi lưu lượng,
+  rủi ro bị chặn IP.
 
-**2/23 domain đang active**: `cafef` và `vietstock`. Tất cả domain khác bị vô hiệu hóa từ 2026-08-03 để tập trung scope và giảm tải trong giai đoạn Phase 1 hardening.
+# Tri thức vận hành
 
-Xem danh sách đầy đủ tại [Domain Sources](../configurations/domain_sources.md).
+Bẫy từng nguồn (feed chết, encoding sai, selector, timezone thiếu offset) ghi ở trường
+`pitfalls` của mỗi YAML và ở [`docs/skills/rss-sources.md`](project/docs/skills/rss-sources.md),
+`docs/domains/*.md`. Luôn kèm ngày verify live.
 
-[^source-strategy]: [Source Strategy Document](project/docs/design/03-source-strategy.md)
-[^domain-configs]: [Domain YAML configurations](project/config/domains/)
+# Liên quan
+
+- [Domain Sources](domain_sources.md) · [Bronze Raw Store](../datasets/bronze_raw_html.md)
+- [Capture Orchestrator](../pipelines/ingestion_scheduler.md)
+
+[^source-strategy]: [Source Strategy](project/docs/design/03-source-strategy.md)
+[^rss-sources]: [RSS sources & pitfalls](project/docs/skills/rss-sources.md)
+[^domains-readme]: [Domain playbooks](project/docs/domains/README.md)
+[^readme]: [Project README](project/README.md)

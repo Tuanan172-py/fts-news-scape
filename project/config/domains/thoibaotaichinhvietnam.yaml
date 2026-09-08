@@ -1,0 +1,31 @@
+name: thoibaotaichinhvietnam   # KHỚP host stem — tránh bẫy .vn-suffix của domain_check.py:152
+enabled: true                  # NEW SOURCE 2026-09-07 (Thời báo Tài chính VN — cơ quan của Bộ Tài chính)
+method: rss_capture            # RSS list + Bronze full raw HTML capture
+rate_limit: 3.0
+timeout: 30
+language: vi
+base_url: "https://thoibaotaichinhvietnam.vn/"
+rss:
+  feeds:
+    # ⚠️ CHỈ 1 FEED. Kế hoạch ban đầu định dùng 9 feed theo chuyên mục
+    # (/{category}/rss_feed/) — nhưng verify live 2026-09-07 cho thấy server
+    # **BỎ QUA path chuyên mục**: mọi URL đều trả CÙNG channel site-wide
+    # "trang-chu" với y hệt 25 item (so khớp title + pubDate + <link> channel
+    # trên chung-khoan / thue-hai-quan / bat-dong-san / root — giống hệt nhau).
+    # Dùng 9 feed = fetch trùng 9 lần và gắn nhãn chuyên mục SAI.
+    - {url: "https://thoibaotaichinhvietnam.vn/rss_feed/", name: "TBTC Tin mới"}
+detail:
+  extract_full: true
+  content_selector: "div.article-detail-main"   # verified 2026-09-07 (fallback: div.article-content)
+  # Feed gộp chung nên tên feed KHÔNG phải chuyên mục. Chuyên mục THẬT nằm ở
+  # <meta property="article:section" content="Chính sách tài chính"> trên trang detail.
+  category_meta: "article:section"
+  max_details_per_cycle: 40
+capture:
+  raw_dir: "data/raw_html"
+  min_body_bytes: 2048
+compliance:
+  respect_robots: true
+  proxy_rotation: false
+  proxies: []
+pitfalls: "⚠️ RSS THEO CHUYÊN MỤC LÀ ẢO (verified 2026-09-07): /{category}/rss_feed/ trả CÙNG feed site-wide 'trang-chu' cho MỌI chuyên mục (25 item giống hệt). Chỉ dùng 1 feed /rss_feed/. Chuyên mục thật lấy từ meta article:section trên trang detail (category_meta). Dạng {category}.rss → 404. Feed CÓ content:encoded full body nhưng VẪN fetch detail để giữ Bronze byte-exact; inline chỉ là fallback khi capture fail. published_time ISO +07:00 sạch. Volume ~25 item/11h ≈ 50 bài/ngày. robots: Disallow /tag/ /article/ *.pdf *.xls — bài chi tiết nằm ở ROOT /<slug>-<id>.html nên KHÔNG bị chặn; TUYỆT ĐỐI không fetch attachment PDF/XLS. Mạnh về giải ngân đầu tư công (nguồn proxy KTXH thay NSO đang bị chặn network)."

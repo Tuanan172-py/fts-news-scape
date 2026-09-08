@@ -21,6 +21,8 @@ logs/
 **/data/notifications/
 **/data/exports/
 **/data/archive_conflicts/
+# Single-instance lock cua run_daily.ps1
+**/data/.pipeline.lock
 # Handoff & pipeline artifacts (tái sinh được — KHÔNG commit)
 # task-packets L1 + bóc tách (l1_route.py / agent_export.py)
 **/data/agent_tasks/

@@ -1,13 +1,12 @@
 ---
 type: Configuration
 title: Notifications
-description: Cấu hình thông báo 4-tier — watchlist → symbol → finance-source → market-keyword.
+description: 4 rule lọc tin ra log file — watchlist → symbol → finance source → market keyword; rule khớp đầu tiên thắng.
 resource: project/config/notifications.yaml
-tags: [config, yaml, notifications, alerting]
+tags: [config, yaml, notifications, coverage]
 status: stable
 generated:
-  by: human:anpt
-  at: 2026-08-04T00:00:00Z
+  at: 2026-09-07T00:00:00Z
 sources:
   - id: notifications-config
     resource: project/config/notifications.yaml
@@ -18,62 +17,66 @@ sources:
   - id: notification-design
     resource: project/docs/design/05-notification-coverage.md
     title: Notification Coverage Design
-sources_last_checked: 2026-08-04
+sources_last_checked: 2026-09-07
 ---
 
-Hệ thống thông báo 4-tier giúp lọc và ưu tiên tin tức dựa trên mức độ liên quan đến danh mục đầu tư.[^notification-design]
+`config/notifications.yaml` định nghĩa **danh sách `rules`**; `FileNotifier` duyệt tuần tự và
+**rule khớp ĐẦU TIÊN thắng**, trả về `tag` của rule đó.[^notifier]
 
-# 4 Tiers
+Mục tiêu là **phủ toàn bộ thông tin thị trường** — cổ phiếu, doanh nghiệp, cơ quan quản lý, vĩ
+mô, trong nước & quốc tế — chỉ loại tin lá cải thuần từ báo tổng hợp.[^notification-design]
 
-| Tier | Trigger | Mức độ | Hành động |
+# 4 rule hiện hành
+
+| # | `tag` | Điều kiện | Ý đồ |
 |---|---|---|---|
-| **Tier 1 — Watchlist** | Bài báo đề cập trực tiếp mã trong [watchlist](watchlist.md) | 🔴 Cao nhất | Ghi file `.txt` ngay lập tức |
-| **Tier 2 — Symbol** | Bài báo đề cập bất kỳ mã chứng khoán nào | 🟠 Cao | Ghi file `.txt` |
-| **Tier 3 — Finance Source** | Bài báo từ nguồn tài chính được phân loại `finance` | 🟡 Trung bình | Ghi file `.txt` |
-| **Tier 4 — Market Keyword** | Bài báo chứa từ khóa thị trường | 🟢 Thấp | Chỉ log, không notify |
+| 1 | `watchlist` | `tickers:` — khớp **nguyên token, phân biệt hoa/thường** 30 mã blue-chip | ưu tiên cao nhất |
+| 2 | `symbol` | `has_symbol: true` | bài gắn **bất kỳ** mã CK nào, kể cả ngoài watchlist |
+| 3 | `finance` | `sources:` — danh sách domain | nguồn 100% tin thị trường ⇒ ghi tất |
+| 4 | `market` | `match.any:` — ~120 từ khoá | chỉ còn cafebiz (home.rss trộn lá cải) |
 
-# Cấu trúc
+Rule 3 gồm: tài chính VN chuyên biệt (fireant, tinnhanhchungkhoan, vietstock, vndirect,
+vneconomy, cafef, vietnambiz), sàn (hnx, api.hsx.vn), báo lớn mà ta **chỉ** subscribe chuyên mục
+kinh tế (dantri, vnexpress, tuoitre, thanhnien, znews, vietnamplus, vietnamnet), và quốc tế EN
+(yahoo, cnbc, fed, marketwatch, oilprice, barrons, investors, wsj).
 
-```yaml
-notifications:
-  enabled: true
-  output_dir: "data/notifications/"
-  tiers:
-    watchlist:
-      enabled: true
-      prefix: "WATCHLIST"
-    symbol:
-      enabled: true
-      prefix: "SYMBOL"
-    finance_source:
-      enabled: true
-      prefix: "FINANCE"
-    market_keyword:
-      enabled: false
-      prefix: "MARKET"
-  keywords:
-    - "VN-Index"
-    - "HOSE"
-    - "HNX"
-    - "lãi suất"
-    - "tỷ giá"
-```
+Rule 4 phủ 6 nhóm từ khoá: chứng khoán/thị trường vốn · doanh nghiệp/vi mô · ngân hàng/tiền tệ ·
+cơ quan quản lý & chính sách · vĩ mô trong nước · ngành kinh tế · hàng hoá/quốc tế.
+
+# 4 kiểu điều kiện của 1 rule (OR trong cùng rule)
+
+| Khoá | Cách khớp |
+|---|---|
+| `tickers: [MÃ…]` | regex `\b(MÃ\|…)\b` trên `title + symbols`, **case-sensitive** |
+| `sources: [domain…]` | `article.source_domain` thuộc danh sách |
+| `has_symbol: true` | bài có ≥1 mã CK |
+| `match.any: [kw…]` | substring **lowercase** trên `title + symbols` |
+
+`tickers` cố ý dùng khớp nguyên-token để tránh gán nhầm: `VIC` ⊄ *Vicem*, `BID` ⊄ *BIDV*,
+`SSI` ⊄ *passive*.[^notifier]
 
 # Output
 
-File notification được ghi vào `data/notifications/` với format:
+Không có file `.txt` theo tier. FileNotifier ghi **1 file log/ngày**:
+
 ```
-WATCHLIST_20260804_143000.txt
-SYMBOL_20260804_143000.txt
-FINANCE_20260804_143000.txt
+data/notifications/YYYY-MM-DD.log
 ```
 
-Mỗi file chứa danh sách bài báo khớp trong chu kỳ đó.
+Mỗi bài khớp = 1 dòng (kèm tag), đồng thời in ra stdout. Metadata đầy đủ đã có trong DB — log
+chỉ để đọc lướt. Cuối cycle ghi thêm dòng tổng kết (`notify_cycle_summary`).
 
-# Implementation
+⚠️ Bản mô tả cũ nói tới cấu trúc `notifications.enabled / tiers / prefix` và file
+`WATCHLIST_*.txt` — **không tồn tại** trong code lẫn config hiện tại.
 
-[FileNotifier](../references/codebase.md) (`src/notifier/file_notify.py`) được gọi bởi [Orchestrator](../pipelines/ingestion_scheduler.md) sau khi tất cả scraper hoàn thành 1 chu kỳ.
+⚠️ Notify là tiện ích *best-effort*: lỗi ở bước này bị bắt và bỏ qua, không làm hỏng cycle.
+Lớp phân phối thật tới người dùng là [User Output](../pipelines/user_output.md).
 
-[^notifications-config]: [Notifications config](project/config/notifications.yaml)
-[^notifier]: [FileNotifier implementation](project/src/notifier/file_notify.py)
+# Liên quan
+
+- [watchlist.yaml](watchlist.md) · [settings.yaml](settings.md)
+- [Capture Orchestrator](../pipelines/ingestion_scheduler.md)
+
+[^notifications-config]: [notifications.yaml](project/config/notifications.yaml)
+[^notifier]: [FileNotifier](project/src/notifier/file_notify.py)
 [^notification-design]: [Notification Coverage Design](project/docs/design/05-notification-coverage.md)

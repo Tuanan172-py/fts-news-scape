@@ -1,12 +1,31 @@
 name: vietnambiz
-enabled: false   # disabled 2026-08-03: focus on cafef + vietstock only
-method: rss
+enabled: true            # RE-ENABLED 2026-09-07 — 6/7 feed live 30 items (verified curl)
+method: rss_capture      # RSS list + Bronze full capture (was: rss — KHÔNG lưu raw HTML)
 rate_limit: 3.0
 timeout: 30
+language: vi
+base_url: "https://vietnambiz.vn/"
 rss:
   feeds:
-    - {url: "https://vietnambiz.vn/chung-khoan.rss", name: "VietnamBiz Chứng khoán"}
-    - {url: "https://vietnambiz.vn/tai-chinh.rss", name: "VietnamBiz Tài chính"}
-    - {url: "https://vietnambiz.vn/vi-mo.rss", name: "VietnamBiz Vĩ mô"}
-detail: {extract_full: true, max_details_per_cycle: 30}
-pitfalls: "XML declaration KHAI utf-16 nhưng serve utf-8 bytes — _decode_feed xử lý (strip encoding attr). 30 items/zone. Verified 2026-07-25."
+    - {url: "https://vietnambiz.vn/chung-khoan.rss",  name: "VietnamBiz Chứng khoán"}   # 30 items
+    - {url: "https://vietnambiz.vn/tai-chinh.rss",    name: "VietnamBiz Tài chính"}     # 30 items
+    - {url: "https://vietnambiz.vn/vi-mo.rss",        name: "VietnamBiz Vĩ mô"}         # 30 items
+    - {url: "https://vietnambiz.vn/doanh-nghiep.rss", name: "VietnamBiz Doanh nghiệp"}  # NEW 2026-09-07, 30 items
+    - {url: "https://vietnambiz.vn/nha-dat.rss",      name: "VietnamBiz Nhà đất"}       # NEW 2026-09-07, 30 items
+    - {url: "https://vietnambiz.vn/hang-hoa.rss",     name: "VietnamBiz Hàng hóa"}      # NEW 2026-09-07, 30 items
+    # quoc-te.rss — 0 item / 356 bytes (verified 2026-09-07): CHẾT, không thêm
+detail:
+  extract_full: true
+  content_selector: "div.vnbcbc-body"   # .vnbcbc-body.vceditor-content[data-role=content]
+  #                                       (verified live 2026-09-07)
+  #   KHÔNG dùng div.post-body-content — nó bọc cả title/author/date, quá rộng.
+  #   Trang KHÔNG có thẻ <article> → default "article" sẽ làm mọi bài thành partial.
+  max_details_per_cycle: 30
+capture:
+  raw_dir: "data/raw_html"       # RawStore lưu full raw HTML byte-exact + .meta.json
+  min_body_bytes: 2048
+compliance:
+  respect_robots: true           # robots.txt: "User-agent: * / Allow: /" — không Disallow/Crawl-delay
+  proxy_rotation: false
+  proxies: []
+pitfalls: "XML declaration KHAI utf-16 nhưng serve utf-8 bytes — _decode_feed xử lý (strip encoding attr). 30 items/feed. quoc-te.rss chết (0 item, 2026-09-07). robots: Allow / , không Disallow/Crawl-delay. Body = div.vnbcbc-body (KHÔNG phải div.post-body-content — bọc cả title/author). Trang KHÔNG có thẻ <article>. BẪY: meta article:published_time THIẾU offset timezone ('2026-09-07T19:41:00') — dùng pubDate của RSS qua _parse_entry_date, ĐỪNG chuyển sang meta. URL bài kết thúc .htm (không phải .html). Verified live 2026-09-07."

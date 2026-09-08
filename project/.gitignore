@@ -17,6 +17,8 @@ data/raw/
 data/dedup_cache.json
 data/notifications/
 data/exports/
+# Single-instance lock cua run_daily.ps1
+data/.pipeline.lock
 # Handoff & pipeline artifacts (tái sinh được — KHÔNG commit)
 # task-packets L1 + bóc tách (l1_route.py / agent_export.py)
 data/agent_tasks/
@@ -30,3 +32,5 @@ data/silver/
 data/work_packages/
 # Bronze raw HTML (nặng — tái scrape được)
 data/raw_html/
+# Bronze bao cao dinh ky NSO (HTML + .xlsx/.docx)
+data/raw_reports/

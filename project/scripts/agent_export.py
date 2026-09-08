@@ -1,7 +1,7 @@
 """
 Xuất task-packet cho agent NGOÀI (Vòng 3 infra, không LLM).
 
-Claim work_items pending → ghi data/agent_tasks/<article_id>.task.json. Phát hành packet cho agents thực thi (prompt tự viết từ schemas/agent-instructions-v1.md), nhận
+Claim work_items pending (mặc định CHỈ bài đã qua L1) → ghi data/agent_tasks/<article_id>.task.json. Phát hành packet cho agents thực thi (prompt tự viết từ schemas/agent-instructions-v1.md), nhận
 agent-output-v1 rồi nạp lại bằng scripts/agent_ingest.py.
 
 Usage:
@@ -35,6 +35,8 @@ def main(argv: list[str]) -> int:
     ap.add_argument("--sync", action="store_true", default=True, help="Tự động đồng bộ Silver nếu có Bronze mới (mặc định bật)")
     ap.add_argument("--no-sync", action="store_false", dest="sync", help="Bỏ qua bước đồng bộ Silver")
     ap.add_argument("--mini-batch", "-m", type=int, default=None, help="Gom lô thành các mini-batch packets (vd: 5 hoặc 10 bài/packet)")
+    ap.add_argument("--require-l1", action="store_true", default=True, help="Chỉ bốc bài đã có l1_outputs.dod_pass=1 (mặc định BẬT)")
+    ap.add_argument("--no-require-l1", action="store_false", dest="require_l1", help="Bốc cả bài chưa có L1 (rút backlog cũ; packet sẽ thiếu l1_entities)")
     args = ap.parse_args(argv)
 
     if args.all:
@@ -54,8 +56,11 @@ def main(argv: list[str]) -> int:
         from src.pipeline.derive import rederive_incremental
         rederive_incremental(store)
     runner = AgentRunner(store)
-    exported = runner.export_tasks(limit=limit, order=args.order)
-    print(f"exported={len(exported)} → data/agent_tasks/")
+    exported = runner.export_tasks(limit=limit, order=args.order, require_l1=args.require_l1)
+    print(f"exported={len(exported)} → data/agent_tasks/ (require_l1={args.require_l1})")
+    if not exported and args.require_l1:
+        print("Không có việc nào đã qua L1. Chạy scripts/l1_route.py + l1_ingest.py trước, "
+              "hoặc dùng --no-require-l1 để rút backlog cũ.")
     if exported:
         from src.agent.manifest import create_batch_manifest, print_batch_summary_table
         manifest = create_batch_manifest(exported, runner.task_dir, batch_type="gold", order=args.order)

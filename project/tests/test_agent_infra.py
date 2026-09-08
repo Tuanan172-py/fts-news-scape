@@ -120,7 +120,7 @@ def test_export_then_ingest_done(tmp_path):
     Catalog(store).enqueue(wp["article_id"], sha, "cafef.vn", wp_path, "NEW")
 
     runner = AgentRunner(store, task_dir=str(tmp_path / "tasks"))
-    exported = runner.export_tasks(limit=10)
+    exported = runner.export_tasks(limit=10, require_l1=False)
     assert len(exported) == 1
     packet = json.loads(open(exported[0]["path"], encoding="utf-8").read())
     assert packet["input"]["article_id"] == "art1"
@@ -137,7 +137,7 @@ def test_ingest_fail_marks_failed(tmp_path):
     wp, wp_path, sha = _make_wp(tmp_path)
     Catalog(store).enqueue(wp["article_id"], sha, "cafef.vn", wp_path, "NEW")
     runner = AgentRunner(store, task_dir=str(tmp_path / "tasks"))
-    runner.export_tasks(limit=10)
+    runner.export_tasks(limit=10, require_l1=False)
 
     res = runner.ingest_output(_make_output(quality="low"))   # extraction_quality=low → DoD fail
     assert res["dod_pass"] is False
@@ -149,7 +149,53 @@ def test_ingest_idempotent_replay(tmp_path):
     wp, wp_path, sha = _make_wp(tmp_path)
     Catalog(store).enqueue(wp["article_id"], sha, "cafef.vn", wp_path, "NEW")
     runner = AgentRunner(store, task_dir=str(tmp_path / "tasks"))
-    runner.export_tasks(limit=10)
+    runner.export_tasks(limit=10, require_l1=False)
     runner.ingest_output(_make_output())
     again = runner.ingest_output(_make_output())
     assert again.get("cached") is True and again["dod_pass"] is True
+
+
+# -- Ordering L1 → Gold (rule 05 §2.5) --------------------------------------
+def _seed_l1_pass(store, article_id, entity_ids):
+    """Ghi 1 l1_outputs đạt DoD theo đúng schema l1-entity-output-v1 (key `entity_id`)."""
+    out = {
+        "l1_output_version": "1.0", "article_id": article_id, "title": "t",
+        "recognized": True,
+        "entities": [{"surface": "t", "entity_id": e, "type": "TICKER",
+                      "method": "alias", "in_list": True} for e in entity_ids],
+        "categories": {"ticker_company": "done"},
+        "citations": [{"source_span": "t"}],
+        "processing_metadata": {"agent_provider": "p", "model_used": "m", "timestamp": "t"},
+    }
+    store.insert_l1_output({
+        "article_id": article_id, "output_json": json.dumps(out, ensure_ascii=False),
+        "recognized": 1, "agent_provider": "p", "model_used": "m", "confidence": 0.9,
+        "dod_pass": 1, "dod_reasons": "[]", "created_at": "t"})
+
+
+def test_export_requires_l1_by_default(tmp_path):
+    """Chưa có L1 → không bốc việc (khỏi đốt token Gold cho bài không định tuyến được)."""
+    store = _store(tmp_path)
+    wp, wp_path, sha = _make_wp(tmp_path)
+    Catalog(store).enqueue(wp["article_id"], sha, "cafef.vn", wp_path, "NEW")
+    runner = AgentRunner(store, task_dir=str(tmp_path / "tasks"))
+
+    assert runner.export_tasks(limit=10) == []
+    assert Catalog(store).counts().get("pending") == 1      # việc vẫn còn nguyên, chưa bị claim
+
+    _seed_l1_pass(store, "art1", ["TICKER:HPG"])
+    assert len(runner.export_tasks(limit=10)) == 1
+
+
+def test_export_embeds_l1_entity_ids(tmp_path):
+    """Packet Gold phải nhúng entity_id từ l1_outputs (schema L1 KHÔNG có key `code`)."""
+    store = _store(tmp_path)
+    wp, wp_path, sha = _make_wp(tmp_path)
+    Catalog(store).enqueue(wp["article_id"], sha, "cafef.vn", wp_path, "NEW")
+    _seed_l1_pass(store, "art1", ["TICKER:HPG", "TICKER:VCB"])
+
+    runner = AgentRunner(store, task_dir=str(tmp_path / "tasks"))
+    exported = runner.export_tasks(limit=10)
+    assert exported[0]["l1_entities"] == ["TICKER:HPG", "TICKER:VCB"]
+    packet = json.loads(open(exported[0]["path"], encoding="utf-8").read())
+    assert packet["input"]["l1_entities"] == ["TICKER:HPG", "TICKER:VCB"]

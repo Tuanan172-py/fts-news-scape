@@ -1,81 +1,95 @@
 ---
 type: Metric
 title: Scraper Health
-description: Trạng thái sức khỏe của các scraper — uptime, error rate, latency.
+description: Sức khỏe scraper — trạng thái hiện thời, error rate và latency theo chu kỳ.
 tags: [metric, monitoring, scraper, health]
 status: stable
 generated:
-  by: human:anpt
-  at: 2026-08-04T00:00:00Z
+  at: 2026-09-07T00:00:00Z
 sources:
-  - id: scraper-heartbeat
-    resource: ../tables/scraper_heartbeat.md
-    title: Scraper heartbeat table
-  - id: scraper-metrics
-    resource: ../tables/scraper_metrics.md
-    title: Scraper metrics table
-sources_last_checked: 2026-08-04
+  - id: heartbeat
+    resource: project/src/monitor/heartbeat.py
+    title: Heartbeat + record_metrics
+  - id: health
+    resource: project/src/monitor/health.py
+    title: Health check CLI + ngưỡng
+  - id: db-store
+    resource: project/src/db/store.py
+    title: DDL scraper_heartbeat / scraper_metrics
+sources_last_checked: 2026-09-07
 ---
 
 # Definition
 
-Tổng hợp sức khỏe của tất cả scraper đang active, bao gồm:
+Ba góc nhìn, **hai nguồn khác nhau**:
 
-1. **Uptime**: % chu kỳ thành công trong 24h qua
-2. **Error rate**: Tỷ lệ lỗi / tổng bài fetch
-3. **Latency**: Thời gian chạy trung bình mỗi chu kỳ
+| Góc nhìn | Nguồn | Ghi chú |
+|---|---|---|
+| Trạng thái hiện thời | [scraper_heartbeat](../tables/scraper_heartbeat.md) | 1 hàng / scraper (upsert) ⇒ **không** tính uptime lịch sử từ bảng này |
+| Error rate | [scraper_metrics](../tables/scraper_metrics.md) | append-only theo chu kỳ |
+| Latency | [scraper_metrics](../tables/scraper_metrics.md) | `duration_ms` mỗi chu kỳ |
 
 # Computation
 
-### Uptime (24h)
+### Trạng thái hiện thời
 
 ```sql
-SELECT
-  scraper_name,
-  COUNT(*) AS total_cycles,
-  SUM(CASE WHEN status = 'ok' THEN 1 ELSE 0 END) AS ok_cycles,
-  ROUND(SUM(CASE WHEN status = 'ok' THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 1) AS uptime_pct
+SELECT scraper_name, status, consecutive_failures, cycle_count, last_run_ts
 FROM scraper_heartbeat
-WHERE last_run_ts >= datetime('now', '-1 day', 'localtime')
-GROUP BY scraper_name;
+ORDER BY consecutive_failures DESC, last_run_ts;
 ```
 
-### Error Rate (7 ngày)
+### Tỷ lệ chu kỳ sạch (7 ngày) — proxy cho uptime
 
 ```sql
-SELECT
-  scraper_name,
-  SUM(errors) AS total_errors,
-  SUM(articles_fetched) AS total_fetched,
-  ROUND(CAST(SUM(errors) AS REAL) / MAX(SUM(articles_fetched), 1) * 100, 1) AS error_rate_pct
-FROM scraper_metrics
-WHERE ts >= datetime('now', '-7 days', 'localtime')
-GROUP BY scraper_name;
-```
-
-### Latency Trung bình (7 ngày)
-
-```sql
-SELECT
-  scraper_name,
-  ROUND(AVG(duration_ms), 0) AS avg_duration_ms,
-  MAX(duration_ms) AS max_duration_ms
+SELECT scraper_name,
+       COUNT(*) AS cycles,
+       SUM(CASE WHEN errors = 0 THEN 1 ELSE 0 END) AS clean_cycles,
+       ROUND(SUM(CASE WHEN errors = 0 THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 1) AS clean_pct
 FROM scraper_metrics
 WHERE ts >= datetime('now', '-7 days', 'localtime')
 GROUP BY scraper_name
-ORDER BY avg_duration_ms DESC;
+ORDER BY clean_pct;
 ```
 
-# Target
+### Error rate & latency (7 ngày)
 
-| Chỉ số | Target | Alert |
+```sql
+SELECT scraper_name,
+       SUM(errors) AS errs,
+       SUM(articles_fetched) AS fetched,
+       ROUND(CAST(SUM(errors) AS REAL) / MAX(SUM(articles_fetched), 1) * 100, 1) AS error_pct,
+       ROUND(AVG(duration_ms)) AS avg_ms,
+       MAX(duration_ms) AS max_ms
+FROM scraper_metrics
+WHERE ts >= datetime('now', '-7 days', 'localtime')
+GROUP BY scraper_name
+ORDER BY error_pct DESC;
+```
+
+CLI: `python -m src.monitor.health` (exit 0 = OK, 1 = có vấn đề).
+
+# Target & Alert
+
+Ngưỡng do `src/monitor/health.py` áp:
+
+| Điều kiện | Mức |
+|---|---|
+| `consecutive_failures ≥ 3` | CRITICAL |
+| `status = 'failed'` | FAILED |
+| `last_run_ts` cũ hơn 30 phút | STALE |
+
+Bổ sung khi xem báo cáo:
+
+| Chỉ số | Target | Cảnh báo |
 |---|---|---|
-| Uptime | > 95% | < 90% trong 24h |
-| Error rate | < 5% | > 10% trong 24h |
-| Latency | < 30s/domain | > 60s (có thể bị rate limit hoặc timeout) |
-| Consecutive failures | 0 | >= 3 → scraper cần investigation |
+| `clean_pct` (7 ngày) | > 95% | < 90% |
+| `error_pct` | < 5% | > 10% |
+| `avg_ms` | < 30.000 ms/domain | > 60.000 ms (rate limit / timeout) |
 
-# Alert
+⚠️ Giá trị `status` hợp lệ là `running` / `ok` / `failed` — **không** có `error`.
 
-- **Critical**: Bất kỳ domain active nào có `consecutive_failures >= 5`
-- **Warning**: `uptime_pct < 90%` hoặc `error_rate > 10%`
+# Liên quan
+
+- [scraper_heartbeat](../tables/scraper_heartbeat.md) · [scraper_metrics](../tables/scraper_metrics.md)
+- [Runbook](../playbooks/runbook.md) · [Articles Per Day](articles_per_day.md)

@@ -93,6 +93,39 @@ def list_domains(enabled_only: bool = True) -> list[str]:
     return names
 
 
+def resolve_source_domain(name: str) -> str:
+    """Tên config → host thật dùng trong `articles.source_domain`.
+
+    Thứ tự ưu tiên:
+      1. Đã có dấu chấm → coi như host, trả nguyên (vd "cafef.vn").
+      2. `domain:` trong domains/<name>/schema.yaml — contract thật của nguồn.
+      3. `config/domains/<name>.yaml` → base_url netloc (bỏ "www.").
+      4. Fallback legacy `<name>.vn` (giữ tương thích ngược cho caller cũ).
+
+    Sửa bẫy cũ `f"{dom}.vn" if "." not in dom else dom`: tên config KHÔNG phải lúc
+    nào cũng là host stem — vd `tnck` → `tinnhanhchungkhoan.vn`, không phải `tnck.vn`.
+    Bẫy này làm domain_check/domain_reporter query nhầm và báo "0 articles".
+    """
+    if not name:
+        return name
+    if "." in name:
+        return name
+
+    schema = PROJECT_ROOT / "domains" / name / "schema.yaml"
+    domain = str((_load_yaml(schema).get("domain") or "")).strip()
+    if domain:
+        return domain.removeprefix("www.")
+
+    base_url = str((_load_yaml(DOMAINS_DIR / f"{name}.yaml").get("base_url") or "")).strip()
+    if base_url:
+        from urllib.parse import urlparse
+        netloc = urlparse(base_url).netloc.removeprefix("www.")
+        if netloc:
+            return netloc
+
+    return f"{name}.vn"
+
+
 def load_watchlist() -> list[str]:
     """Danh sách mã cổ phiếu theo dõi (uppercase)."""
     data = _load_yaml(CONFIG_DIR / "watchlist.yaml")

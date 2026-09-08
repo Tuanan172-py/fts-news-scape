@@ -26,7 +26,7 @@ Hệ thống phân chia ranh giới tuyệt đối thành 2 vùng:
 - **Lớp 2 (Xử lý Nội dung & Ngữ nghĩa — Content Processing)**:
   - Tóm tắt súc tích (`summary`: abstractive + key_points).
   - Phân tích hàm ý thị trường (`implication`: tác động doanh thu/dòng tiền/cổ phiếu).
-  - Chấm điểm trọng yếu động (`materiality_score`: từ 0.1 đến 1.0).
+  - Chấm điểm trọng yếu động (`materiality_score`: **thang 0–1**, khoảng chấm khuyến nghị 0.1–1.0).
   - Phân loại sắc thái (`sentiment`: positive/negative/neutral).
   - Trích xuất chứng cứ có căn cứ (`citations`: $\ge 2$ trích dẫn nguyên văn $\ge 20$ ký tự).
 

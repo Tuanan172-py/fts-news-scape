@@ -49,11 +49,15 @@ class AgentRunner:
 
     # -- export (producer → agent) --------------------------------------------
     def export_tasks(self, limit: int = 20, *, worker_id: str = "exporter",
-                     order: str = "desc") -> list[dict]:
-        """Claim tới `limit` việc pending → ghi task-packet. Trả list {article_id, path}."""
+                     order: str = "desc", require_l1: bool = True) -> list[dict]:
+        """Claim tới `limit` việc pending → ghi task-packet. Trả list {article_id, path}.
+
+        require_l1=True (mặc định): chỉ bốc bài đã có `l1_outputs.dod_pass=1`, đảm bảo
+        `input.l1_entities` luôn có thật (rule 05 §2.5) và bài định tuyến được cho user.
+        """
         out: list[dict] = []
         for _ in range(limit):
-            item = self.catalog.claim(worker_id, order=order)
+            item = self.catalog.claim(worker_id, order=order, require_l1=require_l1)
             if item is None:
                 break
             try:
@@ -61,14 +65,17 @@ class AgentRunner:
             except (OSError, json.JSONDecodeError) as e:
                 logger.error("[agent] load package fail {}: {}", item["package_path"], e)
                 self.catalog.mark_failed(item["id"], f"package_unreadable: {e}")
-            # Check L1 results if available to enrich task packet with l1_entities!
+                continue
+            # Nhúng entity L1 đã bóc sẵn vào packet (rule 05 §2.5 — L1-Assisted Chaining).
+            # l1-entity-output-v1 dùng key `entity_id` (KHÔNG có `code`).
             l1_entities = None
             if hasattr(self.store, "get_l1_output"):
                 l1_rec = self.store.get_l1_output(item["article_id"])
                 if l1_rec and l1_rec.get("output_json"):
                     try:
                         l1_out = json.loads(l1_rec["output_json"])
-                        l1_entities = [e.get("code") for e in l1_out.get("entities", []) if e.get("code")]
+                        l1_entities = [e["entity_id"] for e in l1_out.get("entities", [])
+                                       if e.get("in_list") and e.get("entity_id")]
                     except Exception:
                         pass
             if not l1_entities and hasattr(self.store, "get_l1_task"):

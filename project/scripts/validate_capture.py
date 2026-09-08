@@ -1,13 +1,16 @@
 """
-Audit end-to-end cơ chế RAW HTML CAPTURE (CafeF + Vietstock) — chạy LIVE.
+Audit end-to-end cơ chế RAW HTML CAPTURE — chạy LIVE, MỌI nguồn có capture.
 
 Xây scraper thật, HTTPClient thật, fetch vài bài, lưu raw artifact vào thư mục
 tạm, rồi in báo cáo kiểm chứng: capture_status, byte-exact sha256, images[],
 headers, robots, missing. Không đụng DB production (dùng temp DB).
 
 Usage:
-    python scripts/validate_capture.py            # cafef + vietstock, mỗi nguồn 2 bài
-    python scripts/validate_capture.py cafef 3    # chỉ cafef, 3 bài
+    python scripts/validate_capture.py                  # MỌI domain enabled, 2 bài/nguồn
+    python scripts/validate_capture.py cafef 3          # chỉ cafef, 3 bài
+    python scripts/validate_capture.py tnck baodautu    # chọn nhiều nguồn
+
+Chỉ audit nguồn có khai block `capture:` (nguồn không capture thì không có gì để kiểm).
 """
 
 from __future__ import annotations
@@ -19,7 +22,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from src.core.config import load_domain_config
+from src.core.config import list_domains, load_domain_config
 from src.core.stdio import force_utf8_stdio
 from src.crawler.http_client import HTTPClient
 from src.db.dedup import DedupCache
@@ -34,7 +37,9 @@ def _audit_source(name: str, n: int, raw_dir: str, dedup: DedupCache) -> None:
     cfg = load_domain_config(name)
     cfg.setdefault("capture", {})["raw_dir"] = raw_dir
     cfg["detail"] = {**cfg.get("detail", {}), "max_details_per_cycle": n}
-    if name == "cafef":
+    # Nguồn fetch theo watchlist (cafef, fireant) → 1 request/mã. Rút còn 1 mã cho
+    # audit nhanh, khỏi bắn 30 request chỉ để kiểm 2 bài.
+    if cfg.get("api", {}).get("params") or cfg.get("auth"):
         cfg["watchlist"] = ["FPT"]
 
     http = HTTPClient(rate_limit_delay=cfg.get("rate_limit", 3.0))
@@ -97,13 +102,17 @@ def _audit_source(name: str, n: int, raw_dir: str, dedup: DedupCache) -> None:
 
 def main() -> int:
     args = sys.argv[1:]
-    sources = ["cafef", "vietstock"]
     n = 2
+    if args and args[-1].isdigit():
+        n = int(args[-1])
+        args = args[:-1]
     if args:
-        if args[0] in ("cafef", "vietstock"):
-            sources = [args[0]]
-        if len(args) > 1 and args[-1].isdigit():
-            n = int(args[-1])
+        sources = args
+    else:
+        # mặc định: MỌI domain enabled CÓ khai capture (không hardcode tên nguồn)
+        sources = [d for d in list_domains()
+                   if (load_domain_config(d).get("capture") or {})]
+    print(f"Nguồn audit: {', '.join(sources)}")
 
     tmp = tempfile.mkdtemp(prefix="capture_audit_")
     raw_dir = str(Path(tmp) / "raw_html")

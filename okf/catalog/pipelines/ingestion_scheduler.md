@@ -1,79 +1,96 @@
 ---
 type: Python Pipeline
-title: Web Monocle Orchestrator
-description: Pipeline thu thập, phân tích cảm xúc và lưu trữ tin tức chứng khoán đa nguồn, điều phối bởi APScheduler.
+title: Capture Orchestrator (Vòng 1)
+description: Điều phối scraper theo chu kỳ — fetch list, dedup, capture Bronze byte-exact, classify, enqueue DBWriter.
 resource: project/src/orchestrator.py
-tags: [pipeline, ingestion, apscheduler, python]
+tags: [pipeline, ingestion, capture, bronze, apscheduler]
 status: stable
 generated:
-  by: human:anpt
-  at: 2026-08-03T10:00:00Z
+  at: 2026-09-07T00:00:00Z
 sources:
-  - id: system-overview
-    resource: project/docs/design/01-system-overview.md
-    title: System Overview
-    author: human:anpt
+  - id: orchestrator
+    resource: project/src/orchestrator.py
+    title: Orchestrator.run_cycle
+  - id: base-scraper
+    resource: project/src/core/base_scraper.py
+    title: BaseScraper template method
+  - id: capture-mixin
+    resource: project/src/scrapers/capture_mixin.py
+    title: CaptureMixin
   - id: execution-flow
     resource: project/docs/design/02-execution-flow.md
     title: Execution Flow
-  - id: readme
-    resource: project/README.md
-    title: Project README
-sources_last_checked: 2026-08-03
+sources_last_checked: 2026-09-07
 ---
 
-Pipeline Web Monocle được điều phối bởi `src/orchestrator.py`, sử dụng thư viện `APScheduler` để tự động kích hoạt chu kỳ thu thập dữ liệu mỗi 15 phút một lần với `coalesce=True` và `max_instances=1` (không chồng lấn chu kỳ).[^execution-flow]
+`src/orchestrator.py` là **Vòng 1 — Capture** trong kiến trúc 3 vòng: lấy tin mới và ghi bản raw
+byte-exact xuống [Bronze](../datasets/bronze_raw_html.md). Đây là *hot path* online, cố ý tách
+khỏi phần chuẩn hoá offline.[^execution-flow]
 
-Quy trình diễn ra tuần tự (synchronous bằng thư viện `requests`, không dùng Scrapy hay Async) để đảm bảo tuân thủ rate limit 3 giây/domain.[^system-overview]
+> Ở môi trường prod, orchestrator **không chạy trực tiếp** mà được [Morninger](morninger.md) gọi
+> như job `capture`. Chạy `python -m src.orchestrator` là chế độ standalone/fallback.
 
-# Execution Flow
-
-Mỗi chu kỳ 15 phút, orchestrator thực hiện tuần tự cho từng domain được kích hoạt:
+# Execution flow — 1 cycle
 
 ```
-1. Load domain config từ [config/domains/](../configurations/domain_sources.md)
-2. Build scraper qua REGISTRY (factory pattern)
-3. Scraper.run() → fetch_list() → parse_item() → dedup → enrich()
-4. Classify từng article mới ([Rule-based classifier](../pipelines/sentiment_pipeline.md))
-5. Sentiment analysis cho bài tiếng Việt ([VN Sentiment Engine](../pipelines/sentiment_pipeline.md))
-6. Enqueue vào [DBWriter](../pipelines/db_writer.md) (single-writer thread)
-7. File-based notification ([FileNotifier](../references/notifications.md))
-8. CSV export nếu có bài mới
-9. WAL checkpoint nếu DB > 100MB
+run_cycle(names)
+  ├─ refresh advisory lock "scheduler"        (pipeline_state)
+  └─ for each domain enabled:
+       load_domain_config → build_scraper (REGISTRY factory)
+       heartbeat.record_start
+       run_with_retry / run_with_fallback
+          └─ BaseScraper.run(): fetch_list → parse_item → dedup → enrich()
+                enrich(): robots gate → backoff → fetch detail
+                          → RawStore.save (.html + .meta.json)  ← BRONZE, trước mọi xử lý
+                          → extract (trafilatura)
+       classify_rule_based(title, text) → gắn categories
+       writer.enqueue(article)
+       heartbeat.record_result
+  ├─ notifier.notify_articles + notify_cycle_summary   (lỗi ở đây không làm hỏng cycle)
+  ├─ writer.flush()                                    (commit trước khi export)
+  ├─ _export_csv()   → data/exports/articles-YYYY-MM-DD.csv (ghi đè mỗi cycle)
+  └─ _wal_checkpoint()  → PRAGMA wal_checkpoint(TRUNCATE)
 ```
 
-# CLI Usage
+⚠️ **Sentiment rule-based đã gỡ khỏi cycle** (2026-09): chỉ còn `classify_rule_based`. Sentiment
+dùng cho deliverable do agent sinh ở [agent_outputs](../tables/agent_outputs.md). Engine cũ giữ
+lại ở [Sentiment Pipeline](sentiment_pipeline.md) dạng cold backup.
+
+# CLI
 
 ```powershell
-# Production: chạy liên tục theo APScheduler
-python -m src.orchestrator
-
-# Test: chạy 1 chu kỳ cho tất cả domain rồi thoát
-python -m src.orchestrator --once
-
-# Test: chạy 1 chu kỳ cho domain cụ thể
-python -m src.orchestrator --once cafef fireant tnck
+.venv\Scripts\python.exe -m src.orchestrator             # scheduler liên tục
+.venv\Scripts\python.exe -m src.orchestrator --once      # 1 cycle rồi thoát
+.venv\Scripts\python.exe -m src.orchestrator --once cafef tnck
+.venv\Scripts\python.exe scripts\run_once.py [domain...]  # tương đương --once
 ```
 
-# Graceful Shutdown
+# Bất biến & ràng buộc
 
-Khi nhận SIGINT/SIGTERM, orchestrator gọi `shutdown()`:
-1. Flush [DBWriter](../pipelines/db_writer.md) (đợi tất cả pending articles được commit)
-2. WAL checkpoint
-3. Đóng DedupCache
+| Ràng buộc | Giá trị | Nguồn |
+|---|---|---|
+| Chu kỳ | 15 phút, `coalesce=True`, `max_instances=1`, misfire 300s | [settings.yaml](../configurations/settings.md) |
+| Rate limit | ≥3 giây / domain | `http.rate_limit` |
+| Timeout | 30 giây | `http.timeout` |
+| Retry | 3 lần + fallback method | `src/core/retry.py` |
+| Đơn tiến trình | advisory lock `lock:scheduler`, stale 40′ | [pipeline_state](../tables/pipeline_state.md) |
 
-# Metrics
+**Graceful degradation** — 1 domain lỗi không làm hỏng domain khác; lỗi notify/export không làm
+hỏng cycle. **Graceful shutdown** — SIGINT/SIGTERM ⇒ flush [DBWriter](db_writer.md), WAL
+checkpoint, nhả lock.
 
-- **Chu kỳ chạy**: 15 phút/lần
-- **Rate limit**: 3 giây/domain
-- **Timeout fetch**: 30 giây
-- **Retry**: 3 lần, backoff 1.5x
-- **Graceful degradation**: Lỗi 1 domain không ảnh hưởng domain khác
+**Bronze-first**: chỉ domain có capture raw HTML mới được `enabled` — `method: rss` generic
+không lưu Bronze nên bị tắt có chủ đích.[^capture-mixin] Xem
+[Source Strategy](../configurations/source_strategy.md).
 
-# Configuration
+# Quan hệ
 
-Việc thêm mới một nguồn không yêu cầu sửa đổi code, chỉ cần tạo file YAML mới tại `config/domains/<name>.yaml`.[^execution-flow] Các secret và token của API ngoài (VD: FireAnt) được cấu hình tại [secrets.yaml](../configurations/secrets.md).
+- Ghi [Bronze raw store](../datasets/bronze_raw_html.md), [articles](../tables/articles.md),
+  [seen_articles](../tables/seen_articles.md), [scraper_heartbeat](../tables/scraper_heartbeat.md),
+  [scraper_metrics](../tables/scraper_metrics.md)
+- Được điều phối bởi [Morninger](morninger.md); tiếp nối bởi [Silver Derive](silver_derive.md)
 
-[^system-overview]: [System Overview](project/docs/design/01-system-overview.md)
+[^orchestrator]: [Orchestrator](project/src/orchestrator.py)
+[^base-scraper]: [BaseScraper](project/src/core/base_scraper.py)
+[^capture-mixin]: [CaptureMixin](project/src/scrapers/capture_mixin.py)
 [^execution-flow]: [Execution Flow](project/docs/design/02-execution-flow.md)
-[^readme]: [Project README](project/README.md)

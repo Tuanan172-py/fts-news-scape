@@ -1,92 +1,105 @@
 ---
 type: Configuration
 title: Domain Sources
-description: Danh sách đầy đủ 23 domain cấu hình nguồn tin — mỗi domain là 1 file YAML trong config/domains/.
+description: 24 file YAML cấu hình nguồn tin trong config/domains/ — 7 đang bật (Bronze-first), 17 tắt có chủ đích.
 resource: project/config/domains/
 tags: [config, yaml, domains, sources]
 status: stable
 generated:
-  by: human:anpt
-  at: 2026-08-04T00:00:00Z
+  at: 2026-09-07T00:00:00Z
 sources:
-  - id: domain-configs
-    resource: project/config/domains/
-    title: Domain configuration directory
-  - id: source-strategy
-    resource: project/docs/design/03-source-strategy.md
-    title: Source Strategy Document
-sources_last_checked: 2026-08-04
+  - id: vietnambiz-config
+    resource: project/config/domains/vietnambiz.yaml
+    title: Ví dụ config đầy đủ (rss_capture)
+  - id: config-loader
+    resource: project/src/core/config.py
+    title: load_domain_config / list_domains
+  - id: registry
+    resource: project/src/scrapers/__init__.py
+    title: Scraper REGISTRY
+  - id: adding-source
+    resource: project/docs/dev/03-adding-a-source.md
+    title: Adding a source
+sources_last_checked: 2026-09-07
 ---
 
-Thư mục `config/domains/` chứa 23 file YAML, mỗi file định nghĩa cấu hình cho một nguồn tin. Được load bởi `src/core/config.py` và [Orchestrator](../pipelines/ingestion_scheduler.md).[^domain-configs]
+Mỗi nguồn tin = 1 file YAML trong `config/domains/`. `list_domains()` chỉ trả về domain có
+`enabled: true`; `build_scraper()` tra `method` trong [REGISTRY](../references/codebase.md).[^config-loader]
 
-# Cấu trúc 1 file domain
+# Trạng thái (2026-09-07): 24 config, **7 enabled**
+
+> **Enabled ≡ có Bronze capture.** Hệ thống là Bronze-first: mỗi bài phải có raw HTML byte-exact
+> (`RawStore.save` trước mọi parse). `method: rss` generic **không** lưu Bronze, nên 17 domain
+> còn lại **cố ý tắt** — bật lại cần research từng trang + scraper có capture, không phải đổi
+> `enabled: true`.
+
+## Đang chạy (7)
+
+| Domain | `method` | Ghi chú |
+|---|---|---|
+| cafef | `api` | News.ashx theo watchlist + 6 RSS chuyên mục |
+| vietstock | `vietstock` | RSS + capture, 8 feed |
+| vneconomy | `vneconomy` | RSS + capture, 8 feed, body `#article-editor` |
+| vietnambiz | `rss_capture` | 6 feed, body `div.vnbcbc-body` — nguồn đầu dùng class generic mới |
+| thoibaotaichinhvietnam | `rss_capture` | 1 feed; chuyên mục thật lấy từ `meta article:section` |
+| tnck | `tnck` | zone JSON API + capture, 9 zone; `source_domain` = `tinnhanhchungkhoan.vn` ≠ tên config |
+| baodautu | `baodautu` | **HTML listing** + capture (RSS hỏng vĩnh viễn), 6 chuyên mục |
+
+## Đang tắt (17)
+
+- **VN, `method: rss`**: vnexpress, tuoitre, thanhnien, znews, cafebiz, vietnamplus, dantri,
+  vietnamnet, hose, hnx
+- **VN, `method: api`**: fireant (cần Bearer token), vndirect
+- **Quốc tế (`language: en`, `method: rss`)**: cnbc, marketwatch, fed, oilprice, yahoofinance
+
+# Cấu trúc 1 file
 
 ```yaml
-name: vnexpress
-enabled: false
-method: rss
+name: vietnambiz
+enabled: true
+method: rss_capture          # rss | rss_capture | api | <tên scraper riêng>
 rate_limit: 3.0
 timeout: 30
+language: vi
+base_url: "https://vietnambiz.vn/"
 rss:
   feeds:
-    - {url: "https://vnexpress.net/rss/kinh-doanh.rss", name: "VnExpress Kinh doanh"}
+    - {url: "https://vietnambiz.vn/chung-khoan.rss", name: "VietnamBiz Chứng khoán"}
 detail:
   extract_full: true
+  content_selector: "div.vnbcbc-body"   # BẮT BUỘC với rss_capture
   max_details_per_cycle: 30
-pitfalls: "chung-khoan.rss redirect 302"
+capture:
+  raw_dir: "data/raw_html"
+  min_body_bytes: 2048
+compliance:
+  respect_robots: true
+  proxy_rotation: false
+  proxies: []
+pitfalls: "ghi lại bẫy đã verify live — encoding, feed chết, selector, timezone…"
 ```
 
-# Danh sách đầy đủ 23 domain
+⚠️ Với `method: rss_capture`, **`detail.content_selector` là bắt buộc**. Selector sai ⇒
+`capture_status: partial` ⇒ `SELECTOR_BROKEN` ⇒ bài bị **held**, agent không nhận. Mặc định
+`article` sẽ hỏng với trang không có thẻ `<article>`.
 
-## Đang Active (2)
+Trường `pitfalls` là tri thức vận hành quý nhất trong mỗi file — luôn ghi kèm ngày verify live.
 
-| Domain | Method | Nhóm |
-|---|---|---|
-| [cafef](https://cafef.vn) | API | API Môi giới |
-| [vietstock](https://vietstock.vn) | RSS | Báo VN |
+# Thêm domain mới
 
-## Báo Việt Nam — RSS (11, disabled)
+1. Tạo `config/domains/<name>.yaml`.
+2. Nguồn **có RSS** → `method: rss_capture` ⇒ xong, 0 dòng code (dùng `RssCaptureScraper`).
+3. API/HTML riêng → viết `src/scrapers/<name>.py` + `@register("<name>")`.
+4. Viết test (happy path + 1 edge case), rồi `python scripts/run_once.py <name>`.
 
-| Domain | Trạng thái |
-|---|---|
-| vnexpress.net | Disabled 2026-08-03 |
-| vneconomy.vn | Disabled |
-| vietnambiz.vn | Disabled |
-| dantri.com.vn | Disabled |
-| vietnamnet.vn | Disabled |
-| tuoitre.vn | Disabled |
-| thanhnien.vn | Disabled |
-| znews.vn | Disabled |
-| cafebiz.vn | Disabled |
-| vietnamplus.vn | Disabled |
-| baodautu.vn | Disabled (dormant) |
+Không cần sửa orchestrator/core.[^adding-source]
 
-## API Môi giới (5, disabled)
+# Liên quan
 
-| Domain | Đặc điểm |
-|---|---|
-| fireant.vn | Cần Bearer token |
-| tinnhanhchungkhoan.vn | Zone × page |
-| vndirect.com.vn | Aggregator |
-| hose (HOSE) | Sàn chính thống |
-| hnx (HNX) | Sàn chính thống, lỗi cert chain |
+- [Source Strategy](source_strategy.md) · [Codebase Guide](../references/codebase.md)
+- [Bronze Raw Store](../datasets/bronze_raw_html.md)
 
-## Tiếng Anh Quốc tế (5, disabled)
-
-| Domain |
-|---|
-| cnbc.com |
-| marketwatch.com |
-| finance.yahoo.com |
-| federalreserve.gov |
-| oilprice.com |
-
-# Cách thêm domain mới
-
-Không cần sửa code, chỉ cần tạo file YAML mới trong `config/domains/`. Nếu dùng RSS: chỉ cần config. Nếu dùng API: cần implement scraper class + đăng ký qua `@register()`.
-
-Xem thêm: [Source Strategy](source_strategy.md), [Codebase Guide](../references/codebase.md)
-
-[^domain-configs]: [Domain configurations](project/config/domains/)
-[^source-strategy]: [Source Strategy](project/docs/design/03-source-strategy.md)
+[^vietnambiz-config]: [vietnambiz.yaml](project/config/domains/vietnambiz.yaml)
+[^config-loader]: [config.py](project/src/core/config.py)
+[^registry]: [Scraper registry](project/src/scrapers/__init__.py)
+[^adding-source]: [Adding a source](project/docs/dev/03-adding-a-source.md)

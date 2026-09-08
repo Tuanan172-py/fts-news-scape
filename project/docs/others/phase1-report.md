@@ -37,7 +37,7 @@ Ngày: 2026-07-24. Plan: `plans/20260724-0859-scraping-expansion-phase1/`.
 | baodautu feed: 4 dòng trống trước `<?xml` | feedparser strict | `lstrip()` trước parse + regression test |
 | baodautu feeds 0 items (mọi UA/client) | Nguồn RSS dormant (giống NDH) | `enabled: false` + lý do trong yaml; bật lại khi feed sống |
 | VnEconomy content:encoded không có trong item | Chỉ khai báo namespace | Đi đường detail-fetch thường |
-| Backfill vượt detail cap → bài summary-only | By design (cap 30/cycle) | `scripts/enrich_deferred.py` (TNCK: 80→100% quality) |
+| Backfill vượt detail cap → bài summary-only | By design (cap 30/cycle) | ~~`scripts/enrich_deferred.py`~~ — **đã xoá 2026-09-07** (Bronze-blind). Thay bằng `scripts/maintenance/backfill_deferred.py` |
 
 ## Việc còn lại (user action)
 
@@ -50,4 +50,4 @@ Ngày: 2026-07-24. Plan: `plans/20260724-0859-scraping-expansion-phase1/`.
 - 79 tests pass (fixtures thật captured live 2026-07-24)
 - 7 domain configs + 4 skill docs (`docs/skills/`)
 - Runbook: `docs/runbook.md` | Architecture: `docs/architecture.md`
-- Tools: `run_once.py`, `verify_quality.py`, `enrich_deferred.py`, `watch_24h.py`, `-m src.monitor.health`
+- Tools: `run_once.py`, `verify_quality.py`, `maintenance/backfill_deferred.py`, `watch_24h.py`, `-m src.monitor.health`

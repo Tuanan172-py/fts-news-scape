@@ -28,30 +28,50 @@ vndirect 2026-07-25.
   - `LinkDetail` relative + utm → join `https://cafef.vn`. `Symbol`/`NewsId` thường null.
   - Chi phí: 30 mã × 3s ≈ 90s pha list mỗi cycle.
 
-## fireant — `config/domains/fireant.yaml` (`src/scrapers/fireant.py`)
+## fireant — `fireant.yaml` ✅ enabled 2026-09-07 (`method: fireant`, API + Bronze **JSON**)
 
-- **List:** `GET restv2.fireant.vn/posts?symbol={S}&type=1&offset=0&limit=20` (theo watchlist).
-  **Detail:** `GET restv2.fireant.vn/post/{post_id}` (field `content` = full HTML). Web URL bài =
-  `fireant.vn/bai-viet/{post_id}`.
-- **Auth:** `type: bearer`, `secret_key: fireant_token` trong `config/secrets.yaml` (gitignored).
-- **Quirk / bẫy đã xử:**
-  - **Strip "Bearer " prefix:** nếu token dán kèm `"Bearer "` → cắt để không thành `Bearer Bearer …`
-    (`fireant.py:40-41`). Token `PASTE_*` hoặc rỗng → `disabled` ngay từ constructor (WARN, không crash).
-  - **Self-disable 401/403:** `get_response` đọc status; 401/403 → `_auth_failed` set `disabled`,
-    ERROR log 1 lần, **break** khỏi loop watchlist (không hammer). Áp cho cả list và detail.
-  - List trả `content` RỖNG → bắt buộc gọi detail. `date` đã ISO `+07:00`. symbols từ `taggedSymbols[].symbol`.
-  - Token có thể hết hạn → cập nhật thủ công secrets.yaml. Hướng dẫn lấy token: [../skills/fireant.md](../skills/fireant.md).
+- **Endpoint:** `GET https://restv2.fireant.vn/posts?symbol={S}&type=1&offset=0&limit=20`
+  → detail `GET /posts/{id}` (**SỐ NHIỀU**; `/post/{id}` số ít → 404).
+- **Auth:** Bearer token từ `config/secrets.yaml` → `fireant_token`. Thiếu/hết hạn →
+  scraper **self-disable** trong cycle + ERROR log. **Không ghi Bronze** cho response 401/403.
+- **⚠️ Bronze là JSON, không phải HTML.** `fireant.vn/dashboard/content/{id}` là Next.js SPA,
+  body bài không có trong HTTP GET → capture **response API** (byte-exact).
+  KHÔNG dùng `_capture_and_extract` (chạy CSS selector → báo `partial` oan).
+  `SilverBuilder` thấy `Content-Type: application/json` thì bóc trường HTML trước khi trích.
+- **Field là camelCase:** `postID`, `postSource`, `postSourceUrl`. Bản cũ đọc `post_source`
+  snake_case nên `source_name` LUÔN rỗng — **sửa 2026-09-07**.
+- **Permalink** đúng: `/dashboard/content/{id}`. `/bai-viet/{id}` → **404** — sửa 2026-09-07.
+- List trả `content` **rỗng** → bắt buộc gọi detail (`content` ~3.7k HTML).
+- `date` đã ISO `+07:00`. `taggedSymbols` **gắn sẵn mã CK** → không cần `tag_tickers`.
+- Volume: 30 mã × 20 = 600 item/cycle (verified: fetched=600, 493 new, 0 lỗi).
+- **⚠️ TUÂN THỦ:** robots của fireant.vn chặn ClaudeBot/GPTBot/CCBot/Google-Extended và khai
+  `Content-Signal: ai-train=no, use=reference`. Ta đi qua API đã xác thực bằng token người
+  dùng (restv2 không có robots) → chịu **ToS tài khoản**. **Tuyệt đối không dùng để train model.**
+  Chi tiết + việc cần owner xác nhận: [`domains/fireant/README.md`](../../domains/fireant/README.md).
 
-## tnck — `config/domains/tnck.yaml` (`src/scrapers/tnck.py`)
+## tnck — `tnck.yaml` ✅ enabled 2026-09-07 (`method: tnck`, API + Bronze capture)
 
-- **Endpoint:** `.../morenews-zone-{zone}-{page}.html`; config `zones: [4]` (Thông tin doanh nghiệp),
-  `pages_per_cycle: 2` (~40 item/page → 80), cap detail 40. `Referer: www.tinnhanhchungkhoan.vn/`.
-- **Quirk:**
-  - **`phrase` param bị server IGNORE** (verify: `phrase=HPG` trả zone content y hệt) → **không dùng**
-    để filter mã; tag ticker **client-side** qua `core/tickers.py`.
-  - Response **gzip** (requests auto-decompress). Data path `data["data"]["contents"]`.
-  - `date` = epoch **giây** (string) → `fromtimestamp(int, VN_TZ)`. `url` relative → `urljoin(BASE)`.
-  - Field names KHÁC docs cũ (không có `full_url`/`related_tickers`).
+**Không có RSS** (verified 2026-09-07: `/rss.html` = 13 bytes; `/rss/*.rss` = 302). API zone là
+route **duy nhất** — đừng probe lại.
+
+- **Endpoint:** `GET https://api.tinnhanhchungkhoan.vn/api/morenews-zone-{zone}-{page}.html`
+- **Zones (9):** `[1, 4, 6, 11, 21, 26, 29, 33, 39]` = Chứng khoán · Thông tin doanh nghiệp ·
+  Tiền tệ · Trái phiếu · **Pháp luật** · **M&A** · **Đại hội cổ đông** · **Pháp đình** · Vĩ mô.
+  `pages_per_cycle: 1` (40 item/zone; nhịp 15' thì page 2 gần như 100% trùng).
+  ⚠️ **Zone 8 "Điều tra" bị loại** — nội dung lệch hình sự/tiêu dùng, không phải điều tra DN.
+  Bảng zone đầy đủ 1..45: `domains/tnck/schema.yaml`.
+- **Headers:** browser UA + `Referer: https://www.tinnhanhchungkhoan.vn/` + `Accept: application/json`.
+  Response gzip, `data.contents[]`.
+- **`date` = epoch GIÂY, JSON NUMBER** (tài liệu cũ ghi "string" — **SAI**, sửa 2026-09-07).
+- **`phrase` param bị server IGNORE** → tag ticker client-side.
+- **`source_domain` = NON-WWW** `tinnhanhchungkhoan.vn`; `article.url` giữ host `www.`
+  (đổi URL = đổi `url_title_hash` = đổi định danh bài).
+  → `verify_quality.py tinnhanhchungkhoan.vn` (HOST), `domain_check.py --report tnck` (tên config).
+- **robots:** www Disallow `/api/`, nhưng `api.tinnhanhchungkhoan.vn` là **host khác**
+  (robots riêng, rỗng). Bài `/<slug>-post<NNN>.html` được phép. Không khai Crawl-delay.
+- **Detail:** server-rendered, body `div.article__body.cms-body`.
+  ⚠️ Quảng cáo `div[id^=adsWeb_]` nằm **bên trong** body → strip ở Silver, không đụng Bronze.
+- Chi tiết: [`domains/tnck/README.md`](../../domains/tnck/README.md).
 
 ## vndirect — `config/domains/vndirect.yaml` (`src/scrapers/vndirect.py`)
 

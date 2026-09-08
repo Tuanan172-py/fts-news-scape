@@ -1,16 +1,46 @@
 name: baodautu
-enabled: false    # DISABLED 2026-07-24: mọi feed trả XML hợp lệ nhưng 0 <item>
-                  # (verified nhiều UA/client) — nguồn RSS dormant giống NDH.
-                  # Bật lại khi feed có items: đổi enabled: true là xong.
-method: rss
+enabled: true            # RE-ENABLED 2026-09-07 — chuyển RSS (hỏng) → HTML listing
+method: baodautu         # scraper riêng: HTML listing + full raw HTML capture (was: rss)
 rate_limit: 3.0
 timeout: 30
-rss:
-  feeds:
-    - {url: "https://baodautu.vn/chung-khoan.rss", name: "Báo Đầu tư Chứng khoán"}
-    - {url: "https://baodautu.vn/dau-tu-tai-chinh.rss", name: "Báo Đầu tư Tài chính"}
-    - {url: "https://baodautu.vn/ngan-hang--bao-hiem.rss", name: "Báo Đầu tư Ngân hàng"}
+language: vi
+base_url: "https://baodautu.vn"
+listing:
+  # URL: trang 1 = "{base}/{slug}-d{id}/"   (CÓ / cuối)
+  #      trang N = "{base}/{slug}-d{id}/p{N}"  (⚠️ THÊM / cuối → 404)
+  categories:
+    - {slug: "toan-canh-dau-tu",    id: 2,  name: "Toàn cảnh đầu tư"}      # đầu tư công/giải ngân/FDI/hạ tầng ★
+    - {slug: "thoi-su-dau-tu",      id: 1,  name: "Thời sự Đầu tư"}        # chính sách vĩ mô ★
+    - {slug: "dau-tu-tai-chinh",    id: 6,  name: "Đầu tư tài chính"}      # chứng khoán/tài chính ★
+    - {slug: "kinh-doanh",          id: 3,  name: "Kinh doanh"}            # doanh nghiệp ★
+    - {slug: "ngan-hang--bao-hiem", id: 5,  name: "Ngân hàng & Bảo hiểm"}  # ⚠️ HAI dấu gạch ngang
+    - {slug: "dau-tu-va-phap-luat", id: 41, name: "Đầu tư và Pháp luật"}
+    # TRÁNH: d80 "Quảng bá" (PR trả tiền).
+    # Chưa dùng: d54 quốc tế, d4 doanh nhân, d77 kinh tế số, d52 PT bền vững,
+    #            d10 KH&CN, d8 tiêu dùng, d53 sức khỏe DN, d55 du lịch, d27 đời sống,
+    #            d9 ô tô xe máy, d78 y tế, d76 điểm tin, d36 thông tin doanh nghiệp.
+  pages_per_cycle: 1        # ~31 link/trang × 6 chuyên mục — thừa cho ~50 bài/ngày
+  # ⚠️ Cấu trúc listing (verified 2026-09-07): mỗi bài là 1 thẻ <article>.
+  #    KHÔNG dùng "div.thumbblock" — class thumbblock nằm trên thẻ <a> ẢNH, không phải div
+  #    (BeautifulSoup select("div.thumbblock") trả 0). Mỗi <article> có nhiều <a>:
+  #    link ảnh (a.thumbblock, KHÔNG có text) đứng TRƯỚC link tiêu đề → scraper duyệt hết
+  #    và lấy anchor đầu tiên vừa có text vừa khớp link_pattern.
+  item_selector: "article"
+  link_selector: "a[href]"
+  link_pattern: '-d\d+\.html'      # YAML single-quote: giữ nguyên backslash
+  sapo_selector: "div.sapo_thumb_news, div.desc_list_news_home"
 detail:
   extract_full: true
+  content_selector: "#content_detail_news"   # ⚠️ TUYỆT ĐỐI không dùng .content (template JS)
+  title_selector: "div.title-detail"         # đối chiếu; trang KHÔNG có <h1>
+  date_scope_selector: "span.post-time"      # CHÍNH XÁC — ngày nằm NGOÀI body (verified 2026-09-07)
+  author_selector: "a.author"                # a.author.cl_green
   max_details_per_cycle: 30
-pitfalls: "Feed có 4 dòng trống trước <?xml (đã lstrip trong RSSScraper). 2026-07-24: feeds serve 0 items — dormant."
+capture:
+  raw_dir: "data/raw_html"
+  min_body_bytes: 2048
+compliance:
+  respect_robots: true      # robots: "User-agent: * / Allow: /" — không Disallow, không Crawl-delay
+  proxy_rotation: false
+  proxies: []
+pitfalls: "RSS VĨNH VIỄN HỎNG (verified 2026-09-07, 8/8 URL): mọi feed trả CÙNG channel rỗng 'Trang chủ' + <link> lỗi 'https://baodautu.vn//.rss' (double-slash, không category), 0 item → generator server hỏng, KHÔNG phải dormant; rssMain.html trả HTML homepage. Đừng probe lại. Pagination `…-d<N>/p<page>` — THÊM / cuối là 404; trang 1 thì PHẢI có / cuối. Listing KHÔNG có ngày đăng → published_at chỉ lấy được ở trang detail. Detail: KHÔNG có <h1>, KHÔNG có <time>/article:published_time/JSON-LD; ngày là text thuần dd/MM/yyyy HH:mm trong span.post-time (nằm NGOÀI #content_detail_news). Body = #content_detail_news; selector .content sẽ dính chuỗi template JS `<div class=\"content\">'+content+'</div>'` của widget bình luận. Paragraph mã hoá HTML entity (&ecirc;). Slug d5 có HAI dấu gạch ngang: ngan-hang--bao-hiem. Sitemap sitemaps/news-YYYY-M.xml (~348 url/tuần → ~50 bài/ngày) chỉ là backstop — không có category, lastmod chỉ có ngày."

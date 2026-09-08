@@ -22,8 +22,10 @@ def register(name: str):
 
 # Import cuối file để trigger @register (an toàn circular: register đã định nghĩa)
 from src.scrapers import (  # noqa: E402,F401
+    baodautu,
     cafef,
     fireant,
+    rss_capture,
     rss_generic,
     tnck,
     vietstock,

@@ -1,8 +1,10 @@
 """
-write_user_output.py — Ghi output CSV cuối cho từng user (gate đủ 2 layer).
+write_user_output.py — Ghi output CSV cuối cho từng user (gate tối thiểu L1).
 
-Chỉ ghi article có l1_outputs.dod_pass=1 AND agent_outputs.dod_pass=1, định tuyến theo
-subscription. Output: users/output/<name>/<YYYY-MM-DD>/{L1,agent,final}.csv.
+Chỉ ghi article có l1_outputs.dod_pass=1 (BẮT BUỘC — routing dựa entity của L1);
+agent_outputs.dod_pass=1 là TÙY CHỌN, thiếu thì các trường Gold để trống và
+cột `gold_status` = L1_ONLY. Định tuyến theo subscription.
+Output: users/output/<name>/<YYYY-MM-DD>.csv (+ audit users/output/_master/).
 
 Usage:
     python scripts/write_user_output.py --date today

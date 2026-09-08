@@ -19,7 +19,7 @@ filter:                   # optional — keyword include-filter cho feed noise c
 | Khai `encoding="utf-16"` nhưng serve utf-8 | VietnamBiz | decode bytes + strip encoding attr khỏi XML declaration |
 | BOM utf-8 trước `<?xml` | Dân trí, Fed | `utf-8-sig` |
 | utf-16 thật (BOM FF FE) | (phòng hờ) | decode utf-16 |
-| Blank lines trước `<?xml` | Báo Đầu tư | lstrip |
+| Blank lines trước `<?xml` | Báo Đầu tư *(moot — RSS đã bỏ)* | lstrip |
 | Thiếu `<?xml` declaration | Thanh Niên | feedparser chấp nhận |
 
 ## Feed inventory
@@ -28,9 +28,10 @@ filter:                   # optional — keyword include-filter cho feed noise c
 |--------|------|---------|
 | **vietstock.vn** | `/0/tin-moi.rss`, `/144/chung-khoan.rss`, `/733/doanh-nghiep.rss`, `/761/kinh-te/vi-mo.rss` | Index `https://vietstock.vn/rss` — 60 feeds. pubDate `+0700`. RSS là PRIMARY method (internal API cần browser session) |
 | **vnexpress.net** | `/rss/kinh-doanh.rss` | `chung-khoan.rss` → 302 (không dùng) |
-| **baodautu.vn** | `/chung-khoan.rss`, `/dau-tu-tai-chinh.rss`, `/ngan-hang--bao-hiem.rss` | Index `rssMain.html`. ⚠️ **DISABLED 2026-07-24**: feeds trả XML hợp lệ nhưng 0 items (dormant). Feed cũng có 4 dòng trống trước `<?xml` (đã xử lý lstrip) |
+| **baodautu.vn** | ~~RSS~~ — **KHÔNG DÙNG ĐƯỢC** | ⚠️ **RSS HỎNG VĨNH VIỄN** (re-verified 2026-09-07, 8/8 URL). Mọi feed trả CÙNG channel rỗng `<title>Trang chủ</title><link>https://baodautu.vn//.rss</link>` → generator server hỏng, **không phải dormant**. `rssMain.html` = HTML homepage. ✅ **Đã chuyển sang HTML listing scraper 2026-09-07** — xem `docs/domains/html-scrapers.md` |
 | **vneconomy.vn** | `/chung-khoan.rss`, `/tai-chinh.rss`, `/thi-truong.rss` | Namespace content:encoded khai báo nhưng item không chứa — detail-fetch thường. Thay NDH (dormant) |
-| **vietnambiz.vn** | `/chung-khoan.rss`, `/tai-chinh.rss`, `/vi-mo.rss` | 30 items/zone. Encoding trap (xem bảng trên) |
+| **vietnambiz.vn** | **6 feeds**: `/chung-khoan.rss`, `/tai-chinh.rss`, `/vi-mo.rss`, `/doanh-nghiep.rss`, `/nha-dat.rss`, `/hang-hoa.rss` | ✅ enabled 2026-09-07, `method: rss_capture` (có Bronze). 30 items/feed. Encoding trap (xem bảng trên). ⚠️ `/quoc-te.rss` CHẾT (0 item). Body `div.vnbcbc-body` — trang KHÔNG có `<article>`. pubDate `GMT+7`. URL đuôi `.htm` |
+| **thoibaotaichinhvietnam.vn** | **1 feed**: `/rss_feed/` | ✅ enabled 2026-09-07, `rss_capture`. ⚠️ **RSS chuyên mục ẢO** — `/{cat}/rss_feed/` trả cùng feed site-wide cho mọi chuyên mục → chỉ 1 feed. Chuyên mục thật ở `meta article:section`. 25 items ≈ 50 bài/ngày. Có `content:encoded` (chỉ dùng làm fallback). Ngày ISO+07 sạch |
 | **dantri.com.vn** | `/rss/kinh-doanh.rss` | 100 items, BOM. Không có chung-khoan.rss |
 | **vietnamnet.vn** | `/rss/chung-khoan.rss` (142), `/rss/kinh-doanh.rss` (1000!) | kinh-doanh BẮT BUỘC filter keyword |
 | **tuoitre.vn** | `/rss/kinh-doanh.rss` | 50 items, XML minified 1 dòng |

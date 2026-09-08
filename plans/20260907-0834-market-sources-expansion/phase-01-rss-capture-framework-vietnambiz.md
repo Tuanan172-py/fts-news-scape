@@ -14,8 +14,8 @@
 | Date | 2026-09-07 |
 | Description | Extract the duplicated "RSS list + Bronze full capture" pattern (`vneconomy.py` ≈ `vietstock.py`) into ONE config-driven class `RssCaptureScraper` (`method: rss_capture`). Then re-enable **vietnambiz** on it with 6 live feeds (3 new), under full Bronze capture. Also truth-sync the badly stale domain matrix docs. |
 | Priority | **P0** — framework asset; blocks phase-02 |
-| Implementation status | 🔲 Not started |
-| Review status | 🔲 Not reviewed |
+| Implementation status | ✅ **Done 2026-09-07** (S8 caveat — xem Evidence) |
+| Review status | 🟡 Chờ owner review |
 
 ## Key insights
 
@@ -31,9 +31,18 @@
   makes `method: rss_capture` work for any YAML with no code.
 - **vietnambiz feeds verified live 2026-09-07:** 6 feeds × 30 items; `quoc-te.rss` = 0 items (dead, skip).
   utf-16-declared/utf-8-served quirk already handled by `_decode_feed`.
-- **vietnambiz detail selector was NOT verified by any researcher.** Do **not** invent one.
-  Ship without `content_selector` (class default `article`) → `CaptureMixin._density_extract`
-  covers a miss and records `missing: ["main_content_node"]`; then verify live in Step 1 and fill it in.
+- **vietnambiz selectors VERIFIED LIVE 2026-09-07** (audit report 01 §A3):
+  body **`div.vnbcbc-body`** (`div.vnbcbc-body.vceditor-content[data-role=content]`);
+  title `h1.vnbcb-title`; date `span.vnbcbat-data[data-role=publishdate]`.
+  robots.txt = `User-agent: * / Allow: /` — permissive, no `Disallow`, no `Crawl-delay`.
+- ⚠️ **`content_selector` is MANDATORY, not best-effort** (audit 01 §A2). If the selector matches
+  nothing, `CaptureMixin._looks_complete` → `capture_status: partial` + `missing:[incomplete_render]`
+  → design-07 `classify()` → **SELECTOR_BROKEN → manual_review → the agent HOLDS the package**.
+  `_density_extract` repairs only `content_html`, **not** `capture_status`. vietnambiz has **no
+  `<article>` tag**, so the old "ship without a selector" idea would have held 100% of its articles.
+- ⚠️ **Trap:** vietnambiz's `<meta property="article:published_time" content="2026-09-07T19:41:00">`
+  carries **no timezone offset**. Harmless because `_parse_entry_date` reads RSS `pubDate` first —
+  do **not** "improve" the date by switching to the meta tag.
 - Docs are stale: `docs/domains/README.md:3` claims "23 domain (22 enabled + 1 disabled)". Reality is 3 enabled.
 
 ## Requirements
@@ -45,8 +54,9 @@
 4. `content:encoded` (if a feed ships it) used as **fallback** content when detail fetch fails — never as a substitute for Bronze capture.
 
 **Non-functional**
-- DRY: no third copy of the vneconomy/vietstock body. New class reuses `_clean_title`,
-  `_decode_feed`, `_parse_entry_date`, `_inline_content` from `rss_generic`.
+- DRY: **`RssCaptureScraper` SUBCLASSES `RSSScraper`** (audit 01 §A1) — it overrides only
+  `__init__` and `enrich()`. `fetch_list()` and `parse_item()` are inherited verbatim, so there is
+  no copy of them anywhere. Bonus: `filter.any` / `filter.none` and `link_rewrites` come for free.
 - YAGNI: do **not** refactor `vneconomy.py` / `vietstock.py` onto the new class in this phase
   (they work, they are enabled, and rewriting them risks the only 3 live producers).
   Log it as a follow-up.
@@ -105,109 +115,64 @@ literal like vneconomy's `"vneconomy.vn"` — this is what makes the class reusa
 
 ## Implementation steps
 
-### Step 1 — Verify the vietnambiz detail selector live (do this FIRST)
-```bash
-curl -sL -A "Mozilla/5.0" https://vietnambiz.vn/chung-khoan.rss | grep -o '<link>[^<]*</link>' | head -3
-curl -sL -A "Mozilla/5.0" "<one article url from above>" -o /tmp/vnb.html
-# identify the article body container; record the exact selector + the byte size
-curl -sL https://vietnambiz.vn/robots.txt
-```
-Record the verified selector and robots rules in the YAML `pitfalls:` string. If the body
-container cannot be pinned down, ship **without** `content_selector` and rely on the density
-fallback — do not guess a selector into the config.
+### Step 1 — vietnambiz recon: ALREADY DONE (audit 01 §A3)
+
+Verified live 2026-09-07, no re-probe needed:
+
+| Item | Value |
+|---|---|
+| robots.txt | `User-agent: *` / `Allow: /` — no `Disallow`, no `Crawl-delay` |
+| **body** | **`div.vnbcbc-body`** (`.vnbcbc-body.vceditor-content[data-role=content]`) |
+| title | `h1.vnbcb-title` |
+| date (detail) | `span.vnbcbat-data[data-role=publishdate]` → `19:41 \| 07/09/2026` |
+| date (meta) | `article:published_time` = `2026-09-07T19:41:00` — ⚠️ **no tz offset**, do not use |
+| feed encoding | still declares `utf-16`, serves utf-8 → `_decode_feed` still required |
+| article URL | `https://vietnambiz.vn/<slug>-<id>.htm` (`.htm`, not `.html`) |
+
+Do **not** use the wider `div.post-body-content` — it also wraps title/author/date.
 
 ### Step 2 — `src/scrapers/rss_capture.py`
+
+**Subclasses `RSSScraper`** (audit 01 §A1) — only `__init__` + `enrich()` are overridden.
+`fetch_list()`, `parse_item()`, `filter.any/none` and `link_rewrites` are all inherited.
+
 ```python
 """
 RssCaptureScraper — RSS list + Bronze full-capture detail (method: rss_capture).
 
-DRY: gộp pattern trùng lặp vneconomy.py/vietstock.py thành 1 class config-driven.
-Nguồn RSS mới cần Bronze capture = 1 file YAML, 0 code.
+Kế thừa RSSScraper (fetch_list/parse_item/filter/link_rewrites dùng lại nguyên vẹn),
+chỉ override enrich() để lưu raw HTML byte-exact qua RawStore TRƯỚC mọi parse
+(design 06 §2, bất biến AC7). Nguồn RSS mới cần Bronze = 1 file YAML, 0 code.
 Registry key '_rss_capture' → build_scraper() map qua `method: rss_capture`.
-Raw HTML luôn được RawStore.save TRƯỚC mọi parse (design 06 §2, bất biến AC7).
+
+Khác RSSScraper: content:encoded KHÔNG còn được dùng để bỏ qua fetch detail
+(nó không phải Bronze) — chỉ là fallback body khi capture thất bại.
 """
 from __future__ import annotations
 
-import feedparser
-
-from src.core.base_scraper import BaseScraper
-from src.core.config import load_watchlist
 from src.core.models import Article
-from src.core.tickers import tag_tickers
 from src.processor.extractor import extract_text
 from src.scrapers import register
 from src.scrapers.capture_mixin import CaptureMixin
-# DRY — tái dùng helper của RSSScraper, không copy-paste
-from src.scrapers.rss_generic import (
-    _clean_title, _decode_feed, _inline_content, _parse_entry_date,
-)
-from urllib.parse import urlparse
+from src.scrapers.rss_generic import RSSScraper
 
 
 @register("_rss_capture")
-class RssCaptureScraper(CaptureMixin, BaseScraper):
+class RssCaptureScraper(CaptureMixin, RSSScraper):
+    """MRO: RssCaptureScraper → CaptureMixin → RSSScraper → BaseScraper.
+    CaptureMixin không định nghĩa __init__ nên super() rơi đúng vào RSSScraper."""
+
     def __init__(self, config, http, dedup):
         super().__init__(config, http, dedup)
-        self.feeds = config.get("rss", {}).get("feeds", [])
         detail = config.get("detail", {})
+        # BẮT BUỘC có selector — miss selector ⇒ capture_status=partial ⇒ SELECTOR_BROKEN
+        # ⇒ agent HOLD bài (audit 01 §A2). Không có default "article" mơ hồ.
         self.content_selector = detail.get("content_selector") or "article"
-        self.max_details = detail.get("max_details_per_cycle", 30)
         self.base_url = config.get("base_url", "")
-        self.watchlist = config.get("watchlist") or load_watchlist()
-        self.language = config.get("language", "vi")
-        self._details_fetched = 0
         self._init_capture()          # RawStore + RobotsGate + SourceBackoff
 
-    def fetch_list(self) -> list[dict]:
-        self._details_fetched = 0
-        items: list[dict] = []
-        for feed_cfg in self.feeds:
-            feed_url = feed_cfg["url"]
-            feed_name = feed_cfg.get("name", feed_url)
-            raw = self.http.get_bytes(feed_url, timeout=self.config.get("timeout", 30))
-            if raw is None:
-                self.errors.append(f"feed fetch failed: {feed_name}")
-                continue                      # feed-level isolation
-            feed = feedparser.parse(_decode_feed(raw))
-            if feed.bozo and not feed.entries:
-                self.errors.append(f"feed parse failed: {feed_name}")
-                continue
-            for e in feed.entries:
-                items.append({
-                    "link": (e.get("link") or "").strip(),
-                    "title": (e.get("title") or "").strip(),
-                    "summary": (e.get("summary") or "").strip(),
-                    "author": (e.get("author") or "").strip(),
-                    "published_parsed": e.get("published_parsed"),
-                    "updated_parsed": e.get("updated_parsed"),
-                    "published": e.get("published"),
-                    "updated": e.get("updated"),
-                    "content": e.get("content"),
-                    "_feed_name": feed_name,
-                })
-        return items
-
-    def parse_item(self, raw: dict) -> Article | None:
-        url, title = raw["link"], _clean_title(raw["title"])
-        if not url or not title:
-            return None
-        summary_text = extract_text(raw["summary"]) if "<" in raw["summary"] else raw["summary"]
-        return Article(
-            url=url,
-            title=title,
-            source_domain=urlparse(url).netloc.removeprefix("www."),
-            summary=summary_text,
-            published_at=_parse_entry_date(raw),      # ISO +07:00
-            author=raw["author"],
-            symbols=tag_tickers(f"{title} {summary_text}", self.watchlist),
-            categories=[raw["_feed_name"]],
-            metadata={"feed_name": raw["_feed_name"],
-                      "language": self.language,
-                      "_inline_html": _inline_content(raw)},
-        )
-
     def enrich(self, article: Article) -> None:
-        inline = article.metadata.pop("_inline_html", "")   # never persisted as Bronze
+        inline = article.metadata.pop("_inline_html", "")   # không bao giờ là Bronze
         if self._details_fetched >= self.max_details:
             article.content_text = extract_text(inline) or article.summary
             article.metadata["detail_deferred"] = True
@@ -216,8 +181,8 @@ class RssCaptureScraper(CaptureMixin, BaseScraper):
         html = self._capture_and_extract(article, article.source_domain,
                                          referer, self.content_selector)
         if html is None:
-            # capture failed/skipped — mixin already set content_text=summary + errors.
-            # content:encoded is a *fallback body only*, it is NOT Bronze.
+            # capture fail/skip — mixin đã set content_text=summary + ghi self.errors.
+            # content:encoded chỉ là body dự phòng, KHÔNG phải Bronze.
             if inline:
                 article.content_html = inline
                 article.content_text = extract_text(inline) or article.summary
@@ -225,6 +190,10 @@ class RssCaptureScraper(CaptureMixin, BaseScraper):
         self._details_fetched += 1
         article.content_text = extract_text(article.content_html) or article.summary
 ```
+
+> Inherited from `RSSScraper.__init__`: `self.feeds`, `self.extract_full`, `self.max_details`,
+> `self.watchlist`, `self.language`, `self.link_rewrites`, `self.filter_terms`,
+> `self.block_terms`, `self.drop_unmatched`, `self._details_fetched`, `self._filtered`.
 
 ### Step 3 — Register
 `src/scrapers/__init__.py`, trailing import tuple → add `rss_capture,` (alphabetical, after `rss_generic`).
@@ -249,8 +218,8 @@ rss:
     # quoc-te.rss — 0 item / 356 bytes (verified 2026-09-07): DEAD, không thêm
 detail:
   extract_full: true
-  # content_selector: "<điền sau Step 1 — KHÔNG đoán>"; bỏ trống → default "article"
-  #                   + density fallback của CaptureMixin (ghi missing[main_content_node])
+  content_selector: "div.vnbcbc-body"   # .vnbcbc-body.vceditor-content (verified 2026-09-07)
+  #                                       KHÔNG dùng div.post-body-content (bọc cả title/author)
   max_details_per_cycle: 30
 capture:
   raw_dir: "data/raw_html"
@@ -259,7 +228,7 @@ compliance:
   respect_robots: true
   proxy_rotation: false
   proxies: []
-pitfalls: "XML declaration KHAI utf-16 nhưng serve utf-8 bytes — _decode_feed xử lý (strip encoding attr). 30 items/feed. quoc-te.rss chết (0 item, 2026-09-07). Verified live 2026-09-07."
+pitfalls: "XML declaration KHAI utf-16 nhưng serve utf-8 bytes — _decode_feed xử lý (strip encoding attr). 30 items/feed. quoc-te.rss chết (0 item). robots: Allow / , không Disallow/Crawl-delay. Body = div.vnbcbc-body (KHÔNG phải div.post-body-content — bọc cả title/author). Trang KHÔNG có thẻ <article>. BẪY: meta article:published_time THIẾU offset timezone (2026-09-07T19:41:00) — dùng pubDate của RSS (_parse_entry_date), ĐỪNG chuyển sang meta. URL bài kết thúc .htm (không phải .html). Verified live 2026-09-07."
 ```
 
 ### Step 5 — Tests `tests/test_rss_capture.py`
@@ -298,15 +267,15 @@ Record the artifact + Silver checks (Success criteria) into `domains/vietnambiz/
 
 ## Todo list
 
-- [ ] 1. Verify vietnambiz detail selector + robots.txt live; record findings
-- [ ] 2. Write `src/scrapers/rss_capture.py`
-- [ ] 3. Register in `src/scrapers/__init__.py`
-- [ ] 4. Rewrite `config/domains/vietnambiz.yaml`
-- [ ] 5. Fixtures + `tests/test_rss_capture.py` (6 cases), `pytest -q` green
-- [ ] 6. `domains/vietnambiz/{schema.yaml,README.md,changelog.md}`
-- [ ] 7. Docs: `docs/domains/README.md` truth-sync + `vn-rss.md` + `skills/rss-sources.md` + `dev/03-adding-a-source.md` §2b + `design/03-source-strategy.md` + root `README.md`
-- [ ] 8. Live smoke: diagnose → `--once` → `run_once.py`
-- [ ] 9. Evidence into `domains/vietnambiz/changelog.md`
+- [x] 1. ~~Verify vietnambiz detail selector + robots.txt live~~ — DONE in audit 01 §A3
+- [x] 2. Write `src/scrapers/rss_capture.py` (subclass of `RSSScraper`)
+- [x] 3. Register in `src/scrapers/__init__.py`
+- [x] 4. Rewrite `config/domains/vietnambiz.yaml`
+- [x] 5. Fixtures + `tests/test_rss_capture.py` (**10** cases), `pytest -q` green (273 passed)
+- [x] 6. `domains/vietnambiz/{schema.yaml,README.md,changelog.md}`
+- [x] 7. Docs: `docs/domains/README.md` truth-sync + `vn-rss.md` + `skills/rss-sources.md` + `dev/03-adding-a-source.md` §2b + `design/03-source-strategy.md` + root `README.md`
+- [x] 8. Live smoke: diagnose → `--once` → derive
+- [x] 9. Evidence into `domains/vietnambiz/changelog.md`
 
 ## Success criteria
 
@@ -327,7 +296,7 @@ Record the artifact + Silver checks (Success criteria) into `domains/vietnambiz/
 
 | Risk | Likelihood | Impact | Mitigation |
 |---|---|---|---|
-| Unverified vietnambiz body selector → density fallback on every article | Med | Med (noisier Silver `cleaned_text`) | Step 1 verifies live before shipping; S10 measures it; `_density_extract` is a real fallback, not a failure |
+| ~~Unverified body selector~~ → **RESOLVED**: `div.vnbcbc-body` verified live (audit 01 §A3) | — | — | S10 still measures it in production; a future template change re-opens this risk, not a gap today |
 | New generic class regresses nothing but is a 4th capture path to maintain | Low | Low | It is strictly less code than a 3rd + 4th copy-paste; vneconomy/vietstock untouched |
 | 6 feeds × 3 s + 30 details × 3 s ≈ 108 s/cycle vs 15-min scheduler | Low | Low | Well inside the interval; `max_details_per_cycle: 30` caps the tail |
 | `_inline_content` is a private helper of `rss_generic` | Low | Low | Repo already cross-imports `_clean_title`/`_decode_feed` across scraper modules — same convention |
@@ -350,12 +319,54 @@ phase exists. Follow-up (not in this plan): collapse `vneconomy.py` and `vietsto
 
 ## Unresolved questions
 
-1. **vietnambiz article body selector** — not verified by any researcher. Resolved by Step 1, or
-   accepted as density-fallback. Blocking for S10 only.
-2. **vietnambiz robots.txt** — never fetched (researcher-02 `[UNVERIFIED]`). Step 1 must fetch it;
-   if it disallows article paths, the phase stops and vietnambiz stays disabled.
-3. **Is `domains/<name>/schema.yaml` mandatory?** (scout-01 §d) — this plan treats it as
-   **mandatory for every source it touches**, because phase-03 makes it the host-resolution
-   source of truth. Confirm with maintainer.
-4. **~20 domains disabled since 2026-08-03** — is the freeze still intentional? Out of scope here,
-   but the docs truth-sync will make it visible and it needs an owner decision.
+1. ~~vietnambiz article body selector~~ — **RESOLVED** (audit 01 §A3): `div.vnbcbc-body`.
+2. ~~vietnambiz robots.txt~~ — **RESOLVED** (audit 01 §A3): `Allow: /`, no `Disallow`, no `Crawl-delay`.
+3. ~~Is `domains/<name>/schema.yaml` mandatory?~~ — **RESOLVED** (owner, 2026-09-07): **yes**,
+   mandatory for every source this plan touches.
+4. ~~~20 domains disabled since 2026-08-03~~ — **RESOLVED** (owner, 2026-09-07): the freeze is
+   **intentional**. Bronze requires full raw HTML, so each source needs its own per-site research
+   rather than RSS-breadth re-enabling. Docs truth-sync must state this as a deliberate posture,
+   **not** as a backlog. Do not mass re-enable.
+5. **Filtering** — inherited from `RSSScraper` via the subclass (audit 01 §A1), so `filter.any` /
+   `filter.none` work in any `rss_capture` YAML with no further change. No open work.
+
+
+---
+
+## Evidence (2026-09-07, live)
+
+| # | Check | Result |
+|---|---|---|
+| S1 | `pytest -q` toàn bộ | ✅ **273 passed, 0 failed** (684.9s) |
+| S2 | Registry | ✅ `_rss_capture` in REGISTRY |
+| S3 | `diagnose_sources.py vietnambiz` | ✅ fetched=**180** (6 feed × 30), enrich 2/2 ok, **0 errors** |
+| S4 | `--once vietnambiz` | ✅ `fetched=180 new=174 errors=0 in 108.7s` |
+| S5 | **Bronze artifact** | ✅ 30 meta, `capture_status: {ok: 30}`, **sha256 khớp 30/30**, `images[]` 30/30, `http_status=200` |
+| S6 | Bronze WORM | ✅ `refresh_watchlist` trả `skipped_exists` cho bài đã capture (không ghi đè) |
+| S7 | **Silver derive** | ✅ `32 processed, 32 ok, 0 held`; 30 file Silver, `cleaned_text` non-empty 30/30, `built_from_raw_path` 30/30, `extraction_quality=high` |
+| S8 | `verify_quality.py vietnambiz.vn` | ⚠️ **48.8% — FAIL, nhưng là artefact backlog lần đầu, KHÔNG phải lỗi scraper.** Xem phân tích dưới |
+| S9 | `report_drift.py` | ✅ **0** SELECTOR_BROKEN/TEMPLATE_DRIFT cho vietnambiz (2 bài tồn đọng là **cafef.vn từ 2026-09-04**, có trước) |
+| S10 | Selector health | ✅ **0%** `missing[main_content_node]` / `incomplete_render` — `div.vnbcbc-body` khớp **100%** (mục tiêu <10%) |
+| S12 | Monitoring | ✅ `domain_check.py --report vietnambiz` sinh report thật, watch points render đúng, 0 anomaly |
+| Sec | Header whitelist | ✅ `.meta.json` chỉ có `content-type, server, date` — không rò `Set-Cookie` |
+
+### Phân tích S8 (48.8%) — cap artefact, không phải defect
+
+`verify_quality` đếm trên bảng `articles`: body = `content_text or summary`, ngưỡng 200 ký tự.
+
+- title thiếu **0**, date thiếu **0** → parse đúng 100%.
+- body thiếu **87/170** ← do `max_details_per_cycle: 30` mà cycle đầu có **174 bài mới**.
+  Domain report xác nhận: `content_html` **18%**, `metadata.capture` **18%** = đúng 30/170.
+  Mọi field khác **100%**.
+- Steady state (nhịp 15') số bài mới/cycle ≪ 30 → mọi bài sẽ được capture. Đây là tồn đọng **một lần**.
+
+**Gap thật sự phát hiện được (không phải do phase này gây ra):** không tool nào đóng trọn backlog.
+- `scripts/maintenance/enrich_deferred.py` — cập nhật `articles.content_text` nhưng
+  **KHÔNG ghi Bronze** (dùng `extract_content(http.get(url))`, không qua `RawStore`).
+  Bronze-blind y hệt `RSSScraper` → **không nên dùng** dưới chế độ Bronze-first.
+- `scripts/refresh_watchlist.py` — ghi Bronze + Silver đúng (bỏ qua dedup), nhưng
+  **không cập nhật `articles.content_text`/`metadata_json`** → `verify_quality` vẫn thấp.
+
+→ Đã chạy `refresh_watchlist.py 200 vietnambiz.vn` để phủ Bronze/Silver cho backlog
+(lớp mà agent pipeline thực sự tiêu thụ). Cột DB vẫn lệch — đây là **việc cần làm tiếp**,
+không thuộc phạm vi phase này.

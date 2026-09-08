@@ -25,4 +25,5 @@
 - **User Subscription Contract:** Users subscribe by picking `code` values from `entities.xlsx` and entering them in `users/input/<Name>/entities.xlsx`.
 - **Valid Subscription Columns:** `tickers`, `etfs`, `indices`, `exchanges`, `industries`, `nations`, `themes`, `macro` (alias), `assets`, `institutions`, `entities`.
 - **Graceful Validation:** Unknown codes must be isolated into `_unknown.txt` without crashing the compile pipeline.
-- **Noise Filtering:** Broad macro/asset entities only route to users if present in the title or if `materiality_score >= 3/5`.
+- **Noise Filtering:** Broad macro/asset entities (`MACRO_GEO`, `MACRO_THEME`, `ASSET_CLASS`) only route to users if an alias is present in the title. The filter MUST NOT read any Gold field — the export gate is L1-only, so a not-yet-scored article would always be treated as score 0 and the relaxed gate would only half work.
+- **Export Gate:** `final.csv` requires `l1_outputs.dod_pass=1` ONLY (routing needs L1 entities). `agent_outputs.dod_pass=1` is optional enrichment; when absent the Gold columns are empty strings and `gold_status=L1_ONLY`.

@@ -212,7 +212,7 @@ detail:
 | duration (rate-limited) | 9.1s | 18.7s |
 
 `captured=2` vì `max_details_per_cycle=2` trong audit; 18/108 bài còn lại `detail_deferred`
-(Q1: capture trong cap; backfill quét phần hoãn — xem `scripts/enrich_deferred.py`).
+(Q1: capture trong cap; backfill quét phần hoãn — xem `scripts/maintenance/backfill_deferred.py`).
 
 ---
 
@@ -248,7 +248,10 @@ Lưu DOM render qua cùng `RawStore` với `render_method="playwright"`. Chi ti�
 ## 10. Hạn chế & câu hỏi mở
 
 - **Cap vs full (Q1):** v1 chỉ raw-capture trong `max_details_per_cycle`; phần hoãn cần
-  backfill sweep — chưa có job tự động chuyên cho capture (tái dùng `enrich_deferred.py`).
+  backfill sweep. Quy trình **Bronze-first** (2026-09-07): `refresh_watchlist.py` kéo Bronze
+  (bỏ qua dedup, tôn trọng robots) → `morninger --once derive` dựng Silver →
+  `scripts/maintenance/backfill_deferred.py` cập nhật cột DB **từ chính file Bronze**.
+  (`enrich_deferred.py` cũ đã **XOÁ** — nó ghi content_text mà không tạo Bronze artifact.)
 - **`_density_extract`** phụ thuộc `readability-lxml` (đã thêm vào requirements) — thiếu lib
   thì fallback full-page cho `content_html` (raw vẫn nguyên).
 - **UTF-8 stdout (Windows):** in tiếng Việt qua stdout redirect cp1252 gây `UnicodeEncodeError`

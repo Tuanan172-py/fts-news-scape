@@ -1,8 +1,18 @@
 # Configurations Index
 
-- [Global Settings](settings.md) — Cấu hình toàn cục (DB, logging, scheduler, HTTP, export)
-- [Secrets](secrets.md) — API tokens (FireAnt), file bảo mật gitignored
-- [Watchlist](watchlist.md) — Danh sách 30 mã blue-chip theo dõi
-- [Notifications](notifications.md) — Cấu hình thông báo 4-tier
-- [Domain Sources](domain_sources.md) — Danh sách 23 domain config YAML
-- [Source Strategy](source_strategy.md) — Chiến lược phân nhóm và ưu tiên nguồn tin
+## Hệ thống
+
+- [Global Settings](settings.md) — `settings.yaml`: DB, logging, scheduler, HTTP, export, morninger
+- [Secrets](secrets.md) — `secrets.yaml` (gitignored): token FireAnt
+
+## Nguồn tin
+
+- [Domain Sources](domain_sources.md) — 24 file YAML, 7 đang bật (Bronze-first)
+- [Source Strategy](source_strategy.md) — nguyên tắc chọn & ưu tiên phương thức thu thập
+- [Watchlist](watchlist.md) — 30 mã blue-chip cho query API + tag ticker
+- [Notifications](notifications.md) — 4 rule lọc tin ra log ngày
+
+## Lớp người dùng
+
+- [Entity Registry](entity_registry.md) — ontology 10 miền, 2.152 thực thể, chống false positive
+- [User Subscriptions](user_subscriptions.md) — khai danh mục → compile yaml → manifest bật/tắt

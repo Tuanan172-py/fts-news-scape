@@ -25,14 +25,21 @@ class FakeResponse:
 
 class FakeHTTP:
     def __init__(self, list_json=None, detail_html=None, detail_status=200,
-                 robots_txt="", feed_bytes=None, detail_headers=None):
+                 robots_txt="", feed_bytes=None, detail_headers=None,
+                 listing_html=None, listing_match="-d"):
         self.list_json = list_json
         self.detail_html = detail_html
         self.detail_status = detail_status
         self.robots_txt = robots_txt
         self.feed_bytes = feed_bytes
         self.detail_headers = detail_headers
+        # listing_html: cho scraper HTML-listing (vd baodautu) — get() phải trả
+        # TRANG DANH SÁCH, không phải trang chi tiết. listing_match = chuỗi nhận
+        # diện URL listing (baodautu: "-d<N>/" hoặc "-d<N>/p<page>").
+        self.listing_html = listing_html
+        self.listing_match = listing_match
         self.detail_calls = 0
+        self.listing_calls = 0
         self.rotated = 0
         self.proxy_pool: list[str] = []
 
@@ -42,6 +49,9 @@ class FakeHTTP:
     def get(self, url, **kw):
         if "robots.txt" in url:
             return self.robots_txt
+        if self.listing_html is not None and self.listing_match in url:
+            self.listing_calls += 1
+            return self.listing_html
         return self.detail_html
 
     def get_bytes(self, url, **kw):

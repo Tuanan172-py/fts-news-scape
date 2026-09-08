@@ -1,0 +1,142 @@
+# Domain Schema Contract — Thời báo Tài chính Việt Nam (TBTC)
+# Cơ quan ngôn luận của Bộ Tài chính. Mạnh nhất về giải ngân đầu tư công.
+# Dùng để validate field-level health, detect upstream changes.
+
+domain: thoibaotaichinhvietnam.vn   # ← nguồn sự thật cho resolve_source_domain()
+method: rss_capture
+feeds:
+  - { url: "https://thoibaotaichinhvietnam.vn/rss_feed/", name: "TBTC Tin mới" }
+last_verified: 2026-09-07
+robots:
+  policy: "User-agent: * / Allow: /"
+  disallow: ["/ajax/", "/sp/", "/services/", "/utilities/", "/apiservice@/",
+             "/apicenter@/", "/widgets@/", "/member.api/", "/preview_article/",
+             "/stats/", "/slie/", "/article/", "/login/", "/administrator/",
+             "/act/", "/adsfw/", "/tag/", "*.pdf", "*.xls", "*.xlsx", "*.doc", "*.docx"]
+  note: "Bài chi tiết nằm ở ROOT /<slug>-<id>.html → KHÔNG bị /article/ chặn.
+         TUYỆT ĐỐI không fetch attachment PDF/XLS (bị Disallow tường minh)."
+pitfalls:
+  - "⚠️ RSS THEO CHUYÊN MỤC LÀ ẢO: /{category}/rss_feed/ trả CÙNG feed site-wide
+     'trang-chu' cho MỌI chuyên mục (verified 2026-09-07: chung-khoan / thue-hai-quan /
+     bat-dong-san / root đều cho 25 item y hệt, cùng title + pubDate + channel <link>).
+     → CHỈ dùng 1 feed /rss_feed/. Đừng cấu hình nhiều feed chuyên mục."
+  - "Chuyên mục THẬT nằm ở <meta property=\"article:section\"> trên trang detail
+     (đọc qua detail.category_meta). Tên feed KHÔNG phải chuyên mục."
+  - "Dạng {category}.rss → 404. Dạng /rss_feed/{category} và /{category}/rss_feed/ đều 200
+     nhưng nội dung y hệt nhau."
+  - "Feed CÓ content:encoded full body — nhưng vẫn fetch detail để giữ Bronze byte-exact.
+     Inline chỉ là fallback khi capture fail. KHÔNG được 'tối ưu' bỏ fetch."
+  - "published_time ISO +07:00 sạch (khác baodautu/vietnambiz) → health_threshold 1.0."
+
+raw_response:
+  format: "RSS 2.0"
+  root_path: "rss.channel.item"
+  encoding: "UTF-8"
+  items_per_feed: 25
+  observed_span: "~11 giờ cho 25 item (08:56 → 19:51 ngày 2026-09-07) ≈ 50 bài/ngày"
+  fields:
+    - { name: "guid",            type: "string", required: true,  pattern: "^https://thoibaotaichinhvietnam\\.vn/.*\\.html$", description: "isPermaLink=true — CHÍNH LÀ url bài" }
+    - { name: "title",           type: "string", required: true,  min_length: 1 }
+    - { name: "description",     type: "string", required: false, description: "Tóm tắt, dấu câu bị lược" }
+    - { name: "pubDate",         type: "string", required: true,  pattern: ".*\\+0700$", description: "RFC-2822 +0700" }
+    - { name: "content:encoded", type: "string", required: false, description: "CÓ full body — chỉ dùng làm fallback, KHÔNG phải Bronze" }
+
+request:
+  method: "GET"
+  raw_bytes: true
+  headers:
+    User-Agent: "browser UA"
+
+output_fields:
+  url:            { source: "entry.link", type: string, required: true,  health_threshold: 1.0 }
+  title:          { source: "entry.title → _clean_title()", type: string, required: true, health_threshold: 1.0 }
+  source_domain:  { source: "urlparse(url).netloc.removeprefix('www.')", type: string, required: true, expected_value: "thoibaotaichinhvietnam.vn" }
+  published_at:
+    source: "entry.published_parsed → VN_TZ → ISO 8601"
+    type: "iso8601 string (+07:00)"
+    required: true
+    pattern: "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\+07:00$"
+    health_threshold: 1.0     # nguồn này có ngày sạch — không có lý do gì để trượt
+  summary:        { source: "entry.description → extract_text()", type: string, required: false, health_threshold: 0.9 }
+  content_text:   { source: "enrich: extract_text(content_html) từ div.article-detail-main", type: string, required: false, min_length: 50, health_threshold: 0.7 }
+  content_html:   { source: "enrich: select_one('div.article-detail-main')", type: string, required: false, health_threshold: 0.2 }
+  categories:
+    source: "meta[property=article:section] (chuyên mục THẬT, đứng đầu) + tên feed"
+    type: "list[str]"
+    required: false
+    health_threshold: 0.9
+  symbols:        { source: "tag_tickers(title + summary) ∩ watchlist", type: "list[str]", required: false, health_threshold: 0.1 }
+  metadata.language: { source: "config.language (vi)", type: string, required: false }
+  metadata.capture:  { source: "RawStore.save()", type: dict, required: true, health_threshold: 1.0 }
+
+capture:
+  raw_dir: "data/raw_html/thoibaotaichinhvietnam.vn/<yyyymmdd>/<url_title_hash>.{html,meta.json}"
+  render_method: "requests (server-rendered)"
+  content_selector: "div.article-detail-main"
+  fallback_selector: "div.article-content"
+  min_body_bytes: 2048
+  max_per_cycle: 40
+  expected_capture_status: "ok"
+
+detail_page:
+  url: "{article.url}"
+  body_selector: "div.article-detail-main"
+  sapo_selector: "div.article-detail-desc"
+  author_selector: "div.article-detail-author"
+  source_selector: "div.article-detail-source"
+  tags_selector: "div.article-tags"
+  breadcrumb_selector: "div.bx-breadcrumb"
+  category_meta: "article:section"
+  category_url_meta: "category_url"
+  date_meta: "article:published_time"
+
+link_rewrites: []
+filter:
+  configured: false
+  description: "Feed site-wide gộp mọi chuyên mục kể cả xã hội/đời sống. Nếu nhiễu,
+                bật filter.any/none NGAY TRONG YAML (kế thừa RSSScraper, 0 dòng code)."
+
+watch_points:
+  - id: tbtc-w1
+    field: content_selector div.article-detail-main
+    risk: selector_drift
+    severity: high
+    description: "Đổi class body → capture_status=partial → SELECTOR_BROKEN → agent HOLD bài."
+    check: "tỉ lệ .meta.json có missing[incomplete_render] < 5%"
+
+  - id: tbtc-w2
+    field: meta article:section
+    risk: structure_change
+    severity: medium
+    description: "Mất meta này → categories chỉ còn tên feed 'TBTC Tin mới' (vô nghĩa,
+                  vì feed gộp chung). Mất tín hiệu chuyên mục hoàn toàn."
+    check: "categories[0] != 'TBTC Tin mới' trên >90% bài đã capture"
+
+  - id: tbtc-w3
+    field: per-category rss_feed
+    risk: behaviour_change
+    severity: low
+    description: "Nếu upstream SỬA để /{category}/rss_feed/ trả đúng chuyên mục thì có thể
+                  quay lại nhiều feed + bỏ category_meta. Kiểm tra định kỳ."
+    check: "so sánh sha256 của 2 feed chuyên mục khác nhau — hiện GIỐNG nhau"
+
+  - id: tbtc-w4
+    field: pubDate +0700
+    risk: format_change
+    severity: medium
+    description: "Hiện ISO/RFC chuẩn có offset. Mất offset → published_at sai giờ."
+    check: "published_at fill rate = 1.0 và đuôi +07:00"
+
+  - id: tbtc-w5
+    field: robots.txt
+    risk: policy_change
+    severity: high
+    description: "Cơ quan nhà nước — bị chặn thì hậu quả uy tín nặng hơn mất bài.
+                  Giữ rate_limit 3.0s, không bật proxy_rotation."
+    check: "không có capture_status=skipped_robots"
+
+alert_thresholds:
+  article_count_drop_pct: 50
+  field_fill_rate_drop_pct: 20
+  new_article_zero_streak: 3
+  consecutive_failure_streak: 3

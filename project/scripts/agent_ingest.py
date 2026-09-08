@@ -47,26 +47,32 @@ def main(argv: list[str]) -> int:
     db_path = load_settings().get("database", {}).get("path", "data/monocle.db")
     runner = AgentRunner(ArticleStore(db_path=db_path), task_dir=args.task_dir)
     done = failed = 0
+    done_aids: list[str] = []
     from src.agent.batch_handoff import unpack_batch_output
 
+    def _record(res: dict) -> None:
+        """Cộng sổ 1 kết quả ingest. MỌI record đều đi qua runner.ingest_output (không bypass DoD)."""
+        nonlocal done, failed
+        if res.get("dod_pass"):
+            done += 1
+            if res.get("article_id"):
+                done_aids.append(res["article_id"])
+            print(f"DONE   {res['article_id']}")
+        else:
+            failed += 1
+            print(
+                f"FAILED {res.get('article_id')}: {res.get('reasons') or res.get('reason')}"
+            )
+
     for path in _iter_paths(args.target):
+        # unpack_batch_output đã bao cả 3 dạng: list, {outputs|results: [...]}, và object đơn lẻ.
         unpacked_items = unpack_batch_output(path)
         if not unpacked_items:
-            res = runner.ingest_output(str(path))
-            unpacked_items = [res] if res.get("article_id") else []
-
+            failed += 1
+            print(f"FAILED {path}: không đọc được agent-output (thiếu article_id)")
+            continue
         for item in unpacked_items:
-            res = runner.ingest_output(item) if not isinstance(item, dict) or "dod_pass" not in item else item
-            if res.get("dod_pass"):
-                done += 1
-                if res.get("article_id"):
-                    done_aids.append(res["article_id"])
-                print(f"DONE   {res['article_id']}")
-            else:
-                failed += 1
-                print(
-                    f"FAILED {res.get('article_id')}: {res.get('reasons') or res.get('reason')}"
-                )
+            _record(runner.ingest_output(item))
 
     if done_aids and not args.no_archive:
         from src.agent.archive import archive_completed_tasks

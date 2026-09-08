@@ -23,6 +23,7 @@ import yaml
 
 from loguru import logger
 
+from src.core.config import resolve_source_domain
 from src.core.models import VN_TZ
 
 DOMAINS_DIR = Path(__file__).resolve().parents[2] / "domains"
@@ -123,7 +124,7 @@ class DomainReporter:
         if not self.store:
             return {"total_today": "N/A", "total_db": "N/A", "sources": []}
 
-        source_domain = f"{domain}.vn" if "." not in domain else domain
+        source_domain = resolve_source_domain(domain)
         today_start = f"{date_str}T00:00:00+07:00"
         today_end = f"{date_str}T23:59:59+07:00"
 
@@ -167,7 +168,7 @@ class DomainReporter:
         if not self.store:
             return []
 
-        source_domain = f"{domain}.vn" if "." not in domain else domain
+        source_domain = resolve_source_domain(domain)
         schema = self._load_schema(domain)
         if not schema:
             return []

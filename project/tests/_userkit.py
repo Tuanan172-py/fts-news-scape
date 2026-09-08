@@ -15,6 +15,9 @@ ENTITIES = [
      "canonical_name": "Vinamilk", "aliases": ["Vinamilk"], "attributes": {}, "sources": []},
     {"entity_id": "TICKER:FPT", "type": "TICKER", "code": "FPT",
      "canonical_name": "FPT", "aliases": ["FPT Corp"], "attributes": {}, "sources": []},
+    # Entity DIỆN RỘNG — dùng cho test noise filter (nhánh broad_types).
+    {"entity_id": "ASSET_CLASS:VANG", "type": "ASSET_CLASS", "code": "VANG",
+     "canonical_name": "Vàng", "aliases": ["vàng"], "attributes": {}, "sources": []},
 ]
 
 
@@ -38,10 +41,10 @@ def seed_article(store, aid, *, title="Tin", domain="cafef.vn",
     conn.close()
 
 
-def seed_l1(store, aid, entity_ids, *, dod_pass=1, title="Tin") -> None:
+def seed_l1(store, aid, entity_ids, *, dod_pass=1, title="Tin", etype="TICKER") -> None:
     out = {
         "l1_output_version": "1.0", "article_id": aid, "title": title, "recognized": True,
-        "entities": [{"surface": "x", "entity_id": e, "type": "TICKER",
+        "entities": [{"surface": "x", "entity_id": e, "type": etype,
                       "method": "alias", "in_list": True, "confidence": 0.9} for e in entity_ids],
         "categories": {"ticker_company": "done", "etf_fund": "none", "index": "none",
                        "exchange": "none", "industry_sector": "none"},
@@ -54,10 +57,11 @@ def seed_l1(store, aid, entity_ids, *, dod_pass=1, title="Tin") -> None:
         "dod_pass": dod_pass, "dod_reasons": "[]", "created_at": "t"})
 
 
-def seed_agent(store, aid, *, dod_pass=1, event_type="macro", with_optional=True) -> None:
+def seed_agent(store, aid, *, dod_pass=1, event_type="macro", with_optional=True,
+               raw_sha256=None, summary=None) -> None:
     out = {
         "output_schema_version": "1.0", "article_id": aid,
-        "summary": {"abstractive": "Tóm tắt " + aid, "key_points": ["kp1", "kp2"]},
+        "summary": {"abstractive": summary or ("Tóm tắt " + aid), "key_points": ["kp1", "kp2"]},
         "implication": {"text": "Hàm ý", "affected_parties": ["x"], "impact_area": "market"},
         "materiality": {"score": 0.6, "time_sensitivity": "this_week"},
         "confidence": 0.8,
@@ -68,7 +72,7 @@ def seed_agent(store, aid, *, dod_pass=1, event_type="macro", with_optional=True
         out["sentiment"] = {"overall": -0.3, "polarity": "negative"}
         out["event_type"] = event_type
     store.insert_agent_output({
-        "article_id": aid, "raw_sha256": "h_" + aid, "work_item_id": None,
+        "article_id": aid, "raw_sha256": raw_sha256 or ("h_" + aid), "work_item_id": None,
         "output_json": json.dumps(out, ensure_ascii=False), "agent_provider": "p",
         "model_used": "m", "confidence": 0.8, "dod_pass": dod_pass,
         "dod_reasons": "[]", "created_at": "t"})

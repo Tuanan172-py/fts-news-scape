@@ -26,6 +26,33 @@ _EN_STOPWORDS = re.compile(r"\b(the|and|of|to|in|for|is|on|with|that|as|by)\b", 
 _MIN_HIGH = 200   # trafilatura cho ≥ ký tự này → high
 _MIN_OK = 50      # dưới ngưỡng này coi như trích hụt → thử fallback sâu hơn
 
+# Nguồn API trả JSON (vd fireant): Bronze là body JSON byte-exact, KHÔNG phải HTML.
+# Trường chứa HTML thân bài — thử theo thứ tự. Đây là nhận diện theo ĐỊNH DẠNG
+# (Content-Type), KHÔNG phải luật riêng cho domain nào (giữ module generic — design 12).
+_JSON_HTML_FIELDS = ("content", "originalContent", "original_content",
+                     "body_html", "content_html", "body", "html")
+
+
+def _html_from_json(raw_text: str) -> str | None:
+    """Body JSON → chuỗi HTML thân bài. None nếu không phải JSON / không tìm thấy.
+
+    Vì sao cần: chạy trafilatura/BS4 thẳng trên JSON sẽ nuốt cả key, dấu ngoặc và
+    escape vào cleaned_text. Bóc đúng trường HTML trước rồi mới trích.
+    """
+    try:
+        data = json.loads(raw_text)
+    except (ValueError, TypeError):
+        return None
+    if isinstance(data, list):
+        data = data[0] if data and isinstance(data[0], dict) else None
+    if not isinstance(data, dict):
+        return None
+    for field in _JSON_HTML_FIELDS:
+        val = data.get(field)
+        if isinstance(val, str) and val.strip():
+            return val
+    return None
+
 
 def _detect_lang(text: str) -> str:
     if not text:
@@ -91,6 +118,15 @@ class SilverBuilder:
             html = raw_bytes.decode("utf-8", errors="replace")
 
         url = meta.get("source_url", "")
+
+        # Bronze của nguồn API là JSON (Content-Type: application/json) → bóc trường
+        # HTML ra trước. Nhận diện theo định dạng, không theo tên domain.
+        ctype = str((meta.get("response_headers") or {}).get("content-type", "")).lower()
+        if "json" in ctype:
+            inner = _html_from_json(html)
+            if inner is not None:
+                html = inner
+
         structure = _parse_structure(html)               # parse 1 lần, tái dùng làm fallback
         cleaned, quality = self._extract_cleaned(url, html, structure)
 

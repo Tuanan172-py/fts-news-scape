@@ -1,96 +1,96 @@
 ---
 type: Playbook
 title: Hướng dẫn Triển khai (Deployment)
-description: Cẩm nang triển khai hệ thống Web Monocle trên môi trường local Windows 11.
+description: Cài đặt và chạy hệ thống trên máy local Windows 11 — venv, cấu hình bắt buộc, chạy nền, backup.
 resource: project/docs/operations/deployment.md
-tags: [deployment, operations, setup]
+tags: [deployment, operations, setup, windows]
 status: stable
 generated:
-  by: human:anpt
-  at: 2026-08-03T10:00:00Z
+  at: 2026-09-07T00:00:00Z
 verified:
-  by: human:anpt
   at: 2026-08-04T00:00:00Z
 sources:
   - id: deployment-doc
     resource: project/docs/operations/deployment.md
     title: Deployment Guide
-    author: human:anpt
   - id: readme
     resource: project/README.md
-    title: Project README
-sources_last_checked: 2026-08-04
+    title: Project README — Quick Start
+  - id: run-daily
+    resource: project/scripts/run_daily.ps1
+    title: run_daily.ps1
+sources_last_checked: 2026-09-07
 ---
 
-Hướng dẫn thiết lập và chạy hệ thống thu thập tin tức Web Monocle trên môi trường local. Môi trường tham chiếu chuẩn: **Windows 11, Python 3.14** thông qua Virtual Environment (`.venv`).[^deployment-doc]
+Hệ thống là **standalone**: một máy, một SQLite, không phụ thuộc dịch vụ ngoài. Môi trường tham
+chiếu: **Windows 11, Python 3.10+ (đang chạy 3.14), venv `.venv`**.[^deployment-doc]
 
-## Yêu cầu hệ thống
-
-| Thành phần | Yêu cầu |
-|---|---|
-| OS | Windows 11 |
-| Python | 3.14 |
-| Disk | ~500MB cho DB + logs (tăng ~50MB/tuần với 2 domain active) |
-
-## Cài đặt
+# Cài đặt
 
 ```powershell
-# 1. Clone repo
-cd "C:\Users\anpt\OneDrive - fpts.com.vn\FRA_DataIngestion - news-scape\project"
-
-# 2. Tạo virtual environment
+cd "<repo>\project"
 python -m venv .venv
-
-# 3. Cài dependencies
-.venv\Scripts\pip install -r requirements.txt
-
-# 4. Cấu hình secrets (bắt buộc trước khi chạy)
-cp config/secrets.yaml.example config/secrets.yaml
-# → Điền FireAnt bearer token vào secrets.yaml
+.venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
-## Dependencies chính
+Phụ thuộc chính: `feedparser`, `requests`, `urllib3`, `truststore`, `trafilatura`,
+`beautifulsoup4` + `lxml`, `rapidfuzz`, `APScheduler`, `loguru`, `pyyaml`, `openpyxl`,
+`jsonschema`. (`pyvi` chỉ cần nếu bật lại engine sentiment legacy.)
 
-`feedparser`, `requests`, `urllib3`, `truststore`, `trafilatura`, `beautifulsoup4`, `lxml`, `rapidfuzz`, `pyvi`, `APScheduler`, `loguru`, `pyyaml`.[^deployment-doc]
+# Cấu hình trước khi chạy
 
-## Cấu hình bắt buộc trước khi chạy
-
-1. **`config/secrets.yaml`**: Token FireAnt (file được gitignore để bảo mật)
-2. **`config/settings.yaml`**: DB path, logging config, scheduler interval
-3. **`config/watchlist.yaml`**: Danh sách 30 mã blue-chip cần theo dõi
-
-Xem chi tiết tại:
-- [settings.yaml](../configurations/settings.md)
-- [secrets.yaml](../configurations/secrets.md)
-- [watchlist.yaml](../configurations/watchlist.md)
-
-## Kịch bản chạy (Execution Runbooks)
+| File | Bắt buộc? | Ghi chú |
+|---|---|---|
+| [`config/settings.yaml`](../configurations/settings.md) | có sẵn | kiểm tra interval 15′, rate 3s |
+| [`config/watchlist.yaml`](../configurations/watchlist.md) | có sẵn | 30 mã blue-chip |
+| [`config/domains/*.yaml`](../configurations/domain_sources.md) | có sẵn | 7 domain đang bật |
+| [`config/secrets.yaml`](../configurations/secrets.md) | **chỉ khi bật FireAnt** | copy từ `.example`, điền token |
+| [`users/subscriptions/<name>.xlsx`](../configurations/user_subscriptions.md) | cho lớp người dùng | người dùng tự khai danh mục |
 
 ```powershell
-# Kịch bản 1: Production (chạy liên tục, APScheduler 15 phút/lần)
-.venv\Scripts\python.exe -m src.orchestrator
-
-# Kịch bản 2: Test/CronJob (chạy 1 chu kỳ rồi thoát)
-.venv\Scripts\python.exe -m src.orchestrator --once
-
-# Kịch bản 3: Chạy domain cụ thể
-.venv\Scripts\python.exe -m src.orchestrator --once cafef fireant tnck
+Copy-Item config\secrets.yaml.example config\secrets.yaml
 ```
 
-> **Cảnh báo**: Chỉ được phép chạy MỘT tiến trình scheduler duy nhất. Việc chạy hai tiến trình song song sẽ nhân đôi lưu lượng và gây rủi ro bị chặn IP.[^deployment-doc]
-
-## Monitoring
+# Chạy
 
 ```powershell
-# Theo dõi logs realtime
-Get-Content logs/orchestrator.log -Wait
+# PROD
+.venv\Scripts\python.exe -m src.morninger
 
-# Kiểm tra trạng thái scraper
-sqlite3 data/monocle.db "SELECT scraper_name, status, last_run_ts, consecutive_failures FROM scraper_heartbeat;"
-
-# Kiểm tra metrics gần nhất
-sqlite3 data/monocle.db "SELECT ts, scraper_name, articles_fetched, articles_new, errors FROM scraper_metrics ORDER BY ts DESC LIMIT 10;"
+# chuỗi per-user theo lô (Vòng 3)
+.\scripts\run_daily.ps1 -Mode emit           # phát packet
+.\scripts\run_daily.ps1 -Mode ingest -Days 30  # nạp output + ghi CSV + báo cáo
 ```
+
+# Chạy nền
+
+- **Dev** — terminal, dừng bằng Ctrl+C (SIGINT ⇒ graceful shutdown, flush DBWriter).
+- **Bền hơn** — Windows Task Scheduler hoặc NSSM chạy `-m src.morninger`. Đảm bảo **1 instance**;
+  không đặt đồng thời scheduler mode và cron `--once`.
+- **Cron ngoài** — nếu muốn tự điều phối, dùng `--once` mỗi lần và **không** chạy scheduler mode.
+
+Ghi chú: `scripts/run_daily.ps1` tự dò Python và **bỏ qua** `.venv` shim nếu đường dẫn chứa dấu
+cách gây lỗi — kiểm tra dòng log `run_daily: Mode=…` để biết interpreter nào đang được dùng.
+
+# Dung lượng
+
+DB đang ~550 MB và **chưa có script prune/rotation** (câu hỏi mở trong
+`docs/dev/05-known-issues.md`). Bronze `data/raw_html/**` tăng theo số bài — cần theo dõi đĩa.
+
+# Backup
+
+| Đối tượng | Cách | Ưu tiên |
+|---|---|---|
+| `data/raw_html/**` (Bronze) | copy thư mục | **cao nhất** — không tái tạo được |
+| `data/monocle.db` | `wal_checkpoint(TRUNCATE)` rồi copy, hoặc `scripts/db_snapshot.py` | cao |
+| `config/**` (trừ secrets), `data/entities/**` | đã ở trong git | trung bình |
+| `data/silver`, `data/work_packages` | không cần — re-derive được | thấp |
+
+# Liên quan
+
+- [Runbook](runbook.md) · [Daily Agent Run](daily_agent_run.md) ·
+  [Web Monocle DB](../datasets/web_monocle_db.md)
 
 [^deployment-doc]: [Deployment Guide](project/docs/operations/deployment.md)
 [^readme]: [Project README](project/README.md)
+[^run-daily]: [run_daily.ps1](project/scripts/run_daily.ps1)

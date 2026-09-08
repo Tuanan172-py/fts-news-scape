@@ -6,8 +6,22 @@ Bổ trợ cho: [13-per-user-output-workflow](../design/13-per-user-output-workf
 
 **Đọc trước:** cơ chế là **hàng đợi + trạng thái**, KHÔNG đồng bộ theo giờ. Mỗi bài tự đi qua state
 machine trong `data/monocle.db`; bạn hỏi tiến độ bằng `db_status.py`, không canh đồng hồ. Mọi bước
-**idempotent** — chạy trùng vô hại. `write_user_output` là **cổng JOIN**: chỉ bài đủ
-`l1_outputs.dod_pass=1 AND agent_outputs.dod_pass=1` mới vào `final.csv`; bài dở dang tự vào vòng sau.
+**idempotent** — chạy trùng vô hại. `write_user_output` gate **tối thiểu L1**: chỉ cần
+`l1_outputs.dod_pass=1` là vào `final.csv` (routing dựa entity của L1). `agent_outputs.dod_pass=1`
+là enrichment TÙY CHỌN — thiếu thì các trường Gold để trống và `gold_status=L1_ONLY`; vòng sau
+Gold về là bài tự được ghi đè đầy đủ (rewrite toàn tập nên không nhân đôi).
+
+**Ưu tiên khi rút backlog:** `python scripts/l1_route.py --only gold-ready --all` phát packet L1
+cho đúng nhóm bài **đã có Gold đạt DoD nhưng thiếu L1**. Nhóm này Gold đã trả tiền rồi mà vẫn không
+giao được (định tuyến cần entity của L1) — xong L1 là vào `final.csv` ngay, `gold_status=GOLD`.
+Ngược lại `scripts/agent_export.py` mặc định `--require-l1`: không bốc bài chưa có L1, khỏi đốt
+token Gold cho bài không định tuyến được (dùng `--no-require-l1` nếu cố ý rút backlog cũ).
+
+> **Hệ quả nhịp chạy — Gold trễ L1 đúng 1 vòng.** `run_daily.ps1` xếp `agent_export` TRƯỚC
+> `l1_ingest`, nên bài mới hôm nay chưa có `l1_outputs` ⇒ `--require-l1` không bốc; sang vòng sau
+> (L1 đã ingest) mới có packet Gold. Không mất bài — `work_items` vẫn `pending` trong hàng đợi.
+> Muốn Gold bắt kịp trong cùng ngày: chạy chuỗi `l1_route → [agent L1] → l1_ingest → agent_export
+> → [agent Gold] → agent_ingest` (2 nhịp agent), hoặc chấp nhận độ trễ 1 vòng.
 
 Quy ước: mọi lệnh chạy tại thư mục `project/`, dùng `python` (sau khi kích hoạt venv `.\.venv\Scripts\Activate.ps1`) hoặc trỏ trực tiếp `.\.venv\Scripts\python.exe`.
 

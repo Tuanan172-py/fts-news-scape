@@ -17,7 +17,7 @@ import json
 import os
 import time
 from datetime import datetime
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 
 from bs4 import BeautifulSoup
 from loguru import logger
@@ -201,6 +201,80 @@ class RawStore:
         cap["content_sha256"] = hashlib.sha256(body).hexdigest()
         cap["images"] = self._scan_images(body, url)  # read-only, không sửa file
         cap["capture_status"] = "partial" if cap["missing"] else "ok"
+        self._write_meta(meta_path, cap)
+        return cap
+
+    # -- attachment nhị phân (design 16 — NSO .xlsx/.docx/.pdf) ---------------
+    _EXT_BY_TYPE = {
+        "application/pdf": ".pdf",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": ".xlsx",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document": ".docx",
+        "application/vnd.ms-excel": ".xls",
+        "application/msword": ".doc",
+        "application/zip": ".zip",
+    }
+
+    def save_binary(self, domain: str, url: str, key: str, response,
+                    *, fetched_at: str) -> dict:
+        """Lưu file nhị phân (xlsx/docx/pdf) làm Bronze artifact.
+
+        Khác `save()`: KHÔNG parse, KHÔNG quét <img>, KHÔNG giả định body là HTML.
+        Chỉ ghi bytes nguyên bản + meta. Dùng cho attachment của báo cáo định kỳ
+        (design 16) — payload giá trị nhất của NSO là bảng số liệu .xlsx.
+
+        `key` nên duy nhất trong 1 báo cáo (vd `<report_hash>__01-Bieu-T8`).
+        Đuôi file suy từ Content-Type, fallback theo đuôi trong URL.
+        """
+        yyyymmdd = self._yyyymmdd(fetched_at)
+        directory = self._dir_for(domain, yyyymmdd)
+
+        status = getattr(response, "status_code", None) if response is not None else None
+        headers = getattr(response, "headers", {}) if response is not None else {}
+        ctype = str((headers or {}).get("content-type", "")).split(";")[0].strip().lower()
+        ext = self._EXT_BY_TYPE.get(ctype, "")
+        if not ext:
+            tail = os.path.splitext(urlparse(url).path)[1].lower()
+            ext = tail if tail in {".pdf", ".xlsx", ".xls", ".docx", ".doc", ".zip"} else ".bin"
+
+        bin_path = os.path.join(directory, f"{key}{ext}")
+        # ⚠️ ĐUÔI .binmeta.json (KHÔNG phải .meta.json): pipeline derive quét
+        # rglob("*.meta.json") — file nhị phân không có html_path nên sẽ bị đếm
+        # "raw_missing" gây nhiễu. Đuôi riêng giữ derive sạch.
+        meta_path = os.path.join(directory, f"{key}{ext}.binmeta.json")
+
+        cap: dict = {
+            "source_url": url,
+            "key": key,
+            "fetch_ts": fetched_at,
+            "render_method": "requests",
+            "binary_path": bin_path,
+            "http_status": status,
+            "content_type": ctype,
+            "content_sha256": None,
+            "content_length_bytes": 0,
+            "response_headers": self._filter_headers(headers),
+            "capture_status": "failed",
+            "error": None,
+        }
+
+        body = getattr(response, "content", b"") if response is not None else b""
+        if isinstance(body, str):
+            body = body.encode("utf-8", errors="replace")
+        body = body or b""
+
+        if response is None or status is None or not (200 <= status < 300) or not body:
+            cap["error"] = {
+                "type": "fetch_failed" if response is None else "http_error",
+                "http_status": status,
+                "message": "no response" if response is None else f"status {status}",
+            }
+            self._write_meta(meta_path, cap)
+            return cap
+
+        self._write_atomic(bin_path, body)           # bytes NGUYÊN BẢN, không parse
+        cap["content_length_bytes"] = len(body)
+        cap["content_sha256"] = hashlib.sha256(body).hexdigest()
+        cap["capture_status"] = "ok"
         self._write_meta(meta_path, cap)
         return cap
 

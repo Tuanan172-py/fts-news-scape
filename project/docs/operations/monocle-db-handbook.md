@@ -123,13 +123,22 @@ select dod_pass,count(*) n from agent_outputs group by dod_pass;
 select article_id,substr(dod_reasons,1,120) reasons from agent_outputs where dod_pass=0 limit 20;
 ```
 
-### 3.8 Sẵn sàng ra output cho user? (gate 2 lớp)
+### 3.8 Sẵn sàng ra output cho user? (gate tối thiểu L1)
 ```sql
--- số bài đã đủ CẢ 2 lớp (điều kiện vào final.csv)
-select count(*) gated
+-- số bài đạt gate export, tách theo đã/chưa có Gold (cột gold_status trong final.csv)
+select case when ag.article_id is null then 'L1_ONLY' else 'GOLD' end gold_status, count(*) n
 from articles a
-join l1_outputs   l1 on l1.article_id=a.url_title_hash and l1.dod_pass=1
-join agent_outputs ag on ag.article_id=a.url_title_hash and ag.dod_pass=1;
+join l1_outputs l1 on l1.article_id=a.url_title_hash and l1.dod_pass=1
+left join (select distinct article_id from agent_outputs where dod_pass=1) ag
+       on ag.article_id=a.url_title_hash
+group by 1;
+```
+> Lưu ý: `l1_outputs`/`agent_outputs` có thể chứa `article_id` KHÔNG tồn tại trong `articles`
+> (work_item đã tạo nhưng bài chưa/không được ghi vào `articles`). Những bài đó không bao giờ
+> vào được `final.csv`. Đếm rò rỉ:
+```sql
+select count(*) from l1_outputs l1 where l1.dod_pass=1
+  and not exists (select 1 from articles a where a.url_title_hash=l1.article_id);
 ```
 
 ### 3.9 Truy 1 bài cụ thể (debug)

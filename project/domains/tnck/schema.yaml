@@ -1,0 +1,245 @@
+# Domain Schema Contract — TNCK / ĐTCK (tinnhanhchungkhoan.vn)
+# Báo của Uỷ ban Chứng khoán Nhà nước. Mạnh về điều tra doanh nghiệp,
+# tranh chấp cổ đông, pháp lý chứng khoán.
+
+domain: tinnhanhchungkhoan.vn   # ← NON-WWW. Nguồn sự thật cho resolve_source_domain();
+                                #   sửa bẫy cũ 'tnck' → 'tnck.vn' (không khớp gì trong DB).
+method: api+capture             # zone JSON API (list) + full raw HTML capture (detail)
+endpoint: "https://api.tinnhanhchungkhoan.vn/api/morenews-zone-{zone}-{page}.html"
+last_verified: 2026-09-07
+
+rss:
+  exists: false
+  note: >
+    KHÔNG CÓ RSS. /rss.html = 200 nhưng 13 bytes rỗng; /rss/trang-chu.rss,
+    /chung-khoan.rss, /rss/chung-khoan.rss = 302 + 0 byte. Đừng probe lại.
+
+robots:
+  www: >
+    Allow: / ; Disallow: /api/ /search/ /tim-kiem/ /search.html /tim-kiem.html
+    /tu-khoa.html /tag.html /print.html ; Sitemap: /sitemap.xml ; KHÔNG khai Crawl-delay
+  api_host: >
+    api.tinnhanhchungkhoan.vn là HOST KHÁC, robots riêng (200, rỗng).
+    Disallow /api/ của www KHÔNG áp cho host này.
+  articles: "/<slug>-post<NNN>.html — ĐƯỢC PHÉP"
+
+pitfalls:
+  - "`date` = epoch GIÂY, JSON NUMBER (docs cũ ghi 'string' — SAI, sửa 2026-09-07). int() nhận cả hai."
+  - "`url` là relative → urljoin về https://www.tinnhanhchungkhoan.vn"
+  - "`phrase` param BỊ SERVER IGNORE (phrase=HPG trả y hệt zone content) → không filter ticker được."
+  - "source_domain = NON-WWW 'tinnhanhchungkhoan.vn' nhưng article.url GIỮ host www. Đổi URL sẽ đổi url_title_hash = đổi định danh bài."
+  - "Quảng cáo div[id^=adsWeb_] nằm BÊN TRONG div.article__body → lọt vào Silver cleaned_text. Strip ở Silver nếu nhiễu; KHÔNG đụng Bronze (WORM)."
+
+# ---------------------------------------------------------------------------
+# Zone map — quét đầy đủ zone 1..45 ngày 2026-09-07
+# ---------------------------------------------------------------------------
+zones:
+  active: [1, 4, 6, 11, 21, 26, 29, 33, 39]
+  map:
+    1: "Chứng khoán"
+    2: "Quy hoạch"
+    3: "Doanh nhân"
+    4: "Thông tin doanh nghiệp"
+    5: "Bảo hiểm"
+    6: "Tiền tệ"
+    7: "Chính trị"
+    8: "Điều tra"
+    9: "Quốc tế"
+    10: "Tòa soạn (chỉ 3 item)"
+    11: "Trái phiếu"
+    12: "Quốc tế (trùng 9)"
+    13: "Nhận định"
+    14: "(item KHÔNG có object zone)"
+    16: "Vietnam Investment Review (thông báo báo in)"
+    17: "Lịch sự kiện"
+    21: "Pháp luật"
+    22: "Cung - Cầu"
+    23: "Phong thủy"
+    24: "Doanh nhân (trùng 3)"
+    25: "Tiêu dùng"
+    26: "Mua bán - Sáp nhập"
+    27: "Doanh nghiệp tự giới thiệu (PR)"
+    28: "Thông báo - bố cáo"
+    29: "Đại hội cổ đông"
+    30: "Địa ốc (chỉ 1 item)"
+    31: "Cộng Đồng"
+    32: "Sản Phẩm (PR)"
+    33: "Pháp đình"
+    34: "Chứng khoán (trùng 1)"
+    35: "Chính trị (trùng 7)"
+    36: "Đầu tư"
+    37: "Xã hội"
+    38: "Địa ốc (trùng 30)"
+    39: "Vĩ mô"
+    41: "Tư vấn tài chính / bảo hiểm"
+    42: "Quy hoạch (trùng 2)"
+    43: "Thương trường"
+    44: "Trải nghiệm sống"
+    45: "Doanh nghiệp tự giới thiệu (PR)"
+  empty: [15, 18, 19, 20]
+  deferred:
+    - "8 Điều tra — tên hợp beat NHƯNG nội dung lệch hình sự/tiêu dùng chung. Tín hiệu pháp lý DN thật nằm ở 21/33/26/29. Quyết lại sau 7 ngày đo."
+    - "13 Nhận định"
+    - "36 Đầu tư"
+    - "43 Thương trường"
+  excluded: "27/45/32 (PR trả tiền) · 14/16/10 (tạp / báo in / nội bộ) · các zone trùng lặp"
+
+# ---------------------------------------------------------------------------
+# Raw API response
+# ---------------------------------------------------------------------------
+raw_response:
+  root_key: "data.contents"
+  items_per_page: 40
+  encoding: "gzip; application/json;charset=utf-8"
+  fields:
+    - { name: "content_id",  type: "integer", required: true }
+    - { name: "title",       type: "string",  required: true, min_length: 1 }
+    - { name: "sub_title",   type: "string",  required: false }
+    - { name: "description", type: "string",  required: false, description: "Sapo → summary" }
+    - { name: "date",        type: "integer", required: true,  description: "epoch GIÂY (NUMBER, không phải string)" }
+    - { name: "update_time", type: "integer", required: false }
+    - { name: "url",         type: "string",  required: true,  pattern: "^/.*-post\\d+\\.html$", description: "relative" }
+    - { name: "avatar_url",  type: "string",  required: false }
+    - { name: "zone",        type: "object",  required: false, description: "{zone_id,parent_id,name,url}" }
+
+request:
+  method: "GET"
+  headers:
+    Referer: "https://www.tinnhanhchungkhoan.vn/"
+    Accept: "application/json"
+    User-Agent: "browser UA"
+
+# ---------------------------------------------------------------------------
+# Output Article fields
+# ---------------------------------------------------------------------------
+output_fields:
+  url:
+    source: "urljoin('https://www.tinnhanhchungkhoan.vn', url)"
+    type: "string"
+    required: true
+    health_threshold: 1.0
+
+  title:
+    source: "title.strip()"
+    type: "string"
+    required: true
+    health_threshold: 1.0
+
+  source_domain:
+    source: "hằng số NON-WWW"
+    type: "string"
+    required: true
+    expected_value: "tinnhanhchungkhoan.vn"
+
+  published_at:
+    source: "datetime.fromtimestamp(int(date), VN_TZ)"
+    type: "iso8601 string (+07:00)"
+    required: true
+    pattern: "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\+07:00$"
+    health_threshold: 0.98
+
+  summary:
+    source: "description.strip()"
+    type: "string"
+    required: false
+    health_threshold: 0.9
+
+  content_text:
+    source: "enrich: extract_text(div.article__body)"
+    type: "string"
+    required: false
+    min_length: 50
+    health_threshold: 0.7
+
+  content_html:
+    source: "enrich: select_one('div.article__body')"
+    type: "string"
+    required: false
+    health_threshold: 0.2
+
+  categories:
+    source: "zone.name"
+    type: "list[str]"
+    required: false
+    health_threshold: 0.95
+
+  symbols:
+    source: "tag_tickers(title + summary) ∩ watchlist (client-side — phrase param vô dụng)"
+    type: "list[str]"
+    required: false
+    health_threshold: 0.2
+
+  metadata.zone_id:
+    source: "zone.zone_id"
+    type: "integer"
+    required: false
+
+  metadata.language:
+    source: "config.language (vi)"
+    type: "string"
+    required: false
+
+  metadata.capture:
+    source: "RawStore.save()"
+    type: "dict"
+    required: true
+    health_threshold: 1.0
+
+capture:
+  raw_dir: "data/raw_html/tinnhanhchungkhoan.vn/<yyyymmdd>/<url_title_hash>.{html,meta.json}"
+  render_method: "requests (server-rendered, không cần JS)"
+  content_selector: "div.article__body"
+  min_body_bytes: 2048
+  max_per_cycle: 40
+  expected_capture_status: "ok"
+
+detail_page:
+  body_selector: "div.article__body"      # div.article__body.cms-body
+  sapo_selector: "div.article__sapo"      # .cms-desc
+  meta_selector: "div.article__meta"
+  tags_selector: "div.article__tag"
+  date_meta: "article:published_time"     # 2026-09-07T17:52:56+0700
+  time_tag: "time.time[datetime][data-time]"
+  ads_inside_body: "div[id^=adsWeb_]"
+
+watch_points:
+  - id: tnck-w1
+    field: content_selector div.article__body
+    risk: selector_drift
+    severity: high
+    description: "Đổi class body → capture_status=partial → SELECTOR_BROKEN → agent HOLD bài."
+    check: "tỉ lệ .meta.json có missing[incomplete_render] < 5%"
+
+  - id: tnck-w2
+    field: api zone endpoint
+    risk: url_change
+    severity: high
+    description: "API nội bộ, không có hợp đồng công khai. Đổi/khoá → mất TOÀN BỘ nguồn vì KHÔNG có RSS dự phòng."
+    check: "mỗi zone trả data.contents non-empty"
+
+  - id: tnck-w3
+    field: date epoch seconds
+    risk: format_change
+    severity: medium
+    description: "Nếu upstream đổi sang epoch mili giây thì fromtimestamp cho ra năm ~57000. Hiện chưa có guard."
+    check: "published_at nằm trong ±30 ngày quanh hôm nay"
+
+  - id: tnck-w4
+    field: zone id → name
+    risk: taxonomy_change
+    severity: low
+    description: "Zone id có thể bị đánh số lại → categories dán nhãn sai."
+    check: "zone.name khớp bảng zones.map"
+
+  - id: tnck-w5
+    field: robots của api host
+    risk: policy_change
+    severity: high
+    description: "Nếu api.tinnhanhchungkhoan.vn thêm robots Disallow → phải dừng ngay. Rà soát compliance phải kiểm tra CẢ HAI host."
+    check: "curl https://api.tinnhanhchungkhoan.vn/robots.txt"
+
+alert_thresholds:
+  article_count_drop_pct: 50
+  field_fill_rate_drop_pct: 20
+  new_article_zero_streak: 3
+  consecutive_failure_streak: 3

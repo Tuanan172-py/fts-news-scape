@@ -5,16 +5,15 @@ description: Tỷ lệ khử trùng lặp — phần trăm bài báo bị loại
 tags: [metric, dedup, efficiency]
 status: stable
 generated:
-  by: human:anpt
-  at: 2026-08-04T00:00:00Z
+  at: 2026-09-07T00:00:00Z
 sources:
-  - id: scraper-metrics
-    resource: ../tables/scraper_metrics.md
-    title: Scraper metrics table
   - id: dedup
     resource: project/src/db/dedup.py
-    title: Dedup implementation
-sources_last_checked: 2026-08-04
+    title: DedupCache — 2 lớp
+  - id: db-store
+    resource: project/src/db/store.py
+    title: DDL scraper_metrics / seen_articles
+sources_last_checked: 2026-09-07
 ---
 
 # Definition

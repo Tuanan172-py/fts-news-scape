@@ -40,7 +40,10 @@
   - body **`#content_detail_news`** — the only correct selector.
   - title `div.title-detail` — the page has **no `<h1>` at all**.
   - sapo `div.sapo_detail`; tags `div.tag_detail > .tag_detail_item`; wrapper `main.main_content.main_detail`.
-  - published = plain text `07/09/2026 10:38`. **No `<time>`, no `article:published_time`, no JSON-LD.**
+  - published = plain text `07/09/2026 10:38` inside **`span.post-time`** (verified by byte offset,
+    audit 01 §A4: date @16656, `main.main_content` @11594, `#content_detail_news` @18739 — so the
+    date sits **outside** the body). **No `<time>`, no `article:published_time`, no JSON-LD.**
+  - author `a.author.cl_green` (e.g. "Phong Bình") — capture it, `Article.author` already exists.
   - **Trap:** a JS comment-widget template string `<div class="content">'+content+'</div>'` exists in
     the page source. A naive `.content` selector grabs the wrong node. `#content_detail_news` only.
   - Body paragraphs `<p class="p1" style="text-align: justify;">`, HTML-entity encoded (`&ecirc;`).
@@ -319,7 +322,9 @@ detail:
   extract_full: true
   content_selector: "#content_detail_news"   # ⚠ TUYỆT ĐỐI không dùng .content (template JS)
   title_selector: "div.title-detail"         # đối chiếu; trang KHÔNG có <h1>
-  date_scope_selector: "main.main_content"   # thu hẹp vùng tìm `dd/MM/yyyy HH:mm`
+  date_scope_selector: "span.post-time"      # CHÍNH XÁC (verified 2026-09-07, audit 01 §A4)
+  #                                            fallback rộng hơn nếu template đổi: main.main_content
+  author_selector: "a.author"                # a.author.cl_green
   max_details_per_cycle: 30
 capture:
   raw_dir: "data/raw_html"
@@ -427,7 +432,7 @@ listing route misses >5% of that day's articles, 04b also gains a discovery role
 | Risk | Likelihood | Impact | Mitigation |
 |---|---|---|---|
 | **HTML template change breaks 6 selectors at once** — no upstream contract to lean on | **High** (this is the standing cost of HTML scraping) | **High** | All selectors in YAML (config edit, not code); `_parse_listing` returning 0 items appends an explicit "template drift?" error; `domains/baodautu/schema.yaml` is the diff baseline; `report_drift.py` in the daily runbook |
-| Date regex matches a date *inside* the article body | Med | Med — wrong `published_at` | `date_scope_selector` narrows to `main.main_content`; take the FIRST match; Step 1 must confirm the actual container; S7 measures |
+| Date regex matches a date *inside* the article body | **Low** (was Med) | Med — wrong `published_at` | **Eliminated by scope**: `span.post-time` is an exact, body-external container (audit 01 §A4). Residual risk only if the template renames that class — then `report_drift.py` + S7 catch it |
 | Naive `.content` selector reintroduced by a later edit | Med | **High** — silently captures a JS template string | Dedicated regression test S9 + the trap is documented in the module docstring, the YAML `pitfalls`, and `schema.yaml` |
 | Trailing slash added to `p<N>` "for consistency" → every page 404 | Med | High | `test_page_url_trailing_slash` + comments at the URL builder and in the YAML |
 | Listing order is not actually newest-first (assumed, unverified) | Med | Med — freshness skew | Dedup makes ordering non-fatal (nothing is lost, only delayed); Step 10 cross-check quantifies; 04b fixes properly if needed |
@@ -458,9 +463,8 @@ Conditional: **sub-phase 04b (sitemap backstop)** — opens only if S7 < 98% or 
 
 ## Unresolved questions
 
-1. **Where exactly does the `dd/MM/yyyy HH:mm` string live in the DOM?** researcher-03 verified the
-   format and that it is detail-only, but not its container. `date_scope_selector: "main.main_content"`
-   is a defensible default; Step 1 must confirm and tighten it. **Blocking for S7.**
+1. ~~Where does the `dd/MM/yyyy HH:mm` string live in the DOM?~~ — **RESOLVED** (audit 01 §A4):
+   **`span.post-time`**, outside `#content_detail_news`, inside `main.main_content`. No longer blocking S7.
 2. **Is the listing genuinely newest-first?** (researcher-03 §Unresolved #2, partly open.) Assumed,
    not verified. Affects freshness only, not completeness.
 3. **Sitemap backstop — build it or not?** Deferred behind the Step 9/10 gates. Do not build 04b

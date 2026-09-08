@@ -61,6 +61,64 @@ def build_batch_packet(tasks: list[dict], batch_id: str) -> dict:
     }
 
 
+L1_OUTPUT_SCHEMA = "l1-entity-output-v1"
+_L1_OUTPUT_REQUIRED = [
+    "l1_output_version", "article_id", "title", "recognized",
+    "entities", "categories", "citations", "processing_metadata",
+]
+
+
+def build_l1_batch_packet(tasks: list[dict], batch_id: str) -> dict:
+    """Gom danh sách task L1 thành 1 batch packet.
+
+    L1 chỉ đọc TIÊU ĐỀ nên packet cực nhẹ — gom 20–30 bài/lô vẫn thoải mái, khác Gold
+    (phải mang `cleaned_text`) chỉ gom được 5–10. Mang kèm `code_first` để agent làm đúng
+    nhiệm vụ TRA SOÁT (xác nhận / sửa / bổ sung), không nhận diện lại từ đầu.
+    """
+    batch_tasks = []
+    for tsk in tasks:
+        inp = tsk.get("input", {})
+        cf = tsk.get("code_first") or inp.get("code_first") or {}
+        batch_tasks.append({
+            "article_id": tsk.get("article_id") or inp.get("article_id", ""),
+            "title": tsk.get("title") or inp.get("title", ""),
+            "domain": tsk.get("domain") or inp.get("domain", ""),
+            "code_first": {
+                "route": cf.get("route"),
+                "relevance": cf.get("relevance"),
+                "entity_ids": cf.get("entity_ids", []),
+                "industries": cf.get("industries", []),
+            },
+        })
+
+    return {
+        "packet_version": "1.0",
+        "layer": "L1_ENTITY_RECOGNITION",
+        "task": "recognize_and_audit",
+        "batch_id": batch_id,
+        "task_count": len(batch_tasks),
+        "tasks": batch_tasks,
+        "entity_catalog_ref": {
+            "entities": "data/entities/entities.json",
+            "taxonomy": "data/entities/taxonomy.json",
+        },
+        "output_contract": {
+            "schema_name": L1_OUTPUT_SCHEMA,
+            "schema_path": f"schemas/{L1_OUTPUT_SCHEMA}.schema.json",
+            "format": "JSON array of l1-entity-output-v1 objects or {batch_id, outputs: [...]}",
+            "required_fields_per_item": _L1_OUTPUT_REQUIRED,
+        },
+        "constraints": {
+            "surface_must_be_substring_of": "tasks[i].title",
+            "citation_must_be_substring_of": "tasks[i].title",
+            "recognized_true_requires": ["entities>=1", "citations>=1"],
+            "processing_metadata_required": ["agent_provider", "model_used", "timestamp"],
+            "audit_duty": "xác nhận entity code-first, sửa nếu sai, bổ sung nếu thiếu",
+        },
+        "instructions_ref": "schemas/l1-entity-instructions-v1.md",
+    }
+
+
 def write_batch_packet(batch_packet: dict, base_dir: str = "data/agent_tasks") -> str:
     """Ghi batch packet ra đĩa an toàn qua staging (atomic). Trả path."""
     os.makedirs(base_dir, exist_ok=True)
@@ -75,23 +133,40 @@ def split_tasks_into_batches(
     batch_size: int = 10,
     base_dir: str = "data/agent_tasks",
     prefix: str = "batch",
+    builder=None,
 ) -> list[str]:
-    """Chia danh sách task thành các mini-batches và ghi ra đĩa. Trả danh sách paths."""
+    """Chia danh sách task thành các mini-batches và ghi ra đĩa. Trả danh sách paths.
+
+    `builder` = hàm dựng packet cho 1 lô; mặc định Gold (`build_batch_packet`),
+    truyền `build_l1_batch_packet` cho lớp L1.
+    """
     out_paths: list[str] = []
     if not tasks:
         return out_paths
 
+    builder = builder or build_batch_packet
     total = len(tasks)
     batch_idx = 1
     for i in range(0, total, batch_size):
         chunk = tasks[i : i + batch_size]
         batch_id = f"{prefix}_{batch_idx:02d}"
-        packet = build_batch_packet(chunk, batch_id=batch_id)
+        packet = builder(chunk, batch_id=batch_id)
         path = write_batch_packet(packet, base_dir=base_dir)
         out_paths.append(path)
         batch_idx += 1
 
     return out_paths
+
+
+def split_l1_tasks_into_batches(
+    tasks: list[dict],
+    batch_size: int = 25,
+    base_dir: str = "data/agent_tasks/l1",
+    prefix: str = "l1_batch",
+) -> list[str]:
+    """Gom lô cho lớp L1 (packet chỉ có tiêu đề nên lô lớn hơn Gold được)."""
+    return split_tasks_into_batches(tasks, batch_size=batch_size, base_dir=base_dir,
+                                    prefix=prefix, builder=build_l1_batch_packet)
 
 
 def unpack_batch_output(batch_output: dict | list | str | Path) -> list[dict]:

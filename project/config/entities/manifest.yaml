@@ -11,3 +11,5 @@ default: false
 
 users:
   AnPT: true
+  PhoHG: true      # bật 2026-09-07 — file đăng ký: users/subscriptions/PhoHG_news.xlsx
+  ThanhTD: true    # bật 2026-09-07 — file đăng ký: users/subscriptions/ThanhTD_news.xlsx

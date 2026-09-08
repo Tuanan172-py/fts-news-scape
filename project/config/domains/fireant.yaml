@@ -1,15 +1,25 @@
 name: fireant
-enabled: false   # disabled 2026-08-03: focus on cafef + vietstock only
-method: api
+enabled: true            # RE-ENABLED 2026-09-07 (tắt 2026-08-03 "focus cafef+vietstock")
+method: fireant          # scraper riêng: REST API + Bronze capture JSON
 rate_limit: 3.0
 timeout: 30
+language: vi
 auth:
   type: bearer
-  secret_key: fireant_token     # config/secrets.yaml (gitignored)
+  secret_key: fireant_token     # config/secrets.yaml (gitignored). JWT exp 2036, verified 2026-09-07
 api:
   list_url: "https://restv2.fireant.vn/posts"
-  params: {type: 1, offset: 0, limit: 20}    # symbol inject per watchlist
-  detail_url_template: "https://restv2.fireant.vn/posts/{post_id}"
+  params: {type: 1, offset: 0, limit: 20}    # symbol inject theo watchlist
+  detail_url_template: "https://restv2.fireant.vn/posts/{post_id}"   # SỐ NHIỀU
 detail:
   max_details_per_cycle: 30
-pitfalls: "Bearer token BẮT BUỘC (401 nếu thiếu — verified 2026-07-24). Token hết hạn → scraper self-disable + ERROR log, cập nhật thủ công secrets.yaml. List trả content rỗng → cần detail /posts/{id} (SỐ NHIỀU — /post/{id} số ít trả 404, fixed 2026-07-26; field `content` ~5.8k HTML). `date` đã ISO +07:00."
+  # KHÔNG có content_selector: Bronze là JSON, không phải HTML.
+  # SilverBuilder nhận diện Content-Type: application/json rồi bóc trường `content`.
+capture:
+  raw_dir: "data/raw_html"       # Bronze = body JSON byte-exact của API detail
+  min_body_bytes: 512            # JSON gọn hơn HTML nhiều
+compliance:
+  respect_robots: true
+  proxy_rotation: false
+  proxies: []
+pitfalls: "Bearer token BẮT BUỘC (401 nếu thiếu — verified 2026-07-24). Token hết hạn → self-disable + ERROR log, cập nhật thủ công secrets.yaml. List trả content RỖNG → bắt buộc gọi detail /posts/{id} (SỐ NHIỀU — /post/{id} số ít trả 404); field `content` ~3.7k HTML. `date` đã ISO +07:00. FIELD LÀ camelCase: postID / postSource / postSourceUrl (bản cũ đọc post_source snake_case nên source_name LUÔN rỗng — sửa 2026-09-07). Permalink đúng = /dashboard/content/{id}; /bai-viet/{id} trả 404 (sửa 2026-09-07). ⚠️ BRONZE LÀ JSON KHÔNG PHẢI HTML: trang web là Next.js SPA, body bài không có trong HTTP GET → capture response API. KHÔNG dùng _capture_and_extract (nó chạy CSS selector nên báo partial oan). ⚠️ TUÂN THỦ: robots của fireant.vn chặn ClaudeBot/GPTBot/CCBot/Google-Extended + khai Content-Signal ai-train=no, use=reference. Ta đi qua API đã xác thực bằng token người dùng (restv2 không có robots) → chịu ToS tài khoản. TUYỆT ĐỐI không dùng dữ liệu này để train model."

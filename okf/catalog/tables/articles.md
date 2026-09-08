@@ -1,106 +1,117 @@
 ---
 type: SQLite Table
 title: articles
-description: Bảng trung tâm lưu trữ thông tin bài viết và tin tức thị trường chứng khoán từ 23 nguồn.
+description: Bảng trung tâm lưu bài viết đã capture + chuẩn hoá; hạt độ = 1 bài / url.
 resource: "project/data/monocle.db (table: articles)"
-tags: [news, stock-market, raw-data, enriched]
+tags: [news, stock-market, bronze, articles]
 status: stable
 generated:
-  by: human:anpt
-  at: 2026-08-03T10:00:00Z
+  at: 2026-09-07T00:00:00Z
 sources:
+  - id: db-store
+    resource: project/src/db/store.py
+    title: ArticleStore schema DDL (_SCHEMA)
+  - id: models
+    resource: project/src/core/models.py
+    title: Article dataclass + url_title_hash
   - id: data-model
     resource: project/docs/dev/02-data-model-and-db.md
     title: Data Model & DB Design
-    author: human:anpt
-  - id: system-overview
-    resource: project/docs/design/01-system-overview.md
-    title: System Overview
-    author: human:anpt
-  - id: db-store
-    resource: project/src/db/store.py
-    title: ArticleStore schema DDL
-sources_last_checked: 2026-08-03
+sources_last_checked: 2026-09-07
 ---
 
-Bảng `articles` lưu trữ thông tin chi tiết về các bài viết chứng khoán được thu thập từ 23 nguồn dữ liệu khác nhau bao gồm RSS, REST API, và HTML scraping.[^system-overview] Hạt độ (grain) của bảng là mỗi bản ghi tương ứng với một bài viết duy nhất được xác định bởi `url`.
+Bảng `articles` lưu mỗi bài viết thu được ở **Vòng 1 — Capture**. Hạt độ: 1 hàng = 1 bài,
+định danh nghiệp vụ là `url_title_hash` = SHA-256(`url` + `title`) — khoá này xuyên suốt mọi
+tầng (Bronze → Silver → work_items → l1_outputs/agent_outputs → CSV người dùng).[^db-store]
 
-Dữ liệu trong bảng tuân theo nguyên lý "Không vứt dữ liệu" (Graceful degradation). Cụ thể, bảng bao gồm cả HTML thô nguyên bản (`content_html`) và văn bản đã được làm sạch (`content_text`) thông qua thư viện Trafilatura. Việc populate dữ liệu được thực hiện hoàn toàn tự động thông qua tiến trình [DBWriter](../pipelines/db_writer.md) chạy đơn luồng.[^db-store]
+Ghi vào bảng **chỉ** qua [DBWriter](../pipelines/db_writer.md) (single-writer thread) bằng
+`INSERT OR IGNORE` trên tập 16 cột nghiệp vụ (`id` tự sinh).[^db-store] Scraper không bao giờ
+ghi DB trực tiếp.
 
-Bảng thuộc schema v2 của [Web Monocle DB](../datasets/web_monocle_db.md). Mỗi article sau khi được scraper thu thập sẽ trải qua pipeline: fetch → parse → dedup → [classify](../pipelines/sentiment_pipeline.md) → [sentiment](../pipelines/sentiment_pipeline.md) → DBWriter.[^system-overview]
+Nguyên tắc "không vứt dữ liệu": `content_html` giữ bản HTML đã bóc, `content_text` là bản sạch
+(Trafilatura). Bản raw **byte-exact** không nằm ở đây mà ở tầng
+[Bronze raw store](../datasets/bronze_raw_html.md) — `articles` là chỉ mục tra cứu, không phải
+nguồn provenance.
+
+> Từ 2026-09: `sentiment` / `sentiment_score` do engine rule-based sinh **đã gỡ khỏi workflow**
+> (xem [Sentiment Pipeline](../pipelines/sentiment_pipeline.md) — trạng thái legacy). Sentiment
+> "thật" dùng cho deliverable nằm ở [agent_outputs](agent_outputs.md), không ở cột này.
 
 # Schema
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
 | `id` | INTEGER | PRIMARY KEY AUTOINCREMENT | ID tự tăng |
-| `url` | TEXT | UNIQUE NOT NULL | URL gốc của bài viết |
-| `title` | TEXT | NOT NULL | Tiêu đề bài viết |
-| `source_domain` | TEXT | NOT NULL | Tên miền nguồn (VD: cafef.vn) |
-| `summary` | TEXT | | Tóm tắt (fallback khi enrich lỗi) |
-| `content_html` | TEXT | | Nội dung HTML gốc (luôn giữ lại) |
-| `content_text` | TEXT | | Nội dung văn bản sạch (Trafilatura) |
+| `url` | TEXT | NOT NULL UNIQUE | URL gốc bài viết |
+| `url_title_hash` | TEXT | NOT NULL UNIQUE | SHA-256(url + title) — `article_id` toàn hệ |
+| `title` | TEXT | NOT NULL | Tiêu đề |
+| `summary` | TEXT | | Tóm tắt từ feed (fallback khi enrich lỗi) |
+| `content_html` | TEXT | | HTML nội dung bài |
+| `content_text` | TEXT | | Văn bản sạch (Trafilatura) |
 | `published_at` | TEXT | | Thời gian xuất bản (ISO 8601, giờ VN) |
-| `author` | TEXT | | Tác giả bài viết |
-| `symbols` | TEXT | | Mã CK liên quan (phân tách dấu phẩy) |
+| `author` | TEXT | | Tác giả |
+| `source_domain` | TEXT | NOT NULL | Tên miền nguồn (vd `cafef.vn`) |
+| `symbols` | TEXT | | Mã CK gắn được (phân tách dấu phẩy) |
 | `categories` | TEXT | | Nhãn phân loại (phân tách dấu phẩy) |
-| `sentiment` | TEXT | | Phân loại cảm xúc: positive/negative/neutral |
-| `sentiment_score` | REAL | | Điểm số cảm xúc (-1.0 đến 1.0) |
-| `fetched_at` | TEXT | NOT NULL | Thời gian hoàn tất fetch (ISO 8601, giờ VN) |
-| `processed_at` | TEXT | | Thời gian xử lý & làm giàu thành công |
-| `metadata` | TEXT | | JSON dump chứa metadata bổ sung |
-| `url_title_hash` | TEXT | UNIQUE | SHA-256(url + title) — dùng cho dedup |
+| `sentiment` | TEXT | | *legacy* — positive/negative/neutral |
+| `sentiment_score` | REAL | | *legacy* — điểm −1.0…1.0 |
+| `fetched_at` | TEXT | NOT NULL | Thời điểm fetch xong (ISO 8601, giờ VN) |
+| `processed_at` | TEXT | | Thời điểm enrich/xử lý xong |
+| `metadata_json` | TEXT | | JSON metadata bổ sung |
 
 **Indexes:**
-- `idx_articles_url` trên `url`
-- `idx_articles_source_domain` trên `source_domain`
-- `idx_articles_published_at` trên `published_at`
+- `idx_articles_published` trên `published_at`
+- `idx_articles_source` trên `(source_domain, fetched_at)`
+- UNIQUE ngầm trên `url` và `url_title_hash`
+
+⚠️ Cột tên là `metadata_json` (không phải `metadata`); index KHÔNG có `idx_articles_url` riêng —
+UNIQUE constraint đã tạo index ngầm.
 
 # Common Query Patterns
 
-### Bài báo mới nhất có sentiment tích cực
+### Sản lượng theo nguồn trong ngày
 
 ```sql
-SELECT title, url, source_domain, published_at, sentiment_score
+SELECT source_domain, COUNT(*) AS n
 FROM articles
-WHERE sentiment = 'positive' AND symbols IS NOT NULL
-ORDER BY published_at DESC
-LIMIT 10;
+WHERE date(fetched_at) = date('now', 'localtime')
+GROUP BY source_domain
+ORDER BY n DESC;
 ```
 
-### Thống kê bài báo theo sentiment trong 7 ngày qua
+### Bài đã qua đủ 2 lớp agent (điều kiện vào deliverable)
 
 ```sql
-SELECT
-  sentiment,
-  source_domain,
-  COUNT(*) AS article_count
-FROM articles
-WHERE published_at >= date('now', '-7 days')
-GROUP BY sentiment, source_domain
-ORDER BY article_count DESC;
+SELECT a.url_title_hash, a.title, a.source_domain
+FROM articles a
+JOIN l1_outputs    l1 ON l1.article_id = a.url_title_hash AND l1.dod_pass = 1
+JOIN agent_outputs ag ON ag.article_id = a.url_title_hash AND ag.dod_pass = 1
+WHERE date(COALESCE(a.published_at, a.fetched_at)) = date('now', 'localtime');
 ```
 
-### Bài báo trùng lặp (cùng URL được scrape nhiều lần)
+### Bài chưa có bản Silver/work_item (rò rỉ pipeline)
 
 ```sql
-SELECT url, COUNT(*) AS occurrences
-FROM articles
-GROUP BY url
-HAVING COUNT(*) > 1;
+SELECT a.url_title_hash, a.source_domain, a.fetched_at
+FROM articles a
+LEFT JOIN work_items w ON w.article_id = a.url_title_hash
+WHERE w.id IS NULL AND a.fetched_at >= datetime('now', '-1 day', 'localtime');
 ```
 
 # Joins
 
-- JOIN với [seen_articles](seen_articles.md) qua `url_title_hash = hash_id` để kiểm tra trạng thái dedup
-- JOIN với [scraper_metrics](scraper_metrics.md) qua `source_domain` để theo dõi hiệu suất thu thập
+- [seen_articles](seen_articles.md) qua `url_title_hash = hash` — trạng thái dedup
+- [article_versions](article_versions.md) qua `url_title_hash` — lịch sử capture / change-detect
+- [work_items](work_items.md), [l1_tasks](l1_tasks.md), [l1_outputs](l1_outputs.md),
+  [agent_outputs](agent_outputs.md) qua `article_id = url_title_hash`
+- [scraper_metrics](scraper_metrics.md) qua `source_domain ↔ scraper_name` (**không** luôn bằng
+  nhau: `scraper_name` là tên config, vd `tnck` ↔ `source_domain` `tinnhanhchungkhoan.vn`)
 
 # Metrics
 
-Các metrics được tính từ bảng này:
-- [Articles Per Day](../metrics/articles_per_day.md) — số lượng bài báo thu thập mỗi ngày
-- [Sentiment Distribution](../metrics/sentiment_distribution.md) — phân phối cảm xúc theo nguồn
+- [Articles Per Day](../metrics/articles_per_day.md)
+- [Sentiment Distribution](../metrics/sentiment_distribution.md)
 
+[^db-store]: [ArticleStore schema DDL](project/src/db/store.py)
+[^models]: [Article model](project/src/core/models.py)
 [^data-model]: [Data Model & DB Design](project/docs/dev/02-data-model-and-db.md)
-[^system-overview]: [System Overview](project/docs/design/01-system-overview.md)
-[^db-store]: [ArticleStore implementation](project/src/db/store.py)

@@ -1,8 +1,15 @@
 # Domains — Báo VN qua RSS
 
-Cập nhật: 2026-07-26 · 11 nguồn (10 enabled + baodautu disabled) + vietstock/vnexpress/vneconomy.
-Tất cả dùng chung `RSSScraper`, `language: vi`, `extract_full: true` (trừ ghi chú), cap 30.
-Verify 2026-07-24/25.
+Cập nhật: **2026-09-07**. `language: vi`, `extract_full: true` (trừ ghi chú), cap 30.
+
+**Hai class khác nhau — đọc kỹ:**
+- `method: rss` → `RSSScraper` — **KHÔNG lưu Bronze** (`enrich()` không gọi `RawStore`).
+  Mọi nguồn nhóm này hiện **disabled** (freeze Bronze-first 2026-08-03).
+- `method: rss_capture` → `RssCaptureScraper` (kế thừa `RSSScraper`) — **có Bronze byte-exact**.
+  Chỉ override `__init__` + `enrich()`; `fetch_list`/`parse_item`/`filter`/`link_rewrites` dùng chung.
+
+Enabled trong nhóm này: **vietstock**, **vneconomy** (scraper riêng, có capture) và
+**vietnambiz** (`rss_capture`, mới 2026-09-07). Xem [README.md](README.md) cho ma trận đầy đủ.
 
 ## Nguồn có cấu hình đặc thù
 
@@ -46,8 +53,54 @@ Verify 2026-07-24/25.
 | znews       | `/rss/kinh-doanh-tai-chinh.rss`     | 50 items                                                                                           |
 | cafebiz     | `/rss/home.rss`                     | home.rss = superset (61 items); zone khác không tồn tại                                        |
 | vietnamplus | `www.vietnamplus.vn/rss/kinhte.rss` | dùng bản**www.** (không en.); 50 items                                                    |
-| vietnambiz  | `/chung-khoan.rss` +2               | khai`utf-16` nhưng serve **utf-8** → `_decode_feed` strip encoding attr; 30 items/zone |
+| vietnambiz  | **6 feeds** (xem §vietnambiz)       | ✅ enabled, `rss_capture`. khai `utf-16` serve **utf-8**; 30 items/feed |
 | dantri      | `/rss/kinh-doanh.rss`               | **BOM utf-8** → utf-8-sig; KHÔNG có chung-khoan.rss; 100 items                            |
+
+### vietnambiz — `vietnambiz.yaml` ✅ enabled 2026-09-07, `method: rss_capture`
+
+Nguồn **đầu tiên** chạy `RssCaptureScraper` (RSS list + Bronze full raw HTML capture).
+
+- **6 feeds** (verified live 2026-09-07, 30 items/feed):
+  `/chung-khoan.rss`, `/tai-chinh.rss`, `/vi-mo.rss`,
+  `/doanh-nghiep.rss`, `/nha-dat.rss`, `/hang-hoa.rss`.
+  ⚠️ `/quoc-te.rss` **chết** (0 item / 356 bytes) — không dùng.
+- **Body selector BẮT BUỘC:** `div.vnbcbc-body` (`.vnbcbc-body.vceditor-content[data-role=content]`).
+  Trang **KHÔNG có thẻ `<article>`** → nếu để selector mặc định thì `_looks_complete` fail →
+  `capture_status: partial` → `SELECTOR_BROKEN` → agent **hold** mọi bài. Có test regression.
+  KHÔNG dùng `div.post-body-content` (bọc cả title/author/date).
+- **Encoding:** XML declaration khai `utf-16` nhưng serve utf-8 → `_decode_feed` strip encoding attr.
+- **Ngày:** `pubDate` = `Mon, 07 Sep 2026 19:41:53 GMT+7` (phi chuẩn) → `_parse_raw_date`
+  normalize `GMT+7` → `+0700`.
+  ⚠️ `meta article:published_time` **thiếu offset timezone** — đừng dùng nó thay `pubDate`.
+- **URL bài** đuôi `.htm` (không phải `.html`). Ảnh trên `cdn.vietnambiz.vn`, `src` trực tiếp.
+- **robots.txt:** `Allow: /`, không `Disallow`, không `Crawl-delay`.
+- Chi tiết: [`domains/vietnambiz/README.md`](../../domains/vietnambiz/README.md).
+
+### thoibaotaichinhvietnam — `thoibaotaichinhvietnam.yaml` ✅ enabled 2026-09-07, `method: rss_capture`
+
+Cơ quan ngôn luận **Bộ Tài chính**. Nguồn proxy KTXH/đầu tư công chính (NSO đang bị chặn network).
+
+- ⚠️ **RSS theo chuyên mục là ẢO.** `/{category}/rss_feed/` trả 200 + 25 item cho MỌI chuyên mục,
+  nhưng đều là **cùng feed site-wide `trang-chu`** (verified: chung-khoan / thue-hai-quan /
+  bat-dong-san / root cho ra 25 item y hệt, cùng pubDate, cùng channel `<link>`).
+  → **Chỉ dùng 1 feed** `https://thoibaotaichinhvietnam.vn/rss_feed/`.
+- **Chuyên mục thật** ở trang detail: `<meta property="article:section">` →
+  đọc bằng `detail.category_meta`, chèn vào đầu `categories`.
+- Body `div.article-detail-main` (fallback `div.article-content`).
+- Ngày: `article:published_time` = ISO **+07:00 chuẩn** → health_threshold 1.0.
+- Feed **có** `content:encoded` full body — vẫn fetch detail để giữ Bronze; inline chỉ là fallback.
+- robots: Disallow `/tag/ /article/ *.pdf *.xls`; bài chi tiết ở ROOT nên không bị chặn.
+  **Không fetch attachment PDF/XLS.**
+- Volume ~50 bài/ngày. Chi tiết: [`domains/thoibaotaichinhvietnam/README.md`](../../domains/thoibaotaichinhvietnam/README.md).
+
+### baodautu — ĐÃ CHUYỂN KHỎI NHÓM RSS
+
+baodautu **không còn là nguồn RSS**. RSS của họ hỏng vĩnh viễn ở server (mọi feed trả cùng
+channel rỗng `Trang chủ` + `<link>` dị dạng `https://baodautu.vn//.rss`, 0 item —
+re-verified 2026-09-07, 8/8 URL). Từ 2026-09-07 chạy bằng **HTML listing scraper**.
+
+→ Xem [html-scrapers.md](html-scrapers.md) và
+[`domains/baodautu/README.md`](../../domains/baodautu/README.md).
 
 ## Chung cho nhóm VN RSS
 

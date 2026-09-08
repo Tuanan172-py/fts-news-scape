@@ -7,8 +7,11 @@ user_output.py — Ghi output CUỐI cho từng user (CSV theo ngày), gate tố
 
 Định tuyến: entity nhận diện (l1_outputs.entities[in_list]) → subscribers_for() → chỉ user
 đăng ký entity liên quan (và đang BẬT) mới nhận article.
-- Thư mục user: users/output/<name>/<YYYY-MM-DD>/final.csv (deliverable tinh gọn).
-- Thư mục audit tập trung: users/output/_master/<YYYY-MM-DD>/{L1.csv, agent.csv, final.csv}.
+- Thư mục user (phẳng): users/output/<name>/<YYYY-MM-DD>.csv (deliverable tinh gọn).
+- Thư mục audit tập trung (phẳng): users/output/_master/<YYYY-MM-DD>{,_L1,_agent}.csv.
+
+Cột `gold_status` phân biệt GOLD (đã có agent_outputs đạt DoD) vs L1_ONLY (chưa chạm Gold),
+để không nhầm "chưa xử lý" với "Gold đã chạy nhưng trường optional rỗng".
 
 Idempotent: rewrite toàn tập per (user, date) + checkpoint theo article_id (crash-safe).
 Không notify — chỉ log "done".
@@ -32,19 +35,28 @@ from src.users.compile import DEFAULT_OUTPUT_ROOT
 _GATED_SQL = """
 SELECT a.url_title_hash AS article_id, a.title, a.url, a.source_domain,
        a.published_at, a.fetched_at,
+       a.content_text, a.symbols, a.categories,
        l1.output_json AS l1_json,
        ag.output_json AS agent_json
 FROM articles a
-JOIN l1_outputs         l1 ON l1.article_id = a.url_title_hash AND l1.dod_pass = 1
-LEFT JOIN agent_outputs ag ON ag.article_id = a.url_title_hash AND ag.dod_pass = 1
+JOIN l1_outputs l1 ON l1.article_id = a.url_title_hash AND l1.dod_pass = 1
+LEFT JOIN (
+    SELECT o.article_id, o.output_json
+    FROM agent_outputs o
+    JOIN (SELECT article_id, MAX(id) AS id FROM agent_outputs
+          WHERE dod_pass = 1 GROUP BY article_id) latest
+      ON latest.id = o.id
+) ag ON ag.article_id = a.url_title_hash
 """
 
 FINAL_COLUMNS = [
     "date", "matched_entities", "title", "summary", "key_points",
     "implication", "impact_area", "time_sensitivity",
-    "sentiment", "event_type", "url", "source_domain",
+    "sentiment", "event_type", "gold_status", "url", "source_domain",
     "article_id", "agent_provider", "model_used",
 ]
+# _master mang thêm cột chẩn đoán; deliverable của user giữ đúng FINAL_COLUMNS.
+MASTER_COLUMNS = FINAL_COLUMNS + ["noise_signals"]
 L1_COLUMNS = ["article_id", "date", "title", "entities", "categories", "agent_provider", "model_used"]
 AGENT_COLUMNS = ["article_id", "date", "summary", "implication",
                  "materiality_score", "sentiment", "event_type",
@@ -68,14 +80,19 @@ def _row_date(r: dict) -> str:
     return (r.get("published_at") or r.get("fetched_at") or "")[:10] or "unknown-date"
 
 
-def _atomic_write_csv(path: Path, columns: list[str], rows: list[dict]) -> None:
+def _atomic_write_csv(path: Path, columns: list[str], rows: list[dict]) -> tuple[Path, bool]:
+    """Ghi CSV atomic. Trả (đường dẫn ĐÃ ghi thật, True nếu phải rơi về snapshot vì file bị khoá).
+
+    Caller BẮT BUỘC đọc cờ thứ hai: khi True, file đích vẫn là bản CŨ (stale) — không được
+    log/checkpoint như thể đã giao hàng thành công.
+    """
     def _write(f):
         w = csv.DictWriter(f, fieldnames=columns, extrasaction="ignore")
         w.writeheader()
         for row in rows:
             w.writerow(row)
 
-    safe_atomic_write(path, _write, encoding="utf-8-sig", fallback_on_lock=True)
+    return safe_atomic_write(path, _write, encoding="utf-8-sig", fallback_on_lock=True)
 
 
 class UserOutputWriter:
@@ -134,6 +151,7 @@ class UserOutputWriter:
             "time_sensitivity": mat.get("time_sensitivity") or "",
             "sentiment": sent.get("polarity") or sent.get("overall") or "",
             "event_type": ag.get("event_type") or "",
+            "gold_status": "GOLD" if r.get("agent_json") else "L1_ONLY",
             "url": r.get("url") or "",
             "source_domain": r.get("source_domain") or "",
             "article_id": r["article_id"],
@@ -149,8 +167,9 @@ class UserOutputWriter:
         cats = "; ".join(f"{k}={v}" for k, v in (d.get("categories") or {}).items() if v != "none")
         return {"article_id": r["article_id"], "date": _row_date(r), "title": r.get("title"),
                 "entities": ents, "categories": cats,
-                "agent_provider": meta.get("agent_provider") or "unknown",
-                "model_used": meta.get("model_used") or "unknown"}
+                # Để TRỐNG khi agent không khai báo — không bịa tên provider.
+                "agent_provider": meta.get("agent_provider") or "",
+                "model_used": meta.get("model_used") or ""}
 
     def _agent_row(self, r: dict) -> dict:
         ag = _loads(r.get("agent_json"))
@@ -167,22 +186,49 @@ class UserOutputWriter:
                 "agent_provider": meta.get("agent_provider") or "",
                 "model_used": meta.get("model_used") or ""}
 
+    def _silver_noise_signals(self, matched_eids: set[str], r: dict) -> str:
+        """Tín hiệu nhiễu TẤT ĐỊNH từ Silver — chỉ để QUAN SÁT, CHƯA dùng làm gate.
+
+        Ghi vào cột `noise_signals` của `_master/<date>.csv` (không có trong deliverable user).
+        Mục đích: gom số liệu thật để sau này chọn ngưỡng, thay vì đoán. Khi đã đủ dữ liệu,
+        chuyển tiêu chí nào sang `_passes_noise_filter` là quyết định riêng, có chủ đích.
+        """
+        title_lower = (r.get("title") or "").lower()
+        body_lower = (r.get("content_text") or "").lower()
+        symbols = (r.get("symbols") or "").upper()
+        alias_title = alias_body = 0
+        code_in_symbols = 0
+        for eid in matched_eids:
+            ent = self.reg.get(eid)
+            if not ent:
+                continue
+            code = (ent.get("code") or "").upper()
+            if code and code in {t.strip() for t in symbols.replace(";", ",").split(",")}:
+                code_in_symbols += 1
+            for a in ent.get("aliases", []):
+                if len(a) < 2:
+                    continue
+                al = a.lower()
+                if al in title_lower:
+                    alias_title += 1
+                alias_body += body_lower.count(al)
+        return (f"alias_title={alias_title};alias_body={alias_body};"
+                f"body_len={len(body_lower)};code_in_symbols={code_in_symbols};"
+                f"cats={(r.get('categories') or '').replace(';', '|')}")
+
     def _passes_noise_filter(self, matched_eids: set[str], r: dict) -> bool:
-        """Lọc rác: nếu chỉ match các thực thể diện rộng (MACRO/ASSET), yêu cầu xuất hiện ở title hoặc materiality >= 0.6."""
+        """Lọc rác: nếu chỉ match thực thể diện rộng (MACRO/ASSET), yêu cầu alias xuất hiện ở title.
+
+        KHÔNG đọc bất kỳ trường Gold nào — gate export là L1-only, nên filter cũng phải
+        quyết định được khi Gold chưa chạy. Nếu còn dựa `materiality.score` thì bài L1-only
+        luôn bị chấm 0 và nới gate chỉ có tác dụng một nửa.
+        """
         broad_types = {"MACRO_GEO", "MACRO_THEME", "ASSET_CLASS"}
         matched_types = {self.reg.get(eid)["type"] for eid in matched_eids if self.reg.get(eid)}
         # Nếu có ít nhất 1 entity cụ thể (TICKER, ETF, INDUSTRY, INDEX, EXCHANGE, INSTITUTION) -> Pass luôn
         if any(t not in broad_types for t in matched_types):
             return True
-        # Nếu chỉ có broad entities -> kiểm tra materiality score >= 0.6 (Rule 02 & agent-output-v1 standard)
-        ag = _loads(r.get("agent_json"))
-        mat_score = (ag.get("materiality") or {}).get("score") or 0
-        try:
-            if float(mat_score) >= 0.6:
-                return True
-        except (ValueError, TypeError):
-            pass
-        # Hoặc alias của entity xuất hiện ngay trong title
+        # Chỉ có broad entities -> alias của entity phải xuất hiện ngay trong title
         title_lower = (r.get("title") or "").lower()
         for eid in matched_eids:
             ent = self.reg.get(eid)
@@ -200,6 +246,7 @@ class UserOutputWriter:
         # bucket[(user, date)] = list of (final_row, l1_row, agent_row, article_id)
         bucket: dict[tuple[str, str], list[tuple]] = {}
         matched_article_ids: set[str] = set()
+        locked: list[tuple[Path, Path]] = []      # (file đích stale, snapshot đã ghi thay)
 
         for r in rows:
             eset = self._entity_ids(r["l1_json"])
@@ -227,8 +274,10 @@ class UserOutputWriter:
                 d = _row_date(r)
                 eset = self._entity_ids(r["l1_json"])
                 has_ag = bool(r.get("agent_json"))
+                mrow = self._final_row(r, eset)
+                mrow["noise_signals"] = self._silver_noise_signals(eset, r)
                 master_bucket.setdefault(d, []).append(
-                    (self._final_row(r, eset), self._l1_row(r), self._agent_row(r), r["article_id"], has_ag))
+                    (mrow, self._l1_row(r), self._agent_row(r), r["article_id"], has_ag))
             for d, items in master_bucket.items():
                 seen, finals, l1s, agents, aids = set(), [], [], [], []
                 for frow, l1row, arow, aid, has_ag in items:
@@ -238,9 +287,12 @@ class UserOutputWriter:
                     if has_ag:
                         agents.append(arow)
                 mbase = self.output_root / "_master"
-                _atomic_write_csv(mbase / f"{d}.csv", FINAL_COLUMNS, finals)
-                _atomic_write_csv(mbase / f"{d}_L1.csv", L1_COLUMNS, l1s)
-                _atomic_write_csv(mbase / f"{d}_agent.csv", AGENT_COLUMNS, agents)
+                for mpath, mcols, mrows in ((mbase / f"{d}.csv", MASTER_COLUMNS, finals),
+                                            (mbase / f"{d}_L1.csv", L1_COLUMNS, l1s),
+                                            (mbase / f"{d}_agent.csv", AGENT_COLUMNS, agents)):
+                    actual, was_locked = _atomic_write_csv(mpath, mcols, mrows)
+                    if was_locked:
+                        locked.append((mpath, actual))
 
         counts: dict[str, int] = {}
         for (user, d), items in sorted(bucket.items()):
@@ -252,11 +304,32 @@ class UserOutputWriter:
                 seen.add(aid); finals.append(frow); l1s.append(l1row); agents.append(arow); aids.append(aid)
             user_dir = self.output_root / _safe_name(user)
             file_path = user_dir / f"{d}.csv"  # deliverable duy nhất và phẳng cho user
+            statuses = {row["article_id"]: row["gold_status"] for row in finals}
             new = ckpt.filter_new(user_dir, d, aids)
-            _atomic_write_csv(file_path, FINAL_COLUMNS, finals)
-            ckpt.mark_written(user_dir, d, aids)                       # mark SAU khi replace
+            upgraded = ckpt.filter_upgraded(user_dir, d, statuses)     # L1_ONLY → GOLD
+            actual, was_locked = _atomic_write_csv(file_path, FINAL_COLUMNS, finals)
+            n_l1_only = sum(1 for v in statuses.values() if v == "L1_ONLY")
+            if was_locked:
+                # File đích KHÔNG đổi → chưa giao hàng. Không mark checkpoint, để lần chạy sau
+                # ghi lại và vẫn báo đúng new/upgraded thay vì tưởng đã xong.
+                locked.append((file_path, actual))
+                logger.warning(
+                    "user={} date={}: '{}' đang bị khoá bởi tiến trình khác (Excel/OneDrive) → "
+                    "file đích VẪN LÀ BẢN CŨ; {} dòng mới nằm ở snapshot '{}'. "
+                    "Không mark checkpoint.",
+                    user, d, file_path.name, len(finals), actual.name)
+            else:
+                ckpt.mark_written(user_dir, d, aids, statuses)         # mark SAU khi replace
+                logger.info("done user={} date={} rows={} (new={} upgraded={} l1_only={}) file={}",
+                            user, d, len(finals), len(new), len(upgraded), n_l1_only, actual.name)
             counts[user] = counts.get(user, 0) + len(finals)
-            logger.info("done user={} date={} rows={} (new={}) file={}", user, d, len(finals), len(new), file_path.name)
+
+        if locked:
+            logger.warning(
+                "[FILE LOCK] {} file output KHÔNG cập nhật được vì đang mở ở tiến trình khác: {}. "
+                "Đóng file (Excel / Explorer preview / OneDrive đang sync) rồi chạy lại — output "
+                "là artifact máy sinh, không mở trong lúc pipeline chạy.",
+                len(locked), ", ".join(t.name for t, _ in locked))
 
         orphan_count = len(rows) - len(matched_article_ids)
         if orphan_count > 0:

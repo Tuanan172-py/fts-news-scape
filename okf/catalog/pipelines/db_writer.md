@@ -1,70 +1,74 @@
 ---
 type: Python Pipeline
 title: DBWriter — Single-Writer Thread
-description: Background thread duy nhất ghi dữ liệu vào SQLite, nhận articles qua queue.Queue từ orchestrator.
+description: Daemon thread duy nhất ghi bảng articles, gom batch ≤50 hoặc mỗi 2s vào 1 transaction.
 resource: project/src/db/writer.py
 tags: [pipeline, sqlite, writer, concurrency]
 status: stable
 generated:
-  by: human:anpt
-  at: 2026-08-04T00:00:00Z
+  at: 2026-09-07T00:00:00Z
 sources:
   - id: writer
     resource: project/src/db/writer.py
     title: DBWriter implementation
   - id: db-store
     resource: project/src/db/store.py
-    title: ArticleStore
-sources_last_checked: 2026-08-04
+    title: ArticleStore.insert_batch
+  - id: orchestrator
+    resource: project/src/orchestrator.py
+    title: Orchestrator — enqueue/flush/stop
+sources_last_checked: 2026-09-07
 ---
 
-`DBWriter` là một daemon thread chạy nền, đảm nhận toàn bộ việc ghi dữ liệu vào [SQLite](../datasets/web_monocle_db.md). Đây là giải pháp "Single-writer" để tránh lỗi `SQLITE_BUSY` khi nhiều scraper cùng ghi đồng thời.[^writer]
+`DBWriter` là **daemon thread duy nhất** ghi bảng [articles](../tables/articles.md). Scraper
+không bao giờ ghi DB trực tiếp — chỉ trả `ScrapeResult`, orchestrator `enqueue()`. Mục đích:
+tránh `SQLITE_BUSY` khi nhiều scraper chạy nối tiếp trong cùng tiến trình.[^writer]
 
-# Luồng hoạt động
+# Luồng
 
 ```
-Orchestrator                          DBWriter Thread
-    │                                      │
-    ├── scraper.run() → articles           │
-    ├── writer.enqueue(article) ──────────►│ queue.Queue
-    ├── writer.enqueue(article) ──────────►│
-    │    ...                               │
-    │                                      ├── _run() loop:
-    │                                      │   while not stopped:
-    │                                      │     batch = drain(queue, max=50)
-    │                                      │     if batch:
-    │                                      │       store.insert_batch(batch)
-    │                                      │       COMMIT
-    │                                      │     else:
-    │                                      │       sleep(2s)
-    │                                      │
-    ├── writer.flush() ───────────────────►│ drain ALL + commit
-    │                                      │
-    ├── writer.stop() ────────────────────►│ set stop flag + join thread
+Orchestrator                         db-writer thread
+    │                                     │  (connection RIÊNG của thread)
+    ├─ enqueue(article) ─► queue.Queue ──►│ _drain_batch():
+    │   (_pending += 1)                   │   chờ item đầu ≤ 2s, gom tối đa 50
+    │                                     │ store.insert_batch(batch, conn)
+    │                                     │   (_pending -= len(batch); notify)
+    ├─ flush(timeout=10s) ───────────────►│ chặn tới khi _pending == 0
+    ├─ _export_csv() / _wal_checkpoint()  │
+    └─ stop(timeout=30s) ────────────────►│ set stop → xả hết queue → join
 ```
 
-# Đặc điểm kỹ thuật
+`flush()` dùng `threading.Condition` đếm `_pending`, **không** phải sleep — bảo đảm mọi bài của
+cycle đã commit trước khi export CSV và WAL checkpoint.[^writer]
 
-| Thuộc tính | Giá trị | Mô tả |
+# Tham số
+
+| Thuộc tính | Giá trị | Ghi chú |
 |---|---|---|
-| Thread type | `daemon=True` | Tự động kết thúc khi main thread exit |
-| Batch size | 50 articles | Ghi batch để tối ưu transaction |
-| Drain interval | 2 giây | Nếu queue rỗng, nghỉ 2s trước khi kiểm tra lại |
-| Transaction mode | `BEGIN IMMEDIATE` | Tránh deadlock với reader khác |
-| Flush timeout | 10 giây | Thời gian chờ tối đa khi flush |
-| Stop timeout | 30 giây | Thời gian chờ thread join khi shutdown |
+| Thread | `daemon=True`, tên `db-writer` | tự kết thúc khi main thoát |
+| `batch_size` | 50 | gom tối đa mỗi transaction |
+| `flush_interval` | 2.0 s | thời gian chờ item đầu tiên |
+| `flush()` timeout | 10 s | trả False nếu quá hạn |
+| `stop()` timeout | 30 s | quá hạn ⇒ log WARNING kèm số item còn lại |
+| Insert | `INSERT OR IGNORE` | trùng `url`/`url_title_hash` ⇒ bỏ qua |
 
-# Tương tác với hệ thống
+Connection của thread writer là **riêng biệt** (`store._connect()`), mở suốt đời thread.
 
-- **Orchestrator**: Gọi `enqueue()` cho mỗi article mới, `flush()` trước CSV export, `stop()` khi shutdown
-- **Scrapers**: KHÔNG ghi trực tiếp vào DB — chỉ trả về `ScrapeResult` cho orchestrator
-- **ArticleStore**: `DBWriter` là consumer duy nhất của `insert_batch()`
+# Tương tác
+
+- **Orchestrator** — `enqueue()` mỗi bài mới; `flush()` trước export; `stop()` khi shutdown.
+- **Scrapers** — không chạm DB.
+- **ArticleStore** — `insert_batch()` chỉ có consumer duy nhất là DBWriter.
+
+⚠️ Chỉ bảng `articles` đi qua DBWriter. Các bảng trạng thái (heartbeat, metrics, work_items,
+l1/agent outputs, pipeline_state) được ghi trực tiếp bằng connection ngắn hạn + `BEGIN IMMEDIATE`
+khi cần nguyên tử.
 
 # Quan hệ
 
-- Đọc/ghi vào [Web Monocle DB](../datasets/web_monocle_db.md)
-- Được điều phối bởi [Orchestrator](ingestion_scheduler.md)
-- Ghi vào bảng [articles](../tables/articles.md), [scraper_heartbeat](../tables/scraper_heartbeat.md), [scraper_metrics](../tables/scraper_metrics.md)
+- Ghi vào [Web Monocle DB](../datasets/web_monocle_db.md) / [articles](../tables/articles.md)
+- Được điều phối bởi [Capture Orchestrator](ingestion_scheduler.md)
 
-[^writer]: [DBWriter implementation](project/src/db/writer.py)
+[^writer]: [DBWriter](project/src/db/writer.py)
 [^db-store]: [ArticleStore](project/src/db/store.py)
+[^orchestrator]: [Orchestrator](project/src/orchestrator.py)
