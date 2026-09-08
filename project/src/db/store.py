@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+import socket
 import sqlite3
 
 from loguru import logger
@@ -17,6 +18,23 @@ from datetime import datetime
 
 from src.core.config import PROJECT_ROOT
 from src.core.models import VN_TZ, Article, now_vn_iso
+
+
+def _is_owner_alive(owner: str) -> bool:
+    """Kiểm tra nếu owner ở cùng host thì PID còn sống không."""
+    if not owner:
+        return False
+    if ":" not in owner:
+        return True  # Opaque owner (không có host:pid) → coi như còn sống, dựa vào stale_seconds
+    host, pid_str = owner.split(":", 1)
+    if host != socket.gethostname():
+        return True  # khác host thì không check trực tiếp được pid, coi như còn sống cho an toàn
+    try:
+        pid = int(pid_str)
+        os.kill(pid, 0)
+        return True
+    except (OSError, ValueError):
+        return False
 
 
 def _lock_is_stale(ts_iso: str, stale_seconds: int) -> bool:
@@ -524,7 +542,7 @@ class ArticleStore:
     # -- advisory scheduler lock (Fix F: chống chạy 2 scheduler cùng lúc) -------
     def try_acquire_lock(self, name: str, owner: str, stale_seconds: int) -> bool:
         """Chiếm lock qua pipeline_state (atomic BEGIN IMMEDIATE). True nếu lock trống /
-        của chính owner / đã cũ (stale). False nếu owner khác đang giữ lock còn tươi."""
+        của chính owner / đã cũ (stale) / tiến trình cũ đã chết. False nếu owner khác đang giữ lock còn tươi."""
         key = f"lock:{name}"
         conn = self._connect()
         try:
@@ -532,15 +550,37 @@ class ArticleStore:
             row = conn.execute(
                 "SELECT value, updated_at FROM pipeline_state WHERE key=?", (key,)
             ).fetchone()
-            if row is not None and (row["value"] or "") != owner \
-                    and not _lock_is_stale(row["updated_at"] or "", stale_seconds):
-                conn.rollback()
-                return False
+            if row is not None and (row["value"] or "") != owner:
+                owner_alive = _is_owner_alive(row["value"] or "")
+                if owner_alive and not _lock_is_stale(row["updated_at"] or "", stale_seconds):
+                    conn.rollback()
+                    return False
             conn.execute(
                 "INSERT OR REPLACE INTO pipeline_state (key, value, updated_at) "
                 "VALUES (?, ?, ?)", (key, owner, now_vn_iso()))
             conn.commit()
             return True
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            conn.close()
+
+    def release_lock(self, name: str, owner: str) -> bool:
+        """Giải phóng lock nếu chính owner đang giữ (atomic)."""
+        key = f"lock:{name}"
+        conn = self._connect()
+        try:
+            conn.execute("BEGIN IMMEDIATE")
+            row = conn.execute(
+                "SELECT value FROM pipeline_state WHERE key=?", (key,)
+            ).fetchone()
+            if row is not None and (row["value"] or "") == owner:
+                conn.execute("DELETE FROM pipeline_state WHERE key=?", (key,))
+                conn.commit()
+                return True
+            conn.commit()
+            return False
         except Exception:
             conn.rollback()
             raise

@@ -17,6 +17,7 @@ import os
 from pathlib import Path
 
 from src.agent.dod import load_thresholds
+from src.agent.pruner import clean_article_paragraphs
 
 _SCHEMAS_DIR = Path(__file__).resolve().parents[2] / "schemas"
 OUTPUT_SCHEMA = "agent-output-v1"
@@ -26,16 +27,49 @@ _OUTPUT_REQUIRED = [
 ]
 
 
-def build_task_packet(work_package: dict, *, work_item_id: int | None = None) -> dict:
-    """Gộp work-package + hợp đồng output + ràng buộc thành 1 packet self-describing."""
+def build_gold_input(work_package: dict, *, l1_entities: list[str] | None = None, prune: bool = True) -> dict:
+    """Tạo payload input tinh gọn (Zero-Waste), loại bỏ 100% links/images/table rác."""
+    raw_text = work_package.get("cleaned_text", "") or ""
+    cleaned_text = clean_article_paragraphs(raw_text) if prune else raw_text
+
+    inp = {
+        "article_id": work_package.get("article_id", ""),
+        "source_url": work_package.get("source_url", ""),
+        "domain": work_package.get("domain", ""),
+        "published_at": work_package.get("published_at"),
+        "raw_html_path": work_package.get("raw_html_path", ""),
+        "raw_sha256": work_package.get("raw_sha256", ""),
+        "title": work_package.get("title", ""),
+        "cleaned_text": cleaned_text,
+        "capture_status": work_package.get("capture_status", "ok"),
+        "change_state": work_package.get("change_state", "OK"),
+    }
+    struct = work_package.get("structure")
+    if isinstance(struct, dict) and "headings" in struct:
+        inp["structure"] = {"headings": struct.get("headings", [])}
+
+    if l1_entities is not None:
+        inp["l1_entities"] = l1_entities
+    return inp
+
+
+def build_task_packet(
+    work_package: dict,
+    *,
+    work_item_id: int | None = None,
+    l1_entities: list[str] | None = None,
+    prune: bool = True,
+) -> dict:
+    """Gộp work-package tinh gọn + hợp đồng output + ràng buộc thành 1 packet self-describing."""
     t = load_thresholds()
+    gold_input = build_gold_input(work_package, l1_entities=l1_entities, prune=prune)
     return {
         "packet_version": "1.0",
         "work_item_id": work_item_id,
         "article_id": work_package.get("article_id"),
         "raw_sha256": work_package.get("raw_sha256"),
-        # INPUT — agent đọc cleaned_text; verify raw_sha256 trước khi xử lý.
-        "input": work_package,
+        # INPUT — agent đọc cleaned_text sạch (đã prune, loại bỏ boilerplate)
+        "input": gold_input,
         # OUTPUT contract — agent PHẢI emit đúng schema này.
         "output_contract": {
             "schema_name": OUTPUT_SCHEMA,
@@ -47,6 +81,7 @@ def build_task_packet(work_package: dict, *, work_item_id: int | None = None) ->
         "constraints": {
             "min_citations": t["min_citations"],
             "citations_must_be_substring_of": "input.cleaned_text",
+            "min_citation_len": 20,
             "extraction_quality_in": list(t["quality_ok"]),
             "processing_metadata_required": ["agent_provider", "model_used", "timestamp"],
             "preconditions": [

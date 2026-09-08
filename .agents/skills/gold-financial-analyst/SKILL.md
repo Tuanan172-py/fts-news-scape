@@ -84,3 +84,25 @@ Ghi vào `data/agent_outputs/<article_id>.json`:
   }
 }
 ```
+
+## 4. Chế độ Gom Lô Siêu Tốc (Consolidated Batch Mode)
+
+Khi nhận file task dạng gom lô `data/agent_tasks/batch_XX.task.json`:
+1. **Một lần đọc duy nhất**: Gọi `view_file` đọc toàn bộ file `batch_XX.task.json`.
+2. **Tận dụng `l1_entities`**: Mỗi task trong mảng `tasks[]` đã được L1 tiếp sức sẵn các mã cổ phiếu liên quan (`l1_entities`). Subagent tập trung ngay vào suy luận tác động doanh thu, dòng tiền, thị giá mà không cần dò lại từ đầu.
+3. **Một lần ghi duy nhất**: Ghi toàn bộ kết quả của cả lô vào `data/agent_outputs/batch_XX.output.json` dưới dạng mảng JSON các object theo schema trên:
+```json
+[
+  {
+    "output_schema_version": "1.0",
+    "article_id": "<article_id_1>",
+    ...
+  },
+  {
+    "output_schema_version": "1.0",
+    "article_id": "<article_id_2>",
+    ...
+  }
+]
+```
+> Giảm 90% số lần gọi công cụ I/O, tối ưu tốc độ và triệt tiêu context bloat.

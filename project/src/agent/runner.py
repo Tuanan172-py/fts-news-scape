@@ -48,11 +48,12 @@ class AgentRunner:
             conn.close()
 
     # -- export (producer → agent) --------------------------------------------
-    def export_tasks(self, limit: int = 20, *, worker_id: str = "exporter") -> list[dict]:
+    def export_tasks(self, limit: int = 20, *, worker_id: str = "exporter",
+                     order: str = "desc") -> list[dict]:
         """Claim tới `limit` việc pending → ghi task-packet. Trả list {article_id, path}."""
         out: list[dict] = []
         for _ in range(limit):
-            item = self.catalog.claim(worker_id)
+            item = self.catalog.claim(worker_id, order=order)
             if item is None:
                 break
             try:
@@ -60,11 +61,37 @@ class AgentRunner:
             except (OSError, json.JSONDecodeError) as e:
                 logger.error("[agent] load package fail {}: {}", item["package_path"], e)
                 self.catalog.mark_failed(item["id"], f"package_unreadable: {e}")
-                continue
-            packet = build_task_packet(wp, work_item_id=item["id"])
+            # Check L1 results if available to enrich task packet with l1_entities!
+            l1_entities = None
+            if hasattr(self.store, "get_l1_output"):
+                l1_rec = self.store.get_l1_output(item["article_id"])
+                if l1_rec and l1_rec.get("output_json"):
+                    try:
+                        l1_out = json.loads(l1_rec["output_json"])
+                        l1_entities = [e.get("code") for e in l1_out.get("entities", []) if e.get("code")]
+                    except Exception:
+                        pass
+            if not l1_entities and hasattr(self.store, "get_l1_task"):
+                l1_task = self.store.get_l1_task(item["article_id"])
+                if l1_task and l1_task.get("code_first_json"):
+                    try:
+                        cf = json.loads(l1_task["code_first_json"])
+                        l1_entities = cf.get("entity_ids", [])
+                    except Exception:
+                        pass
+
+            packet = build_task_packet(wp, work_item_id=item["id"], l1_entities=l1_entities)
             path = write_packet(packet, base_dir=self.task_dir)
-            out.append({"article_id": item["article_id"], "work_item_id": item["id"],
-                        "path": path})
+            out.append({
+                "article_id": item["article_id"],
+                "work_item_id": item["id"],
+                "path": path,
+                "title": wp.get("title", ""),
+                "domain": wp.get("domain", ""),
+                "enqueued_at": item.get("enqueued_at", ""),
+                "input": packet.get("input", wp),
+                "l1_entities": l1_entities,
+            })
         logger.info("[agent] exported {} task-packets → {}", len(out), self.task_dir)
         return out
 

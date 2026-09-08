@@ -179,6 +179,9 @@ class Orchestrator:
             return
         self._stopped = True
         logger.info("Shutting down — flushing writer + WAL checkpoint...")
+        if self._owns_scheduler_lock:
+            self.store.release_lock("scheduler", self._lock_owner)
+            self._owns_scheduler_lock = False
         self.writer.stop()
         self.dedup.close()
         self._wal_checkpoint()

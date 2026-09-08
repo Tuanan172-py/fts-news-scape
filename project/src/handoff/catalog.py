@@ -41,24 +41,35 @@ class Catalog:
         finally:
             conn.close()
 
-    def list_pending(self, limit: int = 50) -> list[dict]:
+    def list_pending(self, limit: int = 50, order: str = "desc") -> list[dict]:
         conn = self.store.connect()
         try:
+            order_clause = (
+                "ORDER BY enqueued_at DESC, id DESC"
+                if order.lower() == "desc"
+                else "ORDER BY enqueued_at ASC, id ASC"
+            )
             rows = conn.execute(
-                "SELECT * FROM work_items WHERE status='pending' "
-                "ORDER BY enqueued_at LIMIT ?", (limit,)).fetchall()
+                f"SELECT * FROM work_items WHERE status='pending' {order_clause} LIMIT ?",
+                (limit,),
+            ).fetchall()
             return [dict(r) for r in rows]
         finally:
             conn.close()
 
-    def claim(self, worker_id: str) -> dict | None:
+    def claim(self, worker_id: str, order: str = "desc") -> dict | None:
         """Claim 1 item pending → claimed (atomic). None nếu hết việc."""
         conn = self.store.connect()
         try:
             conn.execute("BEGIN IMMEDIATE")
+            order_clause = (
+                "ORDER BY enqueued_at DESC, id DESC"
+                if order.lower() == "desc"
+                else "ORDER BY enqueued_at ASC, id ASC"
+            )
             row = conn.execute(
-                "SELECT * FROM work_items WHERE status='pending' "
-                "ORDER BY enqueued_at LIMIT 1").fetchone()
+                f"SELECT * FROM work_items WHERE status='pending' {order_clause} LIMIT 1"
+            ).fetchone()
             if row is None:
                 conn.commit()
                 return None

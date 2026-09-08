@@ -88,15 +88,6 @@ def build_template(path: Path) -> Path:
     dv_ex = DataValidation(type="list", formula1='"%s"' % ",".join(EXCHANGES), allow_blank=True)
     ws.add_data_validation(dv_ex); dv_ex.add("D2:D200")
 
-    ms = wb.create_sheet("meta")
-    ms.append(["key", "value"])
-    ms.append(["user", ""])
-    ms.append(["note", ""])
-
-    hd = wb.create_sheet("huong_dan")
-    for row in HUONG_DAN:
-        hd.append(list(row))
-    hd.column_dimensions["B"].width = 90
     wb.save(path)
     return path
 

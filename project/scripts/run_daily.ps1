@@ -130,9 +130,16 @@ switch ($Mode) {
   }
 }
 
-Write-Host "`n=== db_status (progress check) ===" -ForegroundColor Cyan
-& $Py 'scripts/db_status.py'
+Write-Host "`n=== End-to-End System Monitor Report ===" -ForegroundColor Cyan
+if ($Days -gt 0) {
+  & $Py 'scripts/monitor_daily.py' --days $Days --save-md
+} elseif ($Date -eq 'all') {
+  & $Py 'scripts/monitor_daily.py' --date all --save-md
+} else {
+  & $Py 'scripts/monitor_daily.py' --date $Date --save-md
+}
 
 Write-Host "`nrun_daily COMPLETED (Mode=$Mode)." -ForegroundColor Green
 Write-Host "Output: users/output/<user>/<date>.csv and users/output/_master/<date>.csv" -ForegroundColor Green
+Write-Host "Daily Report: reports/daily/report-<date>.md" -ForegroundColor Green
 

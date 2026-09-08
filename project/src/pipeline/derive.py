@@ -78,14 +78,18 @@ def rederive_incremental(
     if not watermark:
         watermark = ""
 
+    print(f"🔄 [derive] Đang quét thư mục Bronze '{raw_dir}' (watermark={watermark or 'bắt đầu'})...", flush=True)
     all_paths = iter_meta_paths(raw_dir)
     to_process = [p for p in all_paths if _should_process(_read_fetch_ts(p), watermark)]
+    print(f"📦 [derive] Quét xong {len(all_paths)} Bronze files: tìm thấy {len(to_process)} bài mới cần chuyển lên Silver.", flush=True)
 
     n = ok = held = 0
     ok_ts: list[str] = []
     by_state: dict[str, int] = {}
-    for meta_path in to_process:
+    for idx, meta_path in enumerate(to_process):
         n += 1
+        if (idx + 1) % 25 == 0 or idx == len(to_process) - 1:
+            print(f"  ⚡ [derive] Đang xử lý: [{idx + 1}/{len(to_process)}] bài...", flush=True)
         try:
             res = process_meta(
                 store,

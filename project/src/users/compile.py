@@ -61,7 +61,15 @@ def read_user_csv(path: str | Path) -> tuple[dict, dict]:
     if not lines:
         return _normalize(doc), meta
 
-    reader = csv.reader(lines)
+    # Tự động nhận diện dấu phân cách (hỗ trợ comma, tab, semicolon)
+    sample = "\n".join(lines[:10])
+    try:
+        dialect = csv.Sniffer().sniff(sample, delimiters=",\t;")
+        delimiter = dialect.delimiter
+    except Exception:
+        delimiter = "\t" if "\t" in lines[0] else (";" if ";" in lines[0] else ",")
+
+    reader = csv.reader(lines, delimiter=delimiter)
     rows = [r for r in reader if any(cell.strip() for cell in r)]
     if not rows:
         return _normalize(doc), meta
@@ -107,11 +115,28 @@ def write_user_csv(path: str | Path, doc: dict, meta: dict | None = None) -> Pat
 
 
 def read_user_xlsx(path: str | Path) -> tuple[dict, dict]:
-    """Đọc entities.xlsx → (doc, meta). doc: {group: [values]}; meta: {key: value}."""
+    """Đọc file Excel subscription của user → (doc, meta).
+    
+    Quy tắc:
+    - User chỉ cần điền DUY NHẤT 1 sheet đầu tiên (chứa danh sách tickers/industries...).
+    - Username được tự động suy ra từ tên file ({username}_news.xlsx hoặc {username}.xlsx).
+    - Không bắt buộc và không yêu cầu user phải tạo hay điền sheet meta.
+    """
+    path = Path(path)
     wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
     doc: dict[str, list[str]] = {}
+    
+    # Ưu tiên sheet đầu tiên (hoặc sheet tên 'entities'/'subscriptions')
+    target_sheet = None
     if "entities" in wb.sheetnames:
-        rows = list(wb["entities"].iter_rows(values_only=True))
+        target_sheet = wb["entities"]
+    elif "subscriptions" in wb.sheetnames:
+        target_sheet = wb["subscriptions"]
+    elif wb.sheetnames:
+        target_sheet = wb.worksheets[0]
+
+    if target_sheet is not None:
+        rows = list(target_sheet.iter_rows(values_only=True))
         if rows:
             headers = [str(h).strip().lower() if h is not None else "" for h in rows[0]]
             col_idx = {h: i for i, h in enumerate(headers) if h in GROUP_KEYS}
@@ -124,7 +149,9 @@ def read_user_xlsx(path: str | Path) -> tuple[dict, dict]:
                             vals.append(v)
                 if vals:
                     doc[key] = vals
-    meta: dict = {}
+
+    # Username tự động lấy từ tên file
+    meta: dict = {"user": _user_from_filename(path.name)}
     if "meta" in wb.sheetnames:
         for r in wb["meta"].iter_rows(values_only=True):
             if not r or not r[0]:
@@ -138,7 +165,7 @@ def read_user_xlsx(path: str | Path) -> tuple[dict, dict]:
 
 
 def write_user_xlsx(path: str | Path, doc: dict, meta: dict | None = None) -> Path:
-    """Ghi entities.xlsx (dùng cho seed mẫu + fixture test). Cột = GROUP_KEYS."""
+    """Ghi subscription ra file XLSX (sheet chính là entities, cột = GROUP_KEYS)."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     wb = openpyxl.Workbook()
@@ -148,10 +175,11 @@ def write_user_xlsx(path: str | Path, doc: dict, meta: dict | None = None) -> Pa
     cols = [doc.get(k, []) for k in GROUP_KEYS]
     for i in range(max((len(c) for c in cols), default=0)):
         ws.append([c[i] if i < len(c) else None for c in cols])
-    ms = wb.create_sheet("meta")
-    ms.append(["key", "value"])
-    for k, v in (meta or {}).items():
-        ms.append([k, v])
+    if meta:
+        ms = wb.create_sheet("meta")
+        ms.append(["key", "value"])
+        for k, v in meta.items():
+            ms.append([k, v])
     wb.save(path)
     return path
 
@@ -247,15 +275,17 @@ def compile_all(input_root: str | Path | None = None, registry=None,
     processed_users: set[str] = set()
 
     if input_root.exists():
-        # 1. Quét các file phẳng (*.csv, *.xlsx) trực tiếp trong thư mục subscriptions/
-        for p in sorted(input_root.iterdir()):
-            if p.is_file() and not p.name.startswith("_"):
-                if p.suffix.lower() in (".csv", ".xlsx", ".xlsm"):
-                    uname = _user_from_filename(p.name)
-                    if uname and uname not in processed_users:
-                        results.append(compile_user(uname, p, registry,
-                                                    users_config_dir=users_config_dir, input_dir=input_root))
-                        processed_users.add(uname)
+        # 1. Quét các file phẳng (*.xlsx, *.csv) trực tiếp trong thư mục subscriptions/ (ưu tiên .xlsx)
+        flat_files = sorted(
+            [p for p in input_root.iterdir() if p.is_file() and not p.name.startswith("_") and p.suffix.lower() in (".csv", ".xlsx", ".xlsm")],
+            key=lambda p: (0 if p.suffix.lower() in (".xlsx", ".xlsm") else 1, p.name)
+        )
+        for p in flat_files:
+            uname = _user_from_filename(p.name)
+            if uname and uname not in processed_users:
+                results.append(compile_user(uname, p, registry,
+                                            users_config_dir=users_config_dir, input_dir=input_root))
+                processed_users.add(uname)
 
         # 2. Quét các thư mục con (hỗ trợ backward compatibility với cấu trúc cũ input/<name>/entities.xlsx)
         for d in sorted(p for p in input_root.iterdir() if p.is_dir()):

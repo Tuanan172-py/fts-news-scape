@@ -32,22 +32,22 @@ Hệ thống phân chia ranh giới tuyệt đối thành 2 vùng:
 
 ---
 
-## 2. Quy chuẩn Dữ liệu Handoff cho Agents (Clean Paragraph Payload Invariant)
+## 2. Quy chuẩn Dữ liệu Handoff cho Agents (Lean Payload & Mini-Batch Invariants)
 
-Nhằm tối ưu tốc độ, giảm thiểu Token Burn và triệt tiêu hoàn toàn ảo giác (hallucination) do rác thông tin:
+Nhằm tối ưu tốc độ, giảm thiểu 95% Token Burn và triệt tiêu hoàn toàn ảo giác (hallucination) do rác thông tin:
 
 1. **Bảo toàn Bản gốc Raw (Immutable Bronze)**:
    - File `raw_html` và `meta.json` luôn được lưu giữ nguyên bản tại Bronze để kiểm toán và đối chiếu SHA256.
-2. **Chỉ chuyển giao các Đoạn văn Nội dung Chính (Main Body Paragraphs Only)**:
-   - Dữ liệu `cleaned_text` trong Task Packet gửi cho Agent **BẮT BUỘC chỉ chứa các khối đoạn văn nội dung chính của bài báo** (`<p>...</p>`).
-3. **Lọc sạch 100% Rác Thông tin (Boilerplate Stripping)**:
-   - Tầng Silver phải loại bỏ hoàn toàn trước khi đóng gói:
-     - Khối "Bài viết liên quan", "Xem thêm", "Tin cùng chuyên mục".
-     - Tên tác giả, bút danh phóng viên vặt, tên nguồn tin ở chân trang.
-     - Banner tài trợ, quảng cáo, menu điều hướng, copyright footer.
-4. **Lợi ích Ràng buộc**:
-   - Agent không bị nhận thông tin rác $\rightarrow$ Giảm 40–60% token input thừa.
-   - Mọi `source_span` trích dẫn citations đảm bảo 100% nằm trong các đoạn văn cốt lõi, vượt qua cổng kiểm tra DoD Ingest.
+2. **Loại bỏ Hoàn toàn Rác DOM (Zero-Waste Task Packet)**:
+   - Tuyệt đối KHÔNG đưa `structure.links` (hàng ngàn liên kết menu/header/footer) và `images` vào Task Packet. Dung lượng 1 packet phải được nén dưới **10 KB** (thay vì 180 KB).
+3. **Bảo toàn Đoạn văn Nguyên bản (Verbatim Paragraph Pruning Invariant)**:
+   - Bộ lọc boilerplate (`pruner.py`) loại bỏ triệt để: Teaser ("Bài liên quan", "Xem thêm"), Hotline, Email, Tòa soạn, Giấy phép, Copyright, nguồn tin vặt.
+   - **RÀNG BUỘC CỐT LÕI**: Bộ lọc BẮT BUỘC loại bỏ theo **nguyên khối đoạn văn** (`<p>`). Tuyệt đối KHÔNG cắt tỉa, biên tập lại câu từ trong các đoạn văn giữ lại, nhằm đảm bảo mọi `source_span` trích dẫn citations ($\ge 20$ ký tự) luôn là chuỗi con nguyên văn (exact substring) hợp lệ, vượt qua cổng kiểm tra DoD Ingest.
+4. **Gom Lô Siêu Tốc (Consolidated Mini-Batch Handoff)**:
+   - Khuyến khích đóng gói các task thành các mini-batch (5–10 bài/file `batch_XX.task.json`).
+   - Subagent chỉ gọi 1 lần `view_file` và 1 lần `write_to_file` mảng JSON cho cả lô, giảm 90% số Tool Calls I/O.
+5. **Tiếp sức Thực thể L1 $\rightarrow$ Gold (L1-Assisted Chaining)**:
+   - Task Packet gửi cho Gold Agent BẮT BUỘC phải nhúng kèm danh sách mã cổ phiếu đã được L1 bóc tách sẵn (`input.l1_entities`), giúp Gold Agent tập trung trực tiếp vào việc phân tích tác động tài chính và chấm điểm trọng yếu.
 
 ---
 

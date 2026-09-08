@@ -99,3 +99,43 @@ def test_agent_output_sample_valid():
                          / "agent-output-sample.json").read_text(encoding="utf-8"))
     ok, errors = validate(sample, "agent-output-v1")
     assert ok, errors
+
+
+def test_catalog_newest_first_order(tmp_path):
+    store = ArticleStore(db_path=str(tmp_path / "test_order.db"))
+    cat = Catalog(store)
+
+    cat.enqueue("art_1", "sha_1", "cafef.vn", "pkg_1", "NEW")
+    cat.enqueue("art_2", "sha_2", "cafef.vn", "pkg_2", "NEW")
+    cat.enqueue("art_3", "sha_3", "cafef.vn", "pkg_3", "NEW")
+
+    # Manually tweak enqueued_at to ensure strict timestamp difference
+    conn = store.connect()
+    try:
+        conn.execute("UPDATE work_items SET enqueued_at='2026-09-01T10:00:00+07:00' WHERE article_id='art_1'")
+        conn.execute("UPDATE work_items SET enqueued_at='2026-09-02T10:00:00+07:00' WHERE article_id='art_2'")
+        conn.execute("UPDATE work_items SET enqueued_at='2026-09-03T10:00:00+07:00' WHERE article_id='art_3'")
+        conn.commit()
+    finally:
+        conn.close()
+
+    # Test list_pending order="desc"
+    pending_desc = cat.list_pending(limit=3, order="desc")
+    assert [p["article_id"] for p in pending_desc] == ["art_3", "art_2", "art_1"]
+
+    # Test list_pending order="asc"
+    pending_asc = cat.list_pending(limit=3, order="asc")
+    assert [p["article_id"] for p in pending_asc] == ["art_1", "art_2", "art_3"]
+
+    # Test claim order="desc" (newest first)
+    c1 = cat.claim("worker_1", order="desc")
+    assert c1["article_id"] == "art_3"
+
+    c2 = cat.claim("worker_1", order="desc")
+    assert c2["article_id"] == "art_2"
+
+    c3 = cat.claim("worker_1", order="desc")
+    assert c3["article_id"] == "art_1"
+
+    assert cat.claim("worker_1", order="desc") is None
+

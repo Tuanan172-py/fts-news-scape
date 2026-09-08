@@ -2,17 +2,16 @@
 
 <!-- Step 9 handoff. OVERWRITE this (never append) at the end of every session. Keep to one screen. -->
 
-- **Updated:** 2026-08-27
-- **Current story:** US-019: Codebase Audit, Dead Code Elimination & Clean Code Architecture
-- **Status:** **implemented & verified** (254/254 tests passed: 249 project + 5 harness, zero regression)
+- **Updated:** 2026-09-07
+- **Current story:** US-007: Tối ưu hóa Context & Handoff Subagents Gold (Payload Pruning, L1 Enrichment & Batch Handoff)
+- **Status:** **implemented & verified** (263/263 tests passed, live benchmark verified)
 - **Blocker:** none
 - **Accomplished:**
-  - Khảo sát toàn diện qua 3 Research Subagents (Folder Architecture, Dead Code & Invariant Compliance).
-  - Loại bỏ các SQLite DB phân tán/mồ côi (`root data/monocle.db`, `project/src/data/monocle.db`), bảo toàn `project/data/monocle.db` (110 MB).
-  - Khắc phục lỗi bug lọc nhiễu materiality score (`>= 3` -> `>= 0.6`) trong `src/export/user_output.py`.
-  - Cố định đường dẫn DB trong `store.py` và `config.py` theo `PROJECT_ROOT`, ngăn ngừa phát sinh DB rác khi CWD thay đổi.
-  - Tích hợp Staging I/O (`safe_atomic_write`) và `_connect_ro()` bảo vệ chống crash do Windows file lock khi mở Excel/DB Browser.
-  - Tái cấu trúc scripts: gom các utility 1 lần vào `scripts/maintenance/`, cô lập mock stub vào `tests/mocks/`, sáp nhập `plans/`.
-  - 100% tests PASS (249 project tests + 5 harness CLI tests), Harness Trace #14 ghi nhận điểm số tối đa (1.0 / 1.0).
-- **Files changed this session:** `project/src/export/user_output.py`, `project/src/db/store.py`, `project/src/core/config.py`, `project/config/entities/manifest.yaml`, `project/scripts/run_daily.ps1`, `project/src/processor/sentiment.py`, `project/src/processor/segment.py`, `project/tests/mocks/agent_process_packets.py`.
-
+  - Xây dựng `src.agent.pruner`: Lọc sạch boilerplate (teaser, hotline, thông tin tòa soạn), bảo toàn nguyên văn các đoạn văn để đảm bảo trích dẫn Grounded Citations.
+  - Tối ưu `src.agent.packet`: Loại bỏ 100% rác HTML menu links & images, nén payload từ 182 KB xuống còn 6–8 KB (giảm 96% dung lượng & token input).
+  - Xây dựng `src.agent.batch_handoff`: Hỗ trợ gom lô 5–10 bài vào `batch_XX.task.json`, giảm 90% số lượng Tool Calls I/O cho Subagent.
+  - Tích hợp L1 Enrichment: `runner.py` tự động nhúng mã CP từ L1 vào `input.l1_entities` của Gold task.
+  - Cập nhật `agent_ingest.py`, `agent_export.py`, `run_agent_hierarchy.py` và `.agents/skills/gold-financial-analyst/SKILL.md` (Batch Mode).
+  - Sửa lỗi phụ trợ `_is_owner_alive()` trong `store.py` (test scheduler lock passed).
+  - Thêm unit test `tests/test_pruner_and_batch.py` (6 passed, full suite 263 passed).
+- **Files changed this session:** `project/src/agent/pruner.py`, `project/src/agent/packet.py`, `project/src/agent/batch_handoff.py`, `project/src/agent/runner.py`, `project/src/db/store.py`, `project/scripts/agent_ingest.py`, `project/scripts/agent_export.py`, `project/scripts/run_agent_hierarchy.py`, `.agents/skills/gold-financial-analyst/SKILL.md`, `project/tests/test_pruner_and_batch.py`, `docs/stories/US-007-gold-task-payload-optimization.md`.

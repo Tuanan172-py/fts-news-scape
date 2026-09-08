@@ -58,12 +58,46 @@ def get_output_counts() -> tuple[int, int]:
     return l1_count, gold_count
 
 
-def run_export() -> bool:
-    """Chạy export task packets từ work_items và l1_route."""
-    print("🚀 [Step 1] Đang đồng bộ L1 Tasks và xuất task packets từ work_items...")
+def run_export(batch_size: int = 50, order: str = "desc", sync_silver: bool = True, mini_batch: int = 10) -> bool:
+    """Chạy export task packets từ work_items và l1_route theo lô (batch)."""
+    if sync_silver:
+        print("🔄 [Step 0] Kiểm tra và tự động đồng bộ Silver từ Bronze (rederive_incremental)...")
+        res_derive = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "src.morninger",
+                "--once",
+                "derive",
+            ],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            cwd=str(PROJECT_ROOT),
+        )
+        if res_derive.returncode != 0:
+            print(f"  ⚠️ Cảnh báo re-derive Silver:\n{res_derive.stderr}", file=sys.stderr)
+        else:
+            found_summary = False
+            for line in res_derive.stdout.splitlines():
+                if "derive done:" in line or "checkpoint=" in line:
+                    print(f"  • {line.strip()}")
+                    found_summary = True
+                    break
+            if not found_summary:
+                print("  • Silver đã đồng bộ hoàn tất.")
+
+    print(f"\n🚀 [Step 1] Đang đồng bộ L1 Tasks và xuất task packets từ work_items (batch={batch_size}, order={order})...")
     # 1. Đồng bộ l1_route
     res_l1 = subprocess.run(
-        [sys.executable, str(PROJECT_ROOT / "scripts" / "l1_route.py")],
+        [
+            sys.executable,
+            str(PROJECT_ROOT / "scripts" / "l1_route.py"),
+            "--batch-size",
+            str(batch_size),
+            "--order",
+            order,
+        ],
         capture_output=True,
         text=True,
         encoding="utf-8",
@@ -71,19 +105,39 @@ def run_export() -> bool:
     )
     if res_l1.returncode != 0:
         print(f"⚠️ Cảnh báo L1 route:\n{res_l1.stderr}", file=sys.stderr)
+    else:
+        print(f"  • L1 Route: {res_l1.stdout.strip().splitlines()[0] if res_l1.stdout.strip() else 'done'}")
 
-    # 2. Xuất agent_export cho Gold
+    # 2. Xuất agent_export cho Gold (kèm gom lô mini-batch)
+    gold_cmd = [
+        sys.executable,
+        str(PROJECT_ROOT / "scripts" / "agent_export.py"),
+        "--batch-size",
+        str(batch_size),
+        "--order",
+        order,
+    ]
+    if mini_batch and mini_batch > 0:
+        gold_cmd.extend(["--mini-batch", str(mini_batch)])
+
     res_gold = subprocess.run(
-        [sys.executable, str(PROJECT_ROOT / "scripts" / "agent_export.py")],
+        gold_cmd,
         capture_output=True,
         text=True,
         encoding="utf-8",
         cwd=str(PROJECT_ROOT),
     )
-    print(res_gold.stdout.strip())
+    print(f"  • Gold Export: {res_gold.stdout.strip().splitlines()[0] if res_gold.stdout.strip() else 'done'}")
     if res_gold.returncode != 0:
         print(f"❌ Export thất bại:\n{res_gold.stderr}", file=sys.stderr)
         return False
+
+    # 3. Hiển thị bảng tóm tắt lô task vừa xuất
+    from src.agent.manifest import load_batch_manifest, print_batch_summary_table
+    gold_manifest = load_batch_manifest(PROJECT_ROOT / "data" / "agent_tasks")
+    if gold_manifest:
+        print_batch_summary_table(gold_manifest)
+
     return True
 
 
@@ -157,8 +211,51 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Chạy toàn bộ chu trình từ Export đến User Output",
     )
+    parser.add_argument(
+        "--batch-size",
+        "-b",
+        type=int,
+        default=50,
+        help="Kích thước lô task xuất ra cho Subagents (mặc định: 50)",
+    )
+    parser.add_argument(
+        "--order",
+        choices=["desc", "asc"],
+        default="desc",
+        help="Thứ tự bốc việc: desc (mới nhất trước), asc (cũ nhất trước)",
+    )
 
+    parser.add_argument(
+        "--no-sync",
+        action="store_true",
+        help="Bỏ qua bước tự động đồng bộ Silver trước khi export",
+    )
+    parser.add_argument(
+        "--batch-info",
+        action="store_true",
+        help="Xem bảng thông tin lô task packets hiện tại từ batch_manifest.json",
+    )
+    parser.add_argument(
+        "--mini-batch",
+        "-m",
+        type=int,
+        default=10,
+        help="Gom lô thành các mini-batch packets cho Gold Agent (mặc định: 10 bài/packet)",
+    )
     args = parser.parse_args(argv)
+
+    if args.batch_info:
+        from src.agent.manifest import load_batch_manifest, print_batch_summary_table
+        gold_manifest = load_batch_manifest("data/agent_tasks")
+        l1_manifest = load_batch_manifest("data/agent_tasks/l1")
+        if not gold_manifest and not l1_manifest:
+            print("⚠️ Chưa có batch_manifest.json nào trong data/agent_tasks/. Vui lòng chạy --export trước.")
+            return 0
+        if gold_manifest:
+            print_batch_summary_table(gold_manifest)
+        if l1_manifest:
+            print_batch_summary_table(l1_manifest)
+        return 0
 
     if args.status or (
         not args.export and not args.ingest_and_deliver and not args.full_cycle
@@ -176,11 +273,16 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.export or args.full_cycle:
-        if not run_export():
+        if not run_export(
+            batch_size=args.batch_size,
+            order=args.order,
+            sync_silver=not args.no_sync,
+            mini_batch=args.mini_batch,
+        ):
             return 1
         l1_tasks, gold_tasks = get_task_counts()
         print(
-            f"✅ Đã sẵn sàng: {l1_tasks} L1 tasks, {gold_tasks} Gold tasks cho Subagents Flash."
+            f"✅ Đã sẵn sàng: {l1_tasks} L1 tasks, {gold_tasks} Gold tasks (batch={args.batch_size}, order={args.order}) cho Subagents Flash."
         )
 
     if args.ingest_and_deliver or args.full_cycle:

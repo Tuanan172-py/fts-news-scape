@@ -19,6 +19,16 @@ def test_roundtrip_xlsx(tmp_path):
     assert meta["user"] == "AnPT"
 
 
+def test_read_xlsx_single_sheet_without_meta(tmp_path):
+    """User chỉ nhập duy nhất 1 sheet, không có sheet meta, username suy từ tên file."""
+    p = tmp_path / "AnPT_news.xlsx"
+    write_user_xlsx(p, {"tickers": ["HPG", "VCB"], "themes": ["LAI_SUAT"]})  # không truyền meta
+    doc, meta = read_user_xlsx(p)
+    assert doc["tickers"] == ["HPG", "VCB"]
+    assert doc["themes"] == ["LAI_SUAT"]
+    assert meta["user"] == "AnPT"
+
+
 def test_roundtrip_csv_horizontal(tmp_path):
     p = tmp_path / "AnPT_news.csv"
     write_user_csv(p, {"tickers": ["HPG", "FPT"], "industries": ["thep"], "macro": ["my"]})

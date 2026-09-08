@@ -1,8 +1,9 @@
 """
-user_output.py — Ghi output CUỐI cho từng user (CSV theo ngày), gate "đủ 2 layer".
+user_output.py — Ghi output CUỐI cho từng user (CSV theo ngày), gate tối thiểu L1.
 
-Điều kiện ghi 1 article vào final.csv (CHỐT 2026-08-18):
-    l1_outputs.dod_pass = 1  (L1 agent-reviewed)  AND  agent_outputs.dod_pass = 1
+Điều kiện ghi 1 article vào final.csv:
+    l1_outputs.dod_pass = 1  (L1 agent-reviewed) [BẮT BUỘC]
+    agent_outputs.dod_pass = 1 [TÙY CHỌN - nếu chưa có thì để trống ""]
 
 Định tuyến: entity nhận diện (l1_outputs.entities[in_list]) → subscribers_for() → chỉ user
 đăng ký entity liên quan (và đang BẬT) mới nhận article.
@@ -34,13 +35,13 @@ SELECT a.url_title_hash AS article_id, a.title, a.url, a.source_domain,
        l1.output_json AS l1_json,
        ag.output_json AS agent_json
 FROM articles a
-JOIN l1_outputs    l1 ON l1.article_id = a.url_title_hash AND l1.dod_pass = 1
-JOIN agent_outputs ag ON ag.article_id = a.url_title_hash AND ag.dod_pass = 1
+JOIN l1_outputs         l1 ON l1.article_id = a.url_title_hash AND l1.dod_pass = 1
+LEFT JOIN agent_outputs ag ON ag.article_id = a.url_title_hash AND ag.dod_pass = 1
 """
 
 FINAL_COLUMNS = [
     "date", "matched_entities", "title", "summary", "key_points",
-    "implication", "impact_area", "materiality_score", "time_sensitivity",
+    "implication", "impact_area", "time_sensitivity",
     "sentiment", "event_type", "url", "source_domain",
     "article_id", "agent_provider", "model_used",
 ]
@@ -114,8 +115,10 @@ class UserOutputWriter:
         return "; ".join(out)
 
     def _final_row(self, r: dict, matched: set[str]) -> dict:
-        ag = _loads(r["agent_json"])
-        summ, impl, mat = ag.get("summary") or {}, ag.get("implication") or {}, ag.get("materiality") or {}
+        ag = _loads(r.get("agent_json"))
+        summ = ag.get("summary") or {}
+        impl = ag.get("implication") or {}
+        mat = ag.get("materiality") or {}
         sent = ag.get("sentiment") or {}
         meta = ag.get("processing_metadata") or {}
         raw_key_points = summ.get("key_points") or []
@@ -123,20 +126,19 @@ class UserOutputWriter:
         return {
             "date": _row_date(r),
             "matched_entities": self._codes(matched),
-            "title": r.get("title"),
-            "summary": summ.get("abstractive"),
+            "title": r.get("title") or "",
+            "summary": summ.get("abstractive") or "",
             "key_points": key_points_formatted,
-            "implication": impl.get("text"),
-            "impact_area": impl.get("impact_area"),
-            "materiality_score": mat.get("score"),
-            "time_sensitivity": mat.get("time_sensitivity"),
-            "sentiment": sent.get("polarity") or sent.get("overall"),
-            "event_type": ag.get("event_type"),
-            "url": r.get("url"),
-            "source_domain": r.get("source_domain"),
+            "implication": impl.get("text") or "",
+            "impact_area": impl.get("impact_area") or "",
+            "time_sensitivity": mat.get("time_sensitivity") or "",
+            "sentiment": sent.get("polarity") or sent.get("overall") or "",
+            "event_type": ag.get("event_type") or "",
+            "url": r.get("url") or "",
+            "source_domain": r.get("source_domain") or "",
             "article_id": r["article_id"],
-            "agent_provider": meta.get("agent_provider") or "unknown",
-            "model_used": meta.get("model_used") or "unknown",
+            "agent_provider": meta.get("agent_provider") or "",
+            "model_used": meta.get("model_used") or "",
         }
 
     def _l1_row(self, r: dict) -> dict:
@@ -151,17 +153,19 @@ class UserOutputWriter:
                 "model_used": meta.get("model_used") or "unknown"}
 
     def _agent_row(self, r: dict) -> dict:
-        ag = _loads(r["agent_json"])
-        summ, impl, mat = ag.get("summary") or {}, ag.get("implication") or {}, ag.get("materiality") or {}
+        ag = _loads(r.get("agent_json"))
+        summ = ag.get("summary") or {}
+        impl = ag.get("implication") or {}
+        mat = ag.get("materiality") or {}
         sent = ag.get("sentiment") or {}
         meta = ag.get("processing_metadata") or {}
         return {"article_id": r["article_id"], "date": _row_date(r),
-                "summary": summ.get("abstractive"), "implication": impl.get("text"),
-                "materiality_score": mat.get("score"),
-                "sentiment": sent.get("polarity") or sent.get("overall"),
-                "event_type": ag.get("event_type"),
-                "agent_provider": meta.get("agent_provider") or "unknown",
-                "model_used": meta.get("model_used") or "unknown"}
+                "summary": summ.get("abstractive") or "", "implication": impl.get("text") or "",
+                "materiality_score": mat.get("score") if mat.get("score") is not None else "",
+                "sentiment": sent.get("polarity") or sent.get("overall") or "",
+                "event_type": ag.get("event_type") or "",
+                "agent_provider": meta.get("agent_provider") or "",
+                "model_used": meta.get("model_used") or ""}
 
     def _passes_noise_filter(self, matched_eids: set[str], r: dict) -> bool:
         """Lọc rác: nếu chỉ match các thực thể diện rộng (MACRO/ASSET), yêu cầu xuất hiện ở title hoặc materiality >= 0.6."""
@@ -222,14 +226,17 @@ class UserOutputWriter:
             for r in rows:
                 d = _row_date(r)
                 eset = self._entity_ids(r["l1_json"])
+                has_ag = bool(r.get("agent_json"))
                 master_bucket.setdefault(d, []).append(
-                    (self._final_row(r, eset), self._l1_row(r), self._agent_row(r), r["article_id"]))
+                    (self._final_row(r, eset), self._l1_row(r), self._agent_row(r), r["article_id"], has_ag))
             for d, items in master_bucket.items():
                 seen, finals, l1s, agents, aids = set(), [], [], [], []
-                for frow, l1row, arow, aid in items:
+                for frow, l1row, arow, aid, has_ag in items:
                     if aid in seen:
                         continue
-                    seen.add(aid); finals.append(frow); l1s.append(l1row); agents.append(arow); aids.append(aid)
+                    seen.add(aid); finals.append(frow); l1s.append(l1row); aids.append(aid)
+                    if has_ag:
+                        agents.append(arow)
                 mbase = self.output_root / "_master"
                 _atomic_write_csv(mbase / f"{d}.csv", FINAL_COLUMNS, finals)
                 _atomic_write_csv(mbase / f"{d}_L1.csv", L1_COLUMNS, l1s)
@@ -253,15 +260,15 @@ class UserOutputWriter:
 
         orphan_count = len(rows) - len(matched_article_ids)
         if orphan_count > 0:
-            logger.info("diagnostics: {} bài đạt 2 lớp nhưng không có user nào đăng ký (orphan)", orphan_count)
+            logger.info("diagnostics: {} bài đạt tiêu chuẩn export nhưng không có user nào đăng ký (orphan)", orphan_count)
 
         if not counts:
-            logger.info("done: không có article đủ 2 layer khớp subscription (date={} days={})", date, days)
+            logger.info("done: không có article đạt L1 khớp subscription (date={} days={})", date, days)
             if date == "today":
                 all_rows = self.gated_rows(date="all")
                 if all_rows:
                     logger.warning(
-                        "[LƯU Ý BACKLOG] '--date today' trả về 0 bài, nhưng có {} bài đạt 2 layer ở các ngày trước "
+                        "[LƯU Ý BACKLOG] '--date today' trả về 0 bài, nhưng có {} bài đạt L1 ở các ngày trước "
                         "(gần nhất: {}). Gợi ý: chạy với --days 30 hoặc --date all.",
                         len(all_rows), _row_date(all_rows[-1])
                     )

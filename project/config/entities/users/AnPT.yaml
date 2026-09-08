@@ -55,3 +55,19 @@ industries:
 - BAN_LE
 - CONG_TY_CHUNG_KHOAN
 - CONG_NGHE
+nations:
+- MY
+- TRUNG_QUOC
+themes:
+- LAI_SUAT
+- TY_GIA
+- DAU_TU_CONG
+- NANG_HANG_TTCK
+assets:
+- TRAI_PHIEU
+- CO_PHIEU
+- VANG
+- DAU_THO
+institutions:
+- NHNN
+- FED

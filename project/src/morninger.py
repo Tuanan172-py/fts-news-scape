@@ -204,12 +204,14 @@ def main(argv: list[str]) -> int:
         sub = args[0] if args else "derive"
         try:
             if sub == "capture":
+                print("🔄 [morninger] Đang thực thi Capture cycle...", flush=True)
                 n = m.run_capture()
-                print(f"capture done: {n} new articles")
+                print(f"✅ capture done: {n} new articles")
             elif sub == "derive":
+                print("🔄 [morninger] Bắt đầu tiến trình Re-derive Silver từ Bronze...", flush=True)
                 s = m.run_derive()
                 print(
-                    f"derive done: processed={s['processed']} ok={s['ok']} "
+                    f"✅ derive done: processed={s['processed']} ok={s['ok']} "
                     f"held={s['held']} backlog={s['backlog']} "
                     f"checkpoint={s['checkpoint_reached']} "
                     f"watermark={s['watermark_new']}"

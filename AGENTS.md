@@ -82,9 +82,11 @@ Maturity: this harness is at **H2-H5 (Durable SQLite + Active Observability + Au
    - **Lớp 1 (Xác định Thực thể — Entity Recognition)**: Nhận diện mã CP (3 ký tự in hoa), doanh nghiệp, sàn niêm yết, ngành kinh doanh, chỉ số từ tiêu đề & nội dung (`l1-entity-output-v1`).
    - **Lớp 2 (Xử lý Nội dung & Ngữ nghĩa — Content Processing)**: Tóm tắt súc tích, viết hàm ý thị trường (`implication`), chấm điểm `materiality_score` động (`0.1 - 1.0`), phân loại `sentiment`, và trích xuất `citations` ($\ge 2$ trích dẫn $\ge 20$ ký tự nguyên văn) (`agent-output-v1`).
 
-### B. Quy chuẩn Dữ liệu Handoff (Clean Paragraph Payload Invariant)
-- **Chỉ Chuyển giao Đoạn văn Nội dung Chính**: Dữ liệu `cleaned_text` trong Task Packet gửi cho Agent **BẮT BUỘC chỉ chứa các khối đoạn văn nội dung chính của bài báo (`<p>...</p>`)**.
-- **Lọc sạch 100% Rác Thông tin**: Tầng Silver phải loại bỏ hoàn toàn bài liên quan, tác giả/phóng viên vặt, banner tài trợ, quảng cáo, menu điều hướng trước khi đóng gói task để Agent không nhận thông tin rác, tối ưu 40–60% token input thừa và triệt tiêu ảo giác trích dẫn.
+### B. Quy chuẩn Dữ liệu Handoff & Gom Lô (Lean Payload & Mini-Batch Invariants)
+- **Zero-Waste Task Packet**: Dữ liệu packet gửi cho Agent BẮT BUỘC chỉ chứa các trường cốt lõi; loại bỏ 100% `structure.links` (hàng ngàn thẻ links menu/header/footer) và `images` để nén dung lượng dưới 10 KB (giảm 96% token input thừa).
+- **Verbatim Extractive Paragraph Pruning**: Lọc sạch rác tòa soạn, teaser ("Bài liên quan"), hotline, email, copyright theo **nguyên khối đoạn văn (`<p>`)**. Tuyệt đối không chỉnh sửa câu từ trong đoạn văn giữ lại để đảm bảo tính nguyên văn exact substring cho Grounded Citations ($\ge 20$ ký tự) qua cổng DoD.
+- **Consolidated Mini-Batch Handoff**: Hỗ trợ gom lô 5–10 tasks vào một file `batch_XX.task.json`, giúp Subagent xử lý trong 1 lần đọc và 1 lần ghi (giảm 90% số Tool Calls I/O).
+- **Tiếp sức Thực thể L1 $\rightarrow$ Gold**: Tự động bơm sẵn `input.l1_entities` vào Gold task để Agent tập trung suy luận hàm ý thị trường.
 - **Bảo toàn Raw Gốc**: Bản gốc `raw_html` và `meta.json` luôn được lưu giữ nguyên bản tại Bronze để kiểm toán.
 
 ### C. Cấm Tuyệt đối Giả lập Trí tuệ Agent bằng Heuristic Script (No Script Emulation)
