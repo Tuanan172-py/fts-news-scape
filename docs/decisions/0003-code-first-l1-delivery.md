@@ -1,6 +1,6 @@
 # 0003 — Kết quả nhận diện TẤT ĐỊNH (code-first) được ghi vào `l1_outputs` và giao hàng
 
-- **Status:** proposed — **chờ Human Operator duyệt** (Cấp 3 HIGH-RISK: đổi Data Contract + DB schema)
+- **Status:** accepted (Duyệt bởi Human Operator ngày 2026-09-09)
 - **Date:** 2026-09-08
 - **Decision-makers:** Human Operator & Agent
 - **Parent / Scope:** L1 Entity Recognition → User Delivery

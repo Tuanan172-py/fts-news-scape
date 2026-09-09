@@ -6,6 +6,8 @@
   "published_at": null,
   "raw_html_path": "data/raw_html\\vietstock.vn\\20260820\\3748cc69c41e0f956f490ddcf708c0423d81a914fd5c37fd49889ec37904c9d7.html",
   "raw_sha256": "985fe4117abbe99daad6f8067190065306dd8f235996661947ec0ea08a09cb95",
+  "title": "Chủ tịch ECB: Châu Âu không thể bỏ lỡ cuộc cách mạng AI",
+  "title_verified": true,
   "cleaned_text": "Chủ tịch ECB: Châu Âu không thể bỏ lỡ cuộc cách mạng AI\nChủ tịch ECB nói rằng tối ưu hóa quy mô là yếu tố sống còn để châu Âu cạnh tranh trong lĩnh vực AI vào thời điểm mô hình kinh tế của khối đang chịu nhiều thách thức.\n| Chủ tịch Ngân hàng Trung ương châu Âu Christine Lagarde (ECB). (Ảnh: THX/TTXVN) | \nChủ tịch Ngân hàng Trung ương châu Âu (ECB) Christine Lagarde ngày 19/8 cảnh báo châu Âu không thể bỏ lỡ cuộc cách mạng trí tuệ nhân tạo (AI), giữa bối cảnh mô hình tăng trưởng của châu lục đang phải đối mặt với áp lực ngày càng lớn.\nPhát biểu tại một sự kiện của Diễn đàn Kinh tế Thế giới (WEF) diễn ra tại Geneva (Thụy Sĩ), bà Lagarde chỉ ra bài học trong quá khứ khi châu Âu gần như đã bỏ lỡ cuộc cách mạng kỹ thuật số lần thứ nhất. Lợi ích thương mại từ quá trình phát triển công nghệ thông tin và truyền thông khi đó phần lớn đã rơi vào tay các khu vực khác.\nDo đó, người đứng đầu ECB nhấn mạnh châu Âu không được phép lặp lại sai lầm đó với AI, vốn được coi là cuộc cách mạng kỹ thuật số lần thứ hai.\nHiện nay, Mỹ và Trung Quốc đang dẫn đầu cuộc đua AI toàn cầu, khi các doanh nghiệp của họ liên tục phát triển những mô hình ngôn ngữ lớn tiên tiến nhất và nhanh chóng xây dựng hệ thống trung tâm dữ liệu khổng lồ.\nMặc dù các doanh nghiệp châu Âu đang rót vốn mạnh mẽ vào AI, các rào cản trong nội bộ Khu vực sử dụng đồng tiền chung châu Âu (Eurozone) đang kìm hãm khả năng mở rộng quy mô hoạt động của họ.\nBà Lagarde giải thích rằng sự phân mảnh của thị trường EU khiến các doanh nghiệp thiếu tính cạnh tranh trên toàn khối và gặp nhiều khó khăn trong việc huy động vốn, đặc biệt khi so sánh với các đối thủ Mỹ. Hệ quả là châu Âu có rất ít doanh nghiệp phát triển đến quy mô toàn cầu và tốc độ phổ biến công nghệ mới vào nền kinh tế cũng bị chậm lại.\nChủ tịch ECB nói thêm rằng tối ưu hóa quy mô là yếu tố sống còn để châu Âu cạnh tranh trong lĩnh vực AI vào thời điểm mô hình kinh tế của khối đang chịu nhiều thách thức.\nTheo phân tích của Chủ tịch ECB, mô hình tăng trưởng thời hậu chiến của châu Âu vốn dựa trên \"ba trụ cột\" vững chắc đang dần xói mòn.\nBa trụ cột này bao gồm một trật tự toàn cầu dựa trên luật lệ được bảo đảm bởi an ninh từ Mỹ, nguồn năng lượng giá rẻ và quá trình phát triển của thương mại toàn cầu.\nTuy nhiên, cả ba yếu tố này đều đang yếu đi khi môi trường quốc tế thay đổi, đồng nghĩa mô hình cũ khó có thể quay trở lại như trước đây.\nSự bất ổn này càng gia tăng khi Tổng thống Mỹ Donald Trump trở lại Nhà Trắng, làm rạn nứt mối quan hệ đồng minh xuyên Đại Tây Dương.\nÔng Trump đã áp đặt các mức thuế quan khắt khe đối với hàng hóa nhập khẩu từ EU và đặt dấu hỏi về cam kết an ninh lâu dài của Mỹ đối với châu lục này./.\nHương Thủy\n- 18:36 19/08/2026",
   "structure": {
     "headings": [
@@ -3186,7 +3188,7 @@
     }
   ],
   "capture_status": "ok",
-  "change_state": "NEW",
+  "change_state": "UNCHANGED",
   "provenance": {
     "fetch_ts": "2026-08-20T09:48:25+07:00",
     "render_method": "requests",

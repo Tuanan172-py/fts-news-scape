@@ -13,5 +13,5 @@ users:
   AnPT: true
   PhoHG: true      # bật 2026-09-07 — file đăng ký: users/subscriptions/PhoHG_news.xlsx
   ThanhTD: true    # bật 2026-09-07 — file đăng ký: users/subscriptions/ThanhTD_news.xlsx
-  VyPTT: true      # bật 2026-09-08 — có users/subscriptions/VyPTT_news.xlsx nhưng
-                   # chưa từng được liệt kê ở đây nên `default: false` tắt im lặng.
+  VyPTT: true      # bật 2026-09-08 — file đăng ký: users/subscriptions/VyPTT_news.xlsx
+  UyenNNT: true    # bật 2026-09-09 — file đăng ký: users/subscriptions/UyenNNT_news.xlsx

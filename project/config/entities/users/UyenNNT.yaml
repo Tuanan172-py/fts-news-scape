@@ -1,0 +1,41 @@
+# AUTO-GENERATED từ users/subscriptions/UyenNNT_news.csv — ĐỪNG sửa tay.
+# Chạy lại: python scripts/compile_users.py --all
+tickers:
+- CTD
+- PC1
+- VCG
+- FCN
+- HHV
+- CTR
+indices:
+- VNINDEX
+- VN30
+exchanges:
+- HOSE
+- HNX
+- UPCOM
+industries:
+- BAT_DONG_SAN
+- CONG_NGHIEP
+- XAY_DUNG
+- VAT_LIEU_XAY_DUNG
+- QUAN_LY_VA_PHAT_TRIEN_BAT_DONG_SAN
+- CO_SO_HA_TANG_GIAO_THONG_VAN_TAI
+- VAN_TAI_DUONG_BO_DUONG_SAT
+nations:
+- MY
+- TRUNG_QUOC
+- DONG_NAM_A
+themes:
+- LAI_SUAT
+- GDP_TANG_TRUONG
+- DAU_TU_CONG
+- FDI
+- TIN_DUNG
+assets:
+- BAT_DONG_SAN_TAI_SAN
+institutions:
+- NHNN
+- BO_TAI_CHINH
+- FED
+- WB_IMF

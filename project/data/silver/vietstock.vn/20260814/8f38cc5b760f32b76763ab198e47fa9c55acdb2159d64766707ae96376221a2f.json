@@ -4,7 +4,10 @@
   "source_url": "http://vietstock.vn/2026/08/co-phieu-ssb-cua-seabank-duoc-lua-chon-vao-ro-msci-frontier-markets-index-757-1480665.htm",
   "domain": "vietstock.vn",
   "content_sha256": "91eb90a336d1981c51a95236cfaca858c2785b4630c5b29c98f28210a1147ecf",
+  "title": "Cổ phiếu SSB của SeABank được lựa chọn vào rổ MSCI Frontier Markets Index",
+  "title_verified": true,
   "cleaned_text": "Cổ phiếu SSB của SeABank được lựa chọn vào rổ MSCI Frontier Markets Index\nNgày 13/08/2026, MSCI (Morgan Stanley Capital International) công bố kết quả kỳ rà soát tháng 8/2026, trong đó chính thức bổ sung cổ phiếu SSB của Ngân hàng TMCP Đông Nam Á (SeABank, HOSE: SSB) vào rổ Frontier Markets Index. Thay đổi sẽ có hiệu lực kể từ ngày 1/9/2026.\nMSCI Frontier Markets Index là chỉ số do MSCI xây dựng nhằm đo lường diễn biến của các cổ phiếu tại các thị trường cận biên. Việc lựa chọn và duy trì thành phần trong chỉ số được thực hiện dựa trên các tiêu chí về quy mô vốn hóa, tỷ lệ cổ phiếu tự do chuyển nhượng, thanh khoản và khả năng tiếp cận của nhà đầu tư quốc tế.\nBộ chỉ số này được nhiều nhà đầu tư tổ chức và các quỹ đầu tư quốc tế sử dụng làm chỉ số tham chiếu (benchmark) trong quá trình đánh giá thị trường và phân bổ tài sản. Thay đổi thành phần chỉ số thường kéo theo gia tăng mức độ hiện diện của cổ phiếu trong danh mục của các quỹ và sản phẩm đầu tư lấy MSCI Frontier Markets làm tham chiếu. Bên cạnh đó, các quỹ ETF (Exchange Traded Fund - Quỹ hoán đổi danh mục) và quỹ thụ động mô phỏng chỉ số có thể điều chỉnh danh mục để phản ánh thành phần mới khi các thay đổi chính thức có hiệu lực, qua đó tạo thêm nhu cầu giao dịch đối với SSB, hỗ trợ thanh khoản và mở rộng cơ hội tiếp cận dòng vốn quốc tế.\n| SSB có tiềm năng gia tăng nhu cầu giao dịch sau khi vào rổ. | \nTheo dữ liệu MSCI tại ngày 31/7/2026, sau kỳ rà soát, số lượng cổ phiếu Việt Nam trong chỉ số không thay đổi, song cơ cấu có sự dịch chuyển khi 3 cổ phiếu được bổ sung đều thuộc nhóm ngân hàng. Điều này cho thấy nhóm cổ phiếu ngân hàng tiếp tục giữ vai trò đáng kể trong cơ cấu thị trường chứng khoán Việt Nam.\nKết quả kỳ rà soát tháng 8/2026 vừa công bố, MSCI Frontier Markets Index bổ sung 6 cổ phiếu và loại 5 cổ phiếu. Trong đó, Việt Nam tiếp tục là thị trường có tỷ trọng lớn nhất trong MSCI Frontier Markets Index, đạt 29.12% và có 3 cổ phiếu được bổ sung đều thuộc nhóm ngân hàng, bao gồm cổ phiếu SSB của SeABank.\nViệc cổ phiếu SSB được bổ sung vào MSCI Frontier Markets Index là một dấu mốc đáng chú ý đối với SeABank, ghi nhận những cải thiện về quy mô vốn hóa, thanh khoản, tính minh bạch và tiêu chuẩn quản trị doanh nghiệp cũng như mức độ hấp dẫn của cổ phiếu đối với cộng đồng đầu tư. Đây cũng là bước tiến tích cực trong quá trình SeABank nâng cao mức độ hiện diện trên thị trường vốn và thu hút sự quan tâm của các nhà quản lý quỹ và cộng đồng đầu tư quốc tế.\n| Nền tảng vốn và năng lực tài chính của SeABank liên tục được củng cố. | \nDấu mốc này cũng ghi nhận những nỗ lực của SeABank trong việc củng cố nền tảng tài chính, nâng cao hiệu quả hoạt động, chất lượng quản trị và tính minh bạch, đồng thời kiên định với chiến lược phát triển bền vững. Trong thời gian qua, Ngân hàng tập trung nâng cao năng lực tài chính, chất lượng tài sản và hiệu quả hoạt động; đẩy mạnh chuyển đổi số, mở rộng hệ sinh thái sản phẩm, dịch vụ và từng bước nâng cao năng lực cạnh tranh trên thị trường.\n- 13:52 14/08/2026",
+  "extraction_quality": "high",
   "structure": {
     "headings": [
       {
@@ -284,7 +287,7 @@
         "text": "VietstockFinance"
       },
       {
-        "href": "//dautruong.vietstock.vn",
+        "href": "//fptscomvn.sharepoint.com///dautruong.vietstock.vn",
         "text": "Đấu trường chứng khoán"
       },
       {
@@ -292,11 +295,11 @@
         "text": "Diễn đàn"
       },
       {
-        "href": "//ir.vietstock.vn",
+        "href": "//fptscomvn.sharepoint.com///ir.vietstock.vn",
         "text": "IR Awards"
       },
       {
-        "href": "//dichvu.vietstock.vn",
+        "href": "//fptscomvn.sharepoint.com///dichvu.vietstock.vn",
         "text": "Dịch vụ"
       },
       {
@@ -332,7 +335,7 @@
         "text": "TIN TỨC"
       },
       {
-        "href": "//en.vietstock.vn",
+        "href": "//fptscomvn.sharepoint.com///en.vietstock.vn",
         "text": "Eng. Version"
       },
       {
@@ -428,79 +431,79 @@
         "text": "Eng. Version"
       },
       {
-        "href": "//finance.vietstock.vn/du-lieu-vi-mo",
+        "href": "//fptscomvn.sharepoint.com///finance.vietstock.vn/du-lieu-vi-mo",
         "text": "Vĩ mô"
       },
       {
-        "href": "//finance.vietstock.vn/tong-quan-thi-truong.htm",
+        "href": "//fptscomvn.sharepoint.com///finance.vietstock.vn/tong-quan-thi-truong.htm",
         "text": "Tổng quan ngành"
       },
       {
-        "href": "//finance.vietstock.vn/du-lieu-nganh.htm",
+        "href": "//fptscomvn.sharepoint.com///finance.vietstock.vn/du-lieu-nganh.htm",
         "text": "Dữ liệu ngành"
       },
       {
-        "href": "//finance.vietstock.vn/tong-quan-thi-truong.htm",
+        "href": "//fptscomvn.sharepoint.com///finance.vietstock.vn/tong-quan-thi-truong.htm",
         "text": "Thị trường cổ phiếu"
       },
       {
-        "href": "//finance.vietstock.vn/ket-qua-giao-dich",
+        "href": "//fptscomvn.sharepoint.com///finance.vietstock.vn/ket-qua-giao-dich",
         "text": "Kết quả giao dịch"
       },
       {
-        "href": "//finance.vietstock.vn/tam-ly-thi-truong.htm",
+        "href": "//fptscomvn.sharepoint.com///finance.vietstock.vn/tam-ly-thi-truong.htm",
         "text": "Tâm lý thị trường"
       },
       {
-        "href": "//finance.vietstock.vn/chung-khoan-phai-sinh/hop-dong-tuong-lai.htm",
+        "href": "//fptscomvn.sharepoint.com///finance.vietstock.vn/chung-khoan-phai-sinh/hop-dong-tuong-lai.htm",
         "text": "Hợp đồng tương lai"
       },
       {
-        "href": "//finance.vietstock.vn/chung-khoan-phai-sinh/chung-quyen.htm",
+        "href": "//fptscomvn.sharepoint.com///finance.vietstock.vn/chung-khoan-phai-sinh/chung-quyen.htm",
         "text": "Chứng quyền"
       },
       {
-        "href": "//finance.vietstock.vn/phan-tich-ky-thuat.htm",
+        "href": "//fptscomvn.sharepoint.com///finance.vietstock.vn/phan-tich-ky-thuat.htm",
         "text": "Phân tích kỹ thuật"
       },
       {
-        "href": "//finance.vietstock.vn/bo-loc-co-phieu.htm",
+        "href": "//fptscomvn.sharepoint.com///finance.vietstock.vn/bo-loc-co-phieu.htm",
         "text": "Bộ lọc cổ phiếu"
       },
       {
-        "href": "//finance.vietstock.vn/suc-manh-gia-rrg",
+        "href": "//fptscomvn.sharepoint.com///finance.vietstock.vn/suc-manh-gia-rrg",
         "text": "Sức mạnh giá RRG"
       },
       {
-        "href": "//finance.vietstock.vn/so-sanh-co-phieu.htm",
+        "href": "//fptscomvn.sharepoint.com///finance.vietstock.vn/so-sanh-co-phieu.htm",
         "text": "So sánh cổ phiếu"
       },
       {
-        "href": "//finance.vietstock.vn/doanh-nghiep-a-z",
+        "href": "//fptscomvn.sharepoint.com///finance.vietstock.vn/doanh-nghiep-a-z",
         "text": "Doanh nghiệp AZ"
       },
       {
-        "href": "//finance.vietstock.vn/lich-su-kien.htm",
+        "href": "//fptscomvn.sharepoint.com///finance.vietstock.vn/lich-su-kien.htm",
         "text": "Lịch sự kiện"
       },
       {
-        "href": "//finance.vietstock.vn/ket-qua-kinh-doanh",
+        "href": "//fptscomvn.sharepoint.com///finance.vietstock.vn/ket-qua-kinh-doanh",
         "text": "Cập nhật lãi lỗ"
       },
       {
-        "href": "//finance.vietstock.vn/giao-dich-noi-bo",
+        "href": "//fptscomvn.sharepoint.com///finance.vietstock.vn/giao-dich-noi-bo",
         "text": "Giao dịch nội bộ"
       },
       {
-        "href": "//finance.vietstock.vn/tai-lieu-co-dong.htm",
+        "href": "//fptscomvn.sharepoint.com///finance.vietstock.vn/tai-lieu-co-dong.htm",
         "text": "Tài liệu cổ đông"
       },
       {
-        "href": "//edocs.vietstock.vn/",
+        "href": "//fptscomvn.sharepoint.com///edocs.vietstock.vn/",
         "text": "eDocs"
       },
       {
-        "href": "//finance.vietstock.vn/tong-hop-doanh-nghiep.htm",
+        "href": "//fptscomvn.sharepoint.com///finance.vietstock.vn/tong-hop-doanh-nghiep.htm",
         "text": "Dữ liệu doanh nghiệp"
       },
       {
@@ -508,7 +511,7 @@
         "text": "Bảng giá trực tuyến"
       },
       {
-        "href": "//dautruong.vietstock.vn",
+        "href": "//fptscomvn.sharepoint.com///dautruong.vietstock.vn",
         "text": "Đấu trường chứng khoán"
       },
       {
@@ -516,11 +519,11 @@
         "text": "Diễn đàn"
       },
       {
-        "href": "//ir.vietstock.vn",
+        "href": "//fptscomvn.sharepoint.com///ir.vietstock.vn",
         "text": "IR AWARDS"
       },
       {
-        "href": "//pedia.vietstock.vn",
+        "href": "//fptscomvn.sharepoint.com///pedia.vietstock.vn",
         "text": "VietstockPedia"
       },
       {
@@ -536,7 +539,7 @@
         "text": "Cổng Nhà đất"
       },
       {
-        "href": "//dichvu.vietstock.vn",
+        "href": "//fptscomvn.sharepoint.com///dichvu.vietstock.vn",
         "text": "Dịch vụ"
       },
       {
@@ -804,7 +807,7 @@
         "text": "TIN TỨC"
       },
       {
-        "href": "//en.vietstock.vn",
+        "href": "//fptscomvn.sharepoint.com///en.vietstock.vn",
         "text": "Eng. Version"
       },
       {
@@ -900,79 +903,79 @@
         "text": "Eng. Version"
       },
       {
-        "href": "//finance.vietstock.vn/du-lieu-vi-mo",
+        "href": "//fptscomvn.sharepoint.com///finance.vietstock.vn/du-lieu-vi-mo",
         "text": "Vĩ mô"
       },
       {
-        "href": "//finance.vietstock.vn/tong-quan-thi-truong.htm",
+        "href": "//fptscomvn.sharepoint.com///finance.vietstock.vn/tong-quan-thi-truong.htm",
         "text": "Tổng quan ngành"
       },
       {
-        "href": "//finance.vietstock.vn/du-lieu-nganh.htm",
+        "href": "//fptscomvn.sharepoint.com///finance.vietstock.vn/du-lieu-nganh.htm",
         "text": "Dữ liệu ngành"
       },
       {
-        "href": "//finance.vietstock.vn/tong-quan-thi-truong.htm",
+        "href": "//fptscomvn.sharepoint.com///finance.vietstock.vn/tong-quan-thi-truong.htm",
         "text": "Thị trường cổ phiếu"
       },
       {
-        "href": "//finance.vietstock.vn/ket-qua-giao-dich",
+        "href": "//fptscomvn.sharepoint.com///finance.vietstock.vn/ket-qua-giao-dich",
         "text": "Kết quả giao dịch"
       },
       {
-        "href": "//finance.vietstock.vn/tam-ly-thi-truong.htm",
+        "href": "//fptscomvn.sharepoint.com///finance.vietstock.vn/tam-ly-thi-truong.htm",
         "text": "Tâm lý thị trường"
       },
       {
-        "href": "//finance.vietstock.vn/chung-khoan-phai-sinh/hop-dong-tuong-lai.htm",
+        "href": "//fptscomvn.sharepoint.com///finance.vietstock.vn/chung-khoan-phai-sinh/hop-dong-tuong-lai.htm",
         "text": "Hợp đồng tương lai"
       },
       {
-        "href": "//finance.vietstock.vn/chung-khoan-phai-sinh/chung-quyen.htm",
+        "href": "//fptscomvn.sharepoint.com///finance.vietstock.vn/chung-khoan-phai-sinh/chung-quyen.htm",
         "text": "Chứng quyền"
       },
       {
-        "href": "//finance.vietstock.vn/phan-tich-ky-thuat.htm",
+        "href": "//fptscomvn.sharepoint.com///finance.vietstock.vn/phan-tich-ky-thuat.htm",
         "text": "Phân tích kỹ thuật"
       },
       {
-        "href": "//finance.vietstock.vn/bo-loc-co-phieu.htm",
+        "href": "//fptscomvn.sharepoint.com///finance.vietstock.vn/bo-loc-co-phieu.htm",
         "text": "Bộ lọc cổ phiếu"
       },
       {
-        "href": "//finance.vietstock.vn/suc-manh-gia-rrg",
+        "href": "//fptscomvn.sharepoint.com///finance.vietstock.vn/suc-manh-gia-rrg",
         "text": "Sức mạnh giá RRG"
       },
       {
-        "href": "//finance.vietstock.vn/so-sanh-co-phieu.htm",
+        "href": "//fptscomvn.sharepoint.com///finance.vietstock.vn/so-sanh-co-phieu.htm",
         "text": "So sánh cổ phiếu"
       },
       {
-        "href": "//finance.vietstock.vn/doanh-nghiep-a-z",
+        "href": "//fptscomvn.sharepoint.com///finance.vietstock.vn/doanh-nghiep-a-z",
         "text": "Doanh nghiệp AZ"
       },
       {
-        "href": "//finance.vietstock.vn/lich-su-kien.htm",
+        "href": "//fptscomvn.sharepoint.com///finance.vietstock.vn/lich-su-kien.htm",
         "text": "Lịch sự kiện"
       },
       {
-        "href": "//finance.vietstock.vn/ket-qua-kinh-doanh",
+        "href": "//fptscomvn.sharepoint.com///finance.vietstock.vn/ket-qua-kinh-doanh",
         "text": "Cập nhật lãi lỗ"
       },
       {
-        "href": "//finance.vietstock.vn/giao-dich-noi-bo",
+        "href": "//fptscomvn.sharepoint.com///finance.vietstock.vn/giao-dich-noi-bo",
         "text": "Giao dịch nội bộ"
       },
       {
-        "href": "//finance.vietstock.vn/tai-lieu-co-dong.htm",
+        "href": "//fptscomvn.sharepoint.com///finance.vietstock.vn/tai-lieu-co-dong.htm",
         "text": "Tài liệu cổ đông"
       },
       {
-        "href": "//edocs.vietstock.vn/",
+        "href": "//fptscomvn.sharepoint.com///edocs.vietstock.vn/",
         "text": "eDocs"
       },
       {
-        "href": "//finance.vietstock.vn/tong-hop-doanh-nghiep.htm",
+        "href": "//fptscomvn.sharepoint.com///finance.vietstock.vn/tong-hop-doanh-nghiep.htm",
         "text": "Dữ liệu doanh nghiệp"
       },
       {
@@ -980,7 +983,7 @@
         "text": "Bảng giá trực tuyến"
       },
       {
-        "href": "//dautruong.vietstock.vn",
+        "href": "//fptscomvn.sharepoint.com///dautruong.vietstock.vn",
         "text": "Đấu trường chứng khoán"
       },
       {
@@ -988,11 +991,11 @@
         "text": "Diễn đàn"
       },
       {
-        "href": "//ir.vietstock.vn",
+        "href": "//fptscomvn.sharepoint.com///ir.vietstock.vn",
         "text": "IR AWARDS"
       },
       {
-        "href": "//pedia.vietstock.vn",
+        "href": "//fptscomvn.sharepoint.com///pedia.vietstock.vn",
         "text": "VietstockPedia"
       },
       {
@@ -1008,7 +1011,7 @@
         "text": "Cổng Nhà đất"
       },
       {
-        "href": "//dichvu.vietstock.vn",
+        "href": "//fptscomvn.sharepoint.com///dichvu.vietstock.vn",
         "text": "Dịch vụ"
       },
       {

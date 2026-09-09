@@ -1,8 +1,8 @@
 {
   "schema_version": "1.1.0",
-  "total_entities": 2152,
+  "total_entities": 2153,
   "by_type": {
-    "TICKER": 1983,
+    "TICKER": 1984,
     "SECURITY_OTHER": 11,
     "ETF": 28,
     "INDEX": 6,
@@ -15,7 +15,7 @@
     "ASSET_CLASS": 7,
     "INSTITUTION": 7
   },
-  "securities_total": 2022,
+  "securities_total": 2023,
   "tickers_with_name": 1968,
   "tickers_with_gics": 1917
 }

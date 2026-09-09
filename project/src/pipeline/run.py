@@ -13,7 +13,7 @@ from pathlib import Path
 
 from loguru import logger
 
-from src.core.config import to_project_relative
+from src.core.config import resolve_project_path, to_project_relative
 from src.handoff.catalog import Catalog
 from src.handoff.contract_validator import validate as schema_validate
 from src.handoff.work_package import WorkPackageBuilder, write_package
@@ -41,10 +41,16 @@ def process_meta(store, meta_path: str, *, silver_dir: str = "data/silver",
     """Xử lý 1 Bronze artifact → silver+version+package(+enqueue). Trả summary dict."""
     meta = json.loads(Path(meta_path).read_text(encoding="utf-8"))
     raw_path = meta.get("html_path", "")
-    if not raw_path or not Path(raw_path).exists():
+    resolved_raw = resolve_project_path(raw_path) if raw_path else None
+    if not resolved_raw or not resolved_raw.exists():
         return {"article_id": meta.get("url_title_hash"), "ok": False,
-                "reason": "raw_missing"}
-    raw_bytes = Path(raw_path).read_bytes()
+                "reason": "raw_missing", "state": "raw_missing"}
+    try:
+        raw_bytes = resolved_raw.read_bytes()
+    except OSError as e:
+        logger.warning("[pipeline] cannot read raw {}: {}", resolved_raw, e)
+        return {"article_id": meta.get("url_title_hash"), "ok": False,
+                "reason": f"raw_read_error: {e}", "state": "raw_read_error"}
 
     # 1) Silver (+ hard-gate silver-v1: bug #3 — silver hỏng/cleaned rỗng → held)
     silver = SilverBuilder().build(meta, raw_bytes)

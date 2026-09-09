@@ -6,6 +6,8 @@
   "published_at": null,
   "raw_html_path": "data/raw_html\\vneconomy.vn\\20260818\\18b41c4502b6b507b6a4bc7eb79476230f0082451b460be083a603254266c238.html",
   "raw_sha256": "ba44fbe5f1417fbb08030d03522ec753018009c962319c2526faba76c925587b",
+  "title": "Y học tái tạo: Ngọn hải đăng hy vọng",
+  "title_verified": true,
   "cleaned_text": "Nội dung đầy đủ bài viết được đăng tải trên Tạp chí Kinh tế Việt Nam số 33-2026 phát hành ngày 17/08/2026. Kính mời Quý độc giả tìm đọc tại đây:\nLink: https://premium.vneconomy.vn/dat-mua/an-pham/tap-chi-kinh-te-viet-nam-so-33-2026.html\nTrong khuôn khổ Diễn đàn “Hoàn thiện chính sách tạo lợi thế cạnh tranh thúc đẩy phát triển năng lượng” do Tạp chí Kinh tế Việt Nam/VnEconomy tổ chức, các chuyên gia pháp lý và kinh tế đã đưa ra những góc nhìn sâu sắc về yêu cầu cải cách thể chế, trọng tâm là dự thảo Luật Dầu khí (sửa đổi).\nTrong tái cấu trúc doanh nghiệp, câu hỏi quan trọng nhất không phải là tài sản hiện tại đáng giá bao nhiêu, mà là doanh nghiệp còn khả năng tạo ra bao nhiêu dòng tiền trong tương lai. Tuy nhiên, giữa tổ chức tín dụng muốn thu hồi vốn nhanh và doanh nghiệp cần thời gian để xoay vòng vốn luôn tồn tại những “nút thắt” giằng co, khó xử lý. Vì vậy, vấn đề là làm thế nào để dung hòa xung đột này, tối đa hóa giá trị thu hồi và biến cơ chế phục hồi thành một thị trường hấp dẫn dòng vốn ngoại.\nÔng Jeffrey Tchui, Giám đốc Điều hành kiêm Giám đốc khu vực châu Á - Thái Bình Dương của Hashgraph, đơn vị phát triển và thúc đẩy Hedera, một trong những mạng sổ cái phân tán hàng đầu thế giới, đồng thời là Giám đốc Điều hành của Web3 Harbour, hiệp hội ngành Web3 hàng đầu Hồng Kông (Trung Quốc), trong cuộc trao đổi với a/b, đã chia sẻ quan điểm về định hướng phát triển thị trường tài sản thực được mã hóa (Real World Assets - RWA), đồng thời đưa ra nhiều gợi mở để Việt Nam hoàn thiện khuôn khổ pháp lý cho lĩnh vực này.\nKhi các định chế tài chính toàn cầu bắt đầu thử nghiệm đưa tài sản truyền thống lên blockchain, Việt Nam đứng trước cơ hội tham gia một xu hướng mới của thị trường vốn. Tuy nhiên, để mã hóa tài sản thực (RWA) phát triển bền vững, cần một chiến lược phù hợp ngay từ giai đoạn đầu...\nQuan hệ Việt Nam - New Zealand đang bước vào giai đoạn phát triển mới sau khi được nâng cấp lên Đối tác Chiến lược Toàn diện. Trên nền tảng hơn nửa thế kỷ hợp tác kể từ khi thiết lập quan hệ ngoại giao năm 1975, hai nước đang đứng trước nhiều cơ hội mở rộng hợp tác kinh tế, thương mại và đầu tư.\nChiều 11/8, Tạp chí Kinh tế Việt Nam/VnEconomy đã tổ chức Diễn đàn: “Hoàn thiện chính sách tạo lợi thế cạnh tranh thúc đẩy phát triển năng lượng”.\nNhà ga T2 Cảng hàng không quốc tế Phú Quốc đang bước vào giai đoạn hoàn thiện mặt ngoài với hơn 9.500 tấm kính Unitized. Toàn công trường huy động khoảng 6.500 kỹ sư, công nhân thi công ba ca, bốn kíp để hướng tới vận hành thử vào tháng 4/2027.",
   "structure": {
     "headings": [
@@ -3349,7 +3351,7 @@
     }
   ],
   "capture_status": "ok",
-  "change_state": "NEW",
+  "change_state": "UNCHANGED",
   "provenance": {
     "fetch_ts": "2026-08-18T15:29:46+07:00",
     "render_method": "requests",

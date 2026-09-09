@@ -2,10 +2,10 @@
 
 <!-- Step 9 handoff. OVERWRITE this (never append) at the end of every session. Keep to one screen. -->
 
-- **Updated:** 2026-09-08
-- **Current story:** US-101 (deliverable XLSX) · US-102 (cổng giá trị Gold) — cả hai `implemented`
-- **Status:** `pytest tests/ = 373 passed` (baseline 357). 0 story `in_progress`.
-- **Blocker:** **US-103 `blocked`** — cần người duyệt ADR 0004 phần D trước khi chạm dữ liệu.
+- **Updated:** 2026-09-09
+- **Current story:** US-101 (deliverable XLSX) · US-102 (cổng giá trị Gold) · US-103 (xử lý dữ liệu cũ & ADR 0003/0004) — tất cả `implemented`
+- **Status:** `pytest tests/ = 378 passed`. 0 story `in_progress`.
+- **Blocker:** **Không còn blocker cổng duyệt**. A1 (ADR 0003 accepted) và A2 (ADR 0004 D1 apply) đã hoàn tất. Sẵn sàng chạy §B.
 
 ## Việc đã làm phiên này
 
@@ -39,12 +39,8 @@
 | Sẽ trượt cổng mới | **1.274 / 1.274** |
 
 ## Next Steps
-
-1. **DUYỆT ADR 0004 phần D** (`docs/decisions/0004-gold-value-gate-va-du-lieu-gia-lap.md`):
-   chọn D1 (hạ `dod_pass=0`, giữ `output_json` — khuyến nghị) / D2 / D3. Chưa duyệt thì
-   deliverable vẫn đang chứa nội dung template.
-2. Sau khi duyệt, trên **máy B**: backup `data/monocle.db` → `python scripts/verify_gold_quality.py`
-   (xem báo cáo) → `--apply`.
-3. Cập nhật prompt agent Gold theo `schemas/agent-instructions-v1.md` §2b rồi chạy lại backlog —
-   trước khi làm việc này, mọi output kiểu cũ sẽ bị cổng mới đánh trượt (đúng chủ đích).
-4. Rò rỉ T4 (orphan backlog Bronze/Silver không vào `articles`) — chưa điều tra.
+1. Thực hiện chuỗi triển khai §B của `OPEN-ITEMS.md`:
+   - §B1: `python scripts/rederive_from_bronze.py` (bổ sung trường `title` cho 3.910 work-package).
+   - §B2: Chuỗi nạp lần đầu (`refresh_aliases`, `l1_ingest --code-first`, `heal_orphans`, `relativize_paths`, `reclaim_stale`, `run_user_workflow --date all`).
+2. Giải toả hàng đợi Agent L1 (~282 bài `needs_agent`) theo §B3.
+3. Rò rỉ T4 (orphan backlog Bronze/Silver không vào `articles`) — chưa điều tra.

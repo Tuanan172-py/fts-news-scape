@@ -6,6 +6,8 @@
   "published_at": "2026-08-21T16:45:19+07:00",
   "raw_html_path": "data/raw_html\\vietstock.vn\\20260821\\b0ba34fbc525cabb05defa143cbb1c4d87d141cba37fdd4379558f6e5d9b6e9d.html",
   "raw_sha256": "2fbef839d49a5e9e14897d845bc6efe33e8bc77035c9aa84e8333c40c44b6372",
+  "title": "Tối ưu tài khoản thanh toán với sản phẩm Sinh Lời Tài Lộc của SACOMBANK",
+  "title_verified": true,
   "cleaned_text": "Tối ưu tài khoản thanh toán với sản phẩm Sinh Lời Tài Lộc của SACOMBANK\nNhằm mang đến giải pháp quản lý dòng tiền thông minh cho cả khách hàng cá nhân và doanh nghiệp, Ngân hàng TMCP Sài Gòn Tài Lộc (SACOMBANK, HOSE: STB) chính thức ra mắt sản phẩm Sinh Lời Tài Lộc, giúp khách hàng tự động tối ưu phần tiền nhàn rỗi trên tài khoản thanh toán để gia tăng lợi ích tài chính, đồng thời vẫn đảm bảo nhu cầu giao dịch.\nThông thường, tài khoản thanh toán của khách hàng luôn duy trì một khoản tiền để phục vụ các giao dịch hằng ngày. Tuy nhiên, trong những khoảng thời gian chưa phát sinh nhu cầu sử dụng, số tiền này chỉ được hưởng lãi suất không kỳ hạn.\nSản phẩm Sinh Lời Tài Lộc mang đến tính năng sinh lời hoàn toàn tự động. Khách hàng chỉ cần thiết lập số dư cần duy trì trên tài khoản thanh toán, phần tiền còn lại sẽ được hệ thống tối ưu mỗi ngày để gia tăng giá trị với lợi suất lên đến 6%/năm, cao hơn 60 lần so với lãi suất không kỳ hạn 0,1%/năm.\nĐối với khách hàng cá nhân, tính năng Sinh Lời Tài Lộc có thể được kích hoạt, thiết lập số dư và theo dõi hiệu quả sinh lời theo ngày trực tiếp trên ứng dụng SACOMBANK PAY. Khi phát sinh nhu cầu chuyển tiền, thanh toán hoặc chi tiêu vượt số dư đã thiết lập, hệ thống sẽ tự động chuyển đổi và bổ sung số dư để giao dịch được diễn ra thông suốt mà khách hàng không cần thao tác thủ công. Trong khi đó, khách hàng doanh nghiệp đăng ký tham gia và thiết lập số dư tại bất kỳ điểm giao dịch nào của SACOMBANK.\nVới giải pháp này, ngoài việc được hưởng lợi suất hấp dẫn đối với số tiền tham gia sản phẩm; khách hàng có thể điều chỉnh số dư hoặc hủy tham gia bất cứ lúc nào theo nhu cầu sử dụng. Nhờ cơ chế vận hành thông minh, Sinh Lời Tài Lộc vừa duy trì khả năng thanh khoản cho mọi giao dịch, vừa khai thác hiệu quả nguồn tiền nhàn rỗi ngay trên tài khoản thanh toán. Không còn phải cân nhắc giữa việc để tiền sẵn sàng chi tiêu hay chuyển sang các hình thức sinh lời khác, khách hàng có thể đồng thời đáp ứng cả hai nhu cầu chỉ với vài thao tác đơn giản.\nViệc ra mắt Sinh Lời Tài Lộc đánh dấu bước tiếp theo trong chiến lược phát triển hệ sinh thái tài chính số của SACOMBANK, hướng tới mang đến những giải pháp linh hoạt và cá nhân hóa theo nhu cầu của từng nhóm khách hàng. Thông qua việc tích hợp tiện ích ngay trên SACOMBANK PAY cho khách hàng cá nhân và mở rộng phục vụ khách hàng doanh nghiệp tại điểm giao dịch, Ngân hàng không ngừng nâng cao trải nghiệm, đồng hành với khách hàng trong quản lý dòng tiền và sử dụng nguồn vốn hiệu quả trong mọi hoạt động tài chính.\nĐể biết thêm thông tin về sản phẩm Sinh Lời Tài Lộc, vui lòng liên hệ Hotline 24/7 miễn phí 1800 5858 88 hoặc truy cập TẠI ĐÂY.\n- 15:43 21/08/2026",
   "structure": {
     "headings": [
@@ -3269,7 +3271,7 @@
     }
   ],
   "capture_status": "ok",
-  "change_state": "NEW",
+  "change_state": "UNCHANGED",
   "provenance": {
     "fetch_ts": "2026-08-21T16:48:23+07:00",
     "render_method": "requests",

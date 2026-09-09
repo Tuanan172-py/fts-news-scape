@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1.0",
-  "entity_count": 2152,
+  "entity_count": 2153,
   "entities": [
     {
       "entity_id": "TICKER:A32",
@@ -854,7 +854,7 @@
         "gics1": "Bất động sản",
         "gics2": "Quản lý và phát triển bất động sản",
         "gics3": "Bất động sản phức hợp",
-        "shares_outstanding": 162528080,
+        "shares_outstanding": 178780896,
         "has_market_cap": true,
         "listed_universe": true
       },
@@ -2504,7 +2504,7 @@
         "gics1": "Y tế",
         "gics2": "Dược phẩm & Công nghệ sinh học",
         "gics3": "Dược phẩm",
-        "shares_outstanding": 6000000,
+        "shares_outstanding": 6860000,
         "has_market_cap": true,
         "listed_universe": true
       },
@@ -3164,7 +3164,7 @@
         "gics1": "Tài chính",
         "gics2": "Ngân hàng",
         "gics3": "Ngân hàng",
-        "shares_outstanding": 7778262016,
+        "shares_outstanding": 7778229248,
         "has_market_cap": true,
         "listed_universe": true
       },
@@ -8037,7 +8037,7 @@
         "gics1": "Công nghiệp",
         "gics2": "Tư liệu sản xuất",
         "gics3": "Xây dựng",
-        "shares_outstanding": 69300000,
+        "shares_outstanding": 69299864,
         "has_market_cap": true,
         "listed_universe": true
       },
@@ -8488,7 +8488,7 @@
         "gics1": "Bất động sản",
         "gics2": "Quản lý và phát triển bất động sản",
         "gics3": "Bất động sản phức hợp",
-        "shares_outstanding": 8218456,
+        "shares_outstanding": 9040058,
         "has_market_cap": true,
         "listed_universe": true
       },
@@ -9612,7 +9612,7 @@
         "gics1": "Hàng tiêu dùng không thiết yếu",
         "gics2": "Bán lẻ",
         "gics3": "Bán lẻ",
-        "shares_outstanding": 221160992,
+        "shares_outstanding": 223360992,
         "has_market_cap": true,
         "listed_universe": true
       },
@@ -9936,7 +9936,7 @@
         "gics1": "Bất động sản",
         "gics2": "Quản lý và phát triển bất động sản",
         "gics3": "Bất động sản phức hợp",
-        "shares_outstanding": 796431168,
+        "shares_outstanding": 844217088,
         "has_market_cap": true,
         "listed_universe": true
       },
@@ -15993,7 +15993,7 @@
         "gics1": "Nguyên vật liệu",
         "gics2": "Vật liệu xây dựng",
         "gics3": "Vật liệu xây dựng",
-        "shares_outstanding": 7170401,
+        "shares_outstanding": 7170284,
         "has_market_cap": true,
         "listed_universe": true
       },
@@ -16977,7 +16977,7 @@
         "gics1": "Nguyên vật liệu",
         "gics2": "Giấy và các sản phẩm từ gỗ",
         "gics3": "Giấy",
-        "shares_outstanding": 92180376,
+        "shares_outstanding": 92179688,
         "has_market_cap": true,
         "listed_universe": true
       },
@@ -20310,7 +20310,7 @@
         "gics1": "Tài chính",
         "gics2": "Tài chính chuyên biệt khác",
         "gics3": "Tài chính chuyên biệt khác",
-        "shares_outstanding": 213835776,
+        "shares_outstanding": 245911136,
         "has_market_cap": true,
         "listed_universe": true
       },
@@ -20566,8 +20566,7 @@
       "canonical_name": "CTCP Chứng khoán Guotai Haitong (Việt Nam)",
       "aliases": [
         "CTCP Chứng khoán Guotai Haitong (Việt Nam)",
-        "Chứng khoán Guotai Haitong",
-        "Việt Nam"
+        "Chứng khoán Guotai Haitong"
       ],
       "attributes": {
         "gics1": "Tài chính",
@@ -20676,6 +20675,22 @@
         "trading_data/market_caps.parquet",
         "trading_data/os.xlsx",
         "industry_classification/industry_classification.xlsx"
+      ]
+    },
+    {
+      "entity_id": "TICKER:KAI",
+      "type": "TICKER",
+      "code": "KAI",
+      "canonical_name": "KAI",
+      "aliases": [],
+      "attributes": {
+        "shares_outstanding": 0,
+        "has_market_cap": true,
+        "listed_universe": true
+      },
+      "sources": [
+        "trading_data/market_caps.parquet",
+        "trading_data/os.xlsx"
       ]
     },
     {
@@ -24887,7 +24902,7 @@
         "gics1": "Tài chính",
         "gics2": "Ngân hàng",
         "gics3": "Ngân hàng",
-        "shares_outstanding": 3120000000,
+        "shares_outstanding": 3744000000,
         "has_market_cap": true,
         "listed_universe": true
       },
@@ -25565,7 +25580,7 @@
         "gics1": "Công nghiệp",
         "gics2": "Tư liệu sản xuất",
         "gics3": "Thiết bị điện",
-        "shares_outstanding": 55644160,
+        "shares_outstanding": 55643248,
         "has_market_cap": true,
         "listed_universe": true
       },
@@ -28880,7 +28895,7 @@
         "gics1": "Dịch vụ công cộng",
         "gics2": "Dịch vụ công cộng",
         "gics3": "Điện",
-        "shares_outstanding": 1213345536,
+        "shares_outstanding": 1213344896,
         "has_market_cap": true,
         "listed_universe": true
       },
@@ -29024,7 +29039,7 @@
         "gics1": "Tài chính",
         "gics2": "Công ty chứng khoán",
         "gics3": "Công ty chứng khoán",
-        "shares_outstanding": 200009328,
+        "shares_outstanding": 250009328,
         "has_market_cap": true,
         "listed_universe": true
       },
@@ -31182,7 +31197,7 @@
         "gics1": "Tài chính",
         "gics2": "Bảo hiểm",
         "gics3": "Bảo hiểm",
-        "shares_outstanding": 257666048,
+        "shares_outstanding": 257664976,
         "has_market_cap": true,
         "listed_universe": true
       },
@@ -32326,7 +32341,7 @@
         "gics1": "Dịch vụ công cộng",
         "gics2": "Dịch vụ công cộng",
         "gics3": "Điện",
-        "shares_outstanding": 622899008,
+        "shares_outstanding": 623399040,
         "has_market_cap": true,
         "listed_universe": true
       },
@@ -32592,7 +32607,7 @@
         "gics1": "Nguyên vật liệu",
         "gics2": "Vật liệu xây dựng",
         "gics3": "Vật liệu xây dựng",
-        "shares_outstanding": 45000000,
+        "shares_outstanding": 75150000,
         "has_market_cap": true,
         "listed_universe": true
       },
@@ -33293,7 +33308,7 @@
         "gics1": "Tài chính",
         "gics2": "Công ty chứng khoán",
         "gics3": "Công ty chứng khoán",
-        "shares_outstanding": 146607600,
+        "shares_outstanding": 156107600,
         "has_market_cap": true,
         "listed_universe": true
       },
@@ -34142,7 +34157,7 @@
         "gics1": "Công nghiệp",
         "gics2": "Tư liệu sản xuất",
         "gics3": "Máy công nghiệp",
-        "shares_outstanding": 3119988,
+        "shares_outstanding": 4635553,
         "has_market_cap": true,
         "listed_universe": true
       },
@@ -34792,7 +34807,7 @@
         "gics1": "Bất động sản",
         "gics2": "Quản lý và phát triển bất động sản",
         "gics3": "Bất động sản phức hợp",
-        "shares_outstanding": 83849984,
+        "shares_outstanding": 83849856,
         "has_market_cap": true,
         "listed_universe": true
       },
@@ -35376,8 +35391,7 @@
       "code": "SJG",
       "canonical_name": "Tổng Công ty Sông Đà - CTCP",
       "aliases": [
-        "Tổng Công ty Sông Đà - CTCP",
-        "Sông Đà"
+        "Tổng Công ty Sông Đà - CTCP"
       ],
       "attributes": {
         "gics1": "Công nghiệp",
@@ -36279,7 +36293,7 @@
         "gics1": "Tài chính",
         "gics2": "Ngân hàng",
         "gics3": "Ngân hàng",
-        "shares_outstanding": 3428800000,
+        "shares_outstanding": 3468800000,
         "has_market_cap": true,
         "listed_universe": true
       },
@@ -36399,7 +36413,7 @@
         "gics1": "Tài chính",
         "gics2": "Công ty chứng khoán",
         "gics3": "Công ty chứng khoán",
-        "shares_outstanding": 3001317376,
+        "shares_outstanding": 3001302272,
         "has_market_cap": true,
         "listed_universe": true
       },
@@ -37819,7 +37833,7 @@
         "gics1": "Bất động sản",
         "gics2": "Quản lý và phát triển bất động sản",
         "gics3": "Bất động sản phức hợp",
-        "shares_outstanding": 912109248,
+        "shares_outstanding": 1003320128,
         "has_market_cap": true,
         "listed_universe": true
       },
@@ -41473,7 +41487,7 @@
         "gics1": "Tài chính",
         "gics2": "Công ty chứng khoán",
         "gics3": "Công ty chứng khoán",
-        "shares_outstanding": 244644704,
+        "shares_outstanding": 244643472,
         "has_market_cap": true,
         "listed_universe": true
       },
@@ -42079,7 +42093,7 @@
         "gics1": "Bất động sản",
         "gics2": "Quản lý và phát triển bất động sản",
         "gics3": "Bất động sản phức hợp",
-        "shares_outstanding": 11999789,
+        "shares_outstanding": 32999788,
         "has_market_cap": true,
         "listed_universe": true
       },
@@ -42119,7 +42133,7 @@
         "gics1": "Tài chính",
         "gics2": "Ngân hàng",
         "gics3": "Ngân hàng",
-        "shares_outstanding": 816360704,
+        "shares_outstanding": 902078528,
         "has_market_cap": true,
         "listed_universe": true
       },
@@ -42377,7 +42391,7 @@
         "gics1": "Bất động sản",
         "gics2": "Quản lý và phát triển bất động sản",
         "gics3": "Bất động sản phức hợp",
-        "shares_outstanding": 138414256,
+        "shares_outstanding": 148795328,
         "has_market_cap": true,
         "listed_universe": true
       },
@@ -44298,7 +44312,7 @@
         "gics1": "Tài chính",
         "gics2": "Công ty chứng khoán",
         "gics3": "Công ty chứng khoán",
-        "shares_outstanding": 2572802048,
+        "shares_outstanding": 2572788480,
         "has_market_cap": true,
         "listed_universe": true
       },
@@ -45013,7 +45027,7 @@
         "gics1": "Công nghiệp",
         "gics2": "Vận tải",
         "gics3": "Hỗ trợ vận tải",
-        "shares_outstanding": 14140487,
+        "shares_outstanding": 14808787,
         "has_market_cap": true,
         "listed_universe": true
       },
@@ -45445,7 +45459,7 @@
         "gics1": "Bất động sản",
         "gics2": "Quản lý và phát triển bất động sản",
         "gics3": "Bất động sản phức hợp",
-        "shares_outstanding": 320049568,
+        "shares_outstanding": 352054528,
         "has_market_cap": true,
         "listed_universe": true
       },

@@ -6,6 +6,8 @@
   "published_at": null,
   "raw_html_path": "data/raw_html\\vietstock.vn\\20260820\\bc4fffa6b26ccfb9177fc48c47932fa78e6618d40dd32aad66f0a88a563fb144.html",
   "raw_sha256": "c96eee399d7f12d3ada1845a217f5f77000e88ee45b6791092ba816c4fa34411",
+  "title": "Bộ Tài chính Mỹ tăng gấp đôi quy mô mua lại trái phiếu, lợi suất giảm mạnh",
+  "title_verified": true,
   "cleaned_text": "Bộ Tài chính Mỹ tăng gấp đôi quy mô mua lại trái phiếu, lợi suất giảm mạnh\nNgày 19/08, Bộ Tài chính Mỹ cho biết sẽ hơn gấp đôi quy mô các đợt mua lại trái phiếu chính phủ, động thái khiến lợi suất giảm mạnh trong bối cảnh thị trường trái phiếu đang chịu áp lực lớn.\n| Bộ trưởng Tài chính Mỹ Scott Bessent | \nGiữa bối cảnh thị trường trái phiếu căng thẳng và lợi suất tăng lên các mức cao nhất trong gần 20 năm, động thái này tập trung vào nhóm trái phiếu có kỳ hạn dài - phân khúc đặc biệt nhạy cảm của thị trường trái phiếu Kho bạc Mỹ.\nTheo kế hoạch đẩy nhanh hoạt động mua lại, Bộ Tài chính Mỹ dưới sự lãnh đạo của Bộ trưởng Scott Bessent sẽ tập trung vào các trái phiếu có kỳ hạn 10-20 năm và 20-30 năm, những phân khúc đã chứng kiến tình trạng thiếu vắng người mua kể từ cuối tháng 6.\nChính phủ Mỹ sẽ “ít nhất tăng gấp đôi” quy mô tối đa của các đợt mua lại, từ 2 tỷ USD lên ít nhất 4 tỷ USD, theo thông báo của Bộ Tài chính.\nNgay sau thông tin này, lợi suất trái phiếu giảm mạnh trong khi hợp đồng tương lai chứng khoán Mỹ bật tăng.\nLợi suất trái phiếu Kho bạc Mỹ kỳ hạn 10 năm giảm 6 điểm cơ bản xuống 4.647%, trong khi lợi suất trái phiếu kỳ hạn 30 năm giảm 9 điểm cơ bản xuống 5.196%. Một điểm cơ bản tương đương 0.01 điểm phần trăm. Giá trái phiếu và lợi suất biến động ngược chiều nhau.\nThay đổi này sẽ bắt đầu có hiệu lực từ ngày 09/09 và duy trì đến ngày 04/11.\nBộ Tài chính Mỹ cho biết: “Việc tăng quy mô các hoạt động mua lại phản ánh mong muốn của Bộ Tài chính trong việc hỗ trợ thanh khoản nhiều hơn cho các phân khúc trái phiếu kỳ hạn dài, nơi thị trường có sự quan tâm ổn định từ các nhà đầu tư, thể hiện qua khối lượng lớn các đề nghị chất lượng cao mà Bộ Tài chính thường xuyên nhận được trong các đợt mua lại trái phiếu kỳ hạn dài\".\nVề bản chất, động thái này đồng nghĩa Bộ Tài chính Mỹ sẽ trở thành người mua lớn hơn đối với các khoản nợ cũ có kỳ hạn dài, qua đó bổ sung thanh khoản cho một phân khúc đang gặp áp lực.\nTrong đợt tăng lợi suất gần đây, các chuyên gia thị trường đã chỉ ra nhiều nguyên nhân, bao gồm phần bù kỳ hạn - tức mức lợi suất bổ sung mà nhà đầu tư yêu cầu để nắm giữ trái phiếu chính phủ dài hạn - cũng như sự thay đổi trong cơ cấu người mua trái phiếu Kho bạc Mỹ.\nBên cạnh đó, nguồn cung trái phiếu doanh nghiệp tăng lên, đặc biệt là các khoản vay phục vụ cho làn sóng đầu tư vào AI, cũng được xem là một yếu tố gây sức ép lên thị trường.\nThông báo ngày 19/08 cho thấy Bộ Tài chính Mỹ đang chú ý đến vấn đề thanh khoản ở phân khúc kỳ hạn dài và sẵn sàng tham gia thị trường một cách chủ động hơn.\nPeter Boockvar, Giám đốc đầu tư của One Point BFG Wealth Partners, nhấn mạnh: “Đây KHÔNG phải là hoạt động trả bớt nợ, mà chỉ là sự sắp xếp lại cơ cấu kỳ hạn của các khoản nợ Kho bạc\".\n- 21:15 19/08/2026",
   "structure": {
     "headings": [
@@ -3191,7 +3193,7 @@
     }
   ],
   "capture_status": "ok",
-  "change_state": "NEW",
+  "change_state": "UNCHANGED",
   "provenance": {
     "fetch_ts": "2026-08-20T09:04:59+07:00",
     "render_method": "requests",

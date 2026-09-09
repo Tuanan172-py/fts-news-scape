@@ -6,6 +6,8 @@
   "published_at": null,
   "raw_html_path": "data/raw_html\\vietstock.vn\\20260821\\ceed7fbdfab30784d8c9a6808fdc9f9cc215bd6746fe3bf8373e881a970ddd57.html",
   "raw_sha256": "a1266a79a3d326977322313a137ec77aa867ab8ccc68129093d8e21f2515c3e6",
+  "title": "Theo dấu dòng tiền cá mập 20/08: Khối ngoại, tự doanh hành động trái chiều",
+  "title_verified": true,
   "cleaned_text": "Theo dấu dòng tiền cá mập 20/08: Khối ngoại, tự doanh hành động trái chiều\n20/08/2026 19:51\n20-08-2026 19:51:58+07:00\nTheo dấu dòng tiền cá mập 20/08: Khối ngoại, tự doanh hành động trái chiều\nKhối ngoại bán ròng hơn 500 tỷ đồng trong phiên 20/08. Ngược chiều, tự doanh lại có phiên mua ròng gần 590 tỷ đồng.\nKhối ngoại tiếp đà bán ròng với giá trị bán ròng gần 555 tỷ đồng phiên hôm nay. Lực bán tập trung ở VIC, VPB, VIX, SSI. Ngược chiều, MSN được mua ròng mạnh nhất.\nTự doanh mua ròng trong phiên 20/08. Trong đó, HPG, VIC và chứng chỉ quỹ FUEMAV30 được mua ròng mạnh nhất. Ngược chiều, VCB bị bán ròng mạnh nhưng giá trị chỉ ở mức hơn 20 tỷ đồng.\nDiễn biến dòng tiền tự doanh các phiên gần đây\nTop 10 cổ phiếu tự doanh mua - bán ròng mạnh nhất phiên 20/08/2026\nCTCP Đầu tư và Phát triển Điện miền Bắc 2 (UPCoM: ND2) thông báo ngày 20/08/2026 là ngày đăng ký cuối cùng để chốt danh sách cổ đông nhận cổ tức năm 2025 bằng tiền...\nCRC, NAG, PSD, PSI, SBG và TCO là 6 doanh nghiệp Small Cap được Đề cử IR Awards 2026, chính thức góp mặt tại vòng chung khảo Bình chọn IR Awards diễn ra từ ngày...\nVới năng lực tài chính tốt, ban lãnh đạo Tuấn Anh Group cho biết Tập đoàn sẽ triển khai dự án nhà máy mới và M&A để tạo dư địa phát triển trong giai đoạn 5 năm tới.\nCTCP Hóa chất Cơ bản Miền Nam (HOSE: CSV) nhận được thông báo nhắc nhở từ Sở Giao dịch Chứng khoán TP.HCM (HOSE) về việc chậm công bố thông tin liên quan đến thay...\nBVBank đang ghi nhận tốc độ tăng trưởng lợi nhuận mạnh trong nửa đầu năm 2026, đúng thời điểm hơn 640 triệu cổ phiếu BVB chính thức niêm yết trên HOSE, mở ra thêm...\nVietstock trân trọng thông báo đến Quý Khách hàng về việc áp dụng “Chính sách quyền riêng tư” căn cứ theo Nghị định số 13/2023/NĐ-CP v/v bảo vệ dữ liệu cá nhân được ban hành bởi Chính phủ.\nTrong quá trình thiết lập mối quan hệ giữa Vietstock và Khách hàng, Vietstock có thể thu thập và xử lý dữ liệu cá nhân của Khách hàng cho mục đích được xác định tại Chính sách quyền riêng tư (“CSQRT”) này. Trong trường hợp Khách hàng không đồng ý một phần hoặc toàn bộ quy định tại CSQRT, Vietstock không thể cung cấp sản phẩm và dịch vụ cho Khách hàng.\nVietstock cam kết luôn tôn trọng quyền riêng tư, bảo mật và an toàn thông tin cá nhân; đồng thời luôn nỗ lực bảo vệ dữ liệu cá nhân của Khách hàng, tuân thủ quy định pháp luật Việt Nam thông qua những biện pháp bảo vệ dữ liệu cá nhân đáp ứng và phù hợp với quy định pháp luật Việt Nam.\nChính sách quyền riêng tư là một phần không thể tách rời của các thỏa thuận, điều khoản và điều kiện chi phối mối quan hệ giữa Vietstock và Quý Khách hàng.\nQuý Khách hàng đã đọc kỹ, hiểu rõ và đồng ý với toàn bộ điều khoản của “Chính sách quyền riêng tư”. Chi tiết Chính sách quyền riêng tư xem tại đây.\nNếu không đồng ý với Chính sách quyền riêng tư này, Chúng tôi không thể cung cấp sản phẩm và dịch vụ cho Quý Khách hàng.",
   "structure": {
     "headings": [
@@ -3425,7 +3427,7 @@
     }
   ],
   "capture_status": "ok",
-  "change_state": "NEW",
+  "change_state": "UNCHANGED",
   "provenance": {
     "fetch_ts": "2026-08-21T09:34:55+07:00",
     "render_method": "requests",

@@ -42,3 +42,21 @@ Quy tắc bất biến cho mọi thao tác I/O (File & Database) trong hệ th�
 - **Bất biến 4 — Ghim trạng thái tệp (Files On-Demand Pinning)**:
   - BẮT BUỘC bật chế độ *"Always keep on this device"* (`attrib -U +P /s /d "<repo>\*"`) để tránh việc OneDrive tự động dehydrate giải phóng dung lượng làm mất file mã nguồn khi biên dịch/thực thi.
 
+## 4. Quy chuẩn Thực thi Script (Execution Guidelines cho Agents & Users)
+
+Nhằm đảm bảo sự nhất quán và không gọi nhầm môi trường Python của hệ thống hay venv cũ:
+
+- **Nguyên tắc cho Agents (Khi chạy tool `run_command`)**:
+  - TUYỆT ĐỐI KHÔNG dùng tiền tố `.venv\Scripts\...` (đã bị xóa khỏi OneDrive).
+  - BẮT BUỘC sử dụng đường dẫn tuyệt đối: `& "C:\venvs\news-scape\Scripts\python.exe" <script_path>` hoặc kích hoạt venv trước khi chạy.
+  - Khi chạy các script pipeline trong `project/scripts/`:
+    - Nếu `Cwd` là thư mục gốc: gọi `& "C:\venvs\news-scape\Scripts\python.exe" project/scripts/<script>.py`.
+    - Nếu `Cwd` là `project`: gọi `& "C:\venvs\news-scape\Scripts\python.exe" scripts/<script>.py`.
+  - Khi chạy pytest: `& "C:\venvs\news-scape\Scripts\python.exe" -m pytest project/tests/ -v`.
+
+- **Hướng dẫn cho Users (Khi thao tác bằng tay trong Terminal)**:
+  - **Lựa chọn 1 (Kích hoạt 1 lần)**: Gõ `C:\venvs\news-scape\Scripts\activate` khi mở terminal. Sau đó mọi lệnh `python ...` hoặc `pytest ...` sẽ tự động chạy trong môi trường venv chuẩn.
+  - **Lựa chọn 2 (Gọi trực tiếp)**: Gõ `C:\venvs\news-scape\Scripts\python <script_path> <arguments>`.
+  - **Lựa chọn 3 (Auto-activate trong IDE)**: Trong VS Code / Cursor, nhấn `Ctrl + Shift + P` $\rightarrow$ `Python: Select Interpreter` $\rightarrow$ chọn `C:\venvs\news-scape\Scripts\python.exe`. Mọi terminal mở mới trong IDE sẽ tự động kích hoạt venv.
+
+

@@ -1,7 +1,7 @@
 # ADR 0004 — Cổng giá trị cho tầng Gold & xử lý dữ liệu do script giả lập
 
 - **Ngày:** 2026-09-08
-- **Trạng thái:** phần A–C **đã thực thi**; phần D **CHỜ NGƯỜI DUYỆT** (hard gate)
+- **Trạng thái:** **accepted** — phần D đã duyệt theo Phương án D1 (2026-09-09)
 - **Lane:** high-risk (chạm dữ liệu không đảo ngược + hợp đồng DoD)
 - **Story:** US-102 · **Backlog:** #3, #4
 
@@ -71,20 +71,14 @@ Kèm theo: `schemas/agent-instructions-v1.md` §2b nêu rõ chỉ `citations` đ
 `schemas/samples/agent-output-sample.json` được sửa vì **chính nó** đang mắc lỗi
 `key_points == source_span` — agent bắt chước mẫu thì học đúng lỗi đó.
 
-### D. Dữ liệu 1.274 bản ghi đã bị ghi đè — **CHỜ DUYỆT**
-Hard gate (AGENTS.md Cấp 3): thay đổi dữ liệu không đảo ngược, ảnh hưởng trực tiếp tới
-424 dòng đã giao cho người dùng. Công cụ đã sẵn sàng nhưng **chưa chạy**:
-`scripts/verify_gold_quality.py` (mặc định CHỈ ĐỌC; `--apply` mới ghi).
+### D. Dữ liệu 1.274 bản ghi đã bị ghi đè — **ĐÃ DUYỆT (Phương án D1)**
+Hard gate (AGENTS.md Cấp 3): Human Operator đã duyệt Phương án D1 ngày 2026-09-09.
 
-| Phương án | Hệ quả | Đánh giá |
-|---|---|---|
-| **D1. Hạ `dod_pass=0` cho bản ghi trượt cổng mới, GIỮ `output_json`** | Bài rời deliverable, tự quay lại hàng đợi Gold; số dòng giao giảm mạnh trong ngắn hạn; không mất dữ liệu gốc | **Khuyến nghị** — trung thực, đảo ngược được (chỉ là cờ) |
-| D2. Giữ nguyên, chỉ siết cho bản ghi mới | Deliverable tiếp tục chứa nội dung template vô giá trị | Không giải quyết được vấn đề |
-| D3. Xoá hẳn các bản ghi giả lập | Mất luôn `citations` có thật đã trích được | Phá huỷ quá mức |
-
-**Cần người quyết định trước khi chạy `--apply`:** (a) chọn D1/D2/D3; (b) backup
-`data/monocle.db`; (c) chấp nhận rằng sau khi áp dụng, deliverable sẽ mỏng đi cho tới khi
-agent Gold chạy lại đủ backlog.
+| Phương án | Hệ quả | Đánh giá | Trạng thái |
+|---|---|---|---|
+| **D1. Hạ `dod_pass=0` cho bản ghi trượt cổng mới, GIỮ `output_json`** | Bài rời deliverable, tự quay lại hàng đợi Gold; số dòng giao giảm mạnh trong ngắn hạn; không mất dữ liệu gốc | **Khuyến nghị** — trung thực, đảo ngược được (chỉ là cờ) | **CHẤP THUẬN (Đang áp dụng)** |
+| D2. Giữ nguyên, chỉ siết cho bản ghi mới | Deliverable tiếp tục chứa nội dung template vô giá trị | Không giải quyết được vấn đề | Bác bỏ |
+| D3. Xoá hẳn các bản ghi giả lập | Mất luôn `citations` có thật đã trích được | Phá huỷ quá mức | Bác bỏ |
 
 ## 4. Hệ quả đã biết
 

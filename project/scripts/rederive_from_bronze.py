@@ -19,14 +19,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from loguru import logger
 
-from src.core.config import load_settings
+from src.core.config import load_settings, resolve_project_path
 from src.core.stdio import force_utf8_stdio
 from src.db.store import ArticleStore
 from src.pipeline.run import process_meta
 
 force_utf8_stdio()
 
-RAW_DIR = Path("data/raw_html")
+RAW_DIR = resolve_project_path("data/raw_html")
 
 
 def iter_meta(domain: str | None, date: str | None):
@@ -44,23 +44,39 @@ def main(argv: list[str]) -> int:
     db_path = load_settings().get("database", {}).get("path", "data/monocle.db")
     store = ArticleStore(db_path=db_path)
 
-    n = ok = held = 0
+    logger.info("Scanning Bronze meta files (domain={}, date={})...", domain or "all", date or "all")
+    meta_files = list(iter_meta(domain, date))
+    total = len(meta_files)
+    logger.info("Found {} meta files. Starting re-derive processing...", total)
+
+    ok = held = failed = 0
     by_state: dict[str, int] = {}
-    for meta_path in iter_meta(domain, date):
-        n += 1
+    for i, meta_path in enumerate(meta_files, 1):
         try:
             res = process_meta(store, str(meta_path))
         except Exception as e:  # noqa: BLE001
             logger.error("process failed {}: {}", meta_path, e)
+            failed += 1
+            by_state["exception"] = by_state.get("exception", 0) + 1
             continue
-        by_state[res["state"]] = by_state.get(res["state"], 0) + 1
-        if res["ok"]:
+
+        state = res.get("state", "failed" if not res.get("ok") else "unknown")
+        by_state[state] = by_state.get(state, 0) + 1
+        if res.get("ok"):
             ok += 1
+        else:
+            failed += 1
         if res.get("enqueue_status") == "held":
             held += 1
-    logger.info("re-derive done: {} processed, {} schema-ok, {} held; states={}",
-                n, ok, held, by_state)
-    print(f"processed={n} schema_ok={ok} held={held} states={by_state}")
+
+        if i % 50 == 0 or i == total:
+            pct = (i / total * 100) if total else 100.0
+            logger.info("Progress: [{}/{}] ({:.1f}%) | ok={} held={} failed={} | latest: {}",
+                        i, total, pct, ok, held, failed, state)
+
+    logger.info("re-derive done: {} processed, {} schema-ok, {} held, {} failed; states={}",
+                total, ok, held, failed, by_state)
+    print(f"processed={total} schema_ok={ok} held={held} failed={failed} states={by_state}")
     return 0
 
 

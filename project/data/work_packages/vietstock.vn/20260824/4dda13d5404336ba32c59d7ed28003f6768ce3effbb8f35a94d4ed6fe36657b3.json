@@ -6,6 +6,8 @@
   "published_at": "2026-08-24T10:35:00+07:00",
   "raw_html_path": "data/raw_html\\vietstock.vn\\20260824\\4dda13d5404336ba32c59d7ed28003f6768ce3effbb8f35a94d4ed6fe36657b3.html",
   "raw_sha256": "862857b6f4027c813a02d5493a60c9d1218f9d410237a28ee4470a8f1e1e9c15",
+  "title": "Tuần 17-21/08: NHNN tiếp tục rút ròng hơn 7,800 tỷ",
+  "title_verified": true,
   "cleaned_text": "Tuần 17-21/08: NHNN tiếp tục rút ròng hơn 7,800 tỷ\nTuần 17-21/08: NHNN tiếp tục rút ròng hơn 7,800 tỷ\nTrong tuần thứ 3 của tháng 8 (17-21/08), Ngân hàng Nhà nước (NHNN) tiếp tục rút ròng 7,839 tỷ đồng.\nNHNN bơm mới 27,506 tỷ đồng qua kênh OMO với kỳ hạn từ 7-16 ngày và lãi suất 4.5%/năm. Trong khi đó, khối lượng đáo hạn trên kênh cho vay cầm cố giấy tờ có giá đạt 35,345 tỷ đồng. Qua đó, nhà điều hành hút ròng 7,839 tỷ đồng, kéo lượng OMO lưu hành trong hệ thống còn khoảng 20,021 tỷ đồng.\n| Nguồn: ViestockFinance | \nCập nhật đến ngày 20/08, lãi suất kỳ hạn qua đêm giảm xuống 3.01%/năm; kỳ hạn 1 tuần là 3.73%/năm; kỳ hạn 2 tuần là 5.64%/năm; kỳ hạn 1 tháng là 6.93%/năm; kỳ hạn 3 tháng là 7.56%/năm; kỳ hạn 6 tháng là 8.44%/năm; kỳ hạn 9 tháng là 8.8%/năm.\n| Diễn biến lãi suất liên ngân hàng từ đầu năm đến 20/08 |  |  | \nUSD quốc tế suy yếu\nKết phiên 21/08, USD-Index (DXY) ghi nhận mức 98.75 điểm, giảm 0.88 điểm so với mức cuối tuần trước là 99.63 điểm.\n| Diễn biến USD-Index từ đầu năm đến nay |  |  | \n| Nguồn: VietstockFinance |  |  | \nSự suy yếu của USD trong tuần qua chủ yếu xuất phát từ sức ép tăng giá của 2 đồng tiền chủ chốt lớn là Euro (EUR) và Bảng Anh (GBP) khi thị trường kỳ vọng các ngân hàng trung ương châu Âu sẽ tiếp tục duy trì chính sách thắt chặt tiền tệ. Tại khu vực đồng tiền chung, đồng Euro nhận được lực đẩy do lạm phát có dấu hiệu dai dẳng, bắt nguồn từ việc giá khí đốt tự nhiên tăng vọt bởi gián đoạn nguồn cung từ Trung Đông. Áp lực này càng được hỗ trợ qua dữ liệu kinh tế của Đức khi chỉ số giá sản xuất (PPI) tháng 7 bất ngờ tăng tới 3% so với cùng kỳ, vượt xa mức dự báo 2.7% của thị trường. Tình trạng chi phí năng lượng và giá sản xuất leo thang đã củng cố thêm khả năng Ngân hàng Trung ương châu Âu (ECB) buộc phải giữ vững lập trường \"diều hâu\" và tiếp tục nâng lãi suất trong năm nay.\nSong song đó, Bảng Anh cũng duy trì được sự ổn định nhờ định hướng kiên định của Ngân hàng Trung ương Anh (BoE). Mặc dù dự báo lạm phát toàn phần có thể đạt 3.2% vào quý 4 do sự gia tăng của các loại giá và hóa đơn do Nhà nước quản lý, BoE không coi đây là diễn biến bất ngờ làm thay đổi chính sách. Thay vào đó, cơ quan này vẫn tập trung vào các áp lực lạm phát cốt lõi như đà tăng trưởng tiền lương và lạm phát dịch vụ, qua đó giữ nguyên lộ trình duy trì lãi suất ở mức cao.\nThêm vào đó, bối cảnh lạm phát toàn cầu tiếp tục được bồi đắp bởi thị trường năng lượng khi giá dầu WTI liên tục neo cao quanh mức 86 USD/thùng. Đây là hệ quả từ những căng thẳng hàng hải giữa Mỹ và Iran tại tuyến vận tải Eo biển Hormuz. Chi phí năng lượng duy trì ở mức đỉnh không chỉ đe dọa chuỗi cung ứng toàn cầu mà còn khiến các ngân hàng trung ương lớn ngoài Mỹ có thêm lý do để không sớm nới lỏng chính sách.\n- 09:33 24/08/2026",
   "structure": {
     "headings": [
@@ -3220,7 +3222,7 @@
     }
   ],
   "capture_status": "ok",
-  "change_state": "NEW",
+  "change_state": "UNCHANGED",
   "provenance": {
     "fetch_ts": "2026-08-24T10:48:37+07:00",
     "render_method": "requests",

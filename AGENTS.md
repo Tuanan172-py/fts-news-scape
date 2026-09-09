@@ -32,14 +32,22 @@ Read these before inventing context; do NOT create a new knowledge folder:
 
 ## 3. Project build / run (the product lives in `project/`)
 
+Môi trường Python được cách ly ngoài OneDrive tại `C:\venvs\news-scape`. Tuyệt đối không tạo `.venv` nội bộ.
+
 ```powershell
+# Kích hoạt môi trường (chỉ cần 1 lần / phiên terminal):
+& "C:\venvs\news-scape\Scripts\Activate.ps1"
+
+# Hoặc gọi trực tiếp Python:
+# & "C:\venvs\news-scape\Scripts\python.exe" <script_path>
+
 cd project
-python -m venv .venv; .venv\Scripts\pip install -r requirements.txt
 python -m src.morninger            # daytime pipeline (capture + re-derive Silver + drift)
 python scripts/run_once.py         # one cycle
 python -m pytest tests/ -v         # tests
 python -m src.monitor.health       # health check
 ```
+
 
 ## 4. Harness map (read as the phase needs — bounded context)
 

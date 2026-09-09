@@ -3,9 +3,11 @@
   "article_id": "0ef1cdfd4a88857418d8b23ec0a145d388ac3984584eda7edc160916e7354687",
   "source_url": "https://vneconomy.vn/gap-rut-hoan-thien-truong-noi-tru-vung-bien-san-sang-don-hoc-sinh-nam-hoc-moi.htm",
   "domain": "vneconomy.vn",
-  "published_at": null,
+  "published_at": "2026-08-23T11:41:11+07:00",
   "raw_html_path": "data/raw_html\\vneconomy.vn\\20260824\\0ef1cdfd4a88857418d8b23ec0a145d388ac3984584eda7edc160916e7354687.html",
   "raw_sha256": "1bed09dae9dd901f9762e0a5b98cf6626e0fda443c130753650bc8261bba1681",
+  "title": "Gấp rút hoàn thiện trường nội trú vùng biên, sẵn sàng đón học sinh năm học mới",
+  "title_verified": true,
   "cleaned_text": "Theo Sở Xây dựng Thanh Hóa, toàn tỉnh đang triển khai 6 dự án trường nội trú liên cấp. Trong đó, các công trình tại các xã Na Mèo, Tam Lư và Tam Thanh đang được tập trung nhân lực, phương tiện để đẩy nhanh tiến độ.\nTại công trường Trường Nội trú liên cấp Tiểu học và Trung học cơ sở Tam Thanh, không khí thi công diễn ra khẩn trương. Hàng trăm công nhân được chia thành nhiều mũi, đồng loạt triển khai các hạng mục từ phòng học, khu nội trú đến nhà ăn, nhà đa năng và các công trình phụ trợ.\nTrung tá Bùi Quốc Quân, Chỉ huy trưởng công trường Trường Nội trú liên cấp Tiểu học và Trung học cơ sở Tam Thanh, cho biết đơn vị đang tổ chức 4 mũi thi công, với khoảng 300 - 320 công nhân và 15 cán bộ kỹ thuật.\nĐể bảo đảm tiến độ, lực lượng thi công được tổ chức làm việc theo phương án “3 ca, 4 kíp”, huy động tối đa nhân lực, tranh thủ từng ngày, từng giờ.\nThời tiết khu vực miền núi diễn biến thất thường cũng tạo thêm áp lực cho công tác thi công. Đơn vị phải chủ động tập kết vật liệu, bố trí nhân lực và thay đổi phương án thi công theo điều kiện thực tế. Khi trời mưa, công nhân chuyển sang hoàn thiện các hạng mục bên trong; khi thời tiết thuận lợi, các phần việc ngoài trời như xoa trát, sơn tường, ốp lát được triển khai ngay.\nĐến ngày 20/8, khối lượng thi công toàn công trình đã đạt hơn 90%. Khu lớp học và nhà hành chính, quản trị dự kiến được bàn giao vào ngày 23/8. Khu nhà nội trú đạt hơn 80%, trong khi nhà ăn đạt khoảng 90%.\nNăm học 2026-2027, Trường Nội trú liên cấp Tiểu học và Trung học cơ sở Tam Thanh dự kiến có khoảng 27 lớp với 686 học sinh. Vì vậy, việc hoàn thiện khu nội trú, nhà ăn và các hạng mục phục vụ sinh hoạt đang được ưu tiên, nhằm bảo đảm điều kiện học tập, ăn ở cho học sinh ngay từ đầu năm học.\nDự án có tổng mức đầu tư gần 147 tỷ đồng. Công trình gồm nhà lớp học bộ môn 4 tầng, nhà lớp học Trung học cơ sở 3 tầng, nhà hiệu bộ 4 tầng, nhà đa năng, khu nội trú và bán trú 4 tầng, nhà công vụ và nhà ăn 3 tầng, cùng nhiều hạng mục hạ tầng kỹ thuật, phụ trợ.\nDự án cũng cải tạo nhà hiệu bộ hiện có thành thư viện, cải tạo nhà lớp học tiểu học 3 tầng với 15 phòng học và đầu tư đồng bộ thiết bị phục vụ việc học tập, sinh hoạt của học sinh cũng như công tác giảng dạy của giáo viên.\nCùng với Tam Thanh, các công trình trường nội trú liên cấp tại Na Mèo và Tam Lư cũng đang được đẩy nhanh tiến độ.\nKhi hoàn thành, các trường nội trú liên cấp sẽ tạo thêm không gian học tập, ăn ở và sinh hoạt khang trang cho học sinh vùng biên. Đặc biệt, với những học sinh ở các bản làng xa trung tâm, việc có trường học và khu nội trú ngay tại địa bàn sẽ giúp giảm khó khăn trong đi lại, tạo điều kiện để các em yên tâm đến trường và duy trì việc học.\nKhông chỉ giải quyết nhu cầu về cơ sở vật chất, các công trình còn được kỳ vọng góp phần nâng cao chất lượng giáo dục ở khu vực miền núi, từng bước thu hẹp khoảng cách về điều kiện học tập giữa vùng biên và khu vực đồng bằng.",
   "structure": {
     "headings": [
@@ -2484,7 +2486,7 @@
     }
   ],
   "capture_status": "ok",
-  "change_state": "NEW",
+  "change_state": "UNCHANGED",
   "provenance": {
     "fetch_ts": "2026-08-24T09:06:55+07:00",
     "render_method": "requests",

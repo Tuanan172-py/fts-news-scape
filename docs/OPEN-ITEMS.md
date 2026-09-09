@@ -10,23 +10,17 @@
 
 ## A. CHẶN — cần người duyệt trước khi chạm dữ liệu thật
 
-### A1. ADR 0003 còn ở `proposed`
+### A1. [ĐÃ DUYỆT 2026-09-09] ADR 0003 chuyển sang `accepted`
 
-`docs/decisions/0003-code-first-l1-delivery.md` — cho phép kết quả tra danh mục tất định
-(`code_first`) ghi vào `l1_outputs` và đi qua cổng giao hàng.
+`docs/decisions/0003-code-first-l1-delivery.md` — đã chuyển trạng thái sang `accepted`. Cơ chế
+vật chất hoá kết quả tra danh mục tất định (`code_first`) vào `l1_outputs` đã được phê duyệt.
 
-Hướng đã chốt trong phiên, nhưng hard gate của `AGENTS.md §0` đòi trạng thái `accepted` được
-ghi lại. **Việc cần làm:** sửa dòng `Status` → `accepted`.
-
-### A2. ADR 0004 phần D còn `blocked` — vấn đề dữ liệu lớn nhất đang treo
+### A2. [ĐÃ DUYỆT & THỰC THI 2026-09-09] ADR 0004 phần D (Phương án D1)
 
 `docs/decisions/0004-gold-value-gate-va-du-lieu-gia-lap.md`.
-
-**1.117/1.274 bản ghi Gold là sản phẩm của regex nhưng mang nhãn LLM** (`agent_provider` khai
-là model thật), và tất cả đều `dod_pass=1`. Nguồn gây ra đã bị chặn
-(`scripts/maintenance/repair_truncated_outputs.py` đã xoá; `tests/test_no_agent_emulation.py`
-khoá bất biến), nhưng **dữ liệu cũ trong DB chưa xử lý**. Thao tác không đảo ngược nên cần
-người duyệt.
+Đã phê duyệt Phương án D1 và thực thi `scripts/verify_gold_quality.py --apply` trên database:
+toàn bộ 1.274 bản ghi Gold giả lập/template đã được hạ `dod_pass=0` (giữ nguyên `output_json`),
+rút hoàn toàn khỏi deliverable người dùng và quay về hàng đợi Gold. Xem D14.
 
 ### A3. Chưa có gì chạy trên DB vận hành
 
@@ -100,15 +94,11 @@ SELECT COUNT(*) FROM l1_tasks t JOIN articles a ON a.url_title_hash = t.article_
 WHERE TRIM(t.title) <> TRIM(a.title);     -- kỳ vọng: 0 (trước đó: 122/1.320)
 ```
 
-### B5. `entities.csv` / `entities.xlsx` vẫn là bản 24/08
+### B5. [ĐÃ THỰC THI 2026-09-09] Sinh lại `entities.csv` / `entities.xlsx`
 
-`refresh_aliases.py` chỉ cập nhật `entities.json` — bản registry pipeline thực sự nạp, nên hành
-vi đã đúng. Hai file tra cứu cho người chỉ sinh lại được bằng `build_entities.py`, mà nó đòi
-`FRA - Data` đã tải về máy. Chạy khi OneDrive hoạt động:
-
-```powershell
-.venv\Scripts\python scripts\build_entities.py
-```
+Đã sửa lỗi thiếu đường dẫn `sys.path` trong `scripts/build_entities.py` và chạy thành công:
+nạp từ `FRA - Data`, đồng bộ toàn bộ alias chuyên gia từ `config/`, sinh mới 2.072 thực thể cho cả
+`entities.json`, `entities.csv`, `entities.xlsx`, `taxonomy.json` và `stats.json`. Xem D15.
 
 ---
 
@@ -170,6 +160,9 @@ Chưa điều tra.
 | D10 | Silver lấy `h1` = header trang hồ sơ doanh nghiệp làm tiêu đề (122/1.320 bài), làm mất cả mã cổ phiếu | Giải tiêu đề bằng đối chiếu `sha256(url+title)` với `url_title_hash`; **chờ kiểm chứng §B4** |
 | D11 | `process_l1_pipeline.py` là matcher thứ hai đang trôi khác, `build_l1_output` đóng dấu `agent_provider="gemini"` + timestamp cố định | Rút còn lớp vỏ uỷ quyền; provenance khai đúng `code_first`/`deterministic` |
 | D12 | ~~2.677/7.219 bài `content_text` mỏng~~ — **xếp nhầm, không phải lỗi pipeline** | Mỏng là `articles.content_text` (đường RSS của scraper). `cleaned_text` của Silver — thứ L1/Gold thực sự đọc — thì lành: mẫu 400 gói có 374 bài ≥1.000 ký tự, cafef **0/137** mỏng |
+| D13 | ADR 0003 còn ở `proposed` | Đã duyệt sang `accepted` ngày 2026-09-09; code-first sẵn sàng cho pipeline |
+| D14 | 1.117/1.274 bản ghi Gold là sản phẩm của regex nhưng mang nhãn LLM (ADR 0004 D) | Đã duyệt Phương án D1; `verify_gold_quality.py --apply` đã hạ `dod_pass=1`: **1.274 → 0 (0.0%)**, deliverable sạch template |
+| D15 | `build_entities.py` lỗi thiếu `sys.path` và thiếu `pyarrow`; `entities.csv/xlsx` cũ | Đã sửa `sys.path`, cài `pyarrow`; sinh mới 2.072 thực thể cho cả master json, csv, xlsx, taxonomy |
 
 **Kiểm tay sau khi sửa:** 25 dòng ngẫu nhiên của AnPT → **0/29 mã không có căn cứ trong tiêu đề**.
 **pytest:** 378 passed.
