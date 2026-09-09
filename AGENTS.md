@@ -57,6 +57,7 @@ python -m src.monitor.health       # health check
 | [docs/IMPROVEMENT_PROTOCOL.md](docs/IMPROVEMENT_PROTOCOL.md) | Closed-loop propose & outcome measurement. |
 | [docs/TEST_MATRIX.md](docs/TEST_MATRIX.md) | Proof vocabulary & live proof table query. |
 | [docs/SESSION-LATEST.md](docs/SESSION-LATEST.md) | "Where am I, what next" — read at start, overwrite at end. |
+| [docs/OPEN-ITEMS.md](docs/OPEN-ITEMS.md) | Việc tồn đọng tuyến L1 → giao hàng: mục CHẶN, bước triển khai, quyết định treo. |
 
 ## 5. Harness CLI (Durable Layer H2-H5)
 
