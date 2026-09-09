@@ -20,6 +20,25 @@ Quy tắc bất biến cho mọi thao tác I/O (File & Database) trong hệ th�
 - **Tách biệt Môi trường Phân tích của User**:
   - Khi User hoặc công cụ BI (DB Browser for SQLite, DBeaver) cần đọc/soi database, BẮT BUỘC sử dụng snapshot `data/monocle_review.db` (tạo qua `src/db/snapshot.py` / `scripts/db_snapshot.py`) để không mở transaction treo trên file DB chính.
 
-## 3. Cách ly Môi trường OneDrive
-- Đối với môi trường có client OneDrive sync đang chạy:
-  - Cho phép override đường dẫn runtime data ra ngoài OneDrive bằng biến môi trường `MONOCLE_DATA_DIR` hoặc `MONOCLE_DB_PATH`.
+## 3. Cách ly Môi trường OneDrive & SharePoint (Hybrid Workspace Invariants)
+
+Đối với các dự án có thư mục làm việc (working tree) nằm trong vùng đồng bộ hai chiều của OneDrive / SharePoint:
+
+- **Bất biến 1 — Tách biệt Git Database (`--separate-git-dir`)**:
+  - TUYỆT ĐỐI KHÔNG để thư mục `.git` thực tế trong vùng đồng bộ OneDrive/SharePoint.
+  - BẮT BUỘC khởi tạo hoặc di dời Git database ra ổ đĩa cục bộ (ví dụ: `C:\gitdirs\<repo>.git`).
+  - Trong thư mục SharePoint, `.git` CHỈ ĐƯỢC PHÉP là 1 file text trỏ đường dẫn (`gitdir: <local_gitdir_path>`).
+
+- **Bất biến 2 — Cách ly Virtual Environment (`.venv`)**:
+  - TUYỆT ĐỐI KHÔNG tạo hoặc lưu trữ `.venv` bên trong thư mục đồng bộ SharePoint/OneDrive.
+  - BẮT BUỘC đặt virtual environment tại thư mục chuyên dụng trên máy cục bộ (ví dụ: `C:\venvs\<project_name>`).
+  - File `.gitignore` của dự án BẮT BUỘC phải chứa `.venv/`, `.pytest_cache/`, `__pycache__/`.
+
+- **Bất biến 3 — Tách biệt Database Runtime (`.db`, `.db-wal`, `.db-shm`)**:
+  - Không cho phép các tiến trình ghi dồn dập vào file SQLite nằm trên OneDrive đang bật sync.
+  - BẮT BUỘC cấu hình biến môi trường (ví dụ: `MONOCLE_DB_PATH`) trỏ file DB chính ra ổ cục bộ (`C:\data\<project>\...`).
+  - Chia sẻ dữ liệu cho User/BI trên SharePoint chỉ thông qua file snapshot tĩnh (ví dụ: `monocle_review.db`) hoặc file xuất bản (`final.csv`, reports).
+
+- **Bất biến 4 — Ghim trạng thái tệp (Files On-Demand Pinning)**:
+  - BẮT BUỘC bật chế độ *"Always keep on this device"* (`attrib -U +P /s /d "<repo>\*"`) để tránh việc OneDrive tự động dehydrate giải phóng dung lượng làm mất file mã nguồn khi biên dịch/thực thi.
+

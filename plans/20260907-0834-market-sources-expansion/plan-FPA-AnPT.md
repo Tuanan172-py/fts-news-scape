@@ -98,6 +98,7 @@ phases 03, 04 and 05.
 | 05 | [05-onedrive-data-loss-recovery.md](reports/05-onedrive-data-loss-recovery.md) | Su co OneDrive xoa file + khoi phuc tu Bronze |
 | 06 | [06-plan-compliance-audit.md](reports/06-plan-compliance-audit.md) | Ra soat may: thuc te co khop ke hoach — 96/99 PASS |
 | 07 | [07-implementation-changelog.md](reports/07-implementation-changelog.md) | Changelog day du — **moc doi chieu phien ban** |
+| 08 | [08-full-session-changelog.md](reports/08-full-session-changelog.md) | Toan bo thay doi phien 09-07/09-08: hop nhat 2 may, OKF, quy trinh 2 may, va 2 cho da sua sai |
 
 > ⚠️ **Ghi chu hop nhat 2026-09-08:** file nay + 5 file `phase-XX` + `research/` + `scout/` la
 > **ban goc**, khoi phuc tu may song song. Code/config/test/fixture lay **ban da verify** cua may
