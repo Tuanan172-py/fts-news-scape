@@ -125,7 +125,7 @@ select article_id,substr(dod_reasons,1,120) reasons from agent_outputs where dod
 
 ### 3.8 Sẵn sàng ra output cho user? (gate tối thiểu L1)
 ```sql
--- số bài đạt gate export, tách theo đã/chưa có Gold (cột gold_status trong final.csv)
+-- số bài đạt gate export, tách theo đã/chưa có Gold (cột gold_status trong <date>.xlsx)
 select case when ag.article_id is null then 'L1_ONLY' else 'GOLD' end gold_status, count(*) n
 from articles a
 join l1_outputs l1 on l1.article_id=a.url_title_hash and l1.dod_pass=1
@@ -135,7 +135,7 @@ group by 1;
 ```
 > Lưu ý: `l1_outputs`/`agent_outputs` có thể chứa `article_id` KHÔNG tồn tại trong `articles`
 > (work_item đã tạo nhưng bài chưa/không được ghi vào `articles`). Những bài đó không bao giờ
-> vào được `final.csv`. Đếm rò rỉ:
+> vào được `<date>.xlsx`. Đếm rò rỉ:
 ```sql
 select count(*) from l1_outputs l1 where l1.dod_pass=1
   and not exists (select 1 from articles a where a.url_title_hash=l1.article_id);
@@ -182,7 +182,7 @@ select source_domain,count(*) n from articles where fetched_at>=datetime('now','
 | **SELECTOR_BROKEN/TEMPLATE_DRIFT** | §3.4 | sửa selector domain rồi `python scripts/rederive_from_bronze.py <domain>` |
 | **work_items held nhiều** | §3.5 | thường do change_state; sửa capture rồi rederive |
 | **agent/L1 dod_pass=0 nhiều** | §3.6/§3.7 (dod_reasons) | sửa output theo reason (xem agent-prompting-guide §6) |
-| **final.csv rỗng dù có tin** | §3.8 (gated=0) | thiếu 1 lớp → chạy L1/agent ingest cho đủ |
+| **<date>.xlsx rỗng dù có tin** | §3.8 (gated=0) | thiếu 1 lớp → chạy L1/agent ingest cho đủ |
 | **DB locked / busy** | (lỗi khi ghi) | có tiến trình đang ghi (morninger); đọc thì mở `mode=ro` (dbq.py mặc định) |
 
 ---

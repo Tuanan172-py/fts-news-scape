@@ -1,0 +1,93 @@
+# _context_guards.yaml — xử lý alias bị TRÙNG NGHĨA với từ thông dụng.
+#
+# Vì sao cần: build_entities._industry() luôn ghép CHÍNH TÊN NGÀNH vào aliases, không bỏ được
+# từ industries.yaml. Nhiều tên ngành tiếng Việt là từ đơn trùng với từ thông dụng khác:
+# "Nước" ≡ mực nước / nước lũ / trong nước / nhà nước; "Điện" ≡ diễn biến / tàu điện / điện
+# thoại; "Giấy" ≡ giấy phép; "Quỹ" ≡ ký quỹ / cổ phiếu quỹ. Bỏ dấu không phân biệt được.
+#
+# HAI cơ chế, chọn theo bản chất của thực thể — đo trên 7.420 tiêu đề thật trong monocle.db:
+#
+#   drop_bare: true   Bỏ alias MỘT TỪ (chính là tên ngành) khỏi index; chỉ các cụm mang đúng
+#                     intent trong industries.yaml mới tính ("ngành nước", "cấp nước", "điện
+#                     lực", "điện mặt trời", "quỹ đầu tư"...). Dùng khi từ trần gần như KHÔNG
+#                     BAO GIỜ chỉ ngành: "nước" xuất hiện 263 lần, hầu hết là trong/ngoài
+#                     nước, nhà nước, mực nước. Danh sách CHO PHÉP nên không bao giờ hụt.
+#
+#   block_in: [...]   Giữ alias trần, chỉ chặn khi nằm trong các cụm liệt kê. Dùng khi từ trần
+#                     THƯỜNG LÀ đúng và tập nhiễu đóng: "Mỹ" đúng 100/109 lần, nhiễu chỉ gồm
+#                     thẩm mỹ / mỹ phẩm / mỹ thuật / Mỹ Đình.
+#
+# Sửa file này xong phải chạy: python scripts/maintenance/refresh_aliases.py
+
+IND_GICS3:NUOC:
+  drop_bare: true
+  block_in:
+    - "trong nước"        # 'giá vàng trong nước' — nội địa, không phải ngành cấp nước
+    - "ngoài nước"
+    - "nước ngoài"        # 'tỷ lệ sở hữu nước ngoài'
+    - "nhà nước"          # 'Ngân hàng Nhà nước'
+    - "chủ tịch nước"
+    - "đất nước"
+    - "cả nước"
+    - "các nước"
+    - "nhiều nước"
+    - "nước ta"
+    - "nước bạn"
+    - "nước lớn"
+    - "nước phát triển"
+    - "nước đang phát triển"
+    - "nước sở tại"
+
+IND_GICS2:QUY: &quy_guard
+  drop_bare: true
+  block_in:
+    - "ký quỹ"            # giao dịch ký quỹ (margin), không phải ngành quỹ
+    - "cổ phiếu quỹ"      # treasury share
+    - "quỹ đất"
+    - "quỹ lương"
+    - "quỹ thời gian"
+    - "quỹ bảo hiểm xã hội"
+    - "quỹ khen thưởng"
+    - "quỹ phúc lợi"
+    - "quỹ dự phòng"
+IND_GICS3:QUY: *quy_guard
+
+IND_GICS3:DIEN:
+  drop_bare: true
+  block_in:
+    - "diễn biến"
+    - "diễn đàn"
+    - "diễn ra"
+    - "diễn giả"
+    - "biểu diễn"
+    - "Điện Biên"         # tỉnh
+    - "điện thoại"
+    - "điện tử"
+    - "điện máy"          # 'Điện Máy Xanh' — bán lẻ, không phải ngành điện
+    - "điện ảnh"
+    - "bưu điện"
+    - "điện toán"
+    - "điện lạnh"
+
+IND_GICS3:GIAY:
+  drop_bare: true
+  block_in:
+    - "giấy phép"
+    - "giấy chứng nhận"
+    - "giấy uỷ quyền"
+    - "giấy ủy quyền"
+    - "giấy tờ"
+    - "giấy đăng ký"
+    - "trên giấy"
+
+MACRO_GEO:MY:
+  block_in:
+    - "thẩm mỹ"
+    - "mỹ phẩm"
+    - "mỹ thuật"
+    - "mỹ nghệ"
+    - "mỹ quan"
+    - "hoàn mỹ"
+    - "Mỹ Đình"           # địa danh Hà Nội
+    - "Mỹ Tho"
+    - "Mỹ Lan"

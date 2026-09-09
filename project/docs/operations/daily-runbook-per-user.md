@@ -1,4 +1,4 @@
-# Runbook vận hành từng bước — chu kỳ per-user (input → final.csv)
+# Runbook vận hành từng bước — chu kỳ per-user (input → <date>.xlsx)
 
 Cập nhật: 2026-08-19 · Đối tượng: người vận hành chạy tay/bán tự động chuỗi agent per-user.
 Bổ trợ cho: [13-per-user-output-workflow](../design/13-per-user-output-workflow.md) (thiết kế),
@@ -7,13 +7,13 @@ Bổ trợ cho: [13-per-user-output-workflow](../design/13-per-user-output-workf
 **Đọc trước:** cơ chế là **hàng đợi + trạng thái**, KHÔNG đồng bộ theo giờ. Mỗi bài tự đi qua state
 machine trong `data/monocle.db`; bạn hỏi tiến độ bằng `db_status.py`, không canh đồng hồ. Mọi bước
 **idempotent** — chạy trùng vô hại. `write_user_output` gate **tối thiểu L1**: chỉ cần
-`l1_outputs.dod_pass=1` là vào `final.csv` (routing dựa entity của L1). `agent_outputs.dod_pass=1`
+`l1_outputs.dod_pass=1` là vào `<date>.xlsx` (routing dựa entity của L1). `agent_outputs.dod_pass=1`
 là enrichment TÙY CHỌN — thiếu thì các trường Gold để trống và `gold_status=L1_ONLY`; vòng sau
 Gold về là bài tự được ghi đè đầy đủ (rewrite toàn tập nên không nhân đôi).
 
 **Ưu tiên khi rút backlog:** `python scripts/l1_route.py --only gold-ready --all` phát packet L1
 cho đúng nhóm bài **đã có Gold đạt DoD nhưng thiếu L1**. Nhóm này Gold đã trả tiền rồi mà vẫn không
-giao được (định tuyến cần entity của L1) — xong L1 là vào `final.csv` ngay, `gold_status=GOLD`.
+giao được (định tuyến cần entity của L1) — xong L1 là vào `<date>.xlsx` ngay, `gold_status=GOLD`.
 Ngược lại `scripts/agent_export.py` mặc định `--require-l1`: không bốc bài chưa có L1, khỏi đốt
 token Gold cho bài không định tuyến được (dùng `--no-require-l1` nếu cố ý rút backlog cũ).
 
@@ -38,7 +38,7 @@ Quy ước: mọi lệnh chạy tại thư mục `project/`, dùng `python` (sau
 [6] ⟨AGENT bóc tách⟩            → *.json vào       data/agent_outputs/        ← handoff #2
 [7] agent_ingest data/agent_outputs                → agent_outputs.dod_pass
     ─────────────────── GATE ───────────────────
-    write_user_output --date today  → users/output/<user>/<ngày>/final.csv
+    write_user_output --date today  → users/output/<user>/<ngày>.xlsx
 ```
 
 Hai ⟨AGENT⟩ là điểm DUY NHẤT cần LLM ngoài (xem §3). Còn lại là script tất định, cron được.
@@ -51,8 +51,8 @@ Hai ⟨AGENT⟩ là điểm DUY NHẤT cần LLM ngoài (xem §3). Còn lại l�
 | ------------------------------------------- | --------------------------------------------------------------------------------------------------------- | -------------- |
 | venv + deps                                 | xem[deployment §1](deployment.md)                                                                         | 1 lần         |
 | Bronze→Silver→work_packages có dữ liệu | `.venv\Scripts\python.exe -m src.morninger` (chạy nền)                                                | luôn bật     |
-| Tạo user mới                              | `.venv\Scripts\python.exe scripts\make_user_template.py` → điền `users/input/<name>/entities.xlsx` | khi thêm user |
-| Bật/tắt user                              | sửa`users/input/manifest.yaml` (`AnPT: true`)                                                        | khi cần       |
+| Tạo user mới                              | `.venv\Scripts\python.exe scripts\make_user_template.py` → copy `users/subscriptions/_template_news.csv` thành `<name>_news.csv` rồi điền | khi thêm user |
+| Bật/tắt user                              | sửa `users/subscriptions/manifest.yaml` (`AnPT: true`)                                                        | khi cần       |
 
 Kiểm tra đã có `work_items` chờ xử lý (nếu trống thì chưa scrape/derive xong):
 
@@ -128,9 +128,9 @@ Xem §3 hoặc dùng Skill `agent-file-processor`. Đầu ra: `data/agent_output
 .venv\Scripts\python.exe scripts\write_user_output.py --date all
 ```
 
-Kết quả mỗi user: `users/output/<name>/<ngày>/{L1.csv, agent.csv, final.csv}` + `_checkpoint.json`.
-Master audit: `users/output/_master/<ngày>/final.csv` (toàn bộ bài đạt 2 lớp, không phụ thuộc user subscription).
-`final.csv` = deliverable đã qua cổng. Bài thiếu 1 lớp / không ai đăng ký entity → không xuất (đúng thiết kế).
+Kết quả mỗi user: `users/output/<name>/<ngày>.xlsx` + `_checkpoint.json`.
+Master audit: `users/output/_master/<ngày>.csv` (toàn bộ bài đạt 2 lớp, không phụ thuộc user subscription).
+`<date>.xlsx` = deliverable đã qua cổng. Bài thiếu 1 lớp / không ai đăng ký entity → không xuất (đúng thiết kế).
 
 ---
 
@@ -194,7 +194,7 @@ Phiếu dán sẵn: [agent-runner-prompt.md](agent-runner-prompt.md).
 #   mục 7 = work_items | mục 8 = l1_tasks + l1_outputs.dod_pass | mục 9 = agent_outputs.dod_pass
 ```
 
-"Lô xong" = mục 8 & 9 có `dod_pass=1` phủ hết bài cần → cổng mới ghi được `final.csv`.
+"Lô xong" = mục 8 & 9 có `dod_pass=1` phủ hết bài cần → cổng mới ghi được `<date>.xlsx`.
 
 ### Xem bài trượt DoD để sửa trúng
 

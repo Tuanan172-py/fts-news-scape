@@ -16,6 +16,20 @@ from src.core.models import now_vn_iso
 
 _HELD_STATES = {"SELECTOR_BROKEN", "TEMPLATE_DRIFT"}
 
+# Item o 'claimed' qua lau = worker da chet giua chung (thoat truoc khi mark_done/mark_failed).
+# Khong co buoc nay thi claim() — vi chi doc status='pending' — se KHONG bao gio thay lai chung:
+# do la ro ri vinh vien. Do tren monocle.db 2026-09-07: 304 item ket, tang deu theo ngay
+# (exporter: 2, 20, 32, 20, 50, 180). Xem scripts/l1_backlog.py.
+_CLAIM_TIMEOUT_MIN = 120
+
+
+def _iso_minus_minutes(minutes: int) -> str:
+    """Moc thoi gian ISO (gio VN) lui `minutes` phut — so sanh chuoi voi claimed_at."""
+    from datetime import timedelta
+    from src.core.models import VN_TZ
+    from datetime import datetime
+    return (datetime.now(VN_TZ) - timedelta(minutes=minutes)).isoformat(timespec="seconds")
+
 
 class Catalog:
     def __init__(self, store):
@@ -41,6 +55,27 @@ class Catalog:
         finally:
             conn.close()
 
+    def reclaim_stale(self, timeout_minutes: int = _CLAIM_TIMEOUT_MIN) -> int:
+        """Tra cac item `claimed` qua han ve `pending`. Tra so item da thu hoi.
+
+        An toan khi worker that su con song: no se mark_done/mark_failed theo id nen trang thai
+        cuoi cung van dung; xau nhat la mot item bi lam hai lan (ingest la idempotent theo
+        UNIQUE(article_id, raw_sha256)).
+        """
+        cutoff = _iso_minus_minutes(timeout_minutes)
+        conn = self.store.connect()
+        try:
+            cur = conn.execute(
+                "UPDATE work_items SET status='pending', claimed_by=NULL, claimed_at=NULL "
+                "WHERE status='claimed' AND (claimed_at IS NULL OR claimed_at < ?)", (cutoff,))
+            conn.commit()
+            n = cur.rowcount or 0
+        finally:
+            conn.close()
+        if n:
+            logger.warning("[catalog] thu hoi {} work_item ket o 'claimed' qua {} phut", n, timeout_minutes)
+        return n
+
     def list_pending(self, limit: int = 50, order: str = "desc") -> list[dict]:
         conn = self.store.connect()
         try:
@@ -65,6 +100,7 @@ class Catalog:
         packet không nhúng được `input.l1_entities` (rule 05 §2.5) và bài cũng không định
         tuyến được cho user nào (routing dựa entity của L1) → tốn token vô ích.
         """
+        self.reclaim_stale()          # khong co buoc nay, item ket o 'claimed' bi ro ri vinh vien
         conn = self.store.connect()
         try:
             conn.execute("BEGIN IMMEDIATE")

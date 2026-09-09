@@ -11,13 +11,14 @@ import os
 from pathlib import Path
 import socket
 import sqlite3
+import time
 
 from loguru import logger
 
 from datetime import datetime
 
 from src.core.config import PROJECT_ROOT
-from src.core.models import VN_TZ, Article, now_vn_iso
+from src.core.models import VN_TZ, Article, normalize_title, now_vn_iso
 
 
 def _is_owner_alive(owner: str) -> bool:
@@ -203,10 +204,15 @@ CREATE TABLE IF NOT EXISTS l1_outputs (
   confidence REAL,
   dod_pass INTEGER DEFAULT 0,
   dod_reasons TEXT,
-  created_at TEXT
+  created_at TEXT,
+  -- Nguon cua ban ghi: 'agent' (subagent LLM nop) hoac 'code_first' (tra danh muc tat dinh).
+  -- Xem docs/decisions/0003-code-first-l1-delivery.md. Ban 'agent' duoc ghi de 'code_first',
+  -- KHONG duoc nguoc lai.
+  l1_source TEXT NOT NULL DEFAULT 'agent'
 );
 CREATE INDEX IF NOT EXISTS idx_l1_outputs_dod ON l1_outputs(dod_pass, created_at);
 CREATE INDEX IF NOT EXISTS idx_l1_outputs_article_dod ON l1_outputs(article_id, dod_pass);
+CREATE INDEX IF NOT EXISTS idx_l1_outputs_source ON l1_outputs(l1_source, dod_pass);
 
 -- Báo cáo định kỳ (NSO/Cục Thống kê) — design 16.
 -- KHÔNG dùng bảng articles: khoá nghiệp vụ là (report_type, period), KHÔNG phải
@@ -286,10 +292,31 @@ class ArticleStore:
     def init_schema(self) -> None:
         conn = self._connect()
         try:
+            # _migrate TRUOC executescript: DDL co index tham chieu cot moi, chay trong khi
+            # bang cu chua co cot do se loi 'no such column'. Voi DB moi tinh, _migrate khong
+            # lam gi (bang chua ton tai) va _SCHEMA tao san du cot.
+            self._migrate(conn)
             conn.executescript(_SCHEMA)
             conn.commit()
         finally:
             conn.close()
+
+    # DDL dung CREATE TABLE IF NOT EXISTS nen KHONG bao gio nang cap duoc DB da ton tai.
+    # Moi cot them sau phai co mot buoc ALTER idempotent o day.
+    _MIGRATIONS = (
+        ("l1_outputs", "l1_source", "ALTER TABLE l1_outputs ADD COLUMN l1_source TEXT NOT NULL DEFAULT 'agent'"),
+    )
+
+    def _migrate(self, conn: sqlite3.Connection) -> None:
+        """Them cot con thieu vao DB da ton tai. An toan khi chay lai nhieu lan."""
+        for table, column, ddl in self._MIGRATIONS:
+            try:
+                have = {r[1] for r in conn.execute(f'PRAGMA table_info({table})')}
+            except sqlite3.Error:
+                continue                      # bang chua ton tai -> _SCHEMA da tao dung roi
+            if have and column not in have:
+                conn.execute(ddl)
+                conn.commit()
 
     def connect(self) -> sqlite3.Connection:
         """Public connection (đủ pragmas). Caller tự đóng. Dùng bởi handoff.Catalog."""
@@ -372,6 +399,24 @@ class ArticleStore:
         finally:
             conn.close()
 
+    def set_agent_dod(self, row_id: int, dod_pass: int, dod_reasons: str) -> None:
+        """Chấm LẠI cổng DoD cho 1 bản ghi đã có. KHÔNG đụng tới `output_json`.
+
+        Tồn tại để `scripts/verify_gold_quality.py --apply` hạ cờ những bản ghi không qua nổi
+        predicate mới, mà vẫn giữ bất biến "chỉ store.py viết SQL vào agent_outputs"
+        (`tests/test_no_agent_emulation.py`). Cố ý KHÔNG cho sửa nội dung: sửa nội dung là
+        việc của agent, không phải của script (AGENTS.md §6.C).
+        """
+        conn = self._connect()
+        try:
+            conn.execute(
+                "UPDATE agent_outputs SET dod_pass = ?, dod_reasons = ? WHERE id = ?",
+                (int(dod_pass), dod_reasons, int(row_id)),
+            )
+            conn.commit()
+        finally:
+            conn.close()
+
     def insert_agent_output(self, row: dict) -> int:
         """Upsert 1 output theo UNIQUE(article_id, raw_sha256). Trả row id."""
         cols = (
@@ -446,7 +491,9 @@ class ArticleStore:
     def insert_l1_output(self, row: dict) -> None:
         """Upsert output tra soát agent L1 theo UNIQUE(article_id)."""
         cols = ("article_id", "output_json", "recognized", "agent_provider",
-                "model_used", "confidence", "dod_pass", "dod_reasons", "created_at")
+                "model_used", "confidence", "dod_pass", "dod_reasons", "created_at",
+                "l1_source")
+        row = {**row, "l1_source": row.get("l1_source") or "agent"}
         conn = self._connect()
         try:
             conn.execute(
@@ -495,8 +542,22 @@ class ArticleStore:
             conn.execute("BEGIN IMMEDIATE")
             before = conn.total_changes
             conn.executemany(_INSERT_SQL, [a.to_row() for a in articles])
+            inserted = conn.total_changes - before      # dem TRUOC khi ghi seen_articles,
+                                                        # neu khong se dem ca row cua bang do
+            # Danh dau `seen` TRONG CUNG transaction voi articles.
+            # Truoc day base_scraper goi dedup.mark_seen() ngay LUC CAO, con dong `articles`
+            # lai duoc ghi bat dong bo sau do qua DBWriter. Bat ky gian doan nao o giua
+            # (thoat tien trinh, writer chet, queue chua xa) khien bai bi danh dau 'da thay'
+            # VINH VIEN nhung khong co dong articles -> moi chu ky sau deu bo qua, trong khi
+            # Bronze/Silver/work_items/L1/Gold van chay tiep tu ban raw da cao.
+            # Do tren monocle.db 2026-09-07: 429 bai mo coi, 429/429 co mat trong seen_articles.
+            conn.executemany(
+                "INSERT OR IGNORE INTO seen_articles (hash, title_norm, source_domain, seen_at) "
+                "VALUES (?, ?, ?, ?)",
+                [(a.url_title_hash, normalize_title(a.title), a.source_domain, time.time())
+                 for a in articles])
             conn.commit()
-            return conn.total_changes - before
+            return inserted
         except sqlite3.Error as e:
             conn.rollback()
             logger.error("DB batch insert failed ({} articles): {}", len(articles), e)

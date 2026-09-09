@@ -47969,10 +47969,20 @@
         "quỹ",
         "quỹ đầu tư",
         "quỹ đầu tư mạo hiểm",
-        "quỹ mở",
+        "quỹ mở đầu tư",
         "quỹ đóng",
         "quỹ thành viên",
         "quỹ ngoại",
+        "quỹ ETF",
+        "chứng chỉ quỹ",
+        "công ty quản lý quỹ",
+        "quản lý quỹ",
+        "quỹ tương hỗ",
+        "quỹ hưu trí",
+        "quỹ trái phiếu",
+        "quỹ cổ phiếu",
+        "quỹ chỉ số",
+        "quỹ đầu tư chứng khoán",
         "venture capital",
         "quỹ hoán đổi danh mục"
       ],
@@ -48260,7 +48270,15 @@
       "code": "NUOC",
       "canonical_name": "Nước",
       "aliases": [
-        "Nước"
+        "Nước",
+        "ngành nước",
+        "cấp nước",
+        "nước sạch",
+        "nhà máy nước",
+        "cấp thoát nước",
+        "xử lý nước thải",
+        "công ty nước",
+        "giá nước sinh hoạt"
       ],
       "attributes": {
         "parent": "Dịch vụ công cộng",
@@ -48276,7 +48294,20 @@
       "code": "DIEN",
       "canonical_name": "Điện",
       "aliases": [
-        "Điện"
+        "Điện",
+        "ngành điện",
+        "điện lực",
+        "thuỷ điện",
+        "thủy điện",
+        "nhiệt điện",
+        "điện mặt trời",
+        "điện gió",
+        "điện hạt nhân",
+        "điện sinh khối",
+        "phát điện",
+        "giá điện",
+        "sản lượng điện",
+        "EVN"
       ],
       "attributes": {
         "parent": "Dịch vụ công cộng",
@@ -48308,7 +48339,12 @@
       "code": "GIAY",
       "canonical_name": "Giấy",
       "aliases": [
-        "Giấy"
+        "Giấy",
+        "ngành giấy",
+        "giấy bao bì",
+        "bột giấy",
+        "giấy in",
+        "sản xuất giấy"
       ],
       "attributes": {
         "parent": "Giấy và các sản phẩm từ gỗ",
@@ -48589,10 +48625,20 @@
         "quỹ",
         "quỹ đầu tư",
         "quỹ đầu tư mạo hiểm",
-        "quỹ mở",
+        "quỹ mở đầu tư",
         "quỹ đóng",
         "quỹ thành viên",
         "quỹ ngoại",
+        "quỹ ETF",
+        "chứng chỉ quỹ",
+        "công ty quản lý quỹ",
+        "quản lý quỹ",
+        "quỹ tương hỗ",
+        "quỹ hưu trí",
+        "quỹ trái phiếu",
+        "quỹ cổ phiếu",
+        "quỹ chỉ số",
+        "quỹ đầu tư chứng khoán",
         "venture capital",
         "quỹ hoán đổi danh mục"
       ],

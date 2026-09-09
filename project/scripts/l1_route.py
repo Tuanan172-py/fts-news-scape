@@ -33,11 +33,26 @@ force_utf8_stdio()
 
 
 def _iter_sources(source: str, reverse: bool = True):
+    """Liệt kê work-package/silver theo THỜI GIAN, mới nhất trước (reverse=True).
+
+    Trước đây sắp theo CHUỖI đường dẫn. Đường dẫn có dạng `<source>/<domain>/<...>/<id>.json`
+    nên sắp giảm dần = sắp theo tên domain giảm dần: vneconomy.vn > vietstock.vn > ... >
+    cafef.vn xếp CUỐI. Cộng với trần mặc định 50 bài/lần chạy, cafef.vn — nguồn lớn nhất
+    (3.733/7.219 bài) — gần như không bao giờ tới lượt. Đo trên monocle.db: `l1_tasks` chỉ
+    có 3/8 domain trong khi `work_items` có đủ 8.
+    """
     pats = [os.path.join(source, "*", "*", "*.json")]
-    files = sorted((f for p in pats for f in glob.glob(p)), reverse=reverse)
+    files = [f for p in pats for f in glob.glob(p)]
     if not files and source != "data/silver":
-        files = sorted(glob.glob(os.path.join("data/silver", "*", "*", "*.json")), reverse=reverse)
-    return files
+        files = glob.glob(os.path.join("data/silver", "*", "*", "*.json"))
+
+    def _mtime(f: str) -> float:
+        try:
+            return os.path.getmtime(f)
+        except OSError:
+            return 0.0
+
+    return sorted(files, key=_mtime, reverse=reverse)
 
 
 def main(argv=None) -> int:

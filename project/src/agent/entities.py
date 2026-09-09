@@ -25,16 +25,41 @@ from pathlib import Path
 
 import yaml
 
+from loguru import logger as _LOG
+
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 ENTITIES_JSON = PROJECT_ROOT / "data" / "entities" / "entities.json"
 USERS_DIR = PROJECT_ROOT / "config" / "entities" / "users"
 MANIFEST_YAML = PROJECT_ROOT / "config" / "entities" / "manifest.yaml"
+CONTEXT_GUARDS_YAML = PROJECT_ROOT / "config" / "entities" / "aliases" / "_context_guards.yaml"
 
 # Mã 3 ký tự dễ nhầm với từ viết tắt trong tin tài chính -> không auto-match by code.
 CODE_STOPLIST = frozenset({
     "GDP", "CPI", "PMI", "FED", "USD", "EUR", "JPY", "CNY", "VND",
     "CEO", "CFO", "COO", "ETF", "IPO", "ROE", "ROA", "EPS", "OTC", "GMT",
 })
+
+# Alias QUA CHUNG: dia danh, hau to phap ly, mo ta nganh nghe chung. Chung lot vao alias cua
+# doanh nghiep qua ten phap ly: "CTCP Chung khoan Guotai Haitong (Viet Nam)" sinh alias
+# "Viet Nam" -> TICKER:IVS khop 164 bai, thanh ticker top-1 sai cua ca he thong.
+# So khop tren dang DA FOLD (_fold: lower + bo dau). CHI ap cho chung khoan (TICKER/ETF/
+# SECURITY_OTHER) - cac nhom nganh/quoc gia/chu de lay alias tu config/entities/aliases/*.yaml
+# do nguoi bien tap, o do "xay dung"/"cong nghiep" LA alias hop le cua chinh nhom nganh do.
+GENERIC_ALIAS_STOPLIST = frozenset({
+    # quoc gia & dia danh hanh chinh
+    "viet nam", "vietnam", "ha noi", "tp ha noi", "ho chi minh", "tp ho chi minh",
+    "thanh pho ho chi minh", "tphcm", "tp hcm", "sai gon", "da nang", "hai phong",
+    "can tho", "song da", "mien bac", "mien nam", "mien trung",
+    # san giao dich - da la thuc the EXCHANGE rieng, khong duoc gan cho mot ma
+    "hose", "hsx", "hnx", "upcom",
+    # hau to phap ly & mo ta nganh nghe chung
+    "tap doan", "tong cong ty", "cong ty", "co phan", "dau tu", "dau tu va phat trien",
+    "phat trien", "thuong mai", "thuong mai va dich vu", "dich vu", "xuat nhap khau",
+    "xay dung", "xay lap", "san xuat", "cong nghiep", "nong nghiep", "quoc te", "viet",
+})
+
+# Nhom chung khoan - alias sinh tu dong tu ten phap ly nen phai loc qua GENERIC_ALIAS_STOPLIST.
+SECURITY_TYPES = ("TICKER", "ETF", "SECURITY_OTHER")
 
 # Các từ ngắn (2-3 ký tự) quan trọng được bảo vệ để không bị bộ lọc độ dài loại bỏ.
 PROTECTED_SHORT_WORDS = frozenset({
@@ -43,6 +68,10 @@ PROTECTED_SHORT_WORDS = frozenset({
 })
 
 _CODE_RE = re.compile(r"\b[A-Z0-9]{3}\b")
+# Ngu canh phia TRUOC khien ma 3 ky tu khong phai ma chung khoan: "TP.HCM", "TP HCM", "T.P HCM".
+# Chan theo ngu canh thay vi bo han "HCM" vao CODE_STOPLIST, vi HCM la ma that (Chung khoan HSC)
+# va co nguoi dung dang ky - bo han se mat ca khop dung.
+_CODE_LEFT_BLOCK_RE = re.compile(r"(?:\bT\.?P\.?\s*)$", re.IGNORECASE)
 _WS_RE = re.compile(r"\s+")
 
 # Nhóm trong file đăng ký -> thứ tự type thử khi ánh xạ code sang entity_id.
@@ -70,18 +99,102 @@ def _fold(s: str) -> str:
     return _WS_RE.sub(" ", s.lower()).strip()
 
 
+def _locate_folded(key: str, raw: str) -> tuple[str | None, tuple[int, int] | None]:
+    """Tim doan con NGUYEN VAN cua `raw` ma khi fold bang dung `key`.
+
+    Chi dung khi khop duoc xac nhan qua ban fold nhung khong dinh vi duoc bang dang alias
+    nguyen ban — vd bai viet khong dau ("Tap doan Hoa Phat") trong khi alias co dau.
+    Chi thu tai cac vi tri BAT DAU TU de khong quet O(n^2) tren toan chuoi.
+    """
+    n = len(key)
+    for m in re.finditer(r"\S+", raw):
+        start = m.start()
+        # do dai raw co the dai hon key (dau tach ra khi NFD, khoang trang gop lai)
+        for end in range(start + n, min(len(raw), start + n + 16) + 1):
+            if _fold(raw[start:end]) == key:
+                return raw[start:end], (start, end)
+    return None, None
+
+
+def _load_context_guards() -> tuple[dict[str, list[str]], set[str]]:
+    """(block_in theo entity_id da fold, tap entity_id can bo alias mot tu).
+
+    Xem config/entities/aliases/_context_guards.yaml de biet khi nao dung co che nao.
+    """
+    if not CONTEXT_GUARDS_YAML.exists():
+        return {}, set()
+    raw = yaml.safe_load(CONTEXT_GUARDS_YAML.read_text(encoding="utf-8")) or {}
+    blocks: dict[str, list[str]] = {}
+    drop_bare: set[str] = set()
+    for eid, cfg in (raw or {}).items():
+        cfg = cfg or {}
+        folded = [f for f in (_fold(p) for p in (cfg.get("block_in") or [])) if f]
+        if folded:
+            blocks[str(eid)] = folded
+        if cfg.get("drop_bare"):
+            drop_bare.add(str(eid))
+    return blocks, drop_bare
+
+
+def _is_strict_form(alias: str) -> bool:
+    """Alias ma ban fold KHONG du de khang dinh khop.
+
+    Hai nhom:
+      * co dau tieng Viet - bo dau xong trung tu thong dung khac
+        ("quy" tu "quỹ" trung "quý"/"quy dinh"; "my" tu "Mỹ" trung "tham my");
+      * viet HOA toan phan ASCII - la ky hieu, khong phai tu ("US", "EU", "DXY").
+    Voi cac alias nay, dang nguyen ban phai thuc su co mat trong text goc.
+    """
+    if any(ord(c) > 127 for c in alias):
+        return True
+    letters = [c for c in alias if c.isalpha()]
+    return bool(letters) and all(c.isupper() for c in letters)
+
+
 class EntityRegistry:
     def __init__(self, entities: list[dict], subscriptions: dict | None = None):
         self.entities = {e["entity_id"]: e for e in entities}
         # index alias (đã fold) -> list[entity_id], chỉ alias đủ dài hoặc trong whitelist từ ngắn
         self._alias_index: dict[str, list[str]] = {}
+        # dang NGUYEN BAN cua alias theo cung key da fold - dung de xac nhan khop
+        # (xem _alias_match), chan false positive do bo dau / hoa-thuong va lay surface nguyen van
+        self._alias_forms: dict[str, list[str]] = {}
         # tra ngành GICS theo CODE (chuẩn hoá đồng bộ với các nhóm code khác — KHÔNG theo tên)
         self._industry_ids_by_code: dict[str, list[str]] = {}
+        # so alias bi loai vi qua chung — de script build/kiem tra bao cao, khong im lang
+        self.aliases_dropped = 0
+        # chan alias 1 tu bi trung nghia theo ngu canh (config/entities/aliases/_context_guards.yaml)
+        self._context_guards, self._drop_bare_alias = _load_context_guards()
         for eid, e in self.entities.items():
+            is_security = e["type"] in SECURITY_TYPES
+            # Alias sinh tu ten phap ly cua chung khoan co the la dia danh/hau to chung
+            # ("viet nam" -> TICKER:IVS, "song da" -> TICKER:SJG) va se khop gan nhu moi bai.
+            # Loai NGAY TAI REGISTRY (khong chi tai index) de moi consumer doc e["aliases"]
+            # - _passes_noise_filter, _silver_noise_signals - cung thay tap alias da sach.
+            # File entities.json tren dia giu nguyen de kiem toan; build_entities.py loc o
+            # lan build sau. Day la nguon chan ly luc chay.
+            if is_security:
+                kept = [a for a in e.get("aliases", []) if _fold(a) not in GENERIC_ALIAS_STOPLIST]
+                if len(kept) != len(e.get("aliases", [])):
+                    self.aliases_dropped += len(e["aliases"]) - len(kept)
+                    e["aliases"] = kept
             for a in e.get("aliases", []):
                 key = _fold(a)
-                if len(key) >= 4 or key in PROTECTED_SHORT_WORDS:
+                # drop_bare: ten nganh la tu don trung nghia voi tu thong dung
+                # ("Nuoc", "Dien", "Giay", "Quy"). Bo alias MOT TU, chi giu cac cum mang
+                # dung intent trong industries.yaml — danh sach CHO PHEP, khong bao gio hut
+                # nhu blocklist. Xem _context_guards.yaml.
+                if eid in self._drop_bare_alias and " " not in key:
+                    self.aliases_dropped += 1
+                    continue
+                # Nguong do dai: chung khoan giu >= 4 (alias sinh tu dong, 3 ky tu chi la
+                # short-name trung lap voi khop theo CODE nen khong them gia tri, lai on).
+                # Cac nhom con lai lay alias tu config/entities/aliases/*.yaml do nguoi bien tap
+                # nen cho phep >= 3, lay lai cac alias that tung bi mat oan: HNX, HSX, USA, DXY,
+                # FDI, IMF, SSC, Nga, ECB, BOJ...
+                if len(key) >= 4 or key in PROTECTED_SHORT_WORDS or (not is_security and len(key) >= 3):
                     self._alias_index.setdefault(key, []).append(eid)
+                    self._alias_forms.setdefault(key, []).append(a)
             if e["type"] in _INDUSTRY_TYPES:
                 self._industry_ids_by_code.setdefault(e["code"], []).append(eid)
 
@@ -132,35 +245,125 @@ class EntityRegistry:
 
     # ---- detect (matcher chi tiết, ghi rõ khớp qua code/alias) ------------
     def detect(self, text: str) -> list[dict]:
-        """Trả list thực thể nhận diện, kèm `via` ('code'|'alias'). Dùng cho L1."""
+        """Tra list thuc the nhan dien, kem `via` (code|alias) va `surface` NGUYEN VAN.
+
+        `surface` la doan con dung nguyen ban cua `text` da lam khop. Bat buoc phai co de
+        ban ghi code-first di qua duoc check_l1_dod (grounding: surface phai la chuoi con
+        cua title). Xem docs/decisions/0003-code-first-l1-delivery.md.
+        """
         if not text:
             return []
         out: list[dict] = []
         seen: set[str] = set()
-        for m in _CODE_RE.findall(text):
-            if m in CODE_STOPLIST:
+        for m in _CODE_RE.finditer(text):
+            code = m.group()
+            if code in CODE_STOPLIST:
                 continue
-            for etype in ("TICKER", "ETF", "SECURITY_OTHER", "INDEX", "MACRO_GEO", "MACRO_THEME", "ASSET_CLASS", "INSTITUTION"):
-                eid = f"{etype}:{m}"
+            if _CODE_LEFT_BLOCK_RE.search(text[:m.start()]):
+                continue                       # "TP.HCM" khong phai ma chung khoan HCM
+            # EXCHANGE bo sung 2026-09-08: truoc day thieu nen HNX viet dang ma trong tieu de
+            # khong bao gio giai duoc ve EXCHANGE:* (lech voi process_l1_pipeline.py).
+            for etype in ("TICKER", "ETF", "SECURITY_OTHER", "INDEX", "EXCHANGE",
+                          "MACRO_GEO", "MACRO_THEME", "ASSET_CLASS", "INSTITUTION"):
+                eid = f"{etype}:{code}"
                 if eid in self.entities and eid not in seen:
-                    seen.add(eid); out.append({"entity_id": eid, "via": "code"})
+                    seen.add(eid)
+                    out.append({"entity_id": eid, "via": "code", "surface": code})
                     break
+        cand: list[tuple[tuple[int, int] | None, str | None, list[str], str]] = []
         folded = _fold(text)
         for key, eids in self._alias_index.items():
-            if re.search(r"\b" + re.escape(key) + r"\b", folded):
-                for eid in eids:
-                    if eid not in seen:
-                        seen.add(eid)
-                        out.append({"entity_id": eid, "via": "alias"})
+            # Prefilter bang `in` truoc khi chay regex: index co ~4.3k alias, hau het khong
+            # xuat hien trong tieu de. Kiem tra chuoi con re hon regex ~100x va KHONG doi
+            # ngu nghia (regex ranh gioi tu van la dieu kien quyet dinh). Truoc toi uu nay
+            # detect() cham toi muc l1_route phai dat tran 50 bai/lan chay.
+            if key not in folded:
+                continue
+            if not re.search(r"\b" + re.escape(key) + r"\b", folded):
+                continue
+            ok, surface, span = self._alias_match(key, text)
+            if not ok:
+                continue
+            cand.append((span, surface, eids, key))
+
+        # Khu chong lan GIUA CAC CHUNG KHOAN: ten cong ty nay khong the nam long trong ten
+        # cong ty khac. "Tap doan Xang dau Viet Nam" (PLX) chua "dau Viet Nam" (OIL) -> chi
+        # giu ma dai hon. KHONG ap cho nganh/vi mo: 'Ngan hang' nam trong ten TCB la khop
+        # DUNG va can giu ca hai.
+        cand.sort(key=lambda c: -((c[0][1] - c[0][0]) if c[0] else 0))
+        taken: list[tuple[int, int]] = []
+        for span, surface, eids, key in cand:
+            sec = [e for e in eids if self.entities[e]["type"] in SECURITY_TYPES]
+            if span and sec and any(t[0] <= span[0] and span[1] <= t[1] for t in taken):
+                eids = [e for e in eids if e not in sec]
+                if not eids:
+                    continue
+            if span and sec:
+                taken.append(span)
+            for eid in eids:
+                if self._blocked_by_context(eid, key, folded):
+                    continue
+                if eid not in seen:
+                    seen.add(eid)
+                    out.append({"entity_id": eid, "via": "alias", "surface": surface})
+
         result = []
         for o in out:
             e = self.entities[o["entity_id"]]
             result.append({
                 "entity_id": e["entity_id"], "type": e["type"], "code": e["code"],
                 "canonical_name": e["canonical_name"], "via": o["via"],
+                "surface": o["surface"],
             })
         return result
 
+    def _blocked_by_context(self, eid: str, key: str, folded: str) -> bool:
+        """Lan khop nay CHI do ngu canh nhieu?
+
+        Xoa moi cum chan khoi tieu de da fold roi thu khop lai. Con thay alias => no xuat hien
+        o cho khac, GIU. Khong con => lan khop do hoan toan nam trong cum chan, BO.
+        Nho vay "Nganh nuoc tang gia, trong nuoc lo lang" van nhan dung IND_GICS3:NUOC.
+        """
+        phrases = self._context_guards.get(eid)
+        if not phrases:
+            return False
+        stripped = folded
+        for ph in phrases:
+            if key in ph:
+                # PHAI dung ranh gioi tu: str.replace tran lan khien cum 'nuoc ta' an trung
+                # ben trong 'nuoc tang gia' va xoa mat mot lan khop dung.
+                stripped = re.sub(r"\b" + re.escape(ph) + r"\b", " ", stripped)
+        return not re.search(r"\b" + re.escape(key) + r"\b", stripped)
+
+    def _alias_match(self, key: str, raw: str) -> tuple[bool, str | None, tuple[int, int] | None]:
+        """Khop tren ban fold da dung chua, va surface nguyen van la gi?
+
+        Chan false positive do bo dau / mat phan biet hoa-thuong, DONG THOI tra ve doan con
+        nguyen ban cua `raw` — hai viec dung chung mot phep tim kiem nen gop lam mot.
+
+        Guard CHI ap cho alias 1 TU NGAN (<=5 ky tu sau fold) va moi dang deu 'strict'. Do la
+        nhom duy nhat that su va cham khi bo dau: "quy" tu "quỹ" trung "quý"/"quy dinh",
+        "dien" tu "điện" trung "diễn"/"diện", "giay" tu "giấy" trung "giày"/"giây".
+        Ten doanh nghiep (nhieu tu, dai) khong va cham nen GIU nguyen bat bien da cong bo o
+        docstring module: bai viet "Tap doan Hoa Phat" khong dau van phai khop TICKER:HPG.
+        """
+        forms = self._alias_forms.get(key) or []
+        for f in forms:
+            #  * alias CO DAU -> chi doi hoi dung dang co dau, KHONG phan biet hoa-thuong.
+            #    Ten nganh trong industries.yaml viet hoa dau dong ('Điện', 'Nước') van la
+            #    danh tu CHUNG; bat dung hoa se chan nham 'gia dien', 'nganh dien'.
+            #  * KY HIEU ASCII viet hoa NGAN (<=3: US, EU, DXY) -> phai dung hoa, neu khong
+            #    'tham my' se khop MACRO_GEO:MY. Ky hieu dai (HOSE, UPCOM) khong mo ho voi tu
+            #    thuong nen bo qua hoa-thuong — bao chi hay viet 'HoSE'.
+            flags = 0 if (f.isascii() and f.isupper() and len(f) <= 3) else re.IGNORECASE
+            m = re.search(r"\b" + re.escape(f) + r"\b", raw, flags)
+            if m:
+                return True, m.group(0), m.span()
+        strict_only = bool(forms) and all(_is_strict_form(f) for f in forms)
+        if strict_only and " " not in key and len(key) <= 5:
+            return False, None, None
+        surface, span = _locate_folded(key, raw)
+        return True, surface, span
 
     # ---- text matching (tương thích ngược) -------------------------------
     def match(self, text: str) -> list[dict]:
@@ -196,7 +399,13 @@ def _load_subscriptions(reg: EntityRegistry) -> tuple[dict, dict]:
     manifest = _load_manifest()
     for f in sorted(USERS_DIR.glob("*.yaml")):
         if not _user_enabled(manifest, f.stem):
-            continue                               # DEV tắt user này → bỏ qua
+            # `default: false` khien user co file dang ky nhung chua duoc liet ke bi tat IM LANG.
+            # VyPTT da o tinh trang nay. Ghi canh bao de khong lap lai.
+            _LOG.warning(
+                "[entities] users/{}.yaml co ton tai nhung KHONG duoc bat trong {} "
+                "(default={}) -> nguoi dung nay se khong nhan duoc bai nao.",
+                f.stem, MANIFEST_YAML.name, manifest.get("default", True))
+            continue                               # DEV tat user nay -> bo qua
         doc = yaml.safe_load(f.read_text(encoding="utf-8")) or {}
         ids, unknown = reg.select(doc)
         subs[f.stem] = ids

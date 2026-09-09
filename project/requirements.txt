@@ -13,4 +13,6 @@ rapidfuzz>=3.0.0
 truststore>=0.9.0
 readability-lxml>=0.8.1     # D5: text-density fallback cho content_html khi selector miss
 jsonschema>=4.20.0          # handoff contract validation (work-package + agent-output)
+openpyxl>=3.1.0             # đọc subscription .xlsx + ghi deliverable .xlsx (US-101)
+pytest>=8.0.0               # AGENTS.md §3 chạy `python -m pytest tests/` sau khi cài file này
 

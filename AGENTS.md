@@ -77,7 +77,7 @@ Maturity: this harness is at **H2-H5 (Durable SQLite + Active Observability + Au
    - **Silver**: Chuẩn hóa DOM, tính SimHash biến đổi và **tinh lọc dữ liệu thành các đoạn văn thuần túy (`<p>`)**.
    - **Task Packaging**: Đóng gói các file `.task.json` chứa payload văn bản sạch vào `data/agent_tasks/`.
    - **Quality Ingest & Gating**: Kiểm tra hợp đồng DoD Schema, nạp database SQLite (`monocle.db`).
-   - **User Delivery**: Phân tuyến theo danh sách theo dõi người dùng và xuất file `users/output/<user>/<date>/final.csv`.
+   - **User Delivery**: Phân tuyến theo danh sách theo dõi người dùng và xuất file `users/output/<user>/<date>.xlsx`.
 2. **Vùng Trí tuệ Tầng Gold (Agents Realm — Đảm nhận ĐỦ 2 Lớp Nghiệp vụ)**:
    - **Lớp 1 (Xác định Thực thể — Entity Recognition)**: Nhận diện mã CP (3 ký tự in hoa), doanh nghiệp, sàn niêm yết, ngành kinh doanh, chỉ số từ tiêu đề & nội dung (`l1-entity-output-v1`).
    - **Lớp 2 (Xử lý Nội dung & Ngữ nghĩa — Content Processing)**: Tóm tắt súc tích, viết hàm ý thị trường (`implication`), chấm điểm `materiality_score` động (`0.1 - 1.0`), phân loại `sentiment`, và trích xuất `citations` ($\ge 2$ trích dẫn $\ge 20$ ký tự nguyên văn) (`agent-output-v1`).

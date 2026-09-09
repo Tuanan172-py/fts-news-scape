@@ -38,8 +38,13 @@ def _make_output(article_id="art1", confidence=0.78, quality="high", ncite=2):
     ][:ncite]
     return {
         "output_schema_version": "1.0", "article_id": article_id,
-        "summary": {"abstractive": "tóm tắt", "key_points": ["a"]},
-        "implication": {"text": "hàm ý", "impact_area": "market"},
+        # abstractive/key_points/implication phải là chữ RIÊNG, không copy CLEANED
+        # (predicate value_added + implication_specific).
+        "summary": {"abstractive": "tóm tắt do agent tự viết",
+                    "key_points": ["ý chắt lọc một", "ý chắt lọc hai"]},
+        "implication": {"text": "Chi phí nhân sự giảm có thể nới biên lợi nhuận quý tới, "
+                                "nhưng làm chậm mở rộng doanh thu.",
+                        "impact_area": "market"},
         "materiality": {"score": 0.6, "time_sensitivity": "this_week"},
         "confidence": confidence,
         "citations": cites,

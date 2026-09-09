@@ -84,8 +84,15 @@ def test_item_without_url_skipped(dedup, fixture_news):
 
 
 def test_dedup_second_run(dedup, fixture_news):
+    """Dedup chi co hieu luc SAU khi bai duoc ghi ben vung vao `articles`.
+
+    Xem test_base_scraper.test_run_dedup_skips_seen: `seen_articles` nay duoc ghi cung
+    transaction voi `articles` (store.insert_batch), khong con danh dau som luc cao.
+    """
     scraper = VndirectScraper(_config(), FakeHTTP(fixture_news), dedup)
-    assert len(scraper.run().new) > 0
+    first = scraper.run().new
+    assert len(first) > 0
+    dedup.store.insert_batch(first)
     assert len(scraper.run().new) == 0
 
 

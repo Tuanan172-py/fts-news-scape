@@ -15,15 +15,14 @@ import time
 
 from loguru import logger
 
-from src.core.models import sha256_hash
+from src.core.models import normalize_title, sha256_hash
 from src.db.store import ArticleStore
 
 _LEGACY_JSON = "data/dedup_cache.json"
 
 
-def normalize_title(title: str) -> str:
-    """Lowercase + gộp whitespace, giữ dấu tiếng Việt (input cho fuzzy Phase 4)."""
-    return re.sub(r"\s+", " ", title.strip().lower())
+# normalize_title chuyển sang src/core/models.py để store.insert_batch dùng chung mà không
+# tạo vòng lặp import (dedup -> store). Re-export giữ tương thích cho caller cũ.
 
 
 class DedupCache:

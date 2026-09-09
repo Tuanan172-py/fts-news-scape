@@ -9,7 +9,7 @@ Agent ĐƯỢC ghi **đúng một loại file** = output JSON vào thư mục in
 truy vấn/ghi DB, chạy script khác, sửa packet đầu vào, đề xuất "bước tiếp theo".
 
 Chỗ vận hành trong chu kỳ: chạy `run_daily.ps1 -Mode emit` (phát packet) → **dán phiếu này cho agent**
-→ `run_daily.ps1 -Mode ingest` (nạp + ghi final.csv). Agent thay cho khúc giữa thủ công.
+→ `run_daily.ps1 -Mode ingest` (nạp + ghi <date>.xlsx). Agent thay cho khúc giữa thủ công.
 
 ---
 

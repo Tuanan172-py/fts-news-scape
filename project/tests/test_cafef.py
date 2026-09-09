@@ -86,9 +86,16 @@ def test_happy_path_real_fixture(env, fixture_list, fixture_detail):
 
 
 def test_dedup_second_run_zero_new(env, fixture_list, fixture_detail):
+    """Dedup chi co hieu luc SAU khi bai duoc ghi ben vung vao `articles`.
+
+    Xem test_base_scraper.test_run_dedup_skips_seen: `seen_articles` nay duoc ghi cung
+    transaction voi `articles` (store.insert_batch), khong con danh dau som luc cao.
+    """
     http = FakeHTTP(list_json=fixture_list, detail_html=fixture_detail)
     scraper = CafeFScraper(_config(), http, env)
-    assert len(scraper.run().new) > 0
+    first = scraper.run().new
+    assert len(first) > 0
+    env.store.insert_batch(first)
     assert len(scraper.run().new) == 0
 
 

@@ -1,14 +1,20 @@
 """
-user_output.py — Ghi output CUỐI cho từng user (CSV theo ngày), gate tối thiểu L1.
+user_output.py — Ghi output CUỐI cho từng user (XLSX theo ngày), gate tối thiểu L1.
 
-Điều kiện ghi 1 article vào final.csv:
+Điều kiện ghi 1 article vào deliverable:
     l1_outputs.dod_pass = 1  (L1 agent-reviewed) [BẮT BUỘC]
     agent_outputs.dod_pass = 1 [TÙY CHỌN - nếu chưa có thì để trống ""]
 
 Định tuyến: entity nhận diện (l1_outputs.entities[in_list]) → subscribers_for() → chỉ user
 đăng ký entity liên quan (và đang BẬT) mới nhận article.
-- Thư mục user (phẳng): users/output/<name>/<YYYY-MM-DD>.csv (deliverable tinh gọn).
-- Thư mục audit tập trung (phẳng): users/output/_master/<YYYY-MM-DD>{,_L1,_agent}.csv.
+- Thư mục user (phẳng): users/output/<name>/<YYYY-MM-DD>.xlsx — deliverable NGƯỜI đọc,
+  đơn sắc, 12 cột (xem `src/export/xlsx_delivery.py`).
+- Thư mục audit tập trung (phẳng): users/output/_master/<YYYY-MM-DD>{,_L1,_agent}.csv —
+  hợp đồng MÁY đọc, giữ nguyên CSV/snake_case tiếng Anh, KHÔNG đi theo deliverable.
+
+Đổi CSV → XLSX (2026-09-08, US-101): CSV không lưu được độ rộng cột, freeze pane, AutoFilter,
+wrap-text; file sinh mới mỗi ngày nên người dùng phải định dạng lại tay hằng ngày. File CSV
+cũ đã giao KHÔNG bị xoá (thư mục output đồng bộ SharePoint — xem dev/07 §1).
 
 Cột `gold_status` phân biệt GOLD (đã có agent_outputs đạt DoD) vs L1_ONLY (chưa chạm Gold),
 để không nhầm "chưa xử lý" với "Gold đã chạy nhưng trường optional rỗng".
@@ -27,16 +33,18 @@ from pathlib import Path
 
 from loguru import logger
 
+from src.agent.entities import _fold
 from src.core.models import VN_TZ
 from src.core.staging import safe_atomic_write
 from src.export import checkpoint as ckpt
+from src.export.xlsx_delivery import write_delivery_xlsx
 from src.users.compile import DEFAULT_OUTPUT_ROOT
 
 _GATED_SQL = """
 SELECT a.url_title_hash AS article_id, a.title, a.url, a.source_domain,
        a.published_at, a.fetched_at,
        a.content_text, a.symbols, a.categories,
-       l1.output_json AS l1_json,
+       l1.output_json AS l1_json, l1.l1_source AS l1_source,
        ag.output_json AS agent_json
 FROM articles a
 JOIN l1_outputs l1 ON l1.article_id = a.url_title_hash AND l1.dod_pass = 1
@@ -49,14 +57,25 @@ LEFT JOIN (
 ) ag ON ag.article_id = a.url_title_hash
 """
 
+# Tập trường NỘI BỘ của một row đã flatten. KHÔNG phải hợp đồng giao hàng.
+# Deliverable của user do `src/export/xlsx_delivery.DELIVERY_FIELDS` quyết định (US-101):
+# nó chiếu ra 12 cột, bỏ `impact_area`/`event_type` (100% và 80% một giá trị → lọc được gì đâu)
+# cùng `agent_provider`/`model_used` (metadata máy, không phải nội dung nghiệp vụ).
 FINAL_COLUMNS = [
     "date", "matched_entities", "title", "summary", "key_points",
     "implication", "impact_area", "time_sensitivity",
     "sentiment", "event_type", "gold_status", "url", "source_domain",
     "article_id", "agent_provider", "model_used",
 ]
-# _master mang thêm cột chẩn đoán; deliverable của user giữ đúng FINAL_COLUMNS.
-MASTER_COLUMNS = FINAL_COLUMNS + ["noise_signals"]
+# _master = hợp đồng MÁY ĐỌC, ĐÓNG BĂNG: snake_case tiếng Anh, dấu phẩy, đủ 16 cột +
+# `noise_signals`. Cố ý KHÔNG đi theo deliverable — đổi cách giao hàng cho người không được
+# phép làm gãy lớp audit.
+# _master mang them cot chan doan: `l1_source` phan biet ban tra bang tat dinh voi ban
+# Subagent nop (docs/decisions/0003-code-first-l1-delivery.md) de do rieng chat luong 2 nguon.
+MASTER_COLUMNS = FINAL_COLUMNS + ["l1_source", "noise_signals"]
+
+# Thứ tự ưu tiên đọc: tin gấp lên trước. Giá trị lạ/rỗng xuống cuối.
+_TIME_RANK = {"urgent": 0, "today": 1, "this_week": 2, "this_month": 3, "archive": 4}
 L1_COLUMNS = ["article_id", "date", "title", "entities", "categories", "agent_provider", "model_used"]
 AGENT_COLUMNS = ["article_id", "date", "summary", "implication",
                  "materiality_score", "sentiment", "event_type",
@@ -125,11 +144,17 @@ class UserOutputWriter:
                 if e.get("in_list") and e.get("entity_id")}
 
     def _codes(self, entity_ids) -> str:
+        """entity_id → code, ĐÃ khử trùng.
+
+        Nhiều `entity_id` khác nhau có thể ánh xạ về CÙNG một `code` (vd 2 định chế cùng mã
+        `CONG_TY_CHUNG_KHOAN`). Trước 2026-09-08 join thẳng nên 22% dòng deliverable hiện
+        `CONG_TY_CHUNG_KHOAN; CONG_TY_CHUNG_KHOAN`.
+        """
         out = []
         for eid in sorted(entity_ids):
             e = self.reg.get(eid)
             out.append(e["code"] if e and e.get("code") else eid)
-        return "; ".join(out)
+        return "; ".join(dict.fromkeys(out))
 
     def _final_row(self, r: dict, matched: set[str]) -> dict:
         ag = _loads(r.get("agent_json"))
@@ -158,6 +183,22 @@ class UserOutputWriter:
             "agent_provider": meta.get("agent_provider") or "",
             "model_used": meta.get("model_used") or "",
         }
+
+    @staticmethod
+    def _sort_key(r: dict, frow: dict) -> tuple:
+        """Thứ tự đọc tất định: gấp trước → quan trọng trước → theo mã → theo tiêu đề.
+
+        `materiality.score` KHÔNG hiện thành cột (giữ mô hình CORE/DETAIL chốt 2026-09-07)
+        nhưng vẫn dùng làm khoá sắp xếp: tin quan trọng tự nổi lên đầu mà không tốn 1 cột.
+        Trước đây rows đi theo thứ tự SQL JOIN trả về nên nhìn như dữ liệu ngẫu nhiên.
+        """
+        mat = _loads(r.get("agent_json")).get("materiality") or {}
+        try:
+            score = float(mat.get("score") or 0.0)
+        except (TypeError, ValueError):
+            score = 0.0
+        return (_TIME_RANK.get(frow.get("time_sensitivity"), 9), -score,
+                frow.get("matched_entities") or "", frow.get("title") or "")
 
     def _l1_row(self, r: dict) -> dict:
         d = _loads(r["l1_json"])
@@ -229,12 +270,15 @@ class UserOutputWriter:
         if any(t not in broad_types for t in matched_types):
             return True
         # Chỉ có broad entities -> alias của entity phải xuất hiện ngay trong title
-        title_lower = (r.get("title") or "").lower()
+        # _fold (khong chi .lower()): tang nhan dien khop tren ban DA BO DAU, neu o day chi ha
+        # chu thuong thi bai khop qua alias khong dau se bi rot oan — dung nhom MACRO/ASSET ma
+        # nguoi dung dang ky nhieu (VANG, DAU_THO, LAI_SUAT, TY_GIA, MY).
+        title_folded = _fold(r.get("title") or "")
         for eid in matched_eids:
             ent = self.reg.get(eid)
             if ent:
                 for a in ent.get("aliases", []):
-                    if len(a) >= 2 and a.lower() in title_lower:
+                    if len(a) >= 2 and _fold(a) in title_folded:
                         return True
         return False
 
@@ -263,8 +307,10 @@ class UserOutputWriter:
                     continue
                 matched_article_ids.add(r["article_id"])
                 key = (user, _row_date(r))
+                frow = self._final_row(r, matched)
                 bucket.setdefault(key, []).append(
-                    (self._final_row(r, matched), self._l1_row(r), self._agent_row(r), r["article_id"]))
+                    (frow, self._l1_row(r), self._agent_row(r), r["article_id"],
+                     self._sort_key(r, frow)))
 
 
         # Ghi master audit nếu được bật (dạng phẳng: users/output/_master/{YYYY-MM-DD}.csv)
@@ -296,18 +342,20 @@ class UserOutputWriter:
 
         counts: dict[str, int] = {}
         for (user, d), items in sorted(bucket.items()):
-            # dedupe theo article_id (rewrite toàn tập → idempotent)
+            # dedupe theo article_id (rewrite toàn tập → idempotent), rồi sắp thứ tự đọc.
             seen, finals, l1s, agents, aids = set(), [], [], [], []
-            for frow, l1row, arow, aid in items:
+            for frow, l1row, arow, aid, _sk in sorted(items, key=lambda t: t[4]):
                 if aid in seen:
                     continue
                 seen.add(aid); finals.append(frow); l1s.append(l1row); agents.append(arow); aids.append(aid)
             user_dir = self.output_root / _safe_name(user)
-            file_path = user_dir / f"{d}.csv"  # deliverable duy nhất và phẳng cho user
+            # Deliverable duy nhất, phẳng, ĐƠN SẮC. CSV bỏ từ 2026-09-08 (US-101): nó không
+            # lưu được width/freeze/filter/wrap nên người dùng phải định dạng lại mỗi ngày.
+            file_path = user_dir / f"{d}.xlsx"
             statuses = {row["article_id"]: row["gold_status"] for row in finals}
             new = ckpt.filter_new(user_dir, d, aids)
             upgraded = ckpt.filter_upgraded(user_dir, d, statuses)     # L1_ONLY → GOLD
-            actual, was_locked = _atomic_write_csv(file_path, FINAL_COLUMNS, finals)
+            actual, was_locked = write_delivery_xlsx(file_path, finals)
             n_l1_only = sum(1 for v in statuses.values() if v == "L1_ONLY")
             if was_locked:
                 # File đích KHÔNG đổi → chưa giao hàng. Không mark checkpoint, để lần chạy sau

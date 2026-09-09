@@ -13,6 +13,26 @@ from pathlib import Path
 import yaml
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
+
+def to_project_relative(path: str | Path) -> str:
+    """Duong dan LUU VAO DB phai tuong doi theo PROJECT_ROOT.
+
+    Luu duong dan tuyet doi khien du lieu dinh chat vao mot may: monocle.db dang co 1.364
+    dong `C:/Users/anpt/...` va 423 dong `C:/Users/An Thanh Pham/...` — may nao cung chi mo
+    duoc phan cua minh. Ngoai PROJECT_ROOT thi giu nguyen (khong ep ../.. kho doc).
+    """
+    p = Path(path)
+    try:
+        return p.resolve().relative_to(PROJECT_ROOT).as_posix()
+    except ValueError:
+        return str(path)
+
+
+def resolve_project_path(path: str | Path) -> Path:
+    """Nghich dao cua to_project_relative: doc duoc ca ban tuong doi lan ban tuyet doi cu."""
+    p = Path(path)
+    return p if p.is_absolute() else (PROJECT_ROOT / p)
 CONFIG_DIR = PROJECT_ROOT / "config"
 DOMAINS_DIR = CONFIG_DIR / "domains"
 

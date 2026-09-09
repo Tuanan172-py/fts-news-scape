@@ -23,7 +23,7 @@ def test_workflow_writes_output(tmp_path):
     res = run(input_root=inp, output_root=tmp_path / "out", store=store, registry=reg,
               do_compile=False, date="2026-08-18")
     assert res["counts"] == {"AnPT": 1} and res["total"] == 1
-    assert (tmp_path / "out" / "AnPT" / "2026-08-18.csv").exists()
+    assert (tmp_path / "out" / "AnPT" / "2026-08-18.xlsx").exists()
 
 
 def test_workflow_disabled_user(tmp_path):

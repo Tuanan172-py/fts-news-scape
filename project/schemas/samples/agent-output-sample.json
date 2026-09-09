@@ -4,13 +4,17 @@
   "summary": {
     "abstractive": "8 ngân hàng và 14 doanh nghiệp đầu ngành giảm tổng cộng hơn 21.730 lao động theo báo cáo mới nhất.",
     "key_points": [
-      "Hơn 6.400 nhân sự rời khỏi báo cáo của 8 ngân hàng",
-      "14 doanh nghiệp đứng đầu giảm 21.730 lao động"
+      "Tổng cộng hơn 21.730 lao động bị cắt giảm ở 22 tổ chức đầu ngành",
+      "Khối ngân hàng chiếm gần 30% mức giảm, phần còn lại thuộc doanh nghiệp niêm yết"
     ]
   },
   "implication": {
     "text": "Xu hướng tinh giản nhân sự diện rộng có thể phản ánh áp lực chi phí và tự động hóa; tác động tới sức mua và tâm lý thị trường lao động.",
-    "affected_parties": ["ngân hàng", "người lao động", "doanh nghiệp niêm yết"],
+    "affected_parties": [
+      "ngân hàng",
+      "người lao động",
+      "doanh nghiệp niêm yết"
+    ],
     "impact_area": "market"
   },
   "materiality": {
@@ -19,8 +23,16 @@
   },
   "confidence": 0.78,
   "citations": [
-    {"claim": "8 ngân hàng giảm hơn 6.400 nhân sự", "source_span": "Hơn 6.400 nhân sự rời khỏi báo cáo của 8 ngân hàng", "source_offset": 0},
-    {"claim": "14 DN đầu ngành giảm 21.730 lao động", "source_span": "14 DN đứng đầu đã giảm 21.730 lao động", "source_offset": 52}
+    {
+      "claim": "8 ngân hàng giảm hơn 6.400 nhân sự",
+      "source_span": "Hơn 6.400 nhân sự rời khỏi báo cáo của 8 ngân hàng",
+      "source_offset": 0
+    },
+    {
+      "claim": "14 DN đầu ngành giảm 21.730 lao động",
+      "source_span": "14 DN đứng đầu đã giảm 21.730 lao động",
+      "source_offset": 52
+    }
   ],
   "processing_metadata": {
     "agent_provider": "example-provider",
@@ -28,12 +40,23 @@
     "timestamp": "2026-08-14T03:05:00+07:00",
     "schema_version": "1.0"
   },
-  "sentiment": {"overall": -0.3, "polarity": "negative"},
+  "sentiment": {
+    "overall": -0.3,
+    "polarity": "negative"
+  },
   "event_type": "macro",
   "entities": {
-    "companies": [{"name": "ngân hàng (tổng hợp)", "ticker": null, "sentiment": -0.2}],
+    "companies": [
+      {
+        "name": "ngân hàng (tổng hợp)",
+        "ticker": null,
+        "sentiment": -0.2
+      }
+    ],
     "people": [],
-    "locations": ["Việt Nam"]
+    "locations": [
+      "Việt Nam"
+    ]
   },
   "extraction_quality": "high"
 }

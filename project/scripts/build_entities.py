@@ -38,6 +38,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from src.agent.entities import GENERIC_ALIAS_STOPLIST, _fold
 from src.core.stdio import force_utf8_stdio
 force_utf8_stdio()
 
@@ -117,18 +118,27 @@ def short_name(name: str) -> str:
 
 def make_aliases(canonical: str, code: str, brand_map: dict | None = None) -> list[str]:
     """Surface form (giữ thứ tự, unique): tên đầy đủ → tên rút gọn → thương hiệu trong
-    ngoặc → alias thương hiệu bổ sung tay (brand_aliases.yaml)."""
+    ngoặc → alias thương hiệu bổ sung tay (brand_aliases.yaml).
+
+    Alias SINH TỰ ĐỘNG (tên rút gọn + chuỗi trong ngoặc) phải lọc qua GENERIC_ALIAS_STOPLIST:
+    tên pháp lý VN thường chứa địa danh/hậu tố chung, và "(Việt Nam)" từng bị bơm thẳng thành
+    alias của TICKER:IVS khiến mã này khớp 164 bài — top-1 sai của cả hệ thống.
+    Tên đầy đủ và alias người biên tập nhập tay (brand_map) KHÔNG lọc — đó là chủ ý.
+    """
     out: list[str] = []
 
-    def add(x: str) -> None:
+    def add(x: str, *, filtered: bool = False) -> None:
         x = clean_name(x)
-        if x and x not in out and not x.isdigit() and len(x) >= 2:
-            out.append(x)
+        if not x or x in out or x.isdigit() or len(x) < 2:
+            return
+        if filtered and _fold(x) in GENERIC_ALIAS_STOPLIST:
+            return
+        out.append(x)
 
     add(clean_name(canonical))
-    add(short_name(canonical))
+    add(short_name(canonical), filtered=True)
     for m in _PAREN_RE.findall(str(canonical)):   # thương hiệu trong ngoặc: (CHOLIMEX)
-        add(m)
+        add(m, filtered=True)
     for b in (brand_map or {}).get(code, []):     # (Vietcombank), (BIDV)...
         add(b)
     return out

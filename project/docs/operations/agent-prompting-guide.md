@@ -76,7 +76,7 @@ Ranh giới trách nhiệm (agent làm cột giữa; CẤM lấn cột phải):
 | Sinh JSON đúng schema/DoD | ✅ | — |
 | **Ghi `<id>.json` vào `data/agent_outputs*/`** | ✅ | — |
 | `l1_ingest.py` / `agent_ingest.py` (validate + DoD → `dod_pass`) | — | ✅ |
-| Truy vấn/sửa DB, orchestrate, cron, ghi final.csv | — | ✅ |
+| Truy vấn/sửa DB, orchestrate, cron, ghi <date>.xlsx | — | ✅ |
 
 Nghiệm thu **KHÔNG do agent tự tuyên bố**: agent chỉ ghi file; `*_ingest.py` mới chấm DoD và đặt
 `dod_pass`. "Xong bài" = file ghi ra **và** `dod_pass=1` sau ingest.
@@ -145,7 +145,7 @@ soạn output → ghi <id>.json → l1_ingest.py / agent_ingest.py
   (đổi `l1_outputs`→`agent_outputs` cho lớp bóc tách.)
 - **Idempotent**: bài đã `dod_pass=1` → nạp lại trả cached, KHÔNG xử lý lại → an toàn chạy trùng.
 - **"Hoàn thành" của cả lô** = `db_status.py` mục 8–9 cho thấy `dod_pass=1` phủ hết article cần thiết;
-  khi đó `write_user_output.py` mới ghi được `final.csv`.
+  khi đó `write_user_output.py` mới ghi được `<date>.xlsx`.
 
 ---
 

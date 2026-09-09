@@ -1,7 +1,6 @@
 """P3 — checkpoint/resume: idempotent, không nhân đôi, thêm bài mới đúng."""
 from __future__ import annotations
 
-import csv
 import json
 
 import _userkit as k
@@ -12,8 +11,8 @@ DATE = "2026-08-18"
 
 
 def _read(path):
-    with open(path, encoding="utf-8-sig", newline="") as f:
-        return list(csv.DictReader(f))
+    """Deliverable là .xlsx từ 2026-09-08 (US-101)."""
+    return k.read_delivery(path)
 
 
 def test_idempotent_double_write(tmp_path):
@@ -24,7 +23,7 @@ def test_idempotent_double_write(tmp_path):
     w.write(date=DATE)
     w.write(date=DATE)                                       # chạy lại
 
-    final = tmp_path / "out" / "AnPT" / f"{DATE}.csv"
+    final = tmp_path / "out" / "AnPT" / f"{DATE}.xlsx"
     assert len(_read(final)) == 1                            # không nhân đôi
     cp = json.loads((tmp_path / "out" / "AnPT" / "_checkpoint.json").read_text(encoding="utf-8"))
     assert "a1" in cp["written"][DATE]
@@ -41,7 +40,7 @@ def test_resume_adds_new_article(tmp_path):
     k.seed_article(store, "a2"); k.seed_l1(store, "a2", ["TICKER:HPG"]); k.seed_agent(store, "a2")
     w.write(date=DATE)
 
-    rows = _read(tmp_path / "out" / "AnPT" / f"{DATE}.csv")
+    rows = _read(tmp_path / "out" / "AnPT" / f"{DATE}.xlsx")
     ids = sorted(r["article_id"] for r in rows)
     assert ids == ["a1", "a2"]                              # đủ 2, không trùng
     cp = json.loads((tmp_path / "out" / "AnPT" / "_checkpoint.json").read_text(encoding="utf-8"))
@@ -61,7 +60,7 @@ def test_checkpoint_records_gold_status_and_upgrade(tmp_path):
     user_dir = tmp_path / "out" / "AnPT"
     cp = json.loads((user_dir / "_checkpoint.json").read_text(encoding="utf-8"))
     assert cp["written"][DATE] == {"a1": "L1_ONLY"}
-    assert _read(user_dir / f"{DATE}.csv")[0]["summary"] == ""
+    assert _read(user_dir / f"{DATE}.xlsx")[0]["summary"] == ""
 
     k.seed_agent(store, "a1")                                            # Gold về ở vòng sau
     assert ckpt.filter_upgraded(user_dir, DATE, {"a1": "GOLD"}) == ["a1"]
@@ -69,7 +68,7 @@ def test_checkpoint_records_gold_status_and_upgrade(tmp_path):
 
     cp = json.loads((user_dir / "_checkpoint.json").read_text(encoding="utf-8"))
     assert cp["written"][DATE] == {"a1": "GOLD"}
-    rows = _read(user_dir / f"{DATE}.csv")
+    rows = _read(user_dir / f"{DATE}.xlsx")
     assert len(rows) == 1 and rows[0]["summary"].startswith("Tóm tắt")   # ghi đè đầy đủ
 
 
@@ -99,14 +98,14 @@ def test_locked_output_file_is_not_marked_as_delivered(tmp_path):
     w.write(date=DATE)
 
     user_dir = tmp_path / "out" / "AnPT"
-    final = user_dir / f"{DATE}.csv"
+    final = user_dir / f"{DATE}.xlsx"
     k.seed_article(store, "a2"); k.seed_l1(store, "a2", ["TICKER:HPG"]); k.seed_agent(store, "a2")
 
-    with open(final, encoding="utf-8-sig"):                  # giả lập Excel giữ handle
+    with open(final, "rb"):                                  # giả lập Excel giữ handle
         w.write(date=DATE, write_master=False)
 
     assert [r["article_id"] for r in _read(final)] == ["a1"]  # file đích VẪN là bản cũ
-    snaps = [p for p in user_dir.glob(f"{DATE}_*.csv")]
+    snaps = [p for p in user_dir.glob(f"{DATE}_*.xlsx")]
     assert len(snaps) == 1                                    # dữ liệu mới nằm ở snapshot
     assert {r["article_id"] for r in _read(snaps[0])} == {"a1", "a2"}
     cp = json.loads((user_dir / "_checkpoint.json").read_text(encoding="utf-8"))

@@ -9,7 +9,7 @@ Cập nhật: 2026-08-24 · Trạng thái: **ACTIVE / PRODUCTION SPEC** · Kèm:
 ## 1. Mục tiêu & Nguyên lý Thiết kế Cốt lõi
 
 1. **Ranh giới Phân công (Scripts vs Gold Agents)**:
-   - **Scripts Automate**: Đảm nhiệm toàn bộ phần hạ tầng từ thu thập Bronze (raw_html bất biến), chuẩn hóa Silver, đóng gói task packets, kiểm tra cổng DoD Ingest và xuất Deliverable `final.csv`.
+   - **Scripts Automate**: Đảm nhiệm toàn bộ phần hạ tầng từ thu thập Bronze (raw_html bất biến), chuẩn hóa Silver, đóng gói task packets, kiểm tra cổng DoD Ingest và xuất Deliverable `<date>.xlsx`.
    - **Gold Agents (2 Lớp Nghiệp vụ Trí tuệ)**: Đảm nhận trọn vẹn cả **(1) Xác định Thực thể (Entity Recognition)** và **(2) Xử lý Nội dung & Ngữ nghĩa (Content Processing)**.
 2. **Quy chuẩn Payload Đoạn văn Sạch (Clean Paragraph Payload Invariant)**:
    - Bản gốc raw_html được bảo toàn tại Bronze để audit/grounding.
@@ -40,7 +40,7 @@ flowchart TD
         OUT_L1["data/agent_outputs_l1/ (*.json)"]
         OUT_GOLD["data/agent_outputs/ (*.json)"]
         DB[("monocle.db<br/>(work_items, agent_outputs)")]
-        USER_CSV["users/output/<user>/<date>/final.csv"]
+        USER_CSV["users/output/<user>/<date>.xlsx"]
     end
 
     MASTER -->|1. agent_export| TASKS
@@ -88,5 +88,5 @@ flowchart TD
 ### Giai đoạn 4: Biên dịch & Phân phối Người dùng (User Delivery)
 - Master Agent chạy `python scripts/run_user_workflow.py`.
 - Đối chiếu mã cổ phiếu bóc tách được với `users/subscriptions/` để ghi file:
-  `users/output/<user>/<date>/final.csv`
+  `users/output/<user>/<date>.xlsx`
 - Header và dữ liệu chuẩn format, `key_points` xuống dòng gạch đầu dòng rõ ràng.

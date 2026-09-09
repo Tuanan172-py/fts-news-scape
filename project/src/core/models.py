@@ -8,6 +8,7 @@ Core models — Article, ScrapeResult và dedup hash.
 from __future__ import annotations
 
 import hashlib
+import re
 import json
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
@@ -18,6 +19,11 @@ VN_TZ = timezone(timedelta(hours=7), name="Asia/Ho_Chi_Minh")
 def sha256_hash(url: str, title: str) -> str:
     """SHA-256 của url + title — dùng thống nhất cho dedup toàn hệ thống."""
     return hashlib.sha256(f"{url}{title}".encode("utf-8")).hexdigest()
+
+
+def normalize_title(title: str) -> str:
+    """Lowercase + gop whitespace, GIU dau tieng Viet (input cho fuzzy dedup lop 2)."""
+    return re.sub(r"\s+", " ", str(title).strip().lower())
 
 
 def now_vn_iso() -> str:

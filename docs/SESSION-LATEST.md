@@ -3,41 +3,48 @@
 <!-- Step 9 handoff. OVERWRITE this (never append) at the end of every session. Keep to one screen. -->
 
 - **Updated:** 2026-09-08
-- **Current story:** Rà soát toàn bộ workflow scripts + Tối ưu hóa SQLite I/O & UTF-8 stdio
-- **Status:** **implemented & verified** (357/357 pytest passed, 100% scripts verified on `data/monocle.db`)
-- **Blocker:** none.
+- **Current story:** US-101 (deliverable XLSX) · US-102 (cổng giá trị Gold) — cả hai `implemented`
+- **Status:** `pytest tests/ = 373 passed` (baseline 357). 0 story `in_progress`.
+- **Blocker:** **US-103 `blocked`** — cần người duyệt ADR 0004 phần D trước khi chạm dữ liệu.
 
-## Đã rà soát & Tối ưu hoá toàn bộ Workflow
+## Việc đã làm phiên này
 
-### 1. Hạ tầng DB & Concurrency
-- **Khôi phục & Đồng bộ DB**: Giải quyết triệt để conflict WAL OneDrive, khôi phục `data/monocle.db` (7.094 articles, 7.613 seen, 1.274 agent outputs, 685 L1 outputs) đạt 100% `PRAGMA integrity_check = ok`.
-- **Tối ưu Composite Index**: Bổ sung `idx_agent_outputs_article_dod` và `idx_l1_outputs_article_dod` vào `_SCHEMA`. Tốc độ kiểm kê `l1_backlog.py` giảm từ >20s xuống **0.07s** (~300x).
-- **Read-Only Connections**: Tách biệt `init_schema: bool = True/False` trong `ArticleStore.__init__` và cập nhật `src/monitor/health.py` dùng `_connect_ro()`.
+### US-101 — Deliverable người dùng cuối: CSV → XLSX đơn sắc
+- `users/output/<user>/<YYYY-MM-DD>.xlsx` — **12 cột**, nhãn tiếng Việt, header đậm + kẻ mảnh,
+  `freeze A2`, AutoFilter, wrap 3 cột văn bản dài, **không màu nền**.
+- Bỏ khỏi deliverable: `impact_area` (100% = `market`), `event_type` (80% = `macro`),
+  `agent_provider`, `model_used`.
+- Sort tất định: `Độ khẩn` → `materiality.score` giảm dần → mã → tiêu đề (score vẫn ẩn cột).
+- Sửa bug `matched_entities` lặp mã (22% dòng) bằng dedupe trong `_codes()`.
+- Chặn formula injection: mọi ô văn bản ép `data_type="s"`.
+- `_master/*.csv` **giữ nguyên** hợp đồng máy đọc (CSV, snake_case EN) — có test riêng khoá.
+- `openpyxl` + `pytest` bổ sung vào `requirements.txt` (đang thiếu, cài mới là gãy).
 
-### 2. Chuẩn hoá Windows UTF-8 Stdio
-- Đã bổ sung `force_utf8_stdio()` và `argparse` vào tất cả workflow/entrypoint scripts (`refresh_watchlist.py`, `run_once.py`, `rederive_from_bronze.py`, `build_entities.py`, v.v.) triệt tiêu hoàn toàn lỗi `UnicodeEncodeError: 'charmap'` trên Windows console.
+### US-102 — Cổng giá trị Gold (backlog #3, ADR 0004 A–C)
+- **Xoá `scripts/maintenance/repair_truncated_outputs.py`** — script giả lập trí tuệ agent bằng
+  regex, vi phạm AGENTS.md §6.C và là nguyên nhân gốc của toàn bộ số liệu dưới.
+- `check_dod` thêm 2 predicate: `value_added`, `implication_specific`.
+- `tests/test_no_agent_emulation.py` khoá 3 bất biến chống tái phạm.
+- `schemas/agent-instructions-v1.md` §2b + sample được sửa (sample **tự vi phạm** quy tắc).
+- `scripts/verify_gold_quality.py` — kiểm định corpus (report mặc định, `--apply` mới ghi).
 
-### 3. Kiểm thử toàn bộ Scripts Pipeline (100% PASS)
-- **Kiểm định & Regression Suite**: `pytest tests/ -v` đạt **357/357 PASSED** (100%).
-- **Harness Audit**: `health_score = 0.85`, `entropy_score = 0.15`, 0 in-progress, 0 unproven stories.
-- **Monitoring & Health**: `db_status.py`, `src.monitor.health`, `report_drift.py` hoạt động chính xác.
-- **Backlog & Hierarchy**: `l1_backlog.py`, `l1_route.py`, `l1_ingest.py`, `agent_export.py`, `agent_ingest.py`, `run_agent_hierarchy.py` chạy chuẩn xác theo phân cấp L1 $\rightarrow$ Gold.
-- **User Delivery**: `compile_users.py`, `write_user_output.py`, `run_user_workflow.py` định tuyến đúng theo manifest.
-- **Diagnostics & Snapshot**: `db_snapshot.py` (tạo `monocle_review.db`), `dbq.py`, `export_csv.py`, `export_silver.py`, `sample_articles.py`, `domain_check.py` đều chạy thông suốt.
+## Số liệu đo trên `monocle.db` thật (read-only)
 
-## Số liệu Hệ thống Thực tế (Live monocle.db)
-
-| Nhóm dữ liệu | Số lượng hiện tại | Trạng thái |
-|---|---|---|
-| Articles trong DB | **7.094** | 100% Integrity OK |
-| Đã qua gate export (final.csv) | **424** | 384 GOLD · 40 L1_ONLY |
-| T1 gold-ready (Gold xong, thiếu L1) | **423** | 17 mini-batches sẵn sàng tại `data/agent_tasks/l1/` |
-| T2 chưa L1 chưa Gold | **6.247** | Sẵn sàng phân tuyến |
-| T3 đã có L1, work_item pending | **40** | Sẵn sàng cho Gold Agent |
-| Snapshot review độc lập | `data/monocle_review.db` | Cập nhật lúc 14:29 |
+| Chỉ số | Trước |
+|---|---|
+| `agent_outputs` · `dod_pass=1` | 1.274 · **1.274 (100%)** — cổng chưa từng từ chối ai |
+| `key_points` copy y hệt `citations[].source_span` | **1.274 (100%)** |
+| `implication.text` distinct | **3 câu** cho 1.274 bản ghi · boilerplate **100%** |
+| `impact_area = market` | **1.274 (100%)** |
+| Sẽ trượt cổng mới | **1.274 / 1.274** |
 
 ## Next Steps
 
-1. **Rút hàng đợi T1 (423 bài)**: Subagent L1 xử lý 17 batch `data/agent_tasks/l1/l1_batch_*.task.json` $\rightarrow$ Ingest & Deliver (`python scripts/run_agent_hierarchy.py --ingest-and-deliver`). Chi tiết: `project/docs/operations/backlog-drain-runbook.md`.
-2. **Kích hoạt chu trình cào mới**: `python scripts/run_once.py` hoặc `python -m src.morninger` để lấy tin tức mới nhất.
-3. **Rò rỉ T4 (Orphan backlog)**: Tiếp tục điều tra nguyên nhân work-packages Bronze/Silver không ghi vào bảng `articles`.
+1. **DUYỆT ADR 0004 phần D** (`docs/decisions/0004-gold-value-gate-va-du-lieu-gia-lap.md`):
+   chọn D1 (hạ `dod_pass=0`, giữ `output_json` — khuyến nghị) / D2 / D3. Chưa duyệt thì
+   deliverable vẫn đang chứa nội dung template.
+2. Sau khi duyệt, trên **máy B**: backup `data/monocle.db` → `python scripts/verify_gold_quality.py`
+   (xem báo cáo) → `--apply`.
+3. Cập nhật prompt agent Gold theo `schemas/agent-instructions-v1.md` §2b rồi chạy lại backlog —
+   trước khi làm việc này, mọi output kiểu cũ sẽ bị cổng mới đánh trượt (đúng chủ đích).
+4. Rò rỉ T4 (orphan backlog Bronze/Silver không vào `articles`) — chưa điều tra.

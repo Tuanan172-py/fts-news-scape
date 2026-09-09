@@ -59,11 +59,25 @@ def test_run_happy_path_with_parse_error(env):
 
 
 def test_run_dedup_skips_seen(env):
+    """Dedup có hiệu lực SAU khi bài được ghi bền vững vào `articles`, không phải lúc cào.
+
+    Trước 2026-09-08 scraper tự mark_seen ngay trong run(), trước khi DBWriter ghi
+    `articles`. Bất kỳ gián đoạn nào ở giữa khiến bài bị đánh dấu 'đã thấy' vĩnh viễn mà
+    không có dòng `articles` — 429 bài mồ côi trên monocle.db, 429/429 nằm trong
+    seen_articles. Nay `seen_articles` được ghi cùng transaction với `articles`
+    (store.insert_batch), nên dedup chỉ chặn thứ đã thực sự lưu được — và bài ghi hụt sẽ
+    được thử lại ở chu kỳ sau thay vì mất im lặng.
+    """
+    store, _ = env
     scraper = _make(env)
     first = scraper.run()
     assert len(first.new) == 2
-    second = scraper.run()
-    assert len(second.new) == 0  # đã mark_seen ở lần 1
+
+    # chưa ghi DB -> vẫn coi là mới (có thể thử lại)
+    assert len(scraper.run().new) == 2
+
+    store.insert_batch(first.new)
+    assert len(scraper.run().new) == 0
 
 
 def test_disabled_scraper_returns_empty(env):

@@ -14,7 +14,7 @@ L1), Gold là enrichment TÙY CHỌN. Hệ quả trực tiếp cho việc rút b
 - **L1 là nút cổ chai, không phải Gold.** Không có L1 thì bài không map được vào danh mục của
   bất kỳ user nào — dù Gold đã chạy xong.
 - **Không chạy agent cho bài không có dòng trong `articles`.** Gate là `articles ⨝ l1_outputs`,
-  nhóm đó vĩnh viễn không ra `final.csv` (xem §4).
+  nhóm đó vĩnh viễn không ra `<date>.xlsx` (xem §4).
 
 Bắt đầu mọi phiên rút backlog bằng:
 
@@ -30,7 +30,7 @@ Lệnh này CHỈ ĐỌC — kiểm kê tồn đọng, xếp hạng T1..T4 và i
 ## 1. T1 — `gold-ready`: lời nhất, tốn 0 token Gold
 
 Bài **đã có Gold đạt DoD nhưng thiếu L1**. Token Gold đã tiêu rồi mà không giao được bài nào.
-Chạy xong L1 là vào thẳng `final.csv` với `gold_status=GOLD`, đầy đủ summary + key_points.
+Chạy xong L1 là vào thẳng `<date>.xlsx` với `gold_status=GOLD`, đầy đủ summary + key_points.
 
 ```powershell
 # 1. Phát packet L1 gom lô 25 bài/file
@@ -53,7 +53,7 @@ Chạy xong L1 là vào thẳng `final.csv` với `gold_status=GOLD`, đầy đ�
 ## 2. T2 — `in-articles`: mở khoá cho Gold
 
 Bài chưa L1 chưa Gold, nhưng **có dòng trong `articles`**. Chạy L1 xong thì:
-- vào `final.csv` ngay dạng `L1_ONLY` (có title/entity, chưa có summary/key_points), và
+- vào `<date>.xlsx` ngay dạng `L1_ONLY` (có title/entity, chưa có summary/key_points), và
 - **mở khoá** cho `agent_export.py` bốc Gold (mặc định `--require-l1`).
 
 ```powershell
@@ -81,7 +81,7 @@ Bài chưa L1 chưa Gold, nhưng **có dòng trong `articles`**. Chạy L1 xong 
 ```
 
 Bài đã giao ở `L1_ONLY` nay được ghi đè đầy đủ; log hiện ở `upgraded=`.
-Cắt ngắn giữa chừng vì hết quota **không hỏng gì** — bài chưa tới lượt vẫn nằm trong `final.csv`
+Cắt ngắn giữa chừng vì hết quota **không hỏng gì** — bài chưa tới lượt vẫn nằm trong `<date>.xlsx`
 dạng `L1_ONLY` và tự nâng cấp ở vòng sau (`write()` rewrite toàn tập, idempotent).
 
 Chỉ dùng `--no-require-l1` khi **cố ý** rút backlog Gold cũ, chấp nhận packet thiếu

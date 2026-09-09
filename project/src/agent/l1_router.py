@@ -17,6 +17,8 @@ import os
 from src.agent.entities import EntityRegistry, load_registry
 from src.agent.l1_classifier import classify_article, title_of
 from src.handoff.contract_validator import validate as schema_validate
+from src.core.config import to_project_relative
+from src.core.models import now_vn_iso
 
 L1_TASK_VERSION = "1.0"
 L1_OUTPUT_SCHEMA = "l1-entity-output-v1"
@@ -24,6 +26,17 @@ _CATEGORY_KEYS = (
     "ticker_company", "etf_fund", "index", "exchange",
     "industry_sector", "macro_geo", "asset_class", "institution",
 )
+
+# type entity -> nhom trong checklist `categories` cua l1-entity-output-v1.
+TYPE_GROUP = {
+    "TICKER": "ticker_company", "SECURITY_OTHER": "ticker_company",
+    "ETF": "etf_fund", "INDEX": "index", "EXCHANGE": "exchange",
+    "INDUSTRY_GICS1": "industry_sector", "INDUSTRY_GICS2": "industry_sector",
+    "INDUSTRY_GICS3": "industry_sector",
+    "MACRO_GEO": "macro_geo", "MACRO_THEME": "macro_geo",
+    "ASSET_CLASS": "asset_class",
+    "INSTITUTION": "institution",
+}
 
 
 # ---------------------------------------------------------------------------
@@ -87,14 +100,69 @@ def write_l1_packet(packet: dict, base_dir: str = "data/agent_tasks/l1") -> str:
     os.makedirs(base_dir, exist_ok=True)
     target_path = os.path.join(base_dir, f"{packet['article_id']}.task.json")
     final_path, _ = safe_json_dump(packet, target_path, indent=2)
-    return str(final_path)
+    return to_project_relative(final_path)      # tuong doi -> chay duoc tren ca 2 may
 
+
+
+
+# ---------------------------------------------------------------------------
+# Vat chat hoa ket qua TAT DINH thanh l1-entity-output-v1
+# ---------------------------------------------------------------------------
+CODE_FIRST_PROVIDER = "code_first"
+CODE_FIRST_MODEL = "deterministic"
+
+
+def build_code_first_output(rec: dict, article_id: str) -> dict:
+    """`code_first` record (l1_classifier) -> l1-entity-output-v1.
+
+    KHONG suy dien them bat cu dieu gi: moi entity la ket qua TRA DANH MUC chuan, `surface`
+    la doan con nguyen van cua tieu de do EntityRegistry.detect() tra ve. Cac truong ngu
+    nghia (tom tat, implication, sentiment, unlisted_candidates) de TRONG — do la vung doc
+    quyen cua Subagent. Xem docs/decisions/0003-code-first-l1-delivery.md va AGENTS.md 6C.
+    """
+    title = rec.get("title") or ""
+    ents = []
+    for d in rec.get("entities") or []:
+        surface = d.get("surface")
+        if not surface or surface not in title:
+            continue          # khong ground duoc vao title thi bo, dung de DoD truot ca ban ghi
+        ents.append({
+            "surface": surface,
+            "entity_id": d["entity_id"],
+            "type": d["type"],
+            "method": "exact_code" if d.get("via") == "code" else "alias",
+            "in_list": True,
+        })
+    groups = {TYPE_GROUP.get(e["type"]) for e in ents}
+    recognized = bool(ents)
+    return {
+        "l1_output_version": "1.0",
+        "article_id": article_id,
+        "title": title,
+        "recognized": recognized,
+        "entities": ents,
+        "categories": {k: ("done" if k in groups else "none") for k in _CATEGORY_KEYS},
+        "unlisted_candidates": [],
+        "citations": [{"source_span": ents[0]["surface"]}] if recognized else [],
+        "processing_metadata": {
+            "agent_provider": CODE_FIRST_PROVIDER,
+            "model_used": CODE_FIRST_MODEL,
+            "timestamp": now_vn_iso(),
+        },
+    }
 
 # ---------------------------------------------------------------------------
 # DoD — gác output agent L1 (checklist machine-checkable)
 # ---------------------------------------------------------------------------
-def check_l1_dod(output: dict, title: str) -> tuple[bool, list[str]]:
-    """(ok, reasons). ok=True ⇔ tất cả predicate đạt."""
+def check_l1_dod(output: dict, title: str, registry=None) -> tuple[bool, list[str]]:
+    """(ok, reasons). ok=True <=> tat ca predicate dat.
+
+    `registry` (mac dinh: load_registry()) dung de kiem entity_id CO THAT trong danh muc.
+    Truoc day DoD khong kiem dieu nay, nen agent tra id sai dang - vd 'INDUSTRY_GICS3:THEP'
+    (gia tri enum cua truong `type`) thay vi id that 'IND_GICS3:THEP' - van qua cong, luu vao
+    DB, roi dinh tuyen cho 0 nguoi. Loi im lang, khong ai thay.
+    """
+
     reasons: list[str] = []
 
     ok, errs = schema_validate(output, L1_OUTPUT_SCHEMA)
@@ -128,19 +196,27 @@ def check_l1_dod(output: dict, title: str) -> tuple[bool, list[str]]:
 
     # category 'done' phải có entity in_list thuộc nhóm đó
     cats = output.get("categories") or {}
-    type_group = {
-        "TICKER": "ticker_company", "SECURITY_OTHER": "ticker_company",
-        "ETF": "etf_fund", "INDEX": "index", "EXCHANGE": "exchange",
-        "INDUSTRY_GICS1": "industry_sector", "INDUSTRY_GICS2": "industry_sector",
-        "INDUSTRY_GICS3": "industry_sector",
-        "MACRO_GEO": "macro_geo", "MACRO_THEME": "macro_geo",
-        "ASSET_CLASS": "asset_class",
-        "INSTITUTION": "institution",
-    }
+    # type_group -> TYPE_GROUP (module level, dung chung voi bo vat chat hoa code-first)
     done_groups = {g for g, v in cats.items() if v == "done"}
-    have_groups = {type_group.get(e.get("type")) for e in ents if e.get("in_list")}
+    have_groups = {TYPE_GROUP.get(e.get("type")) for e in ents if e.get("in_list")}
     for g in done_groups - have_groups:
         reasons.append(f"categories.{g}='done' nhưng không có entity in_list thuộc nhóm")
+
+    # entity_id phai co that trong registry (chan id sai dang / bia)
+    if registry is None:
+        try:
+            registry = load_registry()
+        except Exception:                      # thieu entities.json -> bo qua check nay
+            registry = None
+    if registry is not None:
+        for i, e in enumerate(ents):
+            if not (e or {}).get("in_list"):
+                continue
+            eid = (e or {}).get("entity_id")
+            if not eid:
+                reasons.append(f"entities[{i}].in_list=true nhung thieu entity_id")
+            elif registry.get(eid) is None:
+                reasons.append(f"entities[{i}].entity_id={eid!r} khong co trong danh muc")
 
     pm = output.get("processing_metadata") or {}
     for k in ("agent_provider", "model_used", "timestamp"):

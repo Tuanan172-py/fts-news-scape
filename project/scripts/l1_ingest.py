@@ -6,9 +6,15 @@ lưu l1_outputs → set l1_tasks.status = done/failed. Idempotent theo article_i
 
 Chạy sau khi agent (do cron kích hoạt) xử lý các packet trong data/agent_tasks/l1/.
 
+Che do --code-first: KHONG doc file agent, ma vat chat hoa ket qua TRA DANH MUC tat dinh
+(l1_tasks route=resolved, status=pending) thanh l1-entity-output-v1 va nap thang vao
+l1_outputs voi l1_source='code_first'. Xem docs/decisions/0003-code-first-l1-delivery.md.
+
 Usage:
     python scripts/l1_ingest.py <output.json | thư_mục>
     python scripts/l1_ingest.py data/agent_outputs_l1/
+    python scripts/l1_ingest.py --code-first --dry-run
+    python scripts/l1_ingest.py --code-first [--limit N]
 """
 from __future__ import annotations
 
@@ -34,19 +40,30 @@ def _iter_paths(arg: str):
 
 
 def main(argv: list[str]) -> int:
-    if not argv:
-        print("usage: l1_ingest.py <output.json | dir> [--no-archive] [--task-dir DIR]")
-        return 2
 
     import argparse
     ap = argparse.ArgumentParser(description="Nạp output tra soát của agent L1")
-    ap.add_argument("target", help="output.json hoặc thư mục chứa outputs")
+    ap.add_argument("target", nargs="?", help="output.json hoặc thư mục chứa outputs")
     ap.add_argument("--task-dir", default="data/agent_tasks/l1", help="Thư mục task packets L1 (mặc định: data/agent_tasks/l1)")
     ap.add_argument("--no-archive", action="store_true", help="Không tự động archive task packet khi DoD pass")
+    ap.add_argument("--code-first", action="store_true",
+                    help="Vật chất hoá l1_tasks route=resolved (tra danh mục tất định) → l1_outputs")
+    ap.add_argument("--limit", type=int, default=None, help="Giới hạn số task khi --code-first")
+    ap.add_argument("--dry-run", action="store_true", help="Chỉ đếm, không ghi DB")
     args = ap.parse_args(argv)
 
     db_path = load_settings().get("database", {}).get("path", "data/monocle.db")
     runner = L1Runner(ArticleStore(db_path=db_path), task_dir=args.task_dir)
+
+    if args.code_first:
+        stat = runner.drain_code_first(limit=args.limit, dry_run=args.dry_run)
+        tag = "DRY-RUN " if args.dry_run else ""
+        print(f"{tag}code-first: quét={stat['scanned']} ghi={stat['written']} "
+              f"dod_fail={stat['dod_fail']} trả-lại-agent={stat['rerouted']}")
+        return 0
+
+    if not args.target:
+        ap.error("thiếu <target>, hoặc dùng --code-first")
     done = failed = 0
     done_aids: list[str] = []
     from src.agent.batch_handoff import unpack_batch_output

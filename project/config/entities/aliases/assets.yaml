@@ -65,6 +65,10 @@ TIEN_MA_HOA:
     - "crypto"
     - "cryptocurrency"
     - "Bitcoin"
+    # "BTC" cố ý trỏ ĐỒNG THỜI tới ASSET_CLASS:TIEN_MA_HOA và INSTITUTION:BO_TAI_CHINH.
+    # Hai thực thể cùng mức quan trọng, một tiêu đề nhắc "BTC" thực sự có thể thuộc về một
+    # trong hai; gắn cả hai giữ được recall cho người theo dõi bất kỳ bên nào, còn việc phân
+    # định nghĩa là suy luận ngữ cảnh — thuộc Subagent L1, không phải tầng tất định.
     - "BTC"
     - "Ethereum"
     - "tài sản số"

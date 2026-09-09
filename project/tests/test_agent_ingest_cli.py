@@ -40,7 +40,7 @@ def _output(article_id="art1"):
     return {
         "output_schema_version": "1.0", "article_id": article_id,
         "summary": {"abstractive": "tóm tắt", "key_points": ["a"]},
-        "implication": {"text": "hàm ý", "impact_area": "market"},
+        "implication": {"text": "Chi phí đầu vào hạ nhiệt có thể nới biên lợi nhuận quý tới của nhóm doanh nghiệp liên quan, hỗ trợ định giá cổ phiếu.", "impact_area": "market"},
         "materiality": {"score": 0.6, "time_sensitivity": "this_week"},
         "citations": [
             {"claim": "c1", "source_span": "Alpha beta gamma đầu ngành.", "source_offset": 0},

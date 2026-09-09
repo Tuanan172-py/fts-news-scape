@@ -1,6 +1,6 @@
 # Thiết kế — Quy trình end-to-end lớp NGƯỜI DÙNG (input → output)
 
-Cập nhật: 2026-09-07 · Đối tượng: dev/vận hành muốn chạy từ input user tới khi có CSV output.
+Cập nhật: 2026-09-08 · Đối tượng: dev/vận hành muốn chạy từ input user tới khi có file giao hàng.
 Tham chiếu chéo: [00-end-to-end-architecture](00-end-to-end-architecture.md),
 [09-agent-io-contract](09-agent-io-contract.md), [10-agent-orchestration-governance](10-agent-orchestration-governance.md).
 
@@ -8,8 +8,8 @@ Tham chiếu chéo: [00-end-to-end-architecture](00-end-to-end-architecture.md),
 
 ## 1. Mục tiêu & nguyên tắc chốt
 
-Input cấp cao nhất = **thư mục theo user**. Hệ thống chạy các lớp agent rồi xuất **CSV cuối cho từng
-user**, lọc theo entity user đăng ký, phân theo ngày. Idempotent, resume theo `article_id`.
+Input cấp cao nhất = **thư mục theo user**. Hệ thống chạy các lớp agent rồi xuất **1 file XLSX/ngày
+cho từng user**, lọc theo entity user đăng ký. Idempotent, resume theo `article_id`.
 
 Quyết định thiết kế (chốt 2026-08-18, **sửa 2026-09-07**):
 - **Gate output** = `l1_outputs.dod_pass=1` **CHỈ** (L1 phải agent-reviewed). Định tuyến dựa entity
@@ -19,7 +19,7 @@ Quyết định thiết kế (chốt 2026-08-18, **sửa 2026-09-07**):
   *(Trước 2026-09-07 gate là AND cả 2 lớp — bài chỉ có L1 bị giữ lại, giao hàng trễ vô ích.)*
 - **Phạm vi agent** = chỉ article có entity giao với **union subscription** của user đang bật.
 - **Scrape TÁCH** khỏi workflow (`--skip-scrape` mặc định — giả định cron đã scrape).
-- **Bật/tắt user** = `users/input/manifest.yaml` (vắng tên = mặc định BẬT).
+- **Bật/tắt user** = `users/subscriptions/manifest.yaml` (vắng tên = mặc định BẬT).
 - **Không notify** giai đoạn này — chỉ `logger.info("done …")`.
 
 ---
@@ -27,7 +27,7 @@ Quyết định thiết kế (chốt 2026-08-18, **sửa 2026-09-07**):
 ## 2. Sơ đồ tổng thể
 
 ```
-STAGE 0  users/input/<name>/entities.xlsx   +  users/input/manifest.yaml    (USER nhập tay)
+STAGE 0  users/subscriptions/<name>_news.xlsx|csv + users/subscriptions/manifest.yaml  (USER nhập tay)
    │           scripts/compile_users.py --all
 STAGE 1  → project/config/entities/users/<name>.yaml   (+ _unknown.txt)      → EntityRegistry
    │
@@ -37,7 +37,7 @@ STAGE 3  L1:  l1_route.py → packet → [AGENT] → l1_ingest.py → l1_outputs
    │
 STAGE 4  Agent: agent_export.py(--require-l1) → packet → [AGENT] → agent_ingest.py → agent_outputs.dod_pass=1
    │           GATE: l1 dod_pass=1 (CỨNG) · agent dod_pass=1 (TÙY CHỌN → gold_status)
-STAGE 5  → subscribers_for(entities) ∩ enabled → users/output/<name>/<YYYY-MM-DD>/{L1,agent,final}.csv
+STAGE 5  → subscribers_for(entities) ∩ enabled → users/output/<name>/<YYYY-MM-DD>.xlsx
                                                  + _checkpoint.json · log "done"
 ```
 
@@ -49,24 +49,34 @@ Runtime chỉ **phát packet** + **nạp & chấm DoD**, không nhúng LLM.
 ## 3. Cấu trúc thư mục
 
 ```
-users/                              (REPO ROOT, sibling của project/)
-├── input/
-│   ├── manifest.yaml               # bật/tắt user
-│   ├── <name>/entities.xlsx        # USER nhập
-│   └── <name>/_unknown.txt         # (auto) entity nhập sai
-├── output/
-│   └── <name>/<YYYY-MM-DD>/{L1.csv, agent.csv, final.csv}
-│       + <name>/_checkpoint.json
-└── template/entities_template.xlsx # mẫu có dropdown
+users/                                   (REPO ROOT, sibling của project/)
+├── subscriptions/
+│   ├── manifest.yaml                    # bật/tắt user
+│   ├── <name>_news.xlsx | .csv          # USER nhập (1 file phẳng / user)
+│   ├── _template_news.csv               # mẫu để copy
+│   └── _unknown/<name>.txt              # (auto) entity nhập sai
+└── output/
+    ├── <name>/<YYYY-MM-DD>.xlsx          # deliverable — 1 file/ngày, PHẲNG
+    ├── <name>/_checkpoint.json          # sổ cái đã giao
+    └── _master/<YYYY-MM-DD>.csv         # audit; kèm _L1.csv và _agent.csv cùng ngày
 project/config/entities/users/<name>.yaml    # (auto) config máy đọc
 ```
+
+> **Phẳng, không thư mục con theo ngày.** `users/output/<name>/2026-08-14.xlsx`, KHÔNG phải
+> `users/output/<name>/2026-08-14/final.csv`. Nguồn sự thật: `src/export/user_output.py`
+> (`file_path = user_dir / f"{d}.xlsx"`). Tài liệu trước 2026-09-08 ghi sai dạng thư mục con.
+>
+> Deliverable user đổi CSV → XLSX ngày 2026-09-08 (US-101, §10). File `.csv` đã giao trước đó
+> vẫn nằm nguyên trong thư mục — **không xoá** (đồng bộ SharePoint, xem `dev/07` §1).
 
 ---
 
 ## 4. STAGE 0 — USER khai báo input
 
-### 4.1 File Excel `users/input/<name>/entities.xlsx`
-Sheet `entities`: mỗi **cột** = 1 nhóm, mỗi **dòng** = 1 giá trị. Sheet `meta`: `user`, `note`.
+### 4.1 File đăng ký `users/subscriptions/<name>_news.xlsx` (hoặc `.csv`)
+Sheet đầu tiên (`entities`): mỗi **cột** = 1 nhóm, mỗi **dòng** = 1 giá trị. Username suy ra từ
+TÊN FILE (`AnPT_news.xlsx` → `AnPT`) — user không phải điền sheet `meta`. Bản `.csv` cùng cấu trúc
+(ma trận ngang, header = tên nhóm); khi có cả hai, `.xlsx` được ưu tiên.
 
 | Cột | Nhập gì | Nguồn tra trong `data/entities/entities.xlsx` | Ví dụ |
 |-----|---------|-----------------------------------------------|-------|
@@ -78,10 +88,11 @@ Sheet `entities`: mỗi **cột** = 1 nhóm, mỗi **dòng** = 1 giá trị. She
 | `entities` | **entity_id** (cửa thoát) | cột `entity_id` | `TICKER:HPG` |
 
 - Nhóm dùng code tự viết hoa khi compile (`hpg`→`HPG`, `thep`→`THEP`). `industries` khớp theo **CODE** ngành GICS (KHÔNG theo tên).
-- Lấy template: `python scripts/make_user_template.py` → `users/template/entities_template.xlsx`.
+- Lấy template: `python scripts/make_user_template.py` → `users/subscriptions/_template_news.csv`
+  (+ bản xlsx có dropdown tại `users/template/entities_template.xlsx`).
 - Seed từ config yaml có sẵn: `python scripts/make_user_template.py --seed <name>`.
 
-### 4.2 `users/input/manifest.yaml`
+### 4.2 `users/subscriptions/manifest.yaml`
 ```yaml
 users:
   AnPT: true
@@ -134,7 +145,18 @@ của user-workflow — giả định đã sinh `work_items` trong DB.
 
 **Trường agent phải thêm** (`agent-output-v1`): `summary.abstractive` + `key_points`, `implication.text`
 + `impact_area`, `materiality.score` + `time_sensitivity`, (tuỳ chọn) `sentiment`, `event_type`; `citations`≥2.
-**Agent done** = `agent_outputs.dod_pass=1` (≥2 citation ⊂ cleaned_text, extraction_quality∈{high,medium}). `confidence` không còn là gate.
+**Agent done** = `agent_outputs.dod_pass=1` — 6 predicate: schema hợp lệ · ≥2 citation ⊂
+`cleaned_text` · `extraction_quality`∈{high,medium} · `processing_metadata` đủ ·
+**`value_added`** (tóm tắt không phải bản sao, `key_points` khác `citations`) ·
+**`implication_specific`** (≥40 ký tự, không trích nguyên văn, không phải câu template).
+`confidence` không còn là gate.
+
+> 2 predicate cuối thêm 2026-09-08. Trước đó cổng chỉ đo tính CÓ CĂN CỨ nên với output
+> copy nguyên văn thì phép thử hiển nhiên đúng: **1.274/1.274** bản ghi `agent_outputs`
+> đều `dod_pass=1` trong khi 100% có `key_points` copy y hệt `source_span` và 100%
+> `implication` là 1 trong 3 câu template. Xem
+> [ADR 0004](../../../docs/decisions/0004-gold-value-gate-va-du-lieu-gia-lap.md).
+> Kiểm định định kỳ: `python scripts/verify_gold_quality.py`.
 
 **Giới hạn phạm vi (tiết kiệm):** chỉ nên export article có entity ∈ `union_subscription(registry, enabled)`
 (`src/pipeline/user_workflow.py::union_subscription`). Article không ai theo dõi → không cần agent.
@@ -153,16 +175,16 @@ của user-workflow — giả định đã sinh `work_items` trong DB.
 2. **Định tuyến** — entity của article = `l1_outputs.entities[in_list].entity_id`;
    `subscribers_for(eset)` ∩ `enabled`; mỗi user lấy `matched = eset ∩ resolve_subscription(user)`.
 3. **Ghi file** (atomic temp + `os.replace`, utf-8-sig):
-   - Thư mục user (`users/output/<name>/<YYYY-MM-DD>/`): **chỉ ghi duy nhất `final.csv`** (deliverable tinh gọn).
+   - Thư mục user (`users/output/<name>/`): **chỉ ghi duy nhất `<date>.xlsx`** (deliverable tinh gọn).
    - Thư mục audit tập trung (`users/output/_master/`): `<date>.csv`, `<date>_L1.csv`, `<date>_agent.csv`.
      `_master/<date>.csv` dùng `MASTER_COLUMNS` = `FINAL_COLUMNS` + **`noise_signals`** — tín hiệu
      nhiễu TẤT ĐỊNH từ Silver (`alias_title`, `alias_body`, `body_len`, `code_in_symbols`, `cats`),
      **chỉ để quan sát, CHƯA dùng làm gate**. Gom số liệu thật trước, chọn ngưỡng sau.
      `_master/<date>_agent.csv` chỉ chứa bài `gold_status=GOLD`.
 4. **Checkpoint** — `src/export/checkpoint.py::mark_written()` cập nhật `_checkpoint.json` **SAU** khi
-   `final.csv` đã replace (crash-safe). `logger.info("done user=… date=… rows=…")`.
+   `<date>.xlsx` đã replace (crash-safe). `logger.info("done user=… date=… rows=…")`.
 
-Article thiếu **L1**, hoặc không ai đăng ký entity → **không** vào `final.csv`.
+Article thiếu **L1**, hoặc không ai đăng ký entity → **không** vào `<date>.xlsx`.
 Article có L1 nhưng chưa có Gold → **vẫn vào**, `gold_status=L1_ONLY`, trường Gold rỗng.
 
 **Lọc rác (`_passes_noise_filter`)** — KHÔNG đọc bất kỳ trường Gold nào: pass nếu match ≥1 entity
@@ -171,24 +193,65 @@ cụ thể (TICKER/ETF/INDEX/EXCHANGE/INDUSTRY/INSTITUTION), hoặc — khi ch�
 
 ---
 
-## 10. Định dạng `final.csv`
+## 10. Định dạng file giao hàng `users/output/<name>/<YYYY-MM-DD>.xlsx`
 
-`date, matched_entities, title, summary, key_points, implication, impact_area, time_sensitivity, sentiment, event_type, gold_status, url, source_domain, article_id, agent_provider, model_used`
+Nguồn sự thật: `src/export/xlsx_delivery.py::DELIVERY_FIELDS`. **12 cột**, 4 khối:
 
-- Cột nghiệp vụ/người dùng đọc đưa lên đầu; cột kỹ thuật/máy đọc đưa về cuối.
-- `matched_entities` = **code** các entity user đăng ký MÀ article chạm (join `;`).
-- `summary`←`summary.abstractive`; `key_points`←`summary.key_points` (định dạng danh sách gạch đầu dòng `- Point 1\n- Point 2` xuống dòng trong ô); `implication`←`implication.text`; `materiality_score`←`materiality.score`; `sentiment`←`sentiment.polarity`.
+| # | Cột (nhãn hiển thị) | Nguồn | Khối |
+|---|---|---|---|
+| 1 | Ngày | `published_at` → fallback `fetched_at` (kiểu date thật, `yyyy-mm-dd`) | định vị |
+| 2 | Mã theo dõi | code entity user đăng ký MÀ article chạm, join `; `, **đã khử trùng** | định vị |
+| 3 | Tiêu đề | `articles.title` | định vị |
+| 4 | Sắc thái | `sentiment.polarity` → `Tích cực`/`Tiêu cực`/`Trung lập` | phân loại |
+| 5 | Độ khẩn | `materiality.time_sensitivity` → `Khẩn`/`Trong ngày`/`Trong tuần`/`Trong tháng`/`Lưu trữ` | phân loại |
+| 6 | Độ đầy đủ | `gold_status` → `Đầy đủ` (GOLD) / `Sơ bộ` (L1_ONLY) | phân loại |
+| 7 | Nguồn | `source_domain` | nguồn |
+| 8 | Tóm tắt | `summary.abstractive` | văn bản dài |
+| 9 | Ý chính | `summary.key_points`, dạng `- điểm 1\n- điểm 2` (wrap trong ô) | văn bản dài |
+| 10 | Hàm ý thị trường | `implication.text` | văn bản dài |
+| 11 | Link | `articles.url` — clickable, giữ chữ đen (không dùng style Hyperlink xanh) | kỹ thuật |
+| 12 | Mã bài | `article_id` | kỹ thuật |
+
+**Vì sao XLSX chứ không CSV (chốt 2026-09-08, US-101).** CSV không lưu được độ rộng cột,
+freeze pane, AutoFilter, wrap-text. Đo trên dữ liệu thật: `Tóm tắt` trung bình 460 ký tự,
+`Ý chính` trung bình 593 ký tự có xuống dòng — mở CSV bằng Excel là lưới trần, và vì file
+sinh MỚI mỗi ngày nên người dùng phải lặp lại ~5 thao tác định dạng hằng ngày, không lưu
+lại được. XLSX lưu các thứ đó một lần.
+
+**Quy chuẩn trình bày — đơn sắc, không trang trí:**
+- Đúng 1 dòng header ở dòng 1. Không tiêu đề báo cáo, không merge cell, không dòng trống,
+  không dòng tổng.
+- KHÔNG màu nền, KHÔNG banding, KHÔNG màu chữ. Phân cấp bằng **in đậm** + 1 kẻ mảnh dưới header.
+- `freeze_panes = A2` + AutoFilter trên toàn dải.
+- 7 cột đầu đều ngắn (≤ 20 ký tự) nên vừa một màn hình; 3 cột văn bản dài nằm sau nên tràn
+  vào vùng trống bên phải thay vì đẩy cột ngắn ra ngoài.
+- Thứ tự dòng TẤT ĐỊNH: `Độ khẩn` → `materiality.score` giảm dần → `Mã theo dõi` → `Tiêu đề`.
+  Trước đây dòng đi theo thứ tự SQL JOIN trả về nên nhìn như dữ liệu ngẫu nhiên.
+
+**Cột bị loại khỏi deliverable** (vẫn còn đủ trong `_master/*.csv`):
+- `impact_area` — đo trên 1.274 bản ghi Gold: **100% = `market`**. Lọc được gì đâu.
+- `event_type` — 80% = `macro`.
+- `agent_provider`, `model_used` — metadata máy, không phải nội dung nghiệp vụ.
+- `materiality_score` — ẩn từ 2026-09-07 theo CORE/DETAIL bên dưới, nhưng **vẫn dùng làm khoá
+  sắp xếp** nên tin quan trọng tự nổi lên đầu mà không tốn một cột.
+
+**Chống formula injection.** openpyxl tự đoán chuỗi mở đầu `=` là CÔNG THỨC, và tiêu đề tin tài
+chính mở đầu `-5%…`/`+3%…` là chuyện thường. Mọi ô văn bản bị ép `data_type="s"`
+(`xlsx_delivery._set_text`). Tham chiếu OWASP CSV Injection.
+
 - `gold_status` ∈ `GOLD` | `L1_ONLY` — phân biệt "Gold chưa chạm bài" với "Gold đã chạy nhưng
-  trường optional rỗng" (`sentiment`/`event_type`/`impact_area`/`time_sensitivity` là optional
-  trong `agent-output-v1`). Không có cột này thì ô rỗng là nhập nhằng.
+  trường optional rỗng" (`sentiment`/`time_sensitivity` là optional trong `agent-output-v1`).
+  Không có cột này thì ô rỗng là nhập nhằng.
 - Flatten null-safe: field agent tuỳ chọn thiếu → ô rỗng, không lỗi.
-- **`materiality_score` tạm ẩn khỏi `final.csv`** (2026-09-07) theo mô hình CORE/DETAIL bên dưới.
-  Vẫn được agent sinh, vẫn lưu đủ trong `agent_outputs.output_json` và cột `materiality_score`
-  của `_master/<date>_agent.csv`. Bật lại = thêm 1 dòng vào `FINAL_COLUMNS`, không migration.
+- Enum lạ (agent trả sai giá trị) được giữ NGUYÊN VĂN, không nuốt — nhìn thấy giá trị lạ trong
+  file là tín hiệu đi sửa agent.
+- File CSV đã giao trước 2026-09-08 **không bị xoá** (thư mục output đồng bộ SharePoint,
+  xem `dev/07` §1); pipeline chỉ ngừng sinh CSV mới cho thư mục user.
 
 ### 10.1 Mô hình CORE / DETAIL (chốt 2026-09-07)
 
-Tách **hợp đồng LƯU TRỮ** (`agent-output-v1`, không đổi) khỏi **hợp đồng GIAO HÀNG** (`FINAL_COLUMNS`).
+Tách **hợp đồng LƯU TRỮ** (`agent-output-v1`, không đổi) khỏi **hợp đồng GIAO HÀNG**
+(`xlsx_delivery.DELIVERY_FIELDS` cho người, `MASTER_COLUMNS` cho máy).
 
 | Tầng | Ai làm | Trường | Vai trò |
 |---|---|---|---|
@@ -274,7 +337,7 @@ Tái dùng: `src/agent/entities.py` (select/subscribers_for), `l1_runner.py`, `r
 | Script / bước | Ai thực hiện | Tần suất | Tự động hoá? |
 |---------------|--------------|----------|--------------|
 | `make_user_template.py` | **NGƯỜI DÙNG** | 1 lần khi tạo user mới | không cần (thủ công) |
-| điền `entities.xlsx` + `manifest.yaml` | **NGƯỜI DÙNG** | khi thêm/sửa danh mục theo dõi | không (đầu vào của con người) |
+| điền `<name>_news.xlsx` + `manifest.yaml` | **NGƯỜI DÙNG** | khi thêm/sửa danh mục theo dõi | không (đầu vào của con người) |
 | `compile_users.py --all` | NGƯỜI DÙNG *hoặc* cron | sau khi đổi input (hoặc đầu mỗi lần chạy) | ✅ (run_user_workflow tự gọi) |
 | scrape cycle (`orchestrator.py`/`run_once.py`) | **FRAMEWORK** | liên tục, mỗi ~15′ | ✅ cron/scheduler |
 | `l1_route.py` (phát packet L1) | **FRAMEWORK** | theo lô, vài lần/ngày | ✅ cron |
@@ -296,7 +359,7 @@ KHI ĐỔI INPUT     : compile_users.py --all                   (người dùng,
 THEO LÔ / CUỐI NGÀY:
    l1_route ─▶ [AGENT L1] ─▶ l1_ingest
    agent_export(scoped) ─▶ [AGENT bóc tách] ─▶ agent_ingest
-   run_user_workflow --date today        → users/output/<name>/<ngày>/final.csv
+   run_user_workflow --date today        → users/output/<name>/<ngày>.xlsx
 ```
 
 - Có thể chạy chuỗi "theo lô" **nhiều lần/ngày** (vd mỗi 2–4h) để output cập nhật liên tục,

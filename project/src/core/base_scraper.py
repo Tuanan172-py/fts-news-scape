@@ -74,7 +74,10 @@ class BaseScraper(ABC):
                 logger.warning("[{}] enrich failed for {}: {}", self.name, a.url, e)
                 self.errors.append(f"enrich {a.url}: {e}")
             a.processed_at = now_vn_iso()
-            self.dedup.mark_seen(a.url, a.title, self.name)
+            # KHONG mark_seen o day. Danh dau 'da thay' phai xay ra CUNG transaction voi
+            # dong `articles` (store.insert_batch), neu khong bai se bi bo qua vinh vien khi
+            # buoc ghi DB that bai -> 429 bai mo coi tren monocle.db. Bai trung fuzzy o tren
+            # VAN mark_seen vi co y khong bao gio ghi vao articles.
 
         duration = time.monotonic() - started
         logger.info("[{}] cycle done: fetched={} new={} errors={} in {:.1f}s",

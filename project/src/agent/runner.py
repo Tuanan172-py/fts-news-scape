@@ -20,6 +20,7 @@ from loguru import logger
 
 from src.agent.dod import check_dod, verify_preconditions
 from src.agent.packet import build_task_packet, write_packet
+from src.core.config import resolve_project_path
 from src.core.models import now_vn_iso
 from src.handoff.catalog import Catalog
 
@@ -33,7 +34,8 @@ class AgentRunner:
     # -- helpers --------------------------------------------------------------
     @staticmethod
     def _load_work_package(package_path: str) -> dict:
-        return json.loads(Path(package_path).read_text(encoding="utf-8"))
+        # resolve_project_path: doc duoc ca ban tuong doi moi lan ban tuyet doi cu trong DB
+        return json.loads(resolve_project_path(package_path).read_text(encoding="utf-8"))
 
     def _work_item_for(self, article_id: str) -> dict | None:
         """work_item mới nhất cho article_id (ưu tiên claimed/pending)."""

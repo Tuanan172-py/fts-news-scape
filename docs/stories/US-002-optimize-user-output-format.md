@@ -3,6 +3,12 @@
 > **SUPERSEDED một phần (2026-09-07):** hợp đồng cột `final.csv` đã đổi — `materiality_score` tạm ẩn
 > (mô hình CORE/DETAIL), thêm `gold_status`. Gate export nới từ "đủ 2 lớp" xuống **L1-only**.
 > Nguồn đúng hiện tại: `project/docs/design/13-per-user-output-workflow.md` §9–§10.1.
+>
+> **ĐÍNH CHÍNH ĐƯỜNG DẪN (2026-09-08):** mọi tiêu chí bên dưới ghi
+> `users/output/<name>/<YYYY-MM-DD>/final.csv` là SAI so với code đã ship. Đường dẫn thật là
+> **phẳng**: `users/output/<name>/<YYYY-MM-DD>.csv` (user) và `users/output/_master/<YYYY-MM-DD>.csv`
+> `+ _L1.csv` `+ _agent.csv` (audit). Nguồn sự thật: `src/export/user_output.py`. Giữ nguyên phần
+> thân story làm bản ghi lịch sử — không viết lại.
 
 - **Status:** implemented
 - **Lane:** normal

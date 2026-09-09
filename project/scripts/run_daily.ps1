@@ -85,6 +85,11 @@ function Step([string]$Label, [string[]]$CommandArgs) {
 function Emit {
   if (-not $NoCompile) { Step 'compile_users --all'        @('scripts/compile_users.py','--all') }
   Step "l1_route --review $Review"                          @('scripts/l1_route.py','--review',$Review)
+  # Vat chat hoa ket qua TRA DANH MUC tat dinh (route=resolved) -> l1_outputs. Khong co buoc
+  # nay thi bai code-first DA nhan ra ma cua nguoi dung se nam 'pending' vinh vien va khong
+  # bao gio qua duoc cong `articles JOIN l1_outputs`. Xem docs/decisions/0003-*.
+  # -Review missed van dung: Agent chi can lo phan route=needs_agent.
+  Step 'l1_ingest --code-first'                             @('scripts/l1_ingest.py','--code-first')
   if ($ExportLimit -gt 0) {
     Step 'agent_export --limit'                             @('scripts/agent_export.py','--limit',"$ExportLimit")
   } else {

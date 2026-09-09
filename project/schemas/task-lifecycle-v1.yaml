@@ -36,6 +36,14 @@ loops:
 
 thresholds:
   min_citations: 2
+  # Hàm ý ngắn hơn ngưỡng này là câu lấp chỗ trống, không phải nhận định.
+  min_implication_len: 40
+  # Câu "hàm ý" rỗng nghĩa đã đo được trong agent_outputs (2026-09-08): 3 template phủ
+  # 1.274/1.274 bản ghi. So khớp sau khi chuẩn hoá (thường + gộp khoảng trắng), theo tiền tố.
+  boilerplate_implications:
+    - "Nội dung bài viết phản ánh thông tin và diễn biến quan trọng"
+    - "Thông tin phản ánh diễn biến hoạt động kinh doanh, cơ cấu tài chính"
+    - "Nội dung bài viết tác động tới nhận định thị trường"
   refine_threshold: 0.70
   hitl_auto_above: 0.80      # >0.80 auto-accept; 0.5–0.8 flag review; verifier concern → human
   hitl_review_below: 0.50
@@ -51,6 +59,12 @@ definition_of_done:
     predicate: "len(agent_output.citations) >= thresholds.min_citations AND each citation.source_span IN work_package.cleaned_text"
   - id: quality_ok
     predicate: "agent_output.extraction_quality IN [high, medium]"
+  # value_added + implication_specific (thêm 2026-09-08): 4 predicate đầu đo tính CÓ CĂN CỨ
+  # nhưng không đo CÓ PHÂN TÍCH — với kẻ chỉ copy nguyên văn thì groundedness hiển nhiên đúng.
+  - id: value_added
+    predicate: "norm(agent_output.summary.abstractive) NOT IN work_package.cleaned_text AND no key_point == any citation.source_span"
+  - id: implication_specific
+    predicate: "len(agent_output.implication.text) >= thresholds.min_implication_len AND text NOT IN cleaned_text AND text NOT startswith any thresholds.boilerplate_implications"
   - id: auditable
     predicate: "agent_output.processing_metadata has agent_provider, model_used, timestamp"
 

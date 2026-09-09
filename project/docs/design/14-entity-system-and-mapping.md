@@ -66,7 +66,7 @@ Một alias có thể ánh xạ tới nhiều ID (ví dụ cùng từ khóa *"Qu
 [Master Excel: data/entities/entities.xlsx]
           │ (Tra cứu mã)
           ▼
-[User Input Excel: users/input/<Name>/entities.xlsx]
+[User Input Excel: users/subscriptions/<Name>_news.xlsx]
           │ (Chạy compile.py)
           ▼
 [User Config: config/entities/users/<Name>.yaml] (Active IDs)

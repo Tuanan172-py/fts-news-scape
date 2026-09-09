@@ -13,6 +13,7 @@ from pathlib import Path
 
 from loguru import logger
 
+from src.core.config import to_project_relative
 from src.handoff.catalog import Catalog
 from src.handoff.contract_validator import validate as schema_validate
 from src.handoff.work_package import WorkPackageBuilder, write_package
@@ -85,7 +86,7 @@ def process_meta(store, meta_path: str, *, silver_dir: str = "data/silver",
     package = WorkPackageBuilder().build(silver, meta, state,
                                          published_at=published_at,
                                          scraper_version=SCRAPER_VERSION)
-    package_path = write_package(package, base_dir=package_dir)
+    package_path = to_project_relative(write_package(package, base_dir=package_dir))
 
     # 4) Validate (hard gate) + enqueue — held nếu silver HOẶC package không hợp lệ
     ok, errors = schema_validate(package, "work-package-v1")

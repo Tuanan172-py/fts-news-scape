@@ -21,6 +21,50 @@ ENTITIES = [
 ]
 
 
+def read_delivery(path):
+    """Đọc deliverable .xlsx → list[dict] khoá theo FIELD KEY nội bộ (không phải nhãn VN).
+
+    Giữ assertion trong test đọc được (`r["article_id"]`) mà không phụ thuộc câu chữ nhãn.
+    """
+    from openpyxl import load_workbook
+
+    from src.export.xlsx_delivery import DELIVERY_FIELDS
+
+    wb = load_workbook(path, read_only=True, data_only=True)
+    try:
+        rows = list(wb.active.iter_rows(values_only=True))
+    finally:
+        wb.close()
+    if not rows:
+        return []
+    labels = ["" if c is None else str(c) for c in rows[0]]
+    key_by_label = {label: key for key, label, _w, _wrap in DELIVERY_FIELDS}
+    out = []
+    for r in rows[1:]:
+        d = {}
+        for i, lab in enumerate(labels):
+            v = r[i] if i < len(r) else None
+            if v is None:
+                v = ""
+            elif hasattr(v, "strftime"):
+                v = v.strftime("%Y-%m-%d")
+            d[key_by_label.get(lab, lab)] = str(v)
+        out.append(d)
+    return out
+
+
+def delivery_labels(path) -> list[str]:
+    """Dòng header (nhãn hiển thị) của deliverable .xlsx."""
+    from openpyxl import load_workbook
+
+    wb = load_workbook(path, read_only=True, data_only=True)
+    try:
+        first = next(wb.active.iter_rows(values_only=True))
+    finally:
+        wb.close()
+    return ["" if c is None else str(c) for c in first]
+
+
 def make_registry(subs=None) -> EntityRegistry:
     return EntityRegistry(ENTITIES, subs or {})
 
@@ -58,12 +102,13 @@ def seed_l1(store, aid, entity_ids, *, dod_pass=1, title="Tin", etype="TICKER") 
 
 
 def seed_agent(store, aid, *, dod_pass=1, event_type="macro", with_optional=True,
-               raw_sha256=None, summary=None) -> None:
+               raw_sha256=None, summary=None, materiality=0.6,
+               time_sensitivity="this_week") -> None:
     out = {
         "output_schema_version": "1.0", "article_id": aid,
         "summary": {"abstractive": summary or ("Tóm tắt " + aid), "key_points": ["kp1", "kp2"]},
         "implication": {"text": "Hàm ý", "affected_parties": ["x"], "impact_area": "market"},
-        "materiality": {"score": 0.6, "time_sensitivity": "this_week"},
+        "materiality": {"score": materiality, "time_sensitivity": time_sensitivity},
         "confidence": 0.8,
         "citations": [{"claim": "c", "source_span": "span dài hơn hai mươi ký tự", "source_offset": 0}],
         "processing_metadata": {"agent_provider": "p", "model_used": "m", "timestamp": "t"},

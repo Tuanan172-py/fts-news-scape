@@ -145,6 +145,15 @@ def run_ingest() -> bool:
     """Chạy L1 và Agent Ingest để nghiệm thu DoD."""
     print("\n🔍 [Step 2] Đang nghiệm thu Definition-of-Done (DoD Ingest)...")
 
+    # Vat chat hoa code-first TRUOC: phan lon bai (route=resolved) khong can Agent, va neu
+    # khong co buoc nay chung nam 'pending' vinh vien, khong qua noi cong export.
+    # docs/decisions/0003-code-first-l1-delivery.md
+    res_cf = subprocess.run(
+        [sys.executable, "scripts/l1_ingest.py", "--code-first"],
+        capture_output=True, text=True, encoding="utf-8", cwd=str(PROJECT_ROOT),
+    )
+    print(f"  - L1 code-first: {res_cf.stdout.strip()}")
+
     # Ingest L1
     l1_out_dir = "data/agent_outputs_l1"
     res_l1 = subprocess.run(

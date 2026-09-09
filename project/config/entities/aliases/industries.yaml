@@ -6,10 +6,22 @@ QUY:
   - "quỹ"
   - "quỹ đầu tư"
   - "quỹ đầu tư mạo hiểm"
-  - "quỹ mở"
+  # "quỹ mở" bỏ dấu thành "quy mo", trùng "quy mô" — cụm cực phổ biến trong tin
+  # kinh tế ("nâng quy mô hợp tác"). Dùng dạng dài không nhập nhằng.
+  - "quỹ mở đầu tư"
   - "quỹ đóng"
   - "quỹ thành viên"
   - "quỹ ngoại"
+  - "quỹ ETF"
+  - "chứng chỉ quỹ"
+  - "công ty quản lý quỹ"
+  - "quản lý quỹ"
+  - "quỹ tương hỗ"
+  - "quỹ hưu trí"
+  - "quỹ trái phiếu"
+  - "quỹ cổ phiếu"
+  - "quỹ chỉ số"
+  - "quỹ đầu tư chứng khoán"
   - "venture capital"
   - "quỹ hoán đổi danh mục"
 
@@ -70,3 +82,43 @@ DUOC_PHAM_CONG_NGHE_SINH_HOC:
   - "ngành dược"
   - "thuốc"
   - "công nghệ sinh học"
+
+# --- Ngành có TÊN LÀ TỪ ĐƠN trùng nghĩa với từ thông dụng --------------------------------
+# build_entities._industry() luôn ghép chính tên ngành ("Nước", "Điện", "Giấy") vào aliases,
+# không bỏ đi được từ file này. Nên xử lý theo 2 vế:
+#   1) MỞ RỘNG ở đây các cụm mang đúng intent của ngành (tăng nhận diện đúng);
+#   2) CHẶN ngữ cảnh nhiễu ở _context_guards.yaml (giảm nhận diện sai).
+# Cả hai cùng nhắm một mục tiêu: alias phản ánh đúng ý nghĩa của thực thể đối ứng.
+
+NUOC:
+  - "ngành nước"
+  - "cấp nước"
+  - "nước sạch"
+  - "nhà máy nước"
+  - "cấp thoát nước"
+  - "xử lý nước thải"
+  - "công ty nước"
+  - "giá nước sinh hoạt"
+
+DIEN:
+  - "ngành điện"
+  - "điện lực"
+  - "thuỷ điện"
+  - "thủy điện"
+  - "nhiệt điện"
+  - "điện mặt trời"
+  - "điện gió"
+  - "điện hạt nhân"
+  - "điện sinh khối"
+  - "phát điện"
+  - "giá điện"
+  - "sản lượng điện"
+  - "EVN"
+
+GIAY:
+  - "ngành giấy"
+  - "giấy bao bì"
+  - "bột giấy"
+  - "giấy in"
+  - "sản xuất giấy"
+
