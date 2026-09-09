@@ -26,6 +26,12 @@ class WorkPackageBuilder:
             "published_at": published_at,
             "raw_html_path": meta.get("html_path", ""),
             "raw_sha256": meta.get("content_sha256", ""),
+            # title do Silver giải bằng cách đối chiếu sha256(url+title) với url_title_hash
+            # trong meta.json. Không có trường này thì title_of() rơi về h1 đầu tiên — trên
+            # trang công bố thông tin đó là header trang hồ sơ doanh nghiệp, không phải
+            # tiêu đề bài (122/1.320 bài lệch, làm mất cả mã cổ phiếu).
+            "title": silver.get("title", ""),
+            "title_verified": silver.get("title_verified", False),
             "cleaned_text": silver.get("cleaned_text", ""),
             "structure": silver.get("structure", {}),
             "images": silver.get("images", []),

@@ -15,6 +15,7 @@ from urllib.parse import urlparse
 
 from bs4 import BeautifulSoup
 
+from src.core.models import sha256_hash
 from src.processor.extractor import extract_content, extract_text
 
 SILVER_SCHEMA_VERSION = "1.0"
@@ -25,6 +26,7 @@ _EN_STOPWORDS = re.compile(r"\b(the|and|of|to|in|for|is|on|with|that|as|by)\b", 
 # ngưỡng độ dài cleaned_text để chấm chất lượng trích (bug #2)
 _MIN_HIGH = 200   # trafilatura cho ≥ ký tự này → high
 _MIN_OK = 50      # dưới ngưỡng này coi như trích hụt → thử fallback sâu hơn
+_WS = re.compile(r"\s+")
 
 # Nguồn API trả JSON (vd fireant): Bronze là body JSON byte-exact, KHÔNG phải HTML.
 # Trường chứa HTML thân bài — thử theo thứ tự. Đây là nhận diện theo ĐỊNH DẠNG
@@ -81,9 +83,8 @@ def _domain_of(meta: dict) -> str:
     return net[4:] if net.startswith("www.") else net
 
 
-def _parse_structure(html: str) -> dict:
+def _parse_structure_from(soup) -> dict:
     """Best-effort DOM structure (OPTIONAL field). BeautifulSoup only, no exec."""
-    soup = BeautifulSoup(html, "lxml")
     body = soup.body or soup
     headings = [{"level": int(h.name[1]), "text": h.get_text(" ", strip=True)}
                 for h in body.find_all(re.compile(r"^h[1-6]$"))
@@ -104,6 +105,58 @@ def _parse_structure(html: str) -> dict:
              for a in body.find_all("a", href=True)]
     return {"headings": headings, "paragraphs": paragraphs,
             "tables": tables, "links": links}
+
+
+def _title_candidates(soup, structure: dict, cleaned: str) -> list[str]:
+    """Ung vien tieu de, uu tien nguon dang tin cay nhat truoc."""
+    out: list[str] = []
+
+    def add(v):
+        v = _WS.sub(" ", str(v or "")).strip()
+        if v and v not in out:
+            out.append(v)
+
+    for attr, name in (("property", "og:title"), ("name", "twitter:title"),
+                       ("name", "title"), ("itemprop", "headline")):
+        for tag in soup.find_all("meta", attrs={attr: name}):
+            add(tag.get("content"))
+    if soup.title:
+        raw = soup.title.get_text(" ", strip=True)
+        add(raw)
+        # nhieu bao gan hau to toa soan: 'Tieu de | CafeF', 'Tieu de - Vietstock'
+        for sep in ("|", " - ", " – ", " — "):
+            if sep in raw:
+                add(raw.rsplit(sep, 1)[0])
+    for h in structure.get("headings") or []:
+        add(h.get("text"))
+    if cleaned:
+        add(cleaned.split(chr(10), 1)[0])
+    return out
+
+
+def _resolve_title(soup, structure: dict, cleaned: str,
+                   url: str, url_title_hash: str) -> tuple[str, bool]:
+    """(title, da_kiem_chung).
+
+    `url_title_hash` = sha256(url + title) do scraper tinh luc cao, va no NAM SAN trong
+    meta.json. Nho vay Silver CHUNG MINH duoc ung vien nao la tieu de that thay vi doan —
+    van thuan tuy, offline, tat dinh.
+
+    Vi sao can: work-package truoc day khong co truong `title`, nen title_of() roi ve h1 dau
+    tien. Voi trang cong bo thong tin cua cafef, h1 la header trang HO SO DOANH NGHIEP
+    ("Ngan hang TMCP Phat trien T.P Ho Chi Minh (HOSE)") chu khong phai tieu de bai
+    ("HDB: Thong bao thay doi dia diem..."). Do tren monocle.db: 122/1.320 bai lech,
+    va bai HDB vi the MAT ca TICKER:HDB — dung tieu de that thi khop ngay bang ma.
+
+    Khong ung vien nao khop hash (toa soan sua tit sau khi cao) -> lay ung vien dau tien,
+    danh dau chua kiem chung de con truy vet.
+    """
+    cands = _title_candidates(soup, structure, cleaned)
+    if url and url_title_hash:
+        for c in cands:
+            if sha256_hash(url, c) == url_title_hash:
+                return c, True
+    return (cands[0] if cands else ""), False
 
 
 class SilverBuilder:
@@ -127,8 +180,11 @@ class SilverBuilder:
             if inner is not None:
                 html = inner
 
-        structure = _parse_structure(html)               # parse 1 lần, tái dùng làm fallback
+        soup = BeautifulSoup(html, "lxml")
+        structure = _parse_structure_from(soup)          # parse 1 lần, tái dùng làm fallback
         cleaned, quality = self._extract_cleaned(url, html, structure)
+        title, title_verified = _resolve_title(
+            soup, structure, cleaned, url, meta.get("url_title_hash", ""))
 
         return {
             "silver_schema_version": self.schema_version,
@@ -136,6 +192,8 @@ class SilverBuilder:
             "source_url": url,
             "domain": _domain_of(meta),
             "content_sha256": meta.get("content_sha256", ""),
+            "title": title,
+            "title_verified": title_verified,   # hash sha256(url+title) khớp meta -> chắc chắn
             "cleaned_text": cleaned,
             "extraction_quality": quality,               # bug #2: high|medium|low|empty
             "structure": structure,
