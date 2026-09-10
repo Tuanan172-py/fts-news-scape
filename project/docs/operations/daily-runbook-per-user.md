@@ -162,13 +162,18 @@ Master audit: `users/output/_master/<ngày>.csv` (toàn bộ bài đạt 2 lớp
 3. Lưu JSON trả về thành `<article_id>.json` vào thư mục ingest đúng lớp.
 4. Nhiều bài: dán mảng packet → nhận JSON array → tách từng phần tử thành file riêng.
 
-### (B) Stub — nghiệm thu luồng KHÔNG cần LLM
+### (B) Stub — CHỈ để nghiệm thu luồng trong test, TUYỆT ĐỐI không dùng cho dữ liệu thật
 
-Sinh output hợp lệ theo quy tắc (không phân tích thật) để test end-to-end:
+`tests/mocks/agent_stub.py` sinh output hợp lệ theo quy tắc (không phân tích thật) — chỉ phục vụ
+kiểm thử end-to-end pipeline. Theo AGENTS.md §6C (cấm giả lập trí tuệ Agent bằng script),
+`run_daily.ps1` **không còn gọi script này** (tham số `-Agent` chỉ còn nhận `api`).
+Nếu tự chạy tay để test, **BẮT BUỘC trỏ `--out` ra thư mục test riêng**, không bao giờ trỏ vào
+`data/agent_outputs_l1` / `data/agent_outputs` thật — 2 thư mục đó được `run_daily.ps1 -Mode ingest`
+đọc và ghi thẳng vào deliverable người dùng:
 
 ```powershell
-.venv\Scripts\python.exe scripts\agent_stub.py --queue l1   --out data/agent_outputs_l1
-.venv\Scripts\python.exe scripts\agent_stub.py --queue main --out data/agent_outputs
+.venv\Scripts\python.exe tests\mocks\agent_stub.py --queue l1   --out data/_test_agent_outputs_l1
+.venv\Scripts\python.exe tests\mocks\agent_stub.py --queue main --out data/_test_agent_outputs
 ```
 
 ### (C) Full-auto — adapter gọi API (CHƯA có trong repo)

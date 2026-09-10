@@ -163,8 +163,11 @@ soạn output → ghi <id>.json → l1_ingest.py / agent_ingest.py
 
 ---
 
-## 7. Không có LLM? Dùng stub để nghiệm thu luồng
-`scripts/agent_stub.py` sinh output hợp lệ theo quy tắc (KHÔNG phân tích thật) — dùng kiểm thử end-to-end.
+## 7. Không có LLM? Dùng stub CHỈ để nghiệm thu luồng trong test — không phải cho dữ liệu thật
+`tests/mocks/agent_stub.py` sinh output hợp lệ theo quy tắc (KHÔNG phân tích thật) — dùng kiểm thử
+end-to-end pipeline, ghi ra thư mục test riêng (không trỏ vào `data/agent_outputs_l1`/
+`data/agent_outputs` thật). Theo AGENTS.md §6C, `run_daily.ps1` không gọi script này ở đường sản
+xuất — bài chưa có Subagent thật xử lý thì ở nguyên `L1_ONLY`/`pending`, không tự sinh nội dung.
 Khi cắm LLM, thay bằng adapter đọc packet → gọi model (ép schema §2.3) → ghi `<id>.json`. Xem
 [13-per-user-output-workflow §14.4](../design/13-per-user-output-workflow.md).
 

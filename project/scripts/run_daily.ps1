@@ -2,10 +2,13 @@
 run_daily.ps1 - Run per-user cycle (input -> final.csv) according to runbook.
 See: docs/operations/daily-runbook-per-user.md
 
+KHONG GIA LAP: script nay KHONG duoc mac dinh goi bat ky mo phong/stub LLM nao (AGENTS.md SS6C -
+Cam Tuyet doi Gia lap Tri tue Agent bang Heuristic Script). Bai chua co Subagent xu ly that se
+o nguyen trang thai cho (L1_ONLY / work_items pending) - KHONG duoc dien du lieu gia de "cho day".
+
 Examples:
-  .\scripts\run_daily.ps1                        # FULL with stub
-  .\scripts\run_daily.ps1 -Agent api             # FULL with LLM adapter
-  .\scripts\run_daily.ps1 -Mode emit             # Emit task packets
+  .\scripts\run_daily.ps1                        # FULL - khong tu goi LLM, cho packet sau Emit
+  .\scripts\run_daily.ps1 -Mode emit             # Emit task packets, tu giao cho Subagent xu ly
   .\scripts\run_daily.ps1 -Mode emit -ExportLimit 0 # Emit all pending packets
   .\scripts\run_daily.ps1 -Mode ingest -Days 30  # Ingest and write output for last 30 days
   .\scripts\run_daily.ps1 -Mode ingest -Date all # Ingest and write output for all dates
@@ -13,7 +16,7 @@ Examples:
 [CmdletBinding()]
 param(
   [ValidateSet('full','emit','ingest')] [string]$Mode   = 'full',
-  [ValidateSet('stub','api')]           [string]$Agent  = 'stub',
+  [ValidateSet('api')]                  [string]$Agent  = 'api',
   [ValidateSet('missed','all')]         [string]$Review = 'missed',
   [string]$Date        = 'today',
   [int]$Days           = 0,
@@ -98,16 +101,18 @@ function Emit {
 }
 
 function RunAgents {
+  # KHONG GIA LAP: khong co nhanh nao trong day duoc phep goi script mo phong/stub sinh du lieu
+  # gia (AGENTS.md SS6C). Bai chua co Subagent that xu ly se o nguyen 'pending' - Ingest doc lai
+  # o lan chay sau, KHONG tu dien noi dung.
   switch ($Agent) {
-    'stub' {
-      Step 'agent_stub L1'    @('scripts/agent_stub.py','--queue','l1','--out',$L1Out)
-      Step 'agent_stub main'  @('scripts/agent_stub.py','--queue','main','--out',$AgentOut)
-    }
     'hierarchy' {
       Step 'run_agent_hierarchy export' @('scripts/run_agent_hierarchy.py','--export')
     }
     default {
       Write-Host "Subagent processing mode: Packets ready for invoke_subagent." -ForegroundColor Cyan
+      Write-Host "  -> Chua qua LLM xu ly thi DE RONG, khong tu sinh du lieu gia lap (AGENTS.md SS6C)." -ForegroundColor DarkGray
+      Write-Host "  -> Xu ly packet bang Subagent that (.agents/skills/l1-entity-matcher, gold-financial-analyst)," -ForegroundColor DarkGray
+      Write-Host "     roi chay: .\scripts\run_daily.ps1 -Mode ingest" -ForegroundColor DarkGray
     }
   }
 }
