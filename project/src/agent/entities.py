@@ -56,6 +56,11 @@ GENERIC_ALIAS_STOPLIST = frozenset({
     "tap doan", "tong cong ty", "cong ty", "co phan", "dau tu", "dau tu va phat trien",
     "phat trien", "thuong mai", "thuong mai va dich vu", "dich vu", "xuat nhap khau",
     "xay dung", "xay lap", "san xuat", "cong nghiep", "nong nghiep", "quoc te", "viet",
+    # ten rut gon trung tu dien/ten rieng thong dung: "Trang" (CTCP Trang, ma TFC) an theo
+    # "trạng"/"trăng"/"trắng" (tinh trang, mat trang, mau trang) va ca dang dung chinh ta
+    # "trang" trong "trang suc"/"Nha Trang"/"thoi trang" — do tren 1.787 tieu de that: 21/21
+    # lan khop la sai (0% dung), TFC qua nho de gia tri that bu duoc nhieu.
+    "trang",
 })
 
 # Nhom chung khoan - alias sinh tu dong tu ten phap ly nen phai loc qua GENERIC_ALIAS_STOPLIST.
@@ -134,21 +139,6 @@ def _load_context_guards() -> tuple[dict[str, list[str]], set[str]]:
         if cfg.get("drop_bare"):
             drop_bare.add(str(eid))
     return blocks, drop_bare
-
-
-def _is_strict_form(alias: str) -> bool:
-    """Alias ma ban fold KHONG du de khang dinh khop.
-
-    Hai nhom:
-      * co dau tieng Viet - bo dau xong trung tu thong dung khac
-        ("quy" tu "quỹ" trung "quý"/"quy dinh"; "my" tu "Mỹ" trung "tham my");
-      * viet HOA toan phan ASCII - la ky hieu, khong phai tu ("US", "EU", "DXY").
-    Voi cac alias nay, dang nguyen ban phai thuc su co mat trong text goc.
-    """
-    if any(ord(c) > 127 for c in alias):
-        return True
-    letters = [c for c in alias if c.isalpha()]
-    return bool(letters) and all(c.isupper() for c in letters)
 
 
 class EntityRegistry:
@@ -341,11 +331,13 @@ class EntityRegistry:
         Chan false positive do bo dau / mat phan biet hoa-thuong, DONG THOI tra ve doan con
         nguyen ban cua `raw` — hai viec dung chung mot phep tim kiem nen gop lam mot.
 
-        Guard CHI ap cho alias 1 TU NGAN (<=5 ky tu sau fold) va moi dang deu 'strict'. Do la
-        nhom duy nhat that su va cham khi bo dau: "quy" tu "quỹ" trung "quý"/"quy dinh",
-        "dien" tu "điện" trung "diễn"/"diện", "giay" tu "giấy" trung "giày"/"giây".
-        Ten doanh nghiep (nhieu tu, dai) khong va cham nen GIU nguyen bat bien da cong bo o
-        docstring module: bai viet "Tap doan Hoa Phat" khong dau van phai khop TICKER:HPG.
+        Fallback bo dau (`_locate_folded`) CHI danh cho alias NHIEU TU (ten doanh nghiep day
+        du, vd bai viet "Tap doan Hoa Phat" khong dau van phai khop TICKER:HPG). Alias 1 TU
+        KHONG BAO GIO duoc roi vao fallback nay: do tren 1.787 tieu de that (2026-09) cho thay
+        no khop nham bien the dau KHAC NGHIA hoan toan ("nga" an theo "Ngà" trong "Bờ Biển
+        Ngà", tham chi an theo dung 1 doan giua am tiet: "ngập" bo 3 ky tu dau "ngậ" = fold
+        "nga") va an theo alias 1 tu trung tu dien thong dung ("Trang" an theo "trạng"/
+        "trăng"/"trắng"). Tat fallback cho alias 1 tu loai dung 19 khop sai, 0 khop dung mat.
         """
         forms = self._alias_forms.get(key) or []
         for f in forms:
@@ -359,8 +351,7 @@ class EntityRegistry:
             m = re.search(r"\b" + re.escape(f) + r"\b", raw, flags)
             if m:
                 return True, m.group(0), m.span()
-        strict_only = bool(forms) and all(_is_strict_form(f) for f in forms)
-        if strict_only and " " not in key and len(key) <= 5:
+        if " " not in key:
             return False, None, None
         surface, span = _locate_folded(key, raw)
         return True, surface, span
