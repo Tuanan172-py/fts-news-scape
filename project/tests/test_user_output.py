@@ -39,32 +39,32 @@ def test_gate_and_routing(tmp_path):
     out_file = tmp_path / "out" / "AnPT" / f"{DATE}.xlsx"
     assert out_file.exists()
 
-    # Header = nhãn tiếng Việt, đúng thứ tự khối: định vị → phân loại → nguồn → text dài → kỹ thuật
+    # Header = English labels, correct block order: navigation → classification → source → long text → tech
     assert k.delivery_labels(out_file) == [
-        "Ngày", "Mã theo dõi", "Tiêu đề", "Sắc thái", "Độ khẩn", "Độ đầy đủ", "Nguồn",
-        "Tóm tắt", "Ý chính", "Hàm ý thị trường", "Link", "Mã bài",
+        "Date", "Matched Entities", "Title", "Sentiment", "Time Sensitivity", "Gold Status", "Source",
+        "Summary", "Key Points", "Market Implication", "URL", "Article ID",
     ]
 
     rows = k.read_delivery(out_file)
     assert len(rows) == 2
     row_map = {r["article_id"]: r for r in rows}
 
-    # a1: đủ gold — enum đã dịch sang nhãn tiếng Việt
+    # a1: full gold — enums mapped to English labels
     assert row_map["a1"]["date"] == DATE
     assert row_map["a1"]["matched_entities"] == "HPG"
     assert row_map["a1"]["summary"].startswith("Tóm tắt")
     assert row_map["a1"]["key_points"].startswith("- ")
-    assert row_map["a1"]["sentiment"] == "Tiêu cực"
-    assert row_map["a1"]["time_sensitivity"] == "Trong tuần"
-    assert row_map["a1"]["gold_status"] == "Đầy đủ"
+    assert row_map["a1"]["sentiment"] == "Negative"
+    assert row_map["a1"]["time_sensitivity"] == "This Week"
+    assert row_map["a1"]["gold_status"] == "Full"
 
-    # a2: chỉ L1, thiếu gold → mọi trường gold rỗng
+    # a2: L1 only, missing gold → gold fields empty
     assert row_map["a2"]["summary"] == ""
     assert row_map["a2"]["key_points"] == ""
     assert row_map["a2"]["implication"] == ""
     assert row_map["a2"]["time_sensitivity"] == ""
     assert row_map["a2"]["sentiment"] == ""
-    assert row_map["a2"]["gold_status"] == "Sơ bộ"
+    assert row_map["a2"]["gold_status"] == "Preliminary"
 
     # Cột bị loại khỏi deliverable — không được xuất hiện dưới bất kỳ dạng nào
     for r in rows:
@@ -153,7 +153,7 @@ def test_l1_only_export_fallback_empty_gold(tmp_path):
     assert r["matched_entities"] == "HPG"
     assert r["summary"] == "" and r["key_points"] == "" and r["implication"] == ""
     assert r["time_sensitivity"] == "" and r["sentiment"] == ""
-    assert r["gold_status"] == "Sơ bộ"
+    assert r["gold_status"] == "Preliminary"
 
 
 def test_noise_filter_broad_entity_no_gold_dependency(tmp_path):
@@ -174,7 +174,7 @@ def test_noise_filter_broad_entity_no_gold_dependency(tmp_path):
     UserOutputWriter(store, reg, output_root=tmp_path / "out").write(date=DATE)
     rows = k.read_delivery(tmp_path / "out" / "AnPT" / f"{DATE}.xlsx")
     assert {r["article_id"] for r in rows} == {"b_pass"}
-    assert rows[0]["gold_status"] == "Sơ bộ"
+    assert rows[0]["gold_status"] == "Preliminary"
 
 
 def test_multiple_gold_rows_picks_latest(tmp_path):
@@ -190,7 +190,7 @@ def test_multiple_gold_rows_picks_latest(tmp_path):
     rows = k.read_delivery(tmp_path / "out" / "AnPT" / f"{DATE}.xlsx")
     assert len(rows) == 1
     assert rows[0]["summary"] == "BAN MOI"
-    assert rows[0]["gold_status"] == "Đầy đủ"
+    assert rows[0]["gold_status"] == "Full"
 
 
 def test_matched_entities_deduped(tmp_path):

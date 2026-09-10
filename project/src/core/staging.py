@@ -78,6 +78,19 @@ def safe_atomic_write(
             else:
                 raise TypeError(f"Unsupported content type: {type(writer_fn_or_content)}")
 
+        # Kiểm tra nội dung: Nếu file đích đã tồn tại và nội dung bytes giống hệt tmp_path,
+        # bỏ qua bước os.replace để không kích hoạt Windows lock & OneDrive file-sync conflict.
+        if dst.exists():
+            try:
+                if tmp_path.stat().st_size == dst.stat().st_size:
+                    import hashlib
+                    h_tmp = hashlib.sha256(tmp_path.read_bytes()).digest()
+                    h_dst = hashlib.sha256(dst.read_bytes()).digest()
+                    if h_tmp == h_dst:
+                        return dst, False
+            except Exception:
+                pass
+
         # Cố gắng atomic swap vào file đích
         try:
             os.replace(tmp_path, dst)

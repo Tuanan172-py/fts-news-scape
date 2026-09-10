@@ -59,4 +59,31 @@ Nhằm đảm bảo sự nhất quán và không gọi nhầm môi trường Pyt
   - **Lựa chọn 2 (Gọi trực tiếp)**: Gõ `C:\venvs\news-scape\Scripts\python <script_path> <arguments>`.
   - **Lựa chọn 3 (Auto-activate trong IDE)**: Trong VS Code / Cursor, nhấn `Ctrl + Shift + P` $\rightarrow$ `Python: Select Interpreter` $\rightarrow$ chọn `C:\venvs\news-scape\Scripts\python.exe`. Mọi terminal mở mới trong IDE sẽ tự động kích hoạt venv.
 
+## 5. Bất biến Xuất Dữ liệu & Chống Xung đột Đồng bộ OneDrive (Bulk Export & OneDrive Anti-Fork Invariants)
+
+Nhằm loại bỏ hoàn toàn tình trạng OneDrive tự động tạo các cặp file song song mang tên máy trạm (`<name>-<HOSTNAME>.<ext>`, ví dụ: `2019-01-28-FPA-AnPT.xlsx`):
+
+1. **Byte-level Equality Pre-replacement Check (Tầng Staging)**:
+   - Trước khi thực hiện `os.replace` trên bất kỳ file nào nằm trong vùng đồng bộ OneDrive, tầng Staging (`safe_atomic_write` trong `src.core.staging`) BẮT BUỘC phải so sánh kích thước file (`st_size`) và mã băm `SHA-256` của file tạm với file đích hiện có.
+   - Nếu nội dung nhị phân giống hệt: HỦY file `.tmp` và trả về thành công mà không chạm vào file đích, triệt tiêu sự kiện File System Watcher kích hoạt sync thừa.
+
+2. **Smart Idempotency Skip Guard (Tầng Giao hàng Deliverable)**:
+   - Mọi hàm ghi deliverable cho người dùng (`user_output.py`, periodic reports) BẮT BUỘC phải kiểm tra checkpoint:
+     ```python
+     if not force and file_path.exists() and not new and not upgraded:
+         counts[user] = counts.get(user, 0) + len(finals)
+         continue
+     ```
+   - Nghiêm cấm chạy vòng lặp ghi đè hàng loạt hàng trăm file nhị phân (`.xlsx`) trong thời gian ngắn mà không có cơ chế bỏ qua hoặc cờ `--force`.
+
+3. **Quy chuẩn Lệnh Shell Bảo trì (PowerShell vs Python Script)**:
+   - **CẤM tuyệt đối** đưa các one-liner PowerShell phức tạp có chứa biến `$_`, dấu ống dẫn `|`, hoặc khối mã `{ ... }` bên trong chuỗi nháy kép `"..."` cho người dùng hoặc gọi qua `run_command`, vì shell sẽ nội suy `$_` thành rỗng gây lỗi `The term '.Name' is not recognized`.
+   - **BẮT BUỘC dùng Script Python**: Mọi thao tác quét file, kiểm tra xung đột, lọc thư mục hoặc dọn dẹp bảo trì phải được đóng gói thành file Python độc lập (ví dụ: `scripts/maintenance/<script>.py`) có cấu hình `sys.stdout.reconfigure(encoding="utf-8")`.
+
+4. **Bất biến Thúc đẩy File Conflict Mới hơn (Promote-Before-Delete Invariant)**:
+   - Trong môi trường OneDrive/SharePoint, khi xảy ra xung đột đồng bộ, OneDrive thường giữ nguyên tên file gốc cho bản trên đám mây (thường là bản cũ), và đổi tên bản sửa đổi MỚI NHẤT của người dùng cục bộ thành `<file>-<HOSTNAME>.<ext>`.
+   - **CẤM tuyệt đối xóa mù quáng bản `<HOSTNAME>`**: Khi xử lý xung đột, BẮT BUỘC phải so sánh thời gian sửa đổi (`st_mtime`) và mã băm SHA-256.
+   - Nếu bản `<HOSTNAME>` mới hơn: BẮT BUỘC **PROMOTE** (sao chép ghi đè bản `<HOSTNAME>` thành file chính thức, sau đó mới xóa file có hậu tố) để không làm mất các chỉnh sửa của người dùng.
+   - **Dọn dẹp & Hợp nhất Tự động**: Sử dụng công cụ chuẩn `project/scripts/maintenance/clean_onedrive_conflicts.py` (đã tích hợp sẵn logic so sánh SHA256 và tự động Promote khi conflict mới hơn).
+
 

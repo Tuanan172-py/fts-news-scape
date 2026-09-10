@@ -20,7 +20,14 @@
 $ErrorActionPreference = "Stop"
 $proj = Split-Path -Parent $PSScriptRoot          # scripts/ -> project/
 Set-Location $proj
-$py = Join-Path $proj ".venv\Scripts\python.exe"
+# Interpreter: uu tien $env:MONOCLE_PY, roi .venv trong repo, roi venv ngoai vung sync.
+# Venv KHONG the nam trong thu muc OneDrive (chua duong dan tuyet doi, bi may kia de).
+$py = @(
+    $env:MONOCLE_PY,
+    (Join-Path $proj ".venv\Scripts\python.exe"),
+    "C:\venvs\news-scape\Scripts\python.exe"
+) | Where-Object { $_ -and (Test-Path $_) } | Select-Object -First 1
+if (-not $py) { throw "Khong tim thay Python. Dat \$env:MONOCLE_PY tro toi python.exe cua venv." }
 $env:PYTHONUTF8 = "1"
 $env:PYTHONIOENCODING = "utf-8"
 

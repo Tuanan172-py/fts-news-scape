@@ -50,6 +50,7 @@ def run(*, input_root: str | Path = DEFAULT_INPUT_ROOT,
         store=None, registry=None, db_path: str | None = None,
         users: list[str] | None = None, date: str | None = None, days: int | None = None,
         do_compile: bool = True,
+        force: bool = False,
         l1_outputs_dir: str | Path | None = None,
         agent_outputs_dir: str | Path | None = None) -> dict:
     """Chạy compile → ingest (tùy chọn) → output. Trả {enabled, counts, total}."""
@@ -87,7 +88,7 @@ def run(*, input_root: str | Path = DEFAULT_INPUT_ROOT,
     from src.export.user_output import UserOutputWriter
     # enabled là input-driven & authoritative: tập rỗng = KHÔNG user nào (đừng đổi thành None=all).
     writer = UserOutputWriter(store, reg, output_root=output_root, enabled=enabled)
-    counts = writer.write(date=date, days=days)
+    counts = writer.write(date=date, days=days, force=force)
     total = sum(counts.values())
     logger.info("done workflow: enabled={} users_with_output={} total_rows={}",
                 sorted(enabled), len(counts), total)

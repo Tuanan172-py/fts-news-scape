@@ -99,7 +99,7 @@ def _row_date(r: dict) -> str:
     return (r.get("published_at") or r.get("fetched_at") or "")[:10] or "unknown-date"
 
 
-def _atomic_write_csv(path: Path, columns: list[str], rows: list[dict]) -> tuple[Path, bool]:
+def _atomic_write_csv(path: Path, columns: list[str], rows: list[dict], *, force: bool = False) -> tuple[Path, bool]:
     """Ghi CSV atomic. Trả (đường dẫn ĐÃ ghi thật, True nếu phải rơi về snapshot vì file bị khoá).
 
     Caller BẮT BUỘC đọc cờ thứ hai: khi True, file đích vẫn là bản CŨ (stale) — không được
@@ -110,6 +110,19 @@ def _atomic_write_csv(path: Path, columns: list[str], rows: list[dict]) -> tuple
         w.writeheader()
         for row in rows:
             w.writerow(row)
+
+    if not force and path.exists():
+        import io
+        buf = io.StringIO()
+        _write(buf)
+        new_bytes = buf.getvalue().encode("utf-8-sig")
+        try:
+            if path.stat().st_size == len(new_bytes):
+                with open(path, "rb") as ef:
+                    if ef.read() == new_bytes:
+                        return path, False
+        except Exception:
+            pass
 
     return safe_atomic_write(path, _write, encoding="utf-8-sig", fallback_on_lock=True)
 
@@ -284,7 +297,7 @@ class UserOutputWriter:
 
     # -- route + write --------------------------------------------------------
     def write(self, *, date: str | None = None, days: int | None = None,
-              write_master: bool = True) -> dict[str, int]:
+              write_master: bool = True, force: bool = False) -> dict[str, int]:
         """Gate + route + ghi CSV per (user, date). Trả {user: số dòng final}. Log 'done'."""
         rows = self.gated_rows(date=date, days=days)
         # bucket[(user, date)] = list of (final_row, l1_row, agent_row, article_id)
@@ -336,7 +349,7 @@ class UserOutputWriter:
                 for mpath, mcols, mrows in ((mbase / f"{d}.csv", MASTER_COLUMNS, finals),
                                             (mbase / f"{d}_L1.csv", L1_COLUMNS, l1s),
                                             (mbase / f"{d}_agent.csv", AGENT_COLUMNS, agents)):
-                    actual, was_locked = _atomic_write_csv(mpath, mcols, mrows)
+                    actual, was_locked = _atomic_write_csv(mpath, mcols, mrows, force=force)
                     if was_locked:
                         locked.append((mpath, actual))
 
@@ -355,6 +368,13 @@ class UserOutputWriter:
             statuses = {row["article_id"]: row["gold_status"] for row in finals}
             new = ckpt.filter_new(user_dir, d, aids)
             upgraded = ckpt.filter_upgraded(user_dir, d, statuses)     # L1_ONLY → GOLD
+
+            # Idempotency Guard: Nếu file đã tồn tại và không có bài mới hay nâng cấp, bỏ qua không ghi đè
+            # để chống xung đột và fork file song song trên OneDrive/SharePoint
+            if not force and file_path.exists() and not new and not upgraded:
+                counts[user] = counts.get(user, 0) + len(finals)
+                continue
+
             actual, was_locked = write_delivery_xlsx(file_path, finals)
             n_l1_only = sum(1 for v in statuses.values() if v == "L1_ONLY")
             if was_locked:

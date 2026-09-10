@@ -169,3 +169,34 @@ if ($LASTEXITCODE -eq 0) {
 - **Lỗi `fatal: not a git repository: C:/gitdirs/...`**: Kiểm tra đường dẫn trong file `.git`. Dùng dấu gạch xuôi `/` thay vì dấu gạch ngược `\` (ví dụ: `gitdir: C:/gitdirs/repo.git`).
 - **File bị trạng thái đồng bộ đám mây (mây xanh) không đọc được**: Chạy `attrib -U +P /s /d "*"` trên thư mục gốc.
 - **VS Code không nhận venv**: Nhấn `Ctrl + Shift + P` $\rightarrow$ gõ `Python: Select Interpreter` $\rightarrow$ chọn `Enter interpreter path...` $\rightarrow$ trỏ tới `C:\venvs\<repo>\Scripts\python.exe`.
+
+---
+
+## 7. Phòng chống & Xử lý Xung đột Đồng bộ Tệp Tin (Conflict Resolution Runbook)
+
+### 7.1 Nguyên nhân OneDrive Fork File Binary
+OneDrive không thể merge nội dung file nhị phân (Excel `.xlsx`, SQLite `.db`, ZIP). Khi ghi đè file với tần suất cao (bulk loop), OneDrive filter driver bị quá tải và tự động tạo bản sao song song `<tên_gốc>-<TÊN_MÁY>.<ext>` (ví dụ: `2019-01-28-FPA-AnPT.xlsx`).
+
+### 7.2 Biện pháp Ngăn ngừa Kỹ thuật
+1. **Idempotent Export**: Luôn áp dụng cơ chế bỏ qua file cũ nếu không có dữ liệu mới hoặc không có bản ghi nâng cấp (`new == 0` và `upgraded == 0`).
+2. **Byte-level Check (Staging)**: Kiểm tra kích thước và mã băm SHA-256 trước khi swap file tạm vào file đích.
+3. **Chạy script bảo trì dọn dẹp an toàn**:
+   ```powershell
+   # Quét kiểm tra trước (Dry-run):
+   & "C:\venvs\news-scape\Scripts\python.exe" scripts/maintenance/clean_onedrive_conflicts.py
+
+   # Thực thi xóa bản sao thừa:
+   & "C:\venvs\news-scape\Scripts\python.exe" scripts/maintenance/clean_onedrive_conflicts.py --apply
+   ```
+
+### 7.3 Lưu ý Tránh Lỗi Lệnh Console trên Windows
+- Không chạy lệnh PowerShell lồng nhau dạng: `powershell -Command "Get-ChildItem | Where { $_.Name ... }"` (chuỗi nháy kép làm mất biến `$_`).
+- Luôn ưu tiên đóng gói các tác vụ bảo trì/quét thư mục thành script Python độc lập và gọi qua `C:\venvs\<repo>\Scripts\python.exe`.
+
+### 7.4 Bất biến Thúc đẩy File Conflict Mới hơn (Promote-Before-Delete)
+Khi OneDrive fork file thành `<tên_gốc>-<TÊN_MÁY>.<ext>`, file mang tên máy thường là bản chứa các thao tác chỉnh sửa **MỚI NHẤT** của người dùng tại máy trạm đó, trong khi file gốc là bản cũ từ cloud/người khác.
+- **CẤM tuyệt đối xóa mù quáng bản `<TÊN_MÁY>`**.
+- Luôn kiểm tra `st_mtime` và SHA-256:
+  - Nếu bản `<TÊN_MÁY>` mới hơn: **Ghi đè bản `<TÊN_MÁY>` thành file gốc chính thức** (`shutil.copy2`), sau đó mới xóa file có hậu tố.
+  - Nếu giống hệt hoặc cũ hơn: Xóa bản sao thừa an toàn.
+  - Script `clean_onedrive_conflicts.py` đã tự động hóa 100% quy trình này.

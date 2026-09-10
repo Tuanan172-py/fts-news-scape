@@ -30,41 +30,39 @@ from openpyxl.styles import Alignment, Border, Font, Side
 
 from src.core.staging import safe_atomic_write
 
-SHEET_NAME = "Tin theo dõi"
+SHEET_NAME = "Watchlist News"
 
 # Hợp đồng GIAO HÀNG: (khoá trong row dict, nhãn hiển thị, độ rộng cột, có wrap text).
 # Thứ tự theo khối: định vị → phân loại (ngắn, để quét/filter) → nguồn → văn bản dài → kỹ thuật.
-# 7 cột đầu đều ngắn nên vừa một màn hình; 3 cột văn bản dài nằm sau nên tràn vào vùng trống
-# bên phải thay vì đẩy cột ngắn ra ngoài.
 DELIVERY_FIELDS: list[tuple[str, str, int, bool]] = [
-    ("date",             "Ngày",             12, False),
-    ("matched_entities", "Mã theo dõi",      20, False),
-    ("title",            "Tiêu đề",          48, True),
-    ("sentiment",        "Sắc thái",         11, False),
-    ("time_sensitivity", "Độ khẩn",          12, False),
-    ("gold_status",      "Độ đầy đủ",        11, False),
-    ("source_domain",    "Nguồn",            16, False),
-    ("summary",          "Tóm tắt",          64, True),
-    ("key_points",       "Ý chính",          64, True),
-    ("implication",      "Hàm ý thị trường", 46, True),
-    ("url",              "Link",             38, False),
-    ("article_id",       "Mã bài",           20, False),
+    ("date",             "Date",               12, False),
+    ("matched_entities", "Matched Entities",   20, False),
+    ("title",            "Title",              48, True),
+    ("sentiment",        "Sentiment",          12, False),
+    ("time_sensitivity", "Time Sensitivity",   16, False),
+    ("gold_status",      "Gold Status",        14, False),
+    ("source_domain",    "Source",             16, False),
+    ("summary",          "Summary",            64, True),
+    ("key_points",       "Key Points",         64, True),
+    ("implication",      "Market Implication", 46, True),
+    ("url",              "URL",                38, False),
+    ("article_id",       "Article ID",         20, False),
 ]
 
-# Enum → nhãn tiếng Việt. Giá trị lạ (agent trả sai enum) được giữ NGUYÊN VĂN, không nuốt:
-# nhìn thấy giá trị lạ trong file là tín hiệu để đi sửa agent.
-SENTIMENT_VN = {"positive": "Tích cực", "negative": "Tiêu cực", "neutral": "Trung lập"}
-TIME_SENSITIVITY_VN = {
-    "urgent": "Khẩn", "today": "Trong ngày", "this_week": "Trong tuần",
-    "this_month": "Trong tháng", "archive": "Lưu trữ",
+# Enum → English label. Raw / unexpected values are preserved as-is.
+SENTIMENT_EN = {"positive": "Positive", "negative": "Negative", "neutral": "Neutral"}
+TIME_SENSITIVITY_EN = {
+    "urgent": "Urgent", "today": "Today", "this_week": "This Week",
+    "this_month": "This Month", "archive": "Archive",
 }
-GOLD_STATUS_VN = {"GOLD": "Đầy đủ", "L1_ONLY": "Sơ bộ"}
+GOLD_STATUS_EN = {"GOLD": "Full", "L1_ONLY": "Preliminary"}
 
-_VN_MAPS = {
-    "sentiment": SENTIMENT_VN,
-    "time_sensitivity": TIME_SENSITIVITY_VN,
-    "gold_status": GOLD_STATUS_VN,
+_EN_MAPS = {
+    "sentiment": SENTIMENT_EN,
+    "time_sensitivity": TIME_SENSITIVITY_EN,
+    "gold_status": GOLD_STATUS_EN,
 }
+_VN_MAPS = _EN_MAPS  # Backward compatibility alias
 
 _HEADER_FONT = Font(bold=True)
 _HEADER_BORDER = Border(bottom=Side(style="thin"))
@@ -73,12 +71,15 @@ _WRAP_ALIGN = Alignment(vertical="top", wrap_text=True)
 _PLAIN_ALIGN = Alignment(vertical="top")
 
 
-def vn_label(field: str, value) -> str:
-    """Đổi enum máy sang nhãn tiếng Việt. Giá trị ngoài từ điển giữ nguyên văn."""
-    m = _VN_MAPS.get(field)
+def en_label(field: str, value) -> str:
+    """Đổi enum máy sang nhãn tiếng Anh. Giá trị ngoài từ điển giữ nguyên văn."""
+    m = _EN_MAPS.get(field)
     if not m:
         return "" if value is None else str(value)
     return m.get(value, "" if value in (None, "") else str(value))
+
+
+vn_label = en_label  # Backward compatibility alias
 
 
 def _set_text(cell, value: str, *, align) -> None:
@@ -128,8 +129,8 @@ def build_workbook(rows: list[dict]) -> Workbook:
                     _set_text(cell, str(raw or ""), align=align)
                 continue
 
-            if key in _VN_MAPS:
-                _set_text(cell, vn_label(key, raw), align=align)
+            if key in _EN_MAPS:
+                _set_text(cell, en_label(key, raw), align=align)
                 continue
 
             _set_text(cell, "" if raw is None else str(raw), align=align)
