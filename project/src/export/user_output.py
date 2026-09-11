@@ -1,27 +1,4 @@
-"""
-user_output.py — Ghi output CUỐI cho từng user (XLSX theo ngày), gate tối thiểu L1.
-
-Điều kiện ghi 1 article vào deliverable:
-    l1_outputs.dod_pass = 1  (L1 agent-reviewed) [BẮT BUỘC]
-    agent_outputs.dod_pass = 1 [TÙY CHỌN - nếu chưa có thì để trống ""]
-
-Định tuyến: entity nhận diện (l1_outputs.entities[in_list]) → subscribers_for() → chỉ user
-đăng ký entity liên quan (và đang BẬT) mới nhận article.
-- Thư mục user (phẳng): users/output/<name>/<YYYY-MM-DD>.xlsx — deliverable NGƯỜI đọc,
-  đơn sắc, 12 cột (xem `src/export/xlsx_delivery.py`).
-- Thư mục audit tập trung (phẳng): users/output/_master/<YYYY-MM-DD>{,_L1,_agent}.csv —
-  hợp đồng MÁY đọc, giữ nguyên CSV/snake_case tiếng Anh, KHÔNG đi theo deliverable.
-
-Đổi CSV → XLSX (2026-09-08, US-101): CSV không lưu được độ rộng cột, freeze pane, AutoFilter,
-wrap-text; file sinh mới mỗi ngày nên người dùng phải định dạng lại tay hằng ngày. File CSV
-cũ đã giao KHÔNG bị xoá (thư mục output đồng bộ SharePoint — xem dev/07 §1).
-
-Cột `gold_status` phân biệt GOLD (đã có agent_outputs đạt DoD) vs L1_ONLY (chưa chạm Gold),
-để không nhầm "chưa xử lý" với "Gold đã chạy nhưng trường optional rỗng".
-
-Idempotent: rewrite toàn tập per (user, date) + checkpoint theo article_id (crash-safe).
-Không notify — chỉ log "done".
-"""
+"""Xuất báo cáo tổng hợp theo dõi tin tức theo từng người dùng."""
 from __future__ import annotations
 
 import csv
@@ -57,21 +34,13 @@ LEFT JOIN (
 ) ag ON ag.article_id = a.url_title_hash
 """
 
-# Tập trường NỘI BỘ của một row đã flatten. KHÔNG phải hợp đồng giao hàng.
-# Deliverable của user do `src/export/xlsx_delivery.DELIVERY_FIELDS` quyết định (US-101):
-# nó chiếu ra 12 cột, bỏ `impact_area`/`event_type` (100% và 80% một giá trị → lọc được gì đâu)
-# cùng `agent_provider`/`model_used` (metadata máy, không phải nội dung nghiệp vụ).
 FINAL_COLUMNS = [
     "date", "matched_entities", "title", "summary", "key_points",
     "implication", "impact_area", "time_sensitivity",
     "sentiment", "event_type", "gold_status", "url", "source_domain",
     "article_id", "agent_provider", "model_used",
 ]
-# _master = hợp đồng MÁY ĐỌC, ĐÓNG BĂNG: snake_case tiếng Anh, dấu phẩy, đủ 16 cột +
-# `noise_signals`. Cố ý KHÔNG đi theo deliverable — đổi cách giao hàng cho người không được
-# phép làm gãy lớp audit.
-# _master mang them cot chan doan: `l1_source` phan biet ban tra bang tat dinh voi ban
-# Subagent nop (docs/decisions/0003-code-first-l1-delivery.md) de do rieng chat luong 2 nguon.
+
 MASTER_COLUMNS = FINAL_COLUMNS + ["l1_source", "noise_signals"]
 
 # Thứ tự ưu tiên đọc: tin gấp lên trước. Giá trị lạ/rỗng xuống cuối.
@@ -100,10 +69,16 @@ def _row_date(r: dict) -> str:
 
 
 def _atomic_write_csv(path: Path, columns: list[str], rows: list[dict], *, force: bool = False) -> tuple[Path, bool]:
-    """Ghi CSV atomic. Trả (đường dẫn ĐÃ ghi thật, True nếu phải rơi về snapshot vì file bị khoá).
+    """Ghi dữ liệu ra tệp CSV qua cơ chế nguyên tử an toàn.
 
-    Caller BẮT BUỘC đọc cờ thứ hai: khi True, file đích vẫn là bản CŨ (stale) — không được
-    log/checkpoint như thể đã giao hàng thành công.
+    Args:
+        path: Đường dẫn tệp đích cần ghi.
+        columns: Danh sách tiêu đề cột.
+        rows: Danh sách các dòng dữ liệu từ điển.
+        force: Ép buộc ghi đè ngay cả khi nội dung không đổi.
+
+    Returns:
+        Tuple chứa đường dẫn tệp thực tế đã lưu và cờ báo tệp có bị khóa phải tạo bản sao dự phòng hay không.
     """
     def _write(f):
         w = csv.DictWriter(f, fieldnames=columns, extrasaction="ignore")
@@ -128,8 +103,25 @@ def _atomic_write_csv(path: Path, columns: list[str], rows: list[dict], *, force
 
 
 class UserOutputWriter:
+    """Bộ xuất dữ liệu báo cáo tin tức phân phối theo người dùng.
+
+    Attributes:
+        store: Kho dữ liệu cơ sở SQLite.
+        reg: Sổ đăng ký thực thể EntityRegistry.
+        output_root: Thư mục gốc lưu trữ tệp báo cáo xuất bản.
+        enabled: Tập hợp tài khoản người dùng được kích hoạt nhận tin.
+    """
+
     def __init__(self, store, registry, *, output_root: str | Path = DEFAULT_OUTPUT_ROOT,
                  enabled: set[str] | None = None):
+        """Khởi tạo UserOutputWriter.
+
+        Args:
+            store: Kho dữ liệu cơ sở SQLite.
+            registry: Sổ đăng ký thực thể EntityRegistry.
+            output_root: Đường dẫn thư mục gốc xuất dữ liệu.
+            enabled: Tập hợp tài khoản người dùng được bật tùy chọn.
+        """
         self.store = store
         self.reg = registry
         self.output_root = Path(output_root)
@@ -137,6 +129,15 @@ class UserOutputWriter:
 
     # -- query gated ----------------------------------------------------------
     def gated_rows(self, *, date: str | None = None, days: int | None = None) -> list[dict]:
+        """Truy vấn các bài viết đã vượt qua cổng kiểm định L1 từ cơ sở dữ liệu.
+
+        Args:
+            date: Lọc theo ngày cụ thể dạng 'YYYY-MM-DD', 'today', hoặc 'all'.
+            days: Số ngày gần nhất tính từ thời điểm hiện tại.
+
+        Returns:
+            Danh sách từ điển dữ liệu bài viết kèm kết quả L1 và Agent.
+        """
         conn = self.store._connect_ro()
         try:
             rows = [dict(r) for r in conn.execute(_GATED_SQL)]
@@ -157,12 +158,7 @@ class UserOutputWriter:
                 if e.get("in_list") and e.get("entity_id")}
 
     def _codes(self, entity_ids) -> str:
-        """entity_id → code, ĐÃ khử trùng.
-
-        Nhiều `entity_id` khác nhau có thể ánh xạ về CÙNG một `code` (vd 2 định chế cùng mã
-        `CONG_TY_CHUNG_KHOAN`). Trước 2026-09-08 join thẳng nên 22% dòng deliverable hiện
-        `CONG_TY_CHUNG_KHOAN; CONG_TY_CHUNG_KHOAN`.
-        """
+        """Chuyển đổi danh sách entity_id thành chuỗi các mã định danh đã khử trùng."""
         out = []
         for eid in sorted(entity_ids):
             e = self.reg.get(eid)
@@ -199,12 +195,7 @@ class UserOutputWriter:
 
     @staticmethod
     def _sort_key(r: dict, frow: dict) -> tuple:
-        """Thứ tự đọc tất định: gấp trước → quan trọng trước → theo mã → theo tiêu đề.
-
-        `materiality.score` KHÔNG hiện thành cột (giữ mô hình CORE/DETAIL chốt 2026-09-07)
-        nhưng vẫn dùng làm khoá sắp xếp: tin quan trọng tự nổi lên đầu mà không tốn 1 cột.
-        Trước đây rows đi theo thứ tự SQL JOIN trả về nên nhìn như dữ liệu ngẫu nhiên.
-        """
+        """Tạo khóa sắp xếp thứ tự hiển thị bài viết theo độ ưu tiên nghiệp vụ."""
         mat = _loads(r.get("agent_json")).get("materiality") or {}
         try:
             score = float(mat.get("score") or 0.0)
@@ -241,12 +232,7 @@ class UserOutputWriter:
                 "model_used": meta.get("model_used") or ""}
 
     def _silver_noise_signals(self, matched_eids: set[str], r: dict) -> str:
-        """Tín hiệu nhiễu TẤT ĐỊNH từ Silver — chỉ để QUAN SÁT, CHƯA dùng làm gate.
-
-        Ghi vào cột `noise_signals` của `_master/<date>.csv` (không có trong deliverable user).
-        Mục đích: gom số liệu thật để sau này chọn ngưỡng, thay vì đoán. Khi đã đủ dữ liệu,
-        chuyển tiêu chí nào sang `_passes_noise_filter` là quyết định riêng, có chủ đích.
-        """
+        """Thu thập các chỉ số tín hiệu tần suất xuất hiện alias phục vụ quan sát."""
         title_lower = (r.get("title") or "").lower()
         body_lower = (r.get("content_text") or "").lower()
         symbols = (r.get("symbols") or "").upper()
@@ -271,12 +257,7 @@ class UserOutputWriter:
                 f"cats={(r.get('categories') or '').replace(';', '|')}")
 
     def _passes_noise_filter(self, matched_eids: set[str], r: dict) -> bool:
-        """Lọc rác: nếu chỉ match thực thể diện rộng (MACRO/ASSET), yêu cầu alias xuất hiện ở title.
-
-        KHÔNG đọc bất kỳ trường Gold nào — gate export là L1-only, nên filter cũng phải
-        quyết định được khi Gold chưa chạy. Nếu còn dựa `materiality.score` thì bài L1-only
-        luôn bị chấm 0 và nới gate chỉ có tác dụng một nửa.
-        """
+        """Kiểm tra bài viết có thỏa mãn điều kiện lọc nhiễu thực thể vĩ mô hay không."""
         broad_types = {"MACRO_GEO", "MACRO_THEME", "ASSET_CLASS"}
         matched_types = {self.reg.get(eid)["type"] for eid in matched_eids if self.reg.get(eid)}
         # Nếu có ít nhất 1 entity cụ thể (TICKER, ETF, INDUSTRY, INDEX, EXCHANGE, INSTITUTION) -> Pass luôn
@@ -298,7 +279,17 @@ class UserOutputWriter:
     # -- route + write --------------------------------------------------------
     def write(self, *, date: str | None = None, days: int | None = None,
               write_master: bool = True, force: bool = False) -> dict[str, int]:
-        """Gate + route + ghi CSV per (user, date). Trả {user: số dòng final}. Log 'done'."""
+        """Định tuyến và xuất dữ liệu tin tức ra tệp giao hàng Excel cho người dùng.
+
+        Args:
+            date: Ngày xuất bản cần xử lý ('YYYY-MM-DD', 'today', 'all').
+            days: Số ngày gần nhất cần xuất.
+            write_master: Có xuất các tệp CSV tổng hợp _master hay không.
+            force: Ép buộc ghi đè tệp báo cáo ngay cả khi không có bài mới.
+
+        Returns:
+            Từ điển thống kê số lượng bài viết đã xuất cho từng người dùng.
+        """
         rows = self.gated_rows(date=date, days=days)
         # bucket[(user, date)] = list of (final_row, l1_row, agent_row, article_id)
         bucket: dict[tuple[str, str], list[tuple]] = {}

@@ -1,12 +1,4 @@
-"""
-Xuất bảng `articles` ra CSV (utf-8-sig → Excel mở tiếng Việt không lỗi font).
-
-Dùng bởi:
-- scripts/export_csv.py (CLI thủ công)
-- orchestrator (tự động cuối mỗi cycle, mode 'today')
-
-Bỏ cột nặng (content_html/content_text/metadata) — chỉ giữ cột review.
-"""
+"""Xuất danh sách bài viết từ cơ sở dữ liệu ra tệp CSV."""
 
 from __future__ import annotations
 
@@ -30,13 +22,26 @@ COLUMNS = [
 
 
 def _date_prefix(iso: str) -> str:
-    """'YYYY-MM-DD' đầu chuỗi ISO (fetched_at/published_at có offset +07:00)."""
+    """Trích xuất tiền tố ngày dạng 'YYYY-MM-DD' từ chuỗi thời gian ISO."""
     return (iso or "")[:10]
 
 
 def query_rows(db_path: str = DB_PATH, *, today: bool = False,
                days: int | None = None, domains: list[str] | None = None,
                with_symbols: bool = False, limit: int | None = None) -> list:
+    """Truy vấn các dòng dữ liệu bài viết theo tiêu chí lọc chỉ định.
+
+    Args:
+        db_path: Đường dẫn tới tệp cơ sở dữ liệu SQLite.
+        today: Chỉ lấy các bài viết được thu thập trong ngày hôm nay.
+        days: Số ngày gần nhất cần lấy dữ liệu.
+        domains: Danh sách tên miền nguồn cần lọc.
+        with_symbols: Chỉ lấy các bài viết có gắn mã chứng khoán.
+        limit: Giới hạn số lượng bản ghi tối đa.
+
+    Returns:
+        Danh sách các dòng bản ghi sqlite3.Row tương ứng.
+    """
     # Mở mode read-only an toàn để không cạnh tranh lock với writer
     resolved_db = Path(db_path).resolve()
     if resolved_db.exists():
@@ -67,6 +72,15 @@ def query_rows(db_path: str = DB_PATH, *, today: bool = False,
 
 
 def write_csv(rows: list, out_path: Path) -> Path:
+    """Ghi danh sách bài viết ra tệp CSV với mã hóa UTF-8 BOM.
+
+    Args:
+        rows: Danh sách bản ghi dữ liệu cần ghi.
+        out_path: Đường dẫn tệp đích.
+
+    Returns:
+        Đường dẫn thực tế tới tệp đã lưu thành công.
+    """
     def _write(f):
         w = csv.writer(f)
         w.writerow(COLUMNS)
@@ -93,7 +107,21 @@ def export(*, db_path: str = DB_PATH, today: bool = False, days: int | None = No
            domains: list[str] | None = None, with_symbols: bool = False,
            limit: int | None = None, out: str | None = None,
            verbose: bool = False) -> tuple[Path, int]:
-    """Xuất CSV an toàn qua staging. Trả (đường dẫn thực tế, số bài)."""
+    """Xuất tập dữ liệu bài viết ra tệp CSV qua cơ chế ghi nguyên tử an toàn.
+
+    Args:
+        db_path: Đường dẫn cơ sở dữ liệu SQLite.
+        today: Có chỉ lọc các bài viết trong ngày hôm nay hay không.
+        days: Số ngày gần nhất cần xuất dữ liệu.
+        domains: Danh sách tên miền nguồn muốn lọc.
+        with_symbols: Có yêu cầu bài viết phải chứa mã chứng khoán hay không.
+        limit: Giới hạn số lượng bài viết tối đa.
+        out: Đường dẫn tệp đầu ra tùy chỉnh.
+        verbose: In thông tin thống kê tóm tắt ra màn hình console.
+
+    Returns:
+        Tuple chứa đường dẫn tệp thực tế đã lưu và số lượng bản ghi đã xuất.
+    """
     rows = query_rows(db_path, today=today, days=days, domains=domains,
                       with_symbols=with_symbols, limit=limit)
     out_path = Path(out) if out else _auto_name(today, days)

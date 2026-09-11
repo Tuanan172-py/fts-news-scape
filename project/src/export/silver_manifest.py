@@ -1,14 +1,4 @@
-"""
-Silver manifest — xuất danh sách tin cấp Silver ra CSV (checkpoint).
-
-Nguồn: `article_versions` (bản MỚI NHẤT mỗi bài) JOIN `articles` (url/title/date)
-JOIN `work_items` (trạng thái pending/claimed/done/failed/held). Ghi `utf-8-sig`
-→ mở Excel tiếng Việt không lỗi font.
-
-Dùng bởi:
-- `morninger.run_derive()` — xuất tự động tại mỗi checkpoint (mode `today`).
-- `scripts/export_silver.py` — CLI thủ công.
-"""
+"""Xuất danh sách bài viết chuẩn Silver ra tệp CSV manifest."""
 
 from __future__ import annotations
 
@@ -61,7 +51,16 @@ def _date_prefix(iso: str) -> str:
 def query_manifest(
     store, *, today: bool = False, days: int | None = None
 ) -> list[dict]:
-    """Danh sách Silver (bản mới nhất mỗi bài), lọc theo captured_at nếu cần."""
+    """Truy vấn danh sách bài viết Silver mới nhất từ cơ sở dữ liệu.
+
+    Args:
+        store: Kho dữ liệu cơ sở SQLite.
+        today: Chỉ lọc các bài viết được thu thập trong ngày hôm nay.
+        days: Số ngày gần nhất cần lấy dữ liệu.
+
+    Returns:
+        Danh sách từ điển dữ liệu bài viết chuẩn Silver.
+    """
     conn = store.connect()
     try:
         rows = [dict(r) for r in conn.execute(_SQL).fetchall()]
@@ -85,7 +84,17 @@ def _auto_name(today: bool, days: int | None) -> Path:
 def export_silver_manifest(
     store, *, today: bool = False, days: int | None = None, out: str | None = None
 ) -> tuple[Path, int]:
-    """Xuất manifest Silver ra CSV. Trả (đường dẫn, số bài)."""
+    """Xuất danh sách manifest Silver ra tệp CSV với mã hóa UTF-8 BOM.
+
+    Args:
+        store: Kho dữ liệu cơ sở SQLite.
+        today: Có giới hạn trong ngày hôm nay hay không.
+        days: Số ngày gần nhất cần xuất.
+        out: Đường dẫn tệp đầu ra tùy chọn.
+
+    Returns:
+        Tuple chứa đường dẫn tệp đã xuất và số lượng bài viết.
+    """
     rows = query_manifest(store, today=today, days=days)
     out_path = Path(out) if out else _auto_name(today, days)
     out_path.parent.mkdir(parents=True, exist_ok=True)

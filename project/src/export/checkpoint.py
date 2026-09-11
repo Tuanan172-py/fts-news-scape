@@ -1,25 +1,4 @@
-"""
-checkpoint.py — Trạng thái resume per-user cho output (idempotent theo article_id).
-
-File: `users/output/<name>/_checkpoint.json`
-    { "written": { "2026-08-18": {"<article_id>": "GOLD"|"L1_ONLY"} },
-      "last_run_at": ..., "last_date": ... }
-
-Nguyên tắc crash-safe: GHI file output trước (atomic os.replace) → RỒI mới mark checkpoint.
-Nếu chết giữa chừng, lần chạy sau ghi lại (rewrite toàn tập) nên không trùng, không mất.
-
-**Vai trò thật (rà 2026-09-07):** checkpoint KHÔNG quyết định nội dung output — idempotency đến
-từ việc rewrite toàn tập + `os.replace` + dedupe theo `article_id`. Nó là **sổ cái "đã giao gì,
-ở trạng thái nào"**: nguồn duy nhất trả lời "bài nào mới" và "bài nào vừa được Gold bổ sung".
-
-Từ khi gate export nới thành L1-only, một bài có thể được giao ở trạng thái `L1_ONLY` rồi vòng
-sau mới đầy đủ `GOLD`. Nếu chỉ lưu danh sách id thì "đã ghi" không còn đồng nghĩa "đã giao đủ" →
-lưu kèm `gold_status` để phân biệt. Định dạng cũ (list id) vẫn đọc được, coi như status rỗng.
-
-**Giới hạn (R1):** `mark_written` vẫn là read-modify-write, không có khoá liên tiến trình. Ghi file
-đã atomic + tmp unique nên KHÔNG hỏng JSON nữa, nhưng hai run thật sự song song vẫn có thể
-lost-update (bản ghi sau đè bản trước). Chống chồng run bằng `data/.pipeline.lock` ở run_daily.ps1.
-"""
+"""Quản lý điểm kiểm tra (checkpoint) tiến trình xuất dữ liệu cho người dùng."""
 from __future__ import annotations
 
 import json
@@ -38,6 +17,14 @@ def _path(user_dir: str | Path) -> Path:
 
 
 def load_checkpoint(user_dir: str | Path) -> dict:
+    """Đọc dữ liệu điểm kiểm tra của người dùng từ đĩa.
+
+    Args:
+        user_dir: Thư mục xuất dữ liệu của người dùng.
+
+    Returns:
+        Từ điển dữ liệu điểm kiểm tra gồm danh sách bài đã ghi và mốc thời gian chạy.
+    """
     p = _path(user_dir)
     if not p.exists():
         return {"written": {}, "last_run_at": None, "last_date": None}
@@ -50,7 +37,15 @@ def load_checkpoint(user_dir: str | Path) -> dict:
 
 
 def _entries(user_dir: str | Path, date: str) -> dict[str, str]:
-    """Bản ghi của 1 ngày dạng {article_id: gold_status}. Đọc được cả định dạng cũ (list id)."""
+    """Lấy danh sách bản ghi bài viết kèm trạng thái xử lý theo ngày.
+
+    Args:
+        user_dir: Thư mục xuất dữ liệu của người dùng.
+        date: Ngày xuất bản dạng 'YYYY-MM-DD'.
+
+    Returns:
+        Từ điển ánh xạ mã bài viết sang trạng thái phân tích ('GOLD' hoặc 'L1_ONLY').
+    """
     raw = load_checkpoint(user_dir).get("written", {}).get(date, {})
     if isinstance(raw, dict):
         return {str(k): str(v or "") for k, v in raw.items()}
@@ -58,11 +53,29 @@ def _entries(user_dir: str | Path, date: str) -> dict[str, str]:
 
 
 def written_ids(user_dir: str | Path, date: str) -> set[str]:
+    """Lấy tập hợp các mã bài viết đã được ghi nhận trong ngày.
+
+    Args:
+        user_dir: Thư mục xuất dữ liệu của người dùng.
+        date: Ngày xuất bản dạng 'YYYY-MM-DD'.
+
+    Returns:
+        Tập hợp các mã bài viết đã ghi.
+    """
     return set(_entries(user_dir, date))
 
 
 def filter_new(user_dir: str | Path, date: str, article_ids) -> list[str]:
-    """Trả article_id CHƯA ghi cho ngày `date` (để log số mới; không loại khỏi output)."""
+    """Lọc danh sách các mã bài viết mới chưa từng được xuất trong ngày.
+
+    Args:
+        user_dir: Thư mục xuất dữ liệu của người dùng.
+        date: Ngày xuất bản dạng 'YYYY-MM-DD'.
+        article_ids: Danh sách mã bài viết cần kiểm tra.
+
+    Returns:
+        Danh sách mã bài viết mới chưa xuất hiện trong điểm kiểm tra.
+    """
     seen = written_ids(user_dir, date)
     out, dedup = [], set()
     for aid in article_ids:
@@ -72,19 +85,32 @@ def filter_new(user_dir: str | Path, date: str, article_ids) -> list[str]:
 
 
 def filter_upgraded(user_dir: str | Path, date: str, statuses: dict[str, str]) -> list[str]:
-    """Bài ĐÃ giao trước đó ở trạng thái L1_ONLY mà lần này đã có Gold."""
+    """Lọc các bài viết được nâng cấp trạng thái từ L1_ONLY lên GOLD.
+
+    Args:
+        user_dir: Thư mục xuất dữ liệu của người dùng.
+        date: Ngày xuất bản dạng 'YYYY-MM-DD'.
+        statuses: Từ điển trạng thái hiện tại của các bài viết.
+
+    Returns:
+        Danh sách mã bài viết vừa được bổ sung phân tích chuyên sâu Gold.
+    """
     prev = _entries(user_dir, date)
     return [aid for aid, st in statuses.items()
             if prev.get(aid) == "L1_ONLY" and st == "GOLD"]
 
 
 def mark_written(user_dir: str | Path, date: str, article_ids, statuses=None) -> bool:
-    """Cập nhật checkpoint SAU khi file output đã ghi thành công.
+    """Cập nhật trạng thái các bài viết đã xuất vào tệp điểm kiểm tra.
 
-    `statuses` = {article_id: gold_status}; thiếu thì ghi status rỗng (giữ tương thích lời gọi cũ).
+    Args:
+        user_dir: Thư mục xuất dữ liệu của người dùng.
+        date: Ngày xuất bản dạng 'YYYY-MM-DD'.
+        article_ids: Danh sách các mã bài viết đã ghi thành công.
+        statuses: Từ điển trạng thái tương ứng của từng bài viết tùy chọn.
 
-    Trả True nếu ghi được sổ; False nếu file đang bị khoá — KHÔNG raise, để một user hỏng
-    không làm chết cả vòng lặp ghi output của các user còn lại.
+    Returns:
+        True nếu lưu thành công, False nếu tệp bị khóa.
     """
     p = _path(user_dir)
     p.parent.mkdir(parents=True, exist_ok=True)
