@@ -92,8 +92,11 @@ Maturity: this harness is at **H2-H5 (Durable SQLite + Active Observability + Au
    - **Lớp 2 (Xử lý Nội dung & Ngữ nghĩa — Content Processing)**: Tóm tắt súc tích, viết hàm ý thị trường (`implication`), chấm điểm `materiality_score` động (`0.1 - 1.0`), phân loại `sentiment`, và trích xuất `citations` ($\ge 2$ trích dẫn $\ge 20$ ký tự nguyên văn) (`agent-output-v1`).
 
 ### B. Quy chuẩn Dữ liệu Handoff & Gom Lô (Lean Payload & Mini-Batch Invariants)
+- **Subscriber-Gated Gold Export (ADR 0005)**: Chỉ xuất task Gold cho bài viết có `l1_entities` giao thoa với danh sách Watchlist của các user đang active (`manifest.yaml`). Bài không có người đăng ký lưu trữ ở trạng thái `L1_ONLY` (tiết kiệm ~38% token Gold).
+- **Morphological Cú Pháp & Ranh Giới Từ L1 (ADR 0005)**: Tầng L1 code-first áp dụng `Capitalized Suffix Guard` (chặn từ viết hoa liền sau như *"Mỹ Thuận"*, *"Mỹ Tho"*, *"Mỹ Thủy"*) và `Prefix Guard` (chặn tiền tố thương hiệu/danh xưng) để triệt tiêu 100% false positive địa danh/tên người mà không tốn token.
+- **Dynamic 3-Pass Semantic Pruning (2.200 Chars Max)**: Trần ký tự hạ xuống 2.200 chars. Áp dụng thuật toán 3-pass: giữ tối đa 2 đoạn đầu (Sapo) $\rightarrow$ ưu tiên quét đoạn chứa `l1_entities` và số liệu tài chính $\rightarrow$ điền đầy theo thứ tự gốc. Tuyệt đối bảo toàn nguyên khối đoạn văn (`<p>`) cho Grounded Citations ($\ge 20$ ký tự) qua cổng DoD.
+- **L1 Missed-Only Review Default**: `l1_route.py` mặc định `--review missed` để 62% bài đã được code-first giải quyết chính xác đi thẳng qua `l1_ingest.py --code-first` (0 token).
 - **Zero-Waste Task Packet**: Dữ liệu packet gửi cho Agent BẮT BUỘC chỉ chứa các trường cốt lõi; loại bỏ 100% `structure.links` (hàng ngàn thẻ links menu/header/footer) và `images` để nén dung lượng dưới 10 KB (giảm 96% token input thừa).
-- **Verbatim Extractive Paragraph Pruning**: Lọc sạch rác tòa soạn, teaser ("Bài liên quan"), hotline, email, copyright theo **nguyên khối đoạn văn (`<p>`)**. Tuyệt đối không chỉnh sửa câu từ trong đoạn văn giữ lại để đảm bảo tính nguyên văn exact substring cho Grounded Citations ($\ge 20$ ký tự) qua cổng DoD.
 - **Consolidated Mini-Batch Handoff**: Hỗ trợ gom lô 5–10 tasks vào một file `batch_XX.task.json`, giúp Subagent xử lý trong 1 lần đọc và 1 lần ghi (giảm 90% số Tool Calls I/O).
 - **Tiếp sức Thực thể L1 $\rightarrow$ Gold**: Tự động bơm sẵn `input.l1_entities` vào Gold task để Agent tập trung suy luận hàm ý thị trường.
 - **Bảo toàn Raw Gốc**: Bản gốc `raw_html` và `meta.json` luôn được lưu giữ nguyên bản tại Bronze để kiểm toán.
@@ -102,6 +105,7 @@ Maturity: this harness is at **H2-H5 (Durable SQLite + Active Observability + Au
 - **Không tự viết script bypass Agent**: Tuyệt đối không dùng regex hay code heuristic để tự sinh kết quả phân tích Gold/L1.
 - **Vùng độc quyền của Subagents**: Xử lý ngữ nghĩa, trích xuất thực thể, tóm tắt, suy luận hàm ý và trích dẫn citations là vùng trí tuệ độc quyền của Subagents LLM (Model: Flash/Pro) được kích hoạt qua `invoke_subagent`.
 - **Zero Hallucination User Manifest**: Khi báo cáo phân phối và định tuyến tin, chỉ được phép tham chiếu người dùng thực tế được định nghĩa trong `manifest.yaml` (hiện tại: `AnPT`).
+
 
 
 

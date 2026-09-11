@@ -1,12 +1,4 @@
-"""
-BaseScraper — template method pattern (spec §15).
-
-Subclass chỉ implement fetch_list() + parse_item() (+ enrich() tuỳ chọn).
-run() là luồng chuẩn: fetch → parse → dedup → enrich → mark seen.
-Mọi lỗi được gom vào self.errors, không bao giờ raise ra ngoài
-(graceful degradation, spec §4.3). Scraper KHÔNG ghi DB — orchestrator
-nhận ScrapeResult.new và enqueue vào DBWriter.
-"""
+"""Lớp cơ sở trừu tượng định nghĩa quy trình thu thập dữ liệu theo mẫu Template Method."""
 
 from __future__ import annotations
 
@@ -21,6 +13,17 @@ from src.db.dedup import DedupCache
 
 
 class BaseScraper(ABC):
+    """Lớp cơ sở trừu tượng cho các scraper trong hệ thống.
+
+    Attributes:
+        config: Cấu hình hoạt động của scraper.
+        name: Tên định danh của scraper.
+        http: Client HTTP dùng để gửi yêu cầu mạng.
+        dedup: Bộ nhớ đệm kiểm tra chống trùng lặp.
+        errors: Danh sách lỗi ghi nhận trong chu kỳ hiện tại.
+        disabled: Cờ báo trạng thái tạm dừng thu thập.
+    """
+
     def __init__(self, config: dict, http: HTTPClient, dedup: DedupCache):
         self.config = config
         self.name: str = config["name"]
@@ -29,8 +32,12 @@ class BaseScraper(ABC):
         self.errors: list[str] = []
         self.disabled: bool = not config.get("enabled", True)
 
-    # -- template method: KHÔNG override ------------------------------------
     def run(self) -> ScrapeResult:
+        """Thực thi chu kỳ thu thập dữ liệu qua các bước chuẩn hóa.
+
+        Returns:
+            Đối tượng ScrapeResult chứa danh sách bài viết mới và thống kê lỗi.
+        """
         self.errors = []
         started = time.monotonic()
         if self.disabled:
@@ -62,7 +69,7 @@ class BaseScraper(ABC):
                 continue
             if fuzzy and self.dedup.is_similar_title(a.title, self.name):
                 logger.debug("[{}] fuzzy-dup skipped: {}", self.name, a.title[:60])
-                self.dedup.mark_seen(a.url, a.title, self.name)  # không check lại cycle sau
+                self.dedup.mark_seen(a.url, a.title, self.name)
                 continue
             new.append(a)
 
@@ -70,14 +77,10 @@ class BaseScraper(ABC):
             try:
                 self.enrich(a)
             except Exception as e:
-                # enrich fail → giữ article với summary, không bỏ (fallback)
                 logger.warning("[{}] enrich failed for {}: {}", self.name, a.url, e)
                 self.errors.append(f"enrich {a.url}: {e}")
             a.processed_at = now_vn_iso()
-            # KHONG mark_seen o day. Danh dau 'da thay' phai xay ra CUNG transaction voi
-            # dong `articles` (store.insert_batch), neu khong bai se bi bo qua vinh vien khi
-            # buoc ghi DB that bai -> 429 bai mo coi tren monocle.db. Bai trung fuzzy o tren
-            # VAN mark_seen vi co y khong bao gio ghi vao articles.
+            # Đánh dấu đã xem được thực hiện cùng transaction ghi bài viết vào cơ sở dữ liệu.
 
         duration = time.monotonic() - started
         logger.info("[{}] cycle done: fetched={} new={} errors={} in {:.1f}s",
@@ -85,14 +88,28 @@ class BaseScraper(ABC):
         return ScrapeResult(scraper=self.name, fetched=len(raw_items),
                             new=new, errors=list(self.errors), duration_s=duration)
 
-    # -- hooks cho subclass ---------------------------------------------------
     @abstractmethod
     def fetch_list(self) -> list[dict]:
-        """Lấy danh sách item thô từ nguồn (RSS entries / API JSON / HTML)."""
+        """Lấy danh sách các bản ghi thô từ nguồn dữ liệu.
+
+        Returns:
+            Danh sách các bản ghi thô dạng dictionary.
+        """
 
     @abstractmethod
     def parse_item(self, raw: dict) -> Article | None:
-        """Chuyển 1 item thô thành Article. Trả None để bỏ qua item."""
+        """Phân tích một bản ghi thô thành đối tượng Article.
+
+        Args:
+            raw: Bản ghi thô thu thập từ nguồn.
+
+        Returns:
+            Đối tượng Article đã phân tích hoặc None nếu bản ghi không hợp lệ.
+        """
 
     def enrich(self, article: Article) -> None:
-        """Hook tuỳ chọn: fetch trang chi tiết, điền content_html/content_text."""
+        """Bổ sung nội dung chi tiết cho bài viết từ trang nguồn.
+
+        Args:
+            article: Đối tượng Article cần bổ sung nội dung.
+        """

@@ -91,3 +91,17 @@ MACRO_GEO:MY:
     - "Mỹ Đình"           # địa danh Hà Nội
     - "Mỹ Tho"
     - "Mỹ Lan"
+    - "Bắc Mỹ"            # châu lục, không phải nước Mỹ
+    - "Nam Mỹ"            # châu lục, không phải nước Mỹ
+    - "Phú Mỹ"            # địa danh (Bà Rịa-Vũng Tàu...) + tên riêng ("Đạm Phú Mỹ", "VCB Phú Mỹ")
+    - "Phù Mỹ"            # huyện ở Bình Định
+    - "Mỹ Latinh"         # khu vực Trung/Nam Mỹ, không phải nước Mỹ
+
+# "vàng" đúng nghĩa tài sản ~92/110 lần đo được (2026-09); nhiễu đóng gồm các thành ngữ ghép
+# dùng "vàng" theo nghĩa bóng (đắt giá/quý hiếm), không liên quan tới kim loại vàng.
+ASSET_CLASS:VANG:
+  block_in:
+    - "đất vàng"          # thành ngữ bất động sản, không phải kim loại vàng
+    - "vội vàng"
+    - "vững vàng"
+    - "gà vàng"           # biệt danh, không phải tài sản vàng

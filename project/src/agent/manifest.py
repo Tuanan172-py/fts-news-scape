@@ -1,5 +1,7 @@
-"""
-Batch Manifest Builder and Terminal Visualizer - quan ly lo task packets cho Subagents.
+"""Bộ tạo bản kê (Manifest) và hiển thị tóm tắt lô công việc cho Agent.
+
+Cung cấp các hàm lập bảng kê batch_manifest.json, trích xuất tiêu đề, thời gian
+và hiển thị bảng danh sách bài viết trực quan trên màn hình điều khiển.
 """
 from __future__ import annotations
 
@@ -13,7 +15,14 @@ from src.core.staging import safe_json_dump
 
 
 def format_short_time(iso_str: str) -> str:
-    """Format ISO timestamp sang 'DD/MM HH:MM' de hien thi tren table."""
+    """Định dạng chuỗi thời gian ISO thành dạng rút gọn 'DD/MM HH:MM'.
+
+    Args:
+        iso_str: Chuỗi thời gian định dạng ISO 8601.
+
+    Returns:
+        Chuỗi thời gian rút gọn để hiển thị bảng.
+    """
     if not iso_str:
         return "--/-- --:--"
     try:
@@ -24,7 +33,14 @@ def format_short_time(iso_str: str) -> str:
 
 
 def extract_title(d: dict[str, Any]) -> str:
-    """Trích xuất tiêu đề bài viết từ title -> heading level 1 -> dòng đầu cleaned_text."""
+    """Trích xuất tiêu đề bài viết từ đối tượng tác vụ với nhiều tầng dự phòng.
+
+    Args:
+        d: Từ điển gói tác vụ hoặc thông tin bài viết.
+
+    Returns:
+        Chuỗi tiêu đề bài viết.
+    """
     if d.get("title"):
         return str(d["title"]).strip()
     inp = d.get("input") or {}
@@ -43,7 +59,14 @@ def extract_title(d: dict[str, Any]) -> str:
 
 
 def extract_time(d: dict[str, Any]) -> str:
-    """Trích xuất thời gian bài viết từ các trường thời gian khả dĩ."""
+    """Trích xuất thời điểm bài viết từ các trường thời gian khả dĩ.
+
+    Args:
+        d: Từ điển chứa dữ liệu tác vụ.
+
+    Returns:
+        Chuỗi mốc thời gian bài viết.
+    """
     inp = d.get("input") or {}
     return (
         d.get("enqueued_at")
@@ -62,7 +85,17 @@ def create_batch_manifest(
     batch_type: str = "gold",
     order: str = "desc",
 ) -> dict[str, Any]:
-    """Tao va luu file batch_manifest.json trong batch_dir."""
+    """Tạo tệp kê khai batch_manifest.json lưu trữ trong thư mục lô công việc.
+
+    Args:
+        tasks: Danh sách các gói tác vụ cần ghi nhận trong lô.
+        batch_dir: Thư mục chứa các tệp tác vụ của lô.
+        batch_type: Loại lô tác vụ ('gold' hoặc 'l1').
+        order: Thứ tự sắp xếp tác vụ ('asc' hoặc 'desc').
+
+    Returns:
+        Từ điển dữ liệu bảng kê khai đã lưu thành công.
+    """
     batch_dir = Path(batch_dir)
     batch_dir.mkdir(parents=True, exist_ok=True)
 
@@ -102,7 +135,12 @@ def create_batch_manifest(
 
 
 def print_batch_summary_table(manifest: dict[str, Any], max_rows: int = 25) -> None:
-    """In bang tom tat danh sach tin cua batch len Terminal truc quan."""
+    """In bảng tóm tắt danh sách tin của lô tác vụ ra màn hình điều khiển.
+
+    Args:
+        manifest: Dữ liệu bảng kê khai lô công việc.
+        max_rows: Số dòng bài viết tối đa hiển thị trực tiếp.
+    """
     batch_id = manifest.get("batch_id", "UNKNOWN")
     batch_size = manifest.get("batch_size", 0)
     order = manifest.get("order", "desc")
@@ -133,7 +171,14 @@ def print_batch_summary_table(manifest: dict[str, Any], max_rows: int = 25) -> N
 
 
 def load_batch_manifest(batch_dir: str | Path) -> dict[str, Any] | None:
-    """Doc batch_manifest.json tu thu muc neu ton tai."""
+    """Đọc tệp tin bảng kê khai batch_manifest.json từ thư mục chỉ định nếu tồn tại.
+
+    Args:
+        batch_dir: Thư mục chứa tệp batch_manifest.json.
+
+    Returns:
+        Từ điển dữ liệu bản kê khai, hoặc None nếu không tìm thấy hoặc lỗi đọc tệp.
+    """
     target = Path(batch_dir) / "batch_manifest.json"
     if not target.is_file():
         return None

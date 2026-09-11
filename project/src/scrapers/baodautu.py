@@ -1,32 +1,7 @@
-"""
-Báo Đầu Tư scraper — HTML listing cho list, capture full raw HTML cho detail.
+"""Bộ thu thập dữ liệu báo Báo Đầu Tư (baodautu.vn).
 
-RSS VĨNH VIỄN HỎNG (verified 2026-09-07, 8/8 URL): mọi feed trả CÙNG một channel
-rỗng `<title>Trang chủ</title><link>https://baodautu.vn//.rss</link>` (double-slash,
-không có category) với 0 <item> → generator phía server hỏng, KHÔNG phải "dormant".
-`rssMain.html` trả HTML homepage 34KB, không phải feed. Đừng probe lại, đừng chờ.
-
-Đây là nguồn HTML-listing ĐẦU TIÊN của repo — ngoại lệ có chủ ý của TDR-001
-(RSS > API > HTML): baodautu không có cả RSS lẫn API, nhưng là nguồn số 1 về
-giải ngân đầu tư công / FDI / hạ tầng nên không thể bỏ.
-
-List: trang 1 = `{base}/{slug}-d{id}/` (CÓ dấu / cuối)
-      trang N = `{base}/{slug}-d{id}/p{N}`  (⚠️ THÊM / cuối → 404)
-      ⚠️ item KHÔNG phải `div.thumbblock` — class `thumbblock` nằm trên thẻ <a> ẢNH
-      (select("div.thumbblock") trả 0 node dù chuỗi xuất hiện 35 lần). Item thật là
-      thẻ <article>; trong đó link ảnh (KHÔNG có text) đứng TRƯỚC link tiêu đề nên
-      select_one() sẽ vớ phải link ảnh → mất sạch bài. Phải duyệt hết anchor và lấy
-      cái đầu tiên vừa có text vừa khớp link_pattern.
-      KHÔNG có ngày đăng trên listing → published_at điền ở enrich() từ trang detail.
-
-Detail: body = #content_detail_news
-  ⚠️ TUYỆT ĐỐI KHÔNG dùng selector `.content` — trong source có chuỗi template JS
-     `<div class="content">'+content+'</div>'` của widget bình luận, selector ngây thơ
-     sẽ bắt nhầm node đó.
-  Trang KHÔNG có <h1>; title lấy từ listing, đối chiếu div.title-detail.
-  Ngày = text thuần `dd/MM/yyyy HH:mm` trong span.post-time (nằm NGOÀI body).
-  KHÔNG có <time>, KHÔNG có article:published_time, KHÔNG có JSON-LD.
-  Paragraph mã hoá HTML entity (&ecirc;).
+Cung cấp lớp BaodautuScraper để trích xuất danh sách bài viết qua danh mục HTML
+và thu thập toàn bộ nội dung chi tiết bài viết kèm raw capture tầng Bronze.
 """
 
 from __future__ import annotations
@@ -52,11 +27,14 @@ _DATE_RE = re.compile(r"\b(\d{1,2})/(\d{1,2})/(\d{4})\s+(\d{1,2}):(\d{2})\b")
 
 
 def _parse_detail_date(html: str, scope_selector: str) -> str:
-    """`dd/MM/yyyy HH:mm` (text thuần) → ISO +07:00. Rỗng nếu không khớp — KHÔNG bịa.
+    """Trích xuất ngày xuất bản bài viết theo định dạng dd/MM/yyyy HH:mm sang ISO 8601.
 
-    baodautu KHÔNG có <time> / article:published_time / JSON-LD (verified 2026-09-07).
-    Ngày nằm ở span.post-time, NGOÀI #content_detail_news → thu hẹp scope để không
-    khớp nhầm một ngày nào đó nằm trong thân bài.
+    Args:
+        html: Mã nguồn HTML bài viết chi tiết.
+        scope_selector: CSS selector định vị thẻ chứa chuỗi ngày xuất bản.
+
+    Returns:
+        Chuỗi ngày tháng định dạng ISO 8601 múi giờ +07:00, hoặc chuỗi rỗng nếu không tìm thấy.
     """
     if not html:
         return ""
@@ -78,6 +56,24 @@ def _parse_detail_date(html: str, scope_selector: str) -> str:
 
 @register("baodautu")
 class BaodautuScraper(CaptureMixin, BaseScraper):
+    """Bộ thu thập dữ liệu báo Báo Đầu Tư thông qua trích xuất danh mục HTML.
+
+    Attributes:
+        categories: Danh sách cấu hình chuyên mục cần thu thập.
+        pages_per_cycle: Số trang danh mục cần duyệt trong một chu kỳ.
+        item_selector: Bộ chọn CSS xác định khối bài viết.
+        link_selector: Bộ chọn CSS xác định liên kết bài viết.
+        sapo_selector: Bộ chọn CSS xác định phần tóm tắt ngắn (sapo).
+        link_pattern: Mẫu biểu thức chính quy kiểm tra định dạng liên kết bài viết.
+        content_selector: Bộ chọn CSS vùng nội dung chi tiết bài viết.
+        date_scope: Bộ chọn CSS định vị thời gian đăng bài viết.
+        author_selector: Bộ chọn CSS xác định tác giả.
+        max_details: Giới hạn số bài viết tải chi tiết trong một chu kỳ.
+        base_url: Địa chỉ gốc của trang web báo.
+        watchlist: Danh mục mã cổ phiếu cần theo dõi và gán nhãn.
+        language: Mã ngôn ngữ nội dung bài viết.
+    """
+
     def __init__(self, config, http, dedup):
         super().__init__(config, http, dedup)
         listing = config.get("listing", {}) or {}
@@ -102,11 +98,21 @@ class BaodautuScraper(CaptureMixin, BaseScraper):
 
     # -- listing ------------------------------------------------------------
     def _page_url(self, slug: str, cid, page: int) -> str:
-        """Trang 1 = `…-d<N>/` (CÓ /). Trang >1 = `…-d<N>/p<page>` (KHÔNG / cuối → 404)."""
+        """Tạo đường dẫn phân trang cho chuyên mục."""
         return (f"{self.base_url}/{slug}-d{cid}/" if page == 1
                 else f"{self.base_url}/{slug}-d{cid}/p{page}")
 
     def _parse_listing(self, html: str, cat: dict, listing_url: str) -> list[dict]:
+        """Phân tích cú pháp HTML danh mục để trích xuất danh sách bài viết.
+
+        Args:
+            html: Chuỗi HTML trang danh mục.
+            cat: Cấu hình chuyên mục hiện tại.
+            listing_url: URL trang danh mục đang xử lý.
+
+        Returns:
+            Danh sách từ điển chứa thông tin bài viết thô trích xuất được.
+        """
         out: list[dict] = []
         try:
             blocks = BeautifulSoup(html, "lxml").select(self.item_selector)
@@ -114,10 +120,6 @@ class BaodautuScraper(CaptureMixin, BaseScraper):
             self.errors.append(f"listing parse error {listing_url}: {e}")
             return out
         for b in blocks:
-            # Mỗi <article> có NHIỀU <a>: link ảnh (a.thumbblock — KHÔNG có text) đứng
-            # TRƯỚC link tiêu đề. select_one() sẽ vớ phải link ảnh rồi bị bỏ qua →
-            # mất bài. Vì vậy duyệt hết và lấy anchor ĐẦU TIÊN vừa có text vừa khớp
-            # link_pattern của bài viết.
             href = title = ""
             for a in b.select(self.link_selector):
                 cand_href = (a.get("href") or "").strip()
@@ -138,6 +140,11 @@ class BaodautuScraper(CaptureMixin, BaseScraper):
         return out
 
     def fetch_list(self) -> list[dict]:
+        """Thu thập danh sách bài viết thô từ các trang danh mục cấu hình.
+
+        Returns:
+            Danh sách bài viết thô thu được qua HTTP GET.
+        """
         self._details_fetched = 0
         items: list[dict] = []
         for cat in self.categories:
@@ -147,7 +154,7 @@ class BaodautuScraper(CaptureMixin, BaseScraper):
                                      timeout=self.config.get("timeout", 30))
                 if html is None:
                     self.errors.append(f"listing fetch failed: {url}")
-                    continue                       # category isolation
+                    continue
                 found = self._parse_listing(html, cat, url)
                 if not found:
                     self.errors.append(f"listing 0 items (template drift?): {url}")
@@ -155,6 +162,14 @@ class BaodautuScraper(CaptureMixin, BaseScraper):
         return items
 
     def parse_item(self, raw: dict) -> Article | None:
+        """Chuyển đổi từ điển bài viết thô từ danh mục thành đối tượng Article.
+
+        Args:
+            raw: Dữ liệu bài viết thô thu thập từ danh mục.
+
+        Returns:
+            Đối tượng Article hợp lệ, hoặc None nếu thiếu URL hoặc tiêu đề.
+        """
         url = (raw.get("link") or "").strip()
         title = (raw.get("title") or "").strip()
         if not url or not title:
@@ -166,7 +181,7 @@ class BaodautuScraper(CaptureMixin, BaseScraper):
             title=title,
             source_domain=SOURCE_DOMAIN,
             summary=summary,
-            published_at="",                       # detail-only — điền ở enrich()
+            published_at="",
             symbols=tag_tickers(f"{title} {summary}", self.watchlist),
             categories=[cat] if cat else [],
             metadata={"language": self.language,
@@ -175,6 +190,11 @@ class BaodautuScraper(CaptureMixin, BaseScraper):
 
     # -- detail -------------------------------------------------------------
     def enrich(self, article: Article) -> None:
+        """Bổ sung nội dung chi tiết, tác giả, ngày đăng và lưu capture tầng Bronze.
+
+        Args:
+            article: Đối tượng Article cần bổ sung thông tin.
+        """
         if self._details_fetched >= self.max_details:
             article.content_text = article.summary
             article.metadata["detail_deferred"] = True
@@ -182,12 +202,11 @@ class BaodautuScraper(CaptureMixin, BaseScraper):
         html = self._capture_and_extract(article, SOURCE_DOMAIN,
                                          f"{self.base_url}/", self.content_selector)
         if html is None:
-            return                                 # mixin đã set summary + errors
+            return
         self._details_fetched += 1
 
         article.published_at = _parse_detail_date(html, self.date_scope)
         if not article.published_at:
-            # KHÔNG bịa timestamp — ghi nhận là thiếu để drift report nhìn thấy
             article.metadata.setdefault("capture", {}) \
                 .setdefault("missing", []).append("published_at")
 

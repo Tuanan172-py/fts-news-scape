@@ -1,9 +1,4 @@
-"""
-Content extraction — bóc tách body bài viết.
-
-trafilatura primary. Trả về CẢ raw HTML (spec §9: bảo toàn nguyên bản)
-lẫn text sạch.
-"""
+"""Bóc tách văn bản thuần và nội dung chính từ mã nguồn HTML bằng Trafilatura."""
 
 from __future__ import annotations
 
@@ -20,11 +15,14 @@ _EXTRACT_KW = dict(
 
 
 def extract_content(url: str, html: str | None = None) -> dict:
-    """Extract nội dung chính từ URL hoặc HTML có sẵn.
+    """Trích xuất nội dung bài viết từ địa chỉ URL hoặc chuỗi HTML có sẵn.
+
+    Args:
+        url: Địa chỉ URL bài viết.
+        html: Chuỗi HTML bài viết nếu đã tải trước.
 
     Returns:
-        dict: {raw_html, content (text sạch), status}
-        status: ok | fetch_failed | extract_failed
+        Dictionary chứa raw_html, content và trạng thái xử lý status.
     """
     result = {"raw_html": "", "content": "", "status": "ok"}
 
@@ -45,10 +43,13 @@ def extract_content(url: str, html: str | None = None) -> dict:
 
 
 def extract_text(html_fragment: str) -> str:
-    """Text sạch từ HTML fragment hoặc full page.
+    """Trích xuất văn bản sạch từ một đoạn mã HTML hoặc toàn bộ trang.
 
-    trafilatura fail trên bare fragment (<div>...) → wrap <html><body>.
-    Fallback cuối: BS4 get_text.
+    Args:
+        html_fragment: Đoạn mã HTML hoặc tài liệu HTML cần bóc tách.
+
+    Returns:
+        Chuỗi văn bản thuần đã làm sạch thẻ định dạng.
     """
     if not html_fragment:
         return ""

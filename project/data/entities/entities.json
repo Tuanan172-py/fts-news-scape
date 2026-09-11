@@ -2450,7 +2450,11 @@
       "canonical_name": "Tập đoàn Đầu tư và Phát triển Công nghiệp Becamex - CTCP",
       "aliases": [
         "Tập đoàn Đầu tư và Phát triển Công nghiệp Becamex - CTCP",
-        "Đầu tư và Phát triển Công nghiệp Becamex"
+        "Đầu tư và Phát triển Công nghiệp Becamex",
+        "Becamex",
+        "Becamex IDC",
+        "Becamex Group",
+        "Becamex Tokyu"
       ],
       "attributes": {
         "gics1": "Bất động sản",
@@ -24967,7 +24971,13 @@
       "aliases": [
         "CTCP Tập đoàn Masan",
         "Masan",
-        "Masan Group"
+        "Masan Group",
+        "WinCommerce",
+        "WinMart",
+        "WinMart+",
+        "Masan Consumer",
+        "Phúc Long",
+        "MEATDeli"
       ],
       "attributes": {
         "gics1": "Hàng tiêu dùng thiết yếu",
@@ -25414,7 +25424,13 @@
         "CTCP Đầu tư Thế giới Di động",
         "Đầu tư Thế giới Di động",
         "Thế Giới Di Động",
-        "Thegioididong"
+        "Thegioididong",
+        "Bách Hóa Xanh",
+        "Bach Hoa Xanh",
+        "Điện Máy Xanh",
+        "Dien May Xanh",
+        "An Khang",
+        "EraBlue"
       ],
       "attributes": {
         "gics1": "Hàng tiêu dùng không thiết yếu",
@@ -43996,7 +44012,14 @@
       "aliases": [
         "Tập đoàn VINGROUP - CTCP",
         "VINGROUP",
-        "Vingroup"
+        "Vingroup",
+        "VinFast",
+        "VinFast Auto",
+        "Vinpearl",
+        "Vinschool",
+        "Vinmec",
+        "Xanh SM",
+        "GSM"
       ],
       "attributes": {
         "gics1": "Bất động sản",
@@ -44877,7 +44900,8 @@
       "aliases": [
         "CTCP Chứng khoán VNDIRECT",
         "Chứng khoán VNDIRECT",
-        "VNDirect"
+        "VNDirect",
+        "VNDIRECT"
       ],
       "attributes": {
         "gics1": "Tài chính",
@@ -45333,7 +45357,10 @@
       "aliases": [
         "Ngân hàng TMCP Việt Nam Thịnh Vượng",
         "Việt Nam Thịnh Vượng",
-        "VPBank"
+        "VPBank",
+        "FE Credit",
+        "FE CREDIT",
+        "VPBankS"
       ],
       "attributes": {
         "gics1": "Tài chính",

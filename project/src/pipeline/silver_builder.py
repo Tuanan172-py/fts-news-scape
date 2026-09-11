@@ -1,9 +1,7 @@
-"""
-SilverBuilder — chuẩn hoá Bronze raw thành "clean base" (Silver) cho agent.
+"""Bộ tinh chế dữ liệu thô Bronze thành cấu trúc Silver chuẩn hóa.
 
-PURE + OFFLINE + DETERMINISTIC: input = meta.json dict + raw bytes; không network,
-không đọc DB. Cùng raw → cùng silver (built_at lấy từ meta.fetch_ts, không dùng now)
-→ re-derive được sau khi sửa parser. Xem phase-01, docs/design/07.
+Chuyển đổi các tệp tin HTML/JSON thô tầng Bronze thành dữ liệu sạch
+(Silver) có cấu trúc, tách lọc tiêu đề, nội dung văn bản và cấu trúc DOM.
 """
 
 from __future__ import annotations
@@ -20,26 +18,24 @@ from src.processor.extractor import extract_content, extract_text
 
 SILVER_SCHEMA_VERSION = "1.0"
 
-# ký tự đặc trưng tiếng Việt (đủ để phân biệt vi vs und cho heuristic nhẹ)
 _VI_CHARS = re.compile(r"[ăâđêôơưÁÀẢÃẠáàảãạấầẩẫậắằẳẵặéèẻẽẹếềểễệíìỉĩịóòỏõọốồổỗộớờởỡợúùủũụứừửữựýỳỷỹỵ]", re.I)
 _EN_STOPWORDS = re.compile(r"\b(the|and|of|to|in|for|is|on|with|that|as|by)\b", re.I)
-# ngưỡng độ dài cleaned_text để chấm chất lượng trích (bug #2)
-_MIN_HIGH = 200   # trafilatura cho ≥ ký tự này → high
-_MIN_OK = 50      # dưới ngưỡng này coi như trích hụt → thử fallback sâu hơn
+_MIN_HIGH = 200
+_MIN_OK = 50
 _WS = re.compile(r"\s+")
 
-# Nguồn API trả JSON (vd fireant): Bronze là body JSON byte-exact, KHÔNG phải HTML.
-# Trường chứa HTML thân bài — thử theo thứ tự. Đây là nhận diện theo ĐỊNH DẠNG
-# (Content-Type), KHÔNG phải luật riêng cho domain nào (giữ module generic — design 12).
 _JSON_HTML_FIELDS = ("content", "originalContent", "original_content",
                      "body_html", "content_html", "body", "html")
 
 
 def _html_from_json(raw_text: str) -> str | None:
-    """Body JSON → chuỗi HTML thân bài. None nếu không phải JSON / không tìm thấy.
+    """Trích xuất chuỗi HTML thân bài từ dữ liệu JSON thô.
 
-    Vì sao cần: chạy trafilatura/BS4 thẳng trên JSON sẽ nuốt cả key, dấu ngoặc và
-    escape vào cleaned_text. Bóc đúng trường HTML trước rồi mới trích.
+    Args:
+        raw_text: Chuỗi định dạng JSON thô thu được từ API.
+
+    Returns:
+        Chuỗi HTML thân bài viết, hoặc None nếu không trích xuất được.
     """
     try:
         data = json.loads(raw_text)
@@ -57,6 +53,7 @@ def _html_from_json(raw_text: str) -> str | None:
 
 
 def _detect_lang(text: str) -> str:
+    """Nhận diện mã ngôn ngữ ('vi', 'en', hoặc 'und') của văn bản."""
     if not text:
         return "und"
     sample = text[:2000]
@@ -160,10 +157,24 @@ def _resolve_title(soup, structure: dict, cleaned: str,
 
 
 class SilverBuilder:
+    """Bộ chuyển đổi và tinh chế dữ liệu thô Bronze sang cấu trúc chuẩn Silver.
+
+    Attributes:
+        schema_version: Phiên bản cấu trúc lược đồ Silver.
+    """
+
     schema_version = SILVER_SCHEMA_VERSION
 
     def build(self, meta: dict, raw_bytes: bytes) -> dict:
-        """meta = capture .meta.json dict; raw_bytes = Bronze .html bytes."""
+        """Thực hiện tinh chế dữ liệu thô và siêu dữ liệu Bronze thành bản ghi Silver.
+
+        Args:
+            meta: Từ điển chứa siêu dữ liệu tệp .meta.json của tầng Bronze.
+            raw_bytes: Chuỗi bytes nội dung tệp thô .html/.json từ tầng Bronze.
+
+        Returns:
+            Từ điển chứa dữ liệu sạch tầng Silver theo lược đồ silver-v1.
+        """
         encoding = meta.get("encoding") or "utf-8"
         try:
             html = raw_bytes.decode(encoding, errors="replace")
@@ -171,9 +182,6 @@ class SilverBuilder:
             html = raw_bytes.decode("utf-8", errors="replace")
 
         url = meta.get("source_url", "")
-
-        # Bronze của nguồn API là JSON (Content-Type: application/json) → bóc trường
-        # HTML ra trước. Nhận diện theo định dạng, không theo tên domain.
         ctype = str((meta.get("response_headers") or {}).get("content-type", "")).lower()
         if "json" in ctype:
             inner = _html_from_json(html)
@@ -181,7 +189,7 @@ class SilverBuilder:
                 html = inner
 
         soup = BeautifulSoup(html, "lxml")
-        structure = _parse_structure_from(soup)          # parse 1 lần, tái dùng làm fallback
+        structure = _parse_structure_from(soup)
         cleaned, quality = self._extract_cleaned(url, html, structure)
         title, title_verified = _resolve_title(
             soup, structure, cleaned, url, meta.get("url_title_hash", ""))
@@ -193,23 +201,19 @@ class SilverBuilder:
             "domain": _domain_of(meta),
             "content_sha256": meta.get("content_sha256", ""),
             "title": title,
-            "title_verified": title_verified,   # hash sha256(url+title) khớp meta -> chắc chắn
+            "title_verified": title_verified,
             "cleaned_text": cleaned,
-            "extraction_quality": quality,               # bug #2: high|medium|low|empty
+            "extraction_quality": quality,
             "structure": structure,
             "images": meta.get("images", []),
             "language": _detect_lang(cleaned),
-            "built_at": meta.get("fetch_ts", ""),       # từ Bronze → deterministic
+            "built_at": meta.get("fetch_ts", ""),
             "built_from_raw_path": meta.get("html_path", ""),
         }
 
     @staticmethod
     def _extract_cleaned(url: str, html: str, structure: dict) -> tuple[str, str]:
-        """Chuỗi fallback đảm bảo cleaned_text không rỗng khi trang có chữ (bug #2).
-
-        trafilatura(high) → extract_text/BS4(medium) → join paragraphs(low) → empty.
-        Trả (cleaned_text, extraction_quality).
-        """
+        """Chuỗi dự phòng trích xuất văn bản đảm bảo không rỗng."""
         cleaned = (extract_content(url, html=html).get("content") or "").strip()
         quality = "high"
         if len(cleaned) < _MIN_HIGH:
@@ -226,6 +230,7 @@ class SilverBuilder:
 
 
 def _atomic_write(path: str, data: bytes) -> None:
+    """Ghi dữ liệu nguyên tử thông qua tệp tin tạm thời."""
     tmp = f"{path}.tmp"
     with open(tmp, "wb") as f:
         f.write(data)
@@ -233,7 +238,15 @@ def _atomic_write(path: str, data: bytes) -> None:
 
 
 def write_silver(silver: dict, base_dir: str = "data/silver") -> str:
-    """Ghi silver.json mirror partition Bronze. Trả path."""
+    """Lưu trữ đối tượng Silver ra đĩa theo cấu trúc phân vùng tên miền và ngày tháng.
+
+    Args:
+        silver: Từ điển dữ liệu Silver đã tinh chế.
+        base_dir: Thư mục gốc lưu trữ dữ liệu tầng Silver.
+
+    Returns:
+        Đường dẫn tới tệp tin Silver JSON đã lưu.
+    """
     domain = silver.get("domain") or "unknown"
     yyyymmdd = ""
     if silver.get("built_from_raw_path"):

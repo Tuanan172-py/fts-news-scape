@@ -1,11 +1,4 @@
-"""
-Staging & Safe I/O Manager (Phòng chống Windows File Lock & I/O contention).
-
-Cung cấp các hàm ghi file an toàn (Safe Atomic Write):
-1. Ghi dữ liệu ra file tạm trong thư mục staging hoặc file .tmp.<pid>
-2. Thực hiện atomic replace sang file đích
-3. Bọc PermissionError (khi User mở file trong Excel/DB Browser trên Windows) để tự động fallback sang file version mới có timestamp, không bao giờ làm crash pipeline.
-"""
+"""Quản lý vùng đệm staging và thực thi ghi tệp an toàn (Atomic Safe I/O)."""
 
 from __future__ import annotations
 
@@ -25,6 +18,14 @@ DEFAULT_STAGING_DIR = "data/staging"
 
 
 def ensure_staging_dir(base_dir: str | Path = DEFAULT_STAGING_DIR) -> Path:
+    """Tạo thư mục staging nếu chưa tồn tại.
+
+    Args:
+        base_dir: Đường dẫn thư mục staging cần tạo.
+
+    Returns:
+        Đối tượng Path của thư mục staging.
+    """
     p = Path(base_dir)
     p.mkdir(parents=True, exist_ok=True)
     return p
@@ -127,7 +128,18 @@ def safe_json_dump(
     fallback_on_lock: bool = True,
     staging_dir: str | Path | None = None,
 ) -> tuple[Path, bool]:
-    """Ghi JSON an toàn qua staging + atomic swap."""
+    """Ghi dữ liệu JSON an toàn qua vùng đệm staging và thay thế nguyên tử.
+
+    Args:
+        data: Cấu trúc dữ liệu cần tuần tự hóa sang JSON.
+        target_path: Đường dẫn tệp đích cần ghi.
+        indent: Độ thụt lề định dạng JSON.
+        fallback_on_lock: Cờ cho phép lưu tệp dự phòng nếu tệp đích bị khóa trên Windows.
+        staging_dir: Đường dẫn thư mục staging tùy chọn.
+
+    Returns:
+        Bộ (Path, bool) gồm đường dẫn tệp thực tế và cờ báo tệp dự phòng.
+    """
     def _write(f):
         json.dump(data, f, ensure_ascii=False, indent=indent)
 
@@ -144,7 +156,15 @@ def clean_stale_staging(
     staging_dir: str | Path = DEFAULT_STAGING_DIR,
     max_age_seconds: int = 86400,
 ) -> int:
-    """Dọn dẹp các file .tmp mồ côi trong thư mục staging quá max_age_seconds."""
+    """Dọn dẹp các tệp tạm .tmp tồn đọng trong thư mục staging vượt quá thời gian tối đa.
+
+    Args:
+        staging_dir: Đường dẫn thư mục staging cần dọn dẹp.
+        max_age_seconds: Tuổi thọ tối đa của tệp tính bằng giây trước khi xóa.
+
+    Returns:
+        Số lượng tệp tạm đã được xóa bỏ thành công.
+    """
     p = Path(staging_dir)
     if not p.exists():
         return 0

@@ -1,9 +1,4 @@
-"""
-Centralized logging — loguru, 1 sink file xoay vòng + stderr.
-
-Gọi setup_logging() đúng 1 lần tại entry point; mọi module khác chỉ
-`from loguru import logger` và dùng trực tiếp.
-"""
+"""Cấu hình hệ thống ghi log tập trung sử dụng Loguru."""
 
 from __future__ import annotations
 
@@ -16,7 +11,15 @@ _configured = False
 
 
 def setup_logging(level: str = "INFO", log_dir: str = "logs"):
-    """Cấu hình loguru: stderr + logs/monocle.log (rotation 50MB, giữ 14 ngày)."""
+    """Khởi tạo cấu hình ghi log ra bảng điều khiển và tệp lưu trữ xoay vòng.
+
+    Args:
+        level: Mức độ log tối thiểu cần ghi.
+        log_dir: Thư mục chứa tệp log lưu trữ.
+
+    Returns:
+        Đối tượng Logger đã được cấu hình.
+    """
     global _configured
     if _configured:
         return logger
@@ -32,7 +35,7 @@ def setup_logging(level: str = "INFO", log_dir: str = "logs"):
         rotation="50 MB",
         retention="14 days",
         encoding="utf-8",
-        enqueue=True,   # thread-safe: scraper + writer thread cùng ghi
+        enqueue=True,
         format="{time:YYYY-MM-DD HH:mm:ss.SSS} | {level: <7} | {name}:{function}:{line} | {message}",
     )
     _configured = True

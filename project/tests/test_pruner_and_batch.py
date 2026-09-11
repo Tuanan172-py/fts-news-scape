@@ -261,3 +261,76 @@ def test_batch_ingest_end_to_end(tmp_path):
     res = runner.ingest_output(unpacked[0])
     assert res["dod_pass"] is True
     assert store.get_agent_output("art_b1", sha)["dod_pass"] == 1
+
+
+def test_clean_article_paragraphs_max_chars_and_entities():
+    # Giả lập bài báo dài với nhiều đoạn văn
+    paras = [
+        "Đoạn 1: Mở đầu bài viết về thị trường tài chính với các diễn biến chung.",
+        "Đoạn 2: VN-Index dao động giằng co với thanh khoản duy trì ở mức cao trên 15.000 tỷ đồng.",
+    ]
+    # Thêm 20 đoạn văn dài
+    for i in range(3, 20):
+        paras.append(f"Đoạn {i}: Diễn biến bình luận thị trường tổng quát không mang nhiều thông tin số liệu cụ thể nhưng khá dài dòng {'.' * 150}")
+    # Đoạn mang mã CP quan trọng
+    paras.append("Đoạn cuối: Tập đoàn HPG thông báo doanh thu tăng trưởng 25% đạt mức kỷ lục mới.")
+
+    full_text = "\n\n".join(paras)
+    assert len(full_text) > 3500
+
+    # Clean không có entities
+    c1 = clean_article_paragraphs(full_text, max_chars=2200)
+    assert len(c1) <= 2300
+    assert "Đoạn 1" in c1
+    assert "Đoạn 2" in c1
+
+    # Clean có l1_entities ưu tiên HPG
+    c2 = clean_article_paragraphs(full_text, max_chars=2200, l1_entities=["TICKER:HPG"])
+    assert len(c2) <= 2700
+    assert "Tập đoàn HPG" in c2
+
+
+def test_export_tasks_user_and_date_filters(tmp_path):
+    """Kiểm tra AgentRunner.export_tasks lọc đúng theo user, date, days và dry_run."""
+    from src.agent.runner import AgentRunner
+    from src.db.store import ArticleStore
+
+    db_path = str(tmp_path / "test_export.db")
+    store = ArticleStore(db_path=db_path)
+    conn = store.connect()
+    # Tạo dữ liệu test
+    conn.execute("""
+        INSERT INTO articles (url, url_title_hash, title, published_at, fetched_at, source_domain)
+        VALUES 
+            ('url1', 'h1', 'HPG tăng mạnh', '2026-09-07T08:00:00+07:00', '2026-09-07T08:30:00+07:00', 'cafef.vn'),
+            ('url2', 'h2', 'VHM mở bán đại đô thị', '2026-08-20T08:00:00+07:00', '2026-08-20T08:30:00+07:00', 'cafef.vn')
+    """)
+    conn.execute("""
+        INSERT INTO work_items (article_id, raw_sha256, domain, package_path, status, enqueued_at)
+        VALUES 
+            ('h1', 's1', 'cafef.vn', 'wp1.json', 'pending', '2026-09-07T09:00:00+07:00'),
+            ('h2', 's2', 'cafef.vn', 'wp2.json', 'pending', '2026-08-20T09:00:00+07:00')
+    """)
+    conn.execute("""
+        INSERT INTO l1_outputs (article_id, output_json, dod_pass, l1_source)
+        VALUES 
+            ('h1', '{"entities":[{"entity_id":"TICKER:HPG"}]}', 1, 'code_first'),
+            ('h2', '{"entities":[{"entity_id":"TICKER:VHM"}]}', 1, 'code_first')
+    """)
+    conn.commit()
+    conn.close()
+
+
+    runner = AgentRunner(store, task_dir=str(tmp_path / "tasks"))
+
+    # 1. Test lọc ngày cụ thể
+    exp_date = runner.export_tasks(limit=10, date="2026-09-07", require_l1=True, subscriber_only=False, dry_run=True)
+    assert len(exp_date) == 1
+    assert exp_date[0]["article_id"] == "h1"
+
+    # 2. Test lọc ngày quá cũ bị loại bởi date
+    exp_old = runner.export_tasks(limit=10, date="2026-08-20", require_l1=True, subscriber_only=False, dry_run=True)
+    assert len(exp_old) == 1
+    assert exp_old[0]["article_id"] == "h2"
+
+

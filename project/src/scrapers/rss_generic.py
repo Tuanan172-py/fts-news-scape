@@ -1,10 +1,4 @@
-"""
-Generic RSS scraper — 1 class, N domain configs (method: rss).
-
-Domain RSS mới = 1 file YAML, zero code (spec §12 config-driven).
-Feed-level isolation: 1 feed chết → WARN + tiếp feed khác.
-Nếu feed có content:encoded đủ dài (vd VnEconomy) → dùng luôn, khỏi fetch detail.
-"""
+"""Bộ thu thập dữ liệu RSS feed chung dựa trên cấu hình khai báo (Generic RSS Scraper)."""
 
 from __future__ import annotations
 
@@ -31,48 +25,59 @@ _HTML_TAG = re.compile(r"<[^>]+>")
 
 
 def _clean_title(raw: str) -> str:
-    """Strip tag HTML (hose bọc <span>) + unescape entity double-encoded
-    (thanhnien '&aacute;', vietnambiz '&#225;' — feedparser chỉ decode 1 lớp).
-    Title dùng cho dedup-hash + tag mã CK + sentiment nên phải sạch."""
+    """Làm sạch tiêu đề bằng cách loại bỏ thẻ HTML và giải mã các thực thể ký tự.
+
+    Args:
+        raw: Chuỗi tiêu đề gốc thô.
+
+    Returns:
+        Chuỗi tiêu đề đã làm sạch.
+    """
     return html.unescape(_HTML_TAG.sub("", raw)).strip()
 
 
 def _decode_feed(raw: bytes) -> str:
-    """Encoding hardening — vietnambiz utf-16, dantri/fed BOM, baodautu blank lines.
+    """Giải mã dữ liệu nhị phân của RSS feed và chuẩn hóa khai báo XML.
 
-    Heuristic null-byte chỉ soi 400 bytes đầu (vùng XML declaration).
+    Args:
+        raw: Mảng byte dữ liệu RSS feed tải về.
+
+    Returns:
+        Chuỗi văn bản XML của feed.
     """
     if raw[:2] in (b"\xff\xfe", b"\xfe\xff"):
-        text = raw.decode("utf-16")                        # BOM utf-16
+        text = raw.decode("utf-16")
     elif b"\x00" in raw[:400]:
-        text = raw.decode("utf-16", errors="replace")      # utf-16 không BOM
+        text = raw.decode("utf-16", errors="replace")
     else:
-        text = raw.decode("utf-8-sig", errors="replace")   # strip BOM utf-8 nếu có
-    text = text.lstrip("﻿ \t\r\n")   # BOM escape tường minh + blank lines (baodautu)
-    # vietnambiz khai encoding="utf-16" nhưng serve utf-8 — feedparser tôn trọng
-    # declaration kể cả với str input → đã decode xong thì bỏ encoding attr
+        text = raw.decode("utf-8-sig", errors="replace")
+    text = text.lstrip("﻿ \t\r\n")
     head, rest = text[:200], text[200:]
     return _XML_DECL_ENC.sub(r"\1", head, count=1) + rest
 
 
 def _parse_raw_date(raw: str) -> str:
-    """Fallback cho format phi chuẩn feedparser bó tay (verified 2026-07-25):
-    vietnambiz 'GMT+7', cafebiz '+07', tuoitre '7/25/2026 7:39:00 PM'."""
+    """Phân tích chuỗi ngày tháng từ feed sang mốc thời gian ISO 8601 theo giờ Việt Nam.
+
+    Args:
+        raw: Chuỗi thời gian thô từ feed.
+
+    Returns:
+        Chuỗi thời gian chuẩn ISO 8601 hoặc rỗng nếu không phân tích được.
+    """
     from email.utils import parsedate_to_datetime
 
     raw = raw.replace(" ", " ").strip()
     if not raw:
         return ""
-    # GMT+7 / GMT+10 → +0700 / +1000
     normalized = re.sub(r"GMT([+-])(\d{1,2})$",
                         lambda m: f"{m.group(1)}{int(m.group(2)):02d}00", raw)
-    normalized = re.sub(r"([+-]\d{2})$", r"\g<1>00", normalized)  # +07 → +0700
-    # ('+0700' đầy đủ không match rule trên — sign không nằm ở vị trí -3)
+    normalized = re.sub(r"([+-]\d{2})$", r"\g<1>00", normalized)
     dt = None
     try:
         dt = parsedate_to_datetime(normalized)
     except (ValueError, TypeError):
-        for fmt in ("%m/%d/%Y %I:%M:%S %p", "%m/%d/%Y %H:%M:%S"):  # tuoitre US-style
+        for fmt in ("%m/%d/%Y %I:%M:%S %p", "%m/%d/%Y %H:%M:%S"):
             try:
                 dt = datetime.strptime(raw, fmt)
                 break
@@ -81,12 +86,19 @@ def _parse_raw_date(raw: str) -> str:
     if dt is None:
         return ""
     if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=VN_TZ)   # không có tz → coi là giờ VN
+        dt = dt.replace(tzinfo=VN_TZ)
     return dt.astimezone(VN_TZ).isoformat(timespec="seconds")
 
 
 def _parse_entry_date(entry: dict) -> str:
-    """struct_time (UTC-normalized bởi feedparser) → ISO giờ VN; fallback raw string."""
+    """Trích xuất và chuẩn hóa thời gian phát hành từ đối tượng RSS entry.
+
+    Args:
+        entry: Bản ghi entry từ feedparser.
+
+    Returns:
+        Chuỗi thời gian chuẩn ISO 8601.
+    """
     parsed = entry.get("published_parsed") or entry.get("updated_parsed")
     if parsed:
         dt = datetime(*parsed[:6], tzinfo=timezone.utc).astimezone(VN_TZ)
@@ -95,7 +107,14 @@ def _parse_entry_date(entry: dict) -> str:
 
 
 def _inline_content(entry: dict) -> str:
-    """Lấy content:encoded nếu có (feedparser: entry.content[0].value)."""
+    """Trích xuất nội dung toàn văn nhúng sẵn trong thẻ content:encoded của feed nếu đạt kích thước tối thiểu.
+
+    Args:
+        entry: Bản ghi entry từ feedparser.
+
+    Returns:
+        Chuỗi nội dung toàn văn hoặc rỗng.
+    """
     content = entry.get("content")
     if content and isinstance(content, list):
         value = content[0].get("value", "")
@@ -106,7 +125,19 @@ def _inline_content(entry: dict) -> str:
 
 @register("_rss")
 class RSSScraper(BaseScraper):
-    """Scraper cho mọi domain method: rss. Registry key '_rss' = generic."""
+    """Lớp thu thập dữ liệu tổng quát cho các nguồn tin cung cấp giao diện RSS.
+
+    Attributes:
+        feeds: Danh sách cấu hình các RSS feed.
+        extract_full: Cờ cho phép tải trang chi tiết bài viết.
+        max_details: Số lượng bài chi tiết tối đa tải trong một chu kỳ.
+        watchlist: Danh sách mã cổ phiếu theo dõi.
+        language: Ngôn ngữ chính của nguồn tin.
+        link_rewrites: Quy tắc viết lại đường dẫn liên kết nếu có lỗi cổng hoặc định dạng.
+        filter_terms: Tập từ khóa lọc bài viết quan tâm.
+        drop_unmatched: Cờ bỏ qua bài viết không khớp từ khóa lọc.
+        block_terms: Tập từ khóa chặn bài viết rác.
+    """
 
     def __init__(self, config, http, dedup):
         super().__init__(config, http, dedup)
@@ -116,18 +147,21 @@ class RSSScraper(BaseScraper):
         self.max_details = detail.get("max_details_per_cycle", 30)
         self.watchlist = config.get("watchlist") or load_watchlist()
         self.language = config.get("language", "vi")
-        # sửa link hỏng trong feed (vd HNX kèm port nội bộ :7978)
         self.link_rewrites = [(re.compile(r["pattern"]), r["replace"])
                               for r in config.get("link_rewrites", [])]
         filter_cfg = config.get("filter") or {}
         self.filter_terms = [str(t).lower() for t in filter_cfg.get("any", [])]
         self.drop_unmatched = filter_cfg.get("drop_unmatched", True)
-        # block-list: bài chứa BẤT KỲ term nào bị loại (vd Yahoo lifestyle/retail-finance)
         self.block_terms = [str(t).lower() for t in filter_cfg.get("none", [])]
         self._details_fetched = 0
         self._filtered = 0
 
     def fetch_list(self) -> list[dict]:
+        """Lấy danh sách các bản ghi entry từ tất cả các RSS feed được cấu hình.
+
+        Returns:
+            Danh sách các dictionary chứa dữ liệu entry thô.
+        """
         self._details_fetched = 0
         self._filtered = 0
         items: list[dict] = []
@@ -158,6 +192,14 @@ class RSSScraper(BaseScraper):
         return items
 
     def parse_item(self, raw: dict) -> Article | None:
+        """Chuyển đổi một bản ghi RSS thô thành đối tượng Article sau khi lọc và làm sạch.
+
+        Args:
+            raw: Bản ghi dữ liệu thô của RSS entry.
+
+        Returns:
+            Đối tượng Article hoàn chỉnh hoặc None nếu không hợp lệ hoặc bị lọc bỏ.
+        """
         url, title = raw["link"], _clean_title(raw["title"])
         if not url or not title:
             return None
@@ -193,8 +235,14 @@ class RSSScraper(BaseScraper):
         )
 
     def enrich(self, article: Article) -> None:
+        """Bổ sung nội dung chi tiết bài viết từ thẻ inline hoặc tải trực tiếp từ trang nguồn.
+
+        Args:
+            article: Đối tượng Article cần bổ sung nội dung.
+        """
         inline = article.metadata.pop("_inline_html", "")
         if inline:
+            article.content_html = inline
             # content:encoded đầy đủ trong feed — không cần fetch
             article.content_html = inline
             article.content_text = extract_text(inline) or article.summary

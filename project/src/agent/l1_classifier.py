@@ -1,17 +1,7 @@
-"""
-l1_classifier.py — BƯỚC CODE-FIRST (deterministic) của lớp L1: nhận diện entity trong
-TIÊU ĐỀ bằng khớp mã + alias (không LLM). Đây là TẦNG 1 của quy trình 2 tầng:
+"""Bộ phân loại thực thể ban đầu dựa trên quy tắc mã nguồn (Code-First Classifier).
 
-  Tầng 1 (file này): code khớp được entity → 'resolved', xong.
-  Tầng 2 (l1_router): tiêu đề code KHÔNG khớp (needs_agent) → handoff cho agent L1.
-
-Đặc điểm:
-  - Khớp mã/tên DN/ETF/chỉ số/sàn qua registry (chính xác cao trên tiêu đề).
-  - SUY RA ngành từ GICS của mã đã khớp (tin "HPG..." → ngành Thép) + ngành khớp trực tiếp.
-  - KHÔNG phụ thuộc nhóm đăng ký (co_ban/fta chỉ là ví dụ; map nhóm là bước sau khi
-    người dùng thực sự đăng ký).
-
-Output = record nhận diện/tin; `needs_agent=True` ⇔ code không khớp entity nào.
+Thực hiện nhận diện tất định các thực thể tài chính xuất hiện trong tiêu đề
+bài viết (mã chứng khoán, ngành, tài sản, tổ chức) qua EntityRegistry trước khi chuyển giao cho Agent.
 """
 from __future__ import annotations
 
@@ -28,7 +18,14 @@ _MARKET = {"INDEX", "EXCHANGE"}
 
 
 def title_of(article: dict) -> str:
-    """Rút tiêu đề: field `title` -> heading level 1 (silver) -> dòng đầu cleaned_text."""
+    """Trích xuất tiêu đề bài viết với cơ chế dự phòng nhiều tầng.
+
+    Args:
+        article: Từ điển dữ liệu bài viết (tầng Silver hoặc gói công việc).
+
+    Returns:
+        Chuỗi tiêu đề bài viết.
+    """
     if article.get("title"):
         return str(article["title"]).strip()
     for h in article.get("structure", {}).get("headings", []):
@@ -39,13 +36,20 @@ def title_of(article: dict) -> str:
 
 
 def classify_title(title: str, reg: EntityRegistry | None = None) -> dict:
-    """Phân loại 1 tiêu đề → record entity/ngành/nhóm đăng ký (không cần article_id)."""
+    """Nhận diện thực thể và ngành nghề trực tiếp từ tiêu đề bài viết.
+
+    Args:
+        title: Chuỗi tiêu đề bài viết cần phân tích.
+        reg: Đối tượng EntityRegistry dùng để tra cứu (nếu None sẽ tải mặc định).
+
+    Returns:
+        Từ điển chứa danh sách thực thể phát hiện, ngành liên quan, mức độ phù hợp và cờ needs_agent.
+    """
     reg = reg or load_registry()
     dets = reg.detect(title)
     ids = [d["entity_id"] for d in dets]
     types = sorted({d["type"] for d in dets})
 
-    # ngành: khớp trực tiếp (INDUSTRY_GICS*) + suy ra từ GICS của mã đã khớp
     industries: set[str] = set()
     for d in dets:
         if d["type"] in _INDUSTRY:
@@ -55,7 +59,6 @@ def classify_title(title: str, reg: EntityRegistry | None = None) -> dict:
             if attrs.get(k):
                 industries.add(attrs[k])
 
-    # mức độ liên quan (ưu tiên có mã/DN > ngành > tài sản > định chế > vĩ mô > thị trường)
     tset = set(types)
     if _SECURITY & tset:
         relevance = "entity"
@@ -72,13 +75,11 @@ def classify_title(title: str, reg: EntityRegistry | None = None) -> dict:
     else:
         relevance = "none"
 
-    # entity chính: mã/DN đầu tiên, sau đó tới ngành/tài sản, không thì entity đầu tiên bất kỳ
     primary = next((d["entity_id"] for d in dets if d["type"] in _SECURITY), None)
     if primary is None:
         primary = next((d["entity_id"] for d in dets if d["type"] in _INDUSTRY or d["type"] in _ASSET), None)
     if primary is None and dets:
         primary = dets[0]["entity_id"]
-
 
     return {
         "l1_schema_version": L1_SCHEMA_VERSION,
@@ -89,13 +90,20 @@ def classify_title(title: str, reg: EntityRegistry | None = None) -> dict:
         "industries": sorted(industries),
         "primary_entity": primary,
         "relevance": relevance,
-        # code-first không khớp entity nào ⇒ chuyển handoff cho agent L1
         "needs_agent": len(ids) == 0,
     }
 
 
 def classify_article(article: dict, reg: EntityRegistry | None = None) -> dict:
-    """Phân loại 1 article (silver dict hoặc record có `title`)."""
+    """Phân loại thực thể cho một đối tượng bài viết hoàn chỉnh.
+
+    Args:
+        article: Từ điển dữ liệu bài viết tầng Silver.
+        reg: Đối tượng EntityRegistry dùng tra cứu.
+
+    Returns:
+        Từ điển kết quả phân loại kèm mã định danh bài viết và tên miền nguồn.
+    """
     reg = reg or load_registry()
     rec = classify_title(title_of(article), reg)
     rec["article_id"] = article.get("article_id")

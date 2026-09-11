@@ -1,10 +1,4 @@
-"""
-[LEGACY / COLD BACKUP - NOT IN PRODUCTION PIPELINE]
-Word segmentation wrapper — tokenizer-agnostic seam.
-
-pyvi primary (cài nhẹ trên Windows). underthesea nâng cấp sau nếu cần
-(cùng interface). Fallback cuối: whitespace split.
-"""
+"""Tiện ích phân đoạn từ tiếng Việt (word tokenization)."""
 
 from __future__ import annotations
 
@@ -14,7 +8,14 @@ try:
     from pyvi import ViTokenizer
 
     def seg(text: str) -> list[str]:
-        """Tách từ tiếng Việt. Từ ghép nối bằng '_' (vd 'chứng_khoán')."""
+        """Phân tách chuỗi văn bản thành danh sách từ đơn và từ ghép tiếng Việt.
+
+        Args:
+            text: Chuỗi văn bản đầu vào.
+
+        Returns:
+            Danh sách các token từ vựng.
+        """
         if not text:
             return []
         return ViTokenizer.tokenize(text).split()
@@ -23,4 +24,12 @@ except ImportError:  # pragma: no cover
     logger.warning("pyvi not installed — falling back to whitespace tokenizer")
 
     def seg(text: str) -> list[str]:
+        """Phân tách chuỗi văn bản theo khoảng trắng khi không có thư viện phân đoạn.
+
+        Args:
+            text: Chuỗi văn bản đầu vào.
+
+        Returns:
+            Danh sách các từ đơn giản.
+        """
         return text.split() if text else []

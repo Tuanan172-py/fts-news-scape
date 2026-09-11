@@ -1,13 +1,7 @@
-"""
-Domain Reporter — sinh báo cáo hằng ngày dạng Markdown.
+"""Tạo lập báo cáo sức khỏe chất lượng trường dữ liệu theo tên miền dạng Markdown.
 
-Đọc dữ liệu từ DB + chạy domain_validator để tạo báo cáo
-field-level health cho mỗi domain.
-
-Usage:
-    from src.monitor.domain_reporter import DomainReporter
-    r = DomainReporter(store)
-    r.generate_report("cafef")
+Cung cấp lớp DomainReporter để tổng hợp số liệu bài viết, tỷ lệ điền đầy
+các trường dữ liệu và ghi nhận báo cáo định kỳ ra thư mục lưu trữ.
 """
 
 from __future__ import annotations
@@ -20,7 +14,6 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-
 from loguru import logger
 
 from src.core.config import resolve_source_domain
@@ -31,13 +24,25 @@ REPORTS_DIR = Path(__file__).resolve().parents[2] / "data" / "reports" / "daily"
 
 
 class DomainReporter:
-    """Sinh báo cáo markdown hằng ngày cho 1 domain."""
+    """Bộ tạo lập báo cáo giám sát chất lượng trường dữ liệu theo tên miền.
+
+    Attributes:
+        store: Đối tượng kho lưu trữ ArticleStore để truy vấn số liệu bài viết.
+    """
 
     def __init__(self, store=None):
         self.store = store
 
     def generate_report(self, domain: str, date_override: str = "") -> Path:
-        """Tạo daily report cho domain, trả về path file đã tạo."""
+        """Tạo báo cáo định dạng Markdown cho tên miền chỉ định và lưu ra đĩa.
+
+        Args:
+            domain: Tên miền của nguồn tin tức cần lập báo cáo.
+            date_override: Chuỗi ngày cần tạo báo cáo (định dạng 'YYYY-MM-DD').
+
+        Returns:
+            Đường dẫn Path tới tệp báo cáo Markdown đã ghi nhận thành công.
+        """
         today = date_override or datetime.now(VN_TZ).strftime("%Y-%m-%d")
         schema = self._load_schema(domain)
 

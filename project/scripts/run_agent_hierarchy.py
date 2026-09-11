@@ -58,7 +58,8 @@ def get_output_counts() -> tuple[int, int]:
     return l1_count, gold_count
 
 
-def run_export(batch_size: int = 50, order: str = "desc", sync_silver: bool = True, mini_batch: int = 10) -> bool:
+def run_export(batch_size: int = 50, order: str = "desc", sync_silver: bool = True, mini_batch: int = 10,
+               user: list[str] | None = None, date: str | None = None, days: int | None = None) -> bool:
     """Chạy export task packets từ work_items và l1_route theo lô (batch)."""
     if sync_silver:
         print("🔄 [Step 0] Kiểm tra và tự động đồng bộ Silver từ Bronze (rederive_incremental)...")
@@ -97,6 +98,8 @@ def run_export(batch_size: int = 50, order: str = "desc", sync_silver: bool = Tr
             str(batch_size),
             "--order",
             order,
+            "--review",
+            "missed",
         ],
         capture_output=True,
         text=True,
@@ -108,7 +111,7 @@ def run_export(batch_size: int = 50, order: str = "desc", sync_silver: bool = Tr
     else:
         print(f"  • L1 Route: {res_l1.stdout.strip().splitlines()[0] if res_l1.stdout.strip() else 'done'}")
 
-    # 2. Xuất agent_export cho Gold (kèm gom lô mini-batch)
+    # 2. Xuất agent_export cho Gold (kèm gom lô mini-batch và lọc subscriber)
     gold_cmd = [
         sys.executable,
         str(PROJECT_ROOT / "scripts" / "agent_export.py"),
@@ -116,9 +119,17 @@ def run_export(batch_size: int = 50, order: str = "desc", sync_silver: bool = Tr
         str(batch_size),
         "--order",
         order,
+        "--subscriber-only",
     ]
     if mini_batch and mini_batch > 0:
         gold_cmd.extend(["--mini-batch", str(mini_batch)])
+    if user:
+        for u in user:
+            gold_cmd.extend(["--user", str(u)])
+    if date:
+        gold_cmd.extend(["--date", str(date)])
+    if days:
+        gold_cmd.extend(["--days", str(days)])
 
     res_gold = subprocess.run(
         gold_cmd,
@@ -128,6 +139,7 @@ def run_export(batch_size: int = 50, order: str = "desc", sync_silver: bool = Tr
         cwd=str(PROJECT_ROOT),
     )
     print(f"  • Gold Export: {res_gold.stdout.strip().splitlines()[0] if res_gold.stdout.strip() else 'done'}")
+
     if res_gold.returncode != 0:
         print(f"❌ Export thất bại:\n{res_gold.stderr}", file=sys.stderr)
         return False
@@ -251,6 +263,24 @@ def main(argv: list[str] | None = None) -> int:
         default=10,
         help="Gom lô thành các mini-batch packets cho Gold Agent (mặc định: 10 bài/packet)",
     )
+    parser.add_argument(
+        "--user",
+        "-u",
+        action="append",
+        help="Lọc task packets theo người dùng cụ thể (vd: --user AnPT)",
+    )
+    parser.add_argument(
+        "--days",
+        "-d",
+        type=int,
+        default=None,
+        help="Chỉ xuất bài trong N ngày gần nhất (tính từ ngày bài viết)",
+    )
+    parser.add_argument(
+        "--date",
+        default=None,
+        help="Chỉ xuất bài trong ngày cụ thể (YYYY-MM-DD, today, all)",
+    )
     args = parser.parse_args(argv)
 
     if args.batch_info:
@@ -287,12 +317,16 @@ def main(argv: list[str] | None = None) -> int:
             order=args.order,
             sync_silver=not args.no_sync,
             mini_batch=args.mini_batch,
+            user=args.user,
+            date=args.date,
+            days=args.days,
         ):
             return 1
         l1_tasks, gold_tasks = get_task_counts()
         print(
             f"✅ Đã sẵn sàng: {l1_tasks} L1 tasks, {gold_tasks} Gold tasks (batch={args.batch_size}, order={args.order}) cho Subagents Flash."
         )
+
 
     if args.ingest_and_deliver or args.full_cycle:
         if not run_ingest():

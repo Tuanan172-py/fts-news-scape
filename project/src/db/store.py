@@ -1,9 +1,4 @@
-"""
-Store layer — SQLite duy nhất (spec §7), schema v2, WAL mode.
-
-Mọi connection đều bật: journal_mode=WAL, busy_timeout=5000, synchronous=NORMAL.
-Ghi hàng loạt đi qua DBWriter (src/db/writer.py) — single-writer pattern.
-"""
+"""Tầng truy cập và lưu trữ dữ liệu SQLite (Schema v2, chế độ WAL)."""
 
 from __future__ import annotations
 
@@ -22,14 +17,21 @@ from src.core.models import VN_TZ, Article, normalize_title, now_vn_iso
 
 
 def _is_owner_alive(owner: str) -> bool:
-    """Kiểm tra nếu owner ở cùng host thì PID còn sống không."""
+    """Kiểm tra tiến trình sở hữu khóa có còn hoạt động hay không.
+
+    Args:
+        owner: Chuỗi định danh tiến trình dạng hostname:pid.
+
+    Returns:
+        True nếu tiến trình còn tồn tại hoặc thuộc máy chủ khác.
+    """
     if not owner:
         return False
     if ":" not in owner:
-        return True  # Opaque owner (không có host:pid) → coi như còn sống, dựa vào stale_seconds
+        return True
     host, pid_str = owner.split(":", 1)
     if host != socket.gethostname():
-        return True  # khác host thì không check trực tiếp được pid, coi như còn sống cho an toàn
+        return True
     try:
         pid = int(pid_str)
         os.kill(pid, 0)
@@ -39,7 +41,15 @@ def _is_owner_alive(owner: str) -> bool:
 
 
 def _lock_is_stale(ts_iso: str, stale_seconds: int) -> bool:
-    """True nếu timestamp lock quá cũ (chủ cũ có thể đã chết) → cho phép chiếm lại."""
+    """Kiểm tra mốc thời gian khóa đã hết hạn hiệu lực hay chưa.
+
+    Args:
+        ts_iso: Chuỗi thời gian khóa định dạng ISO.
+        stale_seconds: Thời gian hết hạn tính bằng giây.
+
+    Returns:
+        True nếu khóa đã quá thời hạn cho phép.
+    """
     try:
         age = (datetime.now(VN_TZ) - datetime.fromisoformat(ts_iso)).total_seconds()
     except (ValueError, TypeError):
@@ -242,7 +252,11 @@ CREATE INDEX IF NOT EXISTS idx_periodic_period
 
 
 class ArticleStore:
-    """SQLite article store, schema v2. Thread nào cần thì tự mở connection riêng."""
+    """Lớp quản lý tương tác và thao tác cơ sở dữ liệu SQLite tập trung.
+
+    Attributes:
+        db_path: Đường dẫn tệp cơ sở dữ liệu SQLite.
+    """
 
     def __init__(self, db_path: str | Path | None = None, init_schema: bool = True):
         if db_path is None:
@@ -265,10 +279,13 @@ class ArticleStore:
             self.init_schema()
 
     def _connect(self, readonly: bool = False) -> sqlite3.Connection:
-        """Connection mới với đủ pragmas. Caller tự đóng (hoặc dùng suốt đời thread).
+        """Khởi tạo kết nối SQLite với cấu hình WAL và timeout an toàn.
 
-        check_same_thread=False: APScheduler chạy job trong worker thread khác
-        thread tạo DedupCache; truy cập vẫn tuần tự (max_instances=1) nên an toàn.
+        Args:
+            readonly: Cờ mở kết nối ở chế độ chỉ đọc.
+
+        Returns:
+            Đối tượng sqlite3.Connection đã sẵn sàng thực thi truy vấn.
         """
         resolved = Path(self.db_path).resolve()
         if readonly and resolved.exists():
@@ -400,12 +417,12 @@ class ArticleStore:
             conn.close()
 
     def set_agent_dod(self, row_id: int, dod_pass: int, dod_reasons: str) -> None:
-        """Chấm LẠI cổng DoD cho 1 bản ghi đã có. KHÔNG đụng tới `output_json`.
+        """Cập nhật trạng thái kiểm định Definition-of-Done cho bản ghi kết quả agent.
 
-        Tồn tại để `scripts/verify_gold_quality.py --apply` hạ cờ những bản ghi không qua nổi
-        predicate mới, mà vẫn giữ bất biến "chỉ store.py viết SQL vào agent_outputs"
-        (`tests/test_no_agent_emulation.py`). Cố ý KHÔNG cho sửa nội dung: sửa nội dung là
-        việc của agent, không phải của script (AGENTS.md §6.C).
+        Args:
+            row_id: Khóa chính của bản ghi trong bảng agent_outputs.
+            dod_pass: Cờ trạng thái đạt chuẩn DoD (1 là đạt, 0 là không đạt).
+            dod_reasons: Chuỗi lý do hoặc kết quả kiểm định chi tiết.
         """
         conn = self._connect()
         try:

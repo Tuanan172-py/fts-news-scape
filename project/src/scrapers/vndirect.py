@@ -1,10 +1,7 @@
-"""
-VNDirect scraper — public JSON API, không cần auth (verified 2026-07-25).
+"""Bộ thu thập dữ liệu tin tức từ VNDirect (vndirect.com.vn).
 
-Endpoint: GET https://api-finfo.vndirect.com.vn/v4/news?size=N&sort=newsDate:desc
-VNDirect là aggregator (newsSource = báo gốc, newsUrl = link gốc) → fuzzy dedup
-cross-domain của Phase 1 lo phần trùng với các báo đã crawl trực tiếp.
-Full content nằm ngay trong list response — không cần detail fetch.
+Cung cấp lớp VndirectScraper trích xuất bài viết thông qua JSON API công khai
+của hệ thống VNDirect.
 """
 
 from __future__ import annotations
@@ -19,6 +16,16 @@ from src.scrapers import register
 
 @register("vndirect")
 class VndirectScraper(BaseScraper):
+    """Bộ thu thập tin tức qua giao diện lập trình ứng dụng REST của VNDirect.
+
+    Attributes:
+        API_URL: Địa chỉ mặc định của API tin tức VNDirect.
+        api_url: Địa chỉ endpoint API sau cấu hình.
+        page_size: Số lượng bản ghi tin tức lấy trong một trang.
+        news_groups: Danh sách nhóm tin tức cần lọc.
+        max_details: Giới hạn số bài viết cần tải nội dung mở rộng nếu thiếu.
+    """
+
     API_URL = "https://api-finfo.vndirect.com.vn/v4/news"
 
     def __init__(self, config, http, dedup):
@@ -26,11 +33,16 @@ class VndirectScraper(BaseScraper):
         api = config.get("api", {})
         self.api_url = api.get("endpoint", self.API_URL)
         self.page_size = api.get("page_size", 60)
-        self.news_groups = api.get("news_groups", [])  # rỗng = tất cả
+        self.news_groups = api.get("news_groups", [])
         self.max_details = config.get("detail", {}).get("max_details_per_cycle", 20)
         self._details_fetched = 0
 
     def fetch_list(self) -> list[dict]:
+        """Thu thập danh sách tin tức từ REST API của VNDirect.
+
+        Returns:
+            Danh sách đối tượng từ điển chứa dữ liệu tin tức thô.
+        """
         self._details_fetched = 0
         params = {"size": self.page_size, "sort": "newsDate:desc"}
         if self.news_groups:
@@ -43,6 +55,14 @@ class VndirectScraper(BaseScraper):
         return data.get("data") or []
 
     def parse_item(self, raw: dict) -> Article | None:
+        """Chuyển đổi bản ghi tin tức từ API VNDirect thành đối tượng Article.
+
+        Args:
+            raw: Từ điển bản ghi tin tức thô từ API.
+
+        Returns:
+            Đối tượng Article hợp lệ, hoặc None nếu thiếu tiêu đề hoặc liên kết.
+        """
         title = (raw.get("newsTitle") or "").strip()
         url = (raw.get("newsUrl") or raw.get("dstockUrl") or "").strip()
         if not title or not url:
@@ -68,19 +88,24 @@ class VndirectScraper(BaseScraper):
         )
 
     def enrich(self, article: Article) -> None:
-        # content thường nằm sẵn trong list response
+        """Bổ sung nội dung văn bản chi tiết cho bài viết.
+
+        Nếu nội dung chưa có trong phản hồi danh sách, tải bổ sung từ URL gốc.
+
+        Args:
+            article: Đối tượng Article cần bổ sung nội dung.
+        """
         content_html = article.metadata.pop("_content_html", "")
         if content_html:
             article.content_html = content_html
             article.content_text = extract_text(content_html) or article.summary
             if len(article.content_text) >= 200:
                 return
-        # content rỗng/quá ngắn → fetch bài gốc (newsUrl) qua trafilatura, có cap
         if self._details_fetched >= self.max_details:
             article.content_text = article.content_text or article.summary
             article.metadata["detail_deferred"] = True
             return
-        self._details_fetched += 1   # đếm attempt (kể cả fail) — cap = số request thật
+        self._details_fetched += 1
         html = self.http.get(article.url, timeout=self.config.get("timeout", 30))
         if html is None:
             article.content_text = article.content_text or article.summary

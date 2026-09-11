@@ -1,10 +1,7 @@
-"""
-batch_handoff.py — Đóng gói và giải nén task gom lô (Consolidated Mini-Batch Handoff).
+"""Đóng gói và giải nén tác vụ xử lý theo lô gom nhóm (Batch Handoff).
 
-Mục tiêu:
-1. Gom 5–10 bài viết thành 1 file batch task duy nhất (data/agent_tasks/batch_XX.task.json).
-2. Giảm 80–90% số lượng Tool Calls (1 lần view_file đọc cả lô, 1 lần write_to_file trả về cả lô).
-3. Hỗ trợ giải nén linh hoạt file batch output (mảng JSON hoặc object có key outputs/results).
+Cung cấp các cơ chế gom nhiều bài viết thành một tệp gói tác vụ mini-batch duy nhất
+cho Agent (tầng L1 hoặc Gold) và giải nén các tệp kết quả trả về.
 """
 
 from __future__ import annotations
@@ -25,7 +22,15 @@ _OUTPUT_REQUIRED = [
 
 
 def build_batch_packet(tasks: list[dict], batch_id: str) -> dict:
-    """Gom danh sách task packets thành 1 batch packet siêu nhẹ tự mô tả."""
+    """Đóng gói danh sách gói tác vụ đơn lẻ thành một gói tác vụ lô (batch packet) tầng Gold.
+
+    Args:
+        tasks: Danh sách các gói tác vụ đơn lẻ cần gom nhóm.
+        batch_id: Mã định danh của lô công việc (ví dụ: 'batch_01').
+
+    Returns:
+        Từ điển cấu trúc gói tác vụ gom lô tự mô tả.
+    """
     t = load_thresholds()
     batch_tasks = []
     for tsk in tasks:
@@ -69,11 +74,14 @@ _L1_OUTPUT_REQUIRED = [
 
 
 def build_l1_batch_packet(tasks: list[dict], batch_id: str) -> dict:
-    """Gom danh sách task L1 thành 1 batch packet.
+    """Đóng gói danh sách bài viết thành gói tác vụ gom lô nhận diện thực thể tầng L1.
 
-    L1 chỉ đọc TIÊU ĐỀ nên packet cực nhẹ — gom 20–30 bài/lô vẫn thoải mái, khác Gold
-    (phải mang `cleaned_text`) chỉ gom được 5–10. Mang kèm `code_first` để agent làm đúng
-    nhiệm vụ TRA SOÁT (xác nhận / sửa / bổ sung), không nhận diện lại từ đầu.
+    Args:
+        tasks: Danh sách các bài viết cần thẩm định nhận diện thực thể.
+        batch_id: Mã định danh của lô công việc L1.
+
+    Returns:
+        Từ điển gói tác vụ gom lô tầng L1 kèm thông tin gợi ý code-first.
     """
     batch_tasks = []
     for tsk in tasks:
@@ -120,7 +128,15 @@ def build_l1_batch_packet(tasks: list[dict], batch_id: str) -> dict:
 
 
 def write_batch_packet(batch_packet: dict, base_dir: str = "data/agent_tasks") -> str:
-    """Ghi batch packet ra đĩa an toàn qua staging (atomic). Trả path."""
+    """Ghi gói tác vụ gom lô ra đĩa theo cơ chế hoán đổi nguyên tử an toàn.
+
+    Args:
+        batch_packet: Dữ liệu gói tác vụ gom lô.
+        base_dir: Thư mục lưu trữ các tệp gói tác vụ.
+
+    Returns:
+        Đường dẫn chuỗi tới tệp tin gói tác vụ đã ghi.
+    """
     os.makedirs(base_dir, exist_ok=True)
     batch_id = batch_packet.get("batch_id", "batch_01")
     target_path = os.path.join(base_dir, f"{batch_id}.task.json")
@@ -135,10 +151,17 @@ def split_tasks_into_batches(
     prefix: str = "batch",
     builder=None,
 ) -> list[str]:
-    """Chia danh sách task thành các mini-batches và ghi ra đĩa. Trả danh sách paths.
+    """Chia danh sách tác vụ thành các lô nhỏ và ghi ra các tệp gói tác vụ tương ứng.
 
-    `builder` = hàm dựng packet cho 1 lô; mặc định Gold (`build_batch_packet`),
-    truyền `build_l1_batch_packet` cho lớp L1.
+    Args:
+        tasks: Danh sách các tác vụ cần phân lô.
+        batch_size: Số lượng tác vụ trong mỗi lô.
+        base_dir: Thư mục lưu trữ kết quả.
+        prefix: Tiền tố đặt tên tệp lô (ví dụ: 'batch', 'l1_batch').
+        builder: Hàm đóng gói cấu trúc lô (mặc định là build_batch_packet).
+
+    Returns:
+        Danh sách đường dẫn các tệp gói tác vụ lô đã tạo.
     """
     out_paths: list[str] = []
     if not tasks:

@@ -1,5 +1,15 @@
 # OKF Changelog
 
+## 2026-09-11 (US-009 / ADR 0005: Token Optimization & Morphological Guard)
+
+Đồng bộ OKF với đợt tối ưu token và hoàn thiện tầng bọc ngữ thái L1.
+
+- **ADR**: `docs/decisions/0005-subscriber-gated-gold-va-morphological-l1-guard.md`
+- **Story**: `docs/stories/US-009-token-optimization-subscriber-gate-morphological-l1.md`
+- **Update**: `catalog/pipelines/agent_handoff.md` — cập nhật Subscriber-Gated Export (`agent_export.py --subscriber-only`), Dynamic 3-Pass Semantic Pruner (`max_chars=2200`), và deliverable XLSX.
+- **Update**: `.agents/rules/entity-system-invariants.md` — thêm quy chuẩn Morphological & Compound Boundary Guard (`_blocked_by_morphology`), triệt tiêu 100% false positive cho từ đơn quốc gia/địa chính trị (e.g. `MY`).
+- **Update**: `project/docs/design/15-antigravity-multi-agent-orchestration.md` — chuẩn hóa mô hình Kiến trúc 5 Vòng (5-Ring Architecture) với ranh giới Code-First 0 token vs. Cognitive Flash Subagents.
+
 ## 2026-09-08 (Mo rong nguon tin + bao cao dinh ky NSO)
 
 Dong bo OKF voi dot mo rong nguon (`7bb46ba`, `75b8b6c`) va hop nhat 2 may (`e4d281a`).

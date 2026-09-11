@@ -1,10 +1,4 @@
-"""
-DBWriter — single-writer queue thread (research-02 §2).
-
-Scraper không ghi bảng articles trực tiếp; chỉ enqueue().
-Thread writer gom batch ≤50 hoặc mỗi 2s → 1 transaction BEGIN IMMEDIATE.
-stop(flush=True) xả hết queue trước khi thoát → graceful shutdown (spec §12).
-"""
+"""Luồng ghi cơ sở dữ liệu bất đồng bộ theo mẫu Single-Writer."""
 
 from __future__ import annotations
 
@@ -18,6 +12,14 @@ from src.db.store import ArticleStore
 
 
 class DBWriter:
+    """Hàng đợi gom lô và ghi bài viết vào cơ sở dữ liệu trong luồng riêng.
+
+    Attributes:
+        store: Đối tượng ArticleStore quản lý cơ sở dữ liệu.
+        batch_size: Kích thước tối đa của mỗi lô ghi.
+        flush_interval: Chu kỳ thời gian tối đa xả hàng đợi tính bằng giây.
+    """
+
     def __init__(self, store: ArticleStore, batch_size: int = 50,
                  flush_interval: float = 2.0):
         self.store = store
@@ -27,8 +29,8 @@ class DBWriter:
         self._stop = threading.Event()
         self._inserted = 0
         self._lock = threading.Lock()
-        self._pending = 0                       # item đã enqueue chưa commit
-        self._done = threading.Condition()      # báo khi _pending về 0
+        self._pending = 0
+        self._done = threading.Condition()
         self._thread = threading.Thread(target=self._run, name="db-writer", daemon=True)
         self._thread.start()
 
@@ -38,18 +40,29 @@ class DBWriter:
             return self._inserted
 
     def enqueue(self, article: Article) -> None:
+        """Đưa một bài viết mới vào hàng đợi chờ ghi.
+
+        Args:
+            article: Đối tượng Article cần lưu trữ.
+        """
         with self._done:
             self._pending += 1
         self._queue.put(article)
 
     def flush(self, timeout: float = 10.0) -> bool:
-        """Chặn đến khi mọi item đã enqueue được commit (dùng trước export/checkpoint).
-        Trả True nếu xả hết trong timeout, False nếu quá hạn. Idempotent."""
+        """Chờ xả toàn bộ các mục đang chờ trong hàng đợi vào cơ sở dữ liệu.
+
+        Args:
+            timeout: Thời gian chờ tối đa tính bằng giây.
+
+        Returns:
+            True nếu xả thành công trước khi hết thời gian chờ, ngược lại False.
+        """
         with self._done:
             return self._done.wait_for(lambda: self._pending <= 0, timeout=timeout)
 
     def _drain_batch(self) -> list[Article]:
-        """Chờ item đầu (timeout flush_interval), rồi gom tối đa batch_size."""
+        """Gom các mục trong hàng đợi thành một danh sách lô."""
         batch: list[Article] = []
         try:
             batch.append(self._queue.get(timeout=self.flush_interval))
@@ -63,7 +76,7 @@ class DBWriter:
         return batch
 
     def _run(self) -> None:
-        conn = self.store._connect()  # connection thuộc riêng thread này
+        conn = self.store._connect()
         try:
             while True:
                 batch = self._drain_batch()
@@ -82,7 +95,11 @@ class DBWriter:
             conn.close()
 
     def stop(self, timeout: float = 30.0) -> None:
-        """Dừng writer, xả hết queue. Idempotent."""
+        """Dừng hoạt động luồng ghi và xả toàn bộ hàng đợi trước khi đóng.
+
+        Args:
+            timeout: Thời gian chờ tối đa cho luồng dừng tính bằng giây.
+        """
         self._stop.set()
         self._thread.join(timeout=timeout)
         if self._thread.is_alive():

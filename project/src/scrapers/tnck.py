@@ -1,26 +1,7 @@
-"""
-TNCK (Tin nhanh chứng khoán / ĐTCK) scraper — zone JSON API + Bronze full capture.
+"""Bộ thu thập dữ liệu báo Tin nhanh chứng khoán (tinnhanhchungkhoan.vn).
 
-Endpoint: GET https://api.tinnhanhchungkhoan.vn/api/morenews-zone-{zone}-{page}.html
-
-KHÔNG CÓ RSS (verified 2026-09-07): /rss.html trả 13 bytes rỗng; /rss/*.rss và
-/chung-khoan.rss đều 302 + 0 byte. API zone là route DUY NHẤT — đừng probe lại.
-
-Verified 2026-09-07:
-- Response gzip (requests tự decompress), `data.contents[]` 40 items/page.
-- `date` = epoch GIÂY, JSON **NUMBER** (docs cũ ghi "string" — SAI). int() nhận cả hai.
-- `url` relative → urljoin về host www.
-- `phrase` param BỊ SERVER IGNORE → không filter ticker được; tag client-side.
-- `zone` object echo sẵn {zone_id, parent_id, name, url} → categories tự mô tả.
-- robots www: Disallow /api/ /search/ /tag.html /print.html ... nhưng
-  **api.tinnhanhchungkhoan.vn là HOST KHÁC** (robots riêng, rỗng). Trang chi tiết
-  /<slug>-post<NNN>.html được PHÉP. Không khai Crawl-delay → giữ mặc định 3.0s.
-- Detail server-rendered, body = div.article__body.cms-body.
-  Quảng cáo nằm trong div[id^=adsWeb_] BÊN TRONG body — strip ở Silver, KHÔNG đụng Bronze.
-
-source_domain chuẩn hoá **NON-WWW** = "tinnhanhchungkhoan.vn" (khớp quy ước
-removeprefix("www.") toàn repo). `article.url` GIỮ host www của API — đổi URL sẽ đổi
-url_title_hash tức đổi định danh bài.
+Cung cấp lớp TnckScraper thu thập danh sách bài viết từ JSON API và tải chi tiết
+kèm capture tầng Bronze.
 """
 
 from __future__ import annotations
@@ -41,8 +22,24 @@ from src.scrapers.capture_mixin import CaptureMixin
 
 @register("tnck")
 class TnckScraper(CaptureMixin, BaseScraper):
+    """Bộ thu thập dữ liệu báo Tin nhanh chứng khoán qua API zone.
+
+    Attributes:
+        BASE_URL: Địa chỉ web cơ sở của trang tin.
+        SOURCE_DOMAIN: Tên miền nguồn chuẩn hóa không chứa www.
+        API_TEMPLATE: Mẫu URL gọi API lấy danh sách bài theo zone.
+        template: Mẫu định dạng URL API sau cấu hình.
+        zones: Danh sách mã chuyên mục zone cần thu thập.
+        pages_per_cycle: Số trang cần quét trong mỗi chu kỳ.
+        headers: Các tiêu đề HTTP kèm theo yêu cầu API.
+        content_selector: Bộ chọn CSS vùng nội dung chi tiết bài viết.
+        max_details: Số bài viết chi tiết tối đa cần lấy trong một chu kỳ.
+        watchlist: Danh mục mã cổ phiếu cần theo dõi và gán nhãn.
+        language: Mã ngôn ngữ nội dung bài viết.
+    """
+
     BASE_URL = "https://www.tinnhanhchungkhoan.vn"
-    SOURCE_DOMAIN = "tinnhanhchungkhoan.vn"   # non-www — QUYẾT ĐỊNH, xem docstring
+    SOURCE_DOMAIN = "tinnhanhchungkhoan.vn"
     API_TEMPLATE = "https://api.tinnhanhchungkhoan.vn/api/morenews-zone-{zone}-{page}.html"
 
     def __init__(self, config, http, dedup):
@@ -58,9 +55,14 @@ class TnckScraper(CaptureMixin, BaseScraper):
         self.watchlist = config.get("watchlist") or load_watchlist()
         self.language = config.get("language", "vi")
         self._details_fetched = 0
-        self._init_capture()   # RawStore + RobotsGate + SourceBackoff
+        self._init_capture()
 
     def fetch_list(self) -> list[dict]:
+        """Thu thập danh sách bài viết từ JSON API theo các zone cấu hình.
+
+        Returns:
+            Danh sách bài viết thô trích xuất từ dữ liệu JSON.
+        """
         self._details_fetched = 0
         items: list[dict] = []
         for zone in self.zones:
@@ -71,7 +73,7 @@ class TnckScraper(CaptureMixin, BaseScraper):
                                           timeout=self.config.get("timeout", 30))
                 if not data:
                     self.errors.append(f"zone {zone} page {page} fetch failed")
-                    continue          # zone-level isolation, KHÔNG raise
+                    continue
                 contents = (data.get("data") or {}).get("contents") or []
                 if not contents:
                     logger.info("[tnck] zone {} page {} empty", zone, page)
@@ -79,6 +81,14 @@ class TnckScraper(CaptureMixin, BaseScraper):
         return items
 
     def parse_item(self, raw: dict) -> Article | None:
+        """Chuyển đổi từ điển dữ liệu bài viết thô sang đối tượng Article.
+
+        Args:
+            raw: Dữ liệu bài viết thô từ API.
+
+        Returns:
+            Đối tượng Article hợp lệ, hoặc None nếu thiếu trường bắt buộc.
+        """
         title = (raw.get("title") or "").strip()
         rel_url = (raw.get("url") or "").strip()
         if not title or not rel_url:
@@ -89,7 +99,6 @@ class TnckScraper(CaptureMixin, BaseScraper):
         raw_date = raw.get("date")
         if raw_date:
             try:
-                # epoch giây — API trả NUMBER, int() nhận cả str lẫn int
                 published = datetime.fromtimestamp(int(raw_date), tz=VN_TZ) \
                     .isoformat(timespec="seconds")
             except (ValueError, OSError, TypeError):
@@ -99,9 +108,9 @@ class TnckScraper(CaptureMixin, BaseScraper):
         zone = raw.get("zone") or {}
         zone_name = zone.get("name") or ""
         return Article(
-            url=urljoin(self.BASE_URL, rel_url),      # giữ host www của API
+            url=urljoin(self.BASE_URL, rel_url),
             title=title,
-            source_domain=self.SOURCE_DOMAIN,          # non-www
+            source_domain=self.SOURCE_DOMAIN,
             summary=summary,
             published_at=published,
             symbols=tag_tickers(f"{title} {summary}", self.watchlist),
@@ -109,10 +118,15 @@ class TnckScraper(CaptureMixin, BaseScraper):
             metadata={"content_id": raw.get("content_id", ""),
                       "avatar_url": raw.get("avatar_url", ""),
                       "zone_id": zone.get("zone_id", ""),
-                      "language": self.language},      # BẮT BUỘC (thiếu ở bản cũ)
+                      "language": self.language},
         )
 
     def enrich(self, article: Article) -> None:
+        """Bổ sung nội dung bài viết chi tiết và lưu trữ capture tầng Bronze.
+
+        Args:
+            article: Đối tượng Article cần bổ sung nội dung.
+        """
         if self._details_fetched >= self.max_details:
             article.content_text = article.summary
             article.metadata["detail_deferred"] = True
@@ -120,6 +134,6 @@ class TnckScraper(CaptureMixin, BaseScraper):
         html = self._capture_and_extract(article, self.SOURCE_DOMAIN,
                                          f"{self.BASE_URL}/", self.content_selector)
         if html is None:
-            return    # mixin đã set content_text=summary + ghi self.errors
+            return
         self._details_fetched += 1
         article.content_text = extract_text(article.content_html) or article.summary

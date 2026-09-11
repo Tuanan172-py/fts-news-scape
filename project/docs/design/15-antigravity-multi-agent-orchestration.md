@@ -39,13 +39,14 @@ flowchart TD
         TASKS["data/agent_tasks/ (*.task.json)"]
         OUT_L1["data/agent_outputs_l1/ (*.json)"]
         OUT_GOLD["data/agent_outputs/ (*.json)"]
-        DB[("monocle.db<br/>(work_items, agent_outputs)")]
+        DB[("monocle.db<br/>(work_items, agent_outputs, l1_outputs)")]
         USER_CSV["users/output/<user>/<date>.xlsx"]
     end
 
-    MASTER -->|1. agent_export| TASKS
-    MASTER -->|2. invoke_subagent| L1
-    MASTER -->|2. invoke_subagent| GOLD
+    MASTER -->|1. l1_route --review missed| TASKS
+    MASTER -->|2. agent_export --subscriber-only| TASKS
+    MASTER -->|3. invoke_subagent| L1
+    MASTER -->|3. invoke_subagent| GOLD
     
     TASKS -.-> L1
     TASKS -.-> GOLD
@@ -53,28 +54,32 @@ flowchart TD
     L1 -->|Ghi file| OUT_L1
     GOLD -->|Ghi file| OUT_GOLD
     
-    MASTER -->|3. l1_ingest & agent_ingest| DB
+    MASTER -->|4. l1_ingest & agent_ingest| DB
     DB -->|Nếu fail DoD| HEALER
     HEALER -->|Sửa file| OUT_GOLD
     
-    MASTER -->|4. run_user_workflow| USER_CSV
+    MASTER -->|5. run_user_workflow| USER_CSV
 ```
 
 ---
 
-## 3. Quy trình Điều phối 4 Giai đoạn
+## 3. Quy trình Điều phối & Kiến trúc 5 Vòng (5-Ring Architecture)
 
-### Giai đoạn 1: Export Task Packets (Producer $\rightarrow$ Tasks)
-- Master Agent chạy `python scripts/agent_export.py`.
-- Các bài viết có trạng thái `pending` trong `work_items` được chuyển sang `claimed` và xuất thành:
-  - `data/agent_tasks/l1/<article_id>.task.json`
-  - `data/agent_tasks/<article_id>.task.json`
+Hệ thống vận hành theo nguyên lý phân quyền rạch ròi: **Code-first tất định (0 token) giải quyết phần lớn khối lượng; Subagent LLM chỉ kích hoạt cho bài toán nhận thức.**
 
-### Giai đoạn 2: Phân phối & Xử lý Song song (Subagent Dispatch)
-- Master Agent gọi công cụ `invoke_subagent` khởi chạy song song 2 Subagent Flash:
-  - **Subagent L1**: Quét tiêu đề $\rightarrow$ Đối chiếu `entities.json` $\rightarrow$ Ghi `data/agent_outputs_l1/<article_id>.json`.
-  - **Subagent Gold**: Đọc toàn văn `cleaned_text` $\rightarrow$ Tóm tắt, suy luận hàm ý, chấm điểm `materiality_score` (0.1 - 1.0), phân loại `sentiment`, trích dẫn citations $\ge 20$ ký tự $\rightarrow$ Ghi `data/agent_outputs/<article_id>.json`.
-- Master Agent tạm dừng, Antigravity tự động kích hoạt lại khi các Subagent hoàn thành (**Reactive Wakeup**).
+1. **Vòng 1 (Bronze - Ingestion)**: Thu thập `raw_html` bất biến, audit hash sha256.
+2. **Vòng 2 (Silver - Normalization & Deterministic L1)**: 
+   - Parse khối đoạn văn sạch `<p>...</p>`, lưu `work-package`.
+   - Chạy **L1 Code-First Router** (`entities.py`): Nhận diện thực thể bằng Regex Word Boundary và Morphological Compound Guard (`_blocked_by_morphology`). ~80% bài viết được gán nhãn ngay tại Vòng 2 với **0 token**.
+3. **Vòng 3 (Gold Subscriber-Gated Export & Token Pruning)**:
+   - **Subscriber-Gated Export** (`agent_export.py --subscriber-only`): Chỉ xuất task packet Gold cho các bài viết khớp với danh mục theo dõi của người dùng thực tế (`users/subscriptions/`). Bỏ qua 30–40% bài không ai theo dõi, tiết kiệm hàng triệu token mỗi ngày.
+   - **Dynamic 3-Pass Semantic Pruner** (`pruner.py`): Giới hạn trần 2.200 ký tự (giảm 45% token BPE). Ưu tiên Sapo/Lead $\rightarrow$ Đoạn chứa `l1_entities` & số liệu tài chính $\rightarrow$ Giữ nguyên văn cấu trúc đoạn để bảo toàn trích dẫn $\ge 20$ ký tự.
+4. **Vòng 4 (Subagent Cognitive Processing)**:
+   - **Subagent L1**: Chỉ xử lý các bài `needs_agent` (tiêu đề chưa phân giải được ở Vòng 2).
+   - **Subagent Gold**: Đọc payload 2.200 ký tự đã tỉa $\rightarrow$ Viết tóm tắt, suy luận hàm ý chuyên biệt, chấm điểm `materiality_score` (0.1 - 1.0), phân loại `sentiment`, trích dẫn $\ge 2$ citations $\ge 20$ ký tự $\rightarrow$ Ghi `data/agent_outputs/<article_id>.json`.
+5. **Vòng 5 (Deliverables & Presentation)**:
+   - Nghiệm thu DoD qua `agent_ingest.py`.
+   - Xuất file báo cáo tài chính monochrome doanh nghiệp `users/output/<user>/<date>.xlsx`.
 
 ### Giai đoạn 3: Nghiệm thu DoD & Tự Phục Hồi (DoD Ingest & Self-Healing)
 - Master Agent chạy `python scripts/l1_ingest.py` và `python scripts/agent_ingest.py`.

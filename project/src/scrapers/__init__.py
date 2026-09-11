@@ -1,9 +1,4 @@
-"""
-Scraper registry — map tên domain → class.
-
-Thêm domain mới: viết module trong src/scrapers/ + đăng ký vào REGISTRY
-+ tạo config/domains/<name>.yaml. Không sửa orchestrator (spec §12).
-"""
+"""Sổ đăng ký tập trung các bộ thu thập dữ liệu nguồn tin (Scraper Registry)."""
 
 from __future__ import annotations
 
@@ -13,7 +8,14 @@ REGISTRY: dict[str, type[BaseScraper]] = {}
 
 
 def register(name: str):
-    """Decorator: @register("cafef") trên subclass BaseScraper."""
+    """Decorator đăng ký một lớp scraper vào sổ đăng ký hệ thống theo tên định danh.
+
+    Args:
+        name: Tên định danh của nguồn tin.
+
+    Returns:
+        Hàm bọc lớp scraper cần đăng ký.
+    """
     def wrap(cls: type[BaseScraper]) -> type[BaseScraper]:
         REGISTRY[name] = cls
         return cls

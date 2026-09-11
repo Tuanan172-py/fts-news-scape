@@ -1,20 +1,4 @@
-"""
-entities.py — Registry thực thể + đăng ký theo NGƯỜI DÙNG.
-
-Load danh sách thực thể (data/entities/entities.json) và các file đăng ký của người
-dùng (config/entities/users/<name>.yaml — mỗi file liệt kê entity theo từng nhóm), cho phép:
-
-  * registry.get(entity_id)                 -> 1 thực thể
-  * registry.detect(title)                  -> list thực thể nhận diện trong text (L1)
-  * registry.subscribers_for(entity_ids)    -> set người dùng có đăng ký chạm tới
-  * registry.resolve_subscription("AnPT")   -> set entity_id người dùng đăng ký
-
-Nhận diện trong text:
-  - TICKER/ETF/INDEX: khớp CODE theo ranh giới từ (in hoa), trừ stoplist mơ hồ.
-  - Mọi thực thể có alias: khớp alias (không phân biệt hoa/thường & dấu).
-
-Registry sinh bởi scripts/build_entities.py — chạy lại khi dữ liệu gốc đổi.
-"""
+"""Quản lý danh mục thực thể và ánh xạ danh mục theo dõi người dùng."""
 from __future__ import annotations
 
 import json
@@ -73,10 +57,11 @@ PROTECTED_SHORT_WORDS = frozenset({
 })
 
 _CODE_RE = re.compile(r"\b[A-Z0-9]{3}\b")
-# Ngu canh phia TRUOC khien ma 3 ky tu khong phai ma chung khoan: "TP.HCM", "TP HCM", "T.P HCM".
-# Chan theo ngu canh thay vi bo han "HCM" vao CODE_STOPLIST, vi HCM la ma that (Chung khoan HSC)
-# va co nguoi dung dang ky - bo han se mat ca khop dung.
-_CODE_LEFT_BLOCK_RE = re.compile(r"(?:\bT\.?P\.?\s*)$", re.IGNORECASE)
+# Tin công bố thông tin (CBTT) chính thức: "VND: Báo cáo tình hình quản trị..."
+# Cấp quyền miễn trừ khỏi CODE_STOPLIST nếu mã đứng ngay đầu chuỗi kèm dấu hai chấm.
+_DISCLOSURE_PREFIX_RE = re.compile(r"^([A-Z0-9]{3})\s*:")
+# Ngữ cảnh phía TRƯỚC khiến mã 3 ký tự không phải mã chứng khoán: "TP.HCM", "UBND HCM", "PGD Tân Bình".
+_CODE_LEFT_BLOCK_RE = re.compile(r"(?:\bT\.?P\.?\s*|\bUBND\s*|\bkhu\s+vực\s*)$", re.IGNORECASE)
 _WS_RE = re.compile(r"\s+")
 
 # Nhóm trong file đăng ký -> thứ tự type thử khi ánh xạ code sang entity_id.
@@ -97,7 +82,14 @@ _INDUSTRY_TYPES = ("INDUSTRY_GICS1", "INDUSTRY_GICS2", "INDUSTRY_GICS3")
 
 
 def _fold(s: str) -> str:
-    """lower + bỏ dấu tiếng Việt để so khớp alias/tên ổn định."""
+    """Chuyển chuỗi về dạng chữ thường không dấu phục vụ so khớp.
+
+    Args:
+        s: Chuỗi văn bản gốc.
+
+    Returns:
+        Chuỗi văn bản đã chuyển đổi chữ thường và loại bỏ dấu tiếng Việt.
+    """
     s = s.replace("đ", "d").replace("Đ", "D")
     s = unicodedata.normalize("NFD", s)
     s = "".join(c for c in s if unicodedata.category(c) != "Mn")
@@ -105,11 +97,14 @@ def _fold(s: str) -> str:
 
 
 def _locate_folded(key: str, raw: str) -> tuple[str | None, tuple[int, int] | None]:
-    """Tim doan con NGUYEN VAN cua `raw` ma khi fold bang dung `key`.
+    """Tìm đoạn văn bản con nguyên bản tương ứng với khóa đã chuẩn hóa.
 
-    Chi dung khi khop duoc xac nhan qua ban fold nhung khong dinh vi duoc bang dang alias
-    nguyen ban — vd bai viet khong dau ("Tap doan Hoa Phat") trong khi alias co dau.
-    Chi thu tai cac vi tri BAT DAU TU de khong quet O(n^2) tren toan chuoi.
+    Args:
+        key: Chuỗi khóa đã chuẩn hóa không dấu.
+        raw: Chuỗi văn bản gốc cần tìm kiếm.
+
+    Returns:
+        Tuple chứa đoạn văn bản tìm thấy và vị trí bắt đầu, kết thúc (start, end).
     """
     n = len(key)
     for m in re.finditer(r"\S+", raw):
@@ -122,9 +117,10 @@ def _locate_folded(key: str, raw: str) -> tuple[str | None, tuple[int, int] | No
 
 
 def _load_context_guards() -> tuple[dict[str, list[str]], set[str]]:
-    """(block_in theo entity_id da fold, tap entity_id can bo alias mot tu).
+    """Tải cấu hình ngữ cảnh chặn nhận diện thực thể gây nhiễu.
 
-    Xem config/entities/aliases/_context_guards.yaml de biet khi nao dung co che nao.
+    Returns:
+        Tuple gồm từ điển cụm từ chặn theo entity_id và tập hợp entity_id cần bỏ alias đơn lẻ.
     """
     if not CONTEXT_GUARDS_YAML.exists():
         return {}, set()
@@ -142,7 +138,21 @@ def _load_context_guards() -> tuple[dict[str, list[str]], set[str]]:
 
 
 class EntityRegistry:
+    """Sổ đăng ký thực thể hỗ trợ nhận diện và liên kết người dùng đăng ký.
+
+    Attributes:
+        entities: Từ điển các thực thể theo entity_id.
+        subscriptions: Ánh xạ tên người dùng sang tập hợp entity_id theo dõi.
+        aliases_dropped: Số lượng alias bị loại bỏ do quá chung chung.
+    """
+
     def __init__(self, entities: list[dict], subscriptions: dict | None = None):
+        """Khởi tạo sổ đăng ký EntityRegistry.
+
+        Args:
+            entities: Danh sách các từ điển thực thể.
+            subscriptions: Ánh xạ danh mục đăng ký theo người dùng tùy chọn.
+        """
         self.entities = {e["entity_id"]: e for e in entities}
         # index alias (đã fold) -> list[entity_id], chỉ alias đủ dài hoặc trong whitelist từ ngắn
         self._alias_index: dict[str, list[str]] = {}
@@ -196,15 +206,38 @@ class EntityRegistry:
 
     # ---- lookup ----------------------------------------------------------
     def get(self, entity_id: str) -> dict | None:
+        """Lấy thông tin chi tiết một thực thể theo ID.
+
+        Args:
+            entity_id: Mã định danh thực thể.
+
+        Returns:
+            Từ điển thông tin thực thể hoặc None nếu không tìm thấy.
+        """
         return self.entities.get(entity_id)
 
     def by_type(self, *types: str) -> list[dict]:
+        """Lọc danh sách thực thể theo một hoặc nhiều loại.
+
+        Args:
+            *types: Các chuỗi phân loại thực thể cần lọc.
+
+        Returns:
+            Danh sách các từ điển thực thể thỏa mãn điều kiện.
+        """
         ts = set(types)
         return [e for e in self.entities.values() if e["type"] in ts]
 
     # ---- đăng ký theo người dùng ----------------------------------------
     def select(self, doc: dict) -> tuple[set[str], list[tuple[str, str]]]:
-        """Ánh xạ 1 file đăng ký (liệt kê theo nhóm) → (set entity_id, unknown[])."""
+        """Phân giải tệp cấu hình theo dõi của người dùng sang tập ID thực thể.
+
+        Args:
+            doc: Dữ liệu cấu hình người dùng từ tệp YAML.
+
+        Returns:
+            Tuple chứa tập hợp entity_id hợp lệ và danh sách các mã chưa rõ.
+        """
         ids: set[str] = set()
         unknown: list[tuple[str, str]] = []
         doc = doc or {}
@@ -226,20 +259,37 @@ class EntityRegistry:
         return ids, unknown
 
     def resolve_subscription(self, name: str) -> set[str]:
+        """Lấy tập hợp ID thực thể mà người dùng đăng ký theo dõi.
+
+        Args:
+            name: Tên định danh người dùng.
+
+        Returns:
+            Tập hợp các entity_id người dùng đã đăng ký.
+        """
         return set(self.subscriptions.get(name, set()))
 
     def subscribers_for(self, entity_ids) -> set[str]:
-        """Người dùng có đăng ký chạm tới tập entity này (giao ≠ ∅)."""
+        """Tìm danh sách người dùng đăng ký theo dõi các thực thể được chỉ định.
+
+        Args:
+            entity_ids: Tập hợp hoặc danh sách entity_id cần tra cứu.
+
+        Returns:
+            Tập hợp tên người dùng có đăng ký chứa ít nhất một thực thể trong danh sách.
+        """
         ids = set(entity_ids)
         return {u for u, subs in self.subscriptions.items() if subs & ids}
 
     # ---- detect (matcher chi tiết, ghi rõ khớp qua code/alias) ------------
     def detect(self, text: str) -> list[dict]:
-        """Tra list thuc the nhan dien, kem `via` (code|alias) va `surface` NGUYEN VAN.
+        """Nhận diện các thực thể xuất hiện trong đoạn văn bản kèm nguồn trích dẫn.
 
-        `surface` la doan con dung nguyen ban cua `text` da lam khop. Bat buoc phai co de
-        ban ghi code-first di qua duoc check_l1_dod (grounding: surface phai la chuoi con
-        cua title). Xem docs/decisions/0003-code-first-l1-delivery.md.
+        Args:
+            text: Đoạn văn bản cần nhận diện thực thể.
+
+        Returns:
+            Danh sách từ điển thực thể nhận diện được kèm thông tin hình thái và căn cứ khớp.
         """
         if not text:
             return []
@@ -247,10 +297,24 @@ class EntityRegistry:
         seen: set[str] = set()
         for m in _CODE_RE.finditer(text):
             code = m.group()
-            if code in CODE_STOPLIST:
+            # Miễn trừ cho tin CBTT chính thức ở đầu tiêu đề (ví dụ "VND: Báo cáo quản trị...")
+            is_disclosure_prefix = (m.start() == 0 and _DISCLOSURE_PREFIX_RE.match(text))
+            if code in CODE_STOPLIST and not is_disclosure_prefix:
                 continue
             if _CODE_LEFT_BLOCK_RE.search(text[:m.start()]):
-                continue                       # "TP.HCM" khong phai ma chung khoan HCM
+                continue                       # "TP.HCM", "UBND HCM" không phải mã chứng khoán HCM
+            # PGD guard: mã PGD (Khí thấp áp) bị nhầm với "Phòng giao dịch" của ngân hàng
+            if code == "PGD":
+                left_text = text[:m.start()]
+                right_text = text[m.end():]
+                is_bank_pgd = (
+                    re.search(r"(?:thành\s+lập|đổi\s+tên|chi\s+nhánh|điểm|quản\s+lý|tên|[/\\])\s*$", left_text, re.IGNORECASE)
+                    or re.match(r"^\s+[A-ZÀ-Ỹ0-9]", right_text)  # "PGD Chợ Tân Bình", "PGD Quận 9"
+                    or any(b in text for b in ("MBB:", "TCB:", "VCB:", "BID:", "CTG:", "ACB:", "HDB:", "SHB:", "VPB:", "STB:", "TPB:", "LPB:", "MSB:", "VIB:", "OCB:", "EIB:"))
+                )
+                if is_bank_pgd:
+                    continue
+
             # EXCHANGE bo sung 2026-09-08: truoc day thieu nen HNX viet dang ma trong tieu de
             # khong bao gio giai duoc ve EXCHANGE:* (lech voi process_l1_pipeline.py).
             for etype in ("TICKER", "ETF", "SECURITY_OTHER", "INDEX", "EXCHANGE",
@@ -260,6 +324,7 @@ class EntityRegistry:
                     seen.add(eid)
                     out.append({"entity_id": eid, "via": "code", "surface": code})
                     break
+
         cand: list[tuple[tuple[int, int] | None, str | None, list[str], str]] = []
         folded = _fold(text)
         for key, eids in self._alias_index.items():
@@ -293,6 +358,8 @@ class EntityRegistry:
             for eid in eids:
                 if self._blocked_by_context(eid, key, folded):
                     continue
+                if self._blocked_by_morphology(eid, key, surface, span, text):
+                    continue
                 if eid not in seen:
                     seen.add(eid)
                     out.append({"entity_id": eid, "via": "alias", "surface": surface})
@@ -308,11 +375,15 @@ class EntityRegistry:
         return result
 
     def _blocked_by_context(self, eid: str, key: str, folded: str) -> bool:
-        """Lan khop nay CHI do ngu canh nhieu?
+        """Kiểm tra sự xuất hiện của alias có bị chi phối hoàn toàn bởi ngữ cảnh chặn hay không.
 
-        Xoa moi cum chan khoi tieu de da fold roi thu khop lai. Con thay alias => no xuat hien
-        o cho khac, GIU. Khong con => lan khop do hoan toan nam trong cum chan, BO.
-        Nho vay "Nganh nuoc tang gia, trong nuoc lo lang" van nhan dung IND_GICS3:NUOC.
+        Args:
+            eid: Mã định danh thực thể.
+            key: Khóa alias đã chuẩn hóa.
+            folded: Chuỗi tiêu đề đã chuẩn hóa.
+
+        Returns:
+            True nếu alias nằm hoàn toàn trong ngữ cảnh bị chặn, ngược lại False.
         """
         phrases = self._context_guards.get(eid)
         if not phrases:
@@ -325,19 +396,77 @@ class EntityRegistry:
                 stripped = re.sub(r"\b" + re.escape(ph) + r"\b", " ", stripped)
         return not re.search(r"\b" + re.escape(key) + r"\b", stripped)
 
+    _INTL_AFTER_MY = frozenset({
+        "trump", "biden", "obama", "bush", "clinton", "harris", "hegseth",
+        "powell", "yellen", "blinken", "fed", "sec", "cpi", "ppi", "pmi", "gdp",
+        "wall", "street", "nasdaq", "dow", "jones", "sp500", "s&p", "pentagon",
+        "donald", "joe", "kamala", "barack", "george", "bill", "ronald",
+    })
+    _VIETNAMESE_PREFIXES = frozenset({"á", "phú", "phù", "nam", "bắc"})
+    _HONORIFIC_PREFIXES = frozenset({"bà", "ông", "cô", "chị", "anh", "em", "thị", "văn"})
+
+    def _blocked_by_morphology(self, eid: str, key: str, surface: str | None,
+                               span: tuple[int, int] | None, raw: str) -> bool:
+        """Chặn các kết quả khớp sai do trùng hình thái từ ghép hoặc danh từ riêng.
+
+        Args:
+            eid: Mã định danh thực thể.
+            key: Khóa alias đã chuẩn hóa.
+            surface: Chuỗi bề mặt văn bản khớp được.
+            span: Vị trí (start, end) của chuỗi khớp trong văn bản gốc.
+            raw: Chuỗi văn bản gốc.
+
+        Returns:
+            True nếu khớp vi phạm quy tắc hình thái học, ngược lại False.
+        """
+        if not span or not raw:
+            return False
+        if eid == "MACRO_GEO:MY" and key == "my":
+            start, end = span
+            # 1. Capitalized suffix: nếu sau "Mỹ" là một từ viết hoa tiếng Việt (Mỹ Thuận, Mỹ Tho, Mỹ Đình, Mỹ Thủy...)
+            after = raw[end:].lstrip()
+            m_after = re.match(r"^([A-ZÀ-Ỹa-zà-ỹ0-9]+)", after)
+            if m_after:
+                next_w = m_after.group(1)
+                if next_w[0].isupper() and next_w.lower() not in self._INTL_AFTER_MY:
+                    return True
+            # 2. Prefix guard: nếu trước "Mỹ" là tên riêng ghép (Á Mỹ, Phú Mỹ) hoặc danh xưng/họ tên (Bà Phạm Thị Mỹ Diệu)
+            before = raw[:start].rstrip()
+            m_before = re.search(r"([A-ZÀ-Ỹa-zà-ỹ0-9]+)$", before)
+            if m_before:
+                prev_w = m_before.group(1).lower()
+                if prev_w in self._VIETNAMESE_PREFIXES or prev_w in self._HONORIFIC_PREFIXES:
+                    return True
+
+        if eid == "MACRO_GEO:NGA" and key == "nga":
+            start, end = span
+            # 1. Prefix guard: Chặn tên người nếu trước "Nga" là danh xưng (Bà, Ông, Chị, Cô) hoặc họ tên ghép (Kim Nga, Thúy Nga, Thiên Nga)
+            before = raw[:start].rstrip()
+            m_before = re.search(r"([A-ZÀ-Ỹa-zà-ỹ0-9]+)$", before)
+            if m_before:
+                prev_w = m_before.group(1).lower()
+                if prev_w in self._HONORIFIC_PREFIXES or prev_w in {"kim", "thúy", "thuy", "thiên", "thien", "bích", "bich", "hoàng", "hoang"}:
+                    return True
+            # 2. Suffix guard: Chặn tên tài khoản mạng / tên người ngoại quốc ghép ("Nga Rose", "Nga Phạm"...)
+            after = raw[end:].lstrip()
+            m_after = re.match(r"^([A-ZÀ-Ỹa-zà-ỹ0-9]+)", after)
+            if m_after:
+                next_w = m_after.group(1)
+                # Nếu từ tiếp theo viết hoa mà không phải từ trong quan hệ ngoại giao / kinh tế
+                if next_w.lower() in {"rose", "pham", "nguyen", "tran", "le"} or (next_w[0].isupper() and next_w.lower() in {"hoang", "mai", "lan"}):
+                    return True
+        return False
+
+
     def _alias_match(self, key: str, raw: str) -> tuple[bool, str | None, tuple[int, int] | None]:
-        """Khop tren ban fold da dung chua, va surface nguyen van la gi?
+        """Xác thực kết quả khớp alias và trích xuất chuỗi bề mặt nguyên bản.
 
-        Chan false positive do bo dau / mat phan biet hoa-thuong, DONG THOI tra ve doan con
-        nguyen ban cua `raw` — hai viec dung chung mot phep tim kiem nen gop lam mot.
+        Args:
+            key: Khóa alias đã chuẩn hóa.
+            raw: Chuỗi văn bản gốc.
 
-        Fallback bo dau (`_locate_folded`) CHI danh cho alias NHIEU TU (ten doanh nghiep day
-        du, vd bai viet "Tap doan Hoa Phat" khong dau van phai khop TICKER:HPG). Alias 1 TU
-        KHONG BAO GIO duoc roi vao fallback nay: do tren 1.787 tieu de that (2026-09) cho thay
-        no khop nham bien the dau KHAC NGHIA hoan toan ("nga" an theo "Ngà" trong "Bờ Biển
-        Ngà", tham chi an theo dung 1 doan giua am tiet: "ngập" bo 3 ky tu dau "ngậ" = fold
-        "nga") va an theo alias 1 tu trung tu dien thong dung ("Trang" an theo "trạng"/
-        "trăng"/"trắng"). Tat fallback cho alias 1 tu loai dung 19 khop sai, 0 khop dung mat.
+        Returns:
+            Tuple gồm trạng thái khớp, chuỗi bề mặt và vị trí (start, end).
         """
         forms = self._alias_forms.get(key) or []
         for f in forms:
@@ -358,12 +487,19 @@ class EntityRegistry:
 
     # ---- text matching (tương thích ngược) -------------------------------
     def match(self, text: str) -> list[dict]:
-        """Trả list thực thể (unique, theo thứ tự xuất hiện) nhận diện trong text."""
+        """Nhận diện danh sách thực thể duy nhất xuất hiện trong văn bản.
+
+        Args:
+            text: Đoạn văn bản cần phân tích.
+
+        Returns:
+            Danh sách các từ điển thực thể tương ứng.
+        """
         return [self.entities[d["entity_id"]] for d in self.detect(text)]
 
 
 def _load_manifest() -> dict:
-    """Công tắc DEV (config/entities/manifest.yaml). Thiếu file → bật tất (tương thích cũ)."""
+    """Tải tệp manifest quy định trạng thái kích hoạt người dùng."""
     if not MANIFEST_YAML.exists():
         return {"enabled": True, "default": True, "users": {}}
     m = yaml.safe_load(MANIFEST_YAML.read_text(encoding="utf-8")) or {}
@@ -375,14 +511,29 @@ def _load_manifest() -> dict:
 
 
 def _user_enabled(manifest: dict, stem: str) -> bool:
-    """Người dùng có được DEV bật không (manifest.users[stem], fallback manifest.default)."""
+    """Kiểm tra người dùng có được bật nhận tin trong manifest hay không.
+
+    Args:
+        manifest: Từ điển cấu hình manifest.
+        stem: Tên định danh người dùng.
+
+    Returns:
+        True nếu người dùng được kích hoạt, ngược lại False.
+    """
     if not manifest.get("enabled", True):
         return False
     return bool(manifest.get("users", {}).get(stem, manifest.get("default", True)))
 
 
 def _load_subscriptions(reg: EntityRegistry) -> tuple[dict, dict]:
-    """Đọc users/*.yaml ĐƯỢC DEV BẬT (manifest.yaml) → ({tên: set ids}, {tên: unknown[]})."""
+    """Đọc và giải mã các tệp cấu hình theo dõi của người dùng.
+
+    Args:
+        reg: Đối tượng EntityRegistry dùng để phân giải thực thể.
+
+    Returns:
+        Tuple chứa từ điển danh mục theo dõi và từ điển cảnh báo mã không rõ theo người dùng.
+    """
     subs: dict[str, set[str]] = {}
     warnings: dict[str, list] = {}
     if not USERS_DIR.exists():
@@ -407,6 +558,7 @@ def _load_subscriptions(reg: EntityRegistry) -> tuple[dict, dict]:
 
 @lru_cache(maxsize=1)
 def load_registry() -> EntityRegistry:
+    """Nạp và khởi tạo thể hiện EntityRegistry dùng chung từ tệp dữ liệu chuẩn."""
     entities = json.loads(ENTITIES_JSON.read_text(encoding="utf-8"))["entities"]
     reg = EntityRegistry(entities)                 # dựng index trước
     subs, warnings = _load_subscriptions(reg)      # rồi giải đăng ký người dùng (đã lọc manifest)

@@ -1,10 +1,4 @@
-"""
-Database Snapshot Utility (Point-in-time non-blocking read snapshot).
-
-Cho phép tạo bản sao `monocle_review.db` hoặc `monocle_snapshot.db` từ `monocle.db`
-mà KHÔNG làm lock hay gián đoạn quá trình crawl/ingest của các Agents.
-Sử dụng SQLite `VACUUM INTO` (yêu cầu SQLite 3.27+) hoặc SQLite Online Backup API.
-"""
+"""Tiện ích tạo bản sao dữ liệu snapshot không gây khóa cơ sở dữ liệu chính."""
 
 from __future__ import annotations
 
@@ -22,15 +16,18 @@ def create_db_snapshot(
     *,
     overwrite: bool = True,
 ) -> Path:
-    """Tạo bản sao snapshot của database cho User / BI tools truy vấn.
+    """Tạo bản sao snapshot của cơ sở dữ liệu phục vụ mục đích tra cứu và kiểm thử.
 
     Args:
-        src_db_path: Đường dẫn database nguồn (mặc định data/monocle.db)
-        dst_db_path: Đường dẫn database đích (mặc định data/monocle_review.db)
-        overwrite: Nếu file đích đã tồn tại, tự động ghi đè bản mới
+        src_db_path: Đường dẫn cơ sở dữ liệu nguồn.
+        dst_db_path: Đường dẫn tệp snapshot đích cần tạo.
+        overwrite: Cờ cho phép tự động ghi đè tệp đích nếu đã tồn tại.
 
     Returns:
-        Path: Đường dẫn tới file snapshot đã tạo
+        Đối tượng Path trỏ tới tệp snapshot vừa tạo.
+
+    Raises:
+        FileNotFoundError: Khi tệp cơ sở dữ liệu nguồn không tồn tại.
     """
     src = Path(src_db_path).resolve()
     dst = Path(dst_db_path).resolve()

@@ -1,11 +1,7 @@
-"""
-Change-detection — fingerprint + classify để log khi HTML/template đổi (phase-02).
+"""Bộ phát hiện thay đổi nội dung và cấu trúc DOM của bài viết (Change Detection).
 
-- `content_sha256` (đã có ở Bronze) = exact change, quá nhạy (ad/whitespace flip).
-- `simhash64` = fuzzy near-dup của cleaned_text (phân biệt sửa nội dung nhỏ vs khác hẳn).
-- `dom_path_sig` = chữ ký cấu trúc DOM (multiset tag-path, order-insensitive) → bắt template drift.
-States: NEW | UNCHANGED | CONTENT_CHANGED | TEMPLATE_DRIFT | SELECTOR_BROKEN.
-Thuần, deterministic, không network. Xem docs/design/07 §change-detection.
+Cung cấp các thuật toán sinh dấu vân tay (SimHash64, DOM path signature)
+và phân loại trạng thái bài viết (NEW, UNCHANGED, CONTENT_CHANGED, TEMPLATE_DRIFT, SELECTOR_BROKEN).
 """
 
 from __future__ import annotations
@@ -18,12 +14,20 @@ _TOKEN_RE = re.compile(r"\w+", re.UNICODE)
 
 
 def _token_hash64(token: str) -> int:
+    """Băm một token từ khóa thành số nguyên 64-bit bằng Blake2b."""
     return int.from_bytes(hashlib.blake2b(token.encode("utf-8"), digest_size=8).digest(),
                           "big")
 
 
 def simhash64(text: str) -> int:
-    """64-bit SimHash của text (token whitespace, lowercase). 0 nếu rỗng."""
+    """Tính toán chữ ký SimHash 64-bit của đoạn văn bản.
+
+    Args:
+        text: Nội dung văn bản cần tính toán băm tương đồng.
+
+    Returns:
+        Số nguyên 64-bit đại diện cho dấu vân tay nội dung (0 nếu văn bản rỗng).
+    """
     if not text:
         return 0
     tokens = _TOKEN_RE.findall(text.lower())
@@ -42,27 +46,40 @@ def simhash64(text: str) -> int:
 
 
 def hamming64(a: int, b: int) -> int:
+    """Tính khoảng cách Hamming (số bit khác biệt) giữa hai chữ ký 64-bit.
+
+    Args:
+        a: Số nguyên 64-bit thứ nhất.
+        b: Số nguyên 64-bit thứ hai.
+
+    Returns:
+        Số lượng bit khác biệt giữa a và b.
+    """
     return bin((a ^ b) & _MASK64).count("1")
 
 
 def dom_path_sig(structure: dict) -> str:
-    """Chữ ký cấu trúc order-insensitive từ Silver.structure.
-    Dùng multiset (đếm) heading-levels + số paragraph/table/link buckets → ổn định,
-    không nhạy với reorder/ad. Trả hex sha1 (12 ký tự)."""
+    """Tạo chữ ký cấu trúc DOM không phụ thuộc thứ tự từ siêu dữ liệu cấu trúc Silver.
+
+    Args:
+        structure: Từ điển chứa các thành phần cấu trúc (headings, paragraphs, tables, links).
+
+    Returns:
+        Chuỗi băm SHA-1 độ dài 12 ký tự biểu diễn cấu trúc DOM, hoặc rỗng nếu không có cấu trúc.
+    """
     if not structure:
         return ""
     headings = structure.get("headings", [])
     paragraphs = structure.get("paragraphs", [])
     tables = structure.get("tables", [])
     links = structure.get("links", [])
-    # Fix A: không có nội dung cấu trúc (heading/paragraph/table) ⇒ extraction hụt,
-    # KHÔNG phải DOM thật để fingerprint → trả "" (classify sẽ không nhầm TEMPLATE_DRIFT).
     if not headings and not paragraphs and not tables:
         return ""
     heads = sorted(f"h{h.get('level')}" for h in headings)
-    # bucket hoá số lượng để không nhạy thay đổi nhỏ (log-scale)
+
     def bucket(n: int) -> int:
         return n.bit_length()
+
     parts = [
         "H:" + ",".join(heads),
         f"P:{bucket(len(paragraphs))}",
@@ -75,7 +92,18 @@ def dom_path_sig(structure: dict) -> str:
 
 def fingerprint(cleaned_text: str, structure: dict, *,
                 content_sha256: str, capture_status: str, missing: list | None) -> dict:
-    """Trả các dấu vân tay + tín hiệu selector cho 1 bản capture."""
+    """Tổng hợp bộ dấu vân tay nội dung và trạng thái selector cho một bản capture.
+
+    Args:
+        cleaned_text: Văn bản sạch sau khi trích xuất.
+        structure: Cấu trúc thành phần DOM của bài viết.
+        content_sha256: Mã băm SHA-256 nội dung thô tầng Bronze.
+        capture_status: Trạng thái thu thập ('ok', 'partial', 'failed').
+        missing: Danh sách các thành phần bị thiếu trong capture.
+
+    Returns:
+        Từ điển chứa các chỉ số dấu vân tay và cờ kiểm tra selector.
+    """
     missing = missing or []
     selector_ok = capture_status in ("ok", "partial") \
         and "main_content_node" not in missing \
@@ -91,12 +119,18 @@ def fingerprint(cleaned_text: str, structure: dict, *,
 
 def classify(prev: dict | None, cur: dict, *,
              t_content: int = 6, t_template: int = 12) -> tuple[str, str]:
-    """So sánh fingerprint hiện tại vs bản trước → (state, recommendation).
+    """Phân loại trạng thái thay đổi bằng cách so sánh hai dấu vân tay kế tiếp.
 
-    prev/cur: dict fingerprint. Trả state + khuyến nghị (skip|re_extract|manual_review).
-    SELECTOR_BROKEN ưu tiên cao nhất.
+    Args:
+        prev: Dấu vân tay của phiên bản trước đó (hoặc None nếu là bài mới).
+        cur: Dấu vân tay của phiên bản hiện tại.
+        t_content: Ngưỡng khoảng cách nội dung (tham số dự phòng).
+        t_template: Ngưỡng khoảng cách cấu trúc giao diện (tham số dự phòng).
+
+    Returns:
+        Tuple gồm mã trạng thái ('NEW', 'UNCHANGED', 'CONTENT_CHANGED',
+        'TEMPLATE_DRIFT', 'SELECTOR_BROKEN') và hành động khuyến nghị ('skip', 're_extract', 'manual_review').
     """
-    # selector hỏng → luôn cần người xem, dù có prev hay không
     if not cur.get("selector_ok", True):
         return "SELECTOR_BROKEN", "manual_review"
 
@@ -106,11 +140,6 @@ def classify(prev: dict | None, cur: dict, *,
     if prev.get("content_sha256") and prev["content_sha256"] == cur["content_sha256"]:
         return "UNCHANGED", "skip"
 
-    # TEMPLATE_DRIFT chỉ do CẤU TRÚC DOM đổi — KHÔNG dựa vào độ lớn thay đổi nội dung
-    # (thay đổi nội dung lớn nhưng cùng template vẫn là CONTENT_CHANGED). t_content/
-    # t_template giữ cho tương thích + log/tuning tương lai, không quyết định template.
-    # Fix A: chỉ TEMPLATE_DRIFT khi CẢ HAI sig non-empty & khác nhau. Nếu cur sig rỗng
-    # (extraction hụt cấu trúc) → không nhầm drift; rơi về CONTENT_CHANGED (re_extract).
     dom_changed = bool(prev.get("dom_path_sig")) and bool(cur.get("dom_path_sig")) \
         and prev["dom_path_sig"] != cur["dom_path_sig"]
     if dom_changed:

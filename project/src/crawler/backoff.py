@@ -1,10 +1,4 @@
-"""
-SourceBackoff — cool-down cấp-source khi bị throttle (D4).
-
-Khác với urllib3 Retry (retry trong 1 request): đây là pause GIỮA các lần enrich
-cho cùng 1 domain. Nhận 429/503 → exponential backoff 2→4→8→16s (cap 16s);
-gặp 2xx → reset. Thread-safe (APScheduler worker). Không raise.
-"""
+"""Cơ chế giãn cách lũy thừa (exponential backoff) cấp độ nguồn tin khi gặp hiện tượng nghẽn mạng."""
 
 from __future__ import annotations
 
@@ -17,8 +11,9 @@ _BACKOFF_STEPS = (2.0, 4.0, 8.0, 16.0)
 
 
 class SourceBackoff:
+    """Quản lý thời gian giãn cách yêu cầu độc lập theo từng tên miền (Thread-safe)."""
+
     def __init__(self):
-        # domain -> {"consecutive": int, "next_allowed_ts": float}
         self._state: dict[str, dict] = {}
         self._lock = threading.Lock()
 
@@ -27,7 +22,11 @@ class SourceBackoff:
         return _BACKOFF_STEPS[idx]
 
     def before_fetch(self, domain: str) -> None:
-        """Chờ hết cool-down còn lại (nếu có) trước khi fetch."""
+        """Tạm dừng luồng nếu tên miền đang trong khoảng thời gian hạ nhiệt.
+
+        Args:
+            domain: Tên miền chuẩn bị gửi yêu cầu.
+        """
         with self._lock:
             st = self._state.get(domain)
             wait_until = st["next_allowed_ts"] if st else 0.0
@@ -37,7 +36,12 @@ class SourceBackoff:
             time.sleep(remaining)
 
     def observe(self, domain: str, status: int | None) -> None:
-        """Cập nhật state theo status phản hồi."""
+        """Ghi nhận mã trạng thái phản hồi HTTP để cập nhật thời gian hạ nhiệt.
+
+        Args:
+            domain: Tên miền nhận phản hồi.
+            status: Mã trạng thái HTTP nhận được.
+        """
         with self._lock:
             st = self._state.setdefault(
                 domain, {"consecutive": 0, "next_allowed_ts": 0.0})

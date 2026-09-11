@@ -1,14 +1,4 @@
-"""
-l1_router.py — QUY TRÌNH 2 TẦNG của lớp L1 nhận diện thực thể theo tiêu đề.
-
-  Tầng 1 — CODE-FIRST (deterministic, l1_classifier): khớp mã + alias.
-     → khớp được ≥1 entity ⇒ 'resolved' (tag thẳng, KHÔNG cần agent).
-  Tầng 2 — HANDOFF cho AGENT L1: tiêu đề code không khớp (needs_agent)
-     → build task-packet self-describing (title + trỏ danh sách + output contract + checklist).
-
-Sau khi agent nộp output → check_l1_dod() gác (schema + grounding + checklist).
-Không gọi LLM ở đây. Mirror hạ tầng handoff sẵn có (packet.py / dod.py).
-"""
+"""Định tuyến và kiểm định kết quả nhận diện thực thể tầng L1."""
 from __future__ import annotations
 
 import json
@@ -43,7 +33,15 @@ TYPE_GROUP = {
 # Tầng 1 + định tuyến
 # ---------------------------------------------------------------------------
 def route_article(article: dict, reg: EntityRegistry | None = None) -> dict:
-    """Chạy code-first; trả record kèm `route` ∈ {'resolved','needs_agent'}."""
+    """Phân loại thực thể tầng 1 và xác định hướng định tuyến.
+
+    Args:
+        article: Từ điển chứa dữ liệu bài viết.
+        reg: Sổ đăng ký thực thể EntityRegistry tùy chọn.
+
+    Returns:
+        Từ điển kết quả phân loại kèm trường 'route' ('resolved' hoặc 'needs_agent').
+    """
     reg = reg or load_registry()
     rec = classify_article(article, reg)
     rec["route"] = "needs_agent" if rec["needs_agent"] else "resolved"
@@ -54,8 +52,15 @@ def route_article(article: dict, reg: EntityRegistry | None = None) -> dict:
 # Tầng 2 — task-packet handoff (self-describing, agent-agnostic)
 # ---------------------------------------------------------------------------
 def build_l1_task_packet(article: dict, code_first: dict) -> dict:
-    """Gói 1 tiêu đề cho agent nhận diện + TRA SOÁT. Nhúng kết quả code-first để agent
-    xác nhận/sửa/bổ sung (agent có quyền tra soát ngay cả khi code đã khớp)."""
+    """Đóng gói gói công việc L1 cho agent tra soát và nhận diện bổ sung.
+
+    Args:
+        article: Dữ liệu bài viết cần xử lý.
+        code_first: Kết quả phân loại tự động từ tầng 1.
+
+    Returns:
+        Từ điển gói công việc tuân thủ cấu trúc L1 task packet.
+    """
     return {
         "packet_version": L1_TASK_VERSION,
         "layer": "L1_ENTITY_RECOGNITION",
@@ -96,7 +101,15 @@ from src.core.staging import safe_json_dump
 
 
 def write_l1_packet(packet: dict, base_dir: str = "data/agent_tasks/l1") -> str:
-    """Ghi packet L1 ra đĩa an toàn qua staging (atomic). Trả path."""
+    """Lưu gói công việc L1 vào đĩa qua cơ chế staging nguyên tử.
+
+    Args:
+        packet: Dữ liệu gói công việc cần ghi.
+        base_dir: Thư mục gốc lưu trữ gói công việc.
+
+    Returns:
+        Đường dẫn tương đối tới tệp task packet đã ghi.
+    """
     os.makedirs(base_dir, exist_ok=True)
     target_path = os.path.join(base_dir, f"{packet['article_id']}.task.json")
     final_path, _ = safe_json_dump(packet, target_path, indent=2)
@@ -113,12 +126,14 @@ CODE_FIRST_MODEL = "deterministic"
 
 
 def build_code_first_output(rec: dict, article_id: str) -> dict:
-    """`code_first` record (l1_classifier) -> l1-entity-output-v1.
+    """Chuyển đổi kết quả phân loại tầng 1 sang schema l1-entity-output-v1.
 
-    KHONG suy dien them bat cu dieu gi: moi entity la ket qua TRA DANH MUC chuan, `surface`
-    la doan con nguyen van cua tieu de do EntityRegistry.detect() tra ve. Cac truong ngu
-    nghia (tom tat, implication, sentiment, unlisted_candidates) de TRONG — do la vung doc
-    quyen cua Subagent. Xem docs/decisions/0003-code-first-l1-delivery.md va AGENTS.md 6C.
+    Args:
+        rec: Kết quả phân loại từ l1_classifier.
+        article_id: Định danh duy nhất của bài viết.
+
+    Returns:
+        Từ điển kết quả thực thể tuân thủ schema l1-entity-output-v1.
     """
     title = rec.get("title") or ""
     ents = []
@@ -155,12 +170,15 @@ def build_code_first_output(rec: dict, article_id: str) -> dict:
 # DoD — gác output agent L1 (checklist machine-checkable)
 # ---------------------------------------------------------------------------
 def check_l1_dod(output: dict, title: str, registry=None) -> tuple[bool, list[str]]:
-    """(ok, reasons). ok=True <=> tat ca predicate dat.
+    """Kiểm tra điều kiện nghiệm thu DoD đối với kết quả nhận diện L1.
 
-    `registry` (mac dinh: load_registry()) dung de kiem entity_id CO THAT trong danh muc.
-    Truoc day DoD khong kiem dieu nay, nen agent tra id sai dang - vd 'INDUSTRY_GICS3:THEP'
-    (gia tri enum cua truong `type`) thay vi id that 'IND_GICS3:THEP' - van qua cong, luu vao
-    DB, roi dinh tuyen cho 0 nguoi. Loi im lang, khong ai thay.
+    Args:
+        output: Dữ liệu kết quả đầu ra cần kiểm định.
+        title: Tiêu đề bài viết dùng để đối soát trích dẫn.
+        registry: Sổ đăng ký thực thể EntityRegistry tùy chọn để kiểm tra ID.
+
+    Returns:
+        Tuple gồm trạng thái đạt chuẩn (True/False) và danh sách lý do vi phạm nếu có.
     """
 
     reasons: list[str] = []

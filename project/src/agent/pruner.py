@@ -1,14 +1,4 @@
-"""
-pruner.py — Tinh lọc đoạn văn sạch (Clean Paragraph Pruning) cho Subagents Gold.
-
-Tuân thủ Invariant Rule 05 (Clean Paragraph Payload Invariant):
-1. Chỉ giữ lại các đoạn văn cốt lõi của bài báo.
-2. Loại bỏ 100% boilerplate: teaser "Bài liên quan", thông tin tòa soạn, hotline, quảng cáo, copyright.
-3. BẢO TOÀN NGUYÊN VĂN (Verbatim Span Preservation): Không sửa/cắt ngang trong đoạn văn,
-   đảm bảo citations.source_span của Agent luôn là exact substring của cleaned_text.
-4. Áp dụng Inverted Pyramid: Giới hạn trần ký tự (mặc định 4.000 chars) bằng cách lấy đủ các
-   đoạn văn đầu tiên quan trọng nhất, tránh phình context window.
-"""
+"""Tinh lọc đoạn văn và loại bỏ nội dung rác cho bài viết."""
 from __future__ import annotations
 
 import re
@@ -44,7 +34,14 @@ _FOOTER_SOURCE_PATTERN = re.compile(
 
 
 def is_boilerplate_paragraph(para: str) -> bool:
-    """Kiểm tra một đoạn văn có phải là rác thông tin / boilerplate không."""
+    """Kiểm tra đoạn văn bản có thuộc dạng thông tin rác hoặc mẫu cố định hay không.
+
+    Args:
+        para: Chuỗi đoạn văn cần kiểm tra.
+
+    Returns:
+        True nếu là thông tin rác hoặc định dạng mẫu, ngược lại False.
+    """
     stripped = para.strip()
     if not stripped:
         return True
@@ -64,17 +61,29 @@ def is_boilerplate_paragraph(para: str) -> bool:
     return False
 
 
-def clean_article_paragraphs(text: str, *, max_chars: int = 4000, min_para_len: int = 15) -> str:
-    """
-    Tinh lọc toàn văn bài viết thành các khối đoạn văn cốt lõi sạch sẽ.
+_FINANCIAL_KEYWORDS_RE = re.compile(
+    r'(?:\d+[%]|\d+(?:[.,]\d+)?\s*(?:tỷ|triệu|nghìn\s*tỷ|usd|vnd|đồng)|vn-index|lợi\s*nhuận|doanh\s*thu|kế\s*hoạch|tăng\s*trưởng|cổ\s*tức|thị\s*giá|lãi|lỗ|hđqt|nghị\s*quyết)',
+    re.IGNORECASE,
+)
+
+
+def clean_article_paragraphs(
+    text: str,
+    *,
+    max_chars: int = 2200,
+    min_para_len: int = 15,
+    l1_entities: list[str] | None = None,
+) -> str:
+    """Lọc và giữ lại các đoạn văn cốt lõi của bài viết theo nguyên tắc tháp ngược.
 
     Args:
-        text: Chuỗi cleaned_text ban đầu từ Silver hoặc Trafilatura.
-        max_chars: Giới hạn ký tự tối đa (Inverted Pyramid) để chống context bloat.
-        min_para_len: Độ dài tối thiểu của một đoạn văn hợp lệ.
+        text: Nội dung văn bản thô ban đầu.
+        max_chars: Giới hạn ký tự tối đa giữ lại. Mặc định 2200.
+        min_para_len: Độ dài tối thiểu của một đoạn văn hợp lệ. Mặc định 15.
+        l1_entities: Danh sách thực thể L1 ưu tiên bảo toàn đoạn văn chứa thực thể.
 
     Returns:
-        Chuỗi văn bản sạch chứa các đoạn văn nguyên bản ghép lại bằng 2 dấu xuống dòng.
+        Văn bản đã làm sạch gồm các đoạn văn nguyên bản ngăn cách bởi hai ký tự xuống dòng.
     """
     if not text:
         return ""
@@ -83,28 +92,58 @@ def clean_article_paragraphs(text: str, *, max_chars: int = 4000, min_para_len: 
     if not raw_paragraphs:
         return ""
 
-    cleaned_paragraphs: list[str] = []
-    current_len = 0
-
-    for para in raw_paragraphs:
+    valid_paras: list[tuple[int, str]] = []
+    for idx, para in enumerate(raw_paragraphs):
         # 1. Loại nguyên khối boilerplate
         if is_boilerplate_paragraph(para):
             continue
 
         # 2. Đoạn quá ngắn thường là caption/tag — nhưng GIỮ nếu mang số liệu thị trường
-        if len(para) < min_para_len and not re.search(r'\d+[%]|VN-Index', para):
+        if len(para) < min_para_len and not _FINANCIAL_KEYWORDS_RE.search(para):
             continue
 
-        # 3. Trần ký tự (Inverted Pyramid) — chỉ cắt khi đã có tối thiểu 2 đoạn
-        para_len = len(para)
-        if len(cleaned_paragraphs) >= 2 and current_len + para_len > max_chars:
-            break
+        valid_paras.append((idx, para))
 
-        cleaned_paragraphs.append(para)
-        current_len += para_len + 2          # +2 cho '\n\n' khi ghép
-
-    # Lọc sạch quá tay thì thà trả nguyên bản còn hơn trả rỗng
-    if not cleaned_paragraphs:
+    if not valid_paras:
         return text.strip()
 
-    return "\n\n".join(cleaned_paragraphs)
+    selected_indices: set[int] = set()
+    current_len = 0
+
+    # Chuẩn bị pattern thực thể nếu có
+    entity_patterns = []
+    if l1_entities:
+        for e in l1_entities:
+            code = e.split(":")[-1].strip()
+            if len(code) >= 2:
+                entity_patterns.append(re.compile(r'\b' + re.escape(code) + r'\b', re.IGNORECASE))
+
+    # Pass 1: Giữ tối đa 2 đoạn đầu (Sapo / Mở đầu theo Tháp ngược)
+    for idx, para in valid_paras[:2]:
+        selected_indices.add(idx)
+        current_len += len(para) + 2
+
+    # Pass 2: Ưu tiên các đoạn chứa mã CP / thực thể L1
+    if entity_patterns:
+        for idx, para in valid_paras[2:]:
+            if any(ep.search(para) for ep in entity_patterns):
+                if current_len + len(para) + 2 <= max_chars + 300:
+                    selected_indices.add(idx)
+                    current_len += len(para) + 2
+
+    # Pass 3: Điền các đoạn văn kế tiếp theo thứ tự gốc cho tới khi chạm trần max_chars
+    for idx, para in valid_paras[2:]:
+        if idx in selected_indices:
+            continue
+        if current_len + len(para) + 2 <= max_chars:
+            selected_indices.add(idx)
+            current_len += len(para) + 2
+
+    # Tái tạo văn bản theo đúng thứ tự xuất hiện gốc trong bài
+    selected_paras = [p for idx, p in valid_paras if idx in selected_indices]
+    if not selected_paras:
+        return text.strip()
+
+    return "\n\n".join(selected_paras)
+
+

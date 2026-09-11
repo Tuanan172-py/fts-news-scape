@@ -1,1 +1,1 @@
-"""Lớp NGƯỜI DÙNG — compile input (Excel) → config subscription + manifest bật/tắt."""
+"""Gói biên dịch và quản lý danh mục đăng ký theo dõi thông tin người dùng."""

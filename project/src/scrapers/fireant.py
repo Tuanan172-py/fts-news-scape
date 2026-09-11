@@ -1,35 +1,4 @@
-"""
-FireAnt scraper — REST API (Bearer token), 2-step fetch + Bronze capture JSON.
-
-List:   GET https://restv2.fireant.vn/posts?symbol={S}&type=1&offset=0&limit=20
-Detail: GET https://restv2.fireant.vn/posts/{post_id}   (SỐ NHIỀU — /post/{id} → 404)
-
-⚠️ BRONZE CỦA NGUỒN NÀY LÀ **JSON**, KHÔNG PHẢI HTML
-Trang web `fireant.vn/dashboard/content/{id}` là Next.js SPA (`__NEXT_DATA__`), body bài
-KHÔNG có trong HTTP GET → capture trang web là vô nghĩa. Nguồn sự thật duy nhất là
-response JSON của API detail, trong đó `content` là HTML thân bài.
-→ `enrich()` gọi thẳng `RawStore.save()` trên response detail (byte-exact), KHÔNG dùng
-`CaptureMixin._capture_and_extract` (hàm đó giả định body là HTML: `_looks_complete`
-chạy CSS selector nên sẽ báo `partial` oan cho mọi bài).
-→ `SilverBuilder` nhận diện `Content-Type: application/json` và tự bóc trường HTML
-(nhánh generic theo ĐỊNH DẠNG, xem `_html_from_json`).
-
-Verified 2026-09-07:
-- Token trong `config/secrets.yaml` còn hạn (JWT exp 2036); list + detail đều HTTP 200.
-- List trả `content` RỖNG → bắt buộc gọi detail (`content` ~3.7k HTML).
-- Field thật là `postID`/`postSource`/`postSourceUrl` (camelCase). Bản cũ đọc
-  `post_source` (snake_case) nên `source_name`/`source_url` LUÔN rỗng — đã sửa.
-- Permalink đúng là `/dashboard/content/{id}`; `/bai-viet/{id}` trả **404** — đã sửa.
-- `date` đã ISO +07:00 sẵn.
-- Ảnh trên `static.fireant.vn`.
-
-⚠️ TUÂN THỦ — xem `domains/fireant/README.md` trước khi mở rộng:
-robots.txt của **fireant.vn** chặn tường minh ClaudeBot/GPTBot/CCBot/Google-Extended… và
-khai `Content-Signal: search=yes, ai-train=no, use=reference`. Ta đi qua **API đã xác thực
-bằng token của chính người dùng** (`restv2.fireant.vn`, không có robots.txt), tức chịu ràng
-buộc của ToS tài khoản chứ không phải robots dành cho crawler ẩn danh. KHÔNG dùng dữ liệu
-này để huấn luyện model (`ai-train=no`).
-"""
+"""Bộ thu thập dữ liệu nguồn FireAnt qua REST API có xác thực Bearer token."""
 
 from __future__ import annotations
 
@@ -47,9 +16,20 @@ from src.scrapers.capture_mixin import CaptureMixin
 
 @register("fireant")
 class FireAntScraper(CaptureMixin, BaseScraper):
+    """Lớp thu thập tin tức từ FireAnt REST API và lưu trữ Bronze dạng JSON.
+
+    Attributes:
+        list_url: Đường dẫn API danh sách bài viết theo mã.
+        detail_url: Mẫu đường dẫn API chi tiết bài viết.
+        list_params: Tham số truy vấn phân trang mặc định.
+        max_details: Số lượng bài chi tiết tối đa cần lấy mỗi chu kỳ.
+        watchlist: Danh sách mã cổ phiếu theo dõi.
+        language: Ngôn ngữ chính của bài viết.
+        auth_headers: Header chứa Bearer token xác thực.
+    """
     LIST_URL = "https://restv2.fireant.vn/posts"
-    DETAIL_URL = "https://restv2.fireant.vn/posts/{post_id}"   # số nhiều
-    WEB_URL = "https://fireant.vn/dashboard/content/{post_id}"  # /bai-viet/ → 404
+    DETAIL_URL = "https://restv2.fireant.vn/posts/{post_id}"
+    WEB_URL = "https://fireant.vn/dashboard/content/{post_id}"
     SOURCE_DOMAIN = "fireant.vn"
 
     def __init__(self, config, http, dedup):
@@ -63,10 +43,10 @@ class FireAntScraper(CaptureMixin, BaseScraper):
         self.watchlist = config.get("watchlist") or load_watchlist()
         self.language = config.get("language", "vi")
         self._details_fetched = 0
-        self._init_capture()          # RawStore + RobotsGate + SourceBackoff
+        self._init_capture()
 
         token = (config.get("_secrets") or load_secrets()).get("fireant_token", "").strip()
-        if token[:7].lower() == "bearer ":   # user dán kèm "Bearer " → strip cho khỏi nhân đôi
+        if token[:7].lower() == "bearer ":
             token = token[7:].strip()
         if not token or token.startswith("PASTE_"):
             logger.warning("[fireant] no token in config/secrets.yaml — scraper disabled")
@@ -74,12 +54,16 @@ class FireAntScraper(CaptureMixin, BaseScraper):
             token = ""
         self.auth_headers = {"Authorization": f"Bearer {token}"} if token else {}
 
-    # -- helpers --------------------------------------------------------------
     def _api_headers(self) -> dict:
         return {**self.auth_headers, "Accept": "application/json, text/plain, */*"}
 
     def _auth_failed(self, status: int, context: str) -> None:
-        """401/403 → disable phần còn lại của cycle, không hammer API."""
+        """Xử lý lỗi xác thực 401/403 bằng cách tạm ngưng scraper và ghi nhận cảnh báo.
+
+        Args:
+            status: Mã trạng thái HTTP phản hồi.
+            context: Ngữ cảnh gọi API phát sinh lỗi.
+        """
         self.disabled = True
         msg = (f"auth failed (HTTP {status}) at {context} — token expired? "
                f"Update config/secrets.yaml fireant_token")
@@ -88,6 +72,11 @@ class FireAntScraper(CaptureMixin, BaseScraper):
 
     # -- pipeline -------------------------------------------------------------
     def fetch_list(self) -> list[dict]:
+        """Thu thập danh sách bài viết thô theo danh mục mã cổ phiếu theo dõi.
+
+        Returns:
+            Danh sách đối tượng từ điển chứa dữ liệu bài viết chưa qua xử lý.
+        """
         self._details_fetched = 0
         items: list[dict] = []
         for sym in self.watchlist:
@@ -118,6 +107,14 @@ class FireAntScraper(CaptureMixin, BaseScraper):
         return items
 
     def parse_item(self, raw: dict) -> Article | None:
+        """Chuyển đổi dữ liệu JSON thô của bài viết thành đối tượng Article.
+
+        Args:
+            raw: Từ điển chứa trường dữ liệu bài viết từ API FireAnt.
+
+        Returns:
+            Đối tượng Article hợp lệ, hoặc None nếu thiếu postID hoặc tiêu đề.
+        """
         post_id = raw.get("postID") or raw.get("post_id")
         title = (raw.get("title") or "").strip()
         if not post_id or not title:
@@ -128,7 +125,6 @@ class FireAntScraper(CaptureMixin, BaseScraper):
             sym = (s.get("symbol") or "").upper() if isinstance(s, dict) else str(s).upper()
             if sym and sym not in symbols:
                 symbols.append(sym)
-        # field thật là camelCase (bản cũ đọc snake_case → luôn rỗng)
         source = raw.get("postSource") or raw.get("post_source") or {}
         if not isinstance(source, dict):
             source = {}
@@ -137,7 +133,7 @@ class FireAntScraper(CaptureMixin, BaseScraper):
             title=title,
             source_domain=self.SOURCE_DOMAIN,
             summary=(raw.get("description") or "").strip(),
-            published_at=(raw.get("date") or "").strip(),   # đã ISO +07:00
+            published_at=(raw.get("date") or "").strip(),
             symbols=symbols,
             metadata={"post_id": post_id,
                       "source_name": source.get("name", "") or "",
@@ -147,6 +143,11 @@ class FireAntScraper(CaptureMixin, BaseScraper):
         )
 
     def enrich(self, article: Article) -> None:
+        """Bổ sung nội dung chi tiết bài viết từ API và lưu trữ capture tầng Bronze.
+
+        Args:
+            article: Đối tượng Article cần bổ sung chi tiết nội dung.
+        """
         if self.disabled:
             article.content_text = article.summary
             return
@@ -165,12 +166,10 @@ class FireAntScraper(CaptureMixin, BaseScraper):
             self.backoff.observe(self.SOURCE_DOMAIN, status if status is not None else 503)
 
         if status in (401, 403):
-            # KHÔNG ghi Bronze cho response lỗi auth — nó không phải nội dung bài
             self._auth_failed(status, f"detail {article.metadata['post_id']}")
             article.content_text = article.summary
             return
 
-        # ★ Bronze TRƯỚC mọi parse — byte-exact body JSON (design 06 §2, AC7)
         cap = self.raw_store.save(self.SOURCE_DOMAIN, url, article.url_title_hash,
                                   resp, fetched_at=article.fetched_at)
         article.metadata["capture"] = cap

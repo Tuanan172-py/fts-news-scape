@@ -1,9 +1,7 @@
-"""
-Pipeline orchestration — Bronze meta.json → Silver → version → work-package → catalog.
+"""Điều phối toàn trình dữ liệu từ Bronze sang Silver, phát hiện thay đổi và đưa vào Catalog.
 
-OFFLINE, re-derivable từ WORM Bronze. 1 entrypoint `process_meta` dùng bởi scripts
-(build_silver, enqueue_pending, rederive_from_bronze, validate_e2e). Non-fatal per bài.
-Xem phase-01/02/03/06.
+Cung cấp hàm process_meta xử lý trọn vẹn một bản ghi siêu dữ liệu Bronze
+thành bản ghi Silver, lưu phiên bản, đóng gói Work Package và phân phối vào hàng đợi.
 """
 
 from __future__ import annotations
@@ -24,6 +22,7 @@ SCRAPER_VERSION = "capture-1.0"
 
 
 def _prev_fp(v: dict | None) -> dict | None:
+    """Trích xuất dấu vân tay từ bản ghi phiên bản trước đó trong cơ sở dữ liệu."""
     if v is None:
         return None
     return {
@@ -38,7 +37,20 @@ def process_meta(store, meta_path: str, *, silver_dir: str = "data/silver",
                  package_dir: str = "data/work_packages",
                  t_content: int = 6, t_template: int = 12,
                  do_enqueue: bool = True) -> dict:
-    """Xử lý 1 Bronze artifact → silver+version+package(+enqueue). Trả summary dict."""
+    """Xử lý một tệp tin siêu dữ liệu Bronze qua chuỗi chuyển đổi toàn trình.
+
+    Args:
+        store: Đối tượng ArticleStore quản lý cơ sở dữ liệu.
+        meta_path: Đường dẫn tới tệp tin .meta.json của tầng Bronze.
+        silver_dir: Thư mục đích lưu trữ tệp Silver JSON.
+        package_dir: Thư mục đích lưu trữ tệp Work Package JSON.
+        t_content: Ngưỡng khoảng cách nội dung.
+        t_template: Ngưỡng khoảng cách cấu trúc giao diện.
+        do_enqueue: Cờ cho phép đẩy bản ghi vào hàng đợi Catalog work_items.
+
+    Returns:
+        Từ điển tóm tắt kết quả xử lý gồm trạng thái, mã phiên bản và đường dẫn tệp.
+    """
     meta = json.loads(Path(meta_path).read_text(encoding="utf-8"))
     raw_path = meta.get("html_path", "")
     resolved_raw = resolve_project_path(raw_path) if raw_path else None

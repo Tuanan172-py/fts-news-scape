@@ -1,17 +1,7 @@
-"""
-daily_reporter.py — Core Analytics Engine: Báo cáo giám sát toàn diện hệ thống theo mốc thời gian.
+"""Động cơ phân tích và lập báo cáo giám sát toàn diện hệ thống theo mốc thời gian.
 
-Tổng hợp Phễu Dữ liệu 5 Tầng (Data Conversion Funnel):
-1. Bronze Raw (articles, scraper_heartbeat, scraper_metrics)
-2. Silver & Drift (article_versions, silver_watermark, pipeline lag)
-3. Work Packets (l1_tasks, work_items)
-4. AI Agents Quality & DoD (l1_outputs, agent_outputs, dod_pass, models)
-5. User Deliverables (users/output/<user>/<date>.csv, _master audit)
-
-Thiết kế an toàn:
-- Mở SQLite chế độ Read-Only (file:...mode=ro) với busy_timeout=30s.
-- Hỗ trợ ngày cụ thể (YYYY-MM-DD), 'today', 'yesterday', hoặc khoảng ngày (--days N).
-- Xuất định dạng Markdown báo cáo quản trị và in tóm tắt Terminal.
+Cung cấp lớp DailyReporter tổng hợp phễu chuyển đổi dữ liệu 5 tầng từ Bronze,
+Silver, Hàng đợi Work Packets, Thẩm định AI Agents đến Tệp tin bàn giao người dùng.
 """
 
 from __future__ import annotations
@@ -31,7 +21,15 @@ from src.core.staging import safe_atomic_write
 
 
 def resolve_date_range(date_str: str | None = None, days: int = 0) -> tuple[str, str, list[str]]:
-    """Phân giải tham số ngày thành (start_date, end_date, list_dates)."""
+    """Phân giải chuỗi ngày và tham số số ngày thành khoảng thời gian cụ thể.
+
+    Args:
+        date_str: Chuỗi ngày chỉ định (định dạng 'YYYY-MM-DD', 'today', 'yesterday', 'all').
+        days: Số lượng ngày quét lùi về trước.
+
+    Returns:
+        Tuple gồm ngày bắt đầu, ngày kết thúc và danh sách các ngày trong khoảng.
+    """
     now = datetime.now(VN_TZ)
     if not date_str or date_str == "today":
         target = now.strftime("%Y-%m-%d")
@@ -56,6 +54,12 @@ def resolve_date_range(date_str: str | None = None, days: int = 0) -> tuple[str,
 
 
 class DailyReporter:
+    """Bộ tổng hợp chỉ số vận hành và xuất báo cáo trạng thái định kỳ.
+
+    Attributes:
+        db_path: Đường dẫn tệp tin cơ sở dữ liệu SQLite.
+        users_output_dir: Thư mục chứa các tệp tin CSV bàn giao cho người dùng.
+    """
     def __init__(self, db_path: str | None = None, users_output_dir: str | Path | None = None):
         settings = load_settings()
         self.db_path = db_path or settings.get("database", {}).get("path", "data/monocle.db")

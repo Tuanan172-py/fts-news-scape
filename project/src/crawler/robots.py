@@ -1,10 +1,4 @@
-"""
-RobotsGate — kiểm tra robots.txt trước khi fetch trang chi tiết (AC9).
-
-Stdlib `urllib.robotparser`, zero-dependency. Cache per-domain (TTL 24h).
-FAIL-OPEN: robots.txt lỗi/không tải được → cho phép + WARN (không chặn pipeline
-vì robots outage). Fetch robots qua HTTPClient để đi chung rate limit/UA.
-"""
+"""Kiểm soát tuân thủ tệp robots.txt của các tên miền nguồn tin."""
 
 from __future__ import annotations
 
@@ -17,10 +11,16 @@ from loguru import logger
 
 
 class RobotsGate:
+    """Cổng kiểm tra quyền thu thập dữ liệu dựa trên tệp robots.txt (Thread-safe).
+
+    Attributes:
+        http: Client HTTP dùng để tải tệp robots.txt.
+        ttl: Thời gian sống của bộ nhớ đệm robots tính bằng giây.
+    """
+
     def __init__(self, http, ttl: float = 86400.0):
         self.http = http
         self.ttl = ttl
-        # domain -> (RobotFileParser|None, fetched_ts)  (None = fail-open cached)
         self._cache: dict[str, tuple[RobotFileParser | None, float]] = {}
         self._lock = threading.Lock()
 
@@ -39,7 +39,7 @@ class RobotsGate:
             logger.warning("robots fetch error {}: {}", domain, e)
 
         if text is None:
-            rp = None  # fail-open
+            rp = None
         else:
             try:
                 rp.parse(text.splitlines())
@@ -52,15 +52,33 @@ class RobotsGate:
         return rp
 
     def allowed(self, url: str, ua: str = "*") -> bool:
+        """Kiểm tra đường dẫn URL có được phép thu thập theo robots.txt hay không.
+
+        Args:
+            url: Địa chỉ URL cần kiểm tra quyền truy cập.
+            ua: Tên User-Agent cần kiểm tra.
+
+        Returns:
+            True nếu được phép hoặc khi gặp lỗi tải robots.txt (fail-open).
+        """
         rp = self._get_parser(urlparse(url).netloc)
         if rp is None:
-            return True  # fail-open
+            return True
         try:
             return rp.can_fetch(ua, url)
         except Exception:  # pragma: no cover - defensive
             return True
 
     def crawl_delay(self, domain: str, ua: str = "*") -> float | None:
+        """Lấy giá trị khoảng cách thu thập (crawl-delay) từ robots.txt nếu có.
+
+        Args:
+            domain: Tên miền cần kiểm tra.
+            ua: Tên User-Agent cần kiểm tra.
+
+        Returns:
+            Khoảng cách thu thập tính bằng giây hoặc None nếu không quy định.
+        """
         rp = self._get_parser(domain)
         if rp is None:
             return None

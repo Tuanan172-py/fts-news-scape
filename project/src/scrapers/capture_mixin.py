@@ -1,16 +1,4 @@
-"""
-CaptureMixin — logic thu thập raw HTML dùng chung cho CafeF + Vietstock (DRY).
-
-Cung cấp:
-- `_init_capture()`  : dựng RawStore/RobotsGate/SourceBackoff từ config.
-- `_capture_and_extract()` : luồng chuẩn — robots gate → backoff → fetch →
-  RawStore.save (ĐẦU TIÊN, byte-exact) → set content_html (vùng con) → validity
-  check. KHÔNG bao giờ sửa artifact raw. Không raise.
-- `_looks_complete()`: content-based validity check (D1).
-- `_density_extract()`: fallback trích content_html khi selector miss (D5).
-
-Subclass phải có: self.http, self.config, self.name, self.errors (từ BaseScraper).
-"""
+"""Lớp Mixin cung cấp quy trình thu thập nội dung chi tiết và lưu trữ Bronze cho các scraper."""
 
 from __future__ import annotations
 
@@ -21,7 +9,7 @@ from src.crawler.backoff import SourceBackoff
 from src.crawler.raw_store import RawStore
 from src.crawler.robots import RobotsGate
 
-# marker báo trang render lỗi/rỗng (heuristic — mở rộng khi gặp thực tế)
+# Dấu hiệu nhận diện trang bị lỗi hoặc rỗng khi tải nội dung.
 _EMPTY_MARKERS = (
     "vui lòng bật javascript", "please enable javascript",
     "checking your browser", "access denied", "captcha",
@@ -29,8 +17,10 @@ _EMPTY_MARKERS = (
 
 
 class CaptureMixin:
-    # -- init -----------------------------------------------------------------
+    """Mixin xử lý kiểm tra tuân thủ, thu thập nội dung chi tiết và bóc tách cây DOM."""
+
     def _init_capture(self) -> None:
+        """Khởi tạo các thành phần RawStore, RobotsGate và SourceBackoff từ cấu hình."""
         cap_cfg = self.config.get("capture", {}) or {}
         self.raw_store = RawStore(cap_cfg.get("raw_dir", "data/raw_html"))
         self.min_body_bytes = cap_cfg.get("min_body_bytes", 2048)
@@ -42,13 +32,18 @@ class CaptureMixin:
         if self.proxy_rotation and hasattr(self.http, "set_proxy_pool"):
             self.http.set_proxy_pool(comp.get("proxies", []))
 
-    # -- capture pipeline -----------------------------------------------------
     def _capture_and_extract(self, article, domain: str, referer: str,
                              selector: str) -> str | None:
-        """Fetch detail, lưu raw ĐẦU TIÊN, set content_html vùng con.
+        """Tải trang chi tiết, lưu trữ tạo tác thô Bronze và bóc tách vùng HTML nội dung.
 
-        Trả về html (str) khi thành công, None khi bỏ qua/lỗi (đã set
-        content_text=summary + ghi self.errors). Raw artifact không bị mutate.
+        Args:
+            article: Đối tượng Article cần bổ sung dữ liệu.
+            domain: Tên miền của nguồn tin.
+            referer: Header Referer gửi kèm yêu cầu.
+            selector: Bộ chọn CSS trỏ tới khối nội dung chính.
+
+        Returns:
+            Chuỗi HTML trang chi tiết nếu thành công hoặc None nếu thất bại.
         """
         url = article.url
 
@@ -111,6 +106,15 @@ class CaptureMixin:
 
     # -- helpers --------------------------------------------------------------
     def _looks_complete(self, html: str, selector: str) -> bool:
+        """Kiểm tra sơ bộ tính toàn vẹn của trang chi tiết dựa trên kích thước và nội dung.
+
+        Args:
+            html: Chuỗi HTML trang chi tiết.
+            selector: Bộ chọn CSS nội dung chính.
+
+        Returns:
+            True nếu trang hiển thị đầy đủ và không chứa dấu hiệu lỗi.
+        """
         if not html:
             return False
         if len(html.encode("utf-8", errors="ignore")) < self.min_body_bytes:
@@ -125,8 +129,14 @@ class CaptureMixin:
         return node is not None and bool(node.get_text(strip=True))
 
     def _density_extract(self, html: str) -> str | None:
-        """Fallback text-density khi selector miss. Lazy-import; thiếu lib → None.
-        CHỈ dùng cho content_html — không bao giờ ảnh hưởng raw artifact."""
+        """Trích xuất khối nội dung chính bằng thuật toán mật độ văn bản khi bộ chọn CSS bị lệch.
+
+        Args:
+            html: Chuỗi mã nguồn HTML bài viết.
+
+        Returns:
+            Đoạn mã HTML chứa nội dung chính hoặc None nếu trích xuất thất bại.
+        """
         if not html:
             return None
         try:

@@ -1,9 +1,4 @@
-"""
-HTTP client với retry, rate limit per-domain, UA rotation.
-
-1 class HTTPClient duy nhất cho tất cả scrapers.
-Rate limit mặc định 3.0s/domain (spec §12), timeout ≤30s.
-"""
+"""Client HTTP tích hợp cơ chế kiểm soát tần suất, thử lại và luân chuyển User-Agent."""
 
 from __future__ import annotations
 
@@ -13,8 +8,6 @@ import time
 from urllib.parse import urlparse
 
 try:
-    # Dùng OS cert store (Windows) thay certifi — một số site VN (hnx.vn) serve
-    # cert chain thiếu intermediate, certifi strict sẽ fail còn OS store thì không
     import truststore
     truststore.inject_into_ssl()
 except ImportError:  # pragma: no cover
@@ -35,7 +28,11 @@ USER_AGENTS = [
 
 
 class RateLimiter:
-    """Rate limiter per domain — mỗi domain 1 bucket độc lập. Thread-safe."""
+    """Bộ điều phối tần suất gửi yêu cầu độc lập theo từng tên miền (Thread-safe).
+
+    Attributes:
+        default_delay: Khoảng thời gian giãn cách mặc định giữa hai yêu cầu (giây).
+    """
 
     def __init__(self, default_delay: float = 3.0):
         import threading
@@ -44,43 +41,56 @@ class RateLimiter:
         self._lock = threading.Lock()
 
     def wait(self, url: str, delay: float | None = None):
+        """Tạm dừng luồng thực thi để đảm bảo khoảng cách an toàn giữa các yêu cầu tới cùng tên miền.
+
+        Args:
+            url: Địa chỉ URL mục tiêu để xác định tên miền.
+            delay: Khoảng thời gian giãn cách tùy chọn (giây).
+        """
         domain = urlparse(url).netloc
         delay = delay if delay is not None else self.default_delay
         with self._lock:
             last = self._last_request.get(domain, 0)
             sleep_for = delay - (time.time() - last)
-            # reserve slot trước khi sleep để thread khác thấy đúng thời điểm
             self._last_request[domain] = time.time() + max(0, sleep_for)
         if sleep_for > 0:
             time.sleep(sleep_for)
 
 
 class HTTPClient:
-    """HTTP client với retry (429/5xx), rate limit, UA rotation."""
+    """Client quản lý phiên HTTP với khả năng tự động xử lý lỗi mạng, giới hạn tần suất và proxy.
+
+    Attributes:
+        rate_limiter: Đối tượng điều phối tần suất gửi yêu cầu.
+        session: Phiên làm việc requests.Session đã gắn retry adapter.
+    """
 
     def __init__(self, rate_limit_delay: float = 3.0, max_retries: int = 3):
         self.rate_limiter = RateLimiter(rate_limit_delay)
         self.session = requests.Session()
         retry_strategy = Retry(
             total=max_retries,
-            backoff_factor=1.5,  # 1.5, 3, 6 seconds
+            backoff_factor=1.5,
             status_forcelist=[429, 500, 502, 503, 504],
-            allowed_methods=["GET", "HEAD", "POST"],  # POST = API query idempotent
+            allowed_methods=["GET", "HEAD", "POST"],
         )
         adapter = HTTPAdapter(max_retries=retry_strategy)
         self.session.mount("http://", adapter)
         self.session.mount("https://", adapter)
-        # optional proxy rotation (D4) — off mặc định (pool rỗng → rotate_proxy no-op)
         self._proxy_pool: list[str] = []
         self._proxy_idx: int = 0
 
     def set_proxy_pool(self, proxies: list[str] | None) -> None:
-        """Nạp pool proxy cho rotation (config-gated). Rỗng → tắt."""
+        """Cấu hình danh sách proxy sử dụng luân chuyển.
+
+        Args:
+            proxies: Danh sách địa chỉ proxy hoặc None để tắt.
+        """
         self._proxy_pool = list(proxies or [])
         self._proxy_idx = 0
 
     def rotate_proxy(self) -> None:
-        """Xoay sang proxy kế tiếp trong pool. No-op khi pool rỗng."""
+        """Luân chuyển phiên làm việc sang proxy tiếp theo trong danh sách."""
         if not self._proxy_pool:
             return
         self._proxy_idx = (self._proxy_idx + 1) % len(self._proxy_pool)
@@ -94,9 +104,6 @@ class HTTPClient:
             "User-Agent": random.choice(USER_AGENTS),
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
             "Accept-Language": "vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7",
-            # KHÔNG tự khai Accept-Encoding: requests chỉ advertise codec nó
-            # decode được (br chỉ khi có brotli package) — tự khai "br" mà thiếu
-            # decoder → bytes rác (vietnambiz/vietnamnet 2026-07-25)
             "DNT": "1",
             "Connection": "keep-alive",
         }
@@ -108,7 +115,18 @@ class HTTPClient:
 
     def get(self, url: str, referer: str | None = None, timeout: int = 30,
             params: dict | None = None, headers: dict | None = None) -> str | None:
-        """GET → text hoặc None. Retry + rate limit tự động."""
+        """Gửi yêu cầu HTTP GET và trả về nội dung văn bản.
+
+        Args:
+            url: Địa chỉ URL mục tiêu.
+            referer: Header Referer tùy chọn.
+            timeout: Thời gian chờ tối đa (giây).
+            params: Tham số truy vấn URL dạng dictionary.
+            headers: Các header HTTP bổ sung.
+
+        Returns:
+            Chuỗi văn bản phản hồi hoặc None nếu yêu cầu thất bại.
+        """
         self.rate_limiter.wait(url)
         try:
             resp = self.session.get(url, params=params, timeout=timeout,
@@ -121,7 +139,18 @@ class HTTPClient:
 
     def get_bytes(self, url: str, referer: str | None = None, timeout: int = 30,
                   params: dict | None = None, headers: dict | None = None) -> bytes | None:
-        """GET → raw bytes (caller tự decode — cần cho feed utf-16/BOM)."""
+        """Gửi yêu cầu HTTP GET và trả về nội dung nhị phân (raw bytes).
+
+        Args:
+            url: Địa chỉ URL mục tiêu.
+            referer: Header Referer tùy chọn.
+            timeout: Thời gian chờ tối đa (giây).
+            params: Tham số truy vấn URL dạng dictionary.
+            headers: Các header HTTP bổ sung.
+
+        Returns:
+            Nội dung nhị phân nhận được hoặc None nếu yêu cầu thất bại.
+        """
         self.rate_limiter.wait(url)
         try:
             resp = self.session.get(url, params=params, timeout=timeout,
@@ -134,7 +163,18 @@ class HTTPClient:
 
     def get_json(self, url: str, referer: str | None = None, timeout: int = 30,
                  params: dict | None = None, headers: dict | None = None):
-        """GET trả JSON đã parse, hoặc None. Tự set Accept: application/json."""
+        """Gửi yêu cầu HTTP GET và giải mã kết quả dạng JSON.
+
+        Args:
+            url: Địa chỉ URL mục tiêu.
+            referer: Header Referer tùy chọn.
+            timeout: Thời gian chờ tối đa (giây).
+            params: Tham số truy vấn URL dạng dictionary.
+            headers: Các header HTTP bổ sung.
+
+        Returns:
+            Đối tượng dữ liệu JSON hoặc None nếu thất bại hoặc sai định dạng.
+        """
         merged = {"Accept": "application/json, text/plain, */*"}
         if headers:
             merged.update(headers)
@@ -151,7 +191,19 @@ class HTTPClient:
     def post_json(self, url: str, data: dict | None = None,
                   json_body: dict | None = None, referer: str | None = None,
                   timeout: int = 30, headers: dict | None = None):
-        """POST (form data hoặc JSON body) trả JSON đã parse, hoặc None."""
+        """Gửi yêu cầu HTTP POST và giải mã phản hồi JSON.
+
+        Args:
+            url: Địa chỉ URL mục tiêu.
+            data: Dữ liệu gửi dạng form URL-encoded.
+            json_body: Dữ liệu gửi dạng JSON body.
+            referer: Header Referer tùy chọn.
+            timeout: Thời gian chờ tối đa (giây).
+            headers: Các header HTTP bổ sung.
+
+        Returns:
+            Đối tượng dữ liệu JSON hoặc None nếu thất bại hoặc sai định dạng.
+        """
         self.rate_limiter.wait(url)
         merged = {"Accept": "application/json, text/plain, */*",
                   "X-Requested-With": "XMLHttpRequest"}
@@ -172,7 +224,18 @@ class HTTPClient:
     def get_response(self, url: str, referer: str | None = None, timeout: int = 30,
                      params: dict | None = None,
                      headers: dict | None = None) -> requests.Response | None:
-        """GET trả nguyên Response (caller cần status/headers, vd FireAnt 401)."""
+        """Gửi yêu cầu HTTP GET và trả về đối tượng requests.Response nguyên bản.
+
+        Args:
+            url: Địa chỉ URL mục tiêu.
+            referer: Header Referer tùy chọn.
+            timeout: Thời gian chờ tối đa (giây).
+            params: Tham số truy vấn URL dạng dictionary.
+            headers: Các header HTTP bổ sung.
+
+        Returns:
+            Đối tượng requests.Response hoặc None nếu gặp sự cố kết nối.
+        """
         self.rate_limiter.wait(url)
         try:
             return self.session.get(url, params=params, timeout=timeout,

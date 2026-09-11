@@ -1,14 +1,4 @@
-"""
-Task-packet builder — gói 1 công việc để giao cho agent NGOÀI (do người dùng điều khiển).
-
-Packet tự mô tả, đủ để bất kỳ agent/prompt nào xử lý mà KHÔNG cần biết nội bộ codebase:
-- input          : work-package-v1 (đã trỏ raw, có cleaned_text)
-- output_contract: tên schema + đường dẫn + required fields (agent PHẢI emit đúng)
-- constraints    : ngưỡng DoD + preconditions (để agent tự canh)
-- instructions   : trỏ tới schemas/agent-instructions-v1.md (người dùng viết prompt từ đây)
-
-KHÔNG chứa lời gọi LLM. Ghi ra data/agent_tasks/<article_id>.task.json.
-"""
+"""Đóng gói gói công việc giao tác vụ cho agent."""
 
 from __future__ import annotations
 
@@ -28,9 +18,18 @@ _OUTPUT_REQUIRED = [
 
 
 def build_gold_input(work_package: dict, *, l1_entities: list[str] | None = None, prune: bool = True) -> dict:
-    """Tạo payload input tinh gọn (Zero-Waste), loại bỏ 100% links/images/table rác."""
+    """Tạo payload dữ liệu đầu vào đã làm sạch cho tác vụ agent.
+
+    Args:
+        work_package: Gói công việc nguồn work-package-v1.
+        l1_entities: Danh sách thực thể L1 đã nhận diện tùy chọn.
+        prune: Có lọc bỏ văn bản rác và boilerplate hay không. Mặc định True.
+
+    Returns:
+        Từ điển dữ liệu đầu vào tinh gọn.
+    """
     raw_text = work_package.get("cleaned_text", "") or ""
-    cleaned_text = clean_article_paragraphs(raw_text) if prune else raw_text
+    cleaned_text = clean_article_paragraphs(raw_text, l1_entities=l1_entities) if prune else raw_text
 
     inp = {
         "article_id": work_package.get("article_id", ""),
@@ -60,7 +59,17 @@ def build_task_packet(
     l1_entities: list[str] | None = None,
     prune: bool = True,
 ) -> dict:
-    """Gộp work-package tinh gọn + hợp đồng output + ràng buộc thành 1 packet self-describing."""
+    """Đóng gói toàn diện gói công việc kèm hợp đồng dữ liệu đầu ra và ràng buộc.
+
+    Args:
+        work_package: Gói công việc nguồn chứa nội dung bài viết.
+        work_item_id: Định danh bản ghi tác vụ trong hàng đợi xử lý.
+        l1_entities: Danh sách thực thể L1 đã gắn thẻ.
+        prune: Có lọc tỉa nội dung văn bản thừa hay không.
+
+    Returns:
+        Từ điển gói tác vụ đầy đủ tuân thủ hợp đồng giao tiếp agent.
+    """
     t = load_thresholds()
     gold_input = build_gold_input(work_package, l1_entities=l1_entities, prune=prune)
     return {
@@ -97,7 +106,15 @@ from src.core.staging import safe_json_dump
 
 
 def write_packet(packet: dict, base_dir: str = "data/agent_tasks") -> str:
-    """Ghi packet ra đĩa an toàn qua staging (atomic). Trả path."""
+    """Lưu gói công việc ra đĩa an toàn qua cơ chế staging nguyên tử.
+
+    Args:
+        packet: Dữ liệu gói công việc cần ghi.
+        base_dir: Thư mục gốc lưu trữ gói công việc.
+
+    Returns:
+        Đường dẫn tệp gói tác vụ đã ghi trên đĩa.
+    """
     os.makedirs(base_dir, exist_ok=True)
     target_path = os.path.join(base_dir, f"{packet['article_id']}.task.json")
     final_path, _ = safe_json_dump(packet, target_path, indent=2)

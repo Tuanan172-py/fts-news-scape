@@ -1,16 +1,7 @@
-"""
-Domain Validator — validate article fields against domain schema.yaml.
+"""Kiểm định chất lượng các trường dữ liệu của bài viết theo lược đồ schema.yaml.
 
-Kiểm tra field-level health:
-- Field presence rate (% bài có field)
-- Type correctness
-- Pattern match (regex format)
-- Compare vs 7-day baseline để detect anomaly
-
-Usage:
-    from src.monitor.domain_validator import DomainValidator
-    v = DomainValidator(store)
-    report = v.validate_articles("cafef", articles)
+Cung cấp lớp DomainValidator và các cấu trúc dữ liệu thống kê để theo dõi tỷ lệ
+điền đầy (fill rate), độ khớp định dạng (pattern match) và phát hiện bất thường (anomaly).
 """
 
 from __future__ import annotations
@@ -22,7 +13,6 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-
 from loguru import logger
 
 from src.core.models import Article, VN_TZ
@@ -32,7 +22,18 @@ DOMAINS_DIR = Path(__file__).resolve().parents[2] / "domains"
 
 @dataclass
 class FieldStats:
-    """Stats cho 1 field sau khi validate."""
+    """Số liệu thống kê chất lượng dữ liệu của một trường sau kiểm định.
+
+    Attributes:
+        field_name: Tên trường dữ liệu.
+        total: Tổng số bài viết được kiểm tra.
+        present: Số lượng bài viết có trường dữ liệu này.
+        missing: Số lượng bài viết thiếu trường dữ liệu.
+        pattern_matches: Số lượng bài viết khớp định dạng quy chuẩn.
+        pattern_fails: Số lượng bài viết không khớp định dạng.
+        avg_length: Độ dài chuỗi ký tự trung bình của trường.
+        status: Trạng thái đánh giá tổng quát ('ok', 'warn', 'fail').
+    """
 
     field_name: str
     total: int = 0
@@ -41,32 +42,51 @@ class FieldStats:
     pattern_matches: int = 0
     pattern_fails: int = 0
     avg_length: float = 0.0
-    status: str = "ok"  # ok / warn / fail
+    status: str = "ok"
 
     @property
     def fill_rate(self) -> float:
+        """Tỷ lệ bài viết có điền dữ liệu trên tổng số bài."""
         return self.present / self.total if self.total > 0 else 1.0
 
     @property
     def pattern_rate(self) -> float:
+        """Tỷ lệ dữ liệu khớp mẫu định dạng biểu thức chính quy."""
         return self.pattern_matches / self.present if self.present > 0 else 1.0
 
 
 @dataclass
 class Anomaly:
-    """Phát hiện bất thường."""
+    """Bản ghi phát hiện dấu hiệu bất thường về chất lượng dữ liệu.
+
+    Attributes:
+        field: Tên trường dữ liệu có bất thường.
+        issue: Mã định danh vấn đề phát hiện.
+        current_value: Giá trị đo lường hiện tại.
+        baseline_value: Giá trị chuẩn đối chiếu (nếu có).
+        delta_pct: Tỷ lệ phần trăm sai lệch so với chuẩn.
+        severity: Mức độ nghiêm trọng ('info', 'warn', 'critical').
+    """
 
     field: str
     issue: str
     current_value: Any
     baseline_value: Any | None
     delta_pct: float | None
-    severity: str  # info / warn / critical
+    severity: str
 
 
 @dataclass
 class ValidationReport:
-    """Kết quả validate 1 domain."""
+    """Báo cáo tổng hợp kết quả kiểm định chất lượng dữ liệu của một tên miền.
+
+    Attributes:
+        domain: Tên miền của nguồn tin tức.
+        timestamp: Thời điểm lập báo cáo kiểm định theo chuẩn ISO 8601.
+        article_count: Tổng số bài viết được kiểm định.
+        fields: Bản đồ số liệu thống kê chi tiết theo từng trường.
+        anomalies: Danh sách các điểm bất thường phát hiện được.
+    """
 
     domain: str
     timestamp: str
@@ -76,27 +96,41 @@ class ValidationReport:
 
     @property
     def has_anomalies(self) -> bool:
+        """Kiểm tra báo cáo có ghi nhận bất thường hay không."""
         return len(self.anomalies) > 0
 
     @property
     def has_critical(self) -> bool:
+        """Kiểm tra báo cáo có bất thường mức độ nghiêm trọng (critical) hay không."""
         return any(a.severity == "critical" for a in self.anomalies)
 
     def anomalies_summary(self) -> str:
+        """Tóm tắt ngắn gọn danh sách các điểm bất thường phát hiện được."""
         if not self.anomalies:
             return "none"
         return "; ".join(f"{a.field}:{a.issue}" for a in self.anomalies[:5])
 
 
 class DomainValidator:
-    """Validate articles từ 1 domain so với schema.yaml."""
+    """Bộ kiểm tra tính tuân thủ trường dữ liệu của bài viết so với cấu hình domain.
+
+    Attributes:
+        store: Đối tượng cơ sở dữ liệu để truy vấn số liệu tham chiếu lịch sử.
+    """
 
     def __init__(self, store=None):
         self.store = store
         self._schemas: dict[str, dict] = {}
 
     def load_schema(self, domain: str) -> dict | None:
-        """Load schema.yaml cho 1 domain."""
+        """Tải cấu hình schema.yaml cho một tên miền nguồn tin tức.
+
+        Args:
+            domain: Tên định danh của tên miền nguồn (ví dụ: 'cafef').
+
+        Returns:
+            Từ điển cấu hình lược đồ, hoặc None nếu không tìm thấy tệp.
+        """
         if domain in self._schemas:
             return self._schemas[domain]
         path = DOMAINS_DIR / domain / "schema.yaml"
@@ -110,7 +144,15 @@ class DomainValidator:
     def validate_articles(
         self, domain: str, articles: list[Article]
     ) -> ValidationReport:
-        """Validate batch articles so với schema domain."""
+        """Kiểm định một tập hợp bài viết so với lược đồ định nghĩa của tên miền.
+
+        Args:
+            domain: Tên miền nguồn cần kiểm định.
+            articles: Danh sách đối tượng bài viết Article.
+
+        Returns:
+            Đối tượng ValidationReport tổng hợp kết quả kiểm định.
+        """
         schema = self.load_schema(domain)
         if not schema:
             return ValidationReport(

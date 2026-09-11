@@ -1,15 +1,4 @@
-"""
-AgentRunner — khung điều phối Vòng 3, AGENT-AGNOSTIC (không LLM).
-
-2 mặt, tách rời agent thật:
-- export_tasks(): claim work_items pending (exactly-once qua Catalog.claim) → dựng
-  task-packet → ghi data/agent_tasks/*.task.json. Người dùng đưa packet cho agent
-  của họ (prompt tự viết dựa trên schemas/agent-instructions-v1.md).
-- ingest_output(): nhận agent-output-v1 (do agent ngoài nộp) → verify preconditions
-  → validate schema → check DoD → lưu agent_outputs → mark_done/mark_failed.
-
-Idempotent theo (article_id, raw_sha256): replay trả cached, không double-mark.
-"""
+"""Bộ điều phối thực thi các tác vụ phân tích chuyên sâu của agent."""
 
 from __future__ import annotations
 
@@ -26,7 +15,21 @@ from src.handoff.catalog import Catalog
 
 
 class AgentRunner:
+    """Điều phối xuất gói công việc cho agent và tiếp nhận kết quả phân tích.
+
+    Attributes:
+        store: Kho lưu trữ cơ sở dữ liệu.
+        catalog: Đối tượng quản lý danh mục công việc Catalog.
+        task_dir: Thư mục lưu trữ các tệp gói công việc JSON.
+    """
+
     def __init__(self, store, *, task_dir: str = "data/agent_tasks"):
+        """Khởi tạo bộ điều phối AgentRunner.
+
+        Args:
+            store: Kho lưu trữ cơ sở dữ liệu.
+            task_dir: Thư mục lưu trữ tệp gói công việc. Mặc định 'data/agent_tasks'.
+        """
         self.store = store
         self.catalog = Catalog(store)
         self.task_dir = task_dir
@@ -38,7 +41,14 @@ class AgentRunner:
         return json.loads(resolve_project_path(package_path).read_text(encoding="utf-8"))
 
     def _work_item_for(self, article_id: str) -> dict | None:
-        """work_item mới nhất cho article_id (ưu tiên claimed/pending)."""
+        """Lấy bản ghi công việc gần nhất tương ứng với mã bài viết.
+
+        Args:
+            article_id: Mã băm định danh của bài viết.
+
+        Returns:
+            Từ điển dữ liệu bản ghi công việc hoặc None nếu không tồn tại.
+        """
         conn = self.store.connect()
         try:
             row = conn.execute(
@@ -51,17 +61,120 @@ class AgentRunner:
 
     # -- export (producer → agent) --------------------------------------------
     def export_tasks(self, limit: int = 20, *, worker_id: str = "exporter",
-                     order: str = "desc", require_l1: bool = True) -> list[dict]:
-        """Claim tới `limit` việc pending → ghi task-packet. Trả list {article_id, path}.
+                     order: str = "desc", require_l1: bool = True,
+                     subscriber_only: bool = True,
+                     user: str | list[str] | None = None,
+                     date: str | None = None,
+                     days: int | None = None,
+                     dry_run: bool = False) -> list[dict]:
+        """Tiếp nhận các công việc đang chờ và xuất thành gói công việc JSON.
 
-        require_l1=True (mặc định): chỉ bốc bài đã có `l1_outputs.dod_pass=1`, đảm bảo
-        `input.l1_entities` luôn có thật (rule 05 §2.5) và bài định tuyến được cho user.
+        Args:
+            limit: Giới hạn số lượng tác vụ xuất tối đa. Mặc định 20.
+            worker_id: Định danh tiến trình tiếp nhận công việc.
+            order: Thứ tự sắp xếp theo thời gian ('desc' hoặc 'asc').
+            require_l1: Chỉ nhận bài viết đã qua kiểm định L1 đạt chuẩn.
+            subscriber_only: Chỉ nhận bài viết liên quan danh mục người dùng theo dõi.
+            user: Tên người dùng hoặc danh sách người dùng cần lọc cụ thể.
+            date: Lọc theo ngày xuất bản cụ thể ('YYYY-MM-DD', 'today', 'all').
+            days: Giới hạn số ngày gần nhất tính từ thời điểm hiện tại.
+            dry_run: Chế độ chạy thử, chỉ đếm số lượng mà không nhận công việc.
+
+        Returns:
+            Danh sách từ điển thông tin các tác vụ đã xuất.
         """
+
+        allowed_aids: set[str] | None = None
+        if subscriber_only or user:
+            try:
+                from src.agent.entities import load_registry
+                reg = load_registry()
+                target_subs: set[str] = set()
+
+                if user:
+                    user_list = [user] if isinstance(user, str) else list(user)
+                    for u in user_list:
+                        u_clean = u.strip()
+                        if u_clean in reg.subscriptions:
+                            target_subs.update(reg.subscriptions[u_clean])
+                        else:
+                            logger.warning("[agent] Không tìm thấy đăng ký cho user: {}", u_clean)
+                else:
+                    for user_subs in reg.subscriptions.values():
+                        target_subs.update(user_subs)
+
+                conn = self.store.connect()
+                try:
+                    rows = conn.execute("SELECT article_id, output_json FROM l1_outputs WHERE dod_pass = 1").fetchall()
+                    allowed_aids = set()
+                    for r in rows:
+                        out_json = r["output_json"]
+                        if not out_json:
+                            continue
+                        try:
+                            data = json.loads(out_json)
+                            eids = [e["entity_id"] for e in data.get("entities", []) if e.get("entity_id")]
+                            if any(eid in target_subs for eid in eids):
+                                allowed_aids.add(r["article_id"])
+                        except Exception:
+                            pass
+                finally:
+                    conn.close()
+                filter_label = f"User({user})" if user else "Active Subscribers"
+                logger.info("[agent] {} filter: {}/{} bài L1 phù hợp",
+                            filter_label, len(allowed_aids), len(rows))
+            except Exception as e:
+                logger.warning("[agent] Không thể nạp subscriptions, bỏ qua subscriber filter: {}", e)
+                allowed_aids = None
+
         out: list[dict] = []
+        if dry_run:
+            # Chỉ đếm và thu thập danh sách không chuyển trạng thái thành 'claimed'
+            conn = self.store.connect()
+            try:
+                order_clause = "ORDER BY enqueued_at DESC, id DESC" if order.lower() == "desc" else "ORDER BY enqueued_at ASC, id ASC"
+                l1_clause = " AND EXISTS (SELECT 1 FROM l1_outputs l1 WHERE l1.article_id = work_items.article_id AND l1.dod_pass = 1)" if require_l1 else ""
+                if allowed_aids is not None:
+                    if not allowed_aids:
+                        return []
+                    conn.execute("CREATE TEMP TABLE IF NOT EXISTS _allowed_aids (aid TEXT PRIMARY KEY)")
+                    conn.execute("DELETE FROM _allowed_aids")
+                    conn.executemany("INSERT OR IGNORE INTO _allowed_aids VALUES (?)", [(aid,) for aid in allowed_aids])
+                    allowed_clause = " AND EXISTS (SELECT 1 FROM _allowed_aids aa WHERE aa.aid = work_items.article_id)"
+                else:
+                    allowed_clause = ""
+                date_clause = ""
+                params: list = []
+                if date and date != "all":
+                    from datetime import datetime
+                    from src.core.models import VN_TZ
+                    d_target = f"{datetime.now(VN_TZ):%Y-%m-%d}" if date == "today" else date
+                    date_clause = " AND EXISTS (SELECT 1 FROM articles a WHERE a.url_title_hash = work_items.article_id AND substr(COALESCE(NULLIF(a.published_at, ''), a.fetched_at, work_items.enqueued_at), 1, 10) = ?)"
+                    params.append(d_target)
+                elif days and days > 0:
+                    from datetime import datetime, timedelta
+                    from src.core.models import VN_TZ
+                    cutoff = f"{datetime.now(VN_TZ) - timedelta(days=days):%Y-%m-%d}"
+                    date_clause = " AND EXISTS (SELECT 1 FROM articles a WHERE a.url_title_hash = work_items.article_id AND substr(COALESCE(NULLIF(a.published_at, ''), a.fetched_at, work_items.enqueued_at), 1, 10) >= ?)"
+                    params.append(cutoff)
+                params.append(limit)
+                q = f"SELECT * FROM work_items WHERE status='pending'{l1_clause}{allowed_clause}{date_clause} {order_clause} LIMIT ?"
+                rows = conn.execute(q, params).fetchall()
+                for r in rows:
+                    out.append({"article_id": r["article_id"], "work_item_id": r["id"], "dry_run": True})
+                logger.info("[agent] [DRY-RUN] tìm thấy {} bài pending phù hợp", len(out))
+                return out
+            finally:
+                conn.close()
+
         for _ in range(limit):
-            item = self.catalog.claim(worker_id, order=order, require_l1=require_l1)
+            item = self.catalog.claim(
+                worker_id, order=order, require_l1=require_l1, allowed_article_ids=allowed_aids,
+                date=date, days=days,
+            )
             if item is None:
                 break
+
             try:
                 wp = self._load_work_package(item["package_path"])
             except (OSError, json.JSONDecodeError) as e:
@@ -106,7 +219,14 @@ class AgentRunner:
 
     # -- ingest (agent → producer) --------------------------------------------
     def ingest_output(self, output: dict | str) -> dict:
-        """Nhận 1 agent-output-v1. Validate + DoD + persist + mark. Trả summary dict."""
+        """Tiếp nhận kết quả phân tích của agent, kiểm định chất lượng và cập nhật trạng thái.
+
+        Args:
+            output: Dữ liệu kết quả từ điển hoặc đường dẫn tệp JSON theo schema agent-output-v1.
+
+        Returns:
+            Từ điển báo cáo kết quả gồm trạng thái kiểm định, mã công việc và chi tiết lỗi nếu có.
+        """
         if isinstance(output, str):
             output = json.loads(Path(output).read_text(encoding="utf-8"))
         article_id = output.get("article_id")

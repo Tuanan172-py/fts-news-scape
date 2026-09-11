@@ -1,9 +1,4 @@
-"""
-Config loaders — settings, per-domain, watchlist, secrets.
-
-Config-driven (spec §12): thêm domain mới = thêm file YAML trong
-config/domains/ + module scraper, không sửa core.
-"""
+"""Quản lý và tải cấu hình hệ thống, nguồn tin, danh sách theo dõi và thông tin bảo mật."""
 
 from __future__ import annotations
 
@@ -16,11 +11,13 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 
 def to_project_relative(path: str | Path) -> str:
-    """Duong dan LUU VAO DB phai tuong doi theo PROJECT_ROOT.
+    """Chuyển đổi đường dẫn tuyệt đối thành đường dẫn tương đối so với thư mục gốc dự án.
 
-    Luu duong dan tuyet doi khien du lieu dinh chat vao mot may: monocle.db dang co 1.364
-    dong `C:/Users/anpt/...` va 423 dong `C:/Users/An Thanh Pham/...` — may nao cung chi mo
-    duoc phan cua minh. Ngoai PROJECT_ROOT thi giu nguyen (khong ep ../.. kho doc).
+    Args:
+        path: Đường dẫn tệp hoặc thư mục cần chuyển đổi.
+
+    Returns:
+        Chuỗi đường dẫn tương đối hoặc chuỗi đường dẫn gốc nếu nằm ngoài dự án.
     """
     p = Path(path)
     try:
@@ -30,7 +27,14 @@ def to_project_relative(path: str | Path) -> str:
 
 
 def resolve_project_path(path: str | Path) -> Path:
-    """Nghich dao cua to_project_relative: doc duoc ca ban tuong doi lan ban tuyet doi cu."""
+    """Chuyển đổi đường dẫn tương đối thành đường dẫn tuyệt đối dựa trên thư mục gốc dự án.
+
+    Args:
+        path: Đường dẫn tệp hoặc thư mục dạng chuỗi hoặc Path.
+
+    Returns:
+        Đối tượng Path tuyệt đối.
+    """
     p = Path(path)
     return p if p.is_absolute() else (PROJECT_ROOT / p)
 CONFIG_DIR = PROJECT_ROOT / "config"
@@ -72,10 +76,13 @@ def _deep_merge(base: dict, override: dict) -> dict:
 
 
 def load_settings() -> dict:
-    """config/settings.yaml merge lên defaults + hỗ trợ override từ biến môi trường."""
+    """Tải cấu hình hệ thống từ settings.yaml kết hợp giá trị mặc định và biến môi trường.
+
+    Returns:
+        Dictionary chứa toàn bộ cấu hình hoạt động của hệ thống.
+    """
     cfg = _deep_merge(_DEFAULT_SETTINGS, _load_yaml(CONFIG_DIR / "settings.yaml"))
 
-    # Hỗ trợ override đường dẫn data ra ngoài OneDrive qua MONOCLE_DATA_DIR hoặc MONOCLE_DB_PATH
     env_data_dir = os.getenv("MONOCLE_DATA_DIR")
     env_db_path = os.getenv("MONOCLE_DB_PATH")
     if env_db_path:
@@ -87,7 +94,18 @@ def load_settings() -> dict:
 
 
 def load_domain_config(name: str) -> dict:
-    """Load config/domains/<name>.yaml. Raise rõ ràng nếu thiếu file/key bắt buộc."""
+    """Tải cấu hình chi tiết của một nguồn tin từ thư mục config/domains/.
+
+    Args:
+        name: Tên định danh của nguồn tin.
+
+    Returns:
+        Dictionary chứa thông số cấu hình của nguồn tin.
+
+    Raises:
+        FileNotFoundError: Khi không tìm thấy tệp cấu hình nguồn tin.
+        ValueError: Khi tệp cấu hình thiếu các trường thông tin bắt buộc.
+    """
     path = DOMAINS_DIR / f"{name}.yaml"
     if not path.exists():
         raise FileNotFoundError(f"Domain config not found: {path}")
@@ -102,7 +120,14 @@ def load_domain_config(name: str) -> dict:
 
 
 def list_domains(enabled_only: bool = True) -> list[str]:
-    """Tên tất cả domain có config (sắp xếp ổn định)."""
+    """Liệt kê danh sách tên định danh của tất cả các nguồn tin có cấu hình.
+
+    Args:
+        enabled_only: Cờ lọc chỉ lấy các nguồn tin đang kích hoạt.
+
+    Returns:
+        Danh sách tên định danh nguồn tin đã sắp xếp.
+    """
     if not DOMAINS_DIR.exists():
         return []
     names = []
@@ -114,17 +139,13 @@ def list_domains(enabled_only: bool = True) -> list[str]:
 
 
 def resolve_source_domain(name: str) -> str:
-    """Tên config → host thật dùng trong `articles.source_domain`.
+    """Xác định tên miền chính thức của nguồn tin từ tên cấu hình.
 
-    Thứ tự ưu tiên:
-      1. Đã có dấu chấm → coi như host, trả nguyên (vd "cafef.vn").
-      2. `domain:` trong domains/<name>/schema.yaml — contract thật của nguồn.
-      3. `config/domains/<name>.yaml` → base_url netloc (bỏ "www.").
-      4. Fallback legacy `<name>.vn` (giữ tương thích ngược cho caller cũ).
+    Args:
+        name: Tên định danh hoặc tên cấu hình của nguồn tin.
 
-    Sửa bẫy cũ `f"{dom}.vn" if "." not in dom else dom`: tên config KHÔNG phải lúc
-    nào cũng là host stem — vd `tnck` → `tinnhanhchungkhoan.vn`, không phải `tnck.vn`.
-    Bẫy này làm domain_check/domain_reporter query nhầm và báo "0 articles".
+    Returns:
+        Chuỗi tên miền đại diện cho nguồn tin trong cơ sở dữ liệu.
     """
     if not name:
         return name
@@ -147,11 +168,19 @@ def resolve_source_domain(name: str) -> str:
 
 
 def load_watchlist() -> list[str]:
-    """Danh sách mã cổ phiếu theo dõi (uppercase)."""
+    """Tải danh sách mã cổ phiếu cần theo dõi từ watchlist.yaml.
+
+    Returns:
+        Danh sách mã cổ phiếu viết hoa.
+    """
     data = _load_yaml(CONFIG_DIR / "watchlist.yaml")
     return [str(t).upper() for t in data.get("tickers", [])]
 
 
 def load_secrets() -> dict:
-    """config/secrets.yaml (gitignored). Trả {} nếu chưa có."""
+    """Tải thông tin bảo mật và API key từ secrets.yaml.
+
+    Returns:
+        Dictionary chứa các khóa và bí mật cấu hình.
+    """
     return _load_yaml(CONFIG_DIR / "secrets.yaml")

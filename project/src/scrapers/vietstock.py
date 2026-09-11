@@ -1,13 +1,7 @@
-"""
-Vietstock scraper — RSS cho list, capture full raw HTML cho detail.
+"""Bộ thu thập dữ liệu báo Vietstock (vietstock.vn).
 
-List: 4 RSS feed (tin-moi/chung-khoan/doanh-nghiep/vi-mo) — tái dùng helper của
-RSSScraper (DRY: _decode_feed/_parse_entry_date/_clean_title). Detail: server-
-rendered → enrich() lưu FULL raw page (RawStore, byte-exact) TRƯỚC, rồi set
-content_html = container bài viết. Không dùng generic RSS enrich (không persist raw).
-
-pubDate +0700. Img dùng src trực tiếp (không lazy). Internal API cần browser session
-→ không dùng.
+Cung cấp lớp VietstockScraper thu thập danh sách bài viết từ các kênh RSS và tải
+chi tiết nội dung HTML kèm lưu trữ tầng Bronze.
 """
 
 from __future__ import annotations
@@ -24,7 +18,6 @@ from src.core.tickers import tag_tickers
 from src.processor.extractor import extract_text
 from src.scrapers import register
 from src.scrapers.capture_mixin import CaptureMixin
-# DRY — tái dùng helper của RSSScraper, không copy-paste
 from src.scrapers.rss_generic import (
     _clean_title,
     _decode_feed,
@@ -36,6 +29,16 @@ BASE_URL = "https://vietstock.vn"
 
 @register("vietstock")
 class VietstockScraper(CaptureMixin, BaseScraper):
+    """Bộ thu thập dữ liệu báo Vietstock kết hợp nguồn cấp RSS và tải chi tiết HTML.
+
+    Attributes:
+        feeds: Danh sách cấu hình các kênh RSS cần đọc.
+        content_selector: Bộ chọn CSS vùng nội dung chi tiết bài viết.
+        max_details: Số bài viết chi tiết tối đa cần tải trong mỗi chu kỳ.
+        watchlist: Danh mục mã cổ phiếu cần theo dõi và gán nhãn.
+        language: Mã ngôn ngữ nội dung bài viết.
+    """
+
     def __init__(self, config, http, dedup):
         super().__init__(config, http, dedup)
         self.feeds = config.get("rss", {}).get("feeds", [])
@@ -46,9 +49,14 @@ class VietstockScraper(CaptureMixin, BaseScraper):
         self.watchlist = config.get("watchlist") or load_watchlist()
         self.language = config.get("language", "vi")
         self._details_fetched = 0
-        self._init_capture()  # RawStore + RobotsGate + SourceBackoff
+        self._init_capture()
 
     def fetch_list(self) -> list[dict]:
+        """Thu thập danh sách bài viết từ các kênh cấp tin RSS của Vietstock.
+
+        Returns:
+            Danh sách bài viết thô trích xuất từ các kênh RSS.
+        """
         self._details_fetched = 0
         items: list[dict] = []
         for feed_cfg in self.feeds:
@@ -77,6 +85,14 @@ class VietstockScraper(CaptureMixin, BaseScraper):
         return items
 
     def parse_item(self, raw: dict) -> Article | None:
+        """Chuyển đổi dữ liệu bài viết từ mục cấp tin RSS sang đối tượng Article.
+
+        Args:
+            raw: Dữ liệu bài viết thô từ RSS.
+
+        Returns:
+            Đối tượng Article hợp lệ, hoặc None nếu thiếu URL hoặc tiêu đề.
+        """
         url = raw["link"]
         title = _clean_title(raw["title"])
         if not url or not title:
@@ -96,6 +112,11 @@ class VietstockScraper(CaptureMixin, BaseScraper):
         )
 
     def enrich(self, article: Article) -> None:
+        """Bổ sung nội dung chi tiết bài viết qua HTML và lưu trữ capture tầng Bronze.
+
+        Args:
+            article: Đối tượng Article cần bổ sung chi tiết nội dung.
+        """
         if self._details_fetched >= self.max_details:
             article.content_text = article.summary
             article.metadata["detail_deferred"] = True
@@ -103,6 +124,6 @@ class VietstockScraper(CaptureMixin, BaseScraper):
         html = self._capture_and_extract(article, "vietstock.vn",
                                          f"{BASE_URL}/", self.content_selector)
         if html is None:
-            return  # thất bại/bỏ qua — content_text=summary đã set trong mixin
+            return
         self._details_fetched += 1
         article.content_text = extract_text(article.content_html) or article.summary

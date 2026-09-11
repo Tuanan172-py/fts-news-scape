@@ -39,6 +39,7 @@ _TYPE_TO_GROUP = {
     "INDUSTRY_GICS1": "industries", "INDUSTRY_GICS2": "industries", "INDUSTRY_GICS3": "industries",
     "MACRO_GEO": "nations", "MACRO_THEME": "themes",
     "ASSET_CLASS": "assets", "INSTITUTION": "institutions",
+    "TICKER": "tickers",
 }
 
 
@@ -62,13 +63,21 @@ def main(argv: list[str]) -> int:
         if cfg is None:
             continue
         extra = cfg.get("aliases", []) if isinstance(cfg, dict) else list(cfg)
-        # Mirror ĐÚNG build_entities: _industry() ghép tên ngành lên đầu; các nhóm khác
-        # (nations/themes/assets/institutions) lấy NGUYÊN danh sách trong yaml.
-        merged = [e["canonical_name"]] if e["type"].startswith("INDUSTRY_") else []
+        # Mirror ĐÚNG build_entities:
+        #  - TICKER: giữ các alias pháp lý có sẵn, chỉ append thêm các alias trong tickers.yaml
+        #  - _industry() ghép tên ngành lên đầu
+        #  - các nhóm khác (nations/themes/assets/institutions) lấy NGUYÊN danh sách trong yaml.
+        if e["type"] == "TICKER":
+            merged = list(e.get("aliases") or [])
+        elif e["type"].startswith("INDUSTRY_"):
+            merged = [e["canonical_name"]]
+        else:
+            merged = []
         for a in extra:
             a = str(a).strip()
             if a and a not in merged:
                 merged.append(a)
+
         if merged != e.get("aliases"):
             before = len(e.get("aliases") or [])
             print(f"  {e['entity_id']:46} {before} -> {len(merged)} alias")

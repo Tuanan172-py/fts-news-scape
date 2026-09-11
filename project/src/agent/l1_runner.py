@@ -1,16 +1,4 @@
-"""
-L1Runner — khung điều phối LỚP 1 nhận diện thực thể, AGENT-AGNOSTIC (không LLM).
-Mirror AgentRunner (Vòng 3) cho task title-only. 2 mặt tách rời agent thật:
-
-- route_and_export(): với mỗi article → code-first (l1_classifier) → lưu l1_tasks →
-  ghi task-packet data/agent_tasks/l1/<id>.task.json cho agent tra soát.
-    review='all'    : phát packet cho MỌI tin (agent có quyền tra soát cả tin đã resolved).
-    review='missed' : chỉ phát packet cho tin code-first KHÔNG khớp (needs_agent).
-- ingest_output(): nhận l1-entity-output-v1 (agent nộp) → validate + check_l1_dod →
-  lưu l1_outputs → set_l1_status done/failed. Idempotent theo article_id.
-
-Đầu vào article: silver dict hoặc work-package (đều có title/structure/cleaned_text).
-"""
+"""Bộ điều phối thực thi nhận diện thực thể tầng L1."""
 from __future__ import annotations
 
 import json
@@ -27,7 +15,22 @@ from src.core.models import now_vn_iso
 
 
 class L1Runner:
+    """Điều phối quy trình nhận diện thực thể tầng L1 và xử lý kết quả.
+
+    Attributes:
+        store: Kho dữ liệu cơ sở SQLite hoặc tương đương.
+        task_dir: Thư mục lưu trữ các gói công việc L1 dạng tệp JSON.
+        reg: Sổ đăng ký thực thể EntityRegistry.
+    """
+
     def __init__(self, store, registry=None, *, task_dir: str = "data/agent_tasks/l1"):
+        """Khởi tạo bộ điều phối L1Runner.
+
+        Args:
+            store: Kho dữ liệu cơ sở lưu trữ bài viết và tác vụ.
+            registry: Sổ đăng ký thực thể tùy chọn. Mặc định tự nạp qua load_registry().
+            task_dir: Thư mục lưu trữ các tệp gói công việc L1.
+        """
         self.store = store
         self.task_dir = task_dir
         if registry is None:
@@ -37,7 +40,15 @@ class L1Runner:
 
     # -- producer: code-first → l1_tasks + packet -----------------------------
     def route_and_export(self, article: dict, *, review: str = "all") -> dict:
-        """Code-first 1 article; lưu l1_tasks; phát packet theo `review`. Trả record."""
+        """Phân loại thực thể tự động, lưu tác vụ và tạo tệp gói công việc.
+
+        Args:
+            article: Dữ liệu bài viết cần xử lý.
+            review: Chế độ xuất gói công việc ('all' hoặc 'missed').
+
+        Returns:
+            Từ điển kết quả phân loại kèm đường dẫn gói công việc nếu có.
+        """
         rec = route_article(article, self.reg)
         aid = article.get("article_id")
         emit = review == "all" or (review == "missed" and rec["route"] == "needs_agent")
@@ -61,12 +72,13 @@ class L1Runner:
 
     # -- producer 2: vat chat hoa ban TAT DINH -> l1_outputs ------------------
     def ingest_code_first(self, task: dict) -> dict:
-        """1 l1_task route=resolved -> mot dong l1_outputs nguon `code_first`. Khong goi LLM.
+        """Vật chất hóa kết quả phân loại tự động thành bản ghi đầu ra L1 chuẩn.
 
-        CHAY LAI matcher tren tieu de thay vi doc `code_first_json` da luu: ban da luu duoc
-        sinh boi phien ban matcher cu (con alias rac "Viet Nam" -> TICKER:IVS, 164 bai sai),
-        tin vao no la phat tan lai loi cu. Chay lai con dam bao co `surface` — truong bat buoc
-        de qua duoc grounding cua check_l1_dod.
+        Args:
+            task: Dữ liệu bản ghi tác vụ từ bảng l1_tasks.
+
+        Returns:
+            Từ điển kết quả xử lý gồm trạng thái hợp lệ, mã bài viết và danh sách lỗi.
         """
         aid = task["article_id"]
         title = task.get("title") or ""
@@ -130,7 +142,15 @@ class L1Runner:
                 "entity_ids": rec["entity_ids"]}
 
     def drain_code_first(self, *, limit: int | None = None, dry_run: bool = False) -> dict:
-        """Rut moi l1_task route=resolved dang pending. Tra thong ke."""
+        """Xử lý toàn bộ các tác vụ phân loại tự động đang ở trạng thái chờ.
+
+        Args:
+            limit: Giới hạn số lượng tác vụ xử lý tối đa.
+            dry_run: Nếu True, chỉ thống kê và kiểm tra mà không ghi cơ sở dữ liệu.
+
+        Returns:
+            Từ điển thống kê số lượng bản ghi đã quét, thành công, lỗi hoặc chuyển tuyến.
+        """
         conn = self.store.connect()
         try:
             sql = ("SELECT * FROM l1_tasks WHERE route = 'resolved' AND status = 'pending' "
@@ -165,7 +185,14 @@ class L1Runner:
 
     # -- consumer: agent output → validate + DoD → mark -----------------------
     def ingest_output(self, output: dict | str) -> dict:
-        """Nhận 1 l1-entity-output-v1. Validate + DoD + persist + set status."""
+        """Tiếp nhận, kiểm tra chuẩn DoD và lưu kết quả từ agent.
+
+        Args:
+            output: Từ điển dữ liệu hoặc đường dẫn tệp JSON chứa kết quả phân tích của agent.
+
+        Returns:
+            Từ điển thông báo trạng thái xử lý và kết quả kiểm định DoD.
+        """
         if isinstance(output, str):
             output = json.loads(Path(output).read_text(encoding="utf-8"))
         aid = output.get("article_id")

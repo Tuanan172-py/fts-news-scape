@@ -1,8 +1,7 @@
-"""
-WorkPackageBuilder — gói 1 bài thành work-package (INPUT contract cho agent).
+"""Bộ xây dựng và lưu trữ gói công việc (Work Package) bàn giao cho Agent.
 
-Self-describing, provider-agnostic JSON. TRỎ tới Bronze raw (raw_html_path+raw_sha256),
-KHÔNG inline bytes → agent re-verify offline. Xem phase-03, schemas/work-package-v1.
+Cung cấp lớp WorkPackageBuilder và hàm ghi tệp an toàn để đóng gói dữ liệu Silver
+kèm siêu dữ liệu nguồn thành tệp tin JSON tự mô tả.
 """
 
 from __future__ import annotations
@@ -14,10 +13,28 @@ WORK_PACKAGE_SCHEMA_VERSION = "1.0"
 
 
 class WorkPackageBuilder:
+    """Bộ khởi tạo cấu trúc gói công việc bàn giao cho các agent xử lý.
+
+    Attributes:
+        schema_version: Phiên bản lược đồ của gói công việc bàn giao.
+    """
+
     schema_version = WORK_PACKAGE_SCHEMA_VERSION
 
     def build(self, silver: dict, meta: dict, change_state: str, *,
               published_at: str | None = None, scraper_version: str = "") -> dict:
+        """Đóng gói dữ liệu tầng Silver và metadata tầng Bronze thành gói công việc.
+
+        Args:
+            silver: Dữ liệu bài viết đã xử lý sạch tầng Silver.
+            meta: Siêu dữ liệu thu thập tầng Bronze (metadata capture).
+            change_state: Trạng thái thay đổi bài viết ('new', 'unchanged', 'mutated').
+            published_at: Thời điểm xuất bản bài viết theo chuẩn ISO 8601.
+            scraper_version: Phiên bản của bộ thu thập dữ liệu nguồn.
+
+        Returns:
+            Từ điển chứa cấu trúc gói công việc theo lược đồ work-package-v1.
+        """
         return {
             "schema_version": self.schema_version,
             "article_id": silver.get("article_id", ""),
@@ -26,10 +43,6 @@ class WorkPackageBuilder:
             "published_at": published_at,
             "raw_html_path": meta.get("html_path", ""),
             "raw_sha256": meta.get("content_sha256", ""),
-            # title do Silver giải bằng cách đối chiếu sha256(url+title) với url_title_hash
-            # trong meta.json. Không có trường này thì title_of() rơi về h1 đầu tiên — trên
-            # trang công bố thông tin đó là header trang hồ sơ doanh nghiệp, không phải
-            # tiêu đề bài (122/1.320 bài lệch, làm mất cả mã cổ phiếu).
             "title": silver.get("title", ""),
             "title_verified": silver.get("title_verified", False),
             "cleaned_text": silver.get("cleaned_text", ""),
@@ -47,6 +60,7 @@ class WorkPackageBuilder:
 
 
 def _atomic_write(path: str, data: bytes) -> None:
+    """Ghi dữ liệu ra tệp tạm thời rồi hoán đổi nguyên tử (atomic swap)."""
     tmp = f"{path}.tmp"
     with open(tmp, "wb") as f:
         f.write(data)
@@ -54,6 +68,15 @@ def _atomic_write(path: str, data: bytes) -> None:
 
 
 def write_package(package: dict, base_dir: str = "data/work_packages") -> str:
+    """Lưu gói công việc ra tệp tin JSON trên đĩa theo phân cấp tên miền và ngày tháng.
+
+    Args:
+        package: Dữ liệu gói công việc đã khởi tạo.
+        base_dir: Thư mục cơ sở lưu trữ các gói công việc.
+
+    Returns:
+        Đường dẫn tuyệt đối hoặc tương đối tới tệp tin gói công việc đã lưu.
+    """
     domain = package.get("domain") or "unknown"
     yyyymmdd = ""
     if package.get("raw_html_path"):

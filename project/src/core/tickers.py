@@ -1,8 +1,4 @@
-"""
-Ticker tagging — match mã cổ phiếu (3 ký tự in hoa) trong text với watchlist.
-
-Dùng cho nguồn không có symbol filter server-side (TNCK, Vietstock RSS...).
-"""
+"""Nhận diện và gán nhãn mã cổ phiếu xuất hiện trong văn bản theo danh sách theo dõi."""
 
 from __future__ import annotations
 
@@ -10,9 +6,7 @@ import re
 
 _TICKER_RE = re.compile(r"\b[A-Z]{3}\b")
 
-# Từ 3 chữ in hoa hay gặp trong tin tài chính nhưng KHÔNG phải mã cổ phiếu.
-# VND nằm đây vì thường là đơn vị tiền tệ ("nghìn tỷ VND") — false positive
-# nhiều hơn true positive; tin VNDirect vẫn được cover qua nguồn symbol-based.
+# Danh sách từ viết hoa 3 chữ cái phổ biến cần loại trừ nhằm giảm thiểu false positive.
 DEFAULT_STOPLIST = frozenset({
     "GDP", "CPI", "PMI", "FED", "USD", "EUR", "JPY", "CNY", "VND",
     "CEO", "CFO", "COO", "HHĐ", "ETF", "IPO", "ROE", "ROA", "EPS",
@@ -22,7 +16,16 @@ DEFAULT_STOPLIST = frozenset({
 
 def tag_tickers(text: str, watchlist: list[str] | set[str],
                 stoplist: frozenset[str] = DEFAULT_STOPLIST) -> list[str]:
-    """Trả list mã (theo thứ tự xuất hiện, unique) có trong watchlist, trừ stoplist."""
+    """Trích xuất danh sách mã cổ phiếu duy nhất xuất hiện trong văn bản.
+
+    Args:
+        text: Đoạn văn bản cần tìm mã cổ phiếu.
+        watchlist: Danh sách hoặc tập hợp mã cổ phiếu được theo dõi.
+        stoplist: Tập hợp từ viết hoa 3 chữ cái cần loại trừ.
+
+    Returns:
+        Danh sách mã cổ phiếu hợp lệ theo thứ tự xuất hiện đầu tiên.
+    """
     if not text:
         return []
     allowed = {t.upper() for t in watchlist} - stoplist

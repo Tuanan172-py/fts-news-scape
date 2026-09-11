@@ -1,23 +1,4 @@
-"""
-RssCaptureScraper — RSS list + Bronze full-capture detail (method: rss_capture).
-
-Kế thừa RSSScraper: fetch_list/parse_item/filter.any|none/link_rewrites dùng lại
-NGUYÊN VẸN (DRY — không copy-paste). Chỉ override enrich() để lưu raw HTML
-byte-exact qua RawStore TRƯỚC mọi parse (design 06 §2, bất biến AC7).
-Nguồn RSS mới cần Bronze = 1 file YAML, 0 code.
-
-Registry key '_rss_capture' → build_scraper() map qua `method: rss_capture`
-(orchestrator.py: REGISTRY.get(name) or REGISTRY.get(f"_{method}")).
-
-Khác RSSScraper ở đúng 1 điểm hành vi: content:encoded KHÔNG còn được dùng để
-BỎ QUA fetch detail — inline HTML không phải Bronze. Nó chỉ là body dự phòng khi
-capture thất bại.
-
-⚠ content_selector là BẮT BUỘC trong config: selector miss → _looks_complete=False
-→ capture_status=partial + missing[incomplete_render] → change_detect.classify()
-= SELECTOR_BROKEN → agent HOLD bài. _density_extract chỉ vá content_html, KHÔNG
-vá capture_status.
-"""
+"""Bộ thu thập dữ liệu RSS tích hợp lưu trữ Bronze byte-exact cho trang chi tiết."""
 
 from __future__ import annotations
 
@@ -32,11 +13,14 @@ from src.scrapers.rss_generic import RSSScraper
 
 
 def _meta_content(html: str, key: str) -> str:
-    """Đọc <meta property|name="{key}" content="..."> từ trang detail.
+    """Trích xuất giá trị thuộc tính content từ thẻ meta trong tài liệu HTML.
 
-    Dùng cho nguồn có feed gộp chung (không phân chuyên mục) nhưng trang detail
-    khai chuyên mục thật, vd TBTC: <meta property="article:section" content="...">.
-    Trả "" khi không có — KHÔNG raise.
+    Args:
+        html: Chuỗi mã nguồn HTML trang chi tiết.
+        key: Tên thuộc tính (name hoặc property) của thẻ meta.
+
+    Returns:
+        Nội dung thuộc tính content hoặc chuỗi rỗng nếu không tìm thấy.
     """
     if not html or not key:
         return ""
@@ -52,23 +36,28 @@ def _meta_content(html: str, key: str) -> str:
 
 @register("_rss_capture")
 class RssCaptureScraper(CaptureMixin, RSSScraper):
-    """MRO: RssCaptureScraper → CaptureMixin → RSSScraper → BaseScraper.
+    """Lớp thu thập RSS kết hợp lưu trữ nguyên bản Bronze và phân tích DOM bài viết.
 
-    CaptureMixin không định nghĩa __init__ nên super().__init__ rơi đúng vào
-    RSSScraper.__init__ (nhận feeds/max_details/watchlist/language/filter/...).
+    Attributes:
+        content_selector: Bộ chọn CSS xác định vùng nội dung chính.
+        category_meta: Tên thẻ meta trích xuất chuyên mục bổ sung nếu có.
+        base_url: Đường dẫn gốc của nguồn tin.
     """
 
     def __init__(self, config, http, dedup):
         super().__init__(config, http, dedup)
         detail = config.get("detail", {})
         self.content_selector = detail.get("content_selector") or "article"
-        # Tuỳ chọn: lấy chuyên mục THẬT từ meta tag của trang detail. Cần khi feed
-        # gộp chung mọi chuyên mục (vd TBTC) — khi đó tên feed KHÔNG phải chuyên mục.
         self.category_meta = detail.get("category_meta", "")
         self.base_url = config.get("base_url", "")
-        self._init_capture()  # RawStore + RobotsGate + SourceBackoff
+        self._init_capture()
 
     def enrich(self, article: Article) -> None:
+        """Thu thập trang chi tiết, lưu trữ tạo tác Bronze và bóc tách nội dung bài viết.
+
+        Args:
+            article: Đối tượng Article cần bổ sung dữ liệu.
+        """
         # inline = content:encoded (nếu feed có). Pop để không ghi vào metadata_json.
         inline = article.metadata.pop("_inline_html", "")
 

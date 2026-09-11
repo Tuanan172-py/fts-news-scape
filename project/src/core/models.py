@@ -1,9 +1,4 @@
-"""
-Core models — Article, ScrapeResult và dedup hash.
-
-Đây là nguồn sự thật duy nhất cho schema article và hash dedup
-(SHA-256 của url + title, spec §9 bước 5).
-"""
+"""Mô hình dữ liệu lõi và định nghĩa mã băm chống trùng lặp."""
 
 from __future__ import annotations
 
@@ -17,33 +12,59 @@ VN_TZ = timezone(timedelta(hours=7), name="Asia/Ho_Chi_Minh")
 
 
 def sha256_hash(url: str, title: str) -> str:
-    """SHA-256 của url + title — dùng thống nhất cho dedup toàn hệ thống."""
+    """Tính chuỗi mã băm SHA-256 từ URL và tiêu đề bài viết.
+
+    Args:
+        url: Địa chỉ liên kết của bài viết.
+        title: Tiêu đề của bài viết.
+
+    Returns:
+        Chuỗi hex biểu diễn mã băm SHA-256.
+    """
     return hashlib.sha256(f"{url}{title}".encode("utf-8")).hexdigest()
 
 
 def normalize_title(title: str) -> str:
-    """Lowercase + gop whitespace, GIU dau tieng Viet (input cho fuzzy dedup lop 2)."""
+    """Chuẩn hóa tiêu đề bài viết về dạng chữ thường và khoảng trắng đơn.
+
+    Args:
+        title: Tiêu đề gốc cần xử lý.
+
+    Returns:
+        Chuỗi tiêu đề đã chuẩn hóa.
+    """
     return re.sub(r"\s+", " ", str(title).strip().lower())
 
 
 def now_vn_iso() -> str:
-    """Thời điểm hiện tại theo giờ VN, ISO 8601."""
+    """Lấy mốc thời gian hiện tại theo múi giờ Việt Nam (UTC+7) định dạng ISO 8601.
+
+    Returns:
+        Chuỗi thời gian chuẩn ISO 8601.
+    """
     return datetime.now(VN_TZ).isoformat(timespec="seconds")
 
 
 @dataclass
 class Article:
-    """Bản ghi bài viết chuẩn hoá — mọi scraper đều trả về model này.
+    """Đối tượng lưu trữ thông tin bài viết chuẩn hóa.
 
-    content_html giữ HTML nguyên bản (spec §9: không throw away data);
-    content_text là text sạch đã bóc tách.
-
-    metadata["capture"] (điền bởi RawStore qua CaptureMixin): con trỏ tới raw
-    artifact + trạng thái thu thập. Keys: html_path, content_sha256, http_status,
-    response_headers (subset), fetch_ts, render_method, capture_status
-    (ok|partial|failed|skipped_robots), missing[], error, images[] (read-only
-    manifest: outer_tag/resolved_url/alt/title/caption). Raw .html là byte-exact,
-    KHÔNG bao giờ bị sửa.
+    Attributes:
+        url: Đường dẫn truy cập bài viết.
+        title: Tiêu đề bài viết.
+        source_domain: Tên miền của nguồn tin.
+        summary: Đoạn tóm tắt hoặc nội dung sapo.
+        content_html: Nội dung HTML nguyên bản đã bóc tách.
+        content_text: Văn bản thuần của bài viết.
+        published_at: Thời điểm phát hành định dạng ISO 8601 (+07:00).
+        author: Tên tác giả hoặc cơ quan phát hành.
+        symbols: Danh sách mã cổ phiếu liên quan.
+        categories: Danh sách chuyên mục phân loại.
+        sentiment: Nhãn sắc thái (positive, negative, neutral).
+        sentiment_score: Điểm định lượng sắc thái.
+        fetched_at: Thời điểm thu thập dữ liệu.
+        processed_at: Thời điểm hoàn tất xử lý.
+        metadata: Từ điển chứa siêu dữ liệu và trạng thái capture Bronze.
     """
 
     url: str
@@ -67,7 +88,11 @@ class Article:
         return sha256_hash(self.url, self.title)
 
     def to_row(self) -> dict:
-        """Dict theo tên cột bảng `articles` (schema v2)."""
+        """Chuyển đổi đối tượng Article thành dictionary tương thích schema bảng articles.
+
+        Returns:
+            Dictionary chứa các trường dữ liệu tương ứng với cột trong SQLite.
+        """
         return {
             "url": self.url,
             "url_title_hash": self.url_title_hash,
@@ -89,7 +114,14 @@ class Article:
 
     @classmethod
     def from_row(cls, row) -> "Article":
-        """Khôi phục Article từ sqlite3.Row."""
+        """Khôi phục đối tượng Article từ bản ghi sqlite3.Row.
+
+        Args:
+            row: Bản ghi dữ liệu từ cơ sở dữ liệu SQLite.
+
+        Returns:
+            Đối tượng Article đã được khôi phục.
+        """
         return cls(
             url=row["url"],
             title=row["title"],
@@ -111,7 +143,15 @@ class Article:
 
 @dataclass
 class ScrapeResult:
-    """Kết quả 1 lần chạy scraper — orchestrator dùng cho metrics/monitoring."""
+    """Kết quả thực thi một chu kỳ thu thập dữ liệu của scraper.
+
+    Attributes:
+        scraper: Tên định danh của scraper.
+        fetched: Tổng số bài viết tìm thấy.
+        new: Danh sách các bài viết mới thu thập.
+        errors: Danh sách thông điệp lỗi phát sinh.
+        duration_s: Thời gian thực thi tính bằng giây.
+    """
 
     scraper: str
     fetched: int = 0

@@ -58,7 +58,8 @@ def _iter_sources(source: str, reverse: bool = True):
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--source", default="data/work_packages")
-    ap.add_argument("--review", choices=["all", "missed"], default="all")
+    ap.add_argument("--review", choices=["all", "missed"], default="missed",
+                    help="missed: chỉ phát packet cho tin code-first KHÔNG khớp (needs_agent, mặc định); all: phát cho mọi tin")
     ap.add_argument("--batch-size", "-b", type=int, default=None, help="Kích thước block/lô việc cần xuất (mặc định 50)")
     ap.add_argument("--limit", "-n", type=int, default=None, help="Tối đa N việc")
     ap.add_argument("--order", choices=["desc", "asc"], default="desc", help="Thứ tự: desc (mới nhất trước), asc (cũ nhất trước)")

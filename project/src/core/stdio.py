@@ -1,10 +1,4 @@
-"""
-Stdio helper — ép stdout/stderr sang UTF-8 (Windows).
-
-`print()` tiếng Việt/emoji/`→`/`—` qua Task Scheduler bị redirect vào file dùng
-cp1252 → UnicodeEncodeError làm crash script. Gọi `force_utf8_stdio()` ngay đầu
-mọi script/entry để tránh. Idempotent, không raise.
-"""
+"""Tiện ích cấu hình luồng xuất nhập chuẩn UTF-8 trên môi trường hệ điều hành Windows."""
 
 from __future__ import annotations
 
@@ -12,6 +6,7 @@ import sys
 
 
 def force_utf8_stdio() -> None:
+    """Thiết lập mã hóa UTF-8 cho stdout và stderr nhằm phòng chống lỗi ký tự trên Windows."""
     for stream in (sys.stdout, sys.stderr):
         try:
             stream.reconfigure(encoding="utf-8", errors="replace")

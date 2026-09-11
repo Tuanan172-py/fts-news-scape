@@ -1,11 +1,7 @@
-"""
-Catalog — bảng `work_items` điều phối handoff producer↔consumer (phase-03).
+"""Bộ quản lý danh mục công việc điều phối giữa pipeline và các agent.
 
-Producer append work_items; consumer (agent bất kỳ) claim → done/failed. Exactly-once:
-- idempotency key = UNIQUE(article_id, raw_sha256) → enqueue INSERT OR IGNORE.
-- claim atomic (BEGIN IMMEDIATE + UPDATE ... WHERE status='pending') → không double-claim.
-Held: change_state ∈ {SELECTOR_BROKEN, TEMPLATE_DRIFT} → status='held' (không giao agent).
-DDL nằm ở store._SCHEMA (tập trung). Class này chỉ thao tác.
+Cung cấp lớp Catalog để ghi nhận, phân phối và theo dõi trạng thái thực thi
+của các gói công việc trong bảng work_items.
 """
 
 from __future__ import annotations
@@ -15,30 +11,50 @@ from loguru import logger
 from src.core.models import now_vn_iso
 
 _HELD_STATES = {"SELECTOR_BROKEN", "TEMPLATE_DRIFT"}
-
-# Item o 'claimed' qua lau = worker da chet giua chung (thoat truoc khi mark_done/mark_failed).
-# Khong co buoc nay thi claim() — vi chi doc status='pending' — se KHONG bao gio thay lai chung:
-# do la ro ri vinh vien. Do tren monocle.db 2026-09-07: 304 item ket, tang deu theo ngay
-# (exporter: 2, 20, 32, 20, 50, 180). Xem scripts/l1_backlog.py.
 _CLAIM_TIMEOUT_MIN = 120
 
 
 def _iso_minus_minutes(minutes: int) -> str:
-    """Moc thoi gian ISO (gio VN) lui `minutes` phut — so sanh chuoi voi claimed_at."""
-    from datetime import timedelta
+    """Tính mốc thời gian ISO lùi lại số phút chỉ định theo múi giờ Việt Nam.
+
+    Args:
+        minutes: Số phút cần lùi lại từ thời điểm hiện tại.
+
+    Returns:
+        Chuỗi mốc thời gian chuẩn ISO 8601 múi giờ +07:00.
+    """
+    from datetime import datetime, timedelta
     from src.core.models import VN_TZ
-    from datetime import datetime
     return (datetime.now(VN_TZ) - timedelta(minutes=minutes)).isoformat(timespec="seconds")
 
 
 class Catalog:
+    """Bộ điều phối trạng thái và phân phối các gói công việc (work_items).
+
+    Attributes:
+        store: Đối tượng kho lưu trữ ArticleStore kết nối cơ sở dữ liệu.
+    """
+
     def __init__(self, store):
-        self.store = store  # ArticleStore
+        self.store = store
 
     def enqueue(self, article_id: str, raw_sha256: str, domain: str,
                 package_path: str, change_state: str, *, force_held: bool = False) -> str:
-        """INSERT OR IGNORE (idempotent). Trả status thực tế của item.
-        force_held=True (vd package fail schema) → luôn held, không giao agent."""
+        """Đưa gói công việc vào hàng đợi xử lý của danh mục.
+
+        Thực hiện chèn an toàn (INSERT OR IGNORE) đảm bảo tính lũy kế không trùng lặp.
+
+        Args:
+            article_id: Mã định danh bài viết.
+            raw_sha256: Mã băm SHA-256 của nội dung thô tầng Bronze.
+            domain: Tên miền nguồn của bài viết.
+            package_path: Đường dẫn tệp tin gói công việc JSON.
+            change_state: Trạng thái thay đổi của bài viết.
+            force_held: Cờ bắt buộc chuyển trạng thái sang 'held' (tạm hoãn xử lý).
+
+        Returns:
+            Trạng thái hiện tại của gói công việc trong cơ sở dữ liệu.
+        """
         status = "held" if (force_held or change_state in _HELD_STATES) else "pending"
         conn = self.store.connect()
         try:
@@ -56,11 +72,13 @@ class Catalog:
             conn.close()
 
     def reclaim_stale(self, timeout_minutes: int = _CLAIM_TIMEOUT_MIN) -> int:
-        """Tra cac item `claimed` qua han ve `pending`. Tra so item da thu hoi.
+        """Thu hồi các gói công việc ở trạng thái 'claimed' quá hạn trở lại 'pending'.
 
-        An toan khi worker that su con song: no se mark_done/mark_failed theo id nen trang thai
-        cuoi cung van dung; xau nhat la mot item bi lam hai lan (ingest la idempotent theo
-        UNIQUE(article_id, raw_sha256)).
+        Args:
+            timeout_minutes: Thời hạn chiếm giữ tối đa tính bằng phút trước khi thu hồi.
+
+        Returns:
+            Số lượng gói công việc đã được hoàn trả lại hàng đợi.
         """
         cutoff = _iso_minus_minutes(timeout_minutes)
         conn = self.store.connect()
@@ -77,6 +95,15 @@ class Catalog:
         return n
 
     def list_pending(self, limit: int = 50, order: str = "desc") -> list[dict]:
+        """Liệt kê danh sách các gói công việc đang chờ xử lý.
+
+        Args:
+            limit: Số lượng bản ghi tối đa cần lấy.
+            order: Thứ tự sắp xếp theo thời gian ('asc' hoặc 'desc').
+
+        Returns:
+            Danh sách từ điển chứa thông tin các gói công việc 'pending'.
+        """
         conn = self.store.connect()
         try:
             order_clause = (
@@ -93,14 +120,24 @@ class Catalog:
             conn.close()
 
     def claim(self, worker_id: str, order: str = "desc", *,
-              require_l1: bool = False) -> dict | None:
-        """Claim 1 item pending → claimed (atomic). None nếu hết việc.
+              require_l1: bool = False,
+              allowed_article_ids: set[str] | list[str] | None = None,
+              date: str | None = None,
+              days: int | None = None) -> dict | None:
+        """Nhận độc quyền một gói công việc đang chờ để thực thi.
 
-        require_l1=True: chỉ bốc bài đã có `l1_outputs.dod_pass=1`. Gold chạy TRƯỚC L1 thì
-        packet không nhúng được `input.l1_entities` (rule 05 §2.5) và bài cũng không định
-        tuyến được cho user nào (routing dựa entity của L1) → tốn token vô ích.
+        Args:
+            worker_id: Mã định danh tiến trình hoặc agent nhận việc.
+            order: Thứ tự ưu tiên nhận việc ('asc' hoặc 'desc').
+            require_l1: Cờ yêu cầu bài viết phải đạt chuẩn thẩm định L1 trước đó.
+            allowed_article_ids: Tập mã bài viết được phép chọn.
+            date: Lọc theo ngày cụ thể (định dạng 'YYYY-MM-DD' hoặc 'today').
+            days: Lọc các bài viết trong khoảng số ngày gần nhất.
+
+        Returns:
+            Từ điển thông tin gói công việc được bàn giao, hoặc None nếu không có gói phù hợp.
         """
-        self.reclaim_stale()          # khong co buoc nay, item ket o 'claimed' bi ro ri vinh vien
+        self.reclaim_stale()
         conn = self.store.connect()
         try:
             conn.execute("BEGIN IMMEDIATE")
@@ -114,9 +151,44 @@ class Catalog:
                 " WHERE l1.article_id = work_items.article_id AND l1.dod_pass = 1)"
                 if require_l1 else ""
             )
-            row = conn.execute(
-                f"SELECT * FROM work_items WHERE status='pending'{l1_clause} {order_clause} LIMIT 1"
-            ).fetchone()
+            if allowed_article_ids is not None:
+                if not allowed_article_ids:
+                    conn.commit()
+                    return None
+                conn.execute("CREATE TEMP TABLE IF NOT EXISTS _allowed_aids (aid TEXT PRIMARY KEY)")
+                conn.execute("DELETE FROM _allowed_aids")
+                conn.executemany("INSERT OR IGNORE INTO _allowed_aids VALUES (?)", [(aid,) for aid in allowed_article_ids])
+                allowed_clause = " AND EXISTS (SELECT 1 FROM _allowed_aids aa WHERE aa.aid = work_items.article_id)"
+            else:
+                allowed_clause = ""
+
+            date_clause = ""
+            params: list = []
+            if date and date != "all":
+                from datetime import datetime
+                from src.core.models import VN_TZ
+                d_target = f"{datetime.now(VN_TZ):%Y-%m-%d}" if date == "today" else date
+                date_clause = (
+                    " AND EXISTS (SELECT 1 FROM articles a WHERE a.url_title_hash = work_items.article_id"
+                    " AND substr(COALESCE(NULLIF(a.published_at, ''), a.fetched_at, work_items.enqueued_at), 1, 10) = ?)"
+                )
+                params.append(d_target)
+            elif days and days > 0:
+                from datetime import datetime, timedelta
+                from src.core.models import VN_TZ
+                cutoff = f"{datetime.now(VN_TZ) - timedelta(days=days):%Y-%m-%d}"
+                date_clause = (
+                    " AND EXISTS (SELECT 1 FROM articles a WHERE a.url_title_hash = work_items.article_id"
+                    " AND substr(COALESCE(NULLIF(a.published_at, ''), a.fetched_at, work_items.enqueued_at), 1, 10) >= ?)"
+                )
+                params.append(cutoff)
+
+            query = (
+                f"SELECT * FROM work_items WHERE status='pending'"
+                f"{l1_clause}{allowed_clause}{date_clause} {order_clause} LIMIT 1"
+            )
+            row = conn.execute(query, params).fetchone()
+
             if row is None:
                 conn.commit()
                 return None
@@ -133,13 +205,25 @@ class Catalog:
             conn.close()
 
     def mark_done(self, item_id: int) -> None:
+        """Đánh dấu gói công việc đã hoàn thành xử lý thành công.
+
+        Args:
+            item_id: Mã định danh bản ghi công việc (khóa chính id).
+        """
         self._set_status(item_id, "done", done=True)
 
     def mark_failed(self, item_id: int, error: str = "") -> None:
+        """Đánh dấu gói công việc xử lý thất bại kèm lý do lỗi.
+
+        Args:
+            item_id: Mã định danh bản ghi công việc.
+            error: Chuỗi thông báo lỗi chi tiết.
+        """
         self._set_status(item_id, "failed", error=error)
 
     def _set_status(self, item_id: int, status: str, *, done: bool = False,
                     error: str = "") -> None:
+        """Cập nhật trạng thái bản ghi công việc trong cơ sở dữ liệu."""
         conn = self.store.connect()
         try:
             conn.execute(
@@ -150,6 +234,12 @@ class Catalog:
             conn.close()
 
     def counts(self) -> dict[str, int]:
+        """Thống kê tổng số lượng gói công việc theo từng trạng thái.
+
+        Returns:
+            Từ điển ánh xạ từ trạng thái ('pending', 'claimed', 'done', 'failed', 'held')
+            sang số lượng bản ghi tương ứng.
+        """
         conn = self.store.connect()
         try:
             rows = conn.execute(

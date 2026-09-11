@@ -1,11 +1,4 @@
-"""
-Tiện ích advisory lock cho scheduler (Fix F — chống chạy 2 scheduler cùng lúc).
-
-Lock lưu trong DB (`pipeline_state` qua ArticleStore.try_acquire_lock/refresh_lock).
-Nhịp tim (refresh) chạy mỗi capture cycle (~15'); STALE phải LỚN HƠN interval để lock
-không bị cướp giữa 2 cycle. 40' đủ tolerate misfire; chủ cũ chết → sau 40' tiến trình
-mới được phép chiếm lại lock.
-"""
+"""Tiện ích khóa cố vấn (advisory lock) cho tiến trình lập lịch scheduler."""
 
 from __future__ import annotations
 
@@ -16,5 +9,9 @@ SCHEDULER_LOCK_STALE_SECONDS = 2400  # 40 phút
 
 
 def lock_owner() -> str:
-    """Định danh tiến trình giữ lock: host:pid."""
+    """Tạo định danh duy nhất cho tiến trình sở hữu khóa dạng hostname:pid.
+
+    Returns:
+        Chuỗi định danh tiến trình hiện tại.
+    """
     return f"{socket.gethostname()}:{os.getpid()}"

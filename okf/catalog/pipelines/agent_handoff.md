@@ -43,17 +43,17 @@ cần agent. Kết quả L1 được nhúng ngược vào packet L2 (`input.l1_e
 ngữ cảnh mã CP.[^packet]
 
 # Chu trình 4 giai đoạn
-
+ 
 ```
-1. EXPORT   scripts/l1_route.py --review missed     → packet L1
-            scripts/agent_export.py                 → claim work_items → packet Gold
+1. EXPORT   scripts/l1_route.py --review missed            → packet L1 (chỉ xuất bài needs_agent)
+            scripts/agent_export.py --subscriber-only       → claim work_items (gated theo users/subscriptions/) → packet Gold
 2. AGENT    [agent NGOÀI đọc *.task.json, nộp *.json]
               L1   → data/agent_outputs_l1/
               Gold → data/agent_outputs/
 3. INGEST   scripts/l1_ingest.py <dir>     → validate + check_l1_dod → l1_outputs
             scripts/agent_ingest.py <dir>  → validate + check_dod    → agent_outputs
               PASS → work_items.done   |   FAIL → failed + dod_reasons (self-healing)
-4. DELIVER  scripts/run_user_workflow.py  → users/output/<user>/<date>.csv
+4. DELIVER  scripts/run_user_workflow.py  → users/output/<user>/<date>.xlsx
 ```
 
 Chuỗi gộp: `scripts/run_agent_hierarchy.py`.
@@ -78,11 +78,14 @@ Chuỗi gộp: `scripts/run_agent_hierarchy.py`.
 
 DoD Lớp 1: schema + grounding bằng chứng ⊂ tiêu đề + checklist.
 
-# Tối ưu payload
+# Tối ưu payload & Token Burn (US-009)
 
-- **Pruner** (`src/agent/pruner.py`) — chỉ giữ khối đoạn văn nội dung chính, bỏ teaser, hotline,
-  thông tin toà soạn, menu, quảng cáo; **giữ nguyên văn** từng đoạn để citation vẫn grounded.
-  Payload 182 KB → 6–8 KB (~96%).
+- **Subscriber-Gated Export** (`src/handoff/catalog.py` & `src/agent/runner.py`):
+  Lọc giao việc Gold dựa trên danh mục theo dõi thực tế (`users/subscriptions/`). Bỏ qua các bài viết
+  không có user nào đăng ký mã liên quan (tiết kiệm ~37.1% tổng số bài gọi Gold agent).
+- **Dynamic 3-Pass Semantic Pruner** (`src/agent/pruner.py`):
+  Giới hạn trần `max_chars = 2200` (giảm 45% token BPE). Lọc 3 tầng: (1) Sapo/Lead $\rightarrow$ (2) Đoạn văn chứa `l1_entities` và số liệu tài chính $\rightarrow$ (3) Lấp đầy theo trật tự văn bản gốc.
+  **Bảo toàn nguyên văn**: giữ nguyên tuyệt đối text trong từng đoạn `<p>` để không làm gãy citation grounding $\ge 20$ ký tự.
 - **Batch handoff** (`src/agent/batch_handoff.py`) — gom 5–10 bài vào `batch_XX.task.json`, giảm
   ~90% số tool call I/O của subagent. `manifest.py` dựng manifest lô, `archive.py` dọn packet sau
   khi ingest xong.

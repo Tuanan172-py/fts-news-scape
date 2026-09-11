@@ -40,13 +40,23 @@ Nhằm tối ưu tốc độ, giảm thiểu 95% Token Burn và triệt tiêu ho
    - File `raw_html` và `meta.json` luôn được lưu giữ nguyên bản tại Bronze để kiểm toán và đối chiếu SHA256.
 2. **Loại bỏ Hoàn toàn Rác DOM (Zero-Waste Task Packet)**:
    - Tuyệt đối KHÔNG đưa `structure.links` (hàng ngàn liên kết menu/header/footer) và `images` vào Task Packet. Dung lượng 1 packet phải được nén dưới **10 KB** (thay vì 180 KB).
-3. **Bảo toàn Đoạn văn Nguyên bản (Verbatim Paragraph Pruning Invariant)**:
+3. **Bảo toàn Đoạn văn Nguyên bản & Trần Động (Dynamic 3-Pass Semantic Pruning — 2.200 Chars Max)**:
    - Bộ lọc boilerplate (`pruner.py`) loại bỏ triệt để: Teaser ("Bài liên quan", "Xem thêm"), Hotline, Email, Tòa soạn, Giấy phép, Copyright, nguồn tin vặt.
+   - **TRẦN KÝ TỰ MỚI (ADR 0005)**: Hạ trần mặc định từ `4.000` xuống `2.200` ký tự (giảm 45% input token).
+   - **THUẬT TOÁN 3-PASS**: Giữ tối đa 2 đoạn đầu (Sapo) $\rightarrow$ quét ưu tiên đoạn chứa mã CP từ `l1_entities` hoặc số liệu tài chính $\rightarrow$ điền đầy theo thứ tự gốc.
    - **RÀNG BUỘC CỐT LÕI**: Bộ lọc BẮT BUỘC loại bỏ theo **nguyên khối đoạn văn** (`<p>`). Tuyệt đối KHÔNG cắt tỉa, biên tập lại câu từ trong các đoạn văn giữ lại, nhằm đảm bảo mọi `source_span` trích dẫn citations ($\ge 20$ ký tự) luôn là chuỗi con nguyên văn (exact substring) hợp lệ, vượt qua cổng kiểm tra DoD Ingest.
-4. **Gom Lô Siêu Tốc (Consolidated Mini-Batch Handoff)**:
+4. **Phễu Lọc & Tùy Biến Cổng Xuất Gold (Subscriber-Gated & Customizable Export — ADR 0005 & US-010)**:
+   - Mặc định chỉ xuất task Gold cho bài viết có `l1_entities` nằm trong Watchlist của các người dùng đang active (`manifest.yaml` và `users/*.yaml`).
+   - Các bài viết không có người đăng ký được giữ nguyên ở trạng thái `L1_ONLY`, tiết kiệm 38% – 45% token Gold vô ích.
+   - **Tùy biến linh hoạt theo nhu cầu vận hành**:
+     - `--user <tên>` (`-u`): Xuất đích danh theo Watchlist của 1 hoặc nhiều người dùng cụ thể (thay vì union của toàn bộ).
+     - `--days <N>` (`-d`): Giới hạn chỉ bốc các bài viết trong N ngày gần nhất, tránh xử lý backlog cũ quá hạn.
+     - `--date <YYYY-MM-DD|today|all>`: Giới hạn chính xác trong một ngày xuất bản cụ thể.
+     - `--dry-run`: Cho phép kiểm tra và đếm nhanh số lượng bài thỏa mãn điều kiện mà không claim DB và không ghi file rác.
+5. **Gom Lô Siêu Tốc (Consolidated Mini-Batch Handoff)**:
    - Khuyến khích đóng gói các task thành các mini-batch (5–10 bài/file `batch_XX.task.json`).
    - Subagent chỉ gọi 1 lần `view_file` và 1 lần `write_to_file` mảng JSON cho cả lô, giảm 90% số Tool Calls I/O.
-5. **Tiếp sức Thực thể L1 $\rightarrow$ Gold (L1-Assisted Chaining)**:
+6. **Tiếp sức Thực thể L1 $\rightarrow$ Gold (L1-Assisted Chaining)**:
    - Task Packet gửi cho Gold Agent BẮT BUỘC phải nhúng kèm danh sách mã cổ phiếu đã được L1 bóc tách sẵn (`input.l1_entities`), giúp Gold Agent tập trung trực tiếp vào việc phân tích tác động tài chính và chấm điểm trọng yếu.
 
 ---

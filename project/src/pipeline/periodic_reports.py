@@ -1,40 +1,7 @@
-"""
-PeriodicReportSource — báo cáo định kỳ của NSO (Cục Thống kê). Design 16.
+"""Bộ thu thập và xử lý báo cáo định kỳ kinh tế - xã hội của Tổng cục Thống kê (NSO).
 
-KHÔNG phải BaseScraper, KHÔNG đăng ký vào REGISTRY, KHÔNG có config/domains/nso.yaml.
-Đây là driver OFFLINE chạy theo lịch riêng (vài lần/tháng quanh cửa sổ công bố),
-không nằm trong cycle 15 phút.
-
-Vì sao tách riêng
------------------
-| Đặc điểm NSO | Xung đột với BaseScraper |
-|---|---|
-| ~1-3 bài/tháng, công bố ngày 3 | vòng lặp 15' vô nghĩa |
-| cùng báo cáo mirror nhiều path, slug khác nhau | dedup theo url_title_hash sai |
-| slug KHÔNG suy ra được từ (loại, kỳ) | không xây được URL |
-| payload chính là .xlsx/.docx | RawStore.save giả định HTML |
-| kỳ báo cáo là khoá nghiệp vụ | Article không có khái niệm period |
-
-Bằng chứng slug không tin được (verified 2026-09-07): mục tháng 6/2026 có slug
-`/bai-top/2026/06/bao-cao-tinh-hinh-kinh-te-xa-hoi-thang-nam-va-5-thang-dau-nam-2025-2/`
-→ SAI năm (2025) + hậu tố `-2` do WordPress tự thêm khi trùng slug.
-⇒ khoá dedup phải là **(report_type, period)**, parse từ TIÊU ĐỀ.
-
-Luồng
------
-1. DISCOVER  GET /wp-json/wp/v2/posts?tags=727&after=<watermark>  (WordPress REST API)
-2. IDENTIFY  (report_type, period) ← parse tiêu đề tiếng Việt
-3. DEDUP     bảng periodic_reports, khoá (source, report_type, period);
-             `modified` đổi → revision mới, KHÔNG ghi đè bản cũ
-4. CAPTURE   RawStore.save(post.link) → Bronze HTML byte-exact
-             → bóc link /wp-content/uploads/**.(xlsx|docx|pdf) TỪ HTML ĐÃ LƯU
-             → RawStore.save_binary(mỗi file) → Bronze nhị phân
-5. (v2)      trích số liệu XLSX — HOÃN. Bronze là WORM nên trích lúc nào cũng được,
-             không cần fetch lại.
-
-Tuân thủ: robots.txt của nso.gov.vn chỉ Disallow /wp-admin/, /readme.html, /license.txt.
-`/wp-json/` và `/wp-content/uploads/` ĐƯỢC PHÉP. Không khai Crawl-delay → giữ 3.0s.
-Chỉ đi qua HTTPS (:80 luôn bị RST — verified 12/12 probe 2026-09-07).
+Driver xử lý chuyên biệt cho các báo cáo định kỳ theo tháng, quý, năm; bóc tách kỳ
+báo cáo từ tiêu đề, lưu trữ nội dung HTML và tải tệp đính kèm nhị phân (.xlsx, .docx, .pdf).
 """
 
 from __future__ import annotations
@@ -55,23 +22,11 @@ BASE_URL = "https://www.nso.gov.vn"
 API_POSTS = f"{BASE_URL}/wp-json/wp/v2/posts"
 SOURCE = "nso"
 SOURCE_DOMAIN = "nso.gov.vn"
-
-# tag 727 = "Báo cáo tình hình kinh tế - xã hội" (count 337, verified 2026-09-07)
 KTXH_TAG = 727
 
 _ATTACH_EXT = (".xlsx", ".xls", ".docx", ".doc", ".pdf")
-
-# Root RIENG, KHONG dung chung data/raw_html.
-# Ly do: src/pipeline/derive.py quet data/raw_html/**/*.meta.json roi dung Silver +
-# work_package + work_item cho MOI artifact. Bao cao NSO khong nam trong bang `articles`
-# (no o periodic_reports) nen work_item sinh ra co article_id KHONG join duoc voi
-# articles -> downstream lang le hut metadata. Tach root giu hai luong doc lap dung
-# design 16 muc 3. Muon dua bao cao NSO toi agent thi lam duong rieng, co chu dich.
 RAW_REPORTS_DIR = "data/raw_reports"
 
-# ---------------------------------------------------------------------------
-# Parse (report_type, period) từ TIÊU ĐỀ — không bao giờ từ slug
-# ---------------------------------------------------------------------------
 _MONTH_WORDS = {
     "một": 1, "mot": 1, "giêng": 1, "gieng": 1,
     "hai": 2, "ba": 3, "tư": 4, "tu": 4, "bốn": 4, "bon": 4,
@@ -83,19 +38,20 @@ _QUARTER_ROMAN = {"i": 1, "ii": 2, "iii": 3, "iv": 4}
 
 
 def _strip_accents(text: str) -> str:
+    """Loại bỏ dấu tiếng Việt khỏi chuỗi văn bản."""
     return "".join(c for c in unicodedata.normalize("NFD", text)
                    if unicodedata.category(c) != "Mn")
 
 
 def parse_period(title: str) -> tuple[str, str] | None:
-    """Tiêu đề tiếng Việt → (report_type, period). None nếu không chắc chắn.
+    """Phân tích tiêu đề báo cáo tiếng Việt để xác định loại báo cáo và kỳ thời gian.
 
-    "…tháng Tám và 8 tháng năm 2026"        → ("monthly",   "2026-08")
-    "…tháng 8 năm 2026"                      → ("monthly",   "2026-08")
-    "…Quý II và sáu tháng đầu năm 2026"      → ("quarterly", "2026-Q2")
-    "…năm 2025"                              → ("annual",    "2025")
+    Args:
+        title: Tiêu đề bài viết thông báo báo cáo.
 
-    KHÔNG đoán bừa: không khớp → None → caller đánh dấu held + cảnh báo.
+    Returns:
+        Tuple gồm loại báo cáo ('monthly', 'quarterly', 'annual') và kỳ báo cáo (ví dụ: '2026-08', '2026-Q2'),
+        hoặc None nếu không nhận diện chắc chắn được kỳ.
     """
     if not title:
         return None
@@ -113,14 +69,12 @@ def parse_period(title: str) -> tuple[str, str] | None:
         if q:
             return "quarterly", f"{year}-Q{q}"
 
-    # "tháng 8" dạng số — ưu tiên vì tường minh nhất
     m_num = re.search(r"\bthang\s+(\d{1,2})\b", low)
     if m_num:
         mo = int(m_num.group(1))
         if 1 <= mo <= 12:
             return "monthly", f"{year}-{mo:02d}"
 
-    # "tháng Tám" dạng chữ — bỏ qua "N tháng" (luỹ kế) vì đứng SAU số
     m_word = re.search(r"\bthang\s+(muoi hai|muoi mot|muoi|mot|hai|ba|tu|bon|nam|"
                        r"sau|bay|tam|chin|gieng)\b", low)
     if m_word:
@@ -134,11 +88,14 @@ def parse_period(title: str) -> tuple[str, str] | None:
 
 
 def extract_attachments(html: str, page_url: str) -> list[dict]:
-    """Bóc link file đính kèm từ HTML ĐÃ LƯU (không fetch lại).
+    """Trích xuất danh sách liên kết tệp đính kèm (.xlsx, .docx, .pdf) từ mã nguồn HTML.
 
-    NSO để .docx/.xlsx dưới /wp-content/uploads/<yyyy>/<mm>/. Các file này KHÔNG có
-    trong `content.rendered` của wp-json (acf rỗng, featured_media=0) — chỉ xuất hiện
-    khi theme Avada render trang → bắt buộc bóc từ Bronze HTML.
+    Args:
+        html: Mã nguồn HTML chi tiết bài viết.
+        page_url: Đường dẫn URL trang bài viết gốc.
+
+    Returns:
+        Danh sách đối tượng từ điển chứa URL, tên tệp và nhãn của tệp đính kèm.
     """
     out: list[dict] = []
     seen: set[str] = set()

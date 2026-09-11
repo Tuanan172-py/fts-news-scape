@@ -163,6 +163,10 @@ Chưa điều tra.
 | D13 | ADR 0003 còn ở `proposed` | Đã duyệt sang `accepted` ngày 2026-09-09; code-first sẵn sàng cho pipeline |
 | D14 | 1.117/1.274 bản ghi Gold là sản phẩm của regex nhưng mang nhãn LLM (ADR 0004 D) | Đã duyệt Phương án D1; `verify_gold_quality.py --apply` đã hạ `dod_pass=1`: **1.274 → 0 (0.0%)**, deliverable sạch template |
 | D15 | `build_entities.py` lỗi thiếu `sys.path` và thiếu `pyarrow`; `entities.csv/xlsx` cũ | Đã sửa `sys.path`, cài `pyarrow`; sinh mới 2.072 thực thể cho cả master json, csv, xlsx, taxonomy |
+| D16 | Token burn Gold quá cao do payload 4.000 chars và export toàn bộ pending không ai đọc (ADR 0005) | **Subscriber-Gated Export**: claim 947/1.505 bài, bỏ 558 bài unmonitored (-37.1% token); **Semantic Pruner 2.200 chars** (-47% token/bài); tổng tiết kiệm ~66.7% |
+| D17 | L1 false positives danh từ riêng tiếng Việt (*Mỹ Thuận, Á Mỹ, Mỹ Tho, Bà Kim Nga, Nga Rose*) | **Morphological & Compound Guard** (`_blocked_by_morphology`): FP `MY` **14 → 0**, FP `NGA` tên người **→ 0** |
+| D18 | Sót tin CBTT VNDirect (bị stoplist nuốt), nhầm PGD ngân hàng với mã CP, sót tin công ty con (US-010, US-011) | **Positional Exemption** (`^VND:`): cứu **36/36 bài CBTT**; **Bank PGD Guard**: FP `PGD` **36 → 0**; **Ecosystem Aliasing**: nhận diện thêm VinFast, Bách Hóa Xanh, WinCommerce, FE Credit |
 
 **Kiểm tay sau khi sửa:** 25 dòng ngẫu nhiên của AnPT → **0/29 mã không có căn cứ trong tiêu đề**.
-**pytest:** 378 passed.
+**pytest:** 42 passed (100% green).
+

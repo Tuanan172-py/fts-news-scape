@@ -1,14 +1,4 @@
-"""
-[LEGACY / COLD BACKUP - NOT IN PRODUCTION PIPELINE]
-Sentiment engine — rule-based tiếng Việt cho tin tài chính (spec §9, không LLM).
-LƯU Ý: Trong kiến trúc Antigravity 2.0 (Rule 05 & Rule 6C), phân loại sentiment và ngữ nghĩa
-được đảm nhiệm độc quyền bởi Subagent Gold (Flash/Pro) qua invoke_subagent.
-Module này được lưu trữ phục vụ benchmark/fallback offline.
-
-Pipeline: pyvi segment → n-gram match (trigram > bigram > unigram, longest-first)
-vào lexicon (finance_terms override lexicon chung) → negation flip → mean score
-→ threshold ±0.2. Title trọng số 2× body (0.67/0.33).
-"""
+"""Công cụ phân tích và chấm điểm sắc thái tin tức tài chính dựa trên bộ từ điển (Lexicon Engine)."""
 
 from __future__ import annotations
 
@@ -36,7 +26,7 @@ def _load_tsv(path: Path) -> dict[str, float]:
             continue
         parts = line.split("\t")
         if len(parts) != 2:
-            continue  # bỏ dòng hỏng, không crash (parse strictly)
+            continue
         try:
             lex[parts[0].strip().lower()] = float(parts[1])
         except ValueError:
@@ -45,23 +35,38 @@ def _load_tsv(path: Path) -> dict[str, float]:
 
 
 class SentimentEngine:
+    """Động cơ tính toán điểm phân cực cảm xúc cho tiêu đề và nội dung bài viết.
+
+    Attributes:
+        lex: Từ điển ánh xạ từ khóa sang điểm sắc thái.
+        pos_threshold: Ngưỡng điểm xác định sắc thái tích cực.
+        neg_threshold: Ngưỡng điểm xác định sắc thái tiêu cực.
+    """
+
     def __init__(self, lexicon_dir: str = "data/lexicon",
                  pos_threshold: float = 0.2, neg_threshold: float = -0.2):
         d = Path(lexicon_dir)
         self.lex = _load_tsv(d / "vswn_polarity.tsv")
-        self.lex.update(_load_tsv(d / "finance_terms.tsv"))  # finance override
+        self.lex.update(_load_tsv(d / "finance_terms.tsv"))
         self.pos_threshold = pos_threshold
         self.neg_threshold = neg_threshold
         logger.info("SentimentEngine loaded {} lexicon entries", len(self.lex))
 
     def score_tokens(self, tokens: list[str]) -> float:
-        """Mean score các match. Longest n-gram wins, token đã dùng bị skip."""
+        """Tính điểm sắc thái trung bình cho danh sách token theo thứ tự ưu tiên n-gram dài nhất.
+
+        Args:
+            tokens: Danh sách các từ hoặc token đã phân đoạn.
+
+        Returns:
+            Điểm số sắc thái trung bình dạng số thực.
+        """
         tokens = [t.lower() for t in tokens]
         scores: list[float] = []
         i = 0
         while i < len(tokens):
             matched = False
-            for n in (3, 2, 1):  # trigram → bigram → unigram
+            for n in (3, 2, 1):
                 if i + n > len(tokens):
                     continue
                 key = "_".join(tokens[i:i + n])
@@ -79,7 +84,15 @@ class SentimentEngine:
         return sum(scores) / len(scores) if scores else 0.0
 
     def analyze(self, title: str, text: str = "") -> tuple[str, float]:
-        """(label, score) — label: positive | negative | neutral."""
+        """Phân tích sắc thái của bài viết kết hợp tiêu đề và nội dung.
+
+        Args:
+            title: Tiêu đề bài viết.
+            text: Nội dung văn bản của bài viết.
+
+        Returns:
+            Bộ (nhãn sắc thái, điểm số) với nhãn thuộc positive, negative hoặc neutral.
+        """
         title_score = self.score_tokens(seg(title))
         body_score = self.score_tokens(seg(text)[:100]) if text else 0.0
         if text:

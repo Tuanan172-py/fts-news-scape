@@ -1,14 +1,4 @@
-"""
-RawStore — lưu raw HTML byte-exact + sidecar .meta.json TRƯỚC mọi xử lý.
-
-Nguyên tắc (spec capture §7 no-clean): file .html giữ NGUYÊN bytes phản hồi —
-không decode, không strip tag, không rewrite attribute, không normalize. Đây là
-artifact có thể kiểm tra độc lập (offline) với trang gốc.
-
-`images[]` trong meta.json là READ-ONLY scan (BeautifulSoup) — chỉ liệt kê ảnh
-(URL + alt/title/caption) để bước sau tải/tái sử dụng. Việc swap data-src→src là
-việc của pipeline xử lý downstream, KHÔNG làm ở đây; artifact không bao giờ bị sửa.
-"""
+"""Quản lý lưu trữ tạo tác thô Bronze (HTML/nhị phân nguyên bản) và tệp mô tả siêu dữ liệu."""
 
 from __future__ import annotations
 
@@ -22,21 +12,24 @@ from urllib.parse import urljoin, urlparse
 from bs4 import BeautifulSoup
 from loguru import logger
 
-# Q5: chỉ giữ subset header — loại Set-Cookie/Authorization (PII/secret hygiene)
+# Bộ lọc header cần giữ lại nhằm đảm bảo vệ sinh dữ liệu bảo mật.
 _HEADER_WHITELIST = ("content-type", "content-length", "last-modified",
                      "etag", "server", "date")
-# thứ tự ưu tiên resolve URL ảnh (lazy-load VN news: data-src/data-original...)
+# Danh sách thuộc tính ảnh ưu tiên phân giải URL.
 _LAZY_ATTRS = ("src", "data-src", "data-original", "original-src",
                "document-path", "data-lazy")
 
 
 class RawStore:
-    """Ghi raw HTML + metadata sidecar. Không raise — lỗi trả trong dict `capture`."""
+    """Lớp quản lý lưu trữ dữ liệu thô Bronze byte-exact và siêu dữ liệu đi kèm.
+
+    Attributes:
+        base_dir: Đường dẫn thư mục gốc lưu trữ dữ liệu thô Bronze.
+    """
 
     def __init__(self, base_dir: str = "data/raw_html"):
         self.base_dir = base_dir
 
-    # -- path helpers ---------------------------------------------------------
     @staticmethod
     def _yyyymmdd(fetched_at: str) -> str:
         try:
@@ -45,25 +38,41 @@ class RawStore:
             return "unknown-date"
 
     def _dir_for(self, domain: str, yyyymmdd: str) -> str:
-        """
-            Giải thích: Tạo đường dẫn thư mục cho một domain và ngày cụ thể.
+        """Tạo và trả về đường dẫn thư mục lưu trữ cho tên miền và ngày cụ thể.
+
+        Args:
+            domain: Tên miền của nguồn tin.
+            yyyymmdd: Chuỗi ngày định dạng YYYYMMDD.
+
+        Returns:
+            Chuỗi đường dẫn thư mục lưu trữ.
         """
         d = os.path.join(self.base_dir, domain, yyyymmdd)
         os.makedirs(d, exist_ok=True)
         return d
 
     def paths_for(self, domain: str, url_title_hash: str, fetched_at: str) -> tuple[str, str]:
-        """(html_path, meta_path) dự kiến — KHÔNG tạo thư mục. Dùng để kiểm tra tồn tại
-        (vd refresh bỏ qua capture trùng ngày, tránh ghi đè Bronze)."""
+        """Xác định trước đường dẫn tệp HTML và metadata mà không tạo thư mục.
+
+        Args:
+            domain: Tên miền của nguồn tin.
+            url_title_hash: Mã băm định danh bài viết.
+            fetched_at: Thời điểm thu thập dữ liệu ISO.
+
+        Returns:
+            Bộ (html_path, meta_path) dạng chuỗi đường dẫn.
+        """
         d = os.path.join(self.base_dir, domain, self._yyyymmdd(fetched_at))
         base = os.path.join(d, url_title_hash)
         return f"{base}.html", f"{base}.meta.json"
 
     @staticmethod
     def _write_atomic(path: str, data: bytes) -> None:
-        """
-            Giải thích: Ghi dữ liệu vào một tệp tạm thời và sau đó thay thế tệp đích, đảm bảo quy trình đọc - ghi không làm ảnh hướng tệp đích.
-            Fix C: retry os.replace khi PermissionError (Windows: file đang bị OneDrive/AV/reader giữ) → tránh để lại .tmp.
+        """Ghi dữ liệu ra tệp tạm và thay thế nguyên tử tệp đích với cơ chế thử lại.
+
+        Args:
+            path: Đường dẫn tệp đích cần ghi.
+            data: Mảng byte dữ liệu cần ghi.
         """
         tmp = f"{path}.tmp"
         with open(tmp, "wb") as f:
@@ -135,10 +144,20 @@ class RawStore:
     def save(self, domain: str, url: str, url_title_hash: str, response,
              *, fetched_at: str, missing: list[str] | None = None,
              protection: str | None = None, render_method: str = "requests") -> dict:
-        """Lưu raw artifact + meta.json; trả dict `capture` (không kèm body).
+        """Lưu trữ tệp HTML thô nguyên bản và tệp siêu dữ liệu sidecar .meta.json.
 
-        response: requests.Response-like (status_code/content/headers/encoding/ok)
-        hoặc None (fetch fail). Luôn ghi meta.json — kể cả khi failed.
+        Args:
+            domain: Tên miền của nguồn tin.
+            url: Đường dẫn gốc của bài viết.
+            url_title_hash: Mã băm định danh bài viết.
+            response: Đối tượng phản hồi HTTP hoặc None khi thu thập thất bại.
+            fetched_at: Thời điểm thu thập dữ liệu dạng chuỗi ISO.
+            missing: Danh sách các thành phần nội dung bị thiếu (tùy chọn).
+            protection: Cơ chế bảo vệ phát hiện được (tùy chọn).
+            render_method: Phương thức render nội dung (mặc định 'requests').
+
+        Returns:
+            Dictionary chứa thông tin trạng thái capture của bài viết.
         """
         yyyymmdd = self._yyyymmdd(fetched_at)
         directory = self._dir_for(domain, yyyymmdd)
@@ -216,14 +235,17 @@ class RawStore:
 
     def save_binary(self, domain: str, url: str, key: str, response,
                     *, fetched_at: str) -> dict:
-        """Lưu file nhị phân (xlsx/docx/pdf) làm Bronze artifact.
+        """Lưu trữ tệp đính kèm nhị phân và tệp siêu dữ liệu .binmeta.json.
 
-        Khác `save()`: KHÔNG parse, KHÔNG quét <img>, KHÔNG giả định body là HTML.
-        Chỉ ghi bytes nguyên bản + meta. Dùng cho attachment của báo cáo định kỳ
-        (design 16) — payload giá trị nhất của NSO là bảng số liệu .xlsx.
+        Args:
+            domain: Tên miền của nguồn tin.
+            url: Đường dẫn tệp đính kèm.
+            key: Khóa định danh duy nhất cho tệp đính kèm.
+            response: Đối tượng phản hồi HTTP chứa nội dung nhị phân.
+            fetched_at: Thời điểm thu thập dữ liệu dạng chuỗi ISO.
 
-        `key` nên duy nhất trong 1 báo cáo (vd `<report_hash>__01-Bieu-T8`).
-        Đuôi file suy từ Content-Type, fallback theo đuôi trong URL.
+        Returns:
+            Dictionary chứa thông tin trạng thái capture tệp nhị phân.
         """
         yyyymmdd = self._yyyymmdd(fetched_at)
         directory = self._dir_for(domain, yyyymmdd)
@@ -237,9 +259,7 @@ class RawStore:
             ext = tail if tail in {".pdf", ".xlsx", ".xls", ".docx", ".doc", ".zip"} else ".bin"
 
         bin_path = os.path.join(directory, f"{key}{ext}")
-        # ⚠️ ĐUÔI .binmeta.json (KHÔNG phải .meta.json): pipeline derive quét
-        # rglob("*.meta.json") — file nhị phân không có html_path nên sẽ bị đếm
-        # "raw_missing" gây nhiễu. Đuôi riêng giữ derive sạch.
+        # Đuôi .binmeta.json được dùng riêng cho tệp nhị phân để tách biệt khỏi rglob *.meta.json của pipeline derive.
         meta_path = os.path.join(directory, f"{key}{ext}.binmeta.json")
 
         cap: dict = {

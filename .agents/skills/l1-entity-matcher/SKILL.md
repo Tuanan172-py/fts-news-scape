@@ -40,6 +40,20 @@ description: Nhận diện thực thể tài chính đa tầng từ tiêu đề 
 ## 3. Nguyên Tắc Xử Lý Từ Ngắn & Chống False Positive
 - **Từ ngắn được bảo vệ (`PROTECTED_SHORT_WORDS`)**: Các từ ngắn 2-3 ký tự như *"Mỹ", "Quỹ", "Fed", "Vàng", "Dầu", "CPI", "GDP", "SBV", "ECB", "BOJ", "OMO", "TPDN", "HRC", "BĐS"* là các thực thể hợp lệ, KHÔNG được bỏ qua.
 - **Ranh giới từ (Word Boundary)**: Phải nhận diện theo ranh giới từ hoàn chỉnh, không bắt nhầm chuỗi con trong từ phức (ví dụ: *"quyết định"* $\neq$ *"Quỹ"*, *"mỹ thuật"* $\neq$ *"Mỹ"*, *"dầu ăn"* $\neq$ *"Dầu thô"*).
+- **Quy tắc Tin Công bố thông tin (CBTT Positional Exemption)**:
+  - Định dạng `MÃ: Nội dung` ở đầu tiêu đề (ví dụ: `VND: Báo cáo tình hình quản trị...`) luôn là mã chứng khoán chính thức, ngay cả khi mã đó nằm trong stoplist viết tắt tiền tệ (`VND`).
+- **Phòng ngừa Nhầm lẫn Thuật ngữ Ngân hàng (Bank PGD Guard)**:
+  - Cụm từ `PGD` trong thông báo của ngân hàng (hoặc đứng trước tên địa danh: *"PGD Chợ Tân Bình"*, *"PGD Quận 9"*, *"Chi nhánh/PGD"*) là **Phòng Giao Dịch**, TUYỆT ĐỐI KHÔNG gán cho mã chứng khoán `TICKER:PGD` (Khí thấp áp).
+- **Hệ sinh thái & Thương hiệu Con (Ecosystem & Subsidiary Brands)**:
+  - Khi tiêu đề nhắc đến các thương hiệu bán lẻ hoặc công ty con cốt lõi, Subagent phải ánh xạ về mã tập đoàn mẹ niêm yết:
+    - `Bách Hóa Xanh`, `Điện Máy Xanh`, `An Khang` $\rightarrow$ `TICKER:MWG`
+    - `WinCommerce`, `WinMart`, `Masan Consumer`, `Phúc Long` $\rightarrow$ `TICKER:MSN`
+    - `FE Credit`, `VPBankS` $\rightarrow$ `TICKER:VPB`
+    - `VinFast`, `Vinpearl`, `Xanh SM` $\rightarrow$ `TICKER:VIC`
+    - `Becamex`, `Becamex Tokyu` $\rightarrow$ `TICKER:BCM`
+- **Chống Nhầm lẫn Tên người với Quốc gia (Morphological Guard)**:
+  - Từ `Nga` đứng sau danh xưng hoặc họ đệm (*"Bà Trần Kim Nga"*, *"Nga Rose"*) là tên người Việt/tên tài khoản, KHÔNG được gán nhãn `MACRO_GEO:NGA`.
+  - Từ `Mỹ` đứng trước danh từ riêng tiếng Việt (*"Mỹ Thuận"*, *"Mỹ Tho"*, *"Mỹ Đình"*, *"Mỹ Thủy"*, *"Á Mỹ"*) là địa danh/thương hiệu, KHÔNG được gán nhãn `MACRO_GEO:MY`.
 
 ---
 

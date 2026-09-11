@@ -38,11 +38,15 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-import pandas as pd
+try:
+    import pandas as pd
+except ImportError:
+    pd = None
 
 from src.agent.entities import GENERIC_ALIAS_STOPLIST, _fold
 from src.core.stdio import force_utf8_stdio
 force_utf8_stdio()
+
 
 # ----------------------------------------------------------------------------
 # Cấu hình đường dẫn mặc định

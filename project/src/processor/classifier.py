@@ -1,12 +1,7 @@
-"""
-Classifier — phân loại nội dung article.
-
-Rule-based (keyword, regex) — nhanh, deterministic, không cần LLM.
-"""
+"""Phân loại chủ đề bài viết dựa trên tập quy tắc từ khóa và biểu thức chính quy."""
 
 import re
 
-# Keyword rules — simple, fast
 CATEGORY_RULES: dict[str, list[re.Pattern]] = {
     "finance": [
         re.compile(r"(VN-?Index|chứng khoán|cổ phiếu|thị trường|đầu tư|ngân hàng)", re.I),
@@ -35,9 +30,14 @@ CATEGORY_RULES: dict[str, list[re.Pattern]] = {
 
 
 def classify_rule_based(title: str, body: str = "") -> list[str]:
-    """Rule-based classification, trả về list categories (có thể nhiều).
+    """Phân loại danh mục chủ đề của bài viết dựa trên tiêu đề và nội dung.
 
-    Dựa trên title + body. Nhanh, deterministic.
+    Args:
+        title: Tiêu đề bài viết.
+        body: Nội dung văn bản của bài viết.
+
+    Returns:
+        Danh sách tên chuyên mục phù hợp hoặc ['uncategorized'].
     """
     text = f"{title} {body[:2000]}"
     categories = []
@@ -47,6 +47,3 @@ def classify_rule_based(title: str, body: str = "") -> list[str]:
                 categories.append(cat)
                 break
     return categories if categories else ["uncategorized"]
-
-
-# LLM-based classification: để dành phase sau (spec §9 — rule-based trước).

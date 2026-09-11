@@ -1,8 +1,7 @@
-"""
-Drift report helper — liệt kê bài bị TEMPLATE_DRIFT / SELECTOR_BROKEN (phase-02).
+"""Trợ thủ truy vấn và báo cáo độ lệch cấu trúc (Drift Report Helper).
 
-Dùng chung cho `scripts/report_drift.py` (CLI) và `src/morninger.py` (job hằng ngày).
-Producer xem danh sách này để sửa selector/extractor TRƯỚC khi agent tiêu thụ package hỏng.
+Cung cấp hàm list_drift để trích xuất danh sách các bài viết gặp lỗi
+TEMPLATE_DRIFT hoặc SELECTOR_BROKEN trong bảng article_versions.
 """
 
 from __future__ import annotations
@@ -11,7 +10,15 @@ _HELD_STATES = ("TEMPLATE_DRIFT", "SELECTOR_BROKEN")
 
 
 def list_drift(store, limit: int = 100) -> list[dict]:
-    """Trả danh sách bài drift/broken, mới nhất trước."""
+    """Lấy danh sách các bài viết bị lệch giao diện hoặc hỏng selector.
+
+    Args:
+        store: Đối tượng ArticleStore kết nối cơ sở dữ liệu.
+        limit: Số lượng bản ghi tối đa cần lấy.
+
+    Returns:
+        Danh sách từ điển chứa thông tin các bài viết gặp sự cố drift.
+    """
     conn = store.connect()
     try:
         rows = conn.execute(

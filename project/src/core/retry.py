@@ -1,9 +1,4 @@
-"""
-Retry & fallback — spec §4.3: primary fail → fallback tự động, retry 3 lần.
-
-Transport-level retry (429/5xx) đã có trong HTTPClient (urllib3 Retry).
-Lớp này retry ở mức operation (cả lượt scraper.run) + fallback method chain.
-"""
+"""Cơ chế thử lại và chuyển đổi dự phòng (retry & fallback) cho chu trình thu thập."""
 
 from __future__ import annotations
 
@@ -16,15 +11,22 @@ from src.core.models import ScrapeResult
 
 
 class TransientError(Exception):
-    """Lỗi tạm thời (timeout, network, 429/5xx) — đáng retry."""
+    """Lỗi tạm thời cho phép kích hoạt cơ chế thử lại."""
 
 
 class PermanentError(Exception):
-    """Lỗi vĩnh viễn (401/403/404, schema break) — không retry."""
+    """Lỗi vĩnh viễn không thể khắc phục qua thử lại."""
 
 
 def _cycle_failed(result: ScrapeResult) -> bool:
-    """Cycle coi là fail khi không fetch được gì VÀ có lỗi (chết hẳn nguồn)."""
+    """Kiểm tra chu kỳ thu thập có thất bại hoàn toàn hay không.
+
+    Args:
+        result: Kết quả thu thập của scraper.
+
+    Returns:
+        True nếu không thu thập được bài viết nào và có lỗi phát sinh.
+    """
     return result.fetched == 0 and bool(result.errors)
 
 
@@ -35,13 +37,20 @@ def _cycle_failed(result: ScrapeResult) -> bool:
 def _attempt(scraper: BaseScraper) -> ScrapeResult:
     result = scraper.run()
     if _cycle_failed(result) and not scraper.disabled:
-        # disabled (vd FireAnt 401) là permanent — không retry
+        # Scraper bị disable là permanent error, không thử lại.
         raise TransientError(f"{scraper.name}: {result.errors[:2]}")
     return result
 
 
 def run_with_retry(scraper: BaseScraper) -> ScrapeResult:
-    """Chạy scraper với 3 attempts (backoff 2-30s). Không bao giờ raise."""
+    """Thực thi scraper với cơ chế thử lại lũy thừa tối đa 3 lần.
+
+    Args:
+        scraper: Đối tượng BaseScraper cần thực thi.
+
+    Returns:
+        Đối tượng ScrapeResult chứa kết quả hoặc danh sách lỗi tích lũy.
+    """
     try:
         return _attempt(scraper)
     except TransientError as e:
@@ -52,9 +61,14 @@ def run_with_retry(scraper: BaseScraper) -> ScrapeResult:
 
 def run_with_fallback(primary: BaseScraper,
                       fallback: BaseScraper | None = None) -> ScrapeResult:
-    """Primary (3 retries) → nếu vẫn fail và có fallback → fallback (3 retries).
+    """Thực thi scraper chính và tự động chuyển sang scraper dự phòng nếu thất bại.
 
-    Graceful degradation: luôn trả ScrapeResult, không raise.
+    Args:
+        primary: Scraper chính được ưu tiên chạy trước.
+        fallback: Scraper dự phòng khi scraper chính gặp sự cố (tùy chọn).
+
+    Returns:
+        Đối tượng ScrapeResult cuối cùng từ scraper chính hoặc dự phòng.
     """
     result = run_with_retry(primary)
     if not _cycle_failed(result) or fallback is None:

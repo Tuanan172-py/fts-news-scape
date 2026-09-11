@@ -1,11 +1,7 @@
-"""
-Definition-of-Done + preconditions — "điểm chạm báo hiệu công việc ĐÃ THỰC SỰ hoàn thành".
+"""Tiêu chuẩn hoàn thành (Definition-of-Done) và kiểm tra điều kiện tiên quyết cho Agent.
 
-Thuần (pure), machine-checkable, KHÔNG gọi LLM. Hiện thực đúng
-schemas/task-lifecycle-v1.yaml §definition_of_done + §preconditions (doc 10 §5-6).
-Dùng lại `contract_validator` cho predicate schema_valid (DRY).
-
-Ngưỡng đọc từ task-lifecycle-v1.yaml nếu có (PyYAML), else fallback hằng số khớp spec.
+Cung cấp các hàm kiểm tra tính hợp lệ về cấu trúc, độ xác thực căn cứ (groundedness),
+tính phân tích gia tăng giá trị (value added) và loại bỏ câu sáo rỗng (boilerplate).
 """
 
 from __future__ import annotations
@@ -17,17 +13,12 @@ from src.handoff.contract_validator import validate as schema_validate
 
 _SCHEMAS_DIR = Path(__file__).resolve().parents[2] / "schemas"
 
-# Câu "hàm ý" rỗng nghĩa đã đo được trong `agent_outputs` (2026-09-08): 3 template phủ
-# 1.274/1.274 bản ghi. Dùng dạng ĐÃ chuẩn hoá (thường + gộp khoảng trắng) để so khớp.
-# Mở rộng danh sách qua task-lifecycle-v1.yaml §thresholds.boilerplate_implications,
-# KHÔNG cần sửa code.
 _DEFAULT_BOILERPLATE = (
     "nội dung bài viết phản ánh thông tin và diễn biến quan trọng",
     "thông tin phản ánh diễn biến hoạt động kinh doanh, cơ cấu tài chính",
     "nội dung bài viết tác động tới nhận định thị trường",
 )
 
-# Fallback khớp task-lifecycle-v1.yaml §thresholds (nếu không đọc được YAML).
 _DEFAULT_THRESHOLDS = {
     "min_citations": 2,
     "quality_ok": ("high", "medium"),
@@ -35,23 +26,23 @@ _DEFAULT_THRESHOLDS = {
     "boilerplate_implications": _DEFAULT_BOILERPLATE,
 }
 _HELD_STATES = {"SELECTOR_BROKEN", "TEMPLATE_DRIFT"}
-# Fix D: span quá ngắn (vd "." / "VN") là chuỗi con của gần như mọi bài → groundedness giả.
 _MIN_SPAN_LEN = 20
 
 
 def _norm(s: str) -> str:
-    """Chuẩn hoá để so khớp nguyên văn: gộp khoảng trắng + thường hoá.
-
-    Cần vì kẻ copy hay nối câu bằng ' ' trong khi bản gốc ngăn bằng '\\n' — so thô sẽ trượt.
-    """
+    """Chuẩn hóa chuỗi văn bản bằng cách gộp khoảng trắng và chuyển thành chữ thường."""
     return " ".join((s or "").split()).lower()
 
 
 def load_thresholds() -> dict:
-    """Đọc ngưỡng từ task-lifecycle-v1.yaml; thiếu PyYAML/file → default."""
+    """Tải cấu hình các ngưỡng kiểm định chất lượng từ tệp task-lifecycle-v1.yaml.
+
+    Returns:
+        Từ điển chứa các ngưỡng kiểm định (min_citations, min_implication_len, ...).
+    """
     t = dict(_DEFAULT_THRESHOLDS)
     try:
-        import yaml  # optional
+        import yaml
         doc = yaml.safe_load((_SCHEMAS_DIR / "task-lifecycle-v1.yaml").read_text("utf-8"))
         th = (doc or {}).get("thresholds", {})
         if "min_citations" in th:
@@ -61,13 +52,21 @@ def load_thresholds() -> dict:
         if th.get("boilerplate_implications"):
             t["boilerplate_implications"] = tuple(
                 _norm(x) for x in th["boilerplate_implications"])
-    except Exception:  # noqa: BLE001 — spec fallback là hợp lệ
+    except Exception:
         pass
     return t
 
 
 def verify_preconditions(work_package: dict, *, check_integrity: bool = True) -> tuple[bool, list[str]]:
-    """Guardrail TRƯỚC khi giao agent (doc 10 §6). (ok, reasons)."""
+    """Kiểm tra các điều kiện tiên quyết của gói công việc trước khi bàn giao cho Agent.
+
+    Args:
+        work_package: Dữ liệu gói công việc cần bàn giao.
+        check_integrity: Cờ kiểm tra tính toàn vẹn mã băm SHA-256 tệp thô.
+
+    Returns:
+        Tuple gồm cờ thành công (True/False) và danh sách chuỗi lý do từ chối nếu có.
+    """
     reasons: list[str] = []
     if work_package.get("change_state") in _HELD_STATES:
         reasons.append(f"precondition: change_state={work_package.get('change_state')} → held")
@@ -86,20 +85,23 @@ def verify_preconditions(work_package: dict, *, check_integrity: bool = True) ->
 
 def check_dod(agent_output: dict, work_package: dict,
               thresholds: dict | None = None) -> tuple[bool, list[str]]:
-    """Definition-of-Done. Trả (ok, reasons). ok=True ⇔ TẤT CẢ 6 predicate đạt.
+    """Kiểm định kết quả xử lý của Agent theo bộ 6 tiêu chí hoàn thành Definition-of-Done.
 
-    1 schema_valid | 2 grounded | 3 quality_ok | 4 auditable | 5 value_added | 6 implication_specific.
-    (confidence do agent tự khai, calibration kém → KHÔNG dùng làm gate.)
+    Bao gồm:
+    1. Lược đồ hợp lệ (schema_valid)
+    2. Độ xác thực căn cứ trích dẫn trong văn bản (grounded)
+    3. Chất lượng trích xuất đạt yêu cầu (quality_ok)
+    4. Đầy đủ siêu dữ liệu kiểm toán (auditable)
+    5. Có giá trị phân tích mới, không chép nguyên văn (value_added)
+    6. Hàm ý sâu sắc, không dùng câu mẫu sáo rỗng (implication_specific)
 
-    **Vì sao có predicate 5-6 (thêm 2026-09-08).** Bốn predicate đầu đo được *tính có căn cứ*
-    nhưng KHÔNG đo được *có phân tích hay không* — và với kẻ chỉ copy nguyên văn thì phép thử
-    groundedness trở nên hiển nhiên đúng. Hệ quả đo trên DB thật: 1.274/1.274 bản ghi
-    `agent_outputs` đạt `dod_pass=1`, trong đó 1.274/1.274 có `key_points` copy y hệt
-    `citations[].source_span` và 100% `implication.text` là 1 trong 3 câu template. Một cổng
-    chưa từng từ chối bản ghi nào thì không phải là cổng.
+    Args:
+        agent_output: Dữ liệu kết quả do Agent nộp lại.
+        work_package: Gói công việc gốc đã giao.
+        thresholds: Cấu hình các ngưỡng kiểm định (tùy chọn).
 
-    Đây vẫn là **validation tất định**, KHÔNG phải giả lập trí tuệ agent (AGENTS.md §6.C):
-    nó chỉ TỪ CHỐI output vô giá trị, không tự sinh nội dung thay agent.
+    Returns:
+        Tuple gồm cờ đạt chuẩn (True/False) và danh sách các vi phạm nếu có.
     """
     t = thresholds or load_thresholds()
     reasons: list[str] = []

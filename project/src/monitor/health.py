@@ -1,8 +1,7 @@
-"""
-Health check CLI — `python -m src.monitor.health`.
+"""Kiểm tra sức khỏe hoạt động của các bộ thu thập dữ liệu (Health Check CLI).
 
-Exit 0 = tất cả OK; exit 1 = có scraper STALE (>30 phút) hoặc
-CRITICAL (≥3 lần fail liên tiếp) hoặc FAILED.
+Cung cấp các hàm truy vấn bảng heartbeat và metrics để đánh giá trạng thái
+hoạt động (OK, STALE, CRITICAL, FAILED).
 """
 
 from __future__ import annotations
@@ -19,9 +18,15 @@ CRITICAL_CONSECUTIVE = 3
 
 
 def check(store: ArticleStore) -> tuple[list[dict], bool]:
+    """Kiểm tra sức khỏe vận hành của toàn bộ các bộ thu thập trong cơ sở dữ liệu.
+
+    Args:
+        store: Đối tượng ArticleStore truy vấn dữ liệu nhịp tim và số liệu.
+
+    Returns:
+        Tuple gồm danh sách báo cáo chi tiết từng nguồn và cờ báo toàn bộ đều ổn định (all_ok).
+    """
     now = datetime.now(VN_TZ)
-    # ts lưu ISO +07:00 → tính cutoff cùng format trong Python, tránh lệch
-    # múi giờ của datetime('now') phía SQLite
     cutoff_24h = (now - timedelta(days=1)).isoformat(timespec="seconds")
     conn = store._connect_ro()
     try:
@@ -60,6 +65,7 @@ def check(store: ArticleStore) -> tuple[list[dict], bool]:
 
 
 def main() -> int:
+    """Điểm nhập thực thi công cụ kiểm tra sức khỏe hệ thống từ dòng lệnh."""
     settings = load_settings()
     store = ArticleStore(settings["database"]["path"], init_schema=False)
     report, all_ok = check(store)

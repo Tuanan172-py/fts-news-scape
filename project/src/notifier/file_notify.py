@@ -1,8 +1,7 @@
-"""
-File-based notify (spec §11: chỉ log file + stdout, không Telegram phase này).
+"""Thông báo dựa trên tệp nhật ký và màn hình điều khiển theo quy tắc cấu hình.
 
-Rules từ config/notifications.yaml: match.any keywords trên title + symbols.
-Matched article → dòng vào data/notifications/YYYY-MM-DD.log + stdout.
+Cung cấp lớp FileNotifier đối chiếu bài viết với các quy tắc thông báo
+(mã chứng khoán, tên miền nguồn, từ khóa) và ghi nhận vào tệp log nhật ký theo ngày.
 """
 
 from __future__ import annotations
@@ -18,6 +17,13 @@ from src.core.models import VN_TZ, Article, ScrapeResult
 
 
 class FileNotifier:
+    """Bộ lọc và gửi thông báo bài viết khớp quy tắc ra tệp log hoặc stdout.
+
+    Attributes:
+        out_dir: Thư mục lưu trữ các tệp nhật ký thông báo hàng ngày.
+        rules: Danh sách các quy tắc lọc và gán nhãn thông báo.
+    """
+
     def __init__(
         self,
         config_path: str = "config/notifications.yaml",
@@ -29,8 +35,6 @@ class FileNotifier:
         if p.exists():
             cfg = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
             self.rules = cfg.get("rules", [])
-        # Precompile regex whole-word cho rule dùng `tickers` (tránh SSI⊂passive,
-        # VIC⊂Vicem…). Case-SENSITIVE: mã CK viết hoa, không khớp chữ thường.
         for rule in self.rules:
             ticks = rule.get("tickers")
             if ticks:
@@ -39,19 +43,18 @@ class FileNotifier:
                 )
 
     def _log_path(self) -> Path:
+        """Trả về đường dẫn tệp nhật ký của ngày hiện tại."""
         self.out_dir.mkdir(parents=True, exist_ok=True)
         return self.out_dir / f"{datetime.now(VN_TZ):%Y-%m-%d}.log"
 
     def _matches(self, article: Article) -> str | None:
-        """Trả tag của rule ĐẦU TIÊN match, None nếu không rule nào match.
+        """Kiểm tra bài viết có khớp với bất kỳ quy tắc thông báo nào hay không.
 
-        Mỗi rule hỗ trợ 4 kiểu điều kiện (OR trong 1 rule), ưu tiên theo thứ tự:
-        - tickers: [MÃ...]      → khớp mã CK nguyên-token (whole-word, phân biệt hoa/thường)
-                                  trên title + symbols → tránh SSI⊂passive, VIC⊂Vicem.
-        - sources: [domain...]  → khớp nếu article.source_domain thuộc list
-                                  (nguồn chuyên tài chính/quốc tế → ghi tất, khỏi sót).
-        - has_symbol: true      → khớp nếu bài gắn BẤT KỲ mã CK nào (kể cả ngoài watchlist).
-        - match.any: [kw...]     → khớp substring trên title + symbols (match:true = tất).
+        Args:
+            article: Đối tượng bài viết cần đối chiếu.
+
+        Returns:
+            Nhãn tag của quy tắc đầu tiên khớp, hoặc None nếu không khớp quy tắc nào.
         """
         text = f"{article.title} {' '.join(article.symbols)}"
         haystack = text.lower()
@@ -77,15 +80,27 @@ class FileNotifier:
     SENTIMENT_MARKER = {"positive": "🟢", "negative": "🔴", "neutral": "🟡"}
 
     def format_article(self, a: Article, tag: str = "") -> str:
-        """1 dòng/bài, tối giản theo thiết kế gốc:
-        <marker> <title> (chi tiết (<url>))
-        Metadata (giờ, tag, symbols, nguồn) đã có trong DB — log chỉ để đọc lướt.
+        """Định dạng bài viết thành một dòng thông báo ngắn gọn.
+
+        Args:
+            a: Đối tượng bài viết cần định dạng.
+            tag: Nhãn quy tắc thông báo tương ứng.
+
+        Returns:
+            Chuỗi văn bản hiển thị thông tin bài viết một dòng.
         """
         marker = self.SENTIMENT_MARKER.get(a.sentiment, "🟡")
         return f"{marker} {a.title} (chi tiết ({a.url}))"
 
     def notify_articles(self, articles: list[Article]) -> int:
-        """Ghi 1 dòng/bài match rule (1 dòng/bài, không cách trống). Trả số match."""
+        """Ghi nhận các bài viết khớp quy tắc ra màn hình và tệp nhật ký.
+
+        Args:
+            articles: Danh sách bài viết cần lọc và thông báo.
+
+        Returns:
+            Số lượng bài viết khớp quy tắc thông báo thành công.
+        """
         matched = 0
         lines = []
         for a in articles:
@@ -102,10 +117,10 @@ class FileNotifier:
         return matched
 
     def notify_cycle_summary(self, results: list[ScrapeResult]) -> None:
-        """1 dòng tổng kết cycle: scraper nào mấy bài mới, scraper nào fail.
+        """In tóm tắt kết quả chu kỳ thu thập ra màn hình điều khiển và nhật ký logger.
 
-        Chỉ in stdout + logger — KHÔNG ghi vào file notify để log tin gọn,
-        chỉ toàn bài viết (thiết kế tối giản).
+        Args:
+            results: Danh sách kết quả thu thập ScrapeResult của các nguồn tin.
         """
         parts = []
         for r in results:

@@ -1,19 +1,7 @@
-"""
-Incremental re-derive driver — Bronze → Silver → version → package → catalog.
+"""Trình điều phối tinh chế dữ liệu tăng dần từ Bronze sang Silver và Catalog.
 
-Khác `rederive_from_bronze.py` (full-scan, cho bump schema/parser): đây là chế độ
-TĂNG DẦN cho vận hành liên tục (morninger). Dùng watermark `fetch_ts` (đơn điệu tăng
-theo capture, rate-limited ~3s/bài) để CHỈ xử lý Bronze artifact MỚI hơn watermark.
-
-Selection STRICT `>` (chỉ fetch_ts > watermark):
-  - re-run nhàn rỗi → processed=0 (không tạo version UNCHANGED thừa).
-  - file fetch_ts rỗng/corrupt → luôn được xử lý lại (retry raw_missing/corrupt).
-
-Watermark lưu trong bảng `pipeline_state` (key `silver_watermark`). Sau mỗi lần chạy:
-  - watermark_mới = max(fetch_ts) của các file xử lý THÀNH CÔNG (ok=True).
-  - file lỗi (raw_missing, package invalid...) không đóng góp fetch_ts → bị quét lại
-    chu kỳ sau.
-  - checkpoint "đầy đủ" ⇔ không còn file nào có fetch_ts > watermark_mới (backlog = 0).
+Sử dụng cơ chế điểm mốc thời gian (watermark fetch_ts) để chỉ xử lý các
+tệp dữ liệu tầng Bronze mới phát sinh, cập nhật bài viết tầng Silver và đưa vào hàng đợi.
 """
 
 from __future__ import annotations
@@ -30,7 +18,14 @@ CHECKPOINT_KEY = "silver_checkpoint"
 
 
 def _read_fetch_ts(meta_path: str) -> str:
-    """Đọc `fetch_ts` từ meta.json (field nhỏ, đọc nhanh). Trả '' nếu lỗi/thiếu."""
+    """Đọc trường fetch_ts từ tệp tin siêu dữ liệu .meta.json.
+
+    Args:
+        meta_path: Đường dẫn tới tệp .meta.json.
+
+    Returns:
+        Chuỗi thời gian thu thập bài viết, hoặc rỗng nếu tệp lỗi.
+    """
     try:
         meta = json.loads(Path(meta_path).read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError, TypeError):
@@ -39,7 +34,14 @@ def _read_fetch_ts(meta_path: str) -> str:
 
 
 def iter_meta_paths(raw_dir: str = "data/raw_html") -> list[str]:
-    """Tất cả *.meta.json dưới raw_dir, sắp xếp ổn định."""
+    """Liệt kê toàn bộ các tệp .meta.json trong thư mục lưu trữ Bronze theo thứ tự ổn định.
+
+    Args:
+        raw_dir: Đường dẫn thư mục gốc chứa dữ liệu thô Bronze.
+
+    Returns:
+        Danh sách đường dẫn các tệp siêu dữ liệu.
+    """
     root = Path(raw_dir)
     if not root.exists():
         return []
@@ -47,11 +49,10 @@ def iter_meta_paths(raw_dir: str = "data/raw_html") -> list[str]:
 
 
 def _should_process(fetch_ts: str, watermark: str) -> bool:
-    """Quyết định xử lý 1 file: first-run (watermark='') xử lý hết; sau đó chỉ file
-    MỚI hơn watermark (strict) hoặc file thiếu fetch_ts (retry)."""
-    if not watermark:  # first run — xử lý toàn bộ
+    """Kiểm tra xem tệp tin có thỏa mãn điều kiện cần tinh chế hay không."""
+    if not watermark:
         return True
-    if not fetch_ts:  # corrupt/thiếu fetch_ts — luôn retry
+    if not fetch_ts:
         return True
     return fetch_ts > watermark
 
@@ -68,10 +69,21 @@ def rederive_incremental(
     do_enqueue: bool = True,
     persist: bool = True,
 ) -> dict:
-    """Xử lý tăng dần Bronze artifact MỚI hơn watermark. Trả summary dict.
+    """Thực hiện tinh chế tăng dần các bài viết Bronze mới hơn mốc watermark.
 
-    watermark=None → đọc từ pipeline_state (key silver_watermark); '' nghĩa là từ đầu.
-    persist=True → ghi lại watermark + checkpoint vào pipeline_state.
+    Args:
+        store: Đối tượng ArticleStore quản lý cơ sở dữ liệu.
+        raw_dir: Thư mục chứa dữ liệu thô Bronze.
+        silver_dir: Thư mục lưu trữ kết quả Silver.
+        package_dir: Thư mục lưu trữ gói công việc Work Package.
+        watermark: Mốc thời gian bắt đầu quét (nếu None sẽ lấy từ cơ sở dữ liệu).
+        t_content: Ngưỡng khoảng cách nội dung.
+        t_template: Ngưỡng khoảng cách cấu trúc giao diện.
+        do_enqueue: Cờ cho phép đưa bài vào hàng đợi work_items.
+        persist: Cờ cho phép lưu lại mốc watermark mới vào cơ sở dữ liệu.
+
+    Returns:
+        Từ điển tổng kết số lượng xử lý, trạng thái và mốc watermark mới.
     """
     if watermark is None:
         watermark = store.get_state(WATERMARK_KEY) or ""
