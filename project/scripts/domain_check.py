@@ -1,20 +1,4 @@
-"""
-Domain Check CLI — kiểm tra domain health và tạo báo cáo.
-
-Usage:
-    python scripts/domain_check.py                  # validate tất cả domain
-    python scripts/domain_check.py cafef            # validate 1 domain
-    python scripts/domain_check.py --report         # tạo daily report
-    python scripts/domain_check.py cafef --raw-check  # check raw response
-    python scripts/domain_check.py --list           # liệt kê domain có schema
-
-Quy trình:
-    1. Đọc articles từ DB cho domain được chọn
-    2. Validate field-level health so với schema.yaml
-    3. Detect anomaly vs baseline 7 ngày
-    4. In kết quả ra console
-    5. (--report) Ghi báo cáo markdown vào data/reports/daily/
-"""
+"""Kiểm tra tính toàn vẹn và tình trạng hoạt động của các tên miền nguồn."""
 
 from __future__ import annotations
 

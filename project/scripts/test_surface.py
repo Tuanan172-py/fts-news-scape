@@ -1,7 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Fast and precise L1 matcher and auditor.
-"""
+"""Kiểm thử khớp nối chuỗi bề mặt và kiểm định đầu ra tầng L1."""
 import glob
 import json
 import os

@@ -1,8 +1,4 @@
-"""One-off: áp filter.none của yahoofinance.yaml lên các bài Yahoo đã có trong DB.
-
-In ra bài bị loại rồi xoá. Idempotent — chạy lại an toàn.
-Dùng: py scripts/clean_yahoo_lifestyle.py [--dry-run]
-"""
+"""Lọc và xóa các bài viết giải trí, đời sống của Yahoo Finance khỏi cơ sở dữ liệu."""
 
 import sqlite3
 import sys

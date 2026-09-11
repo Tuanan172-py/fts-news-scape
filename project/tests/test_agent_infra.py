@@ -125,7 +125,7 @@ def test_export_then_ingest_done(tmp_path):
     Catalog(store).enqueue(wp["article_id"], sha, "cafef.vn", wp_path, "NEW")
 
     runner = AgentRunner(store, task_dir=str(tmp_path / "tasks"))
-    exported = runner.export_tasks(limit=10, require_l1=False)
+    exported = runner.export_tasks(limit=10, require_l1=False, subscriber_only=False)
     assert len(exported) == 1
     packet = json.loads(open(exported[0]["path"], encoding="utf-8").read())
     assert packet["input"]["article_id"] == "art1"

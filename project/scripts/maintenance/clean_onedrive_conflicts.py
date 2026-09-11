@@ -1,22 +1,4 @@
-"""
-clean_onedrive_conflicts.py — Quét, giải quyết và dọn dẹp an toàn các file xung đột đồng bộ OneDrive.
-
-Các loại file xung đột xử lý:
-1. File mang hậu tố máy trạm (ví dụ: *-FPA-AnPT*, *-[A-Z0-9]+-[A-Z0-9]+*)
-2. File bản sao trùng lặp (* - Copy*, * (1)*)
-3. File lock tạm của Microsoft Office (~$*.xlsx)
-4. File staging tạm sót lại (*.tmp, *.tmp.*)
-
-Usage:
-    # Quét và xem trước các file xung đột (Dry-run):
-    python scripts/maintenance/clean_onedrive_conflicts.py
-
-    # Thực hiện dọn dẹp thật (Apply):
-    python scripts/maintenance/clean_onedrive_conflicts.py --apply
-
-    # Quét phạm vi cụ thể:
-    python scripts/maintenance/clean_onedrive_conflicts.py --path users/output --apply
-"""
+"""Quét và dọn dẹp các tệp tin xung đột đồng bộ OneDrive trong thư mục dự án."""
 from __future__ import annotations
 
 import argparse

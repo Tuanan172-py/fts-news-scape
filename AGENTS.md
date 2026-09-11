@@ -106,6 +106,15 @@ Maturity: this harness is at **H2-H5 (Durable SQLite + Active Observability + Au
 - **Vùng độc quyền của Subagents**: Xử lý ngữ nghĩa, trích xuất thực thể, tóm tắt, suy luận hàm ý và trích dẫn citations là vùng trí tuệ độc quyền của Subagents LLM (Model: Flash/Pro) được kích hoạt qua `invoke_subagent`.
 - **Zero Hallucination User Manifest**: Khi báo cáo phân phối và định tuyến tin, chỉ được phép tham chiếu người dùng thực tế được định nghĩa trong `manifest.yaml` (hiện tại: `AnPT`).
 
+## 7. Code Quality & Production Docstring Standards (Bắt Buộc Cho Mọi Agent)
+
+Chi tiết quy chuẩn bất biến tại [`.agents/rules/06-code-and-docstring-standards.md`](.agents/rules/06-code-and-docstring-standards.md):
+- **Chuẩn Google Style**: Dòng 1 câu mệnh lệnh kết thúc bằng dấu chấm; các section `Args:`, `Returns:`, `Raises:` đầy đủ kiểu và mô tả ngắn gọn. Module docstring đúng 1 câu khẳng định.
+- **Triệt tiêu Blacklist**: Tuyệt đối không dùng từ nối thừa (`nhìn chung`, `thông thường`, `về cơ bản`, `cần lưu ý rằng`, `đáng chú ý`), đại từ ngôi thứ nhất (`chúng ta`, `tôi`), câu hỏi tu từ, emoji, thẻ tạm (`[LEGACY]`, `TODO tạm thời`).
+- **Production Deliverable**: Docstrings và comments chỉ nói rõ nhận gì, làm gì, trả về gì và giải thích logic phức tạp không hiển nhiên. Không đưa nhật ký gỡ lỗi hoặc giải trình lịch sử vào mã nguồn.
+- **Kiểm định Bắt buộc**: Mọi thay đổi code phải vượt qua kiểm tra cú pháp AST (`ast.parse`) và bảo đảm toàn bộ unit test (`pytest tests/`) luôn PASS 100%.
+
+
 
 
 

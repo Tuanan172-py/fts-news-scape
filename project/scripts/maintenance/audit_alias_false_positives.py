@@ -1,22 +1,4 @@
-"""audit_alias_false_positives.py — Do lai rui ro nham cua alias 1-tu/ngan tren toan bo
-tieu de that trong DB, de nguoi bien tap bo sung `_context_guards.yaml`
-(block_in/drop_bare) hoac GENERIC_ALIAS_STOPLIST.
-
-Vi sao can: L1 code-first (docs/decisions/0003-code-first-l1-delivery.md) chi kiem tra rui ro
-nay MOT LAN truoc khi mo cong. Danh muc entity thay doi lien tuc (them ma, them alias tu ten
-cong ty) nen landmine moi co the xuat hien bat cu luc nao — vi du thuc te: alias "Trang" cua
-TICKER:TFC gay 21/1787 tieu de sai (0% dung) nhung khong ai phat hien cho toi khi do thu cong.
-Script nay bien viec do thu cong do thanh 1 lenh chay lai duoc.
-
-CHI liet ke con so va vi du that (dem/tra bang) - KHONG tu suy dien dung/sai va KHONG tu sua
-config (dung AGENTS.md Sec6C: cam gia lap tri tue Agent bang heuristic script). Nguoi bien tap
-doc vi du roi tu quyet dinh co them guard hay khong.
-
-Usage:
-    python scripts/maintenance/audit_alias_false_positives.py
-    python scripts/maintenance/audit_alias_false_positives.py --max-len 5 --min-hits 3 --examples 8
-    python scripts/maintenance/audit_alias_false_positives.py --db data/monocle.db --out report.txt
-"""
+"""Kiểm toán tần suất và rủi ro nhận diện sai của các bí danh ngắn."""
 from __future__ import annotations
 
 import argparse

@@ -1,20 +1,4 @@
-"""
-Morninger — điều phối pipeline ban ngày (capture → silver re-derive → drift report).
-
-Một tiến trình độc lập, APScheduler 3 job (thay cron `run_once` 1 lần/ngày):
-  1. capture      mỗi 15'  → Orchestrator.run_cycle()  (Bronze + articles CSV)
-  2. re-derive    mỗi 30'  → rederive_incremental()    (Silver tăng dần + watermark)
-  3. drift report mỗi sáng → list_drift()               (TEMPLATE_DRIFT/SELECTOR_BROKEN)
-
-Checkpoint: sau mỗi re-derive, nếu không còn Bronze artifact nào chưa xử lý (backlog=0)
-→ ghi `silver_checkpoint` vào pipeline_state = "danh sách tin cấp Silver đã cập nhật đầy đủ".
-
-Usage:
-    python -m src.morninger                         # scheduler chạy liên tục
-    python -m src.morninger --once capture          # 1 cycle capture rồi thoát
-    python -m src.morninger --once derive           # 1 lần re-derive tăng dần rồi thoát
-    python -m src.morninger --once drift            # 1 lần drift report rồi thoát
-"""
+"""Bộ điều phối lập lịch và thực thi các chu kỳ xử lý pipeline ban ngày."""
 
 from __future__ import annotations
 
@@ -41,8 +25,7 @@ from src.orchestrator import Orchestrator
 
 
 def _force_utf8_stdio() -> None:
-    """Ép stdout/stderr sang UTF-8 (Windows: print tiếng Việt qua Task Scheduler
-    bị redirect vào file dùng cp1252 → UnicodeEncodeError)."""
+    """Cấu hình lại luồng xuất nhập chuẩn sang UTF-8 tránh lỗi mã hóa ký tự."""
     for stream in (sys.stdout, sys.stderr):
         try:
             stream.reconfigure(encoding="utf-8", errors="replace")
@@ -51,7 +34,17 @@ def _force_utf8_stdio() -> None:
 
 
 def build_scheduler(capture_fn, derive_fn, drift_fn, cfg: dict):
-    """Dựng BlockingScheduler với 3 job (chưa start) — tách ra để test được trigger."""
+    """Khởi tạo bộ lập lịch BlockingScheduler với các tác vụ định kỳ.
+
+    Args:
+        capture_fn: Hàm thực thi thu thập dữ liệu Bronze.
+        derive_fn: Hàm thực thi bóc tách tăng dần Silver.
+        drift_fn: Hàm kiểm tra sai lệch mẫu giao diện (drift).
+        cfg: Từ điển cấu hình thời gian chạy của morninger.
+
+    Returns:
+        Đối tượng BlockingScheduler đã đăng ký đầy đủ các công việc.
+    """
     from apscheduler.schedulers.blocking import BlockingScheduler
     from apscheduler.triggers.cron import CronTrigger
     from apscheduler.triggers.interval import IntervalTrigger
@@ -93,7 +86,17 @@ def build_scheduler(capture_fn, derive_fn, drift_fn, cfg: dict):
 
 
 class Morninger:
+    """Điều phối toàn diện tiến trình lập lịch thu thập và tinh chỉnh tin tức ban ngày.
+
+    Attributes:
+        settings: Cấu hình hệ thống chung.
+        store: Kho dữ liệu cơ sở ArticleStore.
+        cfg: Cấu hình riêng của mô-đun morninger.
+        orch: Đối tượng điều phối Orchestrator.
+    """
+
     def __init__(self):
+        """Khởi tạo đối tượng điều phối Morninger."""
         self.settings = load_settings()
         setup_logging(
             self.settings["logging"]["level"], self.settings["logging"]["dir"]
@@ -106,14 +109,19 @@ class Morninger:
 
     # -- jobs -----------------------------------------------------------------
     def run_capture(self) -> int:
-        """Job 1: quét Bronze (delegate sang orchestrator). Trả số bài mới."""
+        """Thực thi chu kỳ thu thập dữ liệu nguồn Bronze.
+
+        Returns:
+            Số lượng bài viết mới được ghi nhận.
+        """
         return self.orch.run_cycle()
 
     def run_derive(self) -> dict:
-        """Job 2: re-derive tăng dần Silver từ Bronze (watermark). Trả summary.
+        """Thực thi chu kỳ chuyển đổi tăng dần từ Bronze sang Silver.
 
-        Khi đạt checkpoint (backlog=0) → xuất manifest Silver 'hôm nay' ra CSV
-        (danh sách tin cấp Silver đầy đủ). Lỗi export không làm hỏng derive."""
+        Returns:
+            Từ điển báo cáo tiến độ xử lý và thông tin manifest nếu đạt điểm kiểm tra.
+        """
         s = rederive_incremental(self.store)
         if s["checkpoint_reached"]:
             try:
@@ -128,7 +136,11 @@ class Morninger:
         return s
 
     def run_drift(self) -> int:
-        """Job 3: drift report mỗi sáng. Trả số bài cần reconcile."""
+        """Kiểm tra và cảnh báo các bài viết gặp sai lệch mẫu hoặc bộ chọn.
+
+        Returns:
+            Số lượng bài viết có trạng thái sai lệch phát hiện được.
+        """
         rows = list_drift(self.store, limit=int(self.cfg.get("drift_limit", 100)))
         if not rows:
             logger.info("[morninger] drift report: không có bài drift/broken ✅")

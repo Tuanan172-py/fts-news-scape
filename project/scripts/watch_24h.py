@@ -1,9 +1,4 @@
-"""
-24h stability watcher — snapshot mỗi giờ: article counts, heartbeat states,
-cycle durations → CSV. Chạy song song với orchestrator.
-
-Usage: python scripts/watch_24h.py [--hours 24] [--out data/watch_24h.csv]
-"""
+"""Giám sát tính ổn định và hiệu năng hệ thống định kỳ 24 giờ."""
 
 from __future__ import annotations
 

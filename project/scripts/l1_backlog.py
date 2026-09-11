@@ -1,27 +1,4 @@
-"""
-l1_backlog.py — Kiểm kê TỒN ĐỌNG toàn pipeline + in kế hoạch rút backlog theo mức "lời".
-
-CHỈ ĐỌC. Không sửa DB, không phát packet, không gọi agent.
-
-Trả lời đúng 1 câu hỏi: *còn bao nhiêu việc, và nên làm cái nào trước để ra hàng nhanh nhất?*
-
-Xếp hạng ưu tiên (cao → thấp):
-  T1 gold-ready  — có trong `articles`, Gold đã đạt DoD, THIẾU L1.
-                   Gold đã trả tiền rồi mà không giao được (định tuyến cần entity của L1).
-                   Chạy L1 xong là vào thẳng final.csv, gold_status=GOLD. Tốn 0 token Gold.
-  T2 l1-only     — có trong `articles`, chưa L1 chưa Gold.
-                   Chạy L1 xong ra final.csv dạng L1_ONLY (thiếu summary/key_points),
-                   đồng thời MỞ KHOÁ cho agent_export (mặc định --require-l1) bốc Gold.
-  T3 gold-next   — có trong `articles`, ĐÃ có L1, work_item còn pending.
-                   Sẵn sàng cho Gold ngay; đây là nơi token Gold sinh lời chắc chắn.
-  T4 orphan      — có work_item/l1_task nhưng KHÔNG có dòng nào trong `articles`.
-                   Gate export là `articles ⨝ l1_outputs` nên nhóm này VĨNH VIỄN không ra
-                   được final.csv. Chạy agent cho chúng là phí. Cần sửa Bronze/Silver.
-
-Usage:
-    python scripts/l1_backlog.py
-    python scripts/l1_backlog.py --json
-"""
+"""Kiểm kê và phân loại các tác vụ tồn đọng trong hàng đợi xử lý."""
 from __future__ import annotations
 
 import argparse

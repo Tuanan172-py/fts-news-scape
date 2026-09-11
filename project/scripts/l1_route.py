@@ -1,18 +1,4 @@
-"""
-l1_route.py — TẦNG DETERMINISTIC của lớp L1 (code-first) + phát task-packet handoff.
-
-Với mỗi work-package (hoặc silver): chạy code-first (khớp mã+alias) → lưu vào DB
-(l1_tasks) → phát task-packet cho agent tra soát (data/agent_tasks/l1/<id>.task.json).
-
-Đây là phần CODE làm hết; việc còn lại là cron kích hoạt agent xử lý các packet,
-rồi nạp kết quả bằng scripts/l1_ingest.py.
-
-Nguồn (ưu tiên work_packages — output pipeline; fallback silver):
-  python scripts/l1_route.py
-  python scripts/l1_route.py --source data/work_packages --review all
-  python scripts/l1_route.py --review missed          # chỉ phát packet tin code không khớp
-  python scripts/l1_route.py --only gold-ready --all  # ƯU TIÊN: bài đã có Gold nhưng thiếu L1
-"""
+"""Định tuyến và phát gói công việc nhận diện thực thể L1."""
 from __future__ import annotations
 
 import argparse
@@ -33,13 +19,14 @@ force_utf8_stdio()
 
 
 def _iter_sources(source: str, reverse: bool = True):
-    """Liệt kê work-package/silver theo THỜI GIAN, mới nhất trước (reverse=True).
+    """Liệt kê danh sách tệp nguồn theo thời gian sửa đổi gần nhất.
 
-    Trước đây sắp theo CHUỖI đường dẫn. Đường dẫn có dạng `<source>/<domain>/<...>/<id>.json`
-    nên sắp giảm dần = sắp theo tên domain giảm dần: vneconomy.vn > vietstock.vn > ... >
-    cafef.vn xếp CUỐI. Cộng với trần mặc định 50 bài/lần chạy, cafef.vn — nguồn lớn nhất
-    (3.733/7.219 bài) — gần như không bao giờ tới lượt. Đo trên monocle.db: `l1_tasks` chỉ
-    có 3/8 domain trong khi `work_items` có đủ 8.
+    Args:
+        source: Thư mục gốc chứa các gói công việc.
+        reverse: Có sắp xếp thời gian giảm dần hay không. Mặc định True.
+
+    Returns:
+        Danh sách đường dẫn tệp JSON đã sắp xếp.
     """
     pats = [os.path.join(source, "*", "*", "*.json")]
     files = [f for p in pats for f in glob.glob(p)]

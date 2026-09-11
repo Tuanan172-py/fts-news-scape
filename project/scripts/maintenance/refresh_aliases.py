@@ -1,23 +1,4 @@
-"""
-refresh_aliases.py — Áp lại `config/entities/aliases/*.yaml` lên `data/entities/entities.json`
-mà KHÔNG cần dựng lại toàn bộ registry.
-
-Vì sao cần: `scripts/build_entities.py` đọc dữ liệu gốc của tổ chức (`FRA - Data`, parquet +
-xlsx). Biên tập viên sửa alias thường xuyên hơn nhiều so với dữ liệu gốc, và trên máy chỉ có
-OneDrive Files-On-Demand thì các file gốc là placeholder chưa tải ("The cloud file provider is
-not running") nên build đầy đủ chạy không được. Script này chỉ đụng trường `aliases` của các
-nhóm KHÔNG phải chứng khoán — đúng phần do người biên tập nắm.
-
-CHỈ áp cho: INDUSTRY_GICS1/2/3, MACRO_GEO, MACRO_THEME, ASSET_CLASS, INSTITUTION, EXCHANGE,
-INDEX. KHÔNG đụng TICKER/ETF/SECURITY_OTHER (alias sinh từ tên pháp lý, thuộc build_entities).
-
-Giữ đúng quy tắc của build_entities._industry(): alias luôn bắt đầu bằng chính tên/canonical
-của thực thể, rồi mới tới alias trong yaml.
-
-Usage:
-    python scripts/maintenance/refresh_aliases.py --dry-run
-    python scripts/maintenance/refresh_aliases.py
-"""
+"""Cập nhật các bí danh từ cấu hình YAML vào tệp danh mục thực thể."""
 from __future__ import annotations
 
 import argparse

@@ -1,10 +1,4 @@
-"""
-report_drift — liệt kê bài bị TEMPLATE_DRIFT / SELECTOR_BROKEN để reconcile (phase-02).
-
-Producer xem list này để sửa selector/extractor TRƯỚC khi agent tiêu thụ package hỏng.
-
-Usage: python scripts/report_drift.py [limit]
-"""
+"""Báo cáo các bài viết phát hiện sai lệch mẫu giao diện hoặc bộ chọn."""
 
 from __future__ import annotations
 

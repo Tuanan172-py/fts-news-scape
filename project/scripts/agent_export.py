@@ -1,13 +1,4 @@
-"""
-Xuất task-packet cho agent NGOÀI (Vòng 3 infra, không LLM).
-
-Claim work_items pending (mặc định CHỈ bài đã qua L1) → ghi data/agent_tasks/<article_id>.task.json. Phát hành packet cho agents thực thi (prompt tự viết từ schemas/agent-instructions-v1.md), nhận
-agent-output-v1 rồi nạp lại bằng scripts/agent_ingest.py.
-
-Usage:
-    python scripts/agent_export.py            # tối đa 20 việc
-    python scripts/agent_export.py 100        # tối đa 100 việc
-"""
+"""Xuất các gói công việc cho agent phân tích chuyên sâu."""
 
 from __future__ import annotations
 

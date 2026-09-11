@@ -1,14 +1,4 @@
-"""
-CLI tạo bản sao Snapshot của database cho User / Chuyên viên phân tích.
-
-Bản snapshot này hoàn toàn độc lập với `data/monocle.db` đang chạy,
-cho phép mở bằng DB Browser for SQLite, DBeaver, DataGrip hoặc Excel
-mà không lo làm lock hay crash pipeline của các Agents.
-
-Usage:
-    python scripts/db_snapshot.py
-    python scripts/db_snapshot.py --out data/monocle_custom.db
-"""
+"""Tạo bản sao chụp cơ sở dữ liệu SQLite tại thời điểm xác định."""
 
 from __future__ import annotations
 

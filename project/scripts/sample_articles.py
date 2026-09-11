@@ -1,22 +1,4 @@
-"""
-Xuất bài đăng mẫu từ TỪNG nguồn — tổ chức kim tự tháp để đọc logic:
-
-    logs/sample_articles/
-      README.md               index: cách đọc + bảng tổng quan + đối chiếu DB
-      01-layer0-exchanges.md  nguồn chính thống Sở GD (hnx, hose)
-      02-api-aggregators.md   API chuyên CK (cafef, tnck, fireant, vndirect)
-      03-vn-press-rss.md      báo chí VN (12 domain RSS)
-      04-intl-rss.md          quốc tế EN (cnbc, marketwatch, yahoo, fed, oilprice)
-
-Mỗi domain: luồng tin + breakdown feed; bài ĐẦU minh hoạ ĐẦY ĐỦ 6 giai đoạn
-pipeline (RAW→PARSE→DEDUP→ENRICH→NLP→DB), các bài sau dạng thẻ gọn.
-Chỉ đọc, KHÔNG ghi DB / KHÔNG mark_seen.
-
-Usage:
-    python scripts/sample_articles.py                 # tất cả nguồn, 2 bài/feed
-    python scripts/sample_articles.py cafef vnexpress # chọn nguồn (vẫn ghi đủ bộ file)
-    python scripts/sample_articles.py --n 3           # 3 bài/feed
-"""
+"""Trích xuất và kết xuất bài viết mẫu đại diện từ các nguồn thu thập."""
 
 from __future__ import annotations
 

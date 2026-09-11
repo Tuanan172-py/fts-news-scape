@@ -1,14 +1,4 @@
-"""
-CLI xuất manifest Silver (danh sách tin cấp Silver) ra CSV.
-
-Logic thật ở src/export/silver_manifest.py (dùng chung với morninger checkpoint).
-
-Usage:
-    python scripts/export_silver.py                # toàn bộ Silver → data/exports/silver-YYYYMMDD.csv
-    python scripts/export_silver.py --today        # chỉ bài captured hôm nay (giờ VN)
-    python scripts/export_silver.py --days 3       # 3 ngày gần nhất (theo captured_at)
-    python scripts/export_silver.py --out data/check.csv
-"""
+"""Xuất danh sách bài viết chuẩn Silver ra tệp CSV manifest."""
 
 from __future__ import annotations
 

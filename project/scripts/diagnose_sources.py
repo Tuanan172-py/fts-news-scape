@@ -1,11 +1,4 @@
-"""
-Chẩn đoán từng domain: fetch_list() + parse_item() sample, báo lỗi.
-Bỏ qua dedup/DB/enrich để test sạch kết nối + parse của TỪNG nguồn.
-
-Usage:
-    python scripts/diagnose_sources.py            # tất cả domain có config
-    python scripts/diagnose_sources.py cafef tnck
-"""
+"""Kiểm tra và chẩn đoán khả năng thu thập dữ liệu của từng nguồn tin."""
 
 from __future__ import annotations
 

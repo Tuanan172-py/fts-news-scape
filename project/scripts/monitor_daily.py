@@ -1,14 +1,4 @@
-"""
-monitor_daily.py — CLI điều khiển xuất báo cáo giám sát hệ thống theo mốc thời gian.
-
-Examples:
-    python scripts/monitor_daily.py                       # Hôm nay (giờ VN)
-    python scripts/monitor_daily.py --date 2026-09-07    # Ngày cụ thể
-    python scripts/monitor_daily.py --date yesterday      # Hôm qua
-    python scripts/monitor_daily.py --days 7              # 7 ngày gần nhất
-    python scripts/monitor_daily.py --save-md             # Vừa in vừa lưu reports/daily/report-YYYY-MM-DD.md
-    python scripts/monitor_daily.py --json                # Xuất JSON thô
-"""
+"""Xuất báo cáo giám sát tổng hợp vận hành hệ thống theo ngày."""
 
 from __future__ import annotations
 

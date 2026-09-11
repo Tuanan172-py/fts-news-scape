@@ -1,17 +1,4 @@
-"""
-run_user_workflow.py — Chạy toàn trình lớp NGƯỜI DÙNG: compile → ingest → output.
-
-Scrape TÁCH riêng (mặc định --skip-scrape): giả định cron/pipeline đã scrape & tạo work_packages.
-Handoff agent bất đồng bộ: dùng scripts/l1_route.py + scripts/agent_export.py để PHÁT packet;
-sau khi agent nộp output, chạy lệnh này với --l1-dir/--agent-dir để NẠP rồi ghi output.
-
-Usage:
-    # chỉ ghi output từ dữ liệu đã ingest sẵn:
-    python scripts/run_user_workflow.py --date today
-    # nạp output agent rồi ghi:
-    python scripts/run_user_workflow.py --l1-dir data/agent_outputs_l1 --agent-dir data/agent_outputs --date today
-    python scripts/run_user_workflow.py --users AnPT,A --days 7
-"""
+"""Thực thi luồng làm việc tích hợp cho lớp phân phối người dùng."""
 from __future__ import annotations
 
 import argparse

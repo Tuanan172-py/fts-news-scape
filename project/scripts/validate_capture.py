@@ -1,17 +1,4 @@
-"""
-Audit end-to-end cơ chế RAW HTML CAPTURE — chạy LIVE, MỌI nguồn có capture.
-
-Xây scraper thật, HTTPClient thật, fetch vài bài, lưu raw artifact vào thư mục
-tạm, rồi in báo cáo kiểm chứng: capture_status, byte-exact sha256, images[],
-headers, robots, missing. Không đụng DB production (dùng temp DB).
-
-Usage:
-    python scripts/validate_capture.py                  # MỌI domain enabled, 2 bài/nguồn
-    python scripts/validate_capture.py cafef 3          # chỉ cafef, 3 bài
-    python scripts/validate_capture.py tnck baodautu    # chọn nhiều nguồn
-
-Chỉ audit nguồn có khai block `capture:` (nguồn không capture thì không có gì để kiểm).
-"""
+"""Kiểm định chất lượng cơ chế chụp và lưu trữ artifact thô (Bronze)."""
 
 from __future__ import annotations
 

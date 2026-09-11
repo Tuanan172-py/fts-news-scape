@@ -1,26 +1,4 @@
-"""
-Thu thập báo cáo định kỳ NSO (Cục Thống kê) — design 16.
-
-OFFLINE, opt-in, tần suất thấp. KHÔNG nằm trong cycle 15 phút của orchestrator.
-NSO công bố ~ngày 3 hàng tháng lúc ~09:00 (verified 2026-09-07) → lịch khuyến nghị:
-cron ngày 2-6 hàng tháng, 2 lần/ngày (08:00 & 14:00 giờ VN), cộng 1 lần/tuần để bắt
-báo cáo quý/năm. Xem scripts/run_periodic_reports.ps1.
-
-Usage:
-    python scripts/fetch_periodic_reports.py                    # 20 bài mới nhất
-    python scripts/fetch_periodic_reports.py --after 2026-08-01 # sync tăng dần
-    python scripts/fetch_periodic_reports.py --limit 3
-    python scripts/fetch_periodic_reports.py --dry-run          # chỉ discover + parse kỳ
-    python scripts/fetch_periodic_reports.py --no-attachments   # bỏ .xlsx/.docx
-    python scripts/fetch_periodic_reports.py --list             # xem đã có gì trong DB
-
-Bronze:
-    data/raw_reports/nso.gov.vn/<yyyymmdd>/<type>-<period>-r<rev>.html         (+ .meta.json)
-    data/raw_reports/nso.gov.vn/<yyyymmdd>/<type>-<period>-r<rev>__<file>.xlsx (+ .binmeta.json)
-
-Root RIENG (khong phai data/raw_html) de pipeline derive/handoff cua bai bao
-khong nuot nham bao cao dinh ky - xem design 16 muc 3.
-"""
+"""Thu thập các báo cáo thống kê định kỳ từ Tổng cục Thống kê (NSO)."""
 
 from __future__ import annotations
 

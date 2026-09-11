@@ -1,44 +1,4 @@
-"""
-Backfill bài `detail_deferred` — BRONZE-FIRST (thay thế enrich_deferred.py đã xoá).
-
-Vì sao có script này
---------------------
-Cycle đầu của một nguồn mới thường sinh hàng trăm bài trong khi
-`detail.max_details_per_cycle` chỉ cho phép ~30-40 → phần dư bị đánh dấu
-`metadata.detail_deferred = true` và chỉ có `summary` làm body. Dedup
-(`seen_articles`) chặn hot path fetch lại, nên chúng KHÔNG tự khỏi.
-
-`scripts/maintenance/enrich_deferred.py` (ĐÃ XOÁ 2026-09-07) từng làm việc này bằng
-`extract_content(url, html=http.get(url))` — tức **ghi content_text vào DB mà KHÔNG
-tạo Bronze artifact nào**. Dưới chế độ Bronze-first (design 06/07) đó là sai: mọi
-`content_text` phải truy vết được về một file raw byte-exact.
-
-Script này Bronze-first tuyệt đối
----------------------------------
-1. Ưu tiên **PURE**: nếu đã có Bronze artifact cho bài (bất kỳ ngày nào) → dựng lại
-   `content_text` TỪ FILE ĐÓ, không chạm mạng. Đây là đường đi mặc định sau khi
-   `scripts/refresh_watchlist.py` đã kéo Bronze về.
-2. Chỉ khi CHƯA có Bronze và bật `--fetch`: fetch qua `RawStore` (robots + rate limit
-   đầy đủ) để **ghi Bronze trước**, rồi mới dựng content.
-3. TUYỆT ĐỐI không bao giờ ghi `content_text` mà không có Bronze tương ứng.
-
-Quy trình khuyến nghị cho nguồn mới:
-    python scripts/refresh_watchlist.py 300 <host>       # kéo Bronze cho backlog
-    python -m src.morninger --once derive                 # Bronze → Silver
-    python scripts/maintenance/backfill_deferred.py <host>  # Bronze → cột DB
-
-Usage:
-    python scripts/maintenance/backfill_deferred.py                 # mọi domain, 100 bài
-    python scripts/maintenance/backfill_deferred.py vietnambiz.vn
-    python scripts/maintenance/backfill_deferred.py vietnambiz.vn --limit 500
-    python scripts/maintenance/backfill_deferred.py fireant.vn --fetch   # fetch nếu thiếu Bronze
-    python scripts/maintenance/backfill_deferred.py --dry-run
-    python scripts/maintenance/backfill_deferred.py baodautu.vn --dates-only --limit 500
-
-`--dates-only`: sửa riêng cột `published_at` rỗng cho bài ĐÃ có Bronze. Cần cho nguồn mà
-ngày CHỈ có ở trang detail (vd baodautu: không có <time>/article:published_time/JSON-LD,
-ngày là text thuần trong `span.post-time`) — bài deferred chưa từng qua enrich() nên cột rỗng.
-"""
+"""Bổ sung nội dung toàn văn và ngày xuất bản cho các bài viết bị trì hoãn bóc tách."""
 
 from __future__ import annotations
 

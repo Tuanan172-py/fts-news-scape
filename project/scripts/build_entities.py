@@ -1,29 +1,4 @@
-"""
-build_entities.py — Trích xuất & chuẩn hoá DANH SÁCH THỰC THỂ (entity master list)
-từ dữ liệu gốc của tổ chức, phục vụ lớp L3 agent nhận diện thực thể trong tin tức.
-
-Nguồn dữ liệu (FRA - Data):
-  - trading_data/market_caps.parquet, os.xlsx, indices.parquet  -> mã (ticker) + chỉ số
-  - company_data/company_name.xlsx, etf_name.xlsx               -> tên doanh nghiệp + ETF
-  - industry_classification/industry_classification.xlsx        -> ngành (GICS 3 cấp)
-
-Đầu ra (project/data/entities/):
-  - entities.json        : master list (1 object / thực thể) — nguồn chân lý
-  - entities.csv         : bản phẳng để tra cứu nhanh
-  - taxonomy.json        : cây phân loại (type + ngành GICS + sàn + chỉ số)
-  - stats.json           : thống kê build
-
-Tiêu chí (theo yêu cầu):
-  * Unique   : entity_id là khoá chính duy nhất (namespaced theo type)
-  * Rõ ràng  : mỗi thực thể có canonical_name + type + aliases xác định
-  * Nhất quán: mọi thực thể cùng schema
-  * Có thuộc tính nhận dạng: code + aliases (surface forms để match trong text)
-  * Tránh dư thừa: TICKER & tên doanh nghiệp gộp làm MỘT thực thể (name là thuộc tính)
-
-Chạy:
-  python scripts/build_entities.py
-  python scripts/build_entities.py --data-root "C:/.../FRA - Data" --out data/entities
-"""
+"""Trích xuất và chuẩn hóa danh mục thực thể tài chính từ dữ liệu nguồn."""
 from __future__ import annotations
 
 import argparse

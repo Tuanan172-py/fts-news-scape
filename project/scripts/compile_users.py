@@ -1,13 +1,4 @@
-"""
-compile_users.py — Biên dịch input Excel của user → config yaml subscription.
-
-Quét users/input/<name>/entities.xlsx → project/config/entities/users/<name>.yaml.
-Báo entity không map được (users/input/<name>/_unknown.txt) mà KHÔNG làm hỏng compile.
-
-Usage:
-    python scripts/compile_users.py --all
-    python scripts/compile_users.py --input-root ../users/input
-"""
+"""Biên dịch danh mục theo dõi của người dùng từ Excel sang cấu hình YAML."""
 from __future__ import annotations
 
 import argparse

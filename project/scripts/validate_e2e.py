@@ -1,10 +1,4 @@
-"""
-validate_e2e — smoke test toàn chuỗi OFFLINE (no network, no LLM). Phase-06 F3.
-
-Bronze(synthetic) → Silver → version → work-package → schema-valid → catalog enqueue,
-rồi validate agent-output-sample vs agent-output-v1 → chứng minh hợp đồng round-trip.
-Exit 0 nếu PASS.
-"""
+"""Kiểm thử khép kín toàn diện chu trình xử lý dữ liệu ở chế độ ngoại tuyến."""
 
 from __future__ import annotations
 

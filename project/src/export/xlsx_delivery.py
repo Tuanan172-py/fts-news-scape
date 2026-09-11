@@ -1,25 +1,4 @@
-"""
-xlsx_delivery.py — Ghi deliverable NGƯỜI DÙNG CUỐI ra .xlsx đơn sắc.
-
-Vì sao là xlsx chứ không phải CSV (chốt 2026-09-08, US-101): CSV không lưu được độ rộng cột,
-freeze pane, AutoFilter và wrap-text. Với dữ liệu thật (cột `Tóm tắt` trung bình 460 ký tự,
-`Ý chính` trung bình 593 ký tự có xuống dòng), file CSV mở ra là lưới trần và người dùng phải
-lặp lại ~5 thao tác định dạng MỖI NGÀY vì file mới sinh mỗi ngày. xlsx lưu được các thứ đó
-một lần.
-
-Nguyên tắc trình bày — "đơn sắc, có quy chuẩn", KHÔNG trang trí:
-- Đúng 1 dòng header ở dòng 1. Không tiêu đề báo cáo, không merge cell, không dòng trống,
-  không dòng tổng.
-- KHÔNG màu nền, KHÔNG banding, KHÔNG màu chữ. Phân cấp chỉ bằng **in đậm** + 1 đường kẻ
-  mảnh dưới header.
-- Link để clickable nhưng giữ chữ đen (không dùng style `Hyperlink` xanh) — chức năng, không
-  phải trang trí.
-- Ngày ghi kiểu date thật + `number_format="yyyy-mm-dd"` để lọc/sắp theo ngày đúng nghĩa.
-
-Chống formula injection: openpyxl tự đoán chuỗi mở đầu bằng `=` là CÔNG THỨC. Tiêu đề tin
-tài chính mở đầu bằng `-5%…` / `+3%…` là chuyện thường, nên MỌI ô văn bản đều bị ép
-`data_type="s"` (xem `_set_text`). Tham chiếu: OWASP CSV Injection.
-"""
+"""Xuất tệp báo cáo giao hàng định dạng Excel (.xlsx) đơn sắc chuẩn."""
 from __future__ import annotations
 
 from datetime import date, datetime
@@ -72,7 +51,15 @@ _PLAIN_ALIGN = Alignment(vertical="top")
 
 
 def en_label(field: str, value) -> str:
-    """Đổi enum máy sang nhãn tiếng Anh. Giá trị ngoài từ điển giữ nguyên văn."""
+    """Chuyển đổi giá trị enum kỹ thuật sang nhãn tiếng Anh hiển thị.
+
+    Args:
+        field: Tên trường cần chuyển đổi.
+        value: Giá trị nội bộ cần tra cứu.
+
+    Returns:
+        Chuỗi nhãn hiển thị tương ứng hoặc giá trị gốc dạng chuỗi nếu không có trong ánh xạ.
+    """
     m = _EN_MAPS.get(field)
     if not m:
         return "" if value is None else str(value)
@@ -83,11 +70,7 @@ vn_label = en_label  # Backward compatibility alias
 
 
 def _set_text(cell, value: str, *, align) -> None:
-    """Ghi ô VĂN BẢN, chặn openpyxl diễn giải thành công thức.
-
-    `cell.value = "=..."` khiến openpyxl gán `data_type='f'` → Excel chạy như công thức.
-    Ép lại `data_type='s'` SAU khi gán để mọi chuỗi luôn là text thuần.
-    """
+    """Gán giá trị văn bản thuần vào ô nhằm ngăn chặn injection công thức."""
     cell.value = value
     cell.data_type = "s"
     cell.alignment = align
@@ -101,7 +84,14 @@ def _parse_date(s: str) -> date | None:
 
 
 def build_workbook(rows: list[dict]) -> Workbook:
-    """Dựng workbook 1 sheet từ các row dict (khoá theo `DELIVERY_FIELDS`)."""
+    """Xây dựng bảng tính Excel đơn sắc từ danh sách bài viết đã tổng hợp.
+
+    Args:
+        rows: Danh sách từ điển dữ liệu bài viết theo các khóa DELIVERY_FIELDS.
+
+    Returns:
+        Đối tượng Workbook của openpyxl đã định dạng đầy đủ.
+    """
     wb = Workbook()
     ws = wb.active
     ws.title = SHEET_NAME
@@ -144,9 +134,14 @@ def build_workbook(rows: list[dict]) -> Workbook:
 
 
 def write_delivery_xlsx(path: str | Path, rows: list[dict]) -> tuple[Path, bool]:
-    """Ghi atomic. Trả (đường dẫn ĐÃ ghi thật, True nếu phải rơi về snapshot vì file bị khoá).
+    """Ghi bảng dữ liệu ra tệp Excel (.xlsx) qua cơ chế nguyên tử an toàn.
 
-    Caller BẮT BUỘC đọc cờ thứ hai: True nghĩa là file đích vẫn là bản CŨ — chưa giao hàng.
+    Args:
+        path: Đường dẫn tệp đích cần ghi.
+        rows: Danh sách từ điển dữ liệu bài viết.
+
+    Returns:
+        Tuple gồm đường dẫn tệp thực tế đã ghi và cờ báo tệp có bị rơi về snapshot khóa hay không.
     """
     wb = build_workbook(rows)
     return safe_atomic_write(Path(path), wb.save, binary=True, fallback_on_lock=True)

@@ -1,14 +1,4 @@
-"""
-Orchestrator — điều phối tất cả scrapers (spec §11).
-
-Singleton cycle: APScheduler coalesce=True + max_instances=1 + misfire 300s
-→ "1 cycle chạy xong mới chạy cycle tiếp".
-
-Usage:
-    python -m src.orchestrator            # scheduler 15 phút/cycle, chạy ngay lần đầu
-    python -m src.orchestrator --once     # 1 cycle rồi thoát
-    python -m src.orchestrator --once cafef tnck
-"""
+"""Bộ điều phối toàn diện chu trình thu thập dữ liệu tin tức."""
 
 from __future__ import annotations
 
@@ -40,8 +30,7 @@ from src.scrapers import REGISTRY
 
 
 def _force_utf8_stdio() -> None:
-    """Ép stdout/stderr sang UTF-8 (Windows: print tiếng Việt qua Task Scheduler
-    bị redirect vào file dùng cp1252 → UnicodeEncodeError làm crash pipeline)."""
+    """Cấu hình lại luồng xuất nhập chuẩn sang UTF-8 tránh lỗi mã hóa ký tự."""
     for stream in (sys.stdout, sys.stderr):
         try:
             stream.reconfigure(encoding="utf-8", errors="replace")
@@ -50,7 +39,19 @@ def _force_utf8_stdio() -> None:
 
 
 def build_scraper(cfg: dict, http: HTTPClient, dedup: DedupCache):
-    """Factory: domain config → scraper instance. Per-name class > generic method class."""
+    """Khởi tạo thể hiện scraper tương ứng với cấu hình tên miền.
+
+    Args:
+        cfg: Cấu hình tên miền từ điển.
+        http: Thể hiện HTTPClient dùng chung.
+        dedup: Bộ nhớ đệm kiểm tra trùng lặp DedupCache.
+
+    Returns:
+        Thể hiện scraper kế thừa BaseScraper.
+
+    Raises:
+        KeyError: Khi không tìm thấy lớp scraper tương ứng.
+    """
     cls = REGISTRY.get(cfg["name"]) or REGISTRY.get(f"_{cfg['method']}")
     if cls is None:
         raise KeyError(f"No scraper for '{cfg['name']}' (method={cfg['method']})")
@@ -58,7 +59,20 @@ def build_scraper(cfg: dict, http: HTTPClient, dedup: DedupCache):
 
 
 class Orchestrator:
+    """Điều phối chu trình thu thập, xử lý và lưu trữ dữ liệu từ các nguồn tin.
+
+    Attributes:
+        settings: Cấu hình hệ thống chung.
+        store: Kho dữ liệu cơ sở ArticleStore.
+        writer: Luồng ghi bất đồng bộ DBWriter.
+        http: Trình khách mạng HTTPClient.
+        dedup: Bộ nhớ đệm kiểm tra trùng lặp DedupCache.
+        heartbeat: Trình theo dõi trạng thái Heartbeat.
+        notifier: Bộ thông báo tệp FileNotifier.
+    """
+
     def __init__(self):
+        """Khởi tạo bộ điều phối Orchestrator."""
         self.settings = load_settings()
         setup_logging(
             self.settings["logging"]["level"], self.settings["logging"]["dir"]
@@ -83,7 +97,14 @@ class Orchestrator:
             logger.info("Dedup cleanup: removed {} entries >30d", removed)
 
     def run_cycle(self, names: list[str] | None = None) -> int:
-        """1 cycle tuần tự qua mọi domain enabled. Trả về số article mới."""
+        """Thực thi một chu kỳ quét tin tuần tự qua các nguồn đã bật.
+
+        Args:
+            names: Danh sách tên miền chỉ định chạy. Mặc định chạy toàn bộ nguồn được kích hoạt.
+
+        Returns:
+            Tổng số lượng bài viết mới được ghi nhận.
+        """
         names = names or list_domains()
         if not names:
             logger.warning("No enabled domain configs in config/domains/")
@@ -150,8 +171,7 @@ class Orchestrator:
         return len(all_new)
 
     def _export_csv(self) -> None:
-        """Tự xuất CSV 'hôm nay' cuối mỗi cycle (data/exports/articles-YYYY-MM-DD.csv).
-        Ghi đè mỗi cycle → luôn phản ánh data mới nhất. Lỗi export không làm hỏng cycle."""
+        """Tự động xuất tệp CSV các bài viết trong ngày hôm nay."""
         exp = self.settings.get("export", {})
         if not exp.get("enabled", True):
             return

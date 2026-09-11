@@ -1,14 +1,4 @@
-"""
-db_status.py — Bảng trạng thái NHANH của hệ thống scrape/pipeline (đọc DB, KHÔNG sửa).
-
-In 1 dashboard gọn: scraper heartbeat, sản lượng hôm nay, watermark Bronze→Silver,
-độ trễ capture↔derive, change-detection (drift), hàng đợi handoff & lớp per-user.
-
-Usage:
-    python scripts/db_status.py                 # ngày hôm nay (giờ VN)
-    python scripts/db_status.py --date 2026-08-18
-    python scripts/db_status.py --db data/monocle.db
-"""
+"""Hiển thị bảng tổng hợp trạng thái hoạt động của hệ thống thu thập tin tức."""
 from __future__ import annotations
 
 import argparse

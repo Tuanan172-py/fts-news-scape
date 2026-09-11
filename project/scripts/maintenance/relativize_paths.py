@@ -1,17 +1,4 @@
-"""
-relativize_paths.py — Đổi `l1_tasks.packet_path` và `work_items.package_path` từ đường dẫn
-TUYỆT ĐỐI sang tương đối theo PROJECT_ROOT.
-
-Vì sao: repo được dùng trên 2 máy với 2 tên user khác nhau. Đo trên monocle.db 2026-09-07:
-1.364 dòng `C:/Users/anpt/...` và 423 dòng `C:/Users/An Thanh Pham/...` — mỗi máy chỉ mở
-được phần đường dẫn của chính nó, phần còn lại hỏng im lặng.
-
-Chỉ cắt phần TRƯỚC thư mục `project/`; không đụng dòng đã tương đối. Chạy lại nhiều lần vô hại.
-
-Usage:
-    python scripts/maintenance/relativize_paths.py --dry-run
-    python scripts/maintenance/relativize_paths.py
-"""
+"""Chuyển đổi các đường dẫn tệp tuyệt đối trong cơ sở dữ liệu sang đường dẫn tương đối."""
 from __future__ import annotations
 
 import argparse

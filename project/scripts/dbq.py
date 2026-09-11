@@ -1,14 +1,4 @@
-"""
-dbq.py — Chạy nhanh 1 câu SQL trên monocle.db. MẶC ĐỊNH READ-ONLY (an toàn).
-
-Tránh khổ escape dấu nháy như `python -c`; mở chế độ mode=ro nên KHÔNG thể lỡ tay sửa DB.
-Ghi chỉ khi có --allow-write (nên backup trước).
-
-Usage:
-    python scripts/dbq.py "select status,count(*) n from work_items group by status"
-    python scripts/dbq.py "select * from articles order by fetched_at desc limit 5" --limit 5
-    python scripts/dbq.py "update l1_outputs set dod_pass=0 where article_id='x'" --allow-write
-"""
+"""Thực thi truy vấn SQL trên cơ sở dữ liệu hệ thống ở chế độ an toàn."""
 from __future__ import annotations
 
 import argparse

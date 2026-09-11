@@ -1,16 +1,4 @@
-"""
-make_user_template.py — Sinh template entities.xlsx đơn giản cho user nhập.
-
-Template gồm:
-  * sheet `entities`: cột tickers/etfs/indices/exchanges/industries/entities (nhập 1 giá trị/dòng).
-  * sheet `meta`: user, note.
-  * sheet `huong_dan`: hướng dẫn tiếng Việt + trỏ tới data/entities/entities.xlsx để tra mã.
-  * Dropdown (data-validation) cho `exchanges` (danh sách nhỏ, cố định).
-
-Usage:
-    python scripts/make_user_template.py                       # ghi users/template/entities_template.xlsx
-    python scripts/make_user_template.py --seed AnPT           # tạo users/input/AnPT/entities.xlsx từ config yaml
-"""
+"""Tạo tệp mẫu Excel cho người dùng đăng ký danh mục thực thể theo dõi."""
 from __future__ import annotations
 
 import argparse

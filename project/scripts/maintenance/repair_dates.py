@@ -1,9 +1,4 @@
-"""
-One-off: backfill published_at cho bài đã lưu thiếu date (feed date format
-phi chuẩn — đã fix parser, bài cũ cần re-map từ feed hiện tại).
-
-Usage: python scripts/repair_dates.py
-"""
+"""Bổ sung ngày xuất bản còn thiếu cho các bài viết từ dữ liệu nguồn cấp RSS."""
 
 from __future__ import annotations
 

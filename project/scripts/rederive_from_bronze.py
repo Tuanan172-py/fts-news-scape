@@ -1,14 +1,4 @@
-"""
-Re-derive Silver + version + work-package + catalog từ WORM Bronze (offline, idempotent).
-
-Đây là driver chính của downstream pipeline (thay cho build_silver + enqueue_pending):
-sửa parser / bump schema → chạy lại KHÔNG cần re-scrape (raw bất biến = source of truth).
-
-Usage:
-    python scripts/rederive_from_bronze.py                 # tất cả Bronze
-    python scripts/rederive_from_bronze.py cafef.vn        # 1 domain
-    python scripts/rederive_from_bronze.py cafef.vn 20260813
-"""
+"""Tái cấu trúc và bóc tách dữ liệu Silver từ kho lưu trữ Bronze."""
 
 from __future__ import annotations
 

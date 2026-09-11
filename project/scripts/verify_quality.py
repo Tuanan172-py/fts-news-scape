@@ -1,9 +1,4 @@
-"""
-Quality checker — % articles đạt chuẩn spec §4.3 (title + body + date ≥95%).
-
-Usage:
-    python scripts/verify_quality.py [source_domain] [--min-body 200]
-"""
+"""Kiểm tra tỷ lệ đạt chuẩn chất lượng dữ liệu các trường nội dung bài viết."""
 
 from __future__ import annotations
 

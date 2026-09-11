@@ -1,26 +1,4 @@
-"""
-heal_orphans.py — Khôi phục các bài "mồ côi": có l1_outputs / agent_outputs / work_items
-nhưng KHÔNG có dòng trong `articles`, nên vĩnh viễn không qua được cổng giao hàng
-(`articles JOIN l1_outputs`).
-
-Nguyên nhân gốc (đã sửa ở src/core/base_scraper.py + src/db/store.py ngày 2026-09-08):
-scraper gọi `dedup.mark_seen()` NGAY LÚC CÀO, còn dòng `articles` lại được ghi bất đồng bộ
-sau đó qua DBWriter. Gián đoạn ở giữa ⇒ bài bị đánh dấu "đã thấy" vĩnh viễn mà không có dòng
-`articles`; mọi chu kỳ sau đều bỏ qua, trong khi Bronze/Silver/work_items/L1/Gold vẫn chạy
-tiếp từ bản raw đã cào. Đo trên monocle.db 2026-09-07: 429 bài, 429/429 nằm trong
-`seen_articles`. Script này thu hồi phần công LLM đã tiêu cho số bài đó.
-
-Cách khôi phục: `articles.url_title_hash` = sha256(url + title), nên phải tìm ĐÚNG tiêu đề
-đã sinh ra hash đó. Thử lần lượt: dòng đầu `cleaned_text` → các heading trong work-package →
-`l1_tasks.title`; chỉ nhận ứng viên có hash TRÙNG KHỚP. Không đoán, không bịa.
-
-Bài có URL đã tồn tại trong `articles` dưới hash khác (toà soạn sửa tiêu đề sau khi đăng)
-sẽ bị bỏ qua do ràng buộc UNIQUE(url) — đúng, vì câu chuyện đó đã được giao rồi.
-
-Usage:
-    python scripts/maintenance/heal_orphans.py --dry-run
-    python scripts/maintenance/heal_orphans.py
-"""
+"""Khôi phục các bản ghi bài viết bị thiếu trong bảng articles từ các tầng phái sinh."""
 from __future__ import annotations
 
 import argparse

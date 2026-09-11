@@ -1,15 +1,4 @@
-"""
-CLI xuất bảng `articles` ra CSV để kiểm tra bằng Excel/Google Sheets.
-Logic thật ở src/export/csv_export.py (dùng chung với orchestrator auto-export).
-
-Usage:
-    python scripts/export_csv.py                     # toàn bộ DB → data/exports/articles-YYYYMMDD.csv
-    python scripts/export_csv.py --today             # chỉ bài fetch hôm nay (giờ VN)
-    python scripts/export_csv.py --days 3            # 3 ngày gần nhất (theo fetched_at)
-    python scripts/export_csv.py --domain cafef fireant
-    python scripts/export_csv.py --with-symbols      # chỉ bài có gắn mã CK
-    python scripts/export_csv.py --out data/check.csv --limit 500
-"""
+"""Xuất danh sách bài viết từ cơ sở dữ liệu ra tệp CSV."""
 
 from __future__ import annotations
 

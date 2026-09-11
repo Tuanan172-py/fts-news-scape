@@ -1,10 +1,4 @@
-"""
-Standalone entry — 1 cycle rồi thoát (quét Bronze + re-derive Silver).
-
-Usage:
-    python scripts/run_once.py            # tất cả domain enabled
-    python scripts/run_once.py cafef tnck
-"""
+"""Thực thi một chu kỳ thu thập và chuyển đổi dữ liệu từ Bronze sang Silver."""
 
 from __future__ import annotations
 

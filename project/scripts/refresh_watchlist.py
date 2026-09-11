@@ -1,14 +1,4 @@
-"""
-Refresh watch-list — re-fetch URL đã biết để kích hoạt change-detection (bug #1).
-
-Ghi Bronze capture thứ 2 (bỏ qua dedup) rồi chạy change-detect + enqueue. Opt-in,
-tôn trọng robots + rate limit. Chạy tay hoặc cron riêng (KHÔNG nằm trong hot path).
-
-Usage:
-    python scripts/refresh_watchlist.py                 # 50 bài mới nhất
-    python scripts/refresh_watchlist.py 100             # 100 bài
-    python scripts/refresh_watchlist.py 100 cafef.vn    # lọc domain
-"""
+"""Làm mới và thu thập lại danh sách bài viết theo dõi để phát hiện biến động."""
 
 from __future__ import annotations
 

@@ -1,13 +1,4 @@
-"""
-Nạp agent-output-v1 do agent NGOÀI sinh ra (Vòng 3 infra, không LLM).
-
-Với mỗi file output: verify preconditions → validate schema → check DoD →
-lưu agent_outputs → mark_done (đạt) / mark_failed (không đạt). Idempotent.
-
-Usage:
-    python scripts/agent_ingest.py output.json           # 1 file
-    python scripts/agent_ingest.py data/agent_outputs_in # cả thư mục *.json
-"""
+"""Tiếp nhận và kiểm định kết quả phân tích chuyên sâu của agent."""
 
 from __future__ import annotations
 

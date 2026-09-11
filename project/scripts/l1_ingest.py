@@ -1,21 +1,4 @@
-"""
-l1_ingest.py — Nạp output tra soát của agent L1 (l1-entity-output-v1).
-
-Với mỗi file output: validate schema + check_l1_dod (grounding + checklist) →
-lưu l1_outputs → set l1_tasks.status = done/failed. Idempotent theo article_id.
-
-Chạy sau khi agent (do cron kích hoạt) xử lý các packet trong data/agent_tasks/l1/.
-
-Che do --code-first: KHONG doc file agent, ma vat chat hoa ket qua TRA DANH MUC tat dinh
-(l1_tasks route=resolved, status=pending) thanh l1-entity-output-v1 va nap thang vao
-l1_outputs voi l1_source='code_first'. Xem docs/decisions/0003-code-first-l1-delivery.md.
-
-Usage:
-    python scripts/l1_ingest.py <output.json | thư_mục>
-    python scripts/l1_ingest.py data/agent_outputs_l1/
-    python scripts/l1_ingest.py --code-first --dry-run
-    python scripts/l1_ingest.py --code-first [--limit N]
-"""
+"""Tiếp nhận và kiểm định kết quả nhận diện thực thể L1."""
 from __future__ import annotations
 
 import sys

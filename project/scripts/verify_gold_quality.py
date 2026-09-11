@@ -1,24 +1,4 @@
-"""
-verify_gold_quality.py — Đo chất lượng THẬT của tầng Gold + chấm lại cổng DoD.
-
-Vì sao cần: `check_dod` chấm TỪNG bản ghi nên không thấy được bệnh ở mức tập hợp — 1.274 bản
-ghi mà `implication` chỉ có 3 câu, `impact_area` 100% là `market`. Nhìn từng dòng thì hợp lệ;
-nhìn cả tập mới lộ ra là template. Script này làm đúng phần "nhìn cả tập".
-
-Hai chế độ:
-  1. BÁO CÁO (mặc định, CHỈ ĐỌC) — thống kê độ trùng lặp + số bản ghi sẽ trượt cổng mới.
-  2. `--apply` — hạ `dod_pass` về 0 cho bản ghi không qua predicate mới. **Không** sửa
-     `output_json`: sửa nội dung là việc của agent (AGENTS.md §6.C). Bản ghi bị hạ cờ sẽ
-     tự động quay lại hàng đợi Gold ở vòng sau.
-
-`--apply` là thay đổi dữ liệu KHÔNG ĐẢO NGƯỢC ở tầng giao hàng → đọc
-`docs/decisions/0004-gold-value-gate-va-du-lieu-gia-lap.md` trước khi chạy.
-
-Usage:
-    python scripts/verify_gold_quality.py                     # báo cáo
-    python scripts/verify_gold_quality.py --json              # báo cáo dạng JSON
-    python scripts/verify_gold_quality.py --apply             # hạ cờ (cần backup DB trước)
-"""
+"""Đo lường chất lượng phân tích chuyên sâu Gold và kiểm định cổng DoD."""
 from __future__ import annotations
 
 import argparse
