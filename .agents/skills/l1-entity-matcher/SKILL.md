@@ -141,12 +141,28 @@ Khi nhận file task dạng gom lô `data/agent_tasks/l1/l1_batch_XX.task.json`:
   Khai `done` mà không có entity tương ứng là **DoD FAIL**.
 - Entity nhận ra nhưng KHÔNG có trong catalog ⇒ `in_list: false`, `entity_id: null`, và đưa vào
   `unlisted_candidates` — đừng bịa `entity_id`.
+- `entities[].type` BẮT BUỘC là 1 trong 12 Enum: `TICKER`, `ETF`, `SECURITY_OTHER`, `INDEX`, `EXCHANGE`, `INDUSTRY_GICS1`, `INDUSTRY_GICS2`, `INDUSTRY_GICS3`, `MACRO_GEO`, `MACRO_THEME`, `ASSET_CLASS`, `INSTITUTION`. Tuyệt đối không dùng `INDUSTRY`.
 - `processing_metadata` phải đủ `agent_provider`, `model_used`, `timestamp` (ISO, giờ VN).
+
+---
+
+## 6. Bảng Tra Cứu Nhanh Danh Mục Entity ID Chuẩn (Official Master Catalog)
+
+Subagent sử dụng bảng này để gán trực tiếp `entity_id` và `in_list: true` mà KHÔNG CẦN gọi tool đọc `entities.json`:
+
+| Phân Loại Entity (`type`) | Danh Mục ID Chuẩn Có Sẵn (`in_list: true`) | Lưu Ý / Ngoài Danh Mục (`in_list: false`) |
+| :--- | :--- | :--- |
+| **`MACRO_GEO`** (8 vùng) | `MACRO_GEO:MY`, `MACRO_GEO:TRUNG_QUOC`, `MACRO_GEO:EU`, `MACRO_GEO:NHAT_BAN`, `MACRO_GEO:HAN_QUOC`, `MACRO_GEO:NGA`, `MACRO_GEO:DONG_NAM_A`, `MACRO_GEO:AN_DO` | Các quốc gia khác (Iran, UAE, Thái Lan, Pháp, Anh...) gán `in_list: false`, `entity_id: null`, thêm vào `unlisted_candidates`. |
+| **`INSTITUTION`** (7 tổ chức) | `INSTITUTION:NHNN`, `INSTITUTION:UBCKNN`, `INSTITUTION:BO_TAI_CHINH`, `INSTITUTION:FED`, `INSTITUTION:ECB`, `INSTITUTION:BOJ`, `INSTITUTION:WB_IMF` | Các bộ ngành/tổ chức khác (Bộ Công Thương, Bộ Nội vụ, BHXH, OECD, BRICS...) gán `in_list: false`, `entity_id: null`. |
+| **`MACRO_THEME`** (9 chủ đề) | `MACRO_THEME:LAI_SUAT`, `MACRO_THEME:TY_GIA`, `MACRO_THEME:LAM_PHAT`, `MACRO_THEME:THUE_THUONG_MAI`, `MACRO_THEME:GDP_TANG_TRUONG`, `MACRO_THEME:DAU_TU_CONG`, `MACRO_THEME:FDI`, `MACRO_THEME:TIN_DUNG`, `MACRO_THEME:NANG_HANG_TTCK` | Bắt buộc có tiền tố `MACRO_THEME:`, không ghi tắt `THUE_THUONG_MAI`. |
+| **`ASSET_CLASS`** (7 lớp) | `ASSET_CLASS:TRAI_PHIEU`, `ASSET_CLASS:CO_PHIEU`, `ASSET_CLASS:VANG`, `ASSET_CLASS:DAU_THO`, `ASSET_CLASS:BAT_DONG_SAN_TAI_SAN`, `ASSET_CLASS:TIEN_MA_HOA`, `ASSET_CLASS:HANG_HOA_NONG_SAN` | Lúa gạo, cà phê, tiêu, heo hơi $\rightarrow$ `ASSET_CLASS:HANG_HOA_NONG_SAN`. |
+| **`INDEX` / `EXCHANGE`** | `INDEX:VNINDEX`, `INDEX:VN30`, `INDEX:VNXALL`, `INDEX:HNXINDEX`, `INDEX:HNX30`, `INDEX:UPINDEX`; `EXCHANGE:HOSE`, `EXCHANGE:HNX`, `EXCHANGE:UPCOM` | Chỉ gán sàn khi tiêu đề nói về diễn biến toàn sàn. |
+| **`TICKER`** | 3 ký tự in hoa (`TICKER:VHM`, `TICKER:HPG`, `TICKER:VIC`...) hoặc mapping thương hiệu (`Xanh SM` $\rightarrow$ `TICKER:VIC`). | Doanh nghiệp chưa niêm yết (Sun Group, Mường Thanh...) gán `type: "TICKER"`, `in_list: false`, `entity_id: null`. |
 
 ### Nạp kết quả
 
 ```bash
 python scripts/l1_ingest.py data/agent_outputs_l1
 ```
-`l1_ingest.py` tự giải nén mảng JSON gom lô, chấm DoD từng bài, ghi `l1_outputs` và chuyển
-`l1_tasks.status` → `done`/`failed`, rồi archive packet đã xong.
+`l1_ingest.py` tự giải nén mảng JSON gom lô, chấm DoD từng bài, ghi `l1_outputs` và chuyển `l1_tasks.status` → `done`/`failed`, rồi archive packet đã xong.
+

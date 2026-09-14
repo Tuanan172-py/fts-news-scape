@@ -81,5 +81,21 @@ Khi nhận file task dạng gom lô `data/agent_tasks/batch_XX.task.json`:
     "citations": ["trích dẫn nguyên văn 1...", "trích dẫn nguyên văn 2..."]
   }
 ]
-```
 > Tiết kiệm ~60% output tokens so với v1, giảm 90% số lần gọi công cụ I/O.
+
+---
+
+## 5. Bảng Tra Cứu Định Mức Token & Hạn Mức Quota (Cheatsheet)
+
+Khi lập kế hoạch hoặc nhận diện khối lượng công việc, sử dụng bảng định mức chuẩn sau:
+
+| Quy mô tác vụ | Số lượng bài | Kích thước Input | Input Tokens | Output Tokens | Tổng Token ước tính | Thời gian (1 Agent) |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Mini-Batch (v2-lean)** | 5 bài | ~15.5 KB | ~3.800 | ~1.800 | **~5.600 tokens** | ~1.8 phút |
+| **Block nhỏ (v2-lean)** | 20 bài | ~62.0 KB | ~15.200 | ~7.200 | **~22.400 tokens** | ~7 phút |
+| **Wave 1 (Ưu tiên)** | 150 bài | ~465 KB | ~114.000 | ~54.000 | **~168.000 tokens** | ~55 phút |
+| **Một ngày đầy đủ** | ~700 bài | ~2.1 MB | ~532.000 | ~252.000 | **~784.000 tokens** | ~4.2 giờ |
+
+> [!TIP]
+> **Quy tắc an toàn TPM**: Chạy tối đa 3–5 Subagents đồng thời. Mỗi Subagent cách nhau một khoảng nghỉ ngắn hoặc xử lý theo lô 5 bài để đảm bảo tốc độ sinh token nằm dưới ngưỡng 4.000.000 TPM của mô hình Flash.
+

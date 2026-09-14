@@ -2,47 +2,27 @@
 
 <!-- Step 9 handoff. OVERWRITE this (never append) at the end of every session. Keep to one screen. -->
 
-- **Updated:** 2026-09-11
-- **Current story:** US-011 (Customizable Gold Export — User, Date, Days & Dry-Run Filters) — `implemented` (42/42 tests passed)
-- **Status:** All test suites green (42/42 passed). 0 story `in_progress`.
-- **Blocker:** Không còn blocker kiến trúc. Cổng L1 và Gold đã sẵn sàng chạy end-to-end với đầy đủ tùy biến linh hoạt.
+- **Updated:** 2026-09-14
+- **Current story:** US-012 (Streamline Gold Output Schema v2-lean & Zero-Waste Handoff) — `implemented` (389/389 tests passed)
+- **Status:** All test suites green (389/389 passed, 6/6 harness passed). 0 story `in_progress`.
+- **Blocker:** Không còn blocker. Codebase hoàn toàn đồng bộ, sạch sẽ và an toàn.
 
+## Việc đã làm phiên này (14/09/2026)
 
+### 1. Ứng dụng Schema v2-lean & Đo lường Token Gold (US-012)
+- Tích hợp schema phẳng 7 trường cốt lõi `agent-output-v2-lean.schema.json`. Giảm ~33% output token và cắt giảm 96% dung lượng task packet nhờ loại bỏ `structure.headings`.
+- Xác thực 100% DoD Pass (10/10 bài pilot) với schema mới.
 
-## Việc đã làm phiên này (US-009 / US-010 / US-011)
+### 2. Triển khai Streamlined Clean Pipeline Xử lý Toàn diện L1 Ngày 14/09
+- Định tuyến và giải quyết 100% (614/614 bài) của ngày 14/09: 356 bài giải quyết qua Code-First (0 token) và 258 bài tra soát bổ sung qua LLM Subagents Flash (11 batches: `l1_batch_01` $\rightarrow$ `l1_batch_11`).
+- Đạt 100% Definition-of-Done (DoD Ingest: 258/258 bài PASS), dọn dẹp sạch sẽ toàn bộ task packets vào `data/agent_tasks/l1/archive/20260914/`.
+- Nâng tổng số bản ghi `l1_outputs` trong SQLite `monocle.db` lên **4.921 bản ghi**.
 
-### 1. Triệt tiêu False Positive L1 & Cắt giảm Token Burn (US-009 / ADR 0005)
-- **Morphological Guard**: Capitalized Suffix Guard + Prefix Guard cho `MACRO_GEO:MY`. False positive giảm 14 → 0 bài trên 7.656 bài trong `monocle.db`, bảo toàn 300/300 bài Nước Mỹ thật.
-- **Dynamic 3-Pass Semantic Pruner**: Hạ trần xuống 2.200 ký tự (giảm ~47% token/bài), bảo toàn nguyên văn thẻ `<p>` cho trích dẫn $\ge 20$ ký tự.
-- **Subscriber-Gated Export**: Mặc định chỉ xuất bài có người dùng theo dõi, giảm ngay 37.1% số bài gọi Gold Agent (947/1.505 bài).
-
-### 2. Tăng cường Độ chính xác & Triệt tiêu Sót bài L1 (US-010)
-- **Positional Disclosure Exemption** (`_DISCLOSURE_PREFIX_RE`): Cứu **36/36 bài CBTT VNDirect** (`VND:`) thoát khỏi Stoplist tiền tệ.
-- **Bank PGD Domain Guard**: Triệt tiêu 100% (36 → 0 bài) nhận nhầm Phòng Giao Dịch ngân hàng sang mã `TICKER:PGD` (Khí thấp áp).
-- **NGA Morphology & Person Name Guard**: Loại bỏ 100% false positive tên người (*Bà Trần Kim Nga, Nga Rose*), bảo toàn 100% tin thời sự Nước Nga.
-- **Ecosystem Aliasing**: Nhận diện chuẩn xác thương hiệu con (*VinFast* → `VIC`, *Bách Hóa Xanh* → `MWG`, *WinCommerce* → `MSN`, *FE Credit* → `VPB`, *Becamex Tokyu* → `BCM`).
-
-### 3. Tùy biến Cổng Xuất Gold & Điều phối (US-011)
-- Bổ sung các cờ `--user` (lọc đích danh), `--days` (lọc số ngày gần nhất), `--date` (lọc ngày cụ thể) và `--dry-run` (kiểm tra an toàn không ghi đĩa) cho cả `agent_export.py` và `run_agent_hierarchy.py`.
-- Toàn bộ test suite: **42 / 42 tests passed 100% green**.
-
-## Số liệu đo trên `monocle.db` thật (read-only)
-
-| Chỉ số | Trước phiên | Sau phiên (US-009/010/011) | Thay đổi |
-|---|---|---|---|
-| L1 False Positive `MACRO_GEO:MY` | 14 bài (*"Mỹ Thuận"*, *"Á Mỹ"*...) | **0 bài** | **-100% false positive** |
-| L1 False Positive `TICKER:PGD` (Ngân hàng) | 36 bài (*"MBB: Thành lập PGD..."*) | **0 bài** | **-100% false positive** |
-| L1 False Positive `MACRO_GEO:NGA` (Tên người) | Nhiều ca (*Bà Kim Nga, Nga Rose*) | **0 bài** | **-100% false positive** |
-| Thu hồi tin CBTT `TICKER:VND` | 0 bài (bị stoplist chặn) | **36 bài match chuẩn** | **+100% tin CBTT** |
-| Chiều dài payload bài Gold | 4.000 ký tự (~1.800 tokens) | **2.200 ký tự (~950 tokens)** | **-47% token/bài** |
-| Số bài xuất cho Gold Agent | 1.505 bài (toàn bộ pending) | **947 bài (chỉ bài user theo dõi)** | **-37.1% số bài gọi LLM** |
-| **Tổng lượng token tiết kiệm ước tính** | - | - | **~66.7% tổng token burn** |
-
+### 3. Đóng gói Quy trình Vận hành Thành Skills & Rules (/learn)
+- Cập nhật [`.agents/rules/01-subagent-guardrails.md`](file:///C:/Users/anpt/OneDrive%20-%20fpts.com.vn/FRA_DataIngestion%20-%20news-scape/.agents/rules/01-subagent-guardrails.md): Bổ sung Điều 5 (Strict 2-I/O Boundary, cấm discovery loops) và Điều 6 (Ràng buộc 12 Enum Types chuẩn & Catalog In-list).
+- Cập nhật [`.agents/skills/news-scape-agent-operations/SKILL.md`](file:///C:/Users/anpt/OneDrive%20-%20fpts.com.vn/FRA_DataIngestion%20-%20news-scape/.agents/skills/news-scape-agent-operations/SKILL.md): Đóng gói Controlled Wave Strategy và chuẩn hóa System Prompts Handoff cho Subagent L1/Gold.
+- Cập nhật [`.agents/skills/l1-entity-matcher/SKILL.md`](file:///C:/Users/anpt/OneDrive%20-%20fpts.com.vn/FRA_DataIngestion%20-%20news-scape/.agents/skills/l1-entity-matcher/SKILL.md): Nhúng sẵn Bảng Tra Cứu Nhanh Entity ID Chuẩn (8 `MACRO_GEO`, 7 `INSTITUTION`, 9 `MACRO_THEME`, 7 `ASSET_CLASS`) để triệt tiêu lỗi bịa đặt ID.
 
 ## Next Steps
-1. Thực hiện chạy nạp dữ liệu định kỳ theo chuỗi:
-   ```powershell
-   python scripts/run_agent_hierarchy.py
-   ```
-2. Kiểm tra log tự phục hồi (Self-Healing) của Subagent Gold nếu có bài trượt DoD.
-3. Chạy `python scripts/run_user_workflow.py` để xuất báo cáo deliverable XLSX đơn sắc mới nhất cho người dùng.
+1. Kích hoạt Subagents xử lý các batch Gold `batch_01.task.json` đến `batch_11.task.json` (51 bài đủ điều kiện subscriber-gated) theo mẫu prompt chuẩn trong Skill.
+2. Chạy `agent_ingest.py` và xuất bản báo cáo deliverable cuối cùng cho người dùng (`write_user_output.py`).

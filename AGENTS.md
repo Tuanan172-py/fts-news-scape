@@ -25,10 +25,11 @@ At most **one** story `in_progress` at a time. If an urgent request interrupts, 
 ## 2. OKF — where to get product context (priority order)
 
 Read these before inventing context; do NOT create a new knowledge folder:
-1. `project/docs/skills/*` — per-domain scraper knowledge (cafef, fireant, rss-sources, tnck).
-2. `project/docs/{design,dev,domains,operations}/` — architecture, how-tos, source taxonomy, ops.
-3. `project/docs/charter.md` + `project/docs/ARCHITECTURE.md` — goals, phases, TDRs.
-4. repo `okf/` — cross-cutting operational knowledge.
+1. `.agents/skills/*` — operational, matching & agent execution skills (`news-scape-agent-operations`, `l1-entity-matcher`, `gold-financial-analyst`).
+2. `project/docs/skills/*` — per-domain scraper knowledge (cafef, fireant, rss-sources, tnck).
+3. `project/docs/{design,dev,domains,operations}/` — architecture, how-tos, source taxonomy, ops.
+4. `project/docs/charter.md` + `project/docs/ARCHITECTURE.md` — goals, phases, TDRs.
+5. repo `okf/` — cross-cutting operational knowledge.
 
 ## 3. Project build / run (the product lives in `project/`)
 
@@ -61,7 +62,7 @@ python -m src.monitor.health       # health check
 | [docs/HARNESS_COMPONENTS.md](docs/HARNESS_COMPONENTS.md) | 11 runtime responsibilities. |
 | [docs/HARNESS_MATURITY.md](docs/HARNESS_MATURITY.md) | H0–H5 maturity ladder & criteria. |
 | [docs/TOOL_REGISTRY.md](docs/TOOL_REGISTRY.md) | Tool manifest & degrade ladder. |
-| [docs/HARNESS_AUDIT.md](docs/HARNESS_AUDIT.md) | Entropy scoring & 6 drift checks. |
+| [docs/HARNESS_AUDIT.md](docs/HARNESS_AUDIT.md) | Entropy scoring & 7 drift checks (bao gồm codebase hygiene). |
 | [docs/IMPROVEMENT_PROTOCOL.md](docs/IMPROVEMENT_PROTOCOL.md) | Closed-loop propose & outcome measurement. |
 | [docs/TEST_MATRIX.md](docs/TEST_MATRIX.md) | Proof vocabulary & live proof table query. |
 | [docs/SESSION-LATEST.md](docs/SESSION-LATEST.md) | "Where am I, what next" — read at start, overwrite at end. |
@@ -70,10 +71,11 @@ python -m src.monitor.health       # health check
 ## 5. Harness CLI (Durable Layer H2-H5)
 
 ```powershell
-python scripts/harness_cli.py query contract   # Check harness capabilities & schema state
-python scripts/harness_cli.py query matrix     # Query live story proof matrix
-python scripts/harness_cli.py audit            # Run entropy & drift audit
-python scripts/harness_cli.py propose          # Generate self-improvement proposals
+python scripts/harness_cli.py query contract        # Check harness capabilities & schema state
+python scripts/harness_cli.py query matrix          # Query live story proof matrix
+python scripts/harness_cli.py audit                 # Run entropy & drift audit
+python scripts/harness_cli.py audit --codebase      # Full audit: drift + Git hygiene + AST + conflicts
+python scripts/harness_cli.py propose               # Generate self-improvement proposals
 ```
 
 Maturity: this harness is at **H2-H5 (Durable SQLite + Active Observability + Auto-Verification + Self-Improvement Protocol)**.

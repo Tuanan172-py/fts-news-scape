@@ -33,6 +33,7 @@ Bộ tài liệu chuyên sâu cho hệ thu thập tin tức thị trường ch�
 - [05-known-issues.md](dev/05-known-issues.md) — vấn đề đã biết & nợ kỹ thuật
 - [06-raw-html-capture-guide.md](dev/06-raw-html-capture-guide.md) — hướng dẫn capture Bronze byte-exact
 - [07-two-machine-workflow.md](dev/07-two-machine-workflow.md) — quy trình 2 máy: dev qua GitHub + vận hành trên OneDrive
+- [08-git-codebase-governance-guide.md](dev/08-git-codebase-governance-guide.md) — phương thức vận hành Git & quản trị codebase tiêu chuẩn sau khi tích hợp Harness
 
 ### 🌐 domains/ — Chi tiết từng nguồn
 - [README.md](domains/README.md) — ma trận 23 domain + watchlist + settings

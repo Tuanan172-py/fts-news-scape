@@ -4,9 +4,9 @@ Tài liệu này định nghĩa cơ chế tự động quét phát hiện độ 
 
 ---
 
-## 1. Sáu Tiêu chí Quét Trôi dạt (6 Drift Checks)
+## 1. Bảy Tiêu chí Quét Trôi dạt (7 Drift Checks)
 
-Lệnh `python scripts/harness_cli.py audit` thực hiện quét 6 hạng mục sau:
+Lệnh `python scripts/harness_cli.py audit` (hoặc mở rộng với `--codebase`) thực hiện quét các hạng mục sau:
 
 | # | Tiêu chí Kiểm toán | Mô tả & Rủi ro | Điểm phạt (Penalty) |
 |:---|:---|:---|:---:|
@@ -16,6 +16,7 @@ Lệnh `python scripts/harness_cli.py audit` thực hiện quét 6 hạng mục 
 | **4** | **Backlog Accumulation** | Có hơn 5 mục ma sát (friction) ở trạng thái `open` chưa được xử lý. | $-0.15$ |
 | **5** | **High-Risk Missing Intake/ADR** | Story thuộc làn `high-risk` nhưng không có bản ghi intake liên kết hoặc thiếu ADR. | $-0.15$ / story |
 | **6** | **Schema Health** | Phiên bản CSDL SQLite không khớp với mã nguồn migration. | Phạt theo độ lệch |
+| **7** | **Codebase & Git Hygiene** | Quét khi bật cờ `--codebase`: lỗi AST, tệp conflict OneDrive (`-HOSTNAME`), tệp nhị phân rác theo dõi trong Git. | Lỗi AST: $-0.25$<br/>Tệp cấm trong Git: $-0.20$<br/>Conflict OneDrive: $-0.15$ |
 
 ---
 

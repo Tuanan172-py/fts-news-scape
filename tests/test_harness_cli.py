@@ -209,6 +209,11 @@ class TestHarnessCLI(unittest.TestCase):
         propose_res = cmd_propose(self.db_path)
         self.assertEqual(propose_res["status"], "success")
 
+    def test_audit_with_codebase(self):
+        audit_res = cmd_audit(self.db_path, check_codebase=True)
+        self.assertEqual(audit_res["status"], "success")
+        self.assertIn("codebase_hygiene", audit_res["checks"])
+
 
 if __name__ == "__main__":
     unittest.main()

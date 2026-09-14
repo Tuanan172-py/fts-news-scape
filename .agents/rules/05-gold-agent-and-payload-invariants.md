@@ -72,3 +72,36 @@ Nhằm tối ưu tốc độ, giảm thiểu 95% Token Burn và triệt tiêu ho
 - **Nhiệm vụ của Subagents**: Xử lý ngữ nghĩa, trích xuất thực thể, tóm tắt, suy luận hàm ý, chấm điểm trọng yếu và trích dẫn citations là vùng trí tuệ độc quyền của Subagents (Model: Flash/Pro).
 - **Quy trình chuẩn**: Orchestrator kích hoạt Subagents qua `invoke_subagent` $\rightarrow$ Subagent xử lý task và ghi `data/agent_outputs/` $\rightarrow$ Chạy script Ingest & Delivery (`python scripts/run_agent_hierarchy.py --ingest-and-deliver`) để kiểm toán và giao hàng.
 
+---
+
+## 4. Tiêu Chuẩn Đo Lường & Phương Thức Ước Lượng Token Quota (Benchmark & Quota Invariants)
+
+Nhằm kiểm soát rủi ro tiêu tốn quota không kiểm soát, tránh chạm trần TPM/RPM và chủ động lập kế hoạch ngân sách LLM:
+
+1. **Định Mức Thực Nghiệm Trên Mỗi Bài Viết (Empirical Per-Article Benchmark - Model Flash)**:
+   - **Input Payload**: ~800 – 900 tokens / bài (sau khi lọc qua Dynamic 3-Pass Semantic Pruning $\le 2.200$ ký tự $\approx 17.2$ KB cho mini-batch 5 bài).
+   - **Output Payload**: ~900 – 1.000 tokens / bài (bóc tách đầy đủ `summary`, `implication`, `materiality`, `citations` $\ge 20$ chars và `metadata` $\approx 18.2$ KB cho mini-batch 5 bài).
+   - **Tổng Token tiêu thụ**: **~1.700 – 1.800 tokens / bài** (trung bình thực tế: **~1.770 tokens**).
+   - **Thời gian xử lý**: **~40 – 45 giây / bài** (~3.5 phút cho mini-batch 5 bài).
+
+2. **Công Thức Ước Lượng Quota Cho Khối Lượng Lớn ($N$ bài viết)**:
+   $$\text{Total Input Tokens} \approx N \times 860$$
+   $$\text{Total Output Tokens} \approx N \times 912$$
+   $$\text{Total Tokens} \approx N \times 1.770 \quad (\text{ví dụ } 700 \text{ bài} \approx 1,24 \text{ triệu tokens})$$
+   $$\text{Thời gian xử lý (1 Subagent)} \approx \frac{N \times 43}{3.600} \text{ (giờ)}$$
+   $$\text{Thời gian xử lý (K Subagents song song)} \approx \frac{N \times 43}{3.600 \times K} \text{ (giờ)}$$
+
+3. **Quy Trình Phân Batch Có Kiểm Soát 3 Bước (Controlled 3-Step Wave Strategy)**:
+   - **Bước 1 — Pilot Benchmark (Khảo sát thí điểm)**:
+     - Luôn chạy cờ `--dry-run` để đếm chính xác số bài thỏa mãn Subscriber-Gating.
+     - Xuất đúng **1 mini-batch (5 bài)** để chạy Pilot qua Subagent Flash.
+     - Kiểm tra 100% DoD Pass và đo lường token thực tế từ transcript trước khi mở rộng.
+   - **Bước 2 — Đóng gói Mini-Batch tối ưu**:
+     - Cố định quy chuẩn **5 bài / file** `batch_XX.task.json` (tương đương ~4.300 input tokens và ~4.560 output tokens).
+     - Tuyệt đối không gom quá 10 bài/batch để tránh quá tải ngữ cảnh (context dilution) và suy giảm chất lượng bóc tách citations.
+   - **Bước 3 — Triển khai 3 Đợt theo Thứ tự Ưu tiên Nghiệp vụ**:
+     - *Wave 1 (Ưu tiên cao nhất)*: Nhóm Cổ phiếu / Doanh nghiệp trọng tâm (`VIC`, `HPG`, `FPT`, `TCB`, `MBB`...).
+     - *Wave 2 (Ưu tiên trung bình)*: Nhóm Vĩ mô & Ngành kinh tế (Tỷ giá, Lãi suất, Đầu tư công, Bất động sản, Ngân hàng).
+     - *Wave 3 (Hoàn tất)*: Toàn bộ backlog còn lại trước khi kích hoạt phân tuyến giao hàng (`user_output.py`).
+
+

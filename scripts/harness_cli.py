@@ -34,6 +34,7 @@ CAPABILITIES = [
     "audit",
     "propose",
     "verify-gate",
+    "codebase-audit",
 ]
 
 
@@ -435,7 +436,7 @@ def cmd_trace(args: argparse.Namespace) -> dict[str, Any]:
 # Audit & Self-Improvement (H4 & H5)
 # ---------------------------------------------------------------------------
 
-def cmd_audit(db_path: str = DEFAULT_DB_PATH) -> dict[str, Any]:
+def cmd_audit(db_path: str = DEFAULT_DB_PATH, check_codebase: bool = False) -> dict[str, Any]:
     conn = get_db_connection(db_path)
     try:
         checks = {}
@@ -484,6 +485,39 @@ def cmd_audit(db_path: str = DEFAULT_DB_PATH) -> dict[str, Any]:
         
         # 6. Schema health
         checks["schema_version"] = get_schema_version(conn)
+        
+        # 7. Codebase & Git hygiene
+        if check_codebase:
+            try:
+                import importlib.util
+                repo_root = Path(db_path).resolve().parent
+                audit_script = repo_root / "project" / "scripts" / "maintenance" / "audit_codebase.py"
+                if not audit_script.exists():
+                    cli_repo_root = Path(__file__).resolve().parent.parent
+                    audit_script = cli_repo_root / "project" / "scripts" / "maintenance" / "audit_codebase.py"
+                    if audit_script.exists():
+                        repo_root = cli_repo_root
+                
+                if audit_script.exists():
+                    spec = importlib.util.spec_from_file_location("audit_codebase_module", str(audit_script))
+                    if spec and spec.loader:
+                        mod = importlib.util.module_from_spec(spec)
+                        spec.loader.exec_module(mod)
+                        cb_res = mod.run_full_audit(repo_root)
+                        checks["codebase_hygiene"] = cb_res["results"]
+                        conflicts = cb_res["results"].get("OneDrive Conflict Files", {})
+                        if conflicts.get("status") == "FAIL":
+                            total_penalty += 0.15
+                        ast_res = cb_res["results"].get("Python AST Syntax", {})
+                        if ast_res.get("status") == "FAIL":
+                            total_penalty += 0.25
+                        tracked_res = cb_res["results"].get("Tracked Files Sanity", {})
+                        if tracked_res.get("status") == "FAIL":
+                            total_penalty += 0.20
+                else:
+                    checks["codebase_hygiene_warning"] = f"Script audit not found at {audit_script}"
+            except Exception as e:
+                checks["codebase_hygiene_error"] = str(e)
         
         health_score = max(0.0, min(1.0, 1.0 - total_penalty))
         entropy_score = round(1.0 - health_score, 2)
@@ -643,7 +677,8 @@ def build_parser() -> argparse.ArgumentParser:
     tr_p.add_argument("--error", help="Error message if any")
     
     # audit & propose
-    subparsers.add_parser("audit", help="Run harness drift & entropy audit")
+    audit_p = subparsers.add_parser("audit", help="Run harness drift & entropy audit")
+    audit_p.add_argument("--codebase", action="store_true", help="Include Git codebase and AST hygiene audit")
     subparsers.add_parser("propose", help="Generate self-improvement proposals from backlog friction")
     
     return parser
@@ -703,7 +738,7 @@ def main() -> None:
         elif args.command == "trace":
             res = cmd_trace(args)
         elif args.command == "audit":
-            res = cmd_audit(args.db)
+            res = cmd_audit(args.db, check_codebase=getattr(args, "codebase", False))
         elif args.command == "propose":
             res = cmd_propose(args.db)
         else:

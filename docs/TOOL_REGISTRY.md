@@ -13,6 +13,8 @@ Tài liệu này quản lý danh sách các công cụ thực thi trong hệ th�
 | `sqlite3` | SQLite Engine (WAL mode) | Lưu trữ monocle.db & harness.db | `python -c "import sqlite3; print(sqlite3.sqlite_version)"` | **Hard Stop** (Bắt buộc cho Durable layer). |
 | `trafilatura` | Web Content Extractor | Bóc tách bài viết cào từ web | `python -c "import trafilatura"` | Fallback sang Regex / BeautifulSoup thô. |
 | `rapidfuzz` | String Similarity Matcher | Khử trùng lặp tiêu đề tin tức | `python -c "import rapidfuzz"` | Fallback sang so sánh chuỗi chính xác (exact match). |
+| `git` | Git Version Control | Quản lý phiên bản mã nguồn, working tree | `git --version` | **Hard Stop** (Bắt buộc cho quản trị codebase). |
+| `audit_codebase` | Codebase & Git Auditor | Kiểm tra AST, xung đột OneDrive, vệ sinh Git | `python project/scripts/maintenance/audit_codebase.py` | Fallback sang `python scripts/harness_cli.py audit`. |
 
 ---
 
