@@ -1,7 +1,8 @@
 # Runbook vận hành từng bước — chu kỳ per-user (input → <date>.xlsx)
 
-Cập nhật: 2026-08-19 · Đối tượng: người vận hành chạy tay/bán tự động chuỗi agent per-user.
-Bổ trợ cho: [13-per-user-output-workflow](../design/13-per-user-output-workflow.md) (thiết kế),
+Cập nhật: 2026-09-14 · Đối tượng: người vận hành chạy tay/bán tự động chuỗi agent per-user.
+Bổ trợ cho: [end-to-end-operations-playbook](end-to-end-operations-playbook.md) (hướng dẫn thực thi chuẩn hóa H2-H5),
+[13-per-user-output-workflow](../design/13-per-user-output-workflow.md) (thiết kế),
 [agent-prompting-guide](agent-prompting-guide.md) (soạn prompt), [runbook](../runbook.md) (lớp scrape).
 
 **Đọc trước:** cơ chế là **hàng đợi + trạng thái**, KHÔNG đồng bộ theo giờ. Mỗi bài tự đi qua state

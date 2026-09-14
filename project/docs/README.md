@@ -43,6 +43,8 @@ Bộ tài liệu chuyên sâu cho hệ thu thập tin tức thị trường ch�
 - [intl-rss.md](domains/intl-rss.md) — 5 báo tài chính quốc tế
 
 ### 🚀 operations/ — Triển khai & sự cố
+- [end-to-end-operations-playbook.md](operations/end-to-end-operations-playbook.md) — cẩm nang vận hành quy trình trọn gói End-to-End từ Bronze/Silver -> L1 -> Gold v2-lean -> Excel Deliverables
+- [daily-runbook-per-user.md](operations/daily-runbook-per-user.md) — runbook chi tiết chạy chuỗi per-user hàng ngày
 - [deployment.md](operations/deployment.md) — cài, chạy, monitor, backup
 - [troubleshooting.md](operations/troubleshooting.md) — triệu chứng → xử lý
 - [db-health-queries.md](operations/db-health-queries.md) — query DB kiểm tra nhanh trạng thái scrape (dashboard `scripts/db_status.py` + SQL thô)

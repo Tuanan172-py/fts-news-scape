@@ -166,7 +166,8 @@ Chưa điều tra.
 | D16 | Token burn Gold quá cao do payload 4.000 chars và export toàn bộ pending không ai đọc (ADR 0005) | **Subscriber-Gated Export**: claim 947/1.505 bài, bỏ 558 bài unmonitored (-37.1% token); **Semantic Pruner 2.200 chars** (-47% token/bài); tổng tiết kiệm ~66.7% |
 | D17 | L1 false positives danh từ riêng tiếng Việt (*Mỹ Thuận, Á Mỹ, Mỹ Tho, Bà Kim Nga, Nga Rose*) | **Morphological & Compound Guard** (`_blocked_by_morphology`): FP `MY` **14 → 0**, FP `NGA` tên người **→ 0** |
 | D18 | Sót tin CBTT VNDirect (bị stoplist nuốt), nhầm PGD ngân hàng với mã CP, sót tin công ty con (US-010, US-011) | **Positional Exemption** (`^VND:`): cứu **36/36 bài CBTT**; **Bank PGD Guard**: FP `PGD` **36 → 0**; **Ecosystem Aliasing**: nhận diện thêm VinFast, Bách Hóa Xanh, WinCommerce, FE Credit |
+| D19 | Xử lý dứt điểm toàn bộ 258 bài L1 ngày 14/09; chống burn token do tool loop; đóng gói End-to-End Playbook | **258/258 bài PASS DoD 100%**; 0 task tồn đọng; nạp 4.921 L1 outputs; chuẩn hóa Rule 01 (Strict 2-I/O), ban hành `end-to-end-operations-playbook.md` |
 
 **Kiểm tay sau khi sửa:** 25 dòng ngẫu nhiên của AnPT → **0/29 mã không có căn cứ trong tiêu đề**.
-**pytest:** 42 passed (100% green).
+**pytest:** 389 passed (100% green).
 
