@@ -17,6 +17,12 @@ _BOILERPLATE_PATTERNS = [
     r'(?:giấy\s+phép\s+(?:thiết\s+lập|hoạt\s+động|xuất\s+bản)|sở\s+thông\s+tin\s+và\s+truyền\s+thông)',
     # Bản quyền
     r'^(?:©\s*copyright|bản\s+quyền\s+thuộc\s+về|toàn\s+bộ\s+bản\s+quyền)',
+    # Tuyên bố miễn trừ trách nhiệm tài chính / khuyến cáo đầu tư
+    r'^(?:tuyên\s+bố\s+miễn\s+trừ|khuyến\s+cáo\s+miễn\s+trừ|khuyến\s+cáo\s*:\s*báo\s+cáo\s+này|nhà\s+đầu\s+tư\s+cần\s+cân\s+nhắc|chúng\s+tôi\s+không\s+chịu\s+trách\s+nhiệm\b)',
+    # Box thông tin doanh nghiệp / hồ sơ công ty chân bài
+    r'^(?:thông\s+tin\s+doanh\s+nghiệp\b|hồ\s+sơ\s+doanh\s+nghiệp\b|tổng\s+quan\s+về\s+[A-Z0-9]+|tiền\s+thân\s+là\s+tập\s+đoàn\b)',
+    # Chú thích ảnh / biểu đồ tường thuật
+    r'^(?:ảnh|hình\s+ảnh|đồ\s+thị|biểu\s+đồ|nguồn\s+ảnh|ảnh\s+chụp)\s*:',
     # Widget giao diện (cỡ chữ, chia sẻ, theo dõi, in bài)
     r'^(?:chọn\s+cỡ\s+chữ|chia\s+sẻ\s+bài\s+viết|theo\s+dõi\s+chúng\s+tôi\s+trên|in\s+bài\s+viết)',
     # Dòng chỉ gồm ký tự phân cách
@@ -25,10 +31,10 @@ _BOILERPLATE_PATTERNS = [
 
 _COMPILED_BOILERPLATE = [re.compile(p, re.IGNORECASE) for p in _BOILERPLATE_PATTERNS]
 
-# Dòng ghi nguồn cuối bài ("Theo CafeF", "Nguồn: ..."). Chỉ loại khi đoạn NGẮN, để không
-# nuốt nhầm một đoạn nội dung thật vô tình mở đầu bằng chữ "Theo".
+# Dòng ghi nguồn cuối bài ("Theo CafeF", "Nguồn: ...") hoặc chữ ký tác giả/phóng viên.
+# Chỉ loại khi đoạn vừa phải (<= 100 ký tự) để không nuốt nhầm đoạn nội dung thật.
 _FOOTER_SOURCE_PATTERN = re.compile(
-    r'^(?:theo\s+(?:hose|hnx|upcom|cafef|vietstock|vneconomy|ttxvn|reuters|bloomberg|dân\s+trí|đầu\s+tư|tiền\s+phong)|nguồn\s*:)\b.*$',
+    r'^(?:theo\s+(?:báo\s+)?(?:hose|hnx|upcom|cafef|vietstock|vneconomy|ttxvn|reuters|bloomberg|dân\s+trí|đầu\s+tư|tiền\s+phong|chứng\s+khoán)\b|nguồn\s*:|(?:bài\s+và\s+ảnh|phóng\s+viên|biên\s+tập|tác\s+giả)\s*:).*$',
     re.IGNORECASE,
 )
 
@@ -54,8 +60,8 @@ def is_boilerplate_paragraph(para: str) -> bool:
         if cp.search(stripped):
             return True
 
-    # Dòng nguồn cuối bài — chỉ tính khi đoạn đủ ngắn
-    if len(stripped) < 50 and _FOOTER_SOURCE_PATTERN.match(stripped):
+    # Dòng nguồn / tác giả cuối bài — chỉ tính khi đoạn <= 100 ký tự
+    if len(stripped) <= 100 and _FOOTER_SOURCE_PATTERN.match(stripped):
         return True
 
     return False

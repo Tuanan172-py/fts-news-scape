@@ -58,6 +58,12 @@ Nhằm tối ưu tốc độ, giảm thiểu 95% Token Burn và triệt tiêu ho
    - Subagent chỉ gọi 1 lần `view_file` và 1 lần `write_to_file` mảng JSON cho cả lô, giảm 90% số Tool Calls I/O.
 6. **Tiếp sức Thực thể L1 $\rightarrow$ Gold (L1-Assisted Chaining)**:
    - Task Packet gửi cho Gold Agent BẮT BUỘC phải nhúng kèm danh sách mã cổ phiếu đã được L1 bóc tách sẵn (`input.l1_entities`), giúp Gold Agent tập trung trực tiếp vào việc phân tích tác động tài chính và chấm điểm trọng yếu.
+7. **Đầu ra Tinh Gọn & Zero-Token Metadata (`agent-output-v2-lean` — US-012)**:
+   - Cấu trúc output phẳng, chỉ gồm 7 trường cốt lõi phục vụ trực tiếp cho Deliverable Excel: `article_id`, `summary`, `key_points`, `implication`, `sentiment`, `time_sensitivity`, `citations`.
+   - `citations` dạng mảng chuỗi nguyên văn trực tiếp (`["span 1", "span 2"]`), loại bỏ `claim` và `source_offset`.
+   - Loại bỏ 100% các trường thừa thãi: `affected_parties`, `impact_area`, `event_type`, `materiality.score`, `extraction_quality`.
+   - Siêu dữ liệu kỹ thuật (`processing_metadata`) do hệ thống tự động điền khi Ingest (Zero-token metadata), tiết kiệm ~60% output token.
+   - Loại bỏ triệt để `structure.headings` khỏi task packet input để chống rò rỉ token và chống hallucinate.
 
 ---
 

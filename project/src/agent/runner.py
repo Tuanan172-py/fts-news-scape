@@ -256,13 +256,15 @@ class AgentRunner:
             dod_ok = False
 
         pm = output.get("processing_metadata") or {}
+        agent_provider = pm.get("agent_provider") or "antigravity"
+        model_used = pm.get("model_used") or "flash"
         self.store.insert_agent_output({
             "article_id": article_id, "raw_sha256": raw_sha256,
             "work_item_id": item["id"],
             "output_json": json.dumps(output, ensure_ascii=False),
-            "agent_provider": pm.get("agent_provider"),
-            "model_used": pm.get("model_used"),
-            "confidence": output.get("confidence"),
+            "agent_provider": agent_provider,
+            "model_used": model_used,
+            "confidence": output.get("confidence", 0.9),
             "dod_pass": 1 if dod_ok else 0,
             "dod_reasons": json.dumps(dod_reasons, ensure_ascii=False),
             "created_at": now_vn_iso(),

@@ -274,3 +274,39 @@ def test_workbook_is_monochrome_and_navigable(tmp_path):
             assert ws.column_dimensions[ws.cell(row=1, column=idx).column_letter].width > 0
     finally:
         wb.close()
+
+
+def test_lean_v2_output_excel_delivery(tmp_path):
+    """Bản ghi agent-output-v2-lean (chuỗi phẳng) xuất Excel đầy đủ các cột."""
+    import json
+    store = k.make_store(tmp_path)
+    reg = k.make_registry({"AnPT": {"TICKER:HPG"}})
+    k.seed_article(store, "lean1", title="Hòa Phát tăng sản lượng thép")
+    k.seed_l1(store, "lean1", ["TICKER:HPG"])
+    lean_json = json.dumps({
+        "article_id": "lean1",
+        "summary": "Tập đoàn Hòa Phát đạt kỷ lục sản lượng thép trong tháng 8.",
+        "key_points": ["Sản lượng tăng 15% svck", "Xuất khẩu thép cuộn cán nóng tăng mạnh"],
+        "implication": "Doanh thu Q3 dự kiến tăng trưởng mạnh, biên lợi nhuận mở rộng.",
+        "sentiment": "positive",
+        "time_sensitivity": "today",
+        "citations": ["Tập đoàn Hòa Phát đạt kỷ lục sản lượng", "Sản lượng tăng 15% svck"],
+    }, ensure_ascii=False)
+    store.insert_agent_output({
+        "article_id": "lean1", "raw_sha256": "sha_lean1", "work_item_id": 1,
+        "output_json": lean_json, "agent_provider": "antigravity", "model_used": "flash",
+        "confidence": 0.9, "dod_pass": 1, "dod_reasons": "[]",
+        "created_at": "2026-08-18T10:00:00+07:00",
+    })
+
+    UserOutputWriter(store, reg, output_root=tmp_path / "out").write(date=DATE)
+    rows = k.read_delivery(tmp_path / "out" / "AnPT" / f"{DATE}.xlsx")
+    assert len(rows) == 1
+    r = rows[0]
+    assert r["article_id"] == "lean1"
+    assert r["summary"] == "Tập đoàn Hòa Phát đạt kỷ lục sản lượng thép trong tháng 8."
+    assert "Sản lượng tăng 15% svck" in r["key_points"]
+    assert r["implication"] == "Doanh thu Q3 dự kiến tăng trưởng mạnh, biên lợi nhuận mở rộng."
+    assert r["sentiment"] == "Positive"
+    assert r["time_sensitivity"] == "Today"
+    assert r["gold_status"] == "Full"

@@ -14,10 +14,10 @@ from typing import Any
 from src.agent.dod import load_thresholds
 from src.core.staging import safe_json_dump
 
-OUTPUT_SCHEMA = "agent-output-v1"
+OUTPUT_SCHEMA = "agent-output-v2-lean"
 _OUTPUT_REQUIRED = [
-    "output_schema_version", "article_id", "summary", "implication",
-    "materiality", "citations", "processing_metadata",
+    "article_id", "summary", "key_points", "implication",
+    "sentiment", "time_sensitivity", "citations",
 ]
 
 
@@ -45,22 +45,22 @@ def build_batch_packet(tasks: list[dict], batch_id: str) -> dict:
         })
 
     return {
-        "packet_version": "1.0",
+        "packet_version": "2.0",
         "batch_id": batch_id,
         "task_count": len(batch_tasks),
         "tasks": batch_tasks,
         "output_contract": {
             "schema_name": OUTPUT_SCHEMA,
-            "format": "JSON array of agent-output-v1 objects or {batch_id, outputs: [...]}",
+            "format": "JSON array of agent-output-v2-lean objects or {batch_id, outputs: [...]}",
             "required_fields_per_item": _OUTPUT_REQUIRED,
-            "thinking_order": ["summary(tóm tắt)", "implication(hàm ý)", "materiality(mức độ quan trọng)"],
+            "thinking_order": ["summary(tóm tắt)", "implication(hàm ý)", "sentiment", "time_sensitivity"],
         },
         "constraints": {
             "min_citations": t["min_citations"],
             "citations_must_be_substring_of": "tasks[i].cleaned_text",
             "min_citation_len": 20,
-            "extraction_quality_in": list(t["quality_ok"]),
-            "processing_metadata_required": ["agent_provider", "model_used", "timestamp"],
+            "citations_format": "array of verbatim strings (>= 20 chars each)",
+            "metadata_note": "Zero-token metadata: system auto-injects provider, model, timestamp at ingest",
         },
         "instructions_ref": "schemas/agent-instructions-v1.md",
     }

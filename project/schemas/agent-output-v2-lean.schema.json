@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fra.local/schemas/agent-output-v2-lean.schema.json",
+  "title": "Agent output v2 lean — streamlined deliverable-focused financial analysis",
+  "description": "Tinh gọn tối đa output của Agent Gold. Loại bỏ 100% các trường không phục vụ Deliverable Excel (impact_area, event_type, processing_metadata, affected_parties) nhằm tiết kiệm ~60% output token.",
+  "type": "object",
+  "required": [
+    "article_id",
+    "summary",
+    "key_points",
+    "implication",
+    "sentiment",
+    "time_sensitivity",
+    "citations"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "output_schema_version": {
+      "type": "string",
+      "description": "Tùy chọn: '2.0-lean' hoặc '2.0'"
+    },
+    "article_id": {
+      "type": "string",
+      "description": "Mã định danh bài viết cần phân tích"
+    },
+    "summary": {
+      "type": "string",
+      "description": "Tóm tắt phân tích súc tích (2–4 câu văn hoàn chỉnh)"
+    },
+    "key_points": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "2–4 luận điểm trọng yếu nhất"
+    },
+    "implication": {
+      "type": "string",
+      "description": "Hàm ý phân tích tác động tài chính / dòng tiền / thị giá (tối thiểu 40 ký tự)"
+    },
+    "sentiment": {
+      "type": "string",
+      "enum": ["positive", "negative", "neutral"],
+      "description": "Sắc thái tác động tới cổ phiếu / thị trường"
+    },
+    "time_sensitivity": {
+      "type": "string",
+      "enum": ["urgent", "today", "this_week", "this_month", "archive"],
+      "description": "Độ nhạy thời gian hành động của thông tin"
+    },
+    "citations": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 2,
+      "description": "Danh sách các chuỗi trích dẫn nguyên văn từ cleaned_text (mỗi chuỗi >= 20 ký tự)"
+    }
+  }
+}

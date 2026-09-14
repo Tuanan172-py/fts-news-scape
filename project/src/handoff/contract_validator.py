@@ -15,6 +15,7 @@ SCHEMAS_DIR = Path(__file__).resolve().parents[2] / "schemas"
 KNOWN_SCHEMAS = {
     "work-package-v1": SCHEMAS_DIR / "work-package-v1.schema.json",
     "agent-output-v1": SCHEMAS_DIR / "agent-output-v1.schema.json",
+    "agent-output-v2-lean": SCHEMAS_DIR / "agent-output-v2-lean.schema.json",
     "silver-v1": SCHEMAS_DIR / "silver-v1.schema.json",
     "l1-entity-output-v1": SCHEMAS_DIR / "l1-entity-output-v1.schema.json",
 }

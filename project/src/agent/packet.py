@@ -10,11 +10,16 @@ from src.agent.dod import load_thresholds
 from src.agent.pruner import clean_article_paragraphs
 
 _SCHEMAS_DIR = Path(__file__).resolve().parents[2] / "schemas"
-OUTPUT_SCHEMA = "agent-output-v1"
-_OUTPUT_REQUIRED = [
+OUTPUT_SCHEMA = "agent-output-v2-lean"
+_OUTPUT_REQUIRED_V2 = [
+    "article_id", "summary", "key_points", "implication",
+    "sentiment", "time_sensitivity", "citations",
+]
+_OUTPUT_REQUIRED_V1 = [
     "output_schema_version", "article_id", "summary", "implication",
     "materiality", "citations", "processing_metadata",
 ]
+_OUTPUT_REQUIRED = _OUTPUT_REQUIRED_V2
 
 
 def build_gold_input(work_package: dict, *, l1_entities: list[str] | None = None, prune: bool = True) -> dict:
@@ -43,9 +48,7 @@ def build_gold_input(work_package: dict, *, l1_entities: list[str] | None = None
         "capture_status": work_package.get("capture_status", "ok"),
         "change_state": work_package.get("change_state", "OK"),
     }
-    struct = work_package.get("structure")
-    if isinstance(struct, dict) and "headings" in struct:
-        inp["structure"] = {"headings": struct.get("headings", [])}
+    # Loại bỏ triệt để structure.headings để tránh lọt tiêu đề tin rác/sidebar gây tốn token và hallucinate
 
     if l1_entities is not None:
         inp["l1_entities"] = l1_entities
@@ -58,6 +61,7 @@ def build_task_packet(
     work_item_id: int | None = None,
     l1_entities: list[str] | None = None,
     prune: bool = True,
+    schema_name: str = OUTPUT_SCHEMA,
 ) -> dict:
     """Đóng gói toàn diện gói công việc kèm hợp đồng dữ liệu đầu ra và ràng buộc.
 
@@ -66,14 +70,34 @@ def build_task_packet(
         work_item_id: Định danh bản ghi tác vụ trong hàng đợi xử lý.
         l1_entities: Danh sách thực thể L1 đã gắn thẻ.
         prune: Có lọc tỉa nội dung văn bản thừa hay không.
+        schema_name: Tên lược đồ hợp đồng đầu ra (mặc định agent-output-v2-lean).
 
     Returns:
         Từ điển gói tác vụ đầy đủ tuân thủ hợp đồng giao tiếp agent.
     """
     t = load_thresholds()
     gold_input = build_gold_input(work_package, l1_entities=l1_entities, prune=prune)
+    is_v1 = schema_name == "agent-output-v1"
+    required_fields = _OUTPUT_REQUIRED_V1 if is_v1 else _OUTPUT_REQUIRED_V2
+
+    constraints: dict = {
+        "min_citations": t["min_citations"],
+        "citations_must_be_substring_of": "input.cleaned_text",
+        "min_citation_len": 20,
+        "preconditions": [
+            "verify sha256(raw_html_path) == raw_sha256",
+            "skip if change_state in [SELECTOR_BROKEN, TEMPLATE_DRIFT]",
+        ],
+    }
+    if is_v1:
+        constraints["extraction_quality_in"] = list(t["quality_ok"])
+        constraints["processing_metadata_required"] = ["agent_provider", "model_used", "timestamp"]
+    else:
+        constraints["citations_format"] = "array of verbatim strings (>= 20 chars each)"
+        constraints["metadata_note"] = "Zero-token metadata: system auto-injects provider, model, timestamp at ingest"
+
     return {
-        "packet_version": "1.0",
+        "packet_version": "2.0" if not is_v1 else "1.0",
         "work_item_id": work_item_id,
         "article_id": work_package.get("article_id"),
         "raw_sha256": work_package.get("raw_sha256"),
@@ -81,23 +105,13 @@ def build_task_packet(
         "input": gold_input,
         # OUTPUT contract — agent PHẢI emit đúng schema này.
         "output_contract": {
-            "schema_name": OUTPUT_SCHEMA,
-            "schema_path": f"schemas/{OUTPUT_SCHEMA}.schema.json",
-            "required": _OUTPUT_REQUIRED,
-            "thinking_order": ["summary(tóm tắt)", "implication(hàm ý)", "materiality(mức độ quan trọng)"],
+            "schema_name": schema_name,
+            "schema_path": f"schemas/{schema_name}.schema.json",
+            "required": required_fields,
+            "thinking_order": ["summary(tóm tắt)", "implication(hàm ý)", "sentiment", "time_sensitivity"],
         },
         # Ràng buộc để agent tự canh trước khi nộp (khớp DoD ở ingest).
-        "constraints": {
-            "min_citations": t["min_citations"],
-            "citations_must_be_substring_of": "input.cleaned_text",
-            "min_citation_len": 20,
-            "extraction_quality_in": list(t["quality_ok"]),
-            "processing_metadata_required": ["agent_provider", "model_used", "timestamp"],
-            "preconditions": [
-                "verify sha256(raw_html_path) == raw_sha256",
-                "skip if change_state in [SELECTOR_BROKEN, TEMPLATE_DRIFT]",
-            ],
-        },
+        "constraints": constraints,
         "instructions_ref": "schemas/agent-instructions-v1.md",
     }
 

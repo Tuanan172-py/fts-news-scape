@@ -13,75 +13,44 @@ description: Chuyên viên bóc tách và phân tích ngữ nghĩa sâu tin tứ
   - Nếu `input.change_state` ∈ {`SELECTOR_BROKEN`, `TEMPLATE_DRIFT`} $\rightarrow$ Bỏ qua bài viết, không xử lý.
   - Đọc `input.cleaned_text` làm căn cứ trích xuất duy nhất.
 
-## 2. Quy trình Suy luận Ngữ nghĩa (Cognitive Workflow)
+## 2. Quy trình Suy luận Ngữ nghĩa Tinh Gọn (Lean Cognitive Workflow)
 
 1. **Tóm tắt Súc tích (`summary`)**:
-   - `abstractive`: Đoạn văn tóm tắt 2–4 câu văn hoàn chỉnh, rõ ý, kết thúc bằng dấu chấm câu. Tuyệt đối không cắt chuỗi thô giữa từ.
-   - `key_points`: 2–4 luận điểm quan trọng nhất của bài viết.
-2. **Hàm ý Thị trường (`implication`)**:
-   - `text`: Phân tích tác động trực tiếp của tin tức đối với doanh thu, lợi nhuận, dòng tiền hoặc giá trị cổ phiếu.
-   - `affected_parties`: Danh sách các bên bị ảnh hưởng (ví dụ: `["Vinhomes", "cổ đông VHM", "ngành bất động sản"]`).
-   - `impact_area`: Chọn một trong các enum: `market`, `regulatory`, `sentiment`, `supply_chain`, `geopolitical`, `other`.
-3. **Đánh giá Trọng yếu (`materiality`)**:
-   - `score`: Số thực từ `0.1` đến `1.0` (tuân thủ quy tắc trong `.agents/rules/02-financial-domain-rules.md`).
-   - `time_sensitivity`: `urgent`, `today`, `this_week`, `this_month`, `archive`.
+   - Đoạn văn tóm tắt 2–4 câu văn hoàn chỉnh, rõ ý, kết thúc bằng dấu chấm câu. Tuyệt đối không cắt chuỗi thô giữa từ.
+2. **Luận điểm Trọng yếu (`key_points`)**:
+   - Mảng 2–4 luận điểm quan trọng nhất của bài viết (ví dụ: `["Doanh thu Q3 tăng 25%...", "Tiến độ bàn giao vượt kế hoạch..."]`).
+3. **Hàm ý Thị trường (`implication`)**:
+   - Chuỗi phân tích tác động trực tiếp của tin tức đối với doanh thu, lợi nhuận, dòng tiền hoặc giá trị cổ phiếu (tối thiểu 40 ký tự).
 4. **Sắc thái (`sentiment`)**:
-   - `polarity`: `positive`, `negative`, `neutral`.
-   - `overall`: Điểm số từ `-1.0` (rất tiêu cực) đến `1.0` (rất tích cực).
-5. **Trích dẫn Chứng cứ Grounded (`citations`) — Cổng DoD**:
+   - Chọn 1 trong 3 nhãn: `"positive"`, `"negative"`, `"neutral"`.
+5. **Độ nhạy Thời gian (`time_sensitivity`)**:
+   - Chọn 1 trong: `"urgent"`, `"today"`, `"this_week"`, `"this_month"`, `"archive"`.
+6. **Trích dẫn Chứng cứ Grounded (`citations`) — Cổng DoD Tinh Gọn**:
    - Tối thiểu **2 trích dẫn**.
-   - Mỗi `source_span` **BẮT BUỘC là chuỗi con NGUYÊN VĂN** của `cleaned_text` với độ dài **$\ge 20$ ký tự**.
-   - `source_offset`: Vị trí bắt đầu của chuỗi con trong `cleaned_text`.
-6. **Phân loại Sự kiện (`event_type`) — Ràng buộc Schema Enum**:
-   - `event_type` CHỈ ĐƯỢC PHÉP là 1 trong: `earnings`, `acquisition`, `regulatory`, `lawsuit`, `partnership`, `financial_move`, `macro`, `other`. Tuyệt đối không dùng các giá trị ngoài schema.
+   - Dạng mảng chuỗi trực tiếp: mỗi phần tử **BẮT BUỘC là chuỗi con NGUYÊN VĂN** của `cleaned_text` với độ dài **$\ge 20$ ký tự**.
+   - *Không cần sinh `claim` hay `source_offset`*.
+7. **Zero-Token Metadata**:
+   - *KHÔNG CẦN SINH*: `processing_metadata`, `affected_parties`, `impact_area`, `event_type`, `materiality.score`, `extraction_quality`. Hệ thống sẽ tự động điền khi Ingest.
 
-## 3. Quy chuẩn Output JSON
+## 3. Quy chuẩn Output JSON Tinh Gọn (`agent-output-v2-lean`)
 
 Ghi vào `data/agent_outputs/<article_id>.json`:
 
 ```json
 {
-  "output_schema_version": "1.0",
   "article_id": "<article_id>",
-  "summary": {
-    "abstractive": "...",
-    "key_points": ["...", "..."],
-    "key_quotes": []
-  },
-  "implication": {
-    "text": "...",
-    "affected_parties": ["..."],
-    "impact_area": "market"
-  },
-  "materiality": {
-    "score": 0.85,
-    "time_sensitivity": "today"
-  },
-  "confidence": 0.9,
-  "sentiment": {
-    "overall": 0.8,
-    "polarity": "positive"
-  },
-  "event_type": "earnings",
-  "extraction_quality": "high",
-  "citations": [
-    {
-      "claim": "...",
-      "source_span": "...",
-      "source_offset": 120
-    },
-    {
-      "claim": "...",
-      "source_span": "...",
-      "source_offset": 340
-    }
+  "summary": "Tập đoàn Vingroup công bố khởi công dự án...",
+  "key_points": [
+    "Quy mô dự án đạt 400 ha với vốn đầu tư...",
+    "Dự kiến hoàn thành các hạng mục chính vào tháng 8/2027"
   ],
-  "processing_metadata": {
-    "agent_provider": "antigravity",
-    "model_used": "flash",
-    "timestamp": "<ISO_NOW_VN>",
-    "schema_version": "1.0"
-  }
+  "implication": "Công trình biểu tượng thể thao quy mô lớn thúc đẩy mạnh mẽ giá trị thương hiệu và mở ra dư địa khai thác thương mại dài hạn cho hệ sinh thái.",
+  "sentiment": "positive",
+  "time_sensitivity": "today",
+  "citations": [
+    "VinFast - Trống Đồng là sân vận động có mái che đóng mở tự động quy mô nhất hành tinh",
+    "dự kiến hoàn thành các hạng mục chính vào tháng 8 năm 2027; sẵn sàng đăng cai"
+  ]
 }
 ```
 
@@ -90,19 +59,27 @@ Ghi vào `data/agent_outputs/<article_id>.json`:
 Khi nhận file task dạng gom lô `data/agent_tasks/batch_XX.task.json`:
 1. **Một lần đọc duy nhất**: Gọi `view_file` đọc toàn bộ file `batch_XX.task.json`.
 2. **Tận dụng `l1_entities`**: Mỗi task trong mảng `tasks[]` đã được L1 tiếp sức sẵn các mã cổ phiếu liên quan (`l1_entities`). Subagent tập trung ngay vào suy luận tác động doanh thu, dòng tiền, thị giá mà không cần dò lại từ đầu.
-3. **Một lần ghi duy nhất**: Ghi toàn bộ kết quả của cả lô vào `data/agent_outputs/batch_XX.output.json` dưới dạng mảng JSON các object theo schema trên:
+3. **Một lần ghi duy nhất**: Ghi toàn bộ kết quả của cả lô vào `data/agent_outputs/batch_XX.output.json` dưới dạng mảng JSON các object theo schema `v2-lean`:
 ```json
 [
   {
-    "output_schema_version": "1.0",
     "article_id": "<article_id_1>",
-    ...
+    "summary": "...",
+    "key_points": ["...", "..."],
+    "implication": "...",
+    "sentiment": "positive",
+    "time_sensitivity": "today",
+    "citations": ["trích dẫn nguyên văn 1...", "trích dẫn nguyên văn 2..."]
   },
   {
-    "output_schema_version": "1.0",
     "article_id": "<article_id_2>",
-    ...
+    "summary": "...",
+    "key_points": ["...", "..."],
+    "implication": "...",
+    "sentiment": "neutral",
+    "time_sensitivity": "this_week",
+    "citations": ["trích dẫn nguyên văn 1...", "trích dẫn nguyên văn 2..."]
   }
 ]
 ```
-> Giảm 90% số lần gọi công cụ I/O, tối ưu tốc độ và triệt tiêu context bloat.
+> Tiết kiệm ~60% output tokens so với v1, giảm 90% số lần gọi công cụ I/O.

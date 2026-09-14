@@ -106,8 +106,22 @@ def check_dod(agent_output: dict, work_package: dict,
     t = thresholds or load_thresholds()
     reasons: list[str] = []
 
-    # 1) schema_valid (hard)
-    ok, errs = schema_validate(agent_output, "agent-output-v1")
+    # 1) schema_valid (hard) - Hỗ trợ cả agent-output-v2-lean và agent-output-v1
+    is_lean = (
+        isinstance(agent_output.get("summary"), str)
+        or isinstance(agent_output.get("implication"), str)
+        or (isinstance(agent_output.get("citations"), list) and agent_output.get("citations") and isinstance(agent_output["citations"][0], str))
+        or "lean" in str(agent_output.get("output_schema_version", "")).lower()
+    )
+    schema_name = "agent-output-v2-lean" if is_lean else "agent-output-v1"
+    ok, errs = schema_validate(agent_output, schema_name)
+    if not ok:
+        # Fallback thử schema còn lại nếu phán đoán sơ bộ bị lệch
+        alt_schema = "agent-output-v1" if is_lean else "agent-output-v2-lean"
+        ok_alt, _ = schema_validate(agent_output, alt_schema)
+        if ok_alt:
+            ok = True
+            is_lean = (alt_schema == "agent-output-v2-lean")
     if not ok:
         reasons.append(f"schema_invalid: {errs[:2]}")
 
@@ -117,39 +131,64 @@ def check_dod(agent_output: dict, work_package: dict,
     if len(cites) < t["min_citations"]:
         reasons.append(f"citations {len(cites)} < {t['min_citations']}")
     for i, c in enumerate(cites):
-        span = (c or {}).get("source_span", "")
+        if isinstance(c, str):
+            span = c
+        elif isinstance(c, dict):
+            span = c.get("source_span", "")
+        else:
+            span = ""
         if not span or len(span.strip()) < _MIN_SPAN_LEN:
             reasons.append(f"citation[{i}] source_span too short (<{_MIN_SPAN_LEN} chars)")
         elif span not in cleaned:
             reasons.append(f"citation[{i}] not grounded in cleaned_text")
 
-    # 3) quality_ok (extraction_quality ∈ {high, medium})
-    q = agent_output.get("extraction_quality")
-    if q not in t["quality_ok"]:
-        reasons.append(f"extraction_quality={q!r} not in {t['quality_ok']}")
+    # 3) quality_ok (extraction_quality ∈ {high, medium}) — chỉ kiểm tra ở schema v1 cũ
+    if not is_lean:
+        q = agent_output.get("extraction_quality")
+        if q not in t["quality_ok"]:
+            reasons.append(f"extraction_quality={q!r} not in {t['quality_ok']}")
 
-    # 4) auditable — processing_metadata đủ provider/model/timestamp
-    pm = agent_output.get("processing_metadata") or {}
-    for k in ("agent_provider", "model_used", "timestamp"):
-        if not pm.get(k):
-            reasons.append(f"processing_metadata.{k} missing")
+    # 4) auditable — processing_metadata đủ provider/model/timestamp (v1). v2-lean do hệ thống tự điền.
+    if not is_lean:
+        pm = agent_output.get("processing_metadata") or {}
+        for k in ("agent_provider", "model_used", "timestamp"):
+            if not pm.get(k):
+                reasons.append(f"processing_metadata.{k} missing")
 
     n_clean = _norm(cleaned)
-    summ = agent_output.get("summary") or {}
+    summ = agent_output.get("summary")
+    if isinstance(summ, str):
+        n_abs = _norm(summ)
+        key_pts = agent_output.get("key_points") or []
+    elif isinstance(summ, dict):
+        n_abs = _norm(summ.get("abstractive") or "")
+        key_pts = summ.get("key_points") or agent_output.get("key_points") or []
+    else:
+        n_abs = ""
+        key_pts = []
 
     # 5) value_added — tóm tắt phải là văn bản MỚI, điểm chính phải khác trích dẫn.
-    n_abs = _norm(summ.get("abstractive") or "")
     if n_abs and n_clean and n_abs in n_clean:
         reasons.append("summary.abstractive là trích nguyên văn cleaned_text, không phải tóm tắt")
-    spans = {_norm((c or {}).get("source_span", "")) for c in cites}
+    spans = set()
+    for c in cites:
+        span_str = c if isinstance(c, str) else (c.get("source_span", "") if isinstance(c, dict) else "")
+        if span_str:
+            spans.add(_norm(span_str))
     spans.discard("")
-    for i, kp in enumerate(summ.get("key_points") or []):
+    for i, kp in enumerate(key_pts):
         if _norm(kp) in spans:
             reasons.append(f"key_points[{i}] copy nguyên văn citations[].source_span")
             break
 
     # 6) implication_specific — "so-what" phải là nhận định riêng, không phải câu mẫu.
-    impl_text = (agent_output.get("implication") or {}).get("text") or ""
+    impl = agent_output.get("implication")
+    if isinstance(impl, str):
+        impl_text = impl
+    elif isinstance(impl, dict):
+        impl_text = impl.get("text") or ""
+    else:
+        impl_text = ""
     n_impl = _norm(impl_text)
     min_len = t["min_implication_len"]
     if len(impl_text.strip()) < min_len:

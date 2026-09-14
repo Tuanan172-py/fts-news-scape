@@ -129,11 +129,53 @@ def test_export_then_ingest_done(tmp_path):
     assert len(exported) == 1
     packet = json.loads(open(exported[0]["path"], encoding="utf-8").read())
     assert packet["input"]["article_id"] == "art1"
-    assert packet["output_contract"]["schema_name"] == "agent-output-v1"
+    assert packet["output_contract"]["schema_name"] in ("agent-output-v1", "agent-output-v2-lean")
 
     res = runner.ingest_output(_make_output())
     assert res["dod_pass"] is True
     assert store.get_agent_output("art1", sha)["dod_pass"] == 1
+    assert Catalog(store).counts().get("done") == 1
+
+
+def _make_lean_output(article_id="art1"):
+    return {
+        "article_id": article_id,
+        "summary": "Tóm tắt phân tích do agent tự viết cho doanh nghiệp.",
+        "key_points": ["Luận điểm kinh doanh số một", "Luận điểm thị trường số hai"],
+        "implication": "Chi phí nhân sự giảm có thể nới biên lợi nhuận quý tới, nhưng làm chậm mở rộng doanh thu.",
+        "sentiment": "positive",
+        "time_sensitivity": "today",
+        "citations": [
+            "Alpha beta gamma đầu ngành.",
+            "Delta epsilon zeta lao động giảm mạnh.",
+        ],
+    }
+
+
+def test_dod_pass_lean_output(tmp_path):
+    wp, _, _ = _make_wp(tmp_path)
+    ok, reasons = check_dod(_make_lean_output(), wp)
+    assert ok is True, reasons
+
+
+def test_runner_ingest_lean_output_and_auto_metadata(tmp_path):
+    store = _store(tmp_path)
+    wp, wp_path, sha = _make_wp(tmp_path)
+    Catalog(store).enqueue(wp["article_id"], sha, "cafef.vn", wp_path, "NEW")
+
+    runner = AgentRunner(store, task_dir=str(tmp_path / "tasks"))
+    exported = runner.export_tasks(limit=10, require_l1=False, subscriber_only=False)
+    assert len(exported) == 1
+    packet = json.loads(open(exported[0]["path"], encoding="utf-8").read())
+    assert packet["output_contract"]["schema_name"] == "agent-output-v2-lean"
+    assert "structure" not in packet["input"]
+
+    res = runner.ingest_output(_make_lean_output())
+    assert res["dod_pass"] is True
+    out_rec = store.get_agent_output("art1", sha)
+    assert out_rec["dod_pass"] == 1
+    assert out_rec["agent_provider"] == "antigravity"
+    assert out_rec["model_used"] == "flash"
     assert Catalog(store).counts().get("done") == 1
 
 

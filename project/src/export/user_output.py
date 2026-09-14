@@ -172,47 +172,55 @@ class UserOutputWriter:
         mat = ag.get("materiality") or {}
         sent = ag.get("sentiment") or {}
         meta = ag.get("processing_metadata") or {}
-        raw_key_points = summ.get("key_points") or []
+
+        # Hỗ trợ cả schema v2-lean (chuỗi phẳng) lẫn v1 (object lồng nhau)
+        summary_val = summ if isinstance(summ, str) else (summ.get("abstractive") or "")
+        raw_key_points = ag.get("key_points") or (summ.get("key_points") if isinstance(summ, dict) else []) or []
         key_points_formatted = "\n".join(f"- {p}" for p in raw_key_points if p) if raw_key_points else ""
+        implication_val = impl if isinstance(impl, str) else (impl.get("text") or "")
+        impact_area_val = impl.get("impact_area") if isinstance(impl, dict) else ""
+        time_sens_val = ag.get("time_sensitivity") or (mat.get("time_sensitivity") if isinstance(mat, dict) else "") or ""
+        sentiment_val = ag.get("sentiment") if isinstance(ag.get("sentiment"), str) else (sent.get("polarity") or sent.get("overall") or "")
+
         return {
             "date": _row_date(r),
             "matched_entities": self._codes(matched),
             "title": r.get("title") or "",
-            "summary": summ.get("abstractive") or "",
+            "summary": summary_val,
             "key_points": key_points_formatted,
-            "implication": impl.get("text") or "",
-            "impact_area": impl.get("impact_area") or "",
-            "time_sensitivity": mat.get("time_sensitivity") or "",
-            "sentiment": sent.get("polarity") or sent.get("overall") or "",
+            "implication": implication_val,
+            "impact_area": impact_area_val,
+            "time_sensitivity": time_sens_val,
+            "sentiment": sentiment_val,
             "event_type": ag.get("event_type") or "",
             "gold_status": "GOLD" if r.get("agent_json") else "L1_ONLY",
             "url": r.get("url") or "",
             "source_domain": r.get("source_domain") or "",
             "article_id": r["article_id"],
-            "agent_provider": meta.get("agent_provider") or "",
-            "model_used": meta.get("model_used") or "",
+            "agent_provider": meta.get("agent_provider") or ag.get("agent_provider") or "",
+            "model_used": meta.get("model_used") or ag.get("model_used") or "",
         }
 
     @staticmethod
     def _sort_key(r: dict, frow: dict) -> tuple:
         """Tạo khóa sắp xếp thứ tự hiển thị bài viết theo độ ưu tiên nghiệp vụ."""
-        mat = _loads(r.get("agent_json")).get("materiality") or {}
+        ag = _loads(r.get("agent_json"))
+        mat = ag.get("materiality") or {}
         try:
-            score = float(mat.get("score") or 0.0)
+            score = float(mat.get("score") if isinstance(mat, dict) else (ag.get("materiality_score") or 0.0))
         except (TypeError, ValueError):
             score = 0.0
         return (_TIME_RANK.get(frow.get("time_sensitivity"), 9), -score,
                 frow.get("matched_entities") or "", frow.get("title") or "")
 
     def _l1_row(self, r: dict) -> dict:
-        d = _loads(r["l1_json"])
+        d = _loads(r.get("l1_json"))
         meta = d.get("processing_metadata") or {}
         ents = "; ".join(f"{e.get('entity_id')}({e.get('type')})"
                          for e in (d.get("entities") or []) if e.get("in_list"))
         cats = "; ".join(f"{k}={v}" for k, v in (d.get("categories") or {}).items() if v != "none")
         return {"article_id": r["article_id"], "date": _row_date(r), "title": r.get("title"),
                 "entities": ents, "categories": cats,
-                # Để TRỐNG khi agent không khai báo — không bịa tên provider.
                 "agent_provider": meta.get("agent_provider") or "",
                 "model_used": meta.get("model_used") or ""}
 
@@ -223,13 +231,17 @@ class UserOutputWriter:
         mat = ag.get("materiality") or {}
         sent = ag.get("sentiment") or {}
         meta = ag.get("processing_metadata") or {}
+        summary_val = summ if isinstance(summ, str) else (summ.get("abstractive") or "")
+        impl_val = impl if isinstance(impl, str) else (impl.get("text") or "")
+        sentiment_val = ag.get("sentiment") if isinstance(ag.get("sentiment"), str) else (sent.get("polarity") or sent.get("overall") or "")
+        mat_score = mat.get("score") if isinstance(mat, dict) and mat.get("score") is not None else ""
         return {"article_id": r["article_id"], "date": _row_date(r),
-                "summary": summ.get("abstractive") or "", "implication": impl.get("text") or "",
-                "materiality_score": mat.get("score") if mat.get("score") is not None else "",
-                "sentiment": sent.get("polarity") or sent.get("overall") or "",
+                "summary": summary_val, "implication": impl_val,
+                "materiality_score": mat_score,
+                "sentiment": sentiment_val,
                 "event_type": ag.get("event_type") or "",
-                "agent_provider": meta.get("agent_provider") or "",
-                "model_used": meta.get("model_used") or ""}
+                "agent_provider": meta.get("agent_provider") or ag.get("agent_provider") or "",
+                "model_used": meta.get("model_used") or ag.get("model_used") or ""}
 
     def _silver_noise_signals(self, matched_eids: set[str], r: dict) -> str:
         """Thu thập các chỉ số tín hiệu tần suất xuất hiện alias phục vụ quan sát."""

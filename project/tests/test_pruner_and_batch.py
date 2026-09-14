@@ -42,6 +42,13 @@ def test_boilerplate_detection():
     assert is_boilerplate_paragraph("Ban biên tập Tòa soạn") is True
     assert is_boilerplate_paragraph("Theo HOSE") is True
     assert is_boilerplate_paragraph("---") is True
+    # US-012: Disclaimer, Hồ sơ công ty, Chú thích ảnh, Chữ ký phóng viên
+    assert is_boilerplate_paragraph("Tuyên bố miễn trừ: Báo cáo này chỉ mang tính tham khảo cho nhà đầu tư.") is True
+    assert is_boilerplate_paragraph("Khuyến cáo miễn trừ trách nhiệm đầu tư tài chính.") is True
+    assert is_boilerplate_paragraph("Thông tin doanh nghiệp: CTCP Tập đoàn Vingroup thành lập năm 1993.") is True
+    assert is_boilerplate_paragraph("Ảnh: Toàn cảnh dự án nhìn từ trên cao.") is True
+    assert is_boilerplate_paragraph("Hình ảnh: Lễ ký kết hợp tác giữa hai tập đoàn.") is True
+    assert is_boilerplate_paragraph("Bài và ảnh: Minh Khang - Phóng viên Báo Đầu tư") is True
     # Doan noi dung that phai duoc giu lai
     assert is_boilerplate_paragraph(
         "VN-Index tăng 12 điểm trong phiên sáng nhờ sức kéo của nhóm ngân hàng."
@@ -93,9 +100,8 @@ def test_lean_task_packet_size(tmp_path):
     packet = build_task_packet(wp, l1_entities=["VCB", "VIC"])
     inp = packet["input"]
 
-    # Zero-Waste: KHONG duoc mang links / images sang agent
-    assert "links" not in inp.get("structure", {})
-    assert "images" not in inp.get("structure", {})
+    # Zero-Waste: KHONG duoc mang links / images / headings rác sang agent
+    assert "structure" not in inp
     assert inp["l1_entities"] == ["VCB", "VIC"]
     assert "Ban biên tập" not in inp["cleaned_text"]
 
