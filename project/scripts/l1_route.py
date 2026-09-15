@@ -43,8 +43,12 @@ def _iter_sources(source: str, reverse: bool = True):
 
 
 def main(argv=None) -> int:
-    ap = argparse.ArgumentParser()
+    ap = argparse.ArgumentParser(description="Định tuyến và phát gói công việc nhận diện thực thể L1")
     ap.add_argument("--source", default="data/work_packages")
+    ap.add_argument("--from-db", action="store_true",
+                    help="Lấy trực tiếp bài viết từ bảng `articles` của SQLite thay vì quét file work_packages")
+    ap.add_argument("--date", type=str, default=None,
+                    help="Lọc bài theo ngày xuất bản YYYY-MM-DD hoặc 'today'")
     ap.add_argument("--review", choices=["all", "missed"], default="missed",
                     help="missed: chỉ phát packet cho tin code-first KHÔNG khớp (needs_agent, mặc định); all: phát cho mọi tin")
     ap.add_argument("--batch-size", "-b", type=int, default=None, help="Kích thước block/lô việc cần xuất (mặc định 50)")
@@ -116,13 +120,38 @@ def main(argv=None) -> int:
     route_ctr, rel_ctr = Counter(), Counter()
     seen: set[str] = set()
     exported_tasks: list[dict] = []
-    for f in _iter_sources(args.source, reverse=(args.order == "desc")):
+
+    target_date = args.date
+    if target_date == "today":
+        from datetime import datetime
+        target_date = f"{datetime.now():%Y-%m-%d}"
+
+    def _iter_articles():
+        if args.from_db or target_date:
+            conn = store.connect()
+            try:
+                order_clause = "DESC" if args.order == "desc" else "ASC"
+                sql = "SELECT url_title_hash AS article_id, title, source_domain AS domain, published_at FROM articles WHERE 1=1"
+                params = []
+                if target_date:
+                    sql += " AND date(published_at) = ?"
+                    params.append(target_date)
+                sql += f" ORDER BY published_at {order_clause}"
+                for r in conn.execute(sql, params):
+                    yield dict(r)
+            finally:
+                conn.close()
+        else:
+            for f in _iter_sources(args.source, reverse=(args.order == "desc")):
+                try:
+                    with open(f, encoding="utf-8") as fp:
+                        yield json.load(fp)
+                except Exception:
+                    continue
+
+    for art in _iter_articles():
         if limit is not None and n >= limit:
             break
-        try:
-            art = json.load(open(f, encoding="utf-8"))
-        except Exception:
-            continue
         aid = art.get("article_id")
         if not aid or aid in seen or aid in done_aids:
             continue
