@@ -22,6 +22,7 @@ def main(argv: list[str]) -> int:
     ap.add_argument("--date", help="'today' hoặc YYYY-MM-DD (mặc định: mọi ngày)")
     ap.add_argument("--days", type=int, help="N ngày gần nhất")
     ap.add_argument("--users", help="lọc user, phân tách bằng dấu phẩy (mặc định: manifest)")
+    ap.add_argument("--force", action="store_true", help="ép ghi đè toàn bộ file deliverable kể cả khi không có bài mới")
     args = ap.parse_args(argv)
 
     db_path = load_settings().get("database", {}).get("path", "data/monocle.db")
@@ -31,7 +32,7 @@ def main(argv: list[str]) -> int:
     else:
         enabled = enabled_users()
     writer = UserOutputWriter(ArticleStore(db_path=db_path), reg, enabled=enabled or None)
-    counts = writer.write(date=args.date, days=args.days)
+    counts = writer.write(date=args.date, days=args.days, force=args.force)
     total = sum(counts.values())
     print(f"done: {len(counts)} user, {total} dòng final. " + ", ".join(
         f"{u}={n}" for u, n in sorted(counts.items())))

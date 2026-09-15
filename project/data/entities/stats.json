@@ -1,8 +1,9 @@
 {
-  "schema_version": "1.1.0",
-  "total_entities": 2153,
+  "schema_version": "1.2.0",
+  "total_active_entities": 1262,
+  "total_archived_entities": 891,
   "by_type": {
-    "TICKER": 1984,
+    "TICKER": 1093,
     "SECURITY_OTHER": 11,
     "ETF": 28,
     "INDEX": 6,
@@ -15,7 +16,12 @@
     "ASSET_CLASS": 7,
     "INSTITUTION": 7
   },
-  "securities_total": 2023,
+  "ticker_tiers": {
+    "tier_1_core": 742,
+    "tier_2_extended": 351,
+    "tier_3_archived": 891
+  },
+  "securities_active_total": 1132,
   "tickers_with_name": 1968,
   "tickers_with_gics": 1917
 }

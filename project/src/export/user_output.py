@@ -64,7 +64,32 @@ def _loads(s):
         return {}
 
 
+def _parse_row_dt(r: dict) -> datetime | None:
+    raw = (r.get("published_at") or r.get("fetched_at") or "").strip()
+    if not raw:
+        return None
+    if raw.endswith("Z"):
+        raw = raw[:-1] + "+00:00"
+    try:
+        dt = datetime.fromisoformat(raw)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=VN_TZ)
+        return dt.astimezone(VN_TZ)
+    except Exception:
+        return None
+
+
+def _row_datetime_str(r: dict) -> str:
+    dt = _parse_row_dt(r)
+    if dt is not None:
+        return dt.strftime("%Y-%m-%d %H:%M")
+    return (r.get("published_at") or r.get("fetched_at") or "")[:16] or "unknown-date"
+
+
 def _row_date(r: dict) -> str:
+    dt = _parse_row_dt(r)
+    if dt is not None:
+        return dt.strftime("%Y-%m-%d")
     return (r.get("published_at") or r.get("fetched_at") or "")[:10] or "unknown-date"
 
 
@@ -183,7 +208,7 @@ class UserOutputWriter:
         sentiment_val = ag.get("sentiment") if isinstance(ag.get("sentiment"), str) else (sent.get("polarity") or sent.get("overall") or "")
 
         return {
-            "date": _row_date(r),
+            "date": _row_datetime_str(r),
             "matched_entities": self._codes(matched),
             "title": r.get("title") or "",
             "summary": summary_val,
@@ -203,15 +228,16 @@ class UserOutputWriter:
 
     @staticmethod
     def _sort_key(r: dict, frow: dict) -> tuple:
-        """Tạo khóa sắp xếp thứ tự hiển thị bài viết theo độ ưu tiên nghiệp vụ."""
+        """Tạo khóa sắp xếp thứ tự hiển thị bài viết: mới nhất lên đầu, tiếp đến materiality cao."""
         ag = _loads(r.get("agent_json"))
         mat = ag.get("materiality") or {}
         try:
             score = float(mat.get("score") if isinstance(mat, dict) else (ag.get("materiality_score") or 0.0))
         except (TypeError, ValueError):
             score = 0.0
-        return (_TIME_RANK.get(frow.get("time_sensitivity"), 9), -score,
-                frow.get("matched_entities") or "", frow.get("title") or "")
+        dt = _parse_row_dt(r)
+        ts_val = dt.timestamp() if dt is not None else 0.0
+        return (-ts_val, -score, frow.get("matched_entities") or "", frow.get("title") or "")
 
     def _l1_row(self, r: dict) -> dict:
         d = _loads(r.get("l1_json"))

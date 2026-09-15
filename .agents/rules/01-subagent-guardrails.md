@@ -35,3 +35,9 @@ Ranh giới quyền hạn bất biến cho MỌI Subagent trong hệ thống New
 - **Quy tắc Entity Catalog In-List**:
   - Chỉ gán `in_list: true` và điền `entity_id` (kèm tiền tố chuẩn như `TICKER:`, `MACRO_THEME:`, `IND_GICS1/2/3:`) nếu thực thể tồn tại chính thức trong danh mục hệ thống.
   - Các thực thể nhận diện được ngoài danh mục (quốc gia ngoài Top 8, tổ chức/thương hiệu quốc tế hoặc chưa niêm yết): BẮT BUỘC gán `in_list: false`, `entity_id: null` và đưa chuỗi tên vào danh sách `unlisted_candidates`.
+
+## 7. Rào cản Giá trị Mới & Chống Trùng lặp (Value-Added Invariant)
+- **Diễn giải độc lập**: Tóm tắt `summary` và các luận điểm `key_points` BẮT BUỘC phải được diễn giải bằng lời văn phân tích tài chính riêng của Agent, mang lại giá trị gia tăng so với bản tin gốc.
+- **CẤM TUYỆT ĐỐI Sao chép Citations vào Key Points**: Không được phép copy nguyên văn câu trích dẫn sang mảng `key_points`. Cổng kiểm định DoD Ingest sẽ tự động quét đối chiếu độ tương đồng và từ chối nạp DB nếu phát hiện `key_points` trùng lặp với `citations`.
+- **Bảo toàn Chuỗi con Exact Substring**: Mọi `source_span` trong `citations` phải là chuỗi con nguyên bản 100% (từng dấu câu, ký tự viết hoa/thường, số liệu) trích trực tiếp từ `cleaned_text` và có độ dài tối thiểu **$\ge 20$ ký tự**.
+

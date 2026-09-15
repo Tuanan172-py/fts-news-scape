@@ -51,6 +51,11 @@ description: Nhận diện thực thể tài chính đa tầng từ tiêu đề 
     - `FE Credit`, `VPBankS` $\rightarrow$ `TICKER:VPB`
     - `VinFast`, `Vinpearl`, `Xanh SM` $\rightarrow$ `TICKER:VIC`
     - `Becamex`, `Becamex Tokyu` $\rightarrow$ `TICKER:BCM`
+- **Phân tầng TICKER 3 Tiers & Quản lý Danh mục (ADR 0005 & US-014)**:
+  - Runtime Master Catalog (`entities.json`) đã được tinh gọn ~45% (loại bỏ ~890 mã đã chết / siêu penny vô thanh khoản sang `entities_archive.json`).
+  - **Tier 1 (Core Universe)**: Gồm 100% Watchlist của người dùng và các mã lớn $\ge 300$ tỷ VND. Được nhận diện bình thường qua mã 3 ký tự in hoa và alias thương hiệu.
+  - **Tier 2 (Extended Universe)**: Các mã vốn hóa 100 – 300 tỷ VND. Chỉ nhận diện qua mã 3 ký tự khi là công bố thông tin (`MÃ: ...`). Trong văn bản thông thường, mã Tier 2 BẮT BUỘC phải nhận diện qua tên công ty hoặc alias thương hiệu để triệt tiêu false positive.
+  - **Tier 3 (Dormant / Archived / Penny)**: Các mã rác ngoài danh mục `entities.json` nếu có xuất hiện trên báo BẮT BUỘC xếp vào `unlisted_candidates` với `in_list: false` và `entity_id: null`.
 - **Chống Nhầm lẫn Tên người với Quốc gia (Morphological Guard)**:
   - Từ `Nga` đứng sau danh xưng hoặc họ đệm (*"Bà Trần Kim Nga"*, *"Nga Rose"*) là tên người Việt/tên tài khoản, KHÔNG được gán nhãn `MACRO_GEO:NGA`.
   - Từ `Mỹ` đứng trước danh từ riêng tiếng Việt (*"Mỹ Thuận"*, *"Mỹ Tho"*, *"Mỹ Đình"*, *"Mỹ Thủy"*, *"Á Mỹ"*) là địa danh/thương hiệu, KHÔNG được gán nhãn `MACRO_GEO:MY`.

@@ -14,7 +14,7 @@ SHEET_NAME = "Watchlist News"
 # Hợp đồng GIAO HÀNG: (khoá trong row dict, nhãn hiển thị, độ rộng cột, có wrap text).
 # Thứ tự theo khối: định vị → phân loại (ngắn, để quét/filter) → nguồn → văn bản dài → kỹ thuật.
 DELIVERY_FIELDS: list[tuple[str, str, int, bool]] = [
-    ("date",             "Date",               12, False),
+    ("date",             "Date",               16, False),
     ("matched_entities", "Matched Entities",   20, False),
     ("title",            "Title",              48, True),
     ("sentiment",        "Sentiment",          12, False),
@@ -76,9 +76,15 @@ def _set_text(cell, value: str, *, align) -> None:
     cell.alignment = align
 
 
-def _parse_date(s: str) -> date | None:
+def _parse_date(s: str) -> datetime | date | None:
+    raw = (s or "").strip()
+    if len(raw) >= 16:
+        try:
+            return datetime.strptime(raw[:16], "%Y-%m-%d %H:%M")
+        except (TypeError, ValueError):
+            pass
     try:
-        return datetime.strptime((s or "")[:10], "%Y-%m-%d").date()
+        return datetime.strptime(raw[:10], "%Y-%m-%d").date()
     except (TypeError, ValueError):
         return None
 
@@ -113,7 +119,7 @@ def build_workbook(rows: list[dict]) -> Workbook:
                 d = _parse_date(raw)
                 if d is not None:
                     cell.value = d
-                    cell.number_format = "yyyy-mm-dd"
+                    cell.number_format = "yyyy-mm-dd hh:mm" if isinstance(d, datetime) else "yyyy-mm-dd"
                     cell.alignment = align
                 else:
                     _set_text(cell, str(raw or ""), align=align)

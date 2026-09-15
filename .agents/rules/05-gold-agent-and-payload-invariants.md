@@ -61,6 +61,7 @@ Nhằm tối ưu tốc độ, giảm thiểu 95% Token Burn và triệt tiêu ho
 7. **Đầu ra Tinh Gọn & Zero-Token Metadata (`agent-output-v2-lean` — US-012)**:
    - Cấu trúc output phẳng, chỉ gồm 7 trường cốt lõi phục vụ trực tiếp cho Deliverable Excel: `article_id`, `summary`, `key_points`, `implication`, `sentiment`, `time_sensitivity`, `citations`.
    - `citations` dạng mảng chuỗi nguyên văn trực tiếp (`["span 1", "span 2"]`), loại bỏ `claim` và `source_offset`.
+   - **Ràng buộc Value-Added Invariant**: `key_points` BẮT BUỘC phải diễn giải bằng lời văn phân tích tài chính riêng của Agent, TUYỆT ĐỐI KHÔNG sao chép nguyên văn chuỗi citations. Cổng DoD Ingest sẽ từ chối nạp DB nếu phát hiện trùng lặp.
    - Loại bỏ 100% các trường thừa thãi: `affected_parties`, `impact_area`, `event_type`, `materiality.score`, `extraction_quality`.
    - Siêu dữ liệu kỹ thuật (`processing_metadata`) do hệ thống tự động điền khi Ingest (Zero-token metadata), tiết kiệm ~60% output token.
    - Loại bỏ triệt để `structure.headings` khỏi task packet input để chống rò rỉ token và chống hallucinate.

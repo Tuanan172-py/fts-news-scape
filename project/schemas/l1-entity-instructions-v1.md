@@ -31,10 +31,11 @@ Bạn có **quyền tra soát** kể cả khi code đã khớp (route=`resolved`
 ## 2. Quy trình bắt buộc (thứ tự)
 0. Đọc `input.code_first`: xác nhận entity đúng, loại entity sai. (TRA SOÁT)
 1. Đọc `title`. Liệt kê ứng viên thực thể (surface = chuỗi con nguyên văn), gồm cả cái code bỏ sót.
-2. Ánh xạ từng ứng viên vào `entities.json`:
+2. Ánh xạ từng ứng viên vào `entities.json` (đã phân tầng Tier 1/2; Tier 3 lưu tại `entities_archive.json`):
    - khớp mã in hoa → `method="exact_code"`; khớp tên/alias → `method="alias"`;
    - nhận ra bằng suy luận (thương hiệu, viết tắt) → `method="semantic"`.
-3. Xác định `in_list` + `entity_id` (null nếu ngoài danh sách → ghi `unlisted_candidates`).
+   - Với mã cổ phiếu Tier 2 (vốn hóa 100-300 tỷ): chỉ khớp mã 3 ký tự khi là tin CBTT (`MÃ: ...`).
+3. Xác định `in_list` + `entity_id` (nếu mã thuộc doanh nghiệp nhỏ/ngừng giao dịch ngoài `entities.json` → đặt `entity_id=null`, `in_list=false`, ghi vào `unlisted_candidates`).
 4. Chấm **checklist `categories`** cho 8 nhóm (mục §3).
 5. Gắn `citations` (≥1 nếu `recognized=true`), `processing_metadata` (`confidence` tuỳ chọn).
 6. Đặt `recognized = (có ≥1 entity)`.

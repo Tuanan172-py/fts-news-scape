@@ -50,6 +50,12 @@ description: Quy trình điều phối chuẩn hóa cho Agent và Subagents tron
 
 Mọi lệnh BẮT BUỘC thực thi với Python venv cách ly: `& "C:\venvs\news-scape\Scripts\python.exe"` và chạy từ thư mục `project/`.
 
+### Bước 0: Câu Lệnh Mồi Chuẩn Hóa Kích Hoạt Ca Vận Hành (Daily Trigger Prompt)
+Người vận hành chỉ cần gửi câu lệnh mồi chuẩn hóa:
+```text
+Bắt đầu phiên ngày {YYYY-MM-DD}: Hãy dùng Radar kiểm tra điểm chạm pipeline, sau đó thực thi trọn vẹn chuỗi L1 (vật chất hóa Code-First trước để tiết kiệm token, phần còn lại gom mini-batches cho Subagents Flash xử lý có kiểm soát). Báo cáo tỷ lệ DoD và tổng lượng token tiêu thụ sau khi hoàn tất.
+```
+
 ### Bước 1: Quét và Vật chất hóa L1 Code-First
 ```powershell
 # Chạy vật chất hóa toàn bộ bài Code-First (0 token) vào l1_outputs:
@@ -135,7 +141,7 @@ Quy tắc xử lý bất biến (Strict 2-I/O & Grounded Citations):
 1. Đọc file task bằng tool `view_file` DUY NHẤT một lần. CẤM gọi discovery tools.
 2. Với mỗi task trong tasks[]:
    - Tận dụng input.l1_entities có sẵn để tập trung suy luận tác động tài chính.
-   - Tóm tắt súc tích: summary (abstractive) và key_points (1-3 điểm chính).
+   - Tóm tắt súc tích: summary (abstractive) và key_points (1-3 điểm chính diễn giải bằng lời văn riêng, TUYỆT ĐỐI KHÔNG copy nguyên văn chuỗi citations).
    - Phân tích implication: tác động cụ thể đến doanh thu, dòng tiền, định giá và cổ phiếu liên quan.
    - Đánh giá sentiment: positive | negative | neutral.
    - Xác định time_sensitivity: immediate | short_term | medium_term.

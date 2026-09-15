@@ -34,8 +34,9 @@ _POSSIBLE_DATA_ROOTS = [
 DEFAULT_DATA_ROOT = next((p for p in _POSSIBLE_DATA_ROOTS if p.exists()), _POSSIBLE_DATA_ROOTS[0])
 DEFAULT_OUT = Path(__file__).resolve().parents[1] / "data" / "entities"
 ALIASES_DIR = Path(__file__).resolve().parents[1] / "config" / "entities" / "aliases"
+USERS_DIR = Path(__file__).resolve().parents[1] / "config" / "entities" / "users"
 
-SCHEMA_VERSION = "1.1.0"
+SCHEMA_VERSION = "1.2.0"
 
 
 
@@ -49,6 +50,21 @@ def read_parquet(path: Path) -> pd.DataFrame:
 
 def read_excel(path: Path, **kw) -> pd.DataFrame:
     return pd.read_excel(path, **kw)
+
+
+def _load_user_watchlist_tickers(users_dir: Path) -> set[str]:
+    """Tải tập hợp các mã chứng khoán được người dùng đăng ký trong config/entities/users/."""
+    out: set[str] = set()
+    if not users_dir.exists():
+        return out
+    try:
+        import yaml
+        for f in users_dir.glob("*.yaml"):
+            cfg = yaml.safe_load(f.read_text(encoding="utf-8")) or {}
+            out.update(str(x).strip().upper() for x in cfg.get("tickers", []))
+    except Exception:
+        pass
+    return out
 
 
 # ----------------------------------------------------------------------------
@@ -276,6 +292,24 @@ def build(data_root: Path, out_dir: Path) -> dict:
     os_latest = osx.sort_values("Date").groupby("Ticker").tail(1)
     os_map = {str(r.Ticker).strip(): int(r.OS) for r in os_latest.itertuples() if pd.notna(r.OS)}
 
+    # Vốn hóa & Ngày hoạt động mới nhất / ticker (từ market_caps.parquet)
+    mc_copy = mc.copy()
+    mc_copy["Date"] = pd.to_datetime(mc_copy["Date"])
+    mc_latest = mc_copy.sort_values("Date").groupby("Ticker").tail(1)
+    mc_meta: dict[str, dict] = {}
+    for r in mc_latest.itertuples():
+        ticker_str = str(r.Ticker).strip()
+        cap_val = float(r.Market_caps) if pd.notna(r.Market_caps) else 0.0
+        date_str = str(r.Date)[:10]
+        year_val = int(r.Date.year)
+        mc_meta[ticker_str] = {
+            "year": year_val,
+            "market_cap_bil": round(cap_val / 1e9, 2),
+            "latest_date": date_str,
+        }
+
+    user_tickers = _load_user_watchlist_tickers(USERS_DIR)
+
     entities: list[dict] = []
 
     # --- 1) SECURITIES: cổ phiếu / ETF / khác (union mọi nguồn có mã) -------
@@ -301,6 +335,32 @@ def build(data_root: Path, out_dir: Path) -> dict:
             attrs["shares_outstanding"] = os_map[code]
         attrs["has_market_cap"] = code in mc_codes
         attrs["listed_universe"] = True
+
+        if etype == "TICKER":
+            meta = mc_meta.get(code, {})
+            mc_year = meta.get("year", 0)
+            mc_bil = meta.get("market_cap_bil", 0.0)
+            latest_date = meta.get("latest_date")
+            is_active = (mc_year >= 2025)
+            in_user = (code in user_tickers)
+
+            if in_user or (is_active and mc_bil >= 300.0):
+                tier = 1
+            elif is_active and mc_bil >= 100.0:
+                tier = 2
+            else:
+                tier = 3
+
+            attrs["tier"] = tier
+            attrs["is_active"] = is_active
+            attrs["market_cap_bil"] = mc_bil
+            if latest_date:
+                attrs["latest_date"] = latest_date
+            if in_user:
+                attrs["in_user_watchlist"] = True
+        else:
+            attrs["tier"] = 1
+            attrs["is_active"] = True
 
         ent = {
             "entity_id": f"{etype}:{code}",
@@ -408,16 +468,24 @@ def build(data_root: Path, out_dir: Path) -> dict:
 
     # ----- outputs ----------------------------------------------------------
     out_dir.mkdir(parents=True, exist_ok=True)
+    active_entities = [e for e in entities if e.get("attributes", {}).get("tier", 1) in (1, 2)]
+    archived_entities = [e for e in entities if e.get("attributes", {}).get("tier", 1) == 3]
+
     _write_json(out_dir / "entities.json", {
         "schema_version": SCHEMA_VERSION,
-        "entity_count": len(entities),
-        "entities": entities,
+        "entity_count": len(active_entities),
+        "entities": active_entities,
     })
-    _write_csv(out_dir / "entities.csv", entities)
-    _write_xlsx(out_dir / "entities.xlsx", entities)
-    _write_taxonomy(out_dir / "taxonomy.json", entities, latest)
+    _write_json(out_dir / "entities_archive.json", {
+        "schema_version": SCHEMA_VERSION,
+        "entity_count": len(archived_entities),
+        "entities": archived_entities,
+    })
+    _write_csv(out_dir / "entities.csv", active_entities)
+    _write_xlsx(out_dir / "entities.xlsx", active_entities, archived_entities)
+    _write_taxonomy(out_dir / "taxonomy.json", active_entities, latest)
 
-    stats = _stats(entities, all_codes, comp_name, gics)
+    stats = _stats(active_entities, archived_entities, all_codes, comp_name, gics)
     _write_json(out_dir / "stats.json", stats)
     return stats
 
@@ -456,8 +524,8 @@ def _write_json(path: Path, obj) -> None:
 
 
 def _write_csv(path: Path, entities: list[dict]) -> None:
-    cols = ["entity_id", "type", "code", "canonical_name", "aliases", "parent",
-            "gics1", "gics2", "gics3", "sources"]
+    cols = ["entity_id", "type", "code", "canonical_name", "tier", "market_cap_bil",
+            "aliases", "parent", "gics1", "gics2", "gics3", "sources"]
     with open(path, "w", newline="", encoding="utf-8-sig") as f:
         w = csv.writer(f)
         w.writerow(cols)
@@ -465,13 +533,14 @@ def _write_csv(path: Path, entities: list[dict]) -> None:
             a = e["attributes"]
             w.writerow([
                 e["entity_id"], e["type"], e["code"], e["canonical_name"],
+                a.get("tier", 1), a.get("market_cap_bil", ""),
                 " | ".join(e["aliases"]), a.get("parent", ""),
                 a.get("gics1", ""), a.get("gics2", ""), a.get("gics3", ""),
                 " ; ".join(e["sources"]),
             ])
 
 
-def _write_xlsx(path: Path, entities: list[dict]) -> None:
+def _write_xlsx(path: Path, entities: list[dict], archived_entities: list[dict] | None = None) -> None:
     """Workbook đa sheet theo loại — chuẩn legacy dễ tra cứu và đăng ký."""
 
     def alias2(e):
@@ -482,6 +551,9 @@ def _write_xlsx(path: Path, entities: list[dict]) -> None:
     securities = [{
         "entity_id": e["entity_id"], "type": e["type"], "code": e["code"],
         "canonical_name": e["canonical_name"], "short_name": alias2(e),
+        "tier": e["attributes"].get("tier", 1),
+        "market_cap_bil": e["attributes"].get("market_cap_bil", ""),
+        "latest_date": e["attributes"].get("latest_date", ""),
         "gics1": e["attributes"].get("gics1", ""),
         "gics2": e["attributes"].get("gics2", ""),
         "gics3": e["attributes"].get("gics3", ""),
@@ -489,6 +561,18 @@ def _write_xlsx(path: Path, entities: list[dict]) -> None:
         "has_market_cap": e["attributes"].get("has_market_cap", ""),
         "sources": " ; ".join(e["sources"]),
     } for e in entities if e["type"] in sec_types]
+
+    archived_securities = [{
+        "entity_id": e["entity_id"], "type": e["type"], "code": e["code"],
+        "canonical_name": e["canonical_name"], "short_name": alias2(e),
+        "tier": e["attributes"].get("tier", 3),
+        "market_cap_bil": e["attributes"].get("market_cap_bil", ""),
+        "latest_date": e["attributes"].get("latest_date", ""),
+        "gics1": e["attributes"].get("gics1", ""),
+        "gics2": e["attributes"].get("gics2", ""),
+        "gics3": e["attributes"].get("gics3", ""),
+        "sources": " ; ".join(e["sources"]),
+    } for e in (archived_entities or []) if e["type"] in sec_types]
 
     industries = [{
         "entity_id": e["entity_id"], "level": e["type"].replace("INDUSTRY_", ""),
@@ -581,6 +665,9 @@ def _write_xlsx(path: Path, entities: list[dict]) -> None:
         "Assets": pd.DataFrame(assets),
         "Institutions": pd.DataFrame(institutions),
     }
+    if archived_securities:
+        sheets["Archived_Securities"] = pd.DataFrame(archived_securities)
+
     with pd.ExcelWriter(path, engine="openpyxl") as xw:
         for name, df in sheets.items():
             df.to_excel(xw, sheet_name=name, index=False)
@@ -636,13 +723,21 @@ def _write_taxonomy(path: Path, entities: list[dict], latest: pd.DataFrame) -> N
     _write_json(path, tax)
 
 
-def _stats(entities, all_codes, comp_name, gics) -> dict:
-    by_type = Counter(e["type"] for e in entities)
+def _stats(active_entities, archived_entities, all_codes, comp_name, gics) -> dict:
+    by_type = Counter(e["type"] for e in active_entities)
+    ticker_tiers = Counter(e.get("attributes", {}).get("tier", 1) for e in active_entities if e["type"] == "TICKER")
+    archived_count = len(archived_entities)
     return {
         "schema_version": SCHEMA_VERSION,
-        "total_entities": len(entities),
+        "total_active_entities": len(active_entities),
+        "total_archived_entities": archived_count,
         "by_type": dict(by_type),
-        "securities_total": sum(by_type[t] for t in ("TICKER", "ETF", "SECURITY_OTHER")),
+        "ticker_tiers": {
+            "tier_1_core": ticker_tiers.get(1, 0),
+            "tier_2_extended": ticker_tiers.get(2, 0),
+            "tier_3_archived": archived_count,
+        },
+        "securities_active_total": sum(by_type[t] for t in ("TICKER", "ETF", "SECURITY_OTHER")),
         "tickers_with_name": sum(1 for c in all_codes if c in comp_name),
         "tickers_with_gics": sum(1 for c in all_codes if c in gics),
     }

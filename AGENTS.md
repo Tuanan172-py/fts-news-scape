@@ -25,7 +25,7 @@ At most **one** story `in_progress` at a time. If an urgent request interrupts, 
 ## 2. OKF — where to get product context (priority order)
 
 Read these before inventing context; do NOT create a new knowledge folder:
-1. `.agents/skills/*` — operational, matching & agent execution skills (`news-scape-agent-operations`, `l1-entity-matcher`, `gold-financial-analyst`).
+1. `.agents/skills/*` — operational, matching, multi-agent swarm & governance skills (`pipeline-radar`, `watchlist-curator`, `token-auditor`, `dod-gatekeeper`, `multi-agent-orchestrator-governance`, `news-scape-agent-operations`, `l1-entity-matcher`, `gold-financial-analyst`).
 2. `project/docs/skills/*` — per-domain scraper knowledge (cafef, fireant, rss-sources, tnck).
 3. `project/docs/{design,dev,domains,operations}/` — architecture, how-tos, source taxonomy, ops.
 4. `project/docs/charter.md` + `project/docs/ARCHITECTURE.md` — goals, phases, TDRs.

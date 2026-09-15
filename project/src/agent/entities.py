@@ -321,6 +321,9 @@ class EntityRegistry:
                           "MACRO_GEO", "MACRO_THEME", "ASSET_CLASS", "INSTITUTION"):
                 eid = f"{etype}:{code}"
                 if eid in self.entities and eid not in seen:
+                    ent_tier = self.entities[eid].get("attributes", {}).get("tier", 1)
+                    if etype == "TICKER" and ent_tier == 2 and not is_disclosure_prefix:
+                        continue
                     seen.add(eid)
                     out.append({"entity_id": eid, "via": "code", "surface": code})
                     break

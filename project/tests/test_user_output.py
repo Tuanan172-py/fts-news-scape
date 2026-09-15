@@ -211,18 +211,21 @@ def test_matched_entities_deduped(tmp_path):
 
 
 def test_rows_sorted_urgent_then_materiality(tmp_path):
-    """Thứ tự đọc tất định: gấp trước, rồi materiality cao trước (score KHÔNG thành cột)."""
+    """Thứ tự đọc tất định: mới nhất lên đầu, cùng giờ thì materiality cao trước."""
     store = k.make_store(tmp_path)
     reg = k.make_registry({"AnPT": {"TICKER:HPG"}})
-    for aid, ts, score in (("low", "this_week", 0.3), ("mid", "this_week", 0.9),
-                           ("top", "urgent", 0.1)):
-        k.seed_article(store, aid)
+    # aid, published_at, score
+    for aid, pub, score in (("old", "2026-08-18T08:00:00+07:00", 0.9),
+                            ("mid_low_score", "2026-08-18T10:00:00+07:00", 0.3),
+                            ("mid_high_score", "2026-08-18T10:00:00+07:00", 0.8),
+                            ("newest", "2026-08-18T15:30:00+07:00", 0.2)):
+        k.seed_article(store, aid, published=pub)
         k.seed_l1(store, aid, ["TICKER:HPG"])
-        k.seed_agent(store, aid, time_sensitivity=ts, materiality=score)
+        k.seed_agent(store, aid, materiality=score)
 
     UserOutputWriter(store, reg, output_root=tmp_path / "out").write(date=DATE)
     rows = k.read_delivery(tmp_path / "out" / "AnPT" / f"{DATE}.xlsx")
-    assert [r["article_id"] for r in rows] == ["top", "mid", "low"]
+    assert [r["article_id"] for r in rows] == ["newest", "mid_high_score", "mid_low_score", "old"]
     assert all("materiality_score" not in r for r in rows)
 
 
