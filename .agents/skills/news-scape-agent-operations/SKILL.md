@@ -81,18 +81,21 @@ Sau khi Subagents hoàn tất và xuất file output:
 
 ### Bước 4: Xuất Tác vụ Gold (Subscriber-Gated & Lean Schema)
 ```powershell
-# Xuất các bài thỏa mãn Watchlist người dùng cho ngày hiện tại (hoặc ngày chỉ định):
-& "C:\venvs\news-scape\Scripts\python.exe" scripts/agent_export.py `
-    --date 2026-09-14 `
-    --require-l1 `
-    --subscriber-only `
-    --limit 10000 `
-    --no-sync
+# Xuất các bài thỏa mãn Watchlist người dùng và tự động gom mini-batches (5 bài/lô):
+& "C:\venvs\news-scape\Scripts\python.exe" scripts/agent_export.py --date today --limit 10 --mini-batch 5
 ```
-Sau đó đóng gói thành các mini-batches Gold (5 bài/lô):
-```python
-from src.agent.batch_handoff import split_tasks_into_batches
-# Đầu ra: data/agent_tasks/batch_XX.task.json (5 bài/lô)
+
+### Bước 4b: Tự Động Hóa 1 Chạm Qua AutoPilot (Headless CLI Runner)
+Thay vì copy prompt thủ công, hệ thống hỗ trợ lệnh tự động hóa toàn diện từ Export đến Giao hàng:
+```powershell
+& "C:\venvs\news-scape\Scripts\python.exe" scripts/auto_pilot.py --date today --limit 10 --mini-batch 5
+```
+*Lệnh này tự động: Export bài -> Phát hiện batches -> Kích hoạt `agy -p` headless -> Ingest vào DB -> Cập nhật Excel cho Users.*
+
+### Bước 4c: Lệnh Kích Hoạt Headless CLI Trực Tiếp (agy -p)
+Khi muốn kích hoạt trực tiếp cho 1 batch cụ thể mà không cần mở giao diện chat interactive:
+```powershell
+agy -p "Bạn là Gold Financial Analyst. Hãy đọc task packet tại data/agent_tasks/batch_01.task.json, phân tích tài chính chuyên sâu (summary, key_points độc lập, implication >= 40 chars, sentiment, time_sensitivity, citations >= 20 chars exact substring) và ghi kết quả mảng JSON chuẩn agent-output-v2-lean vào data/agent_outputs/batch_01.output.json." --dangerously-skip-permissions --effort low
 ```
 
 ### Bước 5: Nghiệm thu DoD Gold Ingest & Giao hàng
@@ -101,7 +104,7 @@ from src.agent.batch_handoff import split_tasks_into_batches
 & "C:\venvs\news-scape\Scripts\python.exe" scripts/agent_ingest.py data/agent_outputs
 
 # Biên dịch và xuất Deliverable Excel cho toàn bộ người dùng active:
-& "C:\venvs\news-scape\Scripts\python.exe" scripts/write_user_output.py --date all
+& "C:\venvs\news-scape\Scripts\python.exe" scripts/write_user_output.py --date today
 ```
 
 ---

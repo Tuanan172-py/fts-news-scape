@@ -1,0 +1,138 @@
+# pipeline.yaml — Pipeline DAG Manifest (Spine 2)
+#
+# Khai báo máy-đọc-được của quy trình end-to-end. Thay thế mô tả văn xuôi 5-phase trong
+# news-scape-agent-operations. pipeline_radar đọc file này để suy ra stage kế tiếp và
+# gợi ý lệnh chính xác thay vì hardcode.
+#
+# Mỗi stage tham chiếu agent theo `id` trong registry.yaml (không lặp lại io_boundary ở đây).
+# needs: danh sách stage phụ thuộc (DAG edges).
+# gate: cổng DoD phải pass trước khi stage sau chạy.
+# wave: chính sách điều phối cognitive agent chống RESOURCE_EXHAUSTED (429).
+# optional: true  -> stage draft/chưa kích hoạt, radar chỉ hiển thị "available".
+
+version: 1
+updated: "2026-09-15"
+registry: .agents/registry.yaml
+
+stages:
+
+  - id: scrape
+    agent: scraper-orchestrator
+    class: operator
+    needs: []
+    produces: "articles (data/monocle.db)"
+    cli: '& "C:\venvs\news-scape\Scripts\python.exe" scripts/run_once.py'
+    liveness_check: "max(fetched_at) trong articles <= 30 phút => 🟢"
+
+  - id: l1_route
+    agent: l1-router
+    class: operator
+    needs: [scrape]
+    produces: "data/agent_tasks/l1/l1_batch_XX.task.json + l1_outputs (code-first)"
+    cli: '& "C:\venvs\news-scape\Scripts\python.exe" scripts/l1_route.py --from-db --date today --mini-batch 25'
+
+  - id: l1_match
+    agent: l1-entity-matcher
+    class: cognitive
+    needs: [l1_route]
+    consumes: "data/agent_tasks/l1/l1_batch_XX.task.json"
+    produces: "data/agent_outputs_l1/l1_batch_XX.output.json"
+    gate: dod-gatekeeper#l1
+    wave: { batch: 25, concurrency: 3, note: "2-3 batches/đợt (50-75 bài), chờ nghiệm thu mới sang đợt kế." }
+    invoke: "invoke_subagent (thủ công qua nền Antigravity) — xem prompt handoff news-scape-agent-operations §3A"
+
+  - id: l1_ingest
+    agent: l1-ingest-gate
+    class: operator
+    needs: [l1_match]
+    produces: "l1_outputs (dod_pass) + archive packet"
+    cli: '& "C:\venvs\news-scape\Scripts\python.exe" scripts/l1_ingest.py data/agent_outputs_l1'
+    metric_hook: "ghi agent_metrics cho l1-entity-matcher (items, dod_pass, dod_total)"
+
+  # ─────────── Cổng đặc nhiệm tùy chọn: Triage + Dedup (draft) ───────────
+  - id: materiality_triage
+    agent: materiality-triage
+    class: cognitive
+    needs: [l1_ingest]
+    optional: true
+    gate: dod-gatekeeper#triage
+    wave: { batch: 30, concurrency: 3 }
+    intent: "Lọc bài đáng phân tích Gold sâu trước khi export (giảm burn)."
+
+  - id: story_dedup
+    agent: story-dedup-clusterer
+    class: cognitive
+    needs: [l1_ingest]
+    optional: true
+    gate: dod-gatekeeper#dedup
+    wave: { batch: 15, concurrency: 2 }
+    intent: "Gộp cùng sự kiện đa nguồn -> Gold phân tích 1 lần, gán N nguồn."
+
+  - id: gold_export
+    agent: gold-exporter
+    class: operator
+    needs: [l1_ingest]         # triage/dedup optional chèn vào trước khi active
+    produces: "data/agent_tasks/batch_XX.task.json"
+    filter: subscriber_gated
+    cli: '& "C:\venvs\news-scape\Scripts\python.exe" scripts/agent_export.py --date today --require-l1 --subscriber-only'
+
+  - id: gold_analyze
+    agent: gold-financial-analyst
+    class: cognitive
+    needs: [gold_export]
+    consumes: "data/agent_tasks/batch_XX.task.json"
+    produces: "data/agent_outputs/batch_XX.output.json"
+    gate: dod-gatekeeper#gold
+    wave: { batch: 5, concurrency: 2, note: "2 batches/đợt (10 bài). Priority Wave 1 core tickers -> Wave 2 vĩ mô -> Wave 3 backlog." }
+    invoke: "invoke_subagent — xem prompt handoff news-scape-agent-operations §3B"
+
+  - id: gold_ingest
+    agent: gold-ingest-gate
+    class: operator
+    needs: [gold_analyze]
+    produces: "agent_outputs (dod_pass) + archive"
+    cli: '& "C:\venvs\news-scape\Scripts\python.exe" scripts/agent_ingest.py data/agent_outputs'
+    metric_hook: "ghi agent_metrics cho gold-financial-analyst"
+
+  - id: gold_qa
+    agent: adversarial-dod-verifier
+    class: cognitive
+    needs: [gold_ingest]
+    optional: true
+    gate: dod-gatekeeper#verifier
+    wave: { batch: 8, concurrency: 1 }
+    intent: "QA ngữ nghĩa trên mẫu output đã ingest; nạp defect vào harness backlog."
+
+  - id: deliver
+    agent: delivery-writer
+    class: operator
+    needs: [gold_ingest]
+    produces: "users/output/<user>/<date>.xlsx"
+    cli: '& "C:\venvs\news-scape\Scripts\python.exe" scripts/write_user_output.py --date all'
+
+  - id: daily_brief
+    agent: daily-brief-synthesizer
+    class: cognitive
+    needs: [deliver]
+    optional: true
+    gate: dod-gatekeeper#brief
+    intent: "Tổng hợp cuối ngày theo watchlist từng user."
+
+# ─────────────── Vòng quản trị (chạy độc lập, không trên đường giao hàng) ───────────────
+governance_loop:
+  - id: harness_audit
+    agent: harness-auditor
+    class: cognitive
+    optional: true
+    trigger: "cuối phiên / định kỳ tuần"
+    reads: ["harness.db (trace + backlog + agent_metrics)"]
+    produces: "docs/proposals/harness_improvement_<date>.md"
+    cli_readonly: '& "C:\venvs\news-scape\Scripts\python.exe" scripts/harness_cli.py propose'
+
+# ─────────────── Bất biến điều phối (Conductor phải tuân) ───────────────
+invariants:
+  - "WIP=1: không 2 story in_progress đồng thời (AGENTS.md §1)."
+  - "Controlled Wave: chờ nghiệm thu đợt hiện tại mới kích hoạt đợt kế (chống 429)."
+  - "No Script Emulation: cấm dùng regex/heuristic thay cognitive agent (rule 05 §3)."
+  - "Gate trước khi tiến: stage có gate phải đạt DoD pass mới cho stage sau chạy."
+  - "Metric hook: operator ingest ghi agent_metrics để nuôi vòng propose (Spine 3)."

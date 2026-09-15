@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Any
 
 PROTOCOL_VERSION = "harness-orchestration-v1"
-CURRENT_SCHEMA_VERSION = 1
+CURRENT_SCHEMA_VERSION = 2
 DEFAULT_DB_PATH = "harness.db"
 DEFAULT_SCHEMA_DIR = "scripts/schema"
 
@@ -27,7 +27,9 @@ CAPABILITIES = [
     "decision",
     "backlog",
     "trace",
+    "metric",
     "matrix",
+    "agent-metrics",
     "score-trace",
     "score-context",
     "tool-registry",
@@ -58,28 +60,43 @@ def get_db_connection(db_path: str = DEFAULT_DB_PATH) -> sqlite3.Connection:
 # ---------------------------------------------------------------------------
 
 def init_db(db_path: str = DEFAULT_DB_PATH, schema_dir: str = DEFAULT_SCHEMA_DIR) -> dict[str, Any]:
+    """Áp dụng tuần tự mọi tệp migration `NNN-*.sql` theo thứ tự số phiên bản.
+
+    Args:
+        db_path: Đường dẫn tệp SQLite harness.
+        schema_dir: Thư mục chứa các tệp migration.
+
+    Returns:
+        Từ điển trạng thái gồm phiên bản schema hiện tại và danh sách tệp đã áp dụng.
+
+    Raises:
+        FileNotFoundError: Khi thư mục schema không có tệp migration nào.
+    """
     conn = get_db_connection(db_path)
     try:
-        schema_path = Path(schema_dir) / "001-init.sql"
-        if not schema_path.exists():
-            raise FileNotFoundError(f"Schema file not found at {schema_path}")
-        
-        with open(schema_path, "r", encoding="utf-8") as f:
-            sql_script = f.read()
-        
-        conn.executescript(sql_script)
-        
-        # Record schema version
-        conn.execute(
-            "INSERT OR REPLACE INTO schema_version (version, applied_at, description) VALUES (?, ?, ?)",
-            (1, now_iso(), "001-init.sql initial schema")
-        )
+        migrations = sorted(Path(schema_dir).glob("[0-9][0-9][0-9]-*.sql"))
+        if not migrations:
+            raise FileNotFoundError(f"No migration files found in {schema_dir}")
+
+        applied: list[str] = []
+        max_version = 0
+        for path in migrations:
+            version = int(path.name[:3])
+            with open(path, "r", encoding="utf-8") as f:
+                conn.executescript(f.read())      # tệp dùng IF NOT EXISTS -> idempotent
+            conn.execute(
+                "INSERT OR REPLACE INTO schema_version (version, applied_at, description) VALUES (?, ?, ?)",
+                (version, now_iso(), path.name),
+            )
+            applied.append(path.name)
+            max_version = max(max_version, version)
+
         conn.commit()
         return {
             "status": "success",
             "db_path": db_path,
-            "schema_version": 1,
-            "applied": ["001-init.sql"]
+            "schema_version": max_version,
+            "applied": applied,
         }
     finally:
         conn.close()
@@ -556,13 +573,144 @@ def cmd_propose(db_path: str = DEFAULT_DB_PATH) -> dict[str, Any]:
                 "recommendation": f"Consolidate {r['cnt']} open items in '{r['component']}' into an ADR / targeted improvement story.",
                 "action_lane": "normal" if r["cnt"] < 3 else "high-risk"
             })
-            
+
+        agent_proposals = _propose_from_agent_metrics(conn)
+
         return {
             "status": "success",
             "total_open_components": len(proposals),
             "proposals": proposals,
+            "agent_metric_proposals": agent_proposals,
             "timestamp": now_iso()
         }
+    finally:
+        conn.close()
+
+
+def _propose_from_agent_metrics(conn: sqlite3.Connection) -> list[dict[str, Any]]:
+    """Sinh đề xuất cải tiến từ xu hướng KPI của từng cognitive agent (Spine 3).
+
+    Args:
+        conn: Kết nối harness.db đang mở.
+
+    Returns:
+        Danh sách đề xuất, mỗi phần tử nêu agent, triệu chứng và hành động khuyến nghị.
+    """
+    try:
+        rows = conn.execute(
+            """
+            SELECT agent_id,
+                   SUM(dod_pass) AS pass, SUM(dod_total) AS total,
+                   SUM(fp_flags) AS fp, SUM(items) AS items, COUNT(*) AS runs
+            FROM agent_metrics
+            GROUP BY agent_id
+            """
+        ).fetchall()
+    except sqlite3.OperationalError:
+        return []                       # schema chưa nâng lên v2
+
+    out: list[dict[str, Any]] = []
+    for r in rows:
+        total = r["total"] or 0
+        rate = (r["pass"] / total) if total else 1.0
+        symptoms = []
+        if total and rate < 0.95:
+            symptoms.append(f"dod_pass_rate={rate:.0%} (<95%)")
+        if (r["fp"] or 0) > 0:
+            symptoms.append(f"fp_flags={r['fp']}")
+        if not symptoms:
+            continue
+        out.append({
+            "agent_id": r["agent_id"],
+            "runs": r["runs"],
+            "items": r["items"],
+            "symptoms": symptoms,
+            "recommendation": (
+                f"Rà soát SKILL của '{r['agent_id']}' + siết điều khoản DoD tương ứng; "
+                f"lập backlog/ADR nếu tái diễn."
+            ),
+            "action_lane": "normal" if rate >= 0.85 and (r["fp"] or 0) < 3 else "high-risk",
+        })
+    return out
+
+
+# ---------------------------------------------------------------------------
+# Agent Metrics Commands (Spine 3 — Per-Agent KPI Ledger)
+# ---------------------------------------------------------------------------
+
+def cmd_metric(args: argparse.Namespace) -> dict[str, Any]:
+    """Ghi một dòng KPI cho một đợt xử lý của agent vào bảng agent_metrics.
+
+    Args:
+        args: Tham số CLI gồm agent, items, dod_pass, dod_total, tokens, fp, wave, note.
+
+    Returns:
+        Từ điển trạng thái kèm id bản ghi và tỷ lệ DoD của đợt.
+    """
+    conn = get_db_connection(args.db)
+    try:
+        ts = now_iso()
+        cur = conn.execute(
+            """
+            INSERT INTO agent_metrics
+                (agent_id, run_ts, items, dod_pass, dod_total, tokens, fp_flags, wave, note, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (args.agent, ts, args.items, args.dod_pass, args.dod_total,
+             args.tokens, args.fp, args.wave, args.note, ts),
+        )
+        conn.commit()
+        rate = (args.dod_pass / args.dod_total) if args.dod_total else None
+        return {
+            "status": "success",
+            "metric_id": cur.lastrowid,
+            "agent_id": args.agent,
+            "dod_pass_rate": round(rate, 4) if rate is not None else None,
+            "timestamp": ts,
+        }
+    finally:
+        conn.close()
+
+
+def query_agent_metrics(db_path: str = DEFAULT_DB_PATH, agent: str | None = None) -> dict[str, Any]:
+    """Tổng hợp KPI tích lũy theo từng agent từ bảng agent_metrics.
+
+    Args:
+        db_path: Đường dẫn harness.db.
+        agent: Lọc theo một agent_id cụ thể, mặc định gộp toàn bộ.
+
+    Returns:
+        Từ điển gồm danh sách rollup KPI theo agent.
+    """
+    conn = get_db_connection(db_path)
+    try:
+        sql = (
+            "SELECT agent_id, COUNT(*) AS runs, SUM(items) AS items, "
+            "SUM(dod_pass) AS dod_pass, SUM(dod_total) AS dod_total, "
+            "SUM(tokens) AS tokens, SUM(fp_flags) AS fp_flags, MAX(run_ts) AS last_run "
+            "FROM agent_metrics"
+        )
+        params: tuple = ()
+        if agent:
+            sql += " WHERE agent_id = ?"
+            params = (agent,)
+        sql += " GROUP BY agent_id ORDER BY agent_id"
+
+        rollup = []
+        for r in conn.execute(sql, params).fetchall():
+            total = r["dod_total"] or 0
+            rollup.append({
+                "agent_id": r["agent_id"],
+                "runs": r["runs"],
+                "items": r["items"],
+                "dod_pass": r["dod_pass"],
+                "dod_total": total,
+                "dod_pass_rate": round(r["dod_pass"] / total, 4) if total else None,
+                "tokens": r["tokens"],
+                "fp_flags": r["fp_flags"],
+                "last_run": r["last_run"],
+            })
+        return {"status": "success", "agents": rollup, "timestamp": now_iso()}
     finally:
         conn.close()
 
@@ -591,6 +739,9 @@ def build_parser() -> argparse.ArgumentParser:
     matrix_p = query_sub.add_parser("matrix", help="Query test proof matrix")
     matrix_p.add_argument("--active", action="store_true", help="Only show active/in_progress stories")
     matrix_p.add_argument("--summary", action="store_true", help="Show summary counts only")
+
+    am_p = query_sub.add_parser("agent-metrics", help="Query per-agent KPI rollup (Spine 3)")
+    am_p.add_argument("--agent", help="Filter by a specific agent_id from registry.yaml")
     
     # intake
     intake_p = subparsers.add_parser("intake", help="Classify and record a new task request")
@@ -676,6 +827,17 @@ def build_parser() -> argparse.ArgumentParser:
     tr_p.add_argument("--friction", help="Friction notes")
     tr_p.add_argument("--error", help="Error message if any")
     
+    # metric (Spine 3 — per-agent KPI ledger)
+    met_p = subparsers.add_parser("metric", help="Record a per-agent KPI row for one processing wave")
+    met_p.add_argument("--agent", required=True, help="agent_id matching registry.yaml")
+    met_p.add_argument("--items", type=int, default=0, help="Số bài xử lý trong đợt")
+    met_p.add_argument("--dod-pass", type=int, default=0, dest="dod_pass", help="Số bài đạt DoD")
+    met_p.add_argument("--dod-total", type=int, default=0, dest="dod_total", help="Số bài chấm DoD")
+    met_p.add_argument("--tokens", type=int, help="Token tiêu thụ đợt (bỏ trống cho operator)")
+    met_p.add_argument("--fp", type=int, default=0, help="Số cờ nghi ngờ false-positive")
+    met_p.add_argument("--wave", help="Nhãn đợt/batch")
+    met_p.add_argument("--note", help="Ghi chú RCA ngắn")
+
     # audit & propose
     audit_p = subparsers.add_parser("audit", help="Run harness drift & entropy audit")
     audit_p.add_argument("--codebase", action="store_true", help="Include Git codebase and AST hygiene audit")
@@ -703,7 +865,17 @@ def format_matrix_table(matrix_data: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def _force_utf8_stdio() -> None:
+    """Cấu hình lại luồng xuất chuẩn sang UTF-8 chống lỗi charmap trên console Windows."""
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError):
+            pass
+
+
 def main() -> None:
+    _force_utf8_stdio()
     parser = build_parser()
     args = parser.parse_args()
     
@@ -718,6 +890,8 @@ def main() -> None:
                 if not args.json:
                     print(format_matrix_table(res))
                     return
+            elif args.query_target == "agent-metrics":
+                res = query_agent_metrics(args.db, getattr(args, "agent", None))
         elif args.command == "intake":
             res = cmd_intake(args)
         elif args.command == "story":
@@ -737,6 +911,8 @@ def main() -> None:
                 res = cmd_backlog_close(args)
         elif args.command == "trace":
             res = cmd_trace(args)
+        elif args.command == "metric":
+            res = cmd_metric(args)
         elif args.command == "audit":
             res = cmd_audit(args.db, check_codebase=getattr(args, "codebase", False))
         elif args.command == "propose":

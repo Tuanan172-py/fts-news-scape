@@ -1,0 +1,266 @@
+# registry.yaml — Agent Registry (nguồn chân lý duy nhất cho mọi tác nhân)
+#
+# Spine 1 của AGENT_NETWORK_DESIGN.md. Mọi tác nhân trong hệ News-Scape khai báo ở đây.
+# Rules và skills tham chiếu về file này thay vì lặp lại bất biến (chống drift G5).
+#
+# class:
+#   operator   — script Python tất định, 0 token, vào/ra cố định, idempotent.
+#   cognitive  — subagent LLM gọi qua invoke_subagent, có phí token, ràng buộc 2-I/O + grounded.
+#   conductor  — bộ điều phối đọc pipeline.yaml, quyết định stage kế tiếp và chính sách wave.
+# status: active | draft | deprecated
+# dod_contract: neo tới cổng kiểm định (skill dod-gatekeeper + rule tương ứng).
+# cost_budget.tokens_per_item: định mức benchmark thực nghiệm (0 cho operator).
+
+version: 1
+updated: "2026-09-15"
+schema_note: "Thêm agent = 1 entry ở đây + 1 skill + 1 stage pipeline.yaml + 1 story + KPI (rule 07)."
+
+agents:
+
+  # ─────────────────────────── CONDUCTOR ───────────────────────────
+  - id: master-orchestrator
+    class: conductor
+    status: active
+    model: null
+    skill: .agents/skills/multi-agent-orchestrator-governance/SKILL.md
+    reads_manifest: .agents/pipeline.yaml
+    responsibility: >-
+      Điều phối vòng đời end-to-end: đọc pipeline.yaml suy ra stage kế tiếp, áp chính sách
+      wave chống 429, gọi cognitive agents qua invoke_subagent, chạy operators, ghi harness trace.
+    owner_rules: ["04-harness-durable-invariants"]
+
+  # ────────────────────── OPERATORS (0 token) ──────────────────────
+  - id: scraper-orchestrator
+    class: operator
+    status: active
+    entrypoint: "project/src/orchestrator.py"
+    cli: 'scripts/run_once.py  |  python -m src.morninger'
+    io_boundary:
+      read:  ["config/domains/*", "web sources"]
+      write: ["data/monocle.db (articles)", "data/exports/articles-<date>.csv"]
+    responsibility: "Bronze scrape + Silver normalize + dedup + CSV export theo cycle."
+    cost_budget: { tokens_per_item: 0 }
+    owner_rules: ["03-io-concurrency-guardrails"]
+
+  - id: l1-router
+    class: operator
+    status: active
+    entrypoint: "project/scripts/l1_route.py"
+    cli: 'scripts/l1_route.py --from-db --date <YYYY-MM-DD|today> --mini-batch 25'
+    io_boundary:
+      read:  ["data/monocle.db (articles)"]
+      write: ["data/agent_tasks/l1/l1_batch_XX.task.json", "l1_outputs (code-first resolved)"]
+    responsibility: "Phân tuyến Code-First (0 token) vs needs_agent; đóng gói mini-batch 25 bài/lô."
+    cost_budget: { tokens_per_item: 0 }
+    owner_rules: ["05-gold-agent-and-payload-invariants", "entity-system-invariants"]
+
+  - id: l1-ingest-gate
+    class: operator
+    status: active
+    entrypoint: "project/scripts/l1_ingest.py"
+    cli: 'scripts/l1_ingest.py data/agent_outputs_l1  |  scripts/l1_ingest.py --code-first'
+    io_boundary:
+      read:  ["data/agent_outputs_l1/*.output.json"]
+      write: ["data/monocle.db (l1_outputs)", "data/agent_tasks/l1/archive/"]
+    responsibility: "Nghiệm thu DoD L1, ghi l1_outputs, tự archive packet đạt chuẩn."
+    dod_contract: dod-gatekeeper#l1
+    cost_budget: { tokens_per_item: 0 }
+    owner_rules: ["01-subagent-guardrails", "entity-system-invariants"]
+
+  - id: gold-exporter
+    class: operator
+    status: active
+    entrypoint: "project/scripts/agent_export.py"
+    cli: 'scripts/agent_export.py --date <date> --require-l1 --subscriber-only'
+    io_boundary:
+      read:  ["data/monocle.db (articles + l1_outputs)", "config/entities/manifest.yaml"]
+      write: ["data/agent_tasks/batch_XX.task.json"]
+    responsibility: >-
+      Lọc Subscriber-Gating + Dynamic 3-Pass Pruning (<=2200 chars) + nhúng l1_entities,
+      gom lô 5 bài/file theo schema agent-output-v2-lean.
+    cost_budget: { tokens_per_item: 0 }
+    owner_rules: ["05-gold-agent-and-payload-invariants"]
+
+  - id: gold-ingest-gate
+    class: operator
+    status: active
+    entrypoint: "project/scripts/agent_ingest.py"
+    cli: 'scripts/agent_ingest.py data/agent_outputs'
+    io_boundary:
+      read:  ["data/agent_outputs/*.output.json"]
+      write: ["data/monocle.db (agent_outputs)", "data/agent_tasks/archive/"]
+    responsibility: "Nghiệm thu DoD Gold v2-lean (7 trường, citations >=20 ký tự, chống copy key_points)."
+    dod_contract: dod-gatekeeper#gold
+    cost_budget: { tokens_per_item: 0 }
+    owner_rules: ["01-subagent-guardrails", "05-gold-agent-and-payload-invariants"]
+
+  - id: delivery-writer
+    class: operator
+    status: active
+    entrypoint: "project/scripts/write_user_output.py"
+    cli: 'scripts/write_user_output.py --date <date|all>'
+    io_boundary:
+      read:  ["data/monocle.db (l1_outputs + agent_outputs)", "users/input/manifest.yaml"]
+      write: ["users/output/<user>/<date>.xlsx"]
+    responsibility: "Phân tuyến theo Watchlist, xuất Excel đơn sắc; Idempotency Skip Guard chống ghi thừa."
+    cost_budget: { tokens_per_item: 0 }
+    owner_rules: ["03-io-concurrency-guardrails"]
+
+  - id: pipeline-radar
+    class: operator
+    status: active
+    entrypoint: "project/scripts/pipeline_radar.py"
+    cli: 'scripts/pipeline_radar.py status|users|token [--date <date>]'
+    io_boundary:
+      read:  ["data/monocle.db", "data/agent_tasks/**", ".agents/pipeline.yaml"]
+      write: ["stdout (gợi ý lệnh copy-paste)"]
+    responsibility: >-
+      Trinh sát điểm chạm pipeline, độ tươi cào tin (Liveness), đo token burn; đọc pipeline.yaml
+      suy ra stage kế tiếp (Spine 2). Không tự chạy hành động — chỉ gợi ý.
+    cost_budget: { tokens_per_item: 0 }
+    owner_rules: ["04-harness-durable-invariants"]
+
+  # ──────────────────── COGNITIVE AGENTS (active) ───────────────────
+  - id: l1-entity-matcher
+    class: cognitive
+    status: active
+    model: flash
+    skill: .agents/skills/l1-entity-matcher/SKILL.md
+    io_boundary:
+      read:  ["data/agent_tasks/l1/*.task.json"]
+      write: ["data/agent_outputs_l1/*.output.json", "data/agent_outputs_l1/l1_batch_XX.output.json"]
+    tools_allowed: [view_file, write_to_file]        # cấm discovery tools (grep/find/list_dir)
+    dod_contract: dod-gatekeeper#l1
+    output_schema: l1-entity-output-v1
+    cost_budget: { tokens_per_item: 450, wave_batch: 25, concurrency: 3 }
+    kpis: [dod_pass_rate, tokens_per_item, false_positive_rate]
+    owner_rules: ["01-subagent-guardrails", "entity-system-invariants"]
+
+  - id: gold-financial-analyst
+    class: cognitive
+    status: active
+    model: flash
+    skill: .agents/skills/gold-financial-analyst/SKILL.md
+    io_boundary:
+      read:  ["data/agent_tasks/*.task.json"]      # bỏ qua thư mục con l1/
+      write: ["data/agent_outputs/*.output.json", "data/agent_outputs/batch_XX.output.json"]
+    tools_allowed: [view_file, write_to_file]
+    dod_contract: dod-gatekeeper#gold
+    output_schema: agent-output-v2-lean
+    cost_budget: { tokens_per_item: 1470, wave_batch: 5, concurrency: 2 }
+    kpis: [dod_pass_rate, tokens_per_item, citation_ground_rate, keypoint_dupe_rate]
+    owner_rules: ["01-subagent-guardrails", "02-financial-domain-rules", "05-gold-agent-and-payload-invariants"]
+
+  # ──────────── COGNITIVE AGENTS ĐẶC NHIỆM (draft — roadmap §4) ───────────
+  - id: story-dedup-clusterer
+    class: cognitive          # hybrid: SimHash operator tiền lọc + tie-breaker cognitive
+    status: draft
+    model: flash
+    skill: .agents/skills/story-dedup-clusterer/SKILL.md
+    stage_role: pre-gold
+    io_boundary:
+      read:  ["data/agent_tasks/dedup/*.task.json"]
+      write: ["data/agent_outputs_dedup/*.output.json"]
+    tools_allowed: [view_file, write_to_file]
+    dod_contract: dod-gatekeeper#dedup
+    cost_budget: { tokens_per_item: 300, wave_batch: 15, concurrency: 2 }
+    kpis: [cluster_precision, tokens_per_item, gold_dedup_savings_pct]
+    intent: "Gộp cùng 1 sự kiện trên nhiều nguồn -> phân tích Gold 1 lần, gán N nguồn."
+    tier: normal
+    owner_rules: ["01-subagent-guardrails"]
+
+  - id: materiality-triage
+    class: cognitive
+    status: draft
+    model: flash-lite
+    skill: .agents/skills/materiality-triage/SKILL.md
+    stage_role: pre-gold-gate
+    io_boundary:
+      read:  ["data/agent_tasks/triage/*.task.json"]
+      write: ["data/agent_outputs_triage/*.output.json"]
+    tools_allowed: [view_file, write_to_file]
+    dod_contract: dod-gatekeeper#triage
+    cost_budget: { tokens_per_item: 120, wave_batch: 30, concurrency: 3 }
+    kpis: [triage_recall, tokens_per_item, gold_burn_reduction_pct]
+    intent: "Cổng rẻ quyết định bài có đáng phân tích Gold sâu không (bổ sung subscriber-gate)."
+    tier: normal
+    owner_rules: ["02-financial-domain-rules"]
+
+  - id: entity-curator
+    class: cognitive
+    status: draft
+    model: pro
+    skill: .agents/skills/entity-curator/SKILL.md
+    stage_role: catalog-growth
+    io_boundary:
+      read:  ["data/monocle.db (unlisted_candidates)", "project/data/entities/entities.json"]
+      write: ["data/proposals/entity_catalog_delta.json"]   # đề xuất, KHÔNG ghi trực tiếp catalog
+    tools_allowed: [view_file, write_to_file]
+    dod_contract: dod-gatekeeper#curator
+    cost_budget: { tokens_per_item: 600, wave_batch: 10, concurrency: 1 }
+    kpis: [proposal_accept_rate, false_add_rate]
+    intent: "Biến unlisted_candidates thành đề xuất bổ sung catalog kèm bằng chứng cho Human duyệt."
+    tier: high-risk          # chạm Data Contract catalog -> cần ADR riêng khi kích hoạt
+    activation_gate: "ADR bắt buộc trước khi status -> active (rule 07 §5, AGENTS.md Tier 3)."
+    owner_rules: ["entity-system-invariants"]
+
+  - id: adversarial-dod-verifier
+    class: cognitive
+    status: draft
+    model: pro
+    skill: .agents/skills/adversarial-dod-verifier/SKILL.md
+    stage_role: post-gold-qa
+    io_boundary:
+      read:  ["data/agent_outputs/*.output.json (mẫu)", "data/agent_tasks/*.task.json"]
+      write: ["data/qa/dod_semantic_report.json"]
+    tools_allowed: [view_file, write_to_file]
+    dod_contract: dod-gatekeeper#verifier
+    cost_budget: { tokens_per_item: 500, wave_batch: 8, concurrency: 1 }
+    kpis: [semantic_defect_catch_rate, sample_coverage_pct]
+    intent: "Kiểm định ngữ nghĩa (implication rỗng, hallucination, sentiment sai) vượt DoD tất định."
+    tier: normal
+    owner_rules: ["02-financial-domain-rules", "05-gold-agent-and-payload-invariants"]
+
+  - id: daily-brief-synthesizer
+    class: cognitive
+    status: draft
+    model: pro
+    skill: .agents/skills/daily-brief-synthesizer/SKILL.md
+    stage_role: post-delivery
+    io_boundary:
+      read:  ["data/monocle.db (agent_outputs + l1_outputs)", "users/input/manifest.yaml"]
+      write: ["users/output/<user>/brief-<date>.md"]
+    tools_allowed: [view_file, write_to_file]
+    dod_contract: dod-gatekeeper#brief
+    cost_budget: { tokens_per_item: 2000, wave_batch: 1, concurrency: 1 }
+    kpis: [brief_grounding_rate, user_watchlist_coverage_pct]
+    intent: "Tổng hợp cuối ngày theo watchlist từng user: tin trọng yếu, roll-up chủ đề vĩ mô."
+    tier: normal
+    owner_rules: ["02-financial-domain-rules", "05-gold-agent-and-payload-invariants"]
+
+  - id: harness-auditor
+    class: cognitive
+    status: draft
+    model: pro
+    skill: .agents/skills/harness-auditor/SKILL.md
+    stage_role: governance-loop
+    io_boundary:
+      read:  ["harness.db (trace + backlog + agent_metrics)", "docs/HARNESS_AUDIT.md"]
+      write: ["docs/proposals/harness_improvement_<date>.md"]
+    tools_allowed: [view_file, write_to_file, run_command]   # chạy harness_cli propose (read-only)
+    dod_contract: dod-gatekeeper#harness
+    cost_budget: { tokens_per_item: 3000, wave_batch: 1, concurrency: 1 }
+    kpis: [proposal_actioned_rate]
+    intent: "Đọc trend harness.db + agent_metrics -> soạn proposal + ADR draft cho Human duyệt (H5)."
+    tier: normal
+    owner_rules: ["04-harness-durable-invariants"]
+
+# ─────────────── Chỉ mục Skill Governance (không phải runtime agent) ───────────────
+# Các skill hỗ trợ vận hành/quản trị, được agent tham chiếu khi cần, không chạy như 1 stage.
+governance_skills:
+  - dod-gatekeeper: "Định nghĩa các dod_contract#* (l1, gold, ...). Neo kiểm định độc lập."
+  - token-auditor: "Đo token burn, hiệu quả subscriber-gating; ánh xạ pipeline_radar token."
+  - watchlist-curator: "Quản trị Watchlist người dùng, phân tầng Ticker 3 Tiers, sync manifest."
+  - git-codebase-governance: "Tra soát Git, vệ sinh codebase, audit AST/conflict."
+  - sharepoint-git-hybrid-workspace: "Cách ly .git/.venv/.db khỏi vùng đồng bộ OneDrive."
+  - news-scape-agent-operations: "Runbook 5-phase end-to-end (mô tả vận hành, canonical = pipeline.yaml)."

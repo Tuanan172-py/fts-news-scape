@@ -26,6 +26,8 @@ from scripts.harness_cli import (
     cmd_backlog_add,
     cmd_backlog_close,
     cmd_trace,
+    cmd_metric,
+    query_agent_metrics,
     cmd_audit,
     cmd_propose,
     calculate_score_trace,
@@ -50,11 +52,13 @@ class TestHarnessCLI(unittest.TestCase):
     def test_query_contract(self):
         contract = query_contract(self.db_path)
         self.assertEqual(contract["protocol_version"], "harness-orchestration-v1")
-        self.assertEqual(contract["schema_version"], 1)
+        self.assertEqual(contract["schema_version"], 2)
         self.assertEqual(contract["database_state"], "ready")
         self.assertIn("intake", contract["capabilities"])
         self.assertIn("audit", contract["capabilities"])
         self.assertIn("propose", contract["capabilities"])
+        self.assertIn("metric", contract["capabilities"])
+        self.assertIn("agent-metrics", contract["capabilities"])
 
     def test_intake_and_story_lifecycle(self):
         # 1. Intake
@@ -213,6 +217,33 @@ class TestHarnessCLI(unittest.TestCase):
         audit_res = cmd_audit(self.db_path, check_codebase=True)
         self.assertEqual(audit_res["status"], "success")
         self.assertIn("codebase_hygiene", audit_res["checks"])
+
+    def test_agent_metrics_ledger_and_propose(self):
+        # Ghi 1 đợt Gold tụt DoD kèm cờ false-positive
+        met_args = argparse.Namespace(
+            db=self.db_path,
+            agent="gold-financial-analyst",
+            items=5, dod_pass=4, dod_total=5,
+            tokens=7350, fp=1, wave="batch_01",
+            note="1 bài copy citations vào key_points",
+        )
+        met_res = cmd_metric(met_args)
+        self.assertEqual(met_res["status"], "success")
+        self.assertEqual(met_res["dod_pass_rate"], 0.8)
+
+        # Rollup phản ánh đúng KPI tích lũy
+        roll = query_agent_metrics(self.db_path, agent="gold-financial-analyst")
+        self.assertEqual(roll["status"], "success")
+        self.assertEqual(len(roll["agents"]), 1)
+        self.assertEqual(roll["agents"][0]["dod_pass_rate"], 0.8)
+        self.assertEqual(roll["agents"][0]["fp_flags"], 1)
+
+        # propose tự phát hiện agent lệch chuẩn và nâng lane high-risk
+        propose_res = cmd_propose(self.db_path)
+        flagged = propose_res.get("agent_metric_proposals", [])
+        self.assertTrue(any(p["agent_id"] == "gold-financial-analyst" for p in flagged))
+        gold = next(p for p in flagged if p["agent_id"] == "gold-financial-analyst")
+        self.assertEqual(gold["action_lane"], "high-risk")
 
 
 if __name__ == "__main__":

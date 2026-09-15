@@ -22,6 +22,18 @@ description: Chuyên viên kiểm toán ngân sách LLM, đo lường lượng t
 3. **Quy Chuẩn Cắt Tỉa Payload Tinh Gọn (Dynamic 3-Pass Pruner)**:
    - **Zero-Waste Task Packet**: Tuyệt đối loại bỏ `structure.links` (hàng ngàn link menu/footer), `structure.headings` và `images`. Dung lượng 1 packet $< 10$ KB.
    - **Dynamic 3-Pass Semantic Pruning (2.200 Chars Max)**: Trần ký tự bài viết tối đa 2.200 chars. Cắt tỉa theo nguyên khối đoạn văn `<p>` (giữ 2 đoạn Sapo $\rightarrow$ đoạn chứa Ticker L1 $\rightarrow$ số liệu tài chính), tuyệt đối không cắt vụn câu chữ để bảo toàn Grounded Citations.
+4. **Kiến Trúc Phễu Lọc 4 Tầng & Quy Chuẩn Kích Thước Batch**:
+   - **Tầng 1 (Code-First Title Matcher)**: 0 token, giải quyết ~60% bài cào.
+   - **Tầng 2 (L1 Mini-Batch Waves)**: Cố định 25 bài/batch, 2–3 batches/đợt (~25.000 tokens/đợt).
+   - **Tầng 3 (Subscriber-Gating)**: Lọc qua Watchlist, loại bỏ 85%–91% bài vô bổ.
+   - **Tầng 4 (Gold Pruned Mini-Batches)**: Cố định 5 bài/batch, Dynamic 3-Pass Pruning <= 2.200 chars.
+5. **Chiến Lược 3 Waves Cho Tầng Gold**:
+   - Wave 1: Nhóm Cổ phiếu trọng tâm (VIC, VHM, HPG, FPT, TCB, MBB...) (10–15 bài).
+   - Wave 2: Vĩ mô & Ngành kinh tế (Tỷ giá, Lãi suất, Bất động sản...) (15–20 bài).
+   - Wave 3: Hoàn tất backlog còn lại trước 16:30.
+6. **Hạn Mức An Toàn (Safety Token Cap)**:
+   - Tốc độ sinh: <= 100.000 tokens/phút.
+   - Trần ngân sách ngày: <= 350.000 tokens (~$0.05 USD).
 
 ---
 

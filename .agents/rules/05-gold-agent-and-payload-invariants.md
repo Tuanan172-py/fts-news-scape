@@ -105,4 +105,7 @@ Nhằm kiểm soát rủi ro tiêu tốn quota không kiểm soát, tránh chạ
      - *Wave 2 (Ưu tiên trung bình)*: Nhóm Vĩ mô & Ngành kinh tế (Tỷ giá, Lãi suất, Đầu tư công, Bất động sản, Ngân hàng).
      - *Wave 3 (Hoàn tất)*: Toàn bộ backlog còn lại trước khi kích hoạt phân tuyến giao hàng (`user_output.py`).
 
-
+4. **Tự Động Hóa Kích Hoạt Headless CLI (`agy -p` Runner)**:
+   - Thay thế hoàn toàn thao tác gõ prompt mồi thủ công bằng script điều phối tự động `scripts/auto_pilot.py`.
+   - Lệnh gọi headless bắt buộc dùng các cờ: `agy -p "<prompt>" --dangerously-skip-permissions --effort low`.
+   - Giữ nghiêm ngặt giới hạn an toàn nội bộ: $\le 100.000$ tokens/phút và trần ngân sách ngày $\le 350.000$ tokens.

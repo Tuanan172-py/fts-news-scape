@@ -72,6 +72,7 @@ Chuyên viên Radar sử dụng công cụ CLI chuẩn hóa được tích hợp
    • Số bài cào xuất bản trong ngày : 320 bài
    • Số bài đã hoàn tất tầng L1     : 764 bài
    • Số bài đã hoàn tất tầng Gold   : 64 bài
+   • Độ tươi cào tin (Liveness)     : 🟢 Tươi mới (lần cào cuối lúc 14:21:57, cách đây 1 phút)
 
 2. TRẠNG THÁI HÀNG ĐỢI FILE (TASK PACKETS & BATCHES):
    • Tác vụ L1 đang chờ Subagents   : 0 files/batches
@@ -87,7 +88,20 @@ Chuyên viên Radar sử dụng công cụ CLI chuẩn hóa được tích hợp
 
 ---
 
-## 5. Mẫu Prompt Mồi Chuẩn Hóa Cho Developer (Daily Activation Template)
+## 5. Quy Trình Bù Đắp Tin Đêm (Overnight Catch-up Protocol)
+
+Khi máy tính không phải server và bị Sleep qua đêm:
+- **Hiện tượng**: Khoảng trống runtime từ tối hôm trước đến sáng hôm sau (delay $> 120$ phút).
+- **Nhận diện tự động**: `pipeline_radar.py status` sẽ tự động hiển thị nhãn `🔴 Gián đoạn / Khoảng trống đêm` và nâng cảnh báo lên `[HIGH]`.
+- **Hành động xử lý tức thì**: Chạy lệnh cào vét bù tin:
+  ```powershell
+  & "C:\venvs\news-scape\Scripts\python.exe" scripts/run_once.py
+  ```
+- **Nguyên lý bảo toàn**: Các RSS feeds lưu trữ 20–50 tin gần nhất; khi chạy bù, toàn bộ bài trong đêm được kéo về Bronze, Silver tự động lọc trùng qua SimHash/watermark và gom thành bài mới an toàn 100%.
+
+---
+
+## 6. Mẫu Prompt Mồi Chuẩn Hóa Cho Developer (Daily Activation Template)
 
 Khi bước sang ngày mới hoặc bắt đầu ca vận hành, người dùng gửi câu lệnh chuẩn hóa (Mẫu 2):
 

@@ -46,6 +46,31 @@ def cmd_status(args: argparse.Namespace) -> None:
     conn = get_db_connection()
     cur = conn.cursor()
 
+    # 0. Kiểm tra độ tươi cào tin (Scraper Freshness & Gap Detection)
+    cur.execute("SELECT max(last_run_ts) FROM scraper_heartbeat WHERE scraper_name NOT LIKE '%-%'")
+    last_hb_row = cur.fetchone()
+    last_scrape_ts_str = last_hb_row[0] if last_hb_row and last_hb_row[0] else None
+
+    cur.execute("SELECT max(fetched_at) FROM articles")
+    last_fetch_row = cur.fetchone()
+    last_fetch_ts_str = last_fetch_row[0] if last_fetch_row and last_fetch_row[0] else None
+
+    # Tính độ trễ cào tin
+    scrape_delay_minutes = None
+    now_dt = datetime.now()
+    ref_ts_str = last_scrape_ts_str or last_fetch_ts_str
+    if ref_ts_str:
+        try:
+            # Hỗ trợ ISO string có hoặc không có timezone
+            ref_clean = ref_ts_str.replace("Z", "+00:00")
+            if "+" in ref_clean[10:] or "-" in ref_clean[10:]:
+                ref_dt = datetime.fromisoformat(ref_clean).astimezone().replace(tzinfo=None)
+            else:
+                ref_dt = datetime.fromisoformat(ref_clean)
+            scrape_delay_minutes = max(0, int((now_dt - ref_dt).total_seconds() / 60))
+        except Exception:
+            pass
+
     # 1. Thống kê bài viết cào về
     cur.execute("SELECT count(*) FROM articles WHERE date(published_at) = ?", (target_date,))
     crawled_count = cur.fetchone()[0]
@@ -84,13 +109,22 @@ def cmd_status(args: argparse.Namespace) -> None:
     l1_resolved_pending = cur.fetchone()[0]
 
     # 4. Thống kê Task files đang treo trên đĩa
-    l1_tasks_pending = len(glob.glob(str(L1_TASKS_DIR / "*.task.json")))
-    gold_tasks_pending = len(glob.glob(str(AGENT_TASKS_DIR / "batch_*.task.json"))) + \
-                         len([f for f in glob.glob(str(AGENT_TASKS_DIR / "*.task.json")) if not os.path.basename(f).startswith("batch_")])
+    def _find_files(*relative_patterns: str) -> list[str]:
+        found = []
+        for base in [DATA_ROOT, PROJECT_ROOT.parent / "data"]:
+            for pat in relative_patterns:
+                found.extend(glob.glob(str(base / pat)))
+        return list(set(found))
+
+    l1_tasks = _find_files("agent_tasks/l1/*.task.json")
+    l1_tasks_pending = len(l1_tasks)
+    gold_tasks = _find_files("agent_tasks/batch_*.task.json") + \
+                 [f for f in _find_files("agent_tasks/*.task.json") if not os.path.basename(f).startswith("batch_")]
+    gold_tasks_pending = len(set(gold_tasks))
 
     # 5. Thống kê Output files có bài chưa Ingest vào DB
     l1_outputs_waiting = 0
-    for lf in glob.glob(str(L1_OUTPUTS_DIR / "*.output.json")):
+    for lf in _find_files("agent_outputs_l1/*.output.json"):
         try:
             with open(lf, "r", encoding="utf-8") as f:
                 data = json.load(f)
@@ -103,7 +137,7 @@ def cmd_status(args: argparse.Namespace) -> None:
             pass
 
     gold_outputs_waiting = 0
-    for gf in glob.glob(str(AGENT_OUTPUTS_DIR / "*.output.json")):
+    for gf in _find_files("agent_outputs/*.output.json"):
         try:
             with open(gf, "r", encoding="utf-8") as f:
                 data = json.load(f)
@@ -121,6 +155,11 @@ def cmd_status(args: argparse.Namespace) -> None:
     print(f"   • Số bài cào xuất bản trong ngày : {crawled_count:,} bài")
     print(f"   • Số bài đã hoàn tất tầng L1     : {l1_done_count:,} bài")
     print(f"   • Số bài đã hoàn tất tầng Gold   : {gold_done_count:,} bài")
+    if scrape_delay_minutes is not None:
+        delay_str = f"{scrape_delay_minutes} phút" if scrape_delay_minutes < 60 else f"{scrape_delay_minutes // 60}h {scrape_delay_minutes % 60}m"
+        last_time_str = ref_ts_str.split("T")[1][:8] if "T" in ref_ts_str else ref_ts_str
+        freshness_tag = "🟢 Tươi mới" if scrape_delay_minutes <= 30 else ("🟡 Chậm nhẹ" if scrape_delay_minutes <= 120 else "🔴 Gián đoạn / Khoảng trống đêm")
+        print(f"   • Độ tươi cào tin (Liveness)     : {freshness_tag} (lần cào cuối lúc {last_time_str}, cách đây {delay_str})")
     print()
 
     print(f"2. TRẠNG THÁI HÀNG ĐỢI FILE (TASK PACKETS & BATCHES):")
@@ -133,6 +172,21 @@ def cmd_status(args: argparse.Namespace) -> None:
     # 6. Xác định điểm chạm và Đề xuất hành động tiếp theo
     print(f"3. ĐIỂM CHẠM VẬN HÀNH & ĐỀ XUẤT HÀNH ĐỘNG CỤ THỂ:")
     recommendations = []
+
+    # Cảnh báo gián đoạn cào tin (qua đêm hoặc tiến trình ngắt)
+    if scrape_delay_minutes is not None and scrape_delay_minutes > 120:
+        delay_hrs = scrape_delay_minutes // 60
+        recommendations.append((
+            "HIGH",
+            f"Phát hiện khoảng trống runtime cào tin ({delay_hrs}h qua chưa cào, máy sleep hoặc scheduler dừng). Cần cào vét bù tin ngay.",
+            f'& "C:\\venvs\\news-scape\\Scripts\\python.exe" scripts/run_once.py'
+        ))
+    elif scrape_delay_minutes is not None and scrape_delay_minutes > 45:
+        recommendations.append((
+            "MEDIUM",
+            f"Tiến trình cào tin tự động đang chậm ({scrape_delay_minutes} phút chưa có nhịp cào mới).",
+            f'Kiểm tra background morninger hoặc chạy bù: & "C:\\venvs\\news-scape\\Scripts\\python.exe" scripts/run_once.py'
+        ))
 
     if l1_outputs_waiting > 0:
         recommendations.append((
@@ -162,7 +216,7 @@ def cmd_status(args: argparse.Namespace) -> None:
             f'Gọi Subagents Flash xử lý các batch trong data/agent_tasks/'
         ))
 
-    if not recommendations:
+    if not any(r[0] == "HIGH" for r in recommendations):
         if l1_unrouted_count > 0:
             recommendations.append((
                 "HIGH",
@@ -181,7 +235,7 @@ def cmd_status(args: argparse.Namespace) -> None:
                 "Đã có bài phân tích Gold nhưng chưa xuất bản Deliverable Excel cho người dùng.",
                 f'& "C:\\venvs\\news-scape\\Scripts\\python.exe" scripts/write_user_output.py --date {target_date}'
             ))
-        else:
+        elif not recommendations:
             recommendations.append((
                 "INFO",
                 "Toàn bộ chuỗi vận hành ngày này đã hoàn tất 100% sạch sẽ. Deliverable đã sẵn sàng.",

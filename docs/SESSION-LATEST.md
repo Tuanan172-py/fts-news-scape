@@ -2,48 +2,28 @@
 
 <!-- Step 9 handoff. OVERWRITE this (never append) at the end of every session. Keep to one screen. -->
 
-- **Updated:** 2026-09-14
-- **Current story:** US-014 (Ticker Tiering & Master Catalog Noise Elimination) — `implemented` (390/390 tests passed)
-- **Status:** All test suites green (390/390 passed, 6/6 harness passed). 0 story `in_progress`.
-- **Blocker:** Không còn blocker. Codebase hoàn toàn đồng bộ, sạch sẽ và an toàn.
+- **Updated:** 2026-09-15
+- **Current story:** US-010 (Agent Network Registry, Pipeline DAG & KPI Ledger) — `implemented` (7/7 harness tests passed)
+- **Status:** 0 story `in_progress`. Live matrix: 7 implemented, 1 blocked (US-001), 0 in-progress. `harness.db` nâng schema v1→v2.
+- **Blocker:** Không còn blocker cho US-010. US-001 vẫn `blocked` (nền cũ, không đụng phiên này).
 
-## Việc đã làm phiên này (14/09/2026)
+## Việc đã làm phiên này (15/09/2026) — Xây dựng Mạng lưới Agent Đặc nhiệm (ADR 0006)
 
-### 1. Thanh lọc & Phân tầng Danh mục TICKER 3 Tiers (US-014)
-- **Hiện trạng trước thanh lọc**: `entities.json` nặng 1,5 MB chứa 2.153 thực thể (trong đó có 1.984 mã TICKER). Gần 45% danh mục là mã đã chết từ 10-15 năm trước hoặc siêu penny vô thanh khoản, gây ô nhiễm token và false positive với từ tiếng Việt.
-- **Mô hình 3 Tiers triển khai**:
-  - **Tier 1 (Core Universe — 742 mã)**: 100% Watchlist người dùng (`AnPT`, `PhoHG`, `ThanhTD`, `VyPTT`, `UyenNNT`) + doanh nghiệp lớn vốn hóa $\ge 300$ tỷ VND và đang hoạt động. Nhận diện bình thường qua mã 3 ký tự in hoa và alias thương hiệu.
-  - **Tier 2 (Extended Universe — 351 mã)**: Doanh nghiệp vốn hóa 100 – 300 tỷ VND. Chỉ nhận diện qua mã khi là công bố thông tin đầu tiêu đề (`MÃ: ...`), trong văn bản thông thường bắt buộc nhận diện qua alias thương hiệu.
-  - **Tier 3 (Archived / Dormant — 891 mã)**: Đã tách độc lập ra `data/entities/entities_archive.json` (731 KB). Loại bỏ 100% khỏi runtime `entities.json`.
-- **Nâng cấp `build_entities.py`**:
-  - Đọc `market_caps.parquet` và `users/*.yaml` để tự động tính `latest_date`, `market_cap_bil`, `is_active` và phân loại tier.
-  - Xuất `entities.json` (giảm dung lượng còn 1.027 KB, -450 KB), `entities_archive.json`, `entities.csv` và `entities.xlsx` (bổ sung sheet `Archived_Securities`).
-- **Nâng cấp Matcher `EntityRegistry` (`src/agent/entities.py`)**:
-  - Bổ sung guard kiểm tra `ent_tier`: mã Tier 2 cô lập không bị bắt nhầm thành từ tiếng Việt thông dụng.
-- **Kiểm định & Benchmark**:
-  - Bổ sung unit test `project/tests/test_ticker_tiering.py` (PASS 100%).
-  - Chạy full test suite: **390/390 passed**.
-  - Benchmark trên 1.787 bài viết lịch sử: tốc độ nhận diện đạt **2.286 bài/giây** (0,78 giây cho toàn bộ dataset).
+### 1. Ba xương sống khai báo (3 Spines)
+- **Spine 1 — Registry**: `.agents/registry.yaml` — nguồn chân lý khai báo toàn bộ tác nhân theo taxonomy 3 lớp (operator / cognitive / conductor), kèm io_boundary, tools_allowed, dod_contract, cost_budget, kpis.
+- **Spine 2 — Pipeline DAG**: `.agents/pipeline.yaml` — DAG điều phối end-to-end (stages + needs + gate + wave + invariants), thay mô tả 5-phase văn xuôi.
+- **Spine 3 — KPI Ledger**: `harness.db` schema v2 (`002-agent-metrics.sql` + bảng `agent_metrics`); `harness_cli.py` thêm lệnh `metric` (ghi) + `query agent-metrics` (rollup); `propose` đọc trend per-agent, tự gắn cờ agent `dod_pass_rate<95%` / `fp_flags>0`, nâng lane high-risk.
 
-### 2. Thiết lập Mạng lưới Multi-Agent Swarm & Đóng gói 4 Specialized Skills
-- **Xây dựng CLI Radar (`scripts/pipeline_radar.py`)**:
-  - `pipeline_radar.py status`: Tự động quét DB và hàng đợi file, chỉ rõ bài viết đang ở điểm chạm nào (cào, L1, Gold, deliverable) và đề xuất chính xác lệnh PowerShell cần chạy tiếp theo.
-  - `pipeline_radar.py token`: Giám sát ngân sách, đo lường lượng token thực tế và tỷ lệ tiết kiệm nhờ Subscriber-Gating (>91% chi phí tránh lãng phí).
-  - `pipeline_radar.py users`: Tự động phát hiện khi có file đăng ký `*_news.xlsx` mới nhưng chưa khai báo trong `manifest.yaml`.
-- **Đóng gói Hệ sinh thái Skills Chuyên Trách (`.agents/skills/`)**:
-  - [pipeline-radar](file:///C:/Users/anpt/OneDrive%20-%20fpts.com.vn/FRA_DataIngestion%20-%20news-scape/.agents/skills/pipeline-radar/SKILL.md): Trinh sát điểm chạm dữ liệu, chỉ ra điểm nghẽn và lệnh xử lý tiếp theo.
-  - [watchlist-curator](file:///C:/Users/anpt/OneDrive%20-%20fpts.com.vn/FRA_DataIngestion%20-%20news-scape/.agents/skills/watchlist-curator/SKILL.md): Quản trị người dùng, phát hiện file đăng ký mới, phân tầng Ticker 3 Tiers và đề xuất thực thể mới.
-  - [token-auditor](file:///C:/Users/anpt/OneDrive%20-%20fpts.com.vn/FRA_DataIngestion%20-%20news-scape/.agents/skills/token-auditor/SKILL.md): Kiểm toán ngân sách token, theo dõi pruning payload $\le 2.200$ ký tự và cảnh báo chi phí.
-  - [dod-gatekeeper](file:///C:/Users/anpt/OneDrive%20-%20fpts.com.vn/FRA_DataIngestion%20-%20news-scape/.agents/skills/dod-gatekeeper/SKILL.md): Gác cổng kiểm định chất lượng, bắt lỗi grounded substring, chống trùng lặp key_points và tự sửa System Prompt.
-### 4. Chuẩn Hóa Mẫu Prompt Mồi Vận Hành Ngày Mới (Daily Trigger Template)
-- **Chuẩn hóa Prompt Mẫu 2**:
-  > *"Bắt đầu phiên ngày {YYYY-MM-DD}: Hãy dùng Radar kiểm tra điểm chạm pipeline, sau đó thực thi trọn vẹn chuỗi L1 (vật chất hóa Code-First trước để tiết kiệm token, phần còn lại gom mini-batches cho Subagents Flash xử lý có kiểm soát). Báo cáo tỷ lệ DoD và tổng lượng token tiêu thụ sau khi hoàn tất."*
-- **Tích hợp sâu vào 3 Skills**:
-  - `pipeline-radar/SKILL.md`: Mục 5 đặc tả chuỗi 6 bước phản xạ tự động của Agent.
-  - `multi-agent-orchestrator-governance/SKILL.md`: Mục 4 Runbook hàng ngày.
-  - `news-scape-agent-operations/SKILL.md`: Mục 2 Bước 0 làm điểm kích hoạt chuẩn.
+### 2. Sáu cognitive agent đặc nhiệm (status: draft — roadmap §4)
+`story-dedup-clusterer`, `materiality-triage`, `entity-curator` (tier high-risk, cần ADR khi kích hoạt), `adversarial-dod-verifier`, `daily-brief-synthesizer`, `harness-auditor`. Mỗi agent: 1 SKILL.md + 1 entry registry + 1 stage pipeline.
+
+### 3. Governance & Hạ tầng
+- Rule mới `.agents/rules/07-agent-registry-governance.md` (taxonomy + checklist 5 bước thêm agent an toàn).
+- `.agents/AGENT_NETWORK_DESIGN.md` (thiết kế tổng thể đã duyệt). ADR `0006`. AGENTS.md §2 trỏ registry/pipeline là nguồn chân lý.
+- `init_db` nâng cấp áp dụng tuần tự mọi migration `NNN-*.sql` (idempotent). Thêm `_force_utf8_stdio()` cho harness_cli (chống charmap Windows).
+- Test: `tests/test_harness_cli.py` mở rộng lên 7 test (thêm ledger + propose), 100% pass.
 
 ## Next Steps
-1. Sẵn sàng nhận lệnh kích hoạt chuỗi L1 cho ngày mới **15/09/2026** (hiện có 176 bài cào mới đang đợi).
-2. Duy trì quy chuẩn tiết kiệm token tối đa và kiểm soát rủi ro qua Controlled Waves.
-
+1. Kích hoạt agent đặc nhiệm #1 `story-dedup-clusterer` hoặc #2 `materiality-triage` (Tier 2, đòn bẩy token cao): dựng operator tiền lọc (SimHash pre-group / triage packet) + wiring metric hook vào ingest.
+2. `entity-curator` cần ADR riêng trước khi chuyển `active` (chạm Data Contract catalog).
+3. Wiring `pipeline_radar` đọc `pipeline.yaml` để gợi ý stage kế tiếp từ DAG (P2 code, cần proof test).
