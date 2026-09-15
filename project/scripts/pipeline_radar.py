@@ -66,6 +66,23 @@ def cmd_status(args: argparse.Namespace) -> None:
     """, (target_date,))
     gold_done_count = cur.fetchone()[0]
 
+    # 3b. Thống kê trạng thái hàng đợi L1 trong DB
+    cur.execute("""
+        SELECT count(1)
+        FROM articles a
+        WHERE date(a.published_at) = ?
+        AND NOT EXISTS (SELECT 1 FROM l1_tasks lt WHERE lt.article_id = a.url_title_hash)
+    """, (target_date,))
+    l1_unrouted_count = cur.fetchone()[0]
+
+    cur.execute("""
+        SELECT count(1)
+        FROM l1_tasks lt
+        JOIN articles a ON lt.article_id = a.url_title_hash
+        WHERE date(a.published_at) = ? AND lt.route = 'resolved' AND lt.status = 'pending'
+    """, (target_date,))
+    l1_resolved_pending = cur.fetchone()[0]
+
     # 4. Thống kê Task files đang treo trên đĩa
     l1_tasks_pending = len(glob.glob(str(L1_TASKS_DIR / "*.task.json")))
     gold_tasks_pending = len(glob.glob(str(AGENT_TASKS_DIR / "batch_*.task.json"))) + \
@@ -146,10 +163,16 @@ def cmd_status(args: argparse.Namespace) -> None:
         ))
 
     if not recommendations:
-        if crawled_count > 0 and l1_done_count == 0:
+        if l1_unrouted_count > 0:
             recommendations.append((
                 "HIGH",
-                "Bài viết đã cào về nhưng chưa quét L1 Code-First.",
+                f"Có {l1_unrouted_count} bài viết đã cào về nhưng chưa định tuyến L1.",
+                f'& "C:\\venvs\\news-scape\\Scripts\\python.exe" scripts/l1_route.py --from-db --date {target_date} --mini-batch 25'
+            ))
+        elif l1_resolved_pending > 0:
+            recommendations.append((
+                "HIGH",
+                f"Có {l1_resolved_pending} bài L1 resolved đang chờ vật chất hóa Code-First.",
                 f'& "C:\\venvs\\news-scape\\Scripts\\python.exe" scripts/l1_ingest.py --code-first'
             ))
         elif gold_done_count > 0 and not any(glob.glob(str(USER_OUTPUT_DIR / "*" / f"{target_date}.xlsx"))):
