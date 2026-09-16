@@ -33,3 +33,15 @@ Quy tắc: **MUST** (Bắt buộc đọc) · **SHOULD** (Khuyến khích đọc 
 1. **Rule of Direct Match:** Nếu công cụ tìm kiếm (`grep_search`, `find_by_name`) đã chỉ ra chính xác vị trí lỗi hoặc hàm cần can thiệp, agent **không được tiếp tục mở thêm** các file tham khảo xung quanh.
 2. **No Full-Repo Dumps:** Tuyệt đối không đọc toàn bộ thư mục hoặc dump hàng loạt file `.md` vào prompt khi chưa có lý do cụ thể.
 3. **Progressive Disclosure:** Luôn đọc tệp tóm tắt trước; chỉ mở tài liệu con trong `references/` hoặc `scripts/` khi bước thực thi yêu cầu.
+
+---
+
+## 4. Bất Biến "Radar-First, Zero-Probe" & Huấn Luyện Liên Tục
+
+1. **Zero-Probe Invariant:**
+   - CẤM chạy các lệnh shell python one-liner `-c "import sqlite3..."` để thăm dò CSDL hoặc đếm file ad-hoc.
+   - BẮT BUỘC dùng `python project/scripts/pipeline_radar.py status` để lấy ngữ cảnh vận hành và nhận câu lệnh khuyến nghị tiếp theo.
+2. **Triệt tiêu File Lớn:**
+   - CẤM đọc trực tiếp các file từ điển runtime khổng lồ (`entities.json` 1.5 MB). Mọi ánh xạ chuẩn đã được tóm tắt trong Skill chuyên trách.
+3. **Continuous In-Context Training Loop:**
+   - Sau mỗi ca thực thi, mọi ma sát và tối ưu hóa mới phải được chưng cất thành Rule/Skill và cập nhật vào `SESSION-LATEST.md`.

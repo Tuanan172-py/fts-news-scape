@@ -25,7 +25,7 @@ At most **one** story `in_progress` at a time. If an urgent request interrupts, 
 ## 2. OKF — where to get product context (priority order)
 
 Read these before inventing context; do NOT create a new knowledge folder:
-0. `.agents/registry.yaml` + `.agents/pipeline.yaml` — **nguồn chân lý** cho mạng lưới tác nhân (ai tồn tại, class operator/cognitive/conductor, ranh giới I/O, DoD, KPI) và DAG điều phối. Thiết kế tổng thể: `.agents/AGENT_NETWORK_DESIGN.md`. Quy tắc tăng trưởng: `.agents/rules/07-agent-registry-governance.md`.
+0. `.agents/registry.yaml` + `.agents/pipeline.yaml` — **nguồn chân lý** cho mạng lưới tác nhân (ai tồn tại, class operator/cognitive/conductor, ranh giới I/O, DoD, KPI) và DAG điều phối. **Chạy thế nào mỗi ngày:** `.agents/AGENT_RUNBOOK.md`. Thiết kế & lý do: `.agents/AGENT_NETWORK_DESIGN.md`. Quy tắc tăng trưởng: `.agents/rules/07-agent-registry-governance.md`.
 1. `.agents/skills/*` — operational, matching, multi-agent swarm & governance skills (`pipeline-radar`, `watchlist-curator`, `token-auditor`, `dod-gatekeeper`, `multi-agent-orchestrator-governance`, `news-scape-agent-operations`, `l1-entity-matcher`, `gold-financial-analyst`; agent đặc nhiệm draft: `story-dedup-clusterer`, `materiality-triage`, `entity-curator`, `adversarial-dod-verifier`, `daily-brief-synthesizer`, `harness-auditor`).
 2. `project/docs/skills/*` — per-domain scraper knowledge (cafef, fireant, rss-sources, tnck).
 3. `project/docs/{design,dev,domains,operations}/` — architecture, how-tos, source taxonomy, ops.
@@ -117,7 +117,13 @@ Chi tiết quy chuẩn bất biến tại [`.agents/rules/06-code-and-docstring-
 - **Production Deliverable**: Docstrings và comments chỉ nói rõ nhận gì, làm gì, trả về gì và giải thích logic phức tạp không hiển nhiên. Không đưa nhật ký gỡ lỗi hoặc giải trình lịch sử vào mã nguồn.
 - **Kiểm định Bắt buộc**: Mọi thay đổi code phải vượt qua kiểm tra cú pháp AST (`ast.parse`) và bảo đảm toàn bộ unit test (`pytest tests/`) luôn PASS 100%.
 
+## 8. Zero-Probe Context & Continuous Agent Training (Bắt Buộc Cho Mọi Phiên)
 
-
-
-
+Chi tiết quy chuẩn bất biến tại [`.agents/rules/08-context-and-zero-probe-guardrails.md`](.agents/rules/08-context-and-zero-probe-guardrails.md):
+- **Nguyên tắc "Radar-First, Never Probe" (Zero-Probe)**: CẤM TUYỆT ĐỐI việc tự ý chạy các câu lệnh python one-liner (`-c "import sqlite3..."`) hoặc quét file ad-hoc chỉ để lấy ngữ cảnh. Mọi ca làm việc BẮT BUỘC dùng lệnh duy nhất:
+  ```powershell
+  & "C:\venvs\news-scape\Scripts\python.exe" project/scripts/pipeline_radar.py status
+  ```
+  Radar cung cấp đầy đủ thông tin pipeline và chỉ định chính xác 1 câu lệnh thực thi tiếp theo.
+- **Progressive Bounded Context**: Không đọc các tệp từ điển khổng lồ (`entities.json` 1.5 MB) hay dump thư mục thô. Chỉ nạp tối đa 3 tệp ban đầu (`AGENTS.md`, `SESSION-LATEST.md`, Skill chuyên trách).
+- **Continuous Policy Distillation (/learn)**: Mọi ma sát phát sinh (permission timeout, cờ lệnh tối ưu, thực thể mới) phải được đúc kết ngay thành Rule, cập nhật vào Skill runbook và `SESSION-LATEST.md` trước khi đóng phiên, đảm bảo các thế hệ Agent tiếp theo kế thừa trọn vẹn và không lặp lại sai sót.

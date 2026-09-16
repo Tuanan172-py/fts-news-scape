@@ -108,12 +108,42 @@ def cmd_status(args: argparse.Namespace) -> None:
     """, (target_date,))
     l1_resolved_pending = cur.fetchone()[0]
 
-    # 4. Thống kê Task files đang treo trên đĩa
+    # 3c. Thống kê bài Gold pending theo Subscriber Gating cho target_date
+    gold_pending_subs_count = 0
+    try:
+        from src.agent.entities import load_registry
+        reg = load_registry()
+        active_subs = set()
+        for user_subs in reg.subscriptions.values():
+            active_subs.update(user_subs)
+
+        cur.execute("""
+            SELECT w.article_id, l1.output_json
+            FROM work_items w
+            JOIN articles a ON w.article_id = a.url_title_hash
+            JOIN l1_outputs l1 ON l1.article_id = w.article_id AND l1.dod_pass = 1
+            WHERE w.status = 'pending'
+            AND date(COALESCE(NULLIF(a.published_at, ''), a.fetched_at)) = ?
+        """, (target_date,))
+        rows = cur.fetchall()
+        for aid, out_json in rows:
+            if not out_json:
+                continue
+            try:
+                data = json.loads(out_json)
+                eids = [e["entity_id"] for e in data.get("entities", []) if e.get("entity_id")]
+                if any(eid in active_subs for eid in eids):
+                    gold_pending_subs_count += 1
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+    # 4. Thống kê Task files đang treo trên đĩa (chỉ quét PROJECT_ROOT / "data")
     def _find_files(*relative_patterns: str) -> list[str]:
         found = []
-        for base in [DATA_ROOT, PROJECT_ROOT.parent / "data"]:
-            for pat in relative_patterns:
-                found.extend(glob.glob(str(base / pat)))
+        for pat in relative_patterns:
+            found.extend(glob.glob(str(DATA_ROOT / pat)))
         return list(set(found))
 
     l1_tasks = _find_files("agent_tasks/l1/*.task.json")
@@ -155,6 +185,7 @@ def cmd_status(args: argparse.Namespace) -> None:
     print(f"   • Số bài cào xuất bản trong ngày : {crawled_count:,} bài")
     print(f"   • Số bài đã hoàn tất tầng L1     : {l1_done_count:,} bài")
     print(f"   • Số bài đã hoàn tất tầng Gold   : {gold_done_count:,} bài")
+    print(f"   • Bài Gold đủ điều kiện chờ phân tích (Subscriber-Gated): {gold_pending_subs_count:,} bài")
     if scrape_delay_minutes is not None:
         delay_str = f"{scrape_delay_minutes} phút" if scrape_delay_minutes < 60 else f"{scrape_delay_minutes // 60}h {scrape_delay_minutes % 60}m"
         last_time_str = ref_ts_str.split("T")[1][:8] if "T" in ref_ts_str else ref_ts_str
