@@ -59,6 +59,9 @@ Mỗi prompt / phiên tương tác của Agent BẮT BUỘC phải ghi lại m�
 2. **`score_context` (0.0 đến 1.0):**
    * Đạt $1.0$ nếu số lượng file đọc nằm trong ngân sách cho phép của Lane (Tiny $\le 5$, Normal $\le 15$, High-risk $\le 30$).
    * Giảm $0.05$ cho mỗi file đọc vượt định mức (tối thiểu $0.2$).
+   * **`files_read` chỉ gồm tệp vào thẳng context của agent điều phối.** Tệp do Explore
+     subagent đọc hộ không kê vào đây (xem `CONTEXT_RULES.md` §1) — chúng không chiếm
+     context window của agent điều phối, và ủy thác là hành vi được khuyến khích.
 
 ---
 

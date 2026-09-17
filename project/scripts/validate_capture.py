@@ -93,13 +93,25 @@ def main() -> int:
     if args and args[-1].isdigit():
         n = int(args[-1])
         args = args[:-1]
+    skipped: list[str] = []
     if args:
         sources = args
     else:
         # mặc định: MỌI domain enabled CÓ khai capture (không hardcode tên nguồn)
-        sources = [d for d in list_domains()
-                   if (load_domain_config(d).get("capture") or {})]
+        sources = []
+        for d in list_domains():
+            if (load_domain_config(d).get("capture") or {}):
+                sources.append(d)
+            else:
+                skipped.append(d)
     print(f"Nguồn audit: {', '.join(sources)}")
+    if skipped:
+        # Bỏ qua âm thầm sẽ tạo cảm giác an toàn giả: những nguồn này đang CHẠY mà
+        # không hề lưu Bronze, tức không có gì để kiểm chứng và không có gì để khôi phục.
+        print(f"⚠️  BỎ QUA {len(skipped)} domain đang BẬT nhưng KHÔNG khai `capture:` "
+              f"→ {', '.join(skipped)}")
+        print("    Những nguồn này không lưu Bronze raw HTML: không audit được, và mất "
+              "bài khi nguồn gỡ. Xem project/docs/dev/03-adding-a-source.md §2b.")
 
     tmp = tempfile.mkdtemp(prefix="capture_audit_")
     raw_dir = str(Path(tmp) / "raw_html")

@@ -29,13 +29,29 @@ hại.[^daily-runbook]
 
 # Đường tắt — `run_daily.ps1`
 
+> ### ✅ ĐÃ SỬA 2026-09-17 (US-017 · ADR 0008) — đọc kỹ phần thay đổi
+>
+> Trước đây `CleanPackets` xoá **mọi** `*.task.json` bằng `-Recurse`, kể cả packet chưa ai xử lý,
+> và `-Mode full` xuất packet rồi xoá sạch mà không hề chạy Gold. Nay:
+>
+> - **`-Mode full` đã bị bỏ hẳn** — chỉ còn `emit` và `ingest`. Gọi tham số này sẽ bị chặn ngay.
+> - **Mặc định đảo chiều: GIỮ packet.** Muốn dọn phải gõ **`-CleanPackets`** (trước đây ngược lại,
+>   phải gõ `-KeepPackets` mới giữ — nên một lần chạy nhầm là xoá trắng hàng đợi).
+> - Việc dọn nay dựa vào **bằng chứng hoàn tất trong DB** (`dod_pass=1`), không xoá theo tên tệp.
+>   Lô gom chỉ bị xoá khi **toàn bộ** bài bên trong đã xong; packet hỏng không đọc được thì giữ.
+> - Muốn xem trước mà không xoá: `python scripts/maintenance/clean_completed_packets.py` (mặc định
+>   dry-run, phải `--apply` mới thực xoá).
+> - **Gold nay có cổng xin quyền** — `python scripts/auto_pilot.py` hiển thị số batch, số bài và
+>   token ước tính rồi mới hỏi. Không xác nhận thì không tiêu thụ token nào.
+
 ```powershell
 .\scripts\run_daily.ps1 -Mode emit                 # phát packet, dừng lại chờ agent
 #   → xử lý packet bằng subagent (.agents/skills/gold-financial-analyst, l1-entity-matcher)
-.\scripts\run_daily.ps1 -Mode ingest -Days 30      # nạp output + ghi CSV + báo cáo
+#     hoặc: python scripts/auto_pilot.py --max-batches 2   (có cổng xin quyền)
+.\scripts\run_daily.ps1 -Mode ingest -Days 30      # nạp output + ghi CSV + báo cáo (giữ packet)
 
-.\scripts\run_daily.ps1                            # full, agent stub (smoke test)
 .\scripts\run_daily.ps1 -Mode ingest -Date all     # bù toàn bộ backlog
+.\scripts\run_daily.ps1 -Mode ingest -CleanPackets # nạp rồi dọn packet ĐÃ HOÀN TẤT
 ```
 
 Tham số: `-Review missed|all` (phạm vi phát packet L1) · `-ExportLimit N` (0 = tất cả) ·

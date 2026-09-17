@@ -1,4 +1,4 @@
-"""Kiểm thử khép kín toàn diện chu trình xử lý dữ liệu ở chế độ ngoại tuyến."""
+"""Kiểm thử khép kín chu trình xử lý dữ liệu ở chế độ ngoại tuyến."""
 
 from __future__ import annotations
 

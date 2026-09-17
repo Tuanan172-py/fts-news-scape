@@ -1,4 +1,4 @@
-"""Động cơ phân tích và lập báo cáo giám sát toàn diện hệ thống theo mốc thời gian.
+"""Động cơ phân tích và lập báo cáo giám sát hệ thống theo mốc thời gian.
 
 Cung cấp lớp DailyReporter tổng hợp phễu chuyển đổi dữ liệu 5 tầng từ Bronze,
 Silver, Hàng đợi Work Packets, Thẩm định AI Agents đến Tệp tin bàn giao người dùng.

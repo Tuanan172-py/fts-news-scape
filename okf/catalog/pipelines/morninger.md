@@ -61,6 +61,15 @@ nhịp.[^proclock] Tiến trình khác không chiếm được ⇒ log ERROR và
 
 Trên Windows dùng Task Scheduler gọi `scripts/run_daily.ps1`.
 
+> **Đối chiếu thực tế 2026-09-17:** không có Task Scheduler entry nào gọi `run_daily.ps1`. Thực tế
+> đang chạy là một tiến trình `python -m src.morninger` thường trú (khởi động tay), cộng task
+> `news_cron` gọi `scripts/run_once.py` lúc 16:00 hằng ngày. `news_cron` **vừa thừa vừa va chạm**:
+> morninger đã bao trọn capture + derive, còn nhánh `--once` của `orchestrator.main` không chiếm
+> scheduler lock nên cào song song với morninger. Xem `docs/OPEN-ITEMS.md` mục A0-5.
+>
+> Lệnh `.venv\Scripts\python.exe` ở khối trên cũng đã lỗi thời — `.venv` nội bộ bị cấm theo
+> AGENTS.md §3, dùng `C:\venvs\news-scape\Scripts\python.exe`.
+
 # Việc KHÔNG thuộc morninger
 
 Morninger chỉ lo Vòng 1 + Vòng 2. Chuỗi agent (Vòng 3) và output người dùng chạy riêng theo lô:

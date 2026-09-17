@@ -1,4 +1,4 @@
-"""Bộ điều phối toàn diện chu trình thu thập dữ liệu tin tức."""
+"""Bộ điều phối chu trình thu thập dữ liệu tin tức qua các nguồn đã bật."""
 
 from __future__ import annotations
 
@@ -251,6 +251,12 @@ def main(argv: list[str]) -> int:
 
     orch = Orchestrator()
     if once:
+        # Q3: Chạy độc lập nhưng phải chiếm scheduler lock để tránh cào song song với morninger
+        if not orch.store.try_acquire_lock("scheduler", orch._lock_owner, SCHEDULER_LOCK_STALE_SECONDS):
+            logger.error("Scheduler khác (morninger hoặc orchestrator) đang chạy. Từ chối chạy --once để tránh cào song song.")
+            orch.shutdown()
+            return 1
+        orch._owns_scheduler_lock = True
 
         def handle_signal(signum, frame):
             orch.shutdown()

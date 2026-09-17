@@ -8,10 +8,13 @@ from __future__ import annotations
 
 import json
 import os
+import uuid
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 from src.agent.dod import load_thresholds
+from src.core.models import VN_TZ
 from src.core.staging import safe_json_dump
 
 OUTPUT_SCHEMA = "agent-output-v2-lean"
@@ -170,9 +173,15 @@ def split_tasks_into_batches(
     builder = builder or build_batch_packet
     total = len(tasks)
     batch_idx = 1
+    # Nhãn định danh lần chạy. Trước đây mã lô luôn đếm lại từ 01 nên lô mới trùng tên lô
+    # cũ; AutoPilot thấy file output cùng tên liền bỏ qua lô MỚI rồi nạp lại dữ liệu CŨ và
+    # báo thành công (ADR 0008 §1.3).
+    # Dấu thời gian theo giây là CHƯA ĐỦ: hai lượt trong cùng một giây vẫn trùng. Ghép thêm
+    # 4 ký tự ngẫu nhiên để va chạm là không thể, không chỉ khó xảy ra.
+    run_tag = (f"{datetime.now(VN_TZ):%Y%m%dT%H%M%S}_{uuid.uuid4().hex[:4]}")
     for i in range(0, total, batch_size):
         chunk = tasks[i : i + batch_size]
-        batch_id = f"{prefix}_{batch_idx:02d}"
+        batch_id = f"{prefix}_{run_tag}_{batch_idx:02d}"
         packet = builder(chunk, batch_id=batch_id)
         path = write_batch_packet(packet, base_dir=base_dir)
         out_paths.append(path)

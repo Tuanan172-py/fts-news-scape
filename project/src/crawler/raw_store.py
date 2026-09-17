@@ -202,11 +202,18 @@ class RawStore:
 
         ok = status is not None and 200 <= status < 300 and len(body) > 0
         if not ok:
+            # 404/410 = nguồn đã xóa bài (không phải lỗi tạm thời) — tách riêng để
+            # (a) không bị backfill_deferred retry vô ích, (b) đo được tần suất
+            # "đăng rồi xóa" đặc trưng của tin VN (pipeline_radar).
+            deleted_at_source = status in (404, 410)
             cap["error"] = {
-                "type": "http_error", "http_status": status,
+                "type": "deleted_at_source" if deleted_at_source else "http_error",
+                "http_status": status,
                 "message": f"status {status}" if status is not None else "empty body",
                 "protection_mechanism": protection,
             }
+            if deleted_at_source:
+                cap["capture_status"] = "deleted_at_source"
             if not cap["missing"]:
                 cap["missing"] = ["article_body"]
             if len(body) > 0:  # partial body vẫn lưu để inspect

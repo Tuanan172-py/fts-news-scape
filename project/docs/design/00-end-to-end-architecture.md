@@ -243,3 +243,4 @@ project/
 | [09 — agent I/O](09-agent-io-contract.md) | taxonomy OUTPUT, provider mapping |
 | [10 — orchestration](10-agent-orchestration-governance.md) | roles, loops, DoD, guardrails |
 | [12 — agent infra](12-agent-infrastructure.md) | export/ingest, DoD gate (không LLM) |
+| [17 — medallion workflows](17-medallion-pipeline-workflows.md) | sơ đồ luồng thực thi chi tiết Bronze, Silver, Gold |

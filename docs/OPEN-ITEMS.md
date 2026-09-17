@@ -1,10 +1,87 @@
 # OPEN-ITEMS — việc tồn đọng của tuyến L1 → giao hàng người dùng
 
-- **Cập nhật:** 2026-09-09
+- **Cập nhật:** 2026-09-17 (bổ sung C5 manh mối Errno 22, C6 tối ưu cycle, C7 metric phát hiện)
 - **Bối cảnh:** rà soát vì sao mapping từ L1 sang danh mục người dùng ghi nhận rất ít số liệu.
 - **Số đo tham chiếu:** trên **bản sao** `project/data/monocle.db` (7.219 articles, chụp 2026-09-07).
   Chưa có thay đổi nào được áp lên DB vận hành.
 - Đóng một mục: chuyển sang §D kèm **Kết quả đo thực tế**, đừng xoá.
+
+---
+
+## A0. RÀ SOÁT END-TO-END 2026-09-17 — mất dữ liệu âm thầm & ngõ cụt trạng thái
+
+Rà soát toàn tuyến Bronze → Silver → L1 → Gold → giao hàng. Con số nền: **7.203 bài đã cào,
+424 bài qua cổng giao hàng**; `work_items`: `pending=3585, claimed=304, done=135, held=2`.
+Khoảng cách đó không phải do quota Gold — dưới đây là các cơ chế làm rơi bài.
+
+### A0-1. [P0 · ĐÃ KIỂM CHỨNG] Watermark Silver nhảy cóc ⇒ mất bài VĨNH VIỄN
+
+`project/src/pipeline/derive.py:130` — `watermark_new = max(ok_ts)` chỉ lấy max của bài **thành
+công**; `_should_process` (dòng 51-57) trả `fetch_ts > watermark`. Một file Bronze lỗi có
+`fetch_ts` cũ hơn một bài thành công sẽ **vĩnh viễn không bao giờ thoả điều kiện** nữa.
+
+Không cảnh báo, không retry counter, không dead-letter — chỉ một dòng log rồi `continue`
+(dòng 115-117). Bronze bắt trọn 100% bài vẫn vô nghĩa nếu Silver lặng lẽ đánh rơi.
+**Sửa đúng:** watermark phải là `min(fetch_ts của phần CHƯA xong)`, không phải `max` của phần đã xong.
+
+### A0-2. [P0 · ĐÃ KIỂM CHỨNG] `run_daily.ps1 -Mode full` là vòng lặp tự huỷ
+
+`param` khai `[ValidateSet('api')] $Agent` (dòng 19) nên nhánh `'hierarchy'` (dòng 108-110)
+**không bao giờ chạy được**; nhánh `default` chỉ in hướng dẫn. Sau đó `CleanPackets` (dòng 138)
+`Get-ChildItem 'data/agent_tasks' -Filter '*.task.json' -Recurse` xoá **mọi** packet kể cả trong
+`l1/`. Chuỗi `full` = xuất packet → in chữ → ingest khi chưa có output → **xoá sạch packet vừa xuất**.
+
+**Cảnh báo vận hành:** chạy `-Mode ingest` hoặc `-Mode full` lúc này sẽ xoá trắng **155 packet L1**
+đang chờ. Dùng `-KeepPackets` cho tới khi sửa xong.
+
+### A0-3. [P0 · ĐÃ KIỂM CHỨNG] AutoPilot va chạm tên batch ⇒ ingest lại dữ liệu cũ
+
+`auto_pilot.py:66-72` bỏ qua batch nếu `<batch>.output.json` đã tồn tại, nhưng
+`split_tasks_into_batches` đánh số lại từ `batch_01` **mỗi lần chạy**. Hiện `data/agent_outputs/`
+có `batch_01`–`batch_02` (17/09) lẫn `batch_03`–`batch_11` (**14/09**). Lần chạy tới: skip toàn bộ
+batch mới, ingest lại dữ liệu 3 ngày trước, rồi in "hoàn tất 100%". AutoPilot không bao giờ dọn
+thư mục output.
+
+Kèm theo: `run_cmd` (dòng 29-31) chỉ *in* lỗi không raise; `except Exception` (dòng 89) nuốt cả
+`FileNotFoundError` khi thiếu `agy`; không timeout, không kiểm output đã sinh, không retry.
+
+### A0-4. [P1] Bốn ngõ cụt trạng thái — bài kẹt vĩnh viễn, không có đường quay lại
+
+| Trạng thái | Sinh ra khi | Vì sao kẹt |
+|---|---|---|
+| `work_items='failed'` | Trượt DoD Gold (`runner.py:276` → `catalog.mark_failed`) | `reclaim_stale` chỉ thu `claimed`; `claim()` chỉ chọn `pending`. Không script nào requeue |
+| `l1_tasks='failed'` | Trượt DoD L1 (`l1_runner.py:140, 231`) | `upsert_l1_task` cố ý giữ status (`store.py:477-480`); `drain_code_first` chỉ lấy `pending` |
+| `work_items='held'` | `silver_ok` hoặc `pkg_ok` sai (`run.py:111`) | `Catalog.enqueue` dùng `INSERT OR IGNORE` ⇒ sửa nguyên nhân xong hàng cũ vẫn không về `pending` |
+| `work_items='claimed'` | Worker nhận việc | `reclaim_stale` chỉ chạy **bên trong** `claim()`; không ai claim thì treo mãi (hiện 304 hàng) |
+
+### A0-5. [P2] Các lỗi chức năng khác
+
+- **`l1_ingest.py:83` dùng `json.loads` nhưng module KHÔNG `import json`** (đã kiểm chứng) →
+  `NameError` bị nuốt bởi `except Exception: pass` (dòng 88-89) ⇒ khối dọn `l1_batch_*.task.json`
+  **chưa từng chạy một lần nào**.
+- **`news_cron` vừa thừa vừa va chạm**: chạy `run_once.py` 16:00 hằng ngày; nhánh `--once` của
+  `orchestrator.main` (dòng 253-262) **không chiếm scheduler lock** ⇒ cào song song với morninger
+  (đang bận ~56% thời gian). morninger đã bao trọn capture + derive ⇒ nên tắt task này.
+- **DoD L1 hai luồng không đồng nhất**: code-first truyền registry (`l1_runner.py:124`), luồng đọc
+  output subagent **không truyền** (dòng 214) ⇒ `entity_id` lạ không bị chặn ở luồng agent.
+- **Sản xuất packet không có consumer**: job `l1_route` (thêm 2026-09-17) chạy mỗi 15 phút sinh
+  packet `needs_agent`, nhưng không job nào tiêu thụ ⇒ `data/agent_tasks/l1/` phình đều (155 file).
+
+### A0-6. [P3] Hiệu năng, vệ sinh, tái lập
+
+- `rederive_incremental` đọc/parse **mỗi `.meta.json` 3 lần** mỗi chu kỳ (`derive.py:95, 131, 132`)
+  ≈ 22k lượt đọc/30 phút trên OneDrive.
+- `checkpoint_reached` chỉ đạt khi `backlog == 0`; một file mới nhất luôn lỗi ⇒ `export_silver_manifest`
+  **không bao giờ tự chạy**.
+- `article_versions` thêm một hàng mỗi lần re-derive cùng bài khi meta thiếu `fetch_ts`
+  (`derive.py:55-56` luôn process; `store.py:383` INSERT thuần, không UPSERT).
+- Không có job retention: `data/work_packages` 7.289 file, `data/silver` 7.289 file,
+  `agent_tasks/l1/archive` 2.461 file.
+- `user_output.gated_rows` nạp toàn bộ bảng vào RAM rồi lọc ngày bằng Python (dòng 166-177).
+- **Tái lập & bảo mật**: `auto_pilot.py:80-88` gọi CLI ngoài `agy` kèm cờ
+  `--dangerously-skip-permissions`; binary nằm ở `C:\Users\anpt\AppData\Local\agy\bin\agy.exe`,
+  **ngoài repo, không pin version, không có trong `requirements.txt`** ⇒ không tái lập được trên
+  máy khác hay CI, và chạy tác nhân ngoài với kiểm tra quyền bị tắt.
 
 ---
 
@@ -140,7 +217,34 @@ thuộc Subagent. `BTC` cố ý trỏ **cả hai** `ASSET_CLASS:TIEN_MA_HOA` và
 ### C5. Silver mỏng ở 2 nguồn nhỏ
 
 `fireant.vn` 8/33 và `tinnhanhchungkhoan.vn` 4/32 work-package có `cleaned_text` < 200 ký tự.
-Chưa điều tra.
+
+**Manh mối mới (2026-09-17)** — log vận hành cho thấy Bronze của fireant có file đọc KHÔNG được:
+
+```
+WARNING | _extract_from_bronze | read bronze failed
+  data/raw_html\fireant.vn\20260907\e669e1e3…f99ade4f.html: [Errno 22] Invalid argument
+```
+
+Bronze không đọc được thì Silver rỗng — rất có thể đây chính là nguyên nhân gốc của C5 chứ không
+phải lỗi bóc tách. Bước điều tra đầu tiên: kiểm tra file đó có tồn tại thật và đọc được bằng tay
+không (`Errno 22` trên Windows thường là path/tên file không hợp lệ hoặc file bị OneDrive
+dehydrate — xem rule 03 Bất biến 4 về Files On-Demand Pinning).
+
+### C6. Tối ưu chi phí chu kỳ capture trước khi hạ interval dưới 10 phút
+
+Đo 2026-09-17: cycle = **335s**, trong đó cafef 124s (fetch 900 item → 5 bài mới) và fireant 87s
+(600 item → 0 bài mới) chiếm 63%. Đã chốt đặt `capture_interval_minutes: 10` để có ~40% biên dự
+phòng. Muốn xuống 5 phút phải giảm chi phí cycle trước.
+
+Hướng: **dừng phân trang sớm** khi gặp một trang mà toàn bộ item đã nằm trong `seen_articles`.
+Rủi ro phải kiểm soát: phân trang nông quá là bỏ sót bài — đi ngược mục tiêu gốc của US-011.
+Cần test trên dữ liệu thật trước khi bật.
+
+### C7. Metric "bài bị nguồn xóa" chưa đếm theo thời điểm phát hiện
+
+Radar hiện hiển thị "N bài đăng hôm nay / M tổng tích lũy". Con số theo ngày đăng luôn thấp hơn
+thực tế vì bài bị gỡ thường được phát hiện muộn hơn ngày đăng. Dữ liệu để làm đúng đã có sẵn:
+`metadata_json.capture_retry.last_at`. Chưa có truy vấn theo trường này.
 
 ---
 
@@ -169,5 +273,6 @@ Chưa điều tra.
 | D19 | Xử lý dứt điểm toàn bộ 258 bài L1 ngày 14/09; chống burn token do tool loop; đóng gói End-to-End Playbook | **258/258 bài PASS DoD 100%**; 0 task tồn đọng; nạp 4.921 L1 outputs; chuẩn hóa Rule 01 (Strict 2-I/O), ban hành `end-to-end-operations-playbook.md` |
 
 **Kiểm tay sau khi sửa:** 25 dòng ngẫu nhiên của AnPT → **0/29 mã không có căn cứ trong tiêu đề**.
-**pytest:** 389 passed (100% green).
+**pytest:** 413 passed (100% green, cập nhật 2026-09-17 — gồm 10 test CLI entry point chạy thật
+qua subprocess, bổ sung sau sự cố 3 lỗi sản xuất vô hình với test import hàm).
 

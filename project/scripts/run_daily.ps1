@@ -6,23 +6,29 @@ KHONG GIA LAP: script nay KHONG duoc mac dinh goi bat ky mo phong/stub LLM nao (
 Cam Tuyet doi Gia lap Tri tue Agent bang Heuristic Script). Bai chua co Subagent xu ly that se
 o nguyen trang thai cho (L1_ONLY / work_items pending) - KHONG duoc dien du lieu gia de "cho day".
 
+MODE 'full' DA BI BO (ADR 0008 SS2.5): no KHONG chay Gold (ValidateSet chan nhanh goi agent, nhanh
+con lai chi in huong dan) nhung VAN xoa packet - tao vong lap tu huy: xuat packet, in chu, ingest
+khi chua co output, roi xoa sach packet vua xuat. Viec goi tac nhan nam o buoc giua, do nguoi van
+hanh chu dong kich hoat qua scripts/auto_pilot.py (co cong xin quyen).
+
 Examples:
-  .\scripts\run_daily.ps1                        # FULL - khong tu goi LLM, cho packet sau Emit
   .\scripts\run_daily.ps1 -Mode emit             # Emit task packets, tu giao cho Subagent xu ly
   .\scripts\run_daily.ps1 -Mode emit -ExportLimit 0 # Emit all pending packets
   .\scripts\run_daily.ps1 -Mode ingest -Days 30  # Ingest and write output for last 30 days
   .\scripts\run_daily.ps1 -Mode ingest -Date all # Ingest and write output for all dates
+  .\scripts\run_daily.ps1 -Mode ingest -CleanPackets  # Ingest + don packet DA HOAN TAT
 #>
 [CmdletBinding()]
 param(
-  [ValidateSet('full','emit','ingest')] [string]$Mode   = 'full',
-  [ValidateSet('api')]                  [string]$Agent  = 'api',
+  [ValidateSet('emit','ingest')]        [string]$Mode   = 'emit',
   [ValidateSet('missed','all')]         [string]$Review = 'missed',
   [string]$Date        = 'today',
   [int]$Days           = 0,
   [int]$ExportLimit    = 0,
   [switch]$NoCompile,
-  [switch]$KeepPackets
+  # Mac dinh GIU packet. Truoc day mac dinh la xoa (-KeepPackets moi giu) nen mot lan chay
+  # nham xoa trang hang doi chua ai xu ly.
+  [switch]$CleanPackets
 )
 
 $ErrorActionPreference = 'Stop'
@@ -100,23 +106,6 @@ function Emit {
   }
 }
 
-function RunAgents {
-  # KHONG GIA LAP: khong co nhanh nao trong day duoc phep goi script mo phong/stub sinh du lieu
-  # gia (AGENTS.md SS6C). Bai chua co Subagent that xu ly se o nguyen 'pending' - Ingest doc lai
-  # o lan chay sau, KHONG tu dien noi dung.
-  switch ($Agent) {
-    'hierarchy' {
-      Step 'run_agent_hierarchy export' @('scripts/run_agent_hierarchy.py','--export')
-    }
-    default {
-      Write-Host "Subagent processing mode: Packets ready for invoke_subagent." -ForegroundColor Cyan
-      Write-Host "  -> Chua qua LLM xu ly thi DE RONG, khong tu sinh du lieu gia lap (AGENTS.md SS6C)." -ForegroundColor DarkGray
-      Write-Host "  -> Xu ly packet bang Subagent that (.agents/skills/l1-entity-matcher, gold-financial-analyst)," -ForegroundColor DarkGray
-      Write-Host "     roi chay: .\scripts\run_daily.ps1 -Mode ingest" -ForegroundColor DarkGray
-    }
-  }
-}
-
 function Ingest {
   Step 'l1_ingest'                     @('scripts/l1_ingest.py',$L1Out)
   Step 'agent_ingest'                  @('scripts/agent_ingest.py',$AgentOut)
@@ -129,31 +118,18 @@ function Ingest {
   }
 }
 
-function CleanPackets {
-  if ($KeepPackets) {
-    Write-Host "`n[KeepPackets] Retaining task packets and output files." -ForegroundColor DarkGray
+function CleanPacketsStep {
+  # Chi xoa packet CO BANG CHUNG HOAN TAT trong DB (l1_outputs/agent_outputs dod_pass=1).
+  # Lenh xoa trang cu (-Recurse tren data/agent_tasks) da tung co the xoa hang tram packet
+  # L1 chua ai xu ly - xem ADR 0008 va docs/OPEN-ITEMS.md SSA0-2.
+  if (-not $CleanPackets) {
+    Write-Host "`n[packets] Giu nguyen task packet (mac dinh). Dung -CleanPackets de don packet da hoan tat." -ForegroundColor DarkGray
     return
   }
-  Write-Host "`n=== Cleaning up task packets & intermediate outputs (OneDrive sync optimization) ===" -ForegroundColor Cyan
-  $taskFiles = @(Get-ChildItem -Path 'data/agent_tasks' -Filter '*.task.json' -Recurse -File -ErrorAction SilentlyContinue)
-  $outL1Files = @(Get-ChildItem -Path 'data/agent_outputs_l1' -Filter '*.json' -File -ErrorAction SilentlyContinue)
-  $outAgentFiles = @(Get-ChildItem -Path 'data/agent_outputs' -Filter '*.json' -File -ErrorAction SilentlyContinue)
-
-  $delTasks = 0
-  $delOutputs = 0
-  foreach ($f in $taskFiles) {
-    Remove-Item -LiteralPath $f.FullName -Force -ErrorAction SilentlyContinue
-    $delTasks++
-  }
-  foreach ($f in ($outL1Files + $outAgentFiles)) {
-    Remove-Item -LiteralPath $f.FullName -Force -ErrorAction SilentlyContinue
-    $delOutputs++
-  }
-  Write-Host "  Deleted $delTasks task packets and $delOutputs intermediate output files." -ForegroundColor Green
-  Write-Host "  Workspace cleaned successfully." -ForegroundColor Green
+  Step 'clean_completed_packets --apply' @('scripts/maintenance/clean_completed_packets.py','--apply')
 }
 
-Write-Host "run_daily: Mode=$Mode Agent=$Agent Review=$Review Date=$Date Days=$Days ExportLimit=$ExportLimit KeepPackets=$KeepPackets NoCompile=$NoCompile" -ForegroundColor Yellow
+Write-Host "run_daily: Mode=$Mode Review=$Review Date=$Date Days=$Days ExportLimit=$ExportLimit CleanPackets=$CleanPackets NoCompile=$NoCompile" -ForegroundColor Yellow
 
 try {
 
@@ -161,18 +137,13 @@ switch ($Mode) {
   'emit' {
     Emit
     Write-Host "`n[EMIT DONE] Packets ready in data/agent_tasks/l1/ and data/agent_tasks/." -ForegroundColor Green
-    Write-Host "-> Process with Subagents (.agents/skills/gold-financial-analyst & l1-entity-matcher)," -ForegroundColor Green
-    Write-Host "   then run: .\scripts\run_daily.ps1 -Mode ingest -Days 30" -ForegroundColor Green
+    Write-Host "-> Xu ly packet bang Subagent that (.agents/skills/gold-financial-analyst & l1-entity-matcher)," -ForegroundColor Green
+    Write-Host "   hoac chay: python scripts/auto_pilot.py   (co cong xin quyen truoc khi tieu thu token)" -ForegroundColor Green
+    Write-Host "   roi: .\scripts\run_daily.ps1 -Mode ingest -Days 30" -ForegroundColor Green
   }
   'ingest' {
     Ingest
-    CleanPackets
-  }
-  'full' {
-    Emit
-    RunAgents
-    Ingest
-    CleanPackets
+    CleanPacketsStep
   }
 }
 

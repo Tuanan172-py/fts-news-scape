@@ -41,6 +41,11 @@ A tier is `1` (passed, evidence recorded), `0` (not passed/not run), or `—` (N
 | [US-003](stories/US-003-antigravity-multi-agent-hierarchy.md) | Antigravity Multi-Agent Hierarchy | `implemented` | 0 | 0 | — | — | Story tồn tại nhưng CHƯA có dòng proof — nợ từ phiên trước |
 | US-004 · US-006 · US-007 | Batch processing / manifest / payload optimization | `lost` | — | — | — | — | **File story MẤT** trong sự cố 2026-09-07 (untracked, không khôi phục được) — xem US-008 §6 |
 | [US-008](stories/US-008-l1-only-gate-and-backlog-tooling.md) | Per-User Output + Multi-Agent Hierarchy | `implemented` | 1 | 1 | 0 | — | 355 passed · export thật 424 dòng (GOLD 384/L1_ONLY 40) · 17 batch cho 423 bài T1 · commit `9c06234` |
+| [US-011](stories/US-011-bronze-capture-cadence-and-deferred-deleted-article-loss-prevention.md) | Bronze Ingestion Pipeline | `implemented` | 1 | 1 | — | — | 395/395 pytest passed · capture_interval 15→5p · deleted_at_source (404/410) · l1_route job tự động |
+| [US-012](stories/US-012-content-recovery-engine.md) | Bronze Ingestion Pipeline | `implemented` | 1 | 1 | — | — | 403/403 passed · vá hồi quy US-011 (retry ghi sổ xuống DB) · giveup cap 5 · mode=failed · từ chối artifact trang lỗi |
+| [US-013](stories/US-013-radar-false-404-and-bronze-guard-rail.md) | Bronze Ingestion Pipeline | `implemented` | 1 | — | — | — | 403/403 passed · guard rail chứng minh RED/GREEN thật trên znews.yaml · radar cảnh báo 404 giả theo domain |
+| [US-014](stories/US-014-context-budget-counts-orchestrator-reads-only.md) | Harness policy | `implemented` | 1 | — | — | — | CONTEXT_RULES §1 + TRACE_SPEC §3 · backlog #6 resolved · trace #46-48 đạt score_context 1.0 |
+| [US-015](stories/US-015-production-audit-cli-blind-spot-and-schema-regression.md) | Bronze Ingestion Pipeline | `implemented` | 1 | 1 | 1 | **1** | 413/413 passed · 5 lỗi sống phát hiện bằng chạy thật · **Platform proof đầu tiên**: morninger `capture/10min` + auto-drain `fetched=14 deleted_at_source=1` |
 
 > Rule reminder: Stories reach `implemented` ONLY after validation commands run and results are recorded. Never hand-flip.
 

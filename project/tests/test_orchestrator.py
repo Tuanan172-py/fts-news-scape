@@ -15,6 +15,8 @@ from src.core.config import list_domains, load_domain_config
 from src.core.models import Article
 from src.orchestrator import Orchestrator, build_scraper
 from src.scrapers import REGISTRY
+from src.scrapers.capture_mixin import CaptureMixin
+from src.scrapers.rss_capture import RssCaptureScraper
 
 
 def test_every_domain_config_resolves_to_scraper_class():
@@ -26,6 +28,54 @@ def test_every_domain_config_resolves_to_scraper_class():
         cls = REGISTRY.get(cfg["name"]) or REGISTRY.get(f"_{cfg['method']}")
         assert cls is not None, f"{name}: no scraper class for method={cfg['method']}"
         assert issubclass(cls, BaseScraper)
+
+
+_MIGRATE_HINT = ("Xem checklist project/docs/dev/03-adding-a-source.md §2b trước khi bật "
+                 "(đổi sang method: rss_capture + khai detail.content_selector đã verify "
+                 "trên trang thật).")
+
+
+def test_enabled_domains_must_capture_bronze():
+    """Guard rail: KHÔNG được bật domain không lưu Bronze raw HTML.
+
+    `RSSScraper` (method: rss) không ghi artifact byte-exact và dùng `http.get()` trả
+    text-or-None nên không phân biệt được 404/410. Bật nó lên là mất toàn bộ lưới an
+    toàn: không có gì để dựng lại nội dung khi nguồn gỡ bài.
+    """
+    offenders = []
+    for name in list_domains(enabled_only=False):
+        cfg = load_domain_config(name)
+        if not cfg.get("enabled", True):
+            continue
+        cls = REGISTRY.get(cfg["name"]) or REGISTRY.get(f"_{cfg['method']}")
+        if cls is not None and not issubclass(cls, CaptureMixin):
+            offenders.append(f"{name} (method={cfg['method']})")
+    assert not offenders, (
+        f"Domain đang bật nhưng KHÔNG lưu Bronze: {', '.join(offenders)}. {_MIGRATE_HINT}")
+
+
+def test_generic_rss_capture_domains_declare_content_selector():
+    """Guard rail: domain dùng `RssCaptureScraper` chung phải khai `content_selector`.
+
+    Chỉ áp cho lớp chung: mặc định của nó là `"article"` — một phỏng đoán, trang không
+    có thẻ <article> sẽ cho `capture_status=partial` + SELECTOR_BROKEN âm thầm trên MỌI
+    bài. Các scraper chuyên dụng (cafef, vietstock, tnck, baodautu, vneconomy) có default
+    đã verify cho đúng site đó, còn fireant là nguồn API (Bronze JSON, không dùng CSS).
+    """
+    missing = []
+    for name in list_domains(enabled_only=False):
+        cfg = load_domain_config(name)
+        if not cfg.get("enabled", True):
+            continue
+        cls = REGISTRY.get(cfg["name"]) or REGISTRY.get(f"_{cfg['method']}")
+        if cls is not RssCaptureScraper:
+            continue
+        detail = cfg.get("detail") or {}
+        if detail.get("extract_full", True) and not detail.get("content_selector"):
+            missing.append(name)
+    assert not missing, (
+        f"Domain bật + rss_capture nhưng thiếu detail.content_selector: "
+        f"{', '.join(missing)}. {_MIGRATE_HINT}")
 
 
 class OkScraper(BaseScraper):

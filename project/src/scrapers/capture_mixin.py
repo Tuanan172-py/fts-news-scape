@@ -79,6 +79,8 @@ class CaptureMixin:
         cap = self.raw_store.save(domain, url, article.url_title_hash, resp,
                                   fetched_at=article.fetched_at)
         article.metadata["capture"] = cap
+        if cap.get("capture_status") == "deleted_at_source":
+            article.metadata["source_deleted"] = True
 
         if resp is None or not getattr(resp, "ok", False):
             article.content_text = article.summary

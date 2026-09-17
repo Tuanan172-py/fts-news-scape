@@ -63,11 +63,67 @@ class Catalog:
                 "(article_id, raw_sha256, domain, package_path, status, change_state, enqueued_at) "
                 "VALUES (?,?,?,?,?,?,?)",
                 (article_id, raw_sha256, domain, package_path, status, change_state, now_vn_iso()))
+            # INSERT OR IGNORE một mình biến 'held' thành án chung thân: sửa xong nguyên
+            # nhân gốc (lỗi schema, selector lệch...) và derive lại thành công thì hàng cũ
+            # vẫn nằm nguyên ở 'held'. Nâng nó về 'pending' để bài được cứu.
+            # Không cần trần số lần: nhánh này chỉ chạy khi lần derive MỚI thật sự vượt
+            # validation (status tính ra là 'pending'), nên không có vòng lặp để chặn.
+            if status == "pending":
+                conn.execute(
+                    "UPDATE work_items SET status='pending', package_path=?, "
+                    "change_state=? "
+                    "WHERE article_id=? AND raw_sha256=? AND status='held'",
+                    (package_path, change_state, article_id, raw_sha256))
             conn.commit()
             row = conn.execute(
                 "SELECT status FROM work_items WHERE article_id=? AND raw_sha256=?",
                 (article_id, raw_sha256)).fetchone()
             return row["status"] if row else status
+        finally:
+            conn.close()
+
+    def requeue(self, state: str, limit: int = 100, *, dry_run: bool = True) -> int:
+        """Đưa các gói công việc đang kẹt trở lại hàng đợi `pending`.
+
+        Dành cho trạng thái `failed` (trượt DoD) — theo quyết định vận hành, nhóm này chỉ
+        được thử lại khi người vận hành chủ động yêu cầu, vì nguyên nhân thường nằm ở nội
+        dung bài chứ không phải lỗi cấu hình nhất thời.
+
+        Args:
+            state: Trạng thái nguồn cần thu hồi (`failed` hoặc `held`).
+            limit: Số hàng tối đa xử lý mỗi lượt.
+            dry_run: Chỉ đếm, không ghi.
+
+        Returns:
+            Số gói công việc đã (hoặc sẽ) được đưa về `pending`.
+        """
+        if state not in ("failed", "held"):
+            raise ValueError(f"state phải là 'failed' hoặc 'held', nhận: {state!r}")
+        conn = self.store.connect()
+        try:
+            ids = [r["id"] for r in conn.execute(
+                "SELECT id FROM work_items WHERE status=? ORDER BY id LIMIT ?",
+                (state, limit)).fetchall()]
+            if not ids or dry_run:
+                return len(ids)
+            marks = ",".join("?" * len(ids))
+            cur = conn.execute(
+                f"UPDATE work_items SET status='pending', claimed_by=NULL, "
+                f"claimed_at=NULL WHERE id IN ({marks})", ids)
+            conn.commit()
+            n = cur.rowcount or 0
+        finally:
+            conn.close()
+        if n:
+            logger.warning("[catalog] requeue {} work_item tu '{}' ve 'pending'", n, state)
+        return n
+
+    def count_by_status(self) -> dict[str, int]:
+        """Đếm số gói công việc theo từng trạng thái, phục vụ radar."""
+        conn = self.store.connect()
+        try:
+            return {r["status"]: r["n"] for r in conn.execute(
+                "SELECT status, count(1) AS n FROM work_items GROUP BY status")}
         finally:
             conn.close()
 

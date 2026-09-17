@@ -17,7 +17,6 @@ Mọi Yêu cầu (Prompt)
        └─ Intake → Dừng tại Hard Gate (status: blocked) → Lập ADR → Human Duyệt → Detailed Trace → Closure Table.
 ```
 
-
 ## 1. WIP = 1
 
 At most **one** story `in_progress` at a time. If an urgent request interrupts, park the current story (`blocked` or `deferred`, with reason) BEFORE starting the new one. Never two `in_progress`.
@@ -26,6 +25,7 @@ At most **one** story `in_progress` at a time. If an urgent request interrupts, 
 
 Read these before inventing context; do NOT create a new knowledge folder:
 0. `.agents/registry.yaml` + `.agents/pipeline.yaml` — **nguồn chân lý** cho mạng lưới tác nhân (ai tồn tại, class operator/cognitive/conductor, ranh giới I/O, DoD, KPI) và DAG điều phối. **Chạy thế nào mỗi ngày:** `.agents/AGENT_RUNBOOK.md`. Thiết kế & lý do: `.agents/AGENT_NETWORK_DESIGN.md`. Quy tắc tăng trưởng: `.agents/rules/07-agent-registry-governance.md`.
+
 1. `.agents/skills/*` — operational, matching, multi-agent swarm & governance skills (`pipeline-radar`, `watchlist-curator`, `token-auditor`, `dod-gatekeeper`, `multi-agent-orchestrator-governance`, `news-scape-agent-operations`, `l1-entity-matcher`, `gold-financial-analyst`; agent đặc nhiệm draft: `story-dedup-clusterer`, `materiality-triage`, `entity-curator`, `adversarial-dod-verifier`, `daily-brief-synthesizer`, `harness-auditor`).
 2. `project/docs/skills/*` — per-domain scraper knowledge (cafef, fireant, rss-sources, tnck).
 3. `project/docs/{design,dev,domains,operations}/` — architecture, how-tos, source taxonomy, ops.
@@ -50,24 +50,23 @@ python -m pytest tests/ -v         # tests
 python -m src.monitor.health       # health check
 ```
 
-
 ## 4. Harness map (read as the phase needs — bounded context)
 
-| Doc | Purpose |
-|-----|---------|
-| [docs/GLOSSARY.md](docs/GLOSSARY.md) | Vocabulary (read once). |
-| [docs/HARNESS.md](docs/HARNESS.md) | The collaboration model + change loop + Done definition. |
-| [docs/FEATURE_INTAKE.md](docs/FEATURE_INTAKE.md) | Risk classification → lane (do this before any change). |
-| [docs/CONTEXT_RULES.md](docs/CONTEXT_RULES.md) | Bounded context & token budgets (Phase × Lane). |
-| [docs/TRACE_SPEC.md](docs/TRACE_SPEC.md) | 3-tier trace schema & scoring specification. |
-| [docs/HARNESS_COMPONENTS.md](docs/HARNESS_COMPONENTS.md) | 11 runtime responsibilities. |
-| [docs/HARNESS_MATURITY.md](docs/HARNESS_MATURITY.md) | H0–H5 maturity ladder & criteria. |
-| [docs/TOOL_REGISTRY.md](docs/TOOL_REGISTRY.md) | Tool manifest & degrade ladder. |
-| [docs/HARNESS_AUDIT.md](docs/HARNESS_AUDIT.md) | Entropy scoring & 7 drift checks (bao gồm codebase hygiene). |
-| [docs/IMPROVEMENT_PROTOCOL.md](docs/IMPROVEMENT_PROTOCOL.md) | Closed-loop propose & outcome measurement. |
-| [docs/TEST_MATRIX.md](docs/TEST_MATRIX.md) | Proof vocabulary & live proof table query. |
-| [docs/SESSION-LATEST.md](docs/SESSION-LATEST.md) | "Where am I, what next" — read at start, overwrite at end. |
-| [docs/OPEN-ITEMS.md](docs/OPEN-ITEMS.md) | Việc tồn đọng tuyến L1 → giao hàng: mục CHẶN, bước triển khai, quyết định treo. |
+| Doc                                                         | Purpose                                                                                        |
+| ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| [docs/GLOSSARY.md](docs/GLOSSARY.md)                         | Vocabulary (read once).                                                                        |
+| [docs/HARNESS.md](docs/HARNESS.md)                           | The collaboration model + change loop + Done definition.                                       |
+| [docs/FEATURE_INTAKE.md](docs/FEATURE_INTAKE.md)             | Risk classification → lane (do this before any change).                                       |
+| [docs/CONTEXT_RULES.md](docs/CONTEXT_RULES.md)               | Bounded context & token budgets (Phase × Lane).                                               |
+| [docs/TRACE_SPEC.md](docs/TRACE_SPEC.md)                     | 3-tier trace schema & scoring specification.                                                   |
+| [docs/HARNESS_COMPONENTS.md](docs/HARNESS_COMPONENTS.md)     | 11 runtime responsibilities.                                                                   |
+| [docs/HARNESS_MATURITY.md](docs/HARNESS_MATURITY.md)         | H0–H5 maturity ladder & criteria.                                                             |
+| [docs/TOOL_REGISTRY.md](docs/TOOL_REGISTRY.md)               | Tool manifest & degrade ladder.                                                                |
+| [docs/HARNESS_AUDIT.md](docs/HARNESS_AUDIT.md)               | Entropy scoring & 7 drift checks (bao gồm codebase hygiene).                                  |
+| [docs/IMPROVEMENT_PROTOCOL.md](docs/IMPROVEMENT_PROTOCOL.md) | Closed-loop propose & outcome measurement.                                                     |
+| [docs/TEST_MATRIX.md](docs/TEST_MATRIX.md)                   | Proof vocabulary & live proof table query.                                                     |
+| [docs/SESSION-LATEST.md](docs/SESSION-LATEST.md)             | "Where am I, what next" — read at start, overwrite at end.                                    |
+| [docs/OPEN-ITEMS.md](docs/OPEN-ITEMS.md)                     | Việc tồn đọng tuyến L1 → giao hàng: mục CHẶN, bước triển khai, quyết định treo. |
 
 ## 5. Harness CLI (Durable Layer H2-H5)
 
@@ -84,6 +83,7 @@ Maturity: this harness is at **H2-H5 (Durable SQLite + Active Observability + Au
 ## 6. Core Architecture Boundaries & Invariants (Scope Định vị Toàn Dự Án)
 
 ### A. Ranh giới Phân công Nghiệp vụ (Scripts Automate vs Gold Agents)
+
 1. **Hạ tầng Scripts Automate (0 Token • Tốc độ Tức thì)**:
    - **Bronze**: Cào mã nguồn và lưu trữ nguyên bản bất biến (`raw_html` + `.meta.json`) phục vụ audit và kiểm chứng SHA256.
    - **Silver**: Chuẩn hóa DOM, tính SimHash biến đổi và **tinh lọc dữ liệu thành các đoạn văn thuần túy (`<p>`)**.
@@ -95,6 +95,7 @@ Maturity: this harness is at **H2-H5 (Durable SQLite + Active Observability + Au
    - **Lớp 2 (Xử lý Nội dung & Ngữ nghĩa — Content Processing)**: Tóm tắt súc tích, viết hàm ý thị trường (`implication`), chấm điểm `materiality_score` động (`0.1 - 1.0`), phân loại `sentiment`, và trích xuất `citations` ($\ge 2$ trích dẫn $\ge 20$ ký tự nguyên văn) (`agent-output-v1`).
 
 ### B. Quy chuẩn Dữ liệu Handoff & Gom Lô (Lean Payload & Mini-Batch Invariants)
+
 - **Subscriber-Gated Gold Export (ADR 0005)**: Chỉ xuất task Gold cho bài viết có `l1_entities` giao thoa với danh sách Watchlist của các user đang active (`manifest.yaml`). Bài không có người đăng ký lưu trữ ở trạng thái `L1_ONLY` (tiết kiệm ~38% token Gold).
 - **Morphological Cú Pháp & Ranh Giới Từ L1 (ADR 0005)**: Tầng L1 code-first áp dụng `Capitalized Suffix Guard` (chặn từ viết hoa liền sau như *"Mỹ Thuận"*, *"Mỹ Tho"*, *"Mỹ Thủy"*) và `Prefix Guard` (chặn tiền tố thương hiệu/danh xưng) để triệt tiêu 100% false positive địa danh/tên người mà không tốn token.
 - **Dynamic 3-Pass Semantic Pruning (2.200 Chars Max)**: Trần ký tự hạ xuống 2.200 chars. Áp dụng thuật toán 3-pass: giữ tối đa 2 đoạn đầu (Sapo) $\rightarrow$ ưu tiên quét đoạn chứa `l1_entities` và số liệu tài chính $\rightarrow$ điền đầy theo thứ tự gốc. Tuyệt đối bảo toàn nguyên khối đoạn văn (`<p>`) cho Grounded Citations ($\ge 20$ ký tự) qua cổng DoD.
@@ -105,6 +106,7 @@ Maturity: this harness is at **H2-H5 (Durable SQLite + Active Observability + Au
 - **Bảo toàn Raw Gốc**: Bản gốc `raw_html` và `meta.json` luôn được lưu giữ nguyên bản tại Bronze để kiểm toán.
 
 ### C. Cấm Tuyệt đối Giả lập Trí tuệ Agent bằng Heuristic Script (No Script Emulation)
+
 - **Không tự viết script bypass Agent**: Tuyệt đối không dùng regex hay code heuristic để tự sinh kết quả phân tích Gold/L1.
 - **Vùng độc quyền của Subagents**: Xử lý ngữ nghĩa, trích xuất thực thể, tóm tắt, suy luận hàm ý và trích dẫn citations là vùng trí tuệ độc quyền của Subagents LLM (Model: Flash/Pro) được kích hoạt qua `invoke_subagent`.
 - **Zero Hallucination User Manifest**: Khi báo cáo phân phối và định tuyến tin, chỉ được phép tham chiếu người dùng thực tế được định nghĩa trong `manifest.yaml` (hiện tại: `AnPT`).
@@ -112,6 +114,7 @@ Maturity: this harness is at **H2-H5 (Durable SQLite + Active Observability + Au
 ## 7. Code Quality & Production Docstring Standards (Bắt Buộc Cho Mọi Agent)
 
 Chi tiết quy chuẩn bất biến tại [`.agents/rules/06-code-and-docstring-standards.md`](.agents/rules/06-code-and-docstring-standards.md):
+
 - **Chuẩn Google Style**: Dòng 1 câu mệnh lệnh kết thúc bằng dấu chấm; các section `Args:`, `Returns:`, `Raises:` đầy đủ kiểu và mô tả ngắn gọn. Module docstring đúng 1 câu khẳng định.
 - **Triệt tiêu Blacklist**: Tuyệt đối không dùng từ nối thừa (`nhìn chung`, `thông thường`, `về cơ bản`, `cần lưu ý rằng`, `đáng chú ý`), đại từ ngôi thứ nhất (`chúng ta`, `tôi`), câu hỏi tu từ, emoji, thẻ tạm (`[LEGACY]`, `TODO tạm thời`).
 - **Production Deliverable**: Docstrings và comments chỉ nói rõ nhận gì, làm gì, trả về gì và giải thích logic phức tạp không hiển nhiên. Không đưa nhật ký gỡ lỗi hoặc giải trình lịch sử vào mã nguồn.
@@ -120,6 +123,7 @@ Chi tiết quy chuẩn bất biến tại [`.agents/rules/06-code-and-docstring-
 ## 8. Zero-Probe Context & Continuous Agent Training (Bắt Buộc Cho Mọi Phiên)
 
 Chi tiết quy chuẩn bất biến tại [`.agents/rules/08-context-and-zero-probe-guardrails.md`](.agents/rules/08-context-and-zero-probe-guardrails.md):
+
 - **Nguyên tắc "Radar-First, Never Probe" (Zero-Probe)**: CẤM TUYỆT ĐỐI việc tự ý chạy các câu lệnh python one-liner (`-c "import sqlite3..."`) hoặc quét file ad-hoc chỉ để lấy ngữ cảnh. Mọi ca làm việc BẮT BUỘC dùng lệnh duy nhất:
   ```powershell
   & "C:\venvs\news-scape\Scripts\python.exe" project/scripts/pipeline_radar.py status

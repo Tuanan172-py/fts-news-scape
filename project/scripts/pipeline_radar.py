@@ -37,7 +37,7 @@ def get_db_connection() -> sqlite3.Connection:
 
 
 def cmd_status(args: argparse.Namespace) -> None:
-    """Truy vấn toàn diện điểm chạm hiện tại của pipeline và đề xuất hành động."""
+    """Truy vấn điểm chạm hiện tại của pipeline và đề xuất hành động kế tiếp."""
     target_date = args.date or f"{datetime.now():%Y-%m-%d}"
     print(f"================================================================================")
     print(f" 🛰️  NEWS-SCAPE PIPELINE OBSERVABILITY & STATUS REPORT — [{target_date}]")
@@ -107,6 +107,63 @@ def cmd_status(args: argparse.Namespace) -> None:
         WHERE date(a.published_at) = ? AND lt.route = 'resolved' AND lt.status = 'pending'
     """, (target_date,))
     l1_resolved_pending = cur.fetchone()[0]
+
+    # 3d. Bài bị nguồn xóa (404/410) trước khi kịp lấy nội dung đầy đủ — đặc trưng tin VN
+    cur.execute("""
+        SELECT count(1)
+        FROM articles
+        WHERE date(published_at) = ?
+        AND (metadata_json LIKE '%"source_deleted": true%'
+             OR metadata_json LIKE '%"source_deleted":true%')
+    """, (target_date,))
+    source_deleted_count = cur.fetchone()[0]
+
+    # Bài bị xóa thường được PHÁT HIỆN muộn hơn ngày đăng (đường retry làm việc với bài
+    # fetch trong 24h qua), nên con số lọc theo published_at của riêng hôm nay luôn thấp
+    # hơn thực tế. Kèm tổng tích lũy để không bỏ sót tín hiệu.
+    cur.execute("""
+        SELECT count(1) FROM articles
+        WHERE metadata_json LIKE '%"source_deleted": true%'
+           OR metadata_json LIKE '%"source_deleted":true%'
+    """)
+    source_deleted_total = cur.fetchone()[0]
+
+    # 3f. Sổ lỗi derive Bronze→Silver (ADR 0007). Dead-letter = nội dung KHÔNG lên được
+    # Silver, tức không bao giờ tới L1/Gold/người dùng — phải nhìn thấy được.
+    try:
+        cur.execute("""
+            SELECT sum(CASE WHEN dead_letter=0 THEN 1 ELSE 0 END) AS blocking,
+                   sum(CASE WHEN dead_letter=1 THEN 1 ELSE 0 END) AS dead
+            FROM silver_failures
+        """)
+        _r = cur.fetchone()
+        silver_blocking, silver_dead = int(_r[0] or 0), int(_r[1] or 0)
+    except sqlite3.OperationalError:
+        silver_blocking = silver_dead = 0      # bảng chưa tạo (DB cũ chưa migrate)
+
+    # 3g. Thống kê trạng thái hàng đợi kẹt (work_items held/claimed/failed và l1_tasks failed)
+    cur.execute("SELECT status, count(1) FROM work_items GROUP BY status")
+    wi_counts = dict(cur.fetchall())
+    wi_held = wi_counts.get("held", 0)
+    wi_claimed = wi_counts.get("claimed", 0)
+    wi_failed = wi_counts.get("failed", 0)
+
+    cur.execute("SELECT count(1) FROM l1_tasks WHERE status = 'failed'")
+    l1_failed = cur.fetchone()[0]
+
+    # 3e. Phân bố 404/410 theo domain. Tăng vọt tập trung ở MỘT domain hầu như luôn là
+    # site đổi cấu trúc URL/selector (404 giả) chứ không phải tin bị gỡ thật.
+    cur.execute("""
+        SELECT source_domain,
+               sum(CASE WHEN metadata_json LIKE '%"source_deleted": true%'
+                          OR metadata_json LIKE '%"source_deleted":true%'
+                        THEN 1 ELSE 0 END) AS deleted,
+               count(1) AS total
+        FROM articles
+        WHERE date(published_at) = ?
+        GROUP BY source_domain
+    """, (target_date,))
+    deleted_by_domain = [(r[0], r[1], r[2]) for r in cur.fetchall() if r[1]]
 
     # 3c. Thống kê bài Gold pending theo Subscriber Gating cho target_date
     gold_pending_subs_count = 0
@@ -186,6 +243,15 @@ def cmd_status(args: argparse.Namespace) -> None:
     print(f"   • Số bài đã hoàn tất tầng L1     : {l1_done_count:,} bài")
     print(f"   • Số bài đã hoàn tất tầng Gold   : {gold_done_count:,} bài")
     print(f"   • Bài Gold đủ điều kiện chờ phân tích (Subscriber-Gated): {gold_pending_subs_count:,} bài")
+    print(f"   • Bài bị nguồn xóa (404/410) trước khi lấy được nội dung: "
+          f"{source_deleted_count:,} bài đăng hôm nay / {source_deleted_total:,} tổng tích lũy")
+    _silver_tag = "🟢" if not (silver_blocking or silver_dead) else (
+        "🔴" if silver_dead else "🟡")
+    print(f"   • Bronze kẹt ở Silver (ADR 0007)  : {_silver_tag} "
+          f"{silver_blocking:,} đang chặn watermark / {silver_dead:,} dead-letter")
+    _queue_dead_tag = "🔴" if (wi_held or wi_failed or l1_failed) else ("🟡" if wi_claimed > 50 else "🟢")
+    print(f"   • Hàng đợi kẹt (Phase 03)        : {_queue_dead_tag} "
+          f"work_items: {wi_claimed:,} claimed, {wi_held:,} held, {wi_failed:,} failed | l1_tasks: {l1_failed:,} failed")
     if scrape_delay_minutes is not None:
         delay_str = f"{scrape_delay_minutes} phút" if scrape_delay_minutes < 60 else f"{scrape_delay_minutes // 60}h {scrape_delay_minutes % 60}m"
         last_time_str = ref_ts_str.split("T")[1][:8] if "T" in ref_ts_str else ref_ts_str
@@ -218,6 +284,47 @@ def cmd_status(args: argparse.Namespace) -> None:
             f"Tiến trình cào tin tự động đang chậm ({scrape_delay_minutes} phút chưa có nhịp cào mới).",
             f'Kiểm tra background morninger hoặc chạy bù: & "C:\\venvs\\news-scape\\Scripts\\python.exe" scripts/run_once.py'
         ))
+
+    if silver_dead:
+        recommendations.append((
+            "HIGH",
+            f"Có {silver_dead} tệp Bronze DEAD-LETTER ở Silver — nội dung không bao giờ "
+            f"lên được Silver, tức không tới L1/Gold/người dùng. Đây là mất dữ liệu thật.",
+            'Soi nguyên nhân: SELECT meta_path, attempts, last_error FROM silver_failures '
+            'WHERE dead_letter=1; — sửa gốc rồi xoá hàng đó để derive thử lại'
+        ))
+    elif silver_blocking:
+        recommendations.append((
+            "MEDIUM",
+            f"Có {silver_blocking} tệp Bronze đang chặn watermark Silver (chưa đủ ngưỡng "
+            f"dead-letter). Watermark sẽ không tiến qua chúng cho tới khi xong hoặc bỏ cuộc.",
+            'SELECT meta_path, attempts, last_error FROM silver_failures WHERE dead_letter=0;'
+        ))
+
+    if wi_failed > 0 or l1_failed > 0:
+        recommendations.append((
+            "HIGH",
+            f"Có {wi_failed} work_items và {l1_failed} l1_tasks ở trạng thái 'failed' (trượt DoD).",
+            '& "C:\\venvs\\news-scape\\Scripts\\python.exe" scripts/maintenance/requeue.py --state failed --layer all --apply'
+        ))
+    elif wi_held > 0:
+        recommendations.append((
+            "MEDIUM",
+            f"Có {wi_held} work_items đang ở trạng thái 'held'. Sẽ tự động về pending khi derive lại thành công hoặc chạy requeue.",
+            '& "C:\\venvs\\news-scape\\Scripts\\python.exe" scripts/maintenance/requeue.py --state held --layer gold --apply'
+        ))
+
+    # Nghi ngờ 404 giả: một domain vừa nhiều tuyệt đối vừa chiếm tỷ trọng lớn.
+    for _dom, _deleted, _total in deleted_by_domain:
+        if _deleted > 10 and _total and (_deleted / _total) > 0.3:
+            recommendations.append((
+                "HIGH",
+                f"Domain {_dom}: {_deleted}/{_total} bài trả 404/410 — nghi site đổi "
+                f"cấu trúc URL/selector chứ KHÔNG phải tin bị gỡ thật. Cần kiểm chứng "
+                f"trước khi tin vào số liệu 'bài bị nguồn xóa'.",
+                f'& "C:\\venvs\\news-scape\\Scripts\\python.exe" '
+                f'scripts/validate_capture.py {_dom.split(".")[0]}'
+            ))
 
     if l1_outputs_waiting > 0:
         recommendations.append((
@@ -395,7 +502,7 @@ def main() -> None:
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     # Lệnh status
-    p_status = subparsers.add_parser("status", help="Truy vấn toàn diện điểm chạm hiện tại và đề xuất hành động.")
+    p_status = subparsers.add_parser("status", help="Truy vấn điểm chạm hiện tại và đề xuất hành động kế tiếp.")
     p_status.add_argument("--date", help="Ngày cần quan sát (YYYY-MM-DD), mặc định là hôm nay.")
 
     # Lệnh token

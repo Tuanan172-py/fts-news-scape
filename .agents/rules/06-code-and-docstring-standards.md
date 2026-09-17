@@ -91,3 +91,20 @@ def export_tasks(self, limit: int = 20, *, require_l1: bool = True) -> list[dict
    - Mọi tệp Python sau khi chỉnh sửa BẮT BUỘC phải biên dịch thành công qua `ast.parse()`, không có ngoại lệ cú pháp.
 3. **Bảo toàn Bộ Kiểm Thử (Pytest Integrity)**:
    - Trước khi kết thúc phiên làm việc, BẮT BUỘC chạy `pytest` để kiểm chứng 100% unit tests vẫn PASS.
+
+4. **Bằng chứng phải gồm THỰC THI THẬT, không chỉ pytest xanh (Real-Execution Proof)**:
+
+   Sự cố 2026-09-17: 403 test PASS trong khi 3 lỗi đang sống trên đường sản xuất
+   (`__doc__.split("\n")[1]` → IndexError; `UnicodeEncodeError` khi in qua pipe; `subprocess`
+   thiếu `encoding` → `stdout=None`). Cả ba vô hình vì test import hàm trực tiếp, không đi qua
+   khối `if __name__ == "__main__"` và không vượt ranh giới tiến trình.
+
+   - **Sửa script có CLI**: BẮT BUỘC chạy thật ít nhất một lần đúng cách automation gọi nó
+     (kèm cờ thật, stdout là pipe), không được chỉ dựa vào test import hàm.
+   - **Đổi tham số vận hành theo thời gian** (interval, timeout, limit, batch size): BẮT BUỘC
+     ĐO trước khi đặt. Sự cố cùng ngày: đặt `capture_interval_minutes: 5` trong khi cycle thật
+     mất 335s, khiến job chồng lấn liên tục và mất sạch biên dự phòng.
+   - **Thêm job chạy nền định kỳ**: BẮT BUỘC có trần thời gian (budget) tự dừng sạch bên trong
+     tiến trình. Để `subprocess timeout` giết là mất trắng thống kê và không biết đã làm tới đâu.
+   - **Tiêu chí Done**: story chỉ đạt `implemented` khi có bằng chứng tier Platform (chạy trong
+     tiến trình thật) chứ không chỉ Unit/Integration, với mọi thay đổi chạm đường automation.

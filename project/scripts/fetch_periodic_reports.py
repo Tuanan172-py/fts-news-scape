@@ -42,7 +42,7 @@ def cmd_list(store) -> int:
 
 
 def main(argv: list[str]) -> int:
-    p = argparse.ArgumentParser(description=__doc__.split("\n")[1])
+    p = argparse.ArgumentParser(description=(__doc__ or "").strip().splitlines()[0])
     p.add_argument("--after", default="", help="ISO date, vd 2026-08-01 (sync tăng dần)")
     p.add_argument("--per-page", type=int, default=20)
     p.add_argument("--pages", type=int, default=1)

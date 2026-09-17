@@ -187,6 +187,20 @@ CREATE TABLE IF NOT EXISTS pipeline_state (
   value TEXT,
   updated_at TEXT
 );
+-- Sổ lỗi derive Bronze→Silver (ADR 0007). Watermark KHÔNG được vượt qua hàng còn
+-- dead_letter=0; đủ ngưỡng lần thử thì chuyển dead_letter=1 để thôi chặn, tránh một
+-- file hỏng vĩnh viễn làm nghẽn toàn bộ Silver.
+CREATE TABLE IF NOT EXISTS silver_failures (
+  meta_path TEXT PRIMARY KEY,
+  url_title_hash TEXT,
+  fetch_ts TEXT,
+  attempts INTEGER NOT NULL DEFAULT 0,
+  last_error TEXT,
+  last_at TEXT,
+  dead_letter INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_silver_failures_blocking
+  ON silver_failures(dead_letter, fetch_ts);
 -- L1 entity-recognition (lớp 1 handoff) — code-first + trạng thái audit của agent.
 -- 1 hàng / article. status = trạng thái tra soát của agent (pending → done/failed).
 CREATE TABLE IF NOT EXISTS l1_tasks (
@@ -380,6 +394,15 @@ class ArticleStore:
         )
         conn = self._connect()
         try:
+            # Kiểm tra tránh insert trùng lặp cùng content_sha256 khi re-derive lặp lại
+            existing = conn.execute(
+                "SELECT id FROM article_versions WHERE url_title_hash = ? AND content_sha256 = ? "
+                "ORDER BY id DESC LIMIT 1",
+                (row.get("url_title_hash"), row.get("content_sha256"))
+            ).fetchone()
+            if existing:
+                return existing["id"]
+
             cur = conn.execute(
                 f"INSERT INTO article_versions ({', '.join(cols)}) "
                 f"VALUES ({', '.join('?' for _ in cols)})",
@@ -649,6 +672,83 @@ class ArticleStore:
                 (key, value, now_vn_iso()),
             )
             conn.commit()
+        finally:
+            conn.close()
+
+    # -- sổ lỗi derive Bronze→Silver (ADR 0007) --------------------------------
+    def record_silver_failure(self, meta_path: str, fetch_ts: str, error: str,
+                              max_attempts: int,
+                              url_title_hash: str = "") -> int:
+        """Ghi nhận một lần derive THẤT BẠI cho tệp Bronze, tăng số lần đã thử.
+
+        Args:
+            meta_path: Đường dẫn tệp `.meta.json` (khoá chính).
+            fetch_ts: Mốc thời gian dùng để chặn watermark.
+            error: Thông điệp lỗi gần nhất.
+            max_attempts: Đủ số lần này thì chuyển dead-letter, thôi chặn watermark.
+            url_title_hash: Mã băm bài viết nếu xác định được.
+
+        Returns:
+            Số lần đã thử sau khi tăng.
+        """
+        conn = self._connect()
+        try:
+            conn.execute("BEGIN IMMEDIATE")
+            row = conn.execute(
+                "SELECT attempts FROM silver_failures WHERE meta_path=?",
+                (meta_path,)).fetchone()
+            attempts = (row["attempts"] if row else 0) + 1
+            conn.execute(
+                "INSERT OR REPLACE INTO silver_failures "
+                "(meta_path, url_title_hash, fetch_ts, attempts, last_error, "
+                " last_at, dead_letter) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (meta_path, url_title_hash, fetch_ts, attempts, error[:500],
+                 now_vn_iso(), 1 if attempts >= max_attempts else 0))
+            conn.commit()
+            return attempts
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            conn.close()
+
+    def clear_silver_failure(self, meta_path: str) -> None:
+        """Xoá tệp khỏi sổ lỗi khi derive thành công, tránh tích tụ rác."""
+        conn = self._connect()
+        try:
+            conn.execute("DELETE FROM silver_failures WHERE meta_path=?", (meta_path,))
+            conn.commit()
+        finally:
+            conn.close()
+
+    def blocking_silver_failure_ts(self) -> str:
+        """Lấy `fetch_ts` nhỏ nhất trong các lỗi CHƯA dead-letter.
+
+        Returns:
+            Mốc thời gian chặn watermark, hoặc chuỗi rỗng nếu không còn lỗi nào chặn.
+        """
+        conn = self._connect_ro()
+        try:
+            row = conn.execute(
+                "SELECT min(fetch_ts) AS ts FROM silver_failures "
+                "WHERE dead_letter=0 AND fetch_ts <> ''").fetchone()
+            return (row["ts"] or "") if row else ""
+        finally:
+            conn.close()
+
+    def count_silver_failures(self) -> tuple[int, int]:
+        """Đếm số lỗi derive đang tồn.
+
+        Returns:
+            Cặp (số đang chặn watermark, số đã dead-letter).
+        """
+        conn = self._connect_ro()
+        try:
+            row = conn.execute(
+                "SELECT sum(CASE WHEN dead_letter=0 THEN 1 ELSE 0 END) AS blocking, "
+                "       sum(CASE WHEN dead_letter=1 THEN 1 ELSE 0 END) AS dead "
+                "FROM silver_failures").fetchone()
+            return (int(row["blocking"] or 0), int(row["dead"] or 0))
         finally:
             conn.close()
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import signal
+import subprocess
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -11,6 +12,8 @@ from pathlib import Path
 _project_root = str(Path(__file__).resolve().parent.parent)
 if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
+
+_SCRIPTS_DIR = Path(_project_root) / "scripts"
 
 from loguru import logger
 
@@ -33,7 +36,8 @@ def _force_utf8_stdio() -> None:
             pass
 
 
-def build_scheduler(capture_fn, derive_fn, drift_fn, cfg: dict):
+def build_scheduler(capture_fn, derive_fn, drift_fn, cfg: dict, l1_route_fn=None,
+                    reclaim_fn=None):
     """Khởi tạo bộ lập lịch BlockingScheduler với các tác vụ định kỳ.
 
     Args:
@@ -41,6 +45,9 @@ def build_scheduler(capture_fn, derive_fn, drift_fn, cfg: dict):
         derive_fn: Hàm thực thi bóc tách tăng dần Silver.
         drift_fn: Hàm kiểm tra sai lệch mẫu giao diện (drift).
         cfg: Từ điển cấu hình thời gian chạy của morninger.
+        l1_route_fn: Hàm định tuyến L1 code-first (0 token). None → không đăng ký
+            job này (tương thích ngược cho lời gọi cũ chỉ có 4 tham số).
+        reclaim_fn: Hàm nhả gói công việc kẹt ở `claimed` quá hạn. None → không đăng ký.
 
     Returns:
         Đối tượng BlockingScheduler đã đăng ký đầy đủ các công việc.
@@ -51,6 +58,7 @@ def build_scheduler(capture_fn, derive_fn, drift_fn, cfg: dict):
 
     cap_interval = int(cfg.get("capture_interval_minutes", 15))
     rederive_interval = int(cfg.get("rederive_interval_minutes", 30))
+    l1_route_interval = int(cfg.get("l1_route_interval_minutes", 15))
     drift_hour = int(cfg.get("drift_hour", 6))
     drift_minute = int(cfg.get("drift_minute", 0))
 
@@ -82,11 +90,34 @@ def build_scheduler(capture_fn, derive_fn, drift_fn, cfg: dict):
         coalesce=True,
         max_instances=1,
     )
+    if l1_route_fn is not None:
+        # Định tuyến L1 code-first tự động — KHÔNG phụ thuộc quota Gold (0 token cho
+        # nhánh resolved), đảm bảo Silver→L1 không cần con người chạy tay khi thấy cảnh báo.
+        scheduler.add_job(
+            l1_route_fn,
+            IntervalTrigger(minutes=l1_route_interval),
+            id="l1_route",
+            coalesce=True,
+            max_instances=1,
+            misfire_grace_time=300,
+            next_run_time=now + timedelta(seconds=90),
+        )
+    if reclaim_fn is not None:
+        # Không có worker nào claim thì cũng không ai nhả — phải có job riêng.
+        scheduler.add_job(
+            reclaim_fn,
+            IntervalTrigger(minutes=int(cfg.get("reclaim_interval_minutes", 30))),
+            id="reclaim",
+            coalesce=True,
+            max_instances=1,
+            misfire_grace_time=300,
+            next_run_time=now + timedelta(seconds=120),
+        )
     return scheduler
 
 
 class Morninger:
-    """Điều phối toàn diện tiến trình lập lịch thu thập và tinh chỉnh tin tức ban ngày.
+    """Điều phối tiến trình lập lịch thu thập và tinh chỉnh tin tức ban ngày.
 
     Attributes:
         settings: Cấu hình hệ thống chung.
@@ -109,12 +140,91 @@ class Morninger:
 
     # -- jobs -----------------------------------------------------------------
     def run_capture(self) -> int:
-        """Thực thi chu kỳ thu thập dữ liệu nguồn Bronze.
+        """Thực thi chu kỳ thu thập dữ liệu nguồn Bronze, nối tiếp bù ngay các bài
+        `detail_deferred` (vượt cap trong cycle) — giảm cửa sổ rủi ro nguồn xóa bài
+        trước khi kịp lấy nội dung đầy đủ (đặc điểm tin VN).
 
         Returns:
-            Số lượng bài viết mới được ghi nhận.
+            Số lượng bài viết mới được ghi nhận (chu kỳ capture chính).
         """
-        return self.orch.run_cycle()
+        n = self.orch.run_cycle()
+        self.run_backfill_deferred()
+        return n
+
+    def run_backfill_deferred(self) -> int:
+        """Gọi backfill_deferred.py ngay sau capture để bù nội dung đầy đủ cho bài bị
+        hoãn (vượt `max_details_per_cycle`) VÀ bài fetch lỗi tạm thời (timeout/5xx).
+        Không chặn cycle nếu lỗi.
+
+        Returns:
+            Exit code của tiến trình con, hoặc -1 nếu không chạy được.
+        """
+        limit = int(self.cfg.get("deferred_backfill_limit", 60))
+        max_attempts = int(self.cfg.get("deferred_max_attempts", 5))
+        window = int(self.cfg.get("deferred_retry_window_hours", 24))
+        budget = int(self.cfg.get("deferred_budget_seconds", 90))
+        script = _SCRIPTS_DIR / "maintenance" / "backfill_deferred.py"
+        try:
+            proc = subprocess.run(
+                [sys.executable, str(script), "--fetch", "--limit", str(limit),
+                 "--mode", "all", "--max-attempts", str(max_attempts),
+                 "--retry-window-hours", str(window),
+                 "--budget-seconds", str(budget)],
+                # timeout phải NỚI HƠN budget để script kịp tự dừng sạch và báo cáo;
+                # bị giết bởi timeout là mất trắng thống kê của lượt đó.
+                # encoding PHẢI khai tường minh: script con phát UTF-8, thiếu dòng này thì
+                # tiến trình cha giải mã theo cp1252, reader thread chết và stdout = None.
+                cwd=_project_root, capture_output=True, text=True, timeout=budget + 60,
+                encoding="utf-8", errors="replace",
+            )
+            if (proc.stdout or "").strip():
+                logger.info("[morninger] backfill_deferred: {}",
+                           proc.stdout.strip().splitlines()[-1])
+            if proc.returncode != 0:
+                logger.warning("[morninger] backfill_deferred exit={}: {}",
+                               proc.returncode, proc.stderr[-500:])
+            return proc.returncode
+        except Exception as e:  # noqa: BLE001 — job phụ trợ, không được làm hỏng capture
+            logger.error("[morninger] backfill_deferred lỗi (bỏ qua): {}", e)
+            return -1
+
+    def run_l1_route(self) -> int:
+        """Định tuyến L1 code-first tự động (0 token LLM cho nhánh resolved) — mô hình kéo theo nhu cầu (Q5).
+        Chỉ định tuyến và vật chất hóa code-first vào DB; không tự ý sinh file packet thừa khi consumer chưa chạy.
+
+        Returns:
+            Exit code của tiến trình con, hoặc -1 nếu không chạy được.
+        """
+        mini_batch = int(self.cfg.get("l1_route_mini_batch", 25))
+        script_route = _SCRIPTS_DIR / "l1_route.py"
+        script_ingest = _SCRIPTS_DIR / "l1_ingest.py"
+        try:
+            # 1. Định tuyến các bài mới trong DB không sinh packet thừa (--review none)
+            proc = subprocess.run(
+                [sys.executable, str(script_route), "--from-db", "--date", "today",
+                 "--review", "none"],
+                cwd=_project_root, capture_output=True, text=True, timeout=180,
+                encoding="utf-8", errors="replace",
+            )
+            for line in (proc.stdout or "").strip().splitlines()[-3:]:
+                logger.info("[morninger] l1_route: {}", line)
+            if proc.returncode != 0:
+                logger.warning("[morninger] l1_route exit={}: {}",
+                               proc.returncode, proc.stderr[-500:])
+
+            # 2. Tự động vật chất hóa ngay nhánh resolved (0 token)
+            proc_cf = subprocess.run(
+                [sys.executable, str(script_ingest), "--code-first"],
+                cwd=_project_root, capture_output=True, text=True, timeout=120,
+                encoding="utf-8", errors="replace",
+            )
+            if (proc_cf.stdout or "").strip():
+                logger.info("[morninger] l1_code_first: {}", proc_cf.stdout.strip().splitlines()[-1])
+
+            return proc.returncode
+        except Exception as e:  # noqa: BLE001 — job phụ trợ, không được làm hỏng scheduler
+            logger.error("[morninger] l1_route lỗi (bỏ qua): {}", e)
+            return -1
 
     def run_derive(self) -> dict:
         """Thực thi chu kỳ chuyển đổi tăng dần từ Bronze sang Silver.
@@ -134,6 +244,27 @@ class Morninger:
             except Exception as e:  # noqa: BLE001 — export là tiện ích
                 logger.error("silver manifest export lỗi (bỏ qua): {}", e)
         return s
+
+    def run_reclaim(self) -> int:
+        """Nhả các gói công việc kẹt ở `claimed` quá hạn về `pending`.
+
+        Trước đây `reclaim_stale()` chỉ chạy bên trong `Catalog.claim()`, nên khi không có
+        worker nào đến nhận việc thì không ai nhả — hàng `claimed` treo vĩnh viễn (đo được
+        304 hàng ngày 2026-09-17).
+
+        Returns:
+            Số gói công việc đã được hoàn trả hàng đợi.
+        """
+        try:
+            from src.handoff.catalog import Catalog
+
+            n = Catalog(self.store).reclaim_stale()
+            if n:
+                logger.info("[morninger] reclaim: nhả {} work_item kẹt ở 'claimed'", n)
+            return n
+        except Exception as e:  # noqa: BLE001 — job phụ trợ, không được làm hỏng scheduler
+            logger.error("[morninger] reclaim lỗi (bỏ qua): {}", e)
+            return -1
 
     def run_drift(self) -> int:
         """Kiểm tra và cảnh báo các bài viết gặp sai lệch mẫu hoặc bộ chọn.
@@ -171,7 +302,8 @@ class Morninger:
         self.orch._owns_scheduler_lock = True
 
         scheduler = build_scheduler(
-            self.run_capture, self.run_derive, self.run_drift, self.cfg
+            self.run_capture, self.run_derive, self.run_drift, self.cfg,
+            self.run_l1_route, self.run_reclaim,
         )
 
         def handle_signal(signum, frame):
@@ -183,12 +315,17 @@ class Morninger:
 
         cap = int(self.cfg.get("capture_interval_minutes", 15))
         rederive = int(self.cfg.get("rederive_interval_minutes", 30))
+        l1_route = int(self.cfg.get("l1_route_interval_minutes", 15))
         drift_hour = int(self.cfg.get("drift_hour", 6))
         drift_minute = int(self.cfg.get("drift_minute", 0))
+        reclaim = int(self.cfg.get("reclaim_interval_minutes", 30))
         logger.info(
-            "Morninger started: capture/{}min, derive/{}min, drift/{}:{}",
+            "Morninger started: capture/{}min (+backfill_deferred nối tiếp), "
+            "derive/{}min, l1_route/{}min, reclaim/{}min, drift/{}:{}",
             cap,
             rederive,
+            l1_route,
+            reclaim,
             drift_hour,
             drift_minute,
         )

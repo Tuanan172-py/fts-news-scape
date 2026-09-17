@@ -63,7 +63,7 @@ def build_task_packet(
     prune: bool = True,
     schema_name: str = OUTPUT_SCHEMA,
 ) -> dict:
-    """Đóng gói toàn diện gói công việc kèm hợp đồng dữ liệu đầu ra và ràng buộc.
+    """Đóng gói công việc kèm hợp đồng dữ liệu đầu ra và ràng buộc.
 
     Args:
         work_package: Gói công việc nguồn chứa nội dung bài viết.

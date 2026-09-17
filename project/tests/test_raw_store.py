@@ -88,6 +88,24 @@ def test_save_http_error_body_saved_for_inspect(tmp_path):
     assert Path(cap["html_path"]).exists()  # partial body vẫn lưu
 
 
+def test_save_404_marks_deleted_at_source(tmp_path):
+    resp = FakeResponse("<html>404 not found</html>", status=404)
+    store = RawStore(base_dir=str(tmp_path / "raw"))
+    cap = store.save("cafef.vn", "https://cafef.vn/gone.chn", "h6", resp,
+                     fetched_at=FETCHED)
+    assert cap["capture_status"] == "deleted_at_source"
+    assert cap["error"]["type"] == "deleted_at_source"
+    assert cap["error"]["http_status"] == 404
+
+
+def test_save_410_marks_deleted_at_source(tmp_path):
+    resp = FakeResponse("<html>410 gone</html>", status=410)
+    store = RawStore(base_dir=str(tmp_path / "raw"))
+    cap = store.save("cafef.vn", "https://cafef.vn/gone2.chn", "h7", resp,
+                     fetched_at=FETCHED)
+    assert cap["capture_status"] == "deleted_at_source"
+
+
 def test_header_subset_excludes_set_cookie(tmp_path):
     resp = FakeResponse("<html><body>x</body></html>", status=200, headers={
         "content-type": "text/html", "set-cookie": "sid=secret",

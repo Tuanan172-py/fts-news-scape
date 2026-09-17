@@ -51,6 +51,9 @@ def archive_completed_tasks(article_ids, task_dir: str | Path,
                             archive_date: str | None = None) -> int:
     """Di chuyển hàng loạt các gói tác vụ đã hoàn thành sang thư mục lưu trữ.
 
+    Hỗ trợ di chuyển cả các tệp đơn lẻ (<aid>.task.json) và các tệp mini-batch
+    (batch_*.task.json) khi toàn bộ các bài viết cấu thành đã đạt chuẩn DoD.
+
     Args:
         article_ids: Danh sách các mã bài viết cần chuyển lưu trữ.
         task_dir: Thư mục chứa các tệp tác vụ đang hoạt động.
@@ -60,9 +63,32 @@ def archive_completed_tasks(article_ids, task_dir: str | Path,
         Số lượng gói tác vụ đã di chuyển lưu trữ thành công.
     """
     cnt = 0
+    task_dir = Path(task_dir)
     if not archive_date:
         archive_date = datetime.now(VN_TZ).strftime("%Y%m%d")
+
+    target_dir = task_dir / "archive" / archive_date
+    target_dir.mkdir(parents=True, exist_ok=True)
+
+    # 1. Di chuyển các tệp task đơn lẻ
     for aid in article_ids:
         if archive_task_packet(aid, task_dir, archive_date):
             cnt += 1
+
+    # 2. Quét và di chuyển các tệp batch packet nếu các bài viết bên trong đã xử lý xong
+    completed_set = set(article_ids)
+    import json
+    for batch_file in task_dir.glob("batch_*.task.json"):
+        try:
+            with open(batch_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            tasks = data.get("tasks", [])
+            if tasks and all(t.get("article_id") in completed_set for t in tasks):
+                dest = target_dir / batch_file.name
+                shutil.move(str(batch_file), str(dest))
+                logger.debug("[archive] moved batch {} -> {}", batch_file.name, dest)
+                cnt += 1
+        except Exception as e:
+            logger.warning("[archive] failed to inspect/move batch {}: {}", batch_file.name, e)
+
     return cnt

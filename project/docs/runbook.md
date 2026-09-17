@@ -90,8 +90,21 @@ Chi tiết: [`docs/design/16-periodic-report-scraper.md`](design/16-periodic-rep
 
 ## Backfill bài `detail_deferred` (Bronze-first)
 
+> **Cập nhật 2026-09-17 — phần lớn đã TỰ ĐỘNG.** `morninger` nối `backfill_deferred.py --mode all`
+> ngay sau mỗi chu kỳ capture, nên bài `detail_deferred` và bài lỗi tạm thời (timeout/5xx) được bù
+> liên tục mà không cần thao tác tay. Quy trình thủ công dưới đây giờ chỉ dùng cho **backlog lớn khi
+> onboard nguồn mới** (hàng trăm bài, vượt xa ngân sách 90s/chu kỳ của job tự động).
+>
+> Tham số job tự động nằm ở `project/config/settings.yaml` khối `morninger`:
+> `deferred_backfill_limit` (60) · `deferred_budget_seconds` (90) · `deferred_max_attempts` (5) ·
+> `deferred_retry_window_hours` (24).
+>
+> Bài thử đủ `max_attempts` lần được gắn `capture_giveup`; bài trả 404/410 được gắn
+> `source_deleted`. Cả hai bị loại khỏi hàng đợi để không fetch lại vô hạn — muốn ép thử lại phải
+> xoá cờ tương ứng trong `metadata_json`.
+
 Cycle đầu của nguồn mới sinh hàng trăm bài trong khi `max_details_per_cycle` chỉ ~30-40 →
-phần dư chỉ có `summary` làm body và bị dedup chặn, **không tự khỏi**.
+phần dư chỉ có `summary` làm body và bị dedup chặn, **không tự khỏi** trong một chu kỳ.
 
 ```bash
 # 1. Kéo Bronze cho backlog (bỏ qua dedup, tôn trọng robots + rate limit 3s)

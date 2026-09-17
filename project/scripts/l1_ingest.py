@@ -1,6 +1,7 @@
 """Tiếp nhận và kiểm định kết quả nhận diện thực thể L1."""
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -85,8 +86,8 @@ def main(argv: list[str]) -> int:
                 if b_tasks and all(t.get("article_id") in done_set or runner.store.get_l1_output(t.get("article_id")) for t in b_tasks):
                     b_file.unlink()
                     print(f"🧹 Tu dong don file batch task hoan tat: {b_file.name}")
-            except Exception:
-                pass
+            except (OSError, json.JSONDecodeError) as e:
+                print(f"⚠️ Khong the doc hoac don file batch {b_file.name}: {e}", file=sys.stderr)
 
     print(f"\ningested: done={done} failed={failed}")
     return 0

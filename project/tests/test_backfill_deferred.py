@@ -14,6 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import pytest
 
+from _fakes import FakeResponse
 from src.core.models import Article
 from src.db.store import ArticleStore
 
@@ -96,6 +97,156 @@ def test_backfill_from_existing_bronze(env):
     assert meta["backfilled_from_bronze"].endswith(f"{a.url_title_hash}.html")
 
 
+class _FakeHTTP:
+    """HTTPClient giả cho đường backfill — đếm số lần thực sự chạm mạng."""
+
+    def __init__(self, status=404, body="<html>gone</html>"):
+        self.status = status
+        self.body = body
+        self.calls = 0
+
+    def get_response(self, url, **kw):
+        self.calls += 1
+        return FakeResponse(self.body, status=self.status)
+
+    def get(self, url, **kw):
+        return ""
+
+
+def _patch_net(monkeypatch, fake):
+    monkeypatch.setattr(backfill, "HTTPClient", lambda **kw: fake)
+    monkeypatch.setattr(backfill, "RobotsGate", lambda http: None)   # None → bỏ qua robots
+
+
+def test_retry_404_marks_source_deleted_and_stops_requerying(env, monkeypatch):
+    """Hồi quy US-011: retry gặp 404 PHẢI ghi cờ source_deleted xuống DB.
+
+    Không ghi thì `_DEFERRED_WHERE` chọn lại row ở mọi chu kỳ sau → job tự động (5
+    phút/lần) fetch một URL đã chết vĩnh viễn, ~288 request rác/ngày/bài.
+    """
+    store, a, _tmp, db = env
+    fake = _FakeHTTP(status=404)
+    _patch_net(monkeypatch, fake)
+
+    backfill.main("vietnambiz.vn", limit=10, do_fetch=True, dry_run=False, db_path=db)
+
+    meta = json.loads(_row(store, a.url_title_hash)["metadata_json"])
+    assert meta.get("source_deleted") is True
+    assert meta["capture_retry"]["attempts"] == 1
+    assert meta["capture_retry"]["last_status"] == 404
+    assert fake.calls == 1
+
+    backfill.main("vietnambiz.vn", limit=10, do_fetch=True, dry_run=False, db_path=db)
+    assert fake.calls == 1, "bài đã bị nguồn xóa vẫn bị fetch lại → vòng lặp vô hạn"
+
+
+def test_transient_failure_gives_up_after_max_attempts(env, monkeypatch):
+    """Lỗi tạm thời lặp lại đủ ngưỡng → capture_giveup, ngừng truy đuổi."""
+    store, a, _tmp, db = env
+    fake = _FakeHTTP(status=500)
+    _patch_net(monkeypatch, fake)
+
+    for _ in range(6):
+        backfill.main("vietnambiz.vn", limit=10, do_fetch=True, dry_run=False,
+                      db_path=db, max_attempts=3)
+
+    meta = json.loads(_row(store, a.url_title_hash)["metadata_json"])
+    assert meta.get("capture_giveup") is True
+    assert meta.get("source_deleted") is None      # lỗi tạm thời KHÁC bị xóa
+    assert fake.calls == 3, "phải dừng đúng sau max_attempts lần thử"
+
+
+def test_dry_run_records_no_attempt(env, monkeypatch):
+    """--dry-run không được ghi sổ retry (giữ đúng ngữ nghĩa 'không đụng DB')."""
+    store, a, _tmp, db = env
+    _patch_net(monkeypatch, _FakeHTTP(status=404))
+
+    backfill.main("vietnambiz.vn", limit=10, do_fetch=True, dry_run=True, db_path=db)
+
+    meta = json.loads(_row(store, a.url_title_hash)["metadata_json"])
+    assert "capture_retry" not in meta and "source_deleted" not in meta
+
+
+def test_backoff_wraps_every_fetch(env, monkeypatch):
+    """Đường backfill phải đi qua SourceBackoff như đường capture sống."""
+    _store, _a, _tmp, db = env
+    _patch_net(monkeypatch, _FakeHTTP(status=404))
+    seen = []
+
+    class _SpyBackoff:
+        def before_fetch(self, dom):
+            seen.append(("before", dom))
+
+        def observe(self, dom, status):
+            seen.append(("observe", dom, status))
+
+    monkeypatch.setattr(backfill, "SourceBackoff", _SpyBackoff)
+    backfill.main("vietnambiz.vn", limit=10, do_fetch=True, dry_run=False, db_path=db)
+
+    assert seen == [("before", "vietnambiz.vn"), ("observe", "vietnambiz.vn", 404)]
+
+
+def test_mode_failed_recovers_transient_failure_from_bronze(env):
+    """`--mode failed`: bài lỗi tạm thời lúc capture sống được khôi phục từ Bronze.
+
+    Trước US-012 nhóm này KHÔNG bao giờ được thử lại — một lần timeout là mất toàn văn
+    vĩnh viễn, chỉ còn summary.
+    """
+    store, deferred_article, tmp, db = env
+    failed = Article(url="https://vietnambiz.vn/bai-loi-tam-thoi.htm",
+                     title="Bài lỗi tạm thời",
+                     source_domain="vietnambiz.vn",
+                     summary="Tóm tắt",
+                     content_text="Tóm tắt",
+                     metadata={"language": "vi",
+                               "capture": {"capture_status": "failed",
+                                           "http_status": 503}})
+    store.insert(failed)
+    d = tmp / "data" / "raw_html" / "vietnambiz.vn" / "20260907"
+    d.mkdir(parents=True)
+    (d / f"{failed.url_title_hash}.html").write_text(DETAIL_HTML, encoding="utf-8")
+
+    backfill.main("vietnambiz.vn", limit=10, do_fetch=False, dry_run=False,
+                  db_path=db, mode="failed")
+
+    r = _row(store, failed.url_title_hash)
+    assert "Nội dung thân bài" in r["content_text"]
+    meta = json.loads(r["metadata_json"])
+    assert "backfilled_from_bronze" in meta
+
+    # mode=failed KHÔNG được đụng tới bài thuộc nhóm deferred
+    assert json.loads(_row(store, deferred_article.url_title_hash)["metadata_json"]) \
+        .get("detail_deferred") is True
+
+    # đã khôi phục xong → không bị chọn lại ở lần quét sau
+    conn = store.connect()
+    again = conn.execute(
+        f"SELECT url_title_hash FROM articles WHERE {backfill._FAILED_WHERE}").fetchall()
+    conn.close()
+    assert not any(x["url_title_hash"] == failed.url_title_hash for x in again)
+
+
+def test_deferred_where_excludes_source_deleted(env):
+    """Bài đã xác nhận bị nguồn xóa (404/410) KHÔNG được truy vấn _DEFERRED_WHERE
+    chọn lại — tránh backfill retry vô ích một URL vĩnh viễn đã biến mất."""
+    store, a, _, _db = env
+    conn = store.connect()
+    rows = conn.execute(
+        f"SELECT url_title_hash FROM articles WHERE {backfill._DEFERRED_WHERE}").fetchall()
+    assert any(r["url_title_hash"] == a.url_title_hash for r in rows)
+
+    meta = json.loads(_row(store, a.url_title_hash)["metadata_json"])
+    meta["source_deleted"] = True
+    conn.execute("UPDATE articles SET metadata_json=? WHERE url_title_hash=?",
+                 (json.dumps(meta, ensure_ascii=False), a.url_title_hash))
+    conn.commit()
+
+    rows2 = conn.execute(
+        f"SELECT url_title_hash FROM articles WHERE {backfill._DEFERRED_WHERE}").fetchall()
+    assert not any(r["url_title_hash"] == a.url_title_hash for r in rows2)
+    conn.close()
+
+
 def test_dry_run_writes_nothing(env):
     store, a, tmp, db = env
     d = tmp / "data" / "raw_html" / "vietnambiz.vn" / "20260907"
@@ -120,6 +271,29 @@ def test_find_bronze_picks_latest(tmp_path, monkeypatch):
     got = backfill._find_bronze("vietnambiz.vn", h)
     assert got is not None and "20260907" in got        # bản mới nhất
     assert backfill._find_bronze("vietnambiz.vn", "b" * 64) is None
+
+
+def test_find_bronze_rejects_error_page_artifact(tmp_path, monkeypatch):
+    """Artifact của TRANG LỖI không được dùng để dựng lại nội dung bài.
+
+    RawStore vẫn ghi body khi HTTP lỗi; nếu không soi sidecar thì backfill sẽ bóc chữ
+    trong trang 404/500 ra làm content_text của bài.
+    """
+    monkeypatch.chdir(tmp_path)
+    h = "c" * 64
+    d = tmp_path / "data" / "raw_html" / "vietnambiz.vn" / "20260917"
+    d.mkdir(parents=True)
+    (d / f"{h}.html").write_text("<html>404 not found</html>", encoding="utf-8")
+    meta = d / f"{h}.meta.json"
+
+    meta.write_text(json.dumps({"capture_status": "deleted_at_source"}), encoding="utf-8")
+    assert backfill._find_bronze("vietnambiz.vn", h) is None
+
+    meta.write_text(json.dumps({"capture_status": "failed"}), encoding="utf-8")
+    assert backfill._find_bronze("vietnambiz.vn", h) is None
+
+    meta.write_text(json.dumps({"capture_status": "ok"}), encoding="utf-8")
+    assert backfill._find_bronze("vietnambiz.vn", h) is not None
 
 
 def test_extract_from_bronze_is_pure(tmp_path):

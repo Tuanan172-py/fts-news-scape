@@ -130,9 +130,18 @@ def test_batch_handoff_and_unpack(tmp_path):
     assert len(batch_paths) == 3                       # 10 + 10 + 5
 
     first = json.loads(Path(batch_paths[0]).read_text(encoding="utf-8"))
-    assert first["batch_id"] == "batch_01"
+    # Mã lô mang nhãn định danh lần chạy (ADR 0008): `batch_<thời gian>_<ngẫu nhiên>_NN`.
+    # Khẳng định HỢP ĐỒNG chứ không phải chuỗi cứng — tên cố định `batch_01` chính là thứ
+    # gây va chạm với lô cũ khiến AutoPilot nạp lại dữ liệu cũ.
+    assert first["batch_id"].startswith("batch_")
+    assert first["batch_id"].endswith("_01")
     assert first["task_count"] == 10
     assert len(first["tasks"]) == 10
+
+    # Thứ tự lô phải giữ nguyên và mã phải khác nhau giữa các lô.
+    ids = [json.loads(Path(p).read_text(encoding="utf-8"))["batch_id"] for p in batch_paths]
+    assert [i[-2:] for i in ids] == ["01", "02", "03"]
+    assert len(set(ids)) == 3
 
     # Agent tra ve 1 mang JSON cho ca lo
     batch_output = [

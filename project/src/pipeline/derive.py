@@ -7,6 +7,7 @@ tệp dữ liệu tầng Bronze mới phát sinh, cập nhật bài viết tần
 from __future__ import annotations
 
 import json
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from loguru import logger
@@ -15,6 +16,28 @@ from src.pipeline.run import process_meta
 
 WATERMARK_KEY = "silver_watermark"
 CHECKPOINT_KEY = "silver_checkpoint"
+DEFAULT_MAX_ATTEMPTS = 5      # ADR 0007 §2.2 — đủ số lần này thì chuyển dead-letter
+
+
+def _prev_ts(ts: str) -> str:
+    """Trả mốc thời gian ngay TRƯỚC `ts` để watermark không nuốt mất chính tệp lỗi.
+
+    `_should_process` so sánh nghiêm ngặt `fetch_ts > watermark`, nên đặt watermark đúng
+    bằng mốc của tệp lỗi sẽ loại chính nó khỏi lần quét sau — tức tái lập đúng lỗi mất bài
+    đang được sửa.
+
+    Args:
+        ts: Mốc ISO có offset cố định `+07:00`.
+
+    Returns:
+        Mốc ISO lùi 1 giây, hoặc chuỗi rỗng khi không phân tích được (quét lại toàn bộ —
+        tốn kém nhưng không bao giờ làm mất bài; giới hạn bởi ngưỡng dead-letter).
+    """
+    try:
+        return (datetime.fromisoformat(ts) - timedelta(seconds=1)).isoformat(
+            timespec="seconds")
+    except (TypeError, ValueError):
+        return ""
 
 
 def _read_fetch_ts(meta_path: str) -> str:
@@ -68,6 +91,7 @@ def rederive_incremental(
     t_template: int = 12,
     do_enqueue: bool = True,
     persist: bool = True,
+    max_attempts: int = DEFAULT_MAX_ATTEMPTS,
 ) -> dict:
     """Thực hiện tinh chế tăng dần các bài viết Bronze mới hơn mốc watermark.
 
@@ -80,7 +104,9 @@ def rederive_incremental(
         t_content: Ngưỡng khoảng cách nội dung.
         t_template: Ngưỡng khoảng cách cấu trúc giao diện.
         do_enqueue: Cờ cho phép đưa bài vào hàng đợi work_items.
-        persist: Cờ cho phép lưu lại mốc watermark mới vào cơ sở dữ liệu.
+        persist: Cờ cho phép lưu lại mốc watermark mới và sổ lỗi vào cơ sở dữ liệu.
+        max_attempts: Số lần derive thất bại trước khi tệp chuyển dead-letter và
+            thôi chặn watermark (ADR 0007).
 
     Returns:
         Từ điển tổng kết số lượng xử lý, trạng thái và mốc watermark mới.
@@ -92,16 +118,20 @@ def rederive_incremental(
 
     print(f"🔄 [derive] Đang quét thư mục Bronze '{raw_dir}' (watermark={watermark or 'bắt đầu'})...", flush=True)
     all_paths = iter_meta_paths(raw_dir)
-    to_process = [p for p in all_paths if _should_process(_read_fetch_ts(p), watermark)]
+    # Đọc fetch_ts MỘT lần cho mỗi tệp rồi tái dùng. Trước đây mỗi tệp bị đọc/parse 3 lần
+    # mỗi chu kỳ (~22k lượt đọc/30 phút trên OneDrive).
+    ts_by_path = {p: _read_fetch_ts(p) for p in all_paths}
+    to_process = [p for p in all_paths if _should_process(ts_by_path[p], watermark)]
     print(f"📦 [derive] Quét xong {len(all_paths)} Bronze files: tìm thấy {len(to_process)} bài mới cần chuyển lên Silver.", flush=True)
 
-    n = ok = held = 0
+    n = ok = held = failed = 0
     ok_ts: list[str] = []
     by_state: dict[str, int] = {}
     for idx, meta_path in enumerate(to_process):
         n += 1
         if (idx + 1) % 25 == 0 or idx == len(to_process) - 1:
             print(f"  ⚡ [derive] Đang xử lý: [{idx + 1}/{len(to_process)}] bài...", flush=True)
+        ft = ts_by_path.get(meta_path, "")
         try:
             res = process_meta(
                 store,
@@ -114,24 +144,45 @@ def rederive_incremental(
             )
         except Exception as e:  # noqa: BLE001 — non-fatal per bài (I5)
             logger.error("[derive] process failed {}: {}", meta_path, e)
+            failed += 1
+            if persist:
+                store.record_silver_failure(meta_path, ft, f"{type(e).__name__}: {e}",
+                                            max_attempts)
             continue
         state = (
             res.get("state") or "raw_missing"
         )  # raw_missing trả early-return không có state
         by_state[state] = by_state.get(state, 0) + 1
-        if res["ok"]:
+        # "ok" của process_meta chỉ nói package hợp lệ. Bài silver_ok=False mà package
+        # vẫn hợp lệ từng được tính là thành công, nên watermark đẩy qua và bài đó không
+        # bao giờ được derive lại (ADR 0007 §1).
+        succeeded = bool(res["ok"]) and bool(res.get("silver_ok", True))
+        if succeeded:
             ok += 1
-            ft = _read_fetch_ts(meta_path)
             if ft:
                 ok_ts.append(ft)
+            if persist:
+                store.clear_silver_failure(meta_path)
+        else:
+            failed += 1
+            if persist:
+                reason = "; ".join(str(x) for x in (res.get("errors") or [])[:2]) \
+                    or f"state={state} silver_ok={res.get('silver_ok')} pkg_ok={res['ok']}"
+                store.record_silver_failure(meta_path, ft, reason, max_attempts,
+                                            url_title_hash=res.get("article_id", ""))
         if res.get("enqueue_status") == "held":
             held += 1
 
-    watermark_new = max(ok_ts) if ok_ts else watermark
-    latest = max((_read_fetch_ts(p) for p in all_paths), default="")
-    backlog = sum(
-        1 for p in all_paths if (ft := _read_fetch_ts(p)) and ft > watermark_new
-    )
+    # Watermark là LOW-water mark: không bao giờ vượt qua một lỗi chưa dead-letter.
+    blocking_ts = store.blocking_silver_failure_ts() if persist else ""
+    candidate = max(ok_ts) if ok_ts else watermark
+    if blocking_ts:
+        # Lùi về ngay TRƯỚC lỗi sớm nhất để chu kỳ sau còn chọn lại nó.
+        watermark_new = min(candidate, _prev_ts(blocking_ts)) if candidate else ""
+    else:
+        watermark_new = candidate
+    latest = max(ts_by_path.values(), default="")
+    backlog = sum(1 for p in all_paths if (ft := ts_by_path[p]) and ft > watermark_new)
     checkpoint_reached = backlog == 0
 
     if persist:
@@ -139,9 +190,11 @@ def rederive_incremental(
         if checkpoint_reached:
             store.set_state(CHECKPOINT_KEY, watermark_new)
 
+    blocking_n, dead_n = store.count_silver_failures() if persist else (0, 0)
     summary = {
         "processed": n,
         "ok": ok,
+        "failed": failed,
         "held": held,
         "states": by_state,
         "watermark_prev": watermark,
@@ -149,16 +202,25 @@ def rederive_incremental(
         "latest_fetch_ts": latest,
         "backlog": backlog,
         "checkpoint_reached": checkpoint_reached,
+        "blocking_failures": blocking_n,
+        "dead_letter": dead_n,
     }
     logger.info(
-        "[derive] done: {} processed, {} ok, {} held; watermark {} -> {}; "
-        "backlog={} checkpoint={}",
+        "[derive] done: {} processed, {} ok, {} failed, {} held; watermark {} -> {}; "
+        "backlog={} checkpoint={} blocking={} dead_letter={}",
         n,
         ok,
+        failed,
         held,
         watermark,
         watermark_new,
         backlog,
         checkpoint_reached,
+        blocking_n,
+        dead_n,
     )
+    if dead_n:
+        logger.error(
+            "[derive] {} tệp Bronze đã dead-letter — nội dung KHÔNG lên được Silver. "
+            "Kiểm tra bảng silver_failures.", dead_n)
     return summary

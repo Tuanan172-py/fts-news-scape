@@ -2,7 +2,6 @@
 name: pipeline-radar
 description: Chuyên viên trinh sát, quan sát trạng thái pipeline end-to-end, phát hiện điểm nghẽn dữ liệu và đề xuất hành động vận hành tiếp theo (Human-in-the-loop).
 ---
-
 # Pipeline Radar & Triage Agent Skill
 
 > **Mục tiêu cốt lõi:** Luôn trả lời được câu hỏi then chốt: *"Dữ liệu đang ở điểm chạm nào? Đã cào bao nhiêu bài? L1 đã xong chưa? Gold đang nghẽn ở đâu? Và hành động tiếp theo chính xác là gì?"*
@@ -72,6 +71,8 @@ Chuyên viên Radar sử dụng công cụ CLI chuẩn hóa được tích hợp
    • Số bài cào xuất bản trong ngày : 320 bài
    • Số bài đã hoàn tất tầng L1     : 764 bài
    • Số bài đã hoàn tất tầng Gold   : 64 bài
+   • Bài Gold đủ điều kiện chờ phân tích (Subscriber-Gated): 0 bài
+   • Bài bị nguồn xóa (404/410) trước khi lấy được nội dung: 0 bài đăng hôm nay / 1 tổng tích lũy
    • Độ tươi cào tin (Liveness)     : 🟢 Tươi mới (lần cào cuối lúc 14:21:57, cách đây 1 phút)
 
 2. TRẠNG THÁI HÀNG ĐỢI FILE (TASK PACKETS & BATCHES):
@@ -86,11 +87,26 @@ Chuyên viên Radar sử dụng công cụ CLI chuẩn hóa được tích hợp
 ================================================================================
 ```
 
+### 4b. Đọc đúng chỉ số "Bài bị nguồn xóa" (bổ sung 2026-09-17)
+
+Chỉ số này hiển thị **hai con số** vì chúng trả lời hai câu hỏi khác nhau:
+
+- **"bài đăng hôm nay"** — lọc theo `date(published_at)`. Luôn thấp hơn thực tế, vì bài bị gỡ
+  thường được PHÁT HIỆN muộn hơn ngày đăng (đường retry làm việc với bài fetch trong 24h qua).
+- **"tổng tích lũy"** — mọi bài từng bị gắn cờ `source_deleted`. Đây là con số dùng để theo dõi
+  xu hướng.
+
+**Cảnh báo 404 giả**: khi một domain có **>10 bài** 404/410 **và** chiếm **>30%** số bài của domain
+đó trong ngày, radar đẩy mục `HIGH` đề nghị chạy `validate_capture.py <domain>`. Tăng vọt tập trung
+ở một domain hầu như luôn là **site đổi cấu trúc URL/selector**, không phải tin bị gỡ thật — đừng
+diễn giải thành "nguồn tin xóa bài nhiều".
+
 ---
 
 ## 5. Quy Trình Bù Đắp Tin Đêm (Overnight Catch-up Protocol)
 
 Khi máy tính không phải server và bị Sleep qua đêm:
+
 - **Hiện tượng**: Khoảng trống runtime từ tối hôm trước đến sáng hôm sau (delay $> 120$ phút).
 - **Nhận diện tự động**: `pipeline_radar.py status` sẽ tự động hiển thị nhãn `🔴 Gián đoạn / Khoảng trống đêm` và nâng cảnh báo lên `[HIGH]`.
 - **Hành động xử lý tức thì**: Chạy lệnh cào vét bù tin:
@@ -110,10 +126,10 @@ Bắt đầu phiên ngày {YYYY-MM-DD}: Hãy dùng Radar kiểm tra điểm ch�
 ```
 
 ### Chuỗi Phản Xạ Tự Động Của Agent (Autonomous Execution Chain):
+
 1. **Bước 1 — Định vị điểm chạm**: Chạy `& "C:\venvs\news-scape\Scripts\python.exe" scripts/pipeline_radar.py status --date {YYYY-MM-DD}`.
 2. **Bước 2 — Tiết kiệm token tối đa**: Chạy `& "C:\venvs\news-scape\Scripts\python.exe" scripts/l1_ingest.py --code-first` để giải quyết 60–70% bài cào với chi phí 0 token.
 3. **Bước 3 — Đóng gói mini-batches**: Gom các bài `needs_agent` còn lại thành các batch 25 bài/lô (`l1_batch_XX.task.json`).
 4. **Bước 4 — Triển khai Controlled Waves**: Kích hoạt Subagents Flash (`l1_entity_matcher`) theo từng đợt 2–3 batches (50–75 bài/đợt) chống lỗi 429 rate limit.
 5. **Bước 5 — Cổng kiểm định DoD & Archive**: Chạy `& "C:\venvs\news-scape\Scripts\python.exe" scripts/l1_ingest.py data/agent_outputs_l1`, tự động nạp DB và di chuyển task packets vào `data/agent_tasks/l1/archive/<YYYYMMDD>/`.
 6. **Bước 6 — Báo cáo nghiệm thu & Telemetry**: Chạy `& "C:\venvs\news-scape\Scripts\python.exe" scripts/pipeline_radar.py token --date {YYYY-MM-DD}` báo cáo số token thực tế và tỷ lệ đạt chuẩn DoD cho Developer.
-

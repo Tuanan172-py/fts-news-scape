@@ -211,6 +211,7 @@ def test_build_scheduler_jobs():
     cfg = {
         "capture_interval_minutes": 5,
         "rederive_interval_minutes": 10,
+        "l1_route_interval_minutes": 15,
         "drift_hour": 7,
         "drift_minute": 30,
         "drift_limit": 50,
@@ -220,9 +221,10 @@ def test_build_scheduler_jobs():
         lambda: calls.append("derive"),
         lambda: calls.append("drift"),
         cfg,
+        lambda: calls.append("l1_route"),
     )
     jobs = {j.id: j for j in sched.get_jobs()}
-    assert set(jobs) == {"capture", "derive", "drift"}
+    assert set(jobs) == {"capture", "derive", "drift", "l1_route"}
 
     cap = jobs["capture"]
     assert isinstance(cap.trigger, IntervalTrigger)
@@ -234,8 +236,22 @@ def test_build_scheduler_jobs():
     assert der.trigger.interval.total_seconds() == 10 * 60
     assert der.coalesce is True and der.max_instances == 1
 
+    l1 = jobs["l1_route"]
+    assert isinstance(l1.trigger, IntervalTrigger)
+    assert l1.trigger.interval.total_seconds() == 15 * 60
+    assert l1.coalesce is True and l1.max_instances == 1
+
     drift = jobs["drift"]
     assert isinstance(drift.trigger, CronTrigger)
     fields = {f.name: f for f in drift.trigger.fields}
     assert "7" in str(fields["hour"]) and "30" in str(fields["minute"])
     assert drift.coalesce is True and drift.max_instances == 1
+
+
+def test_build_scheduler_without_l1_route_fn_omits_job():
+    """Tương thích ngược: gọi 4 tham số (không l1_route_fn) vẫn hoạt động, không đăng ký job đó."""
+    cfg = {"capture_interval_minutes": 5, "rederive_interval_minutes": 10,
+           "drift_hour": 7, "drift_minute": 30}
+    sched = build_scheduler(lambda: None, lambda: None, lambda: None, cfg)
+    jobs = {j.id: j for j in sched.get_jobs()}
+    assert set(jobs) == {"capture", "derive", "drift"}

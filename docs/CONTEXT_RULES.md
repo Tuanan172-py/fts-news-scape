@@ -12,6 +12,17 @@ Tài liệu này định nghĩa phạm vi đọc tài liệu/mã nguồn của A
 | **`normal`** | $\le 5.000$ tokens | 10 – 15 files | Dừng khi hoàn thành Story Packet và hiểu rõ module liên quan. |
 | **`high-risk`** | $\le 10.000$ tokens | 20 – 30 files | Dừng khi thu thập đủ dữ liệu để viết ADR và xác định Hard Gate. |
 
+> **Phạm vi áp dụng của trần số tệp (bổ sung 2026-09-17, US-014).** Trần trên đếm **tệp đi
+> thẳng vào context window của agent điều phối**. Tệp do **Explore subagent đọc hộ KHÔNG
+> tính vào trần này** — chúng nằm trong context riêng của subagent và chỉ trở về dưới dạng
+> bản báo cáo đã cô đọng. Ghi riêng số đó vào trace nếu cần đối soát.
+>
+> Lý do: mục đích khai báo của ngân sách là *kiểm soát context window*; ủy thác khảo sát cho
+> subagent chính là cách đạt mục đích đó. Đếm gộp sẽ **phạt đúng hành vi mà quy tắc khuyến
+> khích**, tạo động cơ ngược là đọc thẳng mọi thứ inline để giữ điểm đẹp. Ca US-011 là bằng
+> chứng: trace ghi vết đầy đủ và trung thực nhưng chỉ đạt `score_context = 0.6` vì gộp cả tệp
+> của 2 Explore subagent.
+
 ---
 
 ## 2. Ma trận Ngữ cảnh (Phase × Lane Matrix)

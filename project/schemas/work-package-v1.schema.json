@@ -20,7 +20,7 @@
     "cleaned_text": {"type": "string"},
     "structure": {"type": "object"},
     "images": {"type": "array", "items": {"type": "object"}},
-    "capture_status": {"type": "string", "enum": ["ok", "partial", "failed", "skipped_robots"]},
+    "capture_status": {"type": "string", "enum": ["ok", "partial", "failed", "skipped_robots", "deleted_at_source"]},
     "change_state": {"type": "string", "enum": [
       "NEW", "UNCHANGED", "CONTENT_CHANGED", "TEMPLATE_DRIFT", "SELECTOR_BROKEN"
     ]},

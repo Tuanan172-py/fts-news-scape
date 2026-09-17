@@ -49,8 +49,8 @@ def main(argv=None) -> int:
                     help="Lấy trực tiếp bài viết từ bảng `articles` của SQLite thay vì quét file work_packages")
     ap.add_argument("--date", type=str, default=None,
                     help="Lọc bài theo ngày xuất bản YYYY-MM-DD hoặc 'today'")
-    ap.add_argument("--review", choices=["all", "missed"], default="missed",
-                    help="missed: chỉ phát packet cho tin code-first KHÔNG khớp (needs_agent, mặc định); all: phát cho mọi tin")
+    ap.add_argument("--review", choices=["all", "missed", "none"], default="missed",
+                    help="missed: chỉ phát packet cho tin code-first KHÔNG khớp (needs_agent, mặc định); all: phát cho mọi tin; none: không tạo packet (chỉ lưu task vào DB)")
     ap.add_argument("--batch-size", "-b", type=int, default=None, help="Kích thước block/lô việc cần xuất (mặc định 50)")
     ap.add_argument("--limit", "-n", type=int, default=None, help="Tối đa N việc")
     ap.add_argument("--order", choices=["desc", "asc"], default="desc", help="Thứ tự: desc (mới nhất trước), asc (cũ nhất trước)")

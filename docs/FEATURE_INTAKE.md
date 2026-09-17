@@ -35,6 +35,16 @@ The classification gate. Run this at step 2 of the change loop. Humans do NOT ra
 - Touching external API tokens / secrets.
 - Weakening or removing a validation/dedup guarantee.
 - Changing a public data contract (Bronze/Silver/Gold, agent handoff envelope).
+- **Thêm/đổi một giá trị enum đang được schema nào đó validate** — xem cảnh báo dưới đây.
+
+> **Cạm bẫy "additive nên không phá vỡ gì" (ghi nhận 2026-09-17, US-011 → US-015).**
+> Thêm một giá trị mới vào enum trông như thay đổi cộng thêm, nhưng nếu tồn tại consumer đang
+> validate enum đó thì đây là **đổi hợp đồng dữ liệu** và là hard gate. Ca thật: thêm
+> `capture_status = "deleted_at_source"` trong `raw_store.py` mà không cập nhật
+> `project/schemas/work-package-v1.schema.json:23` khiến mọi bài mang cờ này bị chặn ở trạng thái
+> `held` tại cổng Silver — lỗi chỉ lộ ra khi đọc log sản xuất, không test nào bắt được.
+> **Bắt buộc trước khi thêm giá trị enum:** `grep -rn "<tên_trường>" project/schemas/ project/domains/`
+> để tìm mọi nơi đang ràng buộc giá trị, và cập nhật đồng thời.
 
 ## 3. Lane selection rule
 

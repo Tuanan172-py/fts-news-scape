@@ -163,17 +163,26 @@ class UserOutputWriter:
         Returns:
             Danh sách từ điển dữ liệu bài viết kèm kết quả L1 và Agent.
         """
-        conn = self.store._connect_ro()
-        try:
-            rows = [dict(r) for r in conn.execute(_GATED_SQL)]
-        finally:
-            conn.close()
+        where_clauses = []
+        params = []
         if date and date != "all":
             d = f"{datetime.now(VN_TZ):%Y-%m-%d}" if date == "today" else date
-            rows = [r for r in rows if _row_date(r) == d]
+            where_clauses.append("substr(COALESCE(NULLIF(a.published_at, ''), a.fetched_at), 1, 10) = ?")
+            params.append(d)
         elif days:
             cutoff = f"{datetime.now(VN_TZ) - timedelta(days=days):%Y-%m-%d}"
-            rows = [r for r in rows if _row_date(r) >= cutoff]
+            where_clauses.append("substr(COALESCE(NULLIF(a.published_at, ''), a.fetched_at), 1, 10) >= ?")
+            params.append(cutoff)
+
+        sql = _GATED_SQL
+        if where_clauses:
+            sql += " WHERE " + " AND ".join(where_clauses)
+
+        conn = self.store._connect_ro()
+        try:
+            rows = [dict(r) for r in conn.execute(sql, params)]
+        finally:
+            conn.close()
         return rows
 
     # -- flatten --------------------------------------------------------------

@@ -2,7 +2,6 @@
 name: multi-agent-orchestrator-governance
 description: Quy trình điều phối mạng lưới Agent đa tầng (Master, Query Radar, Watchlist Monitor, Token Auditor, DoD Gatekeeper) và cơ chế tự học hỏi, nhắc nhở tối ưu hệ thống News-Scape (Human-in-the-loop).
 ---
-
 # Multi-Agent Orchestrator & System Governance Skill
 
 > **Tầm nhìn & Mục tiêu:** Chuyển hóa toàn bộ quy trình vận hành tin tức tài chính News-Scape thành một **mạng lưới các chuyên viên Agent chuyên biệt (Multi-Agent Swarm)** tự điều phối, tự kiểm toán, đo lường chi phí, phát hiện bất thường và chủ động đề xuất hành động cho Developer / Human-in-the-loop.
@@ -38,6 +37,7 @@ description: Quy trình điều phối mạng lưới Agent đa tầng (Master, 
 ## 2. Nhiệm Vụ Cụ Thể Của Từng Chuyên Viên Agent
 
 ### 1. `Query Radar Agent` — Điểm Chạm Vận Hành & Hướng Dẫn Hành Động
+
 - **Nhiệm vụ**: Khi Dev hoặc Agent bắt đầu phiên mà chưa rõ hệ thống đang ở bước nào (cào xong chưa, L1 xong chưa, bài Gold đang nghẽn ở đâu), Radar Agent sẽ truy vấn SQLite `monocle.db` và các thư mục task/output để chỉ ra chính xác:
   - Điểm chạm hiện tại của dữ liệu.
   - Số lượng bài cào về, bài đã qua L1, bài đã qua Gold.
@@ -49,6 +49,7 @@ description: Quy trình điều phối mạng lưới Agent đa tầng (Master, 
   ```
 
 ### 2. `Watchlist & Entity Monitor Agent` — Quan Sát Người Dùng
+
 - **Nhiệm vụ**:
   - Quét thư mục `users/subscriptions/*.xlsx` để phát hiện ngay khi có người dùng mới thêm file đăng ký mà chưa được kích hoạt trong `config/entities/manifest.yaml`.
   - Giám sát các thực thể lạ (`unlisted_candidates`) do Subagents nhận diện để đề xuất Dev cập nhật từ điển catalog `data/entities/entities.json`.
@@ -58,6 +59,7 @@ description: Quy trình điều phối mạng lưới Agent đa tầng (Master, 
   ```
 
 ### 3. `Token Auditor Agent` — Giám Sát Ngân Sách & Chống Burn Token
+
 - **Nhiệm vụ**:
   - Đo lường chính xác số token tiêu thụ thực tế của từng ngày theo benchmark thực nghiệm (L1: ~450 tokens/bài, Gold v2-lean: ~1.470 tokens/bài).
   - Đánh giá hiệu quả của phễu lọc **Subscriber-Gating** (thường tiết kiệm >90% token vô ích).
@@ -68,6 +70,7 @@ description: Quy trình điều phối mạng lưới Agent đa tầng (Master, 
   ```
 
 ### 4. `DoD Ingest Gatekeeper Agent` — Người Gác Cổng Chất Lượng & Grounding
+
 - **Nhiệm vụ**:
   - Nghiệm thu tự động Definition-of-Done trên 100% output của Subagents trước khi nạp DB.
   - Kiểm tra 3 rào cản bất biến:
@@ -82,6 +85,7 @@ description: Quy trình điều phối mạng lưới Agent đa tầng (Master, 
   ```
 
 ### 5. `Delivery & Formatting Agent` — Xuất Bản Deliverable Đơn Sắc
+
 - **Nhiệm vụ**:
   - Tổng hợp dữ liệu Gold v2-lean và L1 vào các file Excel người dùng `users/output/<user>/<date>.xlsx`.
   - Bảo đảm định dạng đơn sắc chuyên nghiệp, wrap text, độ rộng cột tối ưu.
@@ -117,12 +121,15 @@ Mạng lưới Agent áp dụng cơ chế tự hoàn thiện khép kín dựa tr
 ## 4. Runbook 5 Phút Hàng Ngày Cho Developer / Orchestrator
 
 ### A. Mẫu Prompt Mồi Kích Hoạt Nhanh (1-Prompt Daily Trigger):
+
 Developer chỉ cần gửi câu lệnh mồi chuẩn hóa cho Agent:
+
 ```text
 Bắt đầu phiên ngày {YYYY-MM-DD}: Hãy dùng Radar kiểm tra điểm chạm pipeline, sau đó thực thi trọn vẹn chuỗi L1 (vật chất hóa Code-First trước để tiết kiệm token, phần còn lại gom mini-batches cho Subagents Flash xử lý có kiểm soát). Báo cáo tỷ lệ DoD và tổng lượng token tiêu thụ sau khi hoàn tất.
 ```
 
 ### B. Các Lệnh Thực Thi Cơ Học Tương Ứng:
+
 1. **Kiểm tra trạng thái**:
    ```powershell
    & "C:\venvs\news-scape\Scripts\python.exe" scripts/pipeline_radar.py status
@@ -136,4 +143,3 @@ Bắt đầu phiên ngày {YYYY-MM-DD}: Hãy dùng Radar kiểm tra điểm ch�
    ```powershell
    & "C:\venvs\news-scape\Scripts\python.exe" scripts/write_user_output.py --date today
    ```
-

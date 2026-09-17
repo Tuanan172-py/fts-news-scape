@@ -80,7 +80,24 @@ Nhằm loại bỏ hoàn toàn tình trạng OneDrive tự động tạo các c�
    - **CẤM tuyệt đối** đưa các one-liner PowerShell phức tạp có chứa biến `$_`, dấu ống dẫn `|`, hoặc khối mã `{ ... }` bên trong chuỗi nháy kép `"..."` cho người dùng hoặc gọi qua `run_command`, vì shell sẽ nội suy `$_` thành rỗng gây lỗi `The term '.Name' is not recognized`.
    - **BẮT BUỘC dùng Script Python**: Mọi thao tác quét file, kiểm tra xung đột, lọc thư mục hoặc dọn dẹp bảo trì phải được đóng gói thành file Python độc lập (ví dụ: `scripts/maintenance/<script>.py`) có cấu hình `sys.stdout.reconfigure(encoding="utf-8")`.
 
-4. **Bất biến Thúc đẩy File Conflict Mới hơn (Promote-Before-Delete Invariant)**:
+5. **Bất biến Mã hóa Hai Đầu khi Gọi Subprocess (Both-Ends Encoding Invariant)**:
+
+   Quy chuẩn tại §5.3 mới chỉ bắt buộc đầu CON cấu hình UTF-8. Sự cố 2026-09-17 cho thấy đầu CHA
+   cũng bắt buộc, và thiếu nó gây hỏng âm thầm:
+
+   - **Đầu con (script được gọi)**: BẮT BUỘC gọi `force_utf8_stdio()` từ `src.core.stdio` ở cấp
+     module. Thiếu dòng này thì khi stdout là pipe (không phải console), Python dùng encoding hệ
+     thống (cp1252) và `UnicodeEncodeError` ngay khi in tiếng Việt.
+   - **Đầu cha (nơi gọi `subprocess.run`)**: BẮT BUỘC khai `encoding="utf-8", errors="replace"`
+     kèm `text=True`. Chỉ `text=True` thì tiến trình cha giải mã bytes UTF-8 của con theo locale
+     cp1252, **reader thread chết lặng lẽ** và `proc.stdout` trả về `None` — mã gọi
+     `proc.stdout.strip()` sẽ ném `AttributeError` mà không lộ nguyên nhân thật.
+   - **Phòng thủ bắt buộc**: luôn viết `(proc.stdout or "")` thay vì `proc.stdout` trực tiếp.
+   - **Cưỡng chế**: `project/tests/test_cli_entrypoints.py` chạy `--help` của mọi script automation
+     qua `subprocess` với `capture_output=True` — tái hiện đúng điều kiện pipe nên bắt được cả hai
+     phía. Thêm script vào danh sách `AUTOMATION_CLIS` khi đưa script mới vào đường tự động.
+
+6. **Bất biến Thúc đẩy File Conflict Mới hơn (Promote-Before-Delete Invariant)**:
    - Trong môi trường OneDrive/SharePoint, khi xảy ra xung đột đồng bộ, OneDrive thường giữ nguyên tên file gốc cho bản trên đám mây (thường là bản cũ), và đổi tên bản sửa đổi MỚI NHẤT của người dùng cục bộ thành `<file>-<HOSTNAME>.<ext>`.
    - **CẤM tuyệt đối xóa mù quáng bản `<HOSTNAME>`**: Khi xử lý xung đột, BẮT BUỘC phải so sánh thời gian sửa đổi (`st_mtime`) và mã băm SHA-256.
    - Nếu bản `<HOSTNAME>` mới hơn: BẮT BUỘC **PROMOTE** (sao chép ghi đè bản `<HOSTNAME>` thành file chính thức, sau đó mới xóa file có hậu tố) để không làm mất các chỉnh sửa của người dùng.

@@ -102,3 +102,17 @@ def test_detail_404_records_failed(env, fixture_list):
         assert a.content_text == a.summary
     assert any("detail fetch failed" in e for e in result.errors)
 
+
+def test_detail_deleted_at_source_marks_metadata(env, fixture_list):
+    """Bài bị nguồn xóa (404/410 THẬT, có response) phải gắn cờ source_deleted —
+    khác với fetch fail chung (test trên), để backfill_deferred KHÔNG retry vô ích."""
+    http = FakeHTTP(list_json=fixture_list, detail_html=None, detail_status=404)
+    scraper = CafeFScraper(_config(), http, env)
+    scraper.backoff = None
+    result = scraper.run()
+    assert len(result.new) > 0
+    for a in result.new:
+        assert a.metadata["capture"]["capture_status"] == "deleted_at_source"
+        assert a.metadata["source_deleted"] is True
+        assert a.content_text == a.summary
+

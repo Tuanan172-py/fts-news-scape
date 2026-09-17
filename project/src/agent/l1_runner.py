@@ -51,7 +51,7 @@ class L1Runner:
         """
         rec = route_article(article, self.reg)
         aid = article.get("article_id")
-        emit = review == "all" or (review == "missed" and rec["route"] == "needs_agent")
+        emit = False if review == "none" else (review == "all" or (review == "missed" and rec["route"] == "needs_agent"))
 
         packet_path = None
         if emit:
@@ -211,7 +211,7 @@ class L1Runner:
         # docs/decisions/0003-code-first-l1-delivery.md
 
         title = task.get("title") or ""
-        ok, reasons = check_l1_dod(output, title)
+        ok, reasons = check_l1_dod(output, title, self.reg)
 
         pm = output.get("processing_metadata") or {}
         self.store.insert_l1_output({

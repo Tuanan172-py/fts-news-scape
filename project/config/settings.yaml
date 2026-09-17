@@ -19,8 +19,22 @@ export:
   dir: data/exports        # data/exports/articles-YYYY-MM-DD.csv (ghi đè mỗi cycle)
 
 morninger:
-  capture_interval_minutes: 15   # nhịp capture Bronze (job 1)
+  capture_interval_minutes: 10   # nhịp capture Bronze (job 1). ĐO THẬT 2026-09-17: một lượt job
+                                  # ≈ 7 phút (capture 335s + backfill ≤90s). Đặt 5 phút như bản đầu
+                                  # khiến job chồng lấn liên tục, không còn biên dự phòng; 10 phút
+                                  # giữ ~40% headroom mà vẫn nhanh hơn mốc 15 phút cũ.
+                                  # Muốn hạ tiếp: phải tối ưu chi phí cycle trước (dừng phân trang
+                                  # sớm — cafef fetch 900 item chỉ để lấy ~5 bài mới).
   rederive_interval_minutes: 30  # nhịp re-derive Silver tăng dần (job 2)
+  l1_route_interval_minutes: 15  # nhịp định tuyến L1 code-first tự động (job 4) — 0 token,
+                                  # tách biệt hoàn toàn khỏi quota Gold
+  l1_route_mini_batch: 25        # kích thước mini-batch L1 mỗi lần route (khuyến nghị pipeline_radar)
+  deferred_backfill_limit: 60    # số bài bù tối đa mỗi chu kỳ capture (job 1, nối tiếp)
+  deferred_budget_seconds: 90    # trần thời gian bù; hết giờ thì dừng sạch, để dành chu kỳ sau.
+                                  # Đo thực tế 2026-09-17: cycle capture ~335s, nên phần bù phải
+                                  # bị chặn cứng nếu không sẽ kéo dài nhịp capture vô hạn định.
+  deferred_max_attempts: 5       # thử tối đa 5 lần rồi gắn capture_giveup — chặn vòng lặp vô hạn
+  deferred_retry_window_hours: 24  # chỉ truy đuổi bài fetched_at trong 24h gần đây
   drift_hour: 6                  # giờ chạy drift report mỗi sáng (job 3)
   drift_minute: 0
   drift_limit: 100
