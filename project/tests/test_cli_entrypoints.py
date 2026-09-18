@@ -30,6 +30,7 @@ AUTOMATION_CLIS = [
     "scripts/write_user_output.py",
     "scripts/monitor_daily.py",
     "scripts/fetch_periodic_reports.py",
+    "scripts/pipeline_radar.py",
 ]
 
 

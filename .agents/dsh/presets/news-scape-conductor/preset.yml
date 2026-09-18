@@ -1,0 +1,5 @@
+name: News-Scape Conductor (read-only)
+description: >-
+  Conductor read-only cho mạng lưới agent News-Scape: đọc .agents/pipeline.yaml + radar,
+  đề xuất stage kế tiếp; không ghi DB, không sửa file, không spawn agent.
+order: 10

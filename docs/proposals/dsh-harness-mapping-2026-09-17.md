@@ -1,5 +1,9 @@
 # Đề xuất — Khung Harness DSH cho Mạng lưới Agent News-Scape
 
+> **Cập nhật 2026-09-17:** Anh đã chốt D1–D6. Kế hoạch triển khai H1–H4 tại
+> [`plans/20260917-1538-dsh-harness-integration/plan.md`](../../plans/20260917-1538-dsh-harness-integration/plan.md).
+> Tài liệu này giữ nguyên làm bản thiết kế gốc.
+
 - **Trạng thái:** DRAFT — chờ Human duyệt (Hard Gate)
 - **Phân loại:** **Cấp 3 — HIGH-RISK** (chạm Harness Core / automation substrate)
 - **Ngày:** 2026-09-17

@@ -15,6 +15,12 @@ version: 1
 updated: "2026-09-15"
 schema_note: "Thêm agent = 1 entry ở đây + 1 skill + 1 stage pipeline.yaml + 1 story + KPI (rule 07)."
 
+# Model policy (ADR 0009 / quyết định D6, 2026-09-17): MỌI cognitive agent route về
+# flash (DeepSeek-V41-Flash). Cấm model cao hơn vì quản lý chi phí token.
+# Bốn agent từng khai `pro` (entity-curator, adversarial-dod-verifier,
+# daily-brief-synthesizer, harness-auditor) và materiality-triage (`flash-lite`)
+# đã hạ về flash. entity-curator vẫn giữ status draft + activation_gate Tier-3.
+
 agents:
 
   # ─────────────────────────── CONDUCTOR ───────────────────────────
@@ -172,7 +178,7 @@ agents:
   - id: materiality-triage
     class: cognitive
     status: draft
-    model: flash-lite
+    model: flash
     skill: .agents/skills/materiality-triage/SKILL.md
     stage_role: pre-gold-gate
     io_boundary:
@@ -189,7 +195,7 @@ agents:
   - id: entity-curator
     class: cognitive
     status: draft
-    model: pro
+    model: flash
     skill: .agents/skills/entity-curator/SKILL.md
     stage_role: catalog-growth
     io_boundary:
@@ -207,7 +213,7 @@ agents:
   - id: adversarial-dod-verifier
     class: cognitive
     status: draft
-    model: pro
+    model: flash
     skill: .agents/skills/adversarial-dod-verifier/SKILL.md
     stage_role: post-gold-qa
     io_boundary:
@@ -224,7 +230,7 @@ agents:
   - id: daily-brief-synthesizer
     class: cognitive
     status: draft
-    model: pro
+    model: flash
     skill: .agents/skills/daily-brief-synthesizer/SKILL.md
     stage_role: post-delivery
     io_boundary:
@@ -241,7 +247,7 @@ agents:
   - id: harness-auditor
     class: cognitive
     status: draft
-    model: pro
+    model: flash
     skill: .agents/skills/harness-auditor/SKILL.md
     stage_role: governance-loop
     io_boundary:

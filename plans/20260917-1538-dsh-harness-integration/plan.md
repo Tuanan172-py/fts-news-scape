@@ -45,7 +45,7 @@ Bốn agent đang khai `model: pro` — `entity-curator`, `adversarial-dod-verif
 - (a) Hạ tất cả về `model: flash` và ghi chú "chất lượng kiểm chứng sau"; hoặc
 - (b) Giữ `status: draft` và `deferred` tới khi có thiết kế chạy được trên flash.
 
-Plan chọn **(b) cho Tier-3 `entity-curator`** (chạm Data Contract) và **(a) cho ba QA/brief**. Cần một dòng amendment trong `registry.yaml` + trace.
+**Đã chốt (2026-09-17): chọn (a) cho TOÀN BỘ bốn agent — tất cả về `model: flash`.** `entity-curator` vẫn giữ `status: draft` + `activation_gate` ADR (Tier-3, chạm Data Contract) nhưng route model là flash. Cần amendment `registry.yaml` + trace (rule 07).
 
 ## 3. Ràng buộc bắt buộc (không thoả hiệp)
 
@@ -133,13 +133,15 @@ Lưu ý môi trường: phiên DSH hiện có **approval prompts đang tắt**, 
 | harness-auditor | pro | hạ về `flash` |
 | entity-curator | pro, Tier-3 | **deferred** tới khi có thiết kế flash + ADR |
 
-## 9. Câu hỏi mở cần chốt
+## 9. Câu hỏi mở — ĐÃ CHỐT 2026-09-17
 
-1. Chốt §2 (a)/(b) cho 4 agent `pro` — plan đề xuất (b)+(a) (xem §2 Hệ quả D6).
-2. H2 chạy PTC ngay hay chạy native trước rồi mới PTC? Plan đề xuất PTC, có fallback native.
-3. Ngưỡng trần token mặc định mỗi lần activate (đề xuất: L1 60k, Gold 40k).
-4. Có giữ `agy` song song ở H2 để đối chứng chất lượng flash hay không?
-5. 163 packet L1 cũ: archive trước H2 (theo phase-02 remediation) — xác nhận thao tác.
+| # | Chốt |
+|:-:|---|
+| 1 | **(a)** — hạ TẤT CẢ model về `model: flash` (V41). `entity-curator` giữ `status: draft` + activation gate Tier-3, route flash. Cần amendment `registry.yaml` + trace. |
+| 2 | Chạy **PTC** ngay ở H2, giữ fallback native. |
+| 3 | Trần token: **L1 60.000**, **Gold 40.000** mỗi lần activate. |
+| 4 | Giữ `agy` làm option thay thế, **chưa thực thi**; kiểm chứng chất lượng để sau. |
+| 5 | Đồng ý remediation — archive 163 packet L1 cũ trước H2. |
 
 ## 10. Nghiệm thu chung
 
@@ -159,3 +161,25 @@ Mỗi phase trả đủ **Unit + Integration + Platform**. H1 có thêm bằng c
 - Không tự động hoá cognitive khi chưa có xác nhận người.
 - Không chạm `raw_html`.
 - Không implement khi plan chưa được duyệt.
+
+---
+
+## 12. Trạng thái triển khai (2026-09-17)
+
+| Hạng mục | Trạng thái |
+|---|---|
+| ADR 0009 | ✅ accepted |
+| H1 preset `news-scape-conductor` + skill | ✅ tạo, YAML validated |
+| User preset root (junction) | ✅ `%DSH_HOME%\.agent-presets` → repo |
+| H2 `agent_l1` + `agent_gold` + PTC | ✅ thêm vào preset (20 row) |
+| Skill `dsh-conductor` (L1 + Gold) | ✅ |
+| Runbook vận hành toàn workflow | ✅ `.agents/dsh/RUNBOOK.md` |
+| D6 registry pro/flash-lite → flash | ✅ áp dụng |
+| Story US-020..023 | ✅ tạo (US-020 in_progress) |
+| H1 Platform proof (phiên GUI) | ⏳ chờ người |
+| H2 wave L1 (tiêu token, cổng ADR 0008) | ⏳ chờ người xác nhận |
+| H3 bundle + `ns_activate` hard gate + generator | ⏸️ **hoãn** (chưa cần cho phiên 17/09) |
+| H4 governance + brief/verifier/auditor | ⏸️ **hoãn** |
+| Cổng ADR 0008 trong khi hoãn H3 | policy do skill cưỡng chế (chưa hard-enforce) |
+
+Thao tác người cần làm: mở phiên DSH mới chọn preset **News-Scape Conductor**, đặt permission **read-only**, yêu cầu "chạy radar" → lấy bằng chứng H1; sau đó xác nhận cổng ADR 0008 để chạy wave L1 H2.

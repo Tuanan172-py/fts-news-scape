@@ -108,6 +108,24 @@ def cmd_status(args: argparse.Namespace) -> None:
     """, (target_date,))
     l1_resolved_pending = cur.fetchone()[0]
 
+    # 3c-override. Bao phủ L1 theo NGÀY ĐĂNG (khác l1_done_count vốn đếm theo created_at):
+    # trong bài đăng hôm nay, bao nhiêu đã có l1_outputs dod_pass=1, còn bao nhiêu needs_agent chờ.
+    cur.execute("""
+        SELECT count(distinct lo.article_id)
+        FROM l1_outputs lo
+        JOIN articles a ON a.url_title_hash = lo.article_id
+        WHERE date(a.published_at) = ? AND lo.dod_pass = 1
+    """, (target_date,))
+    l1_today_covered = cur.fetchone()[0]
+
+    cur.execute("""
+        SELECT count(1)
+        FROM l1_tasks lt
+        JOIN articles a ON a.url_title_hash = lt.article_id
+        WHERE date(a.published_at) = ? AND lt.route <> 'resolved' AND lt.status = 'pending'
+    """, (target_date,))
+    l1_today_needs_agent = cur.fetchone()[0]
+
     # 3d. Bài bị nguồn xóa (404/410) trước khi kịp lấy nội dung đầy đủ — đặc trưng tin VN
     cur.execute("""
         SELECT count(1)
@@ -241,6 +259,10 @@ def cmd_status(args: argparse.Namespace) -> None:
     print(f"1. DỮ LIỆU TẠI KHO (DATABASE & BRONZE/SILVER):")
     print(f"   • Số bài cào xuất bản trong ngày : {crawled_count:,} bài")
     print(f"   • Số bài đã hoàn tất tầng L1     : {l1_done_count:,} bài")
+    _cover_pct = (100.0 * l1_today_covered / crawled_count) if crawled_count else 0.0
+    print(f"   • Bao phủ L1 bài đăng hôm nay    : {l1_today_covered:,}/{crawled_count:,} "
+          f"({_cover_pct:.1f}%) · còn {l1_today_needs_agent:,} needs_agent chờ · "
+          f"{l1_unrouted_count:,} chưa định tuyến")
     print(f"   • Số bài đã hoàn tất tầng Gold   : {gold_done_count:,} bài")
     print(f"   • Bài Gold đủ điều kiện chờ phân tích (Subscriber-Gated): {gold_pending_subs_count:,} bài")
     print(f"   • Bài bị nguồn xóa (404/410) trước khi lấy được nội dung: "
