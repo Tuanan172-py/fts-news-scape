@@ -39,6 +39,13 @@ FINAL_COLUMNS = [
     "implication", "impact_area", "time_sensitivity",
     "sentiment", "event_type", "gold_status", "url", "source_domain",
     "article_id", "agent_provider", "model_used",
+    # Ba cột minh bạch nguồn nhận diện, nối thêm vào CUỐI nên không đổi nghĩa hay
+    # thứ tự của cột nào đang có; người tiêu thụ hiện tại không vỡ.
+    # `intent_llm` là thực thể do mô hình tự nhận ra, `intent_code` là thực thể do
+    # tầng mã tất định khớp được, `intent_source` là nhãn đối chiếu giữa hai bên.
+    # Giá trị của cặp này nằm ở nhãn LLM_ONLY: đó chính là phần mô hình thấy mà từ
+    # điển cứng không thấy, gồm thương hiệu con, ngành suy ra từ ngữ cảnh và chủ đề vĩ mô.
+    "intent_llm", "intent_code", "intent_source",
 ]
 
 MASTER_COLUMNS = FINAL_COLUMNS + ["l1_source", "noise_signals"]
@@ -199,6 +206,46 @@ class UserOutputWriter:
             out.append(e["code"] if e and e.get("code") else eid)
         return "; ".join(dict.fromkeys(out))
 
+    def _intent_columns(self, l1_json: str) -> dict[str, str]:
+        """Tách thực thể của một bài thành hai cột theo nguồn nhận diện.
+
+        Nhãn đối chiếu do `article_expand.py` ghi sẵn vào siêu dữ liệu khi bung bản
+        ghi, nên ở đây chỉ là việc trình bày lại, không tính toán gì thêm. Bài xử lý
+        bằng đường cũ không có nhãn thì ba cột để trống thay vì đoán.
+
+        Args:
+            l1_json: Chuỗi JSON kết quả nhận diện thực thể của bài.
+
+        Returns:
+            Từ điển ba cột `intent_llm`, `intent_code` và `intent_source`.
+        """
+        d = _loads(l1_json)
+        labels = ((d.get("processing_metadata") or {}).get("intent_source") or {})
+        if not isinstance(labels, dict) or not labels:
+            return {"intent_llm": "", "intent_code": "", "intent_source": ""}
+
+        llm, code = [], []
+        for eid, label in sorted(labels.items()):
+            ent = self.reg.get(eid)
+            shown = (ent.get("code") if ent and ent.get("code") else eid)
+            etype = (ent.get("type") if ent else "") or ""
+            tag = f"{shown} [{etype}]" if etype else shown
+            if label in ("BOTH", "LLM_ONLY"):
+                llm.append(tag)
+            if label in ("BOTH", "CODE_ONLY"):
+                code.append(tag)
+
+        counts = {}
+        for label in labels.values():
+            counts[label] = counts.get(label, 0) + 1
+        source = "; ".join(f"{k}:{v}" for k, v in sorted(counts.items()))
+
+        return {
+            "intent_llm": "; ".join(dict.fromkeys(llm)),
+            "intent_code": "; ".join(dict.fromkeys(code)),
+            "intent_source": source,
+        }
+
     def _final_row(self, r: dict, matched: set[str]) -> dict:
         ag = _loads(r.get("agent_json"))
         summ = ag.get("summary") or {}
@@ -233,6 +280,7 @@ class UserOutputWriter:
             "article_id": r["article_id"],
             "agent_provider": meta.get("agent_provider") or ag.get("agent_provider") or "",
             "model_used": meta.get("model_used") or ag.get("model_used") or "",
+            **self._intent_columns(r.get("l1_json")),
         }
 
     @staticmethod

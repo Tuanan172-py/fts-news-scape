@@ -3,7 +3,7 @@
 |  |  |
 | --- | --- |
 | Ngày | 2026-09-18 |
-| Trạng thái | **SUPERSEDED & MERGED** — Đã được hấp thu và hợp nhất vào [Plan 20260918-1445-article-lane-scale-token](../20260918-1445-article-lane-scale-token/plan.md) |
+| Trạng thái | **SUPERSEDED** — thay thế bởi [plan hợp nhất 20260918-1651-article-lane-unified](../20260918-1651-article-lane-unified/plan.md). Giữ làm hồ sơ thiết kế nền (MDR, expander 0 token, catalog digest). |
 | Phân loại | **Cấp 2 — NORMAL** (Thiết kế nền móng cho MDR, Expander 0-token và Catalog Digest) |
 | Kế hoạch thay thế | [Plan 20260918-1445-article-lane-scale-token](../20260918-1445-article-lane-scale-token/plan.md) (Master Plan: Unified Article Processor, Mega-batch 100, Priority-Queue, Dual-Track Intent) |
 | Ràng buộc chủ đạo | **Trọng tâm vẫn là LLM xử lý nội dung** — Toàn bộ các phát minh cốt lõi (MDR, Expander 0 token, Prefix Caching nhóm đóng) đã được kế thừa trọn vẹn vào Agent hợp nhất |

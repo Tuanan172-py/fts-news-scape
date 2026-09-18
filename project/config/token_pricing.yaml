@@ -1,0 +1,42 @@
+# Bảng giá token và cửa sổ giá — nguồn duy nhất, không hardcode trong mã.
+#
+# DSH không lưu bất kỳ dữ liệu giá nào (đã xác minh mã nguồn), nên `billed_usd`
+# luôn được tính ngoài, từ ba rổ token rời rạc nhân đơn giá ở đây.
+#
+# Nguồn: https://api-docs.deepseek.com/quick_start/pricing — kiểm ngày 2026-09-18.
+# Khi DeepSeek đổi giá, sửa DUY NHẤT file này.
+
+version: 1
+updated: "2026-09-18"
+currency: USD
+unit_tokens: 1000000          # đơn giá tính trên 1 triệu token
+
+models:
+  deepseek-flash:
+    # Ba rổ rời rạc. `cache_write` luôn bằng 0 với adapter DeepSeek nên không có dòng giá.
+    off_peak:
+      input_cache_hit: 0.003
+      input_cache_miss: 0.15
+      output: 0.60
+    peak:
+      input_cache_hit: 0.006
+      input_cache_miss: 0.30
+      output: 1.20
+
+# Cửa sổ giờ cao điểm theo giờ UTC, thứ 2 đến thứ 6.
+# 01:00-04:00 và 06:00-10:00 UTC  ==  08:00-11:00 và 13:00-17:00 giờ VN (UTC+7).
+# Ngoài các khung này, kể cả cuối tuần, là off-peak và rẻ hơn 50%.
+peak_windows_utc:
+  weekdays: [0, 1, 2, 3, 4]     # 0 = thứ 2 (theo datetime.weekday())
+  ranges:
+    - { start_hour: 1, end_hour: 4 }
+    - { start_hour: 6, end_hour: 10 }
+
+# Ngưỡng cảnh báo cho radar. Đây là MỨC ĐỂ NHÌN, không phải cổng chặn việc.
+# Hai chốt tự động duy nhất nằm ở article_pack.py (est_ctx_peak) và
+# article_run.py (parse_fail) — xem plan §9.2.
+watch_thresholds:
+  context_pressure_amber: 0.25   # đóng phiên sau wave hiện tại
+  context_pressure_red: 0.40     # dừng ngay sau batch hiện tại
+  tokens_per_article_warn: 1500  # vượt mức này thì soi lại distillation
+  worker_turns_expected: 1       # con phải xong trong đúng 1 bước

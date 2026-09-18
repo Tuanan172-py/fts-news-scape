@@ -2,110 +2,71 @@
 ---
 trigger: always_on
 ---
-# 05 — Gold Tier Responsibility & Clean Paragraph Payload Invariants
+# 05 — Unified Article Processor, Smart Paragraph Distillation & Priority-Queue Invariants
 
-Quy tắc thiết kế cốt lõi và ranh giới nghiệp vụ bất biến cho tầng Gold và cơ chế Handoff trên Antigravity 2.0:
+Quy tắc thiết kế cốt lõi và ranh giới nghiệp vụ bất biến cho Agent xử lý bài đăng thống nhất trên Antigravity 2.0:
 
-## 1. Ranh giới Phân công Trách nhiệm (Scripts Automate vs Gold Agents)
-
+## 1. Ranh Giới Phân Công Trách Nhiệm (Unified Cognitive Model)
 Hệ thống phân chia ranh giới tuyệt đối thành 2 vùng:
 
-### A. Vùng Hạ tầng Tự động hóa (Scripts Automate):
-
+### A. Vùng Hạ Tầng Tự Động Hóa (Scripts Automate — 0 Token):
 - **Bronze**: Cào mã nguồn và lưu trữ nguyên bản bất biến (`raw_html` + `.meta.json`) phục vụ audit và kiểm chứng SHA256.
-- **Silver**: Chuẩn hóa, bóc tách cấu trúc DOM, phát hiện biến đổi (SimHash/Change Detection) và **tinh lọc dữ liệu thành các đoạn văn thuần túy**.
-- **Task Packaging**: Đóng gói các file `.task.json` chứa payload văn bản sạch để chuyển giao (handoff).
-- **Quality Gating & Ingest**: Kiểm tra hợp đồng Definition-of-Done (DoD Schema), nạp database SQLite (`monocle.db`).
-- **Delivery**: Phân tuyến theo danh sách theo dõi của từng người dùng và xuất file `final.csv`.
+- **Silver**: Chuẩn hóa, bóc tách cấu trúc DOM, phát hiện biến đổi (SimHash/Change Detection) và tách mảng đoạn văn bản `p[]`.
+- **Priority Sorter & Packaging**: Quét nhận diện thực thể Code-First (`{code_entities}`), chấm điểm ưu tiên, đóng gói Mega-Batch (100 bài/batch) dưới dạng **Compact JSON** (`json.dumps(..., separators=(',', ':'))`).
+- **Expander & Reconciliation**: Ánh xạ đối soát Intent chéo (`BOTH`, `LLM_ONLY`, `CODE_ONLY`), bù đắp citations nguyên văn từ chỉ số đoạn `c: [0, 2]`, kiểm tra DoD Schema, nạp database SQLite (`monocle.db`).
+- **Delivery First**: Phân tuyến và xuất file Excel giao hàng sớm cho User ngay sau Batch 1 (`users/output/<user>/<date>.xlsx`).
 
-### B. Vùng Trí tuệ Tầng Gold (Agents Realm — Đảm nhận trọn vẹn 2 lớp nghiệp vụ):
-
-- **Lớp 1 (Xác định Thực thể — Entity Recognition)**:
-  - Nhận diện toàn diện: Mã CP (3 ký tự in hoa), Tên công ty, Sàn niêm yết, Ngành kinh doanh, Chỉ số thị trường, và các trường có trong data/entitties.
-  - Phân loại nhóm `categories` và trích xuất `surface`.
-- **Lớp 2 (Xử lý Nội dung & Ngữ nghĩa — Content Processing)**:
-  - Tóm tắt súc tích (`summary`: abstractive + key_points).
-  - Phân tích hàm ý thị trường (`implication`: tác động doanh thu/dòng tiền/cổ phiếu).
-  - Chấm điểm trọng yếu động (`materiality_score`: **thang 0–1**, khoảng chấm khuyến nghị 0.1–1.0).
-  - Phân loại sắc thái (`sentiment`: positive/negative/neutral).
-  - Trích xuất chứng cứ có căn cứ (`citations`: $\ge 2$ trích dẫn nguyên văn $\ge 20$ ký tự).
+### B. Vùng Trí Tuệ Thống Nhất (Unified Cognitive Agent — `agent_article`):
+- Không còn phân biệt L1 vs GOLD; một Agent duy nhất đảm nhận trọn vẹn cả hai lớp nghiệp vụ trong **1 lượt duy nhất (Single-turn, Zero-tool)**:
+  - **Lớp 1 (Nhận diện Thực thể & Intent Độc lập)**: Trích xuất các đối tượng ngữ nghĩa theo 11 mã nhóm (`TIC`, `COM`, `PER`, `FND`, `IDX`, `EXC`, `IND`, `GEO`, `THM`, `AST`, `INS`), không bị thiên kiến bởi Code.
+  - **Lớp 2 (Xử lý Nội dung & Ngữ nghĩa)**: Tóm tắt súc tích (`s`), các luận điểm chính (`k`), phân tích hàm ý thị trường (`im`), phân loại sắc thái (`sn`), độ nhạy thời gian (`ts`), và chỉ số đoạn trích dẫn (`c`).
 
 ---
 
-## 2. Quy chuẩn Dữ liệu Handoff cho Agents (Lean Payload & Mini-Batch Invariants)
+## 2. Quy Chuẩn Payload & Lọc Đoạn Thông Minh (Smart Semantic Paragraph Distillation)
 
-Nhằm tối ưu tốc độ, giảm thiểu 95% Token Burn và triệt tiêu hoàn toàn ảo giác (hallucination) do rác thông tin:
+Nhằm tối ưu tốc độ, triệt tiêu 100% rác DOM và ngăn chặn bùng nổ token:
 
-1. **Bảo toàn Bản gốc Raw (Immutable Bronze)**:
-   - File `raw_html` và `meta.json` luôn được lưu giữ nguyên bản tại Bronze để kiểm toán và đối chiếu SHA256.
-2. **Loại bỏ Hoàn toàn Rác DOM (Zero-Waste Task Packet)**:
-   - Tuyệt đối KHÔNG đưa `structure.links` (hàng ngàn liên kết menu/header/footer) và `images` vào Task Packet. Dung lượng 1 packet phải được nén dưới **10 KB** (thay vì 180 KB).
-3. **Bảo toàn Đoạn văn Nguyên bản & Trần Động (Dynamic 3-Pass Semantic Pruning — 2.200 Chars Max)**:
-   - Bộ lọc boilerplate (`pruner.py`) loại bỏ triệt để: Teaser ("Bài liên quan", "Xem thêm"), Hotline, Email, Tòa soạn, Giấy phép, Copyright, nguồn tin vặt.
-   - **TRẦN KÝ TỰ MỚI (ADR 0005)**: Hạ trần mặc định từ `4.000` xuống `2.200` ký tự (giảm 45% input token).
-   - **THUẬT TOÁN 3-PASS**: Giữ tối đa 2 đoạn đầu (Sapo) $\rightarrow$ quét ưu tiên đoạn chứa mã CP từ `l1_entities` hoặc số liệu tài chính $\rightarrow$ điền đầy theo thứ tự gốc.
-   - **RÀNG BUỘC CỐT LÕI**: Bộ lọc BẮT BUỘC loại bỏ theo **nguyên khối đoạn văn** (`<p>`). Tuyệt đối KHÔNG cắt tỉa, biên tập lại câu từ trong các đoạn văn giữ lại, nhằm đảm bảo mọi `source_span` trích dẫn citations ($\ge 20$ ký tự) luôn là chuỗi con nguyên văn (exact substring) hợp lệ, vượt qua cổng kiểm tra DoD Ingest.
-4. **Phễu Lọc & Tùy Biến Cổng Xuất Gold (Subscriber-Gated & Customizable Export — ADR 0005 & US-010)**:
-   - Mặc định chỉ xuất task Gold cho bài viết có `l1_entities` nằm trong Watchlist của các người dùng đang active (`manifest.yaml` và `users/*.yaml`).
-   - Các bài viết không có người đăng ký được giữ nguyên ở trạng thái `L1_ONLY`, tiết kiệm 38% – 45% token Gold vô ích.
-   - **Tùy biến linh hoạt theo nhu cầu vận hành**:
-     - `--user <tên>` (`-u`): Xuất đích danh theo Watchlist của 1 hoặc nhiều người dùng cụ thể (thay vì union của toàn bộ).
-     - `--days <N>` (`-d`): Giới hạn chỉ bốc các bài viết trong N ngày gần nhất, tránh xử lý backlog cũ quá hạn.
-     - `--date <YYYY-MM-DD|today|all>`: Giới hạn chính xác trong một ngày xuất bản cụ thể.
-     - `--dry-run`: Cho phép kiểm tra và đếm nhanh số lượng bài thỏa mãn điều kiện mà không claim DB và không ghi file rác.
-5. **Gom Lô Siêu Tốc (Consolidated Mini-Batch Handoff)**:
-   - Khuyến khích đóng gói các task thành các mini-batch (5–10 bài/file `batch_XX.task.json`).
-   - Subagent chỉ gọi 1 lần `view_file` và 1 lần `write_to_file` mảng JSON cho cả lô, giảm 90% số Tool Calls I/O.
-6. **Tiếp sức Thực thể L1 $\rightarrow$ Gold (L1-Assisted Chaining)**:
-   - Task Packet gửi cho Gold Agent BẮT BUỘC phải nhúng kèm danh sách mã cổ phiếu đã được L1 bóc tách sẵn (`input.l1_entities`), giúp Gold Agent tập trung trực tiếp vào việc phân tích tác động tài chính và chấm điểm trọng yếu.
-7. **Đầu ra Tinh Gọn & Zero-Token Metadata (`agent-output-v2-lean` — US-012)**:
-   - Cấu trúc output phẳng, chỉ gồm 7 trường cốt lõi phục vụ trực tiếp cho Deliverable Excel: `article_id`, `summary`, `key_points`, `implication`, `sentiment`, `time_sensitivity`, `citations`.
-   - `citations` dạng mảng chuỗi nguyên văn trực tiếp (`["span 1", "span 2"]`), loại bỏ `claim` và `source_offset`.
-   - **Ràng buộc Value-Added Invariant**: `key_points` BẮT BUỘC phải diễn giải bằng lời văn phân tích tài chính riêng của Agent, TUYỆT ĐỐI KHÔNG sao chép nguyên văn chuỗi citations. Cổng DoD Ingest sẽ từ chối nạp DB nếu phát hiện trùng lặp.
-   - Loại bỏ 100% các trường thừa thãi: `affected_parties`, `impact_area`, `event_type`, `materiality.score`, `extraction_quality`.
-   - Siêu dữ liệu kỹ thuật (`processing_metadata`) do hệ thống tự động điền khi Ingest (Zero-token metadata), tiết kiệm ~60% output token.
-   - Loại bỏ triệt để `structure.headings` khỏi task packet input để chống rò rỉ token và chống hallucinate.
+1. **Bắt Buộc Compact JSON (Anti-Line-Truncation Invariant)**:
+   - File packet gửi cho Agent BẮT BUỘC phải ghi dạng **Compact JSON** (`json.dumps(..., separators=(',', ':'))`), TUYỆT ĐỐI KHÔNG dùng `indent=2`.
+   - Bảo đảm không có bất kỳ dòng vật lý nào dài quá 2.000 ký tự làm kích hoạt lỗi cắt dòng (line truncation) của parser, triệt tiêu nguyên nhân gốc khiến Agent tự mở vòng lặp Grep.
+2. **Lọc Đoạn Giá Trị Cao (Thay thế trần cắt tỉa 2.200 ký tự cứng)**:
+   - `p0`: Bắt buộc giữ đoạn Sapo mở đầu (chứa 70% nội dung sự kiện theo cấu trúc tháp ngược báo chí).
+   - `p1..pk`: Giữ các đoạn chứa số liệu định lượng (%, tỷ đồng, triệu USD, KQKD, nợ xấu) và phát ngôn lãnh đạo / sự kiện pháp lý.
+   - Loại bỏ triệt để: Lịch sử thành lập doanh nghiệp, giải thích thuật ngữ chung, liên kết xem thêm và footer tòa soạn.
+3. **Citations bằng Chỉ Số Đoạn (`c: [0, 2]`)**:
+   - Agent chỉ phát ra số thứ tự của các đoạn văn bản chứa chứng cứ.
+   - Script Expander bên ngoài (0 token) tự động trích xuất chuỗi con nguyên văn từ `p0`, `p2` $\rightarrow$ Bảo đảm 100% vượt qua cổng DoD mà tiết kiệm hàng chục nghìn output token.
 
 ---
 
-## 3. Cấm Tuyệt đối Giả lập Trí tuệ Agent bằng Heuristic Script (No Script Emulation)
-- **Tuyệt đối không viết script Python để tự sinh kết quả Gold/L1**: Không dùng regex hay heuristic rules trong mã lệnh để bypass Subagents và sinh output JSON.
-- **Nhiệm vụ của Subagents**: Xử lý ngữ nghĩa, trích xuất thực thể, tóm tắt, suy luận hàm ý, chấm điểm trọng yếu và trích dẫn citations là vùng trí tuệ độc quyền của Subagents (Model: Flash/Pro).
-- **Quy trình chuẩn**: Orchestrator kích hoạt Subagents qua `invoke_subagent` $\rightarrow$ Subagent xử lý task và ghi `data/agent_outputs/` $\rightarrow$ Chạy script Ingest & Delivery (`python scripts/run_agent_hierarchy.py --ingest-and-deliver`) để kiểm toán và giao hàng.
+## 3. Hàng Đợi Mega-Batch Phân Tầng Ưu Tiên (Priority-Queue Mega-Batching)
+
+Cố định quy chuẩn **100 bài / batch**:
+
+1. **TIER 1 — Delivery First (Batch 1, 100 bài)**:
+   - Bài khớp Ticker/Alias nằm trong Watchlist active (`manifest.yaml`, e.g., user `AnPT`) hoặc biến động vĩ mô khẩn (NHNN, lãi suất điều hành, tỷ giá, GDP, CPI, thuế tự vệ).
+   - **Quy trình**: Đóng gói ngay vào **Batch 1** $\rightarrow$ LLM chạy $\rightarrow$ Expander đối soát $\rightarrow$ **Kích hoạt ngay `write_user_output.py` để xuất bản file Excel giao cho người dùng trước trong 2–3 phút**.
+2. **TIER 2 & 3 — Background Queue (Batch 2..N, 100 bài/batch)**:
+   - Cổ phiếu VN30 ngoài watchlist, báo cáo tài chính quý/năm, công bố thông tin hành chính, tin cổ đông nhỏ, tin thị trường chung.
+   - **Quy trình**: Vẫn xử lý **FULL toàn bộ cả bài** (không bỏ sót bài nào, không để bài nào ở trạng thái L1-only mãi mãi), nhưng xếp hàng đợi phía sau để chạy các batch nối tiếp, hoàn tất nạp SQLite để làm giàu kho dữ liệu phân tích với **độ phủ 100%**.
 
 ---
 
-## 4. Tiêu Chuẩn Đo Lường & Phương Thức Ước Lượng Token Quota (Benchmark & Quota Invariants)
+## 4. Cơ Chế Nhận Diện Intent Độc Lập & Báo Cáo 2 Cột (Dual-Track Intent)
 
-Nhằm kiểm soát rủi ro tiêu tốn quota không kiểm soát, tránh chạm trần TPM/RPM và chủ động lập kế hoạch ngân sách LLM:
+1. **Nhận diện độc lập ban đầu**:
+   - Code-First quét mã CP và từ điển cứng $\rightarrow$ `{code_entities}`.
+   - LLM đọc ngữ nghĩa tự nhiên và trích xuất thực thể theo nhóm $\rightarrow$ `{llm_entities}`.
+2. **Lớp đối soát 0 token (`article_expand.py`)**:
+   - `BOTH`: Cả Code và LLM cùng tìm thấy (Độ tin cậy cao nhất).
+   - `LLM_ONLY`: LLM phát hiện ngữ nghĩa sâu mà Code không có từ khóa (Đưa vào `unlisted_candidates` để mở rộng catalog).
+   - `CODE_ONLY`: Khớp từ khóa máy móc.
+3. **Minh bạch hóa trên Deliverable Excel (`users/output/<user>/<date>.xlsx`)**:
+   - Bổ sung 2 cột riêng biệt `intent_llm` và `intent_code` kèm cột phân loại nguồn gốc `intent_source`.
 
-1. **Định Mức Thực Nghiệm Trên Mỗi Bài Viết (Empirical Per-Article Benchmark - Model Flash)**:
-   - **Input Payload**: ~800 – 900 tokens / bài (sau khi lọc qua Dynamic 3-Pass Semantic Pruning $\le 2.200$ ký tự $\approx 17.2$ KB cho mini-batch 5 bài).
-   - **Output Payload**: ~900 – 1.000 tokens / bài (bóc tách đầy đủ `summary`, `implication`, `materiality`, `citations` $\ge 20$ chars và `metadata` $\approx 18.2$ KB cho mini-batch 5 bài).
-   - **Tổng Token tiêu thụ**: **~1.700 – 1.800 tokens / bài** (trung bình thực tế: **~1.770 tokens**).
-   - **Thời gian xử lý**: **~40 – 45 giây / bài** (~3.5 phút cho mini-batch 5 bài).
+---
 
-2. **Công Thức Ước Lượng Quota Cho Khối Lượng Lớn ($N$ bài viết)**:
-   $$\text{Total Input Tokens} \approx N \times 860$$
-   $$\text{Total Output Tokens} \approx N \times 912$$
-   $$\text{Total Tokens} \approx N \times 1.770 \quad (\text{ví dụ } 700 \text{ bài} \approx 1,24 \text{ triệu tokens})$$
-   $$\text{Thời gian xử lý (1 Subagent)} \approx \frac{N \times 43}{3.600} \text{ (giờ)}$$
-   $$\text{Thời gian xử lý (K Subagents song song)} \approx \frac{N \times 43}{3.600 \times K} \text{ (giờ)}$$
-
-3. **Quy Trình Phân Batch Có Kiểm Soát 3 Bước (Controlled 3-Step Wave Strategy)**:
-   - **Bước 1 — Pilot Benchmark (Khảo sát thí điểm)**:
-     - Luôn chạy cờ `--dry-run` để đếm chính xác số bài thỏa mãn Subscriber-Gating.
-     - Xuất đúng **1 mini-batch (5 bài)** để chạy Pilot qua Subagent Flash.
-     - Kiểm tra 100% DoD Pass và đo lường token thực tế từ transcript trước khi mở rộng.
-   - **Bước 2 — Đóng gói Mini-Batch tối ưu**:
-     - Cố định quy chuẩn **5 bài / file** `batch_XX.task.json` (tương đương ~4.300 input tokens và ~4.560 output tokens).
-     - Tuyệt đối không gom quá 10 bài/batch để tránh quá tải ngữ cảnh (context dilution) và suy giảm chất lượng bóc tách citations.
-   - **Bước 3 — Triển khai 3 Đợt theo Thứ tự Ưu tiên Nghiệp vụ**:
-     - *Wave 1 (Ưu tiên cao nhất)*: Nhóm Cổ phiếu / Doanh nghiệp trọng tâm (`VIC`, `HPG`, `FPT`, `TCB`, `MBB`...).
-     - *Wave 2 (Ưu tiên trung bình)*: Nhóm Vĩ mô & Ngành kinh tế (Tỷ giá, Lãi suất, Đầu tư công, Bất động sản, Ngân hàng).
-     - *Wave 3 (Hoàn tất)*: Toàn bộ backlog còn lại trước khi kích hoạt phân tuyến giao hàng (`user_output.py`).
-
-4. **Tự Động Hóa Kích Hoạt Headless CLI (`agy -p` Runner)**:
-   - Thay thế hoàn toàn thao tác gõ prompt mồi thủ công bằng script điều phối tự động `scripts/auto_pilot.py`.
-   - Lệnh gọi headless bắt buộc dùng các cờ: `agy -p "<prompt>" --dangerously-skip-permissions --effort low`.
-   - Giữ nghiêm ngặt giới hạn an toàn nội bộ: $\le 100.000$ tokens/phút và trần ngân sách ngày $\le 350.000$ tokens.
+## 5. Cấm Tuyệt Đối Giả Lập Trí Tuệ Agent Bằng Heuristic Script (No Script Emulation)
+- **Tuyệt đối không viết script Python để tự sinh kết quả phân tích**: Không dùng regex hay heuristic rules trong mã lệnh để bypass LLM và sinh output JSON tóm tắt/hàm ý.
+- **Vùng độc quyền của LLM**: Xử lý ngữ nghĩa sâu, nhận diện đối tượng mơ hồ, tóm tắt, suy luận hàm ý tài chính và phân loại sắc thái là vùng trí tuệ độc quyền của LLM.

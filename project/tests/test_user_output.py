@@ -39,9 +39,13 @@ def test_gate_and_routing(tmp_path):
     out_file = tmp_path / "out" / "AnPT" / f"{DATE}.xlsx"
     assert out_file.exists()
 
-    # Header = English labels, correct block order: navigation → classification → source → long text → tech
+    # Header = English labels, correct block order: navigation → intent provenance →
+    # classification → source → long text → tech.
+    # Ba cột Intent nằm ngay sau Matched Entities: người đọc tra thực thể ở đó, nên
+    # nguồn nhận diện phải đứng cạnh để so được ngay mô hình thấy gì mà mã không thấy.
     assert k.delivery_labels(out_file) == [
-        "Date", "Matched Entities", "Title", "Sentiment", "Time Sensitivity", "Gold Status", "Source",
+        "Date", "Matched Entities", "Intent — LLM", "Intent — Code", "Intent Source",
+        "Title", "Sentiment", "Time Sensitivity", "Gold Status", "Source",
         "Summary", "Key Points", "Market Implication", "URL", "Article ID",
     ]
 
@@ -242,8 +246,14 @@ def test_formula_injection_is_neutralised(tmp_path):
     UserOutputWriter(store, reg, output_root=tmp_path / "out").write(date=DATE)
     wb = load_workbook(tmp_path / "out" / "AnPT" / f"{DATE}.xlsx")
     try:
-        title_cell = wb.active.cell(row=2, column=3)
-        assert title_cell.data_type == "s"                 # text, KHÔNG phải formula ('f')
+        ws = wb.active
+        # Tra cột theo nhãn thay vì theo chỉ số cứng: hợp đồng giao hàng còn được bổ
+        # sung cột về sau, và một chỉ số cứng sẽ âm thầm kiểm nhầm ô khác.
+        labels = [c.value for c in ws[1]]
+        title_cell = ws.cell(row=2, column=labels.index("Title") + 1)
+        # Ô phải là văn bản, KHÔNG phải công thức ('f'). openpyxl trả 's' cho chuỗi
+        # trong bảng chia sẻ và 'inlineStr' cho chuỗi nội tuyến; cả hai đều là văn bản.
+        assert title_cell.data_type in ("s", "inlineStr")
         assert title_cell.value.startswith("=HYPERLINK")
     finally:
         wb.close()

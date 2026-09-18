@@ -24,14 +24,53 @@ stages:
     cli: '& "C:\venvs\news-scape\Scripts\python.exe" scripts/run_once.py'
     liveness_check: "max(fetched_at) trong articles <= 30 phút => 🟢"
 
+  # ─────────── ĐƯỜNG MẶC ĐỊNH TỪ 2026-09-18 — Article Lane ───────────
+  # Một agent, một bước cho cả lô, xử lý trọn cả thực thể lẫn nội dung của mỗi bài.
+  # Ba stage dưới đây thay thế chuỗi l1_route → l1_match → l1_ingest → gold_export →
+  # gold_analyze → gold_ingest. Chuỗi cũ giữ nguyên bên dưới để còn quay lui.
+  - id: article_pack
+    agent: article-packer
+    class: operator
+    needs: [scrape]
+    produces: "data/agent_tasks/article/article_<wave>_NN.task.json + .map.json + wave_<wave>.json"
+    cli: '& "C:\venvs\news-scape\Scripts\python.exe" scripts/article_run.py --wave <wave> --today'
+    note: >-
+      Xếp tầng ưu tiên theo hướng nhận rộng, chắt lọc đoạn tất định giữ nguyên văn,
+      ghi packet sao cho mọi dòng nằm dưới trần cắt dòng của công cụ đọc, và in dự toán.
+
+  - id: article_analyze
+    agent: article-processor
+    class: cognitive
+    needs: [article_pack]
+    consumes: "data/agent_tasks/article/*.task.json"
+    produces: "data/agent_outputs_article/*.output.json"
+    gate: dod-gatekeeper#l1
+    wave: { batch: 100, concurrency: 3,
+            note: "ĐÚNG MỘT bước mỗi lô. Lô đầu chạy một mình để ghi cache, phần còn lại mới song song." }
+    invoke: "tools.agent_article trong MỘT lệnh run_code; chương trình do article_run.py sinh sẵn"
+
+  - id: article_expand
+    agent: article-expander
+    class: operator
+    needs: [article_analyze]
+    produces: "data/agent_outputs_l1/*.output.json + data/agent_outputs/*.output.json"
+    cli: '& "C:\venvs\news-scape\Scripts\python.exe" scripts/article_run.py --wave <wave> --finish'
+    note: >-
+      Cứu từng bản ghi khi đầu ra hỏng một phần, dựng trích dẫn nguyên văn từ chỉ số
+      đoạn, tra định danh theo nhóm, đối chiếu hai nguồn nhận diện, rồi nạp cơ sở dữ
+      liệu, ghi sổ cái token và sinh tệp bàn giao.
+
+  # ─────────── ĐƯỜNG CŨ — giữ để quay lui, không chạy mặc định ───────────
   - id: l1_route
     agent: l1-router
     class: operator
+    deprecated: true
     needs: [scrape]
     produces: "data/agent_tasks/l1/l1_batch_XX.task.json + l1_outputs (code-first)"
     cli: '& "C:\venvs\news-scape\Scripts\python.exe" scripts/l1_route.py --from-db --date today --mini-batch 25'
 
   - id: l1_match
+    deprecated: true
     agent: l1-entity-matcher
     class: cognitive
     needs: [l1_route]
@@ -42,6 +81,7 @@ stages:
     invoke: "invoke_subagent (thủ công qua nền Antigravity) — xem prompt handoff news-scape-agent-operations §3A"
 
   - id: l1_ingest
+    deprecated: true
     agent: l1-ingest-gate
     class: operator
     needs: [l1_match]
@@ -69,6 +109,7 @@ stages:
     intent: "Gộp cùng sự kiện đa nguồn -> Gold phân tích 1 lần, gán N nguồn."
 
   - id: gold_export
+    deprecated: true
     agent: gold-exporter
     class: operator
     needs: [l1_ingest]         # triage/dedup optional chèn vào trước khi active
@@ -77,6 +118,7 @@ stages:
     cli: '& "C:\venvs\news-scape\Scripts\python.exe" scripts/agent_export.py --date today --require-l1 --subscriber-only'
 
   - id: gold_analyze
+    deprecated: true
     agent: gold-financial-analyst
     class: cognitive
     needs: [gold_export]
@@ -87,6 +129,7 @@ stages:
     invoke: "invoke_subagent — xem prompt handoff news-scape-agent-operations §3B"
 
   - id: gold_ingest
+    deprecated: true
     agent: gold-ingest-gate
     class: operator
     needs: [gold_analyze]
@@ -106,7 +149,7 @@ stages:
   - id: deliver
     agent: delivery-writer
     class: operator
-    needs: [gold_ingest]
+    needs: [article_expand]
     produces: "users/output/<user>/<date>.xlsx"
     cli: '& "C:\venvs\news-scape\Scripts\python.exe" scripts/write_user_output.py --date all'
 

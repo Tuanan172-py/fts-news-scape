@@ -11,10 +11,19 @@ description: Chuyên viên kiểm toán ngân sách LLM, đo lường lượng t
 
 ## 1. Định Hướng & Bất Biến Nghiệp Vụ (Context & Domain Invariants)
 
-1. **Định Mức Thực Nghiệm (Empirical Benchmark — Model Flash)**:
-   - **Tầng L1**: ~450 tokens / bài (~350 input + 100 output).
-   - **Tầng Gold (v2-lean)**: ~1.470 tokens / bài (~860 input + 610 output).
-   - Chi phí ước tính: ~$0.15 USD / 1 triệu tokens (Flash).
+1. **KHÔNG CÒN ĐỊNH MỨC — ĐỌC SỔ CÁI (cập nhật 2026-09-18)**:
+   - Hai định mức cũ, **450 token/bài** cho tầng L1 và **1.470 token/bài** cho tầng Gold, là con số vô nguồn và **đã bị số đo thật bác bỏ**. Hai vệt audit cho ra **39.600** và **30.800–60.000** token mỗi bài, tức lệch **21 đến 90 lần**.
+   - Nguyên nhân lệch không nằm ở nội dung mà ở **số bước**: mỗi bước gửi lại toàn bộ lịch sử, nên chi phí tăng theo bình phương số bước chứ không theo số bài.
+   - Từ nay chi phí đọc từ bảng `token_ledger` trong `harness.db`:
+     ```powershell
+     & "C:\venvs\news-scape\Scripts\python.exe" scripts/token_ledger.py report
+     & "C:\venvs\news-scape\Scripts\python.exe" scripts/token_ledger.py verify
+     ```
+   - **Tuyệt đối không ước lượng chi phí bằng cách nhân định mức với số bài.** Nếu sổ cái chưa có dòng nào thì câu trả lời đúng là "chưa đo", không phải một con số nhân ra.
+2. **Ba Rổ Token Và Hai Thước Đo**:
+   - Ba rổ rời rạc: đầu vào **trúng** bộ nhớ đệm, đầu vào **trượt** bộ nhớ đệm, và đầu ra. Đơn giá chênh nhau tới 200 lần nên cộng gộp là sai.
+   - Hai thước: `quota_tokens` là tổng token tính vào hạn mức tài khoản, `billed_usd` là tiền. Chúng lệch nhau rất xa. **Mọi báo cáo phải nói rõ đang dùng thước nào.**
+   - Giá nằm ở `project/config/token_pricing.yaml`, không hardcode ở đâu khác.
 2. **Bất Biến Phễu Lọc Subscriber-Gating (ADR 0005)**:
    - Chỉ xuất task phân tích Gold cho các bài viết có thực thể nằm trong Watchlist của người dùng đang active.
    - Các bài không có người đăng ký BẮT BUỘC lưu trữ ở trạng thái `L1_ONLY` trong database.
@@ -32,8 +41,9 @@ description: Chuyên viên kiểm toán ngân sách LLM, đo lường lượng t
    - Wave 2: Vĩ mô & Ngành kinh tế (Tỷ giá, Lãi suất, Bất động sản...) (15–20 bài).
    - Wave 3: Hoàn tất backlog còn lại trước 16:30.
 6. **Hạn Mức An Toàn (Safety Token Cap)**:
-   - Tốc độ sinh: <= 100.000 tokens/phút.
-   - Trần ngân sách ngày: <= 350.000 tokens (~$0.05 USD).
+   - ~~Tốc độ sinh: <= 100.000 tokens/phút.~~ **GỠ 2026-09-18.** Con số này vô nguồn. Nhà cung cấp **không có giới hạn theo phút**; giới hạn duy nhất là số lời gọi đồng thời, ở mức 2.500 cho model đang dùng, cao hơn nhu cầu của hệ này ba bậc độ lớn.
+   - ~~Trần ngân sách ngày: <= 350.000 tokens.~~ **GỠ 2026-09-18.** Trần này được đặt khi mới chỉ phân tích sâu khoảng một phần mười số bài. Nay mọi bài đều được xử lý đầy đủ nên mức tiêu thụ hợp lý là khoảng 375.000 token cho 307 bài và 1,22 triệu cho 1.000 bài. Giữ trần cũ chỉ tạo báo động giả.
+   - **Van xả khi khối lượng vượt ngân sách**, theo thứ tự từ nhẹ tới nặng: siết trần token mỗi bài trong khâu chắt lọc, rồi dời nhóm nền sang khung giá thấp điểm, cuối cùng mới giảm kích thước lô. Không hạ độ sâu xử lý.
 
 ---
 

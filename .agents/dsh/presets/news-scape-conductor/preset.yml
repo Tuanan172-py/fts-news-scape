@@ -1,5 +1,7 @@
-name: News-Scape Conductor (read-only)
+name: News-Scape Conductor
 description: >-
-  Conductor read-only cho mạng lưới agent News-Scape: đọc .agents/pipeline.yaml + radar,
-  đề xuất stage kế tiếp; không ghi DB, không sửa file, không spawn agent.
+  Conductor điều phối mạng lưới agent News-Scape ở chế độ PTC: đọc .agents/pipeline.yaml
+  + radar để suy ra stage kế tiếp, chạy operator 0 token qua pwsh, và spawn cognitive
+  agent (agent_article, hoặc agent_l1/agent_gold khi quay lui) qua subagent in-process.
+  Quyền ghi do permission preset của phiên quyết định, không do preset này.
 order: 10

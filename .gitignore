@@ -30,6 +30,11 @@ logs/
 **/data/agent_outputs/
 # output agent L1 nộp về
 **/data/agent_outputs_l1/
+# output agent article & mentions nộp về
+**/data/agent_outputs_article/
+**/data/article_mentions/
+# trạng thái handoff giữa các phiên
+**/data/state/
 # Silver (dẫn xuất Bronze qua derive)
 **/data/silver/
 # Report ngay do domain_check/daily_reporter sinh

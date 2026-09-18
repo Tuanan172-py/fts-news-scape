@@ -26,16 +26,22 @@ Neo: ADR `0009` · ADR `0008` (cổng + trần token) · `plans/20260917-1538-ds
 
 ## Wiring preset vào DSH
 
-Preset được nạp qua **user preset root** bằng junction (không sửa profile, không gây live-reload):
+Preset được nạp qua **root cấu hình**, KHÔNG qua junction:
 
 ```powershell
-cmd /c mklink /J "$env:USERPROFILE\.dsh\.agent-presets\news-scape-conductor" ^
-  "C:\Users\anpt\OneDrive - fpts.com.vn\FRA_DataIngestion - news-scape\.agents\dsh\presets\news-scape-conductor"
+# Dừng host dsh web trước. Sửa khi host đang chạy gây live-reload phá tool catalog.
+# Ghi nội dung .agents/dsh/patch/web.cordis.patch.yml vào:
+#   %DSH_HOME%\profiles\web\cordis.patch.yml   (bản đang nạp vẫn là [] — chưa áp thì preset không bao giờ hiện)
+# Rồi khởi động lại host.
 ```
 
-DSH quét root này mặc định (`includeUserRoot: true`); discovery đọc lại mỗi lần gọi nên preset mới hiện **không cần restart**.
+Root là `<repo>\.agents\dsh\presets` — thư mục **thật** chứa `news-scape-conductor/` là thư mục con **thật**.
 
-`patch/web.cordis.patch.yml` là bản nguồn thay thế (root cấu hình qua `dsh-agent-presets.roots`). **Cảnh báo:** sửa `%DSH_HOME%\profiles\web\cordis.patch.yml` khi host đang chạy gây live-reload phá tool catalog của phiên. Chỉ áp khi host đã dừng, rồi khởi động lại.
+**Vì sao KHÔNG dùng junction:** `dsh-agent-presets` quét root bằng `readdir(dir, { withFileTypes: true })` rồi lọc `if (!child.isDirectory() || !PRESET_ID.test(child.name)) continue;` (`dsh-agent-presets/lib/types/discovery.js:293`). Trên Windows một junction được `readdir` báo là **symlink** (`isDirectory === false`, `isSymbolicLink === true`) nên **bị bỏ qua im lặng** — preset không hiện trong picker, không kèm lý do "broken", không có lỗi nào để đọc. Junction là đường cụt; đã kiểm chứng trên máy 2026-09-18.
+
+**Cảnh báo:** sửa `%DSH_HOME%\profiles\web\cordis.patch.yml` khi host đang chạy gây live-reload phá tool catalog của phiên. Chỉ áp khi host đã dừng, rồi khởi động lại.
+
+**Patch ghi đè TOÀN BỘ config của row**, nên phải restate đủ trường (`default`, `roots`), không chỉ trường muốn đổi.
 
 ## Ranh giới 2-I/O
 

@@ -1,7 +1,8 @@
 # ADR 0008 — Kích hoạt Gold bắt buộc có người trong vòng lặp & trần token
 
 - **Ngày:** 2026-09-17
-- **Trạng thái:** **accepted** (người dùng chỉ định 2026-09-17: *"bắt buộc human phải ở trong loop
+- **Trạng thái:** **accepted, đã amendment 2026-09-18** (§2.1 và §2.3 hết hiệu lực; §2.4 giữ nguyên)
+- **Trạng thái gốc:** accepted (người dùng chỉ định 2026-09-17: *"bắt buộc human phải ở trong loop
   và đưa ra permission"*)
 - **Lane:** **high-risk** — kiểm soát chi phí token & quyền kích hoạt tác nhân ngoài
 - **Story:** US-017 · **Tác động:** `scripts/auto_pilot.py`, `scripts/run_daily.ps1`, `src/agent/batch_handoff.py`
@@ -33,7 +34,36 @@ Bốn vấn đề chồng lên nhau:
 
 ## 2. Quyết định
 
+> ## AMENDMENT 2026-09-18 — gỡ cổng xác nhận, giữ nguyên "thất bại phải ồn ào"
+>
+> **Người dùng chỉ định:** *"bỏ hẳn cổng ADR 0008 (người xác nhận), tôi sẽ quản lý theo batch hoặc wave"*.
+>
+> **Vì sao quyết định gốc không còn phù hợp.** ADR này ra đời khi việc tiêu token diễn ra qua một công cụ ngoài repo chạy kèm cờ bỏ qua mọi lớp hỏi quyền, không ước lượng trước, không đo sau, và báo thành công vô điều kiện. Trong hoàn cảnh đó, cổng hỏi người là lớp bảo vệ duy nhất.
+>
+> Ba điều kiện đó nay đều đã đổi:
+>
+> 1. **Mọi lần tiêu token đều bắt đầu bằng một lệnh tường minh của người vận hành** (`article_run.py --wave N`). Không còn đường nào tự khởi động. Chạy lệnh tức là đã quyết.
+> 2. **Có dự toán trước và số đo thật sau.** `estimate_wave.py` in chi phí trước khi chạy; `token_ledger.py` ghi số thật đọc từ runtime sau khi chạy, kèm đối chiếu sai số. Cổng hỏi người trước đây chỉ hiển thị một con số ước lượng, mà con số ấy về sau bị chứng minh là lệch thực tế 21 đến 90 lần.
+> 3. **Chi phí đã đo được và rất nhỏ.** Một nghìn bài mỗi ngày tốn khoảng 0,31 đô la ở khung giá thấp điểm. Ràng buộc thật là hạn mức token của tài khoản, và hạn mức đó được theo dõi bằng sổ cái chứ không bằng một câu hỏi trước mỗi lần chạy.
+>
+> **§2.1 và §2.3 hết hiệu lực.** Không dựng lại cổng hỏi người dưới bất kỳ tên nào. Thay bằng **hai chốt kỹ thuật tự động**, và cần phân biệt rõ: chúng bảo vệ **chất lượng**, không phải bảo vệ ví, nên chúng không hỏi ai cả.
+>
+> | Chốt | Kích hoạt khi | Hành vi |
+> |---|---|---|
+> | Trần ngữ cảnh | ước tính một lô vượt 25% cửa sổ | `article_pack.py` tự chia nhỏ lô |
+> | Ngưỡng hỏng | tỷ lệ bản ghi hỏng vượt 10% trong một đợt | `article_run.py` dừng đợt trước khi nạp cơ sở dữ liệu |
+>
+> **§2.4 giữ nguyên toàn bộ — thất bại phải ồn ào.** Đây là điều khoản đáng giá nhất của ADR này và không liên quan gì tới cổng xác nhận. Nó đã được thi hành trong mã: lệnh con trả mã khác 0 thì cả đợt dừng và in rõ lý do, không đi tiếp trong im lặng.
+>
+> **§2.2, §2.5, §2.6 không còn đối tượng áp dụng** vì công cụ ngoài repo đã bị thay bằng runtime trong tầm kiểm soát.
+>
+> Neo: `plans/20260918-1651-article-lane-unified/plan.md` §2 Q4, §9.2.
+
+---
+
 ### 2.1 Không kích hoạt Gold khi chưa có xác nhận tường minh của người dùng
+
+> **[HẾT HIỆU LỰC 2026-09-18 — xem amendment ở đầu §2]**
 
 Mọi đường dẫn dẫn tới việc gọi `agy` (hay bất kỳ runner LLM nào sau này) **bắt buộc dừng lại xin
 xác nhận**, hiển thị trước:
@@ -51,6 +81,8 @@ Cờ này chỉ được dùng khi người vận hành chủ động bật, kè
 `agy` giữ nguyên lớp hỏi quyền của nó.
 
 ### 2.3 Trần token theo lần chạy
+
+> **[HẾT HIỆU LỰC 2026-09-18 — thay bằng hai chốt kỹ thuật tự động, xem amendment ở đầu §2]**
 
 Thêm tham số trần (số batch tối đa và/hoặc ngân sách token ước lượng). Vượt trần thì **dừng sạch và
 báo cáo phần đã làm**, theo đúng khuôn mẫu `--budget-seconds` đã áp cho `backfill_deferred` hôm nay.

@@ -3,7 +3,7 @@
 |                              |                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Ngày                        | 2026-09-18 (rev 3 — Unified Article Processor, Smart Paragraph Distillation, Priority-Queue 100 bài/batch giao sớm cho user, Dual-Track Intent 2 cột) |
-| Trạng thái                 | **DRAFT — chờ duyệt** (chưa sửa code/runtime/preset)                                                                                                                                                                                                                                                                                                                                                      |
+| Trạng thái | **SUPERSEDED** — thay thế bởi [plan hợp nhất 20260918-1651-article-lane-unified](../20260918-1651-article-lane-unified/plan.md). Giữ làm hồ sơ; tệp `AUDIT-plan-set-2026-09-18.md` cùng thư mục vẫn còn hiệu lực. |
 | Phân loại                  | **Cấp 2 — NORMAL** cho operator + prompt + expander + user_output. **Cấp 3** cho: (a) amendment ADR 0008 bỏ cổng xác nhận, (b) row preset DSH mới, (c) trường `mentions` mới                                                                                                                                                                                                                              |
 | Nền tảng                   | ADR 0009 (DSH runtime, D1–D6) · audit vệt L1 845K + Gold 154–300K (§1) · nghiên cứu DeepSeek + DSH đã xác minh (§14) · thảo luận phản biện kiến trúc (2026-09-18)                                                                                                                                                                                                                                                                                                         |
 | Thay thế                    | Plan `20260918-1133-l1-llm-lean-token` (Lean Lane L1) — bị plan này bao trùm và sáp nhập toàn bộ                                                                                                                                                                                                                                                                                                                                    |
@@ -93,9 +93,14 @@ Anh đưa vệt Gold hôm qua: **5 bài**, `Usage` báo **154.000 token**, thự
 
 **Chuỗi nhân quả, xác minh bằng file thật:**
 
-1. `write_batch_packet` ghi packet bằng `json.dumps(..., indent=2)` — đo trực tiếp trên `data/agent_tasks/archive/20260917/batch_20260917T165007_8fb1_02.task.json`: file pretty-printed, và vì `cleaned_text` là một chuỗi JSON không xuống dòng thật, **mỗi bài trở thành đúng 1 dòng dài 2.173–2.537 ký tự** (~724–845 token/dòng).
-2. Dòng đó **vượt trần 2.000 ký tự/dòng của tool Read trong DSH** — đúng như agent tự ghi nhận trong Think: *"The cleaned_text is truncated in the read output at 2000 chars per line"*.
-3. Agent không còn tin nội dung mình vừa đọc, nên **không trả kết quả rồi dừng** mà tự đặt ra một vòng kiểm chứng: Grep riêng từng citation (đếm được đúng 15 lệnh Grep = 5 bài × 3 citation/bài — khớp 100% với dữ liệu output thật).
+1. `write_batch_packet` ghi packet bằng `json.dumps(..., indent=2)` — đo trực tiếp trên file thật `project/data/agent_tasks/archive/20260917/batch_20260917T165007_8fb1_02.task.json`: file pretty-printed, và vì `cleaned_text` là một chuỗi JSON không xuống dòng thật, **mỗi bài trở thành đúng 1 dòng vật lý dài vượt ngưỡng**:
+   - Bài 1 (dòng 11): **2.378 ký tự**
+   - Bài 2 (dòng 21): **2.537 ký tự**
+   - Bài 3 (dòng 34): **2.215 ký tự**
+   - Bài 4 (dòng 46): **2.450 ký tự**
+   - Bài 5 (dòng 57): **2.173 ký tự**
+2. Các dòng này **vượt trần 2.000 ký tự/dòng của tool Read trong DSH** — đúng như agent tự ghi nhận trong Think: *"The cleaned_text is truncated in the read output at 2000 chars per line"*.
+3. Mất niềm tin vào nội dung vừa đọc vì bị cắt cụt, agent không trả kết quả rồi dừng mà tự kích hoạt vòng kiểm chứng: **gọi đúng 15 lệnh Grep**. Đối soát với `project/data/agent_outputs/batch_20260917T165007_8fb1_02.output.json`: Mỗi bài có đúng 3 citations $\rightarrow 5 \text{ bài} \times 3 = \mathbf{15 \text{ trích dẫn}}$, giải thích chính xác $100\%$ nguồn gốc của 15 lệnh Grep.
 4. Vì cả 3 citation của một bài **luôn nằm trên cùng một dòng `cleaned_text`** (xác minh trực tiếp: đúng cho cả 5/5 bài), mỗi lệnh Grep ở chế độ mặc định trả về **nguyên dòng khớp**, tức là **trả lại gần như toàn bộ nội dung bài đó** (~730–845 token) — không phải một đoạn ngắn 20 ký tự như citation cần kiểm.
 5. 15 lượt đó cộng dồn vào lịch sử của mọi lượt sau (đặc tính API multi-turn stateless), nên phần trả lời "Có" 15 lần (~90 token hữu ích) kéo theo hàng trăm nghìn token nội dung bị gửi lại nhiều lần.
 
@@ -105,13 +110,24 @@ Mô hình tích lũy tương tự §1.1 cho ra quota-equivalent 500K–620K tùy
 
 | # | Lỗi | Bằng chứng | Xử lý (đã có sẵn trong plan, hoặc bổ sung mới) |
 |:-:|---|---|---|
-| G1 | **Packet ghi pretty-printed (`indent=2`)** khiến 1 bài = 1 dòng dài, vượt trần đọc của tool | 5/5 dòng `cleaned_text` > 2.000 ký tự, đo trực tiếp | **Mới, bổ sung §3.1/§7**: `article_pack.py` ghi packet dạng **compact JSON** (không indent) — không dòng nào có thể dài bất thường vì đoạn văn đã được tách mảng `p[]` theo từng phần tử, không dồn vào một chuỗi khổng lồ |
-| G2 | **Agent tự vòng kiểm chứng citation bằng 15 lượt Grep riêng lẻ** — việc mà một script làm trong 0 token | 15 Grep, khớp đúng 3×5 | **Đã có trong §3.2**: `c` là **chỉ số đoạn**, không phải chuỗi. Expander lấy nguyên văn đoạn theo chỉ số ⇒ citation luôn đúng **bằng xây dựng**, LLM không bao giờ cần verify |
+| G1 | **Packet ghi pretty-printed (`indent=2`)** khiến 1 bài = 1 dòng dài, vượt trần đọc của tool | 5/5 dòng `cleaned_text` > 2.000 ký tự (2.173 - 2.537 chars), đo trực tiếp | **Mới, bổ sung §3.1/§7**: `article_pack.py` ghi packet dạng **compact JSON** (không indent) — không dòng nào có thể dài bất thường vì đoạn văn đã được tách mảng `p[]` theo từng phần tử, không dồn vào một chuỗi khổng lồ |
+| G2 | **Agent tự vòng kiểm chứng citation bằng 15 lượt Grep riêng lẻ** — việc mà một script làm trong 0 token | 15 Grep, khớp đúng 3 citations × 5 bài trong output | **Đã có trong §3.2**: `c` là **chỉ số đoạn `[0, 2]`**, không phải chuỗi. Expander lấy nguyên văn đoạn theo chỉ số ⇒ citation luôn đúng **bằng xây dựng**, LLM không bao giờ cần verify |
 | G3 | **Worker có quyền dùng Grep** dù registry Gold cũng khai `tools_allowed: [view_file, write_to_file]` — cùng lỗi cưỡng chế như L1 (#1 ở §1.3) | 15 Grep xuất hiện dù registry cấm | **Đã có trong §2/§7**: `toolFilter: { allow: [] }` — worker vật lý không có Grep để gọi |
 | G4 | **Grep mặc định trả nguyên dòng khớp** khi dòng đó chính là toàn bộ nội dung bài → verify 20 ký tự tốn 730+ token | tính trực tiếp từ độ dài dòng | Hệ quả của G1+G2; hết khi cả hai được xử lý |
 | G5 | **21 lượt cho 5 bài** = không thể scale; đúng vấn đề anh nêu "1 lượt nhiều bài hơn, tốn ít token hơn" | đếm trực tiếp | **Đã có trong §2**: 1 lượt/batch, không phụ thuộc số bài trong batch |
 
 **So sánh chiếu sang Article Lane (100 bài `full`, §1.4):** 1 lượt, ~1.220 token/bài — so với Gold hiện tại 30.800–60.000 token/bài là **giảm 25–50 lần**, và khác biệt so với so sánh L1 ở chỗ: phần lớn mức giảm ở đây đến từ việc **triệt tiêu một lớp lỗi mới** (self-verification loop) chứ không chỉ từ gộp lượt.
+
+### 1.6 Bài học kiến trúc: Nghịch lý Trao quyền Công cụ & Nguyên lý Bảo đảm bằng Xây dựng
+
+Từ 2 vệt audit đắt giá (L1 845K và Gold 154K–300K), hệ thống đúc kết thành 2 nguyên lý thiết kế sống còn:
+
+1. **Nghịch lý Trao quyền Công cụ (The Tool Autonomy Paradox)**:
+   Khi cấp công cụ tìm kiếm/đọc file (`grep`, `view`, `glob`) cho LLM, chỉ cần dữ liệu đầu vào xuất hiện một vết cắt xén nhỏ (dòng vượt quá 2.000 ký tự bị tool báo `truncated`), LLM sẽ lập tức rơi vào **Hội chứng Hoang tưởng Tự kiểm chứng (Compulsive Self-Verification Loop)**. Agent từ bỏ nhiệm vụ phân tích ngữ nghĩa, chuyển sang dùng 71% số lượt model để tự rà soát từng ký tự. Càng trao quyền công cụ, chi phí token càng bùng nổ mất kiểm soát.
+2. **Nguyên lý "Bảo đảm bằng Xây dựng" (Guaranteed by Construction)**:
+   Không bao giờ dựa vào việc "dặn dò LLM trong prompt" hay để LLM "tự kiểm tra sau khi sinh". Thay vào đó:
+   - **Triệt tiêu công cụ vật lý (`allow: []`)**: Ép model vào thế Single-turn (Nhận Prompt $\rightarrow$ Trả JSON).
+   - **Chuyển cơ chế trích dẫn sang Index (`c: [0, 2]`)**: Trách nhiệm trích xuất nguyên văn thuộc về Code Python bên ngoài (0 token, 0.001s). Citations đạt chuẩn DoD 100% bằng cấu trúc dữ liệu, triệt tiêu hoàn toàn động cơ tự kiểm chứng của LLM.
 
 ---
 

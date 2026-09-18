@@ -112,6 +112,62 @@ agents:
     cost_budget: { tokens_per_item: 0 }
     owner_rules: ["03-io-concurrency-guardrails"]
 
+  # ───── Operator của Article Lane (0 token), thêm 2026-09-18 ─────
+  - id: article-packer
+    class: operator
+    status: active
+    entrypoint: "project/scripts/article_pack.py"
+    cli: 'scripts/article_run.py --wave <wave> --today   # gọi article_pack bên trong'
+    io_boundary:
+      read:  ["data/monocle.db (articles + work_items)", "data/work_packages/**",
+              "data/prefix/ARTICLE_SYSTEM_CORE.meta.json", "config/entities/**"]
+      write: ["data/agent_tasks/article/*.task.json", "*.map.json", "wave_*.json",
+              "wave_*.conductor.ts"]
+    responsibility: >-
+      Xếp tầng ưu tiên theo hướng nhận rộng, chắt lọc đoạn tất định giữ nguyên văn,
+      ghi packet dưới trần cắt dòng của công cụ đọc, in dự toán và ngân sách đọc.
+    cost_budget: { tokens_per_item: 0 }
+    invariants:
+      - "mọi đoạn trong packet là chuỗi con NGUYÊN VĂN của bài gốc"
+      - "không dòng nào của packet vượt trần cắt dòng của công cụ đọc"
+      - "vượt trần ngữ cảnh thì tự chia nhỏ lô — chốt tự động duy nhất bảo vệ chất lượng"
+    owner_rules: ["05-gold-agent-and-payload-invariants"]
+
+  - id: article-expander
+    class: operator
+    status: active
+    entrypoint: "project/scripts/article_expand.py"
+    cli: 'scripts/article_run.py --wave <wave> --finish   # gọi article_expand bên trong'
+    io_boundary:
+      read:  ["data/agent_outputs_article/*.output.json", "data/agent_tasks/article/**"]
+      write: ["data/agent_outputs_l1/*.output.json", "data/agent_outputs/*.output.json",
+              "data/article_mentions/*.mentions.json"]
+    responsibility: >-
+      Cứu từng bản ghi khi đầu ra hỏng một phần, dựng trích dẫn nguyên văn từ chỉ số
+      đoạn, tra định danh theo nhóm, đối chiếu hai nguồn nhận diện và bung ra hai lược đồ.
+    dod_contract: dod-gatekeeper#l1
+    cost_budget: { tokens_per_item: 0 }
+    invariants:
+      - "trích dẫn dựng từ chỉ số đoạn nên đúng nguyên văn do cấu trúc, không cần kiểm lại"
+      - "một bản ghi hỏng không được làm mất cả lô"
+      - "không tra được định danh thì để trống, tuyệt đối không bịa"
+    owner_rules: ["01-subagent-guardrails", "entity-system-invariants"]
+
+  - id: token-ledger
+    class: operator
+    status: active
+    entrypoint: "project/scripts/token_ledger.py"
+    cli: 'scripts/token_ledger.py append|report|verify'
+    io_boundary:
+      read:  ["~/.dsh/storages/session_projcache/**", "~/.dsh/sessions/**",
+              "config/token_pricing.yaml"]
+      write: ["harness.db (token_ledger)"]
+    responsibility: >-
+      Đọc số đo token thật của runtime, quy kết theo đợt và ghi sổ cái. Thay hẳn việc
+      nhân định mức: hai định mức cũ lệch thực tế 21 đến 90 lần.
+    cost_budget: { tokens_per_item: 0 }
+    owner_rules: ["04-harness-durable-invariants"]
+
   - id: pipeline-radar
     class: operator
     status: active
@@ -127,9 +183,45 @@ agents:
     owner_rules: ["04-harness-durable-invariants"]
 
   # ──────────────────── COGNITIVE AGENTS (active) ───────────────────
-  - id: l1-entity-matcher
+  # ─────────── AGENT HỢP NHẤT — đường mặc định từ 2026-09-18 ───────────
+  # Một agent xử lý trọn một bài: nhận diện thực thể từ tiêu đề VÀ phân tích nội dung,
+  # trong ĐÚNG MỘT bước cho cả lô. Không còn tách L1 và Gold thành hai lượt.
+  #
+  # `cost_budget.tokens_per_item` cố tình để trống. Định mức 450 và 1.470 của hai agent
+  # cũ là con số vô nguồn và đã bị số đo thật bác bỏ: hai vệt audit cho ra 39.600 và
+  # 30.800–60.000 token mỗi bài, lệch 21 đến 90 lần. Từ nay chi phí đọc từ bảng
+  # `token_ledger` trong harness.db, không nhân định mức.
+  - id: article-processor
     class: cognitive
     status: active
+    model: flash
+    skill: .agents/skills/l1-entity-matcher/SKILL.md
+    prefix_source: project/scripts/build_article_prefix.py
+    io_boundary:
+      read:  []                                   # worker không có tool nào
+      write: []                                   # kết quả trả trong thông điệp cuối
+    tools_allowed: []
+    dod_contract: dod-gatekeeper#l1
+    output_schema: [l1-entity-output-v1, agent-output-v2-lean]
+    cost_budget: { tokens_per_item: null, wave_batch: 100, concurrency: 3,
+                   source: "harness.db table token_ledger" }
+    kpis: [turns_per_batch, parse_fail_rate, resolve_rate, dod_pass_rate, quota_tokens_per_item]
+    invariants:
+      - "turns_per_batch = 1 — con chạy quá một bước là dấu hiệu persona hỏng"
+      - "sdkSchemas của con phải rỗng; `run_code` không gỡ được dưới mode ptc"
+      - "maxDepth: 1 — giá trị 0 cấm delegation hoàn toàn, xem ADR 0009 amendment"
+      - "reasoningEffort: off — settings.yaml đang để high cho mọi con"
+    owner_rules: ["01-subagent-guardrails", "05-gold-agent-and-payload-invariants",
+                  "entity-system-invariants"]
+
+  # ─────────── ĐƯỜNG CŨ — giữ để quay lui, không dùng mặc định ───────────
+  # Hai agent dưới thuộc mô hình hai tầng cũ. Giữ gọi được trong ít nhất một chu kỳ
+  # vận hành đầy đủ để còn quay lui nếu đường mới trượt nghiệm thu (plan §11.1).
+  - id: l1-entity-matcher
+    class: cognitive
+    status: deprecated
+    deprecated_at: "2026-09-18"
+    superseded_by: article-processor
     model: flash
     skill: .agents/skills/l1-entity-matcher/SKILL.md
     io_boundary:
@@ -138,13 +230,16 @@ agents:
     tools_allowed: [view_file, write_to_file]        # cấm discovery tools (grep/find/list_dir)
     dod_contract: dod-gatekeeper#l1
     output_schema: l1-entity-output-v1
-    cost_budget: { tokens_per_item: 450, wave_batch: 25, concurrency: 3 }
+    cost_budget: { tokens_per_item: null, wave_batch: 25, concurrency: 3,
+                   note: "dinh muc 450 cu la con so vo nguon, do that lech ~90 lan; doc token_ledger" }
     kpis: [dod_pass_rate, tokens_per_item, false_positive_rate]
     owner_rules: ["01-subagent-guardrails", "entity-system-invariants"]
 
   - id: gold-financial-analyst
     class: cognitive
-    status: active
+    status: deprecated
+    deprecated_at: "2026-09-18"
+    superseded_by: article-processor
     model: flash
     skill: .agents/skills/gold-financial-analyst/SKILL.md
     io_boundary:
@@ -153,7 +248,8 @@ agents:
     tools_allowed: [view_file, write_to_file]
     dod_contract: dod-gatekeeper#gold
     output_schema: agent-output-v2-lean
-    cost_budget: { tokens_per_item: 1470, wave_batch: 5, concurrency: 2 }
+    cost_budget: { tokens_per_item: null, wave_batch: 5, concurrency: 2,
+                   note: "dinh muc 1470 cu la con so vo nguon, do that lech 21-41 lan; doc token_ledger" }
     kpis: [dod_pass_rate, tokens_per_item, citation_ground_rate, keypoint_dupe_rate]
     owner_rules: ["01-subagent-guardrails", "02-financial-domain-rules", "05-gold-agent-and-payload-invariants"]
 

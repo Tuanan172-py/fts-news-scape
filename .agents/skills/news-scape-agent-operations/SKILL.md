@@ -1,46 +1,50 @@
 ---
 name: news-scape-agent-operations
-description: Quy trình điều phối chuẩn hóa cho Agent và Subagents trong hệ thống News-Scape (định tuyến L1, nạp Code-First, bóc tách thực thể L1, xuất tác vụ Gold v2-lean, nghiệm thu DoD Ingest và phân phối Deliverable Excel).
+description: Quy trình điều phối chuẩn hóa cho Agent và Subagents trong hệ thống News-Scape (đóng gói Mega-Batch phân tầng ưu tiên, xử lý thống nhất thực thể & nội dung, mở rộng citations bằng index và phân phối Deliverable Excel 2 cột Intent).
 ---
 # News-Scape Agent Operations Skill
 
-> **Mục đích:** Đóng gói trọn vẹn toàn bộ quy trình vận hành chuỗi Agent đa tầng (Master Orchestrator, Subagents L1, Subagents Gold) từ khâu quét dữ liệu thô, lọc phân tuyến, xuất tác vụ, gọi Subagents cho đến nghiệm thu Definition-of-Done (DoD) và bàn giao báo cáo người dùng. Giúp Agent tự động hóa 100% các bước mà không phải dò tìm script hay lặp lại các bước thủ công.
+> **Mục đích:** Quy trình vận hành chuỗi Agent thống nhất (`agent_article`) từ khâu quét dữ liệu thô, phân tầng ưu tiên (Priority-Queue), đóng gói Mega-Batch 100 bài, kích hoạt Subagent Single-turn Zero-Tool, đối soát Intent độc lập (Dual-Track), mở rộng citations bằng index và bàn giao báo cáo người dùng sớm.
 
 ---
 
-## 1. Bản Đồ Quy Trình Khép Kín (5-Phase End-to-End Pipeline)
+## 1. Bản Đồ Quy Trình Khép Kín (Unified Priority Pipeline)
 
 ```
-[Phase 1: Thu thập & Định tuyến L1]
+[Phase 1: Quét Code-First & Phân Tầng Ưu Tiên (Priority Queue)]
        │
        ├─ Quét dữ liệu Silver/DB ngày hiện tại
-       ├─ L1 Router (review="missed"): Phân loại Code-First (resolved) vs Cần Agent (needs_agent)
-       └─ Vật chất hóa Code-First vào l1_outputs (0 token, 100% tiết kiệm)
+       ├─ Code-First quét đối tượng từ điển cứng ({code_entities})
+       ├─ Phân loại 3 Tiers:
+       │    ├─ TIER 1 (Ưu tiên cao): Khớp Watchlist active (manifest.yaml) hoặc biến động vĩ mô khẩn
+       │    └─ TIER 2 & 3 (Hàng đợi nền): VN30 ngoài watchlist, BCTC định kỳ, CBTT, thị trường chung
        │
-[Phase 2: Đóng gói Mini-Batches L1 & Phân phối Subagents]
+[Phase 2: Đóng Gói Mega-Batch 1 (100 Bài — Delivery First)]
        │
-       ├─ Gom lô các bài needs_agent thành l1_batch_XX.task.json (25 bài/lô)
-       └─ Gọi Subagents l1_entity_matcher (Model: Flash) xử lý theo Controlled Wave (2–3 batches/đợt)
+       ├─ Đóng gói 100 bài Tier 1 thành file packet batch_01.task.json
+       ├─ Bắt buộc Compact JSON: json.dumps(..., separators=(',', ':')) (chống tràn dòng >2.000 ký tự)
+       ├─ Smart Paragraph Distillation: giữ p0 (Sapo) + đoạn chứa số liệu tài chính / sự kiện
        │
-[Phase 3: Nghiệm thu DoD L1 (L1 Ingest) & Dọn Dẹp Archive]
+[Phase 3: Kích Hoạt Subagent Thống Nhất (Single-Turn, Zero-Tool)]
        │
-       ├─ Ghi nhận kết quả vào project/data/agent_outputs_l1/l1_batch_XX.output.json
-       ├─ Chạy: python scripts/l1_ingest.py data/agent_outputs_l1/<batch>.output.json
-       ├─ Cập nhật l1_outputs và tự động archive task packets đạt DoD
-       └─ Xóa file task packet trong data/agent_tasks/l1/ sau khi hoàn tất
+       ├─ Kích hoạt agent_article (Model: Flash) với toolFilter: { allow: [] }
+       ├─ Prompt-in toàn bộ 100 bài / JSON-out mảng kết quả trong đúng 1 lượt
+       ├─ Bóc tách độc lập: intent/thực thể 11 nhóm (e), tóm tắt (s), key points (k), hàm ý (im), sentiment (sn), độ nhạy (ts), citations index (c: [0, 2])
        │
-[Phase 4: Xuất Tác vụ Gold Subscriber-Gated (v2-lean)]
+[Phase 4: Expander & Đối Soát Intent Độc Lập (Python tất định — 0 Token)]
        │
-       ├─ Lọc Subscriber-Gating: chỉ xuất bài khớp Watchlist người dùng active
-       ├─ Cắt tỉa DOM Dynamic 3-Pass Pruner (<= 2.200 chars), nhúng input.l1_entities
-       ├─ Gom lô thành batch_XX.task.json (5 bài/lô theo chuẩn schema agent-output-v2-lean)
-       └─ Gọi Subagents gold_financial_analyst (Model: Flash) phân tích chuyên sâu
+       ├─ article_expand.py bù đắp exact substring citations từ chỉ số c: [0, 2] (bảo đảm 100% vượt DoD)
+       ├─ Đối soát Intent 2 nguồn: gán nhãn BOTH, LLM_ONLY, CODE_ONLY
+       ├─ Ingest vào SQLite (monocle.db) trong transaction BEGIN IMMEDIATE
        │
-[Phase 5: Nghiệm thu DoD Gold & Phân phối Deliverable]
+[Phase 5: Giao Hàng Sớm Cho User (Deliverable First)]
        │
-       ├─ Ghi nhận output vào project/data/agent_outputs/batch_XX.output.json
-       ├─ Chạy: python scripts/agent_ingest.py data/agent_outputs
-       └─ Xuất file Excel cá nhân hóa: python scripts/write_user_output.py --date all
+       ├─ Kích hoạt ngay write_user_output.py xuất Excel cho người dùng trong 2–3 phút
+       ├─ Bảng dữ liệu chứa 2 cột riêng biệt: intent_llm và intent_code (kèm intent_source)
+       │
+[Phase 6: Xử Lý Nền Batch 2..N (100% Phủ Kho Dữ Liệu)]
+       │
+       └─ Tuần tự xử lý các batch tiếp theo để nạp CSDL đầy đủ 100%, không bỏ sót bài viết
 ```
 
 ---
@@ -49,145 +53,84 @@ description: Quy trình điều phối chuẩn hóa cho Agent và Subagents tron
 
 Mọi lệnh BẮT BUỘC thực thi với Python venv cách ly: `& "C:\venvs\news-scape\Scripts\python.exe"` và chạy từ thư mục `project/`.
 
-### Bước 0: Câu Lệnh Mồi Chuẩn Hóa Kích Hoạt Ca Vận Hành (Daily Trigger Prompt)
-
-Người vận hành chỉ cần gửi câu lệnh mồi chuẩn hóa:
-
-```text
-Bắt đầu phiên ngày {YYYY-MM-DD}: Hãy dùng Radar kiểm tra điểm chạm pipeline, sau đó thực thi trọn vẹn chuỗi L1 (vật chất hóa Code-First trước để tiết kiệm token, phần còn lại gom mini-batches cho Subagents Flash xử lý có kiểm soát). Báo cáo tỷ lệ DoD và tổng lượng token tiêu thụ sau khi hoàn tất.
-```
-
-### Bước 1: Quét và Vật chất hóa L1 Code-First
+### Bước 0: Kiểm Tra Tình Trạng Pipeline Qua Radar
 
 ```powershell
-# Chạy vật chất hóa toàn bộ bài Code-First (0 token) vào l1_outputs:
-& "C:\venvs\news-scape\Scripts\python.exe" scripts/l1_ingest.py --code-first
+& "C:\venvs\news-scape\Scripts\python.exe" project/scripts/pipeline_radar.py status
 ```
 
-### Bước 2: Đóng gói Batch Tác vụ L1 Cho Subagents
-
-Khi phát hiện các bài viết `needs_agent`, hệ thống đóng gói thành mini-batch 25 bài/lô:
-
-```python
-from src.agent.batch_handoff import split_l1_tasks_into_batches
-# Đầu ra: data/agent_tasks/l1/l1_batch_XX.task.json (25 bài/lô)
-```
-
-### Bước 3: Nghiệm thu DoD L1 Ingest & Dọn Dẹp
-
-Sau khi Subagents hoàn tất và xuất file output:
+### Bước 1: Đóng Gói Mega-Batch Ưu Tiên (Priority-Queue Packaging)
 
 ```powershell
-# Ingest 1 batch cụ thể:
-& "C:\venvs\news-scape\Scripts\python.exe" scripts/l1_ingest.py data/agent_outputs_l1/l1_batch_XX.output.json
-
-# Hoặc ingest toàn bộ thư mục output L1:
-& "C:\venvs\news-scape\Scripts\python.exe" scripts/l1_ingest.py data/agent_outputs_l1
+# Đóng gói 100 bài Tier 1 (khớp Watchlist + Vĩ mô khẩn) dạng Compact JSON:
+& "C:\venvs\news-scape\Scripts\python.exe" project/scripts/article_pack.py --date today --priority watchlist --batch-size 100
 ```
 
-### Bước 4: Xuất Tác vụ Gold (Subscriber-Gated & Lean Schema)
+### Bước 2: Kích Hoạt Subagent Xử Lý Thống Nhất
+
+Chạy Subagent qua `invoke_subagent` (Model: Flash) với `toolFilter: { allow: [] }` bằng mẫu prompt tại Mục 3. Subagent nhận task packet qua prompt và trả mảng JSON trực tiếp trong 1 lượt duy nhất.
+
+### Bước 3: Mở Rộng Citations & Nghiệm Thu DoD (Expander & Ingest)
 
 ```powershell
-# Xuất các bài thỏa mãn Watchlist người dùng và tự động gom mini-batches (5 bài/lô):
-& "C:\venvs\news-scape\Scripts\python.exe" scripts/agent_export.py --date today --limit 10 --mini-batch 5
+# Expander bù citations từ index và đối soát intent chéo vào SQLite:
+& "C:\venvs\news-scape\Scripts\python.exe" project/scripts/article_expand.py project/data/agent_outputs/batch_01.output.json --ingest
 ```
 
-### Bước 4b: Tự Động Hóa 1 Chạm Qua AutoPilot (Headless CLI Runner)
-
-Thay vì copy prompt thủ công, hệ thống hỗ trợ lệnh tự động hóa toàn diện từ Export đến Giao hàng:
+### Bước 4: Giao Hàng Excel Sớm Cho Người Dùng (2 Cột Intent)
 
 ```powershell
-& "C:\venvs\news-scape\Scripts\python.exe" scripts/auto_pilot.py --date today --limit 10 --mini-batch 5
+# Xuất deliverable Excel ngay sau Batch 1 cho người dùng active:
+& "C:\venvs\news-scape\Scripts\python.exe" project/scripts/write_user_output.py --date today
 ```
 
-*Lệnh này tự động: Export bài -> Phát hiện batches -> Kích hoạt `agy -p` headless -> Ingest vào DB -> Cập nhật Excel cho Users.*
-
-### Bước 4c: Lệnh Kích Hoạt Headless CLI Trực Tiếp (agy -p)
-
-Khi muốn kích hoạt trực tiếp cho 1 batch cụ thể mà không cần mở giao diện chat interactive:
+### Bước 5: Tiếp Tục Xử Lý Nền Các Batch Còn Lại (Batch 2..N)
 
 ```powershell
-agy -p "Bạn là Gold Financial Analyst. Hãy đọc task packet tại data/agent_tasks/batch_01.task.json, phân tích tài chính chuyên sâu (summary, key_points độc lập, implication >= 40 chars, sentiment, time_sensitivity, citations >= 20 chars exact substring) và ghi kết quả mảng JSON chuẩn agent-output-v2-lean vào data/agent_outputs/batch_01.output.json." --dangerously-skip-permissions --effort low
-```
-
-### Bước 5: Nghiệm thu DoD Gold Ingest & Giao hàng
-
-```powershell
-# Ingest và nghiệm thu 100% DoD cho các output Gold:
-& "C:\venvs\news-scape\Scripts\python.exe" scripts/agent_ingest.py data/agent_outputs
-
-# Biên dịch và xuất Deliverable Excel cho toàn bộ người dùng active:
-& "C:\venvs\news-scape\Scripts\python.exe" scripts/write_user_output.py --date today
+# Đóng gói và xử lý nền toàn bộ bài viết còn lại trong ngày để đạt 100% độ phủ:
+& "C:\venvs\news-scape\Scripts\python.exe" project/scripts/article_pack.py --date today --priority background --batch-size 100
 ```
 
 ---
 
-## 3. Mẫu Prompt Handoff Chuẩn Hóa Cho Subagents (Anti-Drift & Anti-Burn)
+## 3. Mẫu Prompt Chuẩn Hóa Cho Subagent Thống Nhất (`agent_article`)
 
-Nhằm triệt tiêu 100% nguy cơ Subagent bị trượt schema hoặc gọi discovery loops thừa, Orchestrator BẮT BUỘC sử dụng mẫu prompt sau khi kích hoạt qua `invoke_subagent`:
-
-### A. Mẫu Prompt Kích Hoạt Subagent L1 (`l1_entity_matcher`)
+Nhằm triệt tiêu 100% nguy cơ Subagent bị trượt schema hoặc tự mở vòng lặp Grep/View, Orchestrator BẮT BUỘC sử dụng mẫu prompt sau (truyền qua prompt-in, không cấp công cụ):
 
 ```text
-Bạn là L1 Entity Matcher (tiêu chuẩn H2-H5 / l1-entity-output-v1).
-Nhiệm vụ: Xử lý file task gom lô L1: `<ABSOLUTE_PATH>/l1_batch_XX.task.json`.
+Bạn là Unified Article Analyst (tiêu chuẩn H2-H5 / compact schema).
+Nhiệm vụ: Phân tích danh sách bài viết tài chính trong payload JSON được đính kèm.
 
-Quy tắc xử lý bất biến (Strict 2-I/O & Zero-Leakage):
-1. Đọc file task bằng tool `view_file` DUY NHẤT một lần. CẤM gọi grep, find, list_dir để quét từ điển ngoài nhằm tránh tốn token và rate limit.
-2. Với mỗi task trong danh sách:
-   - Đọc article_id, title.
-   - Bóc tách thực thể theo Ontology 10 Miền (TICKER, ETF, INDEX, EXCHANGE, INDUSTRY_GICS1/2/3, MACRO_GEO, MACRO_THEME, ASSET_CLASS, INSTITUTION).
-   - Kiểm tra exact substring: surface và citations[].source_span BẮT BUỘC là chuỗi con nguyên văn của title.
-   - Chống false positive: "Mỹ" trong "Mỹ Tho", "Mỹ Thuận", "Mỹ Đình" KHÔNG gán MACRO_GEO:MY; "PGD" của ngân hàng KHÔNG gán TICKER:PGD.
-   - Định dạng entity object BẮT BUỘC có đủ: {"surface": str, "type": str, "method": "semantic", "in_list": bool, "entity_id": str or null, "confidence": float}.
-   - Phân định in_list: Chỉ gán in_list: true nếu CHẮC CHẮN thuộc catalog chính thức thật sự nạp trong DB (TICKER: mã CP VN 3 chữ cái xác thực, INDEX: VNINDEX/VN30, EXCHANGE: HOSE/HNX/UPCOM, MACRO_GEO: MY, TRUNG_QUOC, NHAT_BAN, HAN_QUOC, NGA, AN_DO — KHÔNG dùng EU hay DONG_NAM_A, 2 mã này KHÔNG có trong catalog DB dù có vẻ hợp lý; INSTITUTION: NHNN, UBCKNN, BO_TAI_CHINH, FED, ECB, BOJ, WB_IMF). Nếu ngoài catalog hoặc không chắc chắn 100%: gán in_list: false, entity_id: null và đưa tên vào unlisted_candidates. Gán sai entity_id ngoài catalog sẽ làm `l1_ingest.py` FAIL DoD với lỗi `entity_id=... khong co trong danh muc`.
-   - Nếu có thực thể: recognized: true, entities: [...], citations: [{"source_span": surface}], cập nhật categories tương ứng ("done" nếu có in_list, "out_of_list" nếu chỉ có unlisted).
-   - Nếu không có thực thể: recognized: false, entities: [], citations: [], tất cả categories là "none".
-   - **`categories` PHẢI dùng ĐÚNG 8 khóa lowercase theo schema `l1-entity-output-v1.schema.json`**: `ticker_company, etf_fund, index, exchange, industry_sector, macro_geo, asset_class, institution` (TICKER→ticker_company, ETF→etf_fund, INDEX→index, EXCHANGE→exchange, INDUSTRY_GICS1/2/3→industry_sector gộp chung 1 khóa, MACRO_GEO→macro_geo, ASSET_CLASS→asset_class, INSTITUTION→institution; MACRO_THEME không có khóa categories tương ứng, bỏ qua). TUYỆT ĐỐI KHÔNG dùng khóa UPPERCASE hay tách riêng INDUSTRY_GICS1/2/3 — `ticker_company`/`etf_fund` là required field, thiếu sẽ FAIL DoD `schema_invalid`.
-   - processing_metadata: {"agent_provider": "<tên subagent/model thực tế đang chạy>", "model_used": "<model thực tế>", "timestamp": "<ISO_NOW>", "schema_version": "1.0"}.
-3. Gom kết quả thành mảng JSON và dùng `write_to_file` ghi trực tiếp đè vào file:
-`<ABSOLUTE_PATH>/l1_batch_XX.output.json` (Overwrite: true).
-4. Kết thúc và báo cáo số bài recognized/none.
-```
-
-### B. Mẫu Prompt Kích Hoạt Subagent Gold (`gold_financial_analyst`)
-
-```text
-Bạn là Chuyên viên Phân tích Tài chính Gold Cấp cao (tiêu chuẩn H2-H5 / schema agent-output-v2-lean).
-Nhiệm vụ: Xử lý gói tác vụ Gold gom lô: `<ABSOLUTE_PATH>/batch_XX.task.json`.
-
-Quy tắc xử lý bất biến (Strict 2-I/O & Grounded Citations):
-1. Đọc file task bằng tool `view_file` DUY NHẤT một lần. CẤM gọi discovery tools.
-2. Với mỗi task trong tasks[]:
-   - Tận dụng input.l1_entities có sẵn để tập trung suy luận tác động tài chính.
-   - Tóm tắt súc tích: summary (abstractive) và key_points (1-3 điểm chính diễn giải bằng lời văn riêng, TUYỆT ĐỐI KHÔNG copy nguyên văn chuỗi citations).
-   - Phân tích implication: tác động cụ thể đến doanh thu, dòng tiền, định giá và cổ phiếu liên quan.
-   - Đánh giá sentiment: positive | negative | neutral.
-   - Xác định time_sensitivity: BẮT BUỘC đúng 1 trong 5 giá trị enum thực tế của schema `agent-output-v2-lean.schema.json`: `urgent | today | this_week | this_month | archive` (KHÔNG dùng immediate/short_term/medium_term — sai enum sẽ làm `agent_ingest.py` FAIL DoD `schema_invalid`).
-   - Trích xuất citations: mảng các chuỗi NGUYÊN VĂN (>= 2 trích dẫn, mỗi trích dẫn >= 20 ký tự) lấy chính xác từ cleaned_text.
-3. Gom kết quả thành mảng JSON gồm 7 trường cốt lõi (v2-lean) và ghi đè vào file:
-`<ABSOLUTE_PATH>/batch_XX.output.json` bằng tool `write_to_file` (Overwrite: true).
-4. Báo cáo hoàn tất kèm danh sách article_id và sentiment.
+Quy tắc xử lý bất biến (Single-turn, Zero-tool, Citations by Index):
+1. Không sử dụng bất kỳ công cụ nào. Chỉ đọc dữ liệu từ tin nhắn và trả về mảng JSON thuần túy.
+2. Với mỗi bài trong danh sách:
+   - "id": Giữ nguyên article_id.
+   - "e": Trích xuất thực thể/intent độc lập theo nhóm (mỗi thực thể gồm {"s": surface, "g": group_code, "in": in_list_bool, "id": entity_id_or_null}). 
+     Mã nhóm hợp lệ: TIC (Mã CP), COM (Doanh nghiệp), PER (Lãnh đạo), FND (Quỹ đầu tư), IDX (Chỉ số), EXC (Sàn), IND (Ngành GICS), GEO (Vĩ mô địa lý), THM (Chủ đề vĩ mô), AST (Tài sản), INS (Định chế tài chính).
+     Lưu ý: Bóc tách khách quan theo ngữ nghĩa, không phỏng đoán theo mã lạ.
+   - "s": Tóm tắt súc tích nội dung sự kiện (1-2 câu ngắn).
+   - "k": 1-3 luận điểm tài chính chính (diễn giải bằng lời văn riêng, TUYỆT ĐỐI KHÔNG sao chép nguyên văn đoạn trích).
+   - "im": Phân tích hàm ý tài chính đối với doanh nghiệp/dòng tiền/định giá.
+   - "sn": Sắc thái bài viết (pos | neg | neu).
+   - "ts": Độ nhạy thời gian (urg | today | week | month | arch).
+   - "c": Mảng số thứ tự của các đoạn văn bản làm bằng chứng (ví dụ [0, 2]). TUYỆT ĐỐI KHÔNG sao chép chuỗi ký tự dài.
+3. Trả về DUY NHẤT một khối mảng JSON [ { ... }, { ... } ] trong phản hồi cuối cùng, không kèm lời mở đầu hoặc kết luận.
 ```
 
 ---
 
-## 4. Ràng Buộc Bất Biến & Chống Lỗi (Production Invariants & Guardrails)
+## 4. Ràng Buộc Bất Biến & An Toàn Vận Hành (Production Invariants)
 
-1. **Ràng buộc UTF-8 Encoding (Chống Mojibake)**:
-
-   - Khi đọc/ghi file JSON kết quả giữa Subagents và Workspace, luôn sử dụng `encoding="utf-8"`, `ensure_ascii=False`.
-   - Nếu gặp lỗi encoding ký tự tiếng Việt dạng byte Latin1/CP1252, giải mã lại bằng `s.encode('latin1').decode('utf-8')`.
-2. **Ràng buộc I/O Concurrency & Đường dẫn Tuyệt đối**:
-
-   - Khi gọi script thông qua `run_command`, luôn đặt `Cwd: <PROJECT_ROOT>` hoặc sử dụng đường dẫn tương đối đúng cấp bậc (`scripts/...`).
-   - Mọi thao tác ghi deliverable và DB đều tuân thủ Single-Writer và Staging Atomic Write để chống conflict OneDrive.
-3. **Chiến lược Điều phối Subagent Có Kiểm soát (Controlled Wave Dispatch)**:
-
-   - Tuyệt đối không phóng cùng lúc hàng chục Subagent để tránh lỗi `RESOURCE_EXHAUSTED` (Rate Limit 429).
-   - Chia thành các đợt (waves): **2–3 batches/đợt** cho L1 (50–75 bài) và **2 batches/đợt** cho Gold (10 bài).
-   - Chờ hoàn tất và nghiệm thu xong đợt hiện tại mới kích hoạt đợt kế tiếp.
-4. **Bảo đảm Definition-of-Done (DoD Schema Contract)**:
-
-   - **L1 Output**: BẮT BUỘC `surface` và `source_span` là exact substring của `title`. Chỉ đánh dấu `categories.<nhóm>: "done"` khi có entity `in_list: true` thuộc nhóm đó.
-   - **Gold Output (`v2-lean`)**: BẮT BUỘC gồm 7 trường phẳng (`article_id`, `summary`, `key_points`, `implication`, `sentiment`, `time_sensitivity`, `citations`). `citations` là mảng các chuỗi nguyên văn $\ge 20$ ký tự lấy từ `cleaned_text`. Không chứa metadata kỹ thuật rườm rà.
+1. **Bắt Buộc Compact JSON**:
+   - Khi ghi file task packet, luôn dùng `json.dumps(obj, separators=(',', ':'))`. Không định dạng thụt đầu dòng `indent=2` trên các bài viết có đoạn văn dài để chống lỗi cắt dòng của parser.
+2. **Nguyên Lý Bảo Đảm Bằng Xây Dựng (Guaranteed by Construction)**:
+   - LLM chỉ chọn index đoạn `c: [0, 2]`.
+   - Script Python bên ngoài trích xuất exact substring $\ge 20$ chars trực tiếp từ mảng `p[]` gốc. Tỷ lệ vượt qua cổng DoD citations là 100%, loại bỏ hoàn toàn nhu cầu Subagent tự kiểm tra lại.
+3. **Đối Soát Intent Hai Kênh (Dual-Track Reconciliation)**:
+   - Output Excel bắt buộc phân định rõ:
+     - `intent_llm`: Nhận diện ngữ nghĩa từ Subagent.
+     - `intent_code`: Nhận diện từ điển cứng từ Code-First.
+     - `intent_source`: `BOTH`, `LLM_ONLY`, hoặc `CODE_ONLY`.
+4. **Phân Tuyến Ưu Tiên Giao Hàng Nhanh**:
+   - Ưu tiên tối thượng là giao file Excel cho người dùng trong vòng 2–3 phút đầu tiên thông qua Batch 1.
+   - Không được phép trì hoãn việc giao hàng cho đến khi toàn bộ hàng đợi kết thúc.

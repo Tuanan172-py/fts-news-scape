@@ -16,6 +16,13 @@ SHEET_NAME = "Watchlist News"
 DELIVERY_FIELDS: list[tuple[str, str, int, bool]] = [
     ("date",             "Date",               16, False),
     ("matched_entities", "Matched Entities",   20, False),
+    # Ba cột minh bạch nguồn nhận diện, đặt ngay cạnh cột thực thể vì đó là chỗ người
+    # đọc tìm tới. `Intent — LLM` là thứ mô hình tự nhận ra từ ngữ nghĩa, `Intent — Code`
+    # là thứ từ điển cứng khớp được. Phần chỉ có ở cột đầu chính là giá trị mà mô hình
+    # mang lại: thương hiệu con, ngành suy ra từ ngữ cảnh, chủ đề vĩ mô không có từ khoá.
+    ("intent_llm",       "Intent — LLM",       28, True),
+    ("intent_code",      "Intent — Code",      22, True),
+    ("intent_source",    "Intent Source",      18, False),
     ("title",            "Title",              48, True),
     ("sentiment",        "Sentiment",          12, False),
     ("time_sensitivity", "Time Sensitivity",   16, False),

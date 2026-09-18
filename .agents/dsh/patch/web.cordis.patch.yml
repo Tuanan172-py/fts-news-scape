@@ -2,9 +2,13 @@
 # Đây là bản nguồn trong repo. Bản được DSH nạp là:
 #   %DSH_HOME%\profiles\web\cordis.patch.yml
 # Ghi đè toàn bộ config của row, nên phải restate đủ trường.
+
+
+# News-Scape DSH patch — bản nguồn: .agents/dsh/patch/web.cordis.patch.yml
+# Patch ghi đè TOÀN BỘ config của row, nên phải restate đủ trường.
 - id: agent-presets
   config:
-    default: ptc
+    default: news-scape-conductor
     roots:
       - path: 'C:\Users\anpt\OneDrive - fpts.com.vn\FRA_DataIngestion - news-scape\.agents\dsh\presets'
         trust: user

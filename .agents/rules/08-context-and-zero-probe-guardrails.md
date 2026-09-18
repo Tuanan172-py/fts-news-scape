@@ -1,3 +1,6 @@
+---
+trigger: always_on
+---
 # 08 — Zero-Probe Context & Continuous Agent Training Guardrails
 
 Quy chuẩn định hướng bất biến giúp Agent nạp đúng ngữ cảnh, triệt tiêu hành vi chạy script thăm dò ad-hoc (Zero-Probe) và tự động huấn luyện, tích lũy tri thức sau mỗi ca vận hành (Continuous In-Context Training).
@@ -28,7 +31,7 @@ Nhằm chấm dứt tình trạng agent chạy hàng loạt lệnh shell rác ch
 
 ---
 
-## 2. Ranh Giới Ngữ Cảnh Tinh Gọn (Context Boundary & Token Conservation)
+## 2. Ranh Giới Ngữ Cảnh Tinh Gọn (Context Boundary & Anti-Resend Invariants)
 
 Tuân thủ nghiêm ngặt [`docs/CONTEXT_RULES.md`](../../docs/CONTEXT_RULES.md):
 
@@ -42,6 +45,11 @@ Tuân thủ nghiêm ngặt [`docs/CONTEXT_RULES.md`](../../docs/CONTEXT_RULES.md
    - **CẤM đọc trực tiếp toàn bộ thư mục `data/silver/` hay `data/bronze/`**: Trừ khi nhiệm vụ cụ thể yêu cầu sửa bộ bóc tách scraper.
 3. **Quy Tắc Dừng Khi Khớp Trực Tiếp (Direct Match Stop Heuristic)**:
    - Khi `grep_search` hoặc `view_file` đã tìm thấy đúng hàm/dòng code mục tiêu, Agent BẮT BUỘC dừng việc đọc thêm các file xung quanh.
+4. **CẤM TUYỆT ĐỐI Hành Vi Đọc Lại File Vừa Ghi (No Read-Back Loops)**:
+   - Nghiêm cấm Agent sau khi gọi lệnh ghi file (`write_to_file`) lại phát sinh thêm lượt gọi `view_file` chỉ để đọc lại chính file đó nhằm tự kiểm tra.
+   - Việc kiểm tra tính hợp lệ của cú pháp JSON và kiểm định Definition-of-Done (DoD) là thẩm quyền độc quyền của tầng Ingest/Validator bên ngoài (0 token).
+5. **CẤM TUYỆT ĐỐI Vòng Lặp Tự Kiểm Chứng Citations (No Citation Grep Loops)**:
+   - Nghiêm cấm Cognitive Worker chạy các lệnh `grep` để tìm chuỗi con citations trong văn bản. Mọi chứng cứ được neo bằng chỉ số đoạn `c: [0, 2]` do Expander tự động trích xuất theo nguyên lý Bảo đảm bằng Xây dựng (Guaranteed by Construction).
 
 ---
 
@@ -58,3 +66,26 @@ Sau mỗi ca thực thi thành công hoặc khi phát hiện ma sát nghiệp v�
    - Các thực thể ngoài danh mục được phát hiện trong phiên (`Sun Group`, `CITIGYM`, `LPT`...) phải được phân loại `in_list: false`, `entity_id: null` và gom vào `unlisted_candidates` để Agent chuyên trách `entity-curator` đề xuất bổ sung có kiểm soát.
 4. **Bàn Giao Trạng Thái Sạch Sẽ (Session Handoff Invariant)**:
    - Kết thúc phiên làm việc, Agent BẮT BUỘC ghi đè (overwrite, không append) tệp [`docs/SESSION-LATEST.md`](../../docs/SESSION-LATEST.md) để Agent phiên sau kế thừa ngay lập tức mà không phải đọc lại lịch sử chat.
+
+---
+
+## 4. Ba Điều Cấm Rút Từ Hai Vệt Đốt Token Thật (2026-09-18)
+
+Ba quy tắc dưới đây không phải lý thuyết. Mỗi cái tương ứng với một hành vi đã xảy ra và đã trả giá bằng token đo được.
+
+1. **CẤM ĐỌC LẠI TỆP VỪA GHI (No Read-Back)**:
+   - Agent ghi tệp xong thì **dừng**, không được đọc lại để tự kiểm.
+   - Bằng chứng: trong vệt Gold, agent ghi tệp kết quả 23,5 KB rồi đọc lại chính nó, tốn thêm 7.800 token đầu vào, và bản sao đó nằm trong ngữ cảnh của mọi bước còn lại.
+   - Việc kiểm định thuộc về cổng nghiệm thu bên ngoài, vốn làm cùng việc đó với chi phí bằng không.
+
+2. **CẤM ĐỌC MÃ NGUỒN ĐỂ SUY RA HỢP ĐỒNG (No Contract Archaeology)**:
+   - Khi cần biết một hợp đồng dữ liệu hay điều kiện nghiệm thu, Agent phải hỏi **lệnh in ra hợp đồng**, không được mở tệp mã nguồn để đọc logic.
+   - Bằng chứng: trong vệt L1, agent đọc `l1_router.py` **bốn lần** để suy ra `check_l1_dod` và `TYPE_GROUP`, tốn 8.964 token, và tự phát hiện hai chỗ mâu thuẫn giữa tài liệu với mã.
+   - Nguyên nhân gốc là hợp đồng nằm rải rác ở bốn nơi. Hợp đồng phải có **một nguồn in ra được**; nếu chưa có thì tạo nó, đừng bắt Agent đi đào.
+
+3. **CẤM DÙNG MÔ HÌNH LÀM VIỆC CỦA SCRIPT (No LLM Emulation of Script)**:
+   - Đây là chiều ngược của quy tắc cấm dùng script giả lập trí tuệ. Việc nào tất định thì **phải** để script làm.
+   - Bằng chứng: trong vệt Gold, agent dùng **15 lệnh tìm kiếm riêng lẻ** để tự xác minh 15 trích dẫn, chiếm 71% tổng số bước của cả phiên. Toàn bộ việc đó nay do `article_expand.py` làm trong vài mili giây với chi phí bằng không.
+   - Phép thử: nếu một việc có câu trả lời đúng duy nhất và kiểm được bằng mã, nó không thuộc về mô hình.
+
+**Nguyên lý bao trùm — Bảo Đảm Bằng Xây Dựng:** đừng dặn mô hình phải cẩn thận, hãy làm cho sai lầm trở nên **bất khả thi về mặt cấu trúc**. Trích dẫn xác định bằng chỉ số mảng thì không thể sai nguyên văn. Worker không có công cụ thì không thể mở vòng khám phá. Bảng tra sinh từ danh mục thì không thể lệch danh mục.
