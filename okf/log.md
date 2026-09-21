@@ -1,5 +1,15 @@
 # OKF Changelog
 
+## 2026-09-21 (Article Lane + kinh tế token)
+- **New**: `pipelines/article_lane.md` — đường mặc định Vòng 3: gộp L1 + Gold thành MỘT lượt gọi cho trọn lô trên harness DSH; bốn bất biến, hợp đồng packet/bản ghi, prefix tĩnh, giới hạn thật đã đo
+- **New**: `references/token_economy.md` — ba rổ token, sáu luật kế toán, hai thước đo, cache đáng bao nhiêu (1,4% ở lô 100 bài nhưng cắt 62% hoá đơn W2), xếp hạng đòn bẩy
+- **New**: `configurations/token_pricing.md` — `token_pricing.yaml`: giá ba rổ, cửa sổ giờ cao điểm, ngưỡng cảnh báo
+- **New**: `tables/token_ledger.md` — sổ cái chi phí ở `harness.db`, ba cái bẫy khi đọc (ảnh chụp tích luỹ, mốc UTC, `n_sessions` gồm cả Conductor)
+- **New**: `metrics/cache_hit_floor.md` — sàn bộ nhớ đệm, phép kiểm duy nhất bắt được tiền tố trượt
+- **Update**: `pipelines/agent_handoff.md` — đánh dấu là đường **quay lui**, kèm điều kiện quay lui định lượng
+- **Update**: `index.md` mô tả Vòng 3; `MAPPING.md` thêm hai nhóm ánh xạ (Article Lane, đo chi phí); 5 index nhóm
+- **Total**: 45→50 concepts
+
 ## 2026-09-11 (US-009 / ADR 0005: Token Optimization & Morphological Guard)
 
 Đồng bộ OKF với đợt tối ưu token và hoàn thiện tầng bọc ngữ thái L1.

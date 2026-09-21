@@ -17,7 +17,8 @@ Luồng xử lý, xếp theo 3 vòng của [kiến trúc end-to-end](../referenc
 
 ## Vòng 3 — Agent handoff (Gold)
 
-- [Agent Handoff](agent_handoff.md) — 2 lớp agent, export/ingest packet, cổng DoD
+- [Article Lane](article_lane.md) — **đường mặc định từ 2026-09-18**: gộp L1 + Gold thành MỘT lượt gọi cho trọn lô, chạy trên harness DSH
+- [Agent Handoff](agent_handoff.md) — đường 2 lớp, giữ để **quay lui**; export/ingest packet, cổng DoD
 - [User Output Workflow](user_output.md) — gate 2 lớp, định tuyến entity, ghi CSV người dùng
 
 ## Ngoài chu kỳ (opt-in, tần suất thấp)

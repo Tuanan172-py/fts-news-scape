@@ -1,6 +1,6 @@
 # Tables Index
 
-11 bảng trong [Web Monocle DB](../datasets/web_monocle_db.md), nhóm theo tầng medallion.
+11 bảng trong [Web Monocle DB](../datasets/web_monocle_db.md) nhóm theo tầng medallion, cộng một bảng đo quá trình làm việc ở `harness.db`.
 
 ## Bronze / ingestion
 
@@ -24,3 +24,7 @@
 ## Điều phối
 
 - [pipeline_state](pipeline_state.md) — watermark, checkpoint, advisory lock scheduler
+
+## Đo quá trình làm việc (ở `harness.db`, **không** ở `monocle.db`)
+
+- [token_ledger](token_ledger.md) — chi phí mỗi đợt: ba rổ token đo thật, quota, tiền, sai số dự toán

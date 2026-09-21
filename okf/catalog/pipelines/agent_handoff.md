@@ -26,6 +26,12 @@ sources:
 sources_last_checked: 2026-09-07
 ---
 
+> **Trạng thái từ 2026-09-18:** đây không còn là đường mặc định. Đường chạy hằng ngày nay là
+> [Article Lane](article_lane.md) — gộp L1 và Gold thành **một** lượt gọi cho trọn lô. Hai row
+> `agent_l1` / `agent_gold` và toàn bộ mô tả dưới đây được giữ nguyên để **quay lui** trong ít
+> nhất một chu kỳ vận hành đầy đủ. Điều kiện quay lui định lượng: tỷ lệ đạt cổng nghiệm thu
+> dưới 95% **hoặc** tỷ lệ hỏng trên 10%, kéo dài hai đợt liên tiếp.
+
 **Vòng 3** là *hạ tầng* handoff, không phải bộ não. Codebase = **producer** (đóng gói việc,
 nghiệm thu kết quả); agent ngoài = **consumer** (provider bất kỳ do người dùng điều khiển).
 Ranh giới giữa hai bên là 2 JSON Schema + Definition-of-Done. **Không có lời gọi LLM nào trong

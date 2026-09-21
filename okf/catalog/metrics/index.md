@@ -13,6 +13,10 @@
 - [Silver Backlog & Handoff Queue](silver_backlog.md) — tồn đọng Bronze→Silver và hàng đợi agent
 - [DoD Pass Rate](dod_pass_rate.md) — tỷ lệ output agent qua cổng DoD
 
+## Chi phí (Vòng 3)
+
+- [Sàn bộ nhớ đệm](cache_hit_floor.md) — phép kiểm duy nhất bắt được tiền tố tĩnh trượt cache
+
 ## Nội dung (Gold)
 
 - [Sentiment Distribution](sentiment_distribution.md) — phân phối cảm xúc (nguồn: `agent_outputs`)

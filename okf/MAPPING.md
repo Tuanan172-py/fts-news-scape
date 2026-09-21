@@ -48,6 +48,25 @@ DB/logs.
 | `project/src/agent/{dod,packet,pruner,batch_handoff,manifest,archive}.py`, `project/schemas/**` | [catalog/references/agent_contracts.md](catalog/references/agent_contracts.md), [catalog/datasets/silver_work_packages.md](catalog/datasets/silver_work_packages.md), [catalog/metrics/dod_pass_rate.md](catalog/metrics/dod_pass_rate.md) |
 | `project/src/agent/entities.py`, `project/config/entities/**`, `project/data/entities/**` | [catalog/configurations/entity_registry.md](catalog/configurations/entity_registry.md) |
 
+## Article Lane (Vòng 3 — đường mặc định)
+| Code (source of truth) | OKF file |
+|---|---|
+| `project/scripts/{article_run,article_pack,article_expand}.py` | [catalog/pipelines/article_lane.md](catalog/pipelines/article_lane.md) |
+| `project/scripts/build_article_prefix.py`, `project/src/agent/prefix.py` | [catalog/pipelines/article_lane.md](catalog/pipelines/article_lane.md), [catalog/metrics/cache_hit_floor.md](catalog/metrics/cache_hit_floor.md) |
+| `project/src/agent/{distill,intent_resolve}.py` | [catalog/pipelines/article_lane.md](catalog/pipelines/article_lane.md), [catalog/configurations/entity_registry.md](catalog/configurations/entity_registry.md) |
+| `.agents/dsh/presets/news-scape-conductor/**` (persona của row `tool-subagent-article`) | [catalog/pipelines/article_lane.md](catalog/pipelines/article_lane.md) |
+
+> Sinh lại prefix ⇒ **phải dán lại persona vào preset** rồi chạy `build_article_prefix.py
+> --check`. Persona lệch tệp prefix là lỗi duy nhất không có triệu chứng nào ngoài hoá đơn.
+
+## Đo chi phí và bộ nhớ đệm
+| Code / config | OKF file |
+|---|---|
+| `project/config/token_pricing.yaml` | [catalog/configurations/token_pricing.md](catalog/configurations/token_pricing.md) |
+| `project/src/telemetry/dsh_usage.py` | [catalog/references/token_economy.md](catalog/references/token_economy.md), [catalog/tables/token_ledger.md](catalog/tables/token_ledger.md) |
+| `project/scripts/token_ledger.py` | [catalog/tables/token_ledger.md](catalog/tables/token_ledger.md), [catalog/metrics/cache_hit_floor.md](catalog/metrics/cache_hit_floor.md) |
+| `project/scripts/{estimate_wave,pipeline_radar}.py` | [catalog/references/token_economy.md](catalog/references/token_economy.md), [catalog/metrics/cache_hit_floor.md](catalog/metrics/cache_hit_floor.md) |
+
 ## Lớp người dùng
 | Code / config | OKF file |
 |---|---|

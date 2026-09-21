@@ -4,6 +4,7 @@
 
 - [Global Settings](settings.md) — `settings.yaml`: DB, logging, scheduler, HTTP, export, morninger
 - [Secrets](secrets.md) — `secrets.yaml` (gitignored): token FireAnt
+- [Token Pricing & Watch Thresholds](token_pricing.md) — `token_pricing.yaml`: ba rổ giá, cửa sổ giờ cao điểm, ngưỡng cảnh báo
 
 ## Nguồn tin
 
