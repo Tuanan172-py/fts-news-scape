@@ -28,6 +28,7 @@ from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from src.agent.prefix import prefix_hash              # noqa: E402
 from src.core.stdio import force_utf8_stdio            # noqa: E402
 
 force_utf8_stdio()
@@ -37,7 +38,6 @@ REPO_ROOT = PROJECT_ROOT.parent
 SCRIPTS = PROJECT_ROOT / "scripts"
 TASK_DIR = PROJECT_ROOT / "data" / "agent_tasks" / "article"
 OUT_DIR = PROJECT_ROOT / "data" / "agent_outputs_article"
-PREFIX_META = PROJECT_ROOT / "data" / "prefix" / "ARTICLE_SYSTEM_CORE.meta.json"
 PYTHON = sys.executable
 
 
@@ -66,32 +66,49 @@ def run(cmd: list[str], *, cwd: Path = PROJECT_ROOT, check: bool = True) -> int:
     return res.returncode
 
 
-def prefix_hash() -> str | None:
-    """Đọc giá trị băm của prefix đang dùng.
-
-    Returns:
-        Chuỗi băm, hoặc None khi chưa sinh prefix.
-    """
-    try:
-        return json.loads(PREFIX_META.read_text(encoding="utf-8")).get("hash")
-    except (OSError, json.JSONDecodeError):
-        return None
-
-
 def check_prefix() -> bool:
-    """Kiểm prefix trên đĩa còn khớp danh mục thực thể không.
+    """Kiểm hai vế của prefix trước khi mở đợt.
 
-    Prefix lệch danh mục vừa làm sai bảng tra của mô hình, vừa phá bộ nhớ đệm phía
-    nhà cung cấp vì tiền tố không còn giống nhau từng byte giữa các lô.
+    Vế một: tệp prefix trên đĩa còn khớp danh mục thực thể không. Lệch thì bảng tra
+    của mô hình sai.
+
+    Vế hai: `persona` trong preset còn khớp tệp ấy không. Lệch thì bộ nhớ đệm phía
+    nhà cung cấp trượt, vì tiền tố không còn giống nhau từng byte giữa các lô — và
+    đây là vế duy nhất hỏng mà không để lại dấu vết nào ngoài hoá đơn.
 
     Returns:
-        True khi prefix còn khớp, ngược lại False.
+        True khi cả hai vế đều khớp, ngược lại False.
     """
     res = subprocess.run([PYTHON, str(SCRIPTS / "build_article_prefix.py"), "--check"],
                          cwd=str(PROJECT_ROOT), capture_output=True, text=True,
                          encoding="utf-8", errors="replace")
     print((res.stdout or "").strip() or (res.stderr or "").strip())
     return res.returncode == 0
+
+
+def warm_packet() -> str:
+    """Dựng packet tí hon dùng để ghi bộ nhớ đệm cho phần tiền tố tĩnh.
+
+    Bộ nhớ đệm của nhà cung cấp khớp theo tiền tố tính từ token 0, nên nó chỉ được
+    ghi khi có một request thật đi qua. Trước đây lô đầu tiên gánh việc này: nó chạy
+    một mình, xong rồi các lô còn lại mới được thả song song. Cái giá không nằm ở
+    tiền mà ở thời gian — cả đợt phải chờ trọn một lô trăm bài chỉ để ghi mười nghìn
+    token tiền tố.
+
+    Một packet một bài rác ghi đúng phần tiền tố ấy trong vài giây, sau đó mọi lô
+    chạy song song ngay từ đầu. Phần đắt thêm là bản ghi của bài rác, khoảng 900
+    token đầu ra, tức dưới một phần nghìn đô la.
+
+    Returns:
+        Nội dung packet hâm cache, đúng định dạng packet thật.
+    """
+    return json.dumps({
+        "d": datetime.now().strftime("%Y-%m-%d"),
+        "n": 1,
+        "a": [{"i": 0, "t": "Kiểm tra đường truyền, không phải bài thật",
+               "p": ["Đây là mục kiểm tra kỹ thuật, không mang nội dung thị trường "
+                     "nào và không cần phân tích sâu."]}],
+    }, ensure_ascii=False)
 
 
 def conductor_program(manifest: dict, *, concurrency: int) -> str:
@@ -101,6 +118,13 @@ def conductor_program(manifest: dict, *, concurrency: int) -> str:
     đã tính sẵn. Các lần đọc đó nằm trong cùng một chương trình nên không sinh thêm
     bước nào của mô hình, và kết quả của chúng ở lại trong chương trình chứ không vào
     ngữ cảnh của phiên điều phối.
+
+    Đợt từ hai lô trở lên mở đầu bằng một lượt hâm bộ nhớ đệm (xem :func:`warm_packet`)
+    rồi mới thả các lô, nên **mọi** lô đều trúng tiền tố tĩnh, kể cả lô đầu.
+
+    Đợt một lô thì không hâm. Không có lô thứ hai để hưởng tiền tố đã ghi, nên lượt
+    hâm chỉ chuyển chỗ đúng khoản token miss ấy sang một request khác, rồi tính thêm
+    một bản ghi đầu ra và một quãng chờ. Hâm cache chỉ có lãi khi có người dùng lại.
 
     Args:
         manifest: Mô tả đợt do bước đóng gói sinh ra.
@@ -112,6 +136,18 @@ def conductor_program(manifest: dict, *, concurrency: int) -> str:
     batches = [{"id": b["batch_id"], "path": b["path"], "n": b["n"],
                 "windows": b["windows"]} for b in manifest["batches"]]
     out_dir = str(OUT_DIR).replace("\\", "\\\\")
+    warm_block = "" if len(batches) < 2 else f"""const WARM = {json.dumps(warm_packet(), ensure_ascii=False)};
+
+// Một lượt gọi tí hon đi trước để ghi bộ nhớ đệm cho phần tiền tố tĩnh, rồi MỌI lô
+// chạy song song và đều trúng cache. Trước đây lô đầu gánh việc hâm cache, tức cả
+// đợt phải chờ trọn một lô trăm bài trước khi có gì khác được chạy.
+// Hâm cache là tối ưu, không phải điều kiện chạy: hỏng thì đợt vẫn đi tiếp, chỉ là
+// lô đầu tiên trả giá token mới cho phần tiền tố.
+try {{
+  await tools.agent_article({{ description: "warm {manifest['wave']}", prompt: WARM }});
+}} catch (e) {{ /* bỏ qua có chủ ý */ }}
+
+"""
 
     return f"""// Đợt {manifest['wave']} — {manifest['articles']} bài, {len(batches)} lô.
 // Chạy TRỌN chương trình này trong MỘT lệnh run_code. Không tách thành nhiều bước.
@@ -153,11 +189,8 @@ async function runBatch(b) {{
   return {{ id: b.id, ok: true, chars: text.length }};
 }}
 
-// Lô đầu chạy một mình để ghi bộ nhớ đệm cho phần tiền tố tĩnh; các lô sau mới
-// chạy song song và khi đó chúng đều trúng cache.
-const done = [];
-done.push(await runBatch(BATCHES[0]));
-for (let i = 1; i < BATCHES.length; i += CONCURRENCY) {{
+{warm_block}const done = [];
+for (let i = 0; i < BATCHES.length; i += CONCURRENCY) {{
   const slice = BATCHES.slice(i, i + CONCURRENCY);
   done.push(...await Promise.all(slice.map(runBatch)));
 }}
@@ -262,6 +295,14 @@ def cmd_repair(args: argparse.Namespace) -> int:
                         "windows": budget["windows"], "from": batch_id})
 
     if not repairs:
+        # Phân biệt hai trạng thái rất khác nhau mà trước đây in ra cùng một câu.
+        # `missing_indices` coi lô chưa có tệp đầu ra là "không thiếu gì", nên một
+        # đợt chưa chạy lần nào cũng nhận được lời chúc mừng "không cần vá".
+        have, _missing = pending_batches(args.wave)
+        if not have:
+            print(f"⚠️  Đợt {args.wave}: chưa lô nào có đầu ra, nên không có gì để "
+                  f"đối chiếu. Chạy chương trình điều phối trước đã.")
+            return 2
         print(f"✅  Đợt {args.wave}: không lô nào thiếu bài. Không cần vá.")
         return 0
 
@@ -272,8 +313,7 @@ def cmd_repair(args: argparse.Namespace) -> int:
         print(f"  {r['batch_id']:30} {r['n']:>4} bài  (thiếu từ {r['from']})")
 
     manifest = {"wave": args.wave, "articles": total_missing, "batches": repairs}
-    program = conductor_program(manifest,
-                                concurrency=max(1, len(repairs) - 1))
+    program = conductor_program(manifest, concurrency=len(repairs))
     prog_path = TASK_DIR / f"wave_{args.wave}.repair.ts"
     prog_path.write_text(program, encoding="utf-8")
     print()
@@ -318,16 +358,25 @@ def cmd_prepare(args: argparse.Namespace) -> int:
     print("=" * 84)
     n_batches = len(manifest["batches"])
     print(f"Bài      : {manifest['articles']:,} ({manifest['tier1']:,} tầng ưu tiên)")
+    # Khoá `max_completion_tokens` chưa bao giờ tồn tại trong manifest, nên dòng này
+    # vẫn in "trần đầu ra 0 token" ở mọi đợt. Chia lô từ lâu chỉ còn theo `--batch`.
     print(f"Lượt gọi : {n_batches} (tối đa {manifest.get('per_call', '?')} bài mỗi "
-          f"lượt, do trần đầu ra {manifest.get('max_completion_tokens', 0):,} token)")
-    print(f"Bước     : 1 — cả {n_batches} lượt nằm trong cùng một lệnh run_code")
+          f"lượt theo --batch; mốc tham chiếu đầu ra "
+          f"{manifest.get('reference_completion_tokens', 0):,} token mỗi request)")
+    warm_note = (", sau một lượt hâm bộ nhớ đệm tí hon" if n_batches > 1
+                 else " (một lô nên không cần hâm bộ nhớ đệm)")
+    print(f"Bước     : 1 — cả {n_batches} lượt nằm trong cùng một lệnh run_code"
+          f"{warm_note}")
     print(f"Dự toán  : quota {manifest['est_quota_total']:,} token "
           f"(miss {manifest['est_miss_total']:,} · hit {manifest['est_hit_total']:,} · "
           f"out {manifest['est_out_total']:,})")
-    print(f"Prefix   : hash {prefix_hash()}")
+    pfx_note = ("mọi lô trúng cache" if manifest.get("warmed")
+                else "lô duy nhất trả giá token mới")
+    print(f"Prefix   : hash {prefix_hash()} · {manifest.get('prefix_tokens', 0):,} "
+          f"token tĩnh, {pfx_note}")
     print(f"Manifest : {manifest['manifest']}")
 
-    concurrency = args.concurrency or max(1, len(manifest['batches']) - 1)
+    concurrency = args.concurrency or len(manifest["batches"])
     program = conductor_program(manifest, concurrency=concurrency)
     prog_path = TASK_DIR / f"wave_{args.wave}.conductor.ts"
     prog_path.write_text(program, encoding="utf-8")
@@ -425,8 +474,9 @@ def main(argv=None) -> int:
     ap.add_argument("--limit", type=int, default=100,
                     help="Tổng số bài của đợt — đây là đơn vị bạn quản lý")
     ap.add_argument("--concurrency", type=int, default=0,
-                    help="Số lượt chạy song song sau lượt khởi động bộ nhớ đệm; "
-                         "0 nghĩa là chạy hết phần còn lại cùng lúc")
+                    help="Số lô chạy song song; 0 nghĩa là chạy hết cùng lúc. "
+                         "Lượt hâm bộ nhớ đệm nằm riêng ở đầu chương trình nên "
+                         "không lô nào phải chờ lô khác nữa")
     ap.add_argument("--date", help="Chỉ lấy bài xuất bản ngày YYYY-MM-DD")
     ap.add_argument("--today", action="store_true", help="Chỉ lấy bài hôm nay")
     ap.add_argument("--finish", action="store_true",

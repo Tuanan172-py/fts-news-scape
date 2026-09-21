@@ -131,14 +131,25 @@ def main(argv=None) -> int:
         print("-" * 78)
         print("ĐỐI CHIẾU VỚI SỐ THẬT ĐÃ GHI SỔ CÁI")
         print("-" * 78)
-        rows = [("Đầu vào mới", est_miss, actual["miss_tokens"]),
-                ("Đầu vào tái dùng", est_hit, actual["hit_tokens"]),
-                ("Đầu ra", est_out, actual["out_tokens"]),
-                ("Quota", est_quota, actual["quota_tokens"])]
-        print(f"{'khoản':22} {'dự toán':>12} {'thật':>14} {'lệch':>10}")
-        for label, e, a in rows:
+        # Chỉ hai khoản dưới đây là DỰ BÁO, tức sai số của chúng mới có nghĩa.
+        print(f"{'khoản':26} {'dự toán':>12} {'thật':>14} {'lệch':>10}")
+        for label, e, a in (("Đầu vào mới", est_miss, actual["miss_tokens"]),
+                            ("Đầu ra", est_out, actual["out_tokens"])):
             diff = ((a - e) / e * 100) if e else 0.0
-            print(f"{label:22} {e:>12,} {a:>14,} {diff:>9.1f}%")
+            print(f"{label:26} {e:>12,} {a:>14,} {diff:>+9.1f}%")
+
+        # `est_hit` là SÀN, không phải dự báo: nó đếm mỗi lượt gọi đọc lại tiền tố
+        # đúng một lần. Số thật còn gồm phần lịch sử gửi lại ở mỗi bước, nên vượt
+        # sàn nhiều lần là bình thường và lành mạnh — đó là lúc bộ nhớ đệm đang
+        # gánh thay giá token mới. Thấp hơn sàn mới là dấu hiệu hỏng.
+        hit_real = actual["hit_tokens"]
+        verdict = "ĐẠT" if hit_real >= est_hit else f"HỤT {est_hit - hit_real:,}"
+        print(f"{'Đầu vào tái dùng (sàn)':26} {est_hit:>12,} {hit_real:>14,} "
+              f"{verdict:>10}")
+        print(f"{'Quota':26} {est_quota:>12,} {actual['quota_tokens']:>14,} "
+              f"{'—':>10}")
+        print("   Quota gồm cả phần tái dùng nên không so trực tiếp được; đọc hai "
+              "dòng đầu và cột USD.")
         if actual["turns_max"] > 1:
             print(f"\n⚠️  turns_max = {actual['turns_max']}: có phiên chạy quá một bước. "
                   f"Worker phải xong trong đúng một bước, soi lại persona.")

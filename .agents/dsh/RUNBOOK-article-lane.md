@@ -5,6 +5,7 @@
 | Áp dụng từ | 2026-09-18 |
 | Thay thế | Quy trình L1 → Gold hai tầng trong `RUNBOOK.md`. Quy trình cũ giữ lại để quay lui |
 | Thiết kế | `plans/20260918-1651-article-lane-unified/plan.md` |
+| Lưu đồ vận hành | [`WORKFLOW-article-lane.md`](WORKFLOW-article-lane.md) — sáu lưu đồ: toàn cảnh đợt, trình tự gọi, bên trong chương trình điều phối, vòng đời token, cây quyết định sự cố, ranh giới máy/LLM/người |
 | Bề mặt DSH | `docs/proposals/dsh-surface-verified-2026-09-18.md` |
 
 > **Một đợt = một mục tiêu = một phiên.** Xong đợt thì đọc bàn giao và đóng phiên. Mở phiên mới rẻ hơn mang theo ngữ cảnh đã phình, vì bộ nhớ đệm nằm ở phía nhà cung cấp chứ không gắn với phiên.
@@ -29,7 +30,15 @@ cd project
 
 Mở tệp vừa sinh tại `project/data/prefix/ARTICLE_SYSTEM_CORE.md`, chép **trọn nội dung** vào trường `persona` của row `tool-subagent-article` trong `agent.cordis.yml`.
 
-Đây là việc thủ công duy nhất của cả quy trình, và nó chỉ phải làm lại khi danh mục thực thể đổi. Chạy `build_article_prefix.py --check` sẽ báo ngay khi cần làm lại.
+Dán xong thì xác nhận ngay, đừng tin mắt:
+
+```powershell
+& "C:\venvs\news-scape\Scripts\python.exe" scripts/build_article_prefix.py --check-preset
+```
+
+Đây là việc thủ công duy nhất của cả quy trình, và nó chỉ phải làm lại khi danh mục thực thể đổi. Từ 21/09, `build_article_prefix.py --check` kiểm **hai** vế: tệp còn khớp danh mục, **và** persona trong preset còn khớp tệp từng byte. Vế thứ hai mới là vế giữ bộ nhớ đệm — persona dán thiếu một dòng thì kết quả vẫn đúng, chỉ có hoá đơn đắt lên gấp năm mươi lần ở phần lẽ ra rẻ nhất, và không có triệu chứng nào khác. Trước đây vế ấy không ai kiểm.
+
+Danh sách đầy đủ những việc chỉ làm được bằng tay trong DSH: [`DSH-VIEC-THU-CONG.md`](DSH-VIEC-THU-CONG.md).
 
 **Bước 3 — mở phiên đúng preset.** Settings → General → Agent preset → **News-Scape Conductor**, rồi tạo phiên mới với quyền `workspace-write`.
 
@@ -62,7 +71,11 @@ Mở tệp `project/data/agent_tasks/article/wave_W01.conductor.ts` và dán **t
 
 Đừng tách thành nhiều bước. Toàn bộ chi phí của phiên điều phối tỉ lệ với số bước chứ không tỉ lệ với số bài; tách một chương trình thành năm bước là nhân chi phí lên nhiều lần mà không được gì.
 
-Chương trình tự làm: đọc packet theo cửa sổ dòng, chạy lô đầu một mình để ghi bộ nhớ đệm, rồi mới chạy song song phần còn lại, và ghi kết quả thẳng ra đĩa. Nó chỉ trả về vài con số, nên nội dung của lô không lọt vào ngữ cảnh phiên.
+Chương trình tự làm: gọi một lượt **hâm bộ nhớ đệm** tí hon, rồi đọc packet theo cửa sổ dòng, chạy **mọi** lô song song, và ghi kết quả thẳng ra đĩa. Nó chỉ trả về vài con số, nên nội dung của lô không lọt vào ngữ cảnh phiên.
+
+Lượt hâm cache thay cho cách cũ là bắt lô đầu chạy một mình. Bộ nhớ đệm chỉ được ghi khi có một request thật đi qua, nhưng request ấy không cần mang trăm bài: một packet một bài rác ghi đúng phần tiền tố tĩnh trong vài giây, thay vì bắt cả đợt chờ trọn một lô. Tiền không đổi, thời gian chạy đợt ngắn lại đúng bằng thời gian của một lô.
+
+Đợt **một lô** thì chương trình không hâm, và đó là chủ ý: không có lô thứ hai để dùng lại tiền tố, nên lượt hâm chỉ dời đúng khoản token ấy sang một request khác rồi tính thêm một bản ghi đầu ra. Cấu hình mặc định `--limit 100 --batch 100` rơi vào đúng trường hợp này.
 
 ### 1.3 Vá phần thiếu, nếu có — 0 token
 
@@ -70,7 +83,7 @@ Chương trình tự làm: đọc packet theo cửa sổ dòng, chạy lô đầ
 & "C:\venvs\news-scape\Scripts\python.exe" scripts/article_run.py --wave W01 --repair
 ```
 
-Không thiếu bài nào thì lệnh báo ngay và không sinh việc thừa. Có thiếu thì nó ghi packet bù và một tệp `wave_W01.repair.ts`; chạy trọn tệp ấy trong một lệnh `run_code` rồi mới sang bước hoàn tất.
+Ba trạng thái, mỗi trạng thái một câu trả lời riêng: **chưa lô nào có đầu ra** thì lệnh nói thẳng là chưa có gì để đối chiếu và thoát mã 2 (chạy chương trình điều phối trước đã); **đủ bài** thì báo không cần vá; **thiếu bài** thì ghi packet bù và một tệp `wave_W01.repair.ts` — chạy trọn tệp ấy trong một lệnh `run_code` rồi mới sang bước hoàn tất.
 
 ### 1.4 Hoàn tất — quay lại terminal, 0 token
 
@@ -99,12 +112,15 @@ Thư mục giao hàng nằm ở **gốc kho**, không nằm trong `project/`. Đ
 ## 2. Đọc số sau mỗi đợt
 
 ```powershell
+& "C:\venvs\news-scape\Scripts\python.exe" scripts/pipeline_radar.py token --wave W01  # phân rã hoá đơn + kiểm cache
 & "C:\venvs\news-scape\Scripts\python.exe" scripts/estimate_wave.py --wave W01   # dự toán đối chiếu số thật
 & "C:\venvs\news-scape\Scripts\python.exe" scripts/token_ledger.py report        # sổ cái
 & "C:\venvs\news-scape\Scripts\python.exe" scripts/ctx_probe.py                  # áp suất ngữ cảnh
 ```
 
-Sáu dấu hiệu cần xử lý ngay:
+`radar token` nay đọc thẳng sổ cái và checkpoint phiên DSH. Trước 21/09 nó nhân số bài với hai định mức chết 450 và 1.470 token mỗi bài rồi nhân tiếp với một đơn giá gõ trong mã, không biết bộ nhớ đệm tồn tại — nên nó và sổ cái đưa ra hai con số khác nhau cho cùng một đợt. Con số của nó khi ấy phải bỏ hết, đừng đem so với bất cứ báo cáo cũ nào.
+
+Bảy dấu hiệu cần xử lý ngay:
 
 | Dấu hiệu | Nghĩa là gì | Làm gì |
 |---|---|---|
@@ -114,6 +130,7 @@ Sáu dấu hiệu cần xử lý ngay:
 | Lô trả về thiếu bài | Lượt đó bị cắt cụt | `--repair` đóng gói lại đúng phần thiếu. Đừng chia nhỏ mọi lô để phòng xa |
 | `output_tokens` nhiều lượt bằng nhau y hệt | Đã chạm một trần nào đó | Ghi lại con số. Nếu là 256.000 thì đó là mặc định DSH; nếu khác thì có cấu hình nào khác đang đè |
 | Áp suất vàng hoặc đỏ | Ngữ cảnh phiên đã phình | Đọc bàn giao, **đóng phiên**, mở phiên mới |
+| Sổ cái báo **bộ nhớ đệm TRƯỢT** | `hit` thấp hơn sàn `tiền tố × (số lượt − 1)` | Kiểm theo thứ tự: `build_article_prefix.py --check` (persona lệch prefix là nguyên nhân số một) → có đổi tool set/model/effort giữa đợt không → phiên nào chạm ngưỡng nén 80% |
 
 ---
 
@@ -133,7 +150,8 @@ Phiên mới chỉ cần đọc tệp đó rồi chạy tiếp. Mất phiên gi�
 | Con gọi được các tool khác | Phiên đang chạy sai preset | Đóng phiên, mở lại đúng preset. Không sửa prompt để chữa |
 | Đầu ra của lô hỏng nhiều | Persona trôi hoặc trần token đầu ra quá thấp | `article_expand` đã cứu từng bản ghi; chạy lại đúng lô hỏng. Vượt 10% thì lệnh tự dừng đợt |
 | `article_pack` báo dòng quá dài | Có đoạn văn vượt trần cắt dòng của công cụ đọc | Hạ `MAX_PARAGRAPH_CHARS` trong `src/agent/distill.py` rồi đóng gói lại |
-| Prefix báo lệch | Danh mục thực thể đã đổi | Sinh lại prefix và dán lại vào persona. Bỏ qua là vỡ bộ nhớ đệm |
+| Prefix báo lệch danh mục | Danh mục thực thể đã đổi | Sinh lại prefix và dán lại vào persona. Bỏ qua là vỡ bộ nhớ đệm |
+| Persona báo lệch prefix | Dán thiếu, dán thừa, hoặc trình soạn thảo tự thụt lề lại khối YAML | Dán lại trọn nội dung tệp prefix, rồi `--check-preset` để xác nhận. Đây là lỗi duy nhất không có triệu chứng nào ngoài hoá đơn |
 | Sổ cái báo con số vô lý | Mốc quy kết gộp nhầm phiên DSH khác đang mở | Đóng các phiên không liên quan trước khi chạy đợt |
 
 ---

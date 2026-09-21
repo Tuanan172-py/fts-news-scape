@@ -575,3 +575,205 @@ def test_chuong_trinh_dieu_phoi_khong_tra_noi_dung_ve_ngu_canh():
     tail = program[program.rindex("return {"):]
     assert "packet" not in tail
     assert "text" not in tail
+
+
+# --------------------------------------------------------------------------
+# Bộ nhớ đệm phía nhà cung cấp
+#
+# Bốn bất biến dưới đây canh cùng một thứ: phần tiền tố tĩnh phải giống hệt nhau
+# giữa các lượt gọi thì mới trúng bộ nhớ đệm. Hỏng ở đây không làm sai kết quả, chỉ
+# làm hoá đơn đắt lên năm mươi lần ở phần lẽ ra rẻ nhất — tức không có triệu chứng
+# nào ngoài tiền, và vì vậy phải kiểm bằng máy.
+# --------------------------------------------------------------------------
+def test_persona_trong_preset_giong_het_prefix_tren_dia():
+    """Persona dán tay trong preset phải khớp từng byte với tệp prefix đã sinh."""
+    from src.agent.prefix import PREFIX_PATH, compare_persona
+
+    if not PREFIX_PATH.exists():
+        pytest.skip("chưa sinh prefix trên máy này")
+    ok, detail = compare_persona(PREFIX_PATH.read_text(encoding="utf-8"))
+    assert ok, detail
+
+
+def test_persona_lech_mot_dong_bi_bat():
+    """Thêm đúng một dòng vào prefix là chế độ kiểm phải báo lệch."""
+    from src.agent.prefix import PREFIX_PATH, compare_persona
+
+    if not PREFIX_PATH.exists():
+        pytest.skip("chưa sinh prefix trên máy này")
+    doctored = PREFIX_PATH.read_text(encoding="utf-8") + "\nmột dòng thừa\n"
+    ok, detail = compare_persona(doctored)
+    assert not ok
+    assert "dòng" in detail
+
+
+def test_tien_to_tinh_gom_ca_phan_harness_noi_them():
+    """Dự toán phải đếm cả AGENTS.md và section tool, không chỉ phần persona."""
+    from src.agent.prefix import (
+        SYSTEM_OVERHEAD_TOKENS,
+        cached_prefix_tokens,
+        persona_tokens,
+    )
+
+    assert cached_prefix_tokens() == persona_tokens() + SYSTEM_OVERHEAD_TOKENS
+    assert cached_prefix_tokens() > persona_tokens()
+
+
+def test_dong_goi_lai_cung_mot_tap_bai_cho_ra_packet_giong_het(tmp_path):
+    """Packet phải tất định: lần chạy lại chỉ trúng cache khi giống hệt lần trước."""
+    from scripts.article_pack import write_packet
+
+    items = [{"i": 0, "t": "Hòa Phát báo lãi", "p": ["Đoạn một.", "Đoạn hai."]},
+             {"i": 1, "t": "VND: báo cáo quản trị", "p": ["Đoạn ba."]}]
+    mapping = {"batch_id": "b", "index": {"0": "x", "1": "y"}}
+    _p1, _m1, first = write_packet("b", items, mapping, tmp_path / "a")
+    _p2, _m2, second = write_packet("b", items, mapping, tmp_path / "b")
+    assert first["sha256"] == second["sha256"]
+
+
+def test_chuong_trinh_dieu_phoi_ham_cache_truoc_roi_tha_moi_lo():
+    """Lượt hâm cache phải đi trước, và không lô nào bị bắt chạy một mình nữa."""
+    from scripts.article_run import conductor_program
+
+    manifest = {"wave": "T", "articles": 2, "batches": [
+        {"batch_id": "b1", "path": "p1.json", "n": 1, "windows": [[1, 10]]},
+        {"batch_id": "b2", "path": "p2.json", "n": 1, "windows": [[1, 10]]}]}
+    program = conductor_program(manifest, concurrency=2)
+
+    assert "const WARM" in program
+    warm_call = program.index("prompt: WARM")
+    loop = program.index("for (let i = 0; i < BATCHES.length")
+    assert warm_call < loop, "phải hâm bộ nhớ đệm trước khi thả lô"
+    assert "runBatch(BATCHES[0])" not in program, "lô đầu không còn phải chạy một mình"
+
+
+def test_phat_hien_bo_nho_dem_truot_bang_san_toi_thieu():
+    """Hụt so với sàn `tiền tố × (số lượt gọi − 1)` là tín hiệu cache trượt."""
+    from scripts.token_ledger import cache_shortfall
+
+    # Đợt hai lô có ba lượt gọi worker: một lượt hâm và hai lô.
+    assert cache_shortfall(100_000, 4, 11_143, calls=3) == (22_286, 0)
+    assert cache_shortfall(10_000, 4, 11_143, calls=3) == (22_286, 12_286)
+    assert cache_shortfall(0, 1, 11_143, calls=1) == (0, 0), "một lượt thì không có sàn"
+
+
+def test_san_cache_khong_tinh_phien_dieu_phoi_thanh_worker():
+    """Phiên Conductor mang persona khác nên không được tính vào sàn của worker.
+
+    Trước đây sàn lấy thẳng số phiên: đợt hai lô có bốn phiên nên sàn đòi
+    `11.143 × 3`, trong khi chỉ có hai lô thật sự đọc lại tiền tố. Cảnh báo vì thế
+    kêu oan ở mọi đợt bình thường — mà một cảnh báo luôn kêu thì không còn là tín hiệu.
+    """
+    from scripts.token_ledger import cache_shortfall
+
+    hit_hoan_hao = 2 * 11_143          # hai lô, mỗi lô đọc lại trọn tiền tố
+    _floor, thieu = cache_shortfall(hit_hoan_hao, 4, 11_143, calls=3)
+    assert thieu == 0, "cache trúng hoàn hảo mà vẫn báo hụt"
+
+    # Vẫn phải bắt được trường hợp hỏng thật: chỉ một lô trúng.
+    _floor, thieu = cache_shortfall(11_143, 4, 11_143, calls=3)
+    assert thieu == 11_143
+
+
+def test_doc_so_luot_goi_worker_tu_mo_ta_dot(tmp_path, monkeypatch):
+    """Số lượt gọi lấy từ mô tả đợt: số lô cộng lượt hâm nếu có."""
+    import json as _json
+
+    from scripts import token_ledger
+
+    monkeypatch.setattr(token_ledger, "TASK_DIR", str(tmp_path))
+    (tmp_path / "wave_A.json").write_text(
+        _json.dumps({"batches": [{}, {}], "warmed": True}), encoding="utf-8")
+    (tmp_path / "wave_B.json").write_text(
+        _json.dumps({"batches": [{}], "warmed": False}), encoding="utf-8")
+
+    assert token_ledger.worker_calls("A") == 3
+    assert token_ledger.worker_calls("B") == 1
+    assert token_ledger.worker_calls("KHONG_CO") is None
+    assert token_ledger.worker_calls(None) is None
+
+
+def test_ngay_cua_so_cai_la_gio_UTC_phai_doi_ve_gio_may():
+    """Sổ cái ghi theo UTC; lọc theo ngày máy phải đổi thành khoảng UTC.
+
+    Không đổi thì mọi đợt chạy trước 07:00 giờ VN rơi vào ngày hôm trước theo UTC,
+    và radar báo "chưa có dòng nào" cho đúng ngày vừa chạy xong.
+    """
+    from datetime import datetime, timedelta
+
+    from scripts.pipeline_radar import _utc_window
+
+    lo, hi = _utc_window("2026-09-18")
+    lo_dt, hi_dt = datetime.fromisoformat(lo), datetime.fromisoformat(hi)
+    assert hi_dt - lo_dt == timedelta(days=1)
+    assert lo_dt.astimezone().strftime("%Y-%m-%d %H:%M") == "2026-09-18 00:00"
+    assert lo.endswith("+00:00") and hi.endswith("+00:00"), "phải cùng định dạng cột ts"
+
+
+def test_radar_khong_cong_don_cac_anh_chup_tich_luy_cua_cung_mot_dot(tmp_path,
+                                                                    monkeypatch):
+    """Sổ cái ghi ảnh chụp tích luỹ; cộng thẳng chúng là đếm trùng nhiều lần."""
+    import sqlite3 as _sq
+
+    from scripts import pipeline_radar
+    from scripts.token_ledger import SCHEMA
+
+    db = tmp_path / "harness.db"
+    conn = _sq.connect(db)
+    conn.executescript(SCHEMA)
+    for miss in (100, 200, 300):
+        conn.execute(
+            "INSERT INTO token_ledger (ts, wave, agent_id, n_items, n_sessions,"
+            " miss_tokens, hit_tokens, out_tokens, quota_tokens, billed_usd)"
+            " VALUES ('2026-09-18T11:21', 'W', 'article-processor', 200, 25,"
+            f" {miss}, 0, 0, {miss}, 0.1)")
+    conn.commit()
+    conn.close()
+
+    monkeypatch.setattr(pipeline_radar, "HARNESS_DB", db)
+    rows = pipeline_radar._ledger_rows("2026-09-18", "W")
+    assert len(rows) == 1
+    assert rows[0]["miss_tokens"] == 300, "phải giữ ảnh chụp mới nhất"
+
+
+def test_dot_mot_lo_khong_ham_bo_nho_dem():
+    """Một lô thì không có ai dùng lại tiền tố, nên lượt hâm chỉ là tốn thêm."""
+    from scripts.article_run import conductor_program
+
+    manifest = {"wave": "T", "articles": 1, "batches": [
+        {"batch_id": "b1", "path": "p1.json", "n": 1, "windows": [[1, 10]]}]}
+    assert "WARM" not in conductor_program(manifest, concurrency=1)
+
+
+def test_khu_anh_chup_cu_cua_cung_mot_dot():
+    """Sổ cái ghi ảnh chụp tích luỹ; phần cộng phải giữ đúng ảnh chụp cuối cùng."""
+    from scripts.token_ledger import latest_snapshots
+
+    rows = [{"wave": "W1", "batch_id": None, "agent_id": "a", "n_items": 100},
+            {"wave": "W2", "batch_id": None, "agent_id": "a", "n_items": 200},
+            {"wave": "W2", "batch_id": None, "agent_id": "a", "n_items": 200}]
+    kept = latest_snapshots(rows)
+    assert [r["wave"] for r in kept] == ["W1", "W2"]
+    assert kept[-1] is rows[-1], "phải giữ ảnh chụp ghi sau cùng"
+
+
+def test_chua_lo_nao_chay_thi_khong_bao_la_khong_can_va(tmp_path, monkeypatch):
+    """Đợt chưa chạy lần nào phải nói thẳng, không được chúc mừng "không cần vá"."""
+    import argparse
+    import json as _json
+
+    from scripts import article_run
+
+    monkeypatch.setattr(article_run, "TASK_DIR", tmp_path)
+    monkeypatch.setattr(article_run, "OUT_DIR", tmp_path)
+
+    packet = {"d": "2026-09-21", "n": 1,
+              "a": [{"i": 0, "t": "Bài 0", "p": ["Nội dung."]}]}
+    (tmp_path / "article_W_01.task.json").write_text(
+        _json.dumps(packet, ensure_ascii=False), encoding="utf-8")
+    (tmp_path / "article_W_01.map.json").write_text(
+        _json.dumps({"batch_id": "article_W_01", "index": {"0": "id0"}},
+                    ensure_ascii=False), encoding="utf-8")
+
+    assert article_run.cmd_repair(argparse.Namespace(wave="W")) == 2
+    assert not list(tmp_path.glob("*_r01.task.json"))

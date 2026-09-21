@@ -1,14 +1,78 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # Plan hợp nhất — Article Lane: xử lý bài đăng bằng LLM ở quy mô lớn
 
-|  |  |
-| --- | --- |
-| Ngày | 2026-09-18 |
-| Trạng thái | **ĐÃ TRIỂN KHAI (2026-09-18).** Toàn bộ Q1–Q6 đã chốt; mã, cấu hình, kiểm định và tài liệu quản trị đã hoàn tất. Chưa chạy workload thật trên runtime — phần đó do người vận hành thực hiện |
-| Vai trò | **Tài liệu quy phạm duy nhất.** Thi hành theo đúng tài liệu này. Không cần đọc song song tài liệu nào khác |
-| Thay thế | `20260918-1133-l1-llm-lean-token` · `20260918-1445-article-lane-scale-token` · `20260918-1624-dsh-token-economy-workmethod` — cả ba chuyển **SUPERSEDED**, giữ làm hồ sơ |
-| Hồ sơ giữ lại | `20260918-1445-.../AUDIT-plan-set-2026-09-18.md` (22 phát hiện, lý do của mọi quyết định ở §2) · `20260918-1624-.../plan.md` §6 (bề mặt DSH kèm file:line, dùng khi nâng cấp DSH) |
-| Phân loại | **Cấp 2 — NORMAL**. Chạm Cấp 3 ở hai điểm đã tách riêng: amendment ADR 0008 (§2 Q4) và amendment ADR 0009 `maxDepth` (§3.1) |
-| Ràng buộc chủ đạo | **LLM là bộ não nhận diện và tóm tắt.** Code chỉ làm cơ học: đóng gói, tra cứu, bung chỉ số, đo lường. Không dùng code để **quyết định** thực thể hay tóm tắt |
+|                        |                                                                                                                                                                                                                                         |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Ngày                  | 2026-09-18                                                                                                                                                                                                                              |
+| Trạng thái           | **ĐÃ TRIỂN KHAI (2026-09-18).** Toàn bộ Q1–Q6 đã chốt; mã, cấu hình, kiểm định và tài liệu quản trị đã hoàn tất. Chưa chạy workload thật trên runtime — phần đó do người vận hành thực hiện |
+| Vai trò               | **Tài liệu quy phạm duy nhất.** Thi hành theo đúng tài liệu này. Không cần đọc song song tài liệu nào khác                                                                                                      |
+| Thay thế              | `20260918-1133-l1-llm-lean-token` · `20260918-1445-article-lane-scale-token` · `20260918-1624-dsh-token-economy-workmethod` — cả ba chuyển **SUPERSEDED**, giữ làm hồ sơ                                           |
+| Hồ sơ giữ lại      | `20260918-1445-.../AUDIT-plan-set-2026-09-18.md` (22 phát hiện, lý do của mọi quyết định ở §2) · `20260918-1624-.../plan.md` §6 (bề mặt DSH kèm file:line, dùng khi nâng cấp DSH)                                 |
+| Phân loại            | **Cấp 2 — NORMAL**. Chạm Cấp 3 ở hai điểm đã tách riêng: amendment ADR 0008 (§2 Q4) và amendment ADR 0009 `maxDepth` (§3.1)                                                                                       |
+| Ràng buộc chủ đạo | **LLM là bộ não nhận diện và tóm tắt.** Code chỉ làm cơ học: đóng gói, tra cứu, bung chỉ số, đo lường. Không dùng code để **quyết định** thực thể hay tóm tắt                               |
 
 > **Định vị một câu:** mỗi lượt gọi LLM nhận một packet nhiều bài và trả một mảng JSON trong **đúng một bước**; mọi thứ tất định do code làm với 0 token; và toàn bộ chi phí đo được bằng số thật trước và sau khi chạy.
 
@@ -26,14 +90,14 @@ Mỗi phase phải chứng minh được nó đưa hệ thống tới gần đ�
 
 **Vạch xuất phát, đo ngày 2026-09-18:**
 
-| | Giá trị |
-|---|---:|
-| Bài cào trong ngày | 307 |
-| Bài hoàn tất L1 | **0 (0,0%)** |
-| Bài hoàn tất Gold | 0 |
-| Hàng đợi `failed` | 189 work_items · 85 l1_tasks |
-| Packet tồn trên đĩa | 408 file = **2.118 bài** (95 lô chứa 1.805 bài + 313 packet lẻ) |
-| Tồn đọng trong DB | ~6.404 bài chưa L1 · ~4.600 bài chờ Gold |
+|                         |                                                                 Giá trị |
+| ----------------------- | ------------------------------------------------------------------------: |
+| Bài cào trong ngày   |                                                                       307 |
+| Bài hoàn tất L1      |                                                        **0 (0,0%)** |
+| Bài hoàn tất Gold    |                                                                         0 |
+| Hàng đợi`failed`   |                                             189 work_items · 85 l1_tasks |
+| Packet tồn trên đĩa | 408 file =**2.118 bài** (95 lô chứa 1.805 bài + 313 packet lẻ) |
+| Tồn đọng trong DB    |                             ~6.404 bài chưa L1 · ~4.600 bài chờ Gold |
 
 Hai con số cuối là **hai đại lượng khác nhau**, không được dùng lẫn. Con số 10.100 trong tài liệu cũ là sai do giả định mọi packet đều là lô 25 bài.
 
@@ -41,14 +105,14 @@ Hai con số cuối là **hai đại lượng khác nhau**, không được dùn
 
 ## 2. Nhật ký quyết định
 
-| # | Quyết định | Chốt | Ngày |
-|:-:|---|---|---|
-| **Q1** | Hình thái worker: **subagent PTC in-process**. Không dùng `headless`, không dùng `sdk`/`sdk-minimal` | ✅ Đã chốt | 18/09 |
-| **Q4** | Cổng phê duyệt ADR 0008: **bỏ hẳn**. Anh điều khiển bằng lệnh wave tường minh. Chỉ giữ chốt kỹ thuật tự động (§9.2) | ✅ Đã chốt | 18/09 |
-| **Q5** | **Xuất cột Intent ra Excel — NẰM TRONG PHẠM VI**, làm ở bước 5. Deliverable phải phân biệt rõ thực thể nào do **LLM** nhận diện và thực thể nào do **code** nhận diện | ✅ Đã chốt (hiệu chỉnh 18/09, xem §2.2) | 18/09 |
-| **Q6** | **Hợp nhất** ba plan thành tài liệu này trước khi implement | ✅ Đã chốt | 18/09 |
-| **Q2** | Độ sâu xử lý: **100% `full`**. Mọi bài đều được xử lý đầy đủ tiêu đề và nội dung. Không có chế độ `lite` | ✅ Đã chốt | 18/09 |
-| **Q3** | Xếp Tier 1 theo **recall-biased**. Nguyên tắc: *nhận diện thừa còn hơn bỏ sót* — ưu tiên tăng true positive, chấp nhận đánh đổi để giảm false negative. Code-first vẫn còn điểm mù nhưng phải hạn chế tối đa | ✅ Đã chốt | 18/09 |
+|      #      | Quyết định                                                                                                                                                                                                                                         | Chốt                                         | Ngày |
+| :----------: | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- | ----- |
+| **Q1** | Hình thái worker:**subagent PTC in-process**. Không dùng `headless`, không dùng `sdk`/`sdk-minimal`                                                                                                                                 | ✅ Đã chốt                                 | 18/09 |
+| **Q4** | Cổng phê duyệt ADR 0008:**bỏ hẳn**. Anh điều khiển bằng lệnh wave tường minh. Chỉ giữ chốt kỹ thuật tự động (§9.2)                                                                                                         | ✅ Đã chốt                                 | 18/09 |
+| **Q5** | **Xuất cột Intent ra Excel — NẰM TRONG PHẠM VI**, làm ở bước 5. Deliverable phải phân biệt rõ thực thể nào do **LLM** nhận diện và thực thể nào do **code** nhận diện                                       | ✅ Đã chốt (hiệu chỉnh 18/09, xem §2.2) | 18/09 |
+| **Q6** | **Hợp nhất** ba plan thành tài liệu này trước khi implement                                                                                                                                                                             | ✅ Đã chốt                                 | 18/09 |
+| **Q2** | Độ sâu xử lý:**100% `full`**. Mọi bài đều được xử lý đầy đủ tiêu đề và nội dung. Không có chế độ `lite`                                                                                                         | ✅ Đã chốt                                 | 18/09 |
+| **Q3** | Xếp Tier 1 theo**recall-biased**. Nguyên tắc: *nhận diện thừa còn hơn bỏ sót* — ưu tiên tăng true positive, chấp nhận đánh đổi để giảm false negative. Code-first vẫn còn điểm mù nhưng phải hạn chế tối đa | ✅ Đã chốt                                 | 18/09 |
 
 Lý do đầy đủ của từng quyết định nằm ở `AUDIT-plan-set-2026-09-18.md`. Tài liệu này chỉ ghi kết quả và hệ quả.
 
@@ -70,11 +134,11 @@ Lý do đầy đủ của từng quyết định nằm ở `AUDIT-plan-set-2026-
 
 **Ba cột bổ sung vào cuối `FINAL_COLUMNS`:**
 
-| Cột | Nội dung | Ví dụ |
-|---|---|---|
-| `intent_llm` | Thực thể do **LLM** nhận diện độc lập, kèm mã nhóm | `Hòa Phát [COM]; HRC [AST]; thuế chống bán phá giá [THM]` |
-| `intent_code` | Thực thể do **code** nhận diện tất định | `HPG [TIC]; THEP [IND]` |
-| `intent_source` | Nhãn đối soát mỗi thực thể | `BOTH` · `LLM_ONLY` · `CODE_ONLY` |
+| Cột              | Nội dung                                                         | Ví dụ                                                            |
+| ----------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `intent_llm`    | Thực thể do**LLM** nhận diện độc lập, kèm mã nhóm | `Hòa Phát [COM]; HRC [AST]; thuế chống bán phá giá [THM]` |
+| `intent_code`   | Thực thể do**code** nhận diện tất định               | `HPG [TIC]; THEP [IND]`                                          |
+| `intent_source` | Nhãn đối soát mỗi thực thể                                 | `BOTH` · `LLM_ONLY` · `CODE_ONLY`                          |
 
 Yêu cầu cốt lõi của anh là hai cột đầu — phân biệt LLM với code. Cột thứ ba là nhãn đối soát, đã có sẵn trong DB nên xuất kèm không tốn thêm gì, và nó chính là thứ cho thấy **vùng giá trị riêng của LLM** (`LLM_ONLY`: thương hiệu con, ngành suy diễn, chủ đề vĩ mô mà code không có từ khoá cứng).
 
@@ -86,38 +150,38 @@ Nguồn: `%USERPROFILE%\.dsh\profiles\node_modules\@deepseek-ai` phiên bản `0
 
 ### 3.1 Bốn khiếm khuyết P0 phải vá trước mọi wave
 
-| # | Sự thật | Bằng chứng | Vá |
-|:-:|---|---|---|
-| P0-1 | **`maxDepth: 0` cấm delegation hoàn toàn**, không phải chặn đệ quy. `childDepth = depth(parent)+1` nên con đầu tiên là 1 > 0 ⇒ `SubagentDepthError`. Preset đang khai `0` cho `agent_l1` và `agent_gold` ⇒ **hai tool này chưa bao giờ spawn được** | `dsh-subagent/lib/types/child-agent.js:32-41`; `dsh-tool-subagent/README.md:53` | Đổi thành **`maxDepth: 1`** (cho đúng một tầng, chặn cháu). Kèm amendment ADR 0009 §2.2 |
-| P0-2 | **`run_code` được chèn SAU lớp lọc `toolFilter`** và `restrict()` **ném lỗi** nếu cố đặt tên nó ⇒ con PTC luôn có `run_code` | `dsh-tools/lib/index.js:2874`, `:2800` | Bỏ tiêu chí "0 tool" (§10). Thay bằng "SDK rỗng" + "`turns == 1`" |
-| P0-3 | **Không thể đặt `mode` cho con.** Schema row subagent có đúng 9 khoá, không có `mode`. Con kế thừa mode của cha | `dsh-tool-subagent/lib/index.js:252-270`; `dsh-tools:2668` | Gỡ mọi hạng mục `mode: native` cho worker. Conductor giữ `ptc` (§4 R1) |
-| P0-4 | **Pruner kết quả tool không đăng ký listener**, chỉ chạy bên trong một lượt compaction; mà compaction tự chạy ở **80%** cửa sổ | `dsh-compaction-tool-result-pruner/lib/index.js`; `dsh-compaction-basic:15,111` | Không trông vào DSH để cắt transcript. Cắt bằng thiết kế (§8) và ngưỡng đóng phiên thấp hơn nhiều (§8.3) |
+|  #  | Sự thật                                                                                                                                                                                                                                                                                          | Bằng chứng                                                                        | Vá                                                                                                                           |
+| :--: | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| P0-1 | **`maxDepth: 0` cấm delegation hoàn toàn**, không phải chặn đệ quy. `childDepth = depth(parent)+1` nên con đầu tiên là 1 > 0 ⇒ `SubagentDepthError`. Preset đang khai `0` cho `agent_l1` và `agent_gold` ⇒ **hai tool này chưa bao giờ spawn được** | `dsh-subagent/lib/types/child-agent.js:32-41`; `dsh-tool-subagent/README.md:53` | Đổi thành**`maxDepth: 1`** (cho đúng một tầng, chặn cháu). Kèm amendment ADR 0009 §2.2                     |
+| P0-2 | **`run_code` được chèn SAU lớp lọc `toolFilter`** và `restrict()` **ném lỗi** nếu cố đặt tên nó ⇒ con PTC luôn có `run_code`                                                                                                                                 | `dsh-tools/lib/index.js:2874`, `:2800`                                          | Bỏ tiêu chí "0 tool" (§10). Thay bằng "SDK rỗng" + "`turns == 1`"                                                     |
+| P0-3 | **Không thể đặt `mode` cho con.** Schema row subagent có đúng 9 khoá, không có `mode`. Con kế thừa mode của cha                                                                                                                                                             | `dsh-tool-subagent/lib/index.js:252-270`; `dsh-tools:2668`                      | Gỡ mọi hạng mục`mode: native` cho worker. Conductor giữ `ptc` (§4 R1)                                               |
+| P0-4 | **Pruner kết quả tool không đăng ký listener**, chỉ chạy bên trong một lượt compaction; mà compaction tự chạy ở **80%** cửa sổ                                                                                                                                       | `dsh-compaction-tool-result-pruner/lib/index.js`; `dsh-compaction-basic:15,111` | Không trông vào DSH để cắt transcript. Cắt bằng thiết kế (§8) và ngưỡng đóng phiên thấp hơn nhiều (§8.3) |
 
 ### 3.2 Các sự thật khác dùng trong thiết kế
 
-| Hạng mục | Thực tế |
-|---|---|
-| Cấu trúc bước | **Một request mỗi BƯỚC**. Mọi tool call trong một assistant message chạy trong cùng bước đó (song song ≤ 10), rồi sinh **một** request mới |
-| `agentOptions` | Đúng 4 khoá: `provider` · `model` · `reasoningEffort` · `maxTokens` |
-| `reasoningEffort` | Chỉ 4 giá trị: `off` · `low` · `high` · `max`. **Thinking bật mặc định**; `.dsh/settings.yaml` hiện để `high` cho mọi con |
-| `maxTokens` | Mặc định adapter **256.000** (không phải 8K). Trần model 384K. Con kế thừa của cha |
-| Kết quả sub-call dưới `ptc` | **Không** vào context cha — chỉ vào `tool/ptc-dispatch` trong log bền. Dưới `native` thì **có** |
-| Prefix | System prompt là **một node, không có timestamp**. Thứ tự section cố định, tool list lexicographic. Runtime/time context nối ở **đuôi** |
-| Prefix vỡ khi | đổi tool set · đổi preset · đổi model/effort route · compaction viết lại vùng surface |
-| Spill | Ngưỡng **50.000 byte**; vượt thì thay bằng preview + đường dẫn. **Miễn trừ `read`** |
-| Usage | `assistant/message.usage = {inputTokens, outputTokens, totalTokens, cacheReadTokens, reasoningTokens}`. `inputTokens` là **uncached**, không phải kích thước prompt |
-| Nguồn đọc usage | **JSONL** `~/.dsh/sessions/<workspace-key>/<uuid>/session.v3.jsonl.zstd`. SQLite phiên được mount **trơ** |
-| Quy kết con | Con là **Session riêng**; burn của con **không** nằm trong `tokenUsage` của cha |
-| Budget | DSH **không có** trần token hay chi phí theo phiên/ngày |
-| Preset mặc định | `.dsh/settings.yaml` khai `ptc`; **không phải** `news-scape-conductor` — đây là nguyên nhân gốc khiến phiên 17/09 chạy `subagent` generic, mất sạch ranh giới |
+| Hạng mục                       | Thực tế                                                                                                                                                                                  |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Cấu trúc bước                | **Một request mỗi BƯỚC**. Mọi tool call trong một assistant message chạy trong cùng bước đó (song song ≤ 10), rồi sinh **một** request mới                     |
+| `agentOptions`                 | Đúng 4 khoá:`provider` · `model` · `reasoningEffort` · `maxTokens`                                                                                                           |
+| `reasoningEffort`              | Chỉ 4 giá trị:`off` · `low` · `high` · `max`. **Thinking bật mặc định**; `.dsh/settings.yaml` hiện để `high` cho mọi con                                   |
+| `maxTokens`                    | Mặc định adapter**256.000** (không phải 8K). Trần model 384K. Con kế thừa của cha                                                                                           |
+| Kết quả sub-call dưới`ptc` | **Không** vào context cha — chỉ vào `tool/ptc-dispatch` trong log bền. Dưới `native` thì **có**                                                                  |
+| Prefix                           | System prompt là**một node, không có timestamp**. Thứ tự section cố định, tool list lexicographic. Runtime/time context nối ở **đuôi**                            |
+| Prefix vỡ khi                   | đổi tool set · đổi preset · đổi model/effort route · compaction viết lại vùng surface                                                                                          |
+| Spill                            | Ngưỡng**50.000 byte**; vượt thì thay bằng preview + đường dẫn. **Miễn trừ `read`**                                                                               |
+| Usage                            | `assistant/message.usage = {inputTokens, outputTokens, totalTokens, cacheReadTokens, reasoningTokens}`. `inputTokens` là **uncached**, không phải kích thước prompt        |
+| Nguồn đọc usage               | **JSONL** `~/.dsh/sessions/<workspace-key>/<uuid>/session.v3.jsonl.zstd`. SQLite phiên được mount **trơ**                                                               |
+| Quy kết con                     | Con là**Session riêng**; burn của con **không** nằm trong `tokenUsage` của cha                                                                                         |
+| Budget                           | DSH**không có** trần token hay chi phí theo phiên/ngày                                                                                                                         |
+| Preset mặc định               | `.dsh/settings.yaml` khai `ptc`; **không phải** `news-scape-conductor` — đây là nguyên nhân gốc khiến phiên 17/09 chạy `subagent` generic, mất sạch ranh giới |
 
 ### 3.3 Giá và cửa sổ giá `deepseek-flash`
 
-| USD / 1M token | Off-peak | Peak |
-|---|---:|---:|
-| Input — cache hit | 0,003 | 0,006 |
-| Input — cache miss | 0,15 | 0,30 |
-| Output | 0,60 | 1,20 |
+| USD / 1M token      | Off-peak |  Peak |
+| ------------------- | -------: | ----: |
+| Input — cache hit  |    0,003 | 0,006 |
+| Input — cache miss |     0,15 |  0,30 |
+| Output              |     0,60 |  1,20 |
 
 Peak = 01:00–04:00 và 06:00–10:00 UTC, T2–T6, tức **08:00–11:00 và 13:00–17:00 giờ VN**. Off-peak giảm 50%.
 
@@ -138,19 +202,19 @@ S = số bước · P = prefix · U = nội dung mới · O = output
 
 Hai vệt audit thật chứng minh:
 
-| Vệt | Bài | Bước | Nội dung duy nhất | Bị tính | Hệ số | Token/bài |
-|---|---:|---:|---:|---:|---:|---:|
-| L1 | 25 tiêu đề | 19 | 82.202 | ~845.000 | **12,1×** | ~39.600 |
-| Gold | 5 bài | 21 | ~11.000 | 154.000–300.000 | — | **30.800–60.000** |
+| Vệt |          Bài | Bước | Nội dung duy nhất |        Bị tính |          Hệ số |               Token/bài |
+| ---- | ------------: | -----: | ------------------: | ---------------: | ---------------: | -----------------------: |
+| L1   | 25 tiêu đề |     19 |              82.202 |         ~845.000 | **12,1×** |                  ~39.600 |
+| Gold |        5 bài |     21 |             ~11.000 | 154.000–300.000 |               — | **30.800–60.000** |
 
 Định mức khai trong `registry.yaml` là 1.470 token/bài ⇒ lệch **21–41 lần**. Cắt nội dung 50% giảm ~4% hoá đơn; cắt `S` từ 19 xuống 1 giảm ~93%. **Đòn bẩy nằm ở số bước.**
 
 Hai lớp đốt token độc lập, và lớp thứ hai chưa ai chữa:
 
-| Lớp | Ở đâu | Thuốc |
-|---|---|---|
-| **A — Worker** | Mỗi lần gọi LLM xử lý bài | 1 bước/batch · packet ở đuôi · bản ghi tối giản + expander · `maxTokens` chặn trên · effort đo được |
-| **B — Phiên điều phối** | Phiên DSH của người vận hành | **1 bước/wave** · operator-first · handoff 0 token · đóng phiên sau wave · ngưỡng context thấp |
+| Lớp                               | Ở đâu                           | Thuốc                                                                                                                 |
+| ---------------------------------- | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| **A — Worker**              | Mỗi lần gọi LLM xử lý bài    | 1 bước/batch · packet ở đuôi · bản ghi tối giản + expander ·`maxTokens` chặn trên · effort đo được |
+| **B — Phiên điều phối** | Phiên DSH của người vận hành | **1 bước/wave** · operator-first · handoff 0 token · đóng phiên sau wave · ngưỡng context thấp       |
 
 RUNBOOK hiện mô tả **5 bước mỗi wave**. Vì Lớp B rẻ để sửa và ảnh hưởng tới mọi việc còn lại, nó được xếp **trước** Lớp A trong §11.
 
@@ -162,10 +226,10 @@ RUNBOOK hiện mô tả **5 bước mỗi wave**. Vì Lớp B rẻ để sửa v
 
 **R3 — Con nhận ~640 token hướng dẫn về một SDK rỗng, kèm một câu lệnh mâu thuẫn.**
 
-| Section | Nội dung | Đo được |
-|---|---|---:|
-| `tools:ptc-only` | *"`run_code` is the only tool you can call directly… **Reach every tool the SDK declares below** from inside the program."* | ~40 token |
-| `tools:sdk` | Hướng dẫn viết `run_code`, kết thúc bằng `interface ToolArgsMap {}` **rỗng** | 1.802 ký tự ≈ **600 token** |
+| Section            | Nội dung                                                                                                                              |                         Đo được |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------: |
+| `tools:ptc-only` | *"`run_code` is the only tool you can call directly… **Reach every tool the SDK declares below** from inside the program."* |                           ~40 token |
+| `tools:sdk`      | Hướng dẫn viết`run_code`, kết thúc bằng `interface ToolArgsMap {}` **rỗng**                                          | 1.802 ký tự ≈**600 token** |
 
 Prompt đang **mời** model viết chương trình trong khi `tools` không có binding nào. Chi phí không đáng lo vì nằm trong prefix tĩnh (cache hit), nhưng rủi ro hành vi là thật: model thử gọi tool, thất bại, tốn thêm bước.
 
@@ -209,6 +273,7 @@ Prompt đang **mời** model viết chương trình trong khi `tools` không có
 ```
 
 **Bốn bất biến:**
+
 1. LLM **không** đọc file, **không** ghi file, **không** tra catalog, **không** tự chấm DoD.
 2. Code **không** quyết định thực thể hay tóm tắt — chỉ so khớp, tra cứu, bung chỉ số, đo.
 3. Ràng buộc nào cưỡng chế được bằng máy thì **không** viết trong prompt.
@@ -226,12 +291,12 @@ Prompt đang **mời** model viết chương trình trong khi `tools` không có
 {"i":1,"t":"VND: Báo cáo tình hình quản trị công ty 6 tháng đầu năm","p":["VNDirect công bố báo cáo tình hình quản trị định kỳ 6 tháng…"]}]}
 ```
 
-| Trường | Nghĩa |
-|---|---|
-| `d` | ngày batch, một lần cho cả packet |
-| `i` | chỉ số cục bộ, thay `article_id` sha256 64 ký tự |
-| `t` | tiêu đề nguyên văn |
-| `p[]` | các đoạn đã chắt lọc, **nguyên văn, nguyên khối, giữ thứ tự gốc**. Có ở **mọi** bài (Q2) |
+| Trường | Nghĩa                                                                                                                 |
+| -------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `d`    | ngày batch, một lần cho cả packet                                                                                  |
+| `i`    | chỉ số cục bộ, thay`article_id` sha256 64 ký tự                                                                |
+| `t`    | tiêu đề nguyên văn                                                                                                |
+| `p[]`  | các đoạn đã chắt lọc,**nguyên văn, nguyên khối, giữ thứ tự gốc**. Có ở **mọi** bài (Q2) |
 
 Không còn trường `m`: theo Q2, mọi bài đều `full`. Bài ngắn hoặc CBTT định kỳ vẫn có `p[]`, chỉ là mảng ngắn hơn — thuật toán §6.3 tự cho ra ít đoạn khi bài ít nội dung, không cần một chế độ riêng.
 
@@ -243,11 +308,11 @@ Bản trước ghi "bắt buộc compact JSON". Khi triển khai và đo lại g
 
 Giới hạn thật của công cụ đọc trong DSH, đọc từ README của `dsh-tool-fs`:
 
-| Tham số | Giá trị | Ý nghĩa |
-|---|---:|---|
-| `readMaxLineLength` | **2.000** | ký tự giữ lại mỗi dòng, phần dư bị cắt |
-| `readMaxBytes` | **51.200** | trần byte cho một lần gọi |
-| `readLimit` | **2.000** | trần số dòng cho một lần gọi |
+| Tham số              |        Giá trị | Ý nghĩa                                        |
+| --------------------- | ---------------: | ------------------------------------------------ |
+| `readMaxLineLength` |  **2.000** | ký tự giữ lại mỗi dòng, phần dư bị cắt |
+| `readMaxBytes`      | **51.200** | trần byte cho một lần gọi                    |
+| `readLimit`         |  **2.000** | trần số dòng cho một lần gọi               |
 
 Compact JSON dồn **cả packet vào một dòng duy nhất**. Đo thật trên lô 100 bài: một dòng **267.143 ký tự**, tức sẽ bị cắt còn 2.000 và mất 99,3% nội dung. Đó là hỏng nặng hơn hẳn lỗi ban đầu.
 
@@ -268,14 +333,14 @@ Lỗi gốc của vệt Gold vẫn đúng như đã chẩn đoán: `cleaned_text
 {"i":1,"e":[["VND","TIC"]],"s":"VNDirect công bố báo cáo quản trị định kỳ 6 tháng, không có thay đổi nhân sự trọng yếu.","k":["Báo cáo định kỳ theo nghĩa vụ CBTT"],"im":"Không tác động tới định giá; giá trị chủ yếu là hồ sơ tuân thủ.","sn":"neu","ts":"arch","c":[0]}]
 ```
 
-| Khoá | Bắt buộc | Expander bù, 0 token |
-|---|:-:|---|
-| `e` | ✔ | `entity_id`, `type`, `in_list`, `method`, `categories`, `intent_source` |
-| `s` | ✔ | — |
-| `k`, `im` | ✔ | — |
-| `sn`, `ts` | ✔ | map về enum đầy đủ |
-| `c` | ✔ chỉ số đoạn | trích nguyên văn `p[k]` → citations ≥ 20 ký tự |
-| — | | `article_id`, `title`, `recognized`, `processing_metadata`, `unlisted_candidates` |
+| Khoá          |     Bắt buộc     | Expander bù, 0 token                                                                       |
+| -------------- | :----------------: | ------------------------------------------------------------------------------------------- |
+| `e`          |         ✔         | `entity_id`, `type`, `in_list`, `method`, `categories`, `intent_source`         |
+| `s`          |         ✔         | —                                                                                          |
+| `k`, `im`  |         ✔         | —                                                                                          |
+| `sn`, `ts` |         ✔         | map về enum đầy đủ                                                                     |
+| `c`          | ✔ chỉ số đoạn | trích nguyên văn`p[k]` → citations ≥ 20 ký tự                                      |
+| —             |                    | `article_id`, `title`, `recognized`, `processing_metadata`, `unlisted_candidates` |
 
 **Mọi bài sinh cả `l1-entity-output-v1` và `agent-output-v2-lean`** (Q2). Đây là thay đổi vận hành đáng kể so với trước: `agent_ingest.py` nay nhận ~307 bản ghi mỗi ngày thay vì ~50, và cổng DoD Gold áp cho mọi bài. Cần kiểm lại sức chứa hàng đợi `work_items` ở bước 3.
 
@@ -307,42 +372,42 @@ Kiểm bằng **unit test của `article_pack.py`**: mọi `p[k]` phải là chu
 
 **Drift phải xử lý:** `type` là `INDUSTRY_GICS1/2/3` nhưng `entity_id` mang tiền tố **`IND_GICS1/2/3:`**. Bảng tra trong SKILL.md không nói điều này, và đó là nguyên nhân gốc khiến agent trong vệt 845K phải tự dò `entities.json` — chiếm 53% toàn bộ nội dung duy nhất của vệt đó.
 
-| `type` | n | tiền tố `entity_id` | Nhóm |
-|---|---:|---|---|
-| TICKER | 1.093 | `TICKER:` | mở |
-| ETF · SECURITY_OTHER | 28 · 11 | như type | đóng (39) |
-| INDEX · EXCHANGE | 6 · 3 | như type | đóng (9) |
-| INDUSTRY_GICS1/2/3 | 11 · 28 · 51 | **`IND_GICS*`** | đóng (90) |
-| MACRO_GEO · MACRO_THEME | 8 · 9 | như type | đóng (17) |
-| ASSET_CLASS · INSTITUTION | 7 · 7 | như type | đóng (14) |
+| `type`                   |              n | tiền tố`entity_id`  | Nhóm       |
+| -------------------------- | -------------: | ----------------------- | ----------- |
+| TICKER                     |          1.093 | `TICKER:`             | mở         |
+| ETF · SECURITY_OTHER      |       28 · 11 | như type               | đóng (39) |
+| INDEX · EXCHANGE          |         6 · 3 | như type               | đóng (9)  |
+| INDUSTRY_GICS1/2/3         | 11 · 28 · 51 | **`IND_GICS*`** | đóng (90) |
+| MACRO_GEO · MACRO_THEME   |         8 · 9 | như type               | đóng (17) |
+| ASSET_CLASS · INSTITUTION |         7 · 7 | như type               | đóng (14) |
 
 Ngành GICS chỉ có **1 alias = chính canonical name**, nên code không bao giờ khớp `"đường sắt"` thành `Vận tải đường bộ & đường sắt`. Đây chính là vùng LLM tạo giá trị và code không thay được.
 
 ### 7.2 Mười một mã nhóm — mỗi mã một resolver riêng
 
-| Mã | LLM phát khi thấy | Resolver của code |
-|---|---|---|
-| `TIC` | mã 3 ký tự in hoa | exact code + `CODE_STOPLIST` + miễn trừ CBTT `^[A-Z0-9]{3}\s*:` |
-| `COM` | tên doanh nghiệp / thương hiệu | alias fold + word-boundary + morphology guard + `brand_aliases.yaml` |
-| `PER` | tên người / lãnh đạo | `leaders.yaml` — **chưa có**, xem §7.4 |
-| `FND` | ETF / quỹ | digest 39 ID |
-| `IDX` · `EXC` | chỉ số · sàn | digest 6 · 3 ID |
-| `IND` | ngành | digest 90 ID; **LLM phát canonical name** để khớp exact-string; chọn cấp sâu nhất; `entity_id` dùng `IND_GICS*`, `type` dùng `INDUSTRY_GICS*` |
-| `GEO` · `THM` · `AST` · `INS` | quốc gia · chủ đề vĩ mô · tài sản · định chế | digest 8 · 9 · 7 · 7 |
+| Mã                                      | LLM phát khi thấy                                        | Resolver của code                                                                                                                                                   |
+| ---------------------------------------- | ---------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TIC`                                  | mã 3 ký tự in hoa                                       | exact code +`CODE_STOPLIST` + miễn trừ CBTT `^[A-Z0-9]{3}\s*:`                                                                                                 |
+| `COM`                                  | tên doanh nghiệp / thương hiệu                        | alias fold + word-boundary + morphology guard +`brand_aliases.yaml`                                                                                                |
+| `PER`                                  | tên người / lãnh đạo                                 | `leaders.yaml` — **chưa có**, xem §7.4                                                                                                                   |
+| `FND`                                  | ETF / quỹ                                                 | digest 39 ID                                                                                                                                                         |
+| `IDX` · `EXC`                       | chỉ số · sàn                                           | digest 6 · 3 ID                                                                                                                                                     |
+| `IND`                                  | ngành                                                     | digest 90 ID;**LLM phát canonical name** để khớp exact-string; chọn cấp sâu nhất; `entity_id` dùng `IND_GICS*`, `type` dùng `INDUSTRY_GICS*` |
+| `GEO` · `THM` · `AST` · `INS` | quốc gia · chủ đề vĩ mô · tài sản · định chế | digest 8 · 9 · 7 · 7                                                                                                                                              |
 
 Không khớp ⇒ `in_list: false`, `entity_id: null`, vào `unlisted_candidates`. **An toàn theo hướng bỏ sót, không bịa.**
 
 ### 7.3 Prefix chứa gì
 
-| Thành phần | Token | Vào prefix |
-|---|---:|:-:|
-| `ARTICLE_SYSTEM_CORE` (luật 10 miền + guard hình thái + hợp đồng + vô hiệu hoá R3) | ~1.200 | ✔ |
-| Digest nhóm đóng 130 ID + alias | 3.750 | ✔ |
-| Digest ETF + SECURITY_OTHER (39) | 894 | ✔ |
-| Few-shot 3 ví dụ | ~800 | ✔ |
-| **Cộng** | **~6.650** | |
-| Digest TICKER Tier-1 (742 mã) | 8.116 | ✘ — thí nghiệm §13 |
-| Toàn bộ `entities.json` | 324.493 | ✘ tuyệt đối |
+| Thành phần                                                                                   |            Token |       Vào prefix       |
+| ---------------------------------------------------------------------------------------------- | ---------------: | :---------------------: |
+| `ARTICLE_SYSTEM_CORE` (luật 10 miền + guard hình thái + hợp đồng + vô hiệu hoá R3) |           ~1.200 |           ✔           |
+| Digest nhóm đóng 130 ID + alias                                                             |            3.750 |           ✔           |
+| Digest ETF + SECURITY_OTHER (39)                                                               |              894 |           ✔           |
+| Few-shot 3 ví dụ                                                                             |             ~800 |           ✔           |
+| **Cộng**                                                                                | **~6.650** |                        |
+| Digest TICKER Tier-1 (742 mã)                                                                 |            8.116 | ✘ — thí nghiệm §13 |
+| Toàn bộ`entities.json`                                                                     |          324.493 |     ✘ tuyệt đối     |
 
 LLM **không cần** biết mã: nó nói `"Hòa Phát"`, code biết `HPG`.
 
@@ -360,12 +425,12 @@ LLM **không cần** biết mã: nó nói `"Hòa Phát"`, code biết `HPG`.
 
 ### 8.1 Bốn làn công việc
 
-| Lane | Ai làm | Chi phí | Dùng khi |
-|---|---|---|---|
-| **L0 — Cấu hình & Script** | preset, hook, `guard()`, operator Python | **0 token** | Việc lặp ≥2 lần, hoặc ràng buộc phải luôn đúng |
-| **L1 — Operator** | `run_code` gọi `pwsh`/`read`/`write` bên trong chương trình, chỉ `return` số | ~50–200 token/bước | Mọi thao tác cơ học |
-| **L2 — Cognitive** | một lần gọi LLM cho một batch | ~1.220 token/bài | Quyết định ngữ nghĩa |
-| **L3 — Human** | anh | — | Duyệt plan/ADR, chọn ưu tiên, xử lý bất thường |
+| Lane                                | Ai làm                                                                                       | Chi phí              | Dùng khi                                                 |
+| ----------------------------------- | --------------------------------------------------------------------------------------------- | --------------------- | --------------------------------------------------------- |
+| **L0 — Cấu hình & Script** | preset, hook,`guard()`, operator Python                                                     | **0 token**     | Việc lặp ≥2 lần, hoặc ràng buộc phải luôn đúng |
+| **L1 — Operator**            | `run_code` gọi `pwsh`/`read`/`write` bên trong chương trình, chỉ `return` số | ~50–200 token/bước | Mọi thao tác cơ học                                   |
+| **L2 — Cognitive**           | một lần gọi LLM cho một batch                                                             | ~1.220 token/bài     | Quyết định ngữ nghĩa                                 |
+| **L3 — Human**               | anh                                                                                           | —                    | Duyệt plan/ADR, chọn ưu tiên, xử lý bất thường   |
 
 **Quy tắc vàng:** một việc chỉ leo lên lane cao hơn khi lane thấp hơn **không thể** làm được. Đây là chiều ngược của "No Script Emulation": **cấm dùng LLM để giả lập script**.
 
@@ -381,21 +446,21 @@ LLM **không cần** biết mã: nó nói `"Hòa Phát"`, code biết `HPG`.
 
 **Worker bị chặn bằng xây dựng.** Không tool nên không tích luỹ tool result; một bước nên không có history.
 
-| Cấu hình | Prefix | Packet | Output | Đỉnh context | % của 1M |
-|---|---:|---:|---:|---:|---:|
-| 50 bài | 7.000 | 42.500 | 15.000 | 64.500 | 6,5% |
-| **100 bài** (mặc định) | 7.000 | 85.000 | 30.000 | **122.000** | **12,2%** |
-| 200 bài | 7.000 | 170.000 | 60.000 | 237.000 | 23,7% |
+| Cấu hình                       | Prefix |  Packet | Output |    Đỉnh context |       % của 1M |
+| -------------------------------- | -----: | ------: | -----: | ----------------: | --------------: |
+| 50 bài                          |  7.000 |  42.500 | 15.000 |            64.500 |            6,5% |
+| **100 bài** (mặc định) |  7.000 |  85.000 | 30.000 | **122.000** | **12,2%** |
+| 200 bài                         |  7.000 | 170.000 | 60.000 |           237.000 |           23,7% |
 
 Ở 100 bài/lượt, worker không tới gần vùng suy giảm. `article_pack.py` tính `est_ctx_peak` và **tự chia nhỏ batch** nếu vượt ngưỡng (mặc định 25% = 250K) — thực tế ngưỡng này chạm ở khoảng 210 bài, nên nó là lưới an toàn chứ không phải ràng buộc thường trực.
 
 **Conductor giải bằng stateless-by-construction.** PTC chỉ đưa `print`/`return` vào history, nên một wave để lại dưới 100 token. Ngưỡng áp suất — **cố ý thấp hơn nhiều so với ngưỡng compaction 80% của DSH, vì DSH không cắt gì trước đó** (P0-4):
 
-| Mức | Áp suất | Hành vi |
-|---|---:|---|
-| xanh | dưới 25% | chạy bình thường |
-| vàng | 25–40% | hoàn tất wave đang chạy rồi đóng phiên, không mở wave mới |
-| đỏ | trên 40% | dừng ngay sau batch hiện tại |
+| Mức  |  Áp suất | Hành vi                                                             |
+| ----- | ---------: | -------------------------------------------------------------------- |
+| xanh  | dưới 25% | chạy bình thường                                                 |
+| vàng |    25–40% | hoàn tất wave đang chạy rồi đóng phiên, không mở wave mới |
+| đỏ  |  trên 40% | dừng ngay sau batch hiện tại                                      |
 
 **Handoff 0 token.** Toàn bộ trạng thái nằm ở SQLite và file trên đĩa; Conductor không giữ gì mà DB không có. `handoff.py` sinh `data/state/HANDOFF-<ts>.md` từ DB, không nhờ LLM tóm tắt. Mất phiên giữa chừng chỉ mất đúng batch đang chạy, packet của nó vẫn trên đĩa.
 
@@ -407,12 +472,12 @@ LLM **không cần** biết mã: nó nói `"Hòa Phát"`, code biết `HPG`.
 
 ### 8.5 Cưỡng chế bằng máy
 
-| Cơ chế | Việc |
-|---|---|
-| `guard()` preflight | Từ chối chạy wave nếu phiên **sai preset**. Đây là nguyên nhân gốc của vệt 845K, và phải chặn bằng máy chứ không bằng câu dặn trong prompt |
-| hook `agent/request` | Cưỡng chế `reasoningEffort` và `maxTokens` cho worker, không phụ thuộc `settings.yaml` (đang để `high`) |
-| hook `tools/result` | Gọi `token_ledger.py --append` sau mỗi lượt con |
-| Khẳng định runtime | In **tập tool hiệu lực** và **`sdkSchemas`** của con vào trace. Khoá YAML gõ sai bị bỏ qua im lặng, nên không được tin YAML |
+| Cơ chế              | Việc                                                                                                                                                                  |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `guard()` preflight | Từ chối chạy wave nếu phiên**sai preset**. Đây là nguyên nhân gốc của vệt 845K, và phải chặn bằng máy chứ không bằng câu dặn trong prompt |
+| hook`agent/request` | Cưỡng chế`reasoningEffort` và `maxTokens` cho worker, không phụ thuộc `settings.yaml` (đang để `high`)                                               |
+| hook`tools/result`  | Gọi`token_ledger.py --append` sau mỗi lượt con                                                                                                                   |
+| Khẳng định runtime | In**tập tool hiệu lực** và **`sdkSchemas`** của con vào trace. Khoá YAML gõ sai bị bỏ qua im lặng, nên không được tin YAML               |
 
 ---
 
@@ -428,6 +493,7 @@ Nguồn và sáu luật kế toán, tất cả đã kiểm chứng bằng số t
 
 - Nguồn chuẩn theo bước là **JSONL**. File là **zstd nhiều frame, không phải mỗi dòng một frame** ⇒ phải quét magic `28 B5 2F FD` và giải nén **từng frame**; gọi giải nén một lần chỉ trả về frame 0.
 - `session_projcache/sessions/<id>.json` là **checkpoint, không phải bộ đếm sống** ⇒ chỉ dùng đối soát chéo.
+
 1. `inputTokens` là **uncached input**, không phải kích thước prompt. Đọc sai hụt khoảng 30 lần.
 2. Per-request `inputTokens + cacheReadTokens + outputTokens == totalTokens`. **Không bao giờ cộng `totalTokens`** để lấy tổng phiên.
 3. `reasoningTokens` là **tập con của `outputTokens`** ⇒ cộng cả hai là đếm trùng.
@@ -456,25 +522,25 @@ Nhầm lẫn ba loại này là nguyên nhân khiến các tiêu chí cũ vừa 
 
 ### 10.1 Điều kiện đóng phase — phải đạt mới đi tiếp
 
-| Chỉ số | Ngưỡng |
-|---|---|
-| Bước của mỗi con (`turns`) | **= 1** |
-| `sdkSchemas` của con | **rỗng**, in ra và lưu trace |
-| Bước của Conductor mỗi wave | **≤ 2** (từ ≥5 hiện tại) |
-| DoD pass lần đầu | **≥ 99% item** |
-| `parse_fail` | **< 2%** |
-| Prefix giữa hai batch liên tiếp | **byte-identical** |
-| `p[k] ⊂ cleaned_text` | **100%**, kiểm ở unit test của `article_pack.py` |
-| `reasoningTokens` khi effort `off` | **= 0** |
-| Delegation với `maxDepth: 1` | chạy được, không `SubagentDepthError` |
+| Chỉ số                               | Ngưỡng                                                    |
+| -------------------------------------- | ----------------------------------------------------------- |
+| Bước của mỗi con (`turns`)       | **= 1**                                               |
+| `sdkSchemas` của con                | **rỗng**, in ra và lưu trace                       |
+| Bước của Conductor mỗi wave        | **≤ 2** (từ ≥5 hiện tại)                         |
+| DoD pass lần đầu                    | **≥ 99% item**                                       |
+| `parse_fail`                         | **< 2%**                                              |
+| Prefix giữa hai batch liên tiếp     | **byte-identical**                                    |
+| `p[k] ⊂ cleaned_text`               | **100%**, kiểm ở unit test của `article_pack.py` |
+| `reasoningTokens` khi effort `off` | **= 0**                                               |
+| Delegation với`maxDepth: 1`         | chạy được, không`SubagentDepthError`                 |
 
 ### 10.2 Ngưỡng ngắt mạch — chạm thì dừng máy
 
-| Chỉ số | Ngưỡng |
-|---|---|
-| `parse_fail` trong một wave | **> 10%** ⇒ dừng wave |
-| `est_ctx_peak` | **> 25% của 1M** ⇒ tự chia batch |
-| Áp suất context Conductor | **> 40%** ⇒ dừng, handoff |
+| Chỉ số                       | Ngưỡng                                  |
+| ------------------------------ | ----------------------------------------- |
+| `parse_fail` trong một wave | **> 10%** ⇒ dừng wave             |
+| `est_ctx_peak`               | **> 25% của 1M** ⇒ tự chia batch |
+| Áp suất context Conductor    | **> 40%** ⇒ dừng, handoff         |
 
 ### 10.3 Chỉ số quan sát — chỉ để nhìn, không chặn gì
 
@@ -486,16 +552,16 @@ Nhầm lẫn ba loại này là nguyên nhân khiến các tiêu chí cũ vừa 
 
 Nguyên tắc thứ tự: **quyết định kiến trúc trước, thước đo sau, Lớp B trước Lớp A, việc chưa ai cần thì ra khỏi đường tới hạn.**
 
-| # | Nội dung | Vì sao đứng đây | Token |
-|:-:|---|---|:-:|
-| **0** ✅ | Vá bốn P0 (§3.1): `maxDepth` 0→1; sửa comment sai về `allow`+`ptc` trong `agent.cordis.yml`; cấu hình `maxParallelSubCalls` thật; sửa `rules/05` §4.4 còn cờ ADR 0008 đã cấm và định mức bịa. Sửa `preset.yml` mô tả sai. Amendment ADR 0009 §2.2. **Trích §6 của plan 1624 ra `docs/proposals/dsh-surface-verified-2026-09-18.md`** | Chúng chặn **mọi** wave; sửa rất nhỏ. Bản đồ DSH phải ra khỏi `plans/` trước khi ai đó dọn thư mục | 0 |
-| **1** ✅ | **Lớp B trước:** `article_run.py` một lệnh cho cả wave · `handoff.py` · `ctx_probe.py` · kỷ luật vòng đời phiên (§8.2) | Cắt 5 bước xuống 1 cho **mọi** việc còn lại, kể cả việc đang phát triển. Độc lập với worker | 0 |
-| **2** ✅ | `token_ledger.py` + bảng `token_ledger` + radar 6 mục + `estimate_wave.py` | Không đo thì mọi số sau lại là phỏng đoán. Hình thái đo đã xác định nhờ Q1 | 0 |
-| **3** ✅ | `build_article_prefix.py` + `article_pack.py` (Priority Sorter recall-biased, distillation tất định §6.3, compact JSON, histogram token/bài) + kiểm sức chứa `work_items` khi mọi bài đều qua cổng Gold + archive packet cũ **chưa xoá** | Bound xác định là tiền đề của `est_ctx_peak`; distillation nay là cần gạt chi phí số 1 | 0 |
-| **4** ✅ | `agent_article` row + `ARTICLE_SYSTEM_CORE` (có phần vô hiệu hoá R3) + `article_expand.py` (salvage, citations-by-index có khẳng định, resolver theo nhóm, dual-track → `intent_source` vào DB) | Lõi cognitive; giờ đã có thước đo và packet có bound | flash |
-| **5** ◐ | Chạy làn ngày tới khi đạt định nghĩa xong (§1). **Giữ đường cũ đóng băng nhưng gọi được**. **Xuất 3 cột Intent ra Excel** (§2.2): nối `intent_llm`, `intent_code`, `intent_source` vào cuối `FINAL_COLUMNS` của `user_output.py` | Chứng minh trên dữ liệu thật trước khi gỡ đường cũ. Cột Intent làm ở đây vì dữ liệu nguồn có từ bước 4 và cần bản ghi thật để kiểm mắt thường | flash |
-| **6** ⏸ | Archive + deprecate đường cũ + chiến dịch backlog **2.118 bài** theo ngân sách riêng | Chỉ sau khi làn ngày chạy sạch trọn một chu kỳ | flash |
-| **7** ⏸ | Khai phá catalog: `unlisted` → `entity-curator` → delta → seed `leaders.yaml`. Amendment hiến pháp còn lại | Cần dữ liệu `unlisted` tích luỹ từ bước 5–6 | flash |
+|       #       | Nội dung                                                                                                                                                                                                                                                                                                                                                                             | Vì sao đứng đây                                                                                                                                                             | Token |
+| :------------: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :---: |
+| **0** ✅ | Vá bốn P0 (§3.1):`maxDepth` 0→1; sửa comment sai về `allow`+`ptc` trong `agent.cordis.yml`; cấu hình `maxParallelSubCalls` thật; sửa `rules/05` §4.4 còn cờ ADR 0008 đã cấm và định mức bịa. Sửa `preset.yml` mô tả sai. Amendment ADR 0009 §2.2. **Trích §6 của plan 1624 ra `docs/proposals/dsh-surface-verified-2026-09-18.md`** | Chúng chặn**mọi** wave; sửa rất nhỏ. Bản đồ DSH phải ra khỏi `plans/` trước khi ai đó dọn thư mục                                                      |   0   |
+| **1** ✅ | **Lớp B trước:** `article_run.py` một lệnh cho cả wave · `handoff.py` · `ctx_probe.py` · kỷ luật vòng đời phiên (§8.2)                                                                                                                                                                                                                                    | Cắt 5 bước xuống 1 cho**mọi** việc còn lại, kể cả việc đang phát triển. Độc lập với worker                                                               |   0   |
+| **2** ✅ | `token_ledger.py` + bảng `token_ledger` + radar 6 mục + `estimate_wave.py`                                                                                                                                                                                                                                                                                                    | Không đo thì mọi số sau lại là phỏng đoán. Hình thái đo đã xác định nhờ Q1                                                                                    |   0   |
+| **3** ✅ | `build_article_prefix.py` + `article_pack.py` (Priority Sorter recall-biased, distillation tất định §6.3, compact JSON, histogram token/bài) + kiểm sức chứa `work_items` khi mọi bài đều qua cổng Gold + archive packet cũ **chưa xoá**                                                                                                                  | Bound xác định là tiền đề của`est_ctx_peak`; distillation nay là cần gạt chi phí số 1                                                                             |   0   |
+| **4** ✅ | `agent_article` row + `ARTICLE_SYSTEM_CORE` (có phần vô hiệu hoá R3) + `article_expand.py` (salvage, citations-by-index có khẳng định, resolver theo nhóm, dual-track → `intent_source` vào DB)                                                                                                                                                                   | Lõi cognitive; giờ đã có thước đo và packet có bound                                                                                                                   | flash |
+| **5** ◐ | Chạy làn ngày tới khi đạt định nghĩa xong (§1).**Giữ đường cũ đóng băng nhưng gọi được**. **Xuất 3 cột Intent ra Excel** (§2.2): nối `intent_llm`, `intent_code`, `intent_source` vào cuối `FINAL_COLUMNS` của `user_output.py`                                                                                                   | Chứng minh trên dữ liệu thật trước khi gỡ đường cũ. Cột Intent làm ở đây vì dữ liệu nguồn có từ bước 4 và cần bản ghi thật để kiểm mắt thường | flash |
+| **6** ⏸ | Archive + deprecate đường cũ + chiến dịch backlog**2.118 bài** theo ngân sách riêng                                                                                                                                                                                                                                                                                   | Chỉ sau khi làn ngày chạy sạch trọn một chu kỳ                                                                                                                           | flash |
+| **7** ⏸ | Khai phá catalog:`unlisted` → `entity-curator` → delta → seed `leaders.yaml`. Amendment hiến pháp còn lại                                                                                                                                                                                                                                                               | Cần dữ liệu`unlisted` tích luỹ từ bước 5–6                                                                                                                            | flash |
 
 ### 11.1 Điều kiện quay lui
 
@@ -505,33 +571,33 @@ Nguyên tắc thứ tự: **quyết định kiến trúc trước, thước đo 
 
 ## 12. Rủi ro và đối sách
 
-| Rủi ro | Đối sách |
-|---|---|
-| Con sa vào `run_code` vì prompt mời gọi (R3) | Persona vô hiệu hoá tường minh + nhắc lại cuối packet; canh bằng `turns == 1` |
-| Ai đó đổi Conductor sang `native` | R1 là bất biến ghi trong tài liệu; output con sẽ rơi vào context cha |
-| Distillation phá chuỗi con của citations | §6.3 bất biến nguyên khối + unit test ở `article_pack.py` |
-| Chất lượng giảm ở bài cuối batch 100 | Đo recall **theo vị trí trong batch**; hạ về 50 nếu giảm; cơ chế không đổi |
-| Prefix vỡ | Hash prefix + kiểm byte-identical; `compaction auto: false` |
-| Thinking bật lại do `settings.yaml` đè | Hook `agent/request`; ledger kiểm `reasoningTokens` mỗi wave |
-| Khoá YAML gõ sai bị bỏ qua im lặng | Khẳng định tập tool hiệu lực ở runtime, không tin YAML |
-| Hai nguồn sự thật khi làn cũ và mới chạy song song | §11.1 cửa sổ sống chung có điều kiện quay lui định lượng |
-| Tier 1 bỏ sót bài watchlist do điểm mù code-first | Q3 recall-biased; theo dõi số bài watchlist rơi xuống Batch 2+. Vì Q2 = 100% `full`, bài xếp thừa vào Tier 1 **không tốn thêm token**, chỉ làm Batch 1 dài hơn |
-| Khối lượng đột biến vượt ngân sách, không còn `lite` để hạ độ sâu | Ba van xả theo thứ tự ở §16.2: siết distillation → dời Tier 2–3 sang off-peak → giảm batch size |
-| `work_items` và cổng DoD Gold nay nhận mọi bài thay vì ~8–25% | Kiểm sức chứa hàng đợi ở bước 3 trước khi bật wave đầu tiên |
-| Bỏ cổng xác nhận nên chạy nhầm wave lớn | `--limit` tường minh, demand-driven; ledger cho thấy ngay wave nào tốn bao nhiêu |
-| DSH nâng cấp đổi hành vi | Pin version; giữ `20260918-1624-.../plan.md` §6 có file:line để so lại |
+| Rủi ro                                                                              | Đối sách                                                                                                                                                                            |
+| ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Con sa vào`run_code` vì prompt mời gọi (R3)                                    | Persona vô hiệu hoá tường minh + nhắc lại cuối packet; canh bằng`turns == 1`                                                                                                |
+| Ai đó đổi Conductor sang`native`                                               | R1 là bất biến ghi trong tài liệu; output con sẽ rơi vào context cha                                                                                                           |
+| Distillation phá chuỗi con của citations                                          | §6.3 bất biến nguyên khối + unit test ở`article_pack.py`                                                                                                                       |
+| Chất lượng giảm ở bài cuối batch 100                                          | Đo recall**theo vị trí trong batch**; hạ về 50 nếu giảm; cơ chế không đổi                                                                                            |
+| Prefix vỡ                                                                           | Hash prefix + kiểm byte-identical;`compaction auto: false`                                                                                                                          |
+| Thinking bật lại do`settings.yaml` đè                                          | Hook`agent/request`; ledger kiểm `reasoningTokens` mỗi wave                                                                                                                      |
+| Khoá YAML gõ sai bị bỏ qua im lặng                                              | Khẳng định tập tool hiệu lực ở runtime, không tin YAML                                                                                                                         |
+| Hai nguồn sự thật khi làn cũ và mới chạy song song                           | §11.1 cửa sổ sống chung có điều kiện quay lui định lượng                                                                                                                   |
+| Tier 1 bỏ sót bài watchlist do điểm mù code-first                              | Q3 recall-biased; theo dõi số bài watchlist rơi xuống Batch 2+. Vì Q2 = 100%`full`, bài xếp thừa vào Tier 1 **không tốn thêm token**, chỉ làm Batch 1 dài hơn |
+| Khối lượng đột biến vượt ngân sách, không còn`lite` để hạ độ sâu | Ba van xả theo thứ tự ở §16.2: siết distillation → dời Tier 2–3 sang off-peak → giảm batch size                                                                             |
+| `work_items` và cổng DoD Gold nay nhận mọi bài thay vì ~8–25%               | Kiểm sức chứa hàng đợi ở bước 3 trước khi bật wave đầu tiên                                                                                                             |
+| Bỏ cổng xác nhận nên chạy nhầm wave lớn                                      | `--limit` tường minh, demand-driven; ledger cho thấy ngay wave nào tốn bao nhiêu                                                                                               |
+| DSH nâng cấp đổi hành vi                                                        | Pin version; giữ`20260918-1624-.../plan.md` §6 có file:line để so lại                                                                                                          |
 
 ---
 
 ## 13. Ma trận thí nghiệm
 
-| Biến | Mức | Đo |
-|---|---|---|
-| Batch size | 100 mặc định · 50 · 200 | DoD, `parse_fail`, **recall theo vị trí trong batch**, `est_ctx_peak` |
-| `reasoningEffort` | `off` · `low` · `high` | `reasoningTokens` **và** DoD recall — biến đắt nhất, thinking tính giá output |
-| Digest TICKER Tier-1 trong prefix | không · có (+8.116 token) | recall nhóm `COM`, hit ratio |
-| Few-shot | 3 · 5 ví dụ | DoD, token ra/bài |
-| Fan-out | warm-up trước · không | hit ratio của wave |
+| Biến                             | Mức                           | Đo                                                                                           |
+| --------------------------------- | ------------------------------ | --------------------------------------------------------------------------------------------- |
+| Batch size                        | 100 mặc định · 50 · 200   | DoD,`parse_fail`, **recall theo vị trí trong batch**, `est_ctx_peak`              |
+| `reasoningEffort`               | `off` · `low` · `high` | `reasoningTokens` **và** DoD recall — biến đắt nhất, thinking tính giá output |
+| Digest TICKER Tier-1 trong prefix | không · có (+8.116 token)   | recall nhóm`COM`, hit ratio                                                                |
+| Few-shot                          | 3 · 5 ví dụ                 | DoD, token ra/bài                                                                            |
+| Fan-out                           | warm-up trước · không      | hit ratio của wave                                                                           |
 
 Mẫu chuẩn: 200 bài gán tay, đủ 11 nhóm. Chỉ số quan trọng nhất ở batch 100 là **recall có giảm ở bài thứ 60–100 không** — phép đo trực tiếp cho lo ngại suy giảm nhận thức.
 
@@ -553,26 +619,26 @@ Mẫu chuẩn: 200 bài gán tay, đủ 11 nhóm. Chỉ số quan trọng nhất
 
 ## 15. Tài liệu cần đồng bộ
 
-| Đích | Việc |
-|---|---|
-| `docs/decisions/0009` | §2.2 `maxDepth` 0 → **1**; §2.5 `maxParallelSubCalls` cấu hình thật hoặc gỡ; §2.3 ghi chú route pro→flash |
-| `docs/decisions/0008` | Amendment **bỏ cổng xác nhận** (Q4), **giữ nguyên** §2.4 "thất bại phải ồn ào" |
-| `docs/decisions/0005` | Ghi chú: với Q2 = 100% `full`, **lý do chi phí** của subscriber-gating hết hiệu lực (mọi bài đều phân tích sâu). **Vai trò định tuyến giao hàng giữ nguyên** — vẫn quyết định bài nào vào Excel của user nào |
+| Đích                                                | Việc                                                                                                                                                                                                                                                                                                                                                      |
+| ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `docs/decisions/0009`                               | §2.2`maxDepth` 0 → **1**; §2.5 `maxParallelSubCalls` cấu hình thật hoặc gỡ; §2.3 ghi chú route pro→flash                                                                                                                                                                                                                              |
+| `docs/decisions/0008`                               | Amendment**bỏ cổng xác nhận** (Q4), **giữ nguyên** §2.4 "thất bại phải ồn ào"                                                                                                                                                                                                                                                      |
+| `docs/decisions/0005`                               | Ghi chú: với Q2 = 100%`full`, **lý do chi phí** của subscriber-gating hết hiệu lực (mọi bài đều phân tích sâu). **Vai trò định tuyến giao hàng giữ nguyên** — vẫn quyết định bài nào vào Excel của user nào                                                                                                  |
 | `docs/proposals/dsh-surface-verified-2026-09-18.md` | **MỚI, làm ở bước 0.** Trích §6 của plan 1624 (bản đồ DSH kèm file:line) ra khỏi thư mục `plans/`. Lý do: `plans/` là nơi bị dọn dẹp định kỳ, mà bản đồ này là **tài sản kỹ thuật tĩnh** cần sống lâu hơn mọi plan — nó là thứ duy nhất cho phép đối chiếu lại khi DSH nâng phiên bản |
-| `project/src/export/user_output.py` | Nối `intent_llm`, `intent_code`, `intent_source` vào **cuối** `FINAL_COLUMNS` (§2.2). Thay đổi cộng thêm, Cấp 2, không cần ADR |
-| `.agents/dsh/presets/.../agent.cordis.yml` | `maxDepth` 0→1; sửa comment sai về `allow`+`ptc`; thêm row `agent_article` |
-| `.agents/dsh/presets/.../preset.yml` | Mô tả đúng (hiện ghi "read-only, không spawn agent" nhưng file kia định nghĩa 2 subagent + PTC) |
-| `.agents/rules/05` | §4.4 gỡ `--dangerously-skip-permissions` (trái ADR 0008); §4 gỡ định mức 1.770/bài, "≤100.000 token/phút", trần ngày 350.000 — đều vô nguồn hoặc đã bị số đo bác bỏ |
-| `.agents/rules/08` | Bổ sung: cấm read-back tệp vừa ghi · cấm đọc mã nguồn để suy ra hợp đồng · cấm dùng LLM làm việc script làm được |
-| `.agents/rules/01` | Cập nhật 2-I/O cho mô hình worker không tool |
-| `.agents/registry.yaml` | Thêm `article-processor`; `l1-entity-matcher` và `gold-financial-analyst` → `deprecated` ở bước 6; **gỡ `tokens_per_item` bịa**, trỏ ledger |
-| `.agents/pipeline.yaml` | Stage `article_pack` · `article_analyze` · `article_expand` → `l1_ingest` + `gold_ingest` |
-| `.agents/skills/l1-entity-matcher` | §6 bảng tra **sinh tự động**, bổ sung tiền tố `IND_GICS*` |
-| `.agents/skills/token-auditor` | Gỡ định mức 450 và 1.470 — sai 21–41 lần |
-| `docs/TOKEN_ECONOMY.md` | **MỚI** — §8 của tài liệu này |
-| `project/scripts/pipeline_radar.py` | In context pressure, cửa sổ giá, `resolve_rate`; gỡ hằng số 450 |
-| `AGENTS.md` | Thêm mục "Kinh tế Token & Phân làn công việc" trỏ `docs/TOKEN_ECONOMY.md`; sửa §6A/§6B cho mô hình một agent |
-| `docs/SESSION-LATEST.md` | Ghi tài liệu này là điểm vào của đợt cải tiến |
+| `project/src/export/user_output.py`                 | Nối`intent_llm`, `intent_code`, `intent_source` vào **cuối** `FINAL_COLUMNS` (§2.2). Thay đổi cộng thêm, Cấp 2, không cần ADR                                                                                                                                                                                                     |
+| `.agents/dsh/presets/.../agent.cordis.yml`          | `maxDepth` 0→1; sửa comment sai về `allow`+`ptc`; thêm row `agent_article`                                                                                                                                                                                                                                                                     |
+| `.agents/dsh/presets/.../preset.yml`                | Mô tả đúng (hiện ghi "read-only, không spawn agent" nhưng file kia định nghĩa 2 subagent + PTC)                                                                                                                                                                                                                                                  |
+| `.agents/rules/05`                                  | §4.4 gỡ`--dangerously-skip-permissions` (trái ADR 0008); §4 gỡ định mức 1.770/bài, "≤100.000 token/phút", trần ngày 350.000 — đều vô nguồn hoặc đã bị số đo bác bỏ                                                                                                                                                             |
+| `.agents/rules/08`                                  | Bổ sung: cấm read-back tệp vừa ghi · cấm đọc mã nguồn để suy ra hợp đồng · cấm dùng LLM làm việc script làm được                                                                                                                                                                                                                   |
+| `.agents/rules/01`                                  | Cập nhật 2-I/O cho mô hình worker không tool                                                                                                                                                                                                                                                                                                          |
+| `.agents/registry.yaml`                             | Thêm`article-processor`; `l1-entity-matcher` và `gold-financial-analyst` → `deprecated` ở bước 6; **gỡ `tokens_per_item` bịa**, trỏ ledger                                                                                                                                                                                        |
+| `.agents/pipeline.yaml`                             | Stage`article_pack` · `article_analyze` · `article_expand` → `l1_ingest` + `gold_ingest`                                                                                                                                                                                                                                                      |
+| `.agents/skills/l1-entity-matcher`                  | §6 bảng tra**sinh tự động**, bổ sung tiền tố `IND_GICS*`                                                                                                                                                                                                                                                                                   |
+| `.agents/skills/token-auditor`                      | Gỡ định mức 450 và 1.470 — sai 21–41 lần                                                                                                                                                                                                                                                                                                           |
+| `docs/TOKEN_ECONOMY.md`                             | **MỚI** — §8 của tài liệu này                                                                                                                                                                                                                                                                                                                 |
+| `project/scripts/pipeline_radar.py`                 | In context pressure, cửa sổ giá,`resolve_rate`; gỡ hằng số 450                                                                                                                                                                                                                                                                                     |
+| `AGENTS.md`                                         | Thêm mục "Kinh tế Token & Phân làn công việc" trỏ`docs/TOKEN_ECONOMY.md`; sửa §6A/§6B cho mô hình một agent                                                                                                                                                                                                                                |
+| `docs/SESSION-LATEST.md`                            | Ghi tài liệu này là điểm vào của đợt cải tiến                                                                                                                                                                                                                                                                                                  |
 
 ---
 
@@ -582,12 +648,12 @@ Mẫu chuẩn: 200 bài gán tay, đủ 11 nhóm. Chỉ số quan trọng nhất
 
 Giả định ~1.220 token/bài (850 vào + 300 ra + ~70 prefix phân bổ).
 
-| Khối lượng | Quota-equivalent/ngày | USD off-peak | USD peak |
-|---|---:|---:|---:|
-| 307 bài (mức hiện tại) | ~375.000 | ~0,10 | ~0,19 |
-| 500 bài | ~610.000 | ~0,16 | ~0,31 |
-| 1.000 bài | ~1.220.000 | ~0,31 | ~0,62 |
-| Backlog 2.118 bài (một lần) | ~2.580.000 | ~0,65 | ~1,31 |
+| Khối lượng                  | Quota-equivalent/ngày | USD off-peak | USD peak |
+| ------------------------------ | ---------------------: | -----------: | -------: |
+| 307 bài (mức hiện tại)     |               ~375.000 |        ~0,10 |    ~0,19 |
+| 500 bài                       |               ~610.000 |        ~0,16 |    ~0,31 |
+| 1.000 bài                     |             ~1.220.000 |        ~0,31 |    ~0,62 |
+| Backlog 2.118 bài (một lần) |             ~2.580.000 |        ~0,65 |    ~1,31 |
 
 Tiền không phải ràng buộc. Ràng buộc thật là **quota token của tài khoản** nếu có, nên ledger ghi **cả hai thước** và mọi báo cáo phải nói rõ đang dùng thước nào.
 
@@ -624,15 +690,15 @@ Chỉ đạo: đóng gói 100 bài mỗi đợt, bỏ giới hạn token thực 
 
 ### 13.1 Số đo
 
-| Đại lượng | Nguồn | Giá trị |
-|---|---|---|
-| Bản ghi L1 | 400 hàng `l1_outputs` mới nhất | 872 ký tự ≈ 291 token, p90 370 |
-| Bản ghi Gold | 400 hàng `agent_outputs` mới nhất | 1.946 ký tự ≈ 649 token, p90 859 |
-| Bản ghi hợp nhất | cộng hai phần trên | ≈ 900 token/bài, p90 ≈ 1.200 |
-| Đầu vào một lượt 100 bài | `article_pack` | ≈ 89K token, tức 12% cửa sổ |
-| Đầu ra cần cho 100 bài | 100 × 900 | ≈ 90K token |
-| Trần đầu ra một lượt | `maxTokens` trong preset | 40K |
-| Lượt gọi thật đã chạm trần | 75 tệp nhật ký phiên DSH | có, đúng 40.000 |
+| Đại lượng                      | Nguồn                                | Giá trị                           |
+| ---------------------------------- | ------------------------------------- | ----------------------------------- |
+| Bản ghi L1                        | 400 hàng`l1_outputs` mới nhất    | 872 ký tự ≈ 291 token, p90 370   |
+| Bản ghi Gold                      | 400 hàng`agent_outputs` mới nhất | 1.946 ký tự ≈ 649 token, p90 859 |
+| Bản ghi hợp nhất                | cộng hai phần trên                 | ≈ 900 token/bài, p90 ≈ 1.200     |
+| Đầu vào một lượt 100 bài    | `article_pack`                      | ≈ 89K token, tức 12% cửa sổ     |
+| Đầu ra cần cho 100 bài         | 100 × 900                            | ≈ 90K token                        |
+| Trần đầu ra một lượt         | `maxTokens` trong preset            | 40K                                 |
+| Lượt gọi thật đã chạm trần | 75 tệp nhật ký phiên DSH          | có, đúng 40.000                  |
 
 ### 13.2 Kết luận
 
@@ -668,14 +734,14 @@ Bài học chung cho khung: mỗi lần cấm agent đi dò một thứ, phải 
 
 Gộp 69 tệp nhật ký phiên có số đo, tính trung bình mỗi phiên:
 
-| Số bước | Số phiên | miss | hit | out | **quota/phiên** |
-|---:|---:|---:|---:|---:|---:|
-| 1 | 36 | 16.916 | 11.481 | 6.428 | **34.825** |
-| 2–3 | 4 | 13.569 | 26.816 | 4.182 | **44.567** |
-| 4–7 | 8 | 20.249 | 151.856 | 12.064 | **184.169** |
-| 8–15 | 5 | 19.896 | 265.574 | 12.442 | **297.912** |
-| 16–63 | 11 | 65.959 | 1.696.244 | 23.561 | **1.785.764** |
-| 64+ | 5 | 369.273 | 25.615.053 | 123.148 | **26.107.475** |
+| Số bước | Số phiên |    miss |        hit |     out | **quota/phiên** |
+| ---------: | ---------: | ------: | ---------: | ------: | ---------------------: |
+|          1 |         36 |  16.916 |     11.481 |   6.428 |       **34.825** |
+|       2–3 |          4 |  13.569 |     26.816 |   4.182 |       **44.567** |
+|       4–7 |          8 |  20.249 |    151.856 |  12.064 |      **184.169** |
+|      8–15 |          5 |  19.896 |    265.574 |  12.442 |      **297.912** |
+|     16–63 |         11 |  65.959 |  1.696.244 |  23.561 |    **1.785.764** |
+|        64+ |          5 | 369.273 | 25.615.053 | 123.148 |   **26.107.475** |
 
 Từ một bước lên trên sáu mươi bước, chi phí tăng **750 lần**. Phần `miss` chỉ tăng 22 lần, còn `hit` tăng 2.231 lần — nghĩa là gần như toàn bộ mức tăng là **lịch sử cũ được gửi lại**. Rẻ trên mỗi token nhưng khổng lồ về khối lượng, và hạn mức tài khoản tính theo khối lượng chứ không theo tiền.
 
@@ -683,10 +749,10 @@ Từ một bước lên trên sáu mươi bước, chi phí tăng **750 lần**.
 
 Đợt ngày 18/09 lúc 18:14–18:23, đọc từ nhật ký:
 
-| Tầng | Phiên | Bước mỗi phiên | Quota |
-|---|---:|---:|---:|
-| Worker xử lý bài | 13 | 1 | **413.932** |
-| Điều phối | 1 | 53 | **2.786.828** |
+| Tầng               | Phiên | Bước mỗi phiên |               Quota |
+| ------------------- | -----: | -----------------: | ------------------: |
+| Worker xử lý bài |     13 |                  1 |   **413.932** |
+| Điều phối        |      1 |                 53 | **2.786.828** |
 
 Phiên điều phối tốn **gấp 6,7 lần toàn bộ công việc thật cộng lại**, và 97% của nó là `hit` — tức lịch sử gửi lại qua 53 bước.
 
@@ -732,12 +798,12 @@ Chỉ đạo: xử lý dứt điểm mọi cổng làm agent bị chặn hoặc 
 
 ### 16.1 Bốn cổng đã gỡ
 
-| Cổng | Nó làm gì | Vì sao gỡ |
-|---|---|---|
-| `maxTokens: 40000` ở row `tool-subagent-article` | Cắt đầu ra mỗi lượt | Trần **do dự án tự đặt**, không phải trần nhà cung cấp. Chính nó buộc điều phối chữa cháy bằng mười lượt mười bài ở W1 và W2. Hai row `agent_l1`, `agent_gold` vốn không đặt |
-| Bộ chia theo ngân sách đầu ra `plan_calls` | Chia đợt 100 bài thành 4 lượt 25 | Lấy một trần **chưa đo** làm luật kiến trúc |
-| Trần ngữ cảnh 25% tự chia đôi lô | Chia lô khi ước tính vượt 250K token | Chưa bao giờ kích hoạt. Đọc trọn nội dung thì trăm bài mới chiếm 25%, vẫn không chạm |
-| Trần chắt lọc 900 token/bài | Bỏ nội dung trước khi mô hình đọc | Xem §16.2 |
+| Cổng                                                 | Nó làm gì                               | Vì sao gỡ                                                                                                                                                                                                            |
+| ----------------------------------------------------- | ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `maxTokens: 40000` ở row `tool-subagent-article` | Cắt đầu ra mỗi lượt                  | Trần**do dự án tự đặt**, không phải trần nhà cung cấp. Chính nó buộc điều phối chữa cháy bằng mười lượt mười bài ở W1 và W2. Hai row `agent_l1`, `agent_gold` vốn không đặt |
+| Bộ chia theo ngân sách đầu ra`plan_calls`      | Chia đợt 100 bài thành 4 lượt 25     | Lấy một trần**chưa đo** làm luật kiến trúc                                                                                                                                                              |
+| Trần ngữ cảnh 25% tự chia đôi lô               | Chia lô khi ước tính vượt 250K token | Chưa bao giờ kích hoạt. Đọc trọn nội dung thì trăm bài mới chiếm 25%, vẫn không chạm                                                                                                                   |
+| Trần chắt lọc 900 token/bài                       | Bỏ nội dung trước khi mô hình đọc  | Xem §16.2                                                                                                                                                                                                             |
 
 Sau khi gỡ, `--batch` là cổng chia lô duy nhất.
 
@@ -745,11 +811,11 @@ Sau khi gỡ, `--batch` là cổng chia lô duy nhất.
 
 Đo trên 600 bài thật:
 
-| | |
-|---|---|
-| Token nội dung sau bộ lọc cơ học | 1.542/bài (p90 2.537, p99 4.427) |
-| Token thực gửi cho mô hình khi trần 900 | 838/bài |
-| **Nội dung mô hình được đọc** | **54%** |
+|                                              |                                   |
+| -------------------------------------------- | --------------------------------- |
+| Token nội dung sau bộ lọc cơ học        | 1.542/bài (p90 2.537, p99 4.427) |
+| Token thực gửi cho mô hình khi trần 900 | 838/bài                          |
+| **Nội dung mô hình được đọc**  | **54%**                     |
 
 Trần 900 được đặt để tiết kiệm token đầu vào. Chính số đo của dự án đã bác bỏ lý do ấy: đọc trọn nội dung thì một đợt trăm bài dùng 154K token đầu vào, tức 25% cửa sổ một triệu, và token đầu vào chưa cache rẻ hơn token đầu ra **năm mươi lần**. Đổi lại nó bỏ mất **46% nội dung nghiệp vụ** trước khi mô hình kịp đọc — tức code đang quyết định mô hình được đọc gì.
 
@@ -777,12 +843,12 @@ Bốn luật loại bản ghi Gold (thiếu tóm tắt, hàm ý dưới 40 ký t
 
 ### 16.6 Số đo trước và sau
 
-| | Trước | Sau |
-|---|---|---|
-| Lượt gọi cho đợt 100 bài | 4 | **1** |
-| Nội dung mô hình được đọc | 54% | **100%** |
-| Token đầu vào mỗi đợt | 82K | 154K (25% cửa sổ) |
-| Cổng chia lô | 4 | **1** (`--batch`) |
+|                                   | Trước | Sau                       |
+| --------------------------------- | ------- | ------------------------- |
+| Lượt gọi cho đợt 100 bài    | 4       | **1**               |
+| Nội dung mô hình được đọc | 54%     | **100%**            |
+| Token đầu vào mỗi đợt       | 82K     | 154K (25% cửa sổ)       |
+| Cổng chia lô                    | 4       | **1** (`--batch`) |
 
 ### 16.7 Đính chính: trần thật là 256.000, và nó đã nằm sẵn trong tài liệu của dự án
 
@@ -796,3 +862,70 @@ Tôi từng gọi 40.000 là "trần vật lý của nhà cung cấp". Sai. Đó
 Cùng tài liệu, mục Budget: DSH **không có** trần token hay chi phí theo phiên hay theo ngày. Các giới hạn số duy nhất là `maxTokens` 256.000 mỗi request, `contextWindow` 1.000.000, compaction 0,8×, pruner 8.192 ký tự, spill 50.000 byte.
 
 Nghĩa là gỡ `maxTokens` khỏi row không để nó vô hạn mà trả nó về **256.000**. Một đợt trăm bài cần khoảng 90.000 token đầu ra, còn dư gần ba lần. Bài học phương pháp: trước khi gọi một con số là ràng buộc, kiểm xem chính mình có đặt ra nó không.
+
+---
+
+## 17. Bộ nhớ đệm 2026-09-21 — đo lại, và xếp lại thứ tự ưu tiên
+
+### 17.1 Cache ở hệ này là bảo hiểm, không phải cần gạt tiết kiệm
+
+Phân rã hoá đơn thật từ sổ cái, tính bằng khung giá của chính dòng sổ cái đó:
+
+| Đợt          | miss           | hit             | out            | Tổng   |
+| -------------- | -------------- | --------------- | -------------- | ------- |
+| W1 — 100 bài | $0,0487 · 43% | $0,0022 · 1,9% | $0,0634 · 55% | $0,1142 |
+| W2 — 200 bài | $0,0541 · 34% | $0,0052 · 3,3% | $0,0976 · 62% | $0,1568 |
+
+Hai cách đọc, cả hai đều đúng, và bỏ một cái là kết luận sai:
+
+- **Cache đang cứu rất nhiều tiền.** W2 có 1,72 triệu token cache-read vì `turns_max = 2`. Không có cache, số đó bị tính giá miss: hoá đơn thành **$0,410 thay vì $0,157**, tức cache cắt **62%**.
+- **Phần cache *cố ý* — tiền tố tĩnh — chỉ đáng 1,4%.** Ở 100 bài/lô, đợt 300 bài: có cache $0,23312, không cache $0,23639.
+
+|      bài/lô | số lô | có cache | không cache |    tiết kiệm |
+| ------------: | ------: | --------: | -----------: | -------------: |
+|            10 |      30 |  $0,23402 |     $0,28134 |          16,8% |
+|            25 |      12 |  $0,23342 |     $0,25137 |           7,1% |
+|            50 |       6 |  $0,23322 |     $0,24138 |           3,4% |
+| **100** |       3 |  $0,23312 |     $0,23639 | **1,4%** |
+|           150 |       2 |  $0,23309 |     $0,23472 |           0,7% |
+
+Kết luận: tiền tố tĩnh gần như vô hiệu khi mọi thứ chạy đúng thiết kế (1 bước/lô, lô to), và cứu 62% khi có lô đi hai bước hoặc phải chạy lại. Đo cache bằng câu hỏi "tiết kiệm bao nhiêu phần trăm" sẽ ra kết luận sai ở cả hai chiều.
+
+**Thứ tự đòn bẩy thật:** đầu ra (55–62% hoá đơn) → khung giá thấp điểm (−50% mọi rổ, đợt 300 bài $0,233 so với $0,466) → số bước → tiền tố tĩnh.
+
+### 17.2 Vì sao công thức cache phổ biến không áp được thẳng vào đây
+
+| Giả định thường gặp                         | Ở hệ này                                                                                                                                           |
+| ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| cache-read ≈ 0,1× input                         | **0,02×** (0,003 so với 0,15)                                                                                                                 |
+| phần lặp`C` lớn hơn phần mới `N`        | ngược lại:`C` ≈ 11.143, `N` ≈ 154.200 cho lô 100 bài                                                                                       |
+| chi phí nằm ở lịch sử hội thoại            | worker one-shot, không có transcript                                                                                                                |
+| cần đẩy phần biến động xuống cuối prompt | DSH đã thế sẵn: runtime context là**user message nối sau packet** (`dsh-agent-loop:890-906`), `dsh-time-context` không được mount |
+
+### 17.3 Đã sửa trong kho mã
+
+| Việc                                                                                                 | Ở đâu                                             | Vì sao                                                                                                                                                                                                                                                                                               |
+| ----------------------------------------------------------------------------------------------------- | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--check` kiểm cả **persona trong preset ↔ tệp prefix**, thêm `--check-preset`         | `build_article_prefix.py`, `src/agent/prefix.py` | Thứ bắt buộc byte-identical lại là thứ duy nhất chưa ai kiểm. Đã đo ngày 21/09: hiện đang khớp                                                                                                                                                                                        |
+| Hâm cache bằng request tí hon thay vì bắt lô đầu chạy một mình; đợt một lô không hâm | `article_run.py`                                   | Đổi được thời gian chạy đợt, không đổi tiền. Một lô thì hâm là lỗ ròng                                                                                                                                                                                                            |
+| Dự toán tiền tố gồm cả phần harness (+4.800 token)                                             | `article_pack.py`, `src/agent/prefix.py`         | `est_hit` cũ hụt 4.800 token/lượt nên không đối chiếu được với `cacheRead` thật                                                                                                                                                                                                     |
+| Thứ tự bài tất định (`ORDER BY published_at DESC, url_title_hash`) + băm packet              | `article_pack.py`                                  | Điều kiện để lần đóng gói lại cho ra packet giống hệt và trúng cache                                                                                                                                                                                                                    |
+| Sàn`hit ≥ tiền tố × (số phiên − 1)`, cảnh báo kèm số tiền trả thừa                   | `token_ledger.py`                                  | Tỷ lệ trúng cache gộp**không** phát hiện được tiền tố trượt: nó vẫn cao khi các lượt lặp bước                                                                                                                                                                             |
+| `radar token` đọc sổ cái và checkpoint phiên thật                                            | `pipeline_radar.py`                                | Bản cũ nhân số bài với định mức chết 450/1.470 rồi nhân đơn giá gõ trong mã, không biết cache tồn tại — radar và sổ cái nói hai con số khác nhau cho cùng một đợt                                                                                                     |
+| Biến thể`--with-tickers` (+21.500 token, +1,5% hoá đơn đợt 300 bài)                         | `build_article_prefix.py`                          | Cache biến prefix thành**ngân sách tri thức**; biến thể ghi vào tệp mô tả nên `--check` không báo lệch oan                                                                                                                                                                     |
+| `est_hit` trình bày như **sàn**, không như dự báo                                     | `estimate_wave.py`                                 | Cột lệch cũ in "+13.486%" cho một tình huống hoàn toàn lành mạnh: số thật vượt sàn là lúc cache đang gánh thay giá token mới                                                                                                                                                     |
+| `--repair` phân biệt "chưa lô nào chạy" với "không thiếu bài"                             | `article_run.py`                                   | `missing_indices` coi lô chưa có tệp đầu ra là không thiếu gì, nên đợt chưa chạy lần nào vẫn nhận được câu "không cần vá"                                                                                                                                                 |
+| Sàn cache đếm theo**lượt gọi worker**, không theo số phiên                             | `token_ledger.py`, `pipeline_radar.py`           | Phiên Conductor mang persona khác nên không đọc tiền tố của worker. Đếm nó vào sàn làm đợt hai lô bị đòi`11.143 × 3` trong khi chỉ hai lô đọc lại — cảnh báo kêu oan ở **mọi** đợt bình thường, và một cảnh báo luôn kêu thì hết là tín hiệu |
+| Radar đổi ngày máy thành khoảng UTC trước khi tra sổ cái                                    | `pipeline_radar.py`                                | Sổ cái ghi`ts` theo UTC, radar lọc theo ngày của đồng hồ máy: lệch đúng bảy tiếng, nên mọi đợt chạy trước 07:00 giờ VN bị báo "chưa có dòng nào" cho chính ngày vừa chạy                                                                                            |
+
+Tám bất biến mới được canh bằng kiểm định trong `tests/test_article_lane.py`.
+
+### 17.4 Còn lại là việc tay trong DSH
+
+Xem `.agents/dsh/DSH-VIEC-THU-CONG.md`. Mười mục, trong đó bốn mục bắt buộc: dán persona và xác nhận bằng `--check-preset`, chọn đúng preset mỗi phiên, nạp lại DSH sau khi sửa preset, và không đổi tool set/model/effort giữa đợt.
+
+Một mục cố ý **không tự sửa**: `compaction auto: false` theo §8.4. Con dùng chung composition với cha nên tắt nén là tắt cho cả Conductor, mà worker chạy một bước thì không bao giờ chạm ngưỡng 80%. Lợi ích cache bằng không, cái mất là lưới an toàn duy nhất — khuyến nghị giữ `auto: true`.
+
+### 17.5 Đã cân nhắc và bác bỏ
+
+**Vá bằng cách gửi lại trọn packet gốc kèm chỉ thị ở đuôi.** Vá 8 bài trên 100 hiện tốn ~$0,0019 đầu vào; cách kia tốn ~$0,0005. Tiết kiệm $0,0014, đổi lấy rủi ro mô hình phát lại trọn 100 bản ghi — $0,054 đầu ra, đắt hơn ba mươi lần phần vừa tiết kiệm. Giữ nguyên cách vá hiện tại.

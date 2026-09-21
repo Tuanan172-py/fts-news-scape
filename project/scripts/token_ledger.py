@@ -20,6 +20,7 @@ from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from src.agent.prefix import cached_prefix_tokens    # noqa: E402
 from src.core.stdio import force_utf8_stdio          # noqa: E402
 from src.telemetry.dsh_usage import (                # noqa: E402
     is_peak,
@@ -32,6 +33,13 @@ force_utf8_stdio()
 HARNESS_DB = os.path.join(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
     "harness.db",
+)
+
+# Mô tả đợt nằm cạnh packet; đọc từ đây để biết một đợt có bao nhiêu LƯỢT GỌI
+# worker, thay vì suy từ số phiên DSH vốn gồm cả phiên Conductor.
+TASK_DIR = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    "data", "agent_tasks", "article",
 )
 
 SCHEMA = """
@@ -60,6 +68,87 @@ CREATE TABLE IF NOT EXISTS token_ledger (
 CREATE INDEX IF NOT EXISTS idx_token_ledger_wave ON token_ledger(wave);
 CREATE INDEX IF NOT EXISTS idx_token_ledger_ts   ON token_ledger(ts);
 """
+
+
+def latest_snapshots(rows: list) -> list:
+    """Giữ lại ảnh chụp mới nhất của mỗi đợt, bỏ các ảnh chụp cũ hơn của cùng đợt.
+
+    `append` ghi một ảnh chụp **tích luỹ** mỗi lần chạy, không phải phần tăng thêm:
+    chạy lại cho cùng một đợt khi các phiên con lần lượt kết thúc thì dòng sau chứa
+    trọn dòng trước. Đợt W2 có bốn dòng như vậy, và cộng thẳng chúng cho ra 800 bài
+    cho một đợt 200 bài.
+
+    Quy ước lấy dòng mới nhất đã có sẵn ở `estimate_wave.py`; hàm này để mọi công cụ
+    dùng chung đúng một quy ước, thay vì mỗi nơi tự cộng một kiểu rồi báo số khác nhau
+    về cùng một đợt.
+
+    Args:
+        rows: Các dòng sổ cái, đã sắp theo thứ tự ghi tăng dần.
+
+    Returns:
+        Danh sách dòng còn lại sau khi khử ảnh chụp cũ.
+    """
+    latest: dict[tuple, object] = {}
+    for r in rows:
+        latest[(r["wave"], r["batch_id"], r["agent_id"])] = r
+    return list(latest.values())
+
+
+def worker_calls(wave: str | None) -> int | None:
+    """Số lượt gọi worker thật của một đợt, đọc từ mô tả đợt trên đĩa.
+
+    Args:
+        wave: Mã đợt.
+
+    Returns:
+        Số lượt gọi worker, hoặc None khi không có mô tả đợt.
+    """
+    if not wave:
+        return None
+    path = os.path.join(TASK_DIR, f"wave_{wave}.json")
+    try:
+        with open(path, encoding="utf-8") as f:
+            m = json.load(f) or {}
+    except (OSError, json.JSONDecodeError):
+        return None
+    n = len(m.get("batches") or [])
+    if not n:
+        return None
+    return n + (1 if m.get("warmed") else 0)
+
+
+def cache_shortfall(cache_read: int, n_sessions: int, prefix_tokens: int,
+                    calls: int | None = None) -> tuple[int, int]:
+    """Đối chiếu số token trúng bộ nhớ đệm thật với số tối thiểu phải trúng.
+
+    Mỗi lượt gọi worker gửi cùng một tiền tố tĩnh. Lượt đầu ghi cache, mọi lượt sau
+    phải đọc lại xấp xỉ trọn tiền tố ấy ở giá trúng cache. Sàn tối thiểu vì vậy là
+    `tiền tố × (số lượt gọi worker − 1)`; thấp hơn sàn nghĩa là tiền tố đã lệch giữa
+    các lượt, và phần lệch bị tính giá token mới, đắt hơn năm mươi lần.
+
+    Đây là phép kiểm duy nhất phát hiện được cache trượt. Tỷ lệ trúng cache gộp cả
+    đợt **không** phát hiện được: nó vẫn cao khi các lượt lặp bước, ngay cả lúc tiền
+    tố trượt sạch.
+
+    **Đếm theo lượt gọi worker, không theo số phiên.** Một đợt hai lô có tới bốn
+    phiên: phiên Conductor, lượt hâm, và hai lô. Phiên Conductor mang persona khác
+    và bộ tool khác nên nó **không** đọc tiền tố của worker; tính nó vào sàn là đòi
+    một khoản cache không bao giờ tồn tại, và cảnh báo sẽ kêu oan ở mọi đợt bình
+    thường — đúng kiểu cảnh báo tự huỷ giá trị của chính nó.
+
+    Args:
+        cache_read: Số token trúng cache đo được của cả đợt.
+        n_sessions: Số phiên DSH của đợt, chỉ dùng khi không biết số lượt gọi.
+        prefix_tokens: Kích thước tiền tố tĩnh.
+        calls: Số lượt gọi worker thật. Bỏ trống thì suy từ số phiên, và khi ấy sàn
+            chỉ là ước lượng thô.
+
+    Returns:
+        Cặp gồm sàn tối thiểu và phần hụt so với sàn; hụt bằng 0 là đạt.
+    """
+    n = calls if calls else max(0, n_sessions - 1)
+    expected = max(0, prefix_tokens) * max(0, n - 1)
+    return expected, max(0, expected - max(0, cache_read))
 
 
 def connect(db_path: str = HARNESS_DB) -> sqlite3.Connection:
@@ -153,6 +242,27 @@ def cmd_append(args: argparse.Namespace) -> int:
     if turns_max > 1:
         print(f"   ⚠️ turns_max={turns_max}: có phiên chạy quá 1 bước, soi lại persona worker")
 
+    pfx = args.prefix_tokens or cached_prefix_tokens()
+    calls = args.worker_calls or worker_calls(args.wave)
+    expected_hit, shortfall = cache_shortfall(wave.cache_read, len(wave.sessions), pfx,
+                                              calls=calls)
+    basis = (f"{calls} luot goi worker theo mo ta dot" if calls
+             else f"{len(wave.sessions)} phien, tru phien dieu phoi")
+    if expected_hit:
+        table = pricing["models"]["deepseek-flash"]["peak" if peak else "off_peak"]
+        gap_usd = shortfall * (table["input_cache_miss"] - table["input_cache_hit"]) / 1e6
+        if shortfall:
+            print(f"   ⚠️ bộ nhớ đệm TRƯỢT: hit {wave.cache_read:,} token, sàn tối thiểu "
+                  f"{expected_hit:,} (tiền tố {pfx:,} × số lượt sau lượt đầu; "
+                  f"cơ sở: {basis}) — hụt {shortfall:,} token ≈ ${gap_usd:.4f}")
+            print(f"      Kiểm theo thứ tự: (1) `build_article_prefix.py --check` — "
+                  f"persona trong preset có còn khớp prefix từng byte không; (2) trong "
+                  f"đợt có đổi tool set, model hay reasoningEffort không; (3) phiên nào "
+                  f"chạm ngưỡng nén 80% thì vùng surface đã bị viết lại.")
+        else:
+            print(f"   ✅ bộ nhớ đệm trúng: hit {wave.cache_read:,} token so với sàn "
+                  f"{expected_hit:,}")
+
     warn = float((pricing.get("watch_thresholds") or {}).get("tokens_per_article_warn", 1500))
     if args.items and per_item > warn:
         print(f"   ⚠️ {per_item:,.0f} token/bài vượt ngưỡng cảnh báo {warn:,.0f}.")
@@ -218,13 +328,20 @@ def cmd_report(args: argparse.Namespace) -> int:
     for r in rows:
         print(_fmt_row(r))
 
-    tot_items = sum(r["n_items"] for r in rows)
-    tot_quota = sum(r["quota_tokens"] for r in rows)
-    tot_usd = sum(r["billed_usd"] for r in rows)
-    tot_miss = sum(r["miss_tokens"] for r in rows)
-    tot_hit = sum(r["hit_tokens"] for r in rows)
+    # Cộng trên ảnh chụp mới nhất của mỗi đợt. Bảng bên trên vẫn in đủ mọi dòng vì
+    # đó là sổ cái và người vận hành cần thấy nguyên trạng, nhưng phần cộng thì không
+    # được đếm một đợt nhiều lần.
+    unique = latest_snapshots(list(reversed(rows)))
+    tot_items = sum(r["n_items"] for r in unique)
+    tot_quota = sum(r["quota_tokens"] for r in unique)
+    tot_usd = sum(r["billed_usd"] for r in unique)
+    tot_miss = sum(r["miss_tokens"] for r in unique)
+    tot_hit = sum(r["hit_tokens"] for r in unique)
     print("-" * 110)
-    print(f"CỘNG {len(rows)} dòng · {tot_items:,} bài · quota {tot_quota:,} token · ${tot_usd:.4f}")
+    dropped = len(rows) - len(unique)
+    note = f" (bỏ {dropped} ảnh chụp cũ của cùng đợt)" if dropped else ""
+    print(f"CỘNG {len(unique)} đợt{note} · {tot_items:,} bài · "
+          f"quota {tot_quota:,} token · ${tot_usd:.4f}")
     if tot_items:
         print(f"Trung bình {tot_quota / tot_items:,.0f} token/bài")
     if tot_miss + tot_hit:
@@ -319,6 +436,12 @@ def main(argv=None) -> int:
     a.add_argument("--peak", type=int, choices=[0, 1], help="Ép khung giá, bỏ trống thì tự suy")
     a.add_argument("--no-reasoning", action="store_true",
                    help="Bỏ qua việc giải nén JSONL để lấy reasoning")
+    a.add_argument("--worker-calls", type=int,
+                   help="Số lượt gọi worker của đợt. Bỏ trống thì đọc từ mô tả đợt, "
+                        "không có mô tả thì suy thô từ số phiên")
+    a.add_argument("--prefix-tokens", type=int,
+                   help="Kích thước tiền tố tĩnh dùng để đối chiếu cache. Bỏ trống "
+                        "thì lấy từ tệp mô tả prefix")
     a.add_argument("--note", help="Ghi chú tự do")
 
     r = sub.add_parser("report", help="In báo cáo sổ cái")

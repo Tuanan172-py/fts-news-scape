@@ -7,7 +7,7 @@ import json
 import os
 import sqlite3
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 # Cấu hình UTF-8 cho Windows console
@@ -19,6 +19,20 @@ if sys.platform == "win32":
         pass
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(PROJECT_ROOT))
+
+from scripts.token_ledger import (                         # noqa: E402
+    latest_snapshots,
+    worker_calls,
+)
+from src.agent.prefix import cached_prefix_tokens          # noqa: E402
+from src.telemetry.dsh_usage import (                      # noqa: E402
+    billed_usd,
+    is_peak,
+    iter_sessions,
+    load_pricing,
+)
+
 DATA_ROOT = PROJECT_ROOT / "data"
 AGENT_TASKS_DIR = DATA_ROOT / "agent_tasks"
 AGENT_OUTPUTS_DIR = DATA_ROOT / "agent_outputs"
@@ -27,6 +41,7 @@ L1_OUTPUTS_DIR = DATA_ROOT / "agent_outputs_l1"
 USER_OUTPUT_DIR = PROJECT_ROOT.parent / "users" / "output"
 MANIFEST_YAML = PROJECT_ROOT / "config" / "entities" / "manifest.yaml"
 DB_PATH = Path("C:/data/news-scape/monocle.db")
+HARNESS_DB = PROJECT_ROOT.parent / "harness.db"
 
 
 def get_db_connection() -> sqlite3.Connection:
@@ -409,68 +424,228 @@ def cmd_status(args: argparse.Namespace) -> None:
     print(f"================================================================================\n")
 
 
+def _utc_window(date: str) -> tuple[str, str]:
+    """Đổi một ngày theo đồng hồ máy thành khoảng mốc UTC để tra sổ cái.
+
+    Args:
+        date: Ngày dạng YYYY-MM-DD theo giờ địa phương.
+
+    Returns:
+        Cặp mốc đầu và cuối dạng ISO UTC, cùng định dạng với cột `ts` của sổ cái.
+    """
+    start = datetime.strptime(date, "%Y-%m-%d").astimezone()
+    end = start + timedelta(days=1)
+    fmt = lambda d: d.astimezone(timezone.utc).isoformat(timespec="seconds")
+    return fmt(start), fmt(end)
+
+
+def _ledger_rows(date: str | None, wave: str | None) -> list[sqlite3.Row]:
+    """Đọc các dòng sổ cái token theo ngày hoặc theo đợt.
+
+    Args:
+        date: Ngày cần lọc dạng YYYY-MM-DD, bỏ qua khi đã chỉ định đợt.
+        wave: Mã đợt cần lọc.
+
+    Returns:
+        Danh sách dòng sổ cái, rỗng khi chưa có sổ cái hoặc không dòng nào khớp.
+    """
+    if not HARNESS_DB.exists():
+        return []
+    conn = sqlite3.connect(f"file:{HARNESS_DB.as_posix()}?mode=ro", uri=True)
+    conn.row_factory = sqlite3.Row
+    try:
+        if wave:
+            sql, params = "SELECT * FROM token_ledger WHERE wave = ?", (wave,)
+        else:
+            # Sổ cái ghi mốc theo UTC, còn người vận hành nghĩ theo ngày của đồng hồ
+            # máy. So thẳng `substr(ts,1,10)` với ngày máy là sai đúng bảy tiếng: mọi
+            # đợt chạy trước 07:00 giờ VN bị ghi vào ngày hôm trước theo UTC, nên
+            # radar báo "chưa có dòng nào" cho một ngày vừa chạy xong. Vì vậy đổi
+            # ngày địa phương thành một khoảng UTC rồi mới so.
+            lo, hi = _utc_window(date)
+            sql, params = ("SELECT * FROM token_ledger WHERE ts >= ? AND ts < ?",
+                           (lo, hi))
+        rows = list(conn.execute(sql + " ORDER BY id", params))
+    except sqlite3.Error:
+        return []
+    finally:
+        conn.close()
+
+    # Sổ cái ghi ảnh chụp tích luỹ cho mỗi đợt, nên phải khử trước khi cộng. Dùng
+    # chung đúng một định nghĩa với `token_ledger.py` để hai công cụ không bao giờ
+    # nói hai con số khác nhau về cùng một đợt.
+    return latest_snapshots(rows)
+
+
 def cmd_token(args: argparse.Namespace) -> None:
-    """Quản lý, đo lường và dự toán mức tiêu thụ Token Burn thực tế."""
+    """Báo cáo token và chi phí thật của đường xử lý bài đăng.
+
+    Lệnh này từng nhân số bài với hai định mức chết — 450 token mỗi bài tầng L1 và
+    1.470 tầng Gold — rồi nhân tiếp với một đơn giá gõ thẳng trong mã. Cả ba con số
+    đều sai: hai định mức lệch thực tế 21 đến 41 lần, còn đơn giá thì không phân biệt
+    ba rổ token mà nhà cung cấp tính riêng. Tệ hơn cả sai số là việc nó **không biết
+    bộ nhớ đệm tồn tại**, trong khi token trúng cache rẻ hơn token mới năm mươi lần;
+    radar và sổ cái vì thế đưa ra hai con số mâu thuẫn cho cùng một đợt.
+
+    Nay mọi con số đến từ hai nguồn đo thật: sổ cái `token_ledger` cho các đợt đã
+    chốt, và checkpoint phiên DSH cho phần đang chạy. Không còn định mức nào.
+
+    Args:
+        args: Tham số dòng lệnh đã phân tích.
+    """
     target_date = args.date or f"{datetime.now():%Y-%m-%d}"
-    print(f"================================================================================")
-    print(f" 🪙  NEWS-SCAPE TOKEN METRICS & BUDGET AUDITOR — [{target_date}]")
-    print(f"================================================================================")
+    wave = getattr(args, "wave", None)
+    scope = f"đợt {wave}" if wave else f"ngày {target_date}"
+    pricing = load_pricing()
 
-    conn = get_db_connection()
-    cur = conn.cursor()
-
-    # Đếm số bài L1 do Agent xử lý (có in_list hoặc semantic)
-    cur.execute("""
-        SELECT count(*)
-        FROM l1_outputs
-        WHERE date(created_at) = ? AND agent_provider = 'antigravity'
-    """, (target_date,))
-    l1_agent_count = cur.fetchone()[0]
-
-    # Đếm số bài L1 do Code-First xử lý (0 token)
-    cur.execute("""
-        SELECT count(*)
-        FROM l1_outputs
-        WHERE date(created_at) = ? AND (agent_provider IS NULL OR agent_provider = 'code_first')
-    """, (target_date,))
-    l1_codefirst_count = cur.fetchone()[0]
-
-    # Đếm số bài Gold hoàn tất
-    cur.execute("""
-        SELECT count(*)
-        FROM agent_outputs
-        WHERE date(created_at) = ?
-    """, (target_date,))
-    gold_agent_count = cur.fetchone()[0]
-
-    conn.close()
-
-    # Định mức token thực nghiệm (Benchmark Flash v2-lean)
-    L1_TOKEN_PER_ARTICLE = 450      # ~350 input + 100 output
-    GOLD_TOKEN_PER_ARTICLE = 1470   # ~860 input + 610 output
-
-    l1_token_burned = l1_agent_count * L1_TOKEN_PER_ARTICLE
-    l1_token_saved = l1_codefirst_count * L1_TOKEN_PER_ARTICLE
-    gold_token_burned = gold_agent_count * GOLD_TOKEN_PER_ARTICLE
-
-    total_burned = l1_token_burned + gold_token_burned
-
-    print(f"1. THỰC NGHIỆM TIÊU THỤ TOKEN (TIÊU CHUẨN FLASH / LEAN SCHEMA):")
-    print(f"   • Tầng L1 (Subagents) : {l1_agent_count:,} bài × ~{L1_TOKEN_PER_ARTICLE} tokens = ~{l1_token_burned:,.0f} tokens")
-    print(f"   • Tầng L1 (Code-First): {l1_codefirst_count:,} bài (TIẾT KIỆM 100%) = ~{l1_token_saved:,.0f} tokens tiết kiệm")
-    print(f"   • Tầng Gold (Subagents): {gold_agent_count:,} bài × ~{GOLD_TOKEN_PER_ARTICLE} tokens = ~{gold_token_burned:,.0f} tokens")
-    print(f"   ────────────────────────────────────────────────────────────────────────")
-    print(f"   🔥 TỔNG TOKEN TIÊU THỤ THỰC TẾ  : ~{total_burned:,.0f} tokens (~{total_burned/1_000_000:.3f}M tokens)")
-    print(f"   💡 TỔNG TOKEN ĐÃ TIẾT KIỆM ĐƯỢC : ~{l1_token_saved + (l1_codefirst_count + l1_agent_count - gold_agent_count) * GOLD_TOKEN_PER_ARTICLE:,.0f} tokens")
+    print("=" * 96)
+    print(f" 🪙  TOKEN & CHI PHÍ THẬT — {scope}")
+    print("=" * 96)
+    print("Thước đo: `quota` đếm cả token trúng cache; `USD` là tiền thật theo ba rổ "
+          "rời rạc. Hai thước lệch nhau rất xa và không thay thế được nhau.")
     print()
 
-    print(f"2. ĐÁNH GIÁ HIỆU QUẢ SUBSCRIBER-GATING & CLEAN SCHEMA:")
-    if l1_agent_count + l1_codefirst_count > 0:
-        gating_ratio = (gold_agent_count / (l1_agent_count + l1_codefirst_count)) * 100
-        print(f"   • Tỷ lệ chọn lọc Gold qua Watchlist : {gating_ratio:.1f}% ({gold_agent_count}/{l1_agent_count + l1_codefirst_count} bài)")
-        print(f"   • Tỷ lệ cắt giảm Token vô ích       : {100 - gating_ratio:.1f}% chi phí tránh lãng phí")
-        print(f"   • Chi phí ước tính (Google Flash)    : ~${(total_burned / 1_000_000) * 0.15:.4f} USD (Cực kỳ tối ưu)")
-    print(f"================================================================================\n")
+    rows = _ledger_rows(target_date, wave)
+    if rows:
+        print("1. ĐỢT ĐÃ CHỐT SỔ")
+        print("-" * 96)
+        print(f"{'thời điểm':17} {'đợt':>6} {'bài':>5} {'miss':>10} {'hit':>11} "
+              f"{'out':>9} {'quota':>11} {'lượt':>5} {'USD':>9}")
+        for r in rows:
+            print(f"{r['ts'][:16]:17} {str(r['wave'] or '-'):>6} {r['n_items']:>5} "
+                  f"{r['miss_tokens']:>10,} {r['hit_tokens']:>11,} "
+                  f"{r['out_tokens']:>9,} {r['quota_tokens']:>11,} "
+                  f"{r['turns_max']:>5} ${r['billed_usd']:>8.4f}")
+
+        miss = sum(r["miss_tokens"] for r in rows)
+        hit = sum(r["hit_tokens"] for r in rows)
+        out = sum(r["out_tokens"] for r in rows)
+        items = sum(r["n_items"] for r in rows)
+        usd = sum(r["billed_usd"] for r in rows)
+        reasoning = sum(r["reasoning_tokens"] or 0 for r in rows)
+        print("-" * 96)
+        print(f"CỘNG {len(rows)} dòng · {items:,} bài · quota {miss + hit + out:,} "
+              f"token · ${usd:.4f}")
+
+        print()
+        print("2. PHÂN RÃ HOÁ ĐƠN THEO RỔ")
+        print("-" * 96)
+        # Mỗi dòng tính theo khung giá của chính nó. Dùng khung giá lúc chạy báo cáo
+        # sẽ thổi phồng một đợt off-peak đem ra xem vào giờ cao điểm đúng gấp đôi.
+        def _table(row) -> dict:
+            window = "peak" if row["peak_window"] else "off_peak"
+            return pricing["models"]["deepseek-flash"][window]
+
+        cost = {"miss": 0.0, "hit": 0.0, "out": 0.0}
+        for r in rows:
+            t = _table(r)
+            cost["miss"] += r["miss_tokens"] * t["input_cache_miss"] / 1e6
+            cost["hit"] += r["hit_tokens"] * t["input_cache_hit"] / 1e6
+            cost["out"] += r["out_tokens"] * t["output"] / 1e6
+        table = _table(rows[-1])
+        buckets = (("đầu vào mới (miss)", miss, cost["miss"]),
+                   ("đầu vào tái dùng (hit)", hit, cost["hit"]),
+                   ("đầu ra", out, cost["out"]))
+        total_cost = sum(cost.values())
+        for label, tok, money in buckets:
+            share = (money / total_cost * 100) if total_cost else 0.0
+            print(f"   {label:26} {tok:>12,} token  ${money:>9.4f}  "
+                  f"{share:>5.1f}% hoá đơn")
+        if miss + hit:
+            print(f"   {'tỷ lệ trúng cache':26} {hit / (miss + hit):>12.1%}")
+        if reasoning:
+            print(f"   ⚠️ reasoning {reasoning:,} token: suy luận chưa tắt cho worker")
+
+        print()
+        print("3. BỘ NHỚ ĐỆM CÓ THẬT SỰ TRÚNG KHÔNG")
+        print("-" * 96)
+        pfx = cached_prefix_tokens()
+        # Đếm theo LƯỢT GỌI worker đọc từ mô tả đợt. Đếm theo số phiên là tính cả
+        # phiên Conductor — phiên ấy mang persona khác nên không đọc tiền tố của
+        # worker, và sàn sẽ đòi một khoản cache không bao giờ tồn tại.
+        floor = 0
+        for r in rows:
+            calls = worker_calls(r["wave"]) or max(0, r["n_sessions"] - 1)
+            floor += pfx * max(0, calls - 1)
+        if floor:
+            gap = max(0, floor - hit)
+            verdict = "ĐẠT" if not gap else f"HỤT {gap:,} token"
+            print(f"   tiền tố tĩnh {pfx:,} token · sàn tối thiểu {floor:,} · "
+                  f"đo được {hit:,} → {verdict}")
+            if gap:
+                delta = gap * (table["input_cache_miss"]
+                               - table["input_cache_hit"]) / 1e6
+                print(f"   ≈ ${delta:.4f} trả thừa. Kiểm `build_article_prefix.py "
+                      f"--check` trước; persona lệch prefix là nguyên nhân hay gặp nhất.")
+        else:
+            print("   chưa đủ hai lượt gọi để đối chiếu")
+
+        est_miss = sum(r["est_miss"] or 0 for r in rows)
+        est_out = sum(r["est_out"] or 0 for r in rows)
+        if est_miss or est_out:
+            print()
+            print("4. SAI SỐ DỰ TOÁN")
+            print("-" * 96)
+            for label, est, act in (("đầu vào mới", est_miss, miss),
+                                    ("đầu ra", est_out, out)):
+                if not est:
+                    continue
+                print(f"   {label:14} dự toán {est:>10,} · thật {act:>10,} · "
+                      f"lệch {(act - est) / est * 100:>+7.1f}%")
+
+        if items:
+            print()
+            print(f"Mỗi bài: {(miss + hit + out) / items:,.0f} token quota · "
+                  f"${usd / items:.6f}")
+    else:
+        print(f"Chưa có dòng sổ cái nào cho {scope}.")
+        print("Sau mỗi đợt, `article_run.py --wave <mã> --finish` sẽ ghi sổ.")
+
+    # Khi xem theo đợt, ngày của phiên phải là ngày của chính đợt ấy. Lấy hôm nay
+    # thì một đợt chạy tuần trước luôn hiện "không có phiên nào", nghe như mất dữ
+    # liệu trong khi chỉ là so nhầm ngày.
+    session_date = target_date
+    if wave and rows:
+        try:
+            session_date = (datetime.fromisoformat(rows[-1]["ts"])
+                            .astimezone().strftime("%Y-%m-%d"))
+        except (TypeError, ValueError):
+            pass
+    today = [s for s in iter_sessions("news-scape")
+             if datetime.fromtimestamp(s.mtime).strftime("%Y-%m-%d") == session_date]
+    print()
+    print(f"5. PHIÊN DSH NGÀY {session_date} (gồm cả phần chưa chốt sổ)")
+    print("-" * 96)
+    if not today:
+        print("   Không có phiên nào sửa đổi trong ngày.")
+    else:
+        print(f"   {'phiên':14} {'miss':>10} {'hit':>11} {'out':>9} {'lượt':>5} "
+              f"{'áp suất':>8}")
+        for s in today[:12]:
+            print(f"   {s.session_id[:12]:14} {s.uncached_input:>10,} "
+                  f"{s.cache_read:>11,} {s.output:>9,} {s.turns:>5} "
+                  f"{s.pressure_ratio:>7.1%}")
+        live_usd = sum(billed_usd(s.uncached_input, s.cache_read, s.output,
+                                  pricing=pricing) for s in today)
+        worst = max(today, key=lambda s: s.pressure_ratio)
+        print(f"   {len(today)} phiên · ${live_usd:.4f} · áp suất cao nhất "
+              f"{worst.pressure_ratio:.1%}")
+        thresholds = pricing.get("watch_thresholds") or {}
+        amber = float(thresholds.get("context_pressure_amber", 0.25))
+        red = float(thresholds.get("context_pressure_red", 0.40))
+        # Lời khuyên hành động chỉ có nghĩa cho HÔM NAY. In nó khi đang xem một
+        # ngày đã qua là hô "dừng ngay" về một phiên đóng từ tuần trước.
+        live = session_date == datetime.now().strftime("%Y-%m-%d")
+        if not live:
+            print(f"   ⓘ  ngày đã qua — áp suất ở trên là số lịch sử, không phải "
+                  f"trạng thái đang chạy")
+        elif worst.pressure_ratio >= red:
+            print("   🔴 vượt ngưỡng đỏ: dừng ngay sau lô hiện tại.")
+        elif worst.pressure_ratio >= amber:
+            print("   🟡 vượt ngưỡng vàng: xong đợt này thì đóng phiên, "
+                  "không mở đợt mới.")
+    print("=" * 96)
+    print()
 
 
 def cmd_users(args: argparse.Namespace) -> None:
@@ -530,6 +705,7 @@ def main() -> None:
     # Lệnh token
     p_token = subparsers.add_parser("token", help="Đo lường token burn và đánh giá tiết kiệm chi phí.")
     p_token.add_argument("--date", help="Ngày cần đo lường (YYYY-MM-DD), mặc định là hôm nay.")
+    p_token.add_argument("--wave", help="Chỉ xem một đợt, bỏ qua bộ lọc ngày.")
 
     # Lệnh users
     subparsers.add_parser("users", help="Quan sát và tra soát trạng thái người dùng & danh mục theo dõi.")

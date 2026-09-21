@@ -13,6 +13,7 @@ token. Đây là nguyên nhân trực tiếp của vệt Gold 154 đến 300 ngh
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 import os
@@ -30,6 +31,11 @@ from src.agent.distill import (                      # noqa: E402
     estimate_tokens,
 )
 from src.agent.entities import load_registry          # noqa: E402
+from src.agent.prefix import (                        # noqa: E402
+    SYSTEM_OVERHEAD_TOKENS,
+    cached_prefix_tokens,
+    persona_tokens,
+)
 from src.core.stdio import force_utf8_stdio           # noqa: E402
 
 force_utf8_stdio()
@@ -38,7 +44,6 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DATA_ROOT = PROJECT_ROOT / "data"
 DB_PATH = Path("C:/data/news-scape/monocle.db")
 TASK_DIR = DATA_ROOT / "agent_tasks" / "article"
-PREFIX_META = DATA_ROOT / "prefix" / "ARTICLE_SYSTEM_CORE.meta.json"
 
 # Ba trần dưới đây là số thật của công cụ đọc trong DSH, đọc từ README của
 # `dsh-tool-fs`: `readMaxLineLength` 2000 ký tự mỗi dòng, `readMaxBytes` 51.200 byte
@@ -50,7 +55,6 @@ READ_MAX_BYTES = 51_200
 READ_MAX_LINES = 2000
 LINE_SAFETY_MARGIN = 100
 
-DEFAULT_PREFIX_TOKENS = 6400
 CONTEXT_WINDOW = 1_000_000
 
 # Đo ngày 2026-09-21 trên 400 bản ghi thật gần nhất của mỗi bảng:
@@ -184,7 +188,12 @@ def load_candidates(conn: sqlite3.Connection, *, date: str | None, limit: int,
         sql.append("  AND substr(a.published_at,1,10) = ?")
         params.append(date)
     sql.append("GROUP BY a.url_title_hash")
-    sql.append("ORDER BY a.published_at DESC")
+    # Khoá phụ `url_title_hash` không để cho đẹp: nó làm thứ tự bài trở nên tất định.
+    # Bộ nhớ đệm của nhà cung cấp khớp theo tiền tố tính từ token 0, nên hai lần đóng
+    # gói cùng một tập bài phải cho ra packet giống nhau từng byte thì lần chạy lại
+    # mới trúng cache. Chỉ `published_at DESC` thì các bài trùng mốc thời gian đổi
+    # chỗ tuỳ kế hoạch truy vấn, và mọi token sau bài đầu tiên bị đổi chỗ đều trượt.
+    sql.append("ORDER BY a.published_at DESC, a.url_title_hash")
     sql.append("LIMIT ?")
     params.append(limit)
     return list(conn.execute("\n".join(sql), params))
@@ -282,6 +291,9 @@ def write_packet(batch_id: str, items: list[dict], mapping: dict,
     size = len(text.encode("utf-8"))
     budget = {
         "bytes": size,
+        # Băm của packet: bằng chứng kiểm được cho tính tất định. Đóng gói lại cùng
+        # một tập bài mà băm đổi nghĩa là lần chạy lại sẽ trượt bộ nhớ đệm.
+        "sha256": hashlib.sha256(text.encode("utf-8")).hexdigest()[:16],
         "lines": len(lines),
         "longest_line": longest,
         "windows": read_windows(lines),
@@ -322,19 +334,6 @@ def read_windows(lines: list[str]) -> list[list[int]]:
     if count:
         windows.append([start, count])
     return windows or [[1, 1]]
-
-
-def prefix_tokens() -> int:
-    """Lấy kích thước prefix tĩnh để đưa vào dự toán.
-
-    Returns:
-        Số token của prefix, hoặc giá trị mặc định khi chưa sinh prefix.
-    """
-    try:
-        with open(PREFIX_META, encoding="utf-8") as f:
-            return int((json.load(f) or {}).get("approx_tokens") or DEFAULT_PREFIX_TOKENS)
-    except (OSError, json.JSONDecodeError, ValueError):
-        return DEFAULT_PREFIX_TOKENS
 
 
 def histogram(values: list[int], *, buckets: int = 6) -> list[str]:
@@ -428,15 +427,28 @@ def main(argv=None) -> int:
         return 2
 
     # Tầng ưu tiên chạy trước; trong cùng tầng giữ nguyên thứ tự mới nhất trước.
+    # `sort` của Python ổn định và truy vấn đã sắp tất định, nên thứ tự cuối cùng chỉ
+    # phụ thuộc dữ liệu chứ không phụ thuộc lần chạy — điều kiện để lần đóng gói lại
+    # cho ra packet giống hệt và trúng bộ nhớ đệm.
     packed.sort(key=lambda a: a["tier"])
 
-    pfx = prefix_tokens()
+    # Tiền tố tĩnh gồm CẢ phần harness tự nối vào (AGENTS.md, section tool/SDK), chứ
+    # không chỉ phần persona dự án tự dán. Cả hai đều đứng trước packet và đều tĩnh,
+    # nên cả hai đều trúng bộ nhớ đệm; đếm thiếu phần harness làm `est_hit` hụt khoảng
+    # 4.800 token mỗi lượt và khiến số dự toán không đối chiếu được với `cacheRead`
+    # thật trong sổ cái.
+    pfx = cached_prefix_tokens()
     chunk_cap = max(1, args.batch)
 
     # Chia đều thay vì cắt tràn. Cắt tràn để lại một lượt lẻ rất ngắn, mà các lượt
     # chạy song song nên đợt chỉ xong khi lượt dài nhất xong: lượt lẻ không rút
     # ngắn được gì, chỉ làm lệch khối lượng giữa các lượt.
     sizes = plan_calls(len(packed), batch_cap=args.batch)
+
+    # Đợt một lô không có lượt hâm bộ nhớ đệm: không có lô thứ hai để dùng lại tiền
+    # tố, nên lượt hâm chỉ dời đúng khoản token miss ấy sang một request khác rồi
+    # tính thêm một bản ghi đầu ra. Lô duy nhất tự trả giá token mới cho tiền tố.
+    warmed = len(sizes) >= 2
 
     batches: list[dict] = []
     out_dir = Path(args.out_dir)
@@ -467,10 +479,11 @@ def main(argv=None) -> int:
             "n": len(chunk),
             "tier1": sum(1 for a in chunk if a["tier"] == 1),
             "est_miss": est_in - pfx,
-            "est_hit": pfx,
+            "est_hit": pfx if warmed else 0,
             "est_out": est_out,
             "est_ctx_peak": est_in + est_out,
             "bytes": budget["bytes"],
+            "sha256": budget["sha256"],
             "read_calls": budget["read_calls"],
             "longest_line": budget["longest_line"],
             "windows": budget["windows"],
@@ -489,10 +502,16 @@ def main(argv=None) -> int:
         "batches": batches,
         "tier1": sum(b["tier1"] for b in batches),
         "prefix_tokens": pfx,
+        "persona_tokens": persona_tokens(),
+        "system_overhead_tokens": SYSTEM_OVERHEAD_TOKENS,
+        # Lượt hâm bộ nhớ đệm đi trước mọi lô: nó trả giá token mới cho phần tiền tố
+        # đúng một lần, đổi lại mọi lô sau đều trúng cache và không lô nào phải chờ.
+        "est_warm_miss": pfx,
+        "warmed": warmed,
         "per_call": chunk_cap,
         "out_tokens_per_article": args.out_tokens_per_article,
         "reference_completion_tokens": REFERENCE_COMPLETION_TOKENS,
-        "est_miss_total": sum(b["est_miss"] for b in batches),
+        "est_miss_total": sum(b["est_miss"] for b in batches) + pfx,
         "est_hit_total": sum(b["est_hit"] for b in batches),
         "est_out_total": sum(b["est_out"] for b in batches),
     }
@@ -514,7 +533,10 @@ def main(argv=None) -> int:
     lot = (f"{len(batches)} lượt gọi song song trong MỘT bước điều phối"
            if len(batches) > 1 else "MỘT lượt gọi duy nhất")
     print(f"Bài đóng gói : {len(packed):,} ({summary['tier1']:,} tầng ưu tiên) → {lot}")
-    print(f"Prefix tĩnh  : {pfx:,} token (trúng cache từ lượt thứ hai)")
+    cache_note = ("mọi lô trúng cache nhờ lượt hâm đi trước" if warmed
+                  else "một lô nên không hâm; lô này trả giá token mới")
+    print(f"Prefix tĩnh  : {pfx:,} token = persona {persona_tokens():,} + harness "
+          f"{SYSTEM_OVERHEAD_TOKENS:,} ({cache_note})")
     worst_out = max((b["est_out"] for b in batches), default=0)
     print(f"Chia lô      : chỉ theo --batch = {args.batch}. Không trần token nào "
           f"can thiệp.")
