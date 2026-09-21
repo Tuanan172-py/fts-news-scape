@@ -50,13 +50,13 @@ Start in: thư mục project. (Không dùng schedule của Task Scheduler — mo
 
 ## Sự cố thường gặp
 
-| Triệu chứng | Nguyên nhân | Xử lý |
-|-------------|-------------|-------|
-| `fireant` FAILED, log "token expired" | Bearer token hết hạn | Lấy token mới (xem `docs/skills/fireant.md`) → dán vào `config/secrets.yaml` → cycle sau tự chạy lại. Scraper tự disable trong cycle để không hammer API |
-| Scraper CRITICAL liên tục | Site đổi layout/API | Xem `docs/skills/<domain>.md` pitfalls; chạy `scripts/run_once.py <domain>` xem log chi tiết |
-| Nhiều bài `detail_deferred` | Backfill lần đầu vượt cap | **Bronze-first, 3 bước:** `python scripts/refresh_watchlist.py 500 <host>` → `python -m src.morninger --once derive` → `python scripts/maintenance/backfill_deferred.py <host> --limit 600` |
-| File `-wal` phình to | Process bị kill cứng | Orchestrator tự `wal_checkpoint(TRUNCATE)` cuối mỗi cycle; chạy 1 cycle là gọn lại |
-| DB locked (hiếm) | AV/indexer khoá file | Loại trừ thư mục `data/` khỏi antivirus/Windows indexer |
+| Triệu chứng                           | Nguyên nhân                  | Xử lý                                                                                                                                                                                                     |
+| --------------------------------------- | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `fireant` FAILED, log "token expired" | Bearer token hết hạn         | Lấy token mới (xem`docs/skills/fireant.md`) → dán vào `config/secrets.yaml` → cycle sau tự chạy lại. Scraper tự disable trong cycle để không hammer API                                    |
+| Scraper CRITICAL liên tục             | Site đổi layout/API          | Xem`docs/skills/<domain>.md` pitfalls; chạy `scripts/run_once.py <domain>` xem log chi tiết                                                                                                           |
+| Nhiều bài`detail_deferred`          | Backfill lần đầu vượt cap | **Bronze-first, 3 bước:** `python scripts/refresh_watchlist.py 500 <host>` → `python -m src.morninger --once derive` → `python scripts/maintenance/backfill_deferred.py <host> --limit 600` |
+| File`-wal` phình to                  | Process bị kill cứng         | Orchestrator tự`wal_checkpoint(TRUNCATE)` cuối mỗi cycle; chạy 1 cycle là gọn lại                                                                                                                  |
+| DB locked (hiếm)                       | AV/indexer khoá file          | Loại trừ thư mục`data/` khỏi antivirus/Windows indexer                                                                                                                                               |
 
 ## Báo cáo định kỳ NSO (Cục Thống kê)
 
@@ -71,6 +71,7 @@ python scripts/fetch_periodic_reports.py --list         # xem đã có gì trong
 ```
 
 Lịch khuyến nghị (chưa gắn cron):
+
 ```
 0 8,14 2-6 * *   --after <YYYY-MM-01>     # bắt báo cáo tháng
 0 9   * * 1      --per-page 10            # bắt báo cáo quý/năm

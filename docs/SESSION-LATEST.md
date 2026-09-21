@@ -5,6 +5,7 @@
 - **Updated:** 2026-09-18 (Article Lane — triển khai trọn bộ, chưa chạy workload thật)
 - **Điểm vào:** `plans/20260918-1651-article-lane-unified/plan.md` là **tài liệu quy phạm duy nhất**
 - **Vận hành:** `.agents/dsh/RUNBOOK-article-lane.md`
+- **Bối cảnh lớp code-first:** `docs/CODE-FIRST-LANDSCAPE.md` (lập 2026-09-21) — bản đồ codebase, số đo thật, 5 nhóm vấn đề, 8 hướng dư địa; đọc trước khi phát triển tiếp tầng nhận diện tất định
 
 ## Đã làm trong phiên này
 
