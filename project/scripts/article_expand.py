@@ -63,6 +63,42 @@ def now_vn_iso() -> str:
     return datetime.now(timezone(timedelta(hours=7))).isoformat(timespec="seconds")
 
 
+def unwrap_tool_envelope(text: str) -> str:
+    """Bóc lớp vỏ kết quả công cụ của DSH để lấy đúng phần văn bản mô hình trả về.
+
+    Công cụ gọi agent của DSH trả về `{"kind":..., "runId":..., "output":[{"type":
+    "text","text":"..."}]}`. Nếu phía điều phối ghi thẳng đối tượng ấy ra đĩa thì
+    tệp đầu ra mang lớp vỏ này, và bộ bóc bản ghi sẽ đọc nhầm lớp vỏ thành đúng một
+    bản ghi rác có hai trường `type` và `text`. Đây là sự cố thật: các tệp `_cNN`
+    của đợt W1 và W2 đều ở dạng ấy.
+
+    Args:
+        text: Nội dung thô của tệp đầu ra.
+
+    Returns:
+        Phần văn bản mô hình trả về, hoặc nguyên chuỗi vào khi không có lớp vỏ.
+    """
+    stripped = (text or "").strip()
+    if not stripped.startswith("{"):
+        return text
+    try:
+        env = json.loads(stripped)
+    except json.JSONDecodeError:
+        return text
+    if not isinstance(env, dict):
+        return text
+    out = env.get("output")
+    if isinstance(out, list):
+        parts = [str(o.get("text", "")) for o in out
+                 if isinstance(o, dict) and o.get("type") == "text"]
+        if parts:
+            return "".join(parts)
+    for key in ("text", "content"):
+        if isinstance(env.get(key), str):
+            return env[key]
+    return text
+
+
 def salvage_records(text: str) -> tuple[list[dict], int]:
     """Bóc các bản ghi hợp lệ khỏi đầu ra của mô hình, chịu được đầu ra hỏng.
 
@@ -79,7 +115,7 @@ def salvage_records(text: str) -> tuple[list[dict], int]:
     if not text:
         return [], 0
 
-    cleaned = text.strip()
+    cleaned = unwrap_tool_envelope(text).strip()
     if cleaned.startswith("```"):
         lines = [ln for ln in cleaned.splitlines() if not ln.strip().startswith("```")]
         cleaned = "\n".join(lines).strip()

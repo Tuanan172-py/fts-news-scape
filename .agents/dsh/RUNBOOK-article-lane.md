@@ -43,12 +43,18 @@ Sai preset là mất toàn bộ ranh giới công cụ của agent con. Đây đ
 
 ```powershell
 cd project
-& "C:\venvs\news-scape\Scripts\python.exe" scripts/article_run.py --wave W01 --today --limit 300
+& "C:\venvs\news-scape\Scripts\python.exe" scripts/article_run.py --wave W01 --today --limit 100 --batch 100
 ```
 
 Lệnh này kiểm prefix, đóng gói packet, in dự toán và sinh sẵn chương trình điều phối. Nó **không gọi mô hình**.
 
-Đọc kỹ ba con số trước khi đi tiếp: quota dự toán, số lô, và cột `ctx đỉnh` của từng lô. Nếu `ctx đỉnh` vượt 25% thì script đã tự chia nhỏ lô, không cần can thiệp.
+**`--batch` là cổng chia lô duy nhất.** Không trần token nào can thiệp. Đặt `--limit 100 --batch 100` thì được đúng một lượt gọi cho trọn trăm bài.
+
+Ba cổng từng chia lô hộ bạn đã gỡ hết ngày 21/09: `maxTokens` trong preset, bộ chia theo ngân sách đầu ra, và trần ngữ cảnh 25%. Lý do gỡ nằm ở §16 của plan. Tóm tắt: ngữ cảnh chưa bao giờ là ràng buộc — trăm bài chiếm 25% cửa sổ kể cả khi đọc trọn nội dung. Còn trần đầu ra thật của DSH là **256.000 token mỗi request** (`DEFAULT_MAX_TOKENS = 256e3`, con kế thừa của cha khi row không đặt gì), trong khi trăm bài chỉ cần khoảng 90.000. Con số 40.000 cũ là do **dự án tự đặt**, không phải của nhà cung cấp.
+
+**Cơ chế thay thế là vá sau, không phòng trước.** Gửi trọn lô. Nếu lượt nào trả về thiếu bài thì `article_run.py --wave <mã> --repair` đối chiếu số bản ghi nhận được với số bài đã gửi, đóng gói lại **đúng phần thiếu**, và sinh chương trình chạy bù. Chi phí tỉ lệ với thứ thật sự mất chứ không tỉ lệ với nỗi lo.
+
+Sổ cái vẫn theo dõi `output_tokens` mỗi lượt. Nếu con số ấy đụng một mức rồi đứng yên qua nhiều đợt thì đó là trần thật đang lộ ra, và khi ấy mới có số liệu để bàn tới chia lô.
 
 ### 1.2 Chạy mô hình — trong phiên DSH
 
@@ -58,7 +64,15 @@ Mở tệp `project/data/agent_tasks/article/wave_W01.conductor.ts` và dán **t
 
 Chương trình tự làm: đọc packet theo cửa sổ dòng, chạy lô đầu một mình để ghi bộ nhớ đệm, rồi mới chạy song song phần còn lại, và ghi kết quả thẳng ra đĩa. Nó chỉ trả về vài con số, nên nội dung của lô không lọt vào ngữ cảnh phiên.
 
-### 1.3 Hoàn tất — quay lại terminal, 0 token
+### 1.3 Vá phần thiếu, nếu có — 0 token
+
+```powershell
+& "C:\venvs\news-scape\Scripts\python.exe" scripts/article_run.py --wave W01 --repair
+```
+
+Không thiếu bài nào thì lệnh báo ngay và không sinh việc thừa. Có thiếu thì nó ghi packet bù và một tệp `wave_W01.repair.ts`; chạy trọn tệp ấy trong một lệnh `run_code` rồi mới sang bước hoàn tất.
+
+### 1.4 Hoàn tất — quay lại terminal, 0 token
 
 ```powershell
 & "C:\venvs\news-scape\Scripts\python.exe" scripts/article_run.py --wave W01 --finish
@@ -66,11 +80,19 @@ Chương trình tự làm: đọc packet theo cửa sổ dòng, chạy lô đầ
 
 Lệnh này bung bản ghi, nạp cơ sở dữ liệu, ghi sổ cái token, sinh tệp bàn giao và đo áp suất ngữ cảnh.
 
-### 1.4 Giao hàng
+### 1.5 Giao hàng
 
 ```powershell
 & "C:\venvs\news-scape\Scripts\python.exe" scripts/write_user_output.py --date today
 ```
+
+Lệnh này in luôn thư mục đã ghi. Cần biết đường dẫn mà chưa muốn chạy thì hỏi thẳng hợp đồng, 0 token:
+
+```powershell
+& "C:\venvs\news-scape\Scripts\python.exe" scripts/write_user_output.py --where
+```
+
+Thư mục giao hàng nằm ở **gốc kho**, không nằm trong `project/`. Đừng đi dò bằng cách đọc mã nguồn hay liệt kê thư mục: vệt ngày 21/09 tốn sáu bước mô hình chỉ để tìm lại đúng một đường dẫn mà lệnh trên in ra tức thì.
 
 ---
 
@@ -82,13 +104,15 @@ Lệnh này bung bản ghi, nạp cơ sở dữ liệu, ghi sổ cái token, sin
 & "C:\venvs\news-scape\Scripts\python.exe" scripts/ctx_probe.py                  # áp suất ngữ cảnh
 ```
 
-Bốn dấu hiệu cần xử lý ngay:
+Sáu dấu hiệu cần xử lý ngay:
 
 | Dấu hiệu | Nghĩa là gì | Làm gì |
 |---|---|---|
 | `turns_max > 1` | Worker không xong trong một bước, nó đã sa vào viết chương trình | Soi lại phần đầu persona: đoạn tuyên bố không có tool phải đứng trước và phải rõ |
-| `reasoning > 0` | Chế độ suy luận chưa tắt, đang tính tiền theo giá đầu ra | Đặt `reasoningEffort: off` cho row worker; `settings.yaml` đang để `high` cho mọi con |
-| `token/bài` vượt 1.500 | Hoặc mốc quy kết quá rộng nên gộp nhầm phiên khác, hoặc packet quá dày | Kiểm số phiên được gộp trong dòng sổ cái trước, rồi mới soi histogram của `article_pack` |
+| `reasoning > 0` | Chế độ suy luận chưa tắt, đang tính tiền theo giá đầu ra | Đặt `reasoningEffort: "off"` cho row worker — **phải có dấu nháy**, vì YAML đọc `off` trần thành boolean `false` chứ không thành chuỗi |
+| `token/bài` vượt 2.500 | Hoặc mốc quy kết quá rộng nên gộp nhầm phiên khác, hoặc packet quá dày | Kiểm số phiên được gộp trong dòng sổ cái trước, rồi mới soi histogram của `article_pack`. Mức bình thường đo được khoảng 1.980 |
+| Lô trả về thiếu bài | Lượt đó bị cắt cụt | `--repair` đóng gói lại đúng phần thiếu. Đừng chia nhỏ mọi lô để phòng xa |
+| `output_tokens` nhiều lượt bằng nhau y hệt | Đã chạm một trần nào đó | Ghi lại con số. Nếu là 256.000 thì đó là mặc định DSH; nếu khác thì có cấu hình nào khác đang đè |
 | Áp suất vàng hoặc đỏ | Ngữ cảnh phiên đã phình | Đọc bàn giao, **đóng phiên**, mở phiên mới |
 
 ---

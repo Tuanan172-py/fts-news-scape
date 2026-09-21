@@ -38,5 +38,9 @@ peak_windows_utc:
 watch_thresholds:
   context_pressure_amber: 0.25   # đóng phiên sau wave hiện tại
   context_pressure_red: 0.40     # dừng ngay sau batch hiện tại
-  tokens_per_article_warn: 1500  # vượt mức này thì soi lại distillation
+  # Hiệu chuẩn lại 2026-09-21 theo cỡ bản ghi đo thật: ~800 token đầu vào chưa
+  # cache cộng ~900 token đầu ra cho mỗi bài, tức khoảng 1.980 token quota.
+  # Mức cũ 1.500 được đặt khi dự toán đầu ra còn để 300 token/bài, nên nó báo
+  # động ở mọi đợt bình thường và vì thế không còn là tín hiệu.
+  tokens_per_article_warn: 2500  # vượt mức này thì soi lại distillation
   worker_turns_expected: 1       # con phải xong trong đúng 1 bước

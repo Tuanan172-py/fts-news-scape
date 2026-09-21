@@ -524,7 +524,20 @@
       provider: deepseek-official
       model: deepseek-flash
       reasoningEffort: "off"      # settings.yaml đang để 'high' cho mọi con — phải đè ở đây
-      maxTokens: 40000          # chặn trên chủ động cho batch 100 bài (~300 tok out/bài)
+      # KHÔNG đặt `maxTokens` ở đây. Hai row `agent_l1` và `agent_gold` bên dưới
+      # cũng không đặt, nên trường này là tuỳ chọn.
+      #
+      # Trước đây để 40000. Đó là trần do chính dự án đặt, không phải trần của nhà
+      # cung cấp, và nó chính là thứ đã cắt cụt lô 100 bài — buộc phía điều phối
+      # phải chữa cháy bằng mười lượt mười bài ở đợt W1 và W2. Đặt một con số ở đây
+      # là tự áp trần lên chính mình rồi đi thiết kế kiến trúc quanh cái trần ấy.
+      #
+      # Bỏ trống thì kế thừa mặc định của DSH: `DEFAULT_MAX_TOKENS = 256e3`, tức
+      # 256.000 token mỗi request (xem docs/proposals/dsh-surface-verified-
+      # 2026-09-18.md §6.1). Một đợt trăm bài cần khoảng 90.000, còn dư gần ba lần.
+      #
+      # Thiếu bài thì `article_run.py --wave <mã> --repair` đóng gói lại đúng phần
+      # thiếu, không cần chia nhỏ mọi lô để phòng xa.
     toolFilter:
       allow: []                 # xem sự thật #2: còn lại run_code với SDK rỗng
     maxDepth: 1                 # xem sự thật #1

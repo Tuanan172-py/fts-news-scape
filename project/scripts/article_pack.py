@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 import re
 import sqlite3
@@ -50,9 +51,30 @@ READ_MAX_LINES = 2000
 LINE_SAFETY_MARGIN = 100
 
 DEFAULT_PREFIX_TOKENS = 6400
-DEFAULT_OUT_TOKENS_PER_ARTICLE = 300
 CONTEXT_WINDOW = 1_000_000
-DEFAULT_CTX_CEILING = 0.25
+
+# Đo ngày 2026-09-21 trên 400 bản ghi thật gần nhất của mỗi bảng:
+#   l1_outputs     trung bình   872 ký tự  ≈ 291 token, p90 370
+#   agent_outputs  trung bình 1.946 ký tự  ≈ 649 token, p90 859
+# Bản ghi hợp nhất của Article Lane mang cả hai phần nên nặng khoảng 900 token,
+# p90 khoảng 1.200. Hằng số cũ để 300 vì nó được hiệu chuẩn trên riêng tầng L1;
+# nó làm dự toán đầu ra hụt ba lần và che mất trần cắt cụt bên dưới.
+DEFAULT_OUT_TOKENS_PER_ARTICLE = 900
+
+# Mốc tham chiếu để ƯỚC LƯỢNG, **không** dùng để chia lô.
+#
+# 256.000 là `maxTokens` mặc định của DSH (`DEFAULT_MAX_TOKENS = 256e3` trong
+# `dsh-llm-deepseek`), và con kế thừa của cha khi row không đặt gì. Nguồn:
+# `docs/proposals/dsh-surface-verified-2026-09-18.md` §6.1–6.2, đọc từ mã nguồn DSH.
+#
+# Con số 40.000 trước đây **không** phải trần nhà cung cấp mà là giá trị dự án tự
+# đặt ở `maxTokens` trong preset. Đã gỡ khỏi preset ngày 21/09. Một đợt trăm bài cần
+# khoảng 90.000 token đầu ra, tức còn dư gần ba lần so với mặc định thật.
+#
+# DSH không có trần token hay chi phí nào theo phiên hay theo ngày. Các giới hạn số
+# duy nhất của nó: `maxTokens` 256.000 mỗi request, `contextWindow` 1.000.000,
+# compaction ở 0,8×, pruner 8.192 ký tự, spill 50.000 byte.
+REFERENCE_COMPLETION_TOKENS = 256_000
 
 # Tín hiệu vĩ mô khẩn: bài mang các từ này luôn vào tầng ưu tiên kể cả khi không
 # khớp mã nào trong danh sách theo dõi, vì chúng tác động toàn thị trường.
@@ -185,6 +207,31 @@ def read_cleaned_text(package_path: str) -> str:
             return (json.load(f) or {}).get("cleaned_text") or ""
     except (OSError, json.JSONDecodeError):
         return ""
+
+
+def plan_calls(n_articles: int, *, batch_cap: int) -> list[int]:
+    """Chia một đợt thành các lượt gọi, chia đều, chỉ theo trần người vận hành đặt.
+
+    `--batch` là cổng chia duy nhất. Không có trần token nào can thiệp vào đây nữa:
+    ngữ cảnh không phải ràng buộc (một đợt trăm bài chiếm khoảng 15% cửa sổ), còn
+    trần đầu ra thì chưa đo được nên không đủ tư cách làm luật chia lô.
+
+    Chia đều thay vì cắt tràn, vì các lượt chạy song song nên đợt chỉ xong khi lượt
+    dài nhất xong; một lượt lẻ rất ngắn không rút ngắn được gì.
+
+    Args:
+        n_articles: Số bài của cả đợt.
+        batch_cap: Trần số bài mỗi lượt do người vận hành đặt.
+
+    Returns:
+        Danh sách số bài của từng lượt, cộng lại đúng bằng `n_articles`.
+    """
+    if n_articles <= 0:
+        return []
+    cap = max(1, batch_cap)
+    n_calls = max(1, math.ceil(n_articles / cap))
+    base, extra = divmod(n_articles, n_calls)
+    return [base + (1 if i < extra else 0) for i in range(n_calls)]
 
 
 def write_packet(batch_id: str, items: list[dict], mapping: dict,
@@ -337,8 +384,9 @@ def main(argv=None) -> int:
     ap.add_argument("--max-tokens-per-article", type=int,
                     default=DEFAULT_MAX_TOKENS_PER_ARTICLE,
                     help="Trần token phần nội dung mỗi bài")
-    ap.add_argument("--ctx-ceiling", type=float, default=DEFAULT_CTX_CEILING,
-                    help="Trần tỷ lệ cửa sổ ngữ cảnh cho một lô, vượt thì tự chia nhỏ")
+    ap.add_argument("--out-tokens-per-article", type=int,
+                    default=DEFAULT_OUT_TOKENS_PER_ARTICLE,
+                    help="Cỡ bản ghi đầu ra mỗi bài, dùng để chia lượt gọi")
     ap.add_argument("--out-dir", default=str(TASK_DIR), help="Thư mục ghi packet")
     ap.add_argument("--json", action="store_true", help="Xuất mô tả đợt dạng JSON")
     args = ap.parse_args(argv)
@@ -383,24 +431,19 @@ def main(argv=None) -> int:
     packed.sort(key=lambda a: a["tier"])
 
     pfx = prefix_tokens()
-    ceiling_tokens = int(CONTEXT_WINDOW * args.ctx_ceiling)
+    chunk_cap = max(1, args.batch)
+
+    # Chia đều thay vì cắt tràn. Cắt tràn để lại một lượt lẻ rất ngắn, mà các lượt
+    # chạy song song nên đợt chỉ xong khi lượt dài nhất xong: lượt lẻ không rút
+    # ngắn được gì, chỉ làm lệch khối lượng giữa các lượt.
+    sizes = plan_calls(len(packed), batch_cap=args.batch)
 
     batches: list[dict] = []
     out_dir = Path(args.out_dir)
     cursor = 0
     seq = 1
-    while cursor < len(packed):
-        chunk = packed[cursor:cursor + args.batch]
-
-        # Chốt tự động bảo vệ chất lượng: nếu lô dự kiến vượt trần ngữ cảnh thì chia
-        # đôi cho tới khi lọt. Đây là cơ chế duy nhất tự can thiệp, và nó bảo vệ chất
-        # lượng chứ không bảo vệ ví.
-        while len(chunk) > 1:
-            est_in = pfx + sum(a["tokens"] for a in chunk)
-            est_out = len(chunk) * DEFAULT_OUT_TOKENS_PER_ARTICLE
-            if est_in + est_out <= ceiling_tokens:
-                break
-            chunk = chunk[:max(1, len(chunk) // 2)]
+    for size in sizes:
+        chunk = packed[cursor:cursor + size]
 
         batch_id = f"article_{args.wave}_{seq:02d}"
         items = [{"i": i, "t": a["title"], "p": a["paragraphs"]}
@@ -416,7 +459,7 @@ def main(argv=None) -> int:
         packet_path, map_path, budget = write_packet(batch_id, items, mapping, out_dir)
 
         est_in = pfx + sum(a["tokens"] for a in chunk)
-        est_out = len(chunk) * DEFAULT_OUT_TOKENS_PER_ARTICLE
+        est_out = len(chunk) * args.out_tokens_per_article
         batches.append({
             "batch_id": batch_id,
             "path": str(packet_path),
@@ -446,6 +489,9 @@ def main(argv=None) -> int:
         "batches": batches,
         "tier1": sum(b["tier1"] for b in batches),
         "prefix_tokens": pfx,
+        "per_call": chunk_cap,
+        "out_tokens_per_article": args.out_tokens_per_article,
+        "reference_completion_tokens": REFERENCE_COMPLETION_TOKENS,
         "est_miss_total": sum(b["est_miss"] for b in batches),
         "est_hit_total": sum(b["est_hit"] for b in batches),
         "est_out_total": sum(b["est_out"] for b in batches),
@@ -465,9 +511,21 @@ def main(argv=None) -> int:
     print("=" * 84)
     print(f" 📦  ĐÓNG GÓI ĐỢT {args.wave}")
     print("=" * 84)
-    print(f"Bài đóng gói : {len(packed):,} ({summary['tier1']:,} tầng ưu tiên) "
-          f"→ {len(batches)} lô")
-    print(f"Prefix tĩnh  : {pfx:,} token (trúng cache từ lô thứ hai)")
+    lot = (f"{len(batches)} lượt gọi song song trong MỘT bước điều phối"
+           if len(batches) > 1 else "MỘT lượt gọi duy nhất")
+    print(f"Bài đóng gói : {len(packed):,} ({summary['tier1']:,} tầng ưu tiên) → {lot}")
+    print(f"Prefix tĩnh  : {pfx:,} token (trúng cache từ lượt thứ hai)")
+    worst_out = max((b["est_out"] for b in batches), default=0)
+    print(f"Chia lô      : chỉ theo --batch = {args.batch}. Không trần token nào "
+          f"can thiệp.")
+    print(f"Đầu ra ước   : {worst_out:,} token cho lượt nặng nhất "
+          f"(bản ghi {args.out_tokens_per_article} token/bài)")
+    if worst_out > REFERENCE_COMPLETION_TOKENS:
+        print(f"               ⓘ  Vượt mốc tham chiếu "
+              f"{REFERENCE_COMPLETION_TOKENS:,}. Đây là THÔNG TIN, không phải chặn.")
+        print(f"               Nếu lượt nào trả về thiếu bài, chạy "
+              f"`article_run.py --wave <mã> --repair` để đóng gói lại đúng phần "
+              f"thiếu.")
     print()
     print(f"{'lô':26} {'bài':>4} {'ưu tiên':>8} {'miss':>9} {'out':>7} "
           f"{'ctx đỉnh':>9} {'KB':>6} {'đọc':>4}")

@@ -615,3 +615,184 @@ cd project
 ```
 
 Mỗi bước trả đủ **Unit + Integration + Platform**. Bước 0 có bằng chứng delegation chạy được và `rules/05` không còn cờ bị ADR 0008 cấm. Bước 2 có số token thật. Bước 4 có bằng chứng round-trip expander và citations kiểm được.
+
+---
+
+## 13. Đính chính 2026-09-21 — ràng buộc thật nằm ở đầu ra, không ở ngữ cảnh
+
+Chỉ đạo: đóng gói 100 bài mỗi đợt, bỏ giới hạn token thực thi, một lượt điều phối cho trọn 100 bài thay vì chia lô 10 bài.
+
+### 13.1 Số đo
+
+| Đại lượng | Nguồn | Giá trị |
+|---|---|---|
+| Bản ghi L1 | 400 hàng `l1_outputs` mới nhất | 872 ký tự ≈ 291 token, p90 370 |
+| Bản ghi Gold | 400 hàng `agent_outputs` mới nhất | 1.946 ký tự ≈ 649 token, p90 859 |
+| Bản ghi hợp nhất | cộng hai phần trên | ≈ 900 token/bài, p90 ≈ 1.200 |
+| Đầu vào một lượt 100 bài | `article_pack` | ≈ 89K token, tức 12% cửa sổ |
+| Đầu ra cần cho 100 bài | 100 × 900 | ≈ 90K token |
+| Trần đầu ra một lượt | `maxTokens` trong preset | 40K |
+| Lượt gọi thật đã chạm trần | 75 tệp nhật ký phiên DSH | có, đúng 40.000 |
+
+### 13.2 Kết luận
+
+Ngữ cảnh chưa bao giờ là ràng buộc. Trần ngữ cảnh 25% tương đương 250K token, mà một lượt trăm bài chỉ dùng 115K, nên chốt ấy chưa từng kích hoạt và không bảo vệ gì. Thứ thật sự cắt cụt kết quả là **trần token đầu ra**, và nó là giới hạn của nhà cung cấp chứ không phải chính sách của dự án — sửa cấu hình dự án không mở được nó.
+
+Một lượt hoàn thành duy nhất chở trọn 100 bài là **không khả thi** ở cỡ bản ghi hiện tại: cần 90K trên trần 40K, tức mất trắng khoảng 56 bài cuối. Ép cho vừa thì phải cắt bản ghi xuống dưới 400 token/bài, tức bỏ hơn một nửa phần phân tích nội dung — trái với nguyên tắc LLM xử lý nội dung.
+
+### 13.3 Thay đổi đã áp dụng
+
+Tách **đợt** khỏi **lượt gọi**. Đợt là đơn vị người vận hành quản lý, đặt 100 bài. Lượt gọi là đơn vị nhà cung cấp áp trần, `article_pack.plan_calls` tự tính và chia đều. Một đợt 100 bài thành 4 lượt 25 bài, cả 4 chạy song song **trong cùng một lệnh `run_code`**.
+
+Điều này giữ đúng cả ba yêu cầu: đóng gói 100 bài mỗi đợt, không còn lô 10 bài, và một bước điều phối cho trọn đợt. Chi phí phiên điều phối tỉ lệ với số bước chứ không tỉ lệ với số lượt, nên chia lượt không làm đắt thêm.
+
+Ba hằng số sai đã sửa: dự toán đầu ra 300 → 900 token/bài; ngưỡng cảnh báo sổ cái 1.500 → 2.500 token/bài (mức bình thường đo được là 1.980); chú thích `maxTokens` trong preset.
+
+### 13.4 Hai đường duy nhất để giảm số lượt
+
+Nâng `maxTokens` nếu nhà cung cấp thật sự phục vụ mức cao hơn 40K — phải thử thật rồi sửa đồng thời `MAX_COMPLETION_TOKENS`. Hoặc làm bản ghi nhẹ đi, đổi lấy độ sâu phân tích. Không có đường thứ ba.
+
+### 13.5 Lỗ hổng khung làm việc đã vá
+
+Vệt ngày 21/09 tốn sáu bước mô hình để dò ra `users/output` nằm ở gốc kho chứ không trong `project/`: đọc `write_user_output.py`, grep `user_output.py`, grep `compile.py`, thử một đường dẫn sai, rồi hai lần liệt kê đệ quy. Đúng loại "khảo cổ hợp đồng" mà rule 08 §4 cấm.
+
+Nguyên nhân gốc không phải agent làm sai mà là **luật không thi hành được**: rule bảo "hợp đồng nào cũng có lệnh in ra", nhưng hợp đồng này thì không có. Đã thêm `write_user_output.py --where`, và đường chạy thường cũng in thư mục đã ghi.
+
+Bài học chung cho khung: mỗi lần cấm agent đi dò một thứ, phải đồng thời cung cấp lệnh 0 token trả lời đúng thứ đó. Cấm mà không cấp thì luật chỉ là lời khuyên.
+
+---
+
+## 14. Đo toàn bộ quá trình làm việc của agent — 69 phiên DSH có số đo
+
+### 14.1 Chi phí theo số bước
+
+Gộp 69 tệp nhật ký phiên có số đo, tính trung bình mỗi phiên:
+
+| Số bước | Số phiên | miss | hit | out | **quota/phiên** |
+|---:|---:|---:|---:|---:|---:|
+| 1 | 36 | 16.916 | 11.481 | 6.428 | **34.825** |
+| 2–3 | 4 | 13.569 | 26.816 | 4.182 | **44.567** |
+| 4–7 | 8 | 20.249 | 151.856 | 12.064 | **184.169** |
+| 8–15 | 5 | 19.896 | 265.574 | 12.442 | **297.912** |
+| 16–63 | 11 | 65.959 | 1.696.244 | 23.561 | **1.785.764** |
+| 64+ | 5 | 369.273 | 25.615.053 | 123.148 | **26.107.475** |
+
+Từ một bước lên trên sáu mươi bước, chi phí tăng **750 lần**. Phần `miss` chỉ tăng 22 lần, còn `hit` tăng 2.231 lần — nghĩa là gần như toàn bộ mức tăng là **lịch sử cũ được gửi lại**. Rẻ trên mỗi token nhưng khổng lồ về khối lượng, và hạn mức tài khoản tính theo khối lượng chứ không theo tiền.
+
+### 14.2 Tầng nào đang đốt
+
+Đợt ngày 18/09 lúc 18:14–18:23, đọc từ nhật ký:
+
+| Tầng | Phiên | Bước mỗi phiên | Quota |
+|---|---:|---:|---:|
+| Worker xử lý bài | 13 | 1 | **413.932** |
+| Điều phối | 1 | 53 | **2.786.828** |
+
+Phiên điều phối tốn **gấp 6,7 lần toàn bộ công việc thật cộng lại**, và 97% của nó là `hit` — tức lịch sử gửi lại qua 53 bước.
+
+Kết luận định hướng: **tầng worker đã đạt.** Mỗi con chạy đúng một bước, `reasoning` bằng 0, và từ con thứ mười trở đi `miss` chỉ còn khoảng 180 token vì bộ nhớ đệm đã ấm. Không còn gì đáng tối ưu ở đó. Toàn bộ dư địa cải thiện nằm ở **số bước của phiên điều phối**, và đó là nơi duy nhất nên đầu tư công sức thiết kế.
+
+### 14.3 Ba luật rút ra cho khung làm việc
+
+1. **Đếm bước, đừng đếm bài.** Mọi quyết định thiết kế nên hỏi "việc này thêm mấy bước", không hỏi "việc này thêm mấy bài". Một đợt phải nằm trong ba bước: chuẩn bị, chạy, hoàn tất.
+2. **Cấm điều gì thì phải cấp lệnh thay thế.** Xem §13.5. Luật không thi hành được thì không phải luật.
+3. **Song song hoá trong một bước là miễn phí; nối tiếp qua nhiều bước thì không.** Bốn lượt gọi trong một `run_code` có chi phí điều phối bằng một lượt. Cùng bốn lượt ấy tách thành bốn bước thì phiên điều phối nhảy từ mức 35 nghìn lên mức 184 nghìn.
+
+### 14.4 Một điểm cần bạn xác nhận
+
+Bốn phiên worker cuối (18:18–18:19) có `miss` chỉ 146–195 token trong khi `hit` khoảng 25.8 nghìn, tức gần như toàn bộ prompt đã nằm trong bộ nhớ đệm. Với packet nội dung khác nhau thì điều này không xảy ra được. Nhiều khả năng đó là **chạy lại đúng những packet đã gửi**. Nếu đúng thì có một vòng lặp chạy lại ở đâu đó đáng tìm; nếu là chủ ý thì bỏ qua.
+
+---
+
+## 15. Hai lỗi thật tìm thấy khi soi đợt W1 và W2
+
+### 15.1 Đợt W1, W2 đã chạm trần đầu ra và bị chữa cháy bằng cách chia 10
+
+Manifest thật: `W1` 100 bài trong **một** lô, `W2` 200 bài trong **hai** lô 100. Dự toán đầu ra ghi 30.000 token cho 100 bài — theo hằng số cũ 300 token/bài, tức hụt ba lần.
+
+Trên đĩa lại có 30 tệp `article_W*_*_cNN.output.json`, mỗi tệp đúng **10 bản ghi**. Nghĩa là phía điều phối đã không chạy nổi lô 100 bài trong một lượt và tự chia thành mười lượt mười bài. Đây chính là "chia lô 10 bài" mà người dùng nêu, và nó **không phải chính sách của dự án** mà là phản ứng với trần đầu ra.
+
+Bản vá ở §13.3 chuẩn hoá đúng cách chữa cháy ấy: chia theo ngân sách đầu ra đo được, ra 4 lượt 25 bài thay vì 10 lượt 10 bài, và cả 4 nằm trong một bước thay vì mười lần gọi rời rạc.
+
+### 15.2 Chương trình điều phối ghi nhầm lớp vỏ kết quả công cụ ra đĩa
+
+Công cụ gọi agent của DSH trả về `{"kind":...,"runId":...,"output":[{"type":"text","text":"..."}]}`. Chuỗi bóc văn bản trong `conductor_program` chỉ thử `res.text` rồi `res.content`, cả hai đều không có ở tầng ngoài, nên nó rơi xuống `JSON.stringify(res)` và ghi **nguyên lớp vỏ** ra tệp.
+
+Hậu quả đo được: `salvage_records` đọc mỗi tệp `_cNN` thành **đúng một bản ghi rác** hai trường `type` và `text`, thay vì 10 bản ghi thật. Cả lô coi như mất. Các tệp ấy thoát nạn vì không có packet và bảng ánh xạ đi kèm nên bị bỏ qua, nhưng nếu lớp vỏ xuất hiện ở tệp lô chính thì mất trắng cả lô mà vẫn báo "0 hỏng".
+
+Đã vá hai đầu. `conductor_program` bóc `res.output[*].text` trước; `salvage_records` gọi `unwrap_tool_envelope` nên các tệp đã nằm trên đĩa cũng đọc lại được — kiểm chứng: 10 tệp `_cNN` của W1 giờ ra đúng 100 bản ghi, khớp với tệp lô đã gộp.
+
+30 tệp `_cNN` còn lại là sản phẩm trung gian dư của W1 và W2. Chúng bị `article_expand` bỏ qua vì thiếu packet, nên vô hại; chỉ gây 30 dòng cảnh báo mỗi lần chạy `--finish`. Xoá hay giữ là quyết định của người vận hành.
+
+---
+
+## 16. Gỡ toàn bộ cổng chặn 2026-09-21
+
+Chỉ đạo: xử lý dứt điểm mọi cổng làm agent bị chặn hoặc dừng, không tối ưu ở nhịp vận hành trước.
+
+### 16.1 Bốn cổng đã gỡ
+
+| Cổng | Nó làm gì | Vì sao gỡ |
+|---|---|---|
+| `maxTokens: 40000` ở row `tool-subagent-article` | Cắt đầu ra mỗi lượt | Trần **do dự án tự đặt**, không phải trần nhà cung cấp. Chính nó buộc điều phối chữa cháy bằng mười lượt mười bài ở W1 và W2. Hai row `agent_l1`, `agent_gold` vốn không đặt |
+| Bộ chia theo ngân sách đầu ra `plan_calls` | Chia đợt 100 bài thành 4 lượt 25 | Lấy một trần **chưa đo** làm luật kiến trúc |
+| Trần ngữ cảnh 25% tự chia đôi lô | Chia lô khi ước tính vượt 250K token | Chưa bao giờ kích hoạt. Đọc trọn nội dung thì trăm bài mới chiếm 25%, vẫn không chạm |
+| Trần chắt lọc 900 token/bài | Bỏ nội dung trước khi mô hình đọc | Xem §16.2 |
+
+Sau khi gỡ, `--batch` là cổng chia lô duy nhất.
+
+### 16.2 Cổng nặng nhất: chắt lọc nội dung
+
+Đo trên 600 bài thật:
+
+| | |
+|---|---|
+| Token nội dung sau bộ lọc cơ học | 1.542/bài (p90 2.537, p99 4.427) |
+| Token thực gửi cho mô hình khi trần 900 | 838/bài |
+| **Nội dung mô hình được đọc** | **54%** |
+
+Trần 900 được đặt để tiết kiệm token đầu vào. Chính số đo của dự án đã bác bỏ lý do ấy: đọc trọn nội dung thì một đợt trăm bài dùng 154K token đầu vào, tức 25% cửa sổ một triệu, và token đầu vào chưa cache rẻ hơn token đầu ra **năm mươi lần**. Đổi lại nó bỏ mất **46% nội dung nghiệp vụ** trước khi mô hình kịp đọc — tức code đang quyết định mô hình được đọc gì.
+
+`DEFAULT_MAX_TOKENS_PER_ARTICLE` nay để **0**, nghĩa là không cắt. Tham số `--max-tokens-per-article` vẫn còn để dùng tay.
+
+### 16.3 Đoạn quá dài: tách thay vì bỏ
+
+`MAX_PARAGRAPH_CHARS = 1800` phục vụ trần cắt dòng 2.000 ký tự của công cụ đọc, nên phải giữ. Nhưng trước đây chạm trần thì **bỏ nguyên đoạn**. Đo lại trên 14.199 dòng thật: đúng một dòng vượt ngưỡng, dài nhất 2.059 ký tự — hiếm nhưng có thật, và bỏ một đoạn dài là mất đúng phần thường mang nhiều thông tin nhất.
+
+Nay tách tại ranh giới câu. Mỗi mảnh vẫn là chuỗi con nguyên văn nên bất biến nguyên văn được giữ, mà không mất chữ nào.
+
+### 16.4 Cơ chế thay thế: vá sau, không phòng trước
+
+`article_run.py --wave <mã> --repair` đối chiếu số bản ghi nhận được với số bài đã gửi, tìm ra **đúng những chỉ số còn thiếu**, đóng gói lại chỉ phần ấy với chỉ số đánh lại từ 0, rồi sinh `wave_<mã>.repair.ts`. Không cần cơ sở dữ liệu vì nội dung bài đã nằm trong packet gốc, nên đường này cũng tiêu 0 token.
+
+Kinh tế của nó: nhà cung cấp phục vụ trọn lô thì tốn **0 đồng thừa**; cắt ở bài 60 thì chạy lại 40 bài. Cách chia trước tốn 4 lượt ở **mọi** đợt, kể cả khi không cần. Chia trước chỉ thắng khi tỷ lệ cắt cụt gần 100%, mà điều đó chưa ai đo.
+
+### 16.5 Cổng giữ nguyên
+
+Ba cổng sau không phải để tối ưu mà để hỏng thì phải ồn, theo ADR 0008 §2.4 — điều khoản duy nhất còn hiệu lực của ADR ấy:
+
+Prefix lệch danh mục thì dừng đợt. Tỷ lệ hỏng vượt 10% thì dừng trước khi nạp cơ sở dữ liệu. Lệnh con trả mã khác 0 thì dừng cả đợt. Cả ba đều tự động và không hỏi ai.
+
+Bốn luật loại bản ghi Gold (thiếu tóm tắt, hàm ý dưới 40 ký tự, thiếu luận điểm, dưới hai trích dẫn) cũng giữ: đo trên 300 bài của W1 và W2, **không luật nào kích hoạt**, nên chúng không phải là cổng chặn trên thực tế.
+
+### 16.6 Số đo trước và sau
+
+| | Trước | Sau |
+|---|---|---|
+| Lượt gọi cho đợt 100 bài | 4 | **1** |
+| Nội dung mô hình được đọc | 54% | **100%** |
+| Token đầu vào mỗi đợt | 82K | 154K (25% cửa sổ) |
+| Cổng chia lô | 4 | **1** (`--batch`) |
+
+### 16.7 Đính chính: trần thật là 256.000, và nó đã nằm sẵn trong tài liệu của dự án
+
+Tôi từng gọi 40.000 là "trần vật lý của nhà cung cấp". Sai. Đó là giá trị **dự án tự đặt** ở `maxTokens` trong preset. Bằng chứng bác bỏ nằm ngay trong `docs/proposals/dsh-surface-verified-2026-09-18.md`, viết ngày 18/09 từ việc đọc mã nguồn DSH:
+
+> `maxTokens` mặc định — **256.000** (`DEFAULT_MAX_TOKENS = 256e3`); con kế thừa của cha
+> — `dsh-llm-deepseek:1394,1998`; `dsh-subagent/lib/types/child-agent.js:79-92`
+>
+> U3 · `maxTokens` mặc định? · **256.000**, không phải 8K
+
+Cùng tài liệu, mục Budget: DSH **không có** trần token hay chi phí theo phiên hay theo ngày. Các giới hạn số duy nhất là `maxTokens` 256.000 mỗi request, `contextWindow` 1.000.000, compaction 0,8×, pruner 8.192 ký tự, spill 50.000 byte.
+
+Nghĩa là gỡ `maxTokens` khỏi row không để nó vô hạn mà trả nó về **256.000**. Một đợt trăm bài cần khoảng 90.000 token đầu ra, còn dư gần ba lần. Bài học phương pháp: trước khi gọi một con số là ràng buộc, kiểm xem chính mình có đặt ra nó không.

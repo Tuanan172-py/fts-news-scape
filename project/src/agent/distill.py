@@ -21,16 +21,29 @@ from src.agent.pruner import is_boilerplate_paragraph
 # Quy đổi ký tự sang token cho tiếng Việt. Đo trên kho bài thật của dự án.
 CHARS_PER_TOKEN = 3
 
-# Trần mềm cho phần nội dung của một bài, tính bằng token.
-DEFAULT_MAX_TOKENS_PER_ARTICLE = 900
+# Trần mềm cho phần nội dung của một bài, tính bằng token. **0 nghĩa là không cắt.**
+#
+# Trần này từng để 900 với lý do tiết kiệm token đầu vào. Số đo 2026-09-21 trên 600
+# bài thật đã bác bỏ chính lý do ấy: sau các bộ lọc cơ học, một bài nặng trung bình
+# 1.542 token, nên một đợt trăm bài chỉ chiếm 15% cửa sổ một triệu. Đầu vào chưa
+# cache lại rẻ hơn đầu ra năm mươi lần. Đổi lại, trần 900 đã bỏ **46% nội dung**
+# trước khi mô hình kịp đọc — tức code đang quyết định mô hình được đọc gì, trái với
+# nguyên tắc nội dung do LLM xử lý.
+#
+# Vẫn giữ tham số để dùng tay khi cần; chỉ bỏ nó khỏi đường chạy mặc định.
+DEFAULT_MAX_TOKENS_PER_ARTICLE = 0
 
 MIN_PARAGRAPH_CHARS = 40
 
 # Trần ký tự cho MỘT đoạn. Công cụ đọc của DSH cắt mỗi dòng ở 2.000 ký tự
 # (`readMaxLineLength`), mà packet ghi mỗi đoạn một dòng, nên đoạn dài hơn ngưỡng này
 # sẽ bị cắt cụt âm thầm. Đo trên 4.493 đoạn thật: dài nhất 954 ký tự, không đoạn nào
-# chạm trần — nên đây là lưới an toàn chứ không phải ràng buộc thường trực. Khi chạm,
-# bỏ nguyên đoạn để giữ bất biến nguyên văn, tuyệt đối không cắt ngang.
+# chạm trần. Đo lại trên 14.199 dòng thật ngày 21/09: đúng **một** dòng vượt ngưỡng,
+# dài nhất 2.059 ký tự — tức nó có chạm, dù hiếm.
+#
+# Trước đây chạm thì bỏ nguyên đoạn. Nay **tách** đoạn tại ranh giới câu thay vì bỏ:
+# mỗi mảnh vẫn là chuỗi con nguyên văn nên bất biến nguyên văn được giữ, mà không mất
+# chữ nào. Bỏ một đoạn dài là mất đúng phần thường mang nhiều thông tin nhất.
 MAX_PARAGRAPH_CHARS = 1800
 
 _QUANT_RE = re.compile(
@@ -82,6 +95,37 @@ def _rank(paragraph: str) -> int:
     return 0
 
 
+def split_long_paragraph(para: str, limit: int = MAX_PARAGRAPH_CHARS) -> list[str]:
+    """Tách một đoạn quá dài thành nhiều mảnh, mỗi mảnh vẫn nguyên văn.
+
+    Cắt ưu tiên tại ranh giới câu để mảnh còn đọc được; không tìm được ranh giới nào
+    hợp lý thì cắt đúng trần. Mọi mảnh đều là chuỗi con của đoạn gốc, nên bất biến
+    nguyên văn của cả khâu chắt lọc vẫn đứng.
+
+    Args:
+        para: Đoạn văn cần tách.
+        limit: Trần ký tự cho mỗi mảnh.
+
+    Returns:
+        Danh sách mảnh theo đúng thứ tự gốc.
+    """
+    out: list[str] = []
+    start = 0
+    while len(para) - start > limit:
+        window = para[start:start + limit]
+        cut = max(window.rfind(". "), window.rfind("! "),
+                  window.rfind("? "), window.rfind("; "))
+        cut = cut + 1 if cut > limit // 3 else limit
+        piece = para[start:start + cut].strip()
+        if piece:
+            out.append(piece)
+        start += cut
+    tail = para[start:].strip()
+    if tail:
+        out.append(tail)
+    return out
+
+
 def split_paragraphs(text: str) -> list[str]:
     """Tách văn bản thành các đoạn sạch, giữ nguyên văn từng đoạn.
 
@@ -101,6 +145,7 @@ def split_paragraphs(text: str) -> list[str]:
         if len(para) < MIN_PARAGRAPH_CHARS and not _QUANT_RE.search(para):
             continue
         if len(para) > MAX_PARAGRAPH_CHARS:
+            out.extend(split_long_paragraph(para))
             continue
         out.append(para)
     return out
@@ -127,6 +172,8 @@ def distill(text: str, *, max_tokens: int = DEFAULT_MAX_TOKENS_PER_ARTICLE) -> l
     paragraphs = split_paragraphs(text)
     if not paragraphs:
         return []
+    if max_tokens <= 0:
+        return paragraphs
 
     budget = max_tokens
     chosen: set[int] = set()

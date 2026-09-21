@@ -365,6 +365,183 @@ def test_cua_so_doc_khong_vuot_tran_byte():
         assert sum(len(c.encode()) + 12 for c in chunk) <= READ_MAX_BYTES
 
 
+def test_boc_duoc_lop_vo_ket_qua_cong_cu():
+    """Tệp đầu ra mang lớp vỏ kết quả công cụ vẫn phải bung ra đúng bản ghi.
+
+    Không bóc lớp vỏ thì bộ bung đọc `{"type":"text","text":...}` thành đúng một bản
+    ghi rác và cả lô coi như mất. Đây là sự cố thật của các tệp `_cNN` đợt W1, W2.
+    """
+    import json as _json
+
+    from scripts.article_expand import salvage_records
+
+    inner = _json.dumps([{"i": 0, "e": [], "s": "x"}, {"i": 1, "e": [], "s": "y"}],
+                        ensure_ascii=False)
+    envelope = _json.dumps({"kind": "foreground", "runId": "abc",
+                            "output": [{"type": "text", "text": inner}]},
+                           ensure_ascii=False)
+    records, broken = salvage_records(envelope)
+    assert broken == 0
+    assert [r["i"] for r in records] == [0, 1]
+
+
+def test_dau_ra_tran_khong_co_lop_vo_van_boc_duoc():
+    """Bóc lớp vỏ không được làm hỏng đường đầu ra trần vốn đang chạy đúng."""
+    import json as _json
+
+    from scripts.article_expand import salvage_records
+
+    plain = _json.dumps([{"i": 0, "e": [], "s": "x"}], ensure_ascii=False)
+    records, broken = salvage_records(plain)
+    assert broken == 0 and [r["i"] for r in records] == [0]
+
+
+def test_batch_la_cong_chia_duy_nhat():
+    """`--batch` là cổng chia lô duy nhất; không trần token nào can thiệp.
+
+    Trần ngữ cảnh chưa bao giờ chạm, còn trần đầu ra thì chưa đo được nên không đủ
+    tư cách làm luật chia lô. Một đợt trăm bài phải ra đúng MỘT lượt gọi.
+    """
+    from scripts.article_pack import plan_calls
+
+    assert plan_calls(100, batch_cap=100) == [100]
+    assert plan_calls(250, batch_cap=250) == [250]
+    assert plan_calls(0, batch_cap=100) == []
+
+
+def test_cac_luot_duoc_chia_deu():
+    """Khi đợt lớn hơn trần người vận hành đặt thì các lượt phải đều nhau."""
+    from scripts.article_pack import plan_calls
+
+    sizes = plan_calls(250, batch_cap=100)
+    assert sum(sizes) == 250
+    assert max(sizes) - min(sizes) <= 1
+    assert max(sizes) <= 100
+
+
+def test_tran_chat_loc_mac_dinh_da_tat():
+    """Mặc định mô hình phải đọc trọn bài, không bị code cắt bớt trước."""
+    from src.agent.distill import (DEFAULT_MAX_TOKENS_PER_ARTICLE, distill,
+                                   split_paragraphs)
+
+    assert DEFAULT_MAX_TOKENS_PER_ARTICLE == 0
+    text = chr(10).join(f"Đoạn số {i} với nội dung đủ dài để vượt ngưỡng tối thiểu "
+                      f"của bộ lọc cơ học." for i in range(40))
+    assert distill(text) == split_paragraphs(text)
+
+
+def test_doan_qua_dai_bi_tach_chu_khong_bi_bo():
+    """Đoạn vượt trần cắt dòng phải được tách, không được vứt đi.
+
+    Vứt nguyên đoạn dài là mất đúng phần thường mang nhiều thông tin nhất; tách tại
+    ranh giới câu giữ được cả nội dung lẫn bất biến nguyên văn.
+    """
+    from src.agent.distill import (MAX_PARAGRAPH_CHARS, split_long_paragraph,
+                                   split_paragraphs)
+
+    long_para = "Câu có độ dài vừa phải để ghép lại thành đoạn rất dài. " * 60
+    pieces = split_long_paragraph(long_para)
+    assert len(pieces) > 1
+    assert all(len(x) <= MAX_PARAGRAPH_CHARS for x in pieces)
+    assert all(x in long_para for x in pieces)
+
+    kept = split_paragraphs(long_para)
+    assert kept, "đoạn dài không được biến mất khỏi kết quả"
+    assert all(len(x) <= MAX_PARAGRAPH_CHARS for x in kept)
+
+
+def test_phat_hien_dung_nhung_bai_con_thieu(tmp_path, monkeypatch):
+    """Lô trả về thiếu bài phải lộ ra đúng những chỉ số chưa có bản ghi."""
+    import json as _json
+
+    from scripts import article_run
+
+    monkeypatch.setattr(article_run, "TASK_DIR", tmp_path)
+    monkeypatch.setattr(article_run, "OUT_DIR", tmp_path)
+
+    packet = {"d": "2026-09-21", "n": 5,
+              "a": [{"i": i, "t": f"Bài {i}", "p": ["Nội dung."]} for i in range(5)]}
+    mapping = {"batch_id": "article_W_01", "wave": "W",
+               "index": {str(i): f"id{i}" for i in range(5)},
+               "tier": {str(i): 1 for i in range(5)},
+               "reason": {str(i): "x" for i in range(5)}}
+    (tmp_path / "article_W_01.task.json").write_text(
+        _json.dumps(packet, ensure_ascii=False), encoding="utf-8")
+    (tmp_path / "article_W_01.map.json").write_text(
+        _json.dumps(mapping, ensure_ascii=False), encoding="utf-8")
+    # Mô hình chỉ trả về ba bài đầu: hai bài cuối bị cắt cụt.
+    (tmp_path / "article_W_01.output.json").write_text(
+        _json.dumps([{"i": i, "e": [], "s": "x"} for i in range(3)],
+                    ensure_ascii=False), encoding="utf-8")
+
+    missing, _packet, _mapping = article_run.missing_indices("article_W_01")
+    assert missing == ["3", "4"]
+
+
+def test_dong_goi_bu_chi_lay_phan_thieu(tmp_path, monkeypatch, capsys):
+    """Đường vá phải sinh packet chỉ chứa phần thiếu, đánh lại chỉ số từ 0."""
+    import argparse
+    import json as _json
+
+    from scripts import article_run
+
+    monkeypatch.setattr(article_run, "TASK_DIR", tmp_path)
+    monkeypatch.setattr(article_run, "OUT_DIR", tmp_path)
+
+    packet = {"d": "2026-09-21", "n": 5,
+              "a": [{"i": i, "t": f"Bài {i}", "p": ["Nội dung đủ dài cho gói tin."]}
+                    for i in range(5)]}
+    mapping = {"batch_id": "article_W_01", "wave": "W",
+               "index": {str(i): f"id{i}" for i in range(5)},
+               "tier": {str(i): 1 for i in range(5)},
+               "reason": {str(i): "x" for i in range(5)}}
+    (tmp_path / "article_W_01.task.json").write_text(
+        _json.dumps(packet, ensure_ascii=False), encoding="utf-8")
+    (tmp_path / "article_W_01.map.json").write_text(
+        _json.dumps(mapping, ensure_ascii=False), encoding="utf-8")
+    (tmp_path / "article_W_01.output.json").write_text(
+        _json.dumps([{"i": i, "e": [], "s": "x"} for i in range(3)],
+                    ensure_ascii=False), encoding="utf-8")
+
+    rc = article_run.cmd_repair(argparse.Namespace(wave="W"))
+    assert rc == 0
+
+    rmap = _json.loads((tmp_path / "article_W_01_r01.map.json").read_text(
+        encoding="utf-8"))
+    assert rmap["index"] == {"0": "id3", "1": "id4"}
+    rpacket = _json.loads((tmp_path / "article_W_01_r01.task.json").read_text(
+        encoding="utf-8"))
+    assert [a["t"] for a in rpacket["a"]] == ["Bài 3", "Bài 4"]
+    assert (tmp_path / "wave_W.repair.ts").exists()
+
+
+def test_khong_thieu_bai_thi_khong_sinh_goi_bu(tmp_path, monkeypatch):
+    """Lô trả về đủ bài thì đường vá không được đẻ ra việc thừa."""
+    import argparse
+    import json as _json
+
+    from scripts import article_run
+
+    monkeypatch.setattr(article_run, "TASK_DIR", tmp_path)
+    monkeypatch.setattr(article_run, "OUT_DIR", tmp_path)
+
+    packet = {"d": "2026-09-21", "n": 2,
+              "a": [{"i": i, "t": f"Bài {i}", "p": ["Nội dung."]} for i in range(2)]}
+    mapping = {"batch_id": "article_W_01", "wave": "W",
+               "index": {str(i): f"id{i}" for i in range(2)},
+               "tier": {}, "reason": {}}
+    (tmp_path / "article_W_01.task.json").write_text(
+        _json.dumps(packet, ensure_ascii=False), encoding="utf-8")
+    (tmp_path / "article_W_01.map.json").write_text(
+        _json.dumps(mapping, ensure_ascii=False), encoding="utf-8")
+    (tmp_path / "article_W_01.output.json").write_text(
+        _json.dumps([{"i": i, "e": [], "s": "x"} for i in range(2)],
+                    ensure_ascii=False), encoding="utf-8")
+
+    assert article_run.cmd_repair(argparse.Namespace(wave="W")) == 0
+    assert not list(tmp_path.glob("*_r01.task.json"))
+
+
 def test_chuong_trinh_dieu_phoi_la_javascript_hop_le():
     """Chương trình sinh ra cho phía điều phối phải phân tích cú pháp được."""
     import subprocess

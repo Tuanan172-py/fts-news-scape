@@ -30,13 +30,17 @@ Hệ quả thực hành: **gộp mọi thứ vào ít bước nhất có thể**
 
 ```ts
 const r = await tools.pwsh({
-  command: '& "C:\\venvs\\news-scape\\Scripts\\python.exe" scripts/article_run.py --wave W01 --today --limit 300',
+  command: '& "C:\\venvs\\news-scape\\Scripts\\python.exe" scripts/article_run.py --wave W01 --today --limit 100 --batch 100',
   description: 'Chuẩn bị đợt'
 });
 return r.stdout.text;
 ```
 
 Lệnh này kiểm prefix, đóng gói packet, in dự toán và **sinh sẵn chương trình** cho bước sau. Nó không tiêu token mô hình.
+
+`--batch` là cổng chia lô **duy nhất**. Không trần token nào can thiệp nữa: `maxTokens`, bộ chia theo ngân sách đầu ra và trần ngữ cảnh đều đã gỡ ngày 21/09. Trần thật của DSH là 256.000 token đầu ra mỗi request, còn trăm bài chỉ cần khoảng 90.000. Đặt `--limit 100 --batch 100` thì được đúng một lượt gọi cho trọn trăm bài.
+
+Đừng bao giờ đề nghị hạ số bài mỗi đợt, và đừng tự chia nhỏ lô để phòng cắt cụt. Nếu lô trả về thiếu bài thì chạy `article_run.py --wave <mã> --repair`: nó đóng gói lại **đúng phần thiếu** rồi sinh chương trình chạy bù. Vá sau rẻ hơn phòng trước, vì phòng trước thì trả giá ở mọi đợt còn vá thì chỉ trả cho phần thật sự mất.
 
 ### Bước 2 — một lệnh chạy mô hình
 
@@ -45,6 +49,18 @@ Lệnh này kiểm prefix, đóng gói packet, in dự toán và **sinh sẵn ch
 Chương trình đó đã tự lo: phân trang đọc packet, chạy lô đầu một mình để ghi bộ nhớ đệm, rồi mới song song phần còn lại, ghi kết quả thẳng ra đĩa, và chỉ trả về vài con số.
 
 **Đừng tách nó ra.** Đừng đọc packet ở một bước rồi gọi agent ở bước khác. Đừng in nội dung packet hay đầu ra của lô.
+
+### Bước 2b — vá phần thiếu, chỉ khi có
+
+```ts
+const r = await tools.pwsh({
+  command: '& "C:\\venvs\\news-scape\\Scripts\\python.exe" scripts/article_run.py --wave W01 --repair',
+  description: 'Vá phần thiếu'
+});
+return r.stdout.text;
+```
+
+Không thiếu bài thì lệnh báo ngay, không sinh việc thừa. Có thiếu thì chạy trọn `wave_<mã>.repair.ts` trong một lệnh `run_code`, rồi mới sang bước hoàn tất.
 
 ### Bước 3 — một lệnh hoàn tất
 
@@ -65,7 +81,7 @@ Bung bản ghi, nạp cơ sở dữ liệu, ghi sổ cái token, sinh bàn giao,
 1. **Không hỏi xác nhận.** ADR 0008 đã được sửa ngày 2026-09-18: lệnh đợt do người vận hành gõ tường minh **là** quyết định rồi. Không trình cổng, không đề nghị duyệt, không chờ. Hai chốt duy nhất là tự động và nằm trong script.
 2. **Không để nội dung lô vào ngữ cảnh.** Chỉ `print` và `return` mới vào lịch sử. Kết quả của lô ghi thẳng ra đĩa. Một đợt trăm bài chỉ nên để lại vài chục token trong ngữ cảnh của bạn.
 3. **Không đọc lại tệp vừa ghi.** Việc kiểm định thuộc về cổng nghiệm thu ngoài, vốn làm cùng việc đó với chi phí bằng không.
-4. **Không đọc mã nguồn để suy ra hợp đồng.** Hợp đồng nào cũng có lệnh in ra. Nếu chưa có thì báo, đừng đi đào.
+4. **Không đọc mã nguồn để suy ra hợp đồng.** Hợp đồng nào cũng có lệnh in ra. Nếu chưa có thì báo, đừng đi đào. Đường dẫn giao hàng hỏi bằng `scripts/write_user_output.py --where`; nó nằm ở **gốc kho**, không nằm trong `project/`. Vệt ngày 21/09 tốn sáu bước mô hình để dò lại đúng một đường dẫn mà lệnh đó in ra tức thì.
 5. **Không tự làm việc của script.** Việc nào có câu trả lời đúng duy nhất và kiểm được bằng mã thì script làm.
 6. **Đóng phiên khi áp suất tới mức vàng.** Mở phiên mới rẻ hơn mang theo ngữ cảnh đã phình, vì bộ nhớ đệm nằm ở phía nhà cung cấp chứ không gắn với phiên.
 
@@ -79,7 +95,8 @@ Sau mỗi đợt, `article_run.py --finish` in ra các số này. Thấy bất t
 |---|---|
 | `turns_max > 1` | Worker sa vào viết chương trình thay vì trả lời thẳng. Persona cần sửa |
 | `reasoning > 0` | Chế độ suy luận chưa tắt, đang tính tiền theo giá đầu ra |
-| token mỗi bài vượt 1.500 | Hoặc mốc quy kết gộp nhầm phiên khác, hoặc packet quá dày |
+| token mỗi bài vượt 2.500 | Hoặc mốc quy kết gộp nhầm phiên khác, hoặc packet quá dày. Mức bình thường khoảng 1.980 |
+| lô trả về thiếu bài | Lượt đó bị cắt cụt — chạy `--repair`, đừng chia nhỏ mọi lô |
 | áp suất vàng hoặc đỏ | Đọc bàn giao rồi đóng phiên |
 
 ---
