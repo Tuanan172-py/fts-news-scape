@@ -46,6 +46,10 @@ logs/
 # Bronze bao cao dinh ky NSO (HTML + .xlsx/.docx)
 **/data/raw_reports/
 project/src/data/
+# Kho lưu trữ lane L1/Gold đã ngừng (có MANIFEST.json, ~19 MB) — dữ liệu, KHÔNG commit
+project/data/archive/
+# Bản xung đột OneDrive sinh theo tên máy
+**/*-DESKTOP-*
 
 # Harness Durable SQLite
 harness.db*
