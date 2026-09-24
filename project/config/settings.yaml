@@ -26,9 +26,6 @@ morninger:
                                   # Muốn hạ tiếp: phải tối ưu chi phí cycle trước (dừng phân trang
                                   # sớm — cafef fetch 900 item chỉ để lấy ~5 bài mới).
   rederive_interval_minutes: 30  # nhịp re-derive Silver tăng dần (job 2)
-  l1_route_interval_minutes: 15  # nhịp định tuyến L1 code-first tự động (job 4) — 0 token,
-                                  # tách biệt hoàn toàn khỏi quota Gold
-  l1_route_mini_batch: 25        # kích thước mini-batch L1 mỗi lần route (khuyến nghị pipeline_radar)
   deferred_backfill_limit: 60    # số bài bù tối đa mỗi chu kỳ capture (job 1, nối tiếp)
   deferred_budget_seconds: 90    # trần thời gian bù; hết giờ thì dừng sạch, để dành chu kỳ sau.
                                   # Đo thực tế 2026-09-17: cycle capture ~335s, nên phần bù phải

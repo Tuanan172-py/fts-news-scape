@@ -524,8 +524,7 @@
       provider: deepseek-official
       model: deepseek-flash
       reasoningEffort: "off"      # settings.yaml đang để 'high' cho mọi con — phải đè ở đây
-      # KHÔNG đặt `maxTokens` ở đây. Hai row `agent_l1` và `agent_gold` bên dưới
-      # cũng không đặt, nên trường này là tuỳ chọn.
+      # KHÔNG đặt `maxTokens` ở đây. Token là số ghi nhận, không phải trần.
       #
       # Trước đây để 40000. Đó là trần do chính dự án đặt, không phải trần của nhà
       # cung cấp, và nó chính là thứ đã cắt cụt lô 100 bài — buộc phía điều phối
@@ -543,46 +542,8 @@
     maxDepth: 1                 # xem sự thật #1
     backgroundMode: one-shot
 
-# ── agent cũ — GIỮ ĐỂ QUAY LUI, không dùng ở đường mặc định ───────────────────
-# Hai row dưới thuộc đường L1/Gold cũ. Kế hoạch giữ chúng gọi được trong ít nhất một
-# chu kỳ vận hành đầy đủ để còn quay lui (plan §11.1). Đã vá maxDepth theo sự thật #1,
-# nếu không chúng vẫn không spawn được như trước nay.
-- id: tool-subagent-l1
-  name: '@deepseek-ai/dsh-tool-subagent'
-  config:
-    provider: spawn
-    toolName: agent_l1
-    persona: >-
-      [ĐƯỜNG CŨ — chỉ dùng khi quay lui] Bạn là l1-entity-matcher. Đọc
-      .agents/skills/l1-entity-matcher/SKILL.md trước khi làm. Chỉ đọc task packet L1 và ghi
-      output JSON theo l1-entity-output-v1. Không dùng tool discovery. Không suy đoán ngoài title.
-    agentOptions:
-      provider: deepseek-official
-      model: deepseek-flash
-      reasoningEffort: "off"
-    toolFilter:
-      allow: [read, write]
-    maxDepth: 1
-    backgroundMode: one-shot
-
-- id: tool-subagent-gold
-  name: '@deepseek-ai/dsh-tool-subagent'
-  config:
-    provider: spawn
-    toolName: agent_gold
-    persona: >-
-      [ĐƯỜNG CŨ — chỉ dùng khi quay lui] Bạn là gold-financial-analyst. Đọc
-      .agents/skills/gold-financial-analyst/SKILL.md trước. Chỉ đọc task packet Gold và ghi
-      output JSON theo agent-output-v2-lean (7 trường, citations >= 20 ký tự nguyên văn,
-      key_points không trùng). Không dùng discovery tools.
-    agentOptions:
-      provider: deepseek-official
-      model: deepseek-flash
-      reasoningEffort: "off"
-    toolFilter:
-      allow: [read, write]
-    maxDepth: 1
-    backgroundMode: one-shot
+# Hai row `agent_l1`/`agent_gold` của lane L1/Gold cũ đã gỡ ngày 2026-09-23 (ADR 0010).
+# Article Lane là đường duy nhất; `agent_article` ở trên là agent con duy nhất.
 
 # ── remaining model-facing rows ─────────────────────────────────────────────
 

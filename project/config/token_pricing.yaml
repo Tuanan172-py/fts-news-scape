@@ -38,9 +38,8 @@ peak_windows_utc:
 watch_thresholds:
   context_pressure_amber: 0.25   # đóng phiên sau wave hiện tại
   context_pressure_red: 0.40     # dừng ngay sau batch hiện tại
-  # Hiệu chuẩn lại 2026-09-21 theo cỡ bản ghi đo thật: ~800 token đầu vào chưa
-  # cache cộng ~900 token đầu ra cho mỗi bài, tức khoảng 1.980 token quota.
-  # Mức cũ 1.500 được đặt khi dự toán đầu ra còn để 300 token/bài, nên nó báo
-  # động ở mọi đợt bình thường và vì thế không còn là tín hiệu.
-  tokens_per_article_warn: 2500  # vượt mức này thì soi lại distillation
+  # Không có ngưỡng token nào ở đây, theo bài, theo lô hay theo đợt. Token là số
+  # ghi nhận để người dùng tự đánh giá và ước lượng, không phải cổng chặn hay mức
+  # cảnh báo. Số tham chiếu đo được ở đợt W365 (chỉ phiên worker): khoảng 2.850
+  # token quota mỗi bài.
   worker_turns_expected: 1       # con phải xong trong đúng 1 bước
