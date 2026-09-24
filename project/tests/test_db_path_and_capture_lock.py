@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 import pytest
@@ -96,8 +97,14 @@ def test_khoa_tu_nha_khi_chu_khoa_chet(tmp_path):
     finally:
         holder.kill()
         holder.wait(timeout=30)
+    # Python trong venv trên Windows là trình khởi chạy: giết nó thì tiến trình thông dịch
+    # thật (đang giữ khoá) mới bị hệ điều hành dọn sau đó một nhịp, nên chờ có hạn.
     after = SingleInstanceLock(lock_path)
-    assert after.acquire(), "khoá phải tự nhả khi tiến trình giữ khoá chết, không có trạng thái cũ"
+    deadline = time.monotonic() + 20
+    while not after.acquire():
+        assert time.monotonic() < deadline, \
+            "khoá phải tự nhả khi tiến trình giữ khoá chết, không có trạng thái cũ"
+        time.sleep(0.2)
     after.release()
 
 
