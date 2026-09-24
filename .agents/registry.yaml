@@ -7,19 +7,19 @@
 #   operator   — script Python tất định, 0 token, vào/ra cố định, idempotent.
 #   cognitive  — subagent LLM gọi qua invoke_subagent, có phí token, ràng buộc 2-I/O + grounded.
 #   conductor  — bộ điều phối đọc pipeline.yaml, quyết định stage kế tiếp và chính sách wave.
-# status: active | draft | deprecated
+# status: active | draft | deprecated | retired (retired = đã gỡ khỏi vận hành, chỉ còn lịch sử)
 # dod_contract: neo tới cổng kiểm định (skill dod-gatekeeper + rule tương ứng).
 # cost_budget.tokens_per_item: định mức benchmark thực nghiệm (0 cho operator).
 
 version: 1
-updated: "2026-09-15"
+updated: "2026-09-23"
 schema_note: "Thêm agent = 1 entry ở đây + 1 skill + 1 stage pipeline.yaml + 1 story + KPI (rule 07)."
 
 # Model policy (ADR 0009 / quyết định D6, 2026-09-17): MỌI cognitive agent route về
 # flash (DeepSeek-V41-Flash). Cấm model cao hơn vì quản lý chi phí token.
 # Bốn agent từng khai `pro` (entity-curator, adversarial-dod-verifier,
-# daily-brief-synthesizer, harness-auditor) và materiality-triage (`flash-lite`)
-# đã hạ về flash. entity-curator vẫn giữ status draft + activation_gate Tier-3.
+# daily-brief-synthesizer, harness-auditor) đã hạ về flash. materiality-triage
+# đã ngừng (2026-09-24): materiality/event_type không còn là trường đầu ra. entity-curator vẫn giữ status draft + activation_gate Tier-3.
 
 agents:
 
@@ -50,7 +50,9 @@ agents:
 
   - id: l1-router
     class: operator
-    status: active
+    status: retired
+    retired_at: "2026-09-23"
+    retired_by: "ADR 0010 — Article Lane chọn bài bằng article-packer; job morninger đã gỡ"
     entrypoint: "project/scripts/l1_route.py"
     cli: 'scripts/l1_route.py --from-db --date <YYYY-MM-DD|today> --mini-batch 25'
     io_boundary:
@@ -64,18 +66,22 @@ agents:
     class: operator
     status: active
     entrypoint: "project/scripts/l1_ingest.py"
-    cli: 'scripts/l1_ingest.py data/agent_outputs_l1  |  scripts/l1_ingest.py --code-first'
+    cli: 'scripts/article_run.py --wave <wave> --finish   # gọi l1_ingest với đúng tệp article_<wave>_* của đợt'
     io_boundary:
-      read:  ["data/agent_outputs_l1/*.output.json"]
-      write: ["data/monocle.db (l1_outputs)", "data/agent_tasks/l1/archive/"]
-    responsibility: "Nghiệm thu DoD L1, ghi l1_outputs, tự archive packet đạt chuẩn."
+      read:  ["data/agent_outputs_l1/article_<wave>_*.output.json"]
+      write: ["data/monocle.db (l1_outputs, l1_tasks route=article_lane)"]
+    responsibility: >-
+      Cổng nghiệm thu DoD phần nhận diện của Article Lane, ghi l1_outputs. Chỉ được
+      article_run --finish gọi với tệp của đúng đợt. Nhánh --code-first thuộc lane đã ngừng.
     dod_contract: dod-gatekeeper#l1
     cost_budget: { tokens_per_item: 0 }
     owner_rules: ["01-subagent-guardrails", "entity-system-invariants"]
 
   - id: gold-exporter
     class: operator
-    status: active
+    status: retired
+    retired_at: "2026-09-23"
+    retired_by: "ADR 0010 — Article Lane xử lý mọi bài, không còn Subscriber-Gated export"
     entrypoint: "project/scripts/agent_export.py"
     cli: 'scripts/agent_export.py --date <date> --require-l1 --subscriber-only'
     io_boundary:
@@ -91,11 +97,13 @@ agents:
     class: operator
     status: active
     entrypoint: "project/scripts/agent_ingest.py"
-    cli: 'scripts/agent_ingest.py data/agent_outputs'
+    cli: 'scripts/article_run.py --wave <wave> --finish   # gọi agent_ingest với đúng tệp article_<wave>_* của đợt'
     io_boundary:
-      read:  ["data/agent_outputs/*.output.json"]
-      write: ["data/monocle.db (agent_outputs)", "data/agent_tasks/archive/"]
-    responsibility: "Nghiệm thu DoD Gold v2-lean (7 trường, citations >=20 ký tự, chống copy key_points)."
+      read:  ["data/agent_outputs/article_<wave>_*.output.json"]
+      write: ["data/monocle.db (agent_outputs)"]
+    responsibility: >-
+      Cổng nghiệm thu DoD phần phân tích nội dung của Article Lane (v2-lean: citations
+      nguyên văn, chống copy key_points). Chỉ được article_run --finish gọi với tệp của đúng đợt.
     dod_contract: dod-gatekeeper#gold
     cost_budget: { tokens_per_item: 0 }
     owner_rules: ["01-subagent-guardrails", "05-gold-agent-and-payload-invariants"]
@@ -130,7 +138,9 @@ agents:
     invariants:
       - "mọi đoạn trong packet là chuỗi con NGUYÊN VĂN của bài gốc"
       - "không dòng nào của packet vượt trần cắt dòng của công cụ đọc"
-      - "vượt trần ngữ cảnh thì tự chia nhỏ lô — chốt tự động duy nhất bảo vệ chất lượng"
+      - "--batch là cách chia lô duy nhất; không trần token hay trần ngữ cảnh nào chia lô hộ"
+      - "chỉ chọn bài chưa được mô hình phân tích; bản code-first không tính (ADR 0010)"
+      - "chỉ đọc DB và ghi tệp trong kho, nên chạy được dưới workspace-write; chốt quyền ghi nằm ở --finish"
     owner_rules: ["05-gold-agent-and-payload-invariants"]
 
   - id: article-expander
@@ -139,7 +149,7 @@ agents:
     entrypoint: "project/scripts/article_expand.py"
     cli: 'scripts/article_run.py --wave <wave> --finish   # gọi article_expand bên trong'
     io_boundary:
-      read:  ["data/agent_outputs_article/*.output.json", "data/agent_tasks/article/**"]
+      read:  ["data/agent_outputs_article/article_<wave>_*.output.json", "data/agent_tasks/article/**"]
       write: ["data/agent_outputs_l1/*.output.json", "data/agent_outputs/*.output.json",
               "data/article_mentions/*.mentions.json"]
     responsibility: >-
@@ -174,11 +184,12 @@ agents:
     entrypoint: "project/scripts/pipeline_radar.py"
     cli: 'scripts/pipeline_radar.py status|users|token [--date <date>]'
     io_boundary:
-      read:  ["data/monocle.db", "data/agent_tasks/**", ".agents/pipeline.yaml"]
+      read:  ["data/monocle.db (mode=ro)", "data/agent_tasks/article/**", "data/agent_outputs_article/**"]
       write: ["stdout (gợi ý lệnh copy-paste)"]
     responsibility: >-
-      Trinh sát điểm chạm pipeline, độ tươi cào tin (Liveness), đo token burn; đọc pipeline.yaml
-      suy ra stage kế tiếp (Spine 2). Không tự chạy hành động — chỉ gợi ý.
+      Trinh sát điểm chạm Article Lane: độ tươi cào tin, quyền ghi DB, trạng thái đợt gần nhất
+      theo vòng đời, số bài chờ phân tích; in đúng một lệnh kế tiếp. Token chỉ báo cáo, không so
+      với ngưỡng nào. Không tự chạy hành động — chỉ gợi ý.
     cost_budget: { tokens_per_item: 0 }
     owner_rules: ["04-harness-durable-invariants"]
 
@@ -203,8 +214,9 @@ agents:
     tools_allowed: []
     dod_contract: dod-gatekeeper#l1
     output_schema: [l1-entity-output-v1, agent-output-v2-lean]
-    cost_budget: { tokens_per_item: null, wave_batch: 100, concurrency: 3,
-                   source: "harness.db table token_ledger" }
+    cost_budget: { tokens_per_item: null, wave_batch: 100,
+                   source: "harness.db table token_ledger (--workers-only)",
+                   note: "token chỉ ghi nhận, không phải trần hay ngưỡng (ADR 0010)" }
     kpis: [turns_per_batch, parse_fail_rate, resolve_rate, dod_pass_rate, quota_tokens_per_item]
     invariants:
       - "turns_per_batch = 1 — con chạy quá một bước là dấu hiệu persona hỏng"
@@ -214,13 +226,14 @@ agents:
     owner_rules: ["01-subagent-guardrails", "05-gold-agent-and-payload-invariants",
                   "entity-system-invariants"]
 
-  # ─────────── ĐƯỜNG CŨ — giữ để quay lui, không dùng mặc định ───────────
-  # Hai agent dưới thuộc mô hình hai tầng cũ. Giữ gọi được trong ít nhất một chu kỳ
-  # vận hành đầy đủ để còn quay lui nếu đường mới trượt nghiệm thu (plan §11.1).
+  # ─────────── LANE L1/GOLD — ĐÃ NGỪNG (ADR 0010, 2026-09-23) ───────────
+  # Hai agent dưới thuộc mô hình hai tầng cũ. Row preset đã gỡ, không gọi được nữa.
+  # Giữ entry làm lịch sử; skill l1-entity-matcher vẫn là kiến thức của article-processor.
   - id: l1-entity-matcher
     class: cognitive
-    status: deprecated
+    status: retired
     deprecated_at: "2026-09-18"
+    retired_at: "2026-09-23"
     superseded_by: article-processor
     model: flash
     skill: .agents/skills/l1-entity-matcher/SKILL.md
@@ -237,8 +250,9 @@ agents:
 
   - id: gold-financial-analyst
     class: cognitive
-    status: deprecated
+    status: retired
     deprecated_at: "2026-09-18"
+    retired_at: "2026-09-23"
     superseded_by: article-processor
     model: flash
     skill: .agents/skills/gold-financial-analyst/SKILL.md
@@ -273,7 +287,9 @@ agents:
 
   - id: materiality-triage
     class: cognitive
-    status: draft
+    status: retired
+    retired_at: "2026-09-24"
+    retired_by: "Người dùng ngừng dùng materiality/event_type; Article Lane giữ đầu ra sạch"
     model: flash
     skill: .agents/skills/materiality-triage/SKILL.md
     stage_role: pre-gold-gate

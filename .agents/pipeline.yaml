@@ -1,17 +1,17 @@
 # pipeline.yaml — Pipeline DAG Manifest (Spine 2)
 #
-# Khai báo máy-đọc-được của quy trình end-to-end. Thay thế mô tả văn xuôi 5-phase trong
-# news-scape-agent-operations. pipeline_radar đọc file này để suy ra stage kế tiếp và
-# gợi ý lệnh chính xác thay vì hardcode.
+# Khai báo máy-đọc-được của quy trình end-to-end. Article Lane là đường xử lý duy nhất
+# từ 2026-09-23 (ADR 0010); chuỗi l1_route → l1_match → l1_ingest → gold_export →
+# gold_analyze → gold_ingest đã gỡ. `pipeline_radar.py status` hiện thực vòng đời dưới
+# đây và in đúng một lệnh kế tiếp.
 #
 # Mỗi stage tham chiếu agent theo `id` trong registry.yaml (không lặp lại io_boundary ở đây).
 # needs: danh sách stage phụ thuộc (DAG edges).
-# gate: cổng DoD phải pass trước khi stage sau chạy.
-# wave: chính sách điều phối cognitive agent chống RESOURCE_EXHAUSTED (429).
+# gate: cổng phải pass trước khi stage sau chạy.
 # optional: true  -> stage draft/chưa kích hoạt, radar chỉ hiển thị "available".
 
-version: 1
-updated: "2026-09-15"
+version: 2
+updated: "2026-09-23"
 registry: .agents/registry.yaml
 
 stages:
@@ -20,138 +20,69 @@ stages:
     agent: scraper-orchestrator
     class: operator
     needs: []
-    produces: "articles (data/monocle.db)"
+    produces: "articles + work_items (C:\\data\\news-scape\\monocle.db)"
     cli: '& "C:\venvs\news-scape\Scripts\python.exe" scripts/run_once.py'
     liveness_check: "max(fetched_at) trong articles <= 30 phút => 🟢"
 
-  # ─────────── ĐƯỜNG MẶC ĐỊNH TỪ 2026-09-18 — Article Lane ───────────
-  # Một agent, một bước cho cả lô, xử lý trọn cả thực thể lẫn nội dung của mỗi bài.
-  # Ba stage dưới đây thay thế chuỗi l1_route → l1_match → l1_ingest → gold_export →
-  # gold_analyze → gold_ingest. Chuỗi cũ giữ nguyên bên dưới để còn quay lui.
+  # ─────────── Article Lane — một agent, một bước cho cả lô ───────────
   - id: article_pack
     agent: article-packer
     class: operator
     needs: [scrape]
-    produces: "data/agent_tasks/article/article_<wave>_NN.task.json + .map.json + wave_<wave>.json"
-    cli: '& "C:\venvs\news-scape\Scripts\python.exe" scripts/article_run.py --wave <wave> --today'
+    produces: "data/agent_tasks/article/article_<wave>_NN.task.json + .map.json + wave_<wave>.json + wave_<wave>.conductor.ts"
+    cli: '& "C:\venvs\news-scape\Scripts\python.exe" scripts/article_run.py --wave <wave> --date <YYYY-MM-DD> --limit <n> --batch 100'
+    gate: "DB ghi được (preflight) + prefix khớp persona"
     note: >-
-      Xếp tầng ưu tiên theo hướng nhận rộng, chắt lọc đoạn tất định giữ nguyên văn,
-      ghi packet sao cho mọi dòng nằm dưới trần cắt dòng của công cụ đọc, và in dự toán.
+      Chọn bài chưa được mô hình phân tích (bản code-first không tính), xếp tầng ưu tiên
+      theo hướng nhận rộng, đọc trọn nội dung, ghi packet sao cho mọi dòng nằm dưới trần cắt
+      dòng của công cụ đọc, in dự toán để người dùng tham khảo.
 
   - id: article_analyze
     agent: article-processor
     class: cognitive
     needs: [article_pack]
-    consumes: "data/agent_tasks/article/*.task.json"
-    produces: "data/agent_outputs_article/*.output.json"
-    gate: dod-gatekeeper#l1
-    wave: { batch: 100, concurrency: 3,
-            note: "ĐÚNG MỘT bước mỗi lô. Lô đầu chạy một mình để ghi cache, phần còn lại mới song song." }
-    invoke: "tools.agent_article trong MỘT lệnh run_code; chương trình do article_run.py sinh sẵn"
+    consumes: "data/agent_tasks/article/article_<wave>_*.task.json"
+    produces: "data/agent_outputs_article/article_<wave>_*.output.json"
+    wave: { batch: 100,
+            note: "Một lệnh run_code cho cả đợt: đọc hết packet, hâm cache, mọi lô song song. Chia lô chỉ theo --batch." }
+    invoke: "tools.agent_article trong MỘT lệnh run_code; chương trình wave_<wave>.conductor.ts do article_run.py sinh sẵn"
+    repair: '& "C:\venvs\news-scape\Scripts\python.exe" scripts/article_run.py --wave <wave> --repair'
 
   - id: article_expand
     agent: article-expander
     class: operator
     needs: [article_analyze]
-    produces: "data/agent_outputs_l1/*.output.json + data/agent_outputs/*.output.json"
+    produces: "l1_outputs + agent_outputs (qua l1-ingest-gate, gold-ingest-gate) + token_ledger + HANDOFF-latest.md"
     cli: '& "C:\venvs\news-scape\Scripts\python.exe" scripts/article_run.py --wave <wave> --finish'
+    gate: "nạp không lỗi + độ phủ của đợt >= 90% ở cả hai lớp → mới in ✅ và thoát 0"
     note: >-
-      Cứu từng bản ghi khi đầu ra hỏng một phần, dựng trích dẫn nguyên văn từ chỉ số
-      đoạn, tra định danh theo nhóm, đối chiếu hai nguồn nhận diện, rồi nạp cơ sở dữ
-      liệu, ghi sổ cái token và sinh tệp bàn giao.
+      Bung bản ghi của đúng đợt, dựng trích dẫn nguyên văn từ chỉ số đoạn, đối chiếu hai
+      nguồn nhận diện, nạp qua hai cổng DoD chỉ với tệp của đợt, hậu kiểm theo tập bài
+      của đợt, ghi sổ cái token (chỉ ghi nhận) và sinh tệp bàn giao.
 
-  # ─────────── ĐƯỜNG CŨ — giữ để quay lui, không chạy mặc định ───────────
-  - id: l1_route
-    agent: l1-router
-    class: operator
-    deprecated: true
-    needs: [scrape]
-    produces: "data/agent_tasks/l1/l1_batch_XX.task.json + l1_outputs (code-first)"
-    cli: '& "C:\venvs\news-scape\Scripts\python.exe" scripts/l1_route.py --from-db --date today --mini-batch 25'
-
-  - id: l1_match
-    deprecated: true
-    agent: l1-entity-matcher
-    class: cognitive
-    needs: [l1_route]
-    consumes: "data/agent_tasks/l1/l1_batch_XX.task.json"
-    produces: "data/agent_outputs_l1/l1_batch_XX.output.json"
-    gate: dod-gatekeeper#l1
-    wave: { batch: 25, concurrency: 3, note: "2-3 batches/đợt (50-75 bài), chờ nghiệm thu mới sang đợt kế." }
-    invoke: "invoke_subagent (thủ công qua nền Antigravity) — xem prompt handoff news-scape-agent-operations §3A"
-
-  - id: l1_ingest
-    deprecated: true
-    agent: l1-ingest-gate
-    class: operator
-    needs: [l1_match]
-    produces: "l1_outputs (dod_pass) + archive packet"
-    cli: '& "C:\venvs\news-scape\Scripts\python.exe" scripts/l1_ingest.py data/agent_outputs_l1'
-    metric_hook: "ghi agent_metrics cho l1-entity-matcher (items, dod_pass, dod_total)"
-
-  # ─────────── Cổng đặc nhiệm tùy chọn: Triage + Dedup (draft) ───────────
-  - id: materiality_triage
-    agent: materiality-triage
-    class: cognitive
-    needs: [l1_ingest]
-    optional: true
-    gate: dod-gatekeeper#triage
-    wave: { batch: 30, concurrency: 3 }
-    intent: "Lọc bài đáng phân tích Gold sâu trước khi export (giảm burn)."
-
+  # ─────────── Cổng đặc nhiệm tùy chọn (draft) ───────────
   - id: story_dedup
     agent: story-dedup-clusterer
     class: cognitive
-    needs: [l1_ingest]
+    needs: [article_expand]
     optional: true
     gate: dod-gatekeeper#dedup
-    wave: { batch: 15, concurrency: 2 }
-    intent: "Gộp cùng sự kiện đa nguồn -> Gold phân tích 1 lần, gán N nguồn."
-
-  - id: gold_export
-    deprecated: true
-    agent: gold-exporter
-    class: operator
-    needs: [l1_ingest]         # triage/dedup optional chèn vào trước khi active
-    produces: "data/agent_tasks/batch_XX.task.json"
-    filter: subscriber_gated
-    cli: '& "C:\venvs\news-scape\Scripts\python.exe" scripts/agent_export.py --date today --require-l1 --subscriber-only'
-
-  - id: gold_analyze
-    deprecated: true
-    agent: gold-financial-analyst
-    class: cognitive
-    needs: [gold_export]
-    consumes: "data/agent_tasks/batch_XX.task.json"
-    produces: "data/agent_outputs/batch_XX.output.json"
-    gate: dod-gatekeeper#gold
-    wave: { batch: 5, concurrency: 2, note: "2 batches/đợt (10 bài). Priority Wave 1 core tickers -> Wave 2 vĩ mô -> Wave 3 backlog." }
-    invoke: "invoke_subagent — xem prompt handoff news-scape-agent-operations §3B"
-
-  - id: gold_ingest
-    deprecated: true
-    agent: gold-ingest-gate
-    class: operator
-    needs: [gold_analyze]
-    produces: "agent_outputs (dod_pass) + archive"
-    cli: '& "C:\venvs\news-scape\Scripts\python.exe" scripts/agent_ingest.py data/agent_outputs'
-    metric_hook: "ghi agent_metrics cho gold-financial-analyst"
+    intent: "Gộp cùng sự kiện đa nguồn, gán N nguồn."
 
   - id: gold_qa
     agent: adversarial-dod-verifier
     class: cognitive
-    needs: [gold_ingest]
+    needs: [article_expand]
     optional: true
     gate: dod-gatekeeper#verifier
-    wave: { batch: 8, concurrency: 1 }
-    intent: "QA ngữ nghĩa trên mẫu output đã ingest; nạp defect vào harness backlog."
+    intent: "QA ngữ nghĩa trên mẫu output đã nạp; nạp defect vào harness backlog."
 
   - id: deliver
     agent: delivery-writer
     class: operator
     needs: [article_expand]
     produces: "users/output/<user>/<date>.xlsx"
-    cli: '& "C:\venvs\news-scape\Scripts\python.exe" scripts/write_user_output.py --date all'
+    cli: '& "C:\venvs\news-scape\Scripts\python.exe" scripts/write_user_output.py --date <YYYY-MM-DD|today>'
 
   - id: daily_brief
     agent: daily-brief-synthesizer
@@ -167,15 +98,16 @@ governance_loop:
     agent: harness-auditor
     class: cognitive
     optional: true
-    trigger: "cuối phiên / định kỳ tuần"
-    reads: ["harness.db (trace + backlog + agent_metrics)"]
+    trigger: "cuối phiên / sau mỗi đợt"
+    reads: ["harness.db (trace + backlog + agent_metrics + token_ledger)", "mã nguồn (chỉ đọc)"]
     produces: "docs/proposals/harness_improvement_<date>.md"
     cli_readonly: '& "C:\venvs\news-scape\Scripts\python.exe" scripts/harness_cli.py propose'
 
 # ─────────────── Bất biến điều phối (Conductor phải tuân) ───────────────
 invariants:
   - "WIP=1: không 2 story in_progress đồng thời (AGENTS.md §1)."
-  - "Controlled Wave: chờ nghiệm thu đợt hiện tại mới kích hoạt đợt kế (chống 429)."
+  - "Một đợt tại một thời điểm: đợt gần nhất chưa xong (radar báo lệnh của đợt) thì không mở đợt mới."
+  - "Một đợt = một lệnh run_code; không tách chương trình điều phối thành nhiều bước."
+  - "Token là số ghi nhận, không phải cổng: không trần, không ngưỡng cảnh báo theo bài, lô hay đợt."
   - "No Script Emulation: cấm dùng regex/heuristic thay cognitive agent (rule 05 §3)."
-  - "Gate trước khi tiến: stage có gate phải đạt DoD pass mới cho stage sau chạy."
-  - "Metric hook: operator ingest ghi agent_metrics để nuôi vòng propose (Spine 3)."
+  - "Đợt chỉ xong khi --finish thoát 0 và in ✅; ❌ thì chạy đúng lệnh --only mà khung lỗi in ra."

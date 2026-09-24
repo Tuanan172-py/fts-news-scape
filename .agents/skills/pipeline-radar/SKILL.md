@@ -1,135 +1,123 @@
 ---
 name: pipeline-radar
-description: Chuyên viên trinh sát, quan sát trạng thái pipeline end-to-end, phát hiện điểm nghẽn dữ liệu và đề xuất hành động vận hành tiếp theo (Human-in-the-loop).
+description: Trinh sát trạng thái Article Lane end-to-end, phát hiện điểm nghẽn và in đúng một lệnh kế tiếp cho phiên điều phối.
 ---
-# Pipeline Radar & Triage Agent Skill
+# Pipeline Radar — Article Lane
 
-> **Mục tiêu cốt lõi:** Luôn trả lời được câu hỏi then chốt: *"Dữ liệu đang ở điểm chạm nào? Đã cào bao nhiêu bài? L1 đã xong chưa? Gold đang nghẽn ở đâu? Và hành động tiếp theo chính xác là gì?"*
+> **Mục tiêu cốt lõi:** trả lời được câu hỏi *"Hôm nay đã cào bao nhiêu bài, bao nhiêu đã phân tích, đợt gần nhất đang ở nửa nào, DB có ghi được không, và lệnh kế tiếp chính xác là gì?"*
 
----
-
-## 1. Định Hướng & Bất Biến Nghiệp Vụ (Context & Domain Invariants)
-
-1. **Nguyên lý Single Source of Truth (SQLite Read-Only)**:
-   - Mọi thông tin trạng thái dữ liệu phải được truy vấn trực tiếp từ cơ sở dữ liệu `C:/data/news-scape/monocle.db` qua kết nối `mode=ro` (chống lock file) kết hợp kiểm tra hàng đợi tệp tin vật lý (`data/agent_tasks/` và `data/agent_outputs/`).
-2. **Kỷ luật Zero-Guesswork (Không suy đoán mù quáng)**:
-   - Tuyệt đối không phỏng đoán trạng thái của hệ thống. Phải định lượng bằng số liệu thực tế: số bài cào về, số bài đạt chuẩn L1, số bài đạt chuẩn Gold, số batch đang chờ xử lý trên đĩa.
-3. **Quy chuẩn Đề Xuất Hành Động (Actionable Output)**:
-   - Mọi báo cáo trạng thái BẮT BUỘC phải kết thúc bằng một danh mục đề xuất hành động cụ thể kèm mức độ ưu tiên (`HIGH`, `MEDIUM`, `INFO`) và **lệnh PowerShell chuẩn xác để người dùng có thể chạy ngay**.
+Article Lane (`scripts/article_run.py`) là **đường xử lý duy nhất** từ 2026-09-23. Radar không đọc và không khuyến nghị gì thuộc lane L1/Gold cũ: `l1_tasks`, hàng đợi `work_items`, packet `data/agent_tasks/l1/`, `l1_route.py`, `l1_ingest.py --code-first`, `requeue.py`, `agent_l1`/`agent_gold`. Trước đó radar vẫn bảo phía điều phối "gọi Subagents Flash `l1_entity_matcher`". Lệnh ấy dẫn sai lane, và agent nào tuân thủ luật Radar-first đều bị dẫn sai theo.
 
 ---
 
-## 2. Quy Trình Vận Hành & Mô Hình Tư Duy (Thinking Order)
+## 1. Bất biến
 
-Khi Dev bắt đầu một phiên làm việc mới hoặc khi chu kỳ cào tin tự động kết thúc:
+1. **Một nguồn chân lý, chỉ đọc.** Radar đọc đúng DB mà bước nạp ghi vào (`src/db/preflight.resolve_db_path()`: biến môi trường `MONOCLE_DB_PATH`, rồi `settings.yaml`) qua kết nối `mode=ro`, cộng với tệp mô tả đợt `data/agent_tasks/article/wave_<mã>.json`.
+2. **Không suy đoán.** Mọi con số lấy từ DB hoặc từ tệp đợt. "Chờ phân tích" dùng **cùng câu truy vấn** với bước đóng gói (`article_pack.load_candidates`), nên đúng bằng số bài mà đợt kế tiếp sẽ lấy. Bản code-first (`l1_source = 'code_first'`) không tính là đã phân tích (ADR 0010).
+3. **Mỗi khuyến nghị là một lệnh chạy được ngay**, kèm mức ưu tiên `HIGH`/`MEDIUM`/`INFO`. Mọi lệnh chạy với cwd = `project/`.
+4. **Một đợt tại một thời điểm.** Đợt gần nhất chưa xong thì radar chỉ lệnh của đợt đó, không đề nghị mở đợt mới.
+5. **Token không phải cổng.** Radar không so token với ngưỡng nào và không khuyến nghị gì dựa trên token.
+
+---
+
+## 2. Thứ tự suy luận
 
 ```
-[Bắt đầu phiên] 
+[Bước 1: Hạ tầng]
+  ├── DB ghi được không (ghi thử một bảng trong giao dịch rồi rollback)
+  ├── Độ tươi cào tin, Bronze kẹt ở Silver, domain 404 bất thường
        │
        ▼
-[Bước 1: Quét Database & Hàng đợi Tệp tin]
-  ├── Đếm số bài cào trong ngày (articles)
-  ├── Đếm số bài đã có kết quả L1 hợp lệ (l1_outputs)
-  ├── Đếm số bài đã có kết quả Gold hợp lệ (agent_outputs)
-  └── Đếm số task packet / output json đang tồn đọng trên đĩa
+[Bước 2: Đợt Article Lane gần nhất — theo đúng vòng đời]
+  ├── Còn lô chưa có đầu ra           → chạy wave_<mã>.conductor.ts (hoặc .repair.ts) trong MỘT run_code
+  ├── Có bài gửi đi chưa nhận bản ghi → article_run.py --wave <mã> --repair
+  ├── Đủ bản ghi, DB dưới 90%         → article_run.py --wave <mã> --finish
+  └── Đã xong                          → sang bước 3
        │
        ▼
-[Bước 2: Đối chiếu Điểm Chạm Pipeline (Pipeline Phase Triage)]
-  ├── TH1: Có bài mới cào nhưng chưa chạy L1 -> Điểm chạm: Phase 1 (L1 Code-First)
-  ├── TH2: Có batch L1/Gold đang chờ Subagents -> Điểm chạm: Phase 2/4 (Invoke Subagents)
-  ├── TH3: Có output L1/Gold đã sinh nhưng chưa Ingest -> Điểm chạm: Phase 3/5 (DoD Ingest)
-  ├── TH4: Đã Ingest Gold xong nhưng chưa xuất Excel -> Điểm chạm: Phase 5 (Write User Deliverable)
-  └── TH5: Đã hoàn tất 100% -> Điểm chạm: Sẵn sàng đóng phiên (Stable State)
-       │
-       ▼
-[Bước 3: Xuất Báo Cáo Trinh Sát & Lệnh Đề Xuất Tiếp Theo]
+[Bước 3: Ngày đang xem]
+  ├── Còn bài chờ phân tích            → article_run.py --wave <mã-mới> --date <ngày> --limit <số chờ> --batch 100
+  ├── Có bài phân tích nhưng chưa giao, hoặc tệp giao cũ hơn kết quả mới nhất
+  │                                    → write_user_output.py --date <ngày>
+  └── Không còn gì                     → INFO, đóng phiên
 ```
 
 ---
 
-## 3. Bộ Công Cụ Cơ Học Thực Thi (Execution Tooling)
-
-Chuyên viên Radar sử dụng công cụ CLI chuẩn hóa được tích hợp sẵn trong dự án:
+## 3. Lệnh
 
 ```powershell
-# 1. Soi toàn diện trạng thái ngày hôm nay:
+# Trạng thái hôm nay:
 & "C:\venvs\news-scape\Scripts\python.exe" scripts/pipeline_radar.py status
 
-# 2. Soi trạng thái của một ngày cụ thể trong quá khứ:
+# Một ngày cụ thể:
 & "C:\venvs\news-scape\Scripts\python.exe" scripts/pipeline_radar.py status --date YYYY-MM-DD
+
+# Token và chi phí thật theo đợt:
+& "C:\venvs\news-scape\Scripts\python.exe" scripts/pipeline_radar.py token --wave <mã>
+
+# Đường dẫn, cwd, quyền ghi DB:
+& "C:\venvs\news-scape\Scripts\python.exe" scripts/article_run.py --where
 ```
 
 ---
 
-## 4. Cơ Chế Báo Cáo Mẫu (Canonical Radar Output)
+## 4. Báo cáo mẫu (chạy thật ngày 2026-09-23)
 
 ```text
 ================================================================================
- 🛰️  NEWS-SCAPE PIPELINE OBSERVABILITY & STATUS REPORT — [2026-09-14]
+ 🛰️  NEWS-SCAPE PIPELINE RADAR — ARTICLE LANE — [2026-09-23]
 ================================================================================
-1. DỮ LIỆU TẠI KHO (DATABASE & BRONZE/SILVER):
-   • Số bài cào xuất bản trong ngày : 320 bài
-   • Số bài đã hoàn tất tầng L1     : 764 bài
-   • Số bài đã hoàn tất tầng Gold   : 64 bài
-   • Bài Gold đủ điều kiện chờ phân tích (Subscriber-Gated): 0 bài
-   • Bài bị nguồn xóa (404/410) trước khi lấy được nội dung: 0 bài đăng hôm nay / 1 tổng tích lũy
-   • Độ tươi cào tin (Liveness)     : 🟢 Tươi mới (lần cào cuối lúc 14:21:57, cách đây 1 phút)
+1. DỮ LIỆU TẠI KHO
+   • Bài đăng trong ngày            : 372
+   • Đã phân tích (mô hình, đạt)    : 0/372 (0.0%) · nội dung đạt 0
+   • Chờ phân tích                  : 328 bài có gói Silver, chưa được mô hình phân tích (bản code-first không tính)
+   • Bài bị nguồn xóa (404/410)     : 0 bài đăng hôm nay / 1 tổng tích lũy
+   • Bronze kẹt ở Silver (ADR 0007) : 🟢 0 đang chặn watermark / 0 dead-letter
+   • Độ tươi cào tin                : 🟢 Tươi mới (cách đây 1 phút)
+   • Cơ sở dữ liệu                  : ✅ ghi được — C:\data\news-scape\monocle.db
 
-2. TRẠNG THÁI HÀNG ĐỢI FILE (TASK PACKETS & BATCHES):
-   • Tác vụ L1 đang chờ Subagents   : 0 files/batches
-   • Tác vụ Gold đang chờ Subagents : 0 files/batches
-   • Bài L1 đã xuất chưa Ingest DB  : 0 bài
-   • Bài Gold đã xuất chưa Ingest DB: 0 bài
+2. ĐỢT ARTICLE LANE GẦN NHẤT
+   • Mã đợt      : W365 (đóng gói 2026-09-21T17:35:31) · 365 bài · 5 lô gồm cả lô vá
+   • Đầu ra      : 5/5 lô · nhận 365/365 bài
+   • Vào DB      : nhận diện 361 (98.9%) · nội dung 364 (99.7%)
+   • Trạng thái  : đã xong
 
-3. ĐIỂM CHẠM VẬN HÀNH & ĐỀ XUẤT HÀNH ĐỘNG CỤ THỂ:
-   🟢 [INFO] Toàn bộ chuỗi vận hành ngày này đã hoàn tất 100% sạch sẽ. Deliverable đã sẵn sàng.
-      👉 Hành động: Không cần thao tác thêm. Hệ thống ở trạng thái ổn định.
-================================================================================
+3. ĐIỂM CHẠM & LỆNH KẾ TIẾP
+   🔴 [HIGH] 328 bài đăng ngày 2026-09-23 chờ phân tích.
+      👉 & "C:\venvs\news-scape\Scripts\python.exe" scripts/article_run.py --wave W09231659 --date 2026-09-23 --limit 328 --batch 100
 ```
 
-### 4b. Đọc đúng chỉ số "Bài bị nguồn xóa" (bổ sung 2026-09-17)
+Dòng `Cơ sở dữ liệu: ❌` trong phiên DSH gần như luôn là do sandbox `workspace-write` chặn ghi ra `C:\data\news-scape`. Xem mục 2b của `.agents/dsh/DSH-VIEC-THU-CONG.md`.
+
+### 4b. Đọc đúng chỉ số "Bài bị nguồn xóa"
 
 Chỉ số này hiển thị **hai con số** vì chúng trả lời hai câu hỏi khác nhau:
 
-- **"bài đăng hôm nay"** — lọc theo `date(published_at)`. Luôn thấp hơn thực tế, vì bài bị gỡ
-  thường được PHÁT HIỆN muộn hơn ngày đăng (đường retry làm việc với bài fetch trong 24h qua).
-- **"tổng tích lũy"** — mọi bài từng bị gắn cờ `source_deleted`. Đây là con số dùng để theo dõi
-  xu hướng.
+- **"bài đăng hôm nay"** lọc theo ngày đăng. Con số này luôn thấp hơn thực tế, vì bài bị gỡ thường được phát hiện muộn hơn ngày đăng.
+- **"tổng tích lũy"** là mọi bài từng bị gắn cờ `source_deleted`, dùng để theo dõi xu hướng.
 
-**Cảnh báo 404 giả**: khi một domain có **>10 bài** 404/410 **và** chiếm **>30%** số bài của domain
-đó trong ngày, radar đẩy mục `HIGH` đề nghị chạy `validate_capture.py <domain>`. Tăng vọt tập trung
-ở một domain hầu như luôn là **site đổi cấu trúc URL/selector**, không phải tin bị gỡ thật — đừng
-diễn giải thành "nguồn tin xóa bài nhiều".
+**Cảnh báo 404 giả.** Khi một domain có **hơn 10 bài** 404/410 **và** chiếm **hơn 30%** số bài của domain đó trong ngày, radar đẩy mục `HIGH` đề nghị chạy `validate_capture.py <domain>`. Tăng vọt tập trung ở một domain hầu như luôn là site đổi cấu trúc URL/selector, không phải tin bị gỡ thật.
 
 ---
 
-## 5. Quy Trình Bù Đắp Tin Đêm (Overnight Catch-up Protocol)
+## 5. Bù tin đêm
 
-Khi máy tính không phải server và bị Sleep qua đêm:
+Máy không phải server nên có thể sleep qua đêm, để lại khoảng trống runtime (trễ hơn 120 phút). Radar hiện nhãn `🔴 Gián đoạn / Khoảng trống đêm` và đẩy `HIGH`:
 
-- **Hiện tượng**: Khoảng trống runtime từ tối hôm trước đến sáng hôm sau (delay $> 120$ phút).
-- **Nhận diện tự động**: `pipeline_radar.py status` sẽ tự động hiển thị nhãn `🔴 Gián đoạn / Khoảng trống đêm` và nâng cảnh báo lên `[HIGH]`.
-- **Hành động xử lý tức thì**: Chạy lệnh cào vét bù tin:
-  ```powershell
-  & "C:\venvs\news-scape\Scripts\python.exe" scripts/run_once.py
-  ```
-- **Nguyên lý bảo toàn**: Các RSS feeds lưu trữ 20–50 tin gần nhất; khi chạy bù, toàn bộ bài trong đêm được kéo về Bronze, Silver tự động lọc trùng qua SimHash/watermark và gom thành bài mới an toàn 100%.
-
----
-
-## 6. Mẫu Prompt Mồi Chuẩn Hóa Cho Developer (Daily Activation Template)
-
-Khi bước sang ngày mới hoặc bắt đầu ca vận hành, người dùng gửi câu lệnh chuẩn hóa (Mẫu 2):
-
-```text
-Bắt đầu phiên ngày {YYYY-MM-DD}: Hãy dùng Radar kiểm tra điểm chạm pipeline, sau đó thực thi trọn vẹn chuỗi L1 (vật chất hóa Code-First trước để tiết kiệm token, phần còn lại gom mini-batches cho Subagents Flash xử lý có kiểm soát). Báo cáo tỷ lệ DoD và tổng lượng token tiêu thụ sau khi hoàn tất.
+```powershell
+& "C:\venvs\news-scape\Scripts\python.exe" scripts/run_once.py
 ```
 
-### Chuỗi Phản Xạ Tự Động Của Agent (Autonomous Execution Chain):
+RSS giữ 20–50 tin gần nhất, nên chạy bù kéo được toàn bộ bài trong đêm về Bronze. Silver tự lọc trùng qua SimHash và watermark.
 
-1. **Bước 1 — Định vị điểm chạm**: Chạy `& "C:\venvs\news-scape\Scripts\python.exe" scripts/pipeline_radar.py status --date {YYYY-MM-DD}`.
-2. **Bước 2 — Tiết kiệm token tối đa**: Chạy `& "C:\venvs\news-scape\Scripts\python.exe" scripts/l1_ingest.py --code-first` để giải quyết 60–70% bài cào với chi phí 0 token.
-3. **Bước 3 — Đóng gói mini-batches**: Gom các bài `needs_agent` còn lại thành các batch 25 bài/lô (`l1_batch_XX.task.json`).
-4. **Bước 4 — Triển khai Controlled Waves**: Kích hoạt Subagents Flash (`l1_entity_matcher`) theo từng đợt 2–3 batches (50–75 bài/đợt) chống lỗi 429 rate limit.
-5. **Bước 5 — Cổng kiểm định DoD & Archive**: Chạy `& "C:\venvs\news-scape\Scripts\python.exe" scripts/l1_ingest.py data/agent_outputs_l1`, tự động nạp DB và di chuyển task packets vào `data/agent_tasks/l1/archive/<YYYYMMDD>/`.
-6. **Bước 6 — Báo cáo nghiệm thu & Telemetry**: Chạy `& "C:\venvs\news-scape\Scripts\python.exe" scripts/pipeline_radar.py token --date {YYYY-MM-DD}` báo cáo số token thực tế và tỷ lệ đạt chuẩn DoD cho Developer.
+---
+
+## 6. Mẫu prompt mồi đầu ngày
+
+```text
+Bắt đầu phiên ngày {YYYY-MM-DD}: chạy radar, rồi làm đúng lệnh radar in ra cho tới khi radar báo INFO.
+Báo cáo độ phủ lấy từ bảng hậu kiểm của đợt, token lấy từ sổ cái (--workers-only).
+```
+
+Chuỗi phản xạ: radar → lệnh HIGH đầu tiên → radar lại. Không tự ghép chuỗi lệnh khác, không đọc mã nguồn để suy ra hợp đồng. Câu hỏi nào radar và `article_run.py --where` chưa trả lời được thì báo thiếu lệnh.

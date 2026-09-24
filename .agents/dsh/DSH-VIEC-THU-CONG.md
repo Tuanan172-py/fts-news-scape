@@ -43,6 +43,20 @@ Get-Content "$env:USERPROFILE\.dsh\settings.yaml" | Select-String "default:|reas
 
 Sai preset còn làm vỡ cache theo một đường riêng: bộ tool khác nhau thì system prompt khác nhau, nên tiền tố không còn giống đợt trước.
 
+## 2b. Duyệt `danger-full-access` cho bước ghi DB — **bắt buộc, mỗi đợt**
+
+DB vận hành nằm ở `C:\data\news-scape\monocle.db`, ngoài kho mã (đo ngày 23/09 bằng lệnh kiểm bên dưới). Sandbox `workspace-write` chặn ghi ra ngoài kho, và **không có cấu hình nào mở rộng được**: `writableRoots()` của `dsh-sandbox` chỉ gồm workspace root (cwd bất biến của phiên) và thư mục tạm. Bản ghi ngày 23/09 trước đó từng hướng dẫn "thêm vào writable roots"; hướng dẫn ấy sai.
+
+Việc tay thật sự: duyệt `danger-full-access` khi phiên điều phối chạy `article_run.py --finish` và `write_user_output.py`. Radar, chuẩn bị đợt, chạy mô hình và `--repair` không cần quyền này.
+
+Kiểm bằng máy, đừng đoán:
+
+```powershell
+& "C:\venvs\news-scape\Scripts\python.exe" scripts/article_run.py --where   # dòng "DB ghi: ✅/❌" của đúng phiên đang chạy
+```
+
+Thiếu quyền thì `--finish` dừng trước khi nạp, in ❌ kèm lệnh chạy lại và thoát 1. Không token nào mất, vì đầu ra của mô hình đã nằm trên đĩa. Trước 23/09, cùng lỗi này làm đợt W365 in "HOÀN TẤT" trong khi DB trống, và mất sáu bước chẩn đoán vì SQLite chỉ báo `attempt to write a readonly database`.
+
 ## 3. Nạp lại DSH sau khi sửa preset — **bắt buộc**
 
 Preset được nạp lúc mount. Sửa `agent.cordis.yml` xong mà không khởi động lại thì phiên đang mở vẫn chạy bản cũ — và tệ hơn, hai phiên chạy hai bản persona khác nhau sẽ trượt cache của nhau.

@@ -2,52 +2,30 @@
 
 <!-- Step 9 handoff. OVERWRITE this (never append) at the end of every session. Keep to one screen. -->
 
-- **Updated:** 2026-09-18 (Article Lane — triển khai trọn bộ, chưa chạy workload thật)
-- **Điểm vào:** `plans/20260918-1651-article-lane-unified/plan.md` là **tài liệu quy phạm duy nhất**
-- **Vận hành:** `.agents/dsh/RUNBOOK-article-lane.md`
-- **Bối cảnh lớp code-first:** `docs/CODE-FIRST-LANDSCAPE.md` (lập 2026-09-21) — bản đồ codebase, số đo thật, 5 nhóm vấn đề, 8 hướng dư địa; đọc trước khi phát triển tiếp tầng nhận diện tất định
+- **Updated:** 2026-09-23 (US-025, US-026, US-027 — Article Lane là đường duy nhất, ADR 0010)
+- **Điểm vào vận hành:** `pipeline_radar.py status` → chạy đúng lệnh HIGH nó in ra. Đường dẫn/quyền ghi: `article_run.py --where`
+- **Nguồn quy phạm:** `AGENTS.md` §6 (đã viết lại) · `docs/decisions/0010-…` · `.agents/dsh/RUNBOOK-article-lane.md` · skill `dsh-conductor`
 
 ## Đã làm trong phiên này
 
-Gộp hai tầng L1 và Gold thành **một agent, một bước cho cả lô**. Ba vòng audit trước đó cho ra ba plan; phiên này hợp nhất chúng thành một, chốt sáu quyết định, rồi triển khai toàn bộ.
-
-**Vá bốn khiếm khuyết P0 đang sống** (xác minh trực tiếp trong mã nguồn DSH, không suy đoán):
-
-| # | Sự thật | Hệ quả đã xảy ra |
-|:-:|---|---|
-| P0-1 | `maxDepth: 0` **cấm delegation hoàn toàn**, không phải chặn đệ quy | `agent_l1` và `agent_gold` **chưa bao giờ spawn được** kể từ khi preset ra đời |
-| P0-2 | `run_code` được chèn **sau** lớp lọc `toolFilter`, và `restrict()` ném lỗi nếu cố đặt tên nó | Con PTC không bao giờ đạt "0 tool"; tiêu chí đúng là SDK rỗng và `turns == 1` |
-| P0-3 | Row subagent có đúng 9 khoá, **không có `mode`** | Không thể cho con chạy `native`; Conductor buộc giữ `ptc` |
-| P0-4 | Bộ cắt kết quả công cụ **không đăng ký listener nào** | Không có gì cắt ngữ cảnh trước ngưỡng nén 80% |
-
-**Mã mới** — tất cả 0 token: `article_run.py` (gộp cả đợt vào một lệnh), `article_pack.py`, `article_expand.py`, `build_article_prefix.py`, `token_ledger.py`, `estimate_wave.py`, `ctx_probe.py`, `handoff.py`, `src/telemetry/dsh_usage.py`, `src/agent/distill.py`, `src/agent/intent_resolve.py`.
-
-**Bằng chứng đã đo, không phải ước lượng:**
-
-| Hạng mục | Kết quả |
+| Story | Kết quả |
 |---|---|
-| Sáu luật kế toán token | Đối soát trên phiên thật, **đều đạt** |
-| Chắt lọc đoạn trên 200 bài thật | **0 lỗi nguyên văn**, trung bình 786 token/bài từ 1.414 |
-| Cổng nghiệm thu L1 trên 100 bài | **100/100 đạt** |
-| Trích dẫn theo chỉ số đoạn | **0 lỗi**, đúng nguyên văn do cấu trúc |
-| Cứu bản ghi khi đầu ra hỏng | 100 bản ghi cứu được dù phần tử cuối cố tình hỏng |
-| Ngữ cảnh đỉnh, lô 100 bài | **12,3%** của cửa sổ, khớp dự đoán 12,2% |
-| Bộ kiểm định | 32 test mới cho Article Lane |
+| US-025 | `--finish` hết nuốt lỗi (❌ + exit 1 + lệnh `--only`), hậu kiểm theo tập bài của đợt, `readPacket` đọc object `lines[]` và đọc hết packet trước khi gọi mô hình, `--where`, radar chỉ Article Lane, sổ cái `--workers-only`, `L1Runner` tự ghi `l1_tasks route=article_lane` |
+| US-026 | **Token chỉ ghi nhận**: bỏ mọi ngưỡng/cảnh báo token. Gỡ row `agent_l1`/`agent_gold` khỏi preset. Nhiễu: `--finish` chỉ bung/nạp tệp `article_<mã>_*`; bỏ job `l1_route` + `--code-first` khỏi `morninger`; bộ chọn bài không coi bản code-first là đã phân tích; 38 mục tồn chuyển sang `project/data/archive/legacy-lane-20260923/` (có `MANIFEST.json`) |
+| US-027 | ADR 0010 accepted; `AGENTS.md` §2/§3/§6/§8, `registry.yaml` (4 agent → `retired`), `pipeline.yaml` v2 (bỏ 6 stage lane cũ) |
 
-**Đính chính một chỗ plan nói sai:** quy tắc "bắt buộc compact JSON" suy diễn sai chiều. Giới hạn thật của công cụ đọc là 2.000 ký tự **mỗi dòng** và 51.200 byte **mỗi lần gọi**, nên compact dồn cả packet vào một dòng 267 nghìn ký tự sẽ mất 99,3% nội dung. Quy tắc đúng là **không dòng nào vượt trần**, đạt được bằng cách tách nội dung thành mảng đoạn rồi ghi xuống dòng theo phần tử. Đoạn dài nhất đo trên 4.493 đoạn thật chỉ 954 ký tự.
+**Quyền ghi DB (đính chính):** DSH không có cấu hình mở rộng quyền ghi — `writableRoots()` chỉ gồm workspace root + thư mục tạm. `--finish` và `write_user_output.py` chạy với `danger-full-access`; radar, chuẩn bị đợt, chạy mô hình, `--repair` chạy dưới `workspace-write`. Chốt quyền ghi chỉ nằm ở `--finish` (trước bước nạp); nửa chuẩn bị chỉ in ⓘ.
 
-## Dọn dẹp đã làm
-
-Quá trình kiểm chuỗi có nạp dữ liệu mô phỏng vào cơ sở dữ liệu vận hành. **Đã dọn sạch**: 214 bản ghi nhận diện, 220 bản ghi nội dung, 5 tệp Excel và các mục checkpoint tương ứng. Sao lưu cơ sở dữ liệu trước khi xoá tại `C:/data/news-scape/monocle.db.bak-20260918T172336`. Đã xác nhận không còn dấu vết.
+Số thật: W365 nhận diện **365/365**, nội dung **364/365**; nạp W365 `failed=0` (trước 123). Worker W365 ~2.850 token/bài (chỉ ghi nhận). `pytest tests/` **517 passed**. Trace 74–76.
 
 ## Next Steps
 
-1. **Dán prefix vào preset.** Chép trọn `project/data/prefix/ARTICLE_SYSTEM_CORE.md` vào trường `persona` của row `tool-subagent-article`. Đây là việc thủ công duy nhất còn lại.
-2. **Chạy thử một đợt nhỏ** trên DSH, ví dụ `--limit 100 --batch 50`, rồi đọc `estimate_wave.py --wave <mã>` để xem sai số dự toán.
-3. **Canh bốn dấu hiệu** ở §2 của runbook: `turns_max`, `reasoning`, token mỗi bài, áp suất ngữ cảnh.
-4. Sau một chu kỳ chạy sạch mới dọn đường cũ và mở chiến dịch backlog **2.118 bài**.
+1. **Khởi động lại `morninger`** (2 cặp tiến trình chạy từ 17/09 bằng mã cũ, còn job `l1_route`). Không tự tắt vì là tiến trình cào tin.
+2. Chạy đợt hôm nay theo lệnh radar (23/09: 345 bài chờ).
+3. **Backlog 2.915 bài 10–17/09** nay đã hiện ở hàng chờ (ví dụ `radar status --date 2026-09-15`: 254 bài). Chạy hay không là quyết định vận hành.
 
 ## Việc còn treo
 
-- `leaders.yaml` cho nhóm tên người chưa có. Nhóm này hiện luôn rơi vào ngoài danh mục, **đúng thiết kế**: giai đoạn đầu nó là cơ chế thu thập dữ liệu, không phải cơ chế nhận diện. Đo bằng số tên thu được, không đo bằng tỷ lệ tra cứu.
-- Amendment ADR 0008 gỡ cổng xác nhận: đã soạn nội dung trong plan §8, chưa ghi vào tệp ADR.
+- Chưa commit: toàn bộ thay đổi US-025…027 trên nhánh `feature/article-lane-remove-gates`. `docs/proposals/agy-*` không thuộc phiên này.
+- Audit còn 2 mục có từ trước: 2 tệp xung đột OneDrive, cụm cấm ở `src/monitor/daily_reporter.py:389`.
+- `leaders.yaml`, amendment ADR 0008 (nay phần trần token đã hết hiệu lực theo ADR 0010).

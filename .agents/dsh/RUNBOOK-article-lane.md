@@ -3,7 +3,7 @@
 |  |  |
 | --- | --- |
 | Áp dụng từ | 2026-09-18 |
-| Thay thế | Quy trình L1 → Gold hai tầng trong `RUNBOOK.md`. Quy trình cũ giữ lại để quay lui |
+| Thay thế | Quy trình L1 → Gold hai tầng. Lane cũ ngừng hẳn từ 2026-09-23, xem §5 |
 | Thiết kế | `plans/20260918-1651-article-lane-unified/plan.md` |
 | Lưu đồ vận hành | [`WORKFLOW-article-lane.md`](WORKFLOW-article-lane.md) — sáu lưu đồ: toàn cảnh đợt, trình tự gọi, bên trong chương trình điều phối, vòng đời token, cây quyết định sự cố, ranh giới máy/LLM/người |
 | Bề mặt DSH | `docs/proposals/dsh-surface-verified-2026-09-18.md` |
@@ -57,7 +57,19 @@ cd project
 
 Lệnh này kiểm prefix, đóng gói packet, in dự toán và sinh sẵn chương trình điều phối. Nó **không gọi mô hình**.
 
-**`--batch` là cổng chia lô duy nhất.** Không trần token nào can thiệp. Đặt `--limit 100 --batch 100` thì được đúng một lượt gọi cho trọn trăm bài.
+**`--batch` là cách chia lô duy nhất, và mặc định là tự chọn.** Bỏ hẳn cờ này thì đợt tự tính cỡ lô theo số bài thật: `batch = clamp(ceil(số_bài / 10), 100, 500)`.
+
+Công thức giữ số lô bằng đúng `maxParallelSubCalls` mặc định của DSH là 10, nên mọi đợt tới 5.000 bài chạy trọn trong **một sóng song song**. Ít lô hơn thì bỏ phí năng lực song song; nhiều hơn thì các lô dôi ra phải chờ hết một sóng, mà thời gian đợt do lượt dài nhất quyết định.
+
+| Số bài | Cỡ lô tự chọn | Số lô | Sóng |
+| --: | --: | --: | --: |
+| 415 · 455 | 100 | 5 | 1 |
+| 1.000 | 100 | 10 | 1 |
+| 2.000 | 200 | 10 | 1 |
+| 5.000 | 500 | 10 | 1 |
+| 10.000 | 500 | 20 | 2 |
+
+Cận dưới 100 chặn chia vụn: lô vài bài vẫn tốn trọn một lượt gọi và một lần trả giá tiền tố. Cận trên 500 chặn lô quá dài: bản ghi cuối lô được sinh trong ngữ cảnh đã chứa toàn bộ bản ghi trước đó nên phần đuôi dễ trôi. Đặt `--batch <n>` cứng khi muốn ép một cách chia cụ thể.
 
 Ba cổng từng chia lô hộ bạn đã gỡ hết ngày 21/09: `maxTokens` trong preset, bộ chia theo ngân sách đầu ra, và trần ngữ cảnh 25%. Lý do gỡ nằm ở §16 của plan. Tóm tắt: ngữ cảnh chưa bao giờ là ràng buộc — trăm bài chiếm 25% cửa sổ kể cả khi đọc trọn nội dung. Còn trần đầu ra thật của DSH là **256.000 token mỗi request** (`DEFAULT_MAX_TOKENS = 256e3`, con kế thừa của cha khi row không đặt gì), trong khi trăm bài chỉ cần khoảng 90.000. Con số 40.000 cũ là do **dự án tự đặt**, không phải của nhà cung cấp.
 
@@ -91,7 +103,19 @@ Ba trạng thái, mỗi trạng thái một câu trả lời riêng: **chưa lô
 & "C:\venvs\news-scape\Scripts\python.exe" scripts/article_run.py --wave W01 --finish
 ```
 
-Lệnh này bung bản ghi, nạp cơ sở dữ liệu, ghi sổ cái token, sinh tệp bàn giao và đo áp suất ngữ cảnh.
+Lệnh này bung bản ghi, nạp cơ sở dữ liệu, hậu kiểm, ghi sổ cái token, sinh tệp bàn giao và đo áp suất ngữ cảnh.
+
+**Chỉ tin dòng kết và mã thoát.** Đợt xong khi lệnh thoát 0 và in `✅ ĐỢT <mã> HOÀN TẤT`. Có ba trường hợp in `❌ ĐỢT <mã> CHƯA HOÀN TẤT` và thoát 1:
+
+- DB không ghi được, phát hiện **trước** khi nạp.
+- Một lệnh nạp trả mã khác 0.
+- Hậu kiểm thấy độ phủ của đợt dưới 90% ở một trong hai lớp.
+
+Khung ❌ in sẵn đúng lệnh chạy lại. Ví dụ `--finish --only ingest,verify,ledger,handoff` chỉ chạy lại các bước từ nạp trở đi, không bung lại bản ghi và không ghi thừa dòng sổ cái. Tên bước hợp lệ: `expand`, `ingest`, `verify`, `ledger`, `handoff`.
+
+Trước 23/09, hai lệnh nạp chạy với `check=False`. Đợt W365 vì thế in "HOÀN TẤT" và thoát 0 trong khi DB chưa nhận dòng nào. Lần nạp tay sau đó còn bỏ sót 31 bài.
+
+Độ phủ phải đọc ở **bảng hậu kiểm**, vì bảng ấy đếm theo đúng tập bài trong bảng ánh xạ của đợt. Dòng `ingested: done=… failed=…` của hai lệnh nạp là số cộng dồn trên cả thư mục, gồm cả tệp tồn của lane cũ.
 
 ### 1.5 Giao hàng
 
@@ -105,7 +129,26 @@ Lệnh này in luôn thư mục đã ghi. Cần biết đường dẫn mà chưa
 & "C:\venvs\news-scape\Scripts\python.exe" scripts/write_user_output.py --where
 ```
 
-Thư mục giao hàng nằm ở **gốc kho**, không nằm trong `project/`. Đừng đi dò bằng cách đọc mã nguồn hay liệt kê thư mục: vệt ngày 21/09 tốn sáu bước mô hình chỉ để tìm lại đúng một đường dẫn mà lệnh trên in ra tức thì.
+Script nằm trong `project/scripts/` như mọi script khác, chạy với cwd = `project/`. Chỉ **thư mục đầu ra** `users/output/` là nằm ở gốc kho. Đừng đi dò bằng cách đọc mã nguồn hay liệt kê thư mục.
+
+### 1.6 Hợp đồng đường dẫn và quyền ghi — một lệnh, 0 token
+
+```powershell
+& "C:\venvs\news-scape\Scripts\python.exe" scripts/article_run.py --where
+```
+
+In python, cwd chuẩn, đường dẫn DB kèm kết quả **ghi thử thật** (ghi một bảng trong giao dịch rồi rollback), thư mục packet, thư mục đầu ra, tệp bàn giao, thư mục giao hàng và preset. DB không ghi được thì lệnh thoát 1 và nói thẳng nguyên nhân.
+
+**Quyền ghi DB.** DB vận hành nằm ở `C:\data\news-scape\monocle.db`, **ngoài** kho mã. Sandbox `workspace-write` của DSH chặn ghi ra ngoài kho, và không có cấu hình nào mở rộng được: `writableRoots()` của `dsh-sandbox` chỉ gồm workspace root và thư mục tạm. SQLite khi ấy chỉ báo `attempt to write a readonly database`, nghe như lỗi thuộc tính tệp.
+
+Phân quyền theo bước:
+
+| Bước | Quyền |
+|---|---|
+| Radar, chuẩn bị đợt, chạy mô hình, `--repair` | `workspace-write` là đủ: chỉ đọc DB và ghi tệp trong kho |
+| `--finish`, `write_user_output.py` | `danger-full-access` |
+
+Thiếu quyền ở bước chuẩn bị thì lệnh chỉ in dòng ⓘ nhắc trước, không chặn. Thiếu quyền ở `--finish` thì lệnh dừng trước khi nạp, in ❌ và thoát 1. Không token nào bị mất, vì đầu ra của mô hình đã nằm trên đĩa: chạy lại `--finish` với đúng quyền là xong.
 
 ---
 
@@ -120,13 +163,14 @@ Thư mục giao hàng nằm ở **gốc kho**, không nằm trong `project/`. Đ
 
 `radar token` nay đọc thẳng sổ cái và checkpoint phiên DSH. Trước 21/09 nó nhân số bài với hai định mức chết 450 và 1.470 token mỗi bài rồi nhân tiếp với một đơn giá gõ trong mã, không biết bộ nhớ đệm tồn tại — nên nó và sổ cái đưa ra hai con số khác nhau cho cùng một đợt. Con số của nó khi ấy phải bỏ hết, đừng đem so với bất cứ báo cáo cũ nào.
 
-Bảy dấu hiệu cần xử lý ngay:
+**Token là số ghi nhận, không phải cổng.** Không có giới hạn hay mức cảnh báo token nào, theo bài, theo lô hay theo đợt. Sổ cái và `radar token` ghi token và USD để người dùng tự đánh giá, tự ước lượng. Không dừng đợt, không giảm số bài, không chia nhỏ lô vì token. Số tham chiếu đo ở W365, chỉ tính phiên worker: khoảng 2.850 token quota mỗi bài.
+
+Các dấu hiệu kỹ thuật cần xử lý ngay:
 
 | Dấu hiệu | Nghĩa là gì | Làm gì |
 |---|---|---|
 | `turns_max > 1` | Worker không xong trong một bước, nó đã sa vào viết chương trình | Soi lại phần đầu persona: đoạn tuyên bố không có tool phải đứng trước và phải rõ |
 | `reasoning > 0` | Chế độ suy luận chưa tắt, đang tính tiền theo giá đầu ra | Đặt `reasoningEffort: "off"` cho row worker — **phải có dấu nháy**, vì YAML đọc `off` trần thành boolean `false` chứ không thành chuỗi |
-| `token/bài` vượt 2.500 | Hoặc mốc quy kết quá rộng nên gộp nhầm phiên khác, hoặc packet quá dày | Kiểm số phiên được gộp trong dòng sổ cái trước, rồi mới soi histogram của `article_pack`. Mức bình thường đo được khoảng 1.980 |
 | Lô trả về thiếu bài | Lượt đó bị cắt cụt | `--repair` đóng gói lại đúng phần thiếu. Đừng chia nhỏ mọi lô để phòng xa |
 | `output_tokens` nhiều lượt bằng nhau y hệt | Đã chạm một trần nào đó | Ghi lại con số. Nếu là 256.000 thì đó là mặc định DSH; nếu khác thì có cấu hình nào khác đang đè |
 | Áp suất vàng hoặc đỏ | Ngữ cảnh phiên đã phình | Đọc bàn giao, **đóng phiên**, mở phiên mới |
@@ -152,14 +196,23 @@ Phiên mới chỉ cần đọc tệp đó rồi chạy tiếp. Mất phiên gi�
 | `article_pack` báo dòng quá dài | Có đoạn văn vượt trần cắt dòng của công cụ đọc | Hạ `MAX_PARAGRAPH_CHARS` trong `src/agent/distill.py` rồi đóng gói lại |
 | Prefix báo lệch danh mục | Danh mục thực thể đã đổi | Sinh lại prefix và dán lại vào persona. Bỏ qua là vỡ bộ nhớ đệm |
 | Persona báo lệch prefix | Dán thiếu, dán thừa, hoặc trình soạn thảo tự thụt lề lại khối YAML | Dán lại trọn nội dung tệp prefix, rồi `--check-preset` để xác nhận. Đây là lỗi duy nhất không có triệu chứng nào ngoài hoá đơn |
-| Sổ cái báo con số vô lý | Mốc quy kết gộp nhầm phiên DSH khác đang mở | Đóng các phiên không liên quan trước khi chạy đợt |
+| Sổ cái báo con số vô lý | Dòng sổ cái ghi không có `--workers-only` nên gộp cả phiên điều phối | `--finish` đã tự truyền cờ này từ 23/09. Dòng cũ hơn thì đọc với dè dặt |
+| `DB không ghi được … readonly` | Sandbox workspace-write chặn ghi ra `C:\data\news-scape`; không cấu hình nào mở rộng được | Chạy lại đúng lệnh khung ❌ in ra, với `danger-full-access`. Kiểm bằng `article_run.py --where` |
+| Chương trình điều phối trả `stopped` | Đọc packet hỏng; chưa lượt gọi mô hình nào chạy | Báo nguyên văn `failed[].why`. Không sửa tay tệp `.ts`: lỗi phải vá ở `conductor_program()` trong `article_run.py` |
+| Bài có bản ghi mà nhận diện bị loại `no l1_task` | Bài đi thẳng từ Article Lane chưa từng qua định tuyến L1 | Đã vá 23/09: `L1Runner` tự ghi dòng `l1_tasks` với `route=article_lane`. Còn gặp thì bài không tồn tại trong `articles` |
 
 ---
 
-## 5. Quay lui về đường cũ
+## 5. Lane L1/Gold cũ đã ngừng
 
-Đường L1 → Gold cũ vẫn gọi được: `agent_l1` và `agent_gold` còn trong preset, packet cũ chưa bị xoá, và các stage cũ chỉ bị đánh dấu ngừng dùng chứ không gỡ.
+W365 (21/09) là chu kỳ vận hành đầy đủ đầu tiên chạy sạch trên Article Lane, nên lane cũ ngừng hẳn từ 23/09. Radar và bàn giao không còn đọc hay khuyến nghị gì thuộc lane cũ. Không gọi `agent_l1`, `agent_gold`, `l1_route.py`, `l1_ingest.py --code-first` hay `requeue.py`.
 
-Điều kiện quay lui định lượng: tỷ lệ đạt cổng nghiệm thu dưới 95% **hoặc** tỷ lệ hỏng trên 10%, kéo dài **hai đợt liên tiếp**.
+Việc dọn dẹp đã làm ngày 23/09 (ADR 0010):
 
-Chỉ dọn đường cũ sau khi đường mới chạy sạch trọn một chu kỳ vận hành đầy đủ.
+- Gỡ row `agent_l1`/`agent_gold` khỏi preset. `agent_article` là agent con duy nhất.
+- Gỡ job `l1_route` + `l1_ingest --code-first` 15 phút khỏi `morninger`. **Tiến trình `morninger` đang chạy phải khởi động lại** thì mới dừng job này.
+- Bộ chọn bài không còn coi bản code-first là đã phân tích. 2.915 bài ngày 10–17/09 từng kẹt vì điều này nay quay lại hàng chờ, xem được bằng `radar status --date <ngày>`.
+- `--finish` chỉ bung và nạp tệp `article_<mã>_*` của đúng đợt. Dòng `ingested: done/failed` giờ là số của đợt.
+- Tệp tồn đã chuyển (không xoá) sang `data/archive/legacy-lane-20260923/`, kèm `MANIFEST.json` ghi cách hoàn tác: 411 packet `agent_tasks/l1/`, 11 tệp `l1_batch_*`, 21 tệp `batch_*` và manifest Gold cũ.
+
+Các dòng `l1_tasks` cũ trong DB được giữ làm lịch sử. Radar và bàn giao không đọc bảng này.

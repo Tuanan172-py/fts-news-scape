@@ -7,10 +7,11 @@
 
 | Đường dẫn | Vai trò |
 |---|---|
-| `presets/news-scape-conductor/` | Preset conductor: persona, PTC, `agent_l1`, `agent_gold`, skill |
+| `presets/news-scape-conductor/` | Preset conductor: persona, PTC, `agent_article`, skill. Row `agent_l1`/`agent_gold` còn trong tệp nhưng lane ấy đã ngừng từ 23/09 |
 | `presets/news-scape-conductor/skills/dsh-conductor/` | Skill điều phối (nạp qua `customSkillDirs` của preset) |
 | `patch/web.cordis.patch.yml` | Bản nguồn patch profile (dùng khi khởi động host sạch; xem §Wiring) |
-| `RUNBOOK.md` | Định hướng thực thi toàn bộ quy trình 17/09 trên Conductor |
+| `RUNBOOK-article-lane.md` | **Quy trình vận hành hiện hành** — Article Lane |
+| `RUNBOOK.md` | Bản thiết kế vận hành Article Lane ngày 18/09, giữ làm lịch sử |
 
 ## Quyết định đã chốt (2026-09-17)
 
@@ -45,7 +46,7 @@ Root là `<repo>\.agents\dsh\presets` — thư mục **thật** chứa `news-sca
 
 ## Ranh giới 2-I/O
 
-`agent_l1`/`agent_gold` đều khai `toolFilter.allow: [read, write]` — khớp `tools_allowed` trong registry. Mọi tool khác (grep/glob/edit/pwsh/web/skill) biến mất khỏi prompt của con và bị từ chối thực thi. Con đọc skill chuyên trách bằng `read`.
+Worker `agent_article` chạy trả lời thẳng trong một bước, không gọi tool nào (xem P0-2 của plan Article Lane về tiêu chí "SDK rỗng và `turns == 1`"). Phiên điều phối tự đọc packet trong chương trình `run_code` rồi truyền nội dung vào prompt. Row `agent_l1`/`agent_gold` với `toolFilter.allow: [read, write]` thuộc lane cũ đã ngừng.
 
 ## Trạng thái
 

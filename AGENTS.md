@@ -24,9 +24,9 @@ At most **one** story `in_progress` at a time. If an urgent request interrupts, 
 ## 2. OKF — where to get product context (priority order)
 
 Read these before inventing context; do NOT create a new knowledge folder:
-0. `.agents/registry.yaml` + `.agents/pipeline.yaml` — **nguồn chân lý** cho mạng lưới tác nhân (ai tồn tại, class operator/cognitive/conductor, ranh giới I/O, DoD, KPI) và DAG điều phối. **Chạy thế nào mỗi ngày:** `.agents/AGENT_RUNBOOK.md`. Thiết kế & lý do: `.agents/AGENT_NETWORK_DESIGN.md`. Quy tắc tăng trưởng: `.agents/rules/07-agent-registry-governance.md`.
+0. `.agents/registry.yaml` + `.agents/pipeline.yaml` — **nguồn chân lý** cho mạng lưới tác nhân (ai tồn tại, class operator/cognitive/conductor, ranh giới I/O, DoD, KPI) và DAG điều phối. **Chạy thế nào mỗi ngày:** `.agents/dsh/RUNBOOK-article-lane.md` (Article Lane trên DSH, preset `news-scape-conductor`). Thiết kế Article Lane: `plans/20260918-1651-article-lane-unified/plan.md`; quyết định ngừng lane L1/Gold: `docs/decisions/0010-ngung-lane-l1-gold-article-lane-duy-nhat.md`. Quy tắc tăng trưởng: `.agents/rules/07-agent-registry-governance.md`.
 
-1. `.agents/skills/*` — operational, matching, multi-agent swarm & governance skills (`pipeline-radar`, `watchlist-curator`, `token-auditor`, `dod-gatekeeper`, `multi-agent-orchestrator-governance`, `news-scape-agent-operations`, `l1-entity-matcher`, `gold-financial-analyst`; agent đặc nhiệm draft: `story-dedup-clusterer`, `materiality-triage`, `entity-curator`, `adversarial-dod-verifier`, `daily-brief-synthesizer`, `harness-auditor`).
+1. `.agents/skills/*` — operational & governance skills: `pipeline-radar`, `dsh-conductor` (trong `.agents/dsh/presets/news-scape-conductor/skills/`), `watchlist-curator`, `token-auditor`, `dod-gatekeeper`, `multi-agent-orchestrator-governance`, `l1-entity-matcher` (kiến thức nhận diện thực thể của `article-processor`); agent đặc nhiệm draft: `story-dedup-clusterer`, `entity-curator`, `adversarial-dod-verifier`, `daily-brief-synthesizer`, `harness-auditor`. Skill `gold-financial-analyst` và `news-scape-agent-operations` mô tả lane L1/Gold đã ngừng (ADR 0010), chỉ còn giá trị tham khảo.
 2. `project/docs/skills/*` — per-domain scraper knowledge (cafef, fireant, rss-sources, tnck).
 3. `project/docs/{design,dev,domains,operations}/` — architecture, how-tos, source taxonomy, ops.
 4. `project/docs/charter.md` + `project/docs/ARCHITECTURE.md` — goals, phases, TDRs.
@@ -48,7 +48,15 @@ python -m src.morninger            # daytime pipeline (capture + re-derive Silve
 python scripts/run_once.py         # one cycle
 python -m pytest tests/ -v         # tests
 python -m src.monitor.health       # health check
+
+python scripts/pipeline_radar.py status                  # điểm chạm + đúng một lệnh kế tiếp
+python scripts/article_run.py --where                    # đường dẫn, cwd, quyền ghi DB (0 token)
+python scripts/article_run.py --wave <mã> --date <ngày> --limit <n> --batch 100   # chuẩn bị đợt
+python scripts/article_run.py --wave <mã> --finish       # bung, nạp, hậu kiểm, sổ cái, bàn giao
+python scripts/write_user_output.py --date today         # giao hàng
 ```
+
+Mọi lệnh `scripts/...` chạy với cwd = `project/`. DB vận hành nằm ở `C:\data\news-scape\monocle.db`, ngoài kho mã. Sandbox `workspace-write` của DSH không mở rộng được ra ngoài kho, nên `--finish` và `write_user_output.py` chạy với `danger-full-access`. Chuẩn bị đợt và chạy mô hình không cần quyền này.
 
 ## 4. Harness map (read as the phase needs — bounded context)
 
@@ -66,7 +74,7 @@ python -m src.monitor.health       # health check
 | [docs/IMPROVEMENT_PROTOCOL.md](docs/IMPROVEMENT_PROTOCOL.md) | Closed-loop propose & outcome measurement.                                                     |
 | [docs/TEST_MATRIX.md](docs/TEST_MATRIX.md)                   | Proof vocabulary & live proof table query.                                                     |
 | [docs/SESSION-LATEST.md](docs/SESSION-LATEST.md)             | "Where am I, what next" — read at start, overwrite at end.                                    |
-| [docs/OPEN-ITEMS.md](docs/OPEN-ITEMS.md)                     | Việc tồn đọng tuyến L1 → giao hàng: mục CHẶN, bước triển khai, quyết định treo. |
+| [docs/OPEN-ITEMS.md](docs/OPEN-ITEMS.md)                     | Việc tồn đọng trên đường giao hàng: mục CHẶN, bước triển khai, quyết định treo. |
 
 ## 5. Harness CLI (Durable Layer H2-H5)
 
@@ -82,34 +90,38 @@ Maturity: this harness is at **H2-H5 (Durable SQLite + Active Observability + Au
 
 ## 6. Core Architecture Boundaries & Invariants (Scope Định vị Toàn Dự Án)
 
-### A. Ranh giới Phân công Nghiệp vụ (Scripts Automate vs Gold Agents)
+**Article Lane là đường xử lý duy nhất (ADR 0010, 2026-09-23).** Lane L1/Gold hai tầng (`l1_route` → `agent_l1` → `agent_export` → `agent_gold`) đã ngừng hẳn: không còn trong preset, scheduler, radar hay pipeline. Không gọi `l1_route.py`, `l1_ingest.py --code-first`, `agent_export.py` hay `requeue.py`.
 
-1. **Hạ tầng Scripts Automate (0 Token • Tốc độ Tức thì)**:
-   - **Bronze**: Cào mã nguồn và lưu trữ nguyên bản bất biến (`raw_html` + `.meta.json`) phục vụ audit và kiểm chứng SHA256.
-   - **Silver**: Chuẩn hóa DOM, tính SimHash biến đổi và **tinh lọc dữ liệu thành các đoạn văn thuần túy (`<p>`)**.
-   - **Task Packaging**: Đóng gói các file `.task.json` chứa payload văn bản sạch vào `data/agent_tasks/`.
-   - **Quality Ingest & Gating**: Kiểm tra hợp đồng DoD Schema, nạp database SQLite (`monocle.db`).
-   - **User Delivery**: Phân tuyến theo danh sách theo dõi người dùng và xuất file `users/output/<user>/<date>.xlsx`.
-2. **Vùng Trí tuệ Tầng Gold (Agents Realm — Đảm nhận ĐỦ 2 Lớp Nghiệp vụ)**:
-   - **Lớp 1 (Xác định Thực thể — Entity Recognition)**: Nhận diện mã CP (3 ký tự in hoa), doanh nghiệp, sàn niêm yết, ngành kinh doanh, chỉ số từ tiêu đề & nội dung (`l1-entity-output-v1`).
-   - **Lớp 2 (Xử lý Nội dung & Ngữ nghĩa — Content Processing)**: Tóm tắt súc tích, viết hàm ý thị trường (`implication`), chấm điểm `materiality_score` động (`0.1 - 1.0`), phân loại `sentiment`, và trích xuất `citations` ($\ge 2$ trích dẫn $\ge 20$ ký tự nguyên văn) (`agent-output-v1`).
+### A. Ranh giới Phân công: Script (0 token) và Agent
 
-### B. Quy chuẩn Dữ liệu Handoff & Gom Lô (Lean Payload & Mini-Batch Invariants)
+1. **Script tất định (0 token)**:
+   - **Bronze**: cào và lưu nguyên bản bất biến (`raw_html` + `.meta.json`) để kiểm toán và đối chiếu SHA256.
+   - **Silver**: chuẩn hoá DOM, SimHash, tách nội dung thành các đoạn văn (`<p>`).
+   - **Đóng gói đợt** (`article_run.py` → `article_pack.py`): chọn bài chưa được mô hình phân tích, xếp tầng ưu tiên, ghi packet `data/agent_tasks/article/`, sinh sẵn chương trình điều phối `wave_<mã>.conductor.ts`.
+   - **Hoàn tất đợt** (`article_run.py --finish`): bung bản ghi gọn thành hai lược đồ, nạp qua cổng DoD (`l1_ingest.py`, `agent_ingest.py`, chỉ tệp của đúng đợt), hậu kiểm độ phủ, ghi sổ cái token, sinh bàn giao.
+   - **Giao hàng**: phân tuyến theo watchlist, xuất `users/output/<user>/<date>.xlsx`.
+2. **Agent `article-processor`** (công cụ `agent_article`, model `deepseek-flash`, không tool, đúng một bước mỗi lô): xử lý **trọn một bài trong một lượt**, gồm cả hai lớp nghiệp vụ:
+   - **Nhận diện thực thể** từ tiêu đề và nội dung: mã CP, doanh nghiệp, sàn, ngành, chỉ số, vĩ mô → `l1-entity-output-v1`.
+   - **Phân tích nội dung**: tóm tắt, luận điểm, hàm ý thị trường, `sentiment`, `time_sensitivity`, trích dẫn theo chỉ số đoạn → `agent-output-v2-lean`.
+   - **Đầu ra sạch**: không sinh `materiality`, `event_type`, `impact_area`. Ba trường này đã ngừng dùng ở mọi tầng (mô hình, DB mới, giao hàng).
 
-- **Subscriber-Gated Gold Export (ADR 0005)**: Chỉ xuất task Gold cho bài viết có `l1_entities` giao thoa với danh sách Watchlist của các user đang active (`manifest.yaml`). Bài không có người đăng ký lưu trữ ở trạng thái `L1_ONLY` (tiết kiệm ~38% token Gold).
-- **Morphological Cú Pháp & Ranh Giới Từ L1 (ADR 0005)**: Tầng L1 code-first áp dụng `Capitalized Suffix Guard` (chặn từ viết hoa liền sau như *"Mỹ Thuận"*, *"Mỹ Tho"*, *"Mỹ Thủy"*) và `Prefix Guard` (chặn tiền tố thương hiệu/danh xưng) để triệt tiêu 100% false positive địa danh/tên người mà không tốn token.
-- **Dynamic 3-Pass Semantic Pruning (2.200 Chars Max)**: Trần ký tự hạ xuống 2.200 chars. Áp dụng thuật toán 3-pass: giữ tối đa 2 đoạn đầu (Sapo) $\rightarrow$ ưu tiên quét đoạn chứa `l1_entities` và số liệu tài chính $\rightarrow$ điền đầy theo thứ tự gốc. Tuyệt đối bảo toàn nguyên khối đoạn văn (`<p>`) cho Grounded Citations ($\ge 20$ ký tự) qua cổng DoD.
-- **L1 Missed-Only Review Default**: `l1_route.py` mặc định `--review missed` để 62% bài đã được code-first giải quyết chính xác đi thẳng qua `l1_ingest.py --code-first` (0 token).
-- **Zero-Waste Task Packet**: Dữ liệu packet gửi cho Agent BẮT BUỘC chỉ chứa các trường cốt lõi; loại bỏ 100% `structure.links` (hàng ngàn thẻ links menu/header/footer) và `images` để nén dung lượng dưới 10 KB (giảm 96% token input thừa).
-- **Consolidated Mini-Batch Handoff**: Hỗ trợ gom lô 5–10 tasks vào một file `batch_XX.task.json`, giúp Subagent xử lý trong 1 lần đọc và 1 lần ghi (giảm 90% số Tool Calls I/O).
-- **Tiếp sức Thực thể L1 $\rightarrow$ Gold**: Tự động bơm sẵn `input.l1_entities` vào Gold task để Agent tập trung suy luận hàm ý thị trường.
-- **Bảo toàn Raw Gốc**: Bản gốc `raw_html` và `meta.json` luôn được lưu giữ nguyên bản tại Bronze để kiểm toán.
+### B. Bất biến của Article Lane
 
-### C. Cấm Tuyệt đối Giả lập Trí tuệ Agent bằng Heuristic Script (No Script Emulation)
+- **Một đợt = một lệnh `run_code`.** Phiên điều phối chạy trọn `wave_<mã>.conductor.ts` trong một bước. Chương trình đọc hết packet trước, hâm cache, chạy mọi lô song song, ghi đầu ra thẳng ra đĩa, và chỉ trả về con số.
+- **`--batch` là cách chia lô duy nhất.** Không trần token hay trần ngữ cảnh nào chia lô hộ. Lô trả về thiếu bài thì `--repair` đóng gói lại đúng phần thiếu.
+- **Token là số ghi nhận, không phải cổng.** Không có giới hạn hay mức cảnh báo token nào, theo bài, theo lô hay theo đợt. Sổ cái (`token_ledger`, chỉ tính phiên worker) ghi token và USD để người dùng tự đánh giá, tự ước lượng. Không dừng đợt, không giảm số bài, không chia nhỏ lô vì token.
+- **Đọc trọn nội dung.** Packet mang toàn bộ đoạn văn nguyên văn của bài (trần chắt lọc đã tắt). Chỉ giữ tiêu đề và đoạn văn, bỏ link, ảnh, menu. Không dòng nào vượt trần cắt dòng của công cụ đọc.
+- **Trích dẫn theo chỉ số đoạn.** Mô hình trả chỉ số, script dựng lại đoạn nguyên văn, nên trích dẫn đúng nguyên văn do cấu trúc.
+- **Mọi bài đều được xử lý đầy đủ.** Xếp tầng theo watchlist (nhận rộng: mã theo dõi, ngành liên quan, vĩ mô khẩn) chỉ quyết định **thứ tự**, không quyết định độ sâu. Không còn lọc Subscriber-Gated.
+- **Đối chiếu tất định chỉ để kiểm, không để thay.** Bộ nhận diện theo danh mục (có `Capitalized Suffix Guard` và `Prefix Guard`) được dùng để đối chiếu với kết quả mô hình. Bản code-first không bao giờ được tính là "đã phân tích" (`l1_source = 'code_first'` bị loại khỏi mọi phép đếm và khỏi bộ chọn bài).
+- **Cổng thật của một đợt là cổng kỹ thuật.** DB ghi được (kiểm trước khi tiêu token), nạp không lỗi, độ phủ của đợt ≥ 90% ở cả hai lớp. Chỉ khi cả ba đạt thì `--finish` mới thoát 0 và in `✅ ĐỢT <mã> HOÀN TẤT`.
+- **Bảo toàn raw gốc.** `raw_html` và `meta.json` luôn giữ nguyên tại Bronze để kiểm toán.
 
-- **Không tự viết script bypass Agent**: Tuyệt đối không dùng regex hay code heuristic để tự sinh kết quả phân tích Gold/L1.
-- **Vùng độc quyền của Subagents**: Xử lý ngữ nghĩa, trích xuất thực thể, tóm tắt, suy luận hàm ý và trích dẫn citations là vùng trí tuệ độc quyền của Subagents LLM (Model: Flash/Pro) được kích hoạt qua `invoke_subagent`.
-- **Zero Hallucination User Manifest**: Khi báo cáo phân phối và định tuyến tin, chỉ được phép tham chiếu người dùng thực tế được định nghĩa trong `manifest.yaml` (hiện tại: `AnPT`).
+### C. Cấm Giả lập Trí tuệ Agent bằng Script (No Script Emulation)
+
+- **Không viết script thay agent.** Không dùng regex hay heuristic để sinh kết quả nhận diện hay phân tích.
+- **Vùng độc quyền của LLM.** Ngữ nghĩa, trích xuất thực thể, tóm tắt, hàm ý và trích dẫn là việc của `article-processor`, gọi qua `tools.agent_article` trong chương trình điều phối. Mọi model là `deepseek-flash` (ADR 0009 D6).
+- **Zero Hallucination User Manifest.** Khi báo cáo phân phối, chỉ tham chiếu người dùng đang bật trong `project/config/entities/manifest.yaml`. Tra bằng `pipeline_radar.py users`, không chép danh sách vào tài liệu.
 
 ## 7. Code Quality & Production Docstring Standards (Bắt Buộc Cho Mọi Agent)
 
@@ -128,6 +140,7 @@ Chi tiết quy chuẩn bất biến tại [`.agents/rules/08-context-and-zero-pr
   ```powershell
   & "C:\venvs\news-scape\Scripts\python.exe" project/scripts/pipeline_radar.py status
   ```
-  Radar cung cấp đầy đủ thông tin pipeline và chỉ định chính xác 1 câu lệnh thực thi tiếp theo.
+  Radar cung cấp đầy đủ thông tin pipeline và chỉ định chính xác 1 câu lệnh thực thi tiếp theo, theo vòng đời đợt Article Lane. Câu hỏi về đường dẫn, cwd hay quyền ghi DB thì hỏi `project/scripts/article_run.py --where`. Câu hỏi nào hai lệnh này chưa trả lời được thì báo thiếu lệnh, không đi đào mã nguồn.
+- **Tách vai điều phối và kiểm toán**: luật Zero-Probe ràng buộc phiên điều phối. Phiên kiểm toán sau đợt được đọc mã và truy vấn chỉ đọc, nhưng mỗi phát hiện phải kết thúc bằng một lệnh hoặc bản vá script.
 - **Progressive Bounded Context**: Không đọc các tệp từ điển khổng lồ (`entities.json` 1.5 MB) hay dump thư mục thô. Chỉ nạp tối đa 3 tệp ban đầu (`AGENTS.md`, `SESSION-LATEST.md`, Skill chuyên trách).
 - **Continuous Policy Distillation (/learn)**: Mọi ma sát phát sinh (permission timeout, cờ lệnh tối ưu, thực thể mới) phải được đúc kết ngay thành Rule, cập nhật vào Skill runbook và `SESSION-LATEST.md` trước khi đóng phiên, đảm bảo các thế hệ Agent tiếp theo kế thừa trọn vẹn và không lặp lại sai sót.
