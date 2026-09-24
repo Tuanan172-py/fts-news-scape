@@ -91,7 +91,9 @@ def main(argv: list[str]) -> int:
                 print(f"⚠️ Khong the doc hoac don file batch {b_file.name}: {e}", file=sys.stderr)
 
     print(f"\ningested: done={done} failed={failed}")
-    return 0
+    # Bản ghi bị DoD loại hoặc tệp không đọc được là lỗi nạp: trả mã khác 0 để
+    # `article_run.py --finish` dừng đợt thay vì báo hoàn tất.
+    return 1 if failed else 0
 
 
 if __name__ == "__main__":

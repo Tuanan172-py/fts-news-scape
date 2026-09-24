@@ -85,5 +85,5 @@ def test_output_carrying_dod_pass_key_is_not_trusted(tmp_path, monkeypatch):
     out = tmp_path / "bad.json"
     out.write_text(json.dumps(bad, ensure_ascii=False), encoding="utf-8")
     rc, store, sha = _run(tmp_path, monkeypatch, out)
-    assert rc == 0
+    assert rc == 1, "bản ghi bị DoD loại phải làm lệnh nạp thoát khác 0"
     assert store.get_agent_output("art1", sha)["dod_pass"] == 0

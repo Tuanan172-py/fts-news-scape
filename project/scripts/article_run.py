@@ -542,7 +542,8 @@ def cmd_finish(args: argparse.Namespace) -> int:
                 continue
             rc = run([PYTHON, str(SCRIPTS / script), *files], check=False)
             if rc != 0:
-                failed.append(f"{script} trả mã {rc}")
+                failed.append(f"{script} trả mã {rc}: có bản ghi bị DoD loại hoặc tệp "
+                              f"không đọc được, xem các dòng FAILED phía trên")
         if failed:
             fail_banner(args.wave, failed, f"{rerun} ingest,verify,ledger,handoff")
             return 1
