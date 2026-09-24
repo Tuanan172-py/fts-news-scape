@@ -20,10 +20,11 @@ def resolve_db_path() -> Path:
 
     Returns:
         Đường dẫn tuyệt đối tới `monocle.db`.
+
+    Raises:
+        UnsafeDatabasePathError: Khi đường dẫn nằm trong OneDrive hoặc kho mã.
     """
-    raw = load_settings().get("database", {}).get("path", "data/monocle.db")
-    p = Path(raw)
-    return p if p.is_absolute() else (PROJECT_ROOT / p).resolve()
+    return Path(load_settings()["database"]["path"])
 
 
 @dataclass

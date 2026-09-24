@@ -12,7 +12,7 @@ from loguru import logger
 
 from datetime import datetime
 
-from src.core.config import PROJECT_ROOT
+from src.core.config import PROJECT_ROOT, resolve_db_path
 from src.core.models import VN_TZ, Article, normalize_title, now_vn_iso
 
 
@@ -274,14 +274,7 @@ class ArticleStore:
 
     def __init__(self, db_path: str | Path | None = None, init_schema: bool = True):
         if db_path is None:
-            env_db = os.getenv("MONOCLE_DB_PATH")
-            env_dir = os.getenv("MONOCLE_DATA_DIR")
-            if env_db:
-                self.db_path = env_db
-            elif env_dir:
-                self.db_path = str(Path(env_dir) / "monocle.db")
-            else:
-                self.db_path = str(PROJECT_ROOT / "data" / "monocle.db")
+            self.db_path = str(resolve_db_path())
         else:
             p = Path(db_path)
             if not p.is_absolute() and not str(p).startswith("file:"):

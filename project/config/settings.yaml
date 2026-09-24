@@ -1,6 +1,9 @@
 # Global settings — Web Monocle
 database:
-  path: data/monocle.db
+  # DB vận hành nằm ngoài OneDrive. Biến MONOCLE_DB_PATH (nếu có) ghi đè giá trị này.
+  # Đường dẫn trong OneDrive hoặc trong kho mã bị từ chối (src/core/config.py
+  # resolve_db_path), để tiến trình thiếu biến môi trường không ghi nhầm vào bản sao cũ.
+  path: C:/data/news-scape/monocle.db
 
 logging:
   level: INFO

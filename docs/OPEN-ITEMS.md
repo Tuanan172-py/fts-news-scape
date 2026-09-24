@@ -62,6 +62,13 @@ Kèm theo: `run_cmd` (dòng 29-31) chỉ *in* lỗi không raise; `except Except
 - **`news_cron` vừa thừa vừa va chạm**: chạy `run_once.py` 16:00 hằng ngày; nhánh `--once` của
   `orchestrator.main` (dòng 253-262) **không chiếm scheduler lock** ⇒ cào song song với morninger
   (đang bận ~56% thời gian). morninger đã bao trọn capture + derive ⇒ nên tắt task này.
+  - **2026-09-24 — mã đã sửa, còn bước vận hành (H):** khoá tệp `C:\data\news-scape\capture.lock`
+    (`src/core/proclock.py` `SingleInstanceLock`, hệ điều hành tự nhả khi tiến trình chết) được
+    morninger, `orchestrator` và `run_once.py` chiếm trước khoá DB; tiến trình thứ hai thoát mã 1.
+    Khoá DB `pipeline_state` không đủ: hai morninger (khởi động 17/09 14:55 và 15:16) chạy song
+    song đến nay, và `news_cron` 23/09 16:11 vẫn cào 24 phút đè lên morninger. Còn phải: tắt
+    `news_cron`, dừng hai morninger cũ (còn chạy job `l1_route` đã ngừng), khởi động lại **một**
+    morninger bằng mã mới. Chỉ khi morninger chạy mã mới thì khoá tệp mới có hiệu lực.
 - **DoD L1 hai luồng không đồng nhất**: code-first truyền registry (`l1_runner.py:124`), luồng đọc
   output subagent **không truyền** (dòng 214) ⇒ `entity_id` lạ không bị chặn ở luồng agent.
 - **Sản xuất packet không có consumer**: job `l1_route` (thêm 2026-09-17) chạy mỗi 15 phút sinh

@@ -20,7 +20,7 @@ from loguru import logger
 from src.core.config import load_settings
 from src.core.logging import setup_logging
 from src.core.models import VN_TZ
-from src.core.proclock import SCHEDULER_LOCK_STALE_SECONDS, lock_owner
+from src.core.proclock import SCHEDULER_LOCK_STALE_SECONDS, capture_lock, lock_owner
 from src.db.store import ArticleStore
 from src.pipeline.derive import rederive_incremental
 from src.pipeline.drift import list_drift
@@ -124,6 +124,7 @@ class Morninger:
         self.cfg = self.settings.get("morninger", {})
         self.orch = Orchestrator()
         self._lock_owner = lock_owner()          # Fix F
+        self._capture_lock = capture_lock()
         self._stopped = False
 
     # -- jobs -----------------------------------------------------------------
@@ -240,14 +241,35 @@ class Morninger:
         return len(rows)
 
     # -- scheduler ------------------------------------------------------------
-    def start_scheduler(self) -> None:
+    def acquire_capture_lock(self) -> bool:
+        """Chiếm khoá tệp dùng chung của mọi tiến trình cào tin trên máy.
+
+        Returns:
+            True khi chiếm được, False khi tiến trình cào khác đang chạy.
+        """
+        if self._capture_lock.acquire():
+            return True
+        logger.error("Tiến trình cào tin khác đang chạy ({}), giữ khoá {}. Từ chối khởi "
+                     "động để tránh cào song song.", self._capture_lock.holder() or "?",
+                     self._capture_lock.path)
+        return False
+
+    def start_scheduler(self) -> bool:
+        """Chiếm khoá cào tin rồi chạy bộ lập lịch đến khi nhận tín hiệu dừng.
+
+        Returns:
+            False khi tiến trình cào khác đang giữ khoá, True khi bộ lập lịch đã chạy và dừng.
+        """
+        if not self.acquire_capture_lock():
+            return False
         # Fix F: chỉ 1 scheduler chạy. Chiếm lock; giao quyền heartbeat cho orchestrator
         # nội bộ (cùng pid) — run_capture→orch.run_cycle sẽ refresh lock mỗi cycle.
         if not self.store.try_acquire_lock("scheduler", self._lock_owner,
                                            SCHEDULER_LOCK_STALE_SECONDS):
             logger.error("Scheduler khác đang chạy (lock trong pipeline_state). "
                          "Từ chối khởi động morninger để tránh double-scrape.")
-            return
+            self._capture_lock.release()
+            return False
         self.orch._lock_owner = self._lock_owner
         self.orch._owns_scheduler_lock = True
 
@@ -281,6 +303,7 @@ class Morninger:
             scheduler.start()
         finally:
             self.shutdown()
+        return True
 
     def shutdown(self) -> None:
         if self._stopped:
@@ -288,6 +311,7 @@ class Morninger:
         self._stopped = True
         logger.info("Morninger shutdown — flushing orchestrator...")
         self.orch.shutdown()
+        self._capture_lock.release()
         logger.info("Morninger shutdown complete.")
 
 
@@ -301,6 +325,8 @@ def main(argv: list[str]) -> int:
         sub = args[0] if args else "derive"
         try:
             if sub == "capture":
+                if not m.acquire_capture_lock():
+                    return 1
                 print("🔄 [morninger] Đang thực thi Capture cycle...", flush=True)
                 n = m.run_capture()
                 print(f"✅ capture done: {n} new articles")
@@ -325,8 +351,7 @@ def main(argv: list[str]) -> int:
             m.shutdown()
         return 0
 
-    m.start_scheduler()
-    return 0
+    return 0 if m.start_scheduler() else 1
 
 
 if __name__ == "__main__":

@@ -15,7 +15,7 @@ from loguru import logger
 
 from src.core.config import list_domains, load_domain_config, load_settings
 from src.core.logging import setup_logging
-from src.core.proclock import SCHEDULER_LOCK_STALE_SECONDS, lock_owner
+from src.core.proclock import SCHEDULER_LOCK_STALE_SECONDS, capture_lock, lock_owner
 from src.core.retry import run_with_retry, run_with_fallback
 from src.crawler.http_client import HTTPClient
 from src.db.dedup import DedupCache
@@ -211,11 +211,17 @@ class Orchestrator:
         from apscheduler.schedulers.blocking import BlockingScheduler
         from apscheduler.triggers.interval import IntervalTrigger
 
+        file_lock = capture_lock()
+        if not file_lock.acquire():
+            logger.error("Tiến trình cào tin khác đang chạy ({}). Từ chối khởi động để "
+                         "tránh double-scrape.", file_lock.holder() or "?")
+            return
         # Fix F: chỉ 1 scheduler được chạy (chống orchestrator + morninger cùng lúc).
         if not self.store.try_acquire_lock("scheduler", self._lock_owner,
                                            SCHEDULER_LOCK_STALE_SECONDS):
             logger.error("Scheduler khác đang chạy (lock trong pipeline_state). "
                          "Từ chối khởi động để tránh double-scrape.")
+            file_lock.release()
             return
         self._owns_scheduler_lock = True
 
@@ -242,6 +248,7 @@ class Orchestrator:
             scheduler.start()
         finally:
             self.shutdown()
+            file_lock.release()
 
 
 def main(argv: list[str]) -> int:
@@ -251,10 +258,19 @@ def main(argv: list[str]) -> int:
 
     orch = Orchestrator()
     if once:
+        # Khoá tệp chặn chắc chắn khi morninger đang chạy; khoá trong pipeline_state
+        # phụ thuộc nhịp tim nên có thể coi nhầm là đã cũ.
+        file_lock = capture_lock()
+        if not file_lock.acquire():
+            logger.error("Tiến trình cào tin khác đang chạy ({}). Từ chối chạy --once để "
+                         "tránh cào song song.", file_lock.holder() or "?")
+            orch.shutdown()
+            return 1
         # Q3: Chạy độc lập nhưng phải chiếm scheduler lock để tránh cào song song với morninger
         if not orch.store.try_acquire_lock("scheduler", orch._lock_owner, SCHEDULER_LOCK_STALE_SECONDS):
             logger.error("Scheduler khác (morninger hoặc orchestrator) đang chạy. Từ chối chạy --once để tránh cào song song.")
             orch.shutdown()
+            file_lock.release()
             return 1
         orch._owns_scheduler_lock = True
 
@@ -268,6 +284,7 @@ def main(argv: list[str]) -> int:
             orch.run_cycle(names)
         finally:
             orch.shutdown()
+            file_lock.release()
         return 0
     orch.start_scheduler()
     return 0

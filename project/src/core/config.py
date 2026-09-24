@@ -42,9 +42,13 @@ DOMAINS_DIR = CONFIG_DIR / "domains"
 
 DATA_DIR = PROJECT_ROOT / "data"
 LOGS_DIR = PROJECT_ROOT / "logs"
+REPO_ROOT = PROJECT_ROOT.parent
+
+OPERATIONAL_DB_PATH = Path("C:/data/news-scape/monocle.db")
+ALLOW_SYNCED_DB_ENV = "MONOCLE_ALLOW_SYNCED_DB"
 
 _DEFAULT_SETTINGS = {
-    "database": {"path": str(DATA_DIR / "monocle.db")},
+    "database": {"path": str(OPERATIONAL_DB_PATH)},
     "logging": {"level": "INFO", "dir": str(LOGS_DIR)},
     "scheduler": {"interval_minutes": 15},
     "http": {"rate_limit": 3.0, "timeout": 30, "max_retries": 3},
@@ -90,7 +94,63 @@ def load_settings() -> dict:
     elif env_data_dir:
         cfg.setdefault("database", {})["path"] = str(Path(env_data_dir) / "monocle.db")
 
+    cfg.setdefault("database", {})["path"] = str(resolve_db_path(cfg))
     return cfg
+
+
+class UnsafeDatabasePathError(RuntimeError):
+    """Báo đường dẫn DB vận hành rơi vào thư mục đồng bộ đám mây hoặc kho mã."""
+
+
+def is_synced_location(path: Path) -> bool:
+    """Cho biết đường dẫn có nằm trong OneDrive hoặc trong cây thư mục kho mã.
+
+    SQLite ở chế độ WAL giữ ba tệp (`.db`, `-wal`, `-shm`). OneDrive đồng bộ chúng lệch
+    nhịp nên sinh bản xung đột theo từng máy, và một tiến trình thiếu biến môi trường
+    sẽ ghi vào bản sao cũ thay cho DB vận hành.
+
+    Args:
+        path: Đường dẫn tuyệt đối cần kiểm.
+
+    Returns:
+        True khi đường dẫn thuộc vùng đồng bộ hoặc thuộc kho mã.
+    """
+    if any(part.lower().startswith("onedrive") for part in path.parts):
+        return True
+    try:
+        path.relative_to(REPO_ROOT.resolve())
+        return True
+    except ValueError:
+        return False
+
+
+def resolve_db_path(settings: dict | None = None) -> Path:
+    """Phân giải đường dẫn tuyệt đối của DB vận hành và chặn vị trí không an toàn.
+
+    Thứ tự ưu tiên: `MONOCLE_DB_PATH`, rồi `MONOCLE_DATA_DIR`, rồi `database.path` trong
+    `settings.yaml`. Đường dẫn tương đối tính từ thư mục `project/`, không theo cwd.
+
+    Args:
+        settings: Cấu hình đã tải; None thì tự tải.
+
+    Returns:
+        Đường dẫn tuyệt đối tới `monocle.db`.
+
+    Raises:
+        UnsafeDatabasePathError: Khi đường dẫn nằm trong OneDrive hoặc kho mã và biến
+            `MONOCLE_ALLOW_SYNCED_DB` không được đặt.
+    """
+    cfg = settings if settings is not None else load_settings()
+    raw = (cfg.get("database") or {}).get("path") or str(OPERATIONAL_DB_PATH)
+    p = Path(raw)
+    p = (p if p.is_absolute() else PROJECT_ROOT / p).resolve()
+    if is_synced_location(p) and not os.getenv(ALLOW_SYNCED_DB_ENV):
+        raise UnsafeDatabasePathError(
+            f"DB vận hành trỏ vào {p}, nằm trong OneDrive hoặc kho mã. Đặt biến môi "
+            f"trường MONOCLE_DB_PATH={OPERATIONAL_DB_PATH} hoặc sửa database.path trong "
+            f"config/settings.yaml. Chỉ đặt {ALLOW_SYNCED_DB_ENV}=1 khi cố ý mở bản sao cũ."
+        )
+    return p
 
 
 def load_domain_config(name: str) -> dict:
