@@ -184,6 +184,35 @@ class L1Runner:
         return stat
 
     # -- consumer: agent output → validate + DoD → mark -----------------------
+    def _register_article_lane_task(self, aid: str) -> dict | None:
+        """Ghi dòng `l1_tasks` cho bài đi thẳng từ Article Lane mà chưa qua định tuyến L1.
+
+        Article Lane chọn bài từ `work_items`, không qua `l1_route.py`, nên một số bài
+        chưa từng có dòng `l1_tasks`. Thiếu dòng ấy thì bản ghi nhận diện bị loại với
+        lý do "no l1_task" dù mô hình đã trả kết quả đúng. Tiêu đề lấy từ bảng
+        `articles` chứ không lấy từ đầu ra của mô hình, để cổng nghiệm thu vẫn đối
+        chiếu với nguồn gốc.
+
+        Args:
+            aid: Định danh bài.
+
+        Returns:
+            Dòng `l1_tasks` vừa ghi, hoặc None khi bài không tồn tại trong `articles`.
+        """
+        article = self.store.get_by_hash(aid)
+        if article is None:
+            return None
+        self.store.upsert_l1_task({
+            "article_id": aid,
+            "domain": article.source_domain,
+            "title": article.title or "",
+            "code_first_json": None,
+            "route": "article_lane",
+            "packet_path": None,
+            "enqueued_at": now_vn_iso(),
+        })
+        return self.store.get_l1_task(aid)
+
     def ingest_output(self, output: dict | str) -> dict:
         """Tiếp nhận, kiểm tra chuẩn DoD và lưu kết quả từ agent.
 
@@ -199,7 +228,7 @@ class L1Runner:
         if not aid:
             return {"ok": False, "reason": "missing article_id"}
 
-        task = self.store.get_l1_task(aid)
+        task = self.store.get_l1_task(aid) or self._register_article_lane_task(aid)
         if task is None:
             return {"ok": False, "article_id": aid, "reason": "no l1_task"}
 

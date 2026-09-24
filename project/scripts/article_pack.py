@@ -37,12 +37,12 @@ from src.agent.prefix import (                        # noqa: E402
     persona_tokens,
 )
 from src.core.stdio import force_utf8_stdio           # noqa: E402
+from src.db.preflight import resolve_db_path          # noqa: E402
 
 force_utf8_stdio()
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DATA_ROOT = PROJECT_ROOT / "data"
-DB_PATH = Path("C:/data/news-scape/monocle.db")
 TASK_DIR = DATA_ROOT / "agent_tasks" / "article"
 
 # Ba trần dưới đây là số thật của công cụ đọc trong DSH, đọc từ README của
@@ -65,20 +65,35 @@ CONTEXT_WINDOW = 1_000_000
 # nó làm dự toán đầu ra hụt ba lần và che mất trần cắt cụt bên dưới.
 DEFAULT_OUT_TOKENS_PER_ARTICLE = 900
 
-# Mốc tham chiếu để ƯỚC LƯỢNG, **không** dùng để chia lô.
+# Mốc tham chiếu đầu ra của một lượt, chỉ để ƯỚC LƯỢNG chi phí.
 #
 # 256.000 là `maxTokens` mặc định của DSH (`DEFAULT_MAX_TOKENS = 256e3` trong
-# `dsh-llm-deepseek`), và con kế thừa của cha khi row không đặt gì. Nguồn:
-# `docs/proposals/dsh-surface-verified-2026-09-18.md` §6.1–6.2, đọc từ mã nguồn DSH.
+# `dsh-llm-deepseek`), nguồn: `docs/proposals/dsh-surface-verified-2026-09-18.md`
+# §6.1–6.2. Đây là `max_tokens` của một request, KHÔNG phải cổng chặn đợt.
 #
-# Con số 40.000 trước đây **không** phải trần nhà cung cấp mà là giá trị dự án tự
-# đặt ở `maxTokens` trong preset. Đã gỡ khỏi preset ngày 21/09. Một đợt trăm bài cần
-# khoảng 90.000 token đầu ra, tức còn dư gần ba lần so với mặc định thật.
+# Chạm mốc này không gây lỗi và không huỷ lượt: adapter ánh xạ `finish_reason`
+# `"length"` thành `{kind:"max-tokens"}` (`dsh-llm-deepseek`), vòng lặp agent kết
+# thúc turn bình thường (`dsh-agent-loop`), và `salvage_records` bóc được mọi bản
+# ghi hoàn chỉnh đã sinh. Phần thiếu do `--repair` đóng gói bù.
 #
-# DSH không có trần token hay chi phí nào theo phiên hay theo ngày. Các giới hạn số
-# duy nhất của nó: `maxTokens` 256.000 mỗi request, `contextWindow` 1.000.000,
-# compaction ở 0,8×, pruner 8.192 ký tự, spill 50.000 byte.
-REFERENCE_COMPLETION_TOKENS = 256_000
+# Vì vậy số này chỉ dùng để in dự toán. Không nhánh mã nào được dừng, chia nhỏ hay
+# hạ số bài dựa trên nó.
+INFO_OUTPUT_REFERENCE = 256_000
+
+# Số lô song song tối đa mà DSH chạy đồng thời trong một lượt điều phối:
+# `maxParallelSubCalls` mặc định 10 (`dsh-tools`). Vượt ngưỡng này thì các lô dôi ra
+# phải chờ hết một sóng, nên số lô mục tiêu luôn là 10.
+MAX_PARALLEL_BATCHES = 10
+
+# Cận dưới và cận trên của số bài mỗi lô.
+#
+# Cận dưới chặn chia vụn vô ích: chia lô để chạy song song, mà hai chục lô hai bài
+# thì mỗi lô vẫn tốn trọn một lượt gọi và một lần trả giá tiền tố.
+#
+# Cận trên chặn một lô quá dài: bản ghi cuối lô được sinh trong ngữ cảnh đã chứa
+# toàn bộ bản ghi trước đó, nên lô càng dài thì phần đuôi càng dễ trôi.
+MIN_BATCH_SIZE = 100
+MAX_BATCH_SIZE = 500
 
 # Tín hiệu vĩ mô khẩn: bài mang các từ này luôn vào tầng ưu tiên kể cả khi không
 # khớp mã nào trong danh sách theo dõi, vì chúng tác động toàn thị trường.
@@ -91,13 +106,12 @@ _MACRO_URGENT_RE = re.compile(
 
 
 def get_db_connection() -> sqlite3.Connection:
-    """Mở kết nối tới cơ sở dữ liệu vận hành.
+    """Mở kết nối tới đúng cơ sở dữ liệu mà bước nạp ghi vào.
 
     Returns:
         Kết nối SQLite tới `monocle.db`.
     """
-    db_file = DB_PATH if DB_PATH.exists() else (DATA_ROOT / "monocle.db")
-    conn = sqlite3.connect(str(db_file))
+    conn = sqlite3.connect(str(resolve_db_path()))
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -160,6 +174,13 @@ def tier_of(title: str, reg, watched: set[str], industries: set[str]) -> tuple[i
     return 2, "background"
 
 
+# Điều kiện "bài đã được mô hình phân tích" trên bảng `l1_outputs` bí danh `o`. Bản
+# code-first là bản tra bảng tạm (ADR 0003), không phải phân tích: tính nó là "xong"
+# thì bộ chọn bài bỏ qua bài ấy vĩnh viễn, và bài không bao giờ có phần nội dung. Đo
+# ngày 2026-09-23: 2.915 bài ngày 10–17/09 kẹt đúng như vậy.
+ANALYZED_L1 = "o.dod_pass = 1 AND COALESCE(o.l1_source, 'agent') <> 'code_first'"
+
+
 def load_candidates(conn: sqlite3.Connection, *, date: str | None, limit: int,
                     only_pending: bool) -> list[sqlite3.Row]:
     """Lấy danh sách bài cần xử lý kèm đường dẫn gói dữ liệu tầng bạc.
@@ -168,7 +189,7 @@ def load_candidates(conn: sqlite3.Connection, *, date: str | None, limit: int,
         conn: Kết nối cơ sở dữ liệu.
         date: Lọc theo ngày xuất bản YYYY-MM-DD, hoặc None để lấy mọi ngày.
         limit: Số bài tối đa.
-        only_pending: Chỉ lấy bài chưa có kết quả nhận diện đạt chuẩn.
+        only_pending: Chỉ lấy bài chưa được mô hình phân tích đạt chuẩn.
 
     Returns:
         Danh sách bản ghi bài viết.
@@ -182,8 +203,8 @@ def load_candidates(conn: sqlite3.Connection, *, date: str | None, limit: int,
     ]
     params: list = []
     if only_pending:
-        sql.append("  AND NOT EXISTS (SELECT 1 FROM l1_outputs o "
-                   "WHERE o.article_id = a.url_title_hash AND o.dod_pass = 1)")
+        sql.append(f"  AND NOT EXISTS (SELECT 1 FROM l1_outputs o "
+                   f"WHERE o.article_id = a.url_title_hash AND {ANALYZED_L1})")
     if date:
         sql.append("  AND substr(a.published_at,1,10) = ?")
         params.append(date)
@@ -216,6 +237,29 @@ def read_cleaned_text(package_path: str) -> str:
             return (json.load(f) or {}).get("cleaned_text") or ""
     except (OSError, json.JSONDecodeError):
         return ""
+
+
+def suggest_batch_size(n_articles: int) -> int:
+    """Chọn số bài mỗi lô để đợt chạy trọn trong một sóng song song.
+
+    Số lô là biến tự do duy nhất, và mục tiêu là giữ nó bằng đúng số lô DSH chạy
+    đồng thời được. Ít lô hơn thì bỏ phí năng lực song song; nhiều lô hơn thì các lô
+    dôi ra phải chờ hết một sóng, và lượt dài nhất vẫn quyết định thời gian đợt.
+
+    Cận dưới và cận trên của cỡ lô chặn hai kiểu lãng phí ngược nhau: lô quá nhỏ tốn
+    một lượt gọi trọn vẹn cho vài bài, lô quá lớn làm bản ghi cuối lô trôi vì phải
+    sinh trong ngữ cảnh đã chứa toàn bộ bản ghi trước đó.
+
+    Args:
+        n_articles: Số bài của cả đợt.
+
+    Returns:
+        Cỡ lô đề xuất, đã kẹp trong khoảng cho phép.
+    """
+    if n_articles <= 0:
+        return MIN_BATCH_SIZE
+    by_parallelism = math.ceil(n_articles / MAX_PARALLEL_BATCHES)
+    return min(MAX_BATCH_SIZE, max(MIN_BATCH_SIZE, by_parallelism))
 
 
 def plan_calls(n_articles: int, *, batch_cap: int) -> list[int]:
@@ -374,7 +418,8 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="Đóng gói bài đăng thành packet cho worker")
     ap.add_argument("--wave", default=datetime.now().strftime("%Y%m%dT%H%M"),
                     help="Mã đợt, dùng làm tiền tố tên lô")
-    ap.add_argument("--batch", type=int, default=100, help="Số bài mỗi lô")
+    ap.add_argument("--batch", type=int, default=0,
+                    help="Số bài mỗi lô; 0 = tự chọn để đợt gọn trong một sóng song song")
     ap.add_argument("--limit", type=int, default=300, help="Tổng số bài tối đa của đợt")
     ap.add_argument("--date", help="Chỉ lấy bài xuất bản trong ngày YYYY-MM-DD")
     ap.add_argument("--today", action="store_true", help="Tương đương --date hôm nay")
@@ -385,7 +430,7 @@ def main(argv=None) -> int:
                     help="Trần token phần nội dung mỗi bài")
     ap.add_argument("--out-tokens-per-article", type=int,
                     default=DEFAULT_OUT_TOKENS_PER_ARTICLE,
-                    help="Cỡ bản ghi đầu ra mỗi bài, dùng để chia lượt gọi")
+                    help="Cỡ bản ghi đầu ra mỗi bài, chỉ dùng để ước lượng token")
     ap.add_argument("--out-dir", default=str(TASK_DIR), help="Thư mục ghi packet")
     ap.add_argument("--json", action="store_true", help="Xuất mô tả đợt dạng JSON")
     args = ap.parse_args(argv)
@@ -438,12 +483,16 @@ def main(argv=None) -> int:
     # 4.800 token mỗi lượt và khiến số dự toán không đối chiếu được với `cacheRead`
     # thật trong sổ cái.
     pfx = cached_prefix_tokens()
-    chunk_cap = max(1, args.batch)
+
+    # `--batch 0` để đợt tự chọn cỡ lô theo số bài thật. Người vận hành chỉ đặt số
+    # cứng khi muốn ép một cách chia cụ thể.
+    batch_size = args.batch if args.batch > 0 else suggest_batch_size(len(packed))
+    chunk_cap = max(1, batch_size)
 
     # Chia đều thay vì cắt tràn. Cắt tràn để lại một lượt lẻ rất ngắn, mà các lượt
     # chạy song song nên đợt chỉ xong khi lượt dài nhất xong: lượt lẻ không rút
     # ngắn được gì, chỉ làm lệch khối lượng giữa các lượt.
-    sizes = plan_calls(len(packed), batch_cap=args.batch)
+    sizes = plan_calls(len(packed), batch_cap=batch_size)
 
     # Đợt một lô không có lượt hâm bộ nhớ đệm: không có lô thứ hai để dùng lại tiền
     # tố, nên lượt hâm chỉ dời đúng khoản token miss ấy sang một request khác rồi
@@ -510,7 +559,8 @@ def main(argv=None) -> int:
         "warmed": warmed,
         "per_call": chunk_cap,
         "out_tokens_per_article": args.out_tokens_per_article,
-        "reference_completion_tokens": REFERENCE_COMPLETION_TOKENS,
+        "output_reference_tokens": INFO_OUTPUT_REFERENCE,
+        "max_parallel_batches": MAX_PARALLEL_BATCHES,
         "est_miss_total": sum(b["est_miss"] for b in batches) + pfx,
         "est_hit_total": sum(b["est_hit"] for b in batches),
         "est_out_total": sum(b["est_out"] for b in batches),
@@ -538,16 +588,11 @@ def main(argv=None) -> int:
     print(f"Prefix tĩnh  : {pfx:,} token = persona {persona_tokens():,} + harness "
           f"{SYSTEM_OVERHEAD_TOKENS:,} ({cache_note})")
     worst_out = max((b["est_out"] for b in batches), default=0)
-    print(f"Chia lô      : chỉ theo --batch = {args.batch}. Không trần token nào "
-          f"can thiệp.")
+    print(f"Chia lô      : {len(batches)} lô, {chunk_cap} bài mỗi lô "
+          f"(song song tối đa {MAX_PARALLEL_BATCHES}).")
     print(f"Đầu ra ước   : {worst_out:,} token cho lượt nặng nhất "
-          f"(bản ghi {args.out_tokens_per_article} token/bài)")
-    if worst_out > REFERENCE_COMPLETION_TOKENS:
-        print(f"               ⓘ  Vượt mốc tham chiếu "
-              f"{REFERENCE_COMPLETION_TOKENS:,}. Đây là THÔNG TIN, không phải chặn.")
-        print(f"               Nếu lượt nào trả về thiếu bài, chạy "
-              f"`article_run.py --wave <mã> --repair` để đóng gói lại đúng phần "
-              f"thiếu.")
+          f"(bản ghi {args.out_tokens_per_article} token/bài). Số ước lượng, "
+          f"không phải trần.")
     print()
     print(f"{'lô':26} {'bài':>4} {'ưu tiên':>8} {'miss':>9} {'out':>7} "
           f"{'ctx đỉnh':>9} {'KB':>6} {'đọc':>4}")

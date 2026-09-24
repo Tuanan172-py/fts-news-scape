@@ -21,26 +21,26 @@ from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from scripts.article_pack import ANALYZED_L1, load_candidates  # noqa: E402
 from src.core.stdio import force_utf8_stdio          # noqa: E402
+from src.db.preflight import resolve_db_path         # noqa: E402
 
 force_utf8_stdio()
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DATA_ROOT = PROJECT_ROOT / "data"
 STATE_DIR = DATA_ROOT / "state"
-DB_PATH = Path("C:/data/news-scape/monocle.db")
 ARTICLE_TASK_DIR = DATA_ROOT / "agent_tasks" / "article"
 ARTICLE_OUT_DIR = DATA_ROOT / "agent_outputs_article"
 
 
 def get_db_connection() -> sqlite3.Connection:
-    """Mở kết nối tới cơ sở dữ liệu vận hành.
+    """Mở kết nối chỉ đọc tới đúng cơ sở dữ liệu mà bước nạp ghi vào.
 
     Returns:
         Kết nối SQLite tới `monocle.db`.
     """
-    db_file = DB_PATH if DB_PATH.exists() else (DATA_ROOT / "monocle.db")
-    conn = sqlite3.connect(str(db_file))
+    conn = sqlite3.connect(f"file:{resolve_db_path().as_posix()}?mode=ro", uri=True)
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -70,7 +70,7 @@ def collect_state(today: str) -> dict:
         today: Ngày cần thống kê theo định dạng YYYY-MM-DD.
 
     Returns:
-        Từ điển trạng thái gồm độ phủ, hàng đợi, packet tồn và lô chưa nạp.
+        Từ điển trạng thái gồm độ phủ, số bài chờ phân tích và packet chưa chạy.
     """
     conn = get_db_connection()
     cur = conn.cursor()
@@ -82,16 +82,16 @@ def collect_state(today: str) -> dict:
         "l1_done_today": _scalar(
             cur, "SELECT count(*) FROM l1_outputs o JOIN articles a "
                  "ON a.url_title_hash=o.article_id "
-                 "WHERE substr(a.published_at,1,10)=? AND o.dod_pass=1", (today,)),
+                 f"WHERE substr(a.published_at,1,10)=? AND {ANALYZED_L1}", (today,)),
         "gold_done_today": _scalar(
             cur, "SELECT count(*) FROM agent_outputs o JOIN articles a "
                  "ON a.url_title_hash=o.article_id "
                  "WHERE substr(a.published_at,1,10)=? AND o.dod_pass=1", (today,)),
-        "l1_pending": _scalar(cur, "SELECT count(*) FROM l1_tasks WHERE status='pending'"),
-        "l1_failed": _scalar(cur, "SELECT count(*) FROM l1_tasks WHERE status='failed'"),
-        "wi_pending": _scalar(cur, "SELECT count(*) FROM work_items WHERE status='pending'"),
-        "wi_failed": _scalar(cur, "SELECT count(*) FROM work_items WHERE status='failed'"),
     }
+    # Cùng câu truy vấn với bước đóng gói, nên con số này đúng bằng số bài mà đợt kế
+    # tiếp sẽ lấy.
+    state["pending_today"] = len(load_candidates(conn, date=today, limit=1_000_000,
+                                                 only_pending=True))
     conn.close()
 
     packets = sorted(glob.glob(str(ARTICLE_TASK_DIR / "*.task.json")))
@@ -102,7 +102,6 @@ def collect_state(today: str) -> dict:
 
     state["packets_total"] = len(packets)
     state["packets_pending"] = pending_packets
-    state["outputs_not_ingested"] = sorted(outputs)
     return state
 
 
@@ -134,11 +133,7 @@ def render(state: dict, wave: str | None, prefix_hash: str | None) -> str:
         f"- Bài đăng trong ngày: **{total}**",
         f"- Đã xong nhận diện thực thể: **{covered}** ({pct:.1f}%)",
         f"- Đã xong phân tích nội dung: **{state['gold_done_today']}**",
-        "",
-        "## Hàng đợi",
-        "",
-        f"- `l1_tasks`: pending {state['l1_pending']:,} · failed {state['l1_failed']:,}",
-        f"- `work_items`: pending {state['wi_pending']:,} · failed {state['wi_failed']:,}",
+        f"- Chờ phân tích: **{state['pending_today']}** bài có gói Silver",
         "",
         "## Wave đang dở",
         "",
@@ -149,12 +144,6 @@ def render(state: dict, wave: str | None, prefix_hash: str | None) -> str:
         lines.append(f"  - `{Path(p).name}`")
     if len(pending) > 10:
         lines.append(f"  - … và {len(pending) - 10} tệp nữa")
-
-    not_ingested = state["outputs_not_ingested"]
-    if not_ingested:
-        lines += ["", f"- Output đã sinh nhưng **chưa nạp DB**: {len(not_ingested)}"]
-        for o in not_ingested[:10]:
-            lines.append(f"  - `{o}`")
 
     lines += [
         "",
@@ -170,12 +159,11 @@ def render(state: dict, wave: str | None, prefix_hash: str | None) -> str:
         lines.append(f"```powershell\npython scripts/article_run.py --wave {wave or 'next'} --resume\n```")
         lines.append("")
         lines.append(f"Còn {len(pending)} lô chưa chạy trong đợt này; `--resume` bỏ qua lô đã có output.")
-    elif state["l1_pending"]:
-        lines.append("```powershell\npython scripts/article_run.py --wave next --limit 300\n```")
-        lines.append("")
-        lines.append("Không còn lô dở. Mở đợt mới từ hàng đợi còn tồn.")
     else:
-        lines.append("Không còn việc trong hàng đợi. Chạy radar để xác nhận trạng thái sạch.")
+        lines.append("```powershell\npython scripts/pipeline_radar.py status\n```")
+        lines.append("")
+        lines.append(f"Không còn lô dở. Radar in đúng lệnh mở đợt mới cho "
+                     f"{state['pending_today']} bài đang chờ, hoặc lệnh giao hàng.")
 
     lines += [
         "",

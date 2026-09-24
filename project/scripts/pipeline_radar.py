@@ -26,6 +26,7 @@ from scripts.token_ledger import (                         # noqa: E402
     worker_calls,
 )
 from src.agent.prefix import cached_prefix_tokens          # noqa: E402
+from src.db.preflight import probe_write, resolve_db_path  # noqa: E402
 from src.telemetry.dsh_usage import (                      # noqa: E402
     billed_usd,
     is_peak,
@@ -34,394 +35,303 @@ from src.telemetry.dsh_usage import (                      # noqa: E402
 )
 
 DATA_ROOT = PROJECT_ROOT / "data"
-AGENT_TASKS_DIR = DATA_ROOT / "agent_tasks"
-AGENT_OUTPUTS_DIR = DATA_ROOT / "agent_outputs"
-L1_TASKS_DIR = AGENT_TASKS_DIR / "l1"
-L1_OUTPUTS_DIR = DATA_ROOT / "agent_outputs_l1"
+ARTICLE_TASK_DIR = DATA_ROOT / "agent_tasks" / "article"
 USER_OUTPUT_DIR = PROJECT_ROOT.parent / "users" / "output"
 MANIFEST_YAML = PROJECT_ROOT / "config" / "entities" / "manifest.yaml"
-DB_PATH = Path("C:/data/news-scape/monocle.db")
 HARNESS_DB = PROJECT_ROOT.parent / "harness.db"
+PY = '& "C:\\venvs\\news-scape\\Scripts\\python.exe"'
 
 
 def get_db_connection() -> sqlite3.Connection:
-    """Khởi tạo kết nối SQLite ở chế độ Read-Only an toàn."""
-    db_file = DB_PATH if DB_PATH.exists() else (DATA_ROOT / "monocle.db")
-    uri = f"file:{db_file.as_posix()}?mode=ro"
+    """Mở kết nối chỉ đọc tới đúng cơ sở dữ liệu mà bước nạp ghi vào.
+
+    Returns:
+        Kết nối SQLite ở chế độ `mode=ro`.
+    """
+    uri = f"file:{resolve_db_path().as_posix()}?mode=ro"
     return sqlite3.connect(uri, uri=True)
 
 
-def cmd_status(args: argparse.Namespace) -> None:
-    """Truy vấn điểm chạm hiện tại của pipeline và đề xuất hành động kế tiếp."""
-    target_date = args.date or f"{datetime.now():%Y-%m-%d}"
-    print(f"================================================================================")
-    print(f" 🛰️  NEWS-SCAPE PIPELINE OBSERVABILITY & STATUS REPORT — [{target_date}]")
-    print(f"================================================================================")
+def _local_naive(ts: str) -> datetime:
+    """Đổi chuỗi ISO có hoặc không có múi giờ thành giờ máy không kèm múi giờ.
 
+    Args:
+        ts: Chuỗi thời điểm dạng ISO.
+
+    Returns:
+        Thời điểm theo giờ máy.
+    """
+    clean = ts.replace("Z", "+00:00")
+    dt = datetime.fromisoformat(clean)
+    return dt.astimezone().replace(tzinfo=None) if dt.tzinfo else dt
+
+
+def latest_wave() -> dict | None:
+    """Đọc mô tả của đợt Article Lane được đóng gói gần nhất.
+
+    Returns:
+        Nội dung tệp `wave_<mã>.json` mới nhất, hoặc None khi chưa có đợt nào.
+    """
+    best = None
+    for p in ARTICLE_TASK_DIR.glob("wave_*.json"):
+        try:
+            m = json.loads(p.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if m.get("wave") and (best is None
+                              or m.get("created_epoch", 0) > best.get("created_epoch", 0)):
+            best = m
+    return best
+
+
+def wave_state(conn: sqlite3.Connection, manifest: dict) -> dict:
+    """Xác định đợt đang ở nửa nào của vòng đời và lệnh kế tiếp của nó.
+
+    Bốn trạng thái theo đúng thứ tự vòng đời: còn lô chưa có đầu ra (chạy chương
+    trình điều phối), có bài gửi đi mà chưa nhận được bản ghi (vá), đủ bản ghi nhưng
+    cơ sở dữ liệu chưa đủ (hoàn tất), và đã xong.
+
+    Args:
+        conn: Kết nối SQLite chỉ đọc.
+        manifest: Mô tả đợt do bước đóng gói sinh ra.
+
+    Returns:
+        Từ điển số đo của đợt kèm khoá `phase` và `next` (lệnh kế tiếp, rỗng khi xong).
+    """
+    from scripts import article_run as ar
+
+    wave = manifest["wave"]
+    have, missing = ar.pending_batches(wave)
+    ids = ar.wave_article_ids(wave)
+    n = len(ids)
+    received = ar.wave_received_ids(wave) if have else set()
+    cov = ar.coverage_of(conn, ids) if ids else {"l1_ok": set(), "gold_ok": set()}
+    st = {"wave": wave, "n": n, "batches": len(have) + len(missing),
+          "have": len(have), "missing": missing, "received": len(received),
+          "l1_ok": len(cov["l1_ok"]), "gold_ok": len(cov["gold_ok"]),
+          "created_at": manifest.get("created_at", "?")}
+
+    finish = f"{PY} scripts/article_run.py --wave {wave} --finish"
+    if missing:
+        kind = "repair" if all("_r" in b[len(f"article_{wave}_"):] for b in missing) else "conductor"
+        st["phase"] = f"{len(missing)} lô chưa có đầu ra mô hình"
+        st["next"] = (f"Chạy trọn data/agent_tasks/article/wave_{wave}.{kind}.ts trong MỘT "
+                      f"lệnh run_code (preset news-scape-conductor), rồi: {finish}")
+    elif n and len(received) < n:
+        st["phase"] = f"{n - len(received)} bài đã gửi mà chưa nhận được bản ghi"
+        st["next"] = f"{PY} scripts/article_run.py --wave {wave} --repair"
+    elif n and min(st["l1_ok"], st["gold_ok"]) / n < ar.MIN_COVERAGE:
+        st["phase"] = "đủ bản ghi nhưng cơ sở dữ liệu chưa đủ"
+        st["next"] = finish
+    else:
+        st["phase"] = "đã xong"
+        st["next"] = ""
+    return st
+
+
+def cmd_status(args: argparse.Namespace) -> None:
+    """Truy vấn điểm chạm hiện tại của Article Lane và đề xuất đúng lệnh kế tiếp.
+
+    Article Lane là đường xử lý duy nhất. Radar không đọc và không khuyến nghị gì
+    thuộc lane L1/Gold cũ (`l1_tasks`, hàng đợi `work_items`, packet `agent_tasks/l1`),
+    vì mọi khuyến nghị ấy dẫn phía điều phối đi sai đường.
+
+    Args:
+        args: Tham số dòng lệnh đã phân tích.
+    """
+    from scripts.article_pack import ANALYZED_L1, load_candidates
+
+    target_date = args.date or f"{datetime.now():%Y-%m-%d}"
+    print("=" * 80)
+    print(f" 🛰️  NEWS-SCAPE PIPELINE RADAR — ARTICLE LANE — [{target_date}]")
+    print("=" * 80)
+
+    probe = probe_write()
     conn = get_db_connection()
     cur = conn.cursor()
 
-    # 0. Kiểm tra độ tươi cào tin (Scraper Freshness & Gap Detection)
     cur.execute("SELECT max(last_run_ts) FROM scraper_heartbeat WHERE scraper_name NOT LIKE '%-%'")
-    last_hb_row = cur.fetchone()
-    last_scrape_ts_str = last_hb_row[0] if last_hb_row and last_hb_row[0] else None
-
-    cur.execute("SELECT max(fetched_at) FROM articles")
-    last_fetch_row = cur.fetchone()
-    last_fetch_ts_str = last_fetch_row[0] if last_fetch_row and last_fetch_row[0] else None
-
-    # Tính độ trễ cào tin
+    ref_ts_str = (cur.fetchone() or [None])[0]
+    if not ref_ts_str:
+        cur.execute("SELECT max(fetched_at) FROM articles")
+        ref_ts_str = (cur.fetchone() or [None])[0]
     scrape_delay_minutes = None
-    now_dt = datetime.now()
-    ref_ts_str = last_scrape_ts_str or last_fetch_ts_str
     if ref_ts_str:
         try:
-            # Hỗ trợ ISO string có hoặc không có timezone
-            ref_clean = ref_ts_str.replace("Z", "+00:00")
-            if "+" in ref_clean[10:] or "-" in ref_clean[10:]:
-                ref_dt = datetime.fromisoformat(ref_clean).astimezone().replace(tzinfo=None)
-            else:
-                ref_dt = datetime.fromisoformat(ref_clean)
-            scrape_delay_minutes = max(0, int((now_dt - ref_dt).total_seconds() / 60))
-        except Exception:
+            scrape_delay_minutes = max(0, int(
+                (datetime.now() - _local_naive(ref_ts_str)).total_seconds() / 60))
+        except ValueError:
             pass
 
-    # 1. Thống kê bài viết cào về
-    cur.execute("SELECT count(*) FROM articles WHERE date(published_at) = ?", (target_date,))
+    cur.execute("SELECT count(*) FROM articles WHERE substr(published_at,1,10) = ?",
+                (target_date,))
     crawled_count = cur.fetchone()[0]
 
-    # 2. Thống kê L1
-    cur.execute("""
-        SELECT count(distinct article_id)
-        FROM l1_outputs
-        WHERE date(created_at) = ?
-    """, (target_date,))
-    l1_done_count = cur.fetchone()[0]
+    # Độ phủ theo NGÀY ĐĂNG, cùng định nghĩa với `handoff.py`. Bản code-first không
+    # tính là đã phân tích.
+    covered = {}
+    for table, cond in (("l1_outputs", ANALYZED_L1), ("agent_outputs", "o.dod_pass = 1")):
+        cur.execute(f"""
+            SELECT count(distinct o.article_id) FROM {table} o
+            JOIN articles a ON a.url_title_hash = o.article_id
+            WHERE substr(a.published_at,1,10) = ? AND {cond}
+        """, (target_date,))
+        covered[table] = cur.fetchone()[0]
 
-    # 3. Thống kê Gold
-    cur.execute("""
-        SELECT count(distinct article_id)
-        FROM agent_outputs
-        WHERE date(created_at) = ?
-    """, (target_date,))
-    gold_done_count = cur.fetchone()[0]
+    # Cùng một câu truy vấn với bước đóng gói, nên số "chờ phân tích" ở đây đúng bằng
+    # số bài mà `article_run.py --date` sẽ lấy.
+    pending_today = len(load_candidates(conn, date=target_date, limit=1_000_000,
+                                        only_pending=True))
 
-    # 3b. Thống kê trạng thái hàng đợi L1 trong DB
-    cur.execute("""
-        SELECT count(1)
-        FROM articles a
-        WHERE date(a.published_at) = ?
-        AND NOT EXISTS (SELECT 1 FROM l1_tasks lt WHERE lt.article_id = a.url_title_hash)
-    """, (target_date,))
-    l1_unrouted_count = cur.fetchone()[0]
-
-    cur.execute("""
-        SELECT count(1)
-        FROM l1_tasks lt
-        JOIN articles a ON lt.article_id = a.url_title_hash
-        WHERE date(a.published_at) = ? AND lt.route = 'resolved' AND lt.status = 'pending'
-    """, (target_date,))
-    l1_resolved_pending = cur.fetchone()[0]
-
-    # 3c-override. Bao phủ L1 theo NGÀY ĐĂNG (khác l1_done_count vốn đếm theo created_at):
-    # trong bài đăng hôm nay, bao nhiêu đã có l1_outputs dod_pass=1, còn bao nhiêu needs_agent chờ.
-    cur.execute("""
-        SELECT count(distinct lo.article_id)
-        FROM l1_outputs lo
-        JOIN articles a ON a.url_title_hash = lo.article_id
-        WHERE date(a.published_at) = ? AND lo.dod_pass = 1
-    """, (target_date,))
-    l1_today_covered = cur.fetchone()[0]
-
-    cur.execute("""
-        SELECT count(1)
-        FROM l1_tasks lt
-        JOIN articles a ON a.url_title_hash = lt.article_id
-        WHERE date(a.published_at) = ? AND lt.route <> 'resolved' AND lt.status = 'pending'
-    """, (target_date,))
-    l1_today_needs_agent = cur.fetchone()[0]
-
-    # 3d. Bài bị nguồn xóa (404/410) trước khi kịp lấy nội dung đầy đủ — đặc trưng tin VN
-    cur.execute("""
-        SELECT count(1)
-        FROM articles
-        WHERE date(published_at) = ?
-        AND (metadata_json LIKE '%"source_deleted": true%'
-             OR metadata_json LIKE '%"source_deleted":true%')
-    """, (target_date,))
+    source_deleted = "(metadata_json LIKE '%\"source_deleted\": true%' " \
+                     "OR metadata_json LIKE '%\"source_deleted\":true%')"
+    cur.execute(f"SELECT count(1) FROM articles WHERE substr(published_at,1,10) = ? "
+                f"AND {source_deleted}", (target_date,))
     source_deleted_count = cur.fetchone()[0]
-
-    # Bài bị xóa thường được PHÁT HIỆN muộn hơn ngày đăng (đường retry làm việc với bài
-    # fetch trong 24h qua), nên con số lọc theo published_at của riêng hôm nay luôn thấp
-    # hơn thực tế. Kèm tổng tích lũy để không bỏ sót tín hiệu.
-    cur.execute("""
-        SELECT count(1) FROM articles
-        WHERE metadata_json LIKE '%"source_deleted": true%'
-           OR metadata_json LIKE '%"source_deleted":true%'
-    """)
+    # Bài bị xóa thường được PHÁT HIỆN muộn hơn ngày đăng, nên kèm tổng tích lũy.
+    cur.execute(f"SELECT count(1) FROM articles WHERE {source_deleted}")
     source_deleted_total = cur.fetchone()[0]
 
-    # 3f. Sổ lỗi derive Bronze→Silver (ADR 0007). Dead-letter = nội dung KHÔNG lên được
-    # Silver, tức không bao giờ tới L1/Gold/người dùng — phải nhìn thấy được.
+    # Sổ lỗi derive Bronze→Silver (ADR 0007). Dead-letter là nội dung không bao giờ
+    # tới được bước phân tích hay người dùng.
     try:
         cur.execute("""
-            SELECT sum(CASE WHEN dead_letter=0 THEN 1 ELSE 0 END) AS blocking,
-                   sum(CASE WHEN dead_letter=1 THEN 1 ELSE 0 END) AS dead
+            SELECT sum(CASE WHEN dead_letter=0 THEN 1 ELSE 0 END),
+                   sum(CASE WHEN dead_letter=1 THEN 1 ELSE 0 END)
             FROM silver_failures
         """)
         _r = cur.fetchone()
         silver_blocking, silver_dead = int(_r[0] or 0), int(_r[1] or 0)
     except sqlite3.OperationalError:
-        silver_blocking = silver_dead = 0      # bảng chưa tạo (DB cũ chưa migrate)
+        silver_blocking = silver_dead = 0
 
-    # 3g. Thống kê trạng thái hàng đợi kẹt (work_items held/claimed/failed và l1_tasks failed)
-    cur.execute("SELECT status, count(1) FROM work_items GROUP BY status")
-    wi_counts = dict(cur.fetchall())
-    wi_held = wi_counts.get("held", 0)
-    wi_claimed = wi_counts.get("claimed", 0)
-    wi_failed = wi_counts.get("failed", 0)
-
-    cur.execute("SELECT count(1) FROM l1_tasks WHERE status = 'failed'")
-    l1_failed = cur.fetchone()[0]
-
-    # 3e. Phân bố 404/410 theo domain. Tăng vọt tập trung ở MỘT domain hầu như luôn là
-    # site đổi cấu trúc URL/selector (404 giả) chứ không phải tin bị gỡ thật.
-    cur.execute("""
-        SELECT source_domain,
-               sum(CASE WHEN metadata_json LIKE '%"source_deleted": true%'
-                          OR metadata_json LIKE '%"source_deleted":true%'
-                        THEN 1 ELSE 0 END) AS deleted,
-               count(1) AS total
-        FROM articles
-        WHERE date(published_at) = ?
-        GROUP BY source_domain
+    # Tăng vọt 404/410 tập trung ở MỘT domain hầu như luôn là site đổi cấu trúc URL
+    # hoặc selector chứ không phải tin bị gỡ thật.
+    cur.execute(f"""
+        SELECT source_domain, sum(CASE WHEN {source_deleted} THEN 1 ELSE 0 END), count(1)
+        FROM articles WHERE substr(published_at,1,10) = ? GROUP BY source_domain
     """, (target_date,))
     deleted_by_domain = [(r[0], r[1], r[2]) for r in cur.fetchall() if r[1]]
 
-    # 3c. Thống kê bài Gold pending theo Subscriber Gating cho target_date
-    gold_pending_subs_count = 0
-    try:
-        from src.agent.entities import load_registry
-        reg = load_registry()
-        active_subs = set()
-        for user_subs in reg.subscriptions.values():
-            active_subs.update(user_subs)
+    cur.execute("""
+        SELECT max(o.created_at) FROM agent_outputs o
+        JOIN articles a ON a.url_title_hash = o.article_id
+        WHERE substr(a.published_at,1,10) = ? AND o.dod_pass = 1
+    """, (target_date,))
+    last_gold_ts = cur.fetchone()[0]
 
-        cur.execute("""
-            SELECT w.article_id, l1.output_json
-            FROM work_items w
-            JOIN articles a ON w.article_id = a.url_title_hash
-            JOIN l1_outputs l1 ON l1.article_id = w.article_id AND l1.dod_pass = 1
-            WHERE w.status = 'pending'
-            AND date(COALESCE(NULLIF(a.published_at, ''), a.fetched_at)) = ?
-        """, (target_date,))
-        rows = cur.fetchall()
-        for aid, out_json in rows:
-            if not out_json:
-                continue
-            try:
-                data = json.loads(out_json)
-                eids = [e["entity_id"] for e in data.get("entities", []) if e.get("entity_id")]
-                if any(eid in active_subs for eid in eids):
-                    gold_pending_subs_count += 1
-            except Exception:
-                pass
-    except Exception:
-        pass
-
-    # 4. Thống kê Task files đang treo trên đĩa (chỉ quét PROJECT_ROOT / "data")
-    def _find_files(*relative_patterns: str) -> list[str]:
-        found = []
-        for pat in relative_patterns:
-            found.extend(glob.glob(str(DATA_ROOT / pat)))
-        return list(set(found))
-
-    l1_tasks = _find_files("agent_tasks/l1/*.task.json")
-    l1_tasks_pending = len(l1_tasks)
-    gold_tasks = _find_files("agent_tasks/batch_*.task.json") + \
-                 [f for f in _find_files("agent_tasks/*.task.json") if not os.path.basename(f).startswith("batch_")]
-    gold_tasks_pending = len(set(gold_tasks))
-
-    # 5. Thống kê Output files có bài chưa Ingest vào DB
-    l1_outputs_waiting = 0
-    for lf in _find_files("agent_outputs_l1/*.output.json"):
-        try:
-            with open(lf, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                items = data if isinstance(data, list) else data.get("outputs", [])
-                for it in items:
-                    cur.execute("SELECT 1 FROM l1_outputs WHERE article_id = ?", (it.get("article_id"),))
-                    if not cur.fetchone():
-                        l1_outputs_waiting += 1
-        except Exception:
-            pass
-
-    gold_outputs_waiting = 0
-    for gf in _find_files("agent_outputs/*.output.json"):
-        try:
-            with open(gf, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                items = data if isinstance(data, list) else data.get("outputs", [])
-                for it in items:
-                    cur.execute("SELECT 1 FROM agent_outputs WHERE article_id = ?", (it.get("article_id"),))
-                    if not cur.fetchone():
-                        gold_outputs_waiting += 1
-        except Exception:
-            pass
-
+    manifest = latest_wave()
+    wave = wave_state(conn, manifest) if manifest else None
     conn.close()
 
-    print(f"1. DỮ LIỆU TẠI KHO (DATABASE & BRONZE/SILVER):")
-    print(f"   • Số bài cào xuất bản trong ngày : {crawled_count:,} bài")
-    print(f"   • Số bài đã hoàn tất tầng L1     : {l1_done_count:,} bài")
-    _cover_pct = (100.0 * l1_today_covered / crawled_count) if crawled_count else 0.0
-    print(f"   • Bao phủ L1 bài đăng hôm nay    : {l1_today_covered:,}/{crawled_count:,} "
-          f"({_cover_pct:.1f}%) · còn {l1_today_needs_agent:,} needs_agent chờ · "
-          f"{l1_unrouted_count:,} chưa định tuyến")
-    print(f"   • Số bài đã hoàn tất tầng Gold   : {gold_done_count:,} bài")
-    print(f"   • Bài Gold đủ điều kiện chờ phân tích (Subscriber-Gated): {gold_pending_subs_count:,} bài")
-    print(f"   • Bài bị nguồn xóa (404/410) trước khi lấy được nội dung: "
-          f"{source_deleted_count:,} bài đăng hôm nay / {source_deleted_total:,} tổng tích lũy")
+    pct = (100.0 * covered["l1_outputs"] / crawled_count) if crawled_count else 0.0
+    print("1. DỮ LIỆU TẠI KHO")
+    print(f"   • Bài đăng trong ngày            : {crawled_count:,}")
+    print(f"   • Đã phân tích (mô hình, đạt)    : {covered['l1_outputs']:,}/{crawled_count:,} "
+          f"({pct:.1f}%) · nội dung đạt {covered['agent_outputs']:,}")
+    print(f"   • Chờ phân tích                  : {pending_today:,} bài có gói Silver, "
+          f"chưa được mô hình phân tích (bản code-first không tính)")
+    print(f"   • Bài bị nguồn xóa (404/410)     : {source_deleted_count:,} bài đăng hôm nay / "
+          f"{source_deleted_total:,} tổng tích lũy")
     _silver_tag = "🟢" if not (silver_blocking or silver_dead) else (
         "🔴" if silver_dead else "🟡")
-    print(f"   • Bronze kẹt ở Silver (ADR 0007)  : {_silver_tag} "
-          f"{silver_blocking:,} đang chặn watermark / {silver_dead:,} dead-letter")
-    _queue_dead_tag = "🔴" if (wi_held or wi_failed or l1_failed) else ("🟡" if wi_claimed > 50 else "🟢")
-    print(f"   • Hàng đợi kẹt (Phase 03)        : {_queue_dead_tag} "
-          f"work_items: {wi_claimed:,} claimed, {wi_held:,} held, {wi_failed:,} failed | l1_tasks: {l1_failed:,} failed")
+    print(f"   • Bronze kẹt ở Silver (ADR 0007) : {_silver_tag} {silver_blocking:,} đang chặn "
+          f"watermark / {silver_dead:,} dead-letter")
     if scrape_delay_minutes is not None:
-        delay_str = f"{scrape_delay_minutes} phút" if scrape_delay_minutes < 60 else f"{scrape_delay_minutes // 60}h {scrape_delay_minutes % 60}m"
-        last_time_str = ref_ts_str.split("T")[1][:8] if "T" in ref_ts_str else ref_ts_str
-        freshness_tag = "🟢 Tươi mới" if scrape_delay_minutes <= 30 else ("🟡 Chậm nhẹ" if scrape_delay_minutes <= 120 else "🔴 Gián đoạn / Khoảng trống đêm")
-        print(f"   • Độ tươi cào tin (Liveness)     : {freshness_tag} (lần cào cuối lúc {last_time_str}, cách đây {delay_str})")
+        delay_str = (f"{scrape_delay_minutes} phút" if scrape_delay_minutes < 60
+                     else f"{scrape_delay_minutes // 60}h {scrape_delay_minutes % 60}m")
+        freshness_tag = ("🟢 Tươi mới" if scrape_delay_minutes <= 30 else
+                         "🟡 Chậm nhẹ" if scrape_delay_minutes <= 120 else
+                         "🔴 Gián đoạn / Khoảng trống đêm")
+        print(f"   • Độ tươi cào tin                : {freshness_tag} (cách đây {delay_str})")
+    print(f"   • Cơ sở dữ liệu                  : {'✅' if probe.ok else '❌'} {probe.reason} "
+          f"— {probe.path}")
     print()
 
-    print(f"2. TRẠNG THÁI HÀNG ĐỢI FILE (TASK PACKETS & BATCHES):")
-    print(f"   • Tác vụ L1 đang chờ Subagents   : {l1_tasks_pending} files/batches")
-    print(f"   • Tác vụ Gold đang chờ Subagents : {gold_tasks_pending} files/batches")
-    print(f"   • Bài L1 đã xuất chưa Ingest DB  : {l1_outputs_waiting} bài")
-    print(f"   • Bài Gold đã xuất chưa Ingest DB: {gold_outputs_waiting} bài")
+    print("2. ĐỢT ARTICLE LANE GẦN NHẤT")
+    if wave:
+        n = wave["n"] or 1
+        print(f"   • Mã đợt      : {wave['wave']} (đóng gói {wave['created_at']}) · "
+              f"{wave['n']:,} bài · {wave['batches']} lô gồm cả lô vá")
+        print(f"   • Đầu ra      : {wave['have']}/{wave['batches']} lô · nhận "
+              f"{wave['received']:,}/{wave['n']:,} bài")
+        print(f"   • Vào DB      : nhận diện {wave['l1_ok']:,} ({wave['l1_ok'] / n:.1%}) · "
+              f"nội dung {wave['gold_ok']:,} ({wave['gold_ok'] / n:.1%})")
+        print(f"   • Trạng thái  : {wave['phase']}")
+    else:
+        print("   • Chưa có đợt nào được đóng gói.")
     print()
 
-    # 6. Xác định điểm chạm và Đề xuất hành động tiếp theo
-    print(f"3. ĐIỂM CHẠM VẬN HÀNH & ĐỀ XUẤT HÀNH ĐỘNG CỤ THỂ:")
-    recommendations = []
+    print("3. ĐIỂM CHẠM & LỆNH KẾ TIẾP")
+    recs: list[tuple[str, str, str]] = []
 
-    # Cảnh báo gián đoạn cào tin (qua đêm hoặc tiến trình ngắt)
+    if not probe.ok:
+        recs.append(("MEDIUM", f"Phiên này không ghi được DB ({probe.reason}). Chuẩn bị đợt "
+                               f"và chạy mô hình vẫn làm được; `--finish` và giao hàng phải "
+                               f"chạy với danger-full-access.",
+                     f"{PY} scripts/article_run.py --where"))
+
     if scrape_delay_minutes is not None and scrape_delay_minutes > 120:
-        delay_hrs = scrape_delay_minutes // 60
-        recommendations.append((
-            "HIGH",
-            f"Phát hiện khoảng trống runtime cào tin ({delay_hrs}h qua chưa cào, máy sleep hoặc scheduler dừng). Cần cào vét bù tin ngay.",
-            f'& "C:\\venvs\\news-scape\\Scripts\\python.exe" scripts/run_once.py'
-        ))
+        recs.append(("HIGH", f"Khoảng trống cào tin {scrape_delay_minutes // 60}h (máy sleep "
+                             f"hoặc scheduler dừng). Cào vét bù ngay.",
+                     f"{PY} scripts/run_once.py"))
     elif scrape_delay_minutes is not None and scrape_delay_minutes > 45:
-        recommendations.append((
-            "MEDIUM",
-            f"Tiến trình cào tin tự động đang chậm ({scrape_delay_minutes} phút chưa có nhịp cào mới).",
-            f'Kiểm tra background morninger hoặc chạy bù: & "C:\\venvs\\news-scape\\Scripts\\python.exe" scripts/run_once.py'
-        ))
+        recs.append(("MEDIUM", f"Cào tin chậm ({scrape_delay_minutes} phút chưa có nhịp mới).",
+                     f"{PY} scripts/run_once.py"))
 
     if silver_dead:
-        recommendations.append((
-            "HIGH",
-            f"Có {silver_dead} tệp Bronze DEAD-LETTER ở Silver — nội dung không bao giờ "
-            f"lên được Silver, tức không tới L1/Gold/người dùng. Đây là mất dữ liệu thật.",
-            'Soi nguyên nhân: SELECT meta_path, attempts, last_error FROM silver_failures '
-            'WHERE dead_letter=1; — sửa gốc rồi xoá hàng đó để derive thử lại'
-        ))
+        recs.append(("HIGH", f"{silver_dead} tệp Bronze DEAD-LETTER ở Silver: nội dung không "
+                             f"bao giờ tới được bước phân tích. Đây là mất dữ liệu thật.",
+                     "SELECT meta_path, attempts, last_error FROM silver_failures "
+                     "WHERE dead_letter=1; — sửa gốc rồi xoá hàng đó để derive thử lại"))
     elif silver_blocking:
-        recommendations.append((
-            "MEDIUM",
-            f"Có {silver_blocking} tệp Bronze đang chặn watermark Silver (chưa đủ ngưỡng "
-            f"dead-letter). Watermark sẽ không tiến qua chúng cho tới khi xong hoặc bỏ cuộc.",
-            'SELECT meta_path, attempts, last_error FROM silver_failures WHERE dead_letter=0;'
-        ))
+        recs.append(("MEDIUM", f"{silver_blocking} tệp Bronze đang chặn watermark Silver.",
+                     "SELECT meta_path, attempts, last_error FROM silver_failures "
+                     "WHERE dead_letter=0;"))
 
-    if wi_failed > 0 or l1_failed > 0:
-        recommendations.append((
-            "HIGH",
-            f"Có {wi_failed} work_items và {l1_failed} l1_tasks ở trạng thái 'failed' (trượt DoD).",
-            '& "C:\\venvs\\news-scape\\Scripts\\python.exe" scripts/maintenance/requeue.py --state failed --layer all --apply'
-        ))
-    elif wi_held > 0:
-        recommendations.append((
-            "MEDIUM",
-            f"Có {wi_held} work_items đang ở trạng thái 'held'. Sẽ tự động về pending khi derive lại thành công hoặc chạy requeue.",
-            '& "C:\\venvs\\news-scape\\Scripts\\python.exe" scripts/maintenance/requeue.py --state held --layer gold --apply'
-        ))
+    for dom, deleted, total in deleted_by_domain:
+        if deleted > 10 and total and (deleted / total) > 0.3:
+            recs.append(("HIGH", f"Domain {dom}: {deleted}/{total} bài trả 404/410 — nghi site "
+                                 f"đổi cấu trúc URL/selector, không phải tin bị gỡ thật.",
+                         f"{PY} scripts/validate_capture.py {dom.split('.')[0]}"))
 
-    # Nghi ngờ 404 giả: một domain vừa nhiều tuyệt đối vừa chiếm tỷ trọng lớn.
-    for _dom, _deleted, _total in deleted_by_domain:
-        if _deleted > 10 and _total and (_deleted / _total) > 0.3:
-            recommendations.append((
-                "HIGH",
-                f"Domain {_dom}: {_deleted}/{_total} bài trả 404/410 — nghi site đổi "
-                f"cấu trúc URL/selector chứ KHÔNG phải tin bị gỡ thật. Cần kiểm chứng "
-                f"trước khi tin vào số liệu 'bài bị nguồn xóa'.",
-                f'& "C:\\venvs\\news-scape\\Scripts\\python.exe" '
-                f'scripts/validate_capture.py {_dom.split(".")[0]}'
-            ))
+    # Một đợt tại một thời điểm: đợt gần nhất chưa xong thì không mở đợt mới.
+    wave_open = bool(wave and wave["next"])
+    if wave_open:
+        recs.append(("HIGH", f"Đợt {wave['wave']}: {wave['phase']}.", wave["next"]))
+    elif pending_today:
+        new_wave = f"W{datetime.now():%m%d%H%M}"
+        recs.append(("HIGH", f"{pending_today:,} bài đăng ngày {target_date} chờ phân tích.",
+                     f"{PY} scripts/article_run.py --wave {new_wave} --date {target_date} "
+                     f"--limit {pending_today} --batch 100"))
 
-    if l1_outputs_waiting > 0:
-        recommendations.append((
-            "HIGH",
-            f"Có {l1_outputs_waiting} bài L1 trong output files chưa Ingest vào DB.",
-            f'& "C:\\venvs\\news-scape\\Scripts\\python.exe" scripts/l1_ingest.py data/agent_outputs_l1'
-        ))
+    if not wave_open and covered["agent_outputs"]:
+        files = list(USER_OUTPUT_DIR.glob(f"*/{target_date}.xlsx"))
+        newest = max((f.stat().st_mtime for f in files), default=0.0)
+        stale = False
+        if files and last_gold_ts:
+            try:
+                stale = _local_naive(last_gold_ts).timestamp() > newest
+            except ValueError:
+                pass
+        if not files or stale:
+            why = ("chưa xuất tệp giao hàng" if not files
+                   else "tệp giao hàng cũ hơn kết quả phân tích mới nhất")
+            recs.append(("HIGH", f"Đã có bài phân tích ngày {target_date} nhưng {why}.",
+                         f"{PY} scripts/write_user_output.py --date {target_date}"))
 
-    if gold_outputs_waiting > 0:
-        recommendations.append((
-            "HIGH",
-            f"Có {gold_outputs_waiting} bài Gold trong output files chưa nạp DB.",
-            f'& "C:\\venvs\\news-scape\\Scripts\\python.exe" scripts/agent_ingest.py data/agent_outputs'
-        ))
+    if not recs:
+        recs.append(("INFO", "Ngày này đã xử lý và giao hàng xong.", "Không cần thao tác thêm."))
 
-    if l1_tasks_pending > 0:
-        recommendations.append((
-            "MEDIUM",
-            f"Có {l1_tasks_pending} task/batch L1 cần khởi động Subagent `l1_entity_matcher`.",
-            f'Gọi Subagents Flash xử lý các batch trong data/agent_tasks/l1/'
-        ))
-
-    if gold_tasks_pending > 0:
-        recommendations.append((
-            "MEDIUM",
-            f"Có {gold_tasks_pending} task/batch Gold cần khởi động Subagent `gold_financial_analyst`.",
-            f'Gọi Subagents Flash xử lý các batch trong data/agent_tasks/'
-        ))
-
-    if not any(r[0] == "HIGH" for r in recommendations):
-        if l1_unrouted_count > 0:
-            recommendations.append((
-                "HIGH",
-                f"Có {l1_unrouted_count} bài viết đã cào về nhưng chưa định tuyến L1.",
-                f'& "C:\\venvs\\news-scape\\Scripts\\python.exe" scripts/l1_route.py --from-db --date {target_date} --mini-batch 25'
-            ))
-        elif l1_resolved_pending > 0:
-            recommendations.append((
-                "HIGH",
-                f"Có {l1_resolved_pending} bài L1 resolved đang chờ vật chất hóa Code-First.",
-                f'& "C:\\venvs\\news-scape\\Scripts\\python.exe" scripts/l1_ingest.py --code-first'
-            ))
-        elif gold_done_count > 0 and not any(glob.glob(str(USER_OUTPUT_DIR / "*" / f"{target_date}.xlsx"))):
-            recommendations.append((
-                "HIGH",
-                "Đã có bài phân tích Gold nhưng chưa xuất bản Deliverable Excel cho người dùng.",
-                f'& "C:\\venvs\\news-scape\\Scripts\\python.exe" scripts/write_user_output.py --date {target_date}'
-            ))
-        elif not recommendations:
-            recommendations.append((
-                "INFO",
-                "Toàn bộ chuỗi vận hành ngày này đã hoàn tất 100% sạch sẽ. Deliverable đã sẵn sàng.",
-                "Không cần thao tác thêm. Hệ thống ở trạng thái ổn định."
-            ))
-
-    for priority, desc, cmd in recommendations:
+    for priority, desc, cmd in recs:
         icon = "🔴" if priority == "HIGH" else ("🟡" if priority == "MEDIUM" else "🟢")
         print(f"   {icon} [{priority}] {desc}")
-        print(f"      👉 Hành động: {cmd}")
-    print(f"================================================================================\n")
+        print(f"      👉 {cmd}")
+    print()
+    print("   Mọi lệnh chạy với cwd = project/. Đường xử lý duy nhất là Article Lane")
+    print("   (article_run.py). Không dùng l1_route, l1_ingest --code-first, requeue hay")
+    print("   agent_l1/agent_gold: lane L1/Gold cũ đã ngừng.")
+    print("=" * 80 + "\n")
 
 
 def _utc_window(date: str) -> tuple[str, str]:

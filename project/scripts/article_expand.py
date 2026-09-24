@@ -433,6 +433,7 @@ def main(argv=None) -> int:
                     help="Thư mục chứa đầu ra thô của mô hình")
     ap.add_argument("--task-dir", default=str(TASK_DIR), help="Thư mục chứa packet")
     ap.add_argument("--batch", help="Chỉ xử lý một lô cụ thể")
+    ap.add_argument("--wave", help="Chỉ xử lý các lô của một đợt, gồm cả lô vá")
     ap.add_argument("--fail-threshold", type=float, default=0.10,
                     help="Tỷ lệ hỏng khiến lệnh trả mã lỗi")
     ap.add_argument("--json", action="store_true", help="Xuất thống kê dạng JSON")
@@ -440,7 +441,11 @@ def main(argv=None) -> int:
 
     src_dir = Path(args.source)
     task_dir = Path(args.task_dir)
-    pattern = f"{args.batch}.output.json" if args.batch else "*.output.json"
+    # Không lọc thì mỗi lần hoàn tất lại bung mọi đợt cũ trong thư mục, và tỷ lệ hỏng
+    # "cao nhất" lấy trên cả những đợt đã đóng từ lâu.
+    pattern = (f"{args.batch}.output.json" if args.batch
+               else f"article_{args.wave}_*.output.json" if args.wave
+               else "*.output.json")
     outputs = sorted(glob.glob(str(src_dir / pattern)))
     if not outputs:
         print(f"Không có đầu ra nào trong {src_dir}. Chạy wave trước đã.")

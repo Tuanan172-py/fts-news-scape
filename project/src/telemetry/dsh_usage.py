@@ -158,6 +158,20 @@ class SessionUsage:
     seq: int = 0
     mtime: float = 0.0
     path: str = ""
+    created_at: float = 0.0
+
+    @property
+    def is_child(self) -> bool:
+        """Cho biết phiên có phải phiên con do agent cha sinh ra hay không.
+
+        Phiên cấp cao nhất mang mã `session-<uuid>`, còn phiên con của lượt gọi agent
+        mang mã uuid trần. Đây là dấu hiệu duy nhất trong checkpoint phân biệt được
+        worker với phiên điều phối, vì phiên con kế thừa preset của cha.
+
+        Returns:
+            True khi mã phiên không mang tiền tố `session-`.
+        """
+        return not self.session_id.startswith("session-")
 
     @property
     def quota_tokens(self) -> int:
@@ -247,7 +261,23 @@ def read_projcache(path: str | Path) -> SessionUsage | None:
         seq=int((rows.get("tokenUsage") or {}).get("seq") or 0),
         mtime=p.stat().st_mtime,
         path=str(p),
+        created_at=_created_epoch(identity.get("createdAt")),
     )
+
+
+def _created_epoch(raw) -> float:
+    """Đổi mốc tạo phiên dạng mili giây của checkpoint sang epoch giây.
+
+    Args:
+        raw: Giá trị `identity.createdAt`, dạng số hoặc chuỗi mili giây.
+
+    Returns:
+        Epoch giây, hoặc 0 khi thiếu hoặc không đọc được.
+    """
+    try:
+        return int(raw) / 1000.0
+    except (TypeError, ValueError):
+        return 0.0
 
 
 def iter_sessions(cwd_filter: str | None = None, *, since: float = 0.0) -> list[SessionUsage]:
@@ -559,21 +589,29 @@ class WaveUsage:
 
 
 def wave_usage(since: float, *, cwd_filter: str | None = None,
-               with_reasoning: bool = True) -> WaveUsage:
+               with_reasoning: bool = True, workers_only: bool = False) -> WaveUsage:
     """Gộp số đo của mọi phiên phát sinh sau một mốc thời gian.
 
     Chi phí của agent con không nằm trong số đo của phiên cha vì mỗi con là một
     Session riêng, nên hàm này quét toàn bộ phiên mới thay vì chỉ đọc phiên cha.
 
+    Số đo trong checkpoint là số cộng dồn trọn đời phiên. Lọc theo thời điểm sửa đổi
+    vì vậy kéo cả những phiên mở từ nhiều ngày trước nhưng còn hoạt động vào đợt, với
+    toàn bộ token của chúng. `workers_only` chỉ giữ phiên con được TẠO sau mốc, tức
+    đúng các lượt gọi worker của đợt.
+
     Args:
         since: Mốc epoch, chỉ gộp phiên có thời điểm sửa đổi lớn hơn mốc này.
         cwd_filter: Chỉ gộp phiên thuộc thư mục làm việc chứa chuỗi này.
         with_reasoning: Có cố đọc thêm `reasoningTokens` từ nhật ký JSONL không.
+        workers_only: Chỉ gộp phiên con có mốc tạo sau `since`.
 
     Returns:
         Số đo gộp của cả đợt.
     """
     sessions = iter_sessions(cwd_filter, since=since)
+    if workers_only:
+        sessions = [s for s in sessions if s.is_child and s.created_at >= since]
     wave = WaveUsage(sessions=sessions)
     if not with_reasoning:
         return wave

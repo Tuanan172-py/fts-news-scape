@@ -27,7 +27,8 @@ def main(argv: list[str]) -> int:
 
     import argparse
     ap = argparse.ArgumentParser(description="Nạp output tra soát của agent L1")
-    ap.add_argument("target", nargs="?", help="output.json hoặc thư mục chứa outputs")
+    ap.add_argument("target", nargs="*",
+                    help="một hoặc nhiều output.json, hoặc thư mục chứa outputs")
     ap.add_argument("--task-dir", default="data/agent_tasks/l1", help="Thư mục task packets L1 (mặc định: data/agent_tasks/l1)")
     ap.add_argument("--no-archive", action="store_true", help="Không tự động archive task packet khi DoD pass")
     ap.add_argument("--code-first", action="store_true",
@@ -52,7 +53,7 @@ def main(argv: list[str]) -> int:
     done_aids: list[str] = []
     from src.agent.batch_handoff import unpack_batch_output
 
-    for path in _iter_paths(args.target):
+    for path in (p for t in args.target for p in _iter_paths(t)):
         # unpack_batch_output bao cả 3 dạng: mảng, {outputs|results: [...]}, object đơn lẻ.
         # Không có nó thì agent trả cả lô trong 1 file là ingest hỏng im lặng.
         items = unpack_batch_output(path)

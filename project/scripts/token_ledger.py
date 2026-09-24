@@ -196,12 +196,23 @@ def cmd_append(args: argparse.Namespace) -> int:
         Mã thoát 0 khi ghi được, 2 khi không tìm thấy phiên nào trong khoảng.
     """
     since = args.since if args.since is not None else time.time() - args.window_min * 60
-    wave = wave_usage(since, cwd_filter=args.cwd_filter, with_reasoning=not args.no_reasoning)
+    workers_only = getattr(args, "workers_only", False)
+    wave = wave_usage(since, cwd_filter=args.cwd_filter, with_reasoning=not args.no_reasoning,
+                      workers_only=workers_only)
 
     if not wave.sessions:
-        print(f"⚠️  Không có phiên DSH nào sửa đổi sau mốc đã cho "
-              f"({datetime.fromtimestamp(since):%Y-%m-%d %H:%M:%S}). Không ghi gì.")
+        print(f"⚠️  Không có phiên DSH nào {'worker tạo' if workers_only else 'sửa đổi'} "
+              f"sau mốc đã cho ({datetime.fromtimestamp(since):%Y-%m-%d %H:%M:%S}). "
+              f"Không ghi gì.")
         return 2
+    if workers_only:
+        dropped = len(wave_usage(since, cwd_filter=args.cwd_filter,
+                                 with_reasoning=False).sessions) - len(wave.sessions)
+        if dropped:
+            print(f"   bỏ {dropped} phiên không phải worker của đợt (điều phối, phiên mở "
+                  f"từ trước); chúng không tính vào token mỗi bài")
+        if not args.note:
+            args.note = "workers-only"
 
     pricing = load_pricing()
     peak = args.peak if args.peak is not None else is_peak(pricing=pricing)
@@ -243,7 +254,10 @@ def cmd_append(args: argparse.Namespace) -> int:
         print(f"   ⚠️ turns_max={turns_max}: có phiên chạy quá 1 bước, soi lại persona worker")
 
     pfx = args.prefix_tokens or cached_prefix_tokens()
-    calls = args.worker_calls or worker_calls(args.wave)
+    # Ở chế độ chỉ tính worker, mọi phiên còn lại đều là lượt gọi worker, nên chính
+    # số phiên là số lượt gọi khi mô tả đợt không có.
+    calls = (args.worker_calls or worker_calls(args.wave)
+             or (len(wave.sessions) if workers_only else None))
     expected_hit, shortfall = cache_shortfall(wave.cache_read, len(wave.sessions), pfx,
                                               calls=calls)
     basis = (f"{calls} luot goi worker theo mo ta dot" if calls
@@ -262,13 +276,8 @@ def cmd_append(args: argparse.Namespace) -> int:
         else:
             print(f"   ✅ bộ nhớ đệm trúng: hit {wave.cache_read:,} token so với sàn "
                   f"{expected_hit:,}")
-
-    warn = float((pricing.get("watch_thresholds") or {}).get("tokens_per_article_warn", 1500))
-    if args.items and per_item > warn:
-        print(f"   ⚠️ {per_item:,.0f} token/bài vượt ngưỡng cảnh báo {warn:,.0f}.")
-        print(f"      Hai nguyên nhân hay gặp, kiểm theo thứ tự: (1) mốc --since quá rộng nên "
-              f"gộp nhầm phiên DSH khác đang mở song song — đợt này gộp {len(wave.sessions)} "
-              f"phiên; (2) distillation cho packet quá dày, soi histogram của article_pack.")
+    # Token mỗi bài chỉ được ghi và in ra để người dùng tự đánh giá. Không có ngưỡng
+    # nào so với nó, theo bài, theo lô hay theo đợt.
     return 0
 
 
@@ -443,6 +452,9 @@ def main(argv=None) -> int:
                    help="Kích thước tiền tố tĩnh dùng để đối chiếu cache. Bỏ trống "
                         "thì lấy từ tệp mô tả prefix")
     a.add_argument("--note", help="Ghi chú tự do")
+    a.add_argument("--workers-only", action="store_true",
+                   help="Chỉ gộp phiên worker được tạo sau --since; bỏ phiên điều phối "
+                        "và mọi phiên mở từ trước còn đang hoạt động")
 
     r = sub.add_parser("report", help="In báo cáo sổ cái")
     r.add_argument("--wave", help="Lọc theo đợt")

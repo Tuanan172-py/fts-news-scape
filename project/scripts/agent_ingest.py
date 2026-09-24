@@ -30,7 +30,8 @@ def main(argv: list[str]) -> int:
 
     import argparse
     ap = argparse.ArgumentParser(description="Nạp agent-output-v1 do agent NGOÀI sinh ra")
-    ap.add_argument("target", help="output.json hoặc thư mục chứa outputs")
+    ap.add_argument("target", nargs="+",
+                    help="một hoặc nhiều output.json, hoặc thư mục chứa outputs")
     ap.add_argument("--task-dir", default="data/agent_tasks", help="Thư mục task packets (mặc định: data/agent_tasks)")
     ap.add_argument("--no-archive", action="store_true", help="Không tự động archive task packet khi DoD pass")
     args = ap.parse_args(argv)
@@ -55,7 +56,7 @@ def main(argv: list[str]) -> int:
                 f"FAILED {res.get('article_id')}: {res.get('reasons') or res.get('reason')}"
             )
 
-    for path in _iter_paths(args.target):
+    for path in (p for t in args.target for p in _iter_paths(t)):
         # unpack_batch_output đã bao cả 3 dạng: list, {outputs|results: [...]}, và object đơn lẻ.
         unpacked_items = unpack_batch_output(path)
         if not unpacked_items:
