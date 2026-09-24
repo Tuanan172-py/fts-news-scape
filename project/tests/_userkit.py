@@ -101,21 +101,20 @@ def seed_l1(store, aid, entity_ids, *, dod_pass=1, title="Tin", etype="TICKER") 
         "dod_pass": dod_pass, "dod_reasons": "[]", "created_at": "t"})
 
 
-def seed_agent(store, aid, *, dod_pass=1, event_type="macro", with_optional=True,
-               raw_sha256=None, summary=None, materiality=0.6,
+def seed_agent(store, aid, *, dod_pass=1, with_optional=True,
+               raw_sha256=None, summary=None,
                time_sensitivity="this_week") -> None:
     out = {
         "output_schema_version": "1.0", "article_id": aid,
         "summary": {"abstractive": summary or ("Tóm tắt " + aid), "key_points": ["kp1", "kp2"]},
-        "implication": {"text": "Hàm ý", "affected_parties": ["x"], "impact_area": "market"},
-        "materiality": {"score": materiality, "time_sensitivity": time_sensitivity},
+        "implication": {"text": "Hàm ý", "affected_parties": ["x"]},
+        "time_sensitivity": time_sensitivity,
         "confidence": 0.8,
         "citations": [{"claim": "c", "source_span": "span dài hơn hai mươi ký tự", "source_offset": 0}],
         "processing_metadata": {"agent_provider": "p", "model_used": "m", "timestamp": "t"},
     }
     if with_optional:
         out["sentiment"] = {"overall": -0.3, "polarity": "negative"}
-        out["event_type"] = event_type
     store.insert_agent_output({
         "article_id": aid, "raw_sha256": raw_sha256 or ("h_" + aid), "work_item_id": None,
         "output_json": json.dumps(out, ensure_ascii=False), "agent_provider": "p",

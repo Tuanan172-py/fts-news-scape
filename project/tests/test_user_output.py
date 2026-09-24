@@ -14,8 +14,11 @@ from src.export.xlsx_delivery import DELIVERY_FIELDS
 
 DATE = "2026-08-18"
 
-# Trường bị loại khỏi deliverable NGƯỜI đọc (vẫn còn đủ trong _master).
-DROPPED = ("impact_area", "event_type", "agent_provider", "model_used", "materiality_score")
+# Trường kỹ thuật bị loại khỏi deliverable NGƯỜI đọc (vẫn còn đủ trong _master).
+DROPPED = ("agent_provider", "model_used")
+
+# Trường không còn dùng: không được xuất hiện ở bất kỳ đầu ra nào.
+RETIRED = ("materiality", "materiality_score", "event_type", "impact_area")
 
 
 def _read_csv(path):
@@ -100,8 +103,7 @@ def test_master_keeps_english_machine_contract(tmp_path):
     UserOutputWriter(store, reg, output_root=tmp_path / "out").write(date=DATE)
 
     row = _read_csv(tmp_path / "out" / "_master" / f"{DATE}.csv")[0]
-    assert row["impact_area"] == "market"          # còn đủ trong audit
-    assert row["event_type"] == "macro"
+    assert row["time_sensitivity"] == "this_week"
     assert row["agent_provider"] == "p" and row["model_used"] == "m"
     assert row["gold_status"] == "GOLD"            # enum thô, KHÔNG dịch
     assert row["sentiment"] == "negative"
@@ -123,7 +125,7 @@ def test_flatten_null_safe(tmp_path):
     store = k.make_store(tmp_path)
     reg = k.make_registry({"AnPT": {"TICKER:HPG"}})
     k.seed_article(store, "a1"); k.seed_l1(store, "a1", ["TICKER:HPG"])
-    k.seed_agent(store, "a1", with_optional=False)          # thiếu sentiment/event_type
+    k.seed_agent(store, "a1", with_optional=False)          # thiếu sentiment
     UserOutputWriter(store, reg, output_root=tmp_path / "out").write(date=DATE)
     rows = k.read_delivery(tmp_path / "out" / "AnPT" / f"{DATE}.xlsx")
     assert rows[0]["sentiment"] == ""
@@ -169,7 +171,7 @@ def test_noise_filter_broad_entity_no_gold_dependency(tmp_path):
     k.seed_article(store, "b_pass", title="Giá vàng lập đỉnh mới")
     k.seed_l1(store, "b_pass", ["ASSET_CLASS:VANG"], title="Giá vàng lập đỉnh mới",
               etype="ASSET_CLASS")
-    # alias KHÔNG trong title, dù ĐÃ có Gold materiality 0.6 -> bị loại
+    # alias KHÔNG trong title, dù ĐÃ có Gold -> bị loại
     k.seed_article(store, "b_drop", title="Thị trường phiên chiều")
     k.seed_l1(store, "b_drop", ["ASSET_CLASS:VANG"], title="Thị trường phiên chiều",
               etype="ASSET_CLASS")
@@ -214,23 +216,37 @@ def test_matched_entities_deduped(tmp_path):
     assert rows[0]["matched_entities"] == "HPG"
 
 
-def test_rows_sorted_urgent_then_materiality(tmp_path):
-    """Thứ tự đọc tất định: mới nhất lên đầu, cùng giờ thì materiality cao trước."""
+def test_rows_sorted_newest_first(tmp_path):
+    """Thứ tự đọc tất định: mới nhất lên đầu, cùng giờ thì theo thực thể rồi tiêu đề."""
     store = k.make_store(tmp_path)
     reg = k.make_registry({"AnPT": {"TICKER:HPG"}})
-    # aid, published_at, score
-    for aid, pub, score in (("old", "2026-08-18T08:00:00+07:00", 0.9),
-                            ("mid_low_score", "2026-08-18T10:00:00+07:00", 0.3),
-                            ("mid_high_score", "2026-08-18T10:00:00+07:00", 0.8),
-                            ("newest", "2026-08-18T15:30:00+07:00", 0.2)):
-        k.seed_article(store, aid, published=pub)
-        k.seed_l1(store, aid, ["TICKER:HPG"])
-        k.seed_agent(store, aid, materiality=score)
+    for aid, pub, title in (("old", "2026-08-18T08:00:00+07:00", "D"),
+                            ("mid_b", "2026-08-18T10:00:00+07:00", "B"),
+                            ("mid_a", "2026-08-18T10:00:00+07:00", "A"),
+                            ("newest", "2026-08-18T15:30:00+07:00", "C")):
+        k.seed_article(store, aid, published=pub, title=title)
+        k.seed_l1(store, aid, ["TICKER:HPG"], title=title)
+        k.seed_agent(store, aid)
 
     UserOutputWriter(store, reg, output_root=tmp_path / "out").write(date=DATE)
     rows = k.read_delivery(tmp_path / "out" / "AnPT" / f"{DATE}.xlsx")
-    assert [r["article_id"] for r in rows] == ["newest", "mid_high_score", "mid_low_score", "old"]
-    assert all("materiality_score" not in r for r in rows)
+    assert [r["article_id"] for r in rows] == ["newest", "mid_a", "mid_b", "old"]
+
+
+def test_retired_fields_absent_everywhere(tmp_path):
+    """materiality / event_type / impact_area không xuất hiện ở xlsx lẫn mọi CSV _master."""
+    store = k.make_store(tmp_path)
+    reg = k.make_registry({"AnPT": {"TICKER:HPG"}})
+    k.seed_article(store, "a1"); k.seed_l1(store, "a1", ["TICKER:HPG"]); k.seed_agent(store, "a1")
+    UserOutputWriter(store, reg, output_root=tmp_path / "out").write(date=DATE)
+
+    labels = [l.lower() for l in k.delivery_labels(tmp_path / "out" / "AnPT" / f"{DATE}.xlsx")]
+    master = tmp_path / "out" / "_master"
+    for f in RETIRED:
+        assert all(f not in l.replace(" ", "_") for l in labels)
+        for name in (f"{DATE}.csv", f"{DATE}_agent.csv", f"{DATE}_L1.csv"):
+            with open(master / name, encoding="utf-8-sig", newline="") as fh:
+                assert f not in next(csv.reader(fh))
 
 
 def test_formula_injection_is_neutralised(tmp_path):

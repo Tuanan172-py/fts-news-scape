@@ -36,8 +36,8 @@ LEFT JOIN (
 
 FINAL_COLUMNS = [
     "date", "matched_entities", "title", "summary", "key_points",
-    "implication", "impact_area", "time_sensitivity",
-    "sentiment", "event_type", "gold_status", "url", "source_domain",
+    "implication", "time_sensitivity",
+    "sentiment", "gold_status", "url", "source_domain",
     "article_id", "agent_provider", "model_used",
     # Ba cột minh bạch nguồn nhận diện, nối thêm vào CUỐI nên không đổi nghĩa hay
     # thứ tự của cột nào đang có; người tiêu thụ hiện tại không vỡ.
@@ -54,7 +54,7 @@ MASTER_COLUMNS = FINAL_COLUMNS + ["l1_source", "noise_signals"]
 _TIME_RANK = {"urgent": 0, "today": 1, "this_week": 2, "this_month": 3, "archive": 4}
 L1_COLUMNS = ["article_id", "date", "title", "entities", "categories", "agent_provider", "model_used"]
 AGENT_COLUMNS = ["article_id", "date", "summary", "implication",
-                 "materiality_score", "sentiment", "event_type",
+                 "sentiment", "time_sensitivity",
                  "agent_provider", "model_used"]
 
 _SAFE = re.compile(r"[^0-9A-Za-z._-]")
@@ -250,7 +250,6 @@ class UserOutputWriter:
         ag = _loads(r.get("agent_json"))
         summ = ag.get("summary") or {}
         impl = ag.get("implication") or {}
-        mat = ag.get("materiality") or {}
         sent = ag.get("sentiment") or {}
         meta = ag.get("processing_metadata") or {}
 
@@ -259,8 +258,7 @@ class UserOutputWriter:
         raw_key_points = ag.get("key_points") or (summ.get("key_points") if isinstance(summ, dict) else []) or []
         key_points_formatted = "\n".join(f"- {p}" for p in raw_key_points if p) if raw_key_points else ""
         implication_val = impl if isinstance(impl, str) else (impl.get("text") or "")
-        impact_area_val = impl.get("impact_area") if isinstance(impl, dict) else ""
-        time_sens_val = ag.get("time_sensitivity") or (mat.get("time_sensitivity") if isinstance(mat, dict) else "") or ""
+        time_sens_val = ag.get("time_sensitivity") or ""
         sentiment_val = ag.get("sentiment") if isinstance(ag.get("sentiment"), str) else (sent.get("polarity") or sent.get("overall") or "")
 
         return {
@@ -270,10 +268,8 @@ class UserOutputWriter:
             "summary": summary_val,
             "key_points": key_points_formatted,
             "implication": implication_val,
-            "impact_area": impact_area_val,
             "time_sensitivity": time_sens_val,
             "sentiment": sentiment_val,
-            "event_type": ag.get("event_type") or "",
             "gold_status": "GOLD" if r.get("agent_json") else "L1_ONLY",
             "url": r.get("url") or "",
             "source_domain": r.get("source_domain") or "",
@@ -285,16 +281,18 @@ class UserOutputWriter:
 
     @staticmethod
     def _sort_key(r: dict, frow: dict) -> tuple:
-        """Tạo khóa sắp xếp thứ tự hiển thị bài viết: mới nhất lên đầu, tiếp đến materiality cao."""
-        ag = _loads(r.get("agent_json"))
-        mat = ag.get("materiality") or {}
-        try:
-            score = float(mat.get("score") if isinstance(mat, dict) else (ag.get("materiality_score") or 0.0))
-        except (TypeError, ValueError):
-            score = 0.0
+        """Tạo khóa sắp xếp thứ tự hiển thị: mới nhất lên đầu, cùng giờ thì theo thực thể và tiêu đề.
+
+        Args:
+            r: Dòng dữ liệu thô từ truy vấn giao hàng.
+            frow: Dòng đã làm phẳng tương ứng.
+
+        Returns:
+            Bộ khoá sắp xếp tất định.
+        """
         dt = _parse_row_dt(r)
         ts_val = dt.timestamp() if dt is not None else 0.0
-        return (-ts_val, -score, frow.get("matched_entities") or "", frow.get("title") or "")
+        return (-ts_val, frow.get("matched_entities") or "", frow.get("title") or "")
 
     def _l1_row(self, r: dict) -> dict:
         d = _loads(r.get("l1_json"))
@@ -311,18 +309,15 @@ class UserOutputWriter:
         ag = _loads(r.get("agent_json"))
         summ = ag.get("summary") or {}
         impl = ag.get("implication") or {}
-        mat = ag.get("materiality") or {}
         sent = ag.get("sentiment") or {}
         meta = ag.get("processing_metadata") or {}
         summary_val = summ if isinstance(summ, str) else (summ.get("abstractive") or "")
         impl_val = impl if isinstance(impl, str) else (impl.get("text") or "")
         sentiment_val = ag.get("sentiment") if isinstance(ag.get("sentiment"), str) else (sent.get("polarity") or sent.get("overall") or "")
-        mat_score = mat.get("score") if isinstance(mat, dict) and mat.get("score") is not None else ""
         return {"article_id": r["article_id"], "date": _row_date(r),
                 "summary": summary_val, "implication": impl_val,
-                "materiality_score": mat_score,
                 "sentiment": sentiment_val,
-                "event_type": ag.get("event_type") or "",
+                "time_sensitivity": ag.get("time_sensitivity") or "",
                 "agent_provider": meta.get("agent_provider") or ag.get("agent_provider") or "",
                 "model_used": meta.get("model_used") or ag.get("model_used") or ""}
 
