@@ -875,7 +875,9 @@ def main(argv=None) -> int:
         ap.error("--only chỉ dùng cùng --finish")
 
     if args.analyze and not args.finish and not args.repair and not args.resume:
-        # Nếu chỉ gọi --analyze độc lập (sau khi prepare)
+        manifest_path = TASK_DIR / f"wave_{args.wave}.json"
+        if not manifest_path.exists():
+            return cmd_prepare(args)
         return cmd_analyze(args)
 
     if args.repair:
