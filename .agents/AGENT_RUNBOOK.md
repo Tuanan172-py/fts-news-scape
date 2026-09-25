@@ -21,24 +21,22 @@ Mọi lệnh chạy với venv cách ly: `& "C:\venvs\news-scape\Scripts\python.
 
 Đọc từ [`pipeline.yaml`](pipeline.yaml). `active` = chạy hằng ngày; `optional` = kích hoạt theo nhu cầu.
 
-| Stage              | Agent (`class`)                      | Trạng thái | Lệnh / Kích hoạt                                                     |    Cổng DoD    |        Ghi metric        |
-| :----------------- | :------------------------------------- | :----------: | :---------------------------------------------------------------------- | :--------------: | :-----------------------: |
-| scrape             | scraper-orchestrator (op)              |    active    | `scripts/run_once.py`                                                 |        —        |            —            |
-| l1_route           | l1-router (op)                         |    active    | `scripts/l1_route.py --from-db --date today --mini-batch 25`          |        —        |            —            |
-| l1_match           | **l1-entity-matcher** (cog)      |    active    | `invoke_subagent` — wave 25/lô ×3                                  |    `dod#l1`    |            —            |
-| l1_ingest          | l1-ingest-gate (op)                    |    active    | `scripts/l1_ingest.py data/agent_outputs_l1`                          |        ✔        |   ⭐ l1-entity-matcher   |
-| materiality_triage | materiality-triage (cog)               |    draft    | theo nhu cầu, trước export                                           |  `dod#triage`  |            ⭐            |
-| story_dedup        | story-dedup-clusterer (cog)            |    draft    | theo nhu cầu, trước export                                           |  `dod#dedup`  |            ⭐            |
-| gold_export        | gold-exporter (op)                     |    active    | `scripts/agent_export.py --date today --require-l1 --subscriber-only` |        —        |            —            |
-| gold_analyze       | **gold-financial-analyst** (cog) |    active    | `invoke_subagent` — wave 5/lô ×2                                   |   `dod#gold`   |            —            |
-| gold_ingest        | gold-ingest-gate (op)                  |    active    | `scripts/agent_ingest.py data/agent_outputs`                          |        ✔        | ⭐ gold-financial-analyst |
-| gold_qa            | adversarial-dod-verifier (cog)         |    draft    | QA theo mẫu sau ingest                                                 | `dod#verifier` |            ⭐            |
-| deliver            | delivery-writer (op)                   |    active    | `scripts/write_user_output.py --date all`                             |        —        |            —            |
-| daily_brief        | daily-brief-synthesizer (cog)          |    draft    | cuối ngày                                                             |  `dod#brief`  |            ⭐            |
+| Stage           | Agent (`class`)                 | Trạng thái | Lệnh / Kích hoạt                                                                  |       Cổng DoD       |      Ghi metric      |
+| :-------------- | :-------------------------------- | :----------: | :----------------------------------------------------------------------------------- | :-------------------: | :------------------: |
+| scrape          | scraper-orchestrator (op)         |    active    | `scripts/run_once.py`                                                              |          —          |          —          |
+| article_pack    | article-packer (op)               |    active    | `scripts/article_run.py --wave <mã> --date <ngày> --limit <n>`                   | preflight DB + prefix |          —          |
+| article_analyze | **article-processor** (cog) |    active    | `tools.agent_article` trong MỘT `run_code` — trọn `wave_<mã>.conductor.ts` |          —          | ⭐ article-processor |
+| article_expand  | article-expander (op)             |    active    | `scripts/article_run.py --wave <mã> --finish`                                     |    hai lớp ≥ 90%    | ⭐ article-processor |
+| deliver         | delivery-writer (op)              |    active    | `scripts/write_user_output.py --date <ngày\|today>`                                |          —          |          —          |
+| story_dedup     | story-dedup-clusterer (cog)       |    draft    | theo nhu cầu, sau expand                                                            |     `dod#dedup`     |          ⭐          |
+| gold_qa         | adversarial-dod-verifier (cog)    |    draft    | QA theo mẫu sau ingest                                                              |   `dod#verifier`   |          ⭐          |
+| daily_brief     | daily-brief-synthesizer (cog)     |    draft    | cuối ngày                                                                          |     `dod#brief`     |          ⭐          |
 
 Vòng quản trị (ngoài đường giao hàng): **harness-auditor** (cog, draft) — định kỳ tuần.
 
-> Prompt kích hoạt Subagent L1/Gold: xem [`news-scape-agent-operations §3`](skills/news-scape-agent-operations/SKILL.md). Chính sách wave chống 429: [`multi-agent-orchestrator-governance §4.3`](skills/multi-agent-orchestrator-governance/SKILL.md).
+> Chạy một đợt: [`.agents/dsh/RUNBOOK-article-lane.md`](dsh/RUNBOOK-article-lane.md) và skill `dsh-conductor`. Nghiệm thu hạ tầng trước khi vận hành: [`rules/09`](rules/09-dsh-preflight-gate.md).
+>
+> **Lane L1/Gold hai tầng đã ngừng (ADR 0010, 2026-09-23).** Skill `news-scape-agent-operations` và `gold-financial-analyst` chỉ còn giá trị tham khảo lịch sử. Không gọi `l1_route.py`, `l1_ingest.py --code-first`, `agent_export.py`, `requeue.py`, `agent_l1` hay `agent_gold`. `article-processor` xử lý **trọn một bài trong một lượt**, gồm cả nhận diện thực thể lẫn phân tích nội dung; đơn vị công việc là **bài**.
 
 ---
 

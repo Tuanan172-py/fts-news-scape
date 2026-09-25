@@ -63,11 +63,42 @@ def _scalar(cur: sqlite3.Cursor, sql: str, params: tuple = ()) -> int:
         return 0
 
 
-def collect_state(today: str) -> dict:
+def wave_date(wave: str | None) -> str | None:
+    """Đọc ngày dữ liệu của một đợt từ manifest đóng gói.
+
+    Bàn giao phải thống kê đúng ngày mà đợt đã xử lý, không phải ngày chạy lệnh.
+    Đợt chạy bù cho một ngày cũ mà lấy ngày hiện tại thì độ phủ in ra luôn bằng 0,
+    trong khi hậu kiểm của chính đợt ấy đã đạt ngưỡng.
+
+    Args:
+        wave: Mã đợt, hoặc None khi không rõ đợt.
+
+    Returns:
+        Ngày dạng YYYY-MM-DD ghi trong manifest, hoặc None khi không đọc được.
+    """
+    if not wave:
+        return None
+    for name in (f"{wave}.json", f"wave_{wave}.json"):
+        path = ARTICLE_TASK_DIR / name
+        if not path.exists():
+            continue
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        date = data.get("date") or data.get("wave_date")
+        if date:
+            return str(date)[:10]
+    return None
+
+
+def collect_state(today: str, wave: str | None = None) -> dict:
     """Thu thập toàn bộ trạng thái cần cho việc bàn giao.
 
     Args:
         today: Ngày cần thống kê theo định dạng YYYY-MM-DD.
+        wave: Mã đợt đang xét. Có mã thì phần packet chưa chạy chỉ tính trong đợt
+            ấy; không có thì tính mọi packet trên đĩa.
 
     Returns:
         Từ điển trạng thái gồm độ phủ, số bài chờ phân tích và packet chưa chạy.
@@ -94,14 +125,20 @@ def collect_state(today: str) -> dict:
                                                  only_pending=True))
     conn.close()
 
-    packets = sorted(glob.glob(str(ARTICLE_TASK_DIR / "*.task.json")))
+    # Giới hạn theo đợt khi biết mã đợt. Packet lẻ của đợt khác nằm lại trên đĩa là
+    # chuyện thường; tính nó vào đây thì bàn giao báo "còn lô chưa chạy" cho một đợt
+    # đã xong, và chỉ sai lệnh kế tiếp cho phiên sau.
+    pattern = f"article_{wave}_*.task.json" if wave else "*.task.json"
+    packets = sorted(glob.glob(str(ARTICLE_TASK_DIR / pattern)))
     outputs = {Path(p).name.replace(".output.json", "")
-               for p in glob.glob(str(ARTICLE_OUT_DIR / "*.output.json"))}
+               for p in glob.glob(str(ARTICLE_OUT_DIR / pattern.replace(".task.json",
+                                                                   ".output.json")))}
     pending_packets = [p for p in packets
                        if Path(p).name.replace(".task.json", "") not in outputs]
 
     state["packets_total"] = len(packets)
     state["packets_pending"] = pending_packets
+    state["wave"] = wave
     return state
 
 
@@ -128,7 +165,7 @@ def render(state: dict, wave: str | None, prefix_hash: str | None) -> str:
         "Tệp này do `handoff.py` sinh tự động từ cơ sở dữ liệu, **0 token**.",
         "Phiên mới chỉ cần đọc tệp này rồi chạy lệnh ở mục Bước tiếp theo.",
         "",
-        "## Độ phủ hôm nay",
+        f"## Độ phủ ngày {state['today']}",
         "",
         f"- Bài đăng trong ngày: **{total}**",
         f"- Đã xong nhận diện thực thể: **{covered}** ({pct:.1f}%)",
@@ -190,13 +227,13 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="Sinh tệp bàn giao trạng thái 0 token")
     ap.add_argument("--wave", help="Mã đợt đang dở")
     ap.add_argument("--prefix-hash", help="Hash prefix đang dùng")
-    ap.add_argument("--date", default=datetime.now().strftime("%Y-%m-%d"),
-                    help="Ngày thống kê YYYY-MM-DD")
+    ap.add_argument("--date", help="Ngày thống kê YYYY-MM-DD")
     ap.add_argument("--stdout", action="store_true", help="In ra màn hình thay vì ghi tệp")
     ap.add_argument("--json", action="store_true", help="Xuất trạng thái dạng JSON")
     args = ap.parse_args(argv)
 
-    state = collect_state(args.date)
+    args.date = args.date or wave_date(args.wave) or datetime.now().strftime("%Y-%m-%d")
+    state = collect_state(args.date, args.wave)
     if args.json:
         printable = dict(state)
         printable["packets_pending"] = [Path(p).name for p in state["packets_pending"]]
@@ -215,7 +252,8 @@ def main(argv=None) -> int:
     latest.write_text(content, encoding="utf-8")
     print(f"✅ Đã ghi bàn giao: {out}")
     print(f"   Bản mới nhất  : {latest}")
-    print(f"   Độ phủ hôm nay: {state['l1_done_today']}/{state['articles_today']} · "
+    print(f"   Độ phủ ngày {state['today']}: "
+          f"{state['l1_done_today']}/{state['articles_today']} · "
           f"lô chưa chạy: {len(state['packets_pending'])}")
     return 0
 

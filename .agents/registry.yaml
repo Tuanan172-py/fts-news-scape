@@ -53,8 +53,8 @@ agents:
     status: retired
     retired_at: "2026-09-23"
     retired_by: "ADR 0010 — Article Lane chọn bài bằng article-packer; job morninger đã gỡ"
-    entrypoint: "project/scripts/l1_route.py"
-    cli: 'scripts/l1_route.py --from-db --date <YYYY-MM-DD|today> --mini-batch 25'
+    entrypoint: null   # đã ngừng: tệp thuộc lane cũ, không gọi
+    cli: null          # không có lệnh chạy. Dùng article_run.py (Article Lane)
     io_boundary:
       read:  ["data/monocle.db (articles)"]
       write: ["data/agent_tasks/l1/l1_batch_XX.task.json", "l1_outputs (code-first resolved)"]
@@ -82,8 +82,8 @@ agents:
     status: retired
     retired_at: "2026-09-23"
     retired_by: "ADR 0010 — Article Lane xử lý mọi bài, không còn Subscriber-Gated export"
-    entrypoint: "project/scripts/agent_export.py"
-    cli: 'scripts/agent_export.py --date <date> --require-l1 --subscriber-only'
+    entrypoint: null   # đã ngừng: tệp thuộc lane cũ, không gọi
+    cli: null          # không có lệnh chạy. Article Lane xử lý mọi bài, không lọc Subscriber-Gated
     io_boundary:
       read:  ["data/monocle.db (articles + l1_outputs)", "config/entities/manifest.yaml"]
       write: ["data/agent_tasks/batch_XX.task.json"]

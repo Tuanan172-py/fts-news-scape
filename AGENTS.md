@@ -144,3 +144,13 @@ Chi tiết quy chuẩn bất biến tại [`.agents/rules/08-context-and-zero-pr
 - **Tách vai điều phối và kiểm toán**: luật Zero-Probe ràng buộc phiên điều phối. Phiên kiểm toán sau đợt được đọc mã và truy vấn chỉ đọc, nhưng mỗi phát hiện phải kết thúc bằng một lệnh hoặc bản vá script.
 - **Progressive Bounded Context**: Không đọc các tệp từ điển khổng lồ (`entities.json` 1.5 MB) hay dump thư mục thô. Chỉ nạp tối đa 3 tệp ban đầu (`AGENTS.md`, `SESSION-LATEST.md`, Skill chuyên trách).
 - **Continuous Policy Distillation (/learn)**: Mọi ma sát phát sinh (permission timeout, cờ lệnh tối ưu, thực thể mới) phải được đúc kết ngay thành Rule, cập nhật vào Skill runbook và `SESSION-LATEST.md` trước khi đóng phiên, đảm bảo các thế hệ Agent tiếp theo kế thừa trọn vẹn và không lặp lại sai sót.
+
+## 9. Cổng Nghiệm Thu Hạ Tầng Trước Khi Vận Hành (Bắt Buộc Mọi Phiên Trên DSH)
+
+Chi tiết quy chuẩn bất biến tại [`.agents/rules/09-dsh-preflight-gate.md`](.agents/rules/09-dsh-preflight-gate.md):
+
+- **Không gõ lệnh đợt khi chưa qua cổng.** Mọi phiên chạy trên DSH PHẢI nghiệm thu hạ tầng trước khi vận hành, bằng 14 hạng mục trong **một** lệnh `run_code` (0 token). Cổng này trả lời dứt khoát câu hỏi *"hạ tầng đã đủ điều kiện gõ lệnh đợt chưa?"* bằng số đo, không bằng cảm nhận.
+- **Không tin YAML, tin runtime.** Preset nạp **lúc mount**, không phải lúc sửa tệp. So `StartTime` của tiến trình cổng 3080 với `LastWriteTime` của `agent.cordis.yml`: tệp mới hơn tiến trình nghĩa là bản sửa **chưa có hiệu lực**, và triệu chứng duy nhất là hoá đơn sai.
+- **Phân định tệp nạp lúc mount và tệp đọc live.** `agent.cordis.yml`, `preset.yml`, `~/.dsh/settings.yaml` cần restart host; `skills/**/SKILL.md`, `.agents/rules/*.md`, RUNBOOK và script Python thì không. Tra bảng ở §3 của rule trước khi kết luận.
+- **Không có mục XÁM.** Mỗi hạng mục là ĐỎ hoặc XANH; "chắc là được" tính là ĐỎ, và ĐỎ chặn đợt. Không có ngoại lệ "chạy tạm rồi sửa sau".
+- **Không restart host, nhưng phải mở phiên mới.** Hai việc khác nhau: restart là tắt/chạy lại `dsh web` (Conductor không tự làm được vì nó chạy bên trong tiến trình đó); mở phiên mới là thao tác người vận hành làm ở tầng UI, với preset chọn **trước** khi gửi tin đầu tiên.

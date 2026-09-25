@@ -123,6 +123,24 @@ def finish_env(tmp_path, monkeypatch):
     return article_run, calls, rcs
 
 
+def test_bung_ban_ghi_hong_thi_lenh_chay_lai_bo_qua_buoc_hong(finish_env, capsys):
+    """Khung ❌ ở bước bung phải bỏ qua chính bước ấy, không lặp lại nó.
+
+    Bung bản ghi đã ghi kết quả ra đĩa trước khi trả mã, và tỷ lệ hỏng là thuộc tính
+    của đầu ra mô hình nên chạy lại cho ra đúng con số cũ. In `--finish` trần là một
+    vòng lặp vô hạn theo cấu trúc: người vận hành chạy lại, gặp đúng khung này, và
+    không có lối ra nào ngoài tự đoán ra `--only`.
+    """
+    article_run, calls, rcs = finish_env
+    rcs["article_expand.py"] = 1
+
+    assert article_run.cmd_finish(_finish_args()) == 1
+    out = capsys.readouterr().out
+    assert "CHƯA HOÀN TẤT" in out
+    assert "--only ingest,verify,ledger,handoff" in out, "phải bỏ qua bước vừa hỏng"
+    assert "l1_ingest.py" not in calls, "không nạp khi bung còn hỏng"
+
+
 def test_nap_hong_thi_dot_khong_duoc_bao_hoan_tat(finish_env, capsys):
     """Đợt W365 in HOÀN TẤT và thoát 0 dù hai lệnh nạp chết; nay phải thoát 1."""
     article_run, calls, rcs = finish_env

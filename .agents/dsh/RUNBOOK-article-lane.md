@@ -111,7 +111,11 @@ Lệnh này bung bản ghi, nạp cơ sở dữ liệu, hậu kiểm, ghi sổ c
 - Một lệnh nạp trả mã khác 0.
 - Hậu kiểm thấy độ phủ của đợt dưới 90% ở một trong hai lớp.
 
-Khung ❌ in sẵn đúng lệnh chạy lại. Ví dụ `--finish --only ingest,verify,ledger,handoff` chỉ chạy lại các bước từ nạp trở đi, không bung lại bản ghi và không ghi thừa dòng sổ cái. Tên bước hợp lệ: `expand`, `ingest`, `verify`, `ledger`, `handoff`.
+Khung ❌ in sẵn đúng lệnh chạy lại, và lệnh ấy **bỏ qua bước vừa hỏng** thay vì lặp lại nó. Ví dụ `--finish --only ingest,verify,ledger,handoff` chỉ chạy lại các bước từ nạp trở đi, không bung lại bản ghi và không ghi thừa dòng sổ cái. Tên bước hợp lệ: `expand`, `ingest`, `verify`, `ledger`, `handoff`.
+
+**Tỷ lệ hỏng vượt ngưỡng không phải bế tắc.** Bung bản ghi đã ghi kết quả ra đĩa trước khi trả mã, và tỷ lệ hỏng là thuộc tính của đầu ra mô hình nên chạy lại cho ra đúng con số cũ. Nghĩa là `--finish` trần **không bao giờ** qua được bước ấy: chạy lại, gặp đúng khung ❌, lặp vô hạn. Khung ❌ nay in `--only ingest,verify,ledger,handoff` cho đúng nhánh này. Đo độ phủ thật ở **bảng hậu kiểm**: hai lớp đạt ≥90% thì phần đã bung là lành, chỉ còn thiếu bước ghi.
+
+**Tỷ lệ hỏng đếm theo phần lô thật sự phải sinh.** Lô vá gánh một phần packet của lô gốc, nên mẫu số của lô gốc đã trừ phần ấy (`owned`), và bài nào lô vá đã cấp bản ghi thì không tính là thiếu. Không có phép trừ này, một đợt đã vá đủ vẫn báo hỏng và chặn nhầm cả đợt — đúng thứ xảy ra với `W09241605` ngày 24/09: ba lô có đầu ra mô hình hỏng (một lô bọc rào mã, hai lô JSON hỏng hoặc cụt), `parse_fail_rate` gộp `missing` với `broken` thành một con số, và đợt có độ phủ 100%/99,0% vẫn bị chặn ở ngưỡng 10%.
 
 Trước 23/09, hai lệnh nạp chạy với `check=False`. Đợt W365 vì thế in "HOÀN TẤT" và thoát 0 trong khi DB chưa nhận dòng nào. Lần nạp tay sau đó còn bỏ sót 31 bài.
 

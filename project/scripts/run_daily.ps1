@@ -18,6 +18,22 @@ Examples:
   .\scripts\run_daily.ps1 -Mode ingest -Date all # Ingest and write output for all dates
   .\scripts\run_daily.ps1 -Mode ingest -CleanPackets  # Ingest + don packet DA HOAN TAT
 #>
+# ======================================================================================
+# TEP NAY THUOC LANE L1/GOLD DA NGUNG (ADR 0010, 2026-09-23). KHONG CHAY.
+#
+# Ham Emit con goi l1_route.py, l1_ingest.py --code-first va agent_export.py, ca ba deu bi
+# AGENTS.md SS6 cam. Khong Task Scheduler nao dang ky tep nay, nen no la ma chet; nhung de
+# nguyen thi mot lan goi tay se sinh viec cho mot lane da ngung va lam nhieu bo dem.
+#
+# Duong xu ly duy nhat la Article Lane:
+#   & "C:\venvs\news-scape\Scripts\python.exe" scripts/pipeline_radar.py status
+#   & "C:\venvs\news-scape\Scripts\python.exe" scripts/article_run.py --wave <ma> --date <ngay> --limit <n>
+#   & "C:\venvs\news-scape\Scripts\python.exe" scripts/article_run.py --wave <ma> --finish
+#   & "C:\venvs\news-scape\Scripts\python.exe" scripts/write_user_output.py --date <ngay>
+# Xem .agents/dsh/RUNBOOK-article-lane.md.
+#
+# Go han tep nay theo plans/20260924-1627-codebase-audit-cleanup-modularization/plan.md SS3.1.
+# ======================================================================================
 [CmdletBinding()]
 param(
   [ValidateSet('emit','ingest')]        [string]$Mode   = 'emit',
@@ -30,6 +46,15 @@ param(
   # nham xoa trang hang doi chua ai xu ly.
   [switch]$CleanPackets
 )
+
+# Lane L1/Gold da ngung (ADR 0010). Ham Emit con goi l1_route.py, l1_ingest.py --code-first va
+# agent_export.py, ca ba deu bi AGENTS.md SS6 cam. Khong Task Scheduler nao dang ky tep nay nen
+# no la ma chet; nhung de nguyen thi mot lan goi tay se sinh viec cho mot lane da ngung.
+# Duong xu ly duy nhat la Article Lane: scripts/article_run.py. Xem RUNBOOK-article-lane.md.
+Write-Error ('run_daily.ps1 thuoc lane L1/Gold da ngung (ADR 0010). Dung Article Lane: ' +
+             'scripts/article_run.py --wave <ma> --date <ngay> --limit <n>, roi --finish. ' +
+             'Xem .agents/dsh/RUNBOOK-article-lane.md.')
+exit 2
 
 $ErrorActionPreference = 'Stop'
 $Root = Split-Path -Parent $PSScriptRoot

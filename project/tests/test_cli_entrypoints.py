@@ -31,6 +31,8 @@ AUTOMATION_CLIS = [
     "scripts/monitor_daily.py",
     "scripts/fetch_periodic_reports.py",
     "scripts/pipeline_radar.py",
+    "scripts/article_run.py",
+    "scripts/article_tick.py",
 ]
 
 

@@ -61,7 +61,8 @@ Sau mỗi ca thực thi thành công hoặc khi phát hiện ma sát nghiệp v�
    - Khi gặp sự cố môi trường (ví dụ: *Windows Permission Timeout khi Subagent ghi file*), không để bài học trôi mất trong chat transcript.
    - BẮT BUỘC cập nhật ngay vào Rule hoặc System Prompt: Huấn luyện Subagent tự động fallback ghi vào thư mục `scratch/` để Parent Agent thu hồi an toàn.
 2. **Đóng Gói Thành Quy Trình Chuẩn (Experience-to-Skill)**:
-   - Bất kỳ chuỗi thao tác nào được tối ưu (ví dụ: *cờ `--from-db --date today --mini-batch 25` của `l1_route.py`*) phải được ghi ngay vào thư viện lệnh chuẩn của [news-scape-agent-operations/SKILL.md](../skills/news-scape-agent-operations/SKILL.md).
+   - Bất kỳ chuỗi thao tác nào được tối ưu (ví dụ: *bỏ `--batch` để đợt tự chọn cỡ lô theo `suggest_batch_size`*) phải được ghi ngay vào [`.agents/dsh/RUNBOOK-article-lane.md`](../dsh/RUNBOOK-article-lane.md) và skill `dsh-conductor`.
+   - Không viện dẫn cờ của lane L1/Gold đã ngừng (ADR 0010) làm ví dụ chuẩn: skill `news-scape-agent-operations` và `gold-financial-analyst` chỉ còn giá trị tham khảo lịch sử.
 3. **Tích Lũy Tri Thức Danh Mục Thực Thể (Catalog Feedback)**:
    - Các thực thể ngoài danh mục được phát hiện trong phiên (`Sun Group`, `CITIGYM`, `LPT`...) phải được phân loại `in_list: false`, `entity_id: null` và gom vào `unlisted_candidates` để Agent chuyên trách `entity-curator` đề xuất bổ sung có kiểm soát.
 4. **Bàn Giao Trạng Thái Sạch Sẽ (Session Handoff Invariant)**:

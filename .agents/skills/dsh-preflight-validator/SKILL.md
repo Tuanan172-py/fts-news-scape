@@ -43,7 +43,7 @@ Chính repo đã ghi cơ chế: `.agents/dsh/README.md:32` — *"Dừng host `ds
 | Kiểm junction preset | `(Get-Item $p).Target` |
 | Kiểm tiến trình + cổng | `Get-CimInstance`, `Get-NetTCPConnection` |
 | Sửa `agent.cordis.yml`, `preset.yml`, tài liệu | trong repo |
-| Chạy `requeue.py --apply`, sửa DB | |
+| Chạy `article_run.py --wave <mã> --repair` | Sinh chương trình chạy bù cho đúng phần thiếu, 0 token. Lane L1/Gold cũ đã ngừng (ADR 0010): không gọi `requeue.py`, `l1_route.py`, `l1_ingest.py --code-first` |
 
 **Ranh giới thật:** Conductor không bị chặn bởi *quyền ghi*. Nó bị chặn bởi **vòng đời tiến trình** — nó là khách bên trong host, không phải chủ của host.
 
@@ -102,7 +102,7 @@ Chạy **toàn bộ** trong **một** lệnh `run_code`. Không tách bước �
 | # | Hạng mục | Cách kiểm | ĐẠT khi |
 |:-:|---|---|---|
 | D1 | Script đường article đủ | Glob 13 script bắt buộc | Đủ 13/13 |
-| D2 | Task `failed` đã requeue | `pipeline_radar.py status` | Không còn 🔴 failed tồn |
+| D2 | Hàng đợi không còn tồn đọng chặn đợt | `pipeline_radar.py status` | Không còn 🔴 failed tồn |
 | D3 | Ngày dữ liệu khớp `--today` | Đối chiếu radar với liveness scraper | Cùng một ngày |
 | D4 | Áp suất ngữ cảnh | `ctx_probe.py` | 🟢 <25% |
 
@@ -136,7 +136,7 @@ Chạy **toàn bộ** trong **một** lệnh `run_code`. Không tách bước �
        │        └── C3 sai ──► 🔴 DỪNG NGAY. Sửa code, không được chạy.
        │
        └── Có mục ĐỎ ở nhóm D?
-                ├── D2 ──► Conductor TỰ chạy requeue --apply
+                ├── D2 ──► Conductor TỰ chạy `article_run.py --wave <mã> --repair`
                 ├── D3 ──► Conductor báo cáo, người quyết chạy ngày nào
                 └── D4 ──► 🟡 đóng phiên, mở phiên mới
 
@@ -178,10 +178,14 @@ res.identity = await sh('identity', [
   'Get-Content "$env:USERPROFILE\\.dsh\\settings.yaml" | Select-String "default:|reasoningEffort|defaultPreset"'
 ].join('; '));
 
-// A3 — hạng mục then chốt: preset đã được nạp lại chưa
+// A3 — hạng mục then chốt: preset đã được nạp lại chưa.
+// Lấy PID bằng `netstat`, KHÔNG bằng `Get-NetTCPConnection`: cmdlet ấy bị sandbox
+// chặn quyền nên trả rỗng, và bản đầu của skill này đã báo nhầm "NO SERVER ON 3080"
+// trong khi host vẫn đang chạy — suýt khiến kết luận sai là phải restart.
 res.mount = await sh('A3 mount-vs-mtime', [
-  '$p = (Get-NetTCPConnection -LocalPort 3080 -State Listen -ErrorAction SilentlyContinue).OwningProcess',
-  'if (-not $p) { "NO SERVER ON 3080"; exit 1 }',
+  '$line = netstat -ano | Select-String ":3080\s" | Select-String "LISTENING" | Select-Object -First 1',
+  'if (-not $line) { "NO SERVER ON 3080"; exit 1 }',
+  '$p = [int]($line.Line -split "\s+")[-1]',
   '$st = (Get-Process -Id $p).StartTime',
   '$mt = (Get-Item "' + PRESET + '").LastWriteTime',
   '"server StartTime : $st"',
@@ -259,6 +263,9 @@ $p = (Get-NetTCPConnection -LocalPort 3080 -State Listen).OwningProcess
 | Client-plugin không tự reload | Không có Vite `dev:web` | Bật watcher, hoặc refresh thủ công |
 | **C4 báo có watcher nhưng thực ra không có** | Regex `vite\|dev:web` bắt nhầm tiến trình `dsh-subprocess-local` của chính Conductor | Đã vá ở §5.1: loại trừ `dsh-subprocess-local`, `@deepseek-ai.dsh`, `dsh-code-runtime` |
 | `health` exit 1 | Profile scraper cũ còn sót trong DB | `maintenance/clean_onedrive_conflicts.py` |
+| **A3 báo "NO SERVER ON 3080" nhưng host vẫn chạy** | `Get-NetTCPConnection` bị sandbox chặn quyền nên trả rỗng — **không phải server chết** | Lấy PID bằng `netstat -ano \| Select-String ":3080" \| Select-String "LISTENING"` rồi tách cột cuối. Đã vá ở §5.1 |
+| `Get-CimInstance Win32_Process` báo `Access denied` | Cmdlet bị sandbox chặn | Đừng dùng nó để đọc `CommandLine`; kiểm tiến trình bằng `Get-Process` + `StartTime` |
+| **Sửa `SKILL.md` xong, phân vân có phải restart** | Skill đọc **live** từ đĩa mỗi lần gọi, không nạp lúc mount | Phép thử: sửa tệp sau khi host đã chạy, rồi gọi lại skill. Thấy nội dung mới ⇒ không cần restart. Chỉ `agent.cordis.yml`, `preset.yml`, `~/.dsh/settings.yaml` mới nạp lúc mount |
 
 ---
 

@@ -11,6 +11,7 @@ Hai thước này lệch nhau rất xa vì token trúng bộ nhớ đệm rẻ h
 from __future__ import annotations
 
 import argparse
+import glob
 import json
 import os
 import sqlite3
@@ -197,6 +198,62 @@ def cmd_append(args: argparse.Namespace) -> int:
     """
     since = args.since if args.since is not None else time.time() - args.window_min * 60
     workers_only = getattr(args, "workers_only", False)
+
+    manifest_path = os.path.join(TASK_DIR, f"wave_{args.wave}.json") if getattr(args, "wave", None) else None
+    is_agy = getattr(args, "source", None) == "agy"
+    if not is_agy and manifest_path and os.path.exists(manifest_path):
+        try:
+            with open(manifest_path, encoding="utf-8") as f:
+                mf = json.load(f)
+                if mf.get("runner") == "agy":
+                    is_agy = True
+        except Exception:
+            pass
+
+    if is_agy:
+        out_dir = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "data", "agent_outputs_article"
+        )
+        meta_files = glob.glob(os.path.join(out_dir, f"article_{args.wave}_*.meta.json"))
+        if not meta_files:
+            print(f"⚠️  Không tìm thấy tệp meta nào của agy cho đợt {args.wave}. Không ghi gì.")
+            return 2
+        total_in = 0
+        total_out = 0
+        n_batches = len(meta_files)
+        for mf in meta_files:
+            try:
+                with open(mf, encoding="utf-8") as f:
+                    mdata = json.load(f)
+                    u = mdata.get("usage", {})
+                    total_in += u.get("input_tokens", 0)
+                    total_out += u.get("output_tokens", 0)
+            except Exception:
+                pass
+        quota_tokens = total_in + total_out
+        billed_usd = round((total_in * 0.075 + total_out * 0.30) / 1e6, 6)
+        conn = connect(args.db)
+        conn.execute(
+            """INSERT INTO token_ledger
+               (ts, wave, batch_id, agent_id, n_items, n_sessions, miss_tokens, hit_tokens,
+                out_tokens, reasoning_tokens, quota_tokens, turns_max, ctx_peak, ctx_pct,
+                est_miss, est_out, billed_usd, peak_window, note)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            (datetime.now(timezone.utc).isoformat(timespec="seconds"),
+             args.wave, args.batch, "article-processor-agy", args.items, n_batches,
+             total_in, 0, total_out, 0, quota_tokens, 1, 0, 0.0,
+             args.est_miss, args.est_out, billed_usd, 0, "runner=agy"),
+        )
+        conn.commit()
+        conn.close()
+        per_item = quota_tokens / args.items if args.items else 0
+        print(f"✅ Đã ghi sổ cái (agy): wave={args.wave or '-'} ({n_batches} lô, {args.items} bài)")
+        print(f"   quota {quota_tokens:,} token (in {total_in:,} · out {total_out:,} · ~${billed_usd:.4f})")
+        if args.items:
+            print(f"   {per_item:,.0f} token/bài (runner agy)")
+        return 0
+
     wave = wave_usage(since, cwd_filter=args.cwd_filter, with_reasoning=not args.no_reasoning,
                       workers_only=workers_only)
 
@@ -455,6 +512,7 @@ def main(argv=None) -> int:
     a.add_argument("--workers-only", action="store_true",
                    help="Chỉ gộp phiên worker được tạo sau --since; bỏ phiên điều phối "
                         "và mọi phiên mở từ trước còn đang hoạt động")
+    a.add_argument("--source", choices=["dsh", "agy"], help="Nguồn runtime: dsh hoặc agy")
 
     r = sub.add_parser("report", help="In báo cáo sổ cái")
     r.add_argument("--wave", help="Lọc theo đợt")

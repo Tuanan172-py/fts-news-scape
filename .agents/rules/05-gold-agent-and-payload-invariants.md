@@ -30,10 +30,9 @@ Nhằm tối ưu tốc độ, triệt tiêu 100% rác DOM và ngăn chặn bùng
 1. **Bắt Buộc Compact JSON (Anti-Line-Truncation Invariant)**:
    - File packet gửi cho Agent BẮT BUỘC phải ghi dạng **Compact JSON** (`json.dumps(..., separators=(',', ':'))`), TUYỆT ĐỐI KHÔNG dùng `indent=2`.
    - Bảo đảm không có bất kỳ dòng vật lý nào dài quá 2.000 ký tự làm kích hoạt lỗi cắt dòng (line truncation) của parser, triệt tiêu nguyên nhân gốc khiến Agent tự mở vòng lặp Grep.
-2. **Lọc Đoạn Giá Trị Cao (Thay thế trần cắt tỉa 2.200 ký tự cứng)**:
-   - `p0`: Bắt buộc giữ đoạn Sapo mở đầu (chứa 70% nội dung sự kiện theo cấu trúc tháp ngược báo chí).
-   - `p1..pk`: Giữ các đoạn chứa số liệu định lượng (%, tỷ đồng, triệu USD, KQKD, nợ xấu) và phát ngôn lãnh đạo / sự kiện pháp lý.
-   - Loại bỏ triệt để: Lịch sử thành lập doanh nghiệp, giải thích thuật ngữ chung, liên kết xem thêm và footer tòa soạn.
+2. **Bảo Toàn Văn Bản Trọn Vẹn & Tách Đoạn Kỹ Thuật (Full-Fidelity Paragraphs & Anti-Line-Truncation)**:
+   - **Đọc trọn nội dung**: Packet mang toàn bộ đoạn văn nguyên văn của bài báo (`DEFAULT_MAX_TOKENS_PER_ARTICLE = 0`). Tuyệt đối không dùng regex hay heuristic để lọc bỏ các đoạn thân bài; toàn bộ việc phân tích ngữ nghĩa là thẩm quyền của mô hình.
+   - **Tách đoạn kỹ thuật**: Đối với các đoạn dài vượt trần an toàn của công cụ đọc (`MAX_PARAGRAPH_CHARS = 1800`), hệ thống tách thành các mảnh con tại ranh giới câu (`split_long_paragraph`), bảo toàn 100% chữ nguyên văn và chống tràn dòng parser.
 3. **Citations bằng Chỉ Số Đoạn (`c: [0, 2]`)**:
    - Agent chỉ phát ra số thứ tự của các đoạn văn bản chứa chứng cứ.
    - Script Expander bên ngoài (0 token) tự động trích xuất chuỗi con nguyên văn từ `p0`, `p2` $\rightarrow$ Bảo đảm 100% vượt qua cổng DoD mà tiết kiệm hàng chục nghìn output token.

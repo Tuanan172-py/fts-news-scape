@@ -177,7 +177,9 @@ def salvage_records(text: str) -> tuple[list[dict], int]:
 
 
 def build_l1_output(article_id: str, title: str, resolved: list,
-                    labels: dict[str, str]) -> dict:
+                    labels: dict[str, str], *,
+                    agent_provider: str = AGENT_PROVIDER,
+                    model_used: str = MODEL_USED) -> dict:
     """Dựng bản ghi nhận diện thực thể theo lược đồ `l1-entity-output-v1`.
 
     Lược đồ này yêu cầu mọi chuỗi nguyên văn phải nằm trong tiêu đề, nên chỉ những
@@ -190,6 +192,8 @@ def build_l1_output(article_id: str, title: str, resolved: list,
         title: Tiêu đề nguyên văn.
         resolved: Danh sách thực thể đã tra cứu.
         labels: Nhãn đối chiếu giữa mô hình và tầng mã.
+        agent_provider: Nhà cung cấp runtime phân tích.
+        model_used: Tên mô hình đã sử dụng.
 
     Returns:
         Từ điển bản ghi đúng lược đồ.
@@ -233,8 +237,8 @@ def build_l1_output(article_id: str, title: str, resolved: list,
         "unlisted_candidates": unlisted,
         "citations": citations,
         "processing_metadata": {
-            "agent_provider": AGENT_PROVIDER,
-            "model_used": MODEL_USED,
+            "agent_provider": agent_provider,
+            "model_used": model_used,
             "timestamp": now_vn_iso(),
             "intent_source": labels,
         },
@@ -338,8 +342,34 @@ def build_mentions(article_id: str, title: str, resolved: list,
     }
 
 
+def load_repair_ids(task_dir: Path, batch_id: str) -> set[str]:
+    """Gom định danh bài mà các lô vá cùng đợt đã cung cấp.
+
+    Một lô bị cắt cụt thì phần thiếu được đóng gói lại thành lô vá riêng có hậu tố
+    _rNN. Lô vá mang đúng những định danh bài mà lô gốc không sinh được bản ghi.
+    Đếm phần thiếu của lô gốc mà bỏ qua lô vá thì mọi đợt có vá đều báo hỏng vượt
+    ngưỡng, và --finish chặn trước cả bước nạp dù độ phủ thật đã đủ.
+
+    Args:
+        task_dir: Thư mục chứa packet và bảng ánh xạ.
+        batch_id: Mã lô gốc đang xét, chưa có hậu tố vá.
+
+    Returns:
+        Tập định danh bài đã có bản ghi nhờ các lô vá của cùng đợt.
+    """
+    provided: set[str] = set()
+    for map_path in sorted(glob.glob(str(task_dir / f"{batch_id}_r*.map.json"))):
+        try:
+            sibling = json.loads(Path(map_path).read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        provided.update(str(v) for v in (sibling.get("index") or {}).values())
+    return provided
+
+
 def process_batch(batch_id: str, out_text: str, packet: dict, mapping: dict,
-                  resolver: IntentResolver, reg, report: ResolveReport) -> dict:
+                  resolver: IntentResolver, reg, report: ResolveReport,
+                  repaired_ids: set[str] | None = None) -> dict:
     """Xử lý một lô đầu ra của mô hình thành các tệp kết quả.
 
     Args:
@@ -350,6 +380,8 @@ def process_batch(batch_id: str, out_text: str, packet: dict, mapping: dict,
         resolver: Bộ tra cứu định danh.
         reg: Danh mục thực thể.
         report: Bộ đếm thống kê tra cứu.
+        repaired_ids: Định danh bài đã được lô vá của cùng đợt cung cấp. Bài nằm
+            trong tập này không tính là thiếu, vì bản ghi của nó đã có trên đĩa.
 
     Returns:
         Từ điển thống kê kết quả xử lý lô.
@@ -363,16 +395,31 @@ def process_batch(batch_id: str, out_text: str, packet: dict, mapping: dict,
     GOLD_OUT_DIR.mkdir(parents=True, exist_ok=True)
     MENTIONS_DIR.mkdir(parents=True, exist_ok=True)
 
+    repaired_ids = repaired_ids or set()
     l1_rows: list[dict] = []
     gold_rows: list[dict] = []
     mention_rows: list[dict] = []
     missing: list[str] = []
     gold_skipped: list[tuple[str, str]] = []
 
+    meta_path = IN_DIR / f"{batch_id}.meta.json"
+    batch_provider = AGENT_PROVIDER
+    batch_model = MODEL_USED
+    if meta_path.exists():
+        try:
+            meta_data = json.loads(meta_path.read_text(encoding="utf-8"))
+            batch_provider = meta_data.get("agent_provider") or AGENT_PROVIDER
+            batch_model = meta_data.get("model_used") or MODEL_USED
+        except Exception:
+            pass
+
     for idx, article_id in index_map.items():
         rec = by_index.get(idx)
         if rec is None:
-            missing.append(idx)
+            # Bài đã có bản ghi nhờ lô vá thì không thiếu: đếm nó vào đây là lặp
+            # lại đúng khoản đã trả bằng một lượt gọi khác.
+            if str(article_id) not in repaired_ids:
+                missing.append(idx)
             continue
         src = articles.get(idx) or {}
         title = src.get("t") or ""
@@ -382,7 +429,9 @@ def process_batch(batch_id: str, out_text: str, packet: dict, mapping: dict,
         code_ids = {d["entity_id"] for d in reg.detect(title)}
         labels = reconcile(resolved, code_ids)
 
-        l1_rows.append(build_l1_output(article_id, title, resolved, labels))
+        l1_rows.append(build_l1_output(article_id, title, resolved, labels,
+                                       agent_provider=batch_provider,
+                                       model_used=batch_model))
 
         gold, reason = build_gold_output(article_id, rec, paragraphs)
         if gold:
@@ -404,10 +453,14 @@ def process_batch(batch_id: str, out_text: str, packet: dict, mapping: dict,
         (MENTIONS_DIR / f"{batch_id}.mentions.json").write_text(
             json.dumps(mention_rows, ensure_ascii=False, indent=1), encoding="utf-8")
 
+    # Trần đếm hỏng là số bài lô này thật sự phải sinh, đã trừ phần lô vá gánh.
+    owned = sum(1 for a in index_map.values() if str(a) not in repaired_ids)
     total = len(index_map)
     return {
         "batch_id": batch_id,
         "expected": total,
+        "owned": owned,
+        "repaired": total - owned,
         "records": len(records),
         "broken": broken,
         "missing": missing,
@@ -415,7 +468,9 @@ def process_batch(batch_id: str, out_text: str, packet: dict, mapping: dict,
         "gold": len(gold_rows),
         "mentions": len(mention_rows),
         "gold_skipped": gold_skipped,
-        "parse_fail_rate": (len(missing) + broken) / total if total else 0.0,
+        # Mẫu số là phần lô này thật sự phải sinh, không phải toàn bộ packet.
+        # Lô vá đã trả giá cho phần nó gánh, nên tính phần ấy vào đây là tính hai lần.
+        "parse_fail_rate": (len(missing) + broken) / owned if owned else 0.0,
     }
 
 
@@ -466,7 +521,9 @@ def main(argv=None) -> int:
         packet = json.loads(packet_path.read_text(encoding="utf-8"))
         mapping = json.loads(map_path.read_text(encoding="utf-8"))
         text = Path(out_path).read_text(encoding="utf-8")
-        results.append(process_batch(batch_id, text, packet, mapping, resolver, reg, report))
+        repaired_ids = load_repair_ids(task_dir, batch_id)
+        results.append(process_batch(batch_id, text, packet, mapping, resolver, reg,
+                                     report, repaired_ids))
 
     if not results:
         print("Không lô nào xử lý được.")
@@ -481,12 +538,13 @@ def main(argv=None) -> int:
     print("=" * 84)
     print(" 🧩  BUNG BẢN GHI GỌN THÀNH LƯỢC ĐỒ ĐẦY ĐỦ")
     print("=" * 84)
-    print(f"{'lô':28} {'chờ':>5} {'nhận':>6} {'L1':>5} {'nội dung':>9} {'hỏng':>6} {'thiếu':>6}")
-    print("-" * 84)
+    print(f"{'lô':28} {'chờ':>5} {'nhận':>6} {'L1':>5} {'nội dung':>9} {'hỏng':>6} {'thiếu':>6} {'vá':>5}")
+    print("-" * 90)
     for r in results:
         print(f"{r['batch_id']:28} {r['expected']:>5} {r['records']:>6} {r['l1']:>5} "
-              f"{r['gold']:>9} {r['broken']:>6} {len(r['missing']):>6}")
-    print("-" * 84)
+              f"{r['gold']:>9} {r['broken']:>6} {len(r['missing']):>6} "
+              f"{r['repaired']:>5}")
+    print("-" * 90)
 
     print("\nTỷ lệ tra cứu định danh theo nhóm:")
     for group, total, ok, rate in report.summary():

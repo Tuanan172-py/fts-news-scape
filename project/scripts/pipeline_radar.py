@@ -301,9 +301,11 @@ def cmd_status(args: argparse.Namespace) -> None:
         recs.append(("HIGH", f"Đợt {wave['wave']}: {wave['phase']}.", wave["next"]))
     elif pending_today:
         new_wave = f"W{datetime.now():%m%d%H%M}"
+        # Không truyền `--batch`: `article_pack` tự chọn cỡ lô theo số bài thật để
+        # đợt gọn trong một sóng song song. Ghim số cứng ở đây sẽ đè mất lựa chọn ấy.
         recs.append(("HIGH", f"{pending_today:,} bài đăng ngày {target_date} chờ phân tích.",
                      f"{PY} scripts/article_run.py --wave {new_wave} --date {target_date} "
-                     f"--limit {pending_today} --batch 100"))
+                     f"--limit {pending_today}"))
 
     if not wave_open and covered["agent_outputs"]:
         files = list(USER_OUTPUT_DIR.glob(f"*/{target_date}.xlsx"))

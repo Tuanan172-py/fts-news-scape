@@ -20,7 +20,7 @@ Số thật: W365 nhận diện **365/365**, nội dung **364/365**; nạp W365 
 
 ## Next Steps
 
-1. **Khởi động lại `morninger`** (2 cặp tiến trình chạy từ 17/09 bằng mã cũ, còn job `l1_route`). Không tự tắt vì là tiến trình cào tin.
+1. ~~Khởi động lại `morninger`~~ **Đã xong 2026-09-24 15:35**: một tiến trình duy nhất chạy mã mới (commit `39c9898`), giữ khoá `C:\data\news-scape\capture.lock`, log không còn job `l1_route`, 0 lỗi. `news_cron` đã **Disabled**. morninger chạy trong terminal của người dùng: đóng terminal hoặc khởi động lại máy thì phải bật lại tay (chưa có tác vụ tự khởi động).
 2. Chạy đợt hôm nay theo lệnh radar (23/09: 345 bài chờ).
 3. **Backlog 2.915 bài 10–17/09** nay đã hiện ở hàng chờ (ví dụ `radar status --date 2026-09-15`: 254 bài). Chạy hay không là quyết định vận hành.
 

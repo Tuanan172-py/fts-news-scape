@@ -446,10 +446,39 @@ def cmd_prepare(args: argparse.Namespace) -> int:
           f"token tĩnh, {pfx_note}")
     print(f"Manifest : {manifest['manifest']}")
 
+    # Ghi ngày dữ liệu của đợt vào manifest. Bàn giao đọc lại khoá này để thống kê
+    # đúng ngày, thay vì mặc định lấy ngày chạy lệnh: đợt chạy bù cho một ngày cũ
+    # mà lấy ngày hiện tại thì bàn giao luôn báo độ phủ 0 dù hậu kiểm đã đạt.
+    resolved_date = args.date or (datetime.now().strftime("%Y-%m-%d") if args.today else None)
+    manifest_path = Path(manifest["manifest"])
+    if resolved_date and manifest_path.exists():
+        try:
+            on_disk = json.loads(manifest_path.read_text(encoding="utf-8"))
+            on_disk["date"] = resolved_date
+            manifest_path.write_text(json.dumps(on_disk, ensure_ascii=False, indent=1),
+                                     encoding="utf-8")
+        except (OSError, ValueError) as exc:
+            print(f"   ⚠️  Không ghi được ngày dữ liệu vào manifest: {exc}")
+
     concurrency = args.concurrency or len(manifest["batches"])
     program = conductor_program(manifest, concurrency=concurrency)
     prog_path = TASK_DIR / f"wave_{args.wave}.conductor.ts"
     prog_path.write_text(program, encoding="utf-8")
+
+    if args.runner == "agy":
+        print()
+        print("-" * 84)
+        print("RUNNER AGY ĐÃ CHỌN — thực thi tự động qua Antigravity CLI:")
+        print("-" * 84)
+        if args.analyze:
+            return cmd_analyze(args)
+        print("  Để chạy phân tích các lô qua agy, gõ lệnh:")
+        print(f"    python scripts/article_run.py --wave {args.wave} --runner agy --analyze")
+        print()
+        print("  Sau khi hoàn tất, nạp CSDL bằng lệnh:")
+        print(f"    python scripts/article_run.py --wave {args.wave} --finish")
+        print("=" * 84)
+        return 0
 
     print()
     print("-" * 84)
@@ -462,6 +491,38 @@ def cmd_prepare(args: argparse.Namespace) -> int:
     print(f"    python scripts/article_run.py --wave {args.wave} --finish")
     print("=" * 84)
     return 0
+
+
+def cmd_analyze(args: argparse.Namespace) -> int:
+    """Thực thi phân tích nhận thức cho các lô của đợt bằng runner agy.
+
+    Args:
+        args: Tham số dòng lệnh đã phân tích.
+
+    Returns:
+        Mã thoát 0 khi mọi lô đạt yêu cầu, 1 khi có lô thất bại, 2 khi thiếu manifest.
+    """
+    manifest_path = TASK_DIR / f"wave_{args.wave}.json"
+    if not manifest_path.exists():
+        print(f"❌ Không tìm thấy manifest của đợt: {manifest_path}. Chạy chuẩn bị trước.")
+        return 2
+
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    from src.agent.agy_runner import AgyRunner
+
+    runner = AgyRunner()
+    concurrency = args.concurrency or 2
+    print("=" * 84)
+    print(f" 🤖  BẮT ĐẦU PHÂN TÍCH AGY RUNNER (WAVE {args.wave}) — CONCURRENCY {concurrency}")
+    print("=" * 84)
+    res = runner.run_wave(manifest, OUT_DIR, concurrency=concurrency)
+    print(f"Hoàn tất: {res['batches_ok']}/{res['batches_total']} lô đạt OK, "
+          f"trích xuất {res['items_extracted']} bài, {res['total_tokens']:,} tokens.")
+    for r in res.get("results", []):
+        status_symbol = "✅" if r["ok"] else "⚠️"
+        print(f"  {status_symbol} {r['batch_id']}: {r['status']} ({r['items']} bài) {r['error']}")
+    print("=" * 84)
+    return 0 if res["batches_ok"] == res["batches_total"] else 1
 
 
 def cmd_finish(args: argparse.Namespace) -> int:
@@ -519,11 +580,15 @@ def cmd_finish(args: argparse.Namespace) -> int:
         expand_rc = run([PYTHON, str(SCRIPTS / "article_expand.py"), "--wave", args.wave],
                         check=False)
         if expand_rc != 0:
+            # Lệnh chạy lại phải BỎ QUA bước vừa hỏng, không lặp lại nó. Bung bản ghi
+            # đã ghi kết quả ra đĩa trước khi trả mã, và tỷ lệ hỏng là thuộc tính của
+            # đầu ra mô hình nên chạy lại cho ra đúng con số ấy. In `--finish` trần ở
+            # đây là một vòng lặp vô hạn theo cấu trúc: người vận hành chạy lại, gặp
+            # đúng khung này, và không có lối ra nào ngoài tự đoán ra `--only`.
             why = ("Tỷ lệ hỏng vượt ngưỡng. Xem lại persona của worker rồi chạy lại "
                    "đúng các lô hỏng." if expand_rc == 1
                    else f"Bước bung bản ghi trả mã {expand_rc}.")
-            fail_banner(args.wave, [why], f"python scripts/article_run.py "
-                                          f"--wave {args.wave} --finish")
+            fail_banner(args.wave, [why], f"{rerun} ingest,verify,ledger,handoff")
             return 1
 
     # Nạp dữ liệu là bước ghi, không phải bước phụ trợ: hỏng thì dừng đợt ngay. Trước
@@ -564,6 +629,8 @@ def cmd_finish(args: argparse.Namespace) -> int:
         if manifest.get("est_miss_total") is not None:
             ledger_cmd += ["--est-miss", str(manifest["est_miss_total"]),
                            "--est-out", str(manifest["est_out_total"])]
+        if args.runner == "agy" or manifest.get("runner") == "agy":
+            ledger_cmd += ["--source", "agy"]
         if run(ledger_cmd, check=False) != 0:
             soft.append("sổ cái token không ghi được dòng mới")
 
@@ -792,6 +859,10 @@ def main(argv=None) -> int:
                          + ",".join(FINISH_STEPS))
     ap.add_argument("--min-coverage", type=float, default=MIN_COVERAGE,
                     help="Tỷ lệ bài tối thiểu của đợt phải vào DB ở mỗi lớp")
+    ap.add_argument("--runner", choices=["dsh", "agy"], default="dsh",
+                    help="Runner nhận thức: 'dsh' (DeepSeek Flash) hoặc 'agy' (Gemini 3.8 Flash Low)")
+    ap.add_argument("--analyze", action="store_true",
+                    help="Chạy phân tích trực tiếp cho các lô của wave (dùng cho --runner agy)")
     args = ap.parse_args(argv)
 
     if args.where:
@@ -802,6 +873,10 @@ def main(argv=None) -> int:
 
     if args.only and not args.finish:
         ap.error("--only chỉ dùng cùng --finish")
+
+    if args.analyze and not args.finish and not args.repair and not args.resume:
+        # Nếu chỉ gọi --analyze độc lập (sau khi prepare)
+        return cmd_analyze(args)
 
     if args.repair:
         return cmd_repair(args)
