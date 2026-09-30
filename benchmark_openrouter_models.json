@@ -1,0 +1,133 @@
+{
+  "timestamp": "2026-09-29 15:53:20",
+  "key_status": {
+    "label": "sk-or-v1-497...49a",
+    "is_management_key": false,
+    "is_provisioning_key": false,
+    "limit": 100,
+    "limit_reset": null,
+    "limit_remaining": 100,
+    "include_byok_in_limit": false,
+    "usage": 0,
+    "usage_daily": 0,
+    "usage_weekly": 0,
+    "usage_monthly": 0,
+    "byok_usage": 0,
+    "byok_usage_daily": 0,
+    "byok_usage_weekly": 0,
+    "byok_usage_monthly": 0,
+    "is_free_tier": true,
+    "expires_at": "2027-03-28T08:01:21.525Z",
+    "creator_user_id": "user_3JzfEnnjZpNakXgrJ8wViFe41h2",
+    "organization_id": null,
+    "workspace_id": "c9c9c062-216e-5668-8397-6c9a528ee80f",
+    "allowed_data_regions": [
+      "global"
+    ],
+    "free_model_daily_requests": {
+      "used": 5,
+      "limit": 50,
+      "remaining": 45
+    },
+    "rate_limit": {
+      "requests": -1,
+      "interval": "10s",
+      "note": "This field is deprecated and safe to ignore."
+    }
+  },
+  "article": {
+    "id": 20144,
+    "title": "Vinh danh Nhà phát triển bất động sản công nghiệp xanh dẫn đầu năm 2026"
+  },
+  "results": [
+    {
+      "model_requested": "stealth/space-bunny-alpha",
+      "model_actual": "stealth/space-bunny-alpha",
+      "status_code": 200,
+      "latency_ms": 2282.8,
+      "prompt_tokens": 1338,
+      "completion_tokens": 600,
+      "total_tokens": 1938,
+      "throughput_tps": 262.84,
+      "json_valid": false,
+      "dod_score": 0.0,
+      "error": null,
+      "parsed_output": null,
+      "raw_snippet": "{\"ticker\":null,\"entities\":[\"CTCP Thanh Bình Phú Mỹ\",\"CTCP Khu công nghiệp Thành Thành Công (TTC IZ)\",\"CTCP Becamex Bình Định\",\"Báo Tài chính - Đầu tư\",\"Liên chi hội Bất động sản công nghiệp Việt Nam ("
+    },
+    {
+      "model_requested": "qwen/qwen3.8-27b:free",
+      "model_actual": null,
+      "status_code": 429,
+      "latency_ms": 468.9,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "throughput_tps": 0.0,
+      "json_valid": false,
+      "dod_score": 0.0,
+      "error": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"qwen/qwen3.8-27b:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rat",
+      "parsed_output": null,
+      "raw_snippet": ""
+    },
+    {
+      "model_requested": "google/gemma-4-31b-it:free",
+      "model_actual": null,
+      "status_code": 429,
+      "latency_ms": 326.1,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "throughput_tps": 0.0,
+      "json_valid": false,
+      "dod_score": 0.0,
+      "error": "HTTP 429: {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"google/gemma-4-31b-it:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate you",
+      "parsed_output": null,
+      "raw_snippet": ""
+    },
+    {
+      "model_requested": "nvidia/nemotron-3-super-120b-a12b:free",
+      "model_actual": "nvidia/nemotron-3-super-120b-a12b:free",
+      "status_code": 200,
+      "latency_ms": 600.3,
+      "prompt_tokens": 733,
+      "completion_tokens": 600,
+      "total_tokens": 1333,
+      "throughput_tps": 999.51,
+      "json_valid": false,
+      "dod_score": 0.0,
+      "error": null,
+      "parsed_output": null,
+      "raw_snippet": "{\n  \"ticker\": null,\n  \"entities\": [\n    \"CTCP Thanh Bình Phú Mỹ\",\n    \"CTCP Khu công nghiệp Thành Thành Công (TTC IZ)\",\n    \"CTCP Becamex Bình Định\",\n    \"Báo Tài chính - Đầu tư\",\n    \"Liên chi hội Bấ"
+    },
+    {
+      "model_requested": "openrouter/free",
+      "model_actual": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "status_code": 200,
+      "latency_ms": 1083.4,
+      "prompt_tokens": 733,
+      "completion_tokens": 594,
+      "total_tokens": 1327,
+      "throughput_tps": 548.29,
+      "json_valid": true,
+      "dod_score": 100.0,
+      "error": null,
+      "parsed_output": {
+        "ticker": null,
+        "entities": [
+          "CTCP Thanh Bình Phú Mỹ",
+          "CTCP Khu công nghiệp Thành Thành Công (TTC IZ)",
+          "CTCP Becamex Bình Định",
+          "Báo Tài chính - Đầu tư",
+          "Liên chi hội Bất động sản công nghiệp Việt Nam (VIREA)",
+          "Diễn đàn Bất động sản công nghiệp Việt Nam 2026 (VIPF 2026)"
+        ],
+        "summary": "Ba doanh nghiệp bất động sản công nghiệp được vinh danh Nhà phát triển xanh dẫn đầu năm 2026 tại VIPF 2026. Các dự án được ghi nhận nhờ hạ tầng xử lý nước thải, năng lượng tái tạo và tiêu chuẩn công trình xanh.",
+        "sentiment": "pos",
+        "materiality_score": 0.35,
+        "implication": "Tín hiệu tích cực cho uy tín thương hiệu và khả năng thu hút FDI xanh của các doanh nghiệp được vinh danh, hỗ trợ định giá dài hạn cho nhóm bất động sản công nghiệp."
+      },
+      "raw_snippet": "{\n  \"ticker\": null,\n  \"entities\": [\"CTCP Thanh Bình Phú Mỹ\", \"CTCP Khu công nghiệp Thành Thành Công (TTC IZ)\", \"CTCP Becamex Bình Định\", \"Báo Tài chính - Đầu tư\", \"Liên chi hội Bất động sản công nghiệ"
+    }
+  ]
+}

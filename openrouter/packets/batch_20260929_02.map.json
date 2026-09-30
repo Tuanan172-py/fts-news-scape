@@ -1,0 +1,114 @@
+{
+ "0": {
+  "article_id": "0c05fa494ddabb20bccd7a898f73226b029558a6e7a0d2c1e2ba5fb6d0124bab",
+  "title": "Nặng ngang 300 xe bán tải, siêu nam châm mạnh nhất thế giới trình làng: Dậy sóng ngành năng lượng sạch",
+  "tier": 1,
+  "reason": "watchlist:IND_GICS1:NANG_LUONG",
+  "domain": "cafef.vn"
+ },
+ "1": {
+  "article_id": "f196642f4bb9005356f68337ae4ad99180abab4c037149012c013863e298d7c7",
+  "title": "Ngân hàng tư nhân nhiều tiền gửi nhất Việt Nam trả lãi tới 9,3%/năm cho số tiền từ 10 triệu đồng",
+  "tier": 1,
+  "reason": "watchlist:IND_GICS2:NGAN_HANG",
+  "domain": "cafef.vn"
+ },
+ "2": {
+  "article_id": "83daa020f901041122deebcd656f958af0e4d2028763b68b36d31aa152c1a01e",
+  "title": "Cổ phiếu dầu khí, cao su tăng mạnh",
+  "tier": 1,
+  "reason": "watchlist:ASSET_CLASS:CO_PHIEU",
+  "domain": "vneconomy.vn"
+ },
+ "3": {
+  "article_id": "6a0e298aeae5a395fc58080abfa0c3ad89d5e7d505aa967e80ea9db7ea484b7c",
+  "title": "Nguồn cung xăng dầu được đảm bảo đến cuối năm",
+  "tier": 1,
+  "reason": "watchlist:ASSET_CLASS:DAU_THO",
+  "domain": "vietnambiz.vn"
+ },
+ "4": {
+  "article_id": "4dbe1eb1a20da4613612e4d6c1618881dd4409fd4200326d97c64c0548ca559c",
+  "title": "Điện Mặt trời Trung Nam Thuận Nam báo lỗ bán niên 2026",
+  "tier": 1,
+  "reason": "watchlist:IND_GICS3:DIEN",
+  "domain": "vietstock.vn"
+ },
+ "5": {
+  "article_id": "f53e86708a50c55a4f460ddfcca593ad13093df5023e762224900e9a7c6272ea",
+  "title": "Đề xuất xác định tài xế công nghệ là nhóm đối tượng riêng thuộc diện BHXH bắt buộc",
+  "tier": 1,
+  "reason": "watchlist:IND_GICS1:CONG_NGHE",
+  "domain": "baodautu.vn"
+ },
+ "6": {
+  "article_id": "a22e6fe4cbc2fcbb0b8b42e83863bfe52e67d15d344b63d8d3042d78186879cd",
+  "title": "Khối ngoại nối dài chuỗi bán ròng trên HOSE, tâm điểm một mã ngân hàng",
+  "tier": 1,
+  "reason": "watchlist:ASSET_CLASS:CO_PHIEU",
+  "domain": "vietnambiz.vn"
+ },
+ "7": {
+  "article_id": "398f5d387983035cb4e740766c34e9e347f4c62cea6805f943b6eaf9cfb7110c",
+  "title": "Kiến tạo thế hệ hệ sinh thái công nghiệp mới",
+  "tier": 1,
+  "reason": "watchlist:IND_GICS1:CONG_NGHIEP",
+  "domain": "baodautu.vn"
+ },
+ "8": {
+  "article_id": "95a98ea505cfc98c7584cce63d179d5c9b58cc0eaa3a0f272c1641beff5e90dd",
+  "title": "Khơi thông nguồn vốn, tạo động lực mới cho phát triển khu công nghiệp",
+  "tier": 1,
+  "reason": "watchlist:IND_GICS1:CONG_NGHIEP",
+  "domain": "baodautu.vn"
+ },
+ "9": {
+  "article_id": "93169567afff1eff37b994ae9a11951a02243f45f4a8d234eded3c5dd49af47b",
+  "title": "Tất cả người dân đang có thẻ BHYT trên cả nước chú ý thông báo mới nhất từ Bảo hiểm xã hội Việt Nam",
+  "tier": 1,
+  "reason": "watchlist:IND_GICS2:BAO_HIEM",
+  "domain": "cafef.vn"
+ },
+ "10": {
+  "article_id": "c305f52756a1317d43c9b13a85fa90fbf134618775c2018ed68d0b5e9827ce69",
+  "title": "Các thành phố châu Âu tìm lời giải cho bài toán nhà ở giá phải chăng",
+  "tier": 1,
+  "reason": "watchlist:MACRO_GEO:EU",
+  "domain": "vneconomy.vn"
+ },
+ "11": {
+  "article_id": "77eecd0f7f07fa94fd4721f8ac48ae12efd3602b2dfb8b84781eec297e6b87bc",
+  "title": "Brilliant Solutions trở thành cổ đông lớn tại AgriS (SBT)",
+  "tier": 1,
+  "reason": "industry:hàng tiêu dùng thiết yếu",
+  "domain": "tinnhanhchungkhoan.vn"
+ },
+ "12": {
+  "article_id": "762c4ffe75f9c37e4486023da2ca4f41848c6cfea32b45bb8c75d5ae2ce6e78f",
+  "title": "TP.Hồ Chí Minh dự kiến thu hút 19 tỷ USD vốn FDI năm 2026",
+  "tier": 1,
+  "reason": "watchlist:MACRO_THEME:FDI",
+  "domain": "vneconomy.vn"
+ },
+ "13": {
+  "article_id": "1630543cf550d8770f271dd99db6297e229a8dfb7efe2c75acd9b6e5ec2d0e81",
+  "title": "Các nhà máy lọc dầu châu Á đa dạng hóa nguồn dầu thô ngoài eo biển Hormuz",
+  "tier": 1,
+  "reason": "watchlist:ASSET_CLASS:DAU_THO",
+  "domain": "vietnambiz.vn"
+ },
+ "14": {
+  "article_id": "78f8905fafa9b039aecfd331991d22d7e57f903de7f51155f2e6062f75e6136e",
+  "title": "Nhiệt điện Hải Phòng sắp chi 150 tỷ đồng cổ tức",
+  "tier": 1,
+  "reason": "watchlist:IND_GICS3:DIEN",
+  "domain": "vietstock.vn"
+ },
+ "15": {
+  "article_id": "decbc6e35bed160011e9066f76547ee5935dda29b0ce86fa583b82b3a1313937",
+  "title": "Khu công nghiệp xanh đối mặt bài toán vốn: Đầu tư lớn nhưng khó chứng minh dòng tiền",
+  "tier": 1,
+  "reason": "watchlist:IND_GICS1:CONG_NGHIEP",
+  "domain": "vietnambiz.vn"
+ }
+}

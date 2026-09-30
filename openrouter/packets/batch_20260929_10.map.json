@@ -1,0 +1,114 @@
+{
+ "0": {
+  "article_id": "1a679ec174243dbfc1f6bb818083a2814613d5384b71fd97e6e817d5425f4a4e",
+  "title": "PNJ, NVL lại giảm sàn, gần 100 triệu cổ phiếu dư bán",
+  "tier": 1,
+  "reason": "watchlist:ASSET_CLASS:CO_PHIEU",
+  "domain": "vietnambiz.vn"
+ },
+ "1": {
+  "article_id": "682baec18b49ff0227860ce690c45c46086d2f3d8b193fb6a98cab28d0744554",
+  "title": "Thanh toán xuyên biên giới qua mã QR: Bước nhảy vọt cho bán lẻ và du lịch",
+  "tier": 1,
+  "reason": "watchlist:IND_GICS2:BAN_LE",
+  "domain": "vneconomy.vn"
+ },
+ "2": {
+  "article_id": "7c3b0089b3c6e8f88f372249cd875ae10c4e78d59b0af97ff16d1e8a9499dbc7",
+  "title": "Miza Nghi Sơn tăng lãi 77% sau đợt phát hành trái phiếu đầu tiên",
+  "tier": 1,
+  "reason": "watchlist:ASSET_CLASS:TRAI_PHIEU",
+  "domain": "vietstock.vn"
+ },
+ "3": {
+  "article_id": "c2f3efc6327c2689f60ec32a3f5476f74eb2e4589ba0729bda3c900f32b04f63",
+  "title": "Phát hiện Trung Quốc thả đồng loạt 116 drone 5 kg xuống nước, di chuyển được 30 km suốt hơn 8 giờ, lập kỷ lục thế giới",
+  "tier": 1,
+  "reason": "watchlist:MACRO_GEO:TRUNG_QUOC",
+  "domain": "cafef.vn"
+ },
+ "4": {
+  "article_id": "5732eca565006ed87383fc87e8abd5414d10f23ad76c6d2f87654f8c29e65de8",
+  "title": "Tỷ giá euro ngày 29/9: Nhiều nơi giảm sâu",
+  "tier": 1,
+  "reason": "watchlist:MACRO_THEME:TY_GIA",
+  "domain": "vietnambiz.vn"
+ },
+ "5": {
+  "article_id": "a836fd5d558b2c978f2b75ed6ee233ab0506b9273086b67f26fe72ae436119df",
+  "title": "Becamex Group góp thêm gần 270 tỷ đồng vào Becamex - Bình Phước",
+  "tier": 1,
+  "reason": "industry:bất động sản",
+  "domain": "fireant.vn"
+ },
+ "6": {
+  "article_id": "1ca0287c9a869bafe7de48f3c789209c465fec9c91354942edb6e2330c119856",
+  "title": "Vàng, bitcoin đồng loạt giảm mạnh",
+  "tier": 1,
+  "reason": "watchlist:ASSET_CLASS:VANG",
+  "domain": "baodautu.vn"
+ },
+ "7": {
+  "article_id": "9617cbb7bb3d36c46add65ec6b23a745788c41de46be7a25fad51abdd3457dc7",
+  "title": "Lãi suất tăng, người trẻ chuyển hướng thuê nhà",
+  "tier": 1,
+  "reason": "watchlist:MACRO_THEME:LAI_SUAT",
+  "domain": "cafef.vn"
+ },
+ "8": {
+  "article_id": "42597dd1cc3e5b0eb5a47b1b720ca47ad52c24234b0296e705e9bb38e3557a76",
+  "title": "Hà Nội tăng tốc để về đích giải ngân đầu tư công",
+  "tier": 1,
+  "reason": "watchlist:MACRO_THEME:DAU_TU_CONG",
+  "domain": "cafef.vn"
+ },
+ "9": {
+  "article_id": "a72bd037fd8768ebea5743327d9f4e51a26e5a50106a1fce19b4713e2f32b5fa",
+  "title": "Phát hiện ngọn đồi chứa 105 triệu tấn kho báu trải rộng gần 400 km2: Mỹ và Trung Quốc tranh nhau quyền kiểm soát",
+  "tier": 1,
+  "reason": "watchlist:MACRO_GEO:MY",
+  "domain": "cafef.vn"
+ },
+ "10": {
+  "article_id": "1af4ee1eefe3102c23f03d39b22406cd17b4fcdd83b1deec8166b5185adf8c1c",
+  "title": "5 cá nhân đưa hơn 1.000 tỷ đồng cổ phiếu VIC vào công ty riêng của ông Phạm Nhật Vượng",
+  "tier": 1,
+  "reason": "watchlist:ASSET_CLASS:CO_PHIEU",
+  "domain": "cafef.vn"
+ },
+ "11": {
+  "article_id": "1d475e26013c53f6e4feadc1f69f45b992482af879e1ae6b29fede9aa217c105",
+  "title": "5 cá nhân đưa hơn 1.000 tỷ đồng cổ phiếu VIC vào công ty riêng của ông Phạm Nhật Vượng",
+  "tier": 1,
+  "reason": "watchlist:ASSET_CLASS:CO_PHIEU",
+  "domain": "cafef.vn"
+ },
+ "12": {
+  "article_id": "bf7db5a299e12a79eaf9b6e72832b2c032ec6cb5ba814d214156f4e875f9ea18",
+  "title": "Thay đổi tại cổ đông lớn nhất của Vingroup",
+  "tier": 1,
+  "reason": "watchlist:TICKER:VIC",
+  "domain": "cafef.vn"
+ },
+ "13": {
+  "article_id": "21ac9c4a8163ed80ee2987c1c5b4b0bced701e6b6006536d53f499090c5eb214",
+  "title": "Tỷ giá USD hôm nay 29 9 USD lặng sóng trong nước thị trường dõi theo khả năng Úc và Ấn Độ tăng lãi suất",
+  "tier": 1,
+  "reason": "watchlist:MACRO_THEME:LAI_SUAT",
+  "domain": "thoibaotaichinhvietnam.vn"
+ },
+ "14": {
+  "article_id": "e16ffb1ef156f341168f676e6982eb1570f9e2300a828b2ba2a0014e4d1d774c",
+  "title": "Giá vàng miếng, vàng nhẫn trơn sáng 29/9 đồng loạt rớt mạnh tại SJC, DOJI, PNJ, Bảo Tín Minh Châu,...",
+  "tier": 1,
+  "reason": "watchlist:ASSET_CLASS:VANG",
+  "domain": "cafef.vn"
+ },
+ "15": {
+  "article_id": "810a8724424d87f77ba5aee63414d64f105414a656e403cbbd642d6a57cee974",
+  "title": "Vàng thế giới lao dốc gần 4%",
+  "tier": 1,
+  "reason": "watchlist:ASSET_CLASS:VANG",
+  "domain": "vietstock.vn"
+ }
+}

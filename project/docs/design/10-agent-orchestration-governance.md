@@ -2,6 +2,10 @@
 
 Cập nhật: 2026-08-14 · Trạng thái: **SPEC-ONLY** (docs + state machine; không code/LLM) · Kèm: [09](09-agent-io-contract.md), machine-readable: `schemas/task-lifecycle-v1.yaml`.
 
+> [!NOTE]
+> **Trạng thái Kế thừa (Historical Specification):**
+> Mô hình điều phối đa tác nhân phân tầng ban đầu. Hiện đã được hợp nhất thành kiến trúc Unified Article Lane (ADR 0010, 2026-09-23) với một agent cognitive duy nhất (`article-processor`) không vòng lặp tự xác thực và không yêu cầu trường `materiality`.
+
 Khung để bất kỳ provider dựng lớp agent: thứ tự main/sub, vòng lặp, điều kiện thực thi, **điểm chạm
 báo hiệu ĐÃ THỰC SỰ hoàn thành**. Phase-05. Provider-agnostic (roles ≠ vendor).
 

@@ -1,0 +1,130 @@
+[
+  {
+    "i": 0,
+    "s": "Mộc Châu được WTA vinh danh điểm đến thiên nhiên hàng đầu châu Á lần thứ năm, củng cố thương hiệu du lịch và tiềm năng doanh thu địa phương.",
+    "sn": "pos",
+    "ms": 0.2,
+    "k": ["Danh tiếng quốc tế được cải thiện", "Cơ sở phát triển du lịch bền vững"],
+    "c": [0, 1, 4, 7]
+  },
+  {
+    "i": 1,
+    "s": "Sun Group được giao thi công phục hồi Điện Kính Thiên, tạo cơ hội hợp tác lớn nhưng kéo theo rủi ro thực thi về kỹ thuật và bảo tồn.",
+    "sn": "neu",
+    "ms": 0.5,
+    "k": ["Hợp đồng trọng gói cho tập đoàn", "Yêu cầu xác thực và chất lượng cao", "Thúc đẩy du lịch văn hóa"],
+    "c": [4, 8, 9, 10]
+  },
+  {
+    "i": 2,
+    "s": "SSI dự báo nhiều doanh nghiệp tăng lợi nhuận quý III, nổi bật ở khai khoáng, ngân hàng và năng lượng; chi phí và nền cao tạo phân hóa.",
+    "sn": "pos",
+    "ms": 0.9,
+    "k": ["Lợi nhuận tăng trưởng nhưng phân hóa", "Thu nhập bất thường nâng một số doanh nghiệp", "Ngân hàng tăng trưởng nhờ tín dụng"],
+    "c": [0, 1, 3, 6, 8, 13, 14]
+  },
+  {
+    "i": 3,
+    "s": "Dự án phục hồi Điện Kính Thiên chính thức khởi công, với cam kết bảo tồn tính xác thực và phát triển du lịch văn hóa Thăng Long.",
+    "sn": "neu",
+    "ms": 0.4,
+    "k": ["Khởi động dự án di sản trọng điểm", "Sun Group là nhà thầu", "Rủi ro sai lệch di sản cần kiểm soát"],
+    "c": [1, 5, 7, 12, 15, 17, 25]
+  },
+  {
+    "i": 4,
+    "s": "Hai gấu trúc được FedEx vận chuyển từ Trung Quốc sang Mỹ trong chương trình bảo tồn, với chi phí và thủ tục đặc biệt phức tạp.",
+    "sn": "neu",
+    "ms": 0.1,
+    "k": ["Vận chuyển động vật cần chuẩn bị dài hạn", "FedEx tài trợ chi phí", "Sức khỏe và cách ly là trọng tâm"],
+    "c": [0, 3, 4, 16, 22]
+  },
+  {
+    "i": 5,
+    "s": "74 doanh nghiệp ưu tiên hải quan chiếm gần một phần ba kim ngạch xuất nhập khẩu, được lợi về thông quan nhanh và dòng tiền.",
+    "sn": "pos",
+    "ms": 0.7,
+    "k": ["Lợi thế thương mại cho doanh nghiệp uy tín", "Quản lý rủi ro là điều kiện duy trì", "Hải quan tập trung nguồn lực vào rủi ro cao"],
+    "c": [1, 3, 4, 10, 11, 12, 14]
+  },
+  {
+    "i": 6,
+    "s": "Bộ Giáo dục và Suntory PepsiCo mở rộng hợp tác 2026-2029, tiếp tục giáo dục sức khỏe, môi trường và bảo vệ nguồn nước.",
+    "sn": "pos",
+    "ms": 0.2,
+    "k": ["Hợp tác CSR kéo dài bốn năm", "Chương trình MIZUIKU mở rộng quy mô", "Nâng cao ý thức môi trường học sinh"],
+    "c": [1, 2, 4, 7]
+  },
+  {
+    "i": 7,
+    "s": "MIK Group mở rộng sang Bắc Ninh, nhắm khai thác nhu cầu nhà ở và đô thị hóa tại các khu công nghiệp, khu phía Tây thành phố.",
+    "sn": "pos",
+    "ms": 0.4,
+    "k": ["Bắc Ninh có tăng trưởng đầu tư mạnh", "Cơ hội mở rộng danh mục bất động sản", "Áp lực quy hoạch và thiếu hụt hạ tầng"],
+    "c": [2, 3, 5, 6, 8, 11]
+  },
+  {
+    "i": 8,
+    "s": "Đề nghị xác định các đoạn cao tốc áp dụng phạt không giữ khoảng cách nhằm rà soát quy định và chuẩn bị biển báo trước ngày 10/10.",
+    "sn": "neu",
+    "ms": 0.5,
+    "k": ["Tăng cường khả năng rà soát vi phạm", "Phạt nặng và trừ điểm bằng lái xe", "Chi phí tuân thủ có thể tăng"],
+    "c": [0, 4, 5, 7]
+  },
+  {
+    "i": 9,
+    "s": "Michael Burry chuyển sang tăng đòn bẩy các quyền chọn bán và cảnh báo bong bóng AI có thể vỡ sớm, rủi ro cao với cổ phiếu công nghệ.",
+    "sn": "neg",
+    "ms": 0.85,
+    "k": ["Bong bóng AI có nguy cơ điều chỉnh mạnh", "Burry tăng vị thế phòng hộ", "Doanh thu AI chưa chắc đáp ứng vốn đầu tư"],
+    "c": [2, 3, 4, 8, 9, 10, 12]
+  },
+  {
+    "i": 10,
+    "s": "Đề án Khu kinh tế biển TP.HCM đề xuất hệ sinh thái đa ngành, kết hợp cảng, công nghệ, năng lượng, tài chính và du lịch để tạo cực tăng trưởng.",
+    "sn": "pos",
+    "ms": 0.6,
+    "k": ["Mở rộng quy hoạch theo hệ sinh thái", "Đề xuất cực tăng trưởng Gành Rái và Gò Găng", "Cần hạ tầng và nguồn nhân lực chất lượng"],
+    "c": [1, 2, 4, 5, 7, 8, 14, 19, 26]
+  },
+  {
+    "i": 11,
+    "s": "Tỷ phú John Poindexter dùng khoảng 67 triệu USD quyên góp để phục hồi thị trấn Shafter thành khu nghỉ dưỡng và bảo tàng lịch sử.",
+    "sn": "neu",
+    "ms": 0.3,
+    "k": ["Tài sản lớn chuyển sang mục đích xã hội", "Dự án phục hồi địa phương", "Tác động đến cư dân chưa thống nhất"],
+    "c": [3, 5, 7, 11]
+  },
+  {
+    "i": 12,
+    "s": "Xã Minh Châu là xã đảo biệt lập duy nhất của Hà Nội, kinh tế dựa vào nông nghiệp và có tiềm năng du lịch văn hóa.",
+    "sn": "neu",
+    "ms": 0.1,
+    "k": ["Đặc thù địa lý và dân số nhỏ", "Kinh tế tập trung nông nghiệp", "Di tích tạo cơ sở du lịch"],
+    "c": [0, 3, 8]
+  },
+  {
+    "i": 13,
+    "s": "Xuất khẩu sầu riêng tăng 55% sau tám tháng, đạt 2,72 tỷ USD, chủ yếu nhờ nhu cầu Trung Quốc dù phụ thuộc thị trường rất cao.",
+    "sn": "pos",
+    "ms": 0.85,
+    "k": ["Xuất khẩu sầu riêng tăng trưởng mạnh", "Trung Quốc chiếm 95% thị trường", "Giá xuất khẩu tươi giảm và cạnh tranh tăng"],
+    "c": [0, 1, 4, 5, 9, 14, 15, 18]
+  },
+  {
+    "i": 14,
+    "s": "Việt Nam được FTSE Russell nâng lên thị trường mới nổi, hỗ trợ hút dòng vốn và phát triển công cụ quản lý danh mục như VSI.",
+    "sn": "pos",
+    "ms": 0.85,
+    "k": ["Cơ hội thu hút vốn quốc tế", "Chất lượng thị trường được cải thiện", "Direct Indexing hỗ trợ nhà đầu tư cá nhân"],
+    "c": [0, 1, 2, 6, 8, 10, 13]
+  },
+  {
+    "i": 15,
+    "s": "Ngành gỗ và nội thất Việt Nam tăng trưởng xuất khẩu mạnh nhưng cần chuyển từ OEM sang ODM, thương hiệu và làm chủ chuỗi giá trị.",
+    "sn": "pos",
+    "ms": 0.8,
+    "k": ["Xuất khẩu đạt 17,2 tỷ USD năm 2025", "Phụ thuộc thị trường xuất khẩu lớn", "Thiết kế, thương hiệu và truy xuất là lợi thế chiến lược"],
+    "c": [2, 3, 4, 9, 10, 14, 15, 17, 19]
+  }
+]

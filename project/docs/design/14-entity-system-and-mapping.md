@@ -74,7 +74,7 @@ Một alias có thể ánh xạ tới nhiều ID (ví dụ cùng từ khóa *"Qu
           │ ◄─── [Tin tức Silver + L1 Matched Entities]
           ▼
 [Noise Filter Gate: user_output.py]
-  - Macro/Asset diện rộng: Cần title mention HOẶC materiality_score >= 3
+  - Macro/Asset diện rộng: Cần title mention HOẶC alias nằm trong title (tuyệt đối không đọc trường Gold/materiality)
           │
           ▼
 [User Excel Output: users/output/<Name>/news_YYYYMMDD.xlsx]

@@ -12,7 +12,11 @@ from pathlib import Path
 
 from loguru import logger
 
+from src.core.config import resolve_project_path
+from src.core.stdio import force_utf8_stdio
 from src.pipeline.run import process_meta
+
+force_utf8_stdio()
 
 WATERMARK_KEY = "silver_watermark"
 CHECKPOINT_KEY = "silver_checkpoint"
@@ -116,13 +120,17 @@ def rederive_incremental(
     if not watermark:
         watermark = ""
 
-    print(f"🔄 [derive] Đang quét thư mục Bronze '{raw_dir}' (watermark={watermark or 'bắt đầu'})...", flush=True)
-    all_paths = iter_meta_paths(raw_dir)
+    raw_path_res = str(resolve_project_path(raw_dir))
+    silver_path_res = str(resolve_project_path(silver_dir))
+    package_path_res = str(resolve_project_path(package_dir))
+
+    print(f"[derive] Quét thư mục Bronze '{raw_dir}' (watermark={watermark or 'bắt đầu'})...", flush=True)
+    all_paths = iter_meta_paths(raw_path_res)
     # Đọc fetch_ts MỘT lần cho mỗi tệp rồi tái dùng. Trước đây mỗi tệp bị đọc/parse 3 lần
     # mỗi chu kỳ (~22k lượt đọc/30 phút trên OneDrive).
     ts_by_path = {p: _read_fetch_ts(p) for p in all_paths}
     to_process = [p for p in all_paths if _should_process(ts_by_path[p], watermark)]
-    print(f"📦 [derive] Quét xong {len(all_paths)} Bronze files: tìm thấy {len(to_process)} bài mới cần chuyển lên Silver.", flush=True)
+    print(f"[derive] Quét xong {len(all_paths)} Bronze files: tìm thấy {len(to_process)} bài mới cần chuyển lên Silver.", flush=True)
 
     n = ok = held = failed = 0
     ok_ts: list[str] = []
@@ -130,14 +138,14 @@ def rederive_incremental(
     for idx, meta_path in enumerate(to_process):
         n += 1
         if (idx + 1) % 25 == 0 or idx == len(to_process) - 1:
-            print(f"  ⚡ [derive] Đang xử lý: [{idx + 1}/{len(to_process)}] bài...", flush=True)
+            print(f"  [derive] Đang xử lý: [{idx + 1}/{len(to_process)}] bài...", flush=True)
         ft = ts_by_path.get(meta_path, "")
         try:
             res = process_meta(
                 store,
                 meta_path,
-                silver_dir=silver_dir,
-                package_dir=package_dir,
+                silver_dir=silver_path_res,
+                package_dir=package_path_res,
                 t_content=t_content,
                 t_template=t_template,
                 do_enqueue=do_enqueue,

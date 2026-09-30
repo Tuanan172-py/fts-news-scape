@@ -196,10 +196,10 @@ def load_candidates(conn: sqlite3.Connection, *, date: str | None, limit: int,
     """
     sql = [
         "SELECT a.url_title_hash AS article_id, a.title, a.published_at,",
-        "       a.source_domain, w.package_path",
+        "       a.source_domain, w.package_path, a.content_text",
         "FROM articles a",
-        "JOIN work_items w ON w.article_id = a.url_title_hash",
-        "WHERE w.package_path IS NOT NULL",
+        "LEFT JOIN work_items w ON w.article_id = a.url_title_hash",
+        "WHERE (w.package_path IS NOT NULL OR (a.content_text IS NOT NULL AND length(a.content_text) > 100))",
     ]
     params: list = []
     if only_pending:
@@ -450,7 +450,11 @@ def main(argv=None) -> int:
 
     packed: list[dict] = []
     for r in rows:
-        text = read_cleaned_text(r["package_path"])
+        text = ""
+        if r["package_path"]:
+            text = read_cleaned_text(r["package_path"])
+        if not text and "content_text" in r.keys() and r["content_text"]:
+            text = r["content_text"]
         if not text:
             continue
         stats = distill_stats(text, max_tokens=args.max_tokens_per_article)

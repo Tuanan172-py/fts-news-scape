@@ -1,7 +1,7 @@
 ---
 type: SQLite Table
 title: agent_outputs
-description: Kết quả Lớp 2 (Gold — tóm tắt/hàm ý/materiality) do agent ngoài nộp, đã qua cổng DoD.
+description: Kết quả Lớp 2 (Gold — tóm tắt/hàm ý/citations; materiality là legacy) do agent ngoài nộp, đã qua cổng DoD.
 resource: "project/data/monocle.db (table: agent_outputs)"
 tags: [agent, gold, dod, output]
 status: stable
@@ -24,7 +24,7 @@ sources_last_checked: 2026-09-07
 ---
 
 `agent_outputs` lưu **1 output chuẩn / bản raw** của Lớp 2 nghiệp vụ (Gold — Financial Analyst):
-tóm tắt, hàm ý thị trường, điểm materiality, sentiment, citations. Producer **không có LLM**;
+tóm tắt, hàm ý thị trường, sentiment, time_sensitivity, citations (trường `materiality` thuộc v1 cũ đã ngừng). Producer **không có LLM**;
 hàng ở đây do agent NGOÀI nộp file JSON rồi `scripts/agent_ingest.py` validate + chấm DoD trước
 khi ghi.[^runner]
 

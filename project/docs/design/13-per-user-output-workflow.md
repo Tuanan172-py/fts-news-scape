@@ -203,7 +203,7 @@ Nguồn sự thật: `src/export/xlsx_delivery.py::DELIVERY_FIELDS`. **12 cột*
 | 2 | Mã theo dõi | code entity user đăng ký MÀ article chạm, join `; `, **đã khử trùng** | định vị |
 | 3 | Tiêu đề | `articles.title` | định vị |
 | 4 | Sắc thái | `sentiment.polarity` → `Tích cực`/`Tiêu cực`/`Trung lập` | phân loại |
-| 5 | Độ khẩn | `materiality.time_sensitivity` → `Khẩn`/`Trong ngày`/`Trong tuần`/`Trong tháng`/`Lưu trữ` | phân loại |
+| 5 | Độ khẩn | `time_sensitivity` → `Khẩn`/`Trong ngày`/`Trong tuần`/`Trong tháng`/`Lưu trữ` | phân loại |
 | 6 | Độ đầy đủ | `gold_status` → `Đầy đủ` (GOLD) / `Sơ bộ` (L1_ONLY) | phân loại |
 | 7 | Nguồn | `source_domain` | nguồn |
 | 8 | Tóm tắt | `summary.abstractive` | văn bản dài |
@@ -225,15 +225,13 @@ lại được. XLSX lưu các thứ đó một lần.
 - `freeze_panes = A2` + AutoFilter trên toàn dải.
 - 7 cột đầu đều ngắn (≤ 20 ký tự) nên vừa một màn hình; 3 cột văn bản dài nằm sau nên tràn
   vào vùng trống bên phải thay vì đẩy cột ngắn ra ngoài.
-- Thứ tự dòng TẤT ĐỊNH: `Độ khẩn` → `materiality.score` giảm dần → `Mã theo dõi` → `Tiêu đề`.
-  Trước đây dòng đi theo thứ tự SQL JOIN trả về nên nhìn như dữ liệu ngẫu nhiên.
+- Thứ tự dòng TẤT ĐỊNH: Mốc thời gian phát hành mới nhất (`published_at`/`fetched_at` giảm dần) → `Mã theo dõi` → `Tiêu đề` (theo `UserOutputWriter._sort_key`).
 
 **Cột bị loại khỏi deliverable** (vẫn còn đủ trong `_master/*.csv`):
 - `impact_area` — đo trên 1.274 bản ghi Gold: **100% = `market`**. Lọc được gì đâu.
 - `event_type` — 80% = `macro`.
 - `agent_provider`, `model_used` — metadata máy, không phải nội dung nghiệp vụ.
-- `materiality_score` — ẩn từ 2026-09-07 theo CORE/DETAIL bên dưới, nhưng **vẫn dùng làm khoá
-  sắp xếp** nên tin quan trọng tự nổi lên đầu mà không tốn một cột.
+- `materiality_score` — ĐÃ NGỪNG SỬ DỤNG (RETIRED): Không hiển thị trên deliverable và không dùng làm khóa sắp xếp (đã được thay thế hoàn toàn bằng thứ tự thời gian thực).
 
 **Chống formula injection.** openpyxl tự đoán chuỗi mở đầu `=` là CÔNG THỨC, và tiêu đề tin tài
 chính mở đầu `-5%…`/`+3%…` là chuyện thường. Mọi ô văn bản bị ép `data_type="s"`

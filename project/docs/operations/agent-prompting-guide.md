@@ -1,7 +1,11 @@
 # Vận hành — Hướng dẫn PROMPT & nghiệm thu lớp AGENT
 
-Cập nhật: 2026-08-19 · Đối tượng: người điều khiển agent (provider bất kỳ) xử lý 2 handoff:
+Cập nhật: 2026-08-19 · Trạng thái: **ARCHIVED REFERENCE** · Đối tượng: người điều khiển agent (provider bất kỳ) xử lý 2 handoff:
 **L1 nhận diện entity** và **bóc tách** (summary/implication/materiality…).
+
+> [!NOTE]
+> **Tài liệu Kế thừa (Reference Only — Hợp đồng v1):**
+> Hướng dẫn này thuộc về kiến trúc 2-lane cũ (L1/Gold) và schema `agent-output-v1`. Hiện tại runtime vận hành bằng Article Lane duy nhất theo chuẩn `v2-lean` (`build_article_prefix.py`). Các trường `materiality.score`, `impact_area`, `event_type` KHÔNG áp dụng vào runtime hiện hành.
 
 Nguyên tắc: **agent-agnostic** — runtime chỉ *phát packet* + *nạp & chấm DoD*, KHÔNG nhúng LLM.
 Bạn tự soạn prompt từ: **file chỉ dẫn** (system) + **task-packet** (input) + **schema output**.

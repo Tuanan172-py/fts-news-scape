@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 
@@ -55,6 +56,63 @@ class AgentRunner:
                 "SELECT * FROM work_items WHERE article_id=? "
                 "ORDER BY CASE status WHEN 'claimed' THEN 0 WHEN 'pending' THEN 1 "
                 "ELSE 2 END, id DESC LIMIT 1", (article_id,)).fetchone()
+            return dict(row) if row else None
+        finally:
+            conn.close()
+
+    def _register_article_lane_item(self, article_id: str) -> dict | None:
+        """Đăng ký work_item và work_package cho bài từ Article Lane khi chưa có.
+
+        Args:
+            article_id: Mã băm định danh của bài viết.
+
+        Returns:
+            Từ điển dữ liệu bản ghi work_item vừa đăng ký, hoặc None khi không tìm thấy bài.
+        """
+        article = self.store.get_by_hash(article_id)
+        if article is None:
+            return None
+
+        content = article.content_text or article.title or ""
+        raw_sha256 = hashlib.sha256(content.encode("utf-8")).hexdigest()
+
+        project_root = Path(__file__).resolve().parents[2]
+        wp_dir = project_root / "data" / "work_packages"
+        wp_dir.mkdir(parents=True, exist_ok=True)
+        wp_file = wp_dir / f"{article_id}.json"
+
+        if not wp_file.exists():
+            wp_data = {
+                "work_package_version": "1.0",
+                "article_id": article_id,
+                "title": article.title or "",
+                "domain": article.source_domain or "",
+                "published_at": article.published_at or "",
+                "cleaned_text": content,
+                "raw_sha256": raw_sha256,
+                "structure": {
+                    "text_quality": "high",
+                    "content_length": len(content),
+                },
+                "change_state": "NEW",
+            }
+            wp_file.write_text(json.dumps(wp_data, ensure_ascii=False, indent=2), encoding="utf-8")
+
+        rel_path = f"data/work_packages/{article_id}.json"
+
+        conn = self.store.connect()
+        try:
+            cur = conn.execute("SELECT * FROM work_items WHERE article_id=?", (article_id,))
+            row = cur.fetchone()
+            if not row:
+                conn.execute(
+                    "INSERT INTO work_items (article_id, raw_sha256, domain, package_path, "
+                    "change_state, status, enqueued_at) VALUES (?, ?, ?, ?, 'NEW', 'claimed', ?)",
+                    (article_id, raw_sha256, article.source_domain or "", rel_path, now_vn_iso()),
+                )
+                conn.commit()
+                cur = conn.execute("SELECT * FROM work_items WHERE article_id=?", (article_id,))
+                row = cur.fetchone()
             return dict(row) if row else None
         finally:
             conn.close()
@@ -233,7 +291,7 @@ class AgentRunner:
         if not article_id:
             return {"ok": False, "reason": "missing article_id"}
 
-        item = self._work_item_for(article_id)
+        item = self._work_item_for(article_id) or self._register_article_lane_item(article_id)
         if item is None:
             return {"ok": False, "article_id": article_id, "reason": "no work_item"}
         raw_sha256 = item["raw_sha256"]

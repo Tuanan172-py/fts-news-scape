@@ -1,0 +1,114 @@
+{
+ "0": {
+  "article_id": "f1ab86e44bf6090fa3fc405f3a8ef35a141d75d393c522870574ed5562a3025f",
+  "title": "Trung Quốc tăng mạnh mua đậu tương Mỹ trước thềm bầu cử giữa kỳ",
+  "tier": 1,
+  "reason": "watchlist:MACRO_GEO:MY",
+  "domain": "vietnambiz.vn"
+ },
+ "1": {
+  "article_id": "00ad776696633b53656b1d30718ba32ad8780e405b2ef28a3f39fa3a419054db",
+  "title": "VPBank ký kết khoản vay 27 triệu USD với JBIC, tài trợ dự án truyền tải điện",
+  "tier": 1,
+  "reason": "watchlist:TICKER:VPB",
+  "domain": "vietstock.vn"
+ },
+ "2": {
+  "article_id": "26db280dc1158340411ff5f05a47559ba369f3810fa449077793591819ad404d",
+  "title": "Rút ngắn hành trình pháp lý của dự án bất động sản",
+  "tier": 1,
+  "reason": "watchlist:ASSET_CLASS:BAT_DONG_SAN_TAI_SAN",
+  "domain": "cafef.vn"
+ },
+ "3": {
+  "article_id": "c3548a9db057454723ae20d54b0af2fe5c8d596d57be1b98a57ed148051222df",
+  "title": "F88 triển khai niêm yết cổ phiếu trên HOSE",
+  "tier": 1,
+  "reason": "watchlist:ASSET_CLASS:CO_PHIEU",
+  "domain": "vietnambiz.vn"
+ },
+ "4": {
+  "article_id": "21ac663c6cb588b404d5b75bf00a21e6ed8ce854306419f1c61a2f32a9f587f4",
+  "title": "Các nhà điều tra Đức: Phanh chiếc Boeing 787 của Vietnam Airlines gặp sự cố tại Munich đã bị kích hoạt trong lúc chạy đà cất cánh",
+  "tier": 1,
+  "reason": "industry:công nghiệp",
+  "domain": "cafef.vn"
+ },
+ "5": {
+  "article_id": "1c216880db19b3363c047810446acc1a60d59abf82fbac063de3fb991ff7aaeb",
+  "title": "Bộ Y tế: Chi phí khám chữa bệnh bảo hiểm y tế ngày càng tăng",
+  "tier": 1,
+  "reason": "watchlist:IND_GICS1:Y_TE",
+  "domain": "vneconomy.vn"
+ },
+ "6": {
+  "article_id": "2ba9703d05f37f7df94fda346f0f453b18992d4dd8ef7b5bef97a064237e3b4d",
+  "title": "Diễn đàn Bất động sản công nghiệp Việt Nam 2026: Việt Nam đang được lựa chọn trong chu kỳ công nghiệp mới",
+  "tier": 1,
+  "reason": "watchlist:ASSET_CLASS:BAT_DONG_SAN_TAI_SAN",
+  "domain": "baodautu.vn"
+ },
+ "7": {
+  "article_id": "4bc505b2f62e500130857367ebc03cc10a18337f819033c98e6d02a1aa1b0ab4",
+  "title": "VNR góp ý phương án quy hoạch đường sắt đầu mối Hà Nội",
+  "tier": 1,
+  "reason": "industry:tài chính",
+  "domain": "vneconomy.vn"
+ },
+ "8": {
+  "article_id": "3d03457e7f60c8b2ec006993204549b6ce3665aa47c5b219d2cef93bb4215581",
+  "title": "Đà Nẵng mở bán dự án nhà ở xã hội, giá hơn 19 triệu đồng/m2",
+  "tier": 1,
+  "reason": "watchlist:IND_GICS2:QUAN_LY_VA_PHAT_TRIEN_BAT_DONG_SAN",
+  "domain": "cafef.vn"
+ },
+ "9": {
+  "article_id": "91db8433f7535ff6e3687c212904f788aee38c4c05ecda0ab67947c5c66e7803",
+  "title": "Cơn sốt AI khiến Mỹ khó kiểm soát lạm phát",
+  "tier": 1,
+  "reason": "watchlist:MACRO_GEO:MY",
+  "domain": "vneconomy.vn"
+ },
+ "10": {
+  "article_id": "04337f4d16295dcaf399fcd066463417e50089daaa30d398048dd55a861c9958",
+  "title": "Goldman Sachs giữ nguyên dự báo giá vàng đạt 4.900 USD/oz trước cuối năm 2026",
+  "tier": 1,
+  "reason": "watchlist:ASSET_CLASS:VANG",
+  "domain": "vneconomy.vn"
+ },
+ "11": {
+  "article_id": "491408dced557a912d300d1c9986eff5ae164aae957e8a8d050201e229c2a968",
+  "title": "Dự báo lợi nhuận toàn thị trường quý 3/2026 tăng 25%, dầu khí, bán lẻ bùng nổ",
+  "tier": 1,
+  "reason": "watchlist:IND_GICS2:BAN_LE",
+  "domain": "vneconomy.vn"
+ },
+ "12": {
+  "article_id": "e2128c270adddadb8dfe57723f375109be21a91cdf473b0714312d6cf1db549b",
+  "title": "Bảng giá vàng hôm nay 29/9: Đồng loạt giảm, Doji mất 1,4 triệu đồng/lượng",
+  "tier": 1,
+  "reason": "watchlist:ASSET_CLASS:VANG",
+  "domain": "vietnambiz.vn"
+ },
+ "13": {
+  "article_id": "126d7c9fa36bde65fc58abc10b76715e5d7b7cc9f57e39c55ec31fbf813b2f13",
+  "title": "Công ty điện mặt trời của Trung Nam Group: Lỗ lũy kế gần 2.000 tỷ, vốn chủ giảm 73%, nợ phải trả gần 9.800 tỷ",
+  "tier": 1,
+  "reason": "watchlist:IND_GICS3:DIEN",
+  "domain": "cafef.vn"
+ },
+ "14": {
+  "article_id": "592eb80dd16261b9e7e6d1a94ebb64f378258bc7ed1ea12a96137bd62b7d5a27",
+  "title": "FPT: Có gần 182.000 cổ đông, khối ngoại còn nắm 28,5% vốn",
+  "tier": 1,
+  "reason": "watchlist:ASSET_CLASS:CO_PHIEU",
+  "domain": "fireant.vn"
+ },
+ "15": {
+  "article_id": "4bfb6fc6950b3563ce8631642d35036c9e3f006d429364e30f2951766dfc78da",
+  "title": "Loạt ngân hàng mở rộng mảng bảo hiểm",
+  "tier": 1,
+  "reason": "watchlist:IND_GICS2:BAO_HIEM",
+  "domain": "fireant.vn"
+ }
+}

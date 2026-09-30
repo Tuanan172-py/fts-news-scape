@@ -1,6 +1,10 @@
 # Design 15 — Antigravity 2.0 Multi-Agent Hierarchy Orchestration
 
-Cập nhật: 2026-08-24 · Trạng thái: **ACTIVE / PRODUCTION SPEC** · Kèm: [09](09-agent-io-contract.md), [10](10-agent-orchestration-governance.md), [13](13-per-user-output-workflow.md), [14](14-entity-system-and-mapping.md).
+Cập nhật: 2026-08-24 · Trạng thái: **ARCHIVED REFERENCE** (Lane L1/Gold cũ; đã thay thế bằng Article Lane duy nhất theo ADR 0010) · Kèm: [09](09-agent-io-contract.md), [10](10-agent-orchestration-governance.md), [13](13-per-user-output-workflow.md), [14](14-entity-system-and-mapping.md).
+
+> [!NOTE]
+> **Trạng thái Kế thừa (Reference Only — ADR 0010):**
+> Tài liệu này mô tả mô hình phân cấp đa đặc vụ hai tầng L1 và Gold ban đầu. Từ ngày 2026-09-23, toàn bộ pipeline đã được chuẩn hóa vào Article Lane thống nhất với một agent duy nhất (`article-processor`) chạy chuẩn `v2-lean`. Các trường `materiality_score`, `event_type`, `impact_area` đã ngừng áp dụng ở runtime hiện hành.
 
 Đặc tả toàn diện về quy trình điều phối **Đa Đặc vụ (Multi-Agent Hierarchy)** chạy trên nền tảng **Antigravity 2.0**, sử dụng **100% model `flash`** cho toàn bộ các Subagent.
 
@@ -15,7 +19,7 @@ Cập nhật: 2026-08-24 · Trạng thái: **ACTIVE / PRODUCTION SPEC** · Kèm:
    - Bản gốc raw_html được bảo toàn tại Bronze để audit/grounding.
    - Dữ liệu `cleaned_text` trong Task Packet chuyển giao cho Agent **BẮT BUỘC chỉ chứa các khối đoạn văn nội dung chính (Main Body Paragraphs: `<p>...</p>`)**, loại bỏ 100% rác thông tin (bài liên quan, tên tác giả vặt, quảng cáo, menu điều hướng) để Agent không bị nhận thông tin rác, tối ưu token burn và đảm bảo trích dẫn chuẩn xác.
 3. **All-Flash Efficiency**: Toàn bộ các Subagent đều sử dụng model `flash` để đạt tốc độ xử lý nhanh (< 1s/bài), chi phí thấp, và tận dụng khả năng hiểu tiếng Việt tài chính xuất sắc.
-4. **Cognitive Financial Intelligence**: Chấm điểm `materiality_score` biến thiên thực tế (0.1 - 1.0), phân loại `sentiment` (`positive`, `negative`, `neutral`), viết `implication` thực tế và trích xuất $\ge 2$ grounded citations $\ge 20$ ký tự.
+4. **Cognitive Financial Intelligence**: Phân tích nội dung súc tích, phân loại `sentiment` (`positive`, `negative`, `neutral`), `time_sensitivity`, viết `implication` thực tế và trích xuất $\ge 2$ grounded citations $\ge 20$ ký tự. *(Lưu ý: `materiality_score` đã ngừng áp dụng).*
 5. **I/O Isolation & Guardrails**: Ràng buộc quyền hạn cứng theo `.agents/rules/01-subagent-guardrails.md` — Subagent chỉ đọc `data/agent_tasks/` và chỉ ghi `data/agent_outputs/`.
 6. **Self-Healing Loop**: Cơ chế tự sửa lỗi tức thì khi phát hiện bài viết bị trượt Definition-of-Done (DoD).
 
@@ -76,7 +80,7 @@ Hệ thống vận hành theo nguyên lý phân quyền rạch ròi: **Code-firs
    - **Dynamic 3-Pass Semantic Pruner** (`pruner.py`): Giới hạn trần 2.200 ký tự (giảm 45% token BPE). Ưu tiên Sapo/Lead $\rightarrow$ Đoạn chứa `l1_entities` & số liệu tài chính $\rightarrow$ Giữ nguyên văn cấu trúc đoạn để bảo toàn trích dẫn $\ge 20$ ký tự.
 4. **Vòng 4 (Subagent Cognitive Processing)**:
    - **Subagent L1**: Chỉ xử lý các bài `needs_agent` (tiêu đề chưa phân giải được ở Vòng 2).
-   - **Subagent Gold**: Đọc payload 2.200 ký tự đã tỉa $\rightarrow$ Viết tóm tắt, suy luận hàm ý chuyên biệt, chấm điểm `materiality_score` (0.1 - 1.0), phân loại `sentiment`, trích dẫn $\ge 2$ citations $\ge 20$ ký tự $\rightarrow$ Ghi `data/agent_outputs/<article_id>.json`.
+   - **Subagent Gold**: Đọc payload 2.200 ký tự đã tỉa $\rightarrow$ Viết tóm tắt, suy luận hàm ý chuyên biệt, phân loại `sentiment`, `time_sensitivity`, trích dẫn $\ge 2$ citations $\ge 20$ ký tự $\rightarrow$ Ghi `data/agent_outputs/<article_id>.json`.
 5. **Vòng 5 (Deliverables & Presentation)**:
    - Nghiệm thu DoD qua `agent_ingest.py`.
    - Xuất file báo cáo tài chính monochrome doanh nghiệp `users/output/<user>/<date>.xlsx`.

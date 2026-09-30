@@ -1,6 +1,10 @@
 # Hanoff cho AGENT CÓ quyền thực thi với file FILE (tự đọc packet, tự ghi output)
 
-Cập nhật: 2026-08-20 · Đối tượng: agent có tool đọc/ghi file cục bộ (Claude Code, Cursor, MCP filesystem…).
+Cập nhật: 2026-08-20 · Trạng thái: **ARCHIVED REFERENCE** · Đối tượng: agent có tool đọc/ghi file cục bộ (Claude Code, Cursor, MCP filesystem…).
+
+> [!NOTE]
+> **Tài liệu Kế thừa (Reference Only — Hợp đồng v1):**
+> Phiếu giao việc này mô tả luồng chạy hai hàng đợi L1 và Bóc tách thủ công trước khi hợp nhất Article Lane (ADR 0010). Hiện tại toàn bộ tác vụ được đóng gói qua `article_run.py` theo chuẩn `v2-lean`. Các trường `materiality.score`, `impact_area`, `event_type` KHÔNG áp dụng vào runtime hiện hành.
 Khác [agent-prompting-guide](agent-prompting-guide.md) (kiểu copy-paste): ở đây agent **TỰ GHI FILE** —
 không còn bước con người copy output. Bổ trợ [daily-runbook-per-user §3](daily-runbook-per-user.md).
 

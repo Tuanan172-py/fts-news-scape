@@ -128,7 +128,7 @@ flowchart LR
 
 **Phân công Trách nhiệm & 2 Lớp Nghiệp vụ Tầng Gold:**
 - **Lớp 1 (Xác định Thực thể — Entity Recognition)**: Nhận diện mã CP (3 ký tự in hoa), doanh nghiệp, sàn niêm yết, ngành, chỉ số (`l1-entity-output-v1`).
-- **Lớp 2 (Xử lý Nội dung & Ngữ nghĩa — Content Processing)**: Tóm tắt súc tích, viết hàm ý thị trường (`implication`), chấm điểm `materiality_score` động (`0.1 - 1.0`), phân loại `sentiment`, và trích xuất `citations` ($\ge 2$ trích dẫn $\ge 20$ ký tự) (`agent-output-v1`).
+- **Lớp 2 (Xử lý Nội dung & Ngữ nghĩa — Content Processing)**: Tóm tắt súc tích, các luận điểm chính, viết hàm ý thị trường (`implication`), phân loại `sentiment`, độ nhạy thời gian (`time_sensitivity`), và trích xuất `citations` ($\ge 2$ trích dẫn $\ge 20$ ký tự) (`agent-output-v2-lean`). *Lưu ý: `materiality_score` thuộc hợp đồng v1 cũ đã ngừng áp dụng.*
 
 **Quy chuẩn Payload Đoạn văn Sạch (Clean Paragraph Payload Invariant):**
 - Dữ liệu `cleaned_text` trong Task Packet gửi cho Agent **BẮT BUỘC chỉ chứa các khối đoạn văn nội dung chính (`<p>...</p>`)**, đã loại bỏ 100% rác thông tin (bài liên quan, tác giả vặt, quảng cáo, menu điều hướng) tại Silver để Agent không nhận thông tin rác, tối ưu 40–60% token input và triệt tiêu ảo giác trích dẫn.

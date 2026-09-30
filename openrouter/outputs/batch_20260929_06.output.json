@@ -1,0 +1,130 @@
+[
+  {
+    "i": 0,
+    "s": "Chuyên gia cho rằng thanh khoản căng, ngân hàng phải huy động vốn giá cao nên chưa có dư địa giảm lãi suất cho vay, gây áp lực cho doanh nghiệp.",
+    "sn": "neg",
+    "ms": 0.88,
+    "k": ["Thanh khoản liên ngân hàng tiếp tục căng", "Lãi suất huy động cao khiến lãi vay khó giảm", "Doanh nghiệp vay gặp sức ép vốn và chi phí"],
+    "c": [2, 3, 5, 6, 7, 8]
+  },
+  {
+    "i": 1,
+    "s": "Thanh tra An Giang phát hiện sai phạm lớn tại các dự án nhà ở xã hội, gồm thu vượt giá, thu tiền trái phép và hỗ trợ người mua không đủ điều kiện.",
+    "sn": "neg",
+    "ms": 0.72,
+    "k": ["40 người kê khai sai điều kiện", "Chủ đầu tư thu vượt hơn 16,2 tỷ đồng", "Vụ việc chuyển sang cơ quan công an"],
+    "c": [1, 4, 5, 8, 10, 14, 15, 19, 24]
+  },
+  {
+    "i": 2,
+    "s": "Gemadept chuẩn bị phát hành hơn 216 triệu cổ phiếu thưởng, tăng vốn điều lệ lên gần 6.493 tỷ đồng trong bối cảnh lợi nhuận bán niên tăng mạnh.",
+    "sn": "pos",
+    "ms": 0.84,
+    "k": ["Phát hành cổ phiếu thưởng tỷ lệ 2:1", "Vốn điều lệ tăng lên gần 6.493 tỷ đồng", "Lợi nhuận bán niên tăng 71,3%"],
+    "c": [0, 1, 3, 4, 5, 9, 11]
+  },
+  {
+    "i": 3,
+    "s": "Vietjet nhận giải thưởng quốc tế, cùng với tăng trưởng mạnh thương hiệu và mở rộng mạng lưới bay toàn cầu, củng cố vị thế doanh nghiệp hàng không.",
+    "sn": "pos",
+    "ms": 0.67,
+    "k": ["Vietjet tiếp tục nhận giải dẫn đầu trải nghiệm khách hàng", "Giá trị thương hiệu tăng 117% lên 906 triệu USD", "Khai thác 213 đường bay và đặt hơn 600 máy bay"],
+    "c": [1, 2, 4, 5]
+  },
+  {
+    "i": 4,
+    "s": "Mỹ công bố dự án nhà máy thép 15 tỷ USD nhằm tái thiết ngành công nghiệp, trong khi chính sách thuế quan và rủi ro triển khai tiếp tục gây tranh luận.",
+    "sn": "neu",
+    "ms": 0.92,
+    "k": ["Dự án thép 15 tỷ USD dự kiến vận hành năm 2030", "Công suất cuối cùng 10 triệu tấn mỗi năm", "Thuế 50% và rủi ro triển khai làm tăng bất định"],
+    "c": [1, 3, 4, 6, 10, 11, 12, 13]
+  },
+  {
+    "i": 5,
+    "s": "Cổ phiếu HLB tăng gần 100.000 đồng trong phiên thanh khoản gần như không có, dù thị giá đã tăng 75% trong ba tháng; cổ đông tập trung hạn chế giao dịch.",
+    "sn": "neu",
+    "ms": 0.91,
+    "k": ["Biến động giá lớn trên thanh khoản cực thấp", "Thị giá tăng 75% trong ba tháng", "Khoảng 87% vốn nằm trong tay hai nhóm cổ đông"],
+    "c": [0, 1, 2, 4, 6, 7, 9]
+  },
+  {
+    "i": 6,
+    "s": "Bộ Công Thương phê duyệt đề án phát triển outlet đến năm 2030, hướng tới mô hình làng outlet 30.000-50.000 m2 tại các khu vực giao thông, du lịch và sức mua lớn.",
+    "sn": "pos",
+    "ms": 0.58,
+    "k": ["Hình thành ít nhất một mô hình outlet vào năm 2030", "Làng outlet quy mô 30.000-50.000 m2", "Khu vực Hà Nội, TP.HCM và Đà Nẵng được ưu tiên"],
+    "c": [2, 3, 4, 7, 9, 10, 12, 14]
+  },
+  {
+    "i": 7,
+    "s": "Dự án đường sắt tốc độ cao Hà Nội-Quảng Ninh hướng tới hoàn tất giải phóng mặt bằng, với vốn đầu tư 147.300 tỷ đồng và kỳ vọng khai thác năm 2028.",
+    "sn": "pos",
+    "ms": 0.93,
+    "k": ["Quy mô đầu tư hơn 147.300 tỷ đồng", "Tốc độ thiết kế tối đa 350km/h", "Kỳ vọng kết nối Hà Nội-Hạ Long trong 23 phút"],
+    "c": [0, 1, 2, 5, 6, 7, 9, 13, 14, 15]
+  },
+  {
+    "i": 8,
+    "s": "NCB được NHNN chấp thuận tăng vốn tối đa 33.000 tỷ đồng, nâng vốn điều lệ lên gần 62.280 tỷ đồng và có thể vào nhóm 10 ngân hàng lớn nhất.",
+    "sn": "pos",
+    "ms": 0.86,
+    "k": ["Phát hành 3,3 tỷ cổ phiếu riêng lẻ", "Vốn điều lệ dự kiến tăng 112,7%", "Kế hoạch vào Top 10 ngân hàng vốn lớn"],
+    "c": [0, 1, 2, 3, 4]
+  },
+  {
+    "i": 9,
+    "s": "Dữ liệu việc làm, thu nhập và PCE sắp công bố sẽ giúp thị trường đánh giá bà tỏa chính sách của Fed khi tăng trưởng Mỹ mạnh nhưng lạm phát và giá năng lượng vẫn cao.",
+    "sn": "neu",
+    "ms": 0.85,
+    "k": ["Thị trường chờ dữ liệu việc làm và PCE", "Fed vừa tăng lãi suất lên 3,75%-4%", "GDPNow dự báo tăng trưởng quý III khoảng 5%"],
+    "c": [1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 15, 16]
+  },
+  {
+    "i": 10,
+    "s": "VCBS dự báo Sacombank có thể xử lý dứt điểm nợ xấu Bamboo Airways 3.000-4.000 tỷ đồng trong nửa cuối năm, tạo nguồn thu nhập bất thường.",
+    "sn": "pos",
+    "ms": 0.95,
+    "k": ["Dư nợ Bamboo Airways ước 3.000-4.000 tỷ đồng", "Xử lý thành công có thể tạo lợi nhuận bất thường", "Sacombank đã thu giữ nhiều tài sản bảo đảm"],
+    "c": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 14, 15]
+  },
+  {
+    "i": 11,
+    "s": "VCBS dự báo Sacombank có thể xử lý dứt điểm nợ xấu Bamboo Airways 3.000-4.000 tỷ đồng trong nửa cuối năm, tạo nguồn thu nhập bất thường.",
+    "sn": "pos",
+    "ms": 0.95,
+    "k": ["Dư nợ Bamboo Airways ước 3.000-4.000 tỷ đồng", "Xử lý thành công có thể tạo lợi nhuận bất thường", "Sacombank đã thu giữ nhiều tài sản bảo đảm"],
+    "c": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 14, 15]
+  },
+  {
+    "i": 12,
+    "s": "Standard Chartered dự báo GDP Việt Nam quý III đạt 8,7% và cả năm 9,5%, nhờ sản xuất, thương mại và chính sách hỗ trợ tăng trưởng.",
+    "sn": "pos",
+    "ms": 0.87,
+    "k": ["GDP quý III dự báo tăng 8,7%", "GDP cả năm dự báo tăng 9,5%", "Xuất khẩu và sản xuất công nghiệp tiếp tục tích cực"],
+    "c": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13]
+  },
+  {
+    "i": 13,
+    "s": "SoftBank huy động 11,1 tỷ USD qua trái phiếu lợi suất cao để tài trợ đầu tư AI, trong khi chi phí vốn và rủi ro tín dụng toàn cầu tăng.",
+    "sn": "neu",
+    "ms": 0.9,
+    "k": ["Phát hành 11,1 tỷ USD là mức kỷ lục", "Lãi suất USD cao nhất gần 9,75%", "Huy động vốn nhằm tài trợ đầu tư AI quy mô lớn"],
+    "c": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+  },
+  {
+    "i": 14,
+    "s": "PNJ thay đổi lãnh đạo cấp cao, đồng thời báo lỗ 61 tỷ đồng sau hai tháng; dự phòng tổn thất dự kiến khiến lợi nhuận năm 2026 âm sâu.",
+    "sn": "neg",
+    "ms": 0.94,
+    "k": ["Bổ nhiệm lãnh đạo phụ trách chiến lược", "Hai tháng chuyển từ lãi sang lỗ 61 tỷ đồng", "Dự phòng 7.071 tỷ đồng có thể gây lỗ 6.271 tỷ đồng"],
+    "c": [0, 1, 5, 6, 7, 8, 9, 10, 11, 12]
+  },
+  {
+    "i": 15,
+    "s": "Thiso đã thanh toán đầy đủ hai kỳ lãi cho lô trái phiếu 2.200 tỷ đồng, phản ánh khả năng trả nợ tốt dù nợ phải trả tăng.",
+    "sn": "pos",
+    "ms": 0.8,
+    "k": ["Hai kỳ lãi đã được thanh toán", "Tổng lô trái phiếu 2.200 tỷ đồng kỳ hạn 36 tháng", "Nợ phải trả năm 2025 tăng lên gần 7.823 tỷ đồng"],
+    "c": [0, 1, 2, 3, 4, 10, 11, 12, 13, 14, 15, 18, 19, 20, 21]
+  }
+]

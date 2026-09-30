@@ -1,0 +1,17 @@
+services:
+  9router:
+    image: decolua/9router:latest
+    container_name: 9router
+    restart: unless-stopped
+    ports:
+      - "20128:20128"
+    volumes:
+      - 9router-data:/app/data
+    environment:
+      PORT: "20128"
+      DATA_DIR: /app/data
+      HOSTNAME: "0.0.0.0"
+
+volumes:
+  9router-data:
+    driver: local

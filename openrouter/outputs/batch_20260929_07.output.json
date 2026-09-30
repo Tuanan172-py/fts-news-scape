@@ -1,0 +1,179 @@
+[
+  {
+    "i": 0,
+    "s": "Mỹ tăng thuế chống bán phá giá lên 7,01% với Sandhya Aqua, 4,04% với nhóm Devi và 5,53% với 106 doanh nghiệp Ấn Độ, có thể phát sinh thuế bổ sung đáng kể.",
+    "sn": "neg",
+    "ms": 0.72,
+    "k": [
+      "Mức thuế cuối cùng tăng mạnh so với kết quả sơ bộ và rà soát trước",
+      "Doanh nghiệp nhập khẩu có thể phải nộp thêm thuế cho các lô đã nhập"
+    ],
+    "c": [1, 2, 3]
+  },
+  {
+    "i": 1,
+    "s": "Bài viết chia sẻ kinh nghiệm trang bị căn bếp 5m2 với tổng chi phí 42,5 triệu đồng, ưu tiên thiết bị thiết thực, tiết kiệm điện và phù hợp không gian nhỏ.",
+    "sn": "neu",
+    "ms": 0.08,
+    "k": [
+      "Tủ lạnh 20 triệu đồng được đánh giá bền bỉ sau sáu năm sử dụng",
+      "Máy rửa bát, máy hút mùi, bếp từ và đèn LED giúp tối ưu chức năng bếp"
+    ],
+    "c": [0, 3, 4, 20]
+  },
+  {
+    "i": 2,
+    "s": "MSB dự kiến tăng vốn điều lệ thêm 9.360 tỷ đồng, đồng thời mở rộng ngân hàng VIFC và đầu tư công ty chứng khoán, bảo hiểm.",
+    "sn": "pos",
+    "ms": 0.86,
+    "k": [
+      "Vốn mới tập trung cho tín dụng, công nghệ và mua cổ phần",
+      "Mở rộng hệ sinh thái có thể tạo nguồn thu ngoài lãi và nâng cao năng lực cạnh tranh"
+    ],
+    "c": [2, 5, 6, 10, 15, 16, 20]
+  },
+  {
+    "i": 3,
+    "s": "Giá dầu neo cao do xung đột Trung Đông và gián đoạn Hormuz hỗ trợ cổ phiếu dầu khí, vận tải, phân bón; nhiều ngành bị ảnh hưởng.",
+    "sn": "pos",
+    "ms": 0.8,
+    "k": [
+      "Dầu khí hưởng lợi rõ nhất nhờ giá năng lượng tăng",
+      "Cước tàu và chi phí logistics tăng, gây áp lực lạm phát và sản xuất công nghiệp"
+    ],
+    "c": [0, 5, 6, 12, 13, 15]
+  },
+  {
+    "i": 4,
+    "s": "Kafi định vị là nền tảng công nghệ quản lý tài sản, dự kiến lợi nhuận trước thuế 2026 hơn gấp đôi và hướng niêm yết HOSE.",
+    "sn": "pos",
+    "ms": 0.62,
+    "k": [
+      "Bán lẻ, môi giới và margin vẫn là động lực tăng trưởng chính",
+      "Wealth management và sản phẩm đầu tư dài hạn nhằm đa dạng hóa doanh thu"
+    ],
+    "c": [2, 4, 5, 6, 8, 9, 10]
+  },
+  {
+    "i": 5,
+    "s": "Ngân hàng Shinhan Việt Nam sử dụng mạng lưới tập đoàn để kết nối dòng vốn Hàn Quốc với thị trường Việt Nam qua dịch vụ lưu ký, thanh toán và quỹ.",
+    "sn": "pos",
+    "ms": 0.48,
+    "k": [
+      "Shinhan hướng đến việc thu hút vốn dài hạn từ các tổ chức quốc tế",
+      "Hệ sinh thái đa dịch vụ giúp mở rộng năng lực cung cấp giải pháp tài chính"
+    ],
+    "c": [1, 2, 3, 4, 5, 7, 8]
+  },
+  {
+    "i": 6,
+    "s": "NHNN chấp thuận NCB tăng vốn điều lệ tối đa 33.000 tỷ đồng lên 62.280 tỷ đồng trong quý 1/2027, nhằm bổ sung vốn kinh doanh.",
+    "sn": "pos",
+    "ms": 0.84,
+    "k": [
+      "Phát hành riêng lẻ 3,3 tỷ cổ phiếu giá 10.000 đồng dự kiến thu 33.000 tỷ",
+      "Vốn tăng giúp cải thiện năng lực tài chính và mở rộng tín dụng"
+    ],
+    "c": [1, 5, 6, 7, 8, 9, 10]
+  },
+  {
+    "i": 7,
+    "s": "Bột giặt Lix bị xử phạt gần 238 triệu đồng về thuế, trong khi lợi nhuận sau thuế sáu tháng giảm 15,7%.",
+    "sn": "neg",
+    "ms": 0.58,
+    "k": [
+      "Vi phạm thuế phát sinh từ kiểm toán hoạt động quản lý vốn, tài sản năm 2024",
+      "Doanh thu tăng nhưng chi phí tài chính và cổ tức biến động làm lợi nhuận giảm"
+    ],
+    "c": [1, 2, 5, 6, 7]
+  },
+  {
+    "i": 8,
+    "s": "Trung Quốc lập kế hoạch đưa pin thể rắn vào ứng dụng quy mô lớn từ 2030, chuyển ngành pin từ mở rộng quy mô sang công nghệ và chất lượng.",
+    "sn": "pos",
+    "ms": 0.7,
+    "k": [
+      "Thị trường pin thể rắn Trung Quốc được kỳ vọng tăng trưởng kép 44,4% mỗi năm",
+      "Thương mại hóa vẫn đối mặt thách thức về chi phí, quy trình và nhất quán sản xuất"
+    ],
+    "c": [0, 1]
+  },
+  {
+    "i": 9,
+    "s": "Việt Nam xây dựng lộ trình SAF với mục tiêu giảm phát thải hàng không, nhưng chuỗi cung ứng, hạ tầng và cơ chế chứng nhận vẫn chưa hoàn thiện.",
+    "sn": "neu",
+    "ms": 0.55,
+    "k": [
+      "Các doanh nghiệp đã nghiên cứu HEFA, UCO và cung ứng SAF thử nghiệm",
+      "Quy mô triển khai quốc gia còn phụ thuộc hạ tầng, tiêu chuẩn và nguồn cung"
+    ],
+    "c": [0, 2, 3, 4, 5, 7, 8, 9, 10]
+  },
+  {
+    "i": 10,
+    "s": "Green GSM ra mắt taxi thuần điện tại Bắc Mindanao, sử dụng xe VinFast và mở rộng thị trường Philippines.",
+    "sn": "pos",
+    "ms": 0.35,
+    "k": [
+      "Dịch vụ triển khai tại năm khu vực trọng điểm của Bắc Mindanao",
+      "Mô hình vận hành sử dụng xe điện VinFast với giá cước minh bạch"
+    ],
+    "c": [0, 1, 2, 3, 4, 5]
+  },
+  {
+    "i": 11,
+    "s": "Dự án Hanoi Twin Towers 99 đề xuất vốn 3–3,5 tỷ USD, gồm hai tháp 99 tầng cao 568m và nhiều chức năng thương mại, khách sạn, văn phòng.",
+    "sn": "neu",
+    "ms": 0.66,
+    "k": [
+      "Dự án cần phê duyệt quy hoạt và pháp lý từ chính quyền Hà Nội",
+      "Quy mô vốn và công trình tạo cơ hội đầu tư lớn nhưng đòi hỏi năng lực tài chính, kỹ thuật cao"
+    ],
+    "c": [1, 2, 3, 4, 5, 6, 7, 8]
+  },
+  {
+    "i": 12,
+    "s": "Lợi suất trái phiếu Mỹ 10 năm lên 5,18%, cao nhất 19 năm, gây áp lực định giá, thanh khoản và tỷ giá cho chứng khoán Việt Nam.",
+    "sn": "neg",
+    "ms": 0.88,
+    "k": [
+      "Lịch sử cho thấy VN-Index thường giảm mạnh khi lợi suất Mỹ tăng mạnh",
+      "Tăng trưởng nội lực và nâng hạng FTSE Emerging là các yếu tố hỗ trợ"
+    ],
+    "c": [0, 1, 2, 3, 6, 8, 9, 10, 13, 14, 15, 16]
+  },
+  {
+    "i": 13,
+    "s": "Thặng dư thương mại Việt-Mỹ vượt 100 tỷ USD, trong khi chuyên gia khuyến nghị không hy sinh xuất khẩu truyền thống mà chuyển sang nhập khẩu công nghệ và nâng chất lượng chuỗi giá trị.",
+    "sn": "neu",
+    "ms": 0.74,
+    "k": [
+      "Doanh nghiệp FDI chiếm khoảng 73% xuất khẩu, cho thấy phụ thuộc lớn vào khu vực này",
+      "Xuất khẩu cần tăng truy xuất nguồn gốc, thiết kế và giá trị nội địa",
+      "Nhập khẩu Mỹ nên tập trung vào công nghệ, năng lượng và thiết bị nâng cao năng suất"
+    ],
+    "c": [0, 1, 2, 4, 7, 10, 11, 12, 13, 14, 15, 16, 18, 19, 20, 21, 22]
+  },
+  {
+    "i": 14,
+    "s": "Mỹ và Trung Quốc công bố danh sách hàng hóa giảm thuế trị giá khoảng 30 tỷ USD, tập trung vào các mặt hàng ít nhạy cảm và hai nước có thể điều chỉnh hằng năm.",
+    "sn": "pos",
+    "ms": 0.65,
+    "k": [
+      "Danh sách bao phủ 1.619 mặt hàng Mỹ và 77 mặt hàng Trung Quốc",
+      "Quy mô giảm thuế hỗ trợ thương mại nhưng còn nhỏ so với tổng kim ngạch song phẳng"
+    ],
+    "c": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+  },
+  {
+    "i": 15,
+    "s": "Giá dầu WTI và Brent tiếp tục tăng do nguy cơ gián đoạn nguồn cung tại Hormuz, dù kỳ vọng đàm phán qua Qatar giúp thu hẹp đà tăng.",
+    "sn": "neg",
+    "ms": 0.82,
+    "k": [
+      "WTI đạt 93,89 USD/thùng và Brent gần 99,46 USD/thùng",
+      "Khoảng một phần năm dầu và khí toàn cầu đi qua Hormuz, khiến rủi ro cung cung cao"
+    ],
+    "c": [0, 1, 2, 4, 5, 6, 7, 8, 9, 11]
+  }
+]

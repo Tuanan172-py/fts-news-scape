@@ -269,10 +269,12 @@ def missing_indices(batch_id: str) -> tuple[list[str], dict, dict]:
     packet_path = TASK_DIR / f"{batch_id}.task.json"
     map_path = TASK_DIR / f"{batch_id}.map.json"
     out_path = OUT_DIR / f"{batch_id}.output.json"
-    if not (packet_path.exists() and map_path.exists() and out_path.exists()):
+    if not (packet_path.exists() and map_path.exists()):
         return [], {}, {}
     packet = json.loads(packet_path.read_text(encoding="utf-8"))
     mapping = json.loads(map_path.read_text(encoding="utf-8"))
+    if not out_path.exists():
+        return list(mapping.get("index", {}).keys()), packet, mapping
     records, _ = salvage_records(out_path.read_text(encoding="utf-8"))
     have = {str(r.get("i")) for r in records if r.get("i") is not None}
     return [i for i in mapping.get("index", {}) if i not in have], packet, mapping
@@ -323,6 +325,12 @@ def cmd_repair(args: argparse.Namespace) -> int:
         print(f"Không có packet nào của đợt {args.wave}.")
         return 2
 
+    have, _missing = pending_batches(args.wave)
+    if not have:
+        print(f"⚠️  Đợt {args.wave}: chưa lô nào có đầu ra, nên không có gì để "
+              f"đối chiếu. Chạy chương trình điều phối trước đã.")
+        return 2
+
     repairs: list[dict] = []
     total_missing = 0
     received = wave_received_ids(args.wave)
@@ -357,14 +365,6 @@ def cmd_repair(args: argparse.Namespace) -> int:
                         "windows": budget["windows"], "from": batch_id})
 
     if not repairs:
-        # Phân biệt hai trạng thái rất khác nhau mà trước đây in ra cùng một câu.
-        # `missing_indices` coi lô chưa có tệp đầu ra là "không thiếu gì", nên một
-        # đợt chưa chạy lần nào cũng nhận được lời chúc mừng "không cần vá".
-        have, _missing = pending_batches(args.wave)
-        if not have:
-            print(f"⚠️  Đợt {args.wave}: chưa lô nào có đầu ra, nên không có gì để "
-                  f"đối chiếu. Chạy chương trình điều phối trước đã.")
-            return 2
         print(f"✅  Đợt {args.wave}: không lô nào thiếu bài. Không cần vá.")
         return 0
 
@@ -378,6 +378,29 @@ def cmd_repair(args: argparse.Namespace) -> int:
     program = conductor_program(manifest, concurrency=len(repairs))
     prog_path = TASK_DIR / f"wave_{args.wave}.repair.ts"
     prog_path.write_text(program, encoding="utf-8")
+    if getattr(args, "runner", "dsh") in ("agy", "openrouter"):
+        runner_type = getattr(args, "runner", "dsh")
+        print()
+        print("-" * 84)
+        print(f"RUNNER {runner_type.upper()} ĐÃ CHỌN — thực thi tự động gói vá:")
+        print("-" * 84)
+        if runner_type == "agy":
+            from src.agent.agy_runner import AgyRunner
+            runner = AgyRunner()
+        else:
+            from src.agent.openrouter_runner import OpenRouterRunner
+            runner = OpenRouterRunner()
+
+        concurrency = min(len(repairs), args.concurrency or 2)
+        res = runner.run_wave(manifest, OUT_DIR, concurrency=concurrency)
+        print(f"Hoàn tất gói vá: {res['batches_ok']}/{res['batches_total']} lô đạt OK, "
+              f"trích xuất {res['items_extracted']} bài, {res['total_tokens']:,} tokens.")
+        for r in res.get("results", []):
+            status_symbol = "✅" if r["ok"] else "⚠️"
+            print(f"  {status_symbol} {r['batch_id']}: {r['status']} ({r['items']} bài) {r['error']}")
+        print("=" * 84)
+        return 0 if res["batches_ok"] == res["batches_total"] else 1
+
     print()
     print(f"Chạy TRỌN nội dung tệp sau trong MỘT lệnh run_code:")
     print(f"  {prog_path}")
@@ -465,15 +488,16 @@ def cmd_prepare(args: argparse.Namespace) -> int:
     prog_path = TASK_DIR / f"wave_{args.wave}.conductor.ts"
     prog_path.write_text(program, encoding="utf-8")
 
-    if args.runner == "agy":
+    if getattr(args, "runner", "dsh") in ("agy", "openrouter"):
+        runner_type = getattr(args, "runner", "dsh")
         print()
         print("-" * 84)
-        print("RUNNER AGY ĐÃ CHỌN — thực thi tự động qua Antigravity CLI:")
+        print(f"RUNNER {runner_type.upper()} ĐÃ CHỌN — thực thi tự động:")
         print("-" * 84)
         if args.analyze:
             return cmd_analyze(args)
-        print("  Để chạy phân tích các lô qua agy, gõ lệnh:")
-        print(f"    python scripts/article_run.py --wave {args.wave} --runner agy --analyze")
+        print(f"  Để chạy phân tích các lô qua {runner_type}, gõ lệnh:")
+        print(f"    python scripts/article_run.py --wave {args.wave} --runner {runner_type} --analyze")
         print()
         print("  Sau khi hoàn tất, nạp CSDL bằng lệnh:")
         print(f"    python scripts/article_run.py --wave {args.wave} --finish")
@@ -494,7 +518,7 @@ def cmd_prepare(args: argparse.Namespace) -> int:
 
 
 def cmd_analyze(args: argparse.Namespace) -> int:
-    """Thực thi phân tích nhận thức cho các lô của đợt bằng runner agy.
+    """Thực thi phân tích nhận thức cho các lô của đợt bằng runner agy hoặc openrouter.
 
     Args:
         args: Tham số dòng lệnh đã phân tích.
@@ -508,12 +532,19 @@ def cmd_analyze(args: argparse.Namespace) -> int:
         return 2
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    from src.agent.agy_runner import AgyRunner
+    runner_type = getattr(args, "runner", "dsh")
+    if runner_type == "openrouter":
+        from src.agent.openrouter_runner import OpenRouterRunner
+        runner = OpenRouterRunner()
+        title = "OPENROUTER RUNNER (stealth/space-bunny-alpha)"
+    else:
+        from src.agent.agy_runner import AgyRunner
+        runner = AgyRunner()
+        title = "AGY RUNNER (gemini-3.8-flash-low)"
 
-    runner = AgyRunner()
     concurrency = args.concurrency or 2
     print("=" * 84)
-    print(f" 🤖  BẮT ĐẦU PHÂN TÍCH AGY RUNNER (WAVE {args.wave}) — CONCURRENCY {concurrency}")
+    print(f" 🤖  BẮT ĐẦU PHÂN TÍCH {title} (WAVE {args.wave}) — CONCURRENCY {concurrency}")
     print("=" * 84)
     res = runner.run_wave(manifest, OUT_DIR, concurrency=concurrency)
     print(f"Hoàn tất: {res['batches_ok']}/{res['batches_total']} lô đạt OK, "
@@ -629,7 +660,7 @@ def cmd_finish(args: argparse.Namespace) -> int:
         if manifest.get("est_miss_total") is not None:
             ledger_cmd += ["--est-miss", str(manifest["est_miss_total"]),
                            "--est-out", str(manifest["est_out_total"])]
-        if args.runner == "agy" or manifest.get("runner") == "agy":
+        if getattr(args, "runner", "dsh") == "agy" or manifest.get("runner") == "agy":
             ledger_cmd += ["--source", "agy"]
         if run(ledger_cmd, check=False) != 0:
             soft.append("sổ cái token không ghi được dòng mới")
@@ -859,8 +890,8 @@ def main(argv=None) -> int:
                          + ",".join(FINISH_STEPS))
     ap.add_argument("--min-coverage", type=float, default=MIN_COVERAGE,
                     help="Tỷ lệ bài tối thiểu của đợt phải vào DB ở mỗi lớp")
-    ap.add_argument("--runner", choices=["dsh", "agy"], default="dsh",
-                    help="Runner nhận thức: 'dsh' (DeepSeek Flash) hoặc 'agy' (Gemini 3.8 Flash Low)")
+    ap.add_argument("--runner", choices=["dsh", "agy", "openrouter"], default="dsh",
+                    help="Runner nhận thức: 'dsh' (DeepSeek Flash), 'agy' (Gemini 3.8 Flash Low), hoặc 'openrouter' (stealth/space-bunny-alpha)")
     ap.add_argument("--analyze", action="store_true",
                     help="Chạy phân tích trực tiếp cho các lô của wave (dùng cho --runner agy)")
     args = ap.parse_args(argv)

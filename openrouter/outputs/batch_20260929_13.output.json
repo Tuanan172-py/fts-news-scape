@@ -1,0 +1,130 @@
+[
+  {
+    "i": 0,
+    "s": "Nga đóng thông tin xuất khẩu nhiên liệu và dữ liệu giao dịch, phục vụ ổn định thị trường nội địa.",
+    "sn": "neu",
+    "ms": 0.78,
+    "k": ["Dữ liệu xuất khẩu nhiên liệu, giao dịch và logistics bị hạn chế truy cập", "Các biện pháp trước đó nhằm kiểm soát xuất khẩu xăng, kerosene và diesel"],
+    "c": [0, 1, 2, 10, 11]
+  },
+  {
+    "i": 1,
+    "s": "Amy Grupo huy động 787,29 tỷ đồng qua IPO để giảm nợ ngắn hạn và bơm vốn lưu động, trong bối cảnh lợi nhuận giảm và dòng tiền âm.",
+    "sn": "neu",
+    "ms": 0.86,
+    "k": ["IPO dự kiến huy động 787,29 tỷ đồng", "Nợ vay tăng lên 2.581,9 tỷ đồng", "Doanh thu tăng nhưng lợi nhuận và dòng tiền kinh doanh suy giảm"],
+    "c": [1, 2, 3, 4, 5, 6]
+  },
+  {
+    "i": 2,
+    "s": "Cake by VPBank triển khai nhiều chương trình tặng lãi tối đa 2,2%/năm, nâng lãi suất tiền gửi dài hạn lên tối đa 9,6%/năm.",
+    "sn": "pos",
+    "ms": 0.64,
+    "k": ["Ưu đãi áp dụng cho khách hàng mới và khách hàng gia hạn", "Mức cộng lãi tối đa 2,2%/năm cho kỳ hạn dài", "Chương trình có thể kết thúc sớm khi hết ngân sách"],
+    "c": [0, 1, 2, 3, 4, 6, 15]
+  },
+  {
+    "i": 3,
+    "s": "Nicaragua cấp quyền khai phát vàng cho doanh nghiệp Trung Quốc trên diện tích rất lớn, tạy trung tâm sản xuất vàng cho Bắc Kinh.",
+    "sn": "neg",
+    "ms": 0.76,
+    "k": ["Doanh nghiệp Trung Quốc nắm quyền khai thác trên 1,2-1,4 triệu hecta", "Vàng chiếm 22,7% kim ngạch xuất khẩu Nicaragua", "Dự án gây lo ngại về địa chính trị, trừng phạt và kiểm soát chiến lược"],
+    "c": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  },
+  {
+    "i": 4,
+    "s": "Quy định niên hạn công trình có thể khiến thị trường chung cư đánh giá chi tiết hơn chi phí hao mòn, làm phân hóa dòng sản phẩm cũ và mới.",
+    "sn": "neu",
+    "ms": 0.58,
+    "k": ["Tuổi công trình có thể tác động đến giá và mức chiết khấu", "Giá trị đất, vị trí và khả năng tái thiết sẽ bù đắp khấu hao", "Quy định chi tiết vẫn cần được hoàn thiện"],
+    "c": [0, 1, 2, 4, 5, 6, 7, 8, 12, 15]
+  },
+  {
+    "i": 5,
+    "s": "Giá vàng giảm mạnh xuống đáy hơn bảy tuần do USD và lợi suất Mỹ tăng, trong khi giá dầu làm tăng kỳ vọng Fed siết tiền tệ.",
+    "sn": "neg",
+    "ms": 0.88,
+    "k": ["Giá vàng giao ngay giảm 3,5% xuống 4.136,81 USD/ounce", "Dầu tăng làm gia tăng lo ngại lạm phát và kỳ vọng Fed tăng lãi suất", "USD và lợi suất trái phiếu Mỹ tăng gây áp lực lên kim loại quý"],
+    "c": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+  },
+  {
+    "i": 6,
+    "s": "VPBank được cấp phép thành lập VPLife, trong khi Techcombank và ACB cũng mở rộng mạnh vào bảo hiểm, phản ánh làn sóng hội tụ ngân hàng-bảo hiểm.",
+    "sn": "pos",
+    "ms": 0.72,
+    "k": ["VPLife dự kiến vốn điều lệ 2.000 tỷ đồng và hoạt động quý I/2027", "Techcom Life tăng vốn dự kiến lên 4.300 tỷ đồng", "Phi nhân thọ tăng trưởng mạnh trong khi bảo hiểm nhân thọ giảm"],
+    "c": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+  },
+  {
+    "i": 7,
+    "s": "Vietcap nâng dự báo dầu, LNG và than năm 2026, cho thấy lợi ích phân hóa mạnh giữa lọc hóa dầu, khí và điện.",
+    "sn": "neu",
+    "ms": 0.82,
+    "k": ["BSR hưởng lợi từ lãi tồn kho và crack spread cao", "GAS và PVT được đánh giá tích cực nhẹ", "POW, NT2, QTP và PPC chịu tác động tiêu cực nhẹ"],
+    "c": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+  },
+  {
+    "i": 8,
+    "s": "Giá vàng thế giới và vàng trong nước giảm mạnh, chịu áp lực từ lãi suất Mỹ, USD mạnh và giá dầu tăng.",
+    "sn": "neg",
+    "ms": 0.91,
+    "k": ["Giá vàng thế giới giảm 154 USD/ounce", "Giá vàng miếng giảm 2 triệu đồng/lượng", "Thị trường đang chờ dữ liệu việc làm và lạm phát Mỹ"],
+    "c": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+  },
+  {
+    "i": 9,
+    "s": "Giá dầu trên 100 USD/thùng gây áp lực lớn lên hàng không, đặc biệt HVN và VJC, trong khi cảng, logistics và vận tải biển phân hóa.",
+    "sn": "neg",
+    "ms": 0.93,
+    "k": ["HVN lỗ ròng 735 tỷ đồng quý II và lợi nhuận sụt 41,6% sáu tháng", "Dự phóng lợi nhuận HVN giảm 44,2% năm 2026", "VJC lợi nhuận dự phóng giảm 45,7%"],
+    "c": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+  },
+  {
+    "i": 10,
+    "s": "Bán lẻ Việt Nam tăng trưởng nhờ nhu cầu thiết bị và mạng lưới hiện hữu, nhưng lợi nhuận, biên gộp và vốn lưu động phân hóa.",
+    "sn": "pos",
+    "ms": 0.78,
+    "k": ["Điện Máy Xanh tăng doanh thu 29% và bán trả chậm tăng 44%", "Digiworld tăng 45%, FPT Retail tăng mạnh nhờ Long Châu", "Chu kỳ iPhone 18 và giá thiết bị hỗ trợ doanh thu nhưng có thể không bền"],
+    "c": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+  },
+  {
+    "i": 11,
+    "s": "Thị trường chứng khoán cần mở rộng cung cấp cổ phiếu doanh nghiệp FDI để đa dạng hóa ngành và thu hút dòng vốn quốc tế.",
+    "sn": "pos",
+    "ms": 0.67,
+    "k": ["Chỉ khoảng 10 doanh nghiệp FDI niêm yết so với hơn 1.600 doanh nghiệp giao dịch", "FDI tạo trên 3/4 kim ngạch xuất khẩu", "Cải cách thủ tục giúp doanh nghiệp FDI tiếp cận thị trường vốn dễ hơn"],
+    "c": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+  },
+  {
+    "i": 12,
+    "s": "Ngân hàng mua lại hơn 188.433 tỷ đồng trái phiếu để kéo dài kỳ hạn nguồn vốn và bảo đảm an toàn vốn, không chủ yếu nhằm giảm chi phí.",
+    "sn": "neu",
+    "ms": 0.85,
+    "k": ["Ngân hàng chiếm gần 88% giá trị mua lại thị trường", "Trái phiếu cũ được thay bằng nguồn vốn kỳ hạn dài hơn", "Lãi suất phát hành mới vẫn cao nên dư địa giảm chi phí vốn hạn chế"],
+    "c": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
+  },
+  {
+    "i": 13,
+    "s": "Myanmar xúc tiến hồi sinh đập Myitsone công suất 6GW, tạo nguồn điện lớn nhưng kéo theo tranh chấp về đất đai, môi trường và địa chính trị.",
+    "sn": "neu",
+    "ms": 0.8,
+    "k": ["Dự án có thể mất khoảng tám năm sau khi tái khởi động", "Đập cao 152m và cung cấp hơn nửa nhu cầu điện 10GW của Myanmar", "90% điện dự kiến xuất khẩu sang Trung Quốc"],
+    "c": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
+  },
+  {
+    "i": 14,
+    "s": "Giá cao su châu Á phân hóa, Trung Quốc tăng nhẹ trong khi Nhật Bản và Singapore tăng giảm trái chiều; giá thu mua nội địa đi ngang.",
+    "sn": "neu",
+    "ms": 0.52,
+    "k": ["RSS3 tháng 10 tại Nhật giảm 2,58% nhưng tháng 11 tăng 2,22%", "Giá hợp đồng tại Trung Quốc tăng 1,76-2,32%", "Giá thu mua mủ tại các doanh nghiệp lớn ổn định"],
+    "c": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  },
+  {
+    "i": 15,
+    "s": "Nhà đầu tư Thái Lan bán mạnh DR của ETF Việt Nam, cho thấy nguồn vốn tiếp cận chứng khoán Việt Nam đang suy giảm nhưng chưa đồng nghĩa rút vốn quy mô lớn.",
+    "sn": "neg",
+    "ms": 0.76,
+    "k": ["FUEVFVND giảm hơn 40% so với đỉnh", "E1VFVN30 mất khoảng hai phần ba lượng DR từ đỉnh", "Bán DR có thể do chốt lời, kỳ vọng lợi nhuận, thanh khoản hoặc tỷ giá"],
+    "c": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+  }
+]

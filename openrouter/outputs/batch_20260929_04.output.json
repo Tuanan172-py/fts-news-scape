@@ -1,0 +1,130 @@
+[
+  {
+    "i": 0,
+    "s": "Trung Quốc tăng mạnh mua đậu tương Mỹ theo cam kết thương mại, hỗ trợ nông sản Mỹ nhưng chưa chắc nhập khẩu thực tế.",
+    "sn": "pos",
+    "ms": 0.78,
+    "k": ["Lượng mua hợp đồng tăng 4,4 lần", "Đậu tương lên trên 13 USD/giạ", "Trung Quốc còn quyền hoãn hoặc hủy đơn"],
+    "c": [0, 2, 3, 8, 11, 12]
+  },
+  {
+    "i": 1,
+    "s": "VPBank huy động 27 triệu USD từ JBIC và hai ngân hàng Nhật để tài trợ dự án truyền tải điện 220kV, thúc đẩy năng lượng tái tạo.",
+    "sn": "pos",
+    "ms": 0.55,
+    "k": ["Khoản vay dự án đầu tiên trong khung 150 triệu USD", "Nâng cao khả năng giải tỏa công suất tái tạo", "Dư nợ tín dụng xanh VPBank tăng mạnh"],
+    "c": [1, 2, 4, 5, 11]
+  },
+  {
+    "i": 2,
+    "s": "Sửa đổi luật và đồng bộ thủ tục nhằm giảm dự án bất động sản tồn đọng, rút ngắn thời gian pháp lý và giảm chi phí chờ đợi.",
+    "sn": "pos",
+    "ms": 0.62,
+    "k": ["Còn 1.278 dự án cần xử lý", "Đề xuất liên thông dữ liệu và phân cấp thẩm quyền", "Một dự án khởi công sau 18 năm vướng mắc"],
+    "c": [1, 2, 3, 8, 9, 11, 13]
+  },
+  {
+    "i": 3,
+    "s": "F88 sẽ chuyển giao dịch từ UPCoM lên HOSE sau IPO, trong khi lợi nhuận 6 tháng tăng gần 114%.",
+    "sn": "pos",
+    "ms": 0.75,
+    "k": ["IPO huy động gần 782 tỷ đồng", "Lợi nhuận sau thuế 6 tháng đạt 545 tỷ đồng", "Đã thực hiện 61% kế hoạch lợi nhuận cả năm"],
+    "c": [0, 1, 2, 3, 4, 5, 10, 11]
+  },
+  {
+    "i": 4,
+    "s": "Boeing 787 của Vietnam Airlines mất phanh khi chạy đà tại Munich, rời đường băng và va đèn tiếp cận; chưa xác định nguyên nhân.",
+    "sn": "neg",
+    "ms": 0.58,
+    "k": ["Không có người bị thương", "Phanh bị kích hoạt ngay sau khi chạy đà", "Máy bay hư hỏng đáng kể và phải xả nhiên liệu"],
+    "c": [0, 1, 2, 3, 5, 6, 7]
+  },
+  {
+    "i": 5,
+    "s": "Chi khám chữa bệnh bảo hiểm y tế tăng 16,5% lên 162.818,6 tỷ đồng năm 2025, đặt áp lực lớn lên Quỹ.",
+    "sn": "neg",
+    "ms": 0.82,
+    "k": ["Chi phí bình quân tăng ở ngoại trú và nội trú", "Chênh lệch chi phí giữa các tuyến rất lớn", "Cần mở rộng thanh toán theo định suất và DRG"],
+    "c": [0, 3, 4, 5, 6, 7, 9, 13, 15]
+  },
+  {
+    "i": 6,
+    "s": "FDI Việt Nam tăng mạnh, tạo nhu cầu bất động sản công nghiệp; thách thức là nâng cấp hạ tầng và hệ sinh thái khu công nghiệp.",
+    "sn": "pos",
+    "ms": 0.7,
+    "k": ["FDI đăng ký 8 tháng tăng 55,4%", "FDI thực hiện đạt 17,25 tỷ USD", "Cạnh tranh chuyển sang hạ tầng và năng lực vận hành"],
+    "c": [2, 4, 5, 6, 7, 8, 11, 14, 15]
+  },
+  {
+    "i": 7,
+    "s": "VNR đề nghị quy hoạch đường sắt Hà Nội cân nhắc đưa đường sắt quốc gia, đặc biệt tốc độ cao, vào trung tâm để giảm trung chuyển.",
+    "sn": "neu",
+    "ms": 0.48,
+    "k": ["Ngọc Hồi và Gia Lâm được xác định là đầu mối", "Ga trung tâm giúp rút ngắn hành trình", "Cần đánh giá toàn diện trước khi chốt quy hoạch"],
+    "c": [0, 1, 2, 3, 5, 8, 9]
+  },
+  {
+    "i": 8,
+    "s": "Đà Nẵng mở bán 277 căn hộ NOXH giá trên 19,4 triệu đồng/m2, mở rộng cơ hội tiếp cận nhà ở cho nhóm yếu thế.",
+    "sn": "pos",
+    "ms": 0.5,
+    "k": ["Giá đã gồm VAT nhưng chưa gồm bảo trì", "Dự án có hơn 1.400 căn NOXH", "Nhiều nhóm dân cư đủ điều kiện đăng ký"],
+    "c": [0, 1, 2, 3, 4, 5, 6, 7]
+  },
+  {
+    "i": 9,
+    "s": "Đầu tư AI khổng lồ tạo áp lực lạm phát Mỹ qua điện, vật liệu, chip và lao động, buộc Fed cân nhắc nâng lãi suất.",
+    "sn": "neg",
+    "ms": 0.95,
+    "k": ["Đầu tư AI có thể đạt 1 nghìn tỷ USD/năm", "Chi phí hạ tầng tương đương 1,9% GDP", "Nhu cầu nguồn cung tăng trước khả năng đáp ứng"],
+    "c": [0, 1, 2, 3, 4, 5, 8, 10, 13, 14, 18, 20, 22, 25]
+  },
+  {
+    "i": 10,
+    "s": "Goldman Sachs giữ dự báo vàng đạt 4.900 USD/oz cuối năm 2026 nhờ ngân hàng trung ương mua mạnh, dù biến động cao.",
+    "sn": "pos",
+    "ms": 0.86,
+    "k": ["Mua ròng của ngân hàng trung ương được ước tính rất cao", "Trung Quốc nhập khẩu vàng tăng mạnh", "Kịch bản Fed tăng lãi suất có thể đưa vàng về 4.440 USD"],
+    "c": [0, 1, 2, 3, 5, 6, 7, 10, 12, 15]
+  },
+  {
+    "i": 11,
+    "s": "MBS dự báo lợi nhuận quý 3/2026 tăng 25%, dẫn đầu bởi bất động sản, dầu khí và bán lẻ; xây dựng, xuất khẩu giảm mạnh.",
+    "sn": "pos",
+    "ms": 0.84,
+    "k": ["Ngân hàng tăng 19% dù NIM chịu áp lực", "Bất động sản dân cư tăng 214%", "Xây dựng giảm 85%, hàng không giảm 40%"],
+    "c": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+  },
+  {
+    "i": 12,
+    "s": "Giá vàng trong nước ngày 29/9 đồng loạt giảm, vàng miếng SJC bán ra 142 triệu đồng/lượng, thấp hơn thế giới quy đổi.",
+    "sn": "neg",
+    "ms": 0.6,
+    "k": ["SJC giảm 400 nghìn đồng mỗi chiều", "Vàng nhẫn Doji giảm 1,4 triệu đồng/lượng", "Giá trong nước cao hơn thế giới 11,9 triệu đồng/lượng"],
+    "c": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40]
+  },
+  {
+    "i": 13,
+    "s": "Công ty điện mặt trời Trung Nam Thuận Nam chịu áp lực tài chính nặng: lỗ lũy kế gần 2.000 tỷ, nợ 9.793 tỷ.",
+    "sn": "neg",
+    "ms": 0.92,
+    "k": ["Vốn chủ sở hữu giảm 73%", "Trái phiếu gấp khoảng 9 lần vốn chủ", "Vẫn thanh toán gốc và lãi trong nửa đầu năm"],
+    "c": [0, 1, 2, 3, 4, 5, 6, 7]
+  },
+  {
+    "i": 14,
+    "s": "FPT có gần 182.000 cổ đông sau phát hành, trong khi khối ngoại giảm còn 28,5% và cổ phiếu giảm mạnh trong năm.",
+    "sn": "neu",
+    "ms": 0.7,
+    "k": ["Phát hành hơn 171,4 triệu cổ phiếu", "Vốn điều lệ tăng lên hơn 18.857 tỷ đồng", "Giá FPT giảm hơn 30% từ đầu năm"],
+    "c": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+  },
+  {
+    "i": 15,
+    "s": "VPBank, Techcombank và ACB mở rộng sở hữu doanh nghiệp bảo hiểm, tập trung xây dựng hệ sinh thái tài chính toàn diện.",
+    "sn": "pos",
+    "ms": 0.65,
+    "k": ["VPLife dự kiến hoạt động quý 1/2027", "OPES tăng trưởng lợi nhuận gần ba lần", "ACB Insurance đặt mục tiêu tăng phí bảo hiểm kép trên 50%"],
+    "c": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+  }
+]

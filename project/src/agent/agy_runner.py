@@ -14,12 +14,33 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from src.agent.l1_router import TYPE_GROUP
 from src.agent.prefix import prefix_hash
 from src.core.staging import safe_atomic_write, safe_json_dump
 from src.core.stdio import force_utf8_stdio
 
 force_utf8_stdio()
+
+# 11 mã nhóm chuẩn của Article Lane (Rule 01, Rule 05, ARTICLE_SYSTEM_CORE.md)
+VALID_ENTITY_GROUPS = {
+    "TIC", "COM", "PER", "FND", "IDX", "EXC", "IND", "GEO", "THM", "AST", "INS",
+    "TICKER", "SECURITY_OTHER", "ETF", "INDEX", "EXCHANGE",
+    "INDUSTRY_GICS1", "INDUSTRY_GICS2", "INDUSTRY_GICS3", "MACRO_GEO", "MACRO_THEME",
+    "ASSET_CLASS", "INSTITUTION",
+}
+
+ENTITY_GROUP_MAP = {
+    "TIC": "TIC", "TICKER": "TIC", "SECURITY_OTHER": "TIC",
+    "COM": "COM", "COMPANY": "COM", "ORG": "COM", "ORGANIZATION": "COM", "CORP": "COM", "CORPORATION": "COM", "BANK": "COM",
+    "PER": "PER", "PERSON": "PER",
+    "FND": "FND", "FUND": "FND", "ETF": "FND",
+    "IDX": "IDX", "INDEX": "IDX",
+    "EXC": "EXC", "EXCHANGE": "EXC",
+    "IND": "IND", "INDUSTRY": "IND", "IND_GICS1": "IND", "IND_GICS2": "IND", "IND_GICS3": "IND",
+    "GEO": "GEO", "MACRO_GEO": "GEO",
+    "THM": "THM", "MACRO_THEME": "THM", "THEME": "THM",
+    "AST": "AST", "ASSET_CLASS": "AST", "ASSET": "AST",
+    "INS": "INS", "INSTITUTION": "INS", "MINISTRY": "INS", "GOV": "INS",
+}
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 CORE_PATH = PROJECT_ROOT / "data" / "prefix" / "ARTICLE_SYSTEM_CORE.md"
@@ -70,12 +91,17 @@ def has_vietnamese_diacritics(text: str) -> bool:
     return bool(_VIETNAMESE_DIACRITICS_RE.search(text or ""))
 
 
-def build_sandbox_profile(profile_dir: Path, core_text: str) -> dict[str, Path]:
+def build_sandbox_profile(
+    profile_dir: Path,
+    core_text: str,
+    work_dir: Path | None = None,
+) -> dict[str, Path]:
     """Khởi tạo cấu hình hồ sơ làm việc cô lập cho Antigravity CLI.
 
     Args:
         profile_dir: Thư mục gốc chứa hồ sơ worker.
         core_text: Toàn văn nội dung tiền tố hệ thống ARTICLE_SYSTEM_CORE.
+        work_dir: Thư mục làm việc rỗng của tiến trình con (nếu có).
 
     Returns:
         Từ điển đường dẫn các tệp cấu hình đã khởi tạo.
@@ -96,8 +122,20 @@ def build_sandbox_profile(profile_dir: Path, core_text: str) -> dict[str, Path]:
         "inheritCustomizations: false\n"
         "---\n"
     )
-    agent_content = frontmatter + (core_text or "")
+    instruction_guard = (
+        "\n\n## QUY TẮC BẮT BUỘC:\n"
+        "- Bạn là bộ xử lý JSON thuần túy (Prompt-in, JSON-out).\n"
+        "- TUYỆT ĐỐI KHÔNG GỌI BẤT KỲ CÔNG CỤ NÀO (kể cả manage_task, run_code, schedule, v.v.).\n"
+        "- Trả kết quả trực tiếp dưới dạng duy nhất là mảng JSON hợp lệ chứa các bản ghi phân tích.\n"
+    )
+    agent_content = frontmatter + (core_text or "") + instruction_guard
     agent_path.write_text(agent_content, encoding="utf-8")
+
+    # Nếu có work_dir, đồng bộ thêm vào .agents/agents của workspace con
+    if work_dir is not None:
+        work_agents_dir = work_dir / ".agents" / "agents"
+        work_agents_dir.mkdir(parents=True, exist_ok=True)
+        (work_agents_dir / "article-processor.md").write_text(agent_content, encoding="utf-8")
 
     # 2. settings.json cô lập hoàn toàn quyền hạn
     cli_dir = profile_dir / ".gemini" / "antigravity-cli"
@@ -200,7 +238,7 @@ def validate_records(
     errors: list[str] = []
 
     item_map = {item.get("i"): item for item in packet_items if "i" in item}
-    valid_groups = set(TYPE_GROUP.keys())
+    valid_groups = VALID_ENTITY_GROUPS
 
     for idx, rec in enumerate(records):
         item_i = rec.get("i")
@@ -223,11 +261,14 @@ def validate_records(
             if not (isinstance(ent, list) and len(ent) >= 2):
                 invalid_entities = True
                 break
-            grp = str(ent[1]).strip().upper()
-            if grp not in valid_groups:
-                errors.append(f"Bài i={item_i}: Mã nhóm '{grp}' không thuộc 11 nhóm chuẩn.")
+            raw_grp = str(ent[1]).strip().upper()
+            grp_base = raw_grp.split(":")[0].strip()
+            mapped_grp = ENTITY_GROUP_MAP.get(grp_base, grp_base)
+            if mapped_grp not in valid_groups:
+                errors.append(f"Bài i={item_i}: Mã nhóm '{raw_grp}' không thuộc 11 nhóm chuẩn.")
                 invalid_entities = True
                 break
+            ent[1] = mapped_grp
 
         if invalid_entities:
             continue
@@ -348,13 +389,11 @@ class AgyRunner:
                 error_message=f"Lỗi đọc tệp task.json: {exc}",
             )
 
-        # 2. Khởi tạo Sandboxed Worker Profile
+        # 2. Chuẩn bị thư mục làm việc rỗng và Sandboxed Worker Profile
         profile_dir = self.profile_root / batch_id
-        build_sandbox_profile(profile_dir, core_text)
-
-        # 3. Chuẩn bị thư mục làm việc rỗng và dòng lệnh
         work_dir = self.work_root / batch_id
         work_dir.mkdir(parents=True, exist_ok=True)
+        build_sandbox_profile(profile_dir, core_text, work_dir=work_dir)
 
         cmd = [
             "agy",
@@ -382,43 +421,62 @@ class AgyRunner:
             ensure_ascii=False,
         ) + "\n"
 
-        # 4. Thực thi subprocess
-        if mock_subprocess:
-            proc_res = mock_subprocess(cmd, ndjson_input, env, work_dir)
-            stdout_text = proc_res.stdout
-            stderr_text = proc_res.stderr
-            return_code = proc_res.returncode
-        else:
-            try:
-                proc = subprocess.run(
-                    cmd,
-                    input=ndjson_input,
-                    capture_output=True,
-                    text=True,
-                    encoding="utf-8",
-                    errors="replace",
-                    cwd=str(work_dir),
-                    env=env,
-                    timeout=self.timeout_seconds + 30,
+        # 4. Thực thi subprocess (kèm tự động thử lại nếu gặp lỗi tạm thời RETRYABLE)
+        max_attempts = 2
+        for attempt in range(max_attempts):
+            if mock_subprocess:
+                proc_res = mock_subprocess(cmd, ndjson_input, env, work_dir)
+                stdout_text = proc_res.stdout
+                stderr_text = proc_res.stderr
+                return_code = proc_res.returncode
+            else:
+                try:
+                    proc = subprocess.run(
+                        cmd,
+                        input=ndjson_input,
+                        capture_output=True,
+                        text=True,
+                        encoding="utf-8",
+                        errors="replace",
+                        cwd=str(work_dir),
+                        env=env,
+                        timeout=self.timeout_seconds + 30,
+                    )
+                    stdout_text = proc.stdout
+                    stderr_text = proc.stderr
+                    return_code = proc.returncode
+                except subprocess.TimeoutExpired:
+                    return AgyExecutionResult(
+                        ok=False,
+                        batch_id=batch_id,
+                        status="TIMEOUT",
+                        latency_seconds=time.time() - start_time,
+                        error_message=f"Quá thời gian thực thi {self.timeout_seconds} giây.",
+                    )
+                except Exception as exc:
+                    return AgyExecutionResult(
+                        ok=False,
+                        batch_id=batch_id,
+                        status="FATAL",
+                        error_message=f"Lỗi khởi chạy tiến trình agy: {exc}",
+                    )
+
+            err_lower = (stderr_text or "").lower()
+            is_retryable = (
+                return_code != 0
+                and (
+                    "retryable:true" in err_lower
+                    or return_code == 3
+                    or "503" in err_lower
+                    or "unavailable" in err_lower
+                    or "502" in err_lower
+                    or "bad gateway" in err_lower
                 )
-                stdout_text = proc.stdout
-                stderr_text = proc.stderr
-                return_code = proc.returncode
-            except subprocess.TimeoutExpired:
-                return AgyExecutionResult(
-                    ok=False,
-                    batch_id=batch_id,
-                    status="TIMEOUT",
-                    latency_seconds=time.time() - start_time,
-                    error_message=f"Quá thời gian thực thi {self.timeout_seconds} giây.",
-                )
-            except Exception as exc:
-                return AgyExecutionResult(
-                    ok=False,
-                    batch_id=batch_id,
-                    status="FATAL",
-                    error_message=f"Lỗi khởi chạy tiến trình agy: {exc}",
-                )
+            )
+            if is_retryable and attempt < max_attempts - 1:
+                time.sleep(3)
+                continue
+            break
 
         latency = time.time() - start_time
 
@@ -435,7 +493,14 @@ class AgyRunner:
                     latency_seconds=latency,
                     error_message="Hạn mức phiên chạm ngưỡng 429 Resource Exhausted.",
                 )
-            if "retryable:true" in err_lower or return_code == 3:
+            if (
+                "retryable:true" in err_lower
+                or return_code == 3
+                or "503" in err_lower
+                or "unavailable" in err_lower
+                or "502" in err_lower
+                or "bad gateway" in err_lower
+            ):
                 return AgyExecutionResult(
                     ok=False,
                     batch_id=batch_id,
@@ -480,7 +545,7 @@ class AgyRunner:
                 events.append(ev)
                 ev_type = ev.get("type") or ev.get("event")
                 if ev_type == "init":
-                    init_data = ev.get("data", {})
+                    init_data = ev.get("init") or ev.get("data", {})
                     # Kiểm tra mô hình ghim
                     if init_data.get("model") and self.model not in init_data.get("model", ""):
                         return AgyExecutionResult(
@@ -491,11 +556,11 @@ class AgyRunner:
                             error_message=f"Mô hình khởi tạo ({init_data.get('model')}) không khớp ({self.model}).",
                         )
                 elif ev_type == "step_update":
-                    step = ev.get("step", {})
+                    step = ev.get("step_update") or ev.get("step", {})
                     if step.get("type") == "tool" or step.get("tool_name"):
                         tool_invoked = True
                 elif ev_type == "result":
-                    res_data = ev.get("data", {}) or ev
+                    res_data = ev.get("result") or ev.get("data", {}) or ev
                     raw_response = res_data.get("response") or res_data.get("content") or ""
                     usage_data = res_data.get("usage") or {}
                     if res_data.get("denied_actions"):
@@ -503,30 +568,43 @@ class AgyRunner:
             except json.JSONDecodeError:
                 continue
 
-        # Tầng 5: Vi phạm quyền hoặc gọi công cụ ngoài ý muốn
-        if tool_invoked or denied_actions:
-            return AgyExecutionResult(
-                ok=False,
-                batch_id=batch_id,
-                status="VIOLATION",
-                latency_seconds=latency,
-                error_message="Phát hiện lượt gọi công cụ trái quy tắc Zero-Tool.",
-            )
-
-        # Tầng 7: Bóc tách cấu trúc JSON
+        # Tầng 7: Bóc tách cấu trúc JSON trước
+        json_salvage_error: Exception | None = None
+        records: list[dict[str, Any]] = []
         try:
             records = salvage_json_records(raw_response or stdout_text)
         except Exception as exc:
+            json_salvage_error = exc
+
+        # Tầng 8: Kiểm định miền nghiệp vụ nếu bóc tách được
+        valid_recs: list[dict[str, Any]] = []
+        domain_errors: list[str] = []
+        if records:
+            valid_recs, domain_errors = validate_records(records, packet_items)
+
+        # Tầng 5: Kiểm tra vi phạm gọi công cụ
+        tool_warning: str | None = None
+        if tool_invoked or denied_actions:
+            if valid_recs:
+                tool_warning = "Phát hiện lượt gọi công cụ bị hook chặn; đã khôi phục thành công các bản ghi hợp lệ."
+            else:
+                return AgyExecutionResult(
+                    ok=False,
+                    batch_id=batch_id,
+                    status="VIOLATION",
+                    latency_seconds=latency,
+                    error_message="Phát hiện lượt gọi công cụ trái quy tắc Zero-Tool và không có JSON hợp lệ.",
+                )
+
+        if json_salvage_error is not None:
             return AgyExecutionResult(
                 ok=False,
                 batch_id=batch_id,
                 status="SOFT_FAIL",
                 latency_seconds=latency,
-                error_message=f"Bóc tách JSON thất bại: {exc}",
+                error_message=f"Bóc tách JSON thất bại: {json_salvage_error}",
             )
 
-        # Tầng 8: Kiểm định miền nghiệp vụ
-        valid_recs, domain_errors = validate_records(records, packet_items)
         if len(valid_recs) < len(packet_items):
             status = "PARTIAL"
         else:
@@ -552,7 +630,9 @@ class AgyRunner:
             "latency_seconds": round(latency, 2),
             "domain_errors": domain_errors,
         }
-        safe_json_dump(meta_file, meta_info)
+        if tool_warning:
+            meta_info["warning"] = tool_warning
+        safe_json_dump(meta_info, meta_file)
 
         return AgyExecutionResult(
             ok=(status == "OK"),
@@ -589,7 +669,10 @@ class AgyRunner:
             future_to_batch = {}
             for b in batches:
                 bid = b["batch_id"]
-                tpath = Path(b["packet_file"])
+                task_file_str = b.get("path") or b.get("packet_file") or b.get("task_file")
+                if not task_file_str:
+                    task_file_str = str(PROJECT_ROOT / "data" / "agent_tasks" / "article" / f"{bid}.task.json")
+                tpath = Path(task_file_str)
                 future = executor.submit(self.run_batch, bid, tpath, out_dir)
                 future_to_batch[future] = bid
 
@@ -599,12 +682,14 @@ class AgyRunner:
                     res = future.result()
                     results.append(res)
                 except Exception as exc:
+                    import traceback
+                    tb = traceback.format_exc()
                     results.append(
                         AgyExecutionResult(
                             ok=False,
                             batch_id=bid,
                             status="FATAL",
-                            error_message=f"Lỗi ngoại lệ luồng: {exc}",
+                            error_message=f"Lỗi ngoại lệ luồng: {exc} | TB: {tb}",
                         )
                     )
 

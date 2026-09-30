@@ -1,5 +1,9 @@
 # Skill: VN Stock News Packet Processor (`agent-file-processor`)
 
+> [!NOTE]
+> **Tài liệu Kế thừa (Reference Only — ADR 0010):**
+> Skill này mô tả cách xử lý 2 hàng đợi task packets cũ (`data/agent_tasks/l1/` và `data/agent_tasks/`). Toàn bộ luồng này đã được hợp nhất thành Article Lane (`article-processor`) chạy chuẩn `v2-lean`. Các trường `materiality.score`, `impact_area`, `event_type` KHÔNG áp dụng vào runtime hiện hành.
+
 > **Mục đích:** Xử lý tự động cả 2 hàng đợi task packets (L1 Entity Recognition từ Title & Bóc tách Body từ Cleaned Text), tự động kiểm tra Definition-of-Done (DoD) và ghi file output JSON vào thư mục ingest.
 
 ---

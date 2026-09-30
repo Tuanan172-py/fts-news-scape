@@ -1,8 +1,12 @@
 ---
 name: gold-financial-analyst
-description: Chuyên viên bóc tách và phân tích ngữ nghĩa sâu tin tức tài chính, chấm điểm materiality_score, phân loại sentiment và trích dẫn citations chuẩn DoD.
+description: Chuyên viên bóc tách và phân tích ngữ nghĩa sâu tin tức tài chính theo chuẩn v2-lean, phân loại sentiment, time_sensitivity và trích dẫn citations chuẩn DoD.
 ---
 # Gold Financial Analyst Skill
+
+> [!NOTE]
+> **Trạng thái Kế thừa (Reference Only — ADR 0010):**
+> Skill này mô tả nghiệp vụ phân tích nội dung tầng Gold ban đầu. Hiện tại toàn bộ nghiệp vụ này đã được tích hợp thống nhất vào `article-processor` (Article Lane duy nhất). Các trường như `materiality.score`, `event_type`, `impact_area` đã ngừng áp dụng ở runtime hiện hành.
 
 > **Mục đích:** Hướng dẫn Subagent Flash thực hiện suy luận tài chính chuyên sâu từ toàn văn bài viết (`cleaned_text`).
 

@@ -2,6 +2,10 @@
 
 Cập nhật: 2026-08-14 · Trạng thái: **SPEC-ONLY** (chưa có agent/LLM code) · Kèm: [08](08-handoff-contract-catalog.md), [10](10-agent-orchestration-governance.md).
 
+> [!NOTE]
+> **Trạng thái Kế thừa (Historical Specification — agent-output-v1):**
+> Tài liệu này mô tả hợp đồng dữ liệu v1 ban đầu. Từ ngày 2026-09-23 (ADR 0010), hệ thống chuyển sang Article Lane thống nhất với lược đồ tinh gọn `agent-output-v2-lean`. Các trường `materiality.score`, `confidence`, `affected_parties`, `impact_area`, `event_type` ĐÃ NGỪNG ÁP DỤNG ở runtime hiện hành để tối ưu token và độ trễ.
+
 Đặc tả để BẤT KỲ agent provider nào (OpenAI/Anthropic/Gemini/local) xử lý đồng nhất từ work-package.
 Phase-04. **Không** implement agent giờ (owner: "lớp agent để sau").
 

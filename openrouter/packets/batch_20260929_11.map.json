@@ -1,0 +1,114 @@
+{
+ "0": {
+  "article_id": "163458d821213aa5dd1f4db0435cd3e7a5bdca39bbf4012c43369678ed0a844c",
+  "title": "Tổng thống Trump công bố dự án nhà máy thép 15 tỷ USD tại Mỹ",
+  "tier": 1,
+  "reason": "watchlist:IND_GICS3:THEP",
+  "domain": "vneconomy.vn"
+ },
+ "1": {
+  "article_id": "d4df4e1ea703d4dd5c80762e2645ec7f7346c8c56309db89aad9b659eccbb4b4",
+  "title": "Sở Giao dịch chứng khoán Tp.HCM tiếp tục bị giả mạo",
+  "tier": 1,
+  "reason": "watchlist:IND_GICS2:CONG_TY_CHUNG_KHOAN",
+  "domain": "vneconomy.vn"
+ },
+ "2": {
+  "article_id": "dfc541ee4c07b857a85d7110806475a98f4a226a1543b6c5ba474d8f5f7617b1",
+  "title": "Đà bán tháo trên thị trường trái phiếu chính phủ quốc tế gia tăng theo giá dầu",
+  "tier": 1,
+  "reason": "watchlist:ASSET_CLASS:DAU_THO",
+  "domain": "vneconomy.vn"
+ },
+ "3": {
+  "article_id": "e5308351a44eef5f5e9c65d0bc6f3ec8d95f11b14073c4c5d697fa1e1a0a3a60",
+  "title": "Công bố kết luận thanh tra Ngân hàng Nhà nước chi nhánh Khu vực 8",
+  "tier": 1,
+  "reason": "watchlist:IND_GICS2:NGAN_HANG",
+  "domain": "vietstock.vn"
+ },
+ "4": {
+  "article_id": "76cae2080ebca5f5e82c2471a887e5bad4ee94d7c4c33b6c5488d8945cf31f8b",
+  "title": "Nâng hạng chứng khoán: Phân khúc bất động sản nào hưởng lợi nhất?",
+  "tier": 1,
+  "reason": "watchlist:ASSET_CLASS:BAT_DONG_SAN_TAI_SAN",
+  "domain": "cafef.vn"
+ },
+ "5": {
+  "article_id": "b2833a8801417c1748ce6669b3ef82970bc2d492c2cf47aebc712bf3cbb5519b",
+  "title": "Giá dầu rời đỉnh sau khi Ả-rập Saudi khôi phục đường ống dẫn dầu quan trọng",
+  "tier": 1,
+  "reason": "watchlist:ASSET_CLASS:DAU_THO",
+  "domain": "vietstock.vn"
+ },
+ "6": {
+  "article_id": "d9082c546b4718e407186f7340f01a6f1f2cc9c3a8bfe8bd73a4829007add75b",
+  "title": "Dow Jones giảm hơn 300 điểm khi lợi suất trái phiếu Mỹ tăng mạnh",
+  "tier": 1,
+  "reason": "watchlist:ASSET_CLASS:TRAI_PHIEU",
+  "domain": "vietstock.vn"
+ },
+ "7": {
+  "article_id": "c464d3ffa8004e3f9f7d6d57b54919d5a6b5b8d96bddffaee33d628ec9ae11ba",
+  "title": "HDBank mở rộng hợp tác quốc tế với Citi và Standard Chartered, tăng cường kết nối nguồn vốn toàn cầu",
+  "tier": 1,
+  "reason": "watchlist:TICKER:HDB",
+  "domain": "cafef.vn"
+ },
+ "8": {
+  "article_id": "b2ef850957a95105f91ad6230132beff80089f02e71d32afda96fe8158913f3b",
+  "title": "Trái phiếu doanh nghiệp vẫn là 'sân chơi' của các ông lớn",
+  "tier": 1,
+  "reason": "watchlist:ASSET_CLASS:TRAI_PHIEU",
+  "domain": "fireant.vn"
+ },
+ "9": {
+  "article_id": "99024c3a48ffcc12394c458104538d60d2c7dbed2f932eb27f4cf79b7f6eaa4e",
+  "title": "Thủ tướng chỉ đạo 7 nhiệm vụ lớn phát triển khoa học, công nghệ, đổi mới sáng tạo",
+  "tier": 1,
+  "reason": "watchlist:IND_GICS1:CONG_NGHE",
+  "domain": "baodautu.vn"
+ },
+ "10": {
+  "article_id": "14927f60594b9b3c7bf4c55ce26fb16fb03e123060af100d85182d183d7646a3",
+  "title": "Chứng khoán Mỹ tiến gần giao dịch 24h trong ngày:Thêm cơ hội, thêm phép thử cho thị trường",
+  "tier": 1,
+  "reason": "watchlist:IND_GICS2:CONG_TY_CHUNG_KHOAN",
+  "domain": "tinnhanhchungkhoan.vn"
+ },
+ "11": {
+  "article_id": "ff46c8736f7764b99e7edd3b8cf717ce9e6f29c9d19beeb31fdb6ba3bfe6f639",
+  "title": "Doanh nghiệp Việt muốn đưa sản phẩm Việt \"thẳng tiến\" nội địa Trung Quốc: Kênh đào 10,8 tỷ USD mở đường",
+  "tier": 1,
+  "reason": "watchlist:MACRO_GEO:TRUNG_QUOC",
+  "domain": "cafef.vn"
+ },
+ "12": {
+  "article_id": "ce2330d86c6c26198772bae3ceb97612a04f2ebcbd996c7517ada5082d8da37f",
+  "title": "Bộ Xây dựng gọi vốn PPP cho 29 dự án cao tốc quy mô gần 923 ngàn tỷ giai đoạn 2026-2030",
+  "tier": 1,
+  "reason": "watchlist:IND_GICS3:XAY_DUNG",
+  "domain": "vietstock.vn"
+ },
+ "13": {
+  "article_id": "02447c2c74b49c08f229596f5ab6b52726ea8210568c5362b3cfc3db48545879",
+  "title": "Giữ sức hút trong cuộc đua thu hút FDI vào công nghệ cao",
+  "tier": 1,
+  "reason": "watchlist:IND_GICS1:CONG_NGHE",
+  "domain": "baodautu.vn"
+ },
+ "14": {
+  "article_id": "2c491936c4b5c30748a5f1fe557ce249ab0dda50431b1a39bb74a276bf60d9e9",
+  "title": "MSB muốn tăng vốn điều lệ lên hơn 9.300 tỷ, thành lập ngân hàng tại VIFC, mua công ty chứng khoán, bảo hiểm",
+  "tier": 1,
+  "reason": "watchlist:IND_GICS2:BAO_HIEM",
+  "domain": "vietnambiz.vn"
+ },
+ "15": {
+  "article_id": "9a6e6fd5cefc6c5182cbc60e34e3a4c7716eaf639ca5cc333999a7c80bd5dc8c",
+  "title": "Giá dầu neo cao giữa chiến sự Trung Đông, CTCK chỉ ra nhóm cổ phiếu chịu sức ép lớn nhất",
+  "tier": 1,
+  "reason": "watchlist:ASSET_CLASS:CO_PHIEU",
+  "domain": "vietnambiz.vn"
+ }
+}

@@ -1,0 +1,130 @@
+[
+  {
+    "i": 0,
+    "s": "Giá vàng SJC giảm 900.000 đồng/lượng, bám sát thị trường quốc tế. Chênh lệch giá trong nước cao khoảng 11,4 triệu đồng/lượng.",
+    "sn": "neg",
+    "ms": 0.68,
+    "k": ["Vàng SJC giảm về 138,5-141,5 triệu đồng/lượng", "Điều chỉnh đồng hành với vàng thế giới", "Chênh lệch giá trong nước còn cao"],
+    "c": [1, 4, 7]
+  },
+  {
+    "i": 1,
+    "s": "Tỷ lệ sử dụng AI tạo sinh tại Việt Nam đạt 27,9%, đứng thứ hai Đông Nam Á. Mức tăng nhanh cho thấy tiềm năng chuyển đổi số tích cực.",
+    "sn": "pos",
+    "ms": 0.45,
+    "k": ["AI tăng 1,4 điểm phần trăm", "Việt Nam vượt phần lớn khu vực", "Chênh lệch lớn với Singapore còn tồn tại"],
+    "c": [0, 1, 10]
+  },
+  {
+    "i": 2,
+    "s": "GM cảnh báo thị trường ô tô Mỹ sẽ cạnh tranh gay gắt khi các hãng dồn vốn tránh sức ép từ Trung Quốc, buộc hãng phải nâng sức cạnh tranh và cắt giảm chi phí.",
+    "sn": "neg",
+    "ms": 0.82,
+    "k": ["Cạnh tranh tại Mỹ tăng cao", "GM đẩy mạnh cắt giảm chi phí", "Xe điện suy yếu và giá xe cao gây áp lực"],
+    "c": [0, 4, 11, 13]
+  },
+  {
+    "i": 3,
+    "s": "Đồng yên phục hồi sau cảnh báo can thiệp của Nhật Bản, nhưng chênh lệch lãi suất với Mỹ và chính sách Fed cứng nhắc khiến xu hướng suy yếu chưa chấm dứt.",
+    "sn": "neu",
+    "ms": 0.76,
+    "k": ["Đồng yên tăng so với USD", "Nhật Bản gia tăng cảnh báo can thiệp", "Chênh lệch lãi suất Mỹ-Nhật còn rộng"],
+    "c": [3, 5, 9, 12]
+  },
+  {
+    "i": 4,
+    "s": "PVT và POW được khuyến nghị mua với kỳ vọng lợi nhuận tăng mạnh nhờ giá cước vận tải cao và năng lực điện khí LNG mới.",
+    "sn": "pos",
+    "ms": 0.86,
+    "k": ["PVT hưởng lợi từ giá cước và mở rộng đội tàu", "POW tăng trưởng nhờ các nhà máy LNG", "Dự báo lợi nhuận 2026 tăng trưởng mạnh"],
+    "c": [0, 3, 4, 13, 15, 19]
+  },
+  {
+    "i": 5,
+    "s": "MSB đề xuất thành lập ngân hàng tại VIFC, tăng vốn lên 46.800 tỷ đồng và mở rộng sang chứng khoán, bảo hiểm nhằm đa dạng hóa hệ sinh thái.",
+    "sn": "pos",
+    "ms": 0.88,
+    "k": ["Tham nhập VIFC và tiếp cận vốn quốc tế", "Phát hành 936 triệu cổ phiếu", "Mở rộng dịch vụ chứng khoán và bảo hiểm"],
+    "c": [2, 5, 11, 13, 21, 23]
+  },
+  {
+    "i": 6,
+    "s": "Giá vàng trong nước giảm mạnh rồi hồi 500.000 đồng/lượng. Lợi suất cao và USD mạnh gây áp lực ngắn hạn, nhưng nhu cầu vàng dài hạn vẫn được kỳ vọng.",
+    "sn": "neu",
+    "ms": 0.7,
+    "k": ["Vàng biến động mạnh trong ngày", "Lợi suất và USD gây áp lực", "Nhu cầu cấu trúc hỗ trợ giá dài hạn"],
+    "c": [0, 3, 6, 12, 18]
+  },
+  {
+    "i": 7,
+    "s": "Hòa Phát và Đắk Lắk thống nhất tiếp tục phối hợp triển khai các dự án tại Khu kinh tế Nam Phú Yên, trong đó có tổ hợp gang thép quy mô lớn.",
+    "sn": "pos",
+    "ms": 0.74,
+    "k": ["Chính quyền hỗ trợ tháo gỡ vướng mắc", "Dự án thép có vốn dự kiến 86.000 tỷ đồng", "Kế hoạch mở rộng công suất sản xuất"],
+    "c": [0, 3, 5, 8]
+  },
+  {
+    "i": 8,
+    "s": "HoSE cảnh báo tội phạm giả mạo sở và cơ quan quản lý để huy động tiền với lợi nhuận hứa hẹn 1.600%. Nhà đầu tư được khuyến cáo kiểm tra nguồn gốc.",
+    "sn": "neg",
+    "ms": 0.65,
+    "k": ["Giả mạo chứng cứ và thương hiệu cơ quan", "Kêu gọi đầu tư lợi nhuận bất thường", "Khuyến cáo không chuyển tiền cho cá nhân"],
+    "c": [0, 1, 2, 3, 5, 6]
+  },
+  {
+    "i": 9,
+    "s": "FPT Shop, Điện Máy Xanh và Thế Giới Di Động lọt top 15 chuỗi bán lẻ châu Á được tin cậy, phản ánh lợi thế mạnh của mô hình bán lẻ Việt Nam.",
+    "sn": "pos",
+    "ms": 0.42,
+    "k": ["FPT Shop, Điện Máy Xanh, Thế Giới Di Động vào top 15", "Niềm tin thương hiệu tạo lợi thế dài hạn", "Mạng lưới đa kênh và dịch vụ hậu mãi tăng sức hút"],
+    "c": [0, 3, 11, 12, 13]
+  },
+  {
+    "i": 10,
+    "s": "Chi nhánh ICBC Argentina trở nên viral nhờ tòa nhà kiến trúc đặc biệt, cho thấy công trình biểu tượng có thể tạo giá trị thương hiệu với chi phí thấp.",
+    "sn": "neu",
+    "ms": 0.25,
+    "k": ["ICBC Argentina được đầu tư tập trung nhân dân tệ", "Kiến trúc tạo viral không tốn ngân sách quảng cáo", "Soft power hỗ trợ chiến lược thương hiệu"],
+    "c": [2, 4, 5, 6]
+  },
+  {
+    "i": 11,
+    "s": "Giá vàng và bạc lao dối trong bối cảnh lợi suất tăng và Fed có thể tăng lãi suất, trong khi quỹ SPDR vẫn mua ròng mạnh vàng.",
+    "sn": "neg",
+    "ms": 0.78,
+    "k": ["Vàng giảm gần 4% trong phiên", "SPDR mua ròng 4,3 tấn vàng", "Lợi suất Mỹ và USD cao gây áp lực kim loại quý"],
+    "c": [0, 1, 2, 3, 4, 5]
+  },
+  {
+    "i": 12,
+    "s": "F88 chuẩn bị chuyển giao dịch từ UPCoM sang HOSE sau IPO thành công. Doanh thu và lợi nhuận nửa đầu năm tăng lần lượt 62,6% và 113,9%.",
+    "sn": "pos",
+    "ms": 0.72,
+    "k": ["Lên sàn HOSE sau IPO", "IPO thu hồi 781,9 tỷ đồng", "Lợi nhuận và biên lợi nhuận tăng mạnh"],
+    "c": [0, 2, 3, 4, 5]
+  },
+  {
+    "i": 13,
+    "s": "Vietstock phân tích ngắn hạn 10 cổ phiếu nóng với tín hiệu phân hóa. BSR, BVH và GEE tích cực; NLG yếu hơn, còn các ngân hàng chủ yếu rung lắc.",
+    "sn": "neu",
+    "ms": 0.55,
+    "k": ["BSR và BVH có tín hiệu tăng", "NLG suy yếu dưới SMA 50 ngày", "Ngân hàng và bất động sản còn biến động"],
+    "c": [2, 6, 8, 10, 12, 16, 22, 28, 34, 40]
+  },
+  {
+    "i": 14,
+    "s": "Petrovietnam đã phát triển năng lực EPC/EPCI ngoài khơi quy mô lớn, từ Sư Tử Đen đến Lô B-Ô Môn, đồng thời mở rộng ra các thị trường quốc tế.",
+    "sn": "pos",
+    "ms": 0.8,
+    "k": ["Năng lực tổng thầu được nội địa hóa", "Dự án Lô B-Ô Môn quy mô lớn", "Xuất khẩu năng lực EPCI sang Qatar và Ấn Độ"],
+    "c": [0, 3, 8, 9, 12, 15]
+  },
+  {
+    "i": 15,
+    "s": "Bếp từ Funiki đạt chứng nhận CB theo tiêu chuẩn IEC, mở đường cho xuất khẩu. Hòa Phát hướng tới làm OEM/ODM và tăng nội địa hóa linh kiện.",
+    "sn": "pos",
+    "ms": 0.48,
+    "k": ["Chứng nhận IEC mở đường xuất khẩu", "Hợp tác với TÜV SÜD mở rộng thị trường", "Định hướng OEM/ODM và chủ động bo mạch"],
+    "c": [0, 1, 3, 4, 12, 17]
+  }
+]

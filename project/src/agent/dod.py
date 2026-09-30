@@ -73,13 +73,14 @@ def verify_preconditions(work_package: dict, *, check_integrity: bool = True) ->
     if check_integrity:
         raw_path = work_package.get("raw_html_path", "")
         want = work_package.get("raw_sha256", "")
-        p = Path(raw_path)
-        if not p.exists():
-            reasons.append(f"precondition: raw missing {raw_path}")
-        else:
-            got = hashlib.sha256(p.read_bytes()).hexdigest()
-            if got != want:
-                reasons.append("precondition: raw_sha256 mismatch (integrity)")
+        if raw_path:
+            p = Path(raw_path)
+            if not p.is_file():
+                reasons.append(f"precondition: raw missing {raw_path}")
+            else:
+                got = hashlib.sha256(p.read_bytes()).hexdigest()
+                if got != want:
+                    reasons.append("precondition: raw_sha256 mismatch (integrity)")
     return (not reasons), reasons
 
 

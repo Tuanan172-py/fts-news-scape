@@ -1,0 +1,114 @@
+{
+ "0": {
+  "article_id": "105e94aed793eedf82f2503066ed5d56c5871f721777b5453862da1e60c9f245",
+  "title": "Đại hội bất thường DRG: Đổi mô hình quản trị, bãi bỏ Ban kiểm soát",
+  "tier": 1,
+  "reason": "industry:hàng tiêu dùng không thiết yếu",
+  "domain": "vietstock.vn"
+ },
+ "1": {
+  "article_id": "044cb65751005dfad967eaa4dbc2f5ae07c2be00f6ed35f7fac30e0beadee5aa",
+  "title": "Pin mặt trời phát điện ở độ sâu 10m dưới biển, hiệu suất gấp đôi trên cạn",
+  "tier": 1,
+  "reason": "watchlist:IND_GICS3:DIEN",
+  "domain": "vietstock.vn"
+ },
+ "2": {
+  "article_id": "25fe8e808b38b36c649464974c82628dfe696f13cd96675c645c22c691aebfcc",
+  "title": "Giao dịch chứng khoán phiên sáng 29/9: Thị trường thiếu động lực, nhiều cổ phiếu giảm sâu",
+  "tier": 1,
+  "reason": "watchlist:ASSET_CLASS:CO_PHIEU",
+  "domain": "tinnhanhchungkhoan.vn"
+ },
+ "3": {
+  "article_id": "19b098780a5f2307abb62899944c4a6df1050b59adbda1d549ef72050441fc9a",
+  "title": "Ông Đinh Hồng Kỳ giữ vai trò mới tại DIG",
+  "tier": 1,
+  "reason": "industry:bất động sản",
+  "domain": "vietstock.vn"
+ },
+ "4": {
+  "article_id": "8a421eebb93f768cefb4995112829f532f23f350ea38e7f80356bdc14f98b29e",
+  "title": "Nâng chuẩn mới về công bố thông tin trên thị trường chứng khoán",
+  "tier": 1,
+  "reason": "watchlist:ASSET_CLASS:CO_PHIEU",
+  "domain": "baodautu.vn"
+ },
+ "5": {
+  "article_id": "e4c055f0649f92ba8963d015517bc056500fb5ff3dfd1f075a48d66bc5f2894b",
+  "title": "Hơn 65 triệu cổ phiếu Novaland \"chất sàn\", chuyện gì đây?",
+  "tier": 1,
+  "reason": "watchlist:ASSET_CLASS:CO_PHIEU",
+  "domain": "cafef.vn"
+ },
+ "6": {
+  "article_id": "24184b793ba40010c20a4a41630a1251a31787b08f696f228b5d69428abc756e",
+  "title": "MSB mở rộng hệ sinh thái tài chính, hướng tới mô hình đa dịch vụ",
+  "tier": 1,
+  "reason": "watchlist:IND_GICS1:TAI_CHINH",
+  "domain": "vietnambiz.vn"
+ },
+ "7": {
+  "article_id": "2c0921e03d494b1f3520333b6b9035318ff82d4e40d5d8ec8dea629f54546620",
+  "title": "Một cổ phiếu trên HOSE bất ngờ \"nằm sàn\" 7 phiên liên tiếp, 10% công ty chất bán giá sàn: Chuyện gì đang xảy ra?",
+  "tier": 1,
+  "reason": "watchlist:ASSET_CLASS:CO_PHIEU",
+  "domain": "cafef.vn"
+ },
+ "8": {
+  "article_id": "a08f9eab759403b731fa77e9483422b9c3e25b323bb1fe0719d746d4c016f48a",
+  "title": "Hướng dẫn xử lý vi phạm hành chính về bảo hiểm xã hội",
+  "tier": 1,
+  "reason": "watchlist:IND_GICS2:BAO_HIEM",
+  "domain": "vneconomy.vn"
+ },
+ "9": {
+  "article_id": "d24bdf3501756cb48584cbe5b4677a9fecbc7e3e4890ca8b217d9039f9854df2",
+  "title": "PVFCCo - Phú Mỹ với tham vọng bán giải pháp dinh dưỡng toàn diện thay vì chỉ bán phân bón",
+  "tier": 1,
+  "reason": "watchlist:IND_GICS3:PHAN_BON",
+  "domain": "baodautu.vn"
+ },
+ "10": {
+  "article_id": "6125e11518cb38da1abb1732dfbf5a3744c109793c1ee4bd9fa62f3da7d19fb5",
+  "title": "STB: Nghị quyết HĐQT thay đổi địa chỉ các điểm giao dịch trên địa bàn TP.Bắc Ninh",
+  "tier": 1,
+  "reason": "watchlist:TICKER:STB",
+  "domain": "cafef.vn"
+ },
+ "11": {
+  "article_id": "195483268c506f14047861f9bc8e34bf00d40ff15fb150758f03878ccf86d08e",
+  "title": "Tổng công ty Tín Nghĩa (TID) muốn thoái toàn bộ vốn một công ty con đang thua lỗ",
+  "tier": 1,
+  "reason": "industry:hàng tiêu dùng thiết yếu",
+  "domain": "tinnhanhchungkhoan.vn"
+ },
+ "12": {
+  "article_id": "0506ebde21ab6ca368e7801cd941a828e75a932268b690c10df607c9cc2f34b8",
+  "title": "AgriS (SBT) vượt kế hoạch doanh thu, đẩy mạnh đầu tư cho chu kỳ tăng trưởng mới",
+  "tier": 1,
+  "reason": "industry:hàng tiêu dùng thiết yếu",
+  "domain": "vietstock.vn"
+ },
+ "13": {
+  "article_id": "9c227bde34eb8df41ed2811c8e14b65240430b3abe5e495c4d96c6f2ea52ac64",
+  "title": "Tự doanh mua ròng cổ phiếu VPB liên tiếp, ba tuần rót hơn 1.900 tỷ đồng",
+  "tier": 1,
+  "reason": "watchlist:ASSET_CLASS:CO_PHIEU",
+  "domain": "cafef.vn"
+ },
+ "14": {
+  "article_id": "faa6e7045d424e610035c490b658c34a53e202c746497a3af31da2b1c9d86d52",
+  "title": "Một quỹ ngoại kiếm hơn 4.600 tỷ đồng từ cổ phiếu của ngân hàng bầu Thụy đang dẫn dắt, nêu lý do phải bán bớt",
+  "tier": 1,
+  "reason": "watchlist:ASSET_CLASS:CO_PHIEU",
+  "domain": "cafef.vn"
+ },
+ "15": {
+  "article_id": "2795b4977f53ef6377b8dd1e0f35de63b6b62d51d8802dbda69795c16a6cb3f7",
+  "title": "ANT chốt quyền trả cổ tức 2025, nâng vốn lên hơn 350 tỷ",
+  "tier": 1,
+  "reason": "industry:hàng tiêu dùng thiết yếu",
+  "domain": "vietstock.vn"
+ }
+}

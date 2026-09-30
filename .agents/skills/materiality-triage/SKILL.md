@@ -5,6 +5,10 @@ description: Cổng phân loại rẻ quyết định bài tin có đáng đẩy
 
 # Materiality Triage Skill
 
+> [!CAUTION]
+> **TRẠNG THÁI: RETIRED (Đã ngừng hoạt động từ 2026-09-24 theo ADR 0010 và registry.yaml).**
+> Toàn bộ bài viết trong Article Lane đều được xử lý đồng bộ và đầy đủ. Không sử dụng subagent này trong runtime hiện hành. Tài liệu chỉ lưu trữ để đối chiếu lịch sử.
+
 > **Mục đích:** Chấm nhanh mức trọng yếu của bài tin tài chính bằng model Flash-Lite, lọc bỏ nhiễu trước tầng Gold để tiết kiệm chi phí phân tích sâu.
 
 ## 1. Đầu vào

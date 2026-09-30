@@ -1,9 +1,13 @@
 # Agent Instructions v1 — bản chỉ dẫn chuẩn (người dùng viết prompt từ đây)
 
-Cập nhật: 2026-08-17 · Trạng thái: SPEC/GUIDELINE (không kèm LLM). Đây là **ràng buộc +
+Cập nhật: 2026-08-17 · Trạng thái: **ARCHIVED SPEC (agent-output-v1)**. Đây là **ràng buộc +
 định hướng** để BẠN tự soạn prompt cho agent bất kỳ provider. Runtime chỉ validate output,
 không quy định cách bạn prompt. Liên kết: [09](../docs/design/09-agent-io-contract.md),
 [10](../docs/design/10-agent-orchestration-governance.md), [12](../docs/design/12-agent-infrastructure.md).
+
+> [!NOTE]
+> **Tài liệu Kế thừa (Reference Only — Hợp đồng v1):**
+> Bản chỉ dẫn này gắn liền với lược đồ `agent-output-v1` cũ. Hiện tại hệ thống vận hành theo chuẩn `v2-lean` (ADR 0010, `build_article_prefix.py`). Các trường `materiality.score`, `impact_area`, `affected_parties` ĐÃ NGỪNG ÁP DỤNG ở runtime hiện hành.
 
 ## 1. Đầu vào bạn nhận (task-packet)
 `data/agent_tasks/<article_id>.task.json` gồm:

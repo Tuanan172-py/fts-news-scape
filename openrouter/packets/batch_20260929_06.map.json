@@ -1,0 +1,114 @@
+{
+ "0": {
+  "article_id": "eac0776135aa7074a8aca6d04dc60eafe1fc40ca785d82df0270c1f0722c8336",
+  "title": "TS. Nguyễn Trí Hiếu: Tôi không nhìn thấy dư địa cho các ngân hàng giảm lãi suất cho vay",
+  "tier": 1,
+  "reason": "watchlist:IND_GICS2:NGAN_HANG",
+  "domain": "cafef.vn"
+ },
+ "1": {
+  "article_id": "09e43c89006a896d24a31b9e93a38e2cc9d5401dcf214770f9c78f6746193afb",
+  "title": "40 người kê khai sai khi mua nhà ở xã hội: Thanh tra chuyển vụ việc đến công an",
+  "tier": 1,
+  "reason": "watchlist:IND_GICS2:QUAN_LY_VA_PHAT_TRIEN_BAT_DONG_SAN",
+  "domain": "vietstock.vn"
+ },
+ "2": {
+  "article_id": "924bd025e7bb6aa214030fabd7f290260f3a2e8cf273842c77af40b2fa426e7c",
+  "title": "Gemadept phát hành hơn 216 triệu cổ phiếu thưởng cho cổ đông",
+  "tier": 1,
+  "reason": "watchlist:ASSET_CLASS:CO_PHIEU",
+  "domain": "cafef.vn"
+ },
+ "3": {
+  "article_id": "65a2f20dff420658841012a2fbb96ffeec147de83831efc6b2609886160d45ef",
+  "title": "Vietjet được vinh danh “Thương hiệu hàng không dẫn đầu châu Á” tại World Travel Awards 2026",
+  "tier": 1,
+  "reason": "industry:công nghiệp",
+  "domain": "vneconomy.vn"
+ },
+ "4": {
+  "article_id": "d8631fed710a6636a92f0721fda4a17dff4ae9dfdcd3ca96b00bb44445718510",
+  "title": "Ông Trump công bố dự án nhà máy thép 15 tỷ USD, lớn nhất lịch sử Mỹ",
+  "tier": 1,
+  "reason": "watchlist:IND_GICS3:THEP",
+  "domain": "vietstock.vn"
+ },
+ "5": {
+  "article_id": "fa6854eb9f9e918fb12fb85db0e26a1905ebe353d38db5644dfddfad65dcd9f9",
+  "title": "Một cổ phiếu tăng sốc gần 100.000 đồng chỉ trong một phiên",
+  "tier": 1,
+  "reason": "watchlist:ASSET_CLASS:CO_PHIEU",
+  "domain": "cafef.vn"
+ },
+ "6": {
+  "article_id": "ffb33ede8ad77d8640628e6ccbf6d4bb20162694743b1dfb43e56847783ca535",
+  "title": "Không cần sang Thái Lan hay Trung Quốc, Việt Nam lên kế hoạch xây dựng \"làng outlet\" lên đến 50.000m2: Khu vực nào đang được đề xuất?",
+  "tier": 1,
+  "reason": "watchlist:IND_GICS3:XAY_DUNG",
+  "domain": "cafef.vn"
+ },
+ "7": {
+  "article_id": "594d0639f2e250856af538b43f1db9a71c2b212432d3f3ea98e8844cf6314c47",
+  "title": "Ngày mai, tuyến đường đặc biệt từ Hà Nội đi vịnh Hạ Long hết 23 phút của Vingroup sẽ đón dấu mốc lớn?",
+  "tier": 1,
+  "reason": "watchlist:TICKER:VIC",
+  "domain": "cafef.vn"
+ },
+ "8": {
+  "article_id": "78d5ac09281df3a0010fc1e525d1b4b35a35bf3e0cb3e44126af6a5e7e52fbbb",
+  "title": "Một ngân hàng vừa được NHNN chấp thuận tăng vốn điều lệ thêm 33.000 tỷ đồng",
+  "tier": 1,
+  "reason": "watchlist:IND_GICS2:NGAN_HANG",
+  "domain": "cafef.vn"
+ },
+ "9": {
+  "article_id": "039155b7a33e19ec4390269b026d5cbe25252ff7c203600cc1914a8ad395b041",
+  "title": "Loạt báo cáo quan trọng với Fed sẽ công bố trong tuần này",
+  "tier": 1,
+  "reason": "watchlist:INSTITUTION:FED",
+  "domain": "vietstock.vn"
+ },
+ "10": {
+  "article_id": "9943303fe34551f603eb4d32d7c4438c951d8691359e85a76c7fe61935ca0ac7",
+  "title": "VCBS: Sacombank có thể xử lý dứt điểm khoản nợ 3.000 - 4.000 tỷ đồng của Bamboo Airways trong nửa cuối năm",
+  "tier": 1,
+  "reason": "watchlist:TICKER:STB",
+  "domain": "cafef.vn"
+ },
+ "11": {
+  "article_id": "b0741f9d666845cde03a939883974fd587c54b4afa3e14ec59dacd8f898c7997",
+  "title": "VCBS: Sacombank có thể xử lý dứt điểm khoản nợ 3.000 - 4.000 tỷ đồng của Bamboo Airways trong nửa cuối năm",
+  "tier": 1,
+  "reason": "watchlist:TICKER:STB",
+  "domain": "cafef.vn"
+ },
+ "12": {
+  "article_id": "4413a15ce6f079e10286c1e3b5b6531e21056fdbfa2b7437a9a10022ffa37038",
+  "title": "Standard Chartered dự báo tăng trưởng GDP quý III đạt 8,7% và cả năm đạt 9,5%",
+  "tier": 1,
+  "reason": "watchlist:MACRO_THEME:GDP_TANG_TRUONG",
+  "domain": "vietnambiz.vn"
+ },
+ "13": {
+  "article_id": "45966c65af970b896418feeb891defb78cad1a498db6f9828823e5ba16386994",
+  "title": "SoftBank huy động trái phiếu kỷ lục 11,1 tỷ USD, lãi suất cao nhất lên đến gần 10%",
+  "tier": 1,
+  "reason": "watchlist:ASSET_CLASS:TRAI_PHIEU",
+  "domain": "cafef.vn"
+ },
+ "14": {
+  "article_id": "241560d33286ba41ae845f8b17b3cf7d25fab3399614ffeaa3aee2dbe56b6846",
+  "title": "Biến động trong đội ngũ lãnh đạo cấp cao của PNJ",
+  "tier": 1,
+  "reason": "industry:hàng tiêu dùng không thiết yếu",
+  "domain": "vietnambiz.vn"
+ },
+ "15": {
+  "article_id": "c76e7f96e6237b07a102b660aa9c50f9813deacad1ae078144ae2e059ceb8ad2",
+  "title": "Thiso thanh toán lãi cho lô trái phiếu 2.200 tỷ đồng",
+  "tier": 1,
+  "reason": "watchlist:ASSET_CLASS:TRAI_PHIEU",
+  "domain": "cafef.vn"
+ }
+}

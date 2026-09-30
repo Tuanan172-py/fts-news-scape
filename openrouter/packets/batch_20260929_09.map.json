@@ -1,0 +1,114 @@
+{
+ "0": {
+  "article_id": "e0543a75c3ad3dce80a92b3937ab137c9200e14dcb9fd9fda018e035cb02a5ee",
+  "title": "Liên tục điều chỉnh, giá vàng SJC xuống ngưỡng 141,5 triệu đồng mỗi lượng",
+  "tier": 1,
+  "reason": "watchlist:ASSET_CLASS:VANG",
+  "domain": "vietstock.vn"
+ },
+ "1": {
+  "article_id": "5e99a2d061b290a5b065723dbdb04020c1f8de85eb5d383b0b7bb28e288f79dd",
+  "title": "Microsoft: Việt Nam đứng thứ hai Đông Nam Á về phổ cập AI",
+  "tier": 1,
+  "reason": "watchlist:MACRO_GEO:DONG_NAM_A",
+  "domain": "vneconomy.vn"
+ },
+ "2": {
+  "article_id": "d2bc30acfe2317fd40a51b80563d9714506031cca460275bd8ae387f8b0328f0",
+  "title": "GM lo cạnh tranh gay gắt khi các hãng xe tập trung vào Mỹ để tránh đối thủ Trung Quốc",
+  "tier": 1,
+  "reason": "watchlist:MACRO_GEO:MY",
+  "domain": "vneconomy.vn"
+ },
+ "3": {
+  "article_id": "e081ebc33464d9c6c8159cf214a9a5975585dda1e89260aef73129cfe3079928",
+  "title": "Đồng yên hồi giá mạnh sau cảnh báo mới từ Nhật Bản",
+  "tier": 1,
+  "reason": "watchlist:MACRO_GEO:NHAT_BAN",
+  "domain": "vneconomy.vn"
+ },
+ "4": {
+  "article_id": "ebe0a8406276be85f74af758af9dbb27ab753772cf4a8bf4eedc2508a28d0cf3",
+  "title": "Hai cổ phiếu được khuyến nghị mua trước phiên 29/9",
+  "tier": 1,
+  "reason": "watchlist:ASSET_CLASS:CO_PHIEU",
+  "domain": "fireant.vn"
+ },
+ "5": {
+  "article_id": "1b2e45c8156e5cefe4e238ed67ab48c7011845fe25bb31642e9e77e4ee3258cf",
+  "title": "MSB muốn lập ngân hàng con tại VIFC, tăng vốn lên 46,800 tỷ, mở rộng hệ sinh thái chứng khoán, bảo hiểm",
+  "tier": 1,
+  "reason": "watchlist:IND_GICS2:BAO_HIEM",
+  "domain": "vietstock.vn"
+ },
+ "6": {
+  "article_id": "0d9d8c8d07c9da18ed5558e74da372dfa50e972fc8485145bf4adca998a91d46",
+  "title": "Giá vàng miếng, vàng nhẫn trơn sáng 29/9: Bất ngờ đảo chiều tại SJC, DOJI, PNJ, Bảo Tín Minh Châu,...",
+  "tier": 1,
+  "reason": "watchlist:ASSET_CLASS:VANG",
+  "domain": "cafef.vn"
+ },
+ "7": {
+  "article_id": "3cca7ba9d2bc14a102bc452fa66709f69b9e254deceb044bc9a243faebd9c38e",
+  "title": "Tỷ phú Trần Đình Long trực tiếp xuất hiện, làm việc với tỉnh Đắk Lắk về “mảnh đất đẹp cuối cùng để làm thép tại Việt Nam”",
+  "tier": 1,
+  "reason": "watchlist:IND_GICS3:THEP",
+  "domain": "cafef.vn"
+ },
+ "8": {
+  "article_id": "5acce36fe72fe14716ee0b49311111f2a0b67c4193ee91b330f1f214a6954162",
+  "title": "Giả mạo sở giao dịch chứng khoán dụ dỗ đầu tư lợi nhuận 1.600%",
+  "tier": 1,
+  "reason": "watchlist:IND_GICS2:CONG_TY_CHUNG_KHOAN",
+  "domain": "cafef.vn"
+ },
+ "9": {
+  "article_id": "8457384bcfc4c6faeb090f4041bbca5478e7dd6d8eaab115846b8e757495de8b",
+  "title": "Tin vui cho FPT Shop, Điện Máy Xanh, Thế Giới Di Động, Viettel Store...",
+  "tier": 1,
+  "reason": "watchlist:TICKER:FPT",
+  "domain": "cafef.vn"
+ },
+ "10": {
+  "article_id": "ce9427a359101b1eb638cff72cba7f204c0de6b3f7b2e571d5b310e51560a0b4",
+  "title": "Ngỡ ngân hàng phù thủy Gringotts giữa Buenos Aires, hóa ra là ICBC: cú viral 0 đồng cả tập đoàn Trung Quốc có tiền cũng không mua nổi",
+  "tier": 1,
+  "reason": "watchlist:IND_GICS2:NGAN_HANG",
+  "domain": "cafef.vn"
+ },
+ "11": {
+  "article_id": "bd0043858b6d3667a98869177de62c0294b7be78421cba42060ad8c84ef22c7b",
+  "title": "Giá vàng lao dốc, quỹ lớn nhất thế giới mạnh tay \"gom\" hàng tấn vàng",
+  "tier": 1,
+  "reason": "watchlist:ASSET_CLASS:VANG",
+  "domain": "cafef.vn"
+ },
+ "12": {
+  "article_id": "365cf487c2a852aebf32d4740901018176ce91829207f490cacb8a07acf36a7d",
+  "title": "Đầu tư F88 (F88) hé lộ kế hoạch chuyển sàn sang HOSE",
+  "tier": 1,
+  "reason": "watchlist:EXCHANGE:HOSE",
+  "domain": "tinnhanhchungkhoan.vn"
+ },
+ "13": {
+  "article_id": "368073ebd2c93399bb56fade5829a48d47841564a38b7510ef792199e6708b37",
+  "title": "Ngày 29/09/2026: 10 cổ phiếu nóng dưới góc nhìn PTKT của Vietstock",
+  "tier": 1,
+  "reason": "watchlist:ASSET_CLASS:CO_PHIEU",
+  "domain": "vietstock.vn"
+ },
+ "14": {
+  "article_id": "42249112171a146fb4a219d0902a8684f9a05ec4aea868323ea95ed0a25406c1",
+  "title": "Petrovietnam và hành trình làm chủ tổng thầu công trình dầu khí ngoài khơi",
+  "tier": 1,
+  "reason": "watchlist:IND_GICS3:DAU_KHI",
+  "domain": "vneconomy.vn"
+ },
+ "15": {
+  "article_id": "12a6141d2a9c1a30cb806de80afc5e32b8de6e0b0a13bd710813aa14d786101a",
+  "title": "Bếp từ Funiki của Hòa Phát đạt chứng nhận CB theo tiêu chuẩn IEC, mở đường cho xuất khẩu",
+  "tier": 1,
+  "reason": "watchlist:TICKER:HPG",
+  "domain": "baodautu.vn"
+ }
+}

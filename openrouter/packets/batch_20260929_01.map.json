@@ -1,0 +1,114 @@
+{
+ "0": {
+  "article_id": "18a50ddff60935207b48ffb746092e27960aa08f6ab4ba1550e72505c53327ae",
+  "title": "Trái phiếu hạ tầng Cơ hội khơi thông dòng vốn dài hạn cho nền kinh tế",
+  "tier": 1,
+  "reason": "watchlist:ASSET_CLASS:TRAI_PHIEU",
+  "domain": "thoibaotaichinhvietnam.vn"
+ },
+ "1": {
+  "article_id": "eb672602d761194ae21f2ad0c04b1d65c4e61db8f2ea01eadf566b8227e547b1",
+  "title": "Bất động sản công nghiệp Việt Nam bước vào cuộc đua đón “làn sóng” đầu tư mới",
+  "tier": 1,
+  "reason": "watchlist:ASSET_CLASS:BAT_DONG_SAN_TAI_SAN",
+  "domain": "baodautu.vn"
+ },
+ "2": {
+  "article_id": "798c13c8ec4352e8eaa8a04596860fb56b1c9c4c48d770f94e27ab2cd2d1ec89",
+  "title": "VPB: Nghị quyết HĐQT về việc hợp đồng, giao dịch cho vay hợp vốn giữa VPBank và GPBank",
+  "tier": 1,
+  "reason": "watchlist:TICKER:VPB",
+  "domain": "fireant.vn"
+ },
+ "3": {
+  "article_id": "e74ade21fb333bf7f584a188816b70e2db06c127005216579688348247371264",
+  "title": "Việt Nam trước cơ hội kiến tạo thế hệ công nghiệp mới",
+  "tier": 1,
+  "reason": "watchlist:IND_GICS1:CONG_NGHIEP",
+  "domain": "thoibaotaichinhvietnam.vn"
+ },
+ "4": {
+  "article_id": "b69b38454f757c2b660c4c1573f9dbda098ea08fc8d27213c492389a5997061f",
+  "title": "“Luồng gió mới” cho thị trường bán lẻ",
+  "tier": 1,
+  "reason": "watchlist:IND_GICS2:BAN_LE",
+  "domain": "vneconomy.vn"
+ },
+ "5": {
+  "article_id": "dce178a35410575558cf91064c6c7d9383451aafb605be06600c76430856479a",
+  "title": "Chuyến bay của Chủ tịch Tập Cận Bình sang Mỹ bằng Boeing 747 khiến ông Trump phải trầm trồ “Thật tuyệt vời”, nhà lãnh đạo Trung Quốc nói \"nhờ Nga\"",
+  "tier": 1,
+  "reason": "watchlist:MACRO_GEO:MY",
+  "domain": "cafef.vn"
+ },
+ "6": {
+  "article_id": "bad2e7c8cef864c03a640c79f81a1d72b89792b17dcdb2e7f16e26fea83c2af7",
+  "title": "Chứng khoán phiên 29/9: Bluechips vẫn yếu, khớp lệnh sàn HoSE chỉ đạt 10.300 tỷ đồng",
+  "tier": 1,
+  "reason": "watchlist:ASSET_CLASS:CO_PHIEU",
+  "domain": "baodautu.vn"
+ },
+ "7": {
+  "article_id": "09fe3883786e86d4bdb7de8c3859848af460773c3cd68fdd6f76b9b90476ecf3",
+  "title": "SSI gọi tên loạt doanh nghiệp có lợi nhuận quý III tăng hai tới ba chữ số",
+  "tier": 1,
+  "reason": "watchlist:TICKER:SSI",
+  "domain": "vietnambiz.vn"
+ },
+ "8": {
+  "article_id": "b4c74df4c5addd0f3d75b9a931003c99f5ac4a7f75e073c319a1fe8167a32b7a",
+  "title": "Mỹ: Giá nhiên liệu tăng vọt, bang Texas ban bố tình trạng thảm họa",
+  "tier": 1,
+  "reason": "watchlist:MACRO_GEO:MY",
+  "domain": "cafef.vn"
+ },
+ "9": {
+  "article_id": "bd90798617460178e2ba7090dfab08062775d7fff19e3614ed00f4dd7501d248",
+  "title": "Hà Nội đưa khoa học công nghệ thành động lực tăng trưởng",
+  "tier": 1,
+  "reason": "watchlist:IND_GICS1:CONG_NGHE",
+  "domain": "thoibaotaichinhvietnam.vn"
+ },
+ "10": {
+  "article_id": "aa87cafeb8725c0c79835cdec0d3f881ef41a270615f6c102ae4b71c3822219d",
+  "title": "Phiên 29/9: Khối ngoại liên tiếp bán ròng, \"xả\" gần 250 tỷ đồng tại một mã ngân hàng",
+  "tier": 1,
+  "reason": "watchlist:ASSET_CLASS:CO_PHIEU",
+  "domain": "cafef.vn"
+ },
+ "11": {
+  "article_id": "516d632402d481a7e20eb893cfb0a10802a41fc3b1addb90b9aae7cc95f07b3f",
+  "title": "Quỹ ngoại: Hiệu suất đầu tư kém do mức độ tập trung bất thường của diễn biến VN-Index",
+  "tier": 1,
+  "reason": "watchlist:INDEX:VNINDEX",
+  "domain": "vneconomy.vn"
+ },
+ "12": {
+  "article_id": "33845c415520bdc9740c3776e29b05fde264c48b9e5d05352d1048fafa77ae0d",
+  "title": "Vinh danh Nhà phát triển bất động sản công nghiệp xanh dẫn đầu năm 2026",
+  "tier": 1,
+  "reason": "watchlist:ASSET_CLASS:BAT_DONG_SAN_TAI_SAN",
+  "domain": "baodautu.vn"
+ },
+ "13": {
+  "article_id": "3687eb436f85132e5ed22f849b70f1485c127eb0b4bc83e4372fbd024e7cf6eb",
+  "title": "Đề xuất tài xế xe công nghệ tham gia bảo hiểm xã hội bắt buộc",
+  "tier": 1,
+  "reason": "watchlist:IND_GICS1:CONG_NGHE",
+  "domain": "thoibaotaichinhvietnam.vn"
+ },
+ "14": {
+  "article_id": "e118e272ffd21081a8d3642348d65d6414efa3d512fa1401cb3fd060deb13ddd",
+  "title": "Thu hút FDI và sự chuyển động của thị trường bất động sản khu công nghiệp",
+  "tier": 1,
+  "reason": "watchlist:ASSET_CLASS:BAT_DONG_SAN_TAI_SAN",
+  "domain": "vneconomy.vn"
+ },
+ "15": {
+  "article_id": "28bced63417f02cdcb89286805ffb00164028f0dc8c5805d6babfb2197bf7406",
+  "title": "Sàng lọc 5 cổ phiếu hưởng lợi lớn từ mặt bằng lãi suất cao",
+  "tier": 1,
+  "reason": "watchlist:ASSET_CLASS:CO_PHIEU",
+  "domain": "vneconomy.vn"
+ }
+}

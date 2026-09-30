@@ -1,0 +1,130 @@
+[
+  {
+    "i": 0,
+    "s": "PNJ và NVL giảm sàn với áp lực bán rất lớn. Kế hoạch lỗ lớn của PNJ và nhu cầu huy động cấp vốn của Novaland làm tăng lo ngại thanh khoản.",
+    "sn": "neg",
+    "ms": 0.95,
+    "k": ["PNJ dự kiến lỗ sau thuế 2026 khoảng 6.271 tỷ đồng", "NVL huy động dự kiến 8.007 tỷ đồng để xử lý nợ", "Hai cổ phiếu giảm sàn với lượng dư bán rất lớn"],
+    "c": [0, 1, 2, 3, 4, 8, 9, 10, 11, 12]
+  },
+  {
+    "i": 1,
+    "s": "VietQRGlobal thúc đẩy thanh toán bán lẻ xuyên biên giới bằng QR, hỗ trợ du lịch và kết nối hạ tầng tài chính Việt Nam với thị trường quốc tế.",
+    "sn": "pos",
+    "ms": 0.55,
+    "k": ["Thanh toán QR giúp giảm rào cản giao thương và chi tiêu", "Hệ thống chính thức tăng minh bạch dòng ngoại tệ", "Doanh nghiệp nhỏ có thêm cơ hội kinh doanh xuyên biên giới"],
+    "c": [0, 1, 2, 3]
+  },
+  {
+    "i": 2,
+    "s": "Miza Nghi Sơn tăng trưởng lợi nhuận mạnh trong bối cảnh nợ tăng. Các hệ số thanh toán cải thiện, nhưng nợ vay và quy mô nợ vẫn lớn.",
+    "sn": "pos",
+    "ms": 0.72,
+    "k": ["Lợi nhuận 6 tháng 2026 tăng 77% lên 80 tỷ đồng", "Tổng nợ tăng 31% lên 3.422 tỷ đồng", "Thanh toán lãi vay tăng lên 1,96 lần, thanh toán nhanh vẫn dưới 1"],
+    "c": [2, 3, 4, 5, 6]
+  },
+  {
+    "i": 3,
+    "s": "Trung Quốc công bố thử nghiệm 116 drone tự hành dưới nước phối hợp đồng thời, đạt kỷ lục về khả năng vận hành đồng loạt.",
+    "sn": "pos",
+    "ms": 0.28,
+    "k": ["116 thiết bị hoàn thành đội hình tự động trong 34 phút", "Công nghệ hỗ trợ ứng dụng khảo sát đáy biển và đường ống", "Thử nghiệm thể hiện tiến bộ điều phối phương tiện không người lái"],
+    "c": [0, 3, 4, 5, 11]
+  },
+  {
+    "i": 4,
+    "s": "Tỷ giá euro giảm mạnh tại các ngân hàng và thị trường tự do, phản ánh sự suy yếu của đồng tiền châu Âu so với VND.",
+    "sn": "neg",
+    "ms": 0.48,
+    "k": ["Giá mua euro tại ngân hàng giảm khoảng 41-60 đồng", "Tỷ giá chợ đen cũng giảm hơn 50 đồng ở hai chiều", "Dải giao dịch ngân hàng còn rộng giữa các tổ chức"],
+    "c": [0, 1, 2, 3, 4, 5, 6, 7, 9]
+  },
+  {
+    "i": 5,
+    "s": "Becamex Group sẽ góp thêm 266,34 tỷ đồng vào Becamex Bình Phước, duy trì tỷ lệ sở hữu 40%. Song song, doanh nghiệp phát hành 710 tỷ đồng trái phiếu để tái cơ cấu nợ.",
+    "sn": "neu",
+    "ms": 0.76,
+    "k": ["Góp vốn tăng vốn điều lệ Becamex Bình Phước lên 3.364,2 tỷ đồng", "Phát hành 710 tỷ đồng trái phiếu kỳ hạn 3 năm", "710 tỷ đồng dùng để thanh toán các khoản vay ngắn hạn"],
+    "c": [0, 3, 4, 5, 10, 11, 12, 13, 14]
+  },
+  {
+    "i": 6,
+    "s": "Vàng và bitcoin đều giảm mạnh do lợi suất Mỹ tăng cao và kỳ vọng Fed siết tiền tệ. Dù vậy, vàng vẫn giữ nhu cầu dài hạn và bitcoin tăng hơn 40% trong quý III.",
+    "sn": "neg",
+    "ms": 0.86,
+    "k": ["Vàng giảm 3,3% xuống 4.135 USD/ounce", "Bitcoin thủng 83.000 USD", "Lợi suất Mỹ 10 năm đạt 5,23%, cao nhất từ 2007"],
+    "c": [0, 1, 2, 4, 5, 6, 7, 8, 10, 12, 13]
+  },
+  {
+    "i": 7,
+    "s": "Lãi suất vay cao khiến người trẻ chuyển từ mua sang thuê nhà để kiểm soát dòng tiền. Thanh khoản bất động sản có dấu hiệu chậm lại và doanh nghiệp thích nghi sản phẩm.",
+    "sn": "neg",
+    "ms": 0.7,
+    "k": ["Lãi suất vay mới tăng lên 8,4-10,7%/năm", "Người trẻ ưu tiên thuê để dành tiền tích lũy", "Bất động sản cần sản phẩm vừa túi tiền và chính sách thanh toán linh hoạt hơn"],
+    "c": [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 14]
+  },
+  {
+    "i": 8,
+    "s": "Hà Nội đã giải ngân 99.100 tỷ đồng vốn đầu tư công, đạt 82,7% kế hoạch Chính phủ. Thành phố tiếp tục tháo gỡ mặt bằng và thủ tục để bảo đảm hiệu quả giải ngân.",
+    "sn": "pos",
+    "ms": 0.82,
+    "k": ["Giải ngân đạt 82,7% kế hoạch và 61% dự toán thành phố", "Đầu tư công hướng tới giao thông và hạ tầng chiến lược", "Mặt bằng và thủ tục vẫn là các điểm nghẽn cần tháo gỡ"],
+    "c": [2, 3, 4, 5, 6, 7, 10, 11, 12, 13, 14]
+  },
+  {
+    "i": 9,
+    "s": "Kenya đấu thầu mở phát triển Mrima Hill, nơi có khoảng 105 triệu tấn quặng đất hiếm và niobi. Mỹ và Trung Quốc cạnh tranh quyền kiểm soát chuỗi giá trị khoáng sản.",
+    "sn": "neu",
+    "ms": 0.78,
+    "k": ["Tài nguyên Mrima Hill được định giá khoảng 62,4 tỷ USD", "Trung Quốc nắm khoảng 85% công suất tinh luyện đất hiếm toàn cầu", "Khai thác phải cân bằng lợi ích địa phương và môi trường"],
+    "c": [0, 2, 3, 5, 6, 9, 10, 11, 12, 15, 16, 17]
+  },
+  {
+    "i": 10,
+    "s": "Năm cá nhân chuyển gần 4,43 triệu cổ phiếu VIC, trị giá khoảng 1.028 tỷ đồng, vào VIG. Giao dịch làm tỷ lệ sở hữu của VIG tăng nhẹ lên 32,526%.",
+    "sn": "neu",
+    "ms": 0.78,
+    "k": ["VIG tăng sở hữu lên khoảng 32,526% Vingroup", "Giao dịch dự kiến thực hiện từ 1 đến 30/10/2026", "Phạm Nhật Vượng sở hữu 94,8% VIG"],
+    "c": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13]
+  },
+  {
+    "i": 11,
+    "s": "Năm cá nhân góp 4,43 triệu cổ phiếu VIC vào VIG, tương đương khoảng 1.028 tỷ đồng. VIG vẫn là cổ đông lớn nhất của Vingroup với tỷ lệ sở hữu dự kiến 32,526%.",
+    "sn": "neu",
+    "ms": 0.78,
+    "k": ["Giao dịch tập trung vào công ty do Phạm Nhật Vượng kiểm soát", "VIG nâng sở hữu lên gần 2,525 tỷ cổ phiếu VIC", "Cơ cấu sở hữu Vingroup khá tập trung"],
+    "c": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+  },
+  {
+    "i": 12,
+    "s": "VIG nhận chuyển 4,43 triệu VIC trị giá khoảng 1.028 tỷ đồng và tiếp tục là cổ đông lớn nhất Vingroup. Giao dịch không làm thay đổi đáng kể quyền kiểm soát hiện tại.",
+    "sn": "neu",
+    "ms": 0.72,
+    "k": ["Tỷ lệ sở hữu VIG tăng từ 32,468% lên 32,526%", "VIG đồng thời nắm 32,9% VinFast", "Phạm Nhật Vượng sở hữu phần lớn VIG"],
+    "c": [0, 1, 2, 3, 4, 5, 6, 7]
+  },
+  {
+    "i": 13,
+    "s": "USD trong nước ổn định, trong khi DXY phục hồi nhờ lợi suất Mỹ tăng và kỳ vọng Fed thắt chặt. Thị trường theo dõi khả năng RBI và RBA tiếp tục tăng lãi suất.",
+    "sn": "neu",
+    "ms": 0.68,
+    "k": ["Tỷ giá trung tâm USD giảm 2 đồng lên 25.630 VND/USD", "DXY tăng nhẹ lên 101,21 điểm", "Lạm phát Ấn Độ và Úc thúc đẩy kỳ vọng tăng lãi suất"],
+    "c": [0, 1, 3, 4, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
+  },
+  {
+    "i": 14,
+    "s": "Giá vàng trong nước giảm sâu về gần 140 triệu đồng/lượng, trong khi vàng thế giới duy trì dưới 4.135 USD/ounce. Lực bán được cho là do Fed cứng hơn và USD mạnh.",
+    "sn": "neg",
+    "ms": 0.8,
+    "k": ["Giá vàng miếng SJC giảm 1,4 triệu đồng/lượng", "Vàng quốc tế giảm về vùng 4.126-4.134 USD/ounce", "Nhu cầu dài hạn vẫn hỗ trợ giá vàng"],
+    "c": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+  },
+  {
+    "i": 15,
+    "s": "Vàng thế giới giảm gần 4% xuống 4.111 USD/ounce do lợi suất Mỹ tăng kỷ lục và kỳ vọng Fed tiếp tục tăng lãi suất. Thị trường chờ dữ liệu PCE và việc làm để đánh giá chính sách.",
+    "sn": "neg",
+    "ms": 0.9,
+    "k": ["Giá vàng giảm tới 4% trong phiên 28/9", "Lợi suất Mỹ 10 năm chạm đỉnh từ 2007", "Thị trường định giá 70% khả năng Fed tăng lãi suất tháng 10"],
+    "c": [0, 2, 3, 4, 5]
+  }
+]

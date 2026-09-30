@@ -69,3 +69,21 @@ Cố định quy chuẩn **100 bài / batch**:
 ## 5. Cấm Tuyệt Đối Giả Lập Trí Tuệ Agent Bằng Heuristic Script (No Script Emulation)
 - **Tuyệt đối không viết script Python để tự sinh kết quả phân tích**: Không dùng regex hay heuristic rules trong mã lệnh để bypass LLM và sinh output JSON tóm tắt/hàm ý.
 - **Vùng độc quyền của LLM**: Xử lý ngữ nghĩa sâu, nhận diện đối tượng mơ hồ, tóm tắt, suy luận hàm ý tài chính và phân loại sắc thái là vùng trí tuệ độc quyền của LLM.
+
+---
+
+## 6. Chính Sách Định Tuyến OpenRouter Thử Nghiệm (OpenRouter Zero-Cost Testing Invariants)
+
+Trong giai đoạn thử nghiệm độc lập API OpenRouter (chưa tích hợp đa provider vào cùng workflow):
+
+1. **Cặp Đôi Mô Hình Thuần OpenRouter $0 (Pure OpenRouter Dual-Model)**:
+   - **Tầng 1 (Primary — $0)**: `stealth/space-bunny-alpha` (Ưu tiên số 1 cho bóc tách thực thể sâu, tóm tắt và phân tích hàm ý thị trường; tận dụng context 1M và chi phí $0).
+   - **Tầng 2 (Fallback — $0)**: `openrouter/free` (Chốt chặn tự động điều hướng sang cụm server 550B rảnh rỗi như Nemotron 550B khi Stealth bảo trì hoặc nghẽn tải, triệt tiêu 100% lỗi HTTP 429 upstream).
+   - *Phạm vi giai đoạn hiện tại*: Tuyệt đối không tích hợp hay gọi chéo các provider trả phí khác (DeepSeek, OpenAI); chỉ đánh giá và khai thác độc lập năng lực của OpenRouter API.
+
+2. **Quy Chuẩn Tham Số Chống Cắt Cụt JSON (Anti-Truncation Contract)**:
+   - **BẮT BUỘC `max_tokens >= 1000`** (khuyến nghị `1200`): Thực nghiệm chứng minh các mô hình phân tích sâu viết tiếng Việt chi tiết; nếu đặt `max_tokens <= 600` sẽ bị cắt cụt JSON giữa chừng gây hỏng pipeline.
+   - **BẮT BUỘC `temperature = 0.1`**: Đảm bảo tính tất định cao nhất, triệt tiêu ảo giác (hallucination).
+   - **Bảo Vệ Schema Tại Cổng**: Luôn áp dụng hàm bóc tách regex làm sạch Markdown codeblock và kiểm định đúng cấu trúc compact `v2-lean` gồm 8 trường (`i`, `e`, `s`, `k`, `im`, `sn`, `ts`, `c`) trước khi chuyển tiếp cho Expander; tuyệt đối không yêu cầu hay kiểm định các trường đã ngừng áp dụng (`materiality_score`, `event_type`, `impact_area`).
+
+

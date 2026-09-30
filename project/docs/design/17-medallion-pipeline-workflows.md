@@ -149,7 +149,7 @@ Tầng Gold là vùng trí tuệ nhân tạo (Subagents LLM) đảm nhận bóc 
                                          • `key_points`: lập luận tài chính riêng (KHÔNG sao chép citations).
                                          • `implication`: tác động doanh nghiệp / dòng tiền / cổ phiếu.
                                          • `sentiment`: positive / negative / neutral.
-                                         • `materiality_score`: thang số thực 0.1 – 1.0.
+                                         • `time_sensitivity`: urgent / today / this_week / this_month / archive.
                                          • `citations`: >= 2 chuỗi con nguyên bản exact substring (>= 20 ký tự).
                                           │
                                           ▼

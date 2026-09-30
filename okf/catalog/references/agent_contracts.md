@@ -35,7 +35,7 @@ Nhờ vậy agent có thể là bất kỳ provider nào; repo không chứa l�
 |---|---|---|
 | `silver-v1.schema.json` | clean base sau chuẩn hoá | producer |
 | `work-package-v1.schema.json` | INPUT giao agent (trỏ raw, không inline) | producer |
-| `agent-output-v1.schema.json` | OUTPUT Lớp 2 (tóm tắt/hàm ý/materiality/citations) | agent |
+| `agent-output-v1.schema.json` | OUTPUT Lớp 2 v1 legacy (tóm tắt/hàm ý/citations; `materiality` đã ngừng) | agent |
 | `l1-entity-output-v1.schema.json` | OUTPUT Lớp 1 (thực thể trong tiêu đề) | agent |
 | `task-lifecycle-v1.yaml` | vòng đời task + **ngưỡng DoD** | spec |
 

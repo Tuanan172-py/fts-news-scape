@@ -1,0 +1,130 @@
+[
+  {
+    "i": 0,
+    "s": "EVN đầu tư 21.101 tỷ đồng xây thủy điện tích năng Bác Ái 1.200MW, dù địa chất khó và tiến độ có hạn chế.",
+    "sn": "neu",
+    "ms": 0.92,
+    "k": ["Dự án tạo cơ hội đầu tư lớn cho các nhà thầu nội địa", "Khó khăn địa chất làm giảm tốc độ đào hầm nhưng không ảnh hưởng tiến độ chung"],
+    "c": [0, 1, 9, 10, 15]
+  },
+  {
+    "i": 1,
+    "s": "MBS dự phóng nhóm dầu khí quý III/2026 tích cực nhờ vốn đầu tư, cước vận tải và nền lợi nhuận lọc dầu thấp.",
+    "sn": "pos",
+    "ms": 0.95,
+    "k": ["PVS tăng trưởng nhờ chuyển backlog thành doanh thu và có thể hoàn nhập dự phòng", "PVT hưởng lợi từ cước vận tải cao, còn GAS tăng trưởng nhưng giảm theo quý", "BSR có tăng trưởng lợi nhuận 404% nhờ nền thấp"],
+    "c": [0, 5, 8, 10, 14, 18, 22]
+  },
+  {
+    "i": 2,
+    "s": "FPT tăng mạnh cổ đông và tiếp tục tăng trưởng lợi nhuận, trong khi giá cổ phiếu giảm sâu, phản ánh tâm lý nhà đầu tư thận trọng.",
+    "sn": "neu",
+    "ms": 0.88,
+    "k": ["Kinh doanh công nghệ và xuất khẩu tiếp tục tăng trưởng hai chữ số", "Cổ phiếu giảm mạnh dù lợi nhuận tăng, cho thấy định giá và tâm lý thị trường còn thận trọng"],
+    "c": [0, 2, 4, 10, 14, 15]
+  },
+  {
+    "i": 3,
+    "s": "FPT tăng mạnh cổ đông và tiếp tục tăng trưởng lợi nhuận, trong khi giá cổ phiếu giảm sâu, phản ánh tâm lý nhà đầu tư thận trọng.",
+    "sn": "neu",
+    "ms": 0.88,
+    "k": ["Kinh doanh công nghệ và xuất khẩu tiếp tục tăng trưởng hai chữ số", "Cổ phiếu giảm mạnh dù lợi nhuận tăng, cho thấy định giá và tâm lý thị trường còn thận trọng"],
+    "c": [0, 2, 4, 10, 14, 15]
+  },
+  {
+    "i": 4,
+    "s": "Quảng Ngãi đấu giá thành công 12/28 mỏ, trong đó doanh nghiệp trúng hai mỏ đá với tổng giá trị hơn 855 tỷ đồng.",
+    "sn": "pos",
+    "ms": 0.75,
+    "k": ["Giá đất khoáng sản trúng đấu rất cao so với mức khởi điểm", "Thị trường khoáng sản xây dựng có tính phân hóa do nhiều mỏ không đủ điều kiện đấu giá"],
+    "c": [2, 3, 12, 13, 14, 15]
+  },
+  {
+    "i": 5,
+    "s": "KCN thế hệ mới mở ra cơ hội FDI nhưng đòi hỏi vốn đầu tư lớn, ESG, năng suất và thủ tục nhanh hơn.",
+    "sn": "neu",
+    "ms": 0.82,
+    "k": ["Hạ tầng xanh và bền vững trở thành yêu cầu cạnh tranh cốt lõi", "Thủ tục cấp phép chậm làm giảm lợi thế tốc độ và có thể khiến dự án FDI đình trệ"],
+    "c": [5, 13, 14, 19, 22, 24]
+  },
+  {
+    "i": 6,
+    "s": "Giải ngân các dự án giao thông trọng điểm mới đạt 40,7%, thấp hơn đáng kể mức bình quân quốc gia, tạo áp lực lớn cho quý IV.",
+    "sn": "neg",
+    "ms": 0.95,
+    "k": ["42 dự án chưa đạt 40% giải ngân, tiềm ẩn chậm triển khai", "Vướng mặt bằng, vật liệu, nhân lực và phê duyệt là nguyên nhân chính", "Hai dự án đường sắt được đề xuất giảm hơn 72.000 tỷ đồng kế hoạch vốn"],
+    "c": [0, 2, 4, 10, 11, 15, 18]
+  },
+  {
+    "i": 7,
+    "s": "TP.HCM kết hợp hội chợ trực tiếp và nền tảng số để mở rộng xuất khẩu, cải thiện kết nối doanh nghiệp với nhà mua quốc tế.",
+    "sn": "pos",
+    "ms": 0.78,
+    "k": ["Nền tảng dữ liệu và AI hỗ trợ tìm kiếm đối tác và phân tích nhu cầu", "Xuất khẩu và sản xuất công nghiệp của TP.HCM tiếp tục tăng trưởng"],
+    "c": [0, 6, 8, 13, 15]
+  },
+  {
+    "i": 8,
+    "s": "Nghiên cứu cho thấy phục hồi rừng sau khai khoáng có thể tạo giá trị carbon, nhưng hiệu quả phụ thuộc điều kiện địa chất và khung pháp lý.",
+    "sn": "pos",
+    "ms": 0.68,
+    "k": ["Bãi thải than và apatit khó phục hồi hơn bauxite", "Rừng phục hồi có tiềm năng hấp thụ và thương mại hóa tín chỉ carbon", "Cần dữ liệu đáng tin cậy và quản trị thống nhất để mở rộng tài chính"],
+    "c": [2, 6, 11, 15, 17, 18]
+  },
+  {
+    "i": 9,
+    "s": "TP.HCM chuyển chương trình OCOP từ mở rộng số lượng sang nâng cao chất lượng, giá trị và khả năng cạnh tranh xuất khẩu.",
+    "sn": "pos",
+    "ms": 0.72,
+    "k": ["Rà soát và phân hạng lại các sản phẩm OCOP theo tiêu chí mới", "Chương trình hỗ trợ chuyển đổi số, thương hiệu, du lịch và xuất khẩu"],
+    "c": [0, 3, 5, 6, 7, 11]
+  },
+  {
+    "i": 10,
+    "s": "TP.HCM cần chuyển từ mở rộng sản lượng cảng sang chiếm các khâu dịch vụ hàng hải giá trị cao và phát triển năng lượng sạch.",
+    "sn": "neu",
+    "ms": 0.8,
+    "k": ["TP.HCM có lợi thế cảng logistics nhưng còn thiếu tài chính, bảo hiểm và công nghệ hàng hải", "Hạ tầng cảng có nguy cơ quá tải khi lượng hàng tăng gấp đôi", "Cơ hội mới đến từ điện gió, LNG, carbon và du lịch biển"],
+    "c": [2, 4, 6, 7, 8, 10]
+  },
+  {
+    "i": 11,
+    "s": "Bộ Nông nghiệp và Môi trường đề nghị rà soát 23 dự án tồn đọng của Novaland, gồm hai dự án hơn 166 ha tại TP.HCM.",
+    "sn": "neg",
+    "ms": 0.9,
+    "k": ["Vướng đất đai, nghĩa vụ tài chính và thủ tục pháp lý khiến dự án bị chậm", "The Water Bay đã đầu tư hạ tầng và 506 căn nhưng vẫn đình trệ", "Hai dự án có quy mô doanh thu ước tính rất lớn nếu được tháo gỡ"],
+    "c": [0, 2, 5, 7, 8, 11, 13]
+  },
+  {
+    "i": 12,
+    "s": "VN-Index giảm nhẹ trong phiên 29/9, thanh khoản thấp và áp lực bán rộng cho thấy thị trường chưa thể hồi phục.",
+    "sn": "neg",
+    "ms": 0.91,
+    "k": ["Thanh khoản giảm hơn 20% về khối lượng và 18% về giá trị", "Khối ngoại bán ròng ở ngân hàng và bluechip", "Dòng tiền yếu khiến thị trường có thể tiếp tục điều chỉnh"],
+    "c": [0, 1, 3, 5, 6, 8]
+  },
+  {
+    "i": 13,
+    "s": "Chủ tịch Đèo Cả cảnh báo PPP cao tốc có thể khó khăn kéo dài nếu lưu lượng thấp hơn dự phóng, đòi hỏi thiết kế tài chính và phân bổ rủi ro từ đầu.",
+    "sn": "neu",
+    "ms": 0.86,
+    "k": ["Giai đoạn 2026-2030 cần khoảng 1,2 triệu tỷ đồng cho cao tốc", "PPP cần dữ liệu lưu lượng và cơ chế chia sẻ rủi ro minh bạch", "Mở rộng cao tốc cần bảo đảm kết nối và trách nhiệm dài hạn"],
+    "c": [0, 2, 4, 6, 10, 12, 15]
+  },
+  {
+    "i": 14,
+    "s": "Thành phố Quảng Ninh hướng đến mô hình đô thị thông minh, bền vững và chuyển đổi số, đồng thời thu hút khoảng 100.000 tỷ đồng vốn đầu tư.",
+    "sn": "pos",
+    "ms": 0.85,
+    "k": ["Quy hoạch đến 2050 định hướng phát triển đa trung tâm, xanh và thông minh", "Địa phương chọn lọc dự án công nghệ, giá trị cao và phát thải thấp", "24 công trình với giá trị khoảng 47.000 tỷ đồng đã được khởi công hoặc hoàn thành"],
+    "c": [0, 3, 5, 8, 10, 11]
+  },
+  {
+    "i": 15,
+    "s": "Stavian chọn Cushman & Wakefield nghiên cứu Stavian Digital Park, dự án trung tâm dữ liệu AI và điện toán đám mây quy mô lớn tại TP.HCM.",
+    "sn": "pos",
+    "ms": 0.9,
+    "k": ["Dự án dự kiến 300MW điện và 300 ha, tập trung vào AI và cloud", "Nghiên cứu sẽ đánh giá hạ tầng, pháp lý và mô hình tài chính", "Nhu cầu trung tâm dữ liệu Việt Nam tăng nhanh trong bối cảnh kinh tế số"],
+    "c": [0, 1, 2, 3, 4, 5]
+  }
+]
