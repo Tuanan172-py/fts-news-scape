@@ -194,13 +194,25 @@ def load_candidates(conn: sqlite3.Connection, *, date: str | None, limit: int,
     Returns:
         Danh sách bản ghi bài viết.
     """
-    sql = [
-        "SELECT a.url_title_hash AS article_id, a.title, a.published_at,",
-        "       a.source_domain, w.package_path, a.content_text",
-        "FROM articles a",
-        "LEFT JOIN work_items w ON w.article_id = a.url_title_hash",
-        "WHERE (w.package_path IS NOT NULL OR (a.content_text IS NOT NULL AND length(a.content_text) > 100))",
-    ]
+    cols = {row[1] for row in conn.execute("PRAGMA table_info(articles)").fetchall()}
+    has_content = "content_text" in cols
+
+    if has_content:
+        sql = [
+            "SELECT a.url_title_hash AS article_id, a.title, a.published_at,",
+            "       a.source_domain, w.package_path, a.content_text",
+            "FROM articles a",
+            "LEFT JOIN work_items w ON w.article_id = a.url_title_hash",
+            "WHERE (w.package_path IS NOT NULL OR (a.content_text IS NOT NULL AND length(a.content_text) > 100))",
+        ]
+    else:
+        sql = [
+            "SELECT a.url_title_hash AS article_id, a.title, a.published_at,",
+            "       a.source_domain, w.package_path",
+            "FROM articles a",
+            "JOIN work_items w ON w.article_id = a.url_title_hash",
+            "WHERE w.package_path IS NOT NULL",
+        ]
     params: list = []
     if only_pending:
         sql.append(f"  AND NOT EXISTS (SELECT 1 FROM l1_outputs o "

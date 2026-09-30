@@ -44,7 +44,7 @@ MIN_PARAGRAPH_CHARS = 40
 # Trước đây chạm thì bỏ nguyên đoạn. Nay **tách** đoạn tại ranh giới câu thay vì bỏ:
 # mỗi mảnh vẫn là chuỗi con nguyên văn nên bất biến nguyên văn được giữ, mà không mất
 # chữ nào. Bỏ một đoạn dài là mất đúng phần thường mang nhiều thông tin nhất.
-MAX_PARAGRAPH_CHARS = 1800
+MAX_PARAGRAPH_CHARS = 1600
 
 _QUANT_RE = re.compile(
     r"(?:\d+(?:[.,]\d+)?\s*%"
