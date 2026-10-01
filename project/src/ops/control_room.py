@@ -154,6 +154,8 @@ class ControlRoom:
         s, c, p, b = self.store, self.cfg, self.paths, self.breakers
         if path == "/api/labels":
             return 200, present.LABELS, "json"
+        if path == "/api/attention":
+            return 200, sv.state(s, c, p, b)["attention"], "json"
         if path == "/api/state":
             return 200, sv.state(s, c, p, b), "json"
         if path == "/api/map":

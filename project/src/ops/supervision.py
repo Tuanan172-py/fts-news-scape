@@ -12,7 +12,7 @@ from typing import Any
 from src.ops.breakers import Breakers
 from src.ops.config import OpsPaths
 from src.ops.order import load_order
-from src.ops.present import success_rate
+from src.ops.present import (BREAKER_STATE, FAILURE_CLASS, WAVE_STATUS, label, success_rate)
 from src.ops.store import OpsStore, now_vn, parse_iso
 
 AGENTS_DIR = Path(__file__).resolve().parents[3] / ".agents"
@@ -112,7 +112,7 @@ def state(store: OpsStore, cfg: dict, paths: OpsPaths, breakers: Breakers) -> di
     with store.conn() as c:
         unsent = c.execute("SELECT COUNT(*) FROM ops_alerts WHERE sent_at IS NULL").fetchone()[0]
         open_prop = c.execute("SELECT COUNT(*) FROM ops_proposals WHERE status = 'open'").fetchone()[0]
-    return {
+    snapshot = {
         "now": now_vn().isoformat(timespec="seconds"),
         "daemon": {"alive": age is not None and age < 180, "heartbeat_age_s": age},
         "paused": store.get_state("paused") == "1", "kill_switch": paths.kill_switch.exists(),
@@ -131,6 +131,82 @@ def state(store: OpsStore, cfg: dict, paths: OpsPaths, breakers: Breakers) -> di
                     "fail": int(store.get_state("fail_streak", "0") or 0)},
         "alerts_unsent": unsent, "proposals_open": open_prop,
     }
+    items = attention(store, snapshot)
+    snapshot["attention"] = items
+    snapshot["health"] = health_of(items)
+    return snapshot
+
+
+_SEVERITY_RANK = {"bad": 0, "warn": 1, "info": 2}
+
+
+def attention(store: OpsStore, st: dict) -> list[dict]:
+    """Liệt kê việc cần người xem, nặng trước.
+
+    Args:
+        store: Store vận hành.
+        st: Trạng thái đã gom (các khoá daemon, paused, kill_switch, breakers, mandate,
+            alerts_unsent, proposals_open).
+
+    Returns:
+        Danh sách {severity, title, action}; severity là bad, warn hoặc info.
+    """
+    items: list[dict] = []
+
+    def add(severity: str, title: str, action: str) -> None:
+        items.append({"severity": severity, "title": title, "action": action})
+
+    d = st["daemon"]
+    if not d["alive"]:
+        why = ("chưa chạy" if d["heartbeat_age_s"] is None
+               else f"im lặng {round(d['heartbeat_age_s'] / 60)} phút")
+        add("bad", f"Daemon {why}", "Start-ScheduledTask news-scape-ops")
+    if st["kill_switch"]:
+        add("bad", "Cờ AGY_STOP đang bật, không đợt nào được mở", "/unstop")
+    if st["paused"]:
+        add("warn", "Đang tạm dừng mở đợt mới", "/resume")
+    for b in st["breakers"]:
+        if b["state"] != "CLOSED":
+            sev = "bad" if b["reason"] == "AUTH" else "warn"
+            act = f"/reset {b['provider']}" if b["reason"] == "AUTH" else "chờ breaker tự thử lại"
+            add(sev, f"Breaker {b['provider']} {label(BREAKER_STATE, b['state']).lower()} "
+                     f"({label(FAILURE_CLASS, b['reason']).lower()})", act)
+    with store.conn() as c:
+        held = c.execute("SELECT wave_id, status, reason FROM ops_waves WHERE status IN "
+                         "('PARKED','FAILED') ORDER BY opened_at DESC LIMIT 5").fetchall()
+    for w in held:
+        add("bad" if w["status"] == "FAILED" else "warn",
+            f"Đợt {w['wave_id']} {label(WAVE_STATUS, w['status']).lower()}: "
+            f"{(w['reason'] or '')[:100]}", f"/retry {w['wave_id']} hoặc /cancel {w['wave_id']}")
+    m = st["mandate"]
+    if not m["exists"]:
+        add("info", "Chưa có mandate: daemon ở L0, không tự mở đợt", "/level L1")
+    elif m["days_left"] is not None and m["days_left"] <= 3:
+        add("warn", f"Mandate còn {m['days_left']} ngày", "/mandate")
+    if st["alerts_unsent"]:
+        add("warn", f"{st['alerts_unsent']} tin chưa gửi được tới Telegram",
+            "kiểm token và mã chat Telegram")
+    if st["proposals_open"]:
+        add("info", f"{st['proposals_open']} đề xuất cải tiến đang chờ quyết định",
+            "mở màn Cải tiến")
+    return sorted(items, key=lambda i: _SEVERITY_RANK[i["severity"]])
+
+
+def health_of(items: list[dict]) -> dict:
+    """Tóm tắt sức khoẻ tổng thể từ danh sách việc cần người.
+
+    Args:
+        items: Kết quả của `attention`.
+
+    Returns:
+        Từ điển {level, label}; level là ok, warn hoặc bad. Mục `info` không đổi mức.
+    """
+    levels = {i["severity"] for i in items}
+    if "bad" in levels:
+        return {"level": "bad", "label": "Sự cố"}
+    if "warn" in levels:
+        return {"level": "warn", "label": "Cần xem"}
+    return {"level": "ok", "label": "Khoẻ"}
 
 
 # ── bản đồ agent ─────────────────────────────────────────────────────────────

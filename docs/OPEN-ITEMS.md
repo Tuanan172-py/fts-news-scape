@@ -8,6 +8,47 @@
 
 ---
 
+## OPS-1. Vận hành tự chủ khi máy mở (ADR 0012 + sửa đổi 01/10, US-029) — việc còn lại, 2026-10-01
+
+Trạng thái:
+- Daemon `news-scape-ops` và watchdog `news-scape-ops-watchdog` đã cài, priority 4. Daemon đang ở **L0**: chỉ đo và báo, không tự tiêu token.
+- B2–B7 của hội đồng đã sửa, mỗi mục có test (`tests/test_ops_council_fixes.py`).
+- Đợt thật đầu tiên qua daemon (W10011351) DONE: 100/100 bài, nạp DB qua cổng `--finish`.
+
+Người vận hành làm, theo thứ tự (runbook `project/docs/operations/ops-daemon.md` §1):
+
+1. **[CHẶN L1] Telegram:** tạo bot với @BotFather, nhắn `/start` cho bot **trong chat riêng**, rồi chạy `python scripts/ops_daemon.py telegram --token <TOKEN>`. Chưa có bước này thì cảnh báo chỉ nằm trong `ops.db` và console.
+2. **Cấp quyền tự chủ:** `python scripts/ops_daemon.py order --level L1 --days 7`. Từ lúc này, máy mở và đủ điều kiện thì daemon tự chạy trọn đợt.
+3. (Tuỳ chọn) healthchecks.io, period 1 ngày, nếu muốn biết khi máy tắt lâu.
+4. **Ngoài phạm vi (task riêng của người vận hành):** khoảng 10,9 nghìn bài tồn đọng ngoài `lookback_days`. Giao hàng xlsx cấu hình theo người dùng (D11) cũng là story riêng.
+5. **ops-sentinel:** draft. Chấm 10 lần chẩn đoán thật để chuyển active (rule 07).
+6. **Ngoài phạm vi của US-029, chưa sửa:** diff chưa commit của `openrouter_runner.py` đặt `max_tokens: 24000`, trái ADR 0010 (hội đồng C6). Tệp này không do phiên ops viết.
+
+---
+
+## OPS-2. Giám sát multi-agent (ADR 0014, US-031) — việc còn lại, 2026-10-01
+
+Đã xong: vết `ops_spans`, Phòng điều khiển (`python scripts/ops_daemon.py open`, http://127.0.0.1:8787), bản tin giám sát, lệnh `/map /trace /agent /mandate /improve`, mandate 30 ngày tự gia hạn có điều kiện, hộp thư cải tiến.
+
+Người vận hành làm:
+
+1. **Thu hồi token bot Telegram.** Token đã nằm trong cuộc trò chuyện tạo bot. Vào @BotFather, `/revoke`, rồi `python scripts/ops_daemon.py telegram --token <TOKEN_MỚI>` và khởi động lại daemon.
+2. **Cấp mandate:** gõ `/level L1` trên Telegram rồi bấm **Xác nhận**. Từ lúc đó hệ thống tự chạy và tự gia hạn khi khoẻ. Lưu ý: ở L1, daemon sẽ tự xử lý bài ngày hôm nay và hôm qua; phiên OpenCode ghi 382 bài ngày 01/10 là việc người dùng tự xử lý, nên cân nhắc trước khi cấp.
+3. **Xem hộp thư cải tiến** (màn Cải tiến hoặc `/improve`). Đang có 1 đề xuất tự sinh từ dữ liệu thật: Bronze dead-letter tăng quá ngưỡng trong ngày.
+
+Việc kỹ thuật còn treo (chưa làm trong US-031):
+
+| Việc | Ghi chú |
+|---|---|
+| Nghiệm thu P0 bằng đợt thật qua daemon | Chưa có đợt nào chạy sau khi bật vết. Đợt đầu tiên ở L1 hoặc `/run` sẽ cho cây vết đầy đủ; các đợt cũ hiện hiển thị "chưa có span" |
+| Span cho runner OpenRouter và adapter `opencode_native_run.py` | Chỉ `AgyRunner` được đo. Đợt chạy bằng runner khác không có cây vết cấp lô |
+| `harness-auditor` lên active | Cần 10 lần chẩn đoán đúng theo rule 07. Hiện đề xuất do operator tất định `improvement-proposer` sinh |
+| Truy cập Phòng điều khiển từ xa (D-B) | Cần CNTT cho đường hầm có xác thực; Telegram `/map`, `/trace` thay tạm |
+| Thử Arize Phoenix qua OpenTelemetry (D-C) | Span đã giữ trường tương thích; cần một spike nhỏ |
+| Golden set chất lượng phân tích | Phòng điều khiển hiện chỉ đo độ phủ, độ trễ, token; không đo đúng sai |
+
+---
+
 ## A0. RÀ SOÁT END-TO-END 2026-09-17 — mất dữ liệu âm thầm & ngõ cụt trạng thái
 
 Rà soát toàn tuyến Bronze → Silver → L1 → Gold → giao hàng. Con số nền: **7.203 bài đã cào,
