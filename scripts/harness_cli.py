@@ -882,6 +882,36 @@ def cmd_git_verify(args: argparse.Namespace) -> dict[str, Any]:
     }
 
 
+def cmd_git_template(args: argparse.Namespace) -> dict[str, Any]:
+    """Sinh chuỗi thông điệp commit chuẩn ngành theo Conventional Commits 1.0.0."""
+    c_type = args.type.lower().strip()
+    scope = f"({args.scope.lower().strip()})" if getattr(args, "scope", None) else ""
+    story_suffix = f" ({args.story.upper().strip()})" if getattr(args, "story", None) else ""
+    title = args.title.strip()
+    if title and len(title) > 1:
+        title = title[0].lower() + title[1:]
+    elif title:
+        title = title.lower()
+    if title.endswith("."):
+        title = title[:-1].strip()
+
+    header = f"{c_type}{scope}: {title}{story_suffix}"
+    body = getattr(args, "body", None)
+    lines = [header]
+    if body:
+        lines.append("")
+        lines.append(body.strip())
+
+    full_message = "\n".join(lines)
+    return {
+        "status": "success",
+        "header": header,
+        "message": full_message,
+        "length": len(header),
+        "compliant_length": len(header) <= 72,
+    }
+
+
 # ---------------------------------------------------------------------------
 # CLI Argument Parser Setup
 # ---------------------------------------------------------------------------
@@ -1014,6 +1044,12 @@ def build_parser() -> argparse.ArgumentParser:
     git_chk.add_argument("--summary", required=True, help="Checkpoint summary message")
     git_chk.add_argument("--push", action="store_true", help="Push to remote after checkpoint commit")
     git_sub.add_parser("verify", help="Run pre-commit quality gate (AST, forbidden files, hygiene)")
+    git_tmpl = git_sub.add_parser("template", help="Generate a compliant Conventional Commit message")
+    git_tmpl.add_argument("--type", required=True, choices=["feat", "fix", "refactor", "perf", "docs", "test", "chore"], help="Commit type")
+    git_tmpl.add_argument("--scope", help="Commit scope (e.g. core, harness, article-lane)")
+    git_tmpl.add_argument("--story", help="Story ID (e.g. US-030)")
+    git_tmpl.add_argument("--title", required=True, help="Short commit description in imperative mood")
+    git_tmpl.add_argument("--body", help="Optional commit body explaining reason/context")
 
     # audit & propose
     audit_p = subparsers.add_parser("audit", help="Run harness drift & entropy audit")
@@ -1097,6 +1133,8 @@ def main() -> None:
                 res = cmd_git_checkpoint(args)
             elif args.git_action == "verify":
                 res = cmd_git_verify(args)
+            elif args.git_action == "template":
+                res = cmd_git_template(args)
         elif args.command == "audit":
             res = cmd_audit(args.db, check_codebase=getattr(args, "codebase", False))
         elif args.command == "propose":

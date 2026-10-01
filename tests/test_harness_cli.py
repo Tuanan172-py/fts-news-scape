@@ -33,6 +33,7 @@ from scripts.harness_cli import (
     cmd_git_status,
     cmd_git_verify,
     cmd_git_checkpoint,
+    cmd_git_template,
     calculate_score_trace,
     calculate_score_context,
 )
@@ -313,6 +314,20 @@ class TestHarnessCLI(unittest.TestCase):
         self.assertEqual(tr_res["status"], "success")
         self.assertIn("git_commit", tr_res)
         self.assertIn("git_branch", tr_res)
+
+    def test_git_template(self):
+        args = argparse.Namespace(
+            type="feat",
+            scope="core",
+            story="US-030",
+            title="Integrate git lifecycle.",
+            body="Context: connecting harness to git."
+        )
+        res = cmd_git_template(args)
+        self.assertEqual(res["status"], "success")
+        self.assertEqual(res["header"], "feat(core): integrate git lifecycle (US-030)")
+        self.assertTrue(res["compliant_length"])
+        self.assertIn("Context: connecting harness to git.", res["message"])
 
 
 if __name__ == "__main__":
