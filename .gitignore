@@ -65,6 +65,8 @@ __pycache__/
 scratch/
 **/scratch/
 .kilo/
+.opencode/
+**/exclude*.txt
 **/test1.py
 **/test_scratch*.py
 **/check_key*.py

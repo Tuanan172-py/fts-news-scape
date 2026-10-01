@@ -91,17 +91,54 @@ def has_vietnamese_diacritics(text: str) -> bool:
     return bool(_VIETNAMESE_DIACRITICS_RE.search(text or ""))
 
 
+def resolve_agy() -> str:
+    """Tìm đường dẫn tuyệt đối của `agy` trong mọi môi trường chạy.
+
+    PATH của người dùng có thể lưu `%LOCALAPPDATA%\\agy\\bin` ở dạng chưa bung biến. Shell
+    tương tác bung được, còn Task Scheduler thì không, nên `agy` trần báo WinError 2
+    khi chạy dưới `ops_daemon`. Thứ tự tìm: biến `AGY_BIN`, PATH hiện hành, PATH sau
+    khi bung biến môi trường, rồi các vị trí cài đặt đã biết.
+
+    Returns:
+        Đường dẫn tới `agy`, hoặc chuỗi `agy` khi không tìm được ở đâu.
+    """
+    explicit = os.environ.get("AGY_BIN")
+    if explicit and Path(explicit).exists():
+        return explicit
+    found = shutil.which("agy")
+    if found:
+        return found
+    for entry in os.environ.get("PATH", "").split(os.pathsep):
+        expanded = os.path.expandvars(entry.strip())
+        if expanded and expanded != entry:
+            hit = shutil.which("agy", path=expanded)
+            if hit:
+                return hit
+    local = Path(os.environ.get("LOCALAPPDATA", Path.home() / "AppData" / "Local"))
+    for cand in (local / "agy" / "bin" / "agy.exe", Path.home() / ".gemini" / "bin" / "agy.exe"):
+        if cand.exists():
+            return str(cand)
+    return "agy"
+
+
 def build_sandbox_profile(
     profile_dir: Path,
     core_text: str,
     work_dir: Path | None = None,
+    *,
+    agent_name: str = "article-processor",
+    description: str = "Chuyên gia phân tích tin tức tài chính và trích xuất thực thể",
+    instruction_guard: str | None = None,
 ) -> dict[str, Path]:
     """Khởi tạo cấu hình hồ sơ làm việc cô lập cho Antigravity CLI.
 
     Args:
         profile_dir: Thư mục gốc chứa hồ sơ worker.
-        core_text: Toàn văn nội dung tiền tố hệ thống ARTICLE_SYSTEM_CORE.
+        core_text: Toàn văn nội dung tiền tố hệ thống của agent.
         work_dir: Thư mục làm việc rỗng của tiến trình con (nếu có).
+        agent_name: Tên custom agent ghi vào hồ sơ.
+        description: Mô tả ngắn của agent.
+        instruction_guard: Khối quy tắc nối sau thân agent; None dùng quy tắc mảng JSON.
 
     Returns:
         Từ điển đường dẫn các tệp cấu hình đã khởi tạo.
@@ -111,18 +148,18 @@ def build_sandbox_profile(
     # 1. Agent definition toàn cục trong hồ sơ worker
     agents_dir = profile_dir / ".gemini" / "config" / "agents"
     agents_dir.mkdir(parents=True, exist_ok=True)
-    agent_path = agents_dir / "article-processor.md"
+    agent_path = agents_dir / f"{agent_name}.md"
 
     frontmatter = (
         "---\n"
-        "name: article-processor\n"
-        "description: Chuyên gia phân tích tin tức tài chính và trích xuất thực thể\n"
+        f"name: {agent_name}\n"
+        f"description: {description}\n"
         "tools: []\n"
         "excludeDefaultComponents: true\n"
         "inheritCustomizations: false\n"
         "---\n"
     )
-    instruction_guard = (
+    instruction_guard = instruction_guard if instruction_guard is not None else (
         "\n\n## QUY TẮC BẮT BUỘC:\n"
         "- Bạn là bộ xử lý JSON thuần túy (Prompt-in, JSON-out).\n"
         "- TUYỆT ĐỐI KHÔNG GỌI BẤT KỲ CÔNG CỤ NÀO (kể cả manage_task, run_code, schedule, v.v.).\n"
@@ -135,7 +172,7 @@ def build_sandbox_profile(
     if work_dir is not None:
         work_agents_dir = work_dir / ".agents" / "agents"
         work_agents_dir.mkdir(parents=True, exist_ok=True)
-        (work_agents_dir / "article-processor.md").write_text(agent_content, encoding="utf-8")
+        (work_agents_dir / f"{agent_name}.md").write_text(agent_content, encoding="utf-8")
 
     # 2. settings.json cô lập hoàn toàn quyền hạn
     cli_dir = profile_dir / ".gemini" / "antigravity-cli"
@@ -351,6 +388,58 @@ class AgyRunner:
         core_text: str | None = None,
         mock_subprocess: Any | None = None,
     ) -> AgyExecutionResult:
+        """Chạy một lô và ghi vết span `agent` khi có ngữ cảnh ghi vết của daemon.
+
+        Args:
+            batch_id: Mã định danh của lô.
+            task_path: Đường dẫn tệp task.json đầu vào.
+            out_dir: Thư mục ghi tệp kết quả đầu ra.
+            core_text: Nội dung quy chuẩn tiền tố hệ thống.
+            mock_subprocess: Đối tượng giả lập gọi lệnh phục vụ kiểm thử.
+
+        Returns:
+            Đối tượng AgyExecutionResult chứa trạng thái và số đo chi tiết.
+        """
+        from src.ops import trace as tracing
+
+        parent = os.environ.get(tracing.ENV_PARENT)
+        with tracing.span(f"lô {batch_id}", "agent", "article-processor",
+                          span_id=f"{parent}/{batch_id}" if parent else None,
+                          batch=batch_id, model=self.model, entrypoint="agy -p=",
+                          input_ref=str(task_path)) as sp:
+            res = self._run_batch_impl(batch_id, task_path, out_dir, core_text=core_text,
+                                       mock_subprocess=mock_subprocess)
+            meta: dict[str, Any] = {}
+            if res.status in ("OK", "PARTIAL"):
+                try:
+                    meta = json.loads((out_dir / f"{batch_id}.meta.json").read_text(encoding="utf-8"))
+                except (OSError, ValueError):
+                    meta = {}
+            sp.set(runner_status=res.status, items=len(res.records), usage=res.usage,
+                   latency_s=round(res.latency_seconds, 2), exit_code=res.exit_code,
+                   error=(res.error_message or "")[:200],
+                   items_total=meta.get("items_total"),
+                   tool_invoked=bool(meta.get("tool_invoked")),
+                   denied_actions=bool(meta.get("denied_actions")),
+                   attempts=meta.get("attempts"), prefix_hash=meta.get("prefix_hash"),
+                   output_ref=str(out_dir / f"{batch_id}.output.json") if meta else None)
+            if res.status == "PARTIAL":
+                sp.status = "partial"
+            elif res.status == "TIMEOUT":
+                sp.status = "timeout"
+            elif not res.ok:
+                sp.status = "fail"
+            return res
+
+    def _run_batch_impl(
+        self,
+        batch_id: str,
+        task_path: Path,
+        out_dir: Path,
+        *,
+        core_text: str | None = None,
+        mock_subprocess: Any | None = None,
+    ) -> AgyExecutionResult:
         """Thực thi phân tích một lô bài viết và ghi kết quả ra tệp.
 
         Args:
@@ -396,7 +485,7 @@ class AgyRunner:
         build_sandbox_profile(profile_dir, core_text, work_dir=work_dir)
 
         cmd = [
-            "agy",
+            resolve_agy(),
             "-p=",
             "--agent",
             "article-processor",
@@ -629,6 +718,9 @@ class AgyRunner:
             "usage": usage_data,
             "latency_seconds": round(latency, 2),
             "domain_errors": domain_errors,
+            "tool_invoked": tool_invoked,
+            "denied_actions": denied_actions,
+            "attempts": attempt + 1,
         }
         if tool_warning:
             meta_info["warning"] = tool_warning

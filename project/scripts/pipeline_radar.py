@@ -129,6 +129,39 @@ def wave_state(conn: sqlite3.Connection, manifest: dict) -> dict:
     return st
 
 
+def ops_summary() -> dict | None:
+    """Đọc trạng thái control plane từ `ops.db`, không làm hỏng radar khi chưa cài.
+
+    Returns:
+        Từ điển trạng thái daemon, hoặc None khi chưa có `ops.db`.
+    """
+    try:
+        from src.ops.breakers import Breakers
+        from src.ops.config import load_config, resolve_paths
+        from src.ops.order import load_order
+        from src.ops.reports import heartbeat_age_s
+        from src.ops.store import OpsStore
+
+        paths = resolve_paths()
+        if not paths.ops_db.exists():
+            return None
+        store = OpsStore(paths.ops_db)
+        cfg = load_config()
+        age = heartbeat_age_s(store)
+        with store.conn() as c:
+            unsent = c.execute("SELECT COUNT(*) FROM ops_alerts WHERE sent_at IS NULL"
+                               ).fetchone()[0]
+        return {"alive": age is not None and age < 180, "age": age,
+                "level": load_order(paths.standing_order).effective_level(),
+                "paused": store.get_state("paused") == "1",
+                "active": store.active_wave(),
+                "open_breakers": [b for b in Breakers(store, cfg["breaker"]).all()
+                                  if b.state != "CLOSED"],
+                "unsent": unsent}
+    except Exception:  # noqa: BLE001 — radar không được chết vì tầng vận hành
+        return None
+
+
 def cmd_status(args: argparse.Namespace) -> None:
     """Truy vấn điểm chạm hiện tại của Article Lane và đề xuất đúng lệnh kế tiếp.
 
@@ -262,8 +295,33 @@ def cmd_status(args: argparse.Namespace) -> None:
         print("   • Chưa có đợt nào được đóng gói.")
     print()
 
-    print("3. ĐIỂM CHẠM & LỆNH KẾ TIẾP")
+    ops = ops_summary()
+    print("3. VẬN HÀNH TỰ CHỦ (ops_daemon, ADR 0012)")
+    if ops is None:
+        print("   • Chưa cài: python scripts/ops_daemon.py once · scripts/ops_install.ps1")
+    else:
+        alive = ("🟢 sống" if ops["alive"] else
+                 (f"🔴 im lặng {ops['age'] / 60:.0f} phút" if ops["age"] is not None
+                  else "⚪ chưa chạy"))
+        print(f"   • Daemon      : {alive} · mức {ops['level']}"
+              f"{' · TẠM DỪNG' if ops['paused'] else ''}")
+        if ops["active"]:
+            a = ops["active"]
+            print(f"   • Đợt tự động : {a['wave_id']} · {a['status']}/{a['step']}")
+        for b in ops["open_breakers"]:
+            print(f"   • Breaker     : {b.provider} {b.state} ({b.reason}) mở lại "
+                  f"{b.reopen_at or 'khi reset'}")
+        print(f"   • Cảnh báo    : {ops['unsent']} chưa gửi · bảng điều khiển: "
+              f"python scripts/ops_console.py")
+    print()
+
+    print("4. ĐIỂM CHẠM & LỆNH KẾ TIẾP")
     recs: list[tuple[str, str, str]] = []
+    daemon_owns_waves = bool(ops and ops["alive"] and ops["level"] != "L0"
+                             and not ops["paused"])
+    if ops is not None and not ops["alive"]:
+        recs.append(("HIGH", "ops_daemon không chạy: không ai tự mở đợt hay báo sự cố.",
+                     "schtasks /Run /TN news-scape-ops"))
 
     if not probe.ok:
         recs.append(("MEDIUM", f"Phiên này không ghi được DB ({probe.reason}). Chuẩn bị đợt "
@@ -297,7 +355,11 @@ def cmd_status(args: argparse.Namespace) -> None:
 
     # Một đợt tại một thời điểm: đợt gần nhất chưa xong thì không mở đợt mới.
     wave_open = bool(wave and wave["next"])
-    if wave_open:
+    if daemon_owns_waves and (wave_open or pending_today):
+        recs.append(("INFO", f"ops_daemon ({ops['level']}) đang giữ việc mở và chạy đợt; "
+                             f"không mở đợt tay song song.",
+                     f"{PY} scripts/ops_daemon.py status"))
+    elif wave_open:
         recs.append(("HIGH", f"Đợt {wave['wave']}: {wave['phase']}.", wave["next"]))
     elif pending_today:
         new_wave = f"W{datetime.now():%m%d%H%M}"

@@ -234,6 +234,10 @@ def cmd_append(args: argparse.Namespace) -> int:
         quota_tokens = total_in + total_out
         billed_usd = round((total_in * 0.075 + total_out * 0.30) / 1e6, 6)
         conn = connect(args.db)
+        # Số của agy cộng từ mọi tệp meta của đợt nên đã là ảnh chụp trọn đợt: chạy lại
+        # `--finish` thay dòng cũ thay vì thêm dòng trùng.
+        conn.execute("DELETE FROM token_ledger WHERE wave IS ? AND batch_id IS ? "
+                     "AND agent_id = 'article-processor-agy'", (args.wave, args.batch))
         conn.execute(
             """INSERT INTO token_ledger
                (ts, wave, batch_id, agent_id, n_items, n_sessions, miss_tokens, hit_tokens,

@@ -12,7 +12,7 @@
 # cost_budget.tokens_per_item: định mức benchmark thực nghiệm (0 cho operator).
 
 version: 1
-updated: "2026-09-23"
+updated: "2026-10-01"
 schema_note: "Thêm agent = 1 entry ở đây + 1 skill + 1 stage pipeline.yaml + 1 story + KPI (rule 07)."
 
 # Model policy (ADR 0009 / quyết định D6, 2026-09-17): MỌI cognitive agent route về
@@ -33,6 +33,10 @@ agents:
     responsibility: >-
       Điều phối vòng đời end-to-end: đọc pipeline.yaml suy ra stage kế tiếp, áp chính sách
       wave chống 429, gọi cognitive agents qua invoke_subagent, chạy operators, ghi harness trace.
+    implementation: >-
+      Chạy không giám sát bằng `project/src/ops/daemon.py` (ADR 0012, 0014): Python tất định, 0 token,
+      workflow DBOS bền, breaker provider, heartbeat, vết `ops_spans`, Phòng điều khiển và Telegram
+      giám sát. Người vận hành chỉ giám sát và cải tiến. Phiên DSH/agy tương tác vẫn theo skill trên.
     owner_rules: ["04-harness-durable-invariants"]
 
   # ────────────────────── OPERATORS (0 token) ──────────────────────
@@ -372,6 +376,46 @@ agents:
     intent: "Đọc trend harness.db + agent_metrics -> soạn proposal + ADR draft cho Human duyệt (H5)."
     tier: normal
     owner_rules: ["04-harness-durable-invariants"]
+
+  - id: ops-sentinel
+    class: cognitive
+    status: draft
+    model: gemini-3.8-flash-low      # qua runner agy (ADR 0011 cho phép model này cho agy); ADR 0012
+    skill: .agents/skills/ops-sentinel/SKILL.md
+    stage_role: ops-loop
+    io_boundary:
+      read:  ["ops.db (40 sự kiện gần nhất, breaker, hàng đợt)", "ops_logs/waves/<đợt>/*.log (30 dòng cuối)"]
+      write: ["ops_events (sentinel.diagnosis) + ops_alerts (đề xuất kèm nút)"]
+    tools_allowed: []                # một lượt, không tool; hook PreToolUse từ chối mọi lượt gọi
+    dod_contract: "lệnh đề xuất thuộc danh sách trắng src/ops/sentinel.py::WHITELIST, ngoài danh sách thì ép về none"
+    cost_budget: { tokens_per_item: 6000, wave_batch: 1, concurrency: 1 }
+    kpis: [suggestion_accept_rate, suggestion_correct_rate]
+    intent: "Chẩn đoán sự cố vận hành và đề xuất đúng một lệnh; người bấm nút thì daemon mới thi hành."
+    activation_gate: "10 sự cố ghi lại, đề xuất đúng >= 8/10 thì chuyển active (rule 07)."
+    tier: normal
+    owner_rules: ["04-harness-durable-invariants"]
+
+  - id: improvement-proposer
+    class: operator
+    status: active
+    entrypoint: "project/src/ops/improve.py"
+    skill: .agents/skills/ops-supervision/SKILL.md
+    stage_role: ops-loop
+    io_boundary:
+      read:  ["ops.db (ops_spans, ops_waves, ops_events, ops_article_attempts)"]
+      write: ["ops.db (ops_proposals, ops_events)"]
+    responsibility: >-
+      Quét vết và KPI mỗi giờ bằng các bộ phát hiện tất định (0 token), thêm đề xuất cải tiến
+      kèm bằng chứng vào hộp thư. Đề xuất chỉ thành story khi người vận hành bấm Mở story.
+    cost_budget: { tokens_per_item: 0 }
+    kpis: [proposals_created, proposals_accepted, proposals_rejected]
+    invariants:
+      - "không bao giờ tự thi hành đề xuất: chỉ người bấm Mở story mới tạo intake và story planned"
+      - "tối đa 5 đề xuất mới mỗi tuần; đề xuất Hoãn hoặc Bác không nêu lại trong 30 ngày"
+      - "vi phạm bất biến Zero-Tool luôn xếp trên mọi đề xuất tiết kiệm"
+      - "không script nào thay cognitive agent: bộ phát hiện chỉ đo, không sinh nội dung ngữ nghĩa"
+    owner_rules: ["04-harness-durable-invariants", "07-agent-registry-governance"]
+    tier: normal
 
 # ─────────────── Chỉ mục Skill Governance (không phải runtime agent) ───────────────
 # Các skill hỗ trợ vận hành/quản trị, được agent tham chiếu khi cần, không chạy như 1 stage.

@@ -182,7 +182,8 @@ ANALYZED_L1 = "o.dod_pass = 1 AND COALESCE(o.l1_source, 'agent') <> 'code_first'
 
 
 def load_candidates(conn: sqlite3.Connection, *, date: str | None, limit: int,
-                    only_pending: bool) -> list[sqlite3.Row]:
+                    only_pending: bool, exclude: set[str] | None = None,
+                    with_content: bool = True) -> list[sqlite3.Row]:
     """Lấy danh sách bài cần xử lý kèm đường dẫn gói dữ liệu tầng bạc.
 
     Args:
@@ -190,6 +191,9 @@ def load_candidates(conn: sqlite3.Connection, *, date: str | None, limit: int,
         date: Lọc theo ngày xuất bản YYYY-MM-DD, hoặc None để lấy mọi ngày.
         limit: Số bài tối đa.
         only_pending: Chỉ lấy bài chưa được mô hình phân tích đạt chuẩn.
+        exclude: Định danh bài phải bỏ qua (bài đang thuộc đợt khác hoặc đã hết lượt
+            thử). Lọc trong SQL, trước `LIMIT`, nên đợt vẫn đủ số bài.
+        with_content: False thì không trả cột `content_text`; bộ đếm chỉ cần định danh.
 
     Returns:
         Danh sách bản ghi bài viết.
@@ -200,7 +204,8 @@ def load_candidates(conn: sqlite3.Connection, *, date: str | None, limit: int,
     if has_content:
         sql = [
             "SELECT a.url_title_hash AS article_id, a.title, a.published_at,",
-            "       a.source_domain, w.package_path, a.content_text",
+            "       a.source_domain, w.package_path"
+            + (", a.content_text" if with_content else ""),
             "FROM articles a",
             "LEFT JOIN work_items w ON w.article_id = a.url_title_hash",
             "WHERE (w.package_path IS NOT NULL OR (a.content_text IS NOT NULL AND length(a.content_text) > 100))",
@@ -220,6 +225,12 @@ def load_candidates(conn: sqlite3.Connection, *, date: str | None, limit: int,
     if date:
         sql.append("  AND substr(a.published_at,1,10) = ?")
         params.append(date)
+    if exclude:
+        conn.execute("CREATE TEMP TABLE IF NOT EXISTS _pack_exclude (id TEXT PRIMARY KEY)")
+        conn.execute("DELETE FROM _pack_exclude")
+        conn.executemany("INSERT OR IGNORE INTO _pack_exclude(id) VALUES (?)",
+                         [(x,) for x in exclude])
+        sql.append("  AND a.url_title_hash NOT IN (SELECT id FROM temp._pack_exclude)")
     sql.append("GROUP BY a.url_title_hash")
     # Khoá phụ `url_title_hash` không để cho đẹp: nó làm thứ tự bài trở nên tất định.
     # Bộ nhớ đệm của nhà cung cấp khớp theo tiền tố tính từ token 0, nên hai lần đóng
@@ -445,13 +456,19 @@ def main(argv=None) -> int:
                     help="Cỡ bản ghi đầu ra mỗi bài, chỉ dùng để ước lượng token")
     ap.add_argument("--out-dir", default=str(TASK_DIR), help="Thư mục ghi packet")
     ap.add_argument("--json", action="store_true", help="Xuất mô tả đợt dạng JSON")
+    ap.add_argument("--exclude-file",
+                    help="Tệp định danh bài phải bỏ qua, mỗi dòng một định danh")
     args = ap.parse_args(argv)
 
     date = args.date or (datetime.now().strftime("%Y-%m-%d") if args.today else None)
+    exclude: set[str] = set()
+    if args.exclude_file:
+        exclude = {ln.strip() for ln in Path(args.exclude_file).read_text(
+            encoding="utf-8").splitlines() if ln.strip()}
 
     conn = get_db_connection()
     rows = load_candidates(conn, date=date, limit=args.limit,
-                           only_pending=not args.all_articles)
+                           only_pending=not args.all_articles, exclude=exclude)
     conn.close()
     if not rows:
         print("Không có bài nào thoả điều kiện. Kiểm lại --date hoặc hàng đợi work_items.")

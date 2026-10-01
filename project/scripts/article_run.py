@@ -31,6 +31,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from src.agent.prefix import prefix_hash              # noqa: E402
 from src.core.stdio import force_utf8_stdio            # noqa: E402
 from src.db.preflight import probe_write, resolve_db_path  # noqa: E402
+from src.ops import trace as tracing                    # noqa: E402
 
 force_utf8_stdio()
 
@@ -45,6 +46,13 @@ PYTHON = sys.executable
 FINISH_STEPS = ("expand", "ingest", "verify", "ledger", "handoff")
 # Cùng ngưỡng với tỷ lệ hỏng mười phần trăm của bước bung bản ghi.
 MIN_COVERAGE = 0.90
+LAST_VERIFY: dict = {}
+
+
+def _span_id(name: str) -> str | None:
+    """Mã span cố định dưới span cha do daemon đặt, None khi chạy tay."""
+    parent = os.environ.get(tracing.ENV_PARENT)
+    return f"{parent}/{name}" if parent else None
 
 
 def run(cmd: list[str], *, cwd: Path = PROJECT_ROOT, check: bool = True) -> int:
@@ -63,8 +71,14 @@ def run(cmd: list[str], *, cwd: Path = PROJECT_ROOT, check: bool = True) -> int:
     """
     label = " ".join(Path(c).name if c.endswith(".py") else c for c in cmd[1:3])
     print(f"\n▶ {label}")
-    env = {**os.environ, "PYTHONIOENCODING": "utf-8"}
-    res = subprocess.run(cmd, cwd=str(cwd), env=env)
+    script = next((Path(c).name for c in cmd if c.endswith(".py")), label)
+    with tracing.span(script, "script", tracing.SCRIPT_ACTORS.get(script),
+                      span_id=_span_id(script)) as sp:
+        env = {**os.environ, "PYTHONIOENCODING": "utf-8", **sp.env()}
+        res = subprocess.run(cmd, cwd=str(cwd), env=env)
+        sp.set(rc=res.returncode)
+        if res.returncode != 0:
+            sp.status = "fail"
     if check and res.returncode not in (0,):
         print(f"\n❌ Dừng đợt: lệnh trả mã {res.returncode}. "
               f"Thất bại phải ồn ào, không đi tiếp trong im lặng.")
@@ -439,9 +453,25 @@ def cmd_prepare(args: argparse.Namespace) -> int:
         pack_cmd.append("--today")
     if args.date:
         pack_cmd += ["--date", args.date]
+    if getattr(args, "exclude_file", None):
+        pack_cmd += ["--exclude-file", args.exclude_file]
 
-    res = subprocess.run(pack_cmd, cwd=str(PROJECT_ROOT), capture_output=True, text=True,
-                         encoding="utf-8", errors="replace")
+    with tracing.span("article_pack.py", "script", "article-packer",
+                      span_id=_span_id("article_pack.py")) as sp:
+        res = subprocess.run(pack_cmd, cwd=str(PROJECT_ROOT), capture_output=True, text=True,
+                             encoding="utf-8", errors="replace")
+        sp.set(rc=res.returncode)
+        if res.returncode == 2:
+            sp.status = "skipped"
+        elif res.returncode != 0:
+            sp.status = "fail"
+        else:
+            try:
+                packed = json.loads(res.stdout.strip().splitlines()[-1])
+                sp.set(articles=packed.get("articles"), tier1=packed.get("tier1"),
+                       batches=len(packed.get("batches") or []))
+            except (ValueError, IndexError):
+                pass
     if res.returncode != 0:
         print(res.stdout.strip() or res.stderr.strip())
         return res.returncode
@@ -649,7 +679,13 @@ def cmd_finish(args: argparse.Namespace) -> int:
     # lời được câu "đợt này có vào cơ sở dữ liệu đủ không".
     verify_ok = True
     if "verify" in steps:
-        verify_ok = verify_wave(args.wave, min_coverage=args.min_coverage) == 0
+        with tracing.span("verify_wave", "gate", "article-expander",
+                          span_id=_span_id("verify_wave")) as sp:
+            rc_verify = verify_wave(args.wave, min_coverage=args.min_coverage)
+            sp.set(rc=rc_verify, min_coverage=args.min_coverage, **LAST_VERIFY)
+            if rc_verify != 0:
+                sp.status = "fail"
+        verify_ok = rc_verify == 0
 
     soft: list[str] = []
     if "ledger" in steps:
@@ -800,11 +836,15 @@ def verify_wave(wave: str, *, min_coverage: float) -> int:
 
     n = len(ids)
     rc = 0
+    LAST_VERIFY.clear()
+    LAST_VERIFY["articles"] = n
     print(f"   {'lớp':22} {'đạt':>6} {'trượt':>6} {'chưa có':>8} {'độ phủ':>8}")
     for key, label in (("l1", "nhận diện thực thể"), ("gold", "phân tích nội dung")):
         ok, bad = cov[f"{key}_ok"], cov[f"{key}_fail"]
         absent = n - len(ok) - len(bad)
         ratio = len(ok) / n
+        LAST_VERIFY.update({f"{key}_ok": len(ok), f"{key}_fail": len(bad),
+                            f"{key}_absent": absent, f"{key}_coverage": round(ratio, 4)})
         flag = "✅" if ratio >= min_coverage else "❌"
         if ratio < min_coverage:
             rc = 1
@@ -892,6 +932,8 @@ def main(argv=None) -> int:
                     help="Tỷ lệ bài tối thiểu của đợt phải vào DB ở mỗi lớp")
     ap.add_argument("--runner", choices=["dsh", "agy", "openrouter"], default="dsh",
                     help="Runner nhận thức: 'dsh' (DeepSeek Flash), 'agy' (Gemini 3.8 Flash Low), hoặc 'openrouter' (stealth/space-bunny-alpha)")
+    ap.add_argument("--exclude-file",
+                    help="Tệp định danh bài không được đóng gói (ops_daemon giữ chỗ)")
     ap.add_argument("--analyze", action="store_true",
                     help="Chạy phân tích trực tiếp cho các lô của wave (dùng cho --runner agy)")
     args = ap.parse_args(argv)

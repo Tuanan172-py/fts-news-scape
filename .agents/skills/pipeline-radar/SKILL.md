@@ -83,12 +83,20 @@ Article Lane (`scripts/article_run.py`) là **đường xử lý duy nhất** t�
    • Vào DB      : nhận diện 361 (98.9%) · nội dung 364 (99.7%)
    • Trạng thái  : đã xong
 
-3. ĐIỂM CHẠM & LỆNH KẾ TIẾP
+3. VẬN HÀNH TỰ CHỦ (ops_daemon, ADR 0012)
+   • Daemon      : 🟢 sống · mức L1
+   • Cảnh báo    : 0 chưa gửi · bảng điều khiển: python scripts/ops_console.py
+
+4. ĐIỂM CHẠM & LỆNH KẾ TIẾP
    🔴 [HIGH] 328 bài đăng ngày 2026-09-23 chờ phân tích.
       👉 & "C:\venvs\news-scape\Scripts\python.exe" scripts/article_run.py --wave W09231659 --date 2026-09-23 --limit 328 --batch 100
 ```
 
 Dòng `Cơ sở dữ liệu: ❌` trong phiên DSH gần như luôn là do sandbox `workspace-write` chặn ghi ra `C:\data\news-scape`. Xem mục 2b của `.agents/dsh/DSH-VIEC-THU-CONG.md`.
+
+### 4a. Mục "Vận hành tự chủ"
+
+Mục 3 đọc `C:\data\news-scape\ops.db` của `ops_daemon` (ADR 0012). Khi daemon sống ở mức L1 trở lên và không tạm dừng, mục 4 **không** đề xuất mở đợt tay nữa mà in dòng `INFO` trỏ về `ops_daemon.py status`: daemon giữ quyền mở đợt, mở tay song song sẽ tranh packet và quota. Daemon im lặng quá 3 phút thì mục 4 đẩy `HIGH` kèm lệnh `schtasks /Run /TN news-scape-ops`. Runbook: `project/docs/operations/ops-daemon.md`.
 
 ### 4b. Đọc đúng chỉ số "Bài bị nguồn xóa"
 

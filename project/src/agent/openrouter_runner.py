@@ -46,7 +46,7 @@ CORE_PATH = PROJECT_ROOT / "data" / "prefix" / "ARTICLE_SYSTEM_CORE.md"
 OPENROUTER_ENV = PROJECT_ROOT.parent / "openrouter" / ".env"
 DEFAULT_MODEL = "stealth/space-bunny-alpha"
 DEFAULT_BASE_URL = "https://openrouter.ai/api/v1"
-DEFAULT_TIMEOUT_SECONDS = 180
+DEFAULT_TIMEOUT_SECONDS = 300
 
 
 @dataclass
@@ -88,26 +88,33 @@ def salvage_json_records(text: str) -> list[dict[str, Any]]:
     if not stripped:
         raise ValueError("Phản hồi rỗng.")
 
-    if stripped.startswith("```"):
+    # Bóc tách codeblock nếu có
+    if "```" in stripped:
         lines = stripped.splitlines()
-        if lines and lines[0].startswith("```"):
-            lines = lines[1:]
-        if lines and lines[-1].strip() == "```":
-            lines = lines[:-1]
-        stripped = "\n".join(lines).strip()
+        clean_lines = []
+        in_block = False
+        for line in lines:
+            if line.strip().startswith("```"):
+                in_block = not in_block
+                continue
+            clean_lines.append(line)
+        candidate_text = "\n".join(clean_lines).strip()
+        if candidate_text:
+            stripped = candidate_text
 
+    # 1. Thử phân tích JSON nguyên vẹn
     try:
         data = json.loads(stripped)
         if isinstance(data, list):
             return [d for d in data if isinstance(d, dict)]
         if isinstance(data, dict):
-            if "r" in data and isinstance(data["r"], list):
-                return [d for d in data["r"] if isinstance(d, dict)]
-            if "records" in data and isinstance(data["records"], list):
-                return [d for d in data["records"] if isinstance(d, dict)]
+            for k in ("r", "records", "articles", "items", "data", "a"):
+                if k in data and isinstance(data[k], list):
+                    return [d for d in data[k] if isinstance(d, dict)]
     except json.JSONDecodeError:
         pass
 
+    # 2. Thử phân tích chuỗi con giữa cặp ngoặc vuông [ ... ]
     start = stripped.find("[")
     end = stripped.rfind("]")
     if start != -1 and end != -1 and end > start:
@@ -119,7 +126,46 @@ def salvage_json_records(text: str) -> list[dict[str, Any]]:
         except json.JSONDecodeError:
             pass
 
+    # 3. Phục hồi qua quét balanced brace từng đối tượng { ... } (phòng ngừa bị cắt dòng cuối)
+    salvaged: list[dict[str, Any]] = []
+    in_string = False
+    escape = False
+    depth = 0
+    start_idx = -1
+
+    for i, ch in enumerate(stripped):
+        if in_string:
+            if escape:
+                escape = False
+            elif ch == "\\":
+                escape = True
+            elif ch == '"':
+                in_string = False
+        else:
+            if ch == '"':
+                in_string = True
+            elif ch == "{":
+                if depth == 0:
+                    start_idx = i
+                depth += 1
+            elif ch == "}":
+                if depth > 0:
+                    depth -= 1
+                    if depth == 0 and start_idx != -1:
+                        obj_str = stripped[start_idx : i + 1]
+                        try:
+                            item = json.loads(obj_str)
+                            if isinstance(item, dict) and ("i" in item or "s" in item or "e" in item):
+                                salvaged.append(item)
+                        except Exception:
+                            pass
+                        start_idx = -1
+
+    if salvaged:
+        return salvaged
+
     raise ValueError("Không thể bóc tách mảng JSON từ phản hồi.")
+
 
 
 def validate_records(
@@ -291,7 +337,8 @@ class OpenRouterRunner:
         batch_id: str,
         task_path: Path,
         out_dir: Path,
-        max_attempts: int = 3,
+        max_attempts: int = 2,
+        force: bool = False,
     ) -> OpenRouterExecutionResult:
         """Gửi một lô bài viết tới OpenRouter API và lưu trữ kết quả phân tích.
 
@@ -300,10 +347,34 @@ class OpenRouterRunner:
             task_path: Đường dẫn tệp packet đầu vào (.task.json).
             out_dir: Thư mục lưu trữ kết quả đầu ra.
             max_attempts: Số lần thử lại tối đa khi gặp lỗi có thể khôi phục.
+            force: Buộc chạy lại kể cả khi lô đã có kết quả đầu ra.
 
         Returns:
             Đối tượng kết quả thực thi chi tiết.
         """
+        out_file = out_dir / f"{batch_id}.output.json"
+        meta_file = out_dir / f"{batch_id}.meta.json"
+        if not force and out_file.exists():
+            try:
+                cached_recs = json.loads(out_file.read_text(encoding="utf-8"))
+                if isinstance(cached_recs, list) and len(cached_recs) > 0:
+                    meta_info = {}
+                    if meta_file.exists():
+                        try:
+                            meta_info = json.loads(meta_file.read_text(encoding="utf-8"))
+                        except Exception:
+                            pass
+                    return OpenRouterExecutionResult(
+                        ok=True,
+                        batch_id=batch_id,
+                        status="CACHED",
+                        records=cached_recs,
+                        usage=meta_info.get("usage", {}),
+                        latency_seconds=meta_info.get("latency_seconds", 0.0),
+                    )
+            except Exception:
+                pass
+
         if not task_path.exists():
             return OpenRouterExecutionResult(
                 ok=False,
@@ -347,13 +418,13 @@ class OpenRouterRunner:
 
         req_payload = {
             "model": self.model,
-            "response_format": {"type": "json_object"},
             "messages": [
                 {"role": "system", "content": self.core_text},
                 {"role": "user", "content": compact_payload},
             ],
             "reasoning": {"effort": "minimal"},
             "temperature": 0.1,
+            "max_tokens": 24000,
         }
 
         out_dir.mkdir(parents=True, exist_ok=True)
@@ -472,6 +543,7 @@ class OpenRouterRunner:
         out_dir: Path,
         *,
         concurrency: int = 2,
+        force: bool = False,
     ) -> dict[str, Any]:
         """Chạy toàn bộ các lô bài viết trong một đợt phân tích song song.
 
@@ -479,6 +551,7 @@ class OpenRouterRunner:
             manifest_data: Dữ liệu tệp manifest wave_<wave>.json.
             out_dir: Thư mục lưu trữ kết quả đầu ra.
             concurrency: Số luồng chạy song song tối đa (mặc định 2).
+            force: Buộc chạy lại kể cả khi lô đã có kết quả đầu ra.
 
         Returns:
             Báo cáo tổng hợp kết quả của cả đợt.
@@ -495,7 +568,7 @@ class OpenRouterRunner:
                 if not task_file_str:
                     task_file_str = str(PROJECT_ROOT / "data" / "agent_tasks" / "article" / f"{bid}.task.json")
                 tpath = Path(task_file_str)
-                future = executor.submit(self.run_batch, bid, tpath, out_dir)
+                future = executor.submit(self.run_batch, bid, tpath, out_dir, 2, force)
                 future_to_batch[future] = bid
 
             for future in concurrent.futures.as_completed(future_to_batch):

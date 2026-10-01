@@ -103,6 +103,29 @@ governance_loop:
     produces: "docs/proposals/harness_improvement_<date>.md"
     cli_readonly: '& "C:\venvs\news-scape\Scripts\python.exe" scripts/harness_cli.py propose'
 
+# ─────────────── Vòng vận hành tự chủ khi máy mở (ADR 0012) ───────────────
+# ops_daemon là hiện thực của master-orchestrator cho chạy không giám sát: sensor mở đợt
+# (≥100 bài | bài chờ > 90' | khung giờ vét), workflow DBOS bền cho article_pack →
+# article_analyze → article_expand, breaker provider, heartbeat, Telegram HITL.
+ops_loop:
+  - id: ops_supervise
+    agent: master-orchestrator
+    class: conductor
+    trigger: "Task Scheduler news-scape-ops (đăng nhập + watchdog 5 phút)"
+    cli: '& "C:\venvs\news-scape\Scripts\python.exe" scripts/ops_daemon.py run'
+    status_cli: '& "C:\venvs\news-scape\Scripts\python.exe" scripts/ops_daemon.py status'
+    state: 'C:\data\news-scape\ops.db (sự kiện, cảnh báo, breaker, đợt) + ops_dbos.db (checkpoint)'
+  - id: ops_diagnose
+    agent: ops-sentinel
+    class: cognitive
+    optional: true
+    trigger: "/diagnose từ Telegram hoặc console; chỉ đề xuất, không thi hành"
+  - id: ops_improve
+    agent: improvement-proposer
+    class: operator
+    trigger: "mỗi giờ trong daemon (improve_tick); chỉ ghi đề xuất vào ops_proposals, không thi hành"
+    status_cli: 'Phòng điều khiển http://127.0.0.1:8787 (màn Cải tiến) hoặc /improve trên Telegram'
+
 # ─────────────── Bất biến điều phối (Conductor phải tuân) ───────────────
 invariants:
   - "WIP=1: không 2 story in_progress đồng thời (AGENTS.md §1)."
@@ -111,3 +134,5 @@ invariants:
   - "Token là số ghi nhận, không phải cổng: không trần, không ngưỡng cảnh báo theo bài, lô hay đợt."
   - "No Script Emulation: cấm dùng regex/heuristic thay cognitive agent (rule 05 §3)."
   - "Đợt chỉ xong khi --finish thoát 0 và in ✅; ❌ thì chạy đúng lệnh --only mà khung lỗi in ra."
+  - "Khi ops_daemon sống ở mức ≥ L1 thì chỉ daemon mở đợt; không mở đợt tay song song (ADR 0012)."
+  - "Mức tự chủ do standing order quyết định; thiếu hoặc hết hạn thì L0 (chỉ báo, không tiêu token)."

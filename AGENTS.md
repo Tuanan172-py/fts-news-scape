@@ -54,7 +54,14 @@ python scripts/article_run.py --where                    # đường dẫn, cwd,
 python scripts/article_run.py --wave <mã> --date <ngày> --limit <n> --batch 100   # chuẩn bị đợt
 python scripts/article_run.py --wave <mã> --finish       # bung, nạp, hậu kiểm, sổ cái, bàn giao
 python scripts/write_user_output.py --date today         # giao hàng
+
+python scripts/ops_daemon.py status                      # vận hành tự chủ khi máy mở (ADR 0012): mức, đợt, breaker
+python scripts/ops_daemon.py once                        # đo sensor + probe một lượt, không mở đợt
+python scripts/ops_console.py                            # bảng điều khiển chữ (Ctrl+Alt+O)
+python scripts/ops_daemon.py open                        # Phòng điều khiển giám sát multi-agent (ADR 0014)
 ```
+
+Vận hành không giám sát do `ops_daemon` giữ (Task Scheduler `news-scape-ops`), runbook `project/docs/operations/ops-daemon.md`. Khi daemon sống ở mức ≥ L1, không mở đợt tay song song.
 
 Mọi lệnh `scripts/...` chạy với cwd = `project/`. DB vận hành nằm ở `C:\data\news-scape\monocle.db`, ngoài kho mã. Sandbox `workspace-write` của DSH không mở rộng được ra ngoài kho, nên `--finish` và `write_user_output.py` chạy với `danger-full-access`. Chuẩn bị đợt và chạy mô hình không cần quyền này.
 
@@ -92,6 +99,8 @@ Maturity: this harness is at **H2-H5 (Durable SQLite + Active Observability + Au
 
 **Article Lane là đường xử lý duy nhất (ADR 0010, 2026-09-23).** Lane L1/Gold hai tầng (`l1_route` → `agent_l1` → `agent_export` → `agent_gold`) đã ngừng hẳn: không còn trong preset, scheduler, radar hay pipeline. Không gọi `l1_route.py`, `l1_ingest.py --code-first`, `agent_export.py` hay `requeue.py`.
 
+**Thu thập trọn vẹn, xử lý về sau (ADR 0013, rule 10, ghim 2026-10-01).** Nguồn có bao nhiêu bài thì lấy về bấy nhiêu. Tầng cào không lọc theo độ giống, chuyên mục hay độ liên quan, và không dừng cứng ở trang 1. Mọi URL phát hiện được đều có dấu vết trong sổ phát hiện. Loại trùng, làm sạch, xếp ưu tiên là bước sau Bronze và không xoá bài. Bài trùng được giữ đủ nguồn và thời điểm vì tần suất đưa tin là tín hiệu.
+
 ### A. Ranh giới Phân công: Script (0 token) và Agent
 
 1. **Script tất định (0 token)**:
@@ -112,7 +121,7 @@ Maturity: this harness is at **H2-H5 (Durable SQLite + Active Observability + Au
 - **Token là số ghi nhận, không phải cổng.** Không có giới hạn hay mức cảnh báo token nào, theo bài, theo lô hay theo đợt. Sổ cái (`token_ledger`, chỉ tính phiên worker) ghi token và USD để người dùng tự đánh giá, tự ước lượng. Không dừng đợt, không giảm số bài, không chia nhỏ lô vì token.
 - **Đọc trọn nội dung.** Packet mang toàn bộ đoạn văn nguyên văn của bài (trần chắt lọc đã tắt). Chỉ giữ tiêu đề và đoạn văn, bỏ link, ảnh, menu. Không dòng nào vượt trần cắt dòng của công cụ đọc.
 - **Trích dẫn theo chỉ số đoạn.** Mô hình trả chỉ số, script dựng lại đoạn nguyên văn, nên trích dẫn đúng nguyên văn do cấu trúc.
-- **Mọi bài đều được xử lý đầy đủ.** Xếp tầng theo watchlist (nhận rộng: mã theo dõi, ngành liên quan, vĩ mô khẩn) chỉ quyết định **thứ tự**, không quyết định độ sâu. Không còn lọc Subscriber-Gated.
+- **Mọi bài đều được xử lý đầy đủ.** Xếp tầng theo watchlist (nhận rộng: mã theo dõi, ngành liên quan, vĩ mô khẩn) chỉ quyết định **thứ tự**, không quyết định độ sâu. Không còn lọc Subscriber-Gated. Người dùng đã duyệt về nguyên tắc (2026-10-01) một ngoại lệ: bài xác định là trùng được miễn bước LLM và kế thừa kết quả của bài gốc. Ngoại lệ chỉ có hiệu lực khi bước cụm hoá trùng lặp được triển khai và có ADR riêng (`docs/proposals/dedup-architecture-2026-10-01.md`).
 - **Đối chiếu tất định chỉ để kiểm, không để thay.** Bộ nhận diện theo danh mục (có `Capitalized Suffix Guard` và `Prefix Guard`) được dùng để đối chiếu với kết quả mô hình. Bản code-first không bao giờ được tính là "đã phân tích" (`l1_source = 'code_first'` bị loại khỏi mọi phép đếm và khỏi bộ chọn bài).
 - **Cổng thật của một đợt là cổng kỹ thuật.** DB ghi được (kiểm trước khi tiêu token), nạp không lỗi, độ phủ của đợt ≥ 90% ở cả hai lớp. Chỉ khi cả ba đạt thì `--finish` mới thoát 0 và in `✅ ĐỢT <mã> HOÀN TẤT`.
 - **Bảo toàn raw gốc.** `raw_html` và `meta.json` luôn giữ nguyên tại Bronze để kiểm toán.
@@ -154,3 +163,12 @@ Chi tiết quy chuẩn bất biến tại [`.agents/rules/09-dsh-preflight-gate.
 - **Phân định tệp nạp lúc mount và tệp đọc live.** `agent.cordis.yml`, `preset.yml`, `~/.dsh/settings.yaml` cần restart host; `skills/**/SKILL.md`, `.agents/rules/*.md`, RUNBOOK và script Python thì không. Tra bảng ở §3 của rule trước khi kết luận.
 - **Không có mục XÁM.** Mỗi hạng mục là ĐỎ hoặc XANH; "chắc là được" tính là ĐỎ, và ĐỎ chặn đợt. Không có ngoại lệ "chạy tạm rồi sửa sau".
 - **Không restart host, nhưng phải mở phiên mới.** Hai việc khác nhau: restart là tắt/chạy lại `dsh web` (Conductor không tự làm được vì nó chạy bên trong tiến trình đó); mở phiên mới là thao tác người vận hành làm ở tầng UI, với preset chọn **trước** khi gửi tin đầu tiên.
+
+## 10. Thu Thập Trọn Vẹn, Không Bỏ Sót (Bắt Buộc Cho Mọi Thay Đổi Tầng Cào)
+
+Chi tiết quy chuẩn bất biến tại [`.agents/rules/10-thu-thap-tron-ven.md`](.agents/rules/10-thu-thap-tron-ven.md), quyết định tại [`docs/decisions/0013-thu-thap-tron-ven-xu-ly-ve-sau.md`](docs/decisions/0013-thu-thap-tron-ven-xu-ly-ve-sau.md):
+
+- **Lấy về tất cả.** Raw có bao nhiêu tin thì lấy về bấy nhiêu. Không lọc ở tầng cào, trừ bản sao kỹ thuật cùng URL chuẩn hoá (vẫn ghi thành bí danh).
+- **Không có trạng thái "đã bỏ".** Mọi URL phát hiện được đều vào sổ phát hiện trước mọi bước lọc. Trạng thái cuối chỉ là `captured`, `alias`, `gone` hoặc `dead_letter` có lý do.
+- **Phân trang theo watermark, tự bù sau khi máy tắt, đối chiếu sitemap hằng ngày.** Thiếu so với kênh đối chiếu > 2% trong một ngày là ĐỎ.
+- **Trùng lặp là dữ liệu.** Bài trùng có thể miễn LLM, nhưng luôn được giữ và đếm vào chỉ số tần suất, độ rộng đưa tin.
