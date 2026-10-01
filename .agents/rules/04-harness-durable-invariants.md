@@ -28,8 +28,19 @@ Tại MỌI prompt (kể cả tra cứu, giải thích, thiết kế hay sửa c
 6. **Friction Capture:** Mọi điểm nghẽn hoặc lỗi phát sinh phải được đưa vào backlog:
    `python scripts/harness_cli.py backlog add --title <title> --pain <text> --component <comp>`
 
-## 3. Giao thức Đóng Phiên Bắt buộc (Mandatory Harness Closure Protocol)
-Ở cuối **MỖI CÂU TRẢ LỜI / PHIÊN THỰC THI**, Agent BẮT BUỘC phải xuất Bảng Nghiệm thu Đóng phiên (Harness Closure Table) minh bạch định tuyến ghi nhận file/DB:
+## 3. Ràng Buộc Quy Trình Git & Commit Nguyên Tử (Git Lifecycle Invariants)
+Nhằm bảo đảm toàn bộ thay đổi đủ quan trọng đều được Git lưu vết và liên kết chặt chẽ với Harness:
+1. **High-Risk (Cấp 3):** BẮT BUỘC thực hiện trên nhánh feature độc lập (`feature/...`), lập ADR `docs/decisions/NNNN-*.md`, commit theo chuẩn `docs(adr): NNNN-<title>`, và mở Pull Request (PR) để Human Review trước khi merge vào `main`.
+2. **Normal (Cấp 2 - Story):** BẤT BIẾN: **1 Story hoàn tất = Tối thiểu 1 Atomic Commit**.
+   - Chỉ commit SAU KHI Proof Tier (Unit/Integ/Platform) pass 100%.
+   - Định dạng: `<type>(<scope>): <title> (US-XXX)`.
+   - Có thể kích hoạt tự động qua: `python scripts/harness_cli.py story complete --id US-XXX --run-verify --commit`.
+   - Mã băm `git_commit` và nhánh `git_branch` bắt buộc được tự động lưu vào bảng `story` và `trace` trong `harness.db`.
+3. **Tiny (Cấp 1):** Không commit riêng lẻ nếu chỉ là tra cứu/khảo sát. Nếu có chỉnh sửa code/doc nhỏ: Gom thành Checkpoint Commit cuối phiên qua `python scripts/harness_cli.py git checkpoint --summary "<nội dung>"`.
+4. **Vệ sinh tệp (Hygiene Invariant):** TUYỆT ĐỐI KHÔNG commit tệp rác, file chạy thử (`scratch/`, `test_scratch*.py`, `check_key*.py`, `-HOSTNAME`). Chạy `python scripts/harness_cli.py git verify` trước khi kết thúc ca.
+
+## 4. Giao thức Đóng Phiên Bắt buộc (Mandatory Harness Closure Protocol)
+Ở cuối **MỖI CÂU TRẢ LỜI / PHIÊN THỰC THI**, Agent BẮT BUỘC phải xuất Bảng Nghiệm thu Đóng phiên (Harness Closure Table) minh bạch định tuyến ghi nhận file/DB và trạng thái Git:
 
 ```markdown
 ### 📋 Harness Closure Protocol
@@ -42,8 +53,9 @@ Tại MỌI prompt (kể cả tra cứu, giải thích, thiết kế hay sửa c
 | `docs/decisions/NNNN-*.md` | **Yes / No** | [Lý do: Lập ADR do đổi kiến trúc / Không chạm Hard Gate] |
 | `docs/SESSION-LATEST.md` | **Yes / No** | [Lý do: Cập nhật tiến độ handoff / Không đổi] |
 | `docs/HARNESS_BACKLOG.md` | **Yes / No** | [Lý do: Ghi nhận ma sát / Không phát sinh ma sát] |
+| `Git Codebase Status` | **Yes / Clean** | Commit `<hash>` trên nhánh `<branch>`, working tree sạch |
 ```
 
-## 4. Quản trị CSDL Phân lập
+## 5. Quản trị CSDL Phân lập
 - CSDL `harness.db` là CSDL vận hành nội bộ của Harness, phân tách hoàn toàn với CSDL nghiệp vụ `data/monocle.db`.
 - Mọi thao tác ghi nhận trạng thái của Agent phải đi qua `scripts/harness_cli.py`.

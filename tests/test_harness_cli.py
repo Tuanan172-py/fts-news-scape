@@ -30,6 +30,9 @@ from scripts.harness_cli import (
     query_agent_metrics,
     cmd_audit,
     cmd_propose,
+    cmd_git_status,
+    cmd_git_verify,
+    cmd_git_checkpoint,
     calculate_score_trace,
     calculate_score_context,
 )
@@ -52,13 +55,14 @@ class TestHarnessCLI(unittest.TestCase):
     def test_query_contract(self):
         contract = query_contract(self.db_path)
         self.assertEqual(contract["protocol_version"], "harness-orchestration-v1")
-        self.assertEqual(contract["schema_version"], 2)
+        self.assertEqual(contract["schema_version"], 4)
         self.assertEqual(contract["database_state"], "ready")
         self.assertIn("intake", contract["capabilities"])
         self.assertIn("audit", contract["capabilities"])
         self.assertIn("propose", contract["capabilities"])
         self.assertIn("metric", contract["capabilities"])
         self.assertIn("agent-metrics", contract["capabilities"])
+        self.assertIn("git-lifecycle", contract["capabilities"])
 
     def test_intake_and_story_lifecycle(self):
         # 1. Intake
@@ -244,6 +248,71 @@ class TestHarnessCLI(unittest.TestCase):
         self.assertTrue(any(p["agent_id"] == "gold-financial-analyst" for p in flagged))
         gold = next(p for p in flagged if p["agent_id"] == "gold-financial-analyst")
         self.assertEqual(gold["action_lane"], "high-risk")
+
+    def test_git_status_and_verify(self):
+        args = argparse.Namespace(db=self.db_path)
+        status_res = cmd_git_status(args)
+        self.assertEqual(status_res["status"], "success")
+        self.assertIn("branch", status_res)
+        self.assertIn("commit", status_res)
+        self.assertIn("forbidden_files", status_res)
+
+        verify_res = cmd_git_verify(args)
+        self.assertEqual(verify_res["status"], "success")
+        self.assertTrue(verify_res["is_clean"])
+        self.assertGreater(verify_res["ast_checked_files"], 50)
+
+    def test_git_trace_and_story_fields(self):
+        # 1. Add Story
+        story_args = argparse.Namespace(
+            db=self.db_path,
+            id="US-100",
+            title="Test Git Story Fields",
+            parent="Git Epic",
+            status="in_progress",
+            lane="normal",
+            contract=None,
+            criteria=None,
+            verify_cmd=None,
+        )
+        cmd_story_add(story_args)
+
+        # 2. Complete Story (without auto-commit)
+        comp_args = argparse.Namespace(
+            db=self.db_path,
+            id="US-100",
+            unit_proof=1,
+            integ_proof=0,
+            e2e_proof=0,
+            platform_proof=0,
+            evidence="Unit tests passed",
+            verify_cmd=None,
+            run_verify=False,
+            commit=False,
+        )
+        comp_res = cmd_story_complete(comp_args)
+        self.assertEqual(comp_res["status"], "success")
+        self.assertIn("git_commit", comp_res)
+        self.assertIn("git_branch", comp_res)
+
+        # 3. Trace records git fields
+        trace_args = argparse.Namespace(
+            db=self.db_path,
+            summary="Execution trace with git fields",
+            story="US-100",
+            intake=None,
+            outcome="completed",
+            actions="[]",
+            files_read="[]",
+            files_changed="[]",
+            lane="normal",
+            friction="",
+            error="",
+        )
+        tr_res = cmd_trace(trace_args)
+        self.assertEqual(tr_res["status"], "success")
+        self.assertIn("git_commit", tr_res)
+        self.assertIn("git_branch", tr_res)
 
 
 if __name__ == "__main__":

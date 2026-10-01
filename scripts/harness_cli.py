@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Any
 
 PROTOCOL_VERSION = "harness-orchestration-v1"
-CURRENT_SCHEMA_VERSION = 2
+CURRENT_SCHEMA_VERSION = 4
 DEFAULT_DB_PATH = "harness.db"
 DEFAULT_SCHEMA_DIR = "scripts/schema"
 
@@ -37,11 +37,36 @@ CAPABILITIES = [
     "propose",
     "verify-gate",
     "codebase-audit",
+    "git-lifecycle",
 ]
 
 
 def now_iso() -> str:
     return datetime.datetime.now(datetime.timezone.utc).astimezone().isoformat()
+
+
+def get_git_branch() -> str | None:
+    try:
+        res = subprocess.run(["git", "rev-parse", "--abbrev-ref", "HEAD"], capture_output=True, text=True, check=True)
+        return res.stdout.strip() or None
+    except Exception:
+        return None
+
+
+def get_git_head_commit() -> str | None:
+    try:
+        res = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, check=True)
+        return res.stdout.strip() or None
+    except Exception:
+        return None
+
+
+def is_git_working_tree_dirty() -> bool:
+    try:
+        res = subprocess.run(["git", "status", "--porcelain"], capture_output=True, text=True, check=True)
+        return bool(res.stdout.strip())
+    except Exception:
+        return False
 
 
 def get_db_connection(db_path: str = DEFAULT_DB_PATH) -> sqlite3.Connection:
@@ -74,16 +99,22 @@ def init_db(db_path: str = DEFAULT_DB_PATH, schema_dir: str = DEFAULT_SCHEMA_DIR
     """
     conn = get_db_connection(db_path)
     try:
+        conn.execute("CREATE TABLE IF NOT EXISTS schema_version (version INTEGER PRIMARY KEY, applied_at TEXT, description TEXT);")
+        cur = conn.execute("SELECT version FROM schema_version")
+        applied_versions = {row["version"] for row in cur.fetchall()}
+
         migrations = sorted(Path(schema_dir).glob("[0-9][0-9][0-9]-*.sql"))
         if not migrations:
             raise FileNotFoundError(f"No migration files found in {schema_dir}")
 
         applied: list[str] = []
-        max_version = 0
+        max_version = max(applied_versions) if applied_versions else 0
         for path in migrations:
             version = int(path.name[:3])
+            if version in applied_versions:
+                continue
             with open(path, "r", encoding="utf-8") as f:
-                conn.executescript(f.read())      # tệp dùng IF NOT EXISTS -> idempotent
+                conn.executescript(f.read())
             conn.execute(
                 "INSERT OR REPLACE INTO schema_version (version, applied_at, description) VALUES (?, ?, ?)",
                 (version, now_iso(), path.name),
@@ -304,16 +335,49 @@ def cmd_story_complete(args: argparse.Namespace) -> dict[str, Any]:
                 "message": "Cannot mark story as implemented without at least one proof tier passed."
             }
 
+        git_commit = get_git_head_commit()
+        git_branch = get_git_branch()
+        commit_result = None
+        if getattr(args, "commit", False):
+            if is_git_working_tree_dirty():
+                title = story["title"] or args.id
+                c_type = "feat"
+                if any(w in title.lower() for w in ["fix", "sửa", "chữa"]):
+                    c_type = "fix"
+                elif any(w in title.lower() for w in ["refactor", "tái cấu trúc", "chuẩn hóa"]):
+                    c_type = "refactor"
+                elif any(w in title.lower() for w in ["doc", "tài liệu"]):
+                    c_type = "docs"
+                commit_msg = f"{c_type}({args.id.lower()}): {title} ({args.id})"
+                subprocess.run(["git", "add", "-u"], capture_output=True, text=True)
+                res_cmt = subprocess.run(["git", "commit", "-m", commit_msg], capture_output=True, text=True)
+                if res_cmt.returncode == 0:
+                    git_commit = get_git_head_commit()
+                    commit_result = {"status": "committed", "commit": git_commit, "message": commit_msg}
+                else:
+                    commit_result = {"status": "commit_failed", "stderr": res_cmt.stderr.strip()}
+
         conn.execute(
             """
             UPDATE story SET status = 'implemented', unit_proof = ?, integration_proof = ?,
-                             e2e_proof = ?, platform_proof = ?, evidence = ?, updated_at = ?
+                             e2e_proof = ?, platform_proof = ?, evidence = ?,
+                             git_commit = ?, git_branch = ?, updated_at = ?
             WHERE id = ?
             """,
-            (unit, integ, e2e, platform, evidence_str, now_iso(), args.id)
+            (unit, integ, e2e, platform, evidence_str, git_commit, git_branch, now_iso(), args.id)
         )
         conn.commit()
-        return {"status": "success", "story_id": args.id, "status_to": "implemented", "evidence": evidence_str}
+        ret = {
+            "status": "success",
+            "story_id": args.id,
+            "status_to": "implemented",
+            "evidence": evidence_str,
+            "git_commit": git_commit,
+            "git_branch": git_branch,
+        }
+        if commit_result:
+            ret["commit_result"] = commit_result
+        return ret
     finally:
         conn.close()
 
@@ -412,16 +476,18 @@ def cmd_trace(args: argparse.Namespace) -> dict[str, Any]:
         score_t = calculate_score_trace(args.summary, actions_list, read_list, changed_list, args.outcome)
         score_c = calculate_score_context(args.lane or "normal", len(read_list))
         
+        git_commit = get_git_head_commit()
+        git_branch = get_git_branch()
         cur = conn.execute(
             """
             INSERT INTO trace (story_id, intake_id, task_summary, actions_taken, files_read,
                               files_changed, outcome, score_context, score_trace, friction,
-                              error_msg, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                              error_msg, git_commit, git_branch, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (args.story or None, args.intake or None, args.summary, actions_json, read_json,
              changed_json, args.outcome, score_c, score_t, args.friction or "",
-             args.error or "", now_iso())
+             args.error or "", git_commit, git_branch, now_iso())
         )
         conn.commit()
         trace_id = cur.lastrowid
@@ -443,7 +509,9 @@ def cmd_trace(args: argparse.Namespace) -> dict[str, Any]:
             "story_id": args.story,
             "score_trace": score_t,
             "score_context": score_c,
-            "outcome": args.outcome
+            "outcome": args.outcome,
+            "git_commit": git_commit,
+            "git_branch": git_branch,
         }
     finally:
         conn.close()
@@ -716,6 +784,105 @@ def query_agent_metrics(db_path: str = DEFAULT_DB_PATH, agent: str | None = None
 
 
 # ---------------------------------------------------------------------------
+# Git Codebase Governance & Lifecycle (US-030)
+# ---------------------------------------------------------------------------
+
+def cmd_git_status(args: argparse.Namespace) -> dict[str, Any]:
+    """Kiểm tra trạng thái Git repository, branch, head commit và các tệp cấm."""
+    branch = get_git_branch()
+    commit = get_git_head_commit()
+    dirty = is_git_working_tree_dirty()
+
+    forbidden: list[str] = []
+    res = subprocess.run(["git", "status", "--porcelain"], capture_output=True, text=True)
+    status_lines = [l.strip() for l in res.stdout.splitlines() if l.strip()]
+    for line in status_lines:
+        parts = line.split(maxsplit=1)
+        if len(parts) == 2:
+            fname = parts[1]
+            if "-DESKTOP-" in fname or "-FPA-" in fname:
+                forbidden.append(f"OneDrive conflict file: {fname}")
+            elif fname.endswith((".db-wal", ".db-shm")) or (fname.endswith(".db") and not fname.startswith("data/archive")):
+                forbidden.append(f"Database runtime file: {fname}")
+            elif fname.endswith(".xlsx") and not fname.startswith("docs/"):
+                forbidden.append(f"Binary spreadsheet: {fname}")
+
+    return {
+        "status": "success",
+        "branch": branch,
+        "commit": commit,
+        "is_dirty": dirty,
+        "status_lines": status_lines[:25],
+        "forbidden_files": forbidden,
+        "clean_for_closure": not dirty and len(forbidden) == 0,
+    }
+
+
+def cmd_git_checkpoint(args: argparse.Namespace) -> dict[str, Any]:
+    """Tạo commit checkpoint đóng phiên hoặc lưu vết tác vụ Tiny/Hygiene."""
+    branch = get_git_branch()
+    if not is_git_working_tree_dirty():
+        return {
+            "status": "success",
+            "message": "Working tree already clean, nothing to commit",
+            "commit": get_git_head_commit(),
+            "branch": branch,
+        }
+
+    subprocess.run(["git", "add", "-u"], capture_output=True, text=True)
+    msg = args.summary
+    if not msg.startswith(("feat", "fix", "docs", "chore", "refactor", "test")):
+        msg = f"chore(checkpoint): {msg}"
+
+    res = subprocess.run(["git", "commit", "-m", msg], capture_output=True, text=True)
+    if res.returncode != 0:
+        return {"status": "error", "message": f"Git commit failed: {res.stderr.strip()}"}
+
+    commit = get_git_head_commit()
+    pushed = False
+    if getattr(args, "push", False) and branch:
+        res_push = subprocess.run(["git", "push", "origin", branch], capture_output=True, text=True)
+        pushed = (res_push.returncode == 0)
+
+    return {
+        "status": "success",
+        "action": "checkpoint_created",
+        "commit": commit,
+        "branch": branch,
+        "pushed": pushed,
+        "message": msg,
+    }
+
+
+def cmd_git_verify(args: argparse.Namespace) -> dict[str, Any]:
+    """Chạy cổng kiểm soát chất lượng pre-commit: cú pháp AST và kiểm tra tệp cấm."""
+    import ast
+    ast_errors: list[str] = []
+    py_files_checked = 0
+    for root, dirs, files in os.walk("."):
+        dirs[:] = [d for d in dirs if d not in [".venv", "__pycache__", ".git", ".pytest_cache", ".kilo", "scratch"]]
+        for f in files:
+            if f.endswith(".py"):
+                fpath = os.path.join(root, f)
+                py_files_checked += 1
+                try:
+                    with open(fpath, "r", encoding="utf-8", errors="replace") as pf:
+                        ast.parse(pf.read(), filename=fpath)
+                except SyntaxError as se:
+                    ast_errors.append(f"{fpath}:{se.lineno}: {se.msg}")
+
+    status_info = cmd_git_status(args)
+    passed = len(ast_errors) == 0 and len(status_info["forbidden_files"]) == 0
+    return {
+        "status": "success" if passed else "error",
+        "ast_checked_files": py_files_checked,
+        "ast_errors": ast_errors,
+        "forbidden_files": status_info["forbidden_files"],
+        "is_clean": passed,
+    }
+
+
+# ---------------------------------------------------------------------------
 # CLI Argument Parser Setup
 # ---------------------------------------------------------------------------
 
@@ -787,6 +954,7 @@ def build_parser() -> argparse.ArgumentParser:
     s_comp.add_argument("--evidence", help="Evidence text")
     s_comp.add_argument("--verify-cmd", help="Verification command override")
     s_comp.add_argument("--run-verify", action="store_true", help="Execute the verify command live")
+    s_comp.add_argument("--commit", action="store_true", help="Automatically commit modified files with Conventional Commit msg (US-XXX)")
     
     # decision
     dec_p = subparsers.add_parser("decision", help="Manage ADR decision records")
@@ -837,6 +1005,15 @@ def build_parser() -> argparse.ArgumentParser:
     met_p.add_argument("--fp", type=int, default=0, help="Số cờ nghi ngờ false-positive")
     met_p.add_argument("--wave", help="Nhãn đợt/batch")
     met_p.add_argument("--note", help="Ghi chú RCA ngắn")
+
+    # git
+    git_p = subparsers.add_parser("git", help="Git codebase governance & lifecycle tools")
+    git_sub = git_p.add_subparsers(dest="git_action", required=True)
+    git_sub.add_parser("status", help="Inspect git branch, head commit, dirty tree and forbidden files")
+    git_chk = git_sub.add_parser("checkpoint", help="Create a clean session closure commit")
+    git_chk.add_argument("--summary", required=True, help="Checkpoint summary message")
+    git_chk.add_argument("--push", action="store_true", help="Push to remote after checkpoint commit")
+    git_sub.add_parser("verify", help="Run pre-commit quality gate (AST, forbidden files, hygiene)")
 
     # audit & propose
     audit_p = subparsers.add_parser("audit", help="Run harness drift & entropy audit")
@@ -913,6 +1090,13 @@ def main() -> None:
             res = cmd_trace(args)
         elif args.command == "metric":
             res = cmd_metric(args)
+        elif args.command == "git":
+            if args.git_action == "status":
+                res = cmd_git_status(args)
+            elif args.git_action == "checkpoint":
+                res = cmd_git_checkpoint(args)
+            elif args.git_action == "verify":
+                res = cmd_git_verify(args)
         elif args.command == "audit":
             res = cmd_audit(args.db, check_codebase=getattr(args, "codebase", False))
         elif args.command == "propose":

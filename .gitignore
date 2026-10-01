@@ -60,3 +60,12 @@ __pycache__/
 *$py.class
 .pytest_cache/
 .venv/
+
+# Scratch & Temporary Testing Files
+scratch/
+**/scratch/
+.kilo/
+**/test1.py
+**/test_scratch*.py
+**/check_key*.py
+openrouter/check_key.py

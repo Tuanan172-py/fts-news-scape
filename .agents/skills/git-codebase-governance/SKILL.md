@@ -102,52 +102,41 @@ Trước khi thực hiện bất kỳ thay đổi nào, tiến hành đối chi�
 
 ### SOP 3: Kiểm Chuẩn Chất Lượng Trước Khi Commit (Pre-commit Verification)
 
-Trước khi thực hiện lệnh commit, bắt buộc hoàn thành bảng kiểm tra chất lượng:
+Trước khi thực hiện lệnh commit, bắt buộc kiểm tra chất lượng cơ học bằng một lệnh duy nhất:
 
 ```powershell
-# 1. Kiểm tra toàn bộ cú pháp AST của các file Python đã sửa đổi:
-& "C:\venvs\news-scape\Scripts\python.exe" -c "
-import ast, sys
-from pathlib import Path
-for p in Path('.').rglob('*.py'):
-    if '.venv' in p.parts or '__pycache__' in p.parts:
-        continue
-    try:
-        ast.parse(p.read_text(encoding='utf-8'))
-    except Exception as e:
-        print(f'Lỗi cú pháp tại {p}: {e}')
-        sys.exit(1)
-print('AST check passed 100%')
-"
-
-# 2. Chạy bộ kiểm thử đơn vị:
-& "C:\venvs\news-scape\Scripts\python.exe" -m pytest project/tests/ -q
-
-# 3. Quét tệp xung đột hoặc tệp rác phát sinh:
-& "C:\venvs\news-scape\Scripts\python.exe" project/scripts/maintenance/clean_onedrive_conflicts.py
+& "C:\venvs\news-scape\Scripts\python.exe" scripts/harness_cli.py git verify
 ```
+
+Lệnh này tự động thực hiện:
+- Kiểm tra toàn bộ cú pháp AST (`ast.parse`) trên tất cả các tệp Python trong repo.
+- Quét và phát hiện các tệp cấm: xung đột OneDrive (`*-DESKTOP-*`, `*-FPA-*`), CSDL SQLite (`.db`, `.db-wal`), bảng tính (`.xlsx`).
+- Báo cáo chi tiết danh sách lỗi (nếu có) và chặn commit nếu không đạt chuẩn.
 
 ---
 
-### SOP 4: Đóng Gói Commit Chuẩn Hóa (Conventional Commits)
+### SOP 4: Đóng Gói Commit Chuẩn Hóa Theo Cấp Độ Harness
 
-1. **Cấu trúc thông điệp commit**:
-   ```
-   <loại>(<phạm-vi>): <mô-tả-ngắn-gọn-mệnh-lệnh-trực-diện>
+Mọi commit bắt buộc tuân thủ phân tầng 3 Tiers của Harness:
 
-   [Thân commit: giải thích lý do, tác động kiến trúc nếu cần thiết]
-   ```
-2. **Bảng phân loại tiền tố**:
-   - `feat`: Thêm tính năng mới hoặc mở rộng nghiệp vụ.
-   - `fix`: Sửa lỗi logic, sửa lỗi truy vấn hoặc dữ liệu sai lệch.
-   - `refactor`: Tái cấu trúc mã nguồn, không làm đổi hành vi bên ngoài.
-   - `docs`: Bổ sung hoặc cập nhật tài liệu kỹ thuật, chuẩn hóa docstrings.
-   - `test`: Thêm hoặc cập nhật bộ kiểm thử đơn vị, fixture.
-   - `chore`: Cập nhật cấu hình, script phụ trợ, dọn dẹp vệ sinh tệp.
-3. **Quy tắc nội dung**:
-   - Không sử dụng đại từ nhân xưng ("tôi", "chúng ta").
-   - Sử dụng động từ hành động trực diện ("thêm", "sửa", "tối ưu", "loại bỏ").
-   - Mô tả chính xác thực thể và module bị tác động.
+1. **Với Story Hoàn Tất (Normal Tier — US-XXX)**:
+   - Sử dụng lệnh tự động nghiệm thu kèm commit:
+     ```powershell
+     & "C:\venvs\news-scape\Scripts\python.exe" scripts/harness_cli.py story complete --id US-XXX --run-verify --commit
+     ```
+   - Lệnh tự động chạy bộ test kiểm chứng, tự động commit các tệp đã sửa đổi với định dạng:
+     `<type>(<scope>): <title> (US-XXX)`
+     đồng thời tự động ghi nhận mã băm `git_commit` và nhánh `git_branch` vào CSDL `harness.db`.
+
+2. **Với Đóng Phiên / Tác Vụ Nhỏ (Tiny Tier / Session Closure)**:
+   - Sử dụng lệnh checkpoint:
+     ```powershell
+     & "C:\venvs\news-scape\Scripts\python.exe" scripts/harness_cli.py git checkpoint --summary "cập nhật tài liệu và tối ưu docstrings"
+     ```
+
+3. **Với Thay Đổi Trọng Yếu (High-Risk Tier / ADR)**:
+   - Commit gắn với mã quyết định:
+     `docs(adr): NNNN-<tên-quyết-định>`
 
 ---
 
@@ -157,13 +146,13 @@ print('AST check passed 100%')
    ```powershell
    git push origin <ten-nhanh>
    ```
-2. **Lập Bảng Nghiệm Thu Đóng Phiên (Harness Closure Protocol)**:
-   Mọi phiên làm việc kết thúc bắt buộc có bảng tổng kết 5 tiêu chí:
-   - Cấp độ rủi ro (Cấp 1: TINY / Cấp 2: NORMAL / Cấp 3: HIGH-RISK).
-   - Mã băm Commit & Tên nhánh.
-   - Trạng thái kiểm thử (Tỷ lệ pass và số lượng test).
-   - Tình trạng tệp và vệ sinh môi trường.
-   - Bước tiếp theo hoặc vấn đề tồn đọng.
+2. **Kiểm tra trạng thái sạch trước khi đóng phiên**:
+   ```powershell
+   & "C:\venvs\news-scape\Scripts\python.exe" scripts/harness_cli.py git status
+   ```
+3. **Bảng Nghiệm Thu Đóng Phiên (Harness Closure Protocol)**:
+   Mọi phản hồi kết thúc ca làm việc bắt buộc có dòng thứ 7 báo cáo trạng thái Git:
+   `| Git Codebase Status | Yes / Clean | Commit <hash> trên nhánh <branch>, working tree sạch |`
 
 ---
 
