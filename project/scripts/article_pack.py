@@ -1,0 +1,828 @@
+"""Đóng gói bài đăng thành packet cho worker, kèm xếp ưu tiên và dự toán chi phí.
+
+Mọi bài đều được xử lý đầy đủ cả tiêu đề lẫn nội dung; việc xếp tầng chỉ quyết định
+**thứ tự chạy**, không quyết định độ sâu. Nhờ vậy một bài bị xếp thừa vào tầng ưu
+tiên chỉ được xử lý sớm hơn chứ không tốn thêm token, nên bộ xếp hạng được phép
+thiên về nhận rộng: thà nhận nhầm còn hơn bỏ sót bài mà người dùng đang theo dõi.
+
+Packet bắt buộc ghi dạng gọn không thụt lề. Packet cũ ghi thụt lề khiến nội dung mỗi
+bài dồn thành một dòng vật lý dài quá hai nghìn ký tự, vượt ngưỡng cắt dòng của công
+cụ đọc, làm agent mất tin vào dữ liệu và tự mở vòng kiểm chứng tốn hàng trăm nghìn
+token. Đây là nguyên nhân trực tiếp của vệt Gold 154 đến 300 nghìn token.
+"""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import math
+import os
+import re
+import sqlite3
+import sys
+from datetime import datetime
+from pathlib import Path
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from src.agent.distill import (                      # noqa: E402
+    DEFAULT_MAX_TOKENS_PER_ARTICLE,
+    distill_stats,
+    estimate_tokens,
+)
+from src.agent.article_contract import MIN_CITATION_CHARS  # noqa: E402
+from src.agent.silver_source import read_silver_text  # noqa: E402
+from src.agent.entities import load_registry          # noqa: E402
+from src.agent.prefix import (                        # noqa: E402
+    SYSTEM_OVERHEAD_TOKENS,
+    cached_prefix_tokens,
+    persona_tokens,
+)
+from src.core.stdio import force_utf8_stdio           # noqa: E402
+from src.db.preflight import resolve_db_path          # noqa: E402
+from src.pipeline.cluster_job import refresh as refresh_clusters  # noqa: E402
+from src.pipeline.inherit import hold_cutoff          # noqa: E402
+
+force_utf8_stdio()
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+DATA_ROOT = PROJECT_ROOT / "data"
+TASK_DIR = DATA_ROOT / "agent_tasks" / "article"
+
+# Ba trần dưới đây là số thật của công cụ đọc trong DSH, đọc từ README của
+# `dsh-tool-fs`: `readMaxLineLength` 2000 ký tự mỗi dòng, `readMaxBytes` 51.200 byte
+# mỗi lần gọi, `readLimit` 2000 dòng mỗi lần gọi. Packet phải được viết sao cho phía
+# điều phối đọc lại được nguyên vẹn, nếu không dữ liệu bị cắt cụt âm thầm — đúng loại
+# sự cố đã đẻ ra vòng kiểm chứng tốn hàng trăm nghìn token ở vệt Gold.
+READ_MAX_LINE_CHARS = 2000
+READ_MAX_BYTES = 51_200
+READ_MAX_LINES = 2000
+LINE_SAFETY_MARGIN = 100
+
+CONTEXT_WINDOW = 1_000_000
+
+# Đo ngày 2026-09-21 trên 400 bản ghi thật gần nhất của mỗi bảng:
+#   l1_outputs     trung bình   872 ký tự  ≈ 291 token, p90 370
+#   agent_outputs  trung bình 1.946 ký tự  ≈ 649 token, p90 859
+# Bản ghi hợp nhất của Article Lane mang cả hai phần nên nặng khoảng 900 token,
+# p90 khoảng 1.200. Hằng số cũ để 300 vì nó được hiệu chuẩn trên riêng tầng L1;
+# nó làm dự toán đầu ra hụt ba lần và che mất trần cắt cụt bên dưới.
+DEFAULT_OUT_TOKENS_PER_ARTICLE = 900
+
+# Mốc tham chiếu đầu ra của một lượt, chỉ để ƯỚC LƯỢNG chi phí.
+#
+# 256.000 là `maxTokens` mặc định của DSH (`DEFAULT_MAX_TOKENS = 256e3` trong
+# `dsh-llm-deepseek`), nguồn: `docs/proposals/dsh-surface-verified-2026-09-18.md`
+# §6.1–6.2. Đây là `max_tokens` của một request, KHÔNG phải cổng chặn đợt.
+#
+# Chạm mốc này không gây lỗi và không huỷ lượt: adapter ánh xạ `finish_reason`
+# `"length"` thành `{kind:"max-tokens"}` (`dsh-llm-deepseek`), vòng lặp agent kết
+# thúc turn bình thường (`dsh-agent-loop`), và `salvage_records` bóc được mọi bản
+# ghi hoàn chỉnh đã sinh. Phần thiếu do `--repair` đóng gói bù.
+#
+# Vì vậy số này chỉ dùng để in dự toán. Không nhánh mã nào được dừng, chia nhỏ hay
+# hạ số bài dựa trên nó.
+INFO_OUTPUT_REFERENCE = 256_000
+
+# Số lô song song tối đa mà DSH chạy đồng thời trong một lượt điều phối:
+# `maxParallelSubCalls` mặc định 10 (`dsh-tools`). Vượt ngưỡng này thì các lô dôi ra
+# phải chờ hết một sóng, nên số lô mục tiêu luôn là 10.
+MAX_PARALLEL_BATCHES = 10
+
+# Cỡ lô chuẩn cho mọi provider (ADR 0017 D5). Lô dài làm bản ghi cuối lô trôi vì được
+# sinh trong ngữ cảnh đã chứa toàn bộ bản ghi trước đó. Cỡ khác chỉ đặt qua `--batch`.
+DEFAULT_BATCH_SIZE = 50
+
+# Tín hiệu vĩ mô khẩn: bài mang các từ này luôn vào tầng ưu tiên kể cả khi không
+# khớp mã nào trong danh sách theo dõi, vì chúng tác động toàn thị trường.
+_MACRO_URGENT_RE = re.compile(
+    r"(?:ngân\s*hàng\s*nhà\s*nước|nhnn|lãi\s*suất|tỷ\s*giá|room\s*tín\s*dụng"
+    r"|lạm\s*phát|cpi|gdp|thuế\s*quan|thuế\s*chống\s*bán\s*phá\s*giá|thuế\s*tự\s*vệ"
+    r"|fed|fomc|nâng\s*hạng|ftse|msci|trái\s*phiếu\s*doanh\s*nghiệp)",
+    re.IGNORECASE,
+)
+
+
+def get_db_connection() -> sqlite3.Connection:
+    """Mở kết nối tới đúng cơ sở dữ liệu mà bước nạp ghi vào.
+
+    Returns:
+        Kết nối SQLite tới `monocle.db`.
+    """
+    conn = sqlite3.connect(str(resolve_db_path()))
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def watchlist_universe(reg) -> tuple[set[str], set[str]]:
+    """Dựng tập thực thể được theo dõi và tập ngành liên quan tới chúng.
+
+    Tập ngành là phần mở rộng có chủ đích cho việc nhận rộng: một bài nói về ngành
+    thép vẫn đáng ưu tiên với người đang theo dõi một mã thép, dù bài không nhắc mã.
+
+    Args:
+        reg: Thể hiện `EntityRegistry` đã nạp đăng ký người dùng.
+
+    Returns:
+        Cặp gồm tập định danh thực thể được theo dõi và tập tên ngành liên quan.
+    """
+    watched: set[str] = set()
+    for subs in (reg.subscriptions or {}).values():
+        watched |= set(subs)
+
+    industries: set[str] = set()
+    for eid in watched:
+        ent = reg.entities.get(eid) or {}
+        attrs = ent.get("attributes") or {}
+        for key in ("gics1", "gics2", "gics3"):
+            if attrs.get(key):
+                industries.add(str(attrs[key]).strip().lower())
+    return watched, industries
+
+
+def tier_of(title: str, reg, watched: set[str], industries: set[str]) -> tuple[int, str]:
+    """Xếp một bài vào tầng ưu tiên theo nguyên tắc nhận rộng.
+
+    Args:
+        title: Tiêu đề bài viết.
+        reg: Thể hiện `EntityRegistry`.
+        watched: Tập định danh thực thể đang được theo dõi.
+        industries: Tập tên ngành liên quan tới danh sách theo dõi.
+
+    Returns:
+        Cặp gồm số tầng (1 là ưu tiên cao nhất) và lý do xếp tầng.
+    """
+    detected = reg.detect(title or "")
+    ids = {d["entity_id"] for d in detected}
+
+    hit = ids & watched
+    if hit:
+        return 1, f"watchlist:{sorted(hit)[0]}"
+
+    for d in detected:
+        attrs = (reg.entities.get(d["entity_id"]) or {}).get("attributes") or {}
+        for key in ("gics1", "gics2", "gics3"):
+            val = str(attrs.get(key) or "").strip().lower()
+            if val and val in industries:
+                return 1, f"industry:{val}"
+
+    if _MACRO_URGENT_RE.search(title or ""):
+        return 1, "macro-urgent"
+
+    return 2, "background"
+
+
+# Điều kiện "bài đã được mô hình phân tích" trên bảng `l1_outputs` bí danh `o`. Bản
+# code-first là bản tra bảng tạm (ADR 0003), không phải phân tích: tính nó là "xong"
+# thì bộ chọn bài bỏ qua bài ấy vĩnh viễn, và bài không bao giờ có phần nội dung. Đo
+# ngày 2026-09-23: 2.915 bài ngày 10–17/09 kẹt đúng như vậy.
+ANALYZED_L1 = "o.dod_pass = 1 AND COALESCE(o.l1_source, 'agent') <> 'code_first'"
+
+
+def load_candidates(conn: sqlite3.Connection, *, date: str | None, limit: int,
+                    only_pending: bool, exclude: set[str] | None = None,
+                    with_content: bool = True,
+                    exclude_thin: bool = True) -> list[sqlite3.Row]:
+    """Lấy danh sách bài cần xử lý kèm đường dẫn gói dữ liệu tầng bạc.
+
+    Args:
+        conn: Kết nối cơ sở dữ liệu.
+        date: Lọc theo ngày xuất bản YYYY-MM-DD, hoặc None để lấy mọi ngày.
+        limit: Số bài tối đa.
+        only_pending: Chỉ lấy bài chưa được mô hình phân tích đạt chuẩn.
+        exclude: Định danh bài phải bỏ qua (bài đang thuộc đợt khác hoặc đã hết lượt
+            thử). Lọc trong SQL, trước `LIMIT`, nên đợt vẫn đủ số bài.
+        with_content: False thì không trả cột `content_text`; bộ đếm chỉ cần định danh.
+        exclude_thin: True thì loại bài mỏng (không đủ hai đoạn đạt độ dài trích
+            dẫn — Gold trượt tất định). Lọc bằng đúng mảng đoạn văn bước đóng gói
+            sẽ gửi, nên mọi nơi gọi hàm này (radar, sensor, đóng gói) thấy cùng
+            một con số. Đọc tệp gói trên đĩa nên tốn thêm thời gian theo số bài.
+
+    Returns:
+        Danh sách bản ghi bài viết.
+    """
+    cols = {row[1] for row in conn.execute("PRAGMA table_info(articles)").fetchall()}
+    has_content = "content_text" in cols
+
+    if has_content:
+        sql = [
+            "SELECT a.url_title_hash AS article_id, a.title, a.published_at,",
+            "       a.source_domain, w.package_path"
+            + (", a.content_text" if with_content else ""),
+            "FROM articles a",
+            "LEFT JOIN work_items w ON w.article_id = a.url_title_hash",
+            "WHERE (w.package_path IS NOT NULL OR (a.content_text IS NOT NULL AND length(a.content_text) > 100))",
+        ]
+    else:
+        sql = [
+            "SELECT a.url_title_hash AS article_id, a.title, a.published_at,",
+            "       a.source_domain, w.package_path",
+            "FROM articles a",
+            "JOIN work_items w ON w.article_id = a.url_title_hash",
+            "WHERE w.package_path IS NOT NULL",
+        ]
+    params: list = []
+    if only_pending:
+        sql.append(f"  AND NOT EXISTS (SELECT 1 FROM l1_outputs o "
+                   f"WHERE o.article_id = a.url_title_hash AND {ANALYZED_L1})")
+        has_clusters = conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='cluster_members'").fetchone()
+        if has_clusters:
+            # Bài chép lại chờ kế thừa kết quả của bài gốc, không tốn token (ADR 0016). Hết
+            # hạn giữ thì được trả về bộ chọn bài để không bao giờ kẹt vĩnh viễn.
+            sql.append("  AND NOT EXISTS (SELECT 1 FROM cluster_members cm "
+                       "WHERE cm.article_id = a.url_title_hash AND cm.role = 'copy' "
+                       "AND cm.decided_at >= ?)")
+            params.append(hold_cutoff())
+    if date:
+        sql.append("  AND substr(a.published_at,1,10) = ?")
+        params.append(date)
+    if exclude:
+        conn.execute("CREATE TEMP TABLE IF NOT EXISTS _pack_exclude (id TEXT PRIMARY KEY)")
+        conn.execute("DELETE FROM _pack_exclude")
+        conn.executemany("INSERT OR IGNORE INTO _pack_exclude(id) VALUES (?)",
+                         [(x,) for x in exclude])
+        sql.append("  AND a.url_title_hash NOT IN (SELECT id FROM temp._pack_exclude)")
+    sql.append("GROUP BY a.url_title_hash")
+    # Khoá phụ `url_title_hash` không để cho đẹp: nó làm thứ tự bài trở nên tất định.
+    # Bộ nhớ đệm của nhà cung cấp khớp theo tiền tố tính từ token 0, nên hai lần đóng
+    # gói cùng một tập bài phải cho ra packet giống nhau từng byte thì lần chạy lại
+    # mới trúng cache. Chỉ `published_at DESC` thì các bài trùng mốc thời gian đổi
+    # chỗ tuỳ kế hoạch truy vấn, và mọi token sau bài đầu tiên bị đổi chỗ đều trượt.
+    sql.append("ORDER BY a.published_at DESC, a.url_title_hash")
+    sql.append("LIMIT ?")
+    params.append(limit)
+    rows = list(conn.execute("\n".join(sql), params))
+    if not exclude_thin:
+        return rows
+    # Chỉ loại khi đọc được nội dung và xác định mỏng. Không đọc được gì thì giữ
+    # lại để vòng đóng gói loại sau như cũ (fail-open: thiếu dữ kiện thì không giấu
+    # tồn đọng khỏi radar và sensor).
+    return [r for r in rows if not is_thin_row(r)]
+
+
+def read_cleaned_text(package_path: str) -> str:
+    """Đọc nội dung đã chuẩn hóa từ gói dữ liệu tầng bạc.
+
+    Args:
+        package_path: Đường dẫn gói, tương đối với thư mục dự án hoặc tuyệt đối.
+
+    Returns:
+        Nội dung bài viết, hoặc chuỗi rỗng khi không đọc được.
+    """
+    p = Path(package_path)
+    if not p.is_absolute():
+        p = PROJECT_ROOT / package_path
+    try:
+        with open(p, encoding="utf-8") as f:
+            return (json.load(f) or {}).get("cleaned_text") or ""
+    except (OSError, json.JSONDecodeError):
+        return ""
+
+
+def resolve_body_text(*, source_domain=None, published_at=None, article_id=None,
+                      package_path=None, content_text=None) -> str:
+    """Lấy thân bài đầy đủ theo cùng một thứ tự ưu tiên ở mọi nơi.
+
+    Silver đầy đủ trước, gói công việc RSS sau, nội dung trong DB cuối cùng.
+    Thứ tự này là hợp đồng ngầm của lane: packet, bộ lọc mỏng và cổng kiểm đều
+    phải thấy cùng một thân bài thì trích dẫn mới đối chiếu được.
+
+    Args:
+        source_domain: Tên miền nguồn để tìm gói Silver.
+        published_at: Mốc xuất bản để tìm gói Silver.
+        article_id: Băm định danh bài.
+        package_path: Đường dẫn gói công việc RSS dự phòng.
+        content_text: Nội dung trong DB khi không đọc được tệp nào.
+
+    Returns:
+        Thân bài, hoặc chuỗi rỗng khi không có nguồn nào đọc được.
+    """
+    text = ""
+    if article_id:
+        text = read_silver_text(source_domain, published_at, article_id)
+    if not text and package_path:
+        text = read_cleaned_text(package_path)
+    if not text and content_text:
+        text = content_text
+    return text or ""
+
+
+def row_paragraphs(row: sqlite3.Row,
+                   *, max_tokens: int = DEFAULT_MAX_TOKENS_PER_ARTICLE) -> list[str]:
+    """Lấy các đoạn văn đúng như bước đóng gói sẽ gửi cho mô hình.
+
+    Thân bài lấy từ gói Silver đầy đủ trước, rồi mới tới gói công việc RSS và
+    nội dung trong DB — cùng thứ tự với vòng đóng gói. Trích dẫn của mô hình chỉ
+    đối chiếu được khi packet và cổng kiểm đọc cùng một thân bài, nên packet cũ
+    đóng từ đoạn trích RSS ngắn được coi là cũ khi Silver đã có thân đầy đủ.
+    Ngân sách mặc định trùng mặc định của `--max-tokens-per-article` nên bộ lọc
+    mỏng và gói tin thấy cùng một mảng đoạn văn.
+
+    Args:
+        row: Dòng bài của `load_candidates`.
+        max_tokens: Trần token khi chắt lọc đoạn văn.
+
+    Returns:
+        Mảng đoạn văn, rỗng khi không đọc được nội dung nào.
+    """
+    def _col(name: str):
+        try:
+            return row[name]
+        except (IndexError, KeyError, TypeError):
+            return None
+
+    text = resolve_body_text(
+        source_domain=_col("source_domain"), published_at=_col("published_at"),
+        article_id=_col("article_id"), package_path=_col("package_path"),
+        content_text=_col("content_text"))
+    if not text:
+        return []
+    return distill_stats(text, max_tokens=max_tokens)["paragraphs"] or []
+
+
+def is_thin(paragraphs: list[str]) -> bool:
+    """Bài mỏng khi không đủ hai đoạn đạt độ dài trích dẫn.
+
+    Cổng Gold đòi hai trích dẫn nguyên văn, mỗi trích dẫn là một đoạn văn đạt
+    `MIN_CITATION_CHARS`. Bài mỏng qua được nhận diện thực thể nhưng trượt Gold
+    một cách tất định, nên phải loại khỏi packet thay vì đốt token.
+
+    Args:
+        paragraphs: Mảng đoạn văn sẽ gửi cho mô hình.
+
+    Returns:
+        True khi bài không bao giờ dựng được phần nội dung.
+    """
+    return sum(1 for p in paragraphs if len(p) >= MIN_CITATION_CHARS) < 2
+
+
+def is_thin_row(row) -> bool:
+    """True khi đọc được nội dung và xác định mỏng.
+
+    Thiếu dữ kiện (dòng tuple không khoá, không đọc được tệp) thì trả False để
+    vòng đóng gói loại sau như cũ: fail-open, không giấu tồn đọng.
+
+    Args:
+        row: Dòng bài của `load_candidates` (Row hoặc tuple).
+
+    Returns:
+        True chỉ khi chắc chắn bài không dựng được phần nội dung.
+    """
+    try:
+        paras = row_paragraphs(row)
+    except (TypeError, IndexError, KeyError):
+        return False
+    return bool(paras) and is_thin(paras)
+
+
+def fresh_wave_paragraphs(article_ids: set[str]) -> dict[str, list[str]]:
+    """Lấy mảng đoạn văn hiện tại của các bài trong đợt, đọc từ Silver đầy đủ.
+
+    Dùng để phát hiện packet cũ: packet đóng lúc Silver chưa có (hoặc RSS còn là
+    đoạn trích ngắn) mang ít đoạn văn hơn hẳn so với thân bài hiện tại. Bài như
+    vậy phải đóng gói lại thay vì vá quanh bản ghi cũ, vì trích dẫn cũ không đối
+    chiếu được vào thân bài mới.
+
+    Args:
+        article_ids: Tập băm định danh bài cần kiểm.
+
+    Returns:
+        Từ điển định danh bài sang mảng đoạn văn hiện tại. Bài không đọc được
+        thân bài nào thì không có mặt trong từ điển.
+    """
+    fresh: dict[str, list[str]] = {}
+    ids = [a for a in article_ids if a]
+    if not ids:
+        return fresh
+    try:
+        conn = sqlite3.connect(f"file:{resolve_db_path()}?mode=ro", uri=True)
+    except (sqlite3.Error, TypeError, ValueError):
+        return fresh
+    try:
+        conn.row_factory = sqlite3.Row
+        step = 200
+        rows: dict[str, sqlite3.Row] = {}
+        for i in range(0, len(ids), step):
+            chunk = ids[i:i + step]
+            cur = conn.execute(
+                "SELECT url_title_hash AS article_id, title, published_at, "
+                "source_domain FROM articles WHERE url_title_hash IN (%s)"
+                % ",".join("?" * len(chunk)), chunk)
+            for row in cur.fetchall():
+                rows[row["article_id"]] = row
+    finally:
+        conn.close()
+    for aid, row in rows.items():
+        try:
+            paras = row_paragraphs(row)
+        except (TypeError, IndexError, KeyError):
+            continue
+        if paras:
+            fresh[aid] = paras
+    return fresh
+
+
+def suggest_batch_size(n_articles: int) -> int:
+    """Chọn số bài mỗi lô khi người vận hành không đặt `--batch`.
+
+    Args:
+        n_articles: Số bài của cả đợt.
+
+    Returns:
+        Cỡ lô chuẩn, bằng nhau cho mọi provider và mọi cỡ đợt.
+    """
+    return DEFAULT_BATCH_SIZE
+
+
+def plan_calls(n_articles: int, *, batch_cap: int) -> list[int]:
+    """Chia một đợt thành các lượt gọi, chia đều, chỉ theo trần người vận hành đặt.
+
+    `--batch` là cổng chia duy nhất. Không có trần token nào can thiệp vào đây nữa:
+    ngữ cảnh không phải ràng buộc (một đợt trăm bài chiếm khoảng 15% cửa sổ), còn
+    trần đầu ra thì chưa đo được nên không đủ tư cách làm luật chia lô.
+
+    Chia đều thay vì cắt tràn, vì các lượt chạy song song nên đợt chỉ xong khi lượt
+    dài nhất xong; một lượt lẻ rất ngắn không rút ngắn được gì, chỉ làm lệch khối
+    lượng giữa các lượt.
+
+    Args:
+        n_articles: Số bài của cả đợt.
+        batch_cap: Trần số bài mỗi lượt do người vận hành đặt.
+
+    Returns:
+        Danh sách số bài của từng lượt, cộng lại đúng bằng `n_articles`.
+    """
+    if n_articles <= 0:
+        return []
+    cap = max(1, batch_cap)
+    n_calls = max(1, math.ceil(n_articles / cap))
+    base, extra = divmod(n_articles, n_calls)
+    return [base + (1 if i < extra else 0) for i in range(n_calls)]
+
+
+def write_packet(batch_id: str, items: list[dict], mapping: dict,
+                 out_dir: Path) -> tuple[Path, Path, dict]:
+    """Ghi packet ra đĩa ở dạng đọc lại được nguyên vẹn, kèm bảng ánh xạ chỉ số.
+
+    Packet được ghi **xuống dòng theo từng phần tử** thay vì dồn một dòng. Lý do:
+    công cụ đọc cắt mỗi dòng ở 2.000 ký tự, nên một tệp JSON gọn nằm trọn trên một
+    dòng sẽ bị cắt mất gần hết. Ghi mỗi đoạn văn một dòng thì dòng dài nhất bằng đúng
+    đoạn dài nhất, mà đo trên 4.493 đoạn thật thì đoạn dài nhất chỉ 954 ký tự.
+
+    Args:
+        batch_id: Mã lô.
+        items: Danh sách bài đã đóng gói.
+        mapping: Bảng ánh xạ chỉ số cục bộ sang định danh bài.
+        out_dir: Thư mục đích.
+
+    Returns:
+        Bộ ba gồm đường dẫn packet, đường dẫn bảng ánh xạ và số liệu ngân sách đọc.
+
+    Raises:
+        ValueError: Khi packet có dòng vượt ngưỡng cắt dòng của công cụ đọc.
+    """
+    out_dir.mkdir(parents=True, exist_ok=True)
+    packet = {
+        "d": datetime.now().strftime("%Y-%m-%d"),
+        "n": len(items),
+        "a": items,
+    }
+    text = json.dumps(packet, ensure_ascii=False, indent=1)
+
+    lines = text.splitlines()
+    longest = max((len(line) for line in lines), default=0)
+    limit = READ_MAX_LINE_CHARS - LINE_SAFETY_MARGIN
+    if longest > limit:
+        raise ValueError(
+            f"packet {batch_id} có dòng dài {longest} ký tự, vượt ngưỡng an toàn {limit}. "
+            "Công cụ đọc sẽ cắt cụt dòng này và phía điều phối nhận dữ liệu thiếu. "
+            "Hạ MAX_PARAGRAPH_CHARS trong src/agent/distill.py rồi đóng gói lại."
+        )
+
+    packet_path = out_dir / f"{batch_id}.task.json"
+    packet_path.write_text(text, encoding="utf-8")
+
+    map_path = out_dir / f"{batch_id}.map.json"
+    map_path.write_text(json.dumps(mapping, ensure_ascii=False, indent=1), encoding="utf-8")
+
+    size = len(text.encode("utf-8"))
+    budget = {
+        "bytes": size,
+        # Băm của packet: bằng chứng kiểm được cho tính tất định. Đóng gói lại cùng
+        # một tập bài mà băm đổi nghĩa là lần chạy lại sẽ trượt bộ nhớ đệm.
+        "sha256": hashlib.sha256(text.encode("utf-8")).hexdigest()[:16],
+        "lines": len(lines),
+        "longest_line": longest,
+        "windows": read_windows(lines),
+    }
+    budget["read_calls"] = len(budget["windows"])
+    return packet_path, map_path, budget
+
+
+def read_windows(lines: list[str]) -> list[list[int]]:
+    """Chia tệp thành các cửa sổ dòng mà mỗi cửa sổ đọc trọn trong một lần gọi.
+
+    Công cụ đọc chặn ở 51.200 byte và 2.000 dòng cho mỗi lần gọi, nên một packet
+    trăm bài phải đọc làm nhiều lần. Việc chia cửa sổ được tính sẵn ở đây để chương
+    trình điều phối chỉ việc lặp theo danh sách, không phải đoán ngưỡng lúc chạy.
+    Các lần đọc này nằm trong cùng một chương trình nên **không tốn thêm bước nào**
+    của mô hình.
+
+    Args:
+        lines: Danh sách dòng của tệp packet.
+
+    Returns:
+        Danh sách cặp `[dòng bắt đầu tính từ 1, số dòng]`.
+    """
+    budget = READ_MAX_BYTES - 4096          # chừa chỗ cho khung bao và số dòng
+    windows: list[list[int]] = []
+    start = 1
+    used = 0
+    count = 0
+    for idx, line in enumerate(lines, start=1):
+        cost = len(line.encode("utf-8")) + 12
+        if count and (used + cost > budget or count >= READ_MAX_LINES):
+            windows.append([start, count])
+            start = idx
+            used = 0
+            count = 0
+        used += cost
+        count += 1
+    if count:
+        windows.append([start, count])
+    return windows or [[1, 1]]
+
+
+def histogram(values: list[int], *, buckets: int = 6) -> list[str]:
+    """Dựng biểu đồ phân bố dạng văn bản cho số token mỗi bài.
+
+    Args:
+        values: Danh sách số token của từng bài.
+        buckets: Số khoảng chia.
+
+    Returns:
+        Danh sách dòng biểu đồ.
+    """
+    if not values:
+        return []
+    lo, hi = min(values), max(values)
+    if hi == lo:
+        return [f"  {lo:>5} token │ {'█' * 40} {len(values)}"]
+    width = (hi - lo) / buckets
+    lines = []
+    for b in range(buckets):
+        start = lo + width * b
+        end = start + width
+        n = sum(1 for v in values if (start <= v < end or (b == buckets - 1 and v == hi)))
+        bar = "█" * int(40 * n / len(values)) if values else ""
+        lines.append(f"  {int(start):>5}-{int(end):<5} │ {bar} {n}")
+    return lines
+
+
+def main(argv=None) -> int:
+    """Chạy giao diện dòng lệnh đóng gói bài đăng.
+
+    Args:
+        argv: Danh sách tham số dòng lệnh. Mặc định lấy từ `sys.argv`.
+
+    Returns:
+        Mã thoát 0 khi đóng gói được, 2 khi không có bài nào thoả điều kiện.
+    """
+    ap = argparse.ArgumentParser(description="Đóng gói bài đăng thành packet cho worker")
+    ap.add_argument("--wave", default=datetime.now().strftime("%Y%m%dT%H%M"),
+                    help="Mã đợt, dùng làm tiền tố tên lô")
+    ap.add_argument("--batch", type=int, default=0,
+                    help="Số bài mỗi lô; 0 = tự chọn để đợt gọn trong một sóng song song")
+    ap.add_argument("--limit", type=int, default=300, help="Tổng số bài tối đa của đợt")
+    ap.add_argument("--date", help="Chỉ lấy bài xuất bản trong ngày YYYY-MM-DD")
+    ap.add_argument("--today", action="store_true", help="Tương đương --date hôm nay")
+    ap.add_argument("--all-articles", action="store_true",
+                    help="Lấy cả bài đã có kết quả nhận diện đạt chuẩn")
+    ap.add_argument("--max-tokens-per-article", type=int,
+                    default=DEFAULT_MAX_TOKENS_PER_ARTICLE,
+                    help="Trần token phần nội dung mỗi bài")
+    ap.add_argument("--out-tokens-per-article", type=int,
+                    default=DEFAULT_OUT_TOKENS_PER_ARTICLE,
+                    help="Cỡ bản ghi đầu ra mỗi bài, chỉ dùng để ước lượng token")
+    ap.add_argument("--out-dir", default=str(TASK_DIR), help="Thư mục ghi packet")
+    ap.add_argument("--json", action="store_true", help="Xuất mô tả đợt dạng JSON")
+    ap.add_argument("--no-cluster", action="store_true",
+                    help="Không làm mới cụm trùng lặp trước khi chọn bài")
+    ap.add_argument("--exclude-file",
+                    help="Tệp định danh bài phải bỏ qua, mỗi dòng một định danh")
+    args = ap.parse_args(argv)
+
+    date = args.date or (datetime.now().strftime("%Y-%m-%d") if args.today else None)
+    exclude: set[str] = set()
+    if args.exclude_file:
+        exclude = {ln.strip() for ln in Path(args.exclude_file).read_text(
+            encoding="utf-8").splitlines() if ln.strip()}
+
+    conn = get_db_connection()
+    if not args.no_cluster:
+        try:
+            print(f"Cụm hoá trùng lặp: {refresh_clusters(conn)}")
+        except sqlite3.Error as e:
+            print(f"Bỏ qua cụm hoá (DB không ghi được hoặc chưa có bảng): {e}")
+    rows = load_candidates(conn, date=date, limit=args.limit,
+                           only_pending=not args.all_articles, exclude=exclude)
+    conn.close()
+    if not rows:
+        print("Không có bài nào thoả điều kiện. Kiểm lại --date hoặc hàng đợi work_items.")
+        return 2
+
+    reg = load_registry()
+    watched, industries = watchlist_universe(reg)
+
+    packed: list[dict] = []
+    n_thin = 0
+    for r in rows:
+        text = resolve_body_text(
+            source_domain=r["source_domain"], published_at=r["published_at"],
+            article_id=r["article_id"], package_path=r["package_path"],
+            content_text=r["content_text"] if "content_text" in r.keys() else None)
+        if not text:
+            continue
+        stats = distill_stats(text, max_tokens=args.max_tokens_per_article)
+        if not stats["paragraphs"]:
+            continue
+        if is_thin(stats["paragraphs"]):
+            n_thin += 1
+            continue
+        tier, reason = tier_of(r["title"], reg, watched, industries)
+        packed.append({
+            "article_id": r["article_id"],
+            "title": r["title"] or "",
+            "paragraphs": stats["paragraphs"],
+            "tokens": stats["tokens_after"] + estimate_tokens(r["title"] or ""),
+            "tier": tier,
+            "reason": reason,
+            "domain": r["source_domain"],
+        })
+
+    if not packed:
+        print("Có bài nhưng không đọc được nội dung nào. Kiểm lại work_packages trên đĩa.")
+        return 2
+
+    # Tầng ưu tiên chạy trước; trong cùng tầng giữ nguyên thứ tự mới nhất trước.
+    # `sort` của Python ổn định và truy vấn đã sắp tất định, nên thứ tự cuối cùng chỉ
+    # phụ thuộc dữ liệu chứ không phụ thuộc lần chạy — điều kiện để lần đóng gói lại
+    # cho ra packet giống hệt và trúng bộ nhớ đệm.
+    packed.sort(key=lambda a: a["tier"])
+
+    # Tiền tố tĩnh gồm CẢ phần harness tự nối vào (AGENTS.md, section tool/SDK), chứ
+    # không chỉ phần persona dự án tự dán. Cả hai đều đứng trước packet và đều tĩnh,
+    # nên cả hai đều trúng bộ nhớ đệm; đếm thiếu phần harness làm `est_hit` hụt khoảng
+    # 4.800 token mỗi lượt và khiến số dự toán không đối chiếu được với `cacheRead`
+    # thật trong sổ cái.
+    pfx = cached_prefix_tokens()
+
+    # `--batch 0` để đợt tự chọn cỡ lô theo số bài thật. Người vận hành chỉ đặt số
+    # cứng khi muốn ép một cách chia cụ thể.
+    batch_size = args.batch if args.batch > 0 else suggest_batch_size(len(packed))
+    chunk_cap = max(1, batch_size)
+
+    # Chia đều thay vì cắt tràn. Cắt tràn để lại một lượt lẻ rất ngắn, mà các lượt
+    # chạy song song nên đợt chỉ xong khi lượt dài nhất xong: lượt lẻ không rút
+    # ngắn được gì, chỉ làm lệch khối lượng giữa các lượt.
+    sizes = plan_calls(len(packed), batch_cap=batch_size)
+
+    # Đợt một lô không có lượt hâm bộ nhớ đệm: không có lô thứ hai để dùng lại tiền
+    # tố, nên lượt hâm chỉ dời đúng khoản token miss ấy sang một request khác rồi
+    # tính thêm một bản ghi đầu ra. Lô duy nhất tự trả giá token mới cho tiền tố.
+    warmed = len(sizes) >= 2
+
+    batches: list[dict] = []
+    out_dir = Path(args.out_dir)
+    cursor = 0
+    seq = 1
+    for size in sizes:
+        chunk = packed[cursor:cursor + size]
+
+        batch_id = f"article_{args.wave}_{seq:02d}"
+        items = [{"i": i, "t": a["title"], "p": a["paragraphs"]}
+                 for i, a in enumerate(chunk)]
+        mapping = {
+            "batch_id": batch_id,
+            "wave": args.wave,
+            "created_at": datetime.now().isoformat(timespec="seconds"),
+            "index": {str(i): a["article_id"] for i, a in enumerate(chunk)},
+            "tier": {str(i): a["tier"] for i, a in enumerate(chunk)},
+            "reason": {str(i): a["reason"] for i, a in enumerate(chunk)},
+        }
+        packet_path, map_path, budget = write_packet(batch_id, items, mapping, out_dir)
+
+        est_in = pfx + sum(a["tokens"] for a in chunk)
+        est_out = len(chunk) * args.out_tokens_per_article
+        batches.append({
+            "batch_id": batch_id,
+            "path": str(packet_path),
+            "map": str(map_path),
+            "n": len(chunk),
+            "tier1": sum(1 for a in chunk if a["tier"] == 1),
+            "est_miss": est_in - pfx,
+            "est_hit": pfx if warmed else 0,
+            "est_out": est_out,
+            "est_ctx_peak": est_in + est_out,
+            "bytes": budget["bytes"],
+            "sha256": budget["sha256"],
+            "read_calls": budget["read_calls"],
+            "longest_line": budget["longest_line"],
+            "windows": budget["windows"],
+        })
+        cursor += len(chunk)
+        seq += 1
+
+    summary = {
+        "wave": args.wave,
+        # Mốc thời gian này là điểm neo để sổ cái quy kết chi phí: chỉ những phiên
+        # DSH sinh ra SAU khi đóng gói mới thuộc về đợt. Lấy mốc rộng hơn sẽ gộp
+        # nhầm cả phiên không liên quan và thổi phồng con số chi phí mỗi bài.
+        "created_epoch": datetime.now().timestamp(),
+        "created_at": datetime.now().isoformat(timespec="seconds"),
+        "articles": len(packed),
+        "thin_skipped": n_thin,
+        "batches": batches,
+        "tier1": sum(b["tier1"] for b in batches),
+        "prefix_tokens": pfx,
+        "persona_tokens": persona_tokens(),
+        "system_overhead_tokens": SYSTEM_OVERHEAD_TOKENS,
+        # Lượt hâm bộ nhớ đệm đi trước mọi lô: nó trả giá token mới cho phần tiền tố
+        # đúng một lần, đổi lại mọi lô sau đều trúng cache và không lô nào phải chờ.
+        "est_warm_miss": pfx,
+        "warmed": warmed,
+        "per_call": chunk_cap,
+        "out_tokens_per_article": args.out_tokens_per_article,
+        "output_reference_tokens": INFO_OUTPUT_REFERENCE,
+        "max_parallel_batches": MAX_PARALLEL_BATCHES,
+        "est_miss_total": sum(b["est_miss"] for b in batches) + pfx,
+        "est_hit_total": sum(b["est_hit"] for b in batches),
+        "est_out_total": sum(b["est_out"] for b in batches),
+    }
+    summary["est_quota_total"] = (summary["est_miss_total"] + summary["est_hit_total"]
+                                  + summary["est_out_total"])
+
+    manifest = Path(args.out_dir) / f"wave_{args.wave}.json"
+    manifest.write_text(json.dumps(summary, ensure_ascii=False, indent=1), encoding="utf-8")
+    summary["manifest"] = str(manifest)
+
+    if args.json:
+        print(json.dumps(summary, ensure_ascii=False))
+        return 0
+
+    tokens = [a["tokens"] for a in packed]
+    print("=" * 84)
+    print(f" 📦  ĐÓNG GÓI ĐỢT {args.wave}")
+    print("=" * 84)
+    lot = (f"{len(batches)} lượt gọi song song trong MỘT bước điều phối"
+           if len(batches) > 1 else "MỘT lượt gọi duy nhất")
+    print(f"Bài đóng gói : {len(packed):,} ({summary['tier1']:,} tầng ưu tiên) → {lot}")
+    if n_thin:
+        print(f"Bài mỏng     : {n_thin:,} bài không đủ hai đoạn đạt độ dài trích dẫn "
+              f"nên không vào packet (Gold trượt tất định, không tốn token); "
+              f"chờ gói Silver.")
+    cache_note = ("mọi lô trúng cache nhờ lượt hâm đi trước" if warmed
+                  else "một lô nên không hâm; lô này trả giá token mới")
+    print(f"Prefix tĩnh  : {pfx:,} token = persona {persona_tokens():,} + harness "
+          f"{SYSTEM_OVERHEAD_TOKENS:,} ({cache_note})")
+    worst_out = max((b["est_out"] for b in batches), default=0)
+    print(f"Chia lô      : {len(batches)} lô, {chunk_cap} bài mỗi lô "
+          f"(song song tối đa {MAX_PARALLEL_BATCHES}).")
+    print(f"Đầu ra ước   : {worst_out:,} token cho lượt nặng nhất "
+          f"(bản ghi {args.out_tokens_per_article} token/bài). Số ước lượng, "
+          f"không phải trần.")
+    print()
+    print(f"{'lô':26} {'bài':>4} {'ưu tiên':>8} {'miss':>9} {'out':>7} "
+          f"{'ctx đỉnh':>9} {'KB':>6} {'đọc':>4}")
+    print("-" * 84)
+    for b in batches:
+        print(f"{b['batch_id']:26} {b['n']:>4} {b['tier1']:>8} "
+              f"{b['est_miss']:>9,} {b['est_out']:>7,} "
+              f"{b['est_ctx_peak'] / CONTEXT_WINDOW:>8.1%} "
+              f"{b['bytes'] / 1024:>6.0f} {b['read_calls']:>4}")
+    print("-" * 84)
+    print(f"Dự toán đợt  : quota {summary['est_quota_total']:,} token "
+          f"(miss {summary['est_miss_total']:,} · hit {summary['est_hit_total']:,} · "
+          f"out {summary['est_out_total']:,})")
+    print()
+    print("Phân bố token mỗi bài:")
+    for line in histogram(tokens):
+        print(line)
+
+    reads = sum(b["read_calls"] for b in batches)
+    longest = max(b["longest_line"] for b in batches)
+    print()
+    print(f"Ngân sách đọc: {reads} lần gọi `read` cho cả đợt "
+          f"(mỗi lần tối đa {READ_MAX_BYTES // 1024} KB) · dòng dài nhất {longest} ký tự "
+          f"trên trần {READ_MAX_LINE_CHARS}")
+    if reads > len(batches):
+        print("  Lô nào cần hơn một lần đọc thì phía điều phối phải phân trang bằng "
+              "`offset`/`limit` ngay trong cùng một chương trình; việc này KHÔNG tốn "
+              "thêm bước nào của mô hình.")
+    print("=" * 84)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

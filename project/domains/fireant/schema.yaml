@@ -1,0 +1,142 @@
+# Domain Schema Contract — FireAnt (fireant.vn)
+# ⚠️ BRONZE CỦA NGUỒN NÀY LÀ **JSON**, KHÔNG PHẢI HTML.
+
+domain: fireant.vn
+method: api+capture_json      # REST API (Bearer) + Bronze capture body JSON
+endpoint: "https://restv2.fireant.vn/posts"
+last_verified: 2026-09-07
+
+auth:
+  type: bearer
+  secret_key: fireant_token   # config/secrets.yaml (gitignored)
+  note: "JWT exp 2036 (verified 2026-09-07). Hết hạn → scraper self-disable + ERROR log."
+
+bronze:
+  format: json
+  why: >
+    Trang web fireant.vn/dashboard/content/{id} là Next.js SPA (__NEXT_DATA__) — body bài
+    KHÔNG có trong HTTP GET nên capture trang web là vô nghĩa. Nguồn sự thật duy nhất là
+    response JSON của API detail, trong đó `content` là HTML thân bài.
+  how: >
+    enrich() gọi thẳng RawStore.save() trên response detail (byte-exact).
+    KHÔNG dùng CaptureMixin._capture_and_extract — hàm đó chạy CSS selector
+    (_looks_complete) nên sẽ báo `partial` OAN cho mọi bài.
+  silver: >
+    SilverBuilder nhận diện Content-Type: application/json rồi bóc trường HTML qua
+    _html_from_json() (nhánh generic theo ĐỊNH DẠNG, không phải luật riêng domain).
+
+compliance:
+  robots_fireant_vn: >
+    User-agent: * → Allow: / , KÈM Content-Signal: search=yes, ai-train=no, use=reference.
+    Chặn tường minh: ClaudeBot, GPTBot, CCBot, Google-Extended, Amazonbot,
+    Applebot-Extended, Bytespider, meta-externalagent, CloudflareBrowserRenderingCrawler.
+  robots_api_host: "restv2.fireant.vn KHÔNG có robots.txt (404)."
+  posture: >
+    ⚠️ CẦN OWNER XÁC NHẬN. Ta KHÔNG crawl website ẩn danh — ta gọi API đã xác thực bằng
+    token của chính người dùng, tức chịu ràng buộc ToS/thoả thuận tài khoản chứ không phải
+    robots dành cho crawler. Nhưng site đã tỏ rõ ý không muốn nội dung vào hệ thống AI.
+  hard_rule: "TUYỆT ĐỐI KHÔNG dùng dữ liệu fireant để huấn luyện/fine-tune model (ai-train=no)."
+
+pitfalls:
+  - "Field API là camelCase: postID / postSource / postSourceUrl. Bản cũ đọc post_source (snake) nên source_name LUÔN rỗng — sửa 2026-09-07."
+  - "Permalink đúng = /dashboard/content/{id}. /bai-viet/{id} trả 404 — sửa 2026-09-07."
+  - "Detail endpoint là /posts/{id} SỐ NHIỀU; /post/{id} số ít trả 404."
+  - "List trả `content` RỖNG → bắt buộc gọi detail."
+  - "401/403 → self-disable ngay trong cycle, không hammer API. KHÔNG ghi Bronze cho response lỗi auth."
+  - "1 request/mã watchlist → 30 mã = 30 request list/cycle (~600 item)."
+
+raw_response:
+  list:
+    root: "array"
+    items_per_symbol: 20
+    note: "content rỗng ở list"
+  detail:
+    root: "object"
+    content_type: "application/json; charset=utf-8"
+    fields:
+      - { name: "postID",        type: "integer", required: true }
+      - { name: "title",         type: "string",  required: true, min_length: 1 }
+      - { name: "description",   type: "string",  required: false, description: "→ summary" }
+      - { name: "content",       type: "string",  required: false, description: "HTML thân bài (~3.7k)" }
+      - { name: "originalContent", type: "string", required: false, description: "fallback của content" }
+      - { name: "date",          type: "string",  required: true,  description: "ISO +07:00 SẴN" }
+      - { name: "taggedSymbols", type: "array",   required: false, description: "[{symbol}]" }
+      - { name: "postSource",    type: "object",  required: false, description: "{name,url} — có thể null" }
+      - { name: "postSourceUrl", type: "string",  required: false }
+
+output_fields:
+  url:
+    source: "https://fireant.vn/dashboard/content/{postID}"
+    type: "string"
+    required: true
+    health_threshold: 1.0
+  title:          { source: "title.strip()", type: string, required: true, health_threshold: 1.0 }
+  source_domain:  { source: "hằng số", type: string, required: true, expected_value: "fireant.vn" }
+  published_at:
+    source: "date (API trả ISO +07:00 sẵn)"
+    type: "iso8601 string (+07:00)"
+    required: true
+    pattern: '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+07:00$'
+    health_threshold: 0.98
+  summary:        { source: "description.strip()", type: string, required: false, health_threshold: 0.85 }
+  content_text:   { source: "enrich: extract_text(post.content)", type: string, required: false, min_length: 50, health_threshold: 0.7 }
+  content_html:   { source: "enrich: post.content", type: string, required: false, health_threshold: 0.2 }
+  symbols:
+    source: "taggedSymbols[].symbol (API tag SẴN — không cần tag_tickers)"
+    type: "list[str]"
+    required: false
+    health_threshold: 0.8
+  metadata.post_id:     { source: "postID", type: integer, required: true }
+  metadata.source_name: { source: "postSource.name", type: string, required: false }
+  metadata.source_url:  { source: "postSource.url | postSourceUrl", type: string, required: false }
+  metadata.language:    { source: "config.language (vi)", type: string, required: false }
+  metadata.capture:     { source: "RawStore.save() — body JSON", type: dict, required: true, health_threshold: 1.0 }
+
+capture:
+  raw_dir: "data/raw_html/fireant.vn/<yyyymmdd>/<url_title_hash>.html"
+  note: "Đuôi .html là quy ước layout của RawStore; NỘI DUNG là JSON (xem response_headers.content-type)."
+  min_body_bytes: 512
+  max_per_cycle: 30
+  expected_capture_status: "ok"
+
+watch_points:
+  - id: fa-w1
+    field: fireant_token
+    risk: auth_expiry
+    severity: high
+    description: "Token hết hạn → 401 → self-disable toàn cycle. JWT hiện exp 2036 nhưng server có thể thu hồi sớm."
+    check: "không có error 'token expired' trong log"
+
+  - id: fa-w2
+    field: detail JSON field `content`
+    risk: structure_change
+    severity: high
+    description: "Đổi tên trường → content_html rỗng → capture_status=partial + missing[article_body]."
+    check: "tỉ lệ .meta.json có missing[article_body] < 5%"
+
+  - id: fa-w3
+    field: Content-Type application/json
+    risk: format_change
+    severity: medium
+    description: "SilverBuilder dựa content-type để bóc JSON. Đổi content-type → cleaned_text sẽ nuốt cả key JSON."
+    check: "silver cleaned_text không chứa chuỗi 'postID'"
+
+  - id: fa-w4
+    field: permalink /dashboard/content/{id}
+    risk: url_change
+    severity: medium
+    description: "Đổi pattern → url_title_hash đổi → toàn bộ bài cũ bị coi là mới 1 lần. (/bai-viet/ đã chết.)"
+    check: "curl permalink 1 bài → 200"
+
+  - id: fa-w5
+    field: robots Content-Signal
+    risk: policy_change
+    severity: high
+    description: "Hiện ai-train=no, use=reference + chặn ClaudeBot/GPTBot. Nếu siết thêm (vd chặn API hoặc đổi ToS) phải dừng và hỏi owner."
+    check: "curl https://fireant.vn/robots.txt — so với bản 2026-09-07"
+
+alert_thresholds:
+  article_count_drop_pct: 50
+  field_fill_rate_drop_pct: 20
+  new_article_zero_streak: 3
+  consecutive_failure_streak: 2      # chặt hơn: 401 liên tiếp = token chết

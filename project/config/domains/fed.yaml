@@ -1,0 +1,11 @@
+name: fed
+enabled: false   # disabled 2026-08-03: focus on cafef + vietstock only
+method: rss
+language: en
+rate_limit: 3.0
+timeout: 30
+rss:
+  feeds:
+    - {url: "https://www.federalreserve.gov/feeds/press_all.xml", name: "Federal Reserve Press"}
+detail: {extract_full: true, max_details_per_cycle: 10}
+pitfalls: "BOM trước <?xml — _decode_feed xử lý. 20 items, tần suất thấp, signal macro rất cao. Press release ngắn → full text đáng lấy. Verified 2026-07-25."

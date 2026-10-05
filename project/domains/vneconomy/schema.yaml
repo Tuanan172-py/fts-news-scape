@@ -1,0 +1,99 @@
+# Domain Schema Contract — VnEconomy
+# Bổ sung 2026-09-07: 6/7 nguồn enabled đã có contract, vneconomy còn thiếu.
+# schema.yaml là BẮT BUỘC — `domain:` là nguồn sự thật cho resolve_source_domain().
+
+domain: vneconomy.vn
+method: vneconomy              # scraper riêng: RSS list + full raw HTML capture
+last_verified: 2026-08-17      # (chưa re-verify trong đợt 2026-09-07 — xem watch_points)
+feeds:
+  - { url: "https://vneconomy.vn/tin-moi.rss",              name: "VnEconomy Tin mới" }
+  - { url: "https://vneconomy.vn/chung-khoan.rss",          name: "VnEconomy Chứng khoán" }
+  - { url: "https://vneconomy.vn/tai-chinh.rss",            name: "VnEconomy Tài chính" }
+  - { url: "https://vneconomy.vn/thi-truong.rss",           name: "VnEconomy Thị trường" }
+  - { url: "https://vneconomy.vn/dau-tu.rss",               name: "VnEconomy Đầu tư" }
+  - { url: "https://vneconomy.vn/kinh-te-the-gioi.rss",     name: "VnEconomy Kinh tế thế giới" }
+  - { url: "https://vneconomy.vn/nhip-cau-doanh-nghiep.rss", name: "VnEconomy Doanh nghiệp" }
+  - { url: "https://vneconomy.vn/dia-oc.rss",               name: "VnEconomy Bất động sản" }
+robots:
+  policy: "article cho phép; crawl-delay 1s cho AI bot"
+pitfalls:
+  - "content:encoded KHAI namespace nhưng item KHÔNG chứa (verified 2026-08-17) → detail-fetch BẮT BUỘC."
+  - "Body = #article-editor — là thẻ <main>, KHÔNG phải div (verified 2026-08-17, ổn định 3 section)."
+  - "h1 trang RỖNG → dùng title từ RSS."
+  - "Img src trực tiếp trên premedia.vneconomy.vn (không lazy-load)."
+  - "pubDate RFC-2822 GMT → feedparser UTC-normalize."
+  - "Feed KHÔNG tag mã CK → tag_tickers theo watchlist."
+
+raw_response:
+  format: "RSS 2.0"
+  root_path: "rss.channel.item"
+  fields:
+    - { name: "link",            type: "string", required: true,  pattern: '^https://vneconomy\.vn/' }
+    - { name: "title",           type: "string", required: true,  min_length: 1 }
+    - { name: "description",     type: "string", required: false }
+    - { name: "pubDate",         type: "string", required: true,  description: "RFC-2822 GMT" }
+    - { name: "content:encoded", type: "string", required: false, description: "KHAI namespace nhưng RỖNG" }
+
+output_fields:
+  url:            { source: "entry.link", type: string, required: true, health_threshold: 1.0 }
+  title:          { source: "entry.title → _clean_title()", type: string, required: true, health_threshold: 1.0 }
+  source_domain:  { source: "urlparse(url).netloc.removeprefix('www.')", type: string, required: true, expected_value: "vneconomy.vn" }
+  published_at:
+    source: "entry.published_parsed → VN_TZ → ISO 8601"
+    type: "iso8601 string (+07:00)"
+    required: true
+    pattern: '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+07:00$'
+    health_threshold: 0.95
+  summary:        { source: "entry.description → extract_text()", type: string, required: false, health_threshold: 0.8 }
+  content_text:   { source: "enrich: extract_text(#article-editor)", type: string, required: false, min_length: 50, health_threshold: 0.7 }
+  content_html:   { source: "enrich: select_one('#article-editor')", type: string, required: false, health_threshold: 0.2 }
+  categories:     { source: "tên feed từ YAML", type: "list[str]", required: false, health_threshold: 0.9 }
+  symbols:        { source: "tag_tickers(title + summary) ∩ watchlist", type: "list[str]", required: false, health_threshold: 0.2 }
+  metadata.language: { source: "config.language (vi)", type: string, required: false }
+  metadata.capture:  { source: "RawStore.save()", type: dict, required: true, health_threshold: 1.0 }
+
+capture:
+  raw_dir: "data/raw_html/vneconomy.vn/<yyyymmdd>/<url_title_hash>.{html,meta.json}"
+  render_method: "requests (server-rendered)"
+  content_selector: "#article-editor"
+  min_body_bytes: 2048
+  max_per_cycle: 30
+  image_cdn: "premedia.vneconomy.vn"
+  expected_capture_status: "ok"
+
+detail_page:
+  body_selector: "#article-editor"     # thẻ <main>, không phải div
+  note: "h1 rỗng — title lấy từ RSS"
+
+link_rewrites: []
+filter:
+  configured: false
+  description: "8 feed chuyên mục hẹp; tin-moi.rss là firehose bắt hết. filter.any/none khả dụng nếu cần."
+
+watch_points:
+  - id: vne-w1
+    field: content_selector #article-editor
+    risk: selector_drift
+    severity: high
+    description: "Đổi id body → capture_status=partial → SELECTOR_BROKEN → agent HOLD bài."
+    check: "tỉ lệ .meta.json có missing[incomplete_render] < 10%"
+
+  - id: vne-w2
+    field: content:encoded
+    risk: behaviour_change
+    severity: low
+    description: "Hiện khai namespace nhưng rỗng. Nếu upstream điền thật thì có thể cân nhắc dùng làm fallback (KHÔNG thay Bronze)."
+    check: "len(entry.content[0].value) trong feed"
+
+  - id: vne-w3
+    field: last_verified quá cũ
+    risk: staleness
+    severity: medium
+    description: "Contract này ghi lại từ 2026-08-17, CHƯA re-verify trong đợt rà soát 2026-09-07. Cần fetch thật 1 bài để xác nhận #article-editor còn đúng."
+    check: "curl 1 bài + kiểm tra #article-editor tồn tại và có text"
+
+alert_thresholds:
+  article_count_drop_pct: 50
+  field_fill_rate_drop_pct: 20
+  new_article_zero_streak: 3
+  consecutive_failure_streak: 3

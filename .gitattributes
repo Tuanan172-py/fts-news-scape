@@ -1,0 +1,17 @@
+# Kho luu tru da chuan LF (core.autocrlf=true tren ca 2 may Windows).
+# File nay CHOT lai hanh vi do de khong phu thuoc config tung may.
+* text=auto eol=lf
+
+# CANH BAO: KHONG dat "-text" cho html/xml/json fixture.
+# Working tree dang la CRLF (autocrlf), blob la LF; "-text" se commit ban CRLF
+# va lam hong tinh byte-exact cua fixture tai tao tu Bronze.
+
+# Nhi phan — chan moi chuyen doi va chan diff rac
+*.xlsx binary
+*.xls  binary
+*.docx binary
+*.pdf  binary
+*.png  binary
+*.jpg  binary
+*.db   binary
+*.bundle binary

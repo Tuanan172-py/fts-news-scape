@@ -1,0 +1,10 @@
+name: vndirect
+enabled: false   # disabled 2026-08-03: focus on cafef + vietstock only
+method: api
+rate_limit: 3.0
+timeout: 30
+api:
+  endpoint: "https://api-finfo.vndirect.com.vn/v4/news"
+  page_size: 60
+  # news_groups: [company_news, macro_news]   # rỗng = tất cả groups
+pitfalls: "Public JSON API không cần auth (verified 2026-07-25). VNDirect là AGGREGATOR — newsUrl trỏ báo gốc, fuzzy dedup cross-domain xử lý trùng. Full content trong list response. dstock web = Cloudflare 403 nhưng API thì không."

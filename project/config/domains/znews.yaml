@@ -1,0 +1,10 @@
+name: znews
+enabled: false   # disabled 2026-08-03: focus on cafef + vietstock only
+method: rss
+rate_limit: 3.0
+timeout: 30
+rss:
+  feeds:
+    - {url: "https://znews.vn/rss/kinh-doanh-tai-chinh.rss", name: "Znews Kinh doanh Tài chính"}
+detail: {extract_full: true, max_details_per_cycle: 30}
+pitfalls: "50 items. Verified 2026-07-25."

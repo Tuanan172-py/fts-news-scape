@@ -1,0 +1,12 @@
+name: vnexpress
+enabled: false   # disabled 2026-08-03: focus on cafef + vietstock only
+method: rss
+rate_limit: 3.0
+timeout: 30
+rss:
+  feeds:
+    - {url: "https://vnexpress.net/rss/kinh-doanh.rss", name: "VnExpress Kinh doanh"}
+detail:
+  extract_full: true
+  max_details_per_cycle: 30
+pitfalls: "chung-khoan.rss redirect 302 (verified 2026-07-24) — chỉ dùng kinh-doanh. Article body: trafilatura works (fck_detail)."

@@ -1,0 +1,295 @@
+"""Bộ điều phối chu trình thu thập dữ liệu tin tức qua các nguồn đã bật."""
+
+from __future__ import annotations
+
+from src.core.config import resolve_project_path
+import signal
+import sys
+import time
+from datetime import datetime
+from pathlib import Path
+
+from src.core.models import VN_TZ
+from src.export.csv_export import export as export_csv
+
+from loguru import logger
+
+from src.core.config import list_domains, load_domain_config, load_settings
+from src.core.logging import setup_logging
+from src.core.proclock import SCHEDULER_LOCK_STALE_SECONDS, capture_lock, lock_owner
+from src.core.retry import run_with_retry, run_with_fallback
+from src.crawler.http_client import HTTPClient
+from src.db.dedup import DedupCache
+from src.db.store import ArticleStore
+from src.db.writer import DBWriter
+from src.monitor.heartbeat import Heartbeat
+from src.notifier.file_notify import FileNotifier
+from src.processor.classifier import classify_rule_based
+
+import src.scrapers  # noqa: F401 — trigger @register
+from src.scrapers import REGISTRY
+
+
+def _force_utf8_stdio() -> None:
+    """Cấu hình lại luồng xuất nhập chuẩn sang UTF-8 tránh lỗi mã hóa ký tự."""
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError):
+            pass
+
+
+def build_scraper(cfg: dict, http: HTTPClient, dedup: DedupCache):
+    """Khởi tạo thể hiện scraper tương ứng với cấu hình tên miền.
+
+    Args:
+        cfg: Cấu hình tên miền từ điển.
+        http: Thể hiện HTTPClient dùng chung.
+        dedup: Bộ nhớ đệm kiểm tra trùng lặp DedupCache.
+
+    Returns:
+        Thể hiện scraper kế thừa BaseScraper.
+
+    Raises:
+        KeyError: Khi không tìm thấy lớp scraper tương ứng.
+    """
+    cls = REGISTRY.get(cfg["name"]) or REGISTRY.get(f"_{cfg['method']}")
+    if cls is None:
+        raise KeyError(f"No scraper for '{cfg['name']}' (method={cfg['method']})")
+    return cls(cfg, http, dedup)
+
+
+class Orchestrator:
+    """Điều phối chu trình thu thập, xử lý và lưu trữ dữ liệu từ các nguồn tin.
+
+    Attributes:
+        settings: Cấu hình hệ thống chung.
+        store: Kho dữ liệu cơ sở ArticleStore.
+        writer: Luồng ghi bất đồng bộ DBWriter.
+        http: Trình khách mạng HTTPClient.
+        dedup: Bộ nhớ đệm kiểm tra trùng lặp DedupCache.
+        heartbeat: Trình theo dõi trạng thái Heartbeat.
+        notifier: Bộ thông báo tệp FileNotifier.
+    """
+
+    def __init__(self):
+        """Khởi tạo bộ điều phối Orchestrator."""
+        self.settings = load_settings()
+        setup_logging(
+            self.settings["logging"]["level"], self.settings["logging"]["dir"]
+        )
+        self.store = ArticleStore(self.settings["database"]["path"])
+        self.writer = DBWriter(self.store)
+        self.http = HTTPClient(
+            rate_limit_delay=self.settings["http"]["rate_limit"],
+            max_retries=self.settings["http"]["max_retries"],
+        )
+        self.dedup = DedupCache(self.store)
+        self.heartbeat = Heartbeat(self.store)
+        notif_dir = self.settings.get("notifications", {}).get(
+            "dir", "data/notifications"
+        )
+        self.notifier = FileNotifier(out_dir=notif_dir)
+        self._stopped = False
+        self._lock_owner = lock_owner()          # Fix F: định danh giữ scheduler lock
+        self._owns_scheduler_lock = False
+        removed = self.dedup.cleanup(max_age_days=30)
+        if removed:
+            logger.info("Dedup cleanup: removed {} entries >30d", removed)
+
+    def run_cycle(self, names: list[str] | None = None) -> int:
+        """Thực thi một chu kỳ quét tin tuần tự qua các nguồn đã bật.
+
+        Args:
+            names: Danh sách tên miền chỉ định chạy. Mặc định chạy toàn bộ nguồn được kích hoạt.
+
+        Returns:
+            Tổng số lượng bài viết mới được ghi nhận.
+        """
+        names = names or list_domains()
+        if not names:
+            logger.warning("No enabled domain configs in config/domains/")
+            return 0
+        if self._owns_scheduler_lock:  # Fix F: nhịp tim giữ lock còn tươi
+            self.store.refresh_lock("scheduler", self._lock_owner)
+        cycle_start = time.monotonic()
+        logger.info("=== Cycle start: {} domains: {} ===", len(names), ", ".join(names))
+
+        results, all_new = [], []
+        for name in names:
+            try:
+                cfg = load_domain_config(name)
+            except (FileNotFoundError, ValueError) as e:
+                logger.error("Bad domain config '{}': {}", name, e)
+                continue
+            if not cfg.get("enabled", True):
+                logger.info("[{}] disabled, skipping", name)
+                continue
+            try:
+                primary = build_scraper(cfg, self.http, self.dedup)
+            except KeyError as e:
+                logger.error("{}", e)
+                continue
+
+            fallback = None
+            fb_method = cfg.get("fallback")
+            if fb_method and REGISTRY.get(f"_{fb_method}"):
+                fallback = REGISTRY[f"_{fb_method}"](cfg, self.http, self.dedup)
+
+            self.heartbeat.record_start(name)
+            result = (
+                run_with_fallback(primary, fallback)
+                if fallback
+                else run_with_retry(primary)
+            )
+            for a in result.new:
+                # Sentiment rule-based (VN lexicon) đã gỡ khỏi workflow giai đoạn này
+                # (self-lexicon giá trị thấp; sentiment "thật" do agent sinh ở lớp output).
+                # Engine giữ ở src/processor/sentiment.py để bật lại khi cần.
+                for cat in classify_rule_based(a.title, a.content_text):
+                    if cat not in a.categories and cat != "uncategorized":
+                        a.categories.append(cat)
+                self.writer.enqueue(a)
+            self.heartbeat.record_result(result)
+            results.append(result)
+            all_new.extend(result.new)
+
+        try:
+            self.notifier.notify_articles(all_new)
+            if results:
+                self.notifier.notify_cycle_summary(results)
+        except Exception as e:
+            # notify là tiện ích — không được làm hỏng export (graceful degradation)
+            logger.error("Notify lỗi (bỏ qua): {}: {}", type(e).__name__, e)
+        self.writer.flush()  # đảm bảo bài cycle này đã commit trước export/checkpoint
+        self._export_csv()
+        self._wal_checkpoint()
+        logger.info(
+            "=== Cycle done: {} new articles in {:.0f}s ===",
+            len(all_new),
+            time.monotonic() - cycle_start,
+        )
+        return len(all_new)
+
+    def _export_csv(self) -> None:
+        """Tự động xuất tệp CSV các bài viết trong ngày hôm nay."""
+        exp = self.settings.get("export", {})
+        if not exp.get("enabled", True):
+            return
+        out_dir = exp.get("dir", "data/exports")
+        try:
+            out = Path(resolve_project_path(out_dir)) / f"articles-{datetime.now(VN_TZ):%Y-%m-%d}.csv"
+            _, n = export_csv(
+                db_path=self.settings["database"]["path"], today=True, out=str(out)
+            )
+            logger.info("CSV export: {} bài hôm nay -> {}", n, out)
+        except Exception as e:
+            logger.error("CSV export lỗi (bỏ qua): {}: {}", type(e).__name__, e)
+
+    def _wal_checkpoint(self) -> None:
+        """Giữ file -wal nhỏ (Windows) — chạy lúc idle cuối cycle."""
+        try:
+            conn = self.store._connect()
+            conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+            conn.close()
+        except Exception as e:
+            logger.warning("WAL checkpoint failed: {}", e)
+
+    def shutdown(self) -> None:
+        if self._stopped:  # idempotent — có thể bị gọi từ cả signal handler lẫn finally
+            return
+        self._stopped = True
+        logger.info("Shutting down — flushing writer + WAL checkpoint...")
+        if self._owns_scheduler_lock:
+            self.store.release_lock("scheduler", self._lock_owner)
+            self._owns_scheduler_lock = False
+        self.writer.stop()
+        self.dedup.close()
+        self._wal_checkpoint()
+        logger.info("Shutdown complete.")
+
+    def start_scheduler(self) -> None:
+        from apscheduler.schedulers.blocking import BlockingScheduler
+        from apscheduler.triggers.interval import IntervalTrigger
+
+        file_lock = capture_lock()
+        if not file_lock.acquire():
+            logger.error("Tiến trình cào tin khác đang chạy ({}). Từ chối khởi động để "
+                         "tránh double-scrape.", file_lock.holder() or "?")
+            return
+        # Fix F: chỉ 1 scheduler được chạy (chống orchestrator + morninger cùng lúc).
+        if not self.store.try_acquire_lock("scheduler", self._lock_owner,
+                                           SCHEDULER_LOCK_STALE_SECONDS):
+            logger.error("Scheduler khác đang chạy (lock trong pipeline_state). "
+                         "Từ chối khởi động để tránh double-scrape.")
+            file_lock.release()
+            return
+        self._owns_scheduler_lock = True
+
+        interval = self.settings["scheduler"]["interval_minutes"]
+        scheduler = BlockingScheduler()
+        scheduler.add_job(
+            self.run_cycle,
+            IntervalTrigger(minutes=interval),
+            coalesce=True,  # dồn các lần miss thành 1
+            max_instances=1,  # singleton: không chồng cycle
+            misfire_grace_time=300,
+            next_run_time=datetime.now(VN_TZ),  # chạy ngay lần đầu (tz-aware)
+        )
+
+        def handle_signal(signum, frame):
+            logger.warning("Signal {} — stopping scheduler...", signum)
+            scheduler.shutdown(wait=False)
+
+        signal.signal(signal.SIGINT, handle_signal)
+        signal.signal(signal.SIGTERM, handle_signal)
+
+        logger.info("Scheduler started: every {} min (coalesce, singleton)", interval)
+        try:
+            scheduler.start()
+        finally:
+            self.shutdown()
+            file_lock.release()
+
+
+def main(argv: list[str]) -> int:
+    _force_utf8_stdio()
+    once = "--once" in argv
+    names = [a for a in argv if not a.startswith("--")] or None
+
+    orch = Orchestrator()
+    if once:
+        # Khoá tệp chặn chắc chắn khi morninger đang chạy; khoá trong pipeline_state
+        # phụ thuộc nhịp tim nên có thể coi nhầm là đã cũ.
+        file_lock = capture_lock()
+        if not file_lock.acquire():
+            logger.error("Tiến trình cào tin khác đang chạy ({}). Từ chối chạy --once để "
+                         "tránh cào song song.", file_lock.holder() or "?")
+            orch.shutdown()
+            return 1
+        # Q3: Chạy độc lập nhưng phải chiếm scheduler lock để tránh cào song song với morninger
+        if not orch.store.try_acquire_lock("scheduler", orch._lock_owner, SCHEDULER_LOCK_STALE_SECONDS):
+            logger.error("Scheduler khác (morninger hoặc orchestrator) đang chạy. Từ chối chạy --once để tránh cào song song.")
+            orch.shutdown()
+            file_lock.release()
+            return 1
+        orch._owns_scheduler_lock = True
+
+        def handle_signal(signum, frame):
+            orch.shutdown()
+            sys.exit(1)
+
+        signal.signal(signal.SIGINT, handle_signal)
+        signal.signal(signal.SIGTERM, handle_signal)
+        try:
+            orch.run_cycle(names)
+        finally:
+            orch.shutdown()
+            file_lock.release()
+        return 0
+    orch.start_scheduler()
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

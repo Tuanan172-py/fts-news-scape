@@ -1,0 +1,201 @@
+# Domain Schema Contract — VietnamBiz
+# Mô tả contract giữa VietnamBiz RSS feed + detail page và hệ thống scraping.
+# Dùng để validate field-level health, detect upstream changes.
+# Cập nhật file này mỗi khi xác nhận upstream thay đổi.
+
+domain: vietnambiz.vn          # ← nguồn sự thật cho resolve_source_domain() (phase-03)
+method: rss_capture            # RSS list + Bronze full raw HTML capture
+feeds:
+  - { url: "https://vietnambiz.vn/chung-khoan.rss",  name: "VietnamBiz Chứng khoán" }
+  - { url: "https://vietnambiz.vn/tai-chinh.rss",    name: "VietnamBiz Tài chính" }
+  - { url: "https://vietnambiz.vn/vi-mo.rss",        name: "VietnamBiz Vĩ mô" }
+  - { url: "https://vietnambiz.vn/doanh-nghiep.rss", name: "VietnamBiz Doanh nghiệp" }
+  - { url: "https://vietnambiz.vn/nha-dat.rss",      name: "VietnamBiz Nhà đất" }
+  - { url: "https://vietnambiz.vn/hang-hoa.rss",     name: "VietnamBiz Hàng hóa" }
+dead_feeds:
+  - { url: "https://vietnambiz.vn/quoc-te.rss", verified: 2026-09-07, note: "0 item / 356 bytes" }
+last_verified: 2026-09-07
+robots:
+  policy: "User-agent: * / Allow: /"
+  disallow: []
+  crawl_delay: null
+pitfalls:
+  - "XML declaration KHAI encoding='utf-16' nhưng serve utf-8 bytes → _decode_feed strip encoding attr."
+  - "pubDate dạng 'Mon, 07 Sep 2026 19:41:53 GMT+7' (phi chuẩn) → _parse_raw_date normalize GMT+7 → +0700."
+  - "Trang detail KHÔNG có thẻ <article> → content_selector mặc định 'article' làm MỌI bài thành partial/SELECTOR_BROKEN."
+  - "Body = div.vnbcbc-body (.vnbcbc-body.vceditor-content[data-role=content]). KHÔNG dùng div.post-body-content — bọc cả title/author/date."
+  - "BẪY: meta article:published_time THIẾU offset timezone ('2026-09-07T19:41:00'). Dùng pubDate của RSS, ĐỪNG chuyển sang meta."
+  - "URL bài kết thúc .htm (không phải .html)."
+  - "content:encoded KHÔNG có trong feed → bắt buộc fetch detail."
+
+# ---------------------------------------------------------------------------
+# Raw RSS item structure
+# ---------------------------------------------------------------------------
+raw_response:
+  format: "RSS 2.0"
+  root_path: "rss.channel.item"
+  encoding: "utf-8 (declared utf-16 — sai)"
+  items_per_feed: 30
+  fields:
+    - { name: "link",            type: "string", required: true,  pattern: "^https://vietnambiz\\.vn/.*\\.htm$", description: "Full article URL, đuôi .htm" }
+    - { name: "title",           type: "string", required: true,  min_length: 1, description: "Tiêu đề, CDATA, entity double-encoded (&#225;)" }
+    - { name: "description",     type: "string", required: false, description: "Mô tả HTML (chứa <a><img>)" }
+    - { name: "pubDate",         type: "string", required: true,  pattern: ".*GMT\\+7$", description: "CDATA, dạng 'Mon, 07 Sep 2026 19:41:53 GMT+7'" }
+    - { name: "guid",            type: "string", required: false, description: "UUID, isPermaLink=false — KHÔNG dùng làm URL" }
+    - { name: "content:encoded", type: "string", required: false, description: "KHÔNG CÓ từ VietnamBiz (verified 2026-09-07)" }
+
+request:
+  method: "GET"
+  raw_bytes: true
+  headers:
+    User-Agent: "browser UA"
+
+# ---------------------------------------------------------------------------
+# Output Article fields (sau parse_item)
+# ---------------------------------------------------------------------------
+output_fields:
+  url:
+    source: "entry.link"
+    type: "string"
+    required: true
+    health_threshold: 1.0
+
+  title:
+    source: "entry.title → _clean_title()"
+    type: "string"
+    required: true
+    health_threshold: 1.0
+
+  source_domain:
+    source: "urlparse(url).netloc.removeprefix('www.')"
+    type: "string"
+    required: true
+    expected_value: "vietnambiz.vn"
+
+  published_at:
+    source: "entry.published_parsed → VN_TZ → ISO 8601"
+    type: "iso8601 string (+07:00)"
+    required: true
+    pattern: "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\+07:00$"
+    health_threshold: 0.95
+
+  summary:
+    source: "entry.description → extract_text()"
+    type: "string"
+    required: false
+    health_threshold: 0.8
+
+  content_text:
+    source: "enrich: extract_text(content_html) từ div.vnbcbc-body"
+    type: "string"
+    required: false
+    min_length: 50
+    health_threshold: 0.7
+
+  content_html:
+    source: "enrich: select_one('div.vnbcbc-body') trên bản sao raw"
+    type: "string"
+    required: false
+    health_threshold: 0.2     # cap-limited (max 30/cycle)
+
+  symbols:
+    source: "tag_tickers(title + summary) ∩ watchlist"
+    type: "list[str]"
+    required: false
+    element_pattern: "^[A-Z]{3}$"
+    health_threshold: 0.3
+
+  categories:
+    source: "feed name từ YAML config"
+    type: "list[str]"
+    required: false
+    health_threshold: 0.9
+
+  metadata.language:
+    source: "config.language (vi)"
+    type: "string"
+    required: false
+
+  metadata.capture:
+    source: "RawStore.save() — con trỏ Bronze artifact"
+    type: "dict"
+    required: true
+    health_threshold: 1.0
+
+# ---------------------------------------------------------------------------
+# Bronze capture (design 06)
+# ---------------------------------------------------------------------------
+capture:
+  raw_dir: "data/raw_html/vietnambiz.vn/<yyyymmdd>/<url_title_hash>.{html,meta.json}"
+  render_method: "requests (server-rendered, không cần JS)"
+  content_selector: "div.vnbcbc-body"
+  min_body_bytes: 2048
+  max_per_cycle: 30
+  cap_behavior: "deferred: content_text = summary, metadata.detail_deferred = true"
+  image_cdn: "cdn.vietnambiz.vn (src trực tiếp, không lazy-load)"
+  expected_capture_status: "ok"
+
+detail_page:
+  url: "{article.url}"
+  title_selector: "h1.vnbcb-title"
+  date_selector: "span.vnbcbat-data[data-role=publishdate]"   # '19:41 | 07/09/2026' — chỉ tham chiếu
+  body_selector: "div.vnbcbc-body"
+  outer_wrapper: "div.post-body-content[data-role=body]"      # QUÁ RỘNG — không dùng
+
+link_rewrites: []
+
+filter:
+  configured: false
+  description: "Không dùng keyword filter — 6 feed đều là chuyên mục hẹp. filter.any/none KHẢ DỤNG (kế thừa RSSScraper) nếu cần."
+
+# ---------------------------------------------------------------------------
+# Watch points
+# ---------------------------------------------------------------------------
+watch_points:
+  - id: vnb-w1
+    field: content_selector div.vnbcbc-body
+    risk: selector_drift
+    severity: high
+    description: "Đổi class body → _looks_complete=False → capture_status=partial → SELECTOR_BROKEN → agent HOLD bài. Đây là watch point số 1."
+    check: "tỉ lệ .meta.json có missing[incomplete_render] < 10%"
+
+  - id: vnb-w2
+    field: feed encoding declaration
+    risk: encoding_change
+    severity: low
+    description: "Feed khai utf-16 serve utf-8; nếu sửa đúng thành utf-8 thì _decode_feed vẫn chạy (no-op)."
+    check: "feedparser parse thành công, entries > 0"
+
+  - id: vnb-w3
+    field: pubDate 'GMT+7'
+    risk: format_change
+    severity: medium
+    description: "Format phi chuẩn; _parse_raw_date normalize GMT+7→+0700. Format lạ → published_at rỗng."
+    check: "published_at fill rate >= 0.95"
+
+  - id: vnb-w4
+    field: RSS feed URL
+    risk: url_change
+    severity: medium
+    description: "1 feed chết → error, feed khác vẫn chạy (per-feed isolation). quoc-te.rss đã chết."
+    check: "mỗi feed HTTP 200 + có <item>"
+
+  - id: vnb-w5
+    field: article URL suffix .htm
+    risk: url_change
+    severity: low
+    description: "Nếu đổi sang .html thì url_title_hash đổi → toàn bộ bài cũ bị coi là mới 1 lần."
+    check: "pattern link trong feed"
+
+  - id: vnb-w6
+    field: robots.txt
+    risk: policy_change
+    severity: high
+    description: "Hiện Allow: / hoàn toàn. Nếu thêm Disallow cho article path → RobotsGate chặn, capture_status=skipped_robots."
+    check: "không có capture_status=skipped_robots"
+
+alert_thresholds:
+  article_count_drop_pct: 50
+  field_fill_rate_drop_pct: 20
+  new_article_zero_streak: 3
+  consecutive_failure_streak: 3

@@ -1,0 +1,196 @@
+# Domain Schema Contract — Vietstock
+# Mô tả contract giữa Vietstock RSS feed và hệ thống scraping.
+# Dùng để validate field-level health, detect upstream changes.
+# Cập nhật file này mỗi khi xác nhận upstream thay đổi.
+
+domain: vietstock.vn
+method: rss
+feeds:
+  - { url: "https://vietstock.vn/0/tin-moi.rss",            name: "Vietstock Tin mới" }
+  - { url: "https://vietstock.vn/144/chung-khoan.rss",     name: "Vietstock Chứng khoán" }
+  - { url: "https://vietstock.vn/733/doanh-nghiep.rss",    name: "Vietstock Doanh nghiệp" }
+  - { url: "https://vietstock.vn/761/kinh-te/vi-mo.rss",   name: "Vietstock Vĩ mô" }
+last_verified: 2026-08-03
+pitfalls:
+  - "RSS index https://vietstock.vn/rss (60 feeds). Tham khảo nếu muốn mở rộng."
+  - "pubDate +0700. Description chứa img tag. Internal API cần browser session — không dùng."
+  - "content:encoded không có trong feed → bắt buộc extract_full để lấy nội dung."
+
+# ---------------------------------------------------------------------------
+# Raw RSS item structure (những gì feed trả về)
+# ---------------------------------------------------------------------------
+raw_response:
+  format: "RSS 2.0"
+  root_path: "rss.channel.item"
+  encoding: "UTF-8"
+  encoding_fallbacks: ["utf-16 (BOM detection)", "utf-8-sig (errors=replace)"]
+  fields:
+    - { name: "link",            type: "string", required: true,  pattern: "^https?://", description: "Full article URL" }
+    - { name: "title",           type: "string", required: true,  min_length: 1,       description: "Tiêu đề (có thể chứa HTML entities double-encoded)" }
+    - { name: "description",     type: "string", required: false, description: "Mô tả HTML (chứa <img> tags)" }
+    - { name: "author",          type: "string", required: false, description: "Tên tác giả" }
+    - { name: "pubDate",         type: "string", required: true,  pattern: ".*\\+0700$", description: "RFC 2822 với +0700 timezone" }
+    - { name: "guid",            type: "string", required: false, description: "GUID (có thể trùng với link)" }
+    - { name: "category",        type: "string", required: false, description: "Danh mục RSS (có thể rỗng)" }
+    - { name: "content:encoded", type: "string", required: false, description: "Nội dung đầy đủ trong feed (HIỆN KHÔNG CÓ từ Vietstock)" }
+
+request:
+  method: "GET"
+  raw_bytes: true
+  headers:
+    User-Agent: "browser UA (rotated)"
+
+# ---------------------------------------------------------------------------
+# Output Article fields (sau khi parse_item)
+# ---------------------------------------------------------------------------
+output_fields:
+  url:
+    source: "entry.link"
+    type: "string"
+    required: true
+    health_threshold: 1.0
+
+  title:
+    source: "entry.title → _clean_title()"
+    type: "string"
+    required: true
+    health_threshold: 1.0
+
+  source_domain:
+    source: "urlparse(url).netloc.removeprefix('www.')"
+    type: "string"
+    required: true
+    expected_value: "vietstock.vn"
+
+  published_at:
+    source: "entry.published_parsed → VN_TZ → ISO 8601"
+    type: "iso8601 string (+07:00)"
+    required: true
+    pattern: "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\+07:00$"
+    health_threshold: 0.95
+
+  summary:
+    source: "entry.description → extract_text() via trafilatura"
+    type: "string"
+    required: false
+    health_threshold: 0.8
+
+  content_text:
+    source: "enrich: trafilatura extract_content() auto-detect"
+    type: "string"
+    required: false
+    min_length: 50
+    health_threshold: 0.7
+
+  content_html:
+    source: "enrich: full page HTML"
+    type: "string"
+    required: false
+    health_threshold: 0.2     # cap-limited (max 30/cycle, ~30% of total)
+
+  author:
+    source: "entry.author"
+    type: "string"
+    required: false
+    health_threshold: 0.0     # RSS feed không có per-item <author>
+
+  symbols:
+    source: "tag_tickers(title + summary) ∩ watchlist"
+    type: "list[str]"
+    required: false
+    element_pattern: "^[A-Z]{3}$"
+    health_threshold: 0.3
+
+  categories:
+    source: "feed name từ YAML config"
+    type: "list[str]"
+    required: false
+    health_threshold: 0.9
+
+  metadata.feed_name:
+    source: "config rss.feeds[].name"
+    type: "string"
+    required: false
+
+  metadata.language:
+    source: "config.language (default: vi)"
+    type: "string"
+    required: false
+
+# ---------------------------------------------------------------------------
+# Enrich detail page
+# ---------------------------------------------------------------------------
+detail_page:
+  url: "{article.url}"
+  extractor: "trafilatura extract_content() auto-detect"
+  selector: "none (auto-detect by trafilatura)"
+  max_per_cycle: 30
+  cap_behavior: "deferred: content_text = summary, metadata.detail_deferred = true"
+  inline_skip: "Nếu content:encoded >= 500 chars → skip detail fetch (HIỆN KHÔNG ÁP DỤNG)"
+
+# ---------------------------------------------------------------------------
+# Đặc biệt: link_rewrites
+# ---------------------------------------------------------------------------
+link_rewrites: []  # Vietstock không cần rewrite link (link trong RSS đã đúng)
+
+# ---------------------------------------------------------------------------
+# Đặc biệt: filter (keyword filtering)
+# ---------------------------------------------------------------------------
+filter:
+  configured: false
+  description: "Vietstock không dùng keyword filter — tất cả RSS entries đều được giữ lại"
+
+# ---------------------------------------------------------------------------
+# Watch points
+# ---------------------------------------------------------------------------
+watch_points:
+  - id: vs-w1
+    field: RSS feed URL
+    risk: url_change
+    severity: medium
+    description: "1 feed URL thay đổi → feed đó chết, các feed khác vẫn chạy (per-feed isolation)"
+    check: "HTTP 200 + valid XML + có items"
+
+  - id: vs-w2
+    field: pubDate format
+    risk: format_change
+    severity: low
+    description: "pubDate format thay đổi → _parse_entry_date có multiple fallback parsers (GMT+7, +07, US format). Unknown format → published_at rỗng"
+    check: "published_at fill rate"
+
+  - id: vs-w3
+    field: description
+    risk: structure_change
+    severity: low
+    description: "Description thay đổi cấu trúc HTML → extract_text vẫn hoạt động (strip HTML tags)"
+    check: "summary fill rate + length"
+
+  - id: vs-w4
+    field: title encoding
+    risk: encoding_change
+    severity: low
+    description: "Title double-encoded entities thay đổi → _clean_title() xử lý html.unescape()"
+    check: "title chứa ký tự tiếng Việt hợp lệ"
+
+  - id: vs-w5
+    field: feed encoding (UTF-16 BOM)
+    risk: encoding_change
+    severity: low
+    description: "Feed đổi encoding → _decode_feed() có multi-stage detection (UTF-16 BOM, null bytes, utf-8-sig)"
+    check: "feedparser parse thành công"
+
+  - id: vs-w6
+    field: trafilatura extraction
+    risk: extraction_regression
+    severity: medium
+    description: "trafilatura không extract được detail page → fallback summary"
+    check: "content_text length > 50"
+
+# ---------------------------------------------------------------------------
+# Alert thresholds
+# ---------------------------------------------------------------------------
+alert_thresholds:
+  article_count_drop_pct: 50
+  field_fill_rate_drop_pct: 20
+  new_article_zero_streak: 3
+  consecutive_failure_streak: 3

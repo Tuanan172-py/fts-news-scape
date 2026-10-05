@@ -1,0 +1,4 @@
+# Bật/tắt user cho workflow output. Vắng tên = mặc định BẬT.
+# Thư mục input tên bắt đầu bằng '_' luôn bị bỏ qua.
+users:
+  AnPT: true

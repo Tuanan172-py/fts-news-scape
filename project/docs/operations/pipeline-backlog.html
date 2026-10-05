@@ -1,0 +1,489 @@
+<title>News-Scape Backlog</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --paper:#F6F2E7; --surface:#FFFEFA; --ink:#20241F; --ink-dim:#5B6259;
+  --line:#DCD3BC; --line-soft:#E9E1CC;
+  --amber:#AD7415; --amber-ink:#8A5B0E; --amber-tint:#F1E3C6;
+  --good:#2E7A57; --good-ink:#276B4C; --good-tint:#E1EEE3;
+  --bad:#A23A2D; --bad-tint:#F3E1DB;
+  --violet:#6A5A9E; --violet-tint:#EAE5F4;
+  --shadow: 0 1px 0 rgba(32,36,31,0.05);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#15181A; --surface:#1C2023; --ink:#E8E3D4; --ink-dim:#98A099;
+    --line:#2C312C; --line-soft:#262B26;
+    --amber:#E0A23E; --amber-ink:#F0C177; --amber-tint:#332A16;
+    --good:#57B187; --good-ink:#7FCBA6; --good-tint:#1B2B22;
+    --bad:#DB7C68; --bad-tint:#2E1F1B;
+    --violet:#A597D6; --violet-tint:#251F35;
+    --shadow: 0 1px 0 rgba(0,0,0,0.3);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#15181A; --surface:#1C2023; --ink:#E8E3D4; --ink-dim:#98A099;
+  --line:#2C312C; --line-soft:#262B26;
+  --amber:#E0A23E; --amber-ink:#F0C177; --amber-tint:#332A16;
+  --good:#57B187; --good-ink:#7FCBA6; --good-tint:#1B2B22;
+  --bad:#DB7C68; --bad-tint:#2E1F1B;
+  --violet:#A597D6; --violet-tint:#251F35;
+  --shadow: 0 1px 0 rgba(0,0,0,0.3);
+}
+*{box-sizing:border-box;}
+body{background:var(--paper);color:var(--ink);font-family:"IBM Plex Sans",system-ui,-apple-system,sans-serif;padding-inline:20px;padding-block:40px 64px;}
+h1,h2,h3{font-weight:600;text-wrap:balance;margin:0;}
+p{margin:0;}
+code,.mono{font-family:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Consolas,monospace;}
+.wrap{max-width:920px;margin-inline:auto;display:flex;flex-direction:column;gap:56px;}
+
+.head{display:flex;flex-direction:column;gap:14px;}
+.eyebrow{font-family:"IBM Plex Mono";font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-dim);}
+h1{font-size:clamp(28px,4.2vw,38px);letter-spacing:-0.01em;}
+.dek{font-size:16px;line-height:1.55;color:var(--ink-dim);max-width:66ch;}
+.chiprow{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;}
+.chip{font-family:"IBM Plex Mono";font-size:12px;padding:4px 10px;border-radius:5px;border:1px solid var(--line);color:var(--ink-dim);background:var(--surface);display:inline-flex;align-items:center;gap:6px;}
+.chip b{color:var(--ink);font-weight:600;}
+.chip.commit{color:var(--amber-ink);border-color:var(--amber);background:var(--amber-tint);}
+.chip.warn{color:var(--bad);border-color:var(--bad);background:var(--bad-tint);}
+
+section{display:flex;flex-direction:column;gap:18px;}
+.section-head{display:flex;flex-direction:column;gap:6px;}
+.section-num{font-family:"IBM Plex Mono";font-size:12px;color:var(--amber-ink);letter-spacing:.06em;}
+h2{font-size:22px;}
+.lede{color:var(--ink-dim);font-size:15px;line-height:1.6;max-width:70ch;}
+
+/* stat tiles */
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
+@media (min-width:640px){.stats{grid-template-columns:repeat(5,1fr);}}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:4px;box-shadow:var(--shadow);}
+.stat .n{font-family:"IBM Plex Mono";font-size:26px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-0.01em;}
+.stat .n.good{color:var(--good-ink);}
+.stat .n.bad{color:var(--bad);}
+.stat .l{font-size:11.5px;color:var(--ink-dim);line-height:1.4;}
+
+/* diagram (reused mechanism) */
+figure{margin:0;display:flex;flex-direction:column;gap:10px;}
+.diagram-frame{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px;overflow-x:auto;}
+svg.diagram{display:block;width:100%;height:auto;min-width:640px;}
+figcaption{font-size:13px;color:var(--ink-dim);line-height:1.5;max-width:70ch;}
+figcaption b{color:var(--ink);font-weight:600;}
+
+/* compact step table */
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface);}
+table{border-collapse:collapse;width:100%;min-width:640px;font-size:13.5px;}
+th{text-align:left;font-family:"IBM Plex Mono";font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-dim);font-weight:500;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--paper);}
+td{padding:10px 14px;border-bottom:1px solid var(--line-soft);vertical-align:top;line-height:1.5;}
+tr:last-child td{border-bottom:none;}
+td code{font-size:12.5px;color:var(--ink);}
+tr.gate td{background:var(--bad-tint);}
+
+/* item cards (backlog) */
+.itemgrid{display:flex;flex-direction:column;gap:12px;}
+.item{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;box-shadow:var(--shadow);}
+.item.blocked{border-left:3px solid var(--bad);}
+.item.pending{border-left:3px solid var(--amber);}
+.item.done{border-left:3px solid var(--good);}
+.item.drift{border-left:3px solid var(--violet);}
+.item-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 12px;}
+.item-id{font-family:"IBM Plex Mono";font-size:11px;color:var(--ink-dim);letter-spacing:.03em;}
+.item-title{font-weight:600;font-size:15px;}
+.pill{font-family:"IBM Plex Mono";font-size:10.5px;padding:2px 9px;border-radius:99px;letter-spacing:.03em;white-space:nowrap;}
+.pill.done{background:var(--good-tint);color:var(--good-ink);}
+.pill.pending{background:var(--amber-tint);color:var(--amber-ink);}
+.pill.blocked{background:var(--bad-tint);color:var(--bad);}
+.pill.drift{background:var(--violet-tint);color:var(--violet);}
+.item p{font-size:14px;line-height:1.6;color:var(--ink);}
+.item p.dim{color:var(--ink-dim);font-size:13.5px;}
+.paths{display:flex;flex-direction:column;gap:8px;margin-top:2px;}
+.paths .ph{font-family:"IBM Plex Mono";font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-dim);margin-bottom:2px;}
+.pathlist{display:flex;flex-direction:column;gap:6px;}
+.pathrow{display:flex;gap:10px;font-size:13.5px;line-height:1.55;}
+.pathrow .tag{font-family:"IBM Plex Mono";font-size:10.5px;background:var(--paper);border:1px solid var(--line);border-radius:5px;padding:1px 7px;flex-shrink:0;height:fit-content;color:var(--ink-dim);}
+.pathrow .tag.rec{border-color:var(--good);color:var(--good-ink);}
+.cmd{font-family:"IBM Plex Mono";font-size:12.5px;background:var(--paper);border:1px solid var(--line-soft);border-radius:6px;padding:6px 10px;color:var(--ink);overflow-x:auto;white-space:pre;}
+
+/* closed table */
+.closed-table{font-size:13px;}
+.closed-table td{padding:8px 12px;}
+.closed-table th{padding:8px 12px;}
+
+footer{border-top:1px solid var(--line);padding-top:20px;display:flex;flex-direction:column;gap:6px;font-size:12.5px;color:var(--ink-dim);}
+footer .mono{font-size:12px;}
+footer a{color:var(--amber-ink);}
+</style>
+
+<div class="wrap">
+
+  <div class="head">
+    <span class="eyebrow">news-scape · backlog vận hành</span>
+    <h1>News-Scape Backlog</h1>
+    <p class="dek">Toàn bộ quy trình pipeline, danh sách việc tồn đọng trong <code>docs/OPEN-ITEMS.md</code> và hướng xử lý cho từng mục — đối chiếu trực tiếp với mã nguồn và dữ liệu <code>monocle.db</code> trên máy dev, không suy đoán.</p>
+    <div class="chiprow">
+      <span class="chip commit">commit <b>901deee</b></span>
+      <span class="chip">OPEN-ITEMS cập nhật <b>2026-09-09</b></span>
+      <span class="chip warn">DB local máy dev <b>lệch</b> với tài liệu — xem §2</span>
+    </div>
+  </div>
+
+  <!-- ============ 1. TỔNG QUAN ============ -->
+  <section>
+    <div class="section-head">
+      <span class="section-num">01 / tổng quan</span>
+      <h2>Trạng thái trên bản DB local (máy dev)</h2>
+    </div>
+    <div class="stats">
+      <div class="stat"><span class="n">7.656</span><span class="l">tổng bài trong <code>articles</code></span></div>
+      <div class="stat"><span class="n good">1.480</span><span class="l">bài qua cổng L1 (<code>dod_pass=1</code>)</span></div>
+      <div class="stat"><span class="n bad">1.274</span><span class="l">Gold <code>dod_pass=1</code> — vẫn là số CŨ, chưa hạ</span></div>
+      <div class="stat"><span class="n">3.781</span><span class="l"><code>work_items</code> pending (chờ Gold)</span></div>
+      <div class="stat"><span class="n">124</span><span class="l">bài <code>published_at &lt; 2026</code>, chưa vào L1</span></div>
+    </div>
+  </section>
+
+  <!-- ============ 2. QUY TRÌNH ============ -->
+  <section>
+    <div class="section-head">
+      <span class="section-num">02 / quy trình</span>
+      <h2>Cơ chế 2 vòng — nền vs chạy rời</h2>
+      <p class="lede">Không có script "chủ" gọi mọi thứ theo thứ tự. <b style="color:var(--ink)">Morninger</b> chạy nền liên tục; <b style="color:var(--ink)">run_daily.ps1</b> chạy rời, đọc/ghi qua trạng thái bền (DB + filesystem), không gọi hàm của nhau. Chi tiết đầy đủ từng bước — xem <code>project/docs/operations/pipeline-runbook.html</code>.</p>
+    </div>
+
+    <figure>
+      <div class="diagram-frame">
+        <svg class="diagram" viewBox="0 0 940 410" role="img" aria-label="Sơ đồ: vòng lặp Morninger chạy nền ghi Bronze/Silver vào trạng thái bền monocle.db và filesystem; run_daily.ps1 chạy rời đọc backlog từ trạng thái bền, đi qua 4 khối Emit, Agent ngoài, Ingest, Cleanup theo chuỗi, rồi ghi kết quả ngược lại trạng thái bền.">
+          <defs>
+            <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+            </marker>
+          </defs>
+          <text x="190" y="26" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" letter-spacing="0.06em" fill="currentColor" opacity="0.65">VÒNG LẶP NỀN — MORNINGER</text>
+          <text x="750" y="26" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" letter-spacing="0.06em" fill="currentColor" opacity="0.65">CHẠY RỜI 1 LẦN — RUN_DAILY.PS1</text>
+          <rect x="40" y="42" width="300" height="270" rx="10" fill="none" stroke="currentColor" stroke-opacity="0.25" stroke-dasharray="4 4"/>
+          <rect x="58" y="60" width="264" height="64" rx="8" fill="none" stroke="currentColor" stroke-opacity="0.55"/>
+          <circle cx="80" cy="92" r="10" fill="none" stroke="var(--amber)" stroke-width="2"/>
+          <path d="M80,84 a8,8 0 1 1 -6,4" fill="none" stroke="var(--amber)" stroke-width="2" marker-end="url(#arrow)"/>
+          <text x="100" y="82" font-size="13.5" font-weight="600" fill="currentColor">capture</text>
+          <text x="100" y="99" font-family="IBM Plex Mono" font-size="11" fill="currentColor" opacity="0.65">mỗi 15' · Orchestrator.run_cycle()</text>
+          <text x="100" y="114" font-family="IBM Plex Mono" font-size="11" fill="currentColor" opacity="0.65">→ Bronze raw_html + articles</text>
+          <rect x="58" y="146" width="264" height="64" rx="8" fill="none" stroke="currentColor" stroke-opacity="0.55"/>
+          <circle cx="80" cy="178" r="10" fill="none" stroke="var(--amber)" stroke-width="2"/>
+          <path d="M80,170 a8,8 0 1 1 -6,4" fill="none" stroke="var(--amber)" stroke-width="2" marker-end="url(#arrow)"/>
+          <text x="100" y="168" font-size="13.5" font-weight="600" fill="currentColor">derive</text>
+          <text x="100" y="185" font-family="IBM Plex Mono" font-size="11" fill="currentColor" opacity="0.65">mỗi 30' · rederive_incremental()</text>
+          <text x="100" y="200" font-family="IBM Plex Mono" font-size="11" fill="currentColor" opacity="0.65">→ Silver + work_packages (watermark)</text>
+          <rect x="58" y="232" width="264" height="64" rx="8" fill="none" stroke="currentColor" stroke-opacity="0.4" stroke-dasharray="3 3"/>
+          <circle cx="80" cy="264" r="10" fill="none" stroke="currentColor" stroke-opacity="0.5" stroke-width="2"/>
+          <path d="M80,256 a8,8 0 1 1 -6,4" fill="none" stroke="currentColor" stroke-opacity="0.5" stroke-width="2" marker-end="url(#arrow)"/>
+          <text x="100" y="254" font-size="13.5" font-weight="600" fill="currentColor" opacity="0.85">drift</text>
+          <text x="100" y="271" font-family="IBM Plex Mono" font-size="11" fill="currentColor" opacity="0.6">hằng ngày 06:00 · list_drift()</text>
+          <text x="100" y="286" font-family="IBM Plex Mono" font-size="11" fill="currentColor" opacity="0.6">chỉ log, không ghi state</text>
+          <rect x="365" y="150" width="210" height="120" rx="10" fill="var(--amber-tint)" stroke="var(--amber)" stroke-width="1.4"/>
+          <text x="470" y="176" text-anchor="middle" font-family="IBM Plex Mono" font-size="11.5" letter-spacing="0.05em" fill="var(--amber-ink)" font-weight="600">TRẠNG THÁI BỀN</text>
+          <text x="470" y="198" text-anchor="middle" font-family="IBM Plex Mono" font-size="10.5" fill="var(--amber-ink)" opacity="0.9">monocle.db</text>
+          <text x="470" y="214" text-anchor="middle" font-family="IBM Plex Mono" font-size="10.5" fill="var(--amber-ink)" opacity="0.9">data/silver · data/work_packages</text>
+          <text x="470" y="230" text-anchor="middle" font-family="IBM Plex Mono" font-size="10.5" fill="var(--amber-ink)" opacity="0.9">data/agent_tasks · data/agent_outputs*</text>
+          <text x="470" y="246" text-anchor="middle" font-family="IBM Plex Mono" font-size="10.5" fill="var(--amber-ink)" opacity="0.9">users/output</text>
+          <path d="M322,178 C348,178 348,190 365,196" fill="none" stroke="currentColor" stroke-opacity="0.6" stroke-width="1.6" marker-end="url(#arrow)"/>
+          <text x="352" y="168" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="currentColor" opacity="0.6">ghi</text>
+          <path d="M575,190 C610,180 620,140 640,124" fill="none" stroke="currentColor" stroke-opacity="0.6" stroke-width="1.6" marker-end="url(#arrow)"/>
+          <text x="598" y="148" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="currentColor" opacity="0.6">đọc</text>
+          <path d="M640,320 C610,310 600,260 575,236" fill="none" stroke="currentColor" stroke-opacity="0.6" stroke-width="1.6" marker-end="url(#arrow)"/>
+          <text x="598" y="278" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="currentColor" opacity="0.6">ghi</text>
+          <rect x="620" y="60" width="260" height="66" rx="8" fill="none" stroke="currentColor" stroke-opacity="0.6"/>
+          <text x="750" y="84" text-anchor="middle" font-size="13.5" font-weight="600" fill="currentColor">Emit · bước 1–4</text>
+          <text x="750" y="102" text-anchor="middle" font-family="IBM Plex Mono" font-size="10.5" fill="currentColor" opacity="0.65">compile → l1_route → l1_ingest</text>
+          <text x="750" y="116" text-anchor="middle" font-family="IBM Plex Mono" font-size="10.5" fill="currentColor" opacity="0.65">--code-first → agent_export</text>
+          <line x1="750" y1="126" x2="750" y2="150" stroke="currentColor" stroke-opacity="0.6" stroke-width="1.6" marker-end="url(#arrow)"/>
+          <text x="757" y="142" font-family="IBM Plex Mono" font-size="9.5" fill="currentColor" opacity="0.55">*.task.json</text>
+          <rect x="620" y="150" width="260" height="66" rx="8" fill="none" stroke="var(--bad)" stroke-width="1.6" stroke-dasharray="5 4"/>
+          <polygon points="638,164 646,178 630,178" fill="none" stroke="var(--bad)" stroke-width="1.6"/>
+          <text x="638" y="176" text-anchor="middle" font-size="9" fill="var(--bad)" font-weight="700">!</text>
+          <text x="758" y="176" text-anchor="middle" font-size="13" font-weight="600" fill="var(--bad)">Agent ngoài (LLM)</text>
+          <text x="758" y="193" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="var(--bad)" opacity="0.9">không có runner tự động</text>
+          <text x="758" y="207" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="var(--bad)" opacity="0.9">tự giao task: -Mode emit → -Mode ingest</text>
+          <line x1="750" y1="216" x2="750" y2="240" stroke="currentColor" stroke-opacity="0.6" stroke-width="1.6" marker-end="url(#arrow)"/>
+          <text x="757" y="232" font-family="IBM Plex Mono" font-size="9.5" fill="currentColor" opacity="0.55">*.output.json</text>
+          <rect x="620" y="240" width="260" height="66" rx="8" fill="none" stroke="currentColor" stroke-opacity="0.6"/>
+          <text x="750" y="264" text-anchor="middle" font-size="13.5" font-weight="600" fill="currentColor">Ingest · bước 5–7</text>
+          <text x="750" y="282" text-anchor="middle" font-family="IBM Plex Mono" font-size="10.5" fill="currentColor" opacity="0.65">l1_ingest → agent_ingest</text>
+          <text x="750" y="296" text-anchor="middle" font-family="IBM Plex Mono" font-size="10.5" fill="currentColor" opacity="0.65">→ write_user_output</text>
+          <line x1="750" y1="306" x2="750" y2="330" stroke="currentColor" stroke-opacity="0.6" stroke-width="1.6" marker-end="url(#arrow)"/>
+          <rect x="620" y="330" width="260" height="48" rx="8" fill="none" stroke="currentColor" stroke-opacity="0.4" stroke-dasharray="3 3"/>
+          <text x="750" y="350" text-anchor="middle" font-size="13" font-weight="600" fill="currentColor" opacity="0.85">Cleanup · bước 8</text>
+          <text x="750" y="365" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="currentColor" opacity="0.6">xoá packet, trừ khi -KeepPackets</text>
+        </svg>
+      </div>
+      <figcaption>Morninger (trái) và <code>run_daily.ps1</code> (phải) chỉ gặp nhau qua <b>trạng thái bền</b>. Khối viền đứt đỏ là hàng đợi Subagent LLM — tham số <code>-Agent</code> chỉ ảnh hưởng nếu chạy nguyên khối <code>-Mode full</code>; tự giao task cho agent thì dùng <code>-Mode emit</code> rồi <code>-Mode ingest</code>, không đụng tham số đó.</figcaption>
+    </figure>
+
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>#</th><th>Pha</th><th>Script</th><th>Gate / ghi chú</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Emit</td><td><code>compile_users.py --all</code></td><td>Excel subscription → YAML</td></tr>
+          <tr><td>2</td><td>Emit</td><td><code>l1_route.py --review missed</code></td><td>Bỏ qua bài <code>status=done</code> — muốn tra soát lại phải thêm <code>--review all --no-skip-done</code></td></tr>
+          <tr><td>3</td><td>Emit</td><td><code>l1_ingest.py --code-first</code></td><td>Mở cổng ADR 0003 cho bài tra bảng khớp mã</td></tr>
+          <tr><td>4</td><td>Emit</td><td><code>agent_export.py --all</code></td><td>Claim <code>work_items</code>, phát packet Gold</td></tr>
+          <tr class="gate"><td>!</td><td>Agent ngoài</td><td><code>RunAgents</code> — chỉ chạy nếu <code>-Mode full</code></td><td><code>-Agent</code> mặc định <code>stub</code> → <code>agent_stub.py</code> <b>không tồn tại</b> → crash. Đổi <code>-Agent api</code> chỉ print, không gọi LLM.</td></tr>
+          <tr><td>5</td><td>Ingest</td><td><code>l1_ingest.py data/agent_outputs_l1</code></td><td>Ghi <code>l1_outputs</code> nguồn <code>agent</code>, có quyền đè <code>code_first</code></td></tr>
+          <tr><td>6</td><td>Ingest</td><td><code>agent_ingest.py data/agent_outputs</code></td><td>Ghi <code>agent_outputs</code> + đóng <code>work_items</code></td></tr>
+          <tr><td>7</td><td>Ingest</td><td><code>write_user_output.py</code></td><td>Gate <code>l1_outputs.dod_pass=1</code>; Gold tuỳ chọn → <code>gold_status=L1_ONLY</code> nếu thiếu</td></tr>
+          <tr><td>8</td><td>Cleanup</td><td>xoá packet đã ingest</td><td>Trừ khi <code>-KeepPackets</code> — mất bản trả lời gốc của agent</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============ 3. §A CHẶN ============ -->
+  <section>
+    <div class="section-head">
+      <span class="section-num">03 / §A — chặn, cần người duyệt</span>
+      <h2>Trước khi chạm dữ liệu thật</h2>
+    </div>
+    <div class="itemgrid">
+
+      <div class="item done">
+        <div class="item-head">
+          <span class="item-id">A1</span>
+          <span class="item-title">ADR 0003 — code-first ghi vào <code>l1_outputs</code></span>
+          <span class="pill done">accepted 2026-09-09</span>
+        </div>
+        <p>Đã duyệt trên văn bản (<code>docs/decisions/0003-*.md</code> Status = <code>accepted</code>). Cơ chế tra bảng tất định được phép ghi <code>l1_outputs</code>, đi qua cổng giao hàng.</p>
+      </div>
+
+      <div class="item drift">
+        <div class="item-head">
+          <span class="item-id">A2</span>
+          <span class="item-title">ADR 0004 phần D — hạ <code>dod_pass</code> cho 1.274 bản ghi Gold giả lập</span>
+          <span class="pill drift">tài liệu: done · DB local: chưa</span>
+        </div>
+        <p><code>OPEN-ITEMS.md</code> ghi "đã thực thi 2026-09-09, <code>verify_gold_quality.py --apply</code>, 1.274 → 0". <b>Vừa đối chiếu trực tiếp DB local máy này: <code>agent_outputs</code> vẫn còn nguyên <code>dod_pass=1</code> cho cả 1.274 dòng</b> — lệnh <code>--apply</code> chưa từng chạy trên file <code>monocle.db</code> ở máy dev.</p>
+        <p class="dim">Không phải bug — <code>monocle.db</code> là file nhị phân cục bộ, không đi theo <code>git pull</code>. Mỗi máy giữ bản DB riêng; hành động mô tả trong OPEN-ITEMS xảy ra trên DB của máy vận hành, chưa lan sang máy này.</p>
+        <div class="paths">
+          <span class="ph">Hướng xử lý</span>
+          <div class="pathlist">
+            <div class="pathrow"><span class="tag rec">chạy tay</span><span>Trên máy dev: backup DB rồi <code class="mono">python scripts/verify_gold_quality.py</code> (xem report) → <code class="mono">--apply</code> nếu muốn DB dev khớp trạng thái tài liệu.</span></div>
+            <div class="pathrow"><span class="tag">bỏ qua</span><span>Nếu máy dev chỉ dùng để đọc code/backlog, không xuất deliverable thật, có thể để nguyên — miễn không chạy <code>run_user_workflow.py</code> ở đây và tưởng deliverable đã sạch.</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="item pending">
+        <div class="item-head">
+          <span class="item-id">A3</span>
+          <span class="item-title">Chưa có gì chạy trên DB vận hành thật</span>
+          <span class="pill pending">chờ người vận hành</span>
+        </div>
+        <p>Toàn bộ số liệu OPEN-ITEMS đo trên <b>bản sao</b>. Máy vận hành phải <code>git pull</code> rồi chạy §B — bắt buộc backup trước vì có <code>ALTER TABLE l1_outputs ADD COLUMN l1_source</code> (đổi schema không đảo ngược gọn).</p>
+        <div class="paths">
+          <span class="ph">Hướng xử lý</span>
+          <div class="pathlist">
+            <div class="pathrow"><span class="tag rec">bắt buộc trước</span><span><code class="mono">Copy-Item data\monocle.db data\monocle_backup_&lt;YYMMDD&gt;.db</code> trên máy vận hành, rồi mới chạy §B2.</span></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============ 4. §B TRIỂN KHAI ============ -->
+  <section>
+    <div class="section-head">
+      <span class="section-num">04 / §B — các bước triển khai bắt buộc</span>
+      <h2>Chuỗi chạy lần đầu (trên máy có Bronze thật)</h2>
+    </div>
+    <div class="itemgrid">
+
+      <div class="item pending">
+        <div class="item-head">
+          <span class="item-id">B1</span>
+          <span class="item-title">Re-derive Silver toàn bộ — bản sửa tiêu đề chưa áp cho backlog cũ</span>
+          <span class="pill pending">chưa chạy trên máy dev</span>
+        </div>
+        <p>3.910 work-package hiện có không mang trường <code>title</code>; bản sửa (commit <code>7cb0f44</code>) chỉ áp cho gói sinh mới.</p>
+        <div class="cmd">python scripts/rederive_from_bronze.py</div>
+        <p class="dim">Trên máy dev: <code>data/raw_html</code> rỗng hoàn toàn (0 file) → lệnh này không có gì để đọc, không chạy được ở đây. Phải chạy trên máy có Bronze thật.</p>
+      </div>
+
+      <div class="item pending">
+        <div class="item-head">
+          <span class="item-id">B2</span>
+          <span class="item-title">Chuỗi chạy lần đầu sau đổi schema</span>
+          <span class="pill pending">schema đã có sẵn trên dev, data chưa chạy</span>
+        </div>
+        <p class="dim">Cột <code>l1_source</code> đã tồn tại trong schema DB dev (đối chiếu <code>src/db/store.py:211</code>) — phần <code>ALTER TABLE</code> coi như đã áp dụng tự động lúc mở DB. Phần còn lại (refresh alias, code-first ingest, heal orphans) là thao tác dữ liệu, chưa chạy.</p>
+        <div class="cmd">refresh_aliases.py --dry-run → refresh_aliases.py
+l1_ingest.py --code-first --dry-run → l1_ingest.py --code-first
+heal_orphans.py --dry-run → heal_orphans.py
+relativize_paths.py
+Catalog(ArticleStore()).reclaim_stale()
+run_user_workflow.py --date all</div>
+        <p>Kỳ vọng ~2.200–2.400 dòng cho 4 user. Lệch nhiều thì dừng, đối chiếu <code>l1_backlog.py</code>.</p>
+      </div>
+
+      <div class="item pending">
+        <div class="item-head">
+          <span class="item-id">B3</span>
+          <span class="item-title">Rút phần cần Agent (~282 bài <code>needs_agent</code>)</span>
+          <span class="pill pending">chờ Subagent xử lý</span>
+        </div>
+        <div class="cmd">l1_route.py --review missed --all --mini-batch 25</div>
+        <p>Với mỗi <code>l1_batch_XX.task.json</code>: gọi Subagent theo <code>.agents/skills/l1-entity-matcher/SKILL.md</code>, ghi 1 mảng JSON vào <code>data/agent_outputs_l1/l1_batch_XX.output.json</code>, rồi <code>l1_ingest.py data/agent_outputs_l1/</code> → <code>run_user_workflow.py --days 30</code>.</p>
+      </div>
+
+      <div class="item pending">
+        <div class="item-head">
+          <span class="item-id">B4</span>
+          <span class="item-title">Kiểm chứng bản sửa tiêu đề trên dữ liệu thật</span>
+          <span class="pill pending">chờ máy có Bronze</span>
+        </div>
+        <p>Chưa làm được trên máy dev — toàn bộ <code>data/raw_html</code> rỗng nên không đọc được Bronze để đối chiếu. Sau §B1, kỳ vọng:</p>
+        <div class="cmd">SELECT COUNT(*) FROM l1_tasks t JOIN articles a ON a.url_title_hash = t.article_id
+WHERE TRIM(t.title) &lt;&gt; TRIM(a.title);   -- kỳ vọng: 0 (trước đó: 122/1.320)</div>
+      </div>
+
+      <div class="item done">
+        <div class="item-head">
+          <span class="item-id">B5</span>
+          <span class="item-title">Sinh lại <code>entities.csv</code> / <code>entities.xlsx</code></span>
+          <span class="pill done">thực thi 2026-09-09</span>
+        </div>
+        <p>Sửa lỗi thiếu <code>sys.path</code> trong <code>build_entities.py</code>, cài <code>pyarrow</code>. Đã đối chiếu trên máy dev: <code>data/entities/entities.json</code> tồn tại, ~1,5 MB, khớp mô tả "2.072 thực thể".</p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============ 5. §C QUYẾT ĐỊNH TREO ============ -->
+  <section>
+    <div class="section-head">
+      <span class="section-num">05 / §C — quyết định còn treo</span>
+      <h2>Cần chọn hướng, chưa ai chốt</h2>
+    </div>
+    <div class="itemgrid">
+
+      <div class="item pending">
+        <div class="item-head">
+          <span class="item-id">C1</span>
+          <span class="item-title">685 dòng <code>l1_outputs</code> nguồn <code>agent</code> (lô 25/08) mang nhiễu cũ</span>
+          <span class="pill pending">3 lựa chọn</span>
+        </div>
+        <p>22 nhãn <code>IND_GICS*:QUY</code> mà matcher hiện tại phản đối. ADR 0003 quy định bản <code>agent</code> ưu tiên hơn <code>code_first</code> nên chưa đụng. Đối chiếu: 0/28 nhãn từ <code>code_first</code> bị matcher hiện tại phản đối.</p>
+        <div class="paths">
+          <span class="ph">Hướng xử lý</span>
+          <div class="pathlist">
+            <div class="pathrow"><span class="tag">1</span><span>Chạy lại Subagent L1 cho nhóm đó.</span></div>
+            <div class="pathrow"><span class="tag">2</span><span>Cho <code>code_first</code> ghi đè các dòng <code>agent</code> cũ hơn một mốc thời gian — <b>lật một điều khoản ADR 0003</b>, phải sửa ADR trước.</span></div>
+            <div class="pathrow"><span class="tag rec">3</span><span>Để nguyên — rủi ro thấp, chỉ 685/1.480 dòng, sai lệch đã đo cụ thể (22 nhãn).</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="item blocked">
+        <div class="item-head">
+          <span class="item-id">C2</span>
+          <span class="item-title">Không có runner LLM tự động — hàng đợi chỉ dài thêm</span>
+          <span class="pill blocked">xác nhận lại lần này</span>
+        </div>
+        <p>Không module nào trong repo gọi API LLM (<code>requirements.txt</code> không có SDK nào). <code>run_daily.ps1</code> mặc định gọi <code>scripts/agent_stub.py</code> — <b>đã xác nhận file này không tồn tại</b> ở commit 901deee. Tồn: ~282 bài <code>needs_agent</code>, 3.781 <code>work_items</code> chờ Gold.</p>
+        <div class="paths">
+          <span class="ph">Hướng xử lý</span>
+          <div class="pathlist">
+            <div class="pathrow"><span class="tag rec">chạy tay hiện có</span><span><code class="mono">-Mode emit</code> → tự giao packet cho Subagent (Claude Code hoặc framework khác) → <code class="mono">-Mode ingest</code>. Không đụng tham số <code>-Agent</code> (chỉ có ý nghĩa trong <code>-Mode full</code>).</span></div>
+            <div class="pathrow"><span class="tag">dựng runner</span><span>Viết adapter gọi LLM thật thay <code>agent_stub.py</code> — phải chốt provider (Anthropic/khác) trước khi viết, vì đây là thay đổi kiến trúc (gọi API ngoài, tốn phí, cần secret).</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="item pending">
+        <div class="item-head">
+          <span class="item-id">C3</span>
+          <span class="item-title"><code>url_title_hash = sha256(url + title)</code> — khoá định danh chứa trường thay đổi được</span>
+          <span class="pill pending">mức ADR, chưa soạn</span>
+        </div>
+        <p>Toà soạn sửa tít sau khi đăng → sinh hash mới: 12 bài cùng URL nằm dưới nhiều hash, <code>heal_orphans.py</code> phải bỏ qua vì ràng buộc <code>UNIQUE(url)</code>.</p>
+        <div class="paths">
+          <span class="ph">Hướng xử lý</span>
+          <div class="pathlist">
+            <div class="pathrow"><span class="tag rec">sửa đúng</span><span>Chuyển định danh sang URL chuẩn hoá, giữ title làm thuộc tính — cần rehash toàn bộ, soạn ADR trước vì đổi Data Contract (Cấp 3).</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="item pending">
+        <div class="item-head">
+          <span class="item-id">C4</span>
+          <span class="item-title">Alias nhập nhằng nghĩa mà tầng tất định không giải được</span>
+          <span class="pill pending">giới hạn có chủ đích</span>
+        </div>
+        <p>Phần rõ ràng đã xử lý (<code>_context_guards.yaml</code>: <code>drop_bare</code> cho "Nước/Điện/Giấy/Quỹ", <code>block_in</code> cho <code>MACRO_GEO:MY</code>). Phần còn lại là suy luận ngữ cảnh — thuộc Subagent, không phải lỗi cần sửa.</p>
+      </div>
+
+      <div class="item pending">
+        <div class="item-head">
+          <span class="item-id">C5</span>
+          <span class="item-title">Silver mỏng ở 2 nguồn nhỏ</span>
+          <span class="pill pending">chưa điều tra</span>
+        </div>
+        <p><code>fireant.vn</code> 8/33 và <code>tinnhanhchungkhoan.vn</code> 4/32 work-package có <code>cleaned_text</code> &lt; 200 ký tự.</p>
+      </div>
+
+      <div class="item blocked">
+        <div class="item-head">
+          <span class="item-id">C6 <span class="dim mono" style="font-weight:400;">(mới)</span></span>
+          <span class="item-title">124 bài <code>published_at &lt; 2026</code> (2017–2025) lọt vào backlog</span>
+          <span class="pill blocked">3 hướng, chưa chọn</span>
+        </div>
+        <p>Nguồn gốc: 2 domain vừa bật lại 2026-09-07 (<code>baodautu.vn</code>, <code>tinnhanhchungkhoan.vn</code>) không lọc theo ngày ở tầng thu thập; vài zone TNCK (6, 26, 39) đã ngưng cập nhật nên trang 1 chính là đuôi lưu trữ. Hiện: 124 <code>work_items</code> status <code>pending</code>, 0 <code>l1_tasks</code>.</p>
+        <p class="dim">Trên máy dev: không thao tác được — <code>data/silver</code>/<code>data/work_packages</code> không có 2 domain này (chỉ có cafef.vn/vietstock.vn/vneconomy.vn). Phải làm trên máy vận hành.</p>
+        <div class="paths">
+          <span class="ph">Hướng xử lý</span>
+          <div class="pathlist">
+            <div class="pathrow"><span class="tag">1 · cho qua</span><span>Không sửa code, chạy <code>l1_route.py --review missed --only in-articles --all</code> như bài mới — 124 bài lên deliverable đúng ngày đăng gốc (kể cả 2018).</span></div>
+            <div class="pathrow"><span class="tag">2 · lọc export</span><span>Thêm sàn ngày vào <code>gated_rows()</code> (<code>src/export/user_output.py</code>) — cần sửa code, Cấp 2/3.</span></div>
+            <div class="pathrow"><span class="tag">3 · xoá backlog</span><span><code class="mono">DELETE FROM work_items WHERE article_id IN (...)</code> — không đảo ngược, Cấp 3 HIGH-RISK, cần ADR + người duyệt.</span></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============ 6. §D ĐÃ ĐÓNG ============ -->
+  <section>
+    <div class="section-head">
+      <span class="section-num">06 / §D — đã đóng, đừng mở lại</span>
+      <h2>15 mục, kiểm tay 25 dòng ngẫu nhiên AnPT → 0/29 mã vô căn cứ</h2>
+    </div>
+    <div class="tablewrap">
+      <table class="closed-table">
+        <thead><tr><th style="width:40px">#</th><th>Vấn đề</th><th>Kết quả đo thực tế</th></tr></thead>
+        <tbody>
+          <tr><td>D1</td><td>Cổng export bỏ qua kết quả tất định; <code>route=resolved</code> nằm <code>pending</code> vĩnh viễn</td><td>Bài qua cổng 424→1.529; khớp AnPT 146→791; user có output 1→4</td></tr>
+          <tr><td>D2</td><td><code>make_aliases()</code> bơm chuỗi trong ngoặc thành alias</td><td><code>TICKER:IVS</code> khớp sai 164→0</td></tr>
+          <tr><td>D3</td><td><code>seen_articles</code> đánh dấu sớm, <code>articles</code> ghi bất đồng bộ</td><td>Ghi cùng transaction; thu hồi 437 bài mồ côi</td></tr>
+          <tr><td>D4</td><td><code>work_items</code> kẹt <code>claimed</code>, không đường nhả</td><td>304→0 (<code>reclaim_stale()</code>)</td></tr>
+          <tr><td>D5</td><td><code>packet_path</code> tuyệt đối, gãy giữa 2 máy</td><td>1.787 dòng chuyển tương đối</td></tr>
+          <tr><td>D6</td><td><code>l1_route</code> sắp theo chuỗi đường dẫn — thiên vị domain</td><td>Sắp theo thời gian</td></tr>
+          <tr><td>D7</td><td><code>VyPTT</code> bị <code>default:false</code> tắt im lặng</td><td>Đã bật + cảnh báo log</td></tr>
+          <tr><td>D8</td><td>"TP.HCM"→<code>TICKER:HCM</code>, "quý 3"→<code>IND_GICS*:QUY</code>, PLX sinh <code>TICKER:OIL</code></td><td>Guard ngữ cảnh + dấu + khử chồng lấn</td></tr>
+          <tr><td>D9</td><td>DoD L1 không kiểm <code>entity_id</code> có thật</td><td><code>check_l1_dod</code> kiểm registry</td></tr>
+          <tr><td>D10</td><td>Silver lấy header hồ sơ DN làm tiêu đề (122/1.320 bài)</td><td>Giải bằng đối chiếu <code>sha256(url+title)</code>; chờ kiểm §B4</td></tr>
+          <tr><td>D11</td><td><code>process_l1_pipeline.py</code> đóng dấu <code>agent_provider="gemini"</code> giả</td><td>Rút còn lớp vỏ; provenance khai đúng</td></tr>
+          <tr><td>D12</td><td>~~2.677 bài content_text mỏng~~</td><td>Xếp nhầm — <code>cleaned_text</code> Silver thì lành (374/400 ≥1.000 ký tự)</td></tr>
+          <tr><td>D13</td><td>ADR 0003 còn <code>proposed</code></td><td>Duyệt <code>accepted</code> 2026-09-09</td></tr>
+          <tr><td>D14</td><td>1.117/1.274 bản ghi Gold là regex mang nhãn LLM</td><td>Duyệt D1; hạ <code>dod_pass</code> 1.274→0 <b>(trên DB vận hành — xem A2, DB dev chưa khớp)</b></td></tr>
+          <tr><td>D15</td><td><code>build_entities.py</code> lỗi <code>sys.path</code>/thiếu <code>pyarrow</code></td><td>Sửa xong; sinh mới 2.072 thực thể</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    <span>Nguồn đối chiếu: <span class="mono">docs/OPEN-ITEMS.md</span>, <span class="mono">docs/decisions/0003-*.md</span>, <span class="mono">docs/decisions/0004-*.md</span>, truy vấn read-only <span class="mono">project/data/monocle.db</span>, đối chiếu <span class="mono">data/raw_html</span>/<span class="mono">data/silver</span>/<span class="mono">data/work_packages</span> trên máy dev.</span>
+    <span>Tài liệu song hành: <span class="mono">project/docs/operations/pipeline-runbook.html</span> (chi tiết từng bước script) và Artifact <a href="https://claude.ai/code/artifact/840b3d0b-9201-4107-b70b-3bac222f7d50">News-Scape Runbook</a>.</span>
+  </footer>
+
+</div>

@@ -1,0 +1,40 @@
+# Global settings — Web Monocle
+database:
+  # DB vận hành nằm ngoài OneDrive. Biến MONOCLE_DB_PATH (nếu có) ghi đè giá trị này.
+  # Đường dẫn trong OneDrive hoặc trong kho mã bị từ chối (src/core/config.py
+  # resolve_db_path), để tiến trình thiếu biến môi trường không ghi nhầm vào bản sao cũ.
+  path: C:/data/news-scape/monocle.db
+
+logging:
+  level: INFO
+  dir: logs
+
+scheduler:
+  interval_minutes: 15     # polling cycle (spec §6)
+
+http:
+  rate_limit: 3.0          # giây giữa 2 request cùng domain (spec §12)
+  timeout: 30
+  max_retries: 3
+
+export:
+  enabled: true            # tự xuất CSV 'hôm nay' cuối mỗi cycle
+  dir: data/exports        # data/exports/articles-YYYY-MM-DD.csv (ghi đè mỗi cycle)
+
+morninger:
+  capture_interval_minutes: 10   # nhịp capture Bronze (job 1). ĐO THẬT 2026-09-17: một lượt job
+                                  # ≈ 7 phút (capture 335s + backfill ≤90s). Đặt 5 phút như bản đầu
+                                  # khiến job chồng lấn liên tục, không còn biên dự phòng; 10 phút
+                                  # giữ ~40% headroom mà vẫn nhanh hơn mốc 15 phút cũ.
+                                  # Muốn hạ tiếp: phải tối ưu chi phí cycle trước (dừng phân trang
+                                  # sớm — cafef fetch 900 item chỉ để lấy ~5 bài mới).
+  rederive_interval_minutes: 30  # nhịp re-derive Silver tăng dần (job 2)
+  deferred_backfill_limit: 60    # số bài bù tối đa mỗi chu kỳ capture (job 1, nối tiếp)
+  deferred_budget_seconds: 90    # trần thời gian bù; hết giờ thì dừng sạch, để dành chu kỳ sau.
+                                  # Đo thực tế 2026-09-17: cycle capture ~335s, nên phần bù phải
+                                  # bị chặn cứng nếu không sẽ kéo dài nhịp capture vô hạn định.
+  deferred_max_attempts: 5       # thử tối đa 5 lần rồi gắn capture_giveup — chặn vòng lặp vô hạn
+  deferred_retry_window_hours: 24  # chỉ truy đuổi bài fetched_at trong 24h gần đây
+  drift_hour: 6                  # giờ chạy drift report mỗi sáng (job 3)
+  drift_minute: 0
+  drift_limit: 100

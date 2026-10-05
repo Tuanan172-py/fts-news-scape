@@ -1,0 +1,10 @@
+name: thanhnien
+enabled: false   # disabled 2026-08-03: focus on cafef + vietstock only
+method: rss
+rate_limit: 3.0
+timeout: 30
+rss:
+  feeds:
+    - {url: "https://thanhnien.vn/rss/kinh-te.rss", name: "Thanh Niên Kinh tế"}
+detail: {extract_full: true, max_details_per_cycle: 30}
+pitfalls: "Feed thiếu <?xml declaration (bắt đầu thẳng <rss) — feedparser chấp nhận. 50 items. Verified 2026-07-25."

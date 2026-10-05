@@ -1,0 +1,362 @@
+"""Quản lý lưu trữ tạo tác thô Bronze (HTML/nhị phân nguyên bản) và tệp mô tả siêu dữ liệu."""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+import time
+from datetime import datetime
+from urllib.parse import urljoin, urlparse
+
+from bs4 import BeautifulSoup
+from loguru import logger
+
+from src.core.config import PROJECT_ROOT, resolve_project_path
+
+# Bộ lọc header cần giữ lại nhằm đảm bảo vệ sinh dữ liệu bảo mật.
+_HEADER_WHITELIST = ("content-type", "content-length", "last-modified",
+                     "etag", "server", "date")
+# Danh sách thuộc tính ảnh ưu tiên phân giải URL.
+_LAZY_ATTRS = ("src", "data-src", "data-original", "original-src",
+               "document-path", "data-lazy")
+
+
+class RawStore:
+    """Lớp quản lý lưu trữ dữ liệu thô Bronze byte-exact và siêu dữ liệu đi kèm.
+
+    Attributes:
+        base_dir: Đường dẫn tuyệt đối của thư mục gốc lưu trữ dữ liệu thô Bronze.
+    """
+
+    def __init__(self, base_dir: str = "data/raw_html"):
+        """Khởi tạo kho Bronze, neo đường dẫn tương đối vào gốc dự án.
+
+        Đường dẫn tương đối không được hiểu theo thư mục làm việc hiện hành, vì một
+        tiến trình chạy ở gốc repo sẽ ghi Bronze ra ngoài nơi Silver đọc.
+
+        Args:
+            base_dir: Thư mục gốc Bronze, tuyệt đối hoặc tương đối so với gốc dự án.
+        """
+        self.base_dir = str(resolve_project_path(base_dir))
+
+    @staticmethod
+    def _portable_path(path: str) -> str:
+        """Đưa đường dẫn trong gốc dự án về dạng tương đối để ghi vào tệp meta.
+
+        Args:
+            path: Đường dẫn tệp Bronze.
+
+        Returns:
+            Đường dẫn tương đối so với gốc dự án khi tệp nằm trong đó, ngược lại giữ nguyên.
+        """
+        try:
+            return os.path.relpath(path, PROJECT_ROOT) if os.path.commonpath(
+                [os.path.abspath(path), str(PROJECT_ROOT)]) == str(PROJECT_ROOT) else path
+        except ValueError:
+            return path
+
+    @staticmethod
+    def _yyyymmdd(fetched_at: str) -> str:
+        try:
+            return datetime.fromisoformat(fetched_at).strftime("%Y%m%d")
+        except (ValueError, TypeError):
+            return "unknown-date"
+
+    def _dir_for(self, domain: str, yyyymmdd: str) -> str:
+        """Tạo và trả về đường dẫn thư mục lưu trữ cho tên miền và ngày cụ thể.
+
+        Args:
+            domain: Tên miền của nguồn tin.
+            yyyymmdd: Chuỗi ngày định dạng YYYYMMDD.
+
+        Returns:
+            Chuỗi đường dẫn thư mục lưu trữ.
+        """
+        d = os.path.join(self.base_dir, domain, yyyymmdd)
+        os.makedirs(d, exist_ok=True)
+        return d
+
+    def paths_for(self, domain: str, url_title_hash: str, fetched_at: str) -> tuple[str, str]:
+        """Xác định trước đường dẫn tệp HTML và metadata mà không tạo thư mục.
+
+        Args:
+            domain: Tên miền của nguồn tin.
+            url_title_hash: Mã băm định danh bài viết.
+            fetched_at: Thời điểm thu thập dữ liệu ISO.
+
+        Returns:
+            Bộ (html_path, meta_path) dạng chuỗi đường dẫn.
+        """
+        d = os.path.join(self.base_dir, domain, self._yyyymmdd(fetched_at))
+        base = os.path.join(d, url_title_hash)
+        return f"{base}.html", f"{base}.meta.json"
+
+    @staticmethod
+    def _has_good_capture(html_path: str, meta_path: str) -> bool:
+        """Kiểm đã có bản cào tốt (`ok` hoặc `partial`) cùng tệp HTML tại đường dẫn này.
+
+        Args:
+            html_path: Đường dẫn tệp HTML Bronze.
+            meta_path: Đường dẫn tệp meta Bronze.
+
+        Returns:
+            True khi meta đọc được, trạng thái là `ok` hoặc `partial` và HTML còn đó.
+        """
+        if not (os.path.exists(html_path) and os.path.exists(meta_path)):
+            return False
+        try:
+            with open(meta_path, encoding="utf-8") as f:
+                return json.load(f).get("capture_status") in ("ok", "partial")
+        except (OSError, ValueError):
+            return False
+
+    @staticmethod
+    def _write_atomic(path: str, data: bytes) -> None:
+        """Ghi dữ liệu ra tệp tạm và thay thế nguyên tử tệp đích với cơ chế thử lại.
+
+        Args:
+            path: Đường dẫn tệp đích cần ghi.
+            data: Mảng byte dữ liệu cần ghi.
+        """
+        tmp = f"{path}.tmp"
+        with open(tmp, "wb") as f:
+            f.write(data)
+        last_err: Exception | None = None
+        for attempt in range(3):
+            try:
+                os.replace(tmp, path)  # atomic trên cùng volume
+                return
+            except PermissionError as e:  # Windows file lock — thử lại ngắn
+                last_err = e
+                time.sleep(0.1 * (attempt + 1))
+        try:
+            os.remove(tmp)  # dọn tmp rác trước khi báo lỗi
+        except OSError:
+            pass
+        raise last_err  # type: ignore[misc]
+
+    @staticmethod
+    def _filter_headers(headers) -> dict:
+        out: dict = {}
+        getter = getattr(headers, "get", None)
+        if getter is None:
+            return out
+        for k in _HEADER_WHITELIST:
+            v = headers.get(k)
+            if v is not None:
+                out[k] = str(v)
+        return out
+
+    # -- image manifest (read-only, không sửa artifact) -----------------------
+    @staticmethod
+    def _scan_images(body: bytes, base_url: str) -> list[dict]:
+        try:
+            soup = BeautifulSoup(body, "lxml")
+        except Exception as e:  # pragma: no cover - defensive
+            logger.warning("raw_store image scan failed {}: {}", base_url, e)
+            return []
+        images: list[dict] = []
+        for img in soup.find_all("img"):
+            resolved = ""
+            for attr in _LAZY_ATTRS:
+                val = img.get(attr)
+                if val:
+                    resolved = val.strip()
+                    break
+            if not resolved:
+                srcset = img.get("srcset", "")
+                if srcset:
+                    resolved = srcset.split(",")[0].strip().split(" ")[0]
+            if resolved and base_url:
+                resolved = urljoin(base_url, resolved)
+            caption = ""
+            fig = img.find_parent("figure")
+            if fig is not None:
+                cap_el = fig.find("figcaption")
+                if cap_el is not None:
+                    caption = cap_el.get_text(" ", strip=True)
+            images.append({
+                "outer_tag": str(img),
+                "resolved_url": resolved,
+                "alt": img.get("alt", ""),
+                "title": img.get("title", ""),
+                "caption": caption,
+            })
+        return images
+
+    # -- main API -------------------------------------------------------------
+    def save(self, domain: str, url: str, url_title_hash: str, response,
+             *, fetched_at: str, missing: list[str] | None = None,
+             protection: str | None = None, render_method: str = "requests") -> dict:
+        """Lưu trữ tệp HTML thô nguyên bản và tệp siêu dữ liệu sidecar .meta.json.
+
+        Args:
+            domain: Tên miền của nguồn tin.
+            url: Đường dẫn gốc của bài viết.
+            url_title_hash: Mã băm định danh bài viết.
+            response: Đối tượng phản hồi HTTP hoặc None khi thu thập thất bại.
+            fetched_at: Thời điểm thu thập dữ liệu dạng chuỗi ISO.
+            missing: Danh sách các thành phần nội dung bị thiếu (tùy chọn).
+            protection: Cơ chế bảo vệ phát hiện được (tùy chọn).
+            render_method: Phương thức render nội dung (mặc định 'requests').
+
+        Returns:
+            Dictionary chứa thông tin trạng thái capture của bài viết.
+        """
+        yyyymmdd = self._yyyymmdd(fetched_at)
+        directory = self._dir_for(domain, yyyymmdd)
+        html_path = os.path.join(directory, f"{url_title_hash}.html")
+        meta_path = os.path.join(directory, f"{url_title_hash}.meta.json")
+
+        cap: dict = {
+            "source_url": url,
+            "url_title_hash": url_title_hash,
+            "fetch_ts": fetched_at,
+            "render_method": render_method,
+            "html_path": html_path,
+            "http_status": None,
+            "content_sha256": None,
+            "content_length_bytes": 0,
+            "encoding": None,
+            "response_headers": {},
+            "images": [],
+            "capture_status": "failed",
+            "missing": list(missing or []),
+            "error": None,
+        }
+
+        if response is None:
+            cap["error"] = {"type": "fetch_failed", "http_status": None,
+                            "message": "no response",
+                            "protection_mechanism": protection}
+            if not cap["missing"]:
+                cap["missing"] = ["article_body"]
+            if not self._has_good_capture(html_path, meta_path):
+                self._write_meta(meta_path, cap)
+            return cap
+
+        status = getattr(response, "status_code", None)
+        body = getattr(response, "content", b"") or b""
+        if isinstance(body, str):
+            body = body.encode(getattr(response, "encoding", None) or "utf-8",
+                               errors="replace")
+        cap["http_status"] = status
+        cap["content_length_bytes"] = len(body)
+        cap["encoding"] = getattr(response, "encoding", None)
+        cap["response_headers"] = self._filter_headers(getattr(response, "headers", {}))
+
+        ok = status is not None and 200 <= status < 300 and len(body) > 0
+        if not ok:
+            # 404/410 = nguồn đã xóa bài (không phải lỗi tạm thời) — tách riêng để
+            # (a) không bị backfill_deferred retry vô ích, (b) đo được tần suất
+            # "đăng rồi xóa" đặc trưng của tin VN (pipeline_radar).
+            deleted_at_source = status in (404, 410)
+            cap["error"] = {
+                "type": "deleted_at_source" if deleted_at_source else "http_error",
+                "http_status": status,
+                "message": f"status {status}" if status is not None else "empty body",
+                "protection_mechanism": protection,
+            }
+            if deleted_at_source:
+                cap["capture_status"] = "deleted_at_source"
+            if not cap["missing"]:
+                cap["missing"] = ["article_body"]
+            # Lần cào lỗi không được ghi đè bản cào tốt đã có: Bronze bất biến.
+            if self._has_good_capture(html_path, meta_path):
+                return cap
+            if len(body) > 0:  # partial body vẫn lưu để inspect
+                self._write_atomic(html_path, body)
+                cap["content_sha256"] = hashlib.sha256(body).hexdigest()
+            self._write_meta(meta_path, cap)
+            return cap
+
+        # success — ghi raw bytes NGUYÊN BẢN
+        self._write_atomic(html_path, body)
+        cap["content_sha256"] = hashlib.sha256(body).hexdigest()
+        cap["images"] = self._scan_images(body, url)  # read-only, không sửa file
+        cap["capture_status"] = "partial" if cap["missing"] else "ok"
+        self._write_meta(meta_path, cap)
+        return cap
+
+    # -- attachment nhị phân (design 16 — NSO .xlsx/.docx/.pdf) ---------------
+    _EXT_BY_TYPE = {
+        "application/pdf": ".pdf",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": ".xlsx",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document": ".docx",
+        "application/vnd.ms-excel": ".xls",
+        "application/msword": ".doc",
+        "application/zip": ".zip",
+    }
+
+    def save_binary(self, domain: str, url: str, key: str, response,
+                    *, fetched_at: str) -> dict:
+        """Lưu trữ tệp đính kèm nhị phân và tệp siêu dữ liệu .binmeta.json.
+
+        Args:
+            domain: Tên miền của nguồn tin.
+            url: Đường dẫn tệp đính kèm.
+            key: Khóa định danh duy nhất cho tệp đính kèm.
+            response: Đối tượng phản hồi HTTP chứa nội dung nhị phân.
+            fetched_at: Thời điểm thu thập dữ liệu dạng chuỗi ISO.
+
+        Returns:
+            Dictionary chứa thông tin trạng thái capture tệp nhị phân.
+        """
+        yyyymmdd = self._yyyymmdd(fetched_at)
+        directory = self._dir_for(domain, yyyymmdd)
+
+        status = getattr(response, "status_code", None) if response is not None else None
+        headers = getattr(response, "headers", {}) if response is not None else {}
+        ctype = str((headers or {}).get("content-type", "")).split(";")[0].strip().lower()
+        ext = self._EXT_BY_TYPE.get(ctype, "")
+        if not ext:
+            tail = os.path.splitext(urlparse(url).path)[1].lower()
+            ext = tail if tail in {".pdf", ".xlsx", ".xls", ".docx", ".doc", ".zip"} else ".bin"
+
+        bin_path = os.path.join(directory, f"{key}{ext}")
+        # Đuôi .binmeta.json được dùng riêng cho tệp nhị phân để tách biệt khỏi rglob *.meta.json của pipeline derive.
+        meta_path = os.path.join(directory, f"{key}{ext}.binmeta.json")
+
+        cap: dict = {
+            "source_url": url,
+            "key": key,
+            "fetch_ts": fetched_at,
+            "render_method": "requests",
+            "binary_path": bin_path,
+            "http_status": status,
+            "content_type": ctype,
+            "content_sha256": None,
+            "content_length_bytes": 0,
+            "response_headers": self._filter_headers(headers),
+            "capture_status": "failed",
+            "error": None,
+        }
+
+        body = getattr(response, "content", b"") if response is not None else b""
+        if isinstance(body, str):
+            body = body.encode("utf-8", errors="replace")
+        body = body or b""
+
+        if response is None or status is None or not (200 <= status < 300) or not body:
+            cap["error"] = {
+                "type": "fetch_failed" if response is None else "http_error",
+                "http_status": status,
+                "message": "no response" if response is None else f"status {status}",
+            }
+            self._write_meta(meta_path, cap)
+            return cap
+
+        self._write_atomic(bin_path, body)           # bytes NGUYÊN BẢN, không parse
+        cap["content_length_bytes"] = len(body)
+        cap["content_sha256"] = hashlib.sha256(body).hexdigest()
+        cap["capture_status"] = "ok"
+        self._write_meta(meta_path, cap)
+        return cap
+
+    def _write_meta(self, path: str, cap: dict) -> None:
+        portable = dict(cap)
+        if portable.get("html_path"):
+            portable["html_path"] = self._portable_path(portable["html_path"])
+        data = json.dumps(portable, ensure_ascii=False, indent=2).encode("utf-8")
+        self._write_atomic(path, data)

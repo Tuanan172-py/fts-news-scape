@@ -1,0 +1,13 @@
+{
+  "hash": "b7cd7e93820adc5e",
+  "chars": 19643,
+  "approx_tokens": 6547,
+  "entities_total": 1262,
+  "closed_group_lines": 130,
+  "fund_lines": 39,
+  "ticker_lines": 0,
+  "variants": {
+    "tickers": false
+  },
+  "source": "C:\\Users\\anpt\\OneDrive - fpts.com.vn\\FRA_DataIngestion - news-scape\\project\\data\\entities\\entities.json"
+}

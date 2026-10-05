@@ -1,0 +1,77 @@
+# ops.yaml — tham số vận hành tự chủ khi máy mở (ADR 0012, sửa đổi 2026-10-01). Không chứa bí mật.
+# Bí mật (Telegram, healthchecks) nằm ở C:\data\news-scape\secrets\ops.env hoặc biến môi trường.
+# Mô hình vận hành: máy mở thì daemon chạy; máy ngủ/tắt thì mọi thứ dừng và bài nằm chờ.
+
+sensor:
+  interval_seconds: 120          # chu kỳ đánh giá điều kiện mở đợt
+  threshold: 100                 # T1: đủ bấy nhiêu bài chờ thì mở đợt (thay ngưỡng 50 của article_tick)
+  max_age_minutes: 90            # T2: bài chờ lâu nhất vượt mức này thì vét
+  age_rule_hours: [6, 22]        # T2 chỉ áp trong khung giờ này; ban đêm chỉ T1
+  flush_windows: ["07:15-07:45", "12:15-12:45", "15:15-15:45", "17:15-17:45"]   # T3
+  lookback_days: 1               # phạm vi tự động: hôm nay + N ngày trước; tồn đọng cũ xử lý riêng
+
+wave:
+  runner: agy
+  limit: 100
+  batch: 50
+  concurrency: 2
+  max_repair_rounds: 2
+  max_attempts_per_article: 2    # bài đã vào đủ số đợt này mà vẫn chưa qua DoD thì không tự thử lại
+  cooldown_minutes: 30           # nghỉ sau đợt hỏng không do provider; /run bỏ qua
+  progress_silence_minutes: 25   # analyze im lặng quá mức này là treo
+  min_free_gb: 5
+  deadlines_minutes:
+    preflight: 2
+    prepare: 5
+    analyze: 45
+    repair: 25
+    finish: 30                   # nạp DB không nhận lệnh dừng; deadline chỉ dành cho treo thật
+    deliver: 10                  # xuất xlsx giao hàng sau DONE, best-effort, không lật DONE
+
+autonomy:
+  demote_after_failures: 2       # số đợt hỏng liên tiếp thì L1 về L0
+  max_order_days: 30             # mandate (D-A): hạn tối đa, tự gia hạn khi hệ thống khoẻ
+  renew_when_days_left: 7        # còn bấy nhiêu ngày thì xét tự gia hạn
+  renew_min_clean_streak: 5      # điều kiện khoẻ: số đợt sạch liên tiếp tối thiểu
+
+control_room:
+  enabled: true                  # Phòng điều khiển, chỉ nghe 127.0.0.1
+  port: 8787
+
+improvement:
+  max_per_week: 5                # trần số đề xuất cải tiến tự sinh mỗi tuần (D-E)
+
+breaker:
+  timeout_trip: 3
+  timeout_open_minutes: 30
+  network_trip: 3
+  network_open_minutes: 10
+  empty_trip: 2
+  quota_open_minutes: 300        # pool "Work Done" của Antigravity làm mới mỗi 5 giờ
+
+heartbeat:
+  interval_seconds: 60
+
+watchdog:
+  stale_minutes: 10              # nhịp tim cũ hơn mức này ở hai lần kiểm liên tiếp thì báo daemon chết
+
+digest:
+  times: ["08:00", "18:00"]
+
+supervisor:
+  manage_capture: true
+  restart_backoff_seconds: [10, 30, 60, 120, 300]
+  max_restarts: 5
+  restart_window_minutes: 30
+
+probes:
+  capture_stale_minutes: 30
+  capture_hours: [7, 22]
+  dead_letter_alert_delta: 50
+
+alerts:
+  dedup_minutes: 30
+  push_wave_info: false          # false: đợt bình thường chỉ vào bản tin; tin riêng chỉ khi ngoại lệ
+
+telegram:
+  poll_timeout_seconds: 25

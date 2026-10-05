@@ -1,0 +1,11 @@
+name: oilprice
+enabled: false   # disabled 2026-08-03: focus on cafef + vietstock only
+method: rss
+language: en
+rate_limit: 3.0
+timeout: 30
+rss:
+  feeds:
+    - {url: "https://oilprice.com/rss/main", name: "OilPrice Main"}
+detail: {extract_full: true, max_details_per_cycle: 10}
+pitfalls: "15 items, tin dầu/năng lượng/địa chính trị. Opinionated — đọc như commentary. Verified 2026-07-25."

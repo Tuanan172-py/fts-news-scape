@@ -1,0 +1,137 @@
+"""Thông báo dựa trên tệp nhật ký và màn hình điều khiển theo quy tắc cấu hình.
+
+Cung cấp lớp FileNotifier đối chiếu bài viết với các quy tắc thông báo
+(mã chứng khoán, tên miền nguồn, từ khóa) và ghi nhận vào tệp log nhật ký theo ngày.
+"""
+
+from __future__ import annotations
+
+from src.core.config import resolve_project_path
+import re
+from datetime import datetime
+from pathlib import Path
+
+import yaml
+from loguru import logger
+
+from src.core.models import VN_TZ, Article, ScrapeResult
+
+
+class FileNotifier:
+    """Bộ lọc và gửi thông báo bài viết khớp quy tắc ra tệp log hoặc stdout.
+
+    Attributes:
+        out_dir: Thư mục lưu trữ các tệp nhật ký thông báo hàng ngày.
+        rules: Danh sách các quy tắc lọc và gán nhãn thông báo.
+    """
+
+    def __init__(
+        self,
+        config_path: str = "config/notifications.yaml",
+        out_dir: str = "data/notifications",
+    ):
+        self.out_dir = Path(resolve_project_path(out_dir))
+        self.rules = []
+        p = Path(config_path)
+        if p.exists():
+            cfg = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
+            self.rules = cfg.get("rules", [])
+        for rule in self.rules:
+            ticks = rule.get("tickers")
+            if ticks:
+                rule["_ticker_re"] = re.compile(
+                    r"\b(" + "|".join(re.escape(t) for t in ticks) + r")\b"
+                )
+
+    def _log_path(self) -> Path:
+        """Trả về đường dẫn tệp nhật ký của ngày hiện tại."""
+        self.out_dir.mkdir(parents=True, exist_ok=True)
+        return self.out_dir / f"{datetime.now(VN_TZ):%Y-%m-%d}.log"
+
+    def _matches(self, article: Article) -> str | None:
+        """Kiểm tra bài viết có khớp với bất kỳ quy tắc thông báo nào hay không.
+
+        Args:
+            article: Đối tượng bài viết cần đối chiếu.
+
+        Returns:
+            Nhãn tag của quy tắc đầu tiên khớp, hoặc None nếu không khớp quy tắc nào.
+        """
+        text = f"{article.title} {' '.join(article.symbols)}"
+        haystack = text.lower()
+        for rule in self.rules:
+            tag = rule.get("tag", "match")
+            tre = rule.get("_ticker_re")
+            if tre is not None and tre.search(text):
+                return tag
+            srcs = rule.get("sources")
+            if srcs and article.source_domain in srcs:
+                return tag
+            if rule.get("has_symbol") and article.symbols:
+                return tag
+            match = rule.get("match", {})
+            if match is True or match == "all":
+                return tag
+            if isinstance(match, dict):
+                for kw in match.get("any", []):
+                    if str(kw).lower() in haystack:
+                        return tag
+        return None
+
+    SENTIMENT_MARKER = {"positive": "🟢", "negative": "🔴", "neutral": "🟡"}
+
+    def format_article(self, a: Article, tag: str = "") -> str:
+        """Định dạng bài viết thành một dòng thông báo ngắn gọn.
+
+        Args:
+            a: Đối tượng bài viết cần định dạng.
+            tag: Nhãn quy tắc thông báo tương ứng.
+
+        Returns:
+            Chuỗi văn bản hiển thị thông tin bài viết một dòng.
+        """
+        marker = self.SENTIMENT_MARKER.get(a.sentiment, "🟡")
+        return f"{marker} {a.title} (chi tiết ({a.url}))"
+
+    def notify_articles(self, articles: list[Article]) -> int:
+        """Ghi nhận các bài viết khớp quy tắc ra màn hình và tệp nhật ký.
+
+        Args:
+            articles: Danh sách bài viết cần lọc và thông báo.
+
+        Returns:
+            Số lượng bài viết khớp quy tắc thông báo thành công.
+        """
+        matched = 0
+        lines = []
+        for a in articles:
+            tag = self._matches(a)
+            if tag is None:
+                continue
+            matched += 1
+            line = self.format_article(a, tag)
+            lines.append(line)
+            print(line)
+        if lines:
+            with self._log_path().open("a", encoding="utf-8") as f:
+                f.write("\n".join(lines) + "\n")
+        return matched
+
+    def notify_cycle_summary(self, results: list[ScrapeResult]) -> None:
+        """In tóm tắt kết quả chu kỳ thu thập ra màn hình điều khiển và nhật ký logger.
+
+        Args:
+            results: Danh sách kết quả thu thập ScrapeResult của các nguồn tin.
+        """
+        parts = []
+        for r in results:
+            if r.fetched == 0 and r.errors:
+                err = r.errors[0]
+                if len(err) > 80:
+                    err = err[:80] + "…"
+                parts.append(f"{r.scraper}: FAILED ({err})")
+            else:
+                parts.append(f"{r.scraper}: {len(r.new)} new")
+        line = f"{datetime.now(VN_TZ):%H:%M:%S} [cycle] " + " | ".join(parts)
+        print(line)
+        logger.info("Cycle summary: {}", " | ".join(parts))

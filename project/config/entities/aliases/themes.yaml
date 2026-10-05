@@ -1,0 +1,88 @@
+# themes.yaml — alias các chủ đề vĩ mô và kinh tế quan trọng.
+# Nạp bởi scripts/build_entities.py → gộp vào entities.json.
+
+LAI_SUAT:
+  canonical_name: "Lãi suất"
+  aliases:
+    - "lãi suất"
+    - "lãi suất điều hành"
+    - "lãi suất tái cấp vốn"
+    - "lãi suất huy động"
+    - "lãi suất cho vay"
+    - "trần lãi suất"
+    - "lãi suất liên ngân hàng"
+
+TY_GIA:
+  canonical_name: "Tỷ giá & Ngoại tệ"
+  aliases:
+    - "tỷ giá"
+    - "tỷ giá USD/VND"
+    - "DXY"
+    - "đồng USD"
+    - "ngoại tệ"
+    - "dự trữ ngoại hối"
+    - "phá giá tiền tệ"
+
+LAM_PHAT:
+  canonical_name: "Lạm phát & CPI"
+  aliases:
+    - "lạm phát"
+    - "CPI"
+    - "chỉ số giá tiêu dùng"
+    - "lạm phát cơ bản"
+
+THUE_THUONG_MAI:
+  canonical_name: "Thuế quan & Thương mại"
+  aliases:
+    - "thuế chống bán phá giá"
+    - "thuế chống trợ cấp"
+    - "thuế quan"
+    - "chiến tranh thương mại"
+    - "thuế tối thiểu toàn cầu"
+    - "hàng rào thuế quan"
+
+GDP_TANG_TRUONG:
+  canonical_name: "Tăng trưởng GDP"
+  aliases:
+    - "tăng trưởng GDP"
+    - "GDP"
+    - "tăng trưởng kinh tế"
+    - "tổng sản phẩm quốc nội"
+    - "suy thoái kinh tế"
+
+DAU_TU_CONG:
+  canonical_name: "Đầu tư công & Hạ tầng"
+  aliases:
+    - "đầu tư công"
+    - "giải ngân vốn đầu tư công"
+    - "dự án trọng điểm quốc gia"
+    - "cao tốc Bắc Nam"
+    - "sân bay Long Thành"
+
+FDI:
+  canonical_name: "Vốn FDI & Đầu tư nước ngoài"
+  aliases:
+    - "FDI"
+    - "vốn đầu tư nước ngoài"
+    - "vốn ngoại"
+    - "doanh nghiệp FDI"
+    - "thu hút FDI"
+
+TIN_DUNG:
+  canonical_name: "Tín dụng & Tăng trưởng tín dụng"
+  aliases:
+    - "tín dụng"
+    - "tăng trưởng tín dụng"
+    - "room tín dụng"
+    - "dư nợ tín dụng"
+    - "nợ xấu"
+
+NANG_HANG_TTCK:
+  canonical_name: "Nâng hạng thị trường chứng khoán"
+  aliases:
+    - "nâng hạng thị trường"
+    - "nâng hạng TTCK"
+    - "FTSE Russell"
+    - "MSCI"
+    - "thị trường mới nổi"
+    - "Emerging Markets"

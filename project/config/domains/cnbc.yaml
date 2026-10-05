@@ -1,0 +1,17 @@
+name: cnbc
+enabled: false   # disabled 2026-08-03: focus on cafef + vietstock only
+method: rss
+language: en
+rate_limit: 3.0
+timeout: 30
+rss:
+  feeds:
+    - {url: "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=20910258", name: "CNBC World Economy"}
+    - {url: "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=100003114", name: "CNBC Top News"}
+filter:
+  any: ["stock", "market", "fed", "inflation", "rate", "earnings", "economy",
+        "oil", "gold", "treasury", "bond", "china", "asia", "tariff", "gdp",
+        "central bank", "currency", "vietnam"]
+  drop_unmatched: true
+detail: {extract_full: false, max_details_per_cycle: 0}
+pitfalls: "Cần browser UA (HTTPClient sẵn có). Top News noise cao → filter. 30+30 items. Verified 2026-07-25."

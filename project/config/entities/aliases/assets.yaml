@@ -1,0 +1,86 @@
+# assets.yaml — alias các loại tài sản và công cụ tài chính.
+# Nạp bởi scripts/build_entities.py → gộp vào entities.json.
+
+TRAI_PHIEU:
+  canonical_name: "Trái phiếu"
+  aliases:
+    - "trái phiếu"
+    - "TPDN"
+    - "TPCP"
+    - "trái phiếu doanh nghiệp"
+    - "trái phiếu chính phủ"
+    - "trái chủ"
+    - "lợi suất trái phiếu"
+    - "coupon"
+    - "đáo hạn trái phiếu"
+    - "mua lại trước hạn"
+
+CO_PHIEU:
+  canonical_name: "Cổ phiếu"
+  aliases:
+    - "cổ phiếu"
+    - "thị trường chứng khoán"
+    - "TTCK"
+    - "khớp lệnh"
+    - "khối ngoại"
+    - "tự doanh"
+    - "thanh khoản thị trường"
+    - "thị trường cơ sở"
+
+VANG:
+  canonical_name: "Vàng & Kim loại quý"
+  aliases:
+    - "vàng"
+    - "vàng SJC"
+    - "vàng nhẫn"
+    - "giá vàng"
+    - "vàng miếng"
+    - "vàng 9999"
+
+DAU_THO:
+  canonical_name: "Dầu thô & Năng lượng"
+  aliases:
+    - "dầu thô"
+    - "dầu Brent"
+    - "dầu WTI"
+    - "giá dầu"
+    - "OPEC"
+    - "xăng dầu"
+
+BAT_DONG_SAN_TAI_SAN:
+  canonical_name: "Bất động sản tài sản"
+  aliases:
+    - "bất động sản"
+    - "nhà đất"
+    - "địa ốc"
+    - "căn hộ"
+    - "đất nền"
+    - "giá nhà"
+
+TIEN_MA_HOA:
+  canonical_name: "Tiền mã hóa & Tài sản số"
+  aliases:
+    - "tiền mã hóa"
+    - "tiền số"
+    - "crypto"
+    - "cryptocurrency"
+    - "Bitcoin"
+    # "BTC" cố ý trỏ ĐỒNG THỜI tới ASSET_CLASS:TIEN_MA_HOA và INSTITUTION:BO_TAI_CHINH.
+    # Hai thực thể cùng mức quan trọng, một tiêu đề nhắc "BTC" thực sự có thể thuộc về một
+    # trong hai; gắn cả hai giữ được recall cho người theo dõi bất kỳ bên nào, còn việc phân
+    # định nghĩa là suy luận ngữ cảnh — thuộc Subagent L1, không phải tầng tất định.
+    - "BTC"
+    - "Ethereum"
+    - "tài sản số"
+
+HANG_HOA_NONG_SAN:
+  canonical_name: "Hàng hóa & Nông sản"
+  aliases:
+    - "hàng hóa nguyên liệu"
+    - "nông sản"
+    - "giá gạo"
+    - "xuất khẩu gạo"
+    - "cà phê"
+    - "giá cà phê"
+    - "cao su"
+    - "giá cao su"

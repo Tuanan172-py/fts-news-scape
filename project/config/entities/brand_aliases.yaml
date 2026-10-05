@@ -1,0 +1,58 @@
+# brand_aliases.yaml — alias thương hiệu/thông dụng cho mã (bổ sung tay).
+#
+# Vì tên pháp lý (company_name.xlsx) thường KHÁC tên báo chí hay dùng
+# (vd "Ngân hàng TMCP Ngoại thương Việt Nam" vs "Vietcombank"), map này bổ sung
+# các surface form phổ biến để bước code-first bắt được nhiều hơn, giảm tải agent.
+#
+# Định dạng:  <TICKER>: [alias1, alias2, ...]   (alias ≥4 ký tự mới được index)
+# Nạp bởi scripts/build_entities.py → gộp vào entities.json.
+
+VCB: [Vietcombank]
+BID: [BIDV]
+CTG: [VietinBank, Vietinbank]
+VPB: [VPBank]
+TCB: [Techcombank]
+MBB: [MBBank, "MB Bank"]
+STB: [Sacombank]
+HDB: [HDBank]
+TPB: [TPBank]
+EIB: [Eximbank]
+SHB: ["Ngân hàng Sài Gòn - Hà Nội"]
+LPB: [LPBank, "Ngân hàng Lộc Phát"]
+ACB: ["Ngân hàng Á Châu"]
+VIB: ["Ngân hàng Quốc tế"]
+OCB: ["Ngân hàng Phương Đông"]
+MSB: ["Ngân hàng Hàng Hải"]
+SSB: [SeABank]
+NAB: [Nam A Bank, NamABank]
+
+VIC: [Vingroup]
+VHM: [Vinhomes]
+VRE: [Vincom Retail, Vincom]
+VNM: [Vinamilk]
+MSN: [Masan, "Masan Group"]
+MWG: ["Thế Giới Di Động", Thegioididong]
+FRT: [FPT Retail]
+GAS: [PV GAS, "PV Gas", PVGas]
+PLX: [Petrolimex]
+POW: [PV Power, PVPower]
+GVR: ["Tập đoàn Công nghiệp Cao su Việt Nam", "Cao su Việt Nam"]
+SAB: [Sabeco]
+BHN: [Habeco]
+VJC: [Vietjet, Vietjet Air]
+HVN: [Vietnam Airlines, "Hãng hàng không Quốc gia"]
+HPG: [Hoa Phat]
+HSG: [Hoa Sen, "Tôn Hoa Sen", "Tập đoàn Hoa Sen"]
+NKG: [Nam Kim, "Thép Nam Kim"]
+DGC: ["Đức Giang"]
+DPM: ["Đạm Phú Mỹ", "Phân bón Phú Mỹ"]
+DCM: ["Đạm Cà Mau", "Phân bón Cà Mau"]
+DHG: [Dược Hậu Giang]
+SSI: ["Chứng khoán SSI"]
+VND: [VNDirect]
+VCI: [Vietcap, VietCap, "Chứng khoán Vietcap"]
+HCM: ["Chứng khoán HSC"]
+VIX: ["Chứng khoán VIX"]
+BSR: ["Lọc hóa dầu Bình Sơn", "Lọc dầu Bình Sơn"]
+PNJ: ["Vàng bạc Đá quý Phú Nhuận"]
+REE: ["Cơ Điện Lạnh"]
