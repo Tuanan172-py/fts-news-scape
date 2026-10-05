@@ -29,6 +29,14 @@ from src.agent.intent_resolve import (                 # noqa: E402
     ResolveReport,
     reconcile,
 )
+from src.agent.article_contract import (               # noqa: E402,F401
+    MIN_CITATION_CHARS,
+    SENTIMENT_MAP,
+    TIME_MAP,
+    parse_and_validate,
+    salvage_records,
+    unwrap_tool_envelope,
+)
 from src.agent.l1_router import TYPE_GROUP             # noqa: E402
 from src.core.stdio import force_utf8_stdio            # noqa: E402
 
@@ -45,13 +53,7 @@ MENTIONS_DIR = DATA_ROOT / "article_mentions"
 CATEGORY_KEYS = ("ticker_company", "etf_fund", "index", "exchange",
                  "industry_sector", "macro_geo", "asset_class", "institution")
 
-SENTIMENT_MAP = {"pos": "positive", "neg": "negative", "neu": "neutral"}
-TIME_MAP = {"urg": "urgent", "today": "today", "week": "this_week",
-            "month": "this_month", "arch": "archive"}
-
-MIN_CITATION_CHARS = 20
-AGENT_PROVIDER = "dsh"
-MODEL_USED = "deepseek-flash"
+UNKNOWN_PROVENANCE = "unknown"
 
 
 def now_vn_iso() -> str:
@@ -63,123 +65,10 @@ def now_vn_iso() -> str:
     return datetime.now(timezone(timedelta(hours=7))).isoformat(timespec="seconds")
 
 
-def unwrap_tool_envelope(text: str) -> str:
-    """Bóc lớp vỏ kết quả công cụ của DSH để lấy đúng phần văn bản mô hình trả về.
-
-    Công cụ gọi agent của DSH trả về `{"kind":..., "runId":..., "output":[{"type":
-    "text","text":"..."}]}`. Nếu phía điều phối ghi thẳng đối tượng ấy ra đĩa thì
-    tệp đầu ra mang lớp vỏ này, và bộ bóc bản ghi sẽ đọc nhầm lớp vỏ thành đúng một
-    bản ghi rác có hai trường `type` và `text`. Đây là sự cố thật: các tệp `_cNN`
-    của đợt W1 và W2 đều ở dạng ấy.
-
-    Args:
-        text: Nội dung thô của tệp đầu ra.
-
-    Returns:
-        Phần văn bản mô hình trả về, hoặc nguyên chuỗi vào khi không có lớp vỏ.
-    """
-    stripped = (text or "").strip()
-    if not stripped.startswith("{"):
-        return text
-    try:
-        env = json.loads(stripped)
-    except json.JSONDecodeError:
-        return text
-    if not isinstance(env, dict):
-        return text
-    out = env.get("output")
-    if isinstance(out, list):
-        parts = [str(o.get("text", "")) for o in out
-                 if isinstance(o, dict) and o.get("type") == "text"]
-        if parts:
-            return "".join(parts)
-    for key in ("text", "content"):
-        if isinstance(env.get(key), str):
-            return env[key]
-    return text
-
-
-def salvage_records(text: str) -> tuple[list[dict], int]:
-    """Bóc các bản ghi hợp lệ khỏi đầu ra của mô hình, chịu được đầu ra hỏng.
-
-    Đầu ra có thể cụt vì chạm trần token, có thể kèm lời dẫn hoặc rào mã. Vì một lô
-    mang cả trăm bài, mất cả lô chỉ vì một ký tự sai là không chấp nhận được, nên
-    hàm này cứu từng phần tử thay vì phân tích cú pháp một lần rồi bỏ cuộc.
-
-    Args:
-        text: Nội dung thô do mô hình trả về.
-
-    Returns:
-        Cặp gồm danh sách bản ghi lấy được và số phần tử hỏng không cứu được.
-    """
-    if not text:
-        return [], 0
-
-    cleaned = unwrap_tool_envelope(text).strip()
-    if cleaned.startswith("```"):
-        lines = [ln for ln in cleaned.splitlines() if not ln.strip().startswith("```")]
-        cleaned = "\n".join(lines).strip()
-
-    start = cleaned.find("[")
-    if start > 0:
-        cleaned = cleaned[start:]
-
-    try:
-        parsed = json.loads(cleaned)
-        if isinstance(parsed, list):
-            return [r for r in parsed if isinstance(r, dict)], 0
-        if isinstance(parsed, dict):
-            return [parsed], 0
-    except json.JSONDecodeError:
-        pass
-
-    # Quét thủ công theo cặp ngoặc cân bằng, bỏ qua ngoặc nằm trong chuỗi.
-    records: list[dict] = []
-    broken = 0
-    depth = 0
-    buf: list[str] = []
-    in_str = False
-    escape = False
-    for ch in cleaned:
-        if depth:
-            buf.append(ch)
-        if escape:
-            escape = False
-            continue
-        if ch == "\\":
-            escape = True
-            continue
-        if ch == '"':
-            in_str = not in_str
-            continue
-        if in_str:
-            continue
-        if ch == "{":
-            if depth == 0:
-                buf = ["{"]
-            depth += 1
-        elif ch == "}":
-            depth -= 1
-            if depth == 0:
-                chunk = "".join(buf)
-                try:
-                    obj = json.loads(chunk)
-                    if isinstance(obj, dict):
-                        records.append(obj)
-                    else:
-                        broken += 1
-                except json.JSONDecodeError:
-                    broken += 1
-                buf = []
-    if depth > 0:
-        broken += 1
-    return records, broken
-
-
 def build_l1_output(article_id: str, title: str, resolved: list,
                     labels: dict[str, str], *,
-                    agent_provider: str = AGENT_PROVIDER,
-                    model_used: str = MODEL_USED) -> dict:
+                    agent_provider: str = UNKNOWN_PROVENANCE,
+                    model_used: str = UNKNOWN_PROVENANCE) -> dict:
     """Dựng bản ghi nhận diện thực thể theo lược đồ `l1-entity-output-v1`.
 
     Lược đồ này yêu cầu mọi chuỗi nguyên văn phải nằm trong tiêu đề, nên chỉ những
@@ -245,11 +134,25 @@ def build_l1_output(article_id: str, title: str, resolved: list,
     }
 
 
+def _is_index(value) -> bool:
+    """Kiểm giá trị là chỉ số nguyên thật, loại trừ kiểu logic.
+
+    Args:
+        value: Giá trị cần kiểm.
+
+    Returns:
+        True khi là `int` và không phải `bool`.
+    """
+    return isinstance(value, int) and not isinstance(value, bool)
+
+
 def build_gold_output(article_id: str, record: dict, paragraphs: list[str]) -> tuple[dict | None, str]:
     """Dựng bản ghi phân tích nội dung theo lược đồ `agent-output-v2-lean`.
 
     Trích dẫn được lấy **nguyên văn theo chỉ số đoạn** mà mô hình chỉ ra, nên chúng
-    luôn là chuỗi con đúng của nội dung gốc mà không cần ai đi kiểm lại.
+    luôn là chuỗi con đúng của nội dung gốc mà không cần ai đi kiểm lại. Bài chỉ có
+    một đoạn văn đạt độ dài trích dẫn thì một trích dẫn là đủ và bản ghi mang dấu
+    `citation_basis` để cổng DoD nới ngưỡng tương ứng.
 
     Args:
         article_id: Định danh bài viết.
@@ -269,43 +172,39 @@ def build_gold_output(article_id: str, record: dict, paragraphs: list[str]) -> t
         return None, "hàm ý ngắn hơn 40 ký tự"
     if not key_points:
         return None, "thiếu luận điểm"
+    if record.get("sn") not in SENTIMENT_MAP:
+        return None, "sn ngoài enum"
+    if record.get("ts") not in TIME_MAP:
+        return None, "ts ngoài enum"
 
-    idxs = record.get("c") or []
+    eligible = [p for p in paragraphs if len(p) >= MIN_CITATION_CHARS]
+    need = 1 if len(eligible) < 2 else 2
     citations: list[str] = []
-    for raw in idxs:
-        try:
-            i = int(raw)
-        except (TypeError, ValueError):
-            continue
-        if 0 <= i < len(paragraphs):
-            para = paragraphs[i]
-            if len(para) >= MIN_CITATION_CHARS:
+    for raw in record.get("c") or []:
+        if _is_index(raw) and 0 <= raw < len(paragraphs):
+            para = paragraphs[raw]
+            if len(para) >= MIN_CITATION_CHARS and para not in citations:
                 citations.append(para)
-
-    # Chưa đủ hai trích dẫn thì bù bằng các đoạn dài nhất còn lại, theo thứ tự gốc.
-    if len(citations) < 2:
-        for para in paragraphs:
-            if len(citations) >= 2:
-                break
-            if para not in citations and len(para) >= MIN_CITATION_CHARS:
-                citations.append(para)
-    if len(citations) < 2:
-        return None, "không đủ hai đoạn đạt độ dài trích dẫn"
+    if len(citations) < need:
+        return None, "không đủ hai đoạn trích dẫn hợp lệ" if need == 2 else "không đủ trích dẫn hợp lệ"
 
     # Luận điểm không được chép nguyên văn trích dẫn, đây là cổng chống sao chép.
     key_points = [k for k in key_points if k not in citations]
     if not key_points:
         return None, "luận điểm trùng nguyên văn trích dẫn"
 
-    return {
+    row = {
         "article_id": article_id,
         "summary": summary,
         "key_points": key_points,
         "implication": implication,
-        "sentiment": SENTIMENT_MAP.get(str(record.get("sn") or "").lower(), "neutral"),
-        "time_sensitivity": TIME_MAP.get(str(record.get("ts") or "").lower(), "this_week"),
+        "sentiment": SENTIMENT_MAP[record["sn"]],
+        "time_sensitivity": TIME_MAP[record["ts"]],
         "citations": citations,
-    }, ""
+    }
+    if need == 1:
+        row["citation_basis"] = "single-paragraph"
+    return row, ""
 
 
 def build_mentions(article_id: str, title: str, resolved: list,
@@ -369,7 +268,8 @@ def load_repair_ids(task_dir: Path, batch_id: str) -> set[str]:
 
 def process_batch(batch_id: str, out_text: str, packet: dict, mapping: dict,
                   resolver: IntentResolver, reg, report: ResolveReport,
-                  repaired_ids: set[str] | None = None) -> dict:
+                  repaired_ids: set[str] | None = None,
+                  default_provenance: tuple[str, str] | None = None) -> dict:
     """Xử lý một lô đầu ra của mô hình thành các tệp kết quả.
 
     Args:
@@ -382,12 +282,15 @@ def process_batch(batch_id: str, out_text: str, packet: dict, mapping: dict,
         report: Bộ đếm thống kê tra cứu.
         repaired_ids: Định danh bài đã được lô vá của cùng đợt cung cấp. Bài nằm
             trong tập này không tính là thiếu, vì bản ghi của nó đã có trên đĩa.
+        default_provenance: Cặp (provider, model) dùng khi lô không có tệp meta.
+            Không truyền thì lô thiếu meta bị từ chối.
 
     Returns:
         Từ điển thống kê kết quả xử lý lô.
     """
-    records, broken = salvage_records(out_text)
-    by_index = {str(r.get("i")): r for r in records if r.get("i") is not None}
+    parsed = parse_and_validate(out_text, packet)
+    broken = parsed.counters.get("broken", 0)
+    by_index = {str(i): r for i, r in parsed.records.items()}
     index_map = mapping.get("index") or {}
     articles = {str(a.get("i")): a for a in (packet.get("a") or [])}
 
@@ -403,15 +306,23 @@ def process_batch(batch_id: str, out_text: str, packet: dict, mapping: dict,
     gold_skipped: list[tuple[str, str]] = []
 
     meta_path = IN_DIR / f"{batch_id}.meta.json"
-    batch_provider = AGENT_PROVIDER
-    batch_model = MODEL_USED
+    batch_provider = batch_model = ""
     if meta_path.exists():
         try:
             meta_data = json.loads(meta_path.read_text(encoding="utf-8"))
-            batch_provider = meta_data.get("agent_provider") or AGENT_PROVIDER
-            batch_model = meta_data.get("model_used") or MODEL_USED
-        except Exception:
+            batch_provider = meta_data.get("agent_provider") or ""
+            batch_model = meta_data.get("model_used") or ""
+        except (OSError, ValueError):
             pass
+    if not (batch_provider and batch_model) and default_provenance:
+        batch_provider, batch_model = default_provenance
+    if not (batch_provider and batch_model):
+        return {"batch_id": batch_id,
+                "error": "thiếu meta provenance (agent_provider, model_used)",
+                "expected": len(index_map), "owned": len(index_map), "repaired": 0,
+                "records": 0, "invalid": {}, "counters": {}, "broken": 0,
+                "missing": list(index_map), "l1": 0, "gold": 0, "mentions": 0,
+                "gold_skipped": [], "parse_fail_rate": 1.0}
 
     for idx, article_id in index_map.items():
         rec = by_index.get(idx)
@@ -461,17 +372,102 @@ def process_batch(batch_id: str, out_text: str, packet: dict, mapping: dict,
         "expected": total,
         "owned": owned,
         "repaired": total - owned,
-        "records": len(records),
+        "records": len(parsed.records),
+        "invalid": {str(i): codes for i, codes in parsed.errors.items()},
+        "counters": parsed.counters,
         "broken": broken,
         "missing": missing,
         "l1": len(l1_rows),
         "gold": len(gold_rows),
         "mentions": len(mention_rows),
         "gold_skipped": gold_skipped,
+        # Hai tập dưới phục vụ cổng toàn đợt ở main: một bài có bản ghi ở bất kỳ
+        # lô nào (kể cả lô vá anh em, không chỉ con trực tiếp) là đã nhận.
+        "received_ids": sorted({index_map[idx] for idx in by_index if idx in index_map}),
+        "all_ids": sorted(set(index_map.values())),
         # Mẫu số là phần lô này thật sự phải sinh, không phải toàn bộ packet.
         # Lô vá đã trả giá cho phần nó gánh, nên tính phần ấy vào đây là tính hai lần.
         "parse_fail_rate": (len(missing) + broken) / owned if owned else 0.0,
     }
+
+
+def drop_superseded_expanded(results: list[dict], outputs: list[str]) -> int:
+    """Bỏ hàng bung cũ khi bài đã có bản ghi mới hơn ở lô vá khác.
+
+    Vòng làm mới đẻ ra bản ghi thứ hai cho cùng bài (cũ từ packet trích ngắn,
+    mới từ Silver đầy đủ). Tệp bung ra đĩa theo từng lô nên bản cũ vẫn nằm đó
+    và cổng nạp sẽ loại nó vì trích dẫn không đối chiếu được vào thân mới —
+    chặn oan cả đợt dù bản mới đã đạt. Giữ đúng một hàng mỗi bài: hàng của lô
+    có đầu ra thô mới nhất. Đầu ra thô của mô hình không đụng tới nên vết kiểm
+    toán còn nguyên. Không trùng thì không đụng tới tệp nào.
+
+    Args:
+        results: Thống kê từng lô của vòng bung hiện tại.
+        outputs: Đường dẫn các tệp đầu ra thô vừa xử lý.
+
+    Returns:
+        Số hàng đã bỏ khỏi các tệp bung.
+    """
+    order: dict[str, tuple[float, str]] = {}
+    for out_path in outputs:
+        batch_id = Path(out_path).name.replace(".output.json", "")
+        try:
+            order[batch_id] = (Path(out_path).stat().st_mtime, batch_id)
+        except OSError:
+            continue
+    by_batch: dict[str, list[tuple[str, dict]]] = {}
+    for kind, filename, out_dir in (
+            ("l1", ".output.json", L1_OUT_DIR),
+            ("gold", ".output.json", GOLD_OUT_DIR),
+            ("mentions", ".mentions.json", MENTIONS_DIR)):
+        for r in results:
+            path = out_dir / f"{r['batch_id']}{filename}"
+            if not path.exists():
+                continue
+            try:
+                rows = json.loads(path.read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                continue
+            if not isinstance(rows, list):
+                continue
+            for row in rows:
+                if isinstance(row, dict) and row.get("article_id"):
+                    by_batch.setdefault(r["batch_id"], []).append((kind, row))
+    if not any(len(items) > 0 for items in by_batch.values()):
+        return 0
+    seen: dict[str, tuple[float, str]] = {}
+    for batch_id, items in by_batch.items():
+        for _kind, row in items:
+            aid = row["article_id"]
+            stamp = order.get(batch_id, (0.0, batch_id))
+            if aid not in seen or stamp > seen[aid]:
+                seen[aid] = stamp
+    dropped = 0
+    for r in results:
+        for kind, filename, out_dir in (
+                ("l1", ".output.json", L1_OUT_DIR),
+                ("gold", ".output.json", GOLD_OUT_DIR),
+                ("mentions", ".mentions.json", MENTIONS_DIR)):
+            path = out_dir / f"{r['batch_id']}{filename}"
+            if not path.exists():
+                continue
+            try:
+                rows = json.loads(path.read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                continue
+            if not isinstance(rows, list):
+                continue
+            stamp = order.get(r["batch_id"], (0.0, r["batch_id"]))
+            kept = [row for row in rows
+                    if not (isinstance(row, dict) and row.get("article_id"))
+                    or seen.get(row["article_id"]) == stamp]
+            if len(kept) != len(rows):
+                dropped += len(rows) - len(kept)
+                path.write_text(json.dumps(kept, ensure_ascii=False, indent=1),
+                                encoding="utf-8")
+                if kind in r:
+                    r[kind] = len(kept)
+    return dropped
 
 
 def main(argv=None) -> int:
@@ -481,7 +477,8 @@ def main(argv=None) -> int:
         argv: Danh sách tham số dòng lệnh. Mặc định lấy từ `sys.argv`.
 
     Returns:
-        Mã thoát 0 khi mọi lô đạt, 1 khi có lô vượt ngưỡng hỏng, 2 khi không có việc.
+        Mã thoát 0 khi đạt (chế độ đợt: tỷ lệ hỏng toàn đợt dưới ngưỡng),
+        1 khi vượt ngưỡng hỏng, 2 khi không có việc.
     """
     ap = argparse.ArgumentParser(description="Bung bản ghi gọn thành hai lược đồ đầy đủ")
     ap.add_argument("source", nargs="?", default=str(IN_DIR),
@@ -489,6 +486,8 @@ def main(argv=None) -> int:
     ap.add_argument("--task-dir", default=str(TASK_DIR), help="Thư mục chứa packet")
     ap.add_argument("--batch", help="Chỉ xử lý một lô cụ thể")
     ap.add_argument("--wave", help="Chỉ xử lý các lô của một đợt, gồm cả lô vá")
+    ap.add_argument("--default-provider", help="Provider cho lô không có tệp meta, ví dụ dsh")
+    ap.add_argument("--default-model", help="Mô hình cho lô không có tệp meta")
     ap.add_argument("--fail-threshold", type=float, default=0.10,
                     help="Tỷ lệ hỏng khiến lệnh trả mã lỗi")
     ap.add_argument("--json", action="store_true", help="Xuất thống kê dạng JSON")
@@ -522,18 +521,43 @@ def main(argv=None) -> int:
         mapping = json.loads(map_path.read_text(encoding="utf-8"))
         text = Path(out_path).read_text(encoding="utf-8")
         repaired_ids = load_repair_ids(task_dir, batch_id)
+        default_prov = ((args.default_provider, args.default_model or args.default_provider)
+                        if args.default_provider else None)
         results.append(process_batch(batch_id, text, packet, mapping, resolver, reg,
-                                     report, repaired_ids))
+                                     report, repaired_ids, default_prov))
 
     if not results:
         print("Không lô nào xử lý được.")
         return 2
 
+    dropped = drop_superseded_expanded(results, outputs)
+    if dropped:
+        print(f"Đã bỏ {dropped} hàng bung cũ bị bản ghi mới hơn thay thế.")
+
+    # Cổng toàn đợt: một bài có bản ghi ở bất kỳ lô nào là đã nhận. Đếm thiếu
+    # theo lô cao nhất rồi chặn cả đợt là sai khi các lô vá chồng lấp thế hệ
+    # (E1): bài thiếu ở lô cha nhưng đã có ở lô vá anh em vẫn bị tính hỏng.
+    # Bảng theo lô giữ lại để soi, không dùng để chặn ở chế độ đợt.
+    wave_ids: set[str] = set()
+    wave_got: set[str] = set()
+    for r in results:
+        wave_ids.update(r.get("all_ids") or [])
+        wave_got.update(r.get("received_ids") or [])
+    wave_missing = sorted(wave_ids - wave_got)
+    wave_rate = len(wave_missing) / len(wave_ids) if wave_ids else 0.0
+
     if args.json:
         print(json.dumps({"batches": results,
-                          "resolve": report.summary()}, ensure_ascii=False))
+                          "resolve": report.summary(),
+                          "wave_fail_rate": wave_rate,
+                          "wave_missing": wave_missing}, ensure_ascii=False))
         return 0
 
+    no_meta = [r["batch_id"] for r in results if r.get("error")]
+    if no_meta:
+        print(f"Lô thiếu meta provenance, không bung: {', '.join(no_meta)}")
+        print("Ghi tệp meta cho lô, hoặc truyền --default-provider và --default-model.")
+        return 1
     worst = max(r["parse_fail_rate"] for r in results)
     print("=" * 84)
     print(" 🧩  BUNG BẢN GHI GỌN THÀNH LƯỢC ĐỒ ĐẦY ĐỦ")
@@ -557,11 +581,23 @@ def main(argv=None) -> int:
         for batch_id, (idx, reason) in skipped[:8]:
             print(f"  {batch_id} #{idx}: {reason}")
 
+    invalid = [(r["batch_id"], i, c) for r in results for i, c in r["invalid"].items()]
+    if invalid:
+        print(f"\nBản ghi bị từ chối theo hợp đồng, chuyển sang vòng vá: {len(invalid)}")
+        for batch_id, idx, codes in invalid[:8]:
+            print(f"  {batch_id} #{idx}: {','.join(codes)}")
+
     print(f"\nTỷ lệ hỏng cao nhất trong đợt: {worst:.1%} "
           f"(ngưỡng dừng {args.fail_threshold:.0%})")
+    gate = worst
+    if args.wave:
+        print(f"Tỷ lệ hỏng toàn đợt: {wave_rate:.1%} "
+              f"({len(wave_missing)}/{len(wave_ids)} bài chưa có bản ghi "
+              f"ở bất kỳ lô nào)")
+        gate = wave_rate
     print("=" * 84)
     print("Bước tiếp: `l1_ingest.py data/agent_outputs_l1` rồi `agent_ingest.py data/agent_outputs`")
-    return 1 if worst > args.fail_threshold else 0
+    return 1 if gate > args.fail_threshold else 0
 
 
 if __name__ == "__main__":

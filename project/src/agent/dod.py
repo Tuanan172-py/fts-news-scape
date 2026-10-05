@@ -126,11 +126,15 @@ def check_dod(agent_output: dict, work_package: dict,
     if not ok:
         reasons.append(f"schema_invalid: {errs[:2]}")
 
-    # 2) grounded — ≥ min_citations, mỗi source_span ⊂ cleaned_text
+    # 2) grounded — đủ trích dẫn theo ngưỡng, mỗi source_span ⊂ cleaned_text.
+    # Bài một đoạn văn do bộ bung đánh dấu `citation_basis` thì một trích dẫn là
+    # đủ (ADR 0018); còn lại giữ ngưỡng `min_citations`.
     cites = agent_output.get("citations") or []
     cleaned = work_package.get("cleaned_text", "") or ""
-    if len(cites) < t["min_citations"]:
-        reasons.append(f"citations {len(cites)} < {t['min_citations']}")
+    need_cites = (1 if agent_output.get("citation_basis") == "single-paragraph"
+                  else t["min_citations"])
+    if len(cites) < need_cites:
+        reasons.append(f"citations {len(cites)} < {need_cites}")
     for i, c in enumerate(cites):
         if isinstance(c, str):
             span = c

@@ -11,8 +11,6 @@ from src.agent.agy_runner import (
     AgyRunner,
     build_sandbox_profile,
     has_vietnamese_diacritics,
-    salvage_json_records,
-    validate_records,
 )
 
 
@@ -61,96 +59,6 @@ def test_build_sandbox_profile(tmp_path):
     assert hooks["hooks"][0]["decision"] == "deny"
 
 
-def test_salvage_json_records():
-    """Kiểm tra bóc tách và khôi phục mảng bản ghi JSON từ chuỗi mô hình."""
-    # 1. Mảng JSON chuẩn
-    raw_1 = '[{"i": 0, "s": "Tóm tắt bài 0"}]'
-    assert salvage_json_records(raw_1) == [{"i": 0, "s": "Tóm tắt bài 0"}]
-
-    # 2. Bọc trong khối markdown ```json ... ```
-    raw_2 = '```json\n[{"i": 1, "s": "Tóm tắt bài 1"}]\n```'
-    assert salvage_json_records(raw_2) == [{"i": 1, "s": "Tóm tắt bài 1"}]
-
-    # 3. Đối tượng có trường 'r'
-    raw_3 = '{"r": [{"i": 2, "s": "Tóm tắt bài 2"}]}'
-    assert salvage_json_records(raw_3) == [{"i": 2, "s": "Tóm tắt bài 2"}]
-
-    # 4. Kèm lời dẫn bên ngoài mảng
-    raw_4 = 'Dưới đây là kết quả:\n[{"i": 3, "s": "Tóm tắt bài 3"}]\nHy vọng giúp ích!'
-    assert salvage_json_records(raw_4) == [{"i": 3, "s": "Tóm tắt bài 3"}]
-
-    # 5. Lỗi không bóc được
-    with pytest.raises(ValueError):
-        salvage_json_records("Không có json nào ở đây.")
-
-
-def test_validate_records():
-    """Kiểm tra logic thẩm định miền nghiệp vụ."""
-    packet_items = [
-        {
-            "i": 0,
-            "t": "Ngân hàng Nhà nước hạ lãi suất",
-            "p": ["Đoạn mở đầu có dấu.", "Đoạn 1 số liệu định lượng.", "Đoạn 2 kết luận."],
-        }
-    ]
-
-    # Ca đạt chuẩn
-    valid_recs = [
-        {
-            "i": 0,
-            "e": [["Ngân hàng Nhà nước", "INS"]],
-            "c": [0, 1],
-            "s": "Tóm tắt tiếng Việt có dấu đầy đủ.",
-            "im": "Hàm ý dòng tiền tích cực cho thị trường.",
-        }
-    ]
-    recs, errs = validate_records(valid_recs, packet_items)
-    assert len(recs) == 1
-    assert len(errs) == 0
-
-    # Ca lỗi mã nhóm thực thể không thuộc 11 nhóm
-    bad_group = [
-        {
-            "i": 0,
-            "e": [["Ngân hàng Nhà nước", "UNKNOWN_GROUP"]],
-            "c": [0],
-            "s": "Có dấu",
-            "im": "Có dấu",
-        }
-    ]
-    recs, errs = validate_records(bad_group, packet_items)
-    assert len(recs) == 0
-    assert any("không thuộc 11 nhóm chuẩn" in e for e in errs)
-
-    # Ca lỗi chỉ số trích dẫn vượt dải
-    bad_citation = [
-        {
-            "i": 0,
-            "e": [["Ngân hàng Nhà nước", "INS"]],
-            "c": [5],  # Chỉ có 3 đoạn 0..2
-            "s": "Có dấu",
-            "im": "Có dấu",
-        }
-    ]
-    recs, errs = validate_records(bad_citation, packet_items)
-    assert len(recs) == 0
-    assert any("vượt dải đoạn" in e for e in errs)
-
-    # Ca lỗi mất dấu tiếng Việt
-    bad_diacritics = [
-        {
-            "i": 0,
-            "e": [["Ngân hàng Nhà nước", "INS"]],
-            "c": [0],
-            "s": "Tom tat khong co dau",
-            "im": "Ham y khong co dau",
-        }
-    ]
-    recs, errs = validate_records(bad_diacritics, packet_items)
-    assert len(recs) == 0
-    assert any("mất hoàn toàn dấu" in e for e in errs)
-
-
 def test_agy_runner_run_batch_ok(tmp_path):
     """Kiểm tra run_batch thành công với mock subprocess."""
     task_dir = tmp_path / "tasks"
@@ -167,7 +75,7 @@ def test_agy_runner_run_batch_ok(tmp_path):
             {
                 "i": 0,
                 "t": "Thị trường chứng khoán tăng mạnh",
-                "p": ["VN-Index tăng hơn 15 điểm.", "Dòng tiền lan tỏa."],
+                "p": ["VN-Index tăng hơn 15 điểm trong phiên.", "Dòng tiền lan tỏa sang nhóm bluechip."],
             }
         ],
     }
@@ -184,9 +92,10 @@ def test_agy_runner_run_batch_ok(tmp_path):
                         {
                             "i": 0,
                             "e": [["VN-Index", "IDX"]],
-                            "c": [0, 1],
                             "s": "Chỉ số VN-Index tăng mạnh hơn 15 điểm.",
-                            "im": "Dòng tiền lan tỏa báo hiệu xu hướng tích cực.",
+                            "k": ["Chỉ số tăng điểm rõ rệt", "Dòng tiền lan rộng"],
+                            "im": "Dòng tiền lan tỏa báo hiệu xu hướng tích cực cho thị trường.",
+                            "sn": "pos", "ts": "today", "c": [0, 1],
                         }
                     ]
                 ),
@@ -213,6 +122,36 @@ def test_agy_runner_run_batch_ok(tmp_path):
     meta = json.loads((out_dir / f"{batch_id}.meta.json").read_text(encoding="utf-8"))
     assert meta["agent_provider"] == "agy"
     assert meta["items_valid"] == 1
+    assert meta["contract_version"] == "article-compact-v2"
+    assert meta["domain_errors"] == []
+
+
+def test_agy_runner_ban_ghi_sai_hop_dong_thanh_partial(tmp_path):
+    """Bản ghi sai enum bị từ chối, lô thành PARTIAL và lỗi nằm trong meta."""
+    task_dir, out_dir = tmp_path / "tasks", tmp_path / "outputs"
+    task_dir.mkdir()
+    out_dir.mkdir()
+    batch_id = "article_TEST_03"
+    task_path = task_dir / f"{batch_id}.task.json"
+    task_path.write_text(json.dumps({"a": [{
+        "i": 0, "t": "Thị trường chứng khoán tăng mạnh",
+        "p": ["VN-Index tăng hơn 15 điểm trong phiên.", "Dòng tiền lan tỏa sang nhóm bluechip."]}]}),
+        encoding="utf-8")
+    bad = [{"i": 0, "e": [], "s": "Tóm tắt có dấu.", "k": ["một", "hai"],
+            "im": "Dòng tiền lan tỏa báo hiệu xu hướng tích cực cho thị trường.",
+            "sn": "positive", "ts": "today", "c": [0, 1]}]
+    events = [{"type": "init", "data": {"model": "gemini-3.8-flash-low", "tools": []}},
+              {"type": "result", "data": {"response": json.dumps(bad), "usage": {}}}]
+    out = "\n".join(json.dumps(e) for e in events) + "\n"
+
+    def mock_sp(cmd, stdin_data, env, cwd):
+        return MockProcessResult(stdout=out, stderr="", returncode=0)
+
+    runner = AgyRunner(profile_root=tmp_path / "profiles", work_root=tmp_path / "work")
+    res = runner.run_batch(batch_id, task_path, out_dir, core_text="CORE", mock_subprocess=mock_sp)
+    assert res.status == "PARTIAL" and res.records == []
+    meta = json.loads((out_dir / f"{batch_id}.meta.json").read_text(encoding="utf-8"))
+    assert meta["domain_errors"][0].startswith("i=0: enum:sn")
 
 
 def test_agy_runner_run_batch_quota_429(tmp_path):

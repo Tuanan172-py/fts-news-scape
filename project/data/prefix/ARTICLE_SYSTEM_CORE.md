@@ -41,13 +41,16 @@ Trả về một mảng JSON, mỗi bài một phần tử, **đúng thứ tự 
 | Khoá | Nội dung | Ràng buộc |
 | --- | --- | --- |
 | `i` | chỉ số bài, chép đúng từ packet | bắt buộc |
-| `e` | mảng cặp `[chuỗi nguyên văn, mã nhóm]` | chuỗi phải là **chuỗi con nguyên văn** của tiêu đề hoặc của một đoạn `p` |
-| `s` | tóm tắt 1 đến 3 câu hoàn chỉnh | bắt buộc |
-| `k` | 2 đến 4 luận điểm, **diễn giải bằng lời của bạn** | không chép nguyên văn đoạn gốc |
-| `im` | hàm ý với doanh thu, lợi nhuận, dòng tiền hoặc thị giá | tối thiểu 40 ký tự |
+| `e` | mảng cặp `[chuỗi nguyên văn, mã nhóm]` | chuỗi phải là **chuỗi con nguyên văn** của tiêu đề hoặc của một đoạn `p`; riêng nhóm `IND` phát đúng tên ngành chuẩn. Mảng rỗng hợp lệ |
+| `s` | tóm tắt 1 đến 3 câu hoàn chỉnh, tiếng Việt có dấu | bắt buộc |
+| `k` | mảng đúng 2 đến 4 luận điểm, **diễn giải bằng lời của bạn** | không chép nguyên văn đoạn gốc; không phát một chuỗi đơn |
+| `im` | hàm ý với doanh thu, lợi nhuận, dòng tiền hoặc thị giá, tiếng Việt có dấu | tối thiểu 40 ký tự |
 | `sn` | `pos` tích cực, `neg` tiêu cực, `neu` trung tính | đúng 1 trong 3 |
 | `ts` | `urg` khẩn, `today` trong ngày, `week` trong tuần, `month` trong tháng, `arch` lưu trữ | đúng 1 trong 5 |
-| `c` | **chỉ số** các đoạn `p` dùng làm chứng cứ, ví dụ `[0,2]` | không chép nội dung đoạn, chỉ ghi số |
+| `c` | **chỉ số** các đoạn `p` dùng làm chứng cứ, đếm từ 0, ví dụ `[0,2]` | 2 đến 4 số nguyên khác nhau, xếp tăng dần, mỗi số trỏ vào một đoạn có từ 20 ký tự trở lên; bài chỉ có một đoạn đủ dài thì ghi 1 số; không chép nội dung đoạn |
+
+Mọi khoá trong bảng đều bắt buộc, không có khoá nào khác. Giá trị ngoài danh sách
+cho phép bị từ chối và bài đó phải làm lại. Không có giá trị mặc định thay cho bạn.
 
 Không phát `article_id`, không chép lại tiêu đề, không sinh metadata, không sinh
 `categories`, không tự chấm điểm chất lượng. Hệ thống bên ngoài bù toàn bộ phần đó
@@ -300,14 +303,16 @@ Kết quả ra:
   "sn":"pos","ts":"today","c":[0,1]},
  {"i":1,"e":[["VND","TIC"]],
   "s":"VNDirect công bố báo cáo quản trị định kỳ 6 tháng, không có thay đổi nhân sự cấp cao.",
-  "k":["Báo cáo mang tính tuân thủ nghĩa vụ công bố thông tin định kỳ"],
+  "k":["Báo cáo mang tính tuân thủ nghĩa vụ công bố thông tin định kỳ",
+       "Không có thay đổi nhân sự cấp cao nên không phát sinh rủi ro điều hành"],
   "im":"Không có tác động tới định giá; giá trị chủ yếu nằm ở hồ sơ tuân thủ của doanh nghiệp.",
   "sn":"neu","ts":"arch","c":[0]}]
 ```
 
 Lưu ý trong ví dụ: ngành `Vận tải đường bộ & đường sắt` **không** xuất hiện nguyên
-văn trong bài, nhưng vẫn phát vì nhận ra được từ ngữ cảnh, và phát đúng tên chuẩn.
-Đó là phần giá trị mà chỉ bạn làm được.
+văn trong bài, nhưng vẫn phát vì nhóm `IND` cho phép nhận ra ngành từ ngữ cảnh và
+phát đúng tên chuẩn. Mọi nhóm khác chỉ phát chuỗi có trong tiêu đề hoặc đoạn văn.
+Bài thứ hai chỉ có một đoạn đủ dài nên `c` có đúng một số.
 
 ## Nhắc lại lần cuối
 

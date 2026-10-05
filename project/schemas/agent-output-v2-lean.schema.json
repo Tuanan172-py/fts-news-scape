@@ -49,8 +49,8 @@
     "citations": {
       "type": "array",
       "items": { "type": "string" },
-      "minItems": 2,
-      "description": "Danh sách các chuỗi trích dẫn nguyên văn từ cleaned_text (mỗi chuỗi >= 20 ký tự)"
+      "minItems": 1,
+      "description": "Danh sách các chuỗi trích dẫn nguyên văn từ cleaned_text (mỗi chuỗi >= 20 ký tự). Bài nhiều đoạn cần tối thiểu 2 (cổng DoD); bài một đoạn văn được 1 (ADR 0018)."
     }
   }
 }

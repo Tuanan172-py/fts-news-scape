@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "article-compact-v2",
+  "title": "Bản ghi gọn do article-processor trả về, một phần tử mỗi bài",
+  "description": "Nguồn chân lý duy nhất của hợp đồng đầu ra mô hình (ADR 0017). Prefix, bộ kiểm và bộ bung đều đọc tệp này qua src/agent/article_contract.py. Ngoại lệ có điều kiện: khi packet có ít hơn hai đoạn đủ dài để trích dẫn thì số chỉ số c tối thiểu giảm theo số đoạn đó.",
+  "type": "array",
+  "items": {"$ref": "#/$defs/record"},
+  "$defs": {
+    "record": {
+      "type": "object",
+      "required": ["i", "e", "s", "k", "im", "sn", "ts", "c"],
+      "additionalProperties": false,
+      "properties": {
+        "i": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Chỉ số bài trong lô, chép đúng từ packet."
+        },
+        "e": {
+          "type": "array",
+          "description": "Cặp [chuỗi nguyên văn, mã nhóm]. Mảng rỗng hợp lệ.",
+          "items": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "prefixItems": [
+              {"type": "string", "minLength": 1},
+              {"enum": ["TIC", "COM", "PER", "FND", "IDX", "EXC", "IND", "GEO", "THM", "AST", "INS"]}
+            ]
+          }
+        },
+        "s": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Tóm tắt 1 đến 3 câu."
+        },
+        "k": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 4,
+          "items": {"type": "string", "minLength": 1},
+          "description": "Luận điểm diễn giải bằng lời của mô hình."
+        },
+        "im": {
+          "type": "string",
+          "minLength": 40,
+          "description": "Hàm ý thị trường."
+        },
+        "sn": {"enum": ["pos", "neg", "neu"]},
+        "ts": {"enum": ["urg", "today", "week", "month", "arch"]},
+        "c": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 4,
+          "uniqueItems": true,
+          "items": {"type": "integer", "minimum": 0},
+          "description": "Chỉ số 0-based của các đoạn p làm chứng cứ."
+        }
+      }
+    }
+  }
+}

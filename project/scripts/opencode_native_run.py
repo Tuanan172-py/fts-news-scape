@@ -12,14 +12,17 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from src.agent.article_contract import CONTRACT_VERSION, validate_record  # noqa: E402
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 TASK_DIR = PROJECT_ROOT / "data" / "agent_tasks" / "article"
 OUT_DIR = PROJECT_ROOT / "data" / "agent_outputs_article"
 OPS_DB = Path("C:/data/news-scape/ops.db")
 VN_TZ = timezone(timedelta(hours=7))
-
-VALID_GROUPS = {"TIC", "COM", "PER", "FND", "IDX", "EXC", "IND", "GEO", "THM", "AST", "INS"}
-
 
 def log_event(wave_id: str, step: str, kind: str, message: str,
               level: str = "info", data: dict | None = None) -> None:
@@ -49,46 +52,6 @@ def log_event(wave_id: str, step: str, kind: str, message: str,
         con.commit()
     finally:
         con.close()
-
-
-def validate_record(rec: dict[str, Any], n_paras: int) -> str | None:
-    """Kiem tra mot ban ghi v2-lean, tra ve loi hoac None khi dat.
-
-    Args:
-        rec: Ban ghi do mo hinh tra ve.
-        n_paras: So doan van cua bai goc.
-
-    Returns:
-        Chuoi mo ta loi, None khi hop le.
-    """
-    for k in ("i", "e", "s", "k", "im", "sn", "ts", "c"):
-        if k not in rec:
-            return f"thieu khoa {k}"
-    if not isinstance(rec["e"], list):
-        return "e khong phai mang"
-    for ent in rec["e"]:
-        if not (isinstance(ent, list) and len(ent) >= 2):
-            return "thuc the sai dang"
-        if str(ent[1]).upper() not in VALID_GROUPS:
-            return f"nhom {ent[1]} ngoai 11 nhom chuan"
-    if not str(rec["s"]).strip():
-        return "thieu tom tat"
-    k = rec["k"]
-    if not (isinstance(k, list) and 2 <= len(k) <= 4):
-        return "k phai 2-4 luan diem"
-    if len(str(rec["im"])) < 40:
-        return "im duoi 40 ky tu"
-    if str(rec["sn"]) not in ("pos", "neg", "neu"):
-        return "sn sai"
-    if str(rec["ts"]) not in ("urg", "today", "week", "month", "arch"):
-        return "ts sai"
-    c = rec["c"]
-    if not (isinstance(c, list) and len(c) >= 1):
-        return "c thieu chi so doan"
-    for idx in c:
-        if not (isinstance(idx, int) and 0 <= idx < n_paras):
-            return f"c={idx} vuot dai [0..{n_paras - 1}]"
-    return None
 
 
 def append_records(wave: str, batch_id: str, records: list[dict[str, Any]],
@@ -124,6 +87,7 @@ def append_records(wave: str, batch_id: str, records: list[dict[str, Any]],
         except ValueError:
             domain_errors = []
     added = 0
+    transport: dict[str, int] = {}
     for rec in records:
         i = rec.get("i")
         item = items.get(i)
@@ -136,7 +100,8 @@ def append_records(wave: str, batch_id: str, records: list[dict[str, Any]],
             log_event(wave, "analyze", "runner.batch_error", f"{batch_id} i={i} la",
                       level="warn", data={"batch_id": batch_id, "class": "schema_fail"})
             continue
-        err = validate_record(rec, len(item.get("p", [])))
+        clean, codes = validate_record(rec, item.get("p") or [], transport, item.get("t") or "")
+        err = ",".join(codes)
         if err:
             domain_errors.append({"article_id": str(i), "batch_id": batch_id,
                                   "attempt": attempt, "ts": datetime.now(VN_TZ).isoformat(),
@@ -148,7 +113,7 @@ def append_records(wave: str, batch_id: str, records: list[dict[str, Any]],
             continue
         if i in have:
             continue
-        existing.append(rec)
+        existing.append(clean)
         have.add(i)
         added += 1
     existing.sort(key=lambda r: r["i"])
@@ -160,7 +125,8 @@ def append_records(wave: str, batch_id: str, records: list[dict[str, Any]],
             "model_used": "muse-spark-1.3-contributor-free",
             "items_total": len(items), "items_valid": len(existing), "status": status,
             "usage": {"note": "free-tier, token ghi nhan o token_ledger khi finish"},
-            "latency_ms": latency_ms, "domain_errors": domain_errors}
+            "latency_ms": latency_ms, "domain_errors": domain_errors,
+            "contract_version": CONTRACT_VERSION, "transport": transport}
     meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=1), encoding="utf-8")
     log_event(wave, "analyze", "runner.ok" if status == "OK" else "runner.partial",
               f"{batch_id}: +{added}, tong {len(existing)}/{len(items)}",

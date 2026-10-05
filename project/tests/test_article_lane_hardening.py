@@ -187,6 +187,13 @@ def test_only_chi_chay_dung_buoc_da_chon(finish_env):
     assert calls == ["l1_ingest.py", "agent_ingest.py"]
 
 
+def _rec(i, c=()):
+    """Bản ghi gọn đủ tám khoá, hợp lệ theo hợp đồng article-compact-v2."""
+    return {"i": i, "e": [], "s": "Tóm tắt có dấu.", "k": ["Ý một", "Ý hai"],
+            "im": "Hàm ý thị trường đủ dài để vượt qua ngưỡng bốn mươi ký tự.",
+            "sn": "neu", "ts": "week", "c": list(c)}
+
+
 def test_chi_nap_tep_cua_dung_dot(finish_env):
     """Tệp của đợt khác và tệp lane cũ trong cùng thư mục không được nạp lại."""
     article_run, _calls, _ = finish_env
@@ -194,7 +201,8 @@ def test_chi_nap_tep_cua_dung_dot(finish_env):
     assert article_run.cmd_finish(_finish_args(only="expand,ingest")) == 0
     assert article_run._argv["l1_ingest.py"] == ["article_W_01.output.json"]
     assert article_run._argv["agent_ingest.py"] == ["article_W_01.output.json"]
-    assert article_run._argv["article_expand.py"] == ["--wave", "W"]
+    assert article_run._argv["article_expand.py"] == [
+        "--wave", "W", "--default-provider", "dsh", "--default-model", "deepseek-flash"]
 
 
 def test_ten_buoc_sai_bi_tu_choi():
@@ -239,13 +247,14 @@ def test_va_lai_khong_dong_goi_bai_da_co_trong_lo_va(tmp_path, monkeypatch):
     (tmp_path / "article_W_01.map.json").write_text(
         json.dumps({"index": {str(i): f"id{i}" for i in range(5)}}), encoding="utf-8")
     (tmp_path / "article_W_01.output.json").write_text(
-        json.dumps([{"i": i} for i in range(3)]), encoding="utf-8")
-    (tmp_path / "article_W_01_r01.task.json").write_text(json.dumps({"a": []}),
+        json.dumps([_rec(i) for i in range(3)]), encoding="utf-8")
+    (tmp_path / "article_W_01_r01.task.json").write_text(
+        json.dumps({"a": [{"i": i, "t": f"Bài {i}", "p": ["Nội dung."]} for i in range(2)]}),
                                                         encoding="utf-8")
     (tmp_path / "article_W_01_r01.map.json").write_text(
         json.dumps({"index": {"0": "id3", "1": "id4"}}), encoding="utf-8")
     (tmp_path / "article_W_01_r01.output.json").write_text(
-        json.dumps([{"i": 0}, {"i": 1}]), encoding="utf-8")
+        json.dumps([_rec(0), _rec(1)]), encoding="utf-8")
 
     assert article_run.cmd_repair(argparse.Namespace(wave="W")) == 0
     assert not (tmp_path / "article_W_01_r02.task.json").exists()

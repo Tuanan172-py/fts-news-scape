@@ -36,6 +36,7 @@ from src.agent.intent_resolve import (        # noqa: E402
     reconcile,
 )
 from src.agent.l1_router import check_l1_dod  # noqa: E402
+from src.agent.dod import check_dod  # noqa: E402
 
 SAMPLE = "\n".join([
     "Tập đoàn Hòa Phát công bố lợi nhuận sau thuế quý 3 đạt 3.200 tỷ đồng, tăng 25% so với cùng kỳ năm trước.",
@@ -262,6 +263,13 @@ def test_khong_nhan_dien_duoc_thi_moi_nhom_deu_trong(resolver, registry):
     assert passed, reasons
 
 
+def _rec(i, c=()):
+    """Bản ghi gọn đủ tám khoá, hợp lệ theo hợp đồng article-compact-v2."""
+    return {"i": i, "e": [], "s": "Tóm tắt có dấu.", "k": ["Ý một", "Ý hai"],
+            "im": "Hàm ý thị trường đủ dài để vượt qua ngưỡng bốn mươi ký tự.",
+            "sn": "neu", "ts": "week", "c": list(c)}
+
+
 def test_trich_dan_lay_nguyen_van_theo_chi_so():
     """Trích dẫn được dựng từ chỉ số đoạn nên luôn nguyên văn, không cần ai kiểm lại."""
     paragraphs = distill(SAMPLE)
@@ -279,8 +287,8 @@ def test_trich_dan_lay_nguyen_van_theo_chi_so():
         assert len(citation) >= 20
 
 
-def test_chi_so_trich_dan_ngoai_pham_vi_khong_gay_loi():
-    """Chỉ số trích dẫn sai phạm vi được bỏ qua và bù bằng đoạn hợp lệ."""
+def test_chi_so_trich_dan_ngoai_pham_vi_thi_bo_qua_bai():
+    """Chỉ số trích dẫn ngoài phạm vi không được tự bù, bài bị bỏ để vào vòng vá."""
     paragraphs = distill(SAMPLE)
     record = {
         "i": 0, "s": "Tóm tắt.", "k": ["Luận điểm"],
@@ -288,8 +296,8 @@ def test_chi_so_trich_dan_ngoai_pham_vi_khong_gay_loi():
         "sn": "neu", "ts": "arch", "c": [99, 100],
     }
     out, reason = build_gold_output("abc123", record, paragraphs)
-    assert out is not None, reason
-    assert len(out["citations"]) >= 2
+    assert out is None
+    assert "trích dẫn" in reason
 
 
 def test_ham_y_qua_ngan_thi_bo_qua_bai():
@@ -329,7 +337,54 @@ def test_ban_ghi_gold_dung_bay_truong():
         "im": "Hàm ý thị trường đủ dài để vượt qua ngưỡng bốn mươi ký tự theo hợp đồng.",
         "sn": "neu", "ts": "week", "c": [0, 1]}, distill(SAMPLE))
     assert set(out) == {"article_id", "summary", "key_points", "implication",
-                        "sentiment", "time_sensitivity", "citations"}
+                         "sentiment", "time_sensitivity", "citations"}
+
+
+def test_bai_mot_doan_mot_trich_dan_la_du():
+    """Bài tin vắn một đoạn văn thì một trích dẫn hợp lệ là đủ (ADR 0018)."""
+    paragraphs = ["HOSE cho biết số mã bị cắt margin trong quý 4 là 65 mã "
+                  "giảm 8 mã so với 73 mã công bố ngày 11/9 vừa qua."]
+    out, reason = build_gold_output("brief1", {
+        "s": "HOSE cắt margin 65 mã trong quý 4.",
+        "k": ["Số mã bị cắt giảm 8 mã so với đợt trước"],
+        "im": "Diện cắt margin thu hẹp cho thấy chất lượng cổ phiếu niêm yết cải thiện dần.",
+        "sn": "pos", "ts": "today", "c": [0]}, paragraphs)
+    assert out is not None, reason
+    assert out["citations"] == paragraphs
+    assert out["citation_basis"] == "single-paragraph"
+
+
+def test_bai_nhieu_doan_mot_trich_dan_van_bi_loai():
+    """Bài nhiều đoạn mà chỉ trích một đoạn thì vẫn bị loại như cũ."""
+    paragraphs = distill(SAMPLE)
+    assert sum(1 for p in paragraphs if len(p) >= 20) >= 2
+    out, reason = build_gold_output("abc123", {
+        "s": "Tóm tắt.", "k": ["Luận điểm"],
+        "im": "Hàm ý thị trường đủ dài để vượt qua ngưỡng bốn mươi ký tự theo hợp đồng.",
+        "sn": "neu", "ts": "week", "c": [0]}, paragraphs)
+    assert out is None
+    assert "trích dẫn" in reason
+
+
+def test_dod_chap_nhan_mot_trich_dan_voi_dau_single_paragraph():
+    """DoD nới ngưỡng trích dẫn khi bản ghi mang dấu bài một đoạn văn."""
+    para = ("HOSE cho biết số mã bị cắt margin trong quý 4 là 65 mã "
+            "giảm 8 mã so với đợt trước đó.")
+    wp = {"cleaned_text": "Mở bài. " + para + " Kết bài."}
+    out = {
+        "article_id": "brief1",
+        "summary": "HOSE thu hẹp diện cắt margin trong quý 4.",
+        "key_points": ["Số mã giảm 8 so với đợt trước"],
+        "implication": "Diện cắt margin thu hẹp cho thấy chất lượng cổ phiếu cải thiện dần.",
+        "sentiment": "positive", "time_sensitivity": "today",
+        "citations": [para], "citation_basis": "single-paragraph",
+    }
+    ok, reasons = check_dod(out, wp)
+    assert ok, reasons
+    out2 = dict(out)
+    del out2["citation_basis"]
+    ok2, _ = check_dod(out2, wp)
+    assert not ok2
 
 
 # --------------------------------------------------------------------------
@@ -471,7 +526,7 @@ def test_phat_hien_dung_nhung_bai_con_thieu(tmp_path, monkeypatch):
         _json.dumps(mapping, ensure_ascii=False), encoding="utf-8")
     # Mô hình chỉ trả về ba bài đầu: hai bài cuối bị cắt cụt.
     (tmp_path / "article_W_01.output.json").write_text(
-        _json.dumps([{"i": i, "e": [], "s": "x"} for i in range(3)],
+        _json.dumps([_rec(i) for i in range(3)],
                     ensure_ascii=False), encoding="utf-8")
 
     missing, _packet, _mapping = article_run.missing_indices("article_W_01")
@@ -500,7 +555,7 @@ def test_dong_goi_bu_chi_lay_phan_thieu(tmp_path, monkeypatch, capsys):
     (tmp_path / "article_W_01.map.json").write_text(
         _json.dumps(mapping, ensure_ascii=False), encoding="utf-8")
     (tmp_path / "article_W_01.output.json").write_text(
-        _json.dumps([{"i": i, "e": [], "s": "x"} for i in range(3)],
+        _json.dumps([_rec(i, [0]) for i in range(3)],
                     ensure_ascii=False), encoding="utf-8")
 
     rc = article_run.cmd_repair(argparse.Namespace(wave="W"))
@@ -513,6 +568,97 @@ def test_dong_goi_bu_chi_lay_phan_thieu(tmp_path, monkeypatch, capsys):
         encoding="utf-8"))
     assert [a["t"] for a in rpacket["a"]] == ["Bài 3", "Bài 4"]
     assert (tmp_path / "wave_W.repair.ts").exists()
+
+
+def test_va_hai_the_he_khong_de_packet_chong_lap(tmp_path, monkeypatch):
+    """Một bài thiếu ở cả gốc và lô vá chỉ được đóng gói bù đúng một lần (E1)."""
+    import argparse
+    import json as _json
+
+    from scripts import article_run
+
+    monkeypatch.setattr(article_run, "TASK_DIR", tmp_path)
+    monkeypatch.setattr(article_run, "OUT_DIR", tmp_path)
+
+    def _packet(items):
+        return {"d": "2026-09-21", "n": len(items),
+                "a": [{"i": i, "t": t, "p": ["Nội dung đủ dài cho gói tin."]}
+                      for i, t in enumerate(items)]}
+
+    def _mapping(batch_id, ids):
+        return {"batch_id": batch_id, "wave": "W",
+                "index": {str(i): a for i, a in enumerate(ids)},
+                "tier": {str(i): 1 for i in range(len(ids))},
+                "reason": {str(i): "x" for i in range(len(ids))}}
+
+    # Lô gốc thiếu id3, id4; lô vá r01 cứu được id3, vẫn thiếu id4.
+    (tmp_path / "article_W_01.task.json").write_text(
+        _json.dumps(_packet([f"Bài {i}" for i in range(5)]), ensure_ascii=False),
+        encoding="utf-8")
+    (tmp_path / "article_W_01.map.json").write_text(
+        _json.dumps(_mapping("article_W_01", [f"id{i}" for i in range(5)]),
+                    ensure_ascii=False), encoding="utf-8")
+    (tmp_path / "article_W_01.output.json").write_text(
+        _json.dumps([_rec(i, [0]) for i in range(3)],
+                    ensure_ascii=False), encoding="utf-8")
+    (tmp_path / "article_W_01_r01.task.json").write_text(
+        _json.dumps(_packet(["Bài 3", "Bài 4"]), ensure_ascii=False),
+        encoding="utf-8")
+    (tmp_path / "article_W_01_r01.map.json").write_text(
+        _json.dumps(_mapping("article_W_01_r01", ["id3", "id4"]),
+                    ensure_ascii=False), encoding="utf-8")
+    (tmp_path / "article_W_01_r01.output.json").write_text(
+        _json.dumps([_rec(0, [0])], ensure_ascii=False),
+        encoding="utf-8")
+
+    assert article_run.cmd_repair(argparse.Namespace(wave="W")) == 0
+
+    assert (tmp_path / "article_W_01_r02.task.json").exists()
+    rmap = _json.loads((tmp_path / "article_W_01_r02.map.json").read_text(
+        encoding="utf-8"))
+    assert rmap["index"] == {"0": "id4"}
+    assert not (tmp_path / "article_W_01_r01_r01.task.json").exists()
+
+
+def test_cong_expand_dung_ty_le_toan_dot(tmp_path, monkeypatch):
+    """Bài thiếu ở một lô nhưng có ở lô vá anh em không được tính hỏng (E1)."""
+    import json as _json
+
+    from scripts import article_expand
+
+    monkeypatch.setattr(article_expand, "L1_OUT_DIR", tmp_path / "l1")
+    monkeypatch.setattr(article_expand, "GOLD_OUT_DIR", tmp_path / "gold")
+    monkeypatch.setattr(article_expand, "MENTIONS_DIR", tmp_path / "mentions")
+
+    para = "Đoạn văn đủ dài để làm trích dẫn nguyên văn cho kiểm chứng."
+    rec = {"e": [["Hòa Phát", "COM"]], "s": "Tóm tắt một câu.",
+           "k": ["Luận điểm một.", "Luận điểm hai."],
+           "im": "Hàm ý thị trường đủ dài để vượt qua ngưỡng ký tự.",
+           "sn": "pos", "ts": "today", "c": [0, 1]}
+
+    def _batch(batch_id, ids, have):
+        packet = {"d": "2026-09-21", "n": len(ids),
+                  "a": [{"i": i, "t": f"Bài {a}", "p": [para, para]}
+                        for i, a in enumerate(ids)]}
+        mapping = {"batch_id": batch_id, "wave": "W",
+                   "index": {str(i): a for i, a in enumerate(ids)}}
+        (tmp_path / f"{batch_id}.task.json").write_text(
+            _json.dumps(packet, ensure_ascii=False), encoding="utf-8")
+        (tmp_path / f"{batch_id}.map.json").write_text(
+            _json.dumps(mapping, ensure_ascii=False), encoding="utf-8")
+        (tmp_path / f"{batch_id}.output.json").write_text(
+            _json.dumps([{**rec, "i": i} for i in have], ensure_ascii=False),
+            encoding="utf-8")
+
+    # Lô r02 thiếu idB, nhưng idB đã có bản ghi ở lô vá anh em r03.
+    _batch("article_W_01_r02", ["idA", "idB"], [0])
+    _batch("article_W_01_r03", ["idB", "idC"], [0, 1])
+
+    assert article_expand.main([str(tmp_path), "--wave", "W",
+                                "--task-dir", str(tmp_path)]) == 1
+    rc = article_expand.main([str(tmp_path), "--wave", "W", "--task-dir", str(tmp_path),
+                              "--default-provider", "dsh", "--default-model", "deepseek-flash"])
+    assert rc == 0
 
 
 def test_khong_thieu_bai_thi_khong_sinh_goi_bu(tmp_path, monkeypatch):
@@ -535,7 +681,7 @@ def test_khong_thieu_bai_thi_khong_sinh_goi_bu(tmp_path, monkeypatch):
     (tmp_path / "article_W_01.map.json").write_text(
         _json.dumps(mapping, ensure_ascii=False), encoding="utf-8")
     (tmp_path / "article_W_01.output.json").write_text(
-        _json.dumps([{"i": i, "e": [], "s": "x"} for i in range(2)],
+        _json.dumps([_rec(i) for i in range(2)],
                     ensure_ascii=False), encoding="utf-8")
 
     assert article_run.cmd_repair(argparse.Namespace(wave="W")) == 0
@@ -777,3 +923,75 @@ def test_chua_lo_nao_chay_thi_khong_bao_la_khong_can_va(tmp_path, monkeypatch):
 
     assert article_run.cmd_repair(argparse.Namespace(wave="W")) == 2
     assert not list(tmp_path.glob("*_r01.task.json"))
+
+
+def test_silver_package_path_dung_bo_cuc_kho(tmp_path, monkeypatch):
+    """Đường dẫn Silver dựng đúng bố cục domain/ngày/băm."""
+    from src.agent import silver_source
+
+    monkeypatch.setattr(silver_source, "SILVER_ROOT", tmp_path)
+    aid = "a" * 64
+    target = tmp_path / "cafef.vn" / "20261005" / f"{aid}.json"
+    target.parent.mkdir(parents=True)
+    target.write_text(json.dumps({"cleaned_text": "Thân bài đầy đủ."}),
+                       encoding="utf-8")
+    assert silver_source.silver_package_path("cafef.vn", "2026-10-05T01:00:00", aid) == target
+    assert silver_source.read_silver_text("cafef.vn", "2026-10-05T01:00:00", aid) == "Thân bài đầy đủ."
+    assert silver_source.silver_package_path("cafef.vn", "2026-10-05", "b" * 64) is None
+    assert silver_source.silver_package_path(None, "2026-10-05", aid) is None
+
+
+def test_row_paragraphs_uu_tien_silver_truoc_rss(tmp_path, monkeypatch):
+    """Đoạn văn đóng gói lấy từ Silver đầy đủ trước đoạn trích RSS ngắn."""
+    from scripts import article_pack
+    from src.agent import silver_source
+
+    monkeypatch.setattr(silver_source, "SILVER_ROOT", tmp_path)
+    aid = "c" * 64
+    silver_dir = tmp_path / "vneconomy.vn" / "20261005"
+    silver_dir.mkdir(parents=True)
+    para1 = ("Đoạn mở đầu của thân bài đầy đủ, dài hơn bốn mươi ký tự để đạt ngưỡng "
+             "trích dẫn theo hợp đồng chung của lane.")
+    para2 = ("Đoạn thứ hai cũng dài hơn bốn mươi ký tự, mang số liệu định lượng cụ "
+             "thể để mô hình có căn cứ trích dẫn thứ hai.")
+    (silver_dir / f"{aid}.json").write_text(
+        json.dumps({"cleaned_text": para1 + "\n" + para2}), encoding="utf-8")
+    row = {"article_id": aid, "title": "Tít", "published_at": "2026-10-05T00:00:00",
+           "source_domain": "vneconomy.vn", "package_path": "khong/co/file.json",
+           "content_text": "Trích ngắn."}
+    paras = article_pack.row_paragraphs(row)
+    assert paras == [para1, para2]
+
+
+def test_drop_superseded_chi_giu_ban_ghi_moi_nhat(tmp_path, monkeypatch):
+    """Hàng bung cũ bị loại khi cùng bài đã có bản ghi ở lô mới hơn."""
+    import os
+
+    import scripts.article_expand as expander
+
+    l1_dir = tmp_path / "l1"
+    gold_dir = tmp_path / "gold"
+    mentions_dir = tmp_path / "mentions"
+    for d in (l1_dir, gold_dir, mentions_dir):
+        d.mkdir()
+    monkeypatch.setattr(expander, "L1_OUT_DIR", l1_dir)
+    monkeypatch.setattr(expander, "GOLD_OUT_DIR", gold_dir)
+    monkeypatch.setattr(expander, "MENTIONS_DIR", mentions_dir)
+    old_row = {"article_id": "artA", "summary": "Cũ."}
+    new_row = {"article_id": "artA", "summary": "Mới."}
+    (l1_dir / "b_old.output.json").write_text(json.dumps([old_row]), encoding="utf-8")
+    (l1_dir / "b_new.output.json").write_text(json.dumps([new_row]), encoding="utf-8")
+    raw_old = tmp_path / "b_old.output.json"
+    raw_new = tmp_path / "b_new.output.json"
+    raw_old.write_text("[]", encoding="utf-8")
+    raw_new.write_text("[]", encoding="utf-8")
+    os.utime(raw_old, (1000000000, 1000000000))
+    os.utime(raw_new, (1000000001, 1000000001))
+    results = [{"batch_id": "b_old", "l1": 1, "gold": 0, "mentions": 0},
+               {"batch_id": "b_new", "l1": 1, "gold": 0, "mentions": 0}]
+    dropped = expander.drop_superseded_expanded(results, [str(raw_old), str(raw_new)])
+    assert dropped == 1
+    assert json.loads((l1_dir / "b_old.output.json").read_text(encoding="utf-8")) == []
+    assert json.loads((l1_dir / "b_new.output.json").read_text(encoding="utf-8")) == [new_row]
+    assert results[0]["l1"] == 0
+    assert results[1]["l1"] == 1

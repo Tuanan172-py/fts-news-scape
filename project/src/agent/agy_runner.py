@@ -4,7 +4,6 @@ from __future__ import annotations
 import concurrent.futures
 import json
 import os
-import re
 import shutil
 import subprocess
 import sys
@@ -14,45 +13,22 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from src.agent.article_contract import (  # noqa: F401
+    build_user_message,
+    has_vietnamese_diacritics,
+    result_meta,
+    validate_response,
+)
 from src.agent.prefix import prefix_hash
 from src.core.staging import safe_atomic_write, safe_json_dump
 from src.core.stdio import force_utf8_stdio
 
 force_utf8_stdio()
 
-# 11 mã nhóm chuẩn của Article Lane (Rule 01, Rule 05, ARTICLE_SYSTEM_CORE.md)
-VALID_ENTITY_GROUPS = {
-    "TIC", "COM", "PER", "FND", "IDX", "EXC", "IND", "GEO", "THM", "AST", "INS",
-    "TICKER", "SECURITY_OTHER", "ETF", "INDEX", "EXCHANGE",
-    "INDUSTRY_GICS1", "INDUSTRY_GICS2", "INDUSTRY_GICS3", "MACRO_GEO", "MACRO_THEME",
-    "ASSET_CLASS", "INSTITUTION",
-}
-
-ENTITY_GROUP_MAP = {
-    "TIC": "TIC", "TICKER": "TIC", "SECURITY_OTHER": "TIC",
-    "COM": "COM", "COMPANY": "COM", "ORG": "COM", "ORGANIZATION": "COM", "CORP": "COM", "CORPORATION": "COM", "BANK": "COM",
-    "PER": "PER", "PERSON": "PER",
-    "FND": "FND", "FUND": "FND", "ETF": "FND",
-    "IDX": "IDX", "INDEX": "IDX",
-    "EXC": "EXC", "EXCHANGE": "EXC",
-    "IND": "IND", "INDUSTRY": "IND", "IND_GICS1": "IND", "IND_GICS2": "IND", "IND_GICS3": "IND",
-    "GEO": "GEO", "MACRO_GEO": "GEO",
-    "THM": "THM", "MACRO_THEME": "THM", "THEME": "THM",
-    "AST": "AST", "ASSET_CLASS": "AST", "ASSET": "AST",
-    "INS": "INS", "INSTITUTION": "INS", "MINISTRY": "INS", "GOV": "INS",
-}
-
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 CORE_PATH = PROJECT_ROOT / "data" / "prefix" / "ARTICLE_SYSTEM_CORE.md"
 DEFAULT_MODEL = "gemini-3.8-flash-low"
 DEFAULT_TIMEOUT_SECONDS = 600
-
-# Ký tự có dấu tiếng Việt phục vụ kiểm tra bảo toàn dấu.
-_VIETNAMESE_DIACRITICS_RE = re.compile(
-    r"[àáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ]",
-    re.IGNORECASE,
-)
-
 
 @dataclass
 class AgyExecutionResult:
@@ -77,18 +53,6 @@ class AgyExecutionResult:
     usage: dict[str, int] = field(default_factory=dict)
     latency_seconds: float = 0.0
     error_message: str = ""
-
-
-def has_vietnamese_diacritics(text: str) -> bool:
-    """Kiểm tra chuỗi văn bản có chứa ký tự tiếng Việt có dấu hay không.
-
-    Args:
-        text: Chuỗi văn bản cần kiểm tra.
-
-    Returns:
-        True nếu chuỗi có ít nhất một ký tự tiếng Việt có dấu.
-    """
-    return bool(_VIETNAMESE_DIACRITICS_RE.search(text or ""))
 
 
 def resolve_agy() -> str:
@@ -204,144 +168,6 @@ def build_sandbox_profile(
         "settings": settings_path,
         "hooks": hooks_path,
     }
-
-
-def salvage_json_records(text: str) -> list[dict[str, Any]]:
-    """Trích xuất và khôi phục mảng bản ghi JSON từ chuỗi phản hồi của mô hình.
-
-    Args:
-        text: Chuỗi văn bản thô do mô hình trả về.
-
-    Returns:
-        Danh sách các từ điển bản ghi đã bóc tách.
-
-    Raises:
-        ValueError: Khi không tìm thấy cấu trúc JSON hợp lệ.
-    """
-    stripped = (text or "").strip()
-    if not stripped:
-        raise ValueError("Phản hồi rỗng.")
-
-    # Loại bỏ khối markdown nếu mô hình bọc trong ```json ... ```
-    if stripped.startswith("```"):
-        lines = stripped.splitlines()
-        if lines and lines[0].startswith("```"):
-            lines = lines[1:]
-        if lines and lines[-1].strip() == "```":
-            lines = lines[:-1]
-        stripped = "\n".join(lines).strip()
-
-    # Thử bóc trực tiếp đối tượng mảng JSON
-    try:
-        data = json.loads(stripped)
-        if isinstance(data, list):
-            return [d for d in data if isinstance(d, dict)]
-        if isinstance(data, dict):
-            if "r" in data and isinstance(data["r"], list):
-                return [d for d in data["r"] if isinstance(d, dict)]
-            if "records" in data and isinstance(data["records"], list):
-                return [d for d in data["records"] if isinstance(d, dict)]
-    except json.JSONDecodeError:
-        pass
-
-    # Tìm mảng ngoài cùng bằng chỉ số ngoặc vuông
-    start = stripped.find("[")
-    end = stripped.rfind("]")
-    if start != -1 and end != -1 and end > start:
-        snippet = stripped[start : end + 1]
-        try:
-            arr = json.loads(snippet)
-            if isinstance(arr, list):
-                return [d for d in arr if isinstance(d, dict)]
-        except json.JSONDecodeError:
-            pass
-
-    raise ValueError("Không thể bóc tách mảng JSON từ phản hồi.")
-
-
-def validate_records(
-    records: list[dict[str, Any]], packet_items: list[dict[str, Any]]
-) -> tuple[list[dict[str, Any]], list[str]]:
-    """Kiểm tra tính hợp lệ về mặt miền nghiệp vụ của các bản ghi phân tích.
-
-    Args:
-        records: Danh sách bản ghi do mô hình trả về.
-        packet_items: Danh sách các bài viết trong gói công việc đầu vào.
-
-    Returns:
-        Cặp giá trị gồm danh sách bản ghi hợp lệ và danh sách thông báo lỗi.
-    """
-    valid_records: list[dict[str, Any]] = []
-    errors: list[str] = []
-
-    item_map = {item.get("i"): item for item in packet_items if "i" in item}
-    valid_groups = VALID_ENTITY_GROUPS
-
-    for idx, rec in enumerate(records):
-        item_i = rec.get("i")
-        if item_i is None or item_i not in item_map:
-            errors.append(f"Bản ghi #{idx}: Chỉ số 'i'={item_i} không khớp bài nào trong packet.")
-            continue
-
-        raw_item = item_map[item_i]
-        title = raw_item.get("t") or ""
-        paragraphs = raw_item.get("p") or []
-
-        # 1. Kiểm tra nhóm thực thể
-        entities = rec.get("e") or []
-        invalid_entities = False
-        if not isinstance(entities, list):
-            errors.append(f"Bài i={item_i}: Trường 'e' không phải mảng.")
-            continue
-
-        for ent in entities:
-            if not (isinstance(ent, list) and len(ent) >= 2):
-                invalid_entities = True
-                break
-            raw_grp = str(ent[1]).strip().upper()
-            grp_base = raw_grp.split(":")[0].strip()
-            mapped_grp = ENTITY_GROUP_MAP.get(grp_base, grp_base)
-            if mapped_grp not in valid_groups:
-                errors.append(f"Bài i={item_i}: Mã nhóm '{raw_grp}' không thuộc 11 nhóm chuẩn.")
-                invalid_entities = True
-                break
-            ent[1] = mapped_grp
-
-        if invalid_entities:
-            continue
-
-        # 2. Kiểm tra chỉ số trích dẫn
-        citations = rec.get("c") or []
-        if not isinstance(citations, list) or len(citations) < 1:
-            errors.append(f"Bài i={item_i}: Trường trích dẫn 'c' thiếu chỉ số đoạn.")
-            continue
-
-        out_of_range = False
-        for c_idx in citations:
-            if not isinstance(c_idx, int) or c_idx < 0 or c_idx >= len(paragraphs):
-                errors.append(
-                    f"Bài i={item_i}: Chỉ số đoạn c={c_idx} vượt dải đoạn [0..{len(paragraphs)-1}]."
-                )
-                out_of_range = True
-                break
-
-        if out_of_range:
-            continue
-
-        # 3. Kiểm tra bảo toàn dấu tiếng Việt
-        source_has_diacritics = has_vietnamese_diacritics(title) or any(
-            has_vietnamese_diacritics(p) for p in paragraphs[:3]
-        )
-        if source_has_diacritics:
-            summary = rec.get("s") or ""
-            implication = rec.get("im") or ""
-            if not has_vietnamese_diacritics(summary) and not has_vietnamese_diacritics(implication):
-                errors.append(f"Bài i={item_i}: Bài gốc có dấu nhưng tóm tắt/hàm ý mất hoàn toàn dấu.")
-                continue
-
-        valid_records.append(rec)
-
-    return valid_records, errors
 
 
 class AgyRunner:
@@ -506,7 +332,7 @@ class AgyRunner:
         env["PYTHONUTF8"] = "1"
 
         ndjson_input = json.dumps(
-            {"event": "user", "message": {"content": f"## Packet\n{task_content}"}},
+            {"event": "user", "message": {"content": build_user_message(task_content)}},
             ensure_ascii=False,
         ) + "\n"
 
@@ -657,19 +483,14 @@ class AgyRunner:
             except json.JSONDecodeError:
                 continue
 
-        # Tầng 7: Bóc tách cấu trúc JSON trước
+        # Tầng 7-8: bóc vỏ và kiểm hợp đồng bằng bộ kiểm dùng chung mọi provider
+        parsed = validate_response(raw_response or stdout_text, packet_items)
         json_salvage_error: Exception | None = None
-        records: list[dict[str, Any]] = []
-        try:
-            records = salvage_json_records(raw_response or stdout_text)
-        except Exception as exc:
-            json_salvage_error = exc
-
-        # Tầng 8: Kiểm định miền nghiệp vụ nếu bóc tách được
-        valid_recs: list[dict[str, Any]] = []
-        domain_errors: list[str] = []
-        if records:
-            valid_recs, domain_errors = validate_records(records, packet_items)
+        if parsed.counters.get("raw_records", 0) == 0:
+            json_salvage_error = ValueError("Không bóc được bản ghi JSON nào từ phản hồi.")
+        valid_recs = list(parsed.records.values())
+        contract_meta = result_meta(parsed)
+        domain_errors = contract_meta["domain_errors"]
 
         # Tầng 5: Kiểm tra vi phạm gọi công cụ
         tool_warning: str | None = None
@@ -711,13 +532,14 @@ class AgyRunner:
             "created_at": datetime.now(timezone.utc).isoformat(),
             "agent_provider": "agy",
             "model_used": self.model,
+            "sampling": {"temperature": "unsupported", "seed": "unsupported"},
             "prefix_hash": prefix_hash(),
             "items_total": len(packet_items),
             "items_valid": len(valid_recs),
             "status": status,
             "usage": usage_data,
             "latency_seconds": round(latency, 2),
-            "domain_errors": domain_errors,
+            **contract_meta,
             "tool_invoked": tool_invoked,
             "denied_actions": denied_actions,
             "attempts": attempt + 1,
