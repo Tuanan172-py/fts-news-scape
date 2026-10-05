@@ -19,7 +19,12 @@
 
 ## Next Steps
 
-1. **Cấp quyền Write GitHub**: Tài khoản GitHub cần quyền Write/Collaborator trên `https://github.com/Research-FPA/news-scraper` để thực thi `git push fpa main`.
-2. **Push mã nguồn**: Sau khi có quyền, chạy `git push -u fpa main` (hoặc push cả branch `feature/article-lane-remove-gates`).
-3. **Data Plane**: Toàn bộ data (Silver, work packages, task packets, outputs, sqlite) đã untrack khỏi Git, vận hành qua SharePoint `FRA - Data/news/` và local SSD.
+> **Phiên US-038 2026-10-05 (high-risk, blocked chờ người):** đưa mã lên `Research-FPA/news-scraper`, đề xuất ADR 0020.
+> - Nhánh cục bộ `import/clean-20261005` (df021e6): snapshot lịch sử mới của 986a7c6, 888 tệp, 8,2 MB, không dữ liệu, không bí mật thật. Kho tổ chức đang rỗng và private.
+> - Push bị chặn quyền trong phiên agent. Người vận hành chạy: `git push fpa import/clean-20261005:refs/heads/main`.
+> - Dữ liệu cũ đã chuyển (không xoá) vào `C:/data/news-scape/archive/20261005-cleanup/` kèm `MANIFEST.txt`. `C:/data/news-scape/raw_html` (legacy 08/09) chưa chuyển do bị chặn quyền; dòng manifest của nó ghi nhầm là đã chuyển. `project/src/data` nằm trong archive và chứa Bronze duy nhất, không xoá.
+> - `FRA - Data` = teamsite `sites/FRA/Data` qua shortcut OneDrive, Files On-Demand chỉ-trên-mây. ADR 0020 (proposed): xuất bản một chiều, chỉ thêm, manifest SHA256, thang L0/L1/L2.
 
+1. Người vận hành push snapshot lên `fpa` (lệnh trên). Sau đó phát triển trên nhánh tách từ `fpa/main`.
+2. Duyệt ADR 0020 và trả lời ba câu hỏi mở ở §4 (quyền ghi `sites/FRA/Data`, tài khoản dịch vụ, hạn mức).
+3. PR kế tiếp trên kho tổ chức: cách ly test (`conftest.py`), rồi `core/paths.py` làm nguồn đường dẫn duy nhất, rồi chuyển dữ liệu nóng khỏi OneDrive trong khung dừng daemon.
