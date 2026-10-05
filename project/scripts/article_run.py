@@ -412,11 +412,13 @@ def cmd_repair(args: argparse.Namespace) -> int:
         repairs.append({"batch_id": rid, "path": str(rpath), "n": len(items),
                         "windows": budget["windows"], "from": batch_id})
 
-    # Làm mới packet cũ: bài đã có bản ghi nhưng packet mang ít đoạn văn hơn hẳn
-    # thân Silver hiện tại (đóng lúc Silver chưa có, chỉ còn đoạn trích RSS). Bản
-    # ghi cũ trích từ đoạn trích nên không đối chiếu được vào thân mới; vá quanh
-    # nó chỉ thêm vòng hỏng. Nhóm theo packet gốc, mỗi gói vá tối đa 25 bài để
-    # vừa trần đầu ra của provider miễn phí.
+    # Làm mới packet cũ: bài đã có bản ghi nhưng packet mang dưới hai đoạn văn
+    # đạt độ dài trích dẫn trong khi Silver hiện tại đã đủ (packet đóng lúc
+    # Silver chưa có, chỉ còn đoạn trích RSS ngắn). Dưới hai đoạn thì cổng cũ
+    # không dựng được nội dung, và trích dẫn cũ cũng không đối chiếu được vào
+    # thân mới — vá quanh bản ghi cũ chỉ thêm vòng hỏng. Bài packet đủ đoạn thì
+    # không đụng tới để khỏi đốt token trùng lặp. Nhóm theo packet gốc, mỗi gói
+    # vá tối đa 25 bài để vừa trần đầu ra của provider miễn phí.
     stale_by_batch: dict[str, list[tuple[str, dict]]] = {}
     for packet_path in packets:
         batch_id = Path(packet_path).name.replace(".task.json", "")
@@ -431,11 +433,12 @@ def cmd_repair(args: argparse.Namespace) -> int:
             if article_id not in received or article_id in claimed:
                 continue
             current = fresh_paras.get(article_id)
-            if not current:
+            if not current or _eligible(current) < 2:
                 continue
             src = arts.get(str(old_i)) or {}
-            if _eligible(current) > _eligible(src.get("p", [])):
-                stale_by_batch.setdefault(batch_id, []).append((old_i, src))
+            if _eligible(src.get("p", [])) >= 2:
+                continue
+            stale_by_batch.setdefault(batch_id, []).append((old_i, src))
     total_refresh = 0
     for batch_id, stale in sorted(stale_by_batch.items()):
         try:
