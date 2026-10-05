@@ -13,12 +13,13 @@
 > - Chưa làm: R-06, R-07 (cào bù và `raw_html`) vì trùng phạm vi phiên US-036 đang chạy; R-08 phần nhả đợt hỏng.
 > - Test: bộ ops và `test_ops_manual.py` xanh. 5 test ngoài phạm vi đang đỏ do phiên khác: `test_inherit` (1), `test_periodic_reports` (4).
 
-- **Updated:** 2026-10-05 (daemon L0; W10051042/W10051050 vẫn Lỗi; capture còn 864 URL chờ bù + 141 raw_missing)
-- **Điểm vào vận hành:** `pipeline_radar.py status` · `ops_daemon.py status` · Phòng điều khiển `ops_daemon.py open`
-- **Tài liệu:** ADR 0018 · runbook `project/docs/operations/ops-daemon.md`
+- **Updated:** 2026-10-05 (Data plane decoupled; clean commit 737d8ce; ready for Research-FPA/news-scraper)
+- **Điểm vào vận hành:** `pipeline_radar.py status` · `ops_daemon.py status` · `scripts/harness_cli.py git status`
+- **Tài liệu:** ADR 0018, ADR 0019 (`0019-loai-bai-mong-khoi-packet-article-lane.md`) · `project/docs/operations/ops-daemon.md`
 
 ## Next Steps
 
-1. **Va chạm phiên:** cây đang có 2 phiên sửa song song (US-036 commit xen kẽ). Hai ADR cùng số 0018 (`mot-trich-dan...` đã commit vs `loai-bai-mong...` chưa commit, hướng ngược nhau) — Human gộp số hiệu và chốt phạm vi trước khi ai commit tiếp.
-2. **Không tự commit/push phiên này** vì cây lẫn thay đổi của phiên kia; `clean_for_closure=false` có lý do chính đáng, ghi rõ ở Closure.
-3. **Tồn đọng còn lại:** W10051042, W10051050, 2 đợt 1-2 bài; capture bù 864 URL + recapture; ~12,4k bài ngoài phạm vi tự động.
+1. **Cấp quyền Write GitHub**: Tài khoản GitHub cần quyền Write/Collaborator trên `https://github.com/Research-FPA/news-scraper` để thực thi `git push fpa main`.
+2. **Push mã nguồn**: Sau khi có quyền, chạy `git push -u fpa main` (hoặc push cả branch `feature/article-lane-remove-gates`).
+3. **Data Plane**: Toàn bộ data (Silver, work packages, task packets, outputs, sqlite) đã untrack khỏi Git, vận hành qua SharePoint `FRA - Data/news/` và local SSD.
+
