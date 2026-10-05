@@ -326,16 +326,16 @@ def row_paragraphs(row: sqlite3.Row,
     Returns:
         Mảng đoạn văn, rỗng khi không đọc được nội dung nào.
     """
-    try:
-        text = resolve_body_text(
-            source_domain=row["source_domain"], published_at=row["published_at"],
-            article_id=row["article_id"], package_path=row["package_path"],
-            content_text=row["content_text"])
-    except (IndexError, KeyError, TypeError):
+    def _col(name: str):
         try:
-            text = resolve_body_text(package_path=row["package_path"])
+            return row[name]
         except (IndexError, KeyError, TypeError):
-            text = ""
+            return None
+
+    text = resolve_body_text(
+        source_domain=_col("source_domain"), published_at=_col("published_at"),
+        article_id=_col("article_id"), package_path=_col("package_path"),
+        content_text=_col("content_text"))
     if not text:
         return []
     return distill_stats(text, max_tokens=max_tokens)["paragraphs"] or []
