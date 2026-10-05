@@ -77,7 +77,10 @@ def test_vietstock_feed_real_fixture(dedup):
         http, dedup)
     result = scraper.run()
     assert result.fetched > 5
-    assert len(result.new) == result.fetched
+    # Feed thật lặp nguyên URL của ba mục; mỗi bài chỉ được cào một lần trong một chu kỳ.
+    urls = [a.url for a in result.new]
+    assert len(urls) == len(set(urls))
+    assert len(result.new) == result.fetched - 3
     for a in result.new:
         assert a.source_domain == "vietstock.vn"
         assert a.title and a.url.startswith("http")

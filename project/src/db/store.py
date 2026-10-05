@@ -14,6 +14,7 @@ from datetime import datetime
 
 from src.core.config import PROJECT_ROOT, resolve_db_path
 from src.core.models import VN_TZ, Article, normalize_title, now_vn_iso
+from src.db import registry
 
 
 def _is_owner_alive(owner: str) -> bool:
@@ -262,6 +263,103 @@ CREATE TABLE IF NOT EXISTS periodic_reports (
 );
 CREATE INDEX IF NOT EXISTS idx_periodic_period
   ON periodic_reports(source, report_type, period);
+
+-- Sổ phát hiện URL (ADR 0013, rule 10): ghi TRƯỚC mọi bước lọc. Không có trạng thái "đã bỏ".
+CREATE TABLE IF NOT EXISTS discovered_urls (
+  url_canonical TEXT PRIMARY KEY,    -- mã bài của nguồn hoặc URL chuẩn hoá
+  source_domain TEXT NOT NULL,
+  first_url TEXT NOT NULL,
+  first_seen_via TEXT NOT NULL,      -- listing | rss | api | sitemap | reconcile
+  first_seen_at TEXT NOT NULL,
+  last_seen_at TEXT NOT NULL,
+  n_seen INTEGER NOT NULL DEFAULT 1,
+  state TEXT NOT NULL DEFAULT 'discovered',   -- discovered | captured | gone | dead_letter
+  article_hash TEXT,
+  attempts INTEGER NOT NULL DEFAULT 0,
+  last_error TEXT,
+  updated_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_disc_state ON discovered_urls(state, source_domain);
+CREATE TABLE IF NOT EXISTS url_aliases (
+  url TEXT PRIMARY KEY,
+  url_canonical TEXT NOT NULL,
+  seen_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_alias_key ON url_aliases(url_canonical);
+-- Độ phủ thu thập: số bài kênh đối chiếu độc lập báo so với số bài đã có trong kho.
+CREATE TABLE IF NOT EXISTS capture_coverage (
+  day TEXT NOT NULL,
+  source_domain TEXT NOT NULL,
+  ref_n INTEGER NOT NULL,
+  in_db_n INTEGER NOT NULL,
+  missing_n INTEGER NOT NULL,
+  backfilled_n INTEGER NOT NULL DEFAULT 0,
+  checked_at TEXT,
+  PRIMARY KEY (day, source_domain)
+);
+
+-- Cụm câu chuyện (ADR 0016). Bảng phái sinh: dựng lại được từ articles và Silver.
+CREATE TABLE IF NOT EXISTS story_clusters (
+  cluster_id TEXT PRIMARY KEY,
+  canonical_id TEXT NOT NULL,
+  first_seen_at TEXT,
+  last_seen_at TEXT,
+  n_members INTEGER,
+  n_sources INTEGER,
+  built_at TEXT
+);
+CREATE TABLE IF NOT EXISTS cluster_members (
+  article_id TEXT PRIMARY KEY,
+  cluster_id TEXT NOT NULL,
+  role TEXT NOT NULL,                -- canonical | copy | candidate | series
+  method TEXT NOT NULL,              -- sha | shingle | series | single
+  score REAL,
+  evidence TEXT,                     -- JSON: số liệu chung, mã CP chung, containment
+  decided_by TEXT,
+  decided_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_cm_cluster ON cluster_members(cluster_id, role);
+
+-- Tín hiệu insight (ADR 0016). Bảng phái sinh: xoá được, dựng lại bằng signal_build.py.
+CREATE TABLE IF NOT EXISTS signal_daily (
+  entity_id TEXT NOT NULL,
+  trade_date TEXT NOT NULL,
+  n_articles INTEGER,
+  n_sources INTEGER,
+  n_stories INTEGER,
+  share REAL,
+  ama_z REAL,
+  stale_ratio REAL,
+  cascade_minutes REAL,
+  n_updates INTEGER,
+  net_sent_story REAL,
+  net_sent_volume REAL,
+  net_sent_norm REAL,
+  dispersion REAL,
+  sent_shift REAL,
+  first_source TEXT,
+  coverage_pct REAL,
+  built_at TEXT,
+  PRIMARY KEY (entity_id, trade_date)
+);
+CREATE TABLE IF NOT EXISTS entity_links (
+  entity_a TEXT NOT NULL,
+  entity_b TEXT NOT NULL,
+  window_end TEXT NOT NULL,
+  n_co INTEGER,
+  pmi REAL,
+  PRIMARY KEY (entity_a, entity_b, window_end)
+);
+CREATE TABLE IF NOT EXISTS source_profile (
+  source_domain TEXT NOT NULL,
+  window_end TEXT NOT NULL,
+  n INTEGER,
+  pos_rate REAL,
+  neg_rate REAL,
+  lead_rate REAL,
+  original_rate REAL,
+  PRIMARY KEY (source_domain, window_end)
+);
 """
 
 
@@ -321,6 +419,7 @@ class ArticleStore:
             # lam gi (bang chua ton tai) va _SCHEMA tao san du cot.
             self._migrate(conn)
             conn.executescript(_SCHEMA)
+            registry.backfill_from_articles(conn)
             conn.commit()
         finally:
             conn.close()
@@ -552,6 +651,8 @@ class ArticleStore:
             conn = self._connect()
         try:
             cur = conn.execute(_INSERT_SQL, article.to_row())
+            registry.mark_captured(conn, article.url, article.source_domain,
+                                   article.url_title_hash)
             if own:
                 conn.commit()
             return cur.rowcount > 0
@@ -589,6 +690,8 @@ class ArticleStore:
                 "VALUES (?, ?, ?, ?)",
                 [(a.url_title_hash, normalize_title(a.title), a.source_domain, time.time())
                  for a in articles])
+            for a in articles:
+                registry.mark_captured(conn, a.url, a.source_domain, a.url_title_hash)
             conn.commit()
             return inserted
         except sqlite3.Error as e:
@@ -669,6 +772,66 @@ class ArticleStore:
             conn.close()
 
     # -- sổ lỗi derive Bronze→Silver (ADR 0007) --------------------------------
+    @staticmethod
+    def canonical_meta_key(meta_path: str) -> str:
+        """Chuẩn hoá khoá của `silver_failures` về dạng tương đối so với gốc dự án.
+
+        Cùng một tệp Bronze có thể được gọi bằng đường dẫn tuyệt đối hoặc tương đối,
+        dấu gạch chéo xuôi hoặc ngược. Khoá không chuẩn làm dòng lỗi cũ không bao giờ
+        được xoá hay tăng số lần thử, và ghim watermark mãi.
+
+        Args:
+            meta_path: Đường dẫn tệp `.meta.json`.
+
+        Returns:
+            Đường dẫn dùng dấu gạch chéo xuôi, tương đối khi tệp nằm trong gốc dự án.
+        """
+        p = Path(meta_path)
+        if p.is_absolute():
+            try:
+                p = p.relative_to(PROJECT_ROOT)
+            except ValueError:
+                pass
+        return str(p).replace("\\", "/")
+
+    def normalize_silver_failure_keys(self) -> int:
+        """Đưa mọi khoá trong `silver_failures` về dạng chuẩn, gộp các dòng trùng.
+
+        Dòng trùng giữ số lần thử lớn nhất và cờ dead-letter lớn nhất.
+
+        Returns:
+            Số dòng đã đổi khoá hoặc đã gộp.
+        """
+        conn = self._connect()
+        changed = 0
+        try:
+            conn.execute("BEGIN IMMEDIATE")
+            rows = conn.execute("SELECT meta_path FROM silver_failures").fetchall()
+            for (key,) in [(r[0],) for r in rows]:
+                canon = self.canonical_meta_key(key)
+                if canon == key:
+                    continue
+                old = conn.execute("SELECT * FROM silver_failures WHERE meta_path=?",
+                                   (key,)).fetchone()
+                dup = conn.execute("SELECT attempts, dead_letter FROM silver_failures "
+                                   "WHERE meta_path=?", (canon,)).fetchone()
+                if dup:
+                    conn.execute(
+                        "UPDATE silver_failures SET attempts=?, dead_letter=? WHERE meta_path=?",
+                        (max(old["attempts"], dup[0]), max(old["dead_letter"], dup[1]), canon))
+                    conn.execute("DELETE FROM silver_failures WHERE meta_path=?", (key,))
+                else:
+                    conn.execute("UPDATE silver_failures SET meta_path=? WHERE meta_path=?",
+                                 (canon, key))
+                changed += 1
+            conn.commit()
+            return changed
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            conn.close()
+
     def record_silver_failure(self, meta_path: str, fetch_ts: str, error: str,
                               max_attempts: int,
                               url_title_hash: str = "") -> int:
@@ -684,6 +847,7 @@ class ArticleStore:
         Returns:
             Số lần đã thử sau khi tăng.
         """
+        meta_path = self.canonical_meta_key(meta_path)
         conn = self._connect()
         try:
             conn.execute("BEGIN IMMEDIATE")
@@ -709,7 +873,8 @@ class ArticleStore:
         """Xoá tệp khỏi sổ lỗi khi derive thành công, tránh tích tụ rác."""
         conn = self._connect()
         try:
-            conn.execute("DELETE FROM silver_failures WHERE meta_path=?", (meta_path,))
+            conn.execute("DELETE FROM silver_failures WHERE meta_path IN (?, ?)",
+                         (meta_path, self.canonical_meta_key(meta_path)))
             conn.commit()
         finally:
             conn.close()

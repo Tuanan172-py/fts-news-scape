@@ -14,7 +14,9 @@ from loguru import logger
 from src.core.base_scraper import BaseScraper
 from src.core.config import load_watchlist
 from src.core.models import VN_TZ, Article
+from src.core.pagination import paginate_until_known
 from src.core.tickers import tag_tickers
+from src.core.urlnorm import url_key
 from src.processor.extractor import extract_text
 from src.scrapers import register
 from src.scrapers.capture_mixin import CaptureMixin
@@ -48,6 +50,7 @@ class TnckScraper(CaptureMixin, BaseScraper):
         self.template = api.get("url_template", self.API_TEMPLATE)
         self.zones = api.get("zones", [4])
         self.pages_per_cycle = api.get("pages_per_cycle", 1)
+        self.max_pages = api.get("max_pages", 8)
         self.headers = api.get("headers", {"Referer": f"{self.BASE_URL}/"})
         detail = config.get("detail", {})
         self.content_selector = detail.get("content_selector", "div.article__body")
@@ -66,18 +69,25 @@ class TnckScraper(CaptureMixin, BaseScraper):
         self._details_fetched = 0
         items: list[dict] = []
         for zone in self.zones:
-            for page in range(1, self.pages_per_cycle + 1):
+            def fetch_page(page: int, zone=zone) -> list[dict] | None:
                 url = self.template.format(zone=zone, page=page)
                 data = self.http.get_json(url, referer=f"{self.BASE_URL}/",
                                           headers=self.headers,
                                           timeout=self.config.get("timeout", 30))
                 if not data:
                     self.errors.append(f"zone {zone} page {page} fetch failed")
-                    continue
+                    return None
                 contents = (data.get("data") or {}).get("contents") or []
                 if not contents:
                     logger.info("[tnck] zone {} page {} empty", zone, page)
-                items.extend(contents)
+                return contents
+
+            items.extend(paginate_until_known(
+                fetch_page,
+                lambda it: url_key(urljoin(self.BASE_URL, it.get("url") or "")),
+                self.dedup.known_keys,
+                min_pages=self.pages_per_cycle, max_pages=self.max_pages,
+                errors=self.errors, label=f"tnck/zone{zone}"))
         return items
 
     def parse_item(self, raw: dict) -> Article | None:

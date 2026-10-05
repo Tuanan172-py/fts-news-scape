@@ -5,6 +5,7 @@ from __future__ import annotations
 import signal
 import subprocess
 import sys
+import time
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -138,7 +139,38 @@ class Morninger:
         """
         n = self.orch.run_cycle()
         self.run_backfill_deferred()
+        self.run_capture_gap()
         return n
+
+    def run_capture_gap(self) -> int:
+        """Đối chiếu sitemap và cào bù URL thiếu ngay sau capture (rule 10, ADR 0013).
+
+        Pha đối chiếu chỉ chạy khi lần trước đã cũ hơn `gap_reconcile_minutes`. Không chặn
+        cycle nếu lỗi.
+
+        Returns:
+            Exit code của tiến trình con, hoặc -1 nếu không chạy được.
+        """
+        limit = int(self.cfg.get("gap_backfill_limit", 40))
+        budget = int(self.cfg.get("gap_budget_seconds", 120))
+        every = int(self.cfg.get("gap_reconcile_minutes", 30))
+        script = _SCRIPTS_DIR / "capture_reconcile.py"
+        try:
+            proc = subprocess.run(
+                [sys.executable, str(script), "run", "--limit", str(limit),
+                 "--budget", str(budget), "--min-interval-minutes", str(every)],
+                cwd=_project_root, capture_output=True, text=True, timeout=budget + 180,
+                encoding="utf-8", errors="replace",
+            )
+            for line in (proc.stdout or "").strip().splitlines()[-5:]:
+                logger.info("[morninger] capture_gap: {}", line)
+            if proc.returncode != 0:
+                logger.warning("[morninger] capture_gap exit={}: {}",
+                               proc.returncode, proc.stderr[-500:])
+            return proc.returncode
+        except Exception as e:  # noqa: BLE001 — job phụ trợ, không được làm hỏng capture
+            logger.error("[morninger] capture_gap lỗi (bỏ qua): {}", e)
+            return -1
 
     def run_backfill_deferred(self) -> int:
         """Gọi backfill_deferred.py ngay sau capture để bù nội dung đầy đủ cho bài bị
@@ -184,6 +216,7 @@ class Morninger:
             Từ điển báo cáo tiến độ xử lý và thông tin manifest nếu đạt điểm kiểm tra.
         """
         s = rederive_incremental(self.store)
+        self.run_story_cluster()
         if s["checkpoint_reached"]:
             try:
                 from src.export.silver_manifest import export_silver_manifest
@@ -195,6 +228,33 @@ class Morninger:
             except Exception as e:  # noqa: BLE001 — export là tiện ích
                 logger.error("silver manifest export lỗi (bỏ qua): {}", e)
         return s
+
+    def run_story_cluster(self) -> dict:
+        """Cụm hoá trùng lặp và ghi kết quả kế thừa sau derive Silver (ADR 0016).
+
+        Returns:
+            Thống kê cụm hoá và kế thừa; từ điển rỗng nếu lỗi. Không chặn derive.
+        """
+        try:
+            from src.analytics.signals import build_all
+            from src.pipeline.cluster_job import refresh
+
+            conn = self.store._connect()
+            try:
+                stats = refresh(conn, days=int(self.cfg.get("cluster_days", 3)))
+                every = float(self.cfg.get("signal_build_minutes", 30))
+                last = self.store.get_state("signals_last_ts")
+                if last is None or time.time() - float(last) >= every * 60:
+                    built = build_all(conn, days=int(self.cfg.get("signal_days", 30)))
+                    self.store.set_state("signals_last_ts", str(time.time()))
+                    stats["signal_rows"] = len(built["signal_daily"])
+            finally:
+                conn.close()
+            logger.info("[morninger] story_cluster: {}", stats)
+            return stats
+        except Exception as e:  # noqa: BLE001 — job phụ trợ, không được làm hỏng derive
+            logger.error("[morninger] story_cluster lỗi (bỏ qua): {}", e)
+            return {}
 
     def run_reclaim(self) -> int:
         """Nhả các gói công việc kẹt ở `claimed` quá hạn về `pending`.

@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import time
 from abc import ABC, abstractmethod
+from urllib.parse import urlsplit
 
 from loguru import logger
 
+from src.core.htmltitle import extract_page_title
 from src.core.models import Article, ScrapeResult, now_vn_iso
 from src.crawler.http_client import HTTPClient
 from src.db.dedup import DedupCache
@@ -62,15 +64,22 @@ class BaseScraper(ABC):
             if a:
                 articles.append(a)
 
-        fuzzy = self.config.get("fuzzy_dedup", True)
+        # Rule 10 (ADR 0013): ghi sổ phát hiện TRƯỚC mọi bước lọc, và chỉ bỏ bản sao kỹ thuật.
+        # Trùng ngữ nghĩa là việc của bước cụm hoá sau Bronze, không bao giờ loại bài ở đây.
+        via = self.config.get("discovery_via", "listing")
         new = []
+        seen_keys: set[str] = set()
         for a in articles:
-            if self.dedup.is_duplicate(a.url, a.title):
+            key, _is_new, alias_form = self.dedup.discover(a.url, a.source_domain or self.name, via)
+            # Hash đã thấy chỉ đủ để bỏ qua khi sổ phát hiện xác nhận bài đã vào kho. Bài từng bị
+            # đánh dấu đã thấy mà chưa có dòng `articles` (lọc mờ cũ) được lấy lại.
+            if self.dedup.is_duplicate(a.url, a.title) and (not key or self.dedup.is_captured(key)):
                 continue
-            if fuzzy and self.dedup.is_similar_title(a.title, self.name):
-                logger.debug("[{}] fuzzy-dup skipped: {}", self.name, a.title[:60])
-                self.dedup.mark_seen(a.url, a.title, self.name)
+            if key and (key in seen_keys or (alias_form and self.dedup.is_captured(key))):
+                logger.debug("[{}] url alias skipped: {}", self.name, a.url[:80])
                 continue
+            if key:
+                seen_keys.add(key)
             new.append(a)
 
         for a in new:
@@ -113,3 +122,46 @@ class BaseScraper(ABC):
         Args:
             article: Đối tượng Article cần bổ sung nội dung.
         """
+
+    def article_from_url(self, url: str) -> Article | None:
+        """Dựng Article tối thiểu từ một URL bằng cách đọc tiêu đề trang chi tiết.
+
+        Args:
+            url: URL bài viết do sổ phát hiện hoặc kênh đối chiếu cung cấp.
+
+        Returns:
+            Article có tiêu đề hợp lệ, hoặc None khi không tải được hay không tìm ra tiêu đề.
+        """
+        host = urlsplit(url).netloc.lower().removeprefix("www.")
+        html = self.http.get(url, referer=f"https://{host}/",
+                             timeout=self.config.get("timeout", 30))
+        if not html:
+            return None
+        title = extract_page_title(html)
+        if not title:
+            return None
+        return Article(url=url, title=title, source_domain=host,
+                       metadata={"language": self.config.get("language", "vi"),
+                                 "backfill": True})
+
+    def backfill_url(self, url: str) -> Article | None:
+        """Cào một bài theo URL qua đúng đường enrich và Bronze của scraper này.
+
+        Args:
+            url: URL bài viết cần lấy.
+
+        Returns:
+            Article đã bổ sung nội dung và `processed_at`, hoặc None khi không dựng được bài.
+        """
+        article = self.article_from_url(url)
+        if article is None:
+            return None
+        if hasattr(self, "_details_fetched"):
+            self._details_fetched = 0
+        try:
+            self.enrich(article)
+        except Exception as e:
+            logger.warning("[{}] backfill enrich failed for {}: {}", self.name, url, e)
+            self.errors.append(f"backfill enrich {url}: {e}")
+        article.processed_at = now_vn_iso()
+        return article

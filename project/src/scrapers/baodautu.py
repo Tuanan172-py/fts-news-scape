@@ -15,7 +15,10 @@ from loguru import logger
 
 from src.core.base_scraper import BaseScraper
 from src.core.config import load_watchlist
+from src.core.htmltitle import extract_page_title, is_valid_title
 from src.core.models import VN_TZ, Article
+from src.core.pagination import paginate_until_known
+from src.core.urlnorm import url_key
 from src.core.tickers import tag_tickers
 from src.processor.extractor import extract_text
 from src.scrapers import register
@@ -54,6 +57,20 @@ def _parse_detail_date(html: str, scope_selector: str) -> str:
         return ""
 
 
+def _slug_title(href: str) -> str:
+    """Dựng tiêu đề tạm từ slug URL khi listing không có tiêu đề hợp lệ.
+
+    Args:
+        href: Đường dẫn bài viết dạng `/ten-bai-d123456.html`.
+
+    Returns:
+        Chuỗi các từ trong slug, đã bỏ mã bài `-d<số>`.
+    """
+    slug = href.rstrip("/").rsplit("/", 1)[-1]
+    slug = re.sub(r"-d\d+\.html.*$", "", slug)
+    return slug.replace("-", " ").strip()
+
+
 @register("baodautu")
 class BaodautuScraper(CaptureMixin, BaseScraper):
     """Bộ thu thập dữ liệu báo Báo Đầu Tư thông qua trích xuất danh mục HTML.
@@ -79,6 +96,7 @@ class BaodautuScraper(CaptureMixin, BaseScraper):
         listing = config.get("listing", {}) or {}
         self.categories = listing.get("categories", [])
         self.pages_per_cycle = listing.get("pages_per_cycle", 1)
+        self.max_pages = listing.get("max_pages", 8)
         self.item_selector = listing.get("item_selector", "article")
         self.link_selector = listing.get("link_selector", "a[href]")
         self.sapo_selector = listing.get(
@@ -123,16 +141,26 @@ class BaodautuScraper(CaptureMixin, BaseScraper):
             href = title = ""
             for a in b.select(self.link_selector):
                 cand_href = (a.get("href") or "").strip()
-                cand_title = a.get_text(" ", strip=True)
-                if cand_href and cand_title and self.link_pattern.search(cand_href):
+                if not cand_href or not self.link_pattern.search(cand_href):
+                    continue
+                img = a.find("img")
+                cand_title = max(
+                    (a.get_text(" ", strip=True), a.get("title") or "",
+                     (img.get("alt") or "") if img else ""), key=len).strip()
+                if len(cand_title) > len(title) or not href:
                     href, title = cand_href, cand_title
-                    break
-            if not href or not title:
+            if not href:
+                continue
+            from_slug = not is_valid_title(title)
+            if from_slug:
+                title = _slug_title(href)
+            if not title:
                 continue
             sapo_node = b.select_one(self.sapo_selector)
             out.append({
                 "link": href,
                 "title": title,
+                "_title_from_slug": from_slug,
                 "sapo": sapo_node.get_text(" ", strip=True) if sapo_node else "",
                 "_cat_name": cat.get("name", ""),
                 "_listing_url": listing_url,
@@ -148,17 +176,24 @@ class BaodautuScraper(CaptureMixin, BaseScraper):
         self._details_fetched = 0
         items: list[dict] = []
         for cat in self.categories:
-            for page in range(1, self.pages_per_cycle + 1):
+            def fetch_page(page: int, cat=cat) -> list[dict] | None:
                 url = self._page_url(cat["slug"], cat["id"], page)
                 html = self.http.get(url, referer=f"{self.base_url}/",
                                      timeout=self.config.get("timeout", 30))
                 if html is None:
                     self.errors.append(f"listing fetch failed: {url}")
-                    continue
+                    return None
                 found = self._parse_listing(html, cat, url)
-                if not found:
+                if not found and page == 1:
                     self.errors.append(f"listing 0 items (template drift?): {url}")
-                items.extend(found)
+                return found
+
+            items.extend(paginate_until_known(
+                fetch_page,
+                lambda it: url_key(urljoin(self.base_url + "/", it["link"])),
+                self.dedup.known_keys,
+                min_pages=self.pages_per_cycle, max_pages=self.max_pages,
+                errors=self.errors, label=f"baodautu/{cat.get('name', cat.get('slug'))}"))
         return items
 
     def parse_item(self, raw: dict) -> Article | None:
@@ -185,7 +220,8 @@ class BaodautuScraper(CaptureMixin, BaseScraper):
             symbols=tag_tickers(f"{title} {summary}", self.watchlist),
             categories=[cat] if cat else [],
             metadata={"language": self.language,
-                      "listing_url": raw.get("_listing_url", "")},
+                      "listing_url": raw.get("_listing_url", ""),
+                      **({"title_from_slug": True} if raw.get("_title_from_slug") else {})},
         )
 
     # -- detail -------------------------------------------------------------
@@ -204,6 +240,8 @@ class BaodautuScraper(CaptureMixin, BaseScraper):
         if html is None:
             return
         self._details_fetched += 1
+        if article.metadata.pop("title_from_slug", False):
+            article.title = extract_page_title(html) or article.title
 
         article.published_at = _parse_detail_date(html, self.date_scope)
         if not article.published_at:

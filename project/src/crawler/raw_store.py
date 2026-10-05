@@ -12,6 +12,8 @@ from urllib.parse import urljoin, urlparse
 from bs4 import BeautifulSoup
 from loguru import logger
 
+from src.core.config import PROJECT_ROOT, resolve_project_path
+
 # Bộ lọc header cần giữ lại nhằm đảm bảo vệ sinh dữ liệu bảo mật.
 _HEADER_WHITELIST = ("content-type", "content-length", "last-modified",
                      "etag", "server", "date")
@@ -24,11 +26,35 @@ class RawStore:
     """Lớp quản lý lưu trữ dữ liệu thô Bronze byte-exact và siêu dữ liệu đi kèm.
 
     Attributes:
-        base_dir: Đường dẫn thư mục gốc lưu trữ dữ liệu thô Bronze.
+        base_dir: Đường dẫn tuyệt đối của thư mục gốc lưu trữ dữ liệu thô Bronze.
     """
 
     def __init__(self, base_dir: str = "data/raw_html"):
-        self.base_dir = base_dir
+        """Khởi tạo kho Bronze, neo đường dẫn tương đối vào gốc dự án.
+
+        Đường dẫn tương đối không được hiểu theo thư mục làm việc hiện hành, vì một
+        tiến trình chạy ở gốc repo sẽ ghi Bronze ra ngoài nơi Silver đọc.
+
+        Args:
+            base_dir: Thư mục gốc Bronze, tuyệt đối hoặc tương đối so với gốc dự án.
+        """
+        self.base_dir = str(resolve_project_path(base_dir))
+
+    @staticmethod
+    def _portable_path(path: str) -> str:
+        """Đưa đường dẫn trong gốc dự án về dạng tương đối để ghi vào tệp meta.
+
+        Args:
+            path: Đường dẫn tệp Bronze.
+
+        Returns:
+            Đường dẫn tương đối so với gốc dự án khi tệp nằm trong đó, ngược lại giữ nguyên.
+        """
+        try:
+            return os.path.relpath(path, PROJECT_ROOT) if os.path.commonpath(
+                [os.path.abspath(path), str(PROJECT_ROOT)]) == str(PROJECT_ROOT) else path
+        except ValueError:
+            return path
 
     @staticmethod
     def _yyyymmdd(fetched_at: str) -> str:
@@ -65,6 +91,25 @@ class RawStore:
         d = os.path.join(self.base_dir, domain, self._yyyymmdd(fetched_at))
         base = os.path.join(d, url_title_hash)
         return f"{base}.html", f"{base}.meta.json"
+
+    @staticmethod
+    def _has_good_capture(html_path: str, meta_path: str) -> bool:
+        """Kiểm đã có bản cào tốt (`ok` hoặc `partial`) cùng tệp HTML tại đường dẫn này.
+
+        Args:
+            html_path: Đường dẫn tệp HTML Bronze.
+            meta_path: Đường dẫn tệp meta Bronze.
+
+        Returns:
+            True khi meta đọc được, trạng thái là `ok` hoặc `partial` và HTML còn đó.
+        """
+        if not (os.path.exists(html_path) and os.path.exists(meta_path)):
+            return False
+        try:
+            with open(meta_path, encoding="utf-8") as f:
+                return json.load(f).get("capture_status") in ("ok", "partial")
+        except (OSError, ValueError):
+            return False
 
     @staticmethod
     def _write_atomic(path: str, data: bytes) -> None:
@@ -187,7 +232,8 @@ class RawStore:
                             "protection_mechanism": protection}
             if not cap["missing"]:
                 cap["missing"] = ["article_body"]
-            self._write_meta(meta_path, cap)
+            if not self._has_good_capture(html_path, meta_path):
+                self._write_meta(meta_path, cap)
             return cap
 
         status = getattr(response, "status_code", None)
@@ -216,6 +262,9 @@ class RawStore:
                 cap["capture_status"] = "deleted_at_source"
             if not cap["missing"]:
                 cap["missing"] = ["article_body"]
+            # Lần cào lỗi không được ghi đè bản cào tốt đã có: Bronze bất biến.
+            if self._has_good_capture(html_path, meta_path):
+                return cap
             if len(body) > 0:  # partial body vẫn lưu để inspect
                 self._write_atomic(html_path, body)
                 cap["content_sha256"] = hashlib.sha256(body).hexdigest()
@@ -306,5 +355,8 @@ class RawStore:
         return cap
 
     def _write_meta(self, path: str, cap: dict) -> None:
-        data = json.dumps(cap, ensure_ascii=False, indent=2).encode("utf-8")
+        portable = dict(cap)
+        if portable.get("html_path"):
+            portable["html_path"] = self._portable_path(portable["html_path"])
+        data = json.dumps(portable, ensure_ascii=False, indent=2).encode("utf-8")
         self._write_atomic(path, data)
