@@ -7,7 +7,7 @@ users/output/
 # Cảnh báo entity nhập sai (auto) — KHÔNG commit
 users/subscriptions/_unknown/
 users/input/*/_unknown.txt
-# GIỮ commit: users/subscriptions/*.csv, users/subscriptions/manifest.yaml, users/subscriptions/_template_news.csv
+# GIỮ commit: users/subscriptions/manifest.yaml. File đăng ký .xlsx của chuyên viên là dữ liệu, lưu ở SharePoint
 
 
 # Runtime data
@@ -92,5 +92,8 @@ other/meeting-minutes/
 **/data/entities/*.xlsx
 **/data/labeled/
 project/reports/
-reports/
+/reports/
 project/.git/
+.code-review-graph/
+# Tài liệu tham khảo dạng bảng là dữ liệu, không commit
+project/thamkhao/**/*.csv

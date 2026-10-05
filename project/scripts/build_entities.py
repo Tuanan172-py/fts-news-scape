@@ -5,6 +5,7 @@ import argparse
 import csv
 import io
 import json
+import os
 import re
 import sys
 import unicodedata
@@ -26,9 +27,11 @@ force_utf8_stdio()
 # ----------------------------------------------------------------------------
 # Cấu hình đường dẫn mặc định
 # ----------------------------------------------------------------------------
+# Thứ tự ưu tiên: biến môi trường FRA_DATA_ROOT, thư mục đồng bộ SharePoint của
+# người dùng hiện tại, rồi thư mục cạnh kho mã.
 _POSSIBLE_DATA_ROOTS = [
-    Path(r"C:\Users\anpt\OneDrive - fpts.com.vn\FRA - Data"),
-    Path(r"C:\Users\An Thanh Pham\OneDrive - fpts.com.vn\FRA - Data"),
+    *([Path(os.environ["FRA_DATA_ROOT"])] if os.environ.get("FRA_DATA_ROOT") else []),
+    Path.home() / "OneDrive - fpts.com.vn" / "FRA - Data",
     Path(__file__).resolve().parents[2] / "FRA - Data",
 ]
 DEFAULT_DATA_ROOT = next((p for p in _POSSIBLE_DATA_ROOTS if p.exists()), _POSSIBLE_DATA_ROOTS[0])
