@@ -26,5 +26,5 @@
 > - `FRA - Data` = teamsite `sites/FRA/Data` qua shortcut OneDrive, Files On-Demand chỉ-trên-mây. ADR 0020 (proposed): xuất bản một chiều, chỉ thêm, manifest SHA256, thang L0/L1/L2.
 
 1. Người vận hành push snapshot lên `fpa` (lệnh trên). Sau đó phát triển trên nhánh tách từ `fpa/main`.
-2. Duyệt ADR 0020 và trả lời ba câu hỏi mở ở §4 (quyền ghi `sites/FRA/Data`, tài khoản dịch vụ, hạn mức).
+2. Duyệt ADR 0020 và trả lời ba câu hỏi mở ở §6 của ADR 0020 (quyền ghi `sites/FRA/Data`, tài khoản dịch vụ, hạn mức).
 3. PR kế tiếp trên kho tổ chức: cách ly test (`conftest.py`), rồi `core/paths.py` làm nguồn đường dẫn duy nhất, rồi chuyển dữ liệu nóng khỏi OneDrive trong khung dừng daemon.

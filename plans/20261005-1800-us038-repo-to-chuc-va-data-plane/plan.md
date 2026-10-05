@@ -27,7 +27,7 @@ Mã phụ trách: **N** = người vận hành, **A** = agent.
 |---|---|---|---|---|
 | N1 | N | Push snapshot lên kho tổ chức | — | `main` trên GitHub có commit df021e6 |
 | N2 | N | Chuyển `raw_html` cũ vào archive | — | `C:\data\news-scape\raw_html` không còn |
-| N3 | N | Duyệt ADR 0020, trả lời 3 câu hỏi, tạo thư mục `news/` | — | ADR chuyển `accepted`, thư mục `FRA - Data\news` tồn tại và ghi được |
+| N3 | N | Duyệt ADR 0020, trả lời 3 câu hỏi ở §6, tạo thư mục `news/` | — | ADR chuyển `accepted`, thư mục `FRA - Data\news` tồn tại và ghi được |
 | A1 | A | Chuyển nhánh làm việc sang `fpa/main` | N1 | Nhánh `dev/us038` tách từ `fpa/main`, có đủ commit sau snapshot |
 | A2 | A | PR-1: cách ly test | A1 | `pytest tests/` toàn bộ xanh. `monocle.db` thật không đổi `mtime` sau khi chạy |
 | A3 | A | PR-2: `core/paths.py` làm nguồn đường dẫn duy nhất; packet ghi đường dẫn tương đối; script chuyển đổi đường dẫn trong DB (có `--dry-run`) | A2 | Không còn `"data/..."` tự ghép ngoài `paths.py`. Test xanh. Script chạy `--dry-run` in đúng số dòng cần đổi |
