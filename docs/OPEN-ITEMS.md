@@ -8,6 +8,22 @@
 
 ---
 
+## REPO-1. Mã lên kho tổ chức, dữ liệu lên SharePoint (ADR 0020, US-038) — việc còn lại, 2026-10-05
+
+Kế hoạch và hướng dẫn từng bước: [`plans/20261005-1800-us038-repo-to-chuc-va-data-plane/plan.md`](../plans/20261005-1800-us038-repo-to-chuc-va-data-plane/plan.md).
+
+| Mục | Ai | Việc | Trạng thái |
+|---|---|---|---|
+| N1 | Người | `git push fpa import/clean-20261005:refs/heads/main` | CHẶN mọi bước sau |
+| N2 | Người | Chuyển `C:\data\news-scape\raw_html` cũ vào archive | Chờ |
+| N3 | Người | Duyệt ADR 0020, kiểm quyền ghi `sites/FRA/Data`, tạo `news/` | CHẶN A4 |
+| A1–A3 | Agent | Chuyển nhánh sang `fpa/main`, cách ly test, `core/paths.py` | Chờ N1 |
+| N4 | Người + agent | Khung chuyển đổi: mã sang `C:\src\news-scraper`, dữ liệu sang `C:\data\news-scape` | Chờ A3 |
+| A4, N5 | Agent, người | Publisher L1 và kiểm lần xuất bản đầu | Chờ N3, N4 |
+| N6, N7 | Người | Ngừng đồng bộ thư mục mã cũ sau 14 ngày; xin ứng dụng Graph cho L2 | Sau |
+
+---
+
 ## CON-1. Hợp đồng đầu ra thống nhất cho mọi provider (ADR 0017, US-034) — việc còn lại, 2026-10-05
 
 Đã làm: schema `article-compact-v2` và module `article_contract.py` (nguồn chân lý), bộ kiểm dùng chung cho agy, openrouter, opencode và bộ bung, gỡ mặc định ngữ nghĩa ở expander, một khung đầu vào, tham số chuẩn, meta bắt buộc, lô chuẩn 50, `--analyze` từ chối runner lạ, `provider_conformance.py`, prefix và rule 11.
