@@ -370,6 +370,22 @@ def cmd_repair(args: argparse.Namespace) -> int:
         except (OSError, ValueError):
             continue
     fresh_paras = fresh_wave_paragraphs(wave_ids)
+    # Bài đã có nội dung đạt trong DB thì không cần chạy lại dù packet cũ: bản
+    # ghi của nó đã qua cổng và nằm trong độ phủ của đợt.
+    passing: set[str] = set()
+    try:
+        import sqlite3 as _sqlite3
+
+        _conn = _sqlite3.connect(f"file:{resolve_db_path()}?mode=ro", uri=True)
+        try:
+            for _row in _conn.execute(
+                    "SELECT article_id, MAX(dod_pass) FROM agent_outputs GROUP BY article_id"):
+                if _row[1]:
+                    passing.add(_row[0])
+        finally:
+            _conn.close()
+    except Exception:
+        passing = set()
     # Một bài thiếu ở nhiều thế hệ packet (gốc + các lô vá) chỉ được đóng gói bù
     # đúng một lần trong một lần chạy: packet duyệt trước (thế hệ cũ hơn, xếp trước
     # theo thứ tự tên) giữ bài, các thế hệ sau bỏ qua. Không có tập này, một lần
@@ -379,9 +395,12 @@ def cmd_repair(args: argparse.Namespace) -> int:
     for packet_path in packets:
         batch_id = Path(packet_path).name.replace(".task.json", "")
         missing, packet, mapping = missing_indices(batch_id)
+        # Gói làm mới sinh bản ghi thay thế cho bản cũ: bài thiếu bản ghi trong
+        # gói này thì đóng lại kể cả khi nó đã có bản ghi cũ ở gói khác.
+        is_refresh = (mapping.get("kind") == "refresh")
         fresh = [i for i in missing
-                 if mapping["index"][i] not in received
-                 and mapping["index"][i] not in claimed]
+                 if mapping["index"][i] not in claimed
+                 and (is_refresh or mapping["index"][i] not in received)]
         if not fresh:
             continue
         for i in fresh:
@@ -412,14 +431,14 @@ def cmd_repair(args: argparse.Namespace) -> int:
         repairs.append({"batch_id": rid, "path": str(rpath), "n": len(items),
                         "windows": budget["windows"], "from": batch_id})
 
-    # Làm mới packet cũ: bài đã có bản ghi nhưng packet mang dưới hai đoạn văn
-    # đạt độ dài trích dẫn trong khi Silver hiện tại đã đủ (packet đóng lúc
-    # Silver chưa có, chỉ còn đoạn trích RSS ngắn). Dưới hai đoạn thì cổng cũ
-    # không dựng được nội dung, và trích dẫn cũ cũng không đối chiếu được vào
-    # thân mới — vá quanh bản ghi cũ chỉ thêm vòng hỏng. Bài packet đủ đoạn thì
-    # không đụng tới để khỏi đốt token trùng lặp. Nhóm theo packet gốc, mỗi gói
-    # vá tối đa 25 bài để vừa trần đầu ra của provider miễn phí.
+    # Làm mới packet cũ: bài chưa có nội dung đạt trong DB mà thân Silver hiện
+    # tại giàu đoạn văn hơn hẳn packet đang giữ (packet đóng lúc Silver chưa có,
+    # chỉ còn đoạn trích RSS ngắn). Trích dẫn cũ không đối chiếu được vào thân
+    # mới nên vá quanh bản ghi cũ chỉ thêm vòng hỏng. Bài đã đạt thì không đụng
+    # tới để khỏi đốt token trùng lặp. Nhóm theo packet gốc, mỗi gói vá tối đa
+    # 25 bài để vừa trần đầu ra của provider miễn phí.
     stale_by_batch: dict[str, list[tuple[str, dict]]] = {}
+    refreshed: set[str] = set()
     for packet_path in packets:
         batch_id = Path(packet_path).name.replace(".task.json", "")
         try:
@@ -430,15 +449,18 @@ def cmd_repair(args: argparse.Namespace) -> int:
             continue
         arts = {str(a.get("i")): a for a in (packet.get("a") or [])}
         for old_i, article_id in (mapping.get("index") or {}).items():
-            if article_id not in received or article_id in claimed:
+            if article_id in claimed:
+                continue
+            if article_id in passing or article_id in refreshed:
                 continue
             current = fresh_paras.get(article_id)
             if not current or _eligible(current) < 2:
                 continue
             src = arts.get(str(old_i)) or {}
-            if _eligible(src.get("p", [])) >= 2:
+            if _eligible(current) <= _eligible(src.get("p", [])):
                 continue
             stale_by_batch.setdefault(batch_id, []).append((old_i, src))
+            refreshed.add(article_id)
     total_refresh = 0
     for batch_id, stale in sorted(stale_by_batch.items()):
         try:
@@ -796,8 +818,11 @@ def cmd_finish(args: argparse.Namespace) -> int:
         if manifest.get("est_miss_total") is not None:
             ledger_cmd += ["--est-miss", str(manifest["est_miss_total"]),
                            "--est-out", str(manifest["est_out_total"])]
-        if getattr(args, "runner", "dsh") == "agy" or manifest.get("runner") == "agy":
-            ledger_cmd += ["--source", "agy"]
+        runner = getattr(args, "runner", "dsh")
+        if runner in ("agy", "openrouter"):
+            ledger_cmd += ["--source", runner]
+        elif manifest.get("runner") in ("agy", "openrouter"):
+            ledger_cmd += ["--source", manifest["runner"]]
         if run(ledger_cmd, check=False) != 0:
             soft.append("sổ cái token không ghi được dòng mới")
 
@@ -1036,6 +1061,12 @@ def main(argv=None) -> int:
                     help="Tệp định danh bài không được đóng gói (ops_daemon giữ chỗ)")
     ap.add_argument("--analyze", action="store_true",
                     help="Chạy phân tích trực tiếp cho các lô của wave (dùng cho --runner agy)")
+    ap.add_argument("--mode", choices=["backlog", "bench", "adhoc"],
+                    help="Chế độ chạy tay: backlog (dọn bài tồn, nạp DB), bench (thử agent, "
+                         "không nạp DB, đầu ra ở data/agent_bench/<đợt>), adhoc. Daemon phát "
+                         "lệnh thì bỏ qua")
+    ap.add_argument("--force", action="store_true",
+                    help="Bỏ qua kiểm va chạm với đợt daemon đang chạy và khoá provider")
     args = ap.parse_args(argv)
 
     if args.where:
@@ -1047,6 +1078,48 @@ def main(argv=None) -> int:
     if args.only and not args.finish:
         ap.error("--only chỉ dùng cùng --finish")
 
+    from src.ops import manual
+
+    manifest_exists = (TASK_DIR / f"wave_{args.wave}.json").exists()
+    phase = ("finish" if args.finish else "repair" if args.repair else
+             "analyze" if args.analyze and manifest_exists else "prepare")
+    gate = manual.begin(args.wave, args.mode, phase, args.runner, force=args.force,
+                        target_date=args.date)
+    if gate.refusal:
+        print(f"❌ {gate.refusal}")
+        return 3
+    if gate.store is not None and gate.mode == "bench":
+        global OUT_DIR
+        OUT_DIR = gate.bench_dir
+        OUT_DIR.mkdir(parents=True, exist_ok=True)
+    if gate.store is not None and phase == "prepare" and not args.exclude_file:
+        held = gate.exclude_ids()
+        if held:
+            excl = TASK_DIR / f"exclude_{args.wave}.txt"
+            excl.write_text("\n".join(sorted(held)), encoding="utf-8")
+            args.exclude_file = str(excl)
+    rc = 1
+    try:
+        rc = _dispatch(args)
+        return rc
+    finally:
+        ids = None
+        if phase == "prepare":
+            ids = lambda: sorted(wave_article_ids(args.wave))  # noqa: E731
+        elif phase == "repair":
+            ids = lambda: sorted(set(wave_article_ids(args.wave)) - wave_received_ids(args.wave))  # noqa: E731
+        gate.finish(rc, ids)
+
+
+def _dispatch(args: argparse.Namespace) -> int:
+    """Chạy đúng nửa của đợt theo cờ dòng lệnh.
+
+    Args:
+        args: Tham số dòng lệnh đã phân tích.
+
+    Returns:
+        Mã thoát của nửa đã chạy.
+    """
     if args.analyze and not args.finish and not args.repair and not args.resume:
         manifest_path = TASK_DIR / f"wave_{args.wave}.json"
         if not manifest_path.exists():

@@ -109,6 +109,47 @@ class OpenRouterRunner:
         max_attempts: int = 2,
         force: bool = False,
     ) -> OpenRouterExecutionResult:
+        """Chạy một lô và ghi vết span `agent` khi có ngữ cảnh ghi vết.
+
+        Args:
+            batch_id: Mã định danh của lô bài viết.
+            task_path: Đường dẫn tệp packet đầu vào (.task.json).
+            out_dir: Thư mục lưu trữ kết quả đầu ra.
+            max_attempts: Số lần thử lại tối đa khi gặp lỗi có thể khôi phục.
+            force: Buộc chạy lại kể cả khi lô đã có kết quả đầu ra.
+
+        Returns:
+            Đối tượng kết quả thực thi chi tiết.
+        """
+        from src.ops import trace as tracing
+
+        parent = os.environ.get(tracing.ENV_PARENT)
+        with tracing.span(f"lô {batch_id}", "agent", "article-processor",
+                          span_id=f"{parent}/{batch_id}" if parent else None,
+                          batch=batch_id, model=self.model, entrypoint="openrouter chat",
+                          input_ref=str(task_path)) as sp:
+            res = self._run_batch_impl(batch_id, task_path, out_dir, max_attempts, force)
+            sp.set(runner_status=res.status, items=len(res.records), usage=res.usage,
+                   latency_s=round(res.latency_seconds, 2),
+                   error=(res.error_message or "")[:200], tool_invoked=False,
+                   denied_actions=False,
+                   output_ref=str(out_dir / f"{batch_id}.output.json") if res.records else None)
+            if res.status == "PARTIAL":
+                sp.status = "partial"
+            elif res.status == "TIMEOUT":
+                sp.status = "timeout"
+            elif not res.ok:
+                sp.status = "fail"
+            return res
+
+    def _run_batch_impl(
+        self,
+        batch_id: str,
+        task_path: Path,
+        out_dir: Path,
+        max_attempts: int = 2,
+        force: bool = False,
+    ) -> OpenRouterExecutionResult:
         """Gửi một lô bài viết tới OpenRouter API và lưu trữ kết quả phân tích.
 
         Args:

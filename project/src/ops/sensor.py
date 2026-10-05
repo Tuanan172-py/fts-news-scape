@@ -138,6 +138,19 @@ def in_windows(now: datetime, windows: list[str]) -> str | None:
     return None
 
 
+def cooldown_active(until: str | None, *, now: datetime | None = None) -> bool:
+    """Cho biết sensor còn trong thời gian nghỉ sau đợt hỏng hay không.
+
+    Args:
+        until: Mốc hết nghỉ dạng ISO, hoặc None khi không có.
+        now: Thời điểm xét, mặc định là hiện tại.
+
+    Returns:
+        True khi `until` còn ở tương lai.
+    """
+    return bool(until) and (now or now_vn()) < parse_iso(until)
+
+
 def decide(reading: SensorReading, cfg: dict, *, now: datetime | None = None,
            force: bool = False) -> tuple[bool, str, str]:
     """Áp ba luật kích hoạt T1 khối lượng, T2 tuổi, T3 khung giờ.

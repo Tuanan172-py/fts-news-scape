@@ -6,6 +6,7 @@ kèm siêu dữ liệu nguồn thành tệp tin JSON tự mô tả.
 
 from __future__ import annotations
 
+from src.core.config import resolve_project_path
 import json
 import os
 
@@ -83,7 +84,8 @@ def write_package(package: dict, base_dir: str = "data/work_packages") -> str:
         parts = package["raw_html_path"].replace("\\", "/").split("/")
         if len(parts) >= 2:
             yyyymmdd = parts[-2]
-    directory = os.path.join(base_dir, domain, yyyymmdd or "unknown-date")
+    directory = os.path.join(str(resolve_project_path(base_dir)), domain,
+                             yyyymmdd or "unknown-date")
     os.makedirs(directory, exist_ok=True)
     path = os.path.join(directory, f"{package['article_id']}.json")
     _atomic_write(path, json.dumps(package, ensure_ascii=False, indent=2).encode("utf-8"))

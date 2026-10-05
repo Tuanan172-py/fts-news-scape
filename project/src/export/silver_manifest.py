@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from src.core.config import resolve_project_path
 import csv
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -78,7 +79,7 @@ def query_manifest(
 def _auto_name(today: bool, days: int | None) -> Path:
     stamp = f"{datetime.now(VN_TZ):%Y%m%d}"
     suffix = "-today" if today else (f"-{days}d" if days else "")
-    return Path(EXPORT_DIR) / f"silver-{stamp}{suffix}.csv"
+    return Path(resolve_project_path(EXPORT_DIR)) / f"silver-{stamp}{suffix}.csv"
 
 
 def export_silver_manifest(

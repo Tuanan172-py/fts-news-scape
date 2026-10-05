@@ -36,6 +36,7 @@
 | **Cognitive (agent)** | Tác nhân là mô hình ngôn ngữ, có phí token, chạy một lượt, không có công cụ. Hiện có `article-processor`; các tác nhân khác ở trạng thái `draft`. |
 | **Conductor** | Tác nhân điều phối: quyết định bước kế tiếp và chính sách đợt. Hiện thực bằng `ops_daemon` (`master-orchestrator`). |
 | **Registry** | `.agents/registry.yaml`, nguồn chân lý về tác nhân tồn tại. Tác nhân không có mục trong registry thì không tồn tại về mặt vận hành. |
+| **Luồng** | Nhóm đợt chạy độc lập: tự động (daemon), bài tồn (chạy tay, nạp DB), thử nghiệm (chạy tay, không nạp DB). Mỗi luồng tối đa một đợt đang chạy. |
 | **Pipeline** | `.agents/pipeline.yaml`, khai báo luồng điều phối: stage, tác nhân phụ trách, cổng. |
 | **Skill** | Gói tri thức `SKILL.md` của một tác nhân. Tác nhân lúc chạy không nạp skill động; skill là phần nội dung đã nhúng vào persona. |
 | **Mandate** | Uỷ quyền vận hành có hạn do người cấp (`/level L1`), lưu ở `agy_standing_order.yaml`. Tự gia hạn khi hệ thống khoẻ. Tên cũ: *standing order*. |

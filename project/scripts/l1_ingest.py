@@ -58,6 +58,15 @@ def main(argv: list[str]) -> int:
         # Không có nó thì agent trả cả lô trong 1 file là ingest hỏng im lặng.
         items = unpack_batch_output(path)
         if not items:
+            # Tệp mảng rỗng hợp lệ (mọi hàng đã dồn sang lô vá mới hơn) thì bỏ
+            # qua im lặng: không có gì để nạp không phải là lỗi nạp.
+            try:
+                empty_ok = json.loads(Path(path).read_text(encoding="utf-8")) == []
+            except (OSError, ValueError):
+                empty_ok = False
+            if empty_ok:
+                print(f"SKIP   {path}: tệp rỗng sau khi dồn hàng sang lô mới")
+                continue
             failed += 1
             print(f"FAILED {path}: không đọc được l1-entity-output (thiếu article_id)")
             continue

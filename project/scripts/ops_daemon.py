@@ -286,7 +286,9 @@ def cmd_send(args: argparse.Namespace) -> int:
 
     paths = resolve_paths()
     store = OpsStore(paths.ops_db)
-    cid = store.enqueue_command(" ".join(args.text), actor="cli")
+    from src.ops.commands import normalize_command
+
+    cid = store.enqueue_command(normalize_command(" ".join(args.text)), actor="cli")
     for _ in range(30):
         row = store.command(cid)
         if row and row["status"] != "pending":

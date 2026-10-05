@@ -380,3 +380,63 @@ def test_finalize_not_done_skips_deliver(env):
     assert steps.finalize(spec, "FAILED", "hong", counts_as_failure=True) == "FAILED"
     assert steps.finalize(spec, "DONE", "rong", counts_as_failure=False, clean=False) == "DONE"
     assert calls == []
+
+
+def test_git_bash_path_is_restored_to_command(env):
+    cfg, paths, store = env
+    ctl = FakeController(cfg, paths, store)
+    assert commands.normalize_command("C:/Program Files/Git/retry W1") == "/retry W1"
+    assert commands.normalize_command(r"C:\Program Files (x86)\Git\pause") == "/pause"
+    commands.execute("C:/Program Files/Git/pause", ctl)
+    assert store.get_state("paused") == "1"
+    assert [e for e in store.events(limit=20) if e["kind"] == "human.command"
+            and e["message"].endswith("/pause")]
+
+
+def test_path_like_command_is_rejected_and_not_audited_as_command(env):
+    cfg, paths, store = env
+    ctl = FakeController(cfg, paths, store)
+    reply = commands.execute("D:/tools/run something", ctl)
+    assert "không hợp lệ" in reply.text
+    kinds = [e["kind"] for e in store.events(limit=20)]
+    assert "human.command_rejected" in kinds and "human.command" not in kinds
+    assert store.get_state("paused") != "1"
+
+
+def test_probe_coverage_flags_gap_and_passes_when_complete(tmp_path):
+    import sqlite3
+
+    from src.ops.probes import probe_coverage
+    from src.ops.store import now_vn
+
+    db = tmp_path / "m.db"
+    conn = sqlite3.connect(db)
+    conn.executescript("""
+        CREATE TABLE capture_coverage(day TEXT, source_domain TEXT, ref_n INT, in_db_n INT,
+            missing_n INT, backfilled_n INT, checked_at TEXT);
+        CREATE TABLE discovered_urls(source_domain TEXT, state TEXT);
+        INSERT INTO discovered_urls VALUES ('a.vn','discovered'), ('a.vn','captured');""")
+    today = now_vn().date().isoformat()
+    conn.execute("INSERT INTO capture_coverage VALUES (?,?,?,?,?,0,'x')", (today, "a.vn", 100, 40, 60))
+    conn.execute("INSERT INTO capture_coverage VALUES (?,?,?,?,?,0,'x')", (today, "b.vn", 100, 100, 0))
+    conn.commit()
+    conn.close()
+    bad = probe_coverage(db)
+    assert not bad.ok and "a.vn thiếu 60%" in bad.message and "b.vn" not in bad.message
+    conn = sqlite3.connect(db)
+    conn.execute("UPDATE capture_coverage SET missing_n = 1, in_db_n = 99 WHERE source_domain = 'a.vn'")
+    conn.commit()
+    conn.close()
+    assert probe_coverage(db).ok
+    assert probe_coverage(tmp_path / "none.db").ok
+
+
+def test_manual_wave_does_not_block_auto_lane_and_stop_cancels_all(env):
+    cfg, paths, store = env
+    store.upsert_wave("WB", status="ANALYZING", trigger="backlog", provider="openrouter",
+                      level="manual")
+    assert store.active_wave("auto") is None and store.active_wave("backlog")
+    store.upsert_wave("WA", status="ANALYZING", trigger="T1", provider="agy", level="L1")
+    ctl = FakeController(cfg, paths, store)
+    commands.execute("/stop confirm", ctl)
+    assert store.get_state("cancel:WA") == "1" and store.get_state("cancel:WB") == "1"

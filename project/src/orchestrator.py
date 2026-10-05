@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from src.core.config import resolve_project_path
 import signal
 import sys
 import time
@@ -177,7 +178,7 @@ class Orchestrator:
             return
         out_dir = exp.get("dir", "data/exports")
         try:
-            out = Path(out_dir) / f"articles-{datetime.now(VN_TZ):%Y-%m-%d}.csv"
+            out = Path(resolve_project_path(out_dir)) / f"articles-{datetime.now(VN_TZ):%Y-%m-%d}.csv"
             _, n = export_csv(
                 db_path=self.settings["database"]["path"], today=True, out=str(out)
             )

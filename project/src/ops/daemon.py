@@ -14,12 +14,32 @@ from src.ops.breakers import Breakers
 from src.ops.config import OpsPaths
 from src.ops.order import PROVIDERS, load_order
 from src.ops.present import alert_card
-from src.ops.probes import (apply_edges, probe_capture, probe_db, probe_dead_letter,
+from src.ops.probes import (apply_edges, probe_capture, probe_coverage, probe_db, probe_dead_letter,
                             probe_disk, probe_order)
-from src.ops.sensor import decide, read_pending
+from src.ops.sensor import cooldown_active, decide, read_pending
 from src.ops.store import ACTIVE_WAVE_STATUSES, OpsStore, iso, now_vn, parse_iso
 from src.ops.supervisor import CaptureSupervisor
 from src.ops.wave_flow import WaveSpec, WaveSteps, _default_db_probe
+
+
+def repair_cap_reason(store: OpsStore, cfg: dict, wave_id: str) -> str | None:
+    """Trả lý do từ chối chạy lại khi đợt đã vá quá trần tổng số vòng.
+
+    Args:
+        store: Store vận hành.
+        cfg: Cấu hình đầy đủ.
+        wave_id: Mã đợt.
+
+    Returns:
+        Chuỗi lý do, hoặc None khi còn được chạy lại. Trần tổng là hai lần `max_repair_rounds`
+        (một workflow đầu và một lần chạy lại).
+    """
+    cap = 2 * int(cfg["wave"]["max_repair_rounds"])
+    done = int(store.get_state(f"repair_rounds:{wave_id}", "0") or 0)
+    if done >= cap:
+        return (f"Đợt {wave_id} đã vá {done} vòng (trần {cap}). Bài còn thiếu không tự thử lại: "
+                f"dùng /cancel {wave_id} rồi xử lý bằng chế độ chạy tay.")
+    return None
 
 
 class OpsDaemon:
@@ -119,7 +139,7 @@ class OpsDaemon:
         """
         from dbos import DBOS
 
-        w = self.store.active_wave()
+        w = self.store.active_wave("auto")
         if not w or not w["workflow_id"]:
             return
         status = DBOS.get_workflow_status(w["workflow_id"])
@@ -271,6 +291,7 @@ class OpsDaemon:
         results += [probe_disk(self.paths.data_dir, float(self.cfg["wave"]["min_free_gb"])),
                     probe_dead_letter(self.monocle_db, self.store,
                                       int(p["dead_letter_alert_delta"])),
+                    probe_coverage(self.monocle_db),
                     probe_order(self.paths.standing_order)]
         apply_edges(self.store, results)
 
@@ -306,8 +327,8 @@ class OpsDaemon:
         self._force_wave.clear()
         if self._dbos_ready:
             self.reconcile()
-        if self.store.active_wave():
-            # Đang có đợt: không mở đợt mới, nên không đọc lại cả bảng bài trên DB
+        if self.store.active_wave("auto"):
+            # Đang có đợt tự động: không mở đợt mới, nên không đọc lại cả bảng bài trên DB
             # vận hành (bộ chọn bài nặng, và đợt đang chạy cần DB hơn).
             return
         t0 = time.monotonic()
@@ -327,6 +348,13 @@ class OpsDaemon:
         if self.paths.kill_switch.exists():
             return
         if self.store.get_state("paused") == "1" and not force:
+            return
+        until = self.store.get_state("cooldown_until")
+        if not force and cooldown_active(until):
+            if self.store.get_state("cooldown_noted") != until:
+                self.store.set_state("cooldown_noted", until)
+                self.store.emit("sensor.cooldown", f"Nghỉ mở đợt mới đến {until[11:16]} sau đợt hỏng.",
+                                actor="sensor")
             return
         if not self._dbos_ready:
             return
@@ -413,8 +441,8 @@ class OpsDaemon:
         Returns:
             Phản hồi cho người vận hành.
         """
-        if self.store.active_wave():
-            return "Đang có đợt chạy; WIP đợt = 1."
+        if self.store.active_wave("auto"):
+            return "Đang có đợt tự động chạy; mỗi luồng tối đa một đợt."
         self._force_wave.set()
         return "Đã yêu cầu mở đợt; sensor xử lý trong vài giây."
 
@@ -442,9 +470,14 @@ class OpsDaemon:
             return f"Không có đợt {wave_id}."
         if w["status"] not in ("PARKED", "FAILED", "CANCELLED"):
             return f"Đợt {wave_id} đang {w['status']}, không chạy lại được."
-        active = self.store.active_wave()
+        active = self.store.active_wave("auto")
         if active:
-            return f"Đang có đợt {active['wave_id']} chạy."
+            return f"Đang có đợt tự động {active['wave_id']} chạy."
+        blocked = repair_cap_reason(self.store, self.cfg, wave_id)
+        if blocked:
+            self.store.emit("wave.retry_refused", f"{wave_id}: {blocked}", level="warn",
+                            wave_id=wave_id)
+            return blocked
         order = load_order(self.paths.standing_order)
         attempt = int(w["attempt"] or 0) + 1
         # Chỉ người gọi được hàm này khi standing order về L0 (sensor không tự chạy lại

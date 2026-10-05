@@ -46,6 +46,7 @@ Xếp theo mức nghiêm trọng, nặng nhất trước. Tin Telegram có cùng
 | Lỗi | Tin "Mất kết nối tới agy" | Breaker mở vì lỗi mạng | Kiểm mạng. Breaker tự thử lại sau 10 phút |
 | Lỗi | Tin "Mandate ... không tự gia hạn" | Hệ thống chưa đủ điều kiện khoẻ | Xử lý nguyên nhân trong tin, hoặc gõ `/order extend 30` |
 | Cảnh báo | Tin "agy hết hạn mức" | Breaker mở tới giờ làm mới hạn mức | Chờ tự thử lại, hoặc gõ `/provider openrouter` |
+| Cảnh báo | Cần xử lý bài tồn hoặc thử provider khác | Daemon chỉ tự xử lý bài trong phạm vi theo dõi | Dùng `article_run.py --mode backlog` hoặc `--mode bench` (xem tài liệu tham chiếu, mục 7) |
 | Cảnh báo | Phòng điều khiển không mở | Cổng 8787 đang bị tiến trình khác dùng | Đổi `control_room.port` trong `config/ops.yaml`, khởi động lại daemon |
 
 ## 5. Quay lui

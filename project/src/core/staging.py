@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from src.core.config import resolve_project_path
 import json
 import os
 import time
@@ -26,7 +27,7 @@ def ensure_staging_dir(base_dir: str | Path = DEFAULT_STAGING_DIR) -> Path:
     Returns:
         Đối tượng Path của thư mục staging.
     """
-    p = Path(base_dir)
+    p = Path(resolve_project_path(base_dir))
     p.mkdir(parents=True, exist_ok=True)
     return p
 

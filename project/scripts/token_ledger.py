@@ -209,35 +209,55 @@ def cmd_append(args: argparse.Namespace) -> int:
                     is_agy = True
         except Exception:
             pass
+    is_runner_meta = is_agy or getattr(args, "source", None) == "openrouter"
 
-    if is_agy:
+    if is_runner_meta:
+        provider = "agy" if is_agy else "openrouter"
         out_dir = os.path.join(
             os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
             "data", "agent_outputs_article"
         )
         meta_files = glob.glob(os.path.join(out_dir, f"article_{args.wave}_*.meta.json"))
         if not meta_files:
-            print(f"⚠️  Không tìm thấy tệp meta nào của agy cho đợt {args.wave}. Không ghi gì.")
+            print(f"⚠️  Không tìm thấy tệp meta nào của {provider} cho đợt {args.wave}. Không ghi gì.")
             return 2
         total_in = 0
         total_out = 0
+        total_reasoning = 0
+        total_cost = 0.0
         n_batches = len(meta_files)
         for mf in meta_files:
             try:
                 with open(mf, encoding="utf-8") as f:
                     mdata = json.load(f)
                     u = mdata.get("usage", {})
-                    total_in += u.get("input_tokens", 0)
-                    total_out += u.get("output_tokens", 0)
+                    if provider == "agy":
+                        total_in += u.get("input_tokens", 0)
+                        total_out += u.get("output_tokens", 0)
+                    else:
+                        total_in += u.get("prompt_tokens", 0)
+                        total_out += u.get("completion_tokens", 0)
+                        if not u.get("prompt_tokens") and u.get("total_tokens"):
+                            total_in += u.get("total_tokens", 0)
+                        details = u.get("completion_tokens_details") or {}
+                        total_reasoning += details.get("reasoning_tokens", 0) or 0
+                        try:
+                            total_cost += float(u.get("cost", 0) or 0)
+                        except (TypeError, ValueError):
+                            pass
             except Exception:
                 pass
         quota_tokens = total_in + total_out
-        billed_usd = round((total_in * 0.075 + total_out * 0.30) / 1e6, 6)
+        if provider == "agy":
+            billed_usd = round((total_in * 0.075 + total_out * 0.30) / 1e6, 6)
+        else:
+            billed_usd = round(total_cost, 6)
+        agent_id = f"article-processor-{provider}"
         conn = connect(args.db)
-        # Số của agy cộng từ mọi tệp meta của đợt nên đã là ảnh chụp trọn đợt: chạy lại
-        # `--finish` thay dòng cũ thay vì thêm dòng trùng.
+        # Số của runner cộng từ mọi tệp meta của đợt nên đã là ảnh chụp trọn đợt:
+        # chạy lại `--finish` thay dòng cũ thay vì thêm dòng trùng.
         conn.execute("DELETE FROM token_ledger WHERE wave IS ? AND batch_id IS ? "
-                     "AND agent_id = 'article-processor-agy'", (args.wave, args.batch))
+                     "AND agent_id = ?", (args.wave, args.batch, agent_id))
         conn.execute(
             """INSERT INTO token_ledger
                (ts, wave, batch_id, agent_id, n_items, n_sessions, miss_tokens, hit_tokens,
@@ -245,17 +265,17 @@ def cmd_append(args: argparse.Namespace) -> int:
                 est_miss, est_out, billed_usd, peak_window, note)
                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
             (datetime.now(timezone.utc).isoformat(timespec="seconds"),
-             args.wave, args.batch, "article-processor-agy", args.items, n_batches,
-             total_in, 0, total_out, 0, quota_tokens, 1, 0, 0.0,
-             args.est_miss, args.est_out, billed_usd, 0, "runner=agy"),
+             args.wave, args.batch, agent_id, args.items, n_batches,
+             total_in, 0, total_out, total_reasoning, quota_tokens, 1, 0, 0.0,
+             args.est_miss, args.est_out, billed_usd, 0, f"runner={provider}"),
         )
         conn.commit()
         conn.close()
         per_item = quota_tokens / args.items if args.items else 0
-        print(f"✅ Đã ghi sổ cái (agy): wave={args.wave or '-'} ({n_batches} lô, {args.items} bài)")
+        print(f"✅ Đã ghi sổ cái ({provider}): wave={args.wave or '-'} ({n_batches} lô, {args.items} bài)")
         print(f"   quota {quota_tokens:,} token (in {total_in:,} · out {total_out:,} · ~${billed_usd:.4f})")
         if args.items:
-            print(f"   {per_item:,.0f} token/bài (runner agy)")
+            print(f"   {per_item:,.0f} token/bài (runner {provider})")
         return 0
 
     wave = wave_usage(since, cwd_filter=args.cwd_filter, with_reasoning=not args.no_reasoning,
@@ -516,7 +536,8 @@ def main(argv=None) -> int:
     a.add_argument("--workers-only", action="store_true",
                    help="Chỉ gộp phiên worker được tạo sau --since; bỏ phiên điều phối "
                         "và mọi phiên mở từ trước còn đang hoạt động")
-    a.add_argument("--source", choices=["dsh", "agy"], help="Nguồn runtime: dsh hoặc agy")
+    a.add_argument("--source", choices=["dsh", "agy", "openrouter"],
+                     help="Nguồn runtime: dsh, agy hoặc openrouter (đọc usage từ meta)")
 
     r = sub.add_parser("report", help="In báo cáo sổ cái")
     r.add_argument("--wave", help="Lọc theo đợt")

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from src.core.config import resolve_project_path
 import csv
 import sqlite3
 from collections import Counter
@@ -100,7 +101,7 @@ def write_csv(rows: list, out_path: Path) -> Path:
 def _auto_name(today: bool, days: int | None) -> Path:
     stamp = f"{datetime.now(VN_TZ):%Y%m%d}"
     suffix = "-today" if today else (f"-{days}d" if days else "")
-    return Path(EXPORT_DIR) / f"articles-{stamp}{suffix}.csv"
+    return Path(resolve_project_path(EXPORT_DIR)) / f"articles-{stamp}{suffix}.csv"
 
 
 def export(*, db_path: str = DB_PATH, today: bool = False, days: int | None = None,

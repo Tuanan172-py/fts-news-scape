@@ -799,7 +799,9 @@ def cmd_git_status(args: argparse.Namespace) -> dict[str, Any]:
     for line in status_lines:
         parts = line.split(maxsplit=1)
         if len(parts) == 2:
-            fname = parts[1]
+            status_code, fname = parts[0], parts[1]
+            if "D" in status_code:
+                continue
             if "-DESKTOP-" in fname or "-FPA-" in fname:
                 forbidden.append(f"OneDrive conflict file: {fname}")
             elif fname.endswith((".db-wal", ".db-shm")) or (fname.endswith(".db") and not fname.startswith("data/archive")):

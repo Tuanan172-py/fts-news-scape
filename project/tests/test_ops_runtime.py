@@ -406,3 +406,51 @@ def test_dbos_workflow_runs_through_and_b7_step_error_fails_wave(tmp_path):
     last = _json.loads(proc.stdout.strip().splitlines()[-1])
     assert last["result"] == "DONE" and last["status"] == "DONE"
     assert last["broken_result"] == "FAILED" and last["broken_status"] == "FAILED"
+
+
+def test_failed_wave_sets_cooldown_and_done_does_not(env):
+    from datetime import timedelta
+
+    from src.ops.sensor import cooldown_active
+    from src.ops.store import now_vn
+
+    cfg, paths, store = env
+    steps = WaveSteps(store, cfg, paths, db_probe=lambda: (True, ""))
+    steps.finalize(WaveSpec("W1", "2026-10-01", "T1", "L1"), "FAILED", "cổng đỏ",
+                   counts_as_failure=True)
+    until = store.get_state("cooldown_until")
+    assert until and cooldown_active(until)
+    assert not cooldown_active(until, now=now_vn() + timedelta(minutes=31))
+    assert not cooldown_active(None)
+
+
+def test_provider_failure_does_not_start_cooldown(env):
+    cfg, paths, store = env
+    steps = WaveSteps(store, cfg, paths, db_probe=lambda: (True, ""))
+    steps.finalize(WaveSpec("W1", "2026-10-01", "T1", "L1"), "PARKED", "hết hạn mức",
+                   counts_as_failure=False)
+    assert store.get_state("cooldown_until") is None
+
+
+def test_repair_round_bumps_attempts_and_counts_rounds(env, monkeypatch):
+    from scripts import article_run as ar
+
+    cfg, paths, store = env
+    monkeypatch.setattr(ar, "wave_article_ids", lambda w: ["a", "b", "c"])
+    monkeypatch.setattr(ar, "wave_received_ids", lambda w: {"a"})
+    steps = WaveSteps(store, cfg, paths, db_probe=lambda: (True, ""))
+    steps._count_repair_round("W1")
+    steps._count_repair_round("W1")
+    assert store.get_state("repair_rounds:W1") == "2"
+    assert store.exhausted_article_ids(2) == {"b", "c"}
+    assert store.exhausted_article_ids(3) == set()
+
+
+def test_retry_refused_after_repair_cap(env):
+    from src.ops.daemon import repair_cap_reason
+
+    cfg, paths, store = env
+    assert repair_cap_reason(store, cfg, "W1") is None
+    store.set_state("repair_rounds:W1", str(2 * cfg["wave"]["max_repair_rounds"]))
+    reason = repair_cap_reason(store, cfg, "W1")
+    assert reason and "/cancel W1" in reason

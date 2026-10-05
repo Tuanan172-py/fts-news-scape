@@ -17,6 +17,7 @@ wave:
   concurrency: 2
   max_repair_rounds: 2
   max_attempts_per_article: 2    # bài đã vào đủ số đợt này mà vẫn chưa qua DoD thì không tự thử lại
+  cooldown_minutes: 30           # nghỉ sau đợt hỏng không do provider; /run bỏ qua
   progress_silence_minutes: 25   # analyze im lặng quá mức này là treo
   min_free_gb: 5
   deadlines_minutes:

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from typing import Protocol
 
@@ -99,6 +100,22 @@ class Controller(Protocol):
     def capture_restart(self) -> str: ...
 
 
+_GIT_BASH_PREFIX_RE = re.compile(r"^[A-Za-z]:[/\\]Program Files(?: \(x86\))?[/\\]Git[/\\]")
+_PATHLIKE_RE = re.compile(r"^[A-Za-z]:|\\|.+/")
+
+
+def normalize_command(text: str | None) -> str:
+    """Khôi phục lệnh bị Git Bash đổi thành đường dẫn tệp.
+
+    Args:
+        text: Chuỗi lệnh thô, ví dụ `C:/Program Files/Git/retry W10011100`.
+
+    Returns:
+        Chuỗi lệnh dạng `/retry W10011100`; chuỗi không khớp được trả về đã cắt khoảng trắng.
+    """
+    return _GIT_BASH_PREFIX_RE.sub("/", (text or "").strip())
+
+
 def execute(text: str, ctl: Controller, actor: str = "human") -> Reply:
     """Thông dịch và thực hiện một lệnh, ghi vết kiểm toán.
 
@@ -110,13 +127,19 @@ def execute(text: str, ctl: Controller, actor: str = "human") -> Reply:
     Returns:
         Reply.
     """
-    parts = (text or "").strip().split()
+    text = normalize_command(text)
+    parts = text.split()
     if not parts:
         return Reply(HELP)
-    # Chấp nhận lệnh không có dấu "/" vì Git Bash đổi "/pause" thành đường dẫn tệp.
+    store = ctl.store
+    if _PATHLIKE_RE.search(parts[0]):
+        store.emit("human.command_rejected", f"{actor}: {text[:120]}", level="warn",
+                   actor="human", data={"source": actor})
+        return Reply("Lệnh không hợp lệ: chuỗi trông như đường dẫn tệp. Gõ lệnh bắt đầu bằng "
+                     "\"/\", ví dụ /retry W10011100. Trên Git Bash hãy chạy bằng PowerShell.")
+    # Chấp nhận lệnh không có dấu "/" (ví dụ `pause`).
     cmd = "/" + parts[0].split("@")[0].lower().lstrip("/")
     args = parts[1:]
-    store = ctl.store
     if cmd not in READ_ONLY:
         store.emit("human.command", f"{actor}: {text.strip()}", actor="human",
                    data={"source": actor})
@@ -196,10 +219,11 @@ def _dispatch(cmd: str, args: list[str], ctl: Controller) -> Reply:
                          [[("Xác nhận dừng", "/stop confirm")]])
         paths.kill_switch.parent.mkdir(parents=True, exist_ok=True)
         paths.kill_switch.write_text("stop từ lệnh vận hành\n", encoding="utf-8")
-        w = store.active_wave()
-        if w:
+        waves = store.active_waves()
+        for w in waves:
             store.set_state(f"cancel:{w['wave_id']}", "1")
-        return Reply("Đã bật AGY_STOP" + (f" và huỷ {w['wave_id']}." if w else ".")
+        ids = ", ".join(w["wave_id"] for w in waves)
+        return Reply("Đã bật AGY_STOP" + (f" và huỷ {ids}." if waves else ".")
                      + " Gỡ bằng /unstop.")
     if cmd == "/unstop":
         paths.kill_switch.unlink(missing_ok=True)

@@ -25,7 +25,7 @@ Người vận hành làm hoặc quyết định:
 9. **Chưa có đợt chạy thật dưới cổng mới.** Phát lại đợt `W10051050` (sinh bằng prefix cũ) cho 38/100 bản ghi bị từ chối, 32 bài do `c` có 5 hoặc 6 chỉ số. Prefix mới đã nói rõ 2 đến 4, nhưng tỷ lệ từ chối mới chưa đo. Chạy một đợt agy 50 bài trước khi nâng daemon lên L1.
 10. **Đường vá đã sửa** để dùng cùng bộ kiểm với bộ bung (`pending_batches`, `wave_received_ids`). Trước đó bản ghi sai vẫn được tính là đã nhận nên không bao giờ được vá. Đợt `W10051050` và `W10051042` đang `Lỗi` từ 04/10 (độ phủ dưới 90%, tỷ lệ hỏng vượt ngưỡng); chạy `--repair` thay vì `--finish`.
 11. **`max_tokens` của OpenRouter** nâng từ 24000 lên 32000 để giảm cắt cụt. Cần đo xem lô 50 bài có còn bị `PARTIAL` do trần đầu ra không.
-12. **[MỚI 2026-10-05, Tier 3 — DỪNG Ở HARD GATE] Trần nội dung với bài tin vắn 1 đoạn.** Đợt W10051122 (500 bài, OpenRouter stealth/space-bunny-alpha free $0): sau 5 vòng vá đạt 499/500 bản ghi (L1 100%) nhưng nội dung chỉ 360/500 (72% < ngưỡng 90%). Toàn bộ ~140 bài thiếu đều là tin vắn đúng 1 đoạn văn (mẫu: "65 cổ phiếu bị cắt margin", 199 ký tự) — hợp đồng đòi ≥2 trích dẫn nên không worker nào qua được, vá thêm vô ích. Lựa chọn (cần Human duyệt ADR): (a) cho phép 1 trích dẫn với bài 1 đoạn, (b) miễn gold cho tin vắn, (c) loại tin vắn khỏi mẫu số verify. Chưa đổi gate nào; `--finish` W10051122 vẫn từ chối đúng thiết kế.
+12. **[2026-10-05, Tier 3 — XONG] Packet cũ Silver và đợt W10051122 HOÀN TẤT.** Chẩn đoán "tin vắn" ban đầu sai: đo lại Silver cho thấy cả 500 bài đều đủ đoạn văn; packet đóng lúc Silver chưa có nên chỉ còn đoạn trích RSS ngắn (ADR 0018, Human duyệt hướng a). Đã sửa: lane đọc Silver trước (pack/runner/wp v1.1), `--repair` làm mới packet cũ, expand dồn hàng cũ, ingest bỏ qua tệp rỗng. W10051122 HOÀN TẤT 15:30: L1 500/500, nội dung 500/500, OpenRouter free $0. Chú ý: tồn tại ADR 0018 thứ hai chưa commit (`0018-loai-bai-mong...`, US-036, hướng loại bài mỏng) — hai hướng cần người gộp số hiệu và chốt phạm vi.
 
 ---
 
@@ -38,7 +38,9 @@ Số đo lúc bắt đầu (02/10, so với sitemap): cafef thiếu 64%, tnck 68
 Người vận hành làm hoặc quyết định:
 
 1. **Bronze ghi sai gốc: đã gộp, còn chờ khởi động lại morninger (US-035, 2026-10-05).** 2.750 tệp ở `<gốc repo>/data/raw_html` đã chuyển vào `project/data/raw_html`. 1.607 tệp trùng tên khác nội dung nằm ở `C:\data
-ews-scapeecoveredoot_raw_html_conflicts_20261005`. `RawStore` nay neo vào `PROJECT_ROOT`, lần cào lỗi không ghi đè bản tốt, khoá `silver_failures` được chuẩn hoá. **Người vận hành:** khởi động lại `python -m src.morninger` (PID 42208, chạy từ 02/10) để nhận mã mới, rồi kiểm `pipeline_radar.py status`: dòng Bronze kẹt phải về 0. Chưa xử lý: `silver`, `agent_tasks`, `work_packages`, `agent_outputs*`, `exports` còn ở `<gốc repo>/data`.
+ews-scape
+ecovered
+oot_raw_html_conflicts_20261005`. `RawStore` nay neo vào `PROJECT_ROOT`, lần cào lỗi không ghi đè bản tốt, khoá `silver_failures` được chuẩn hoá. **Người vận hành:** khởi động lại `python -m src.morninger` (PID 42208, chạy từ 02/10) để nhận mã mới, rồi kiểm `pipeline_radar.py status`: dòng Bronze kẹt phải về 0. Phần còn lại của `<gốc repo>/data` đã dọn theo phương án E: `silver`, `work_packages`, `agent_tasks`, `agent_outputs*` (259 tệp) sang `C:\data\news-scape\recovered\root_data_20261005`; 4 CSV `exports` chưa có ở project đã gộp vào `project/data/exports`, 1 CSV trùng tên giữ ở `recovered`. Các điểm ghi `exports`, `notifications`, `staging`, `work_packages` đã neo vào `PROJECT_ROOT`. Còn dùng đường dẫn tương đối nhưng thuộc lane L1/Gold đã ngừng: `batch_handoff.py`, `l1_router.py`, `packet.py`, `runner.py`, `l1_runner.py`.
 2. **Ba nguồn chưa có kênh đối chiếu độc lập:** vietstock, vietnambiz, thoibaotaichinhvietnam. Sitemap của chúng cũ hoặc không có. Độ phủ của ba nguồn này chưa đo được.
 3. **fireant là API, không cào bù được theo URL.** Bài fireant ở trạng thái `discovered` được lấy lại khi chúng xuất hiện lại trong danh sách API; nếu không, chúng sang `dead_letter` sau 5 lần thử.
 4. **Tải xử lý tăng.** Cào bù thêm vài trăm bài mỗi ngày cho ngày hôm nay và hôm qua. Daemon ở L1 sẽ tự đưa chúng vào đợt, nên token tăng tương ứng. Token là số ghi nhận, không phải cổng (ADR 0010).
@@ -90,6 +92,14 @@ Việc kỹ thuật còn treo (chưa làm trong US-031):
 | Golden set chất lượng phân tích | Phòng điều khiển hiện chỉ đo độ phủ, độ trễ, token; không đo đúng sai |
 
 ---
+
+## OPS-3. Ổn định pipeline tự chạy (audit 05/10, US-037) — việc còn lại, 2026-10-05
+
+1. **Nối vào phiên US-036 (thu thập):** cào bù đang xả chậm vì `gap_backfill_limit` mặc định 40 và `gap_budget_seconds` 120 chưa có trong `config/settings.yaml`; chu kỳ 10 phút với 700 URL cafef chờ. Radar vẫn khuyên `recapture` cho `raw_missing`, trái với CAP-1 mục 1 (gộp `data/raw_html` rồi derive lại). Người vận hành đã đồng ý sao chép, không cào lại web.
+2. **Nhả đợt hỏng** (cần xác nhận): W10021650, W10051042, W10051050. Chạy `--repair` (không `--finish`) nếu muốn giữ bài, hoặc `/cancel <đợt>` để nhả.
+3. **Chạy lô agy 50 bài một lần có tệp phản hồi thô** để biết nguyên nhân lô trả 0 bài; kết quả quyết định có hạ lô xuống 25 hay không (CON-1 mục 9 và 11).
+4. **`--runner opencode` chính thức** (CON-1 mục 4): chạy tay bằng OpenCode hiện đăng ký provider `dsh` mặc định; cần nhãn đúng khi có runner mới.
+5. **Cấp lại L1** khi đủ điều kiện ổn định (kế hoạch mục 5): ba đợt liền DONE, độ phủ thu thập thiếu dưới 2%, không đợt tay vô hình.
 
 ## A0. RÀ SOÁT END-TO-END 2026-09-17 — mất dữ liệu âm thầm & ngõ cụt trạng thái
 

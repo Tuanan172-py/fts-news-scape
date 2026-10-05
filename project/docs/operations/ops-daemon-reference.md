@@ -68,3 +68,47 @@ Luật mở đợt (T1, T2, T3) định nghĩa trong [bảng thuật ngữ](../.
 - `/stop` đặt cờ `AGY_STOP`. Đợt đang chạy dừng ở ranh giới bước kế tiếp.
 - Bước nạp DB đang chạy không bị cắt ngang.
 - Daemon chết thì Job Object kết thúc cả cây `article_run` và `agy`, nên không lô nào tiêu token khi không ai giám sát.
+
+## 7. Chạy tay (bài tồn và thử tác nhân)
+
+Chạy tay là đường chính thức để dọn bài tồn đọng và so sánh năng lực các provider. Mọi đợt tay tự đăng ký vào `ops.db`, có vết, và đi qua cùng cổng kiểm va chạm.
+
+| Chế độ | Dùng khi | Giữ chỗ bài | Nạp DB | Đầu ra |
+|---|---|---|---|---|
+| `backlog` | Dọn bài ngoài phạm vi tự động | Có | Có, bằng `--finish` | `data/agent_outputs_article/` |
+| `bench` | Thử provider hoặc model khác trên cùng tập bài | Không | Không, `--finish` bị từ chối | `data/agent_bench/<đợt>/` |
+| `adhoc` | Việc tay khác (mặc định) | Có | Có | `data/agent_outputs_article/` |
+
+Lệnh mẫu, chạy với thư mục hiện tại là `project/`:
+
+```powershell
+python scripts/article_run.py --wave W<mã> --date 2026-09-20 --limit 100 --batch 50 --mode backlog --runner openrouter
+python scripts/article_run.py --wave W<mã> --runner openrouter --analyze --mode backlog
+python scripts/article_run.py --wave W<mã> --repair --runner openrouter
+python scripts/article_run.py --wave W<mã> --finish
+```
+
+Quy tắc:
+
+- Provider khoá theo đợt ở lần mở đầu tiên. Đổi provider giữa đợt bị từ chối; muốn thử provider khác thì mở đợt mới ở chế độ `bench`.
+- Khi daemon đang chạy một đợt, lệnh tay bị từ chối. Cờ `--force` bỏ qua kiểm này và khoá provider, đồng thời ghi sự kiện `provider.override`.
+- Bài đang thuộc đợt chưa xong bị loại tự động. Bài đã hết lượt thử của daemon vẫn chọn được ở chế độ `backlog`.
+- Mỗi vòng vá tính một lần thử cho từng bài còn thiếu. `/retry` bị từ chối khi đợt đã vá quá hai lần `max_repair_rounds`.
+- Sau mỗi đợt hỏng không do provider, sensor nghỉ `wave.cooldown_minutes` (mặc định 30 phút) trước khi mở đợt mới. `/run` bỏ qua thời gian nghỉ.
+
+## 8. Phân luồng
+
+Mỗi đợt thuộc đúng một luồng, xác định bởi luật mở đợt trong cột `trigger` (mã `src/ops/lanes.py`). Mỗi luồng chỉ có tối đa một đợt đang chạy. Các luồng chạy song song và không chặn nhau.
+
+| Luồng | Ai mở | Luật mở đợt | Provider | Phạm vi bài | Nạp DB |
+|---|---|---|---|---|---|
+| Tự động (auto) | Daemon | T1, T2, T3, `/run`, chạy lại | Theo mandate, khoá theo đợt | Trong `sensor.lookback_days` | Có |
+| Bài tồn (backlog) | Người, `--mode backlog` hoặc `adhoc` | Chạy tay | Chọn lúc mở, khoá theo đợt | Bất kỳ ngày; bài đang thuộc đợt khác bị loại | Có |
+| Thử nghiệm (bench) | Người, `--mode bench` | Chạy tay | Chọn lúc mở | Cùng tập bài với luồng khác | Không |
+
+Quy tắc phân luồng:
+
+- Sensor, `/run` và `/retry` chỉ xét đợt của luồng tự động. Đợt tay đang chạy không làm daemon ngừng mở đợt.
+- Hai luồng không lấy trùng bài. Bài đã thuộc đợt chưa xong bị loại khi đóng gói. Luồng thử nghiệm không giữ chỗ nên không bị loại.
+- `/stop` và `AGY_STOP` huỷ mọi đợt đang chạy ở cả ba luồng.
+- Muốn đẩy bài cụ thể vào luồng tự động thì không dùng chạy tay: để sensor mở đợt, hoặc gõ `/run`.

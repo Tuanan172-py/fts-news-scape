@@ -2,18 +2,23 @@
 
 <!-- Step 9 handoff. OVERWRITE this (never append) at the end of every session. Keep to one screen. -->
 
-> **Phiên OpenCode 2026-10-05 (Tier 2, backlog W10051122): đóng gói + xử lý 500 bài tồn đọng.**
-> - `--repair` vòng 1 đóng 334 bài/5 lô; chạy OpenRouter (stealth/space-bunny-alpha, free $0, max_tokens 32000) 5 vòng vá: 256 → 36 → 30 → 11 → 0 bài, còn đúng 1 bài rớt `count:c:1` cả 5 lần.
-> - `--finish` từ chối đúng thiết kế: L1 500/500 (100% ✅), nội dung 360/500 (72% ❌ < 90%). Toàn bộ ~140 bài thiếu là tin vắn 1 đoạn văn — trần hợp đồng, không phải lỗi worker.
-> - Prefix khớp (`b7cd7e93820adc5e`, persona khớp); test cổng `test_article_lane*` 84 passed. Ghi OPEN-ITEMS CON-1 mục 12 (Tier 3 Hard Gate).
+> **Phiên OpenCode 2026-10-05 (Tier 2+3, DONE): đợt W10051122 HOÀN TẤT 500/500.**
+> - 5 vòng vá OpenRouter free $0 (256→36→30→11→0) rồi phát hiện packet cũ: đóng lúc Silver chưa có, trích RSS ngắn.
+> - Sửa lane đọc Silver trước (pack/runner/wp v1.1), `--repair` làm mới, expand dồn hàng cũ, ingest bỏ tệp rỗng. Finish 15:30: L1 100%, nội dung 100%.
+> - ADR 0018 accepted (Human duyệt hướng a). Test 146 passed. 5 test khác rớt do phiên US-036, không thuộc phạm vi này.
 
-- **Updated:** 2026-10-05 (daemon L0; W10051042/W10051050 vẫn Lỗi; capture còn 996 URL chờ bù + 1241 raw_missing)
-- **Điểm vào vận hành:** `pipeline_radar.py status` · `ops_daemon.py status` · Phòng điều khiển `ops_daemon.py open` (http://127.0.0.1:8787)
-- **Tài liệu:** ADR chờ viết cho tin vắn 1 đoạn · runbook `project/docs/operations/ops-daemon.md`
+> **Phiên ổn định pipeline 2026-10-05 (US-037, một phần):** audit điều phối `docs/proposals/audit-dieu-phoi-agent-2026-10-05.md`, kế hoạch `~/.claude/plans/lovely-herding-moler.md`.
+> - Xong (R-01 đến R-05): phản hồi thô của agy lưu khi lô rỗng (`ops_logs/waves/<đợt>/raw/`); `/retry` bị chặn sau 2 lần `max_repair_rounds` vòng vá; mỗi vòng vá tính lần thử cho từng bài; nghỉ 30 phút sau đợt hỏng (`wave.cooldown_minutes`); lệnh dạng đường dẫn Git Bash được khôi phục hoặc bị từ chối; chạy tay có ba chế độ `--mode backlog|bench|adhoc` tự đăng ký `ops_waves`, vết, giữ chỗ, khoá provider, kiểm va chạm (`src/ops/manual.py`); span cho OpenRouter; probe độ phủ thu thập. Daemon đã khởi động lại bằng mã mới.
+> - Đã nhả W10021650, W10051042, W10051050 (`/cancel`). Phân luồng (`src/ops/lanes.py`): auto, backlog, bench; mỗi luồng tối đa một đợt, đợt tay không còn chặn sensor; `/stop` huỷ mọi luồng. Mô tả ở `ops-daemon-reference.md` mục 8.
+> - Chưa làm: R-06, R-07 (cào bù và `raw_html`) vì trùng phạm vi phiên US-036 đang chạy; R-08 phần nhả đợt hỏng.
+> - Test: bộ ops và `test_ops_manual.py` xanh. 5 test ngoài phạm vi đang đỏ do phiên khác: `test_inherit` (1), `test_periodic_reports` (4).
+
+- **Updated:** 2026-10-05 (daemon L0; W10051042/W10051050 vẫn Lỗi; capture còn 864 URL chờ bù + 141 raw_missing)
+- **Điểm vào vận hành:** `pipeline_radar.py status` · `ops_daemon.py status` · Phòng điều khiển `ops_daemon.py open`
+- **Tài liệu:** ADR 0018 · runbook `project/docs/operations/ops-daemon.md`
 
 ## Next Steps
 
-1. **Tin vắn 1 đoạn:** Đã giải quyết bằng ADR 0018 (chấp nhận 1 trích dẫn cho bài 1 đoạn). Sẵn sàng `--finish` lại wave khi cần.
-2. **Quy trình Git & Khung Harness:** Đã hoàn tất cài đặt pre-commit hook cơ học, ban hành Bất biến Đóng phiên (§11), và đóng gói 4 commits chuẩn Conventional Commits.
-3. **Tồn đọng vận hành:** W10051042, W10051050; cào bù capture 996 URL + recapture 1241 raw_missing.
-
+1. **Va chạm phiên:** cây đang có 2 phiên sửa song song (US-036 commit xen kẽ). Hai ADR cùng số 0018 (`mot-trich-dan...` đã commit vs `loai-bai-mong...` chưa commit, hướng ngược nhau) — Human gộp số hiệu và chốt phạm vi trước khi ai commit tiếp.
+2. **Không tự commit/push phiên này** vì cây lẫn thay đổi của phiên kia; `clean_for_closure=false` có lý do chính đáng, ghi rõ ở Closure.
+3. **Tồn đọng còn lại:** W10051042, W10051050, 2 đợt 1-2 bài; capture bù 864 URL + recapture; ~12,4k bài ngoài phạm vi tự động.

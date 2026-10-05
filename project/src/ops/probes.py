@@ -120,6 +120,38 @@ def probe_dead_letter(db_path: Path, store: OpsStore, delta_alert: int) -> Probe
                        f"Xem: pipeline_radar.py status.")
 
 
+def probe_coverage(db_path: Path, red_pct: float = 2.0, days: int = 2) -> ProbeResult:
+    """Đo độ phủ thu thập so với sitemap (rule 10: thiếu quá 2% trong một ngày là đỏ).
+
+    Args:
+        db_path: Đường dẫn `monocle.db`.
+        red_pct: Ngưỡng phần trăm bài thiếu.
+        days: Số ngày gần nhất xét.
+
+    Returns:
+        ProbeResult; không khoẻ khi có cặp (ngày, nguồn) thiếu quá ngưỡng.
+    """
+    try:
+        conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True, timeout=10)
+        try:
+            rows = conn.execute(
+                "SELECT source_domain, SUM(ref_n), SUM(missing_n) FROM capture_coverage "
+                "WHERE day >= date('now', ?, 'localtime') GROUP BY source_domain",
+                (f"-{days - 1} days",)).fetchall()
+            pending = conn.execute("SELECT COUNT(*) FROM discovered_urls "
+                                   "WHERE state = 'discovered'").fetchone()[0]
+        finally:
+            conn.close()
+    except sqlite3.Error:
+        return ProbeResult("coverage", True, "info", "Chưa có bảng độ phủ thu thập.")
+    bad = [(d, 100.0 * m / r) for d, r, m in rows if r and 100.0 * m / r > red_pct]
+    if not bad:
+        return ProbeResult("coverage", True, "warn", f"Độ phủ đạt, {pending:,} URL chờ cào bù.")
+    worst = ", ".join(f"{d} thiếu {pct:.0f}%" for d, pct in sorted(bad, key=lambda x: -x[1])[:3])
+    return ProbeResult("coverage", False, "warn",
+                       f"Thu thập thiếu so với sitemap: {worst}; {pending:,} URL chờ cào bù.")
+
+
 def probe_order(order_path: Path) -> ProbeResult:
     """Kiểm hạn của standing order.
 
@@ -151,6 +183,8 @@ PROBE_ACTION = {
     "db": ("đợt không nạp được bản ghi", "kiểm quyền ghi monocle.db và khoá DB", "/log 15"),
     "disk": ("đợt không đóng gói được", "giải phóng dung lượng ổ dữ liệu", "/status"),
     "dead_letter": ("bài Bronze không vào được Silver", "xem pipeline_radar.py status", "/status"),
+    "coverage": ("bài của một số nguồn chưa được thu thập đủ",
+                 "chờ cào bù, xem capture_reconcile.py status", "/status"),
     "order": ("daemon sắp về L0 và dừng tự mở đợt", "gia hạn bằng /order extend 30", "/mandate"),
 }
 

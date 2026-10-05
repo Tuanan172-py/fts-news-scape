@@ -10,6 +10,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Iterator
 
+from src.ops.lanes import lane_of
 from src.ops.redact import redact, redact_data
 from src.ops.trace import SPAN_SCHEMA
 
@@ -418,17 +419,32 @@ class OpsStore:
             return c.execute("SELECT * FROM ops_waves ORDER BY opened_at DESC LIMIT ?",
                              (limit,)).fetchall()
 
-    def active_wave(self) -> sqlite3.Row | None:
-        """Trả về đợt đang chạy, nếu có.
+    def active_waves(self, lane: str | None = None) -> list[sqlite3.Row]:
+        """Liệt kê các đợt đang chạy, mới nhất trước.
+
+        Args:
+            lane: Chỉ lấy đợt của luồng này (auto, backlog, bench); None lấy mọi luồng.
+
+        Returns:
+            Danh sách hàng đợt đang ở trạng thái hoạt động.
+        """
+        marks = ",".join("?" * len(ACTIVE_WAVE_STATUSES))
+        with self.conn() as c:
+            rows = c.execute(f"SELECT * FROM ops_waves WHERE status IN ({marks}) "
+                             "ORDER BY opened_at DESC", ACTIVE_WAVE_STATUSES).fetchall()
+        return [r for r in rows if lane is None or lane_of(r["trigger"]) == lane]
+
+    def active_wave(self, lane: str | None = None) -> sqlite3.Row | None:
+        """Trả về đợt đang chạy mới nhất, nếu có.
+
+        Args:
+            lane: Chỉ xét đợt của luồng này; None xét mọi luồng.
 
         Returns:
             Hàng đợt đang ở trạng thái hoạt động, hoặc None.
         """
-        marks = ",".join("?" * len(ACTIVE_WAVE_STATUSES))
-        with self.conn() as c:
-            return c.execute(f"SELECT * FROM ops_waves WHERE status IN ({marks}) "
-                             "ORDER BY opened_at DESC LIMIT 1",
-                             ACTIVE_WAVE_STATUSES).fetchone()
+        rows = self.active_waves(lane)
+        return rows[0] if rows else None
 
     def parked_for_breaker(self) -> list[sqlite3.Row]:
         """Liệt kê đợt PARKED đang chờ provider hồi phục.
@@ -467,6 +483,26 @@ class OpsStore:
                               "attempts = attempts + 1, last_wave = excluded.last_wave, "
                               "updated_at = excluded.updated_at", (aid, wave_id, now))
         return added
+
+    def bump_attempts(self, article_ids: list[str], wave_id: str) -> int:
+        """Tăng số lần thử của các bài vừa được đóng gói vá, mỗi bài đúng một lần mỗi vòng.
+
+        Args:
+            article_ids: Định danh bài được vá trong vòng này.
+            wave_id: Mã đợt đang vá.
+
+        Returns:
+            Số bài đã được tăng.
+        """
+        now = iso()
+        with self.conn() as c:
+            for aid in article_ids:
+                c.execute("INSERT INTO ops_article_attempts(article_id, attempts, "
+                          "last_wave, updated_at) VALUES (?,1,?,?) "
+                          "ON CONFLICT(article_id) DO UPDATE SET "
+                          "attempts = attempts + 1, last_wave = excluded.last_wave, "
+                          "updated_at = excluded.updated_at", (aid, wave_id, now))
+        return len(article_ids)
 
     def reserved_article_ids(self) -> set[str]:
         """Liệt kê bài đang thuộc một đợt chưa xong vòng đời (đang chạy, PARKED, FAILED).

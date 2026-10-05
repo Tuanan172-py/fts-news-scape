@@ -74,4 +74,23 @@ scratch/
 **/C*
 *.pdf
 openrouter/check_key.py
+benchmark_openrouter_models.json
+openrouter/outputs/
+openrouter/packets/
+other/meeting-minutes/
 
+# Binary documents & spreadsheets (SharePoint managed)
+*.docx
+*.xlsx
+*.xls
+*.parquet
+*.tar.zst
+
+# Generated entities & data
+**/data/entities/*.json
+**/data/entities/*.csv
+**/data/entities/*.xlsx
+**/data/labeled/
+project/reports/
+reports/
+project/.git/

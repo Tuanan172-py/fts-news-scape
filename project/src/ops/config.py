@@ -19,7 +19,7 @@ DEFAULTS: dict[str, Any] = {
                "flush_windows": ["07:15-07:45", "12:15-12:45", "15:15-15:45", "17:15-17:45"],
                "lookback_days": 1},
     "wave": {"runner": "agy", "limit": 100, "batch": 50, "concurrency": 2,
-             "max_repair_rounds": 2, "max_attempts_per_article": 2,
+             "max_repair_rounds": 2, "max_attempts_per_article": 2, "cooldown_minutes": 30,
              "progress_silence_minutes": 25, "min_free_gb": 5,
              "deadlines_minutes": {"preflight": 2, "prepare": 5, "analyze": 45,
                                    "repair": 25, "finish": 30}},

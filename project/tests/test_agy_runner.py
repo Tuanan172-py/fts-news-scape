@@ -207,3 +207,30 @@ def test_agy_runner_run_batch_violation_tool(tmp_path):
     assert res.ok is False
     assert res.status == "VIOLATION"
     assert "Zero-Tool" in res.error_message
+
+
+def test_agy_runner_soft_fail_luu_phan_hoi_tho(tmp_path, monkeypatch):
+    """Lô không bóc được bản ghi nào để lại tệp phản hồi thô đã che bí mật và ghi đường dẫn."""
+    monkeypatch.setenv("MONOCLE_DATA_DIR", str(tmp_path / "data"))
+    monkeypatch.delenv("OPS_TRACE_WAVE", raising=False)
+    task_dir, out_dir = tmp_path / "tasks", tmp_path / "outputs"
+    task_dir.mkdir()
+    out_dir.mkdir()
+    batch_id = "article_W99990000_01"
+    task_path = task_dir / f"{batch_id}.task.json"
+    task_path.write_text(json.dumps({"a": [{"i": 0, "t": "Tiêu đề", "p": ["Đoạn văn một."]}]}),
+                         encoding="utf-8")
+    events = [{"type": "init", "data": {"model": "gemini-3.8-flash-low", "tools": []}},
+              {"type": "result", "data": {"response": "Xin lỗi, tôi sk-abcdefghijklmnop1234 không làm được.",
+                                          "usage": {}}}]
+    out = "\n".join(json.dumps(e) for e in events) + "\n"
+
+    def mock_sp(cmd, stdin_data, env, cwd):
+        return MockProcessResult(stdout=out, stderr="cảnh báo", returncode=0)
+
+    runner = AgyRunner(profile_root=tmp_path / "profiles", work_root=tmp_path / "work")
+    res = runner.run_batch(batch_id, task_path, out_dir, core_text="CORE", mock_subprocess=mock_sp)
+    assert res.status == "SOFT_FAIL" and res.raw_ref
+    text = Path(res.raw_ref).read_text(encoding="utf-8")
+    assert "Xin lỗi" in text and "sk-abcdefghijklmnop1234" not in text and "cảnh báo" in text
+    assert Path(res.raw_ref).parent.name == "raw" and "W99990000" in res.raw_ref

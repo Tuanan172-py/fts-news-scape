@@ -43,6 +43,7 @@ class AgyExecutionResult:
         usage: Thông tin số lượng token sử dụng.
         latency_seconds: Thời gian thực thi tính bằng giây.
         error_message: Thông điệp lỗi chi tiết nếu có.
+        raw_ref: Đường dẫn tệp phản hồi thô khi lô SOFT_FAIL, để chẩn đoán.
     """
 
     ok: bool
@@ -53,6 +54,39 @@ class AgyExecutionResult:
     usage: dict[str, int] = field(default_factory=dict)
     latency_seconds: float = 0.0
     error_message: str = ""
+    raw_ref: str | None = None
+
+
+RAW_DUMP_LIMIT = 256 * 1024
+
+
+def dump_raw_response(batch_id: str, stdout_text: str, stderr_text: str, raw_response: str) -> str | None:
+    """Ghi phản hồi thô của một lô thất bại ra `ops_logs/waves/<đợt>/raw/`.
+
+    Args:
+        batch_id: Mã lô, dạng `article_<đợt>_NN`.
+        stdout_text: Đầu ra chuẩn của agy.
+        stderr_text: Đầu ra lỗi của agy.
+        raw_response: Nội dung sự kiện `result`.
+
+    Returns:
+        Đường dẫn tệp đã ghi, hoặc None khi không ghi được. Mỗi phần bị cắt ở 256 KB và
+        đã che bí mật.
+    """
+    try:
+        from src.ops.config import resolve_paths
+        from src.ops.redact import redact
+
+        wave = os.environ.get("OPS_TRACE_WAVE") or batch_id.split("_")[1]
+        target = resolve_paths().log_dir / "waves" / wave / "raw" / f"{batch_id}.txt"
+        target.parent.mkdir(parents=True, exist_ok=True)
+        parts = (("result", raw_response), ("stdout", stdout_text), ("stderr", stderr_text))
+        body = "\n".join(f"=== {name} ({len(text or '')} ký tự) ===\n{redact((text or '')[:RAW_DUMP_LIMIT])}"
+                         for name, text in parts)
+        target.write_text(body, encoding="utf-8")
+        return str(target)
+    except Exception:  # noqa: BLE001 — chẩn đoán không được làm hỏng lô
+        return None
 
 
 def resolve_agy() -> str:
@@ -243,7 +277,7 @@ class AgyRunner:
                     meta = {}
             sp.set(runner_status=res.status, items=len(res.records), usage=res.usage,
                    latency_s=round(res.latency_seconds, 2), exit_code=res.exit_code,
-                   error=(res.error_message or "")[:200],
+                   error=(res.error_message or "")[:200], raw_ref=res.raw_ref,
                    items_total=meta.get("items_total"),
                    tool_invoked=bool(meta.get("tool_invoked")),
                    denied_actions=bool(meta.get("denied_actions")),
@@ -513,6 +547,7 @@ class AgyRunner:
                 status="SOFT_FAIL",
                 latency_seconds=latency,
                 error_message=f"Bóc tách JSON thất bại: {json_salvage_error}",
+                raw_ref=dump_raw_response(batch_id, stdout_text, stderr_text, raw_response),
             )
 
         if len(valid_recs) < len(packet_items):

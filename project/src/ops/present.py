@@ -50,7 +50,8 @@ PROPOSAL_STATUS = {"open": "Đang mở", "story_opened": "Đã mở story", "def
 AGENT_STATUS = {"active": "Hoạt động", "draft": "Draft", "retired": "Đã gỡ"}
 
 TRIGGER = {"T1": "Đủ khối lượng", "T2": "Bài chờ lâu", "T3": "Khung giờ chốt",
-           "manual": "Người chạy", "retry": "Chạy lại"}
+           "manual": "Người chạy", "retry": "Chạy lại", "backlog": "Chạy tay: bài tồn",
+           "adhoc": "Chạy tay", "bench": "Chạy tay: thử nghiệm"}
 
 # Bảng gửi cho trang web qua `/api/labels`; mọi nhãn chữ của giao diện lấy từ đây.
 LABELS = {

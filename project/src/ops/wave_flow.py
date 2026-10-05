@@ -7,6 +7,7 @@ import json
 import re
 import shutil
 from dataclasses import asdict, dataclass, field
+from datetime import timedelta
 from pathlib import Path
 from typing import Any, Callable, Protocol
 
@@ -17,7 +18,7 @@ from src.ops.config import PROJECT_ROOT, OpsPaths
 from src.ops.order import demote, load_order, save_order
 from src.ops.present import FAILURE_CLASS, WAVE_STATUS, alert_card, fmt_datetime, label
 from src.ops.procrun import StepResult, python_cmd, run_step
-from src.ops.store import OpsStore, iso
+from src.ops.store import OpsStore, iso, now_vn
 from src.ops.trace import Tracer
 
 SCRIPTS = PROJECT_ROOT / "scripts"
@@ -218,6 +219,15 @@ class WaveSteps:
         received = len(ar.wave_received_ids(wave_id))
         return received, total
 
+    def _count_repair_round(self, wave_id: str) -> None:
+        """Ghi một vòng vá vào bộ đếm bền của đợt và của từng bài còn thiếu."""
+        from scripts import article_run as ar
+
+        missing = sorted(set(ar.wave_article_ids(wave_id)) - set(ar.wave_received_ids(wave_id)))
+        self.store.bump_attempts(missing, wave_id)
+        key = f"repair_rounds:{wave_id}"
+        self.store.set_state(key, str(int(self.store.get_state(key, "0") or 0) + 1))
+
     def _has_outputs(self, wave_id: str) -> bool:
         return self._output_signature(wave_id)[0] > 0
 
@@ -342,6 +352,8 @@ class WaveSteps:
         if total and received >= total:
             return AnalyzeOutcome("skip", "ok", received, total, br.OK)
         mode = "repair" if self._has_outputs(spec.wave_id) else "analyze"
+        if mode == "repair":
+            self._count_repair_round(spec.wave_id)
         self.store.upsert_wave(spec.wave_id, status="REPAIRING" if mode == "repair"
                                else "ANALYZING")
         w = self.cfg["wave"]
@@ -545,6 +557,9 @@ class WaveSteps:
             return status
         self.store.set_state("clean_streak", "0")
         if counts_as_failure:
+            minutes = int(self.cfg["wave"].get("cooldown_minutes", 0) or 0)
+            if minutes > 0:
+                self.store.set_state("cooldown_until", iso(now_vn() + timedelta(minutes=minutes)))
             streak = int(self.store.get_state("fail_streak", "0") or 0) + 1
             self.store.set_state("fail_streak", str(streak))
             limit = int(self.cfg["autonomy"]["demote_after_failures"])
@@ -637,6 +652,41 @@ def _default_db_probe() -> tuple[bool, str]:
     return p.ok, p.reason
 
 
+def l1_full_gold_short(wave_id: str) -> bool:
+    """Đợt hỏng có đáng miễn khỏi chuỗi hỏng để tự hạ mức không.
+
+    Miễn khi lớp nhận diện đã đủ 100% số bài của đợt: mô hình chạy, bung và nạp
+    đều xong; phần thiếu chỉ còn ở lớp nội dung (bài mỏng theo ADR 0018 hoặc
+    trượt DoD nội dung). Lỗi này không phản ánh sức khoẻ provider nên không được
+    góp vào `fail_streak` làm daemon hạ mức.
+
+    Args:
+        wave_id: Mã đợt vừa FAILED ở bước finish.
+
+    Returns:
+        True khi L1 đủ và Gold thiếu; False trong mọi trường hợp khác (kể cả lỗi
+        đọc DB — thiếu dữ kiện thì giữ hành vi cũ).
+    """
+    try:
+        import sqlite3
+
+        from scripts import article_run as ar
+        from src.db.preflight import resolve_db_path
+
+        ids = ar.wave_article_ids(wave_id)
+        if not ids:
+            return False
+        conn = sqlite3.connect(f"file:{resolve_db_path().as_posix()}?mode=ro",
+                               uri=True, timeout=10)
+        try:
+            cov = ar.coverage_of(conn, ids)
+        finally:
+            conn.close()
+        return len(cov["l1_ok"]) == len(ids) and len(cov["gold_ok"]) < len(ids)
+    except Exception:
+        return False
+
+
 class WaveOps(Protocol):
     """Giao diện các bước mà `drive_wave` gọi; bản DBOS bọc mỗi bước thành step bền."""
 
@@ -703,8 +753,13 @@ def drive_wave(spec_d: dict, ops: WaveOps, cfg: dict) -> str:
                             {"failure": False, "summary": out})
     fin = ops.finish(spec_d)
     if not fin[0]:
+        failure = True
+        suffix = ""
+        if l1_full_gold_short(spec_d["wave_id"]):
+            failure = False
+            suffix = " (L1 đủ 100%, Gold thiếu không tính vào chuỗi hỏng theo ADR 0018)"
         return ops.finalize(spec_d, "FAILED", f"--finish không đạt cổng kỹ thuật "
-                            f"({fin[1]}). {fin[2][-300:]}", {"failure": True})
+                            f"({fin[1]}). {fin[2][-300:]}{suffix}", {"failure": failure})
     return ops.finalize(spec_d, "DONE",
                         f"{out.get('received')}/{out.get('total')} bài phân tích, đã nạp DB.",
                         {"failure": False, "summary": out})
