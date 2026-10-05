@@ -147,6 +147,59 @@ agents:
       - "chỉ đọc DB và ghi tệp trong kho, nên chạy được dưới workspace-write; chốt quyền ghi nằm ở --finish"
     owner_rules: ["05-gold-agent-and-payload-invariants"]
 
+  - id: capture-reconciler
+    class: operator
+    status: active
+    entrypoint: "project/scripts/capture_reconcile.py"
+    cli: 'scripts/capture_reconcile.py run --limit 40 --budget 120   # morninger gọi sau capture'
+    io_boundary:
+      read:  ["sitemap của nguồn (HTTP)", "data/monocle.db (articles, discovered_urls, silver_failures)"]
+      write: ["data/monocle.db (discovered_urls, url_aliases, capture_coverage, articles)", "data/raw_html/**"]
+    responsibility: >-
+      Đối chiếu kho với sitemap độc lập, ghi URL thiếu vào sổ phát hiện, cào bù theo URL
+      và phục hồi Bronze đã mất cho bài còn trong kho (rule 10, ADR 0013).
+    cost_budget: { tokens_per_item: 0 }
+    invariants:
+      - "không có trạng thái cuối nào mang nghĩa đã bỏ: captured, gone hoặc dead_letter có lý do"
+      - "mỗi lượt có ngân sách thời gian và dừng sạch khi hết"
+      - "Bronze phục hồi mang đúng url_title_hash đã lưu"
+    owner_rules: ["10-thu-thap-tron-ven"]
+
+  - id: story-clusterer
+    class: operator
+    status: active
+    entrypoint: "project/scripts/story_cluster.py"
+    cli: 'scripts/story_cluster.py run --days 3   # morninger gọi sau derive; article_pack gọi trước khi chọn bài'
+    io_boundary:
+      read:  ["data/monocle.db (articles, l1_outputs, agent_outputs, article_versions)"]
+      write: ["data/monocle.db (story_clusters, cluster_members, l1_outputs và agent_outputs với l1_source=inherited)"]
+    responsibility: >-
+      Gom bài thành cụm câu chuyện, gán vai trò canonical, copy, candidate và ghi kết quả
+      kế thừa cho bài chép lại. Không xoá và không sửa bài (ADR 0016).
+    cost_budget: { tokens_per_item: 0 }
+    invariants:
+      - "chỉ gán copy khi nội dung trùng tuyệt đối hoặc containment từ 0,95 và cùng số liệu, cùng mã CP"
+      - "kế thừa chỉ khi bài gốc có đủ hai lớp đạt cổng DoD, và không bao giờ ghi đè kết quả mô hình thật"
+      - "bài copy chờ tối đa 48 giờ rồi được trả về bộ chọn bài"
+    owner_rules: ["10-thu-thap-tron-ven"]
+
+  - id: signal-builder
+    class: operator
+    status: active
+    entrypoint: "project/scripts/signal_build.py"
+    cli: 'scripts/signal_build.py --days 30   # morninger gọi sau cụm hoá, giãn 30 phút'
+    io_boundary:
+      read:  ["data/monocle.db (articles, l1_outputs, agent_outputs, cluster_members)"]
+      write: ["data/monocle.db (signal_daily, entity_links, source_profile)"]
+    responsibility: >-
+      Dựng lại bảng tín hiệu insight phái sinh: chú ý bất thường, sentiment hiệu chỉnh,
+      liên kết thực thể và hồ sơ nguồn. Chỉ tổng hợp số học trên kết quả mô hình đã có.
+    cost_budget: { tokens_per_item: 0 }
+    invariants:
+      - "bảng phái sinh: xoá được và dựng lại được, ghi trong một transaction"
+      - "không dùng bản code-first làm đầu vào"
+    owner_rules: ["10-thu-thap-tron-ven"]
+
   - id: article-expander
     class: operator
     status: active
@@ -217,8 +270,10 @@ agents:
       write: []                                   # kết quả trả trong thông điệp cuối
     tools_allowed: []
     dod_contract: dod-gatekeeper#l1
-    output_schema: [l1-entity-output-v1, agent-output-v2-lean]
-    cost_budget: { tokens_per_item: null, wave_batch: 100,
+    # Mô hình phát record gọn theo hợp đồng article-compact-v2 (ADR 0017); bộ bung dựng hai lược đồ đầy đủ.
+    output_schema: [article-compact-v2]
+    expanded_schemas: [l1-entity-output-v1, agent-output-v2-lean]
+    cost_budget: { tokens_per_item: null, wave_batch: 50,
                    source: "harness.db table token_ledger (--workers-only)",
                    note: "token chỉ ghi nhận, không phải trần hay ngưỡng (ADR 0010)" }
     kpis: [turns_per_batch, parse_fail_rate, resolve_rate, dod_pass_rate, quota_tokens_per_item]
@@ -228,7 +283,7 @@ agents:
       - "maxDepth: 1 — giá trị 0 cấm delegation hoàn toàn, xem ADR 0009 amendment"
       - "reasoningEffort: off — settings.yaml đang để high cho mọi con"
     owner_rules: ["01-subagent-guardrails", "05-gold-agent-and-payload-invariants",
-                  "entity-system-invariants"]
+                  "entity-system-invariants", "11-hop-dong-dau-ra-thong-nhat"]
 
   # ─────────── LANE L1/GOLD — ĐÃ NGỪNG (ADR 0010, 2026-09-23) ───────────
   # Hai agent dưới thuộc mô hình hai tầng cũ. Row preset đã gỡ, không gọi được nữa.
@@ -273,19 +328,14 @@ agents:
 
   # ──────────── COGNITIVE AGENTS ĐẶC NHIỆM (draft — roadmap §4) ───────────
   - id: story-dedup-clusterer
-    class: cognitive          # hybrid: SimHash operator tiền lọc + tie-breaker cognitive
-    status: draft
+    class: cognitive
+    status: retired
+    retired_at: "2026-10-02"
+    retired_by: "ADR 0016 — cụm hoá trùng lặp là việc tất định của story-clusterer; bản viết lại được phân tích đầy đủ, không cần agent riêng"
+    superseded_by: story-clusterer
     model: flash
     skill: .agents/skills/story-dedup-clusterer/SKILL.md
-    stage_role: pre-gold
-    io_boundary:
-      read:  ["data/agent_tasks/dedup/*.task.json"]
-      write: ["data/agent_outputs_dedup/*.output.json"]
-    tools_allowed: [view_file, write_to_file]
-    dod_contract: dod-gatekeeper#dedup
-    cost_budget: { tokens_per_item: 300, wave_batch: 15, concurrency: 2 }
-    kpis: [cluster_precision, tokens_per_item, gold_dedup_savings_pct]
-    intent: "Gộp cùng 1 sự kiện trên nhiều nguồn -> phân tích Gold 1 lần, gán N nguồn."
+    intent: "Đã gỡ: thiết kế cho lane Gold. Xem story-clusterer."
     tier: normal
     owner_rules: ["01-subagent-guardrails"]
 

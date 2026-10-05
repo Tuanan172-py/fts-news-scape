@@ -38,3 +38,8 @@ Ranh giới quyền hạn bất biến cho MỌI Subagent trong hệ thống New
 - **Diễn giải độc lập**: Tóm tắt `summary` (`s`), các luận điểm `key_points` (`k`), và hàm ý thị trường `implication` (`im`) BẮT BUỘC phải được diễn giải bằng lời văn phân tích tài chính riêng của Agent, mang lại giá trị gia tăng so với bản tin gốc.
 - **CẤM TUYỆT ĐỐI Sao Chép Đoạn Trích Vào Key Points**: Không được phép copy nguyên văn câu trích dẫn sang mảng `key_points`. Cổng kiểm định DoD Ingest sẽ tự động quét đối chiếu độ tương đồng và từ chối nạp DB nếu phát hiện `key_points` trùng lặp với `citations`.
 
+## 7. Bất Biến Đóng Phiên & Vệ Sinh Codebase (Session Closure & Git Invariant)
+- **Kiểm định đóng phiên**: Mọi phiên làm việc có sửa đổi mã nguồn hoặc tài liệu BẮT BUỘC phải thực thi lệnh `harness_cli.py git status`.
+- **Cấm treo cây làm việc dồn ứ (No Dangling Dirty Tree)**: Nếu `clean_for_closure == false`, Agent KHÔNG ĐƯỢC PHÉP coi là hoàn thành phiên. Bắt buộc phải thực hiện đóng gói commit chuẩn (Conventional Commits ≤ 72 ký tự kèm mã `(US-XXX)`) và đẩy mã nguồn (`git push`) trước khi kết thúc lượt hoặc cập nhật `SESSION-LATEST.md`.
+
+

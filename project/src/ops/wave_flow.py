@@ -440,6 +440,40 @@ class WaveSteps:
                 sp.status = "timeout" if res.outcome in ("timeout", "stalled") else "fail"
             return res
 
+    def _deliver(self, spec: WaveSpec) -> bool:
+        """Xuất xlsx giao hàng cho ngày của đợt, best-effort sau DONE.
+
+        Writer có Idempotency Guard và checkpoint nên gọi lại an toàn.
+        Lỗi giao hàng không lật trạng thái đợt (DB đã xong).
+
+        Args:
+            spec: Thông số đợt.
+
+        Returns:
+            True khi tiến trình giao hàng thoát 0.
+        """
+        self.store.upsert_wave(spec.wave_id, step="deliver")
+        self.store.emit("step.started", f"{spec.wave_id}: bắt đầu deliver",
+                        actor="wave", wave_id=spec.wave_id, step="deliver")
+        with tracing.span("deliver", "step", "delivery-writer", tracer=self._tracer(spec),
+                          span_id=self._step_id(spec, "deliver"),
+                          entrypoint="write_user_output.py --date") as sp:
+            res = self.executor(
+                python_cmd(SCRIPTS / "write_user_output.py", "--date", spec.target_date),
+                cwd=PROJECT_ROOT, log_path=self._log(spec, "deliver"),
+                deadline_s=self._deadline("deliver"), stop_fn=None,
+                extra_env=self._tracer(spec).child_env(sp.id))
+            sp.set(rc=res.returncode, outcome=res.outcome)
+            if not res.ok:
+                sp.status = "timeout" if res.outcome in ("timeout", "stalled") else "fail"
+            level = "info" if res.ok else "warn"
+            self.store.emit("step.done" if res.ok else "step.failed",
+                            f"{spec.wave_id}: deliver → {res.outcome} ({res.duration_s:.0f}s)",
+                            level=level, actor="wave", wave_id=spec.wave_id, step="deliver",
+                            data={"rc": res.returncode, "outcome": res.outcome,
+                                  "tail": res.tail[-1500:] if not res.ok else None})
+            return res.ok
+
     def finalize(self, spec: WaveSpec, status: str, reason: str, *,
                  resume_on_breaker: bool = False, counts_as_failure: bool = False,
                  summary: dict | None = None, clean: bool = True) -> str:
@@ -482,6 +516,28 @@ class WaveSteps:
                 return status
             streak_clean = int(self.store.get_state("clean_streak", "0") or 0) + 1
             self.store.set_state("clean_streak", str(streak_clean))
+            try:
+                delivered = self._deliver(spec)
+            except Exception as exc:  # noqa: BLE001 — giao hàng hỏng không được lật DONE
+                delivered = False
+                self.store.emit("wave.deliver_failed", f"{spec.wave_id}: {exc}"[:300],
+                                level="warn", actor="wave", wave_id=spec.wave_id)
+            if delivered:
+                self.store.emit("wave.delivered",
+                                f"{spec.wave_id}: đã giao xlsx ngày {spec.target_date}",
+                                actor="wave", wave_id=spec.wave_id)
+            else:
+                self.store.emit("wave.deliver_failed",
+                                f"{spec.wave_id}: giao xlsx ngày {spec.target_date} thất bại, "
+                                f"chạy tay write_user_output.py --date {spec.target_date}",
+                                level="warn", actor="wave", wave_id=spec.wave_id)
+                self.store.alert("warn", alert_card(
+                    "warn", f"Đợt {spec.wave_id} đã nạp DB nhưng giao hàng thất bại.",
+                    "người dùng chưa nhận được xlsx ngày "
+                    f"{spec.target_date}",
+                    f"chạy write_user_output.py --date {spec.target_date}",
+                    f"/log 10 {spec.wave_id}"),
+                    dedup_key=f"deliver:{spec.wave_id}")
             # Đợt bình thường đi vào bản tin; tin riêng chỉ khi cấu hình bật.
             if self.cfg["alerts"].get("push_wave_info"):
                 self.store.alert("info", f"Đợt {spec.wave_id} ({spec.target_date}) xong: {reason}",
@@ -597,7 +653,8 @@ def drive_wave(spec_d: dict, ops: WaveOps, cfg: dict) -> str:
 
     Đợt đã mở thì chạy tới nạp DB mà không hỏi người: chốt kỹ thuật của `--finish`
     (độ phủ ≥ 90% ở cả hai lớp) quyết việc nạp, theo amendment ADR 0008. Người điều
-    khiển bằng standing order, `/pause` và `/stop`. Giao hàng không thuộc vòng đời đợt.
+    khiển bằng standing order, `/pause` và `/stop`. Giao hàng chạy best-effort sau
+    DONE cho ngày của đợt; lỗi giao hàng không lật DONE.
 
     Hàm chỉ chứa logic tất định; mọi tác dụng phụ đi qua `ops`, nên khi chạy trong
     workflow DBOS mỗi lời gọi được checkpoint và không lặp lại sau khi khôi phục.

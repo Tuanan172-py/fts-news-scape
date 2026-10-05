@@ -172,7 +172,7 @@ def cmd_status(args: argparse.Namespace) -> None:
     Args:
         args: Tham số dòng lệnh đã phân tích.
     """
-    from scripts.article_pack import ANALYZED_L1, load_candidates
+    from scripts.article_pack import ANALYZED_L1, is_thin_row, load_candidates
 
     target_date = args.date or f"{datetime.now():%Y-%m-%d}"
     print("=" * 80)
@@ -212,9 +212,13 @@ def cmd_status(args: argparse.Namespace) -> None:
         covered[table] = cur.fetchone()[0]
 
     # Cùng một câu truy vấn với bước đóng gói, nên số "chờ phân tích" ở đây đúng bằng
-    # số bài mà `article_run.py --date` sẽ lấy.
-    pending_today = len(load_candidates(conn, date=target_date, limit=1_000_000,
-                                        only_pending=True))
+    # số bài mà `article_run.py --date` sẽ lấy. Bài mỏng (không đủ hai đoạn đạt độ
+    # dài trích dẫn) bị packer loại nên đếm riêng, không gộp vào chờ.
+    _candidates = load_candidates(conn, date=target_date, limit=1_000_000,
+                                  only_pending=True, exclude_thin=False)
+    _thin = [r for r in _candidates if is_thin_row(r)]
+    pending_today = len(_candidates) - len(_thin)
+    thin_today = len(_thin)
 
     source_deleted = "(metadata_json LIKE '%\"source_deleted\": true%' " \
                      "OR metadata_json LIKE '%\"source_deleted\":true%')"
@@ -237,6 +241,45 @@ def cmd_status(args: argparse.Namespace) -> None:
         silver_blocking, silver_dead = int(_r[0] or 0), int(_r[1] or 0)
     except sqlite3.OperationalError:
         silver_blocking = silver_dead = 0
+
+    # Độ phủ thu thập (rule 10): sitemap độc lập báo bao nhiêu bài so với kho đang có.
+    try:
+        cur.execute("""
+            SELECT source_domain, sum(ref_n), sum(missing_n)
+            FROM capture_coverage WHERE day >= date(?, '-1 day') GROUP BY source_domain
+            ORDER BY source_domain
+        """, (target_date,))
+        coverage = [(r[0], int(r[1] or 0), int(r[2] or 0)) for r in cur.fetchall()]
+        cur.execute("SELECT count(1) FROM discovered_urls WHERE state='discovered'")
+        capture_pending = int(cur.fetchone()[0])
+        cur.execute("SELECT count(1) FROM silver_failures WHERE dead_letter=1 "
+                    "AND last_error LIKE '%raw_missing%'")
+        raw_lost = int(cur.fetchone()[0])
+    except sqlite3.OperationalError:
+        coverage, capture_pending, raw_lost = [], 0, 0
+
+    # Trùng lặp theo cụm câu chuyện (ADR 0016) và tín hiệu chú ý bất thường của phiên gần nhất.
+    try:
+        cur.execute("""
+            SELECT cm.role, count(1) FROM cluster_members cm
+            JOIN articles a ON a.url_title_hash = cm.article_id
+            WHERE substr(a.published_at,1,10) = ? GROUP BY cm.role
+        """, (target_date,))
+        dup_roles = {r[0]: r[1] for r in cur.fetchall()}
+        cur.execute("""
+            SELECT count(1) FROM l1_outputs o JOIN articles a ON a.url_title_hash = o.article_id
+            WHERE o.l1_source = 'inherited' AND substr(a.published_at,1,10) = ?
+        """, (target_date,))
+        inherited_today = int(cur.fetchone()[0])
+        cur.execute("""
+            SELECT trade_date, entity_id, ama_z, n_articles, n_sources FROM signal_daily
+            WHERE trade_date = (SELECT max(trade_date) FROM signal_daily)
+              AND n_articles >= 3 AND n_sources >= 2 AND ama_z IS NOT NULL
+            ORDER BY ama_z DESC LIMIT 3
+        """)
+        attention = cur.fetchall()
+    except sqlite3.OperationalError:
+        dup_roles, inherited_today, attention = {}, 0, []
 
     # Tăng vọt 404/410 tập trung ở MỘT domain hầu như luôn là site đổi cấu trúc URL
     # hoặc selector chứ không phải tin bị gỡ thật.
@@ -264,12 +307,32 @@ def cmd_status(args: argparse.Namespace) -> None:
           f"({pct:.1f}%) · nội dung đạt {covered['agent_outputs']:,}")
     print(f"   • Chờ phân tích                  : {pending_today:,} bài có gói Silver, "
           f"chưa được mô hình phân tích (bản code-first không tính)")
+    if thin_today:
+        print(f"   • Bài mỏng chờ Silver             : {thin_today:,} bài không đủ hai "
+              f"đoạn đạt độ dài trích dẫn, packer loại khỏi đợt (không tốn token)")
     print(f"   • Bài bị nguồn xóa (404/410)     : {source_deleted_count:,} bài đăng hôm nay / "
           f"{source_deleted_total:,} tổng tích lũy")
     _silver_tag = "🟢" if not (silver_blocking or silver_dead) else (
         "🔴" if silver_dead else "🟡")
     print(f"   • Bronze kẹt ở Silver (ADR 0007) : {_silver_tag} {silver_blocking:,} đang chặn "
           f"watermark / {silver_dead:,} dead-letter")
+    if coverage:
+        red_cov = [(d, 100.0 * m / r) for d, r, m in coverage if r and 100.0 * m / r > 2.0]
+        cov_tag = "🔴" if red_cov else "🟢"
+        worst = ", ".join(f"{d.split('.')[0]} thiếu {p:.0f}%" for d, p in
+                          sorted(red_cov, key=lambda x: -x[1])[:4]) or "đủ trong ngưỡng 2%"
+        print(f"   • Độ phủ thu thập (2 ngày)       : {cov_tag} {worst} · chờ cào bù "
+              f"{capture_pending:,}")
+    else:
+        print("   • Độ phủ thu thập                : ⚪ chưa đối chiếu sitemap "
+              "(scripts/capture_reconcile.py reconcile)")
+    if dup_roles:
+        print(f"   • Trùng lặp trong ngày           : {dup_roles.get('copy', 0):,} bài chép "
+              f"(đã kế thừa {inherited_today:,}) · {dup_roles.get('candidate', 0):,} bài cùng sự kiện")
+    if attention:
+        top = ", ".join(f"{r[1].split(':')[-1]} z={r[2]:.0f} ({r[3]} bài/{r[4]} nguồn)"
+                        for r in attention)
+        print(f"   • Chú ý bất thường (phiên {attention[0][0]}): {top}")
     if scrape_delay_minutes is not None:
         delay_str = (f"{scrape_delay_minutes} phút" if scrape_delay_minutes < 60
                      else f"{scrape_delay_minutes // 60}h {scrape_delay_minutes % 60}m")
@@ -337,7 +400,18 @@ def cmd_status(args: argparse.Namespace) -> None:
         recs.append(("MEDIUM", f"Cào tin chậm ({scrape_delay_minutes} phút chưa có nhịp mới).",
                      f"{PY} scripts/run_once.py"))
 
-    if silver_dead:
+    if coverage:
+        red_cov = [(d, 100.0 * m / r) for d, r, m in coverage if r and 100.0 * m / r > 2.0]
+        if red_cov:
+            recs.append(("HIGH", f"Thu thập thiếu so với sitemap ở {len(red_cov)} nguồn "
+                                 f"(vượt ngưỡng 2%); {capture_pending:,} URL chờ cào bù.",
+                         f"{PY} scripts/capture_reconcile.py run --limit 100 --budget 600"))
+
+    if silver_dead and raw_lost:
+        recs.append(("HIGH", f"{raw_lost} bài còn trong kho nhưng đã mất tệp Bronze (raw_missing). "
+                             f"Cào lại theo URL để phục hồi raw.",
+                     f"{PY} scripts/capture_reconcile.py recapture --limit 100 --budget 600"))
+    elif silver_dead:
         recs.append(("HIGH", f"{silver_dead} tệp Bronze DEAD-LETTER ở Silver: nội dung không "
                              f"bao giờ tới được bước phân tích. Đây là mất dữ liệu thật.",
                      "SELECT meta_path, attempts, last_error FROM silver_failures "

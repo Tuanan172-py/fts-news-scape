@@ -74,9 +74,12 @@ tránh `SQLITE_BUSY` và đơn giản hơn multi-writer coordination (TDR-004). 
 - **Lớp 1 (đang chạy):** `is_duplicate(url,title)` tra hash trong `seen_articles`. `mark_seen`
   ghi `INSERT OR IGNORE` (hash, `normalize_title`, source, `time.time()`). `normalize_title`
   = lowercase + gộp whitespace, **giữ dấu tiếng Việt**.
-- **Lớp 2 (fuzzy):** `is_similar_title(title, source, hours=48, threshold=90)` dùng
-  `rapidfuzz.token_set_ratio` so với tiêu đề **domain khác** trong 48h. Gọi trong
-  `BaseScraper.run()` khi `cfg.fuzzy_dedup` (mặc định True).
+- **Không còn lớp lọc mờ ở tầng cào** (ADR 0013, rule 10). Lớp `is_similar_title` đã gỡ vì loại
+  nhầm 202 trong 439 bài ở 3 ngày đầu tháng 10/2026. Trùng ngữ nghĩa xử lý sau Bronze bằng cụm hoá
+  (`src/pipeline/story_cluster.py`, ADR 0016), không bao giờ xoá bài.
+- **Sổ phát hiện:** `discovered_urls` ghi mọi URL thấy được trước mọi bước lọc. Khoá là mã bài của
+  nguồn (`src/core/urlnorm.py: url_key`) nên cùng một bài đổi slug hay thêm `?utm_source` vẫn là một
+  bài. Biến thể URL nằm ở `url_aliases`. `DedupCache.discover` và `store.insert_batch` cập nhật sổ.
 - `cleanup(max_age_days=30)` xoá seen cũ (gọi lúc khởi tạo orchestrator).
 
 ## 5. Migration JSON→SQLite (`dedup.py:37-53`)

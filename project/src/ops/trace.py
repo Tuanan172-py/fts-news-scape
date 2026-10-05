@@ -12,6 +12,8 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any, Iterator
 
+from src.ops import pipeline_spec
+
 ENV_DB = "OPS_TRACE_DB"
 ENV_WAVE = "OPS_TRACE_WAVE"
 ENV_PARENT = "OPS_TRACE_PARENT"
@@ -42,15 +44,7 @@ CREATE INDEX IF NOT EXISTS idx_ops_spans_parent ON ops_spans(parent_id);
 """
 
 # Script chạy bên trong `article_run.py` và tác nhân tương ứng trong registry.
-SCRIPT_ACTORS = {
-    "article_pack.py": "article-packer",
-    "article_expand.py": "article-expander",
-    "l1_ingest.py": "l1-ingest-gate",
-    "agent_ingest.py": "gold-ingest-gate",
-    "token_ledger.py": "token-ledger",
-    "handoff.py": "token-ledger",
-    "ctx_probe.py": "token-ledger",
-}
+SCRIPT_ACTORS = pipeline_spec.script_actors()
 
 
 def _now() -> str:

@@ -31,7 +31,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from src.agent.prefix import prefix_hash              # noqa: E402
 from src.core.stdio import force_utf8_stdio            # noqa: E402
 from src.db.preflight import probe_write, resolve_db_path  # noqa: E402
-from src.ops import trace as tracing                    # noqa: E402
+from src.ops import pipeline_spec, trace as tracing      # noqa: E402
 
 force_utf8_stdio()
 
@@ -43,7 +43,7 @@ OUT_DIR = PROJECT_ROOT / "data" / "agent_outputs_article"
 L1_OUT_DIR = PROJECT_ROOT / "data" / "agent_outputs_l1"
 GOLD_OUT_DIR = PROJECT_ROOT / "data" / "agent_outputs"
 PYTHON = sys.executable
-FINISH_STEPS = ("expand", "ingest", "verify", "ledger", "handoff")
+FINISH_STEPS = pipeline_spec.finish_steps()
 # Cùng ngưỡng với tỷ lệ hỏng mười phần trăm của bước bung bản ghi.
 MIN_COVERAGE = 0.90
 LAST_VERIFY: dict = {}
@@ -278,7 +278,7 @@ def missing_indices(batch_id: str) -> tuple[list[str], dict, dict]:
     Returns:
         Bộ ba gồm danh sách chỉ số còn thiếu, nội dung packet và bảng ánh xạ.
     """
-    from scripts.article_expand import salvage_records
+    from src.agent.article_contract import parse_and_validate
 
     packet_path = TASK_DIR / f"{batch_id}.task.json"
     map_path = TASK_DIR / f"{batch_id}.map.json"
@@ -289,13 +289,13 @@ def missing_indices(batch_id: str) -> tuple[list[str], dict, dict]:
     mapping = json.loads(map_path.read_text(encoding="utf-8"))
     if not out_path.exists():
         return list(mapping.get("index", {}).keys()), packet, mapping
-    records, _ = salvage_records(out_path.read_text(encoding="utf-8"))
-    have = {str(r.get("i")) for r in records if r.get("i") is not None}
+    parsed = parse_and_validate(out_path.read_text(encoding="utf-8"), packet)
+    have = {str(i) for i in parsed.records}
     return [i for i in mapping.get("index", {}) if i not in have], packet, mapping
 
 
 def wave_received_ids(wave: str) -> set[str]:
-    """Thu tập định danh bài đã nhận được bản ghi ở bất kỳ lô nào của đợt.
+    """Thu tập định danh bài đã nhận được bản ghi hợp lệ ở bất kỳ lô nào của đợt.
 
     Bài thiếu ở lô gốc nhưng đã có trong lô vá vẫn là bài đã nhận. Chỉ nhìn lô gốc
     thì mỗi lần chạy lại `--repair` lại đóng gói bù đúng những bài đã vá xong.
@@ -306,7 +306,7 @@ def wave_received_ids(wave: str) -> set[str]:
     Returns:
         Tập định danh bài có bản ghi trong đầu ra của mô hình.
     """
-    from scripts.article_expand import salvage_records
+    from src.agent.article_contract import parse_and_validate
 
     got: set[str] = set()
     for p in glob.glob(str(TASK_DIR / f"article_{wave}_*.map.json")):
@@ -315,8 +315,12 @@ def wave_received_ids(wave: str) -> set[str]:
         if not out_path.exists():
             continue
         index = json.loads(Path(p).read_text(encoding="utf-8")).get("index") or {}
-        records, _ = salvage_records(out_path.read_text(encoding="utf-8"))
-        got |= {index[str(r.get("i"))] for r in records if str(r.get("i")) in index}
+        packet_path = TASK_DIR / f"{batch_id}.task.json"
+        if not packet_path.exists():
+            continue
+        packet = json.loads(packet_path.read_text(encoding="utf-8"))
+        parsed = parse_and_validate(out_path.read_text(encoding="utf-8"), packet)
+        got |= {index[str(i)] for i in parsed.records if str(i) in index}
     return got
 
 
@@ -324,7 +328,10 @@ def cmd_repair(args: argparse.Namespace) -> int:
     """Đóng gói lại đúng những bài chưa nhận được bản ghi rồi sinh chương trình chạy bù.
 
     Không cần tới cơ sở dữ liệu: nội dung bài đã nằm sẵn trong packet gốc, nên đường
-    vá này cũng tiêu 0 token.
+    vá này cũng tiêu 0 token. Mỗi bài thiếu chỉ vào đúng một packet vá trong một lần
+    chạy, dù nó thiếu ở nhiều thế hệ packet. Packet đóng lúc Silver chưa có mang đoạn
+    trích RSS ngắn nên trích dẫn cũ không đối chiếu được vào thân bài mới: những bài
+    này được đóng gói lại từ Silver đầy đủ (làm mới) thay vì vá quanh bản ghi cũ.
 
     Args:
         args: Tham số dòng lệnh đã phân tích.
@@ -332,7 +339,11 @@ def cmd_repair(args: argparse.Namespace) -> int:
     Returns:
         Mã thoát 0 khi có việc để vá hoặc không còn gì thiếu, 2 khi chưa có đầu ra.
     """
-    from scripts.article_pack import write_packet
+    from scripts.article_pack import fresh_wave_paragraphs, write_packet
+    from src.agent.article_contract import MIN_CITATION_CHARS
+
+    def _eligible(paras: list) -> int:
+        return sum(1 for p in (paras or []) if len(p or "") >= MIN_CITATION_CHARS)
 
     packets = sorted(glob.glob(str(TASK_DIR / f"article_{args.wave}_*.task.json")))
     if not packets:
@@ -348,12 +359,34 @@ def cmd_repair(args: argparse.Namespace) -> int:
     repairs: list[dict] = []
     total_missing = 0
     received = wave_received_ids(args.wave)
+    # Thân bài hiện tại (Silver đầy đủ) để đóng gói mới cho bài thiếu và phát
+    # hiện packet cũ. Không đọc được thì giữ nguyên hành vi cũ (packet gốc).
+    wave_ids: set[str] = set()
+    for packet_path in packets:
+        try:
+            _mapping = json.loads(Path(packet_path.replace(".task.json", ".map.json"))
+                                   .read_text(encoding="utf-8"))
+            wave_ids.update(str(v) for v in (_mapping.get("index") or {}).values())
+        except (OSError, ValueError):
+            continue
+    fresh_paras = fresh_wave_paragraphs(wave_ids)
+    # Một bài thiếu ở nhiều thế hệ packet (gốc + các lô vá) chỉ được đóng gói bù
+    # đúng một lần trong một lần chạy: packet duyệt trước (thế hệ cũ hơn, xếp trước
+    # theo thứ tự tên) giữ bài, các thế hệ sau bỏ qua. Không có tập này, một lần
+    # chạy đẻ ra nhiều packet vá chồng lấp cho cùng các bài (E1), đốt token trùng
+    # lặp và làm lệch đếm hỏng của expand.
+    claimed: set[str] = set()
     for packet_path in packets:
         batch_id = Path(packet_path).name.replace(".task.json", "")
         missing, packet, mapping = missing_indices(batch_id)
-        missing = [i for i in missing if mapping["index"][i] not in received]
-        if not missing:
+        fresh = [i for i in missing
+                 if mapping["index"][i] not in received
+                 and mapping["index"][i] not in claimed]
+        if not fresh:
             continue
+        for i in fresh:
+            claimed.add(mapping["index"][i])
+        missing = fresh
         total_missing += len(missing)
         arts = {str(a.get("i")): a for a in (packet.get("a") or [])}
         items: list[dict] = []
@@ -362,7 +395,8 @@ def cmd_repair(args: argparse.Namespace) -> int:
         reason: dict[str, str] = {}
         for new_i, old_i in enumerate(missing):
             src = arts.get(old_i) or {}
-            items.append({"i": new_i, "t": src.get("t", ""), "p": src.get("p", [])})
+            paras = fresh_paras.get(mapping["index"][old_i]) or src.get("p", [])
+            items.append({"i": new_i, "t": src.get("t", ""), "p": paras})
             index[str(new_i)] = mapping["index"][old_i]
             tier[str(new_i)] = (mapping.get("tier") or {}).get(old_i, 2)
             reason[str(new_i)] = (mapping.get("reason") or {}).get(old_i, "")
@@ -377,6 +411,63 @@ def cmd_repair(args: argparse.Namespace) -> int:
         rpath, _mpath, budget = write_packet(rid, items, new_map, TASK_DIR)
         repairs.append({"batch_id": rid, "path": str(rpath), "n": len(items),
                         "windows": budget["windows"], "from": batch_id})
+
+    # Làm mới packet cũ: bài đã có bản ghi nhưng packet mang ít đoạn văn hơn hẳn
+    # thân Silver hiện tại (đóng lúc Silver chưa có, chỉ còn đoạn trích RSS). Bản
+    # ghi cũ trích từ đoạn trích nên không đối chiếu được vào thân mới; vá quanh
+    # nó chỉ thêm vòng hỏng. Nhóm theo packet gốc, mỗi gói vá tối đa 25 bài để
+    # vừa trần đầu ra của provider miễn phí.
+    stale_by_batch: dict[str, list[tuple[str, dict]]] = {}
+    for packet_path in packets:
+        batch_id = Path(packet_path).name.replace(".task.json", "")
+        try:
+            packet = json.loads(Path(packet_path).read_text(encoding="utf-8"))
+            mapping = json.loads(Path(packet_path.replace(".task.json", ".map.json"))
+                                 .read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        arts = {str(a.get("i")): a for a in (packet.get("a") or [])}
+        for old_i, article_id in (mapping.get("index") or {}).items():
+            if article_id not in received or article_id in claimed:
+                continue
+            current = fresh_paras.get(article_id)
+            if not current:
+                continue
+            src = arts.get(str(old_i)) or {}
+            if _eligible(current) > _eligible(src.get("p", [])):
+                stale_by_batch.setdefault(batch_id, []).append((old_i, src))
+    total_refresh = 0
+    for batch_id, stale in sorted(stale_by_batch.items()):
+        try:
+            origin_map = json.loads((TASK_DIR / f"{batch_id}.map.json")
+                                    .read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            origin_map = {}
+        for chunk_start in range(0, len(stale), 25):
+            chunk = stale[chunk_start:chunk_start + 25]
+            items, index, tier, reason = [], {}, {}, {}
+            for new_i, (old_i, src) in enumerate(chunk):
+                items.append({"i": new_i, "t": src.get("t", ""),
+                              "p": fresh_paras[(origin_map.get("index") or {}).get(
+                                  str(old_i), "")] or src.get("p", [])})
+                article_id = (origin_map.get("index") or {}).get(str(old_i), "")
+                index[str(new_i)] = article_id
+                tier[str(new_i)] = (origin_map.get("tier") or {}).get(str(old_i), 2)
+                reason[str(new_i)] = (origin_map.get("reason") or {}).get(str(old_i), "")
+                claimed.add(article_id)
+            total_refresh += len(items)
+            seq = 1
+            while (TASK_DIR / f"{batch_id}_r{seq:02d}.task.json").exists():
+                seq += 1
+            rid = f"{batch_id}_r{seq:02d}"
+            new_map = {"batch_id": rid, "wave": args.wave,
+                       "created_at": datetime.now().isoformat(timespec="seconds"),
+                       "index": index, "tier": tier, "reason": reason,
+                       "kind": "refresh"}
+            rpath, _mpath, budget = write_packet(rid, items, new_map, TASK_DIR)
+            repairs.append({"batch_id": rid, "path": str(rpath), "n": len(items),
+                            "windows": budget["windows"], "from": batch_id + " (làm mới)"})
+    total_missing += total_refresh
 
     if not repairs:
         print(f"✅  Đợt {args.wave}: không lô nào thiếu bài. Không cần vá.")
@@ -567,10 +658,14 @@ def cmd_analyze(args: argparse.Namespace) -> int:
         from src.agent.openrouter_runner import OpenRouterRunner
         runner = OpenRouterRunner()
         title = "OPENROUTER RUNNER (stealth/space-bunny-alpha)"
-    else:
+    elif runner_type == "agy":
         from src.agent.agy_runner import AgyRunner
         runner = AgyRunner()
         title = "AGY RUNNER (gemini-3.8-flash-low)"
+    else:
+        print(f"❌ --analyze chỉ chạy với --runner agy hoặc openrouter, nhận '{runner_type}'. "
+              "Runner dsh chạy qua chương trình điều phối wave_<mã>.conductor.ts.")
+        return 2
 
     concurrency = args.concurrency or 2
     print("=" * 84)
@@ -638,8 +733,10 @@ def cmd_finish(args: argparse.Namespace) -> int:
             return 1
 
     if "expand" in steps:
-        expand_rc = run([PYTHON, str(SCRIPTS / "article_expand.py"), "--wave", args.wave],
-                        check=False)
+        expand_cmd = [PYTHON, str(SCRIPTS / "article_expand.py"), "--wave", args.wave]
+        if getattr(args, "runner", "dsh") == "dsh":
+            expand_cmd += ["--default-provider", "dsh", "--default-model", "deepseek-flash"]
+        expand_rc = run(expand_cmd, check=False)
         if expand_rc != 0:
             # Lệnh chạy lại phải BỎ QUA bước vừa hỏng, không lặp lại nó. Bung bản ghi
             # đã ghi kết quả ra đĩa trước khi trả mã, và tỷ lệ hỏng là thuộc tính của

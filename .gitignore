@@ -69,5 +69,9 @@ scratch/
 **/exclude*.txt
 **/test1.py
 **/test_scratch*.py
-**/check_key*.py
+# Temporary runner files & binary documents
+*expand_*.json
+**/C*
+*.pdf
 openrouter/check_key.py
+

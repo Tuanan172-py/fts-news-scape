@@ -49,6 +49,7 @@ h3 { font-size: 11px; margin: 0 0 6px; letter-spacing: .08em; text-transform: up
 .pad { padding: 14px 16px; }
 .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 16px; }
 .grid2 > * { min-width: 0; }
+.note + .grid2 { margin-top: 24px; }
 .muted { color: var(--muted); }
 .mono { font-family: var(--mono); font-size: 12px; }
 code { font-family: var(--mono); font-size: 12px; background: var(--accent-soft); padding: 1px 5px; border-radius: 4px; }
@@ -98,6 +99,12 @@ svg .axis { stroke: var(--line); stroke-width: 1; } svg .axtxt { font: 10px var(
 .spark { stroke: var(--accent); stroke-width: 2; fill: none; }
 .kv { display: grid; grid-template-columns: 9em minmax(0,1fr); gap: 4px 12px; font-size: 13px; }
 .kv dt { color: var(--muted); } .kv dd { margin: 0; overflow-wrap: anywhere; }
+.att { display: grid; grid-template-columns: auto minmax(0,1fr) auto; gap: 4px 12px; align-items: baseline; padding: 9px 14px; border-bottom: 1px solid var(--line); }
+.att:last-child { border-bottom: 0; }
+.att .act { font: 12px var(--mono); color: var(--muted); overflow-wrap: anywhere; }
+.pill.info { background: var(--band); color: var(--muted); }
+.chip.big { font-size: 13px; padding: 3px 12px; }
+button.danger { border-color: var(--bad); color: var(--bad); }
 ul.plain { margin: 0; padding-left: 1.1em; } ul.plain li { margin-bottom: 3px; }
 </style>
 </head>
@@ -115,12 +122,12 @@ ul.plain { margin: 0; padding-left: 1.1em; } ul.plain li { margin-bottom: 3px; }
   </div>
   <div id="strip" aria-live="polite"></div>
 </header>
-<main id="view"><div class="empty">Đang tải...</div></main>
+<main id="view"><div class="empty">Đang tải dữ liệu.</div></main>
 
 <script>
 const TOKEN = "__CR_TOKEN__";
-const sel = { wave: null, agent: null, open: new Set() };
-let timer = null, lastTab = null;
+const sel = { wave: null, agent: null, open: new Set(), confirm: null };
+let timer = null, lastTab = null, lastHtml = null;
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 // FMT:BEGIN (khớp từng ký tự với src/ops/present.py; tests/test_ops_present.py kiểm bằng Node)
@@ -159,26 +166,26 @@ async function post(path) {
 // ── dải trạng thái ───────────────────────────────────────────────────────────
 function chip(k, v, cls) { return `<span class="chip ${cls || ""}">${esc(k)} <b>${esc(v)}</b></span>`; }
 function renderStrip(s) {
-  const d = s.daemon, m = s.mandate, p = s.pending, c = [];
-  c.push(chip("daemon", d.alive ? "sống" : (d.heartbeat_age_s == null ? "chưa chạy" : "im lặng " + Math.round(d.heartbeat_age_s / 60) + " ph"), d.alive ? "ok" : "bad"));
-  c.push(chip("cào tin", s.capture, s.capture === "child" || s.capture === "external" ? "ok" : "warn"));
-  c.push(chip("mandate", m.exists ? m.level + (m.days_left != null ? " · còn " + m.days_left + " ngày" : "") : "L0 · chưa cấp", m.level === "L1" ? "ok" : "warn"));
-  (s.breakers.length ? s.breakers : []).forEach(b => c.push(chip("breaker " + b.provider, b.state, b.state === "CLOSED" ? "ok" : "bad")));
-  if (s.paused) c.push(chip("trạng thái", "tạm dừng", "warn"));
-  if (s.kill_switch) c.push(chip("AGY_STOP", "BẬT", "bad"));
-  c.push(chip("bài chờ", num(p.total) + (p.oldest_age_min ? " · lâu nhất " + Math.round(p.oldest_age_min) + "'" : "")));
-  c.push(chip("tồn đọng cũ", num(p.backlog_all), "warn"));
-  if (s.active_wave) c.push(chip("đang chạy", s.active_wave.wave_id + " " + s.active_wave.step, "warn"));
-  c.push(chip("chuỗi sạch", s.streaks.clean + (s.streaks.fail ? " · hỏng " + s.streaks.fail : "")));
-  if (s.alerts_unsent) c.push(chip("tin chưa gửi", s.alerts_unsent, "warn"));
-  if (s.proposals_open) c.push(chip("đề xuất mở", s.proposals_open, "warn"));
+  const d = s.daemon, m = s.mandate, p = s.pending, h = s.health || { level: "ok", label: "Khoẻ" }, c = [];
+  c.push(chip("Tổng thể", h.label, "big " + h.level));
+  c.push(chip("Daemon", d.alive ? "sống" : (d.heartbeat_age_s == null ? "chưa chạy" : "im lặng " + Math.round(d.heartbeat_age_s / 60) + " ph"), d.alive ? "ok" : "bad"));
+  c.push(chip("Mandate", m.exists ? m.level + (m.days_left != null ? ", còn " + m.days_left + " ngày" : "") : "L0, chưa cấp", m.level === "L1" ? "ok" : "warn"));
+  c.push(chip("Bài chờ", num(p.total) + (p.oldest_age_min ? ", lâu nhất " + Math.round(p.oldest_age_min) + " ph" : "")));
+  if (s.active_wave) c.push(chip("Đang chạy", s.active_wave.wave_id + " " + s.active_wave.step, "warn"));
+  if (s.paused) c.push(chip("Trạng thái", "tạm dừng", "warn"));
+  if (s.kill_switch) c.push(chip("AGY_STOP", "bật", "bad"));
   document.getElementById("strip").innerHTML = c.join("");
+}
+
+function attentionPanel(items) {
+  if (!items.length) return `<div class="panel empty"><b>Không có việc nào cần bạn.</b><br>Daemon, breaker và mandate đều bình thường. Quay lại khi có thông báo từ Telegram.</div>`;
+  return `<div class="panel">${items.map(i => `<div class="att"><span class="pill ${i.severity === "bad" ? "fail" : i.severity === "warn" ? "warn" : "info"}">${esc({ bad: "Sự cố", warn: "Cảnh báo", info: "Thông tin" }[i.severity])}</span><span>${esc(i.title)}</span><span class="act">${esc(i.action)}</span></div>`).join("")}</div>`;
 }
 
 // ── Toàn cảnh ────────────────────────────────────────────────────────────────
 function drawMap(map) {
   const W = map.width, H = map.height, byId = Object.fromEntries(map.nodes.map(n => [n.id, n]));
-  const out = [`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Bản đồ các agent trong registry với trạng thái hiện tại" style="width:100%;min-width:1000px;height:auto"><defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>`];
+  const out = [`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Bản đồ các tác nhân trong registry với trạng thái hiện tại" style="width:100%;min-width:1000px;height:auto"><defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>`];
   const cond = byId["master-orchestrator"], chain = map.chain.map(i => byId[i]).filter(Boolean);
   if (cond && chain.length) {
     const busY = 150, cx = cond.x + cond.w / 2;
@@ -192,16 +199,16 @@ function drawMap(map) {
   });
   map.nodes.forEach(n => {
     const cls = ["nd", n.class === "conductor" ? "cond" : n.class === "cognitive" ? "cognitive" : "", n.state === "fail" ? "fail" : "", n.state === "run" ? "run" : "", n.state === "draft" ? "draft" : "", n.state === "idle" ? "idle" : ""].join(" ");
-    const sub = (n.class === "cognitive" && n.status === "active") ? "cognitive · tools " + n.tools : n.class + (n.skill ? " · " + n.skill : "");
+    const sub = (n.class === "cognitive" && n.status === "active") ? "cognitive, công cụ " + n.tools : n.class + (n.skill ? " · " + n.skill : "");
     out.push(`<g><title>${esc(n.id)}: ${esc(n.state)}</title><rect class="${cls}" x="${n.x}" y="${n.y}" width="${n.w}" height="${n.h}" rx="7"/>`);
     out.push(`<circle class="dot ${n.state}" cx="${n.x + n.w - 11}" cy="${n.y + 11}" r="4.5"/>`);
     out.push(`<text class="nid" x="${n.x + n.w / 2}" y="${n.y + n.h / 2 - 2}">${esc(n.id)}</text>`);
     out.push(`<text class="nsub" x="${n.x + n.w / 2}" y="${n.y + n.h / 2 + 14}">${esc(sub.length > Math.floor(n.w / 6) ? sub.slice(0, Math.floor(n.w / 6) - 1) + "…" : sub)}</text>`);
     const st = n.stats;
-    if (st && st.spans) out.push(`<text class="badge" x="${n.x + n.w / 2}" y="${n.y + n.h + 17}">${st.spans} span${st.tokens ? " · " + num(st.tokens) + " token" : ""}${st.tool_violations ? " · vi phạm " + st.tool_violations : ""}</text>`);
+    if (st && st.spans) out.push(`<text class="badge" x="${n.x + n.w / 2}" y="${n.y + n.h + 17}">${st.spans} bước${st.tokens ? " · " + num(st.tokens) + " token" : ""}${st.tool_violations ? " · vi phạm " + st.tool_violations : ""}</text>`);
     out.push(`</g>`);
   });
-  out.push(`<text class="lbl" x="16" y="292">DRAFT, CHƯA VẬN HÀNH</text><line class="bus" x1="16" y1="362" x2="${W - 16}" y2="362"/>`);
+  out.push(`<text class="lbl" x="16" y="292">BẢN NHÁP, CHƯA VẬN HÀNH</text><line class="bus" x1="16" y1="362" x2="${W - 16}" y2="362"/>`);
   map.stores.forEach((s, i) => {
     const sw = (W - 32 - 40) / 3, x = 16 + i * (sw + 20);
     out.push(`<rect class="store" x="${x}" y="374" width="${sw}" height="40" rx="7"/><text class="nid" x="${x + sw / 2}" y="392">${esc(s.name)}</text><text class="nsub" x="${x + sw / 2}" y="407">${esc(s.sub)}</text>`);
@@ -215,11 +222,11 @@ async function viewOverview() {
   renderStrip(map.state);
   const an = kpi.anomalies.length
     ? `<ul class="plain">${kpi.anomalies.map(a => `<li><b>${esc(a.metric)}</b>: ${a.value} (trung bình 7 ngày ${a.mean} ± ${a.stdev})</li>`).join("")}</ul>`
-    : `<div class="muted">Không có số đo nào lệch quá 2 độ lệch chuẩn so với các đợt trước${Object.values(kpi.series).every(s => s.length < 6) ? " (chưa đủ 5 đợt để so sánh)" : ""}.</div>`;
+    : `<div class="muted">Không có số đo nào lệch quá hai độ lệch chuẩn so với các đợt trước${Object.values(kpi.series).every(s => s.length < 6) ? " (chưa đủ 5 đợt để so sánh)" : ""}.</div>`;
   const rows = ws.map(w => `<tr class="pick" tabindex="0" data-wave="${esc(w.wave_id)}"><td class="mono">${esc(w.wave_id)}</td><td>${pill(w.status)}</td><td class="num">${num(w.n_articles)}</td><td class="num">${pct(w.first_pass_yield)}</td><td class="num">${num(w.tokens)}</td><td class="num">${w.duration_s != null ? fmtDuration(w.duration_s) : "–"}</td></tr>`).join("");
-  return `<h2>Bản đồ agent</h2><div class="panel scroll">${drawMap(map)}</div>
-  <p class="note">Nút là agent trong <code>registry.yaml</code>, màu theo vết lúc chạy hôm nay. Cột cam là agent duy nhất tiêu token. Nút nét đứt là agent draft.</p>
-  <div class="grid2"><div><h2>Đợt gần nhất</h2><div class="panel scroll"><table><thead><tr><th>Đợt</th><th>Trạng thái</th><th>Bài</th><th>Nhận đủ lượt đầu</th><th>Token</th><th>Thời gian</th></tr></thead><tbody>${rows || `<tr><td colspan="6" class="empty">Chưa có đợt nào do daemon chạy.</td></tr>`}</tbody></table></div></div>
+  return `<h2>Việc cần người</h2>${attentionPanel(map.state.attention || [])}<h2>Bản đồ tác nhân</h2><div class="panel scroll">${drawMap(map)}</div>
+  <p class="note">Mỗi nút là một tác nhân trong <code>registry.yaml</code>, màu theo vết hôm nay. Màu cam là tác nhân duy nhất tiêu token. Nét đứt là tác nhân bản nháp.</p>
+  <div class="grid2"><div><h2>Đợt gần nhất</h2><div class="panel scroll"><table><thead><tr><th>Đợt</th><th>Trạng thái</th><th>Bài</th><th>Nhận đủ lượt đầu</th><th>Token</th><th>Thời gian</th></tr></thead><tbody>${rows || `<tr><td colspan="6" class="empty">Chưa có đợt nào do daemon chạy. Cấp mandate bằng /level L1 hoặc gõ /run để mở đợt đầu.</td></tr>`}</tbody></table></div></div>
   <div><h2>Khác thường</h2><div class="panel pad">${an}</div></div></div>`;
 }
 
@@ -238,11 +245,11 @@ function ordered(spans) {
 }
 function drawGantt(tr, rowsOrdered, depth) {
   const W = 1040, left = 230, rowH = 22, H = rowsOrdered.length * rowH + 30, T = Math.max(1, tr.duration_ms);
-  const out = [`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Biểu đồ Gantt các span của đợt ${esc(tr.wave_id)}" style="width:100%;min-width:760px;height:auto">`];
+  const out = [`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Biểu đồ Gantt các bước của đợt ${esc(tr.wave_id)}" style="width:100%;min-width:760px;height:auto">`];
   for (let i = 0; i <= 4; i++) { const x = left + (W - left - 10) * i / 4; out.push(`<line class="axis" x1="${x}" y1="14" x2="${x}" y2="${H - 4}"/><text class="axtxt" x="${x}" y="10" text-anchor="${i === 4 ? "end" : "start"}">${dur(T * i / 4)}</text>`); }
   rowsOrdered.forEach((s, i) => {
     const y = 20 + i * rowH, x = left + (W - left - 10) * s.offset_ms / T, w = Math.max(3, (W - left - 10) * s.duration_ms / T);
-    const label = (s.kind === "agent" ? "" : "") + s.name;
+    const label = s.name;
     out.push(`<text class="gtxt" x="${8 + depth[s.span_id] * 12}" y="${y + 12}">${esc(label.length > 30 - depth[s.span_id] * 2 ? label.slice(0, 28 - depth[s.span_id] * 2) + "…" : label)}</text>`);
     out.push(`<rect class="gbar ${esc(s.kind === "agent" && s.status === "ok" ? "agent" : s.status)}" x="${x}" y="${y + 2}" width="${w}" height="${rowH - 7}" rx="3"><title>${esc(s.name)} · ${esc(s.status)} · ${dur(s.duration_ms)}</title></rect>`);
   });
@@ -267,22 +274,22 @@ function toolCell(s) {
   return `${a.tool_invoked ? "<b style='color:var(--bad)'>CÓ gọi</b>" : "0 gọi"} · ${a.denied_actions ? "<b style='color:var(--bad)'>bị từ chối</b>" : "0 từ chối"}`;
 }
 function drawTree(rowsOrdered, depth) {
-  return `<table><thead><tr><th>Span</th><th>Actor (registry)</th><th>Skill</th><th>Script / lệnh</th><th>Công cụ</th><th>Token</th><th>Thời gian</th><th>Trạng thái</th></tr></thead><tbody>${rowsOrdered.map(s => `<tr><td style="padding-left:${10 + depth[s.span_id] * 20}px;white-space:nowrap"><span class="kind ${esc(s.kind)}">${esc(s.kind)}</span> ${esc(s.name)}<div class="muted" style="font-size:11.5px">${esc(spanNote(s))}</div></td><td>${esc(s.actor_id || "–")}</td><td class="mono">${esc(s.skill || "–")}</td><td class="mono">${esc(s.entrypoint || "–")}</td><td class="mono">${toolCell(s)}</td><td class="num">${s.tokens ? num(s.tokens) : "–"}</td><td class="num">${dur(s.duration_ms)}</td><td>${pill(s.status)}</td></tr>`).join("")}</tbody></table>`;
+  return `<table><thead><tr><th>Bước</th><th>Tác nhân</th><th>Công cụ</th><th>Token</th><th>Thời gian</th><th>Trạng thái</th></tr></thead><tbody>${rowsOrdered.map(s => `<tr><td style="padding-left:${10 + depth[s.span_id] * 20}px"><span class="kind ${esc(s.kind)}">${esc(lab("span_kind", s.kind))}</span> ${esc(s.name)}<div class="muted" style="font-size:11.5px">${esc([spanNote(s), s.entrypoint].filter(Boolean).join(" · "))}</div></td><td>${esc(s.actor_id || "–")}<div class="muted mono" style="font-size:11px">${esc(s.skill || "")}</div></td><td class="mono">${toolCell(s)}</td><td class="num">${s.tokens ? num(s.tokens) : "–"}</td><td class="num">${dur(s.duration_ms)}</td><td>${pill(s.status)}</td></tr>`).join("")}</tbody></table>`;
 }
 async function viewWaves() {
   const ws = await api("/api/waves?limit=30");
   if (!sel.wave && ws.length) sel.wave = ws[0].wave_id;
-  let detail = `<div class="empty">Chọn một đợt để xem cây vết.</div>`;
+  let detail = `<div class="empty">Chưa chọn đợt. Bấm một dòng trong bảng để xem biểu đồ Gantt và cây vết.</div>`;
   if (sel.wave) {
     const tr = await api("/api/trace/" + encodeURIComponent(sel.wave));
     if (tr.spans.length) {
       const dp = depthMap(tr.spans), ord = ordered(tr.spans);
       detail = `<h2>Biểu đồ Gantt · ${esc(sel.wave)} · ${dur(tr.duration_ms)}</h2><div class="panel scroll pad">${drawGantt(tr, ord, dp)}</div>
-      <h2>Cây vết</h2><div class="panel scroll">${drawTree(ord, dp)}</div>`;
-    } else detail = `<div class="panel empty">Đợt ${esc(sel.wave)} chưa có span nào. Vết chỉ được ghi cho đợt chạy qua daemon từ khi bật US-031.</div>`;
+      <h2>Cây vết của đợt</h2><div class="panel scroll">${drawTree(ord, dp)}</div>`;
+    } else detail = `<div class="panel empty">Đợt ${esc(sel.wave)} chưa có vết nào. Đợt chạy tay hoặc chạy trước khi bật ghi vết không có cây vết. Chỉ đợt do daemon mở mới có.</div>`;
   }
-  const rows = ws.map(w => `<tr class="pick ${w.wave_id === sel.wave ? "sel" : ""}" tabindex="0" data-wave="${esc(w.wave_id)}"><td class="mono">${esc(w.wave_id)}</td><td>${pill(w.status)}</td><td>${fmtDate(w.target_date)}</td><td class="num">${num(w.n_articles)}</td><td class="num">${pct(w.first_pass_yield)}</td><td class="num">${pct(w.repair_share)}</td><td class="num">${num(w.tokens)}</td><td class="num">${w.duration_s != null ? fmtDuration(w.duration_s) : "–"}</td><td>${esc(w.trigger)}</td></tr>`).join("");
-  return `<h2>Các đợt</h2><div class="panel scroll"><table><thead><tr><th>Đợt</th><th>Trạng thái</th><th>Ngày bài</th><th>Bài</th><th>Nhận đủ lượt đầu</th><th>Tỷ lệ token ở bước vá</th><th>Token</th><th>Thời gian</th><th>Mở bởi</th></tr></thead><tbody>${rows || `<tr><td colspan="9" class="empty">Chưa có đợt nào.</td></tr>`}</tbody></table></div>${detail}`;
+  const rows = ws.map(w => `<tr class="pick ${w.wave_id === sel.wave ? "sel" : ""}" tabindex="0" data-wave="${esc(w.wave_id)}"><td class="mono">${esc(w.wave_id)}<div class="muted" style="font-size:11px;font-family:var(--font)">bài ngày ${fmtDate(w.target_date)} · ${esc(lab("trigger", w.trigger))}</div></td><td>${pill(w.status)}</td><td class="num">${num(w.n_articles)}</td><td class="num">${pct(w.first_pass_yield)}</td><td class="num">${num(w.tokens)}</td><td class="num">${w.duration_s != null ? fmtDuration(w.duration_s) : "–"}</td></tr>`).join("");
+  return `<h2>Các đợt</h2><div class="panel scroll"><table><thead><tr><th>Đợt</th><th>Trạng thái</th><th>Bài</th><th>Nhận đủ lượt đầu</th><th>Token</th><th>Thời gian</th></tr></thead><tbody>${rows || `<tr><td colspan="6" class="empty">Chưa có đợt nào. Daemon mở đợt khi đủ 100 bài chờ, hoặc bạn gõ /run.</td></tr>`}</tbody></table></div>${detail}`;
 }
 
 // ── Tác nhân ─────────────────────────────────────────────────────────────────
@@ -296,38 +303,47 @@ async function viewAgents() {
   let detail = "";
   if (card) {
     const sp = card.spec, io = sp.io_boundary || {};
-    const trend = card.trend.length ? `<table><thead><tr><th>Ngày</th><th>Span</th><th>Thành công</th><th>Token</th><th>Độ trễ TB</th></tr></thead><tbody>${card.trend.map(t => `<tr><td>${esc(t.day)}</td><td class="num">${t.spans}</td><td class="num">${pct(t.spans ? t.ok / t.spans : null)}</td><td class="num">${num(t.tokens)}</td><td class="num">${t.avg_latency_s != null ? t.avg_latency_s + " s" : "–"}</td></tr>`).join("")}</tbody></table>` : `<div class="empty">Chưa có span nào của tác nhân này trong 7 ngày.</div>`;
-    const recent = card.recent.length ? `<table><thead><tr><th>Span</th><th>Đợt</th><th>Trạng thái</th><th>Token</th><th>Lúc</th></tr></thead><tbody>${card.recent.map(r => `<tr class="pick" tabindex="0" data-wave="${esc(r.trace_id)}"><td>${esc(r.name)}</td><td class="mono">${esc(r.trace_id)}</td><td>${pill(r.status)}</td><td class="num">${r.tokens ? num(r.tokens) : "–"}</td><td class="num">${hhmm(r.started_at)}</td></tr>`).join("")}</tbody></table>` : "";
+    const trend = card.trend.length ? `<table><thead><tr><th>Ngày</th><th>Bước</th><th>Thành công</th><th>Token</th><th>Độ trễ TB</th></tr></thead><tbody>${card.trend.map(t => `<tr><td>${esc(t.day)}</td><td class="num">${t.spans}</td><td class="num">${pct(t.spans ? t.ok / t.spans : null)}</td><td class="num">${num(t.tokens)}</td><td class="num">${t.avg_latency_s != null ? t.avg_latency_s + " s" : "–"}</td></tr>`).join("")}</tbody></table>` : `<div class="empty">Chưa có bước nào của tác nhân này trong 7 ngày. Số liệu xuất hiện sau đợt đầu tiên do daemon chạy.</div>`;
+    const recent = card.recent.length ? `<table><thead><tr><th>Bước</th><th>Đợt</th><th>Trạng thái</th><th>Token</th><th>Lúc</th></tr></thead><tbody>${card.recent.map(r => `<tr class="pick" tabindex="0" data-wave="${esc(r.trace_id)}"><td>${esc(r.name)}</td><td class="mono">${esc(r.trace_id)}</td><td>${pill(r.status)}</td><td class="num">${r.tokens ? num(r.tokens) : "–"}</td><td class="num">${hhmm(r.started_at)}</td></tr>`).join("")}</tbody></table>` : "";
     detail = `<h2>${esc(sp.id)} ${pill(sp.status, sp.status === "active" ? "ok" : "warn")}</h2>
     <div class="grid2"><div class="panel pad"><h3>Đặc tả từ registry</h3><dl class="kv">
       <dt>Loại</dt><dd>${esc(sp.class)}</dd><dt>Mô hình</dt><dd>${esc(sp.model || "không dùng LLM")}</dd>
-      <dt>Skill</dt><dd class="mono">${esc(sp.skill || "–")}</dd><dt>Entrypoint</dt><dd class="mono">${esc(sp.entrypoint || sp.cli || "–")}</dd>
+      <dt>Skill</dt><dd class="mono">${esc(sp.skill || "–")}</dd><dt>Điểm vào</dt><dd class="mono">${esc(sp.entrypoint || sp.cli || "–")}</dd>
       <dt>Công cụ cho phép</dt><dd>${(sp.tools_allowed || []).length ? esc(sp.tools_allowed.join(", ")) : "không có (0)"}</dd>
-      <dt>Đọc</dt><dd class="mono">${io.read ? esc(io.read.join("; ") || "không có (agent không đọc tệp)") : "–"}</dd><dt>Ghi</dt><dd class="mono">${io.write ? esc(io.write.join("; ") || "không có (kết quả trả trong thông điệp)") : "–"}</dd>
-      <dt>Cổng DoD</dt><dd>${esc(sp.dod_contract || "–")}</dd><dt>KPI</dt><dd>${esc((sp.kpis || []).join(", ") || "–")}</dd></dl>
+      <dt>Đọc</dt><dd class="mono">${io.read ? esc(io.read.join("; ") || "không có (tác nhân không đọc tệp)") : "–"}</dd><dt>Ghi</dt><dd class="mono">${io.write ? esc(io.write.join("; ") || "không có (kết quả trả trong thông điệp)") : "–"}</dd>
+      <dt>Cổng nghiệm thu</dt><dd>${esc(sp.dod_contract || "–")}</dd><dt>KPI</dt><dd>${esc((sp.kpis || []).join(", ") || "–")}</dd></dl>
       <p class="note">${esc(String(sp.responsibility || sp.intent || "").replace(/\s+/g, " ").slice(0, 320))}</p></div>
     <div class="panel pad"><h3>Bất biến</h3><ul class="plain">${(sp.invariants || []).slice(0, 7).map(i => `<li>${esc(i)}</li>`).join("") || "<li class='muted'>không khai</li>"}</ul>
       ${card.violations.length ? `<p style="color:var(--bad);font-weight:600">${card.violations.length} vi phạm công cụ trong 7 ngày</p>` : `<p class="note">Không có vi phạm công cụ trong 7 ngày.</p>`}</div></div>
     <h2>KPI 7 ngày</h2><div class="panel scroll">${trend}</div>
-    ${recent ? `<h2>Span gần nhất</h2><div class="panel scroll">${recent}</div>` : ""}`;
+    ${recent ? `<h2>Các bước gần nhất</h2><div class="panel scroll">${recent}</div>` : ""}`;
   }
-  return `<h2>Tác nhân trong registry</h2><div class="panel scroll"><table><thead><tr><th>Id</th><th>Loại</th><th>Trạng thái</th><th>Skill</th><th>Mô hình</th></tr></thead><tbody>${rows}</tbody></table></div>${detail}`;
+  return `<h2>Các tác nhân trong registry</h2><div class="panel scroll"><table><thead><tr><th>Mã</th><th>Loại</th><th>Trạng thái</th><th>Skill</th><th>Mô hình</th></tr></thead><tbody>${rows}</tbody></table></div>${detail}`;
 }
 
 // ── Sự cố ────────────────────────────────────────────────────────────────────
 async function viewIncidents() {
   const d = await api("/api/incidents");
-  const br = d.breakers.length ? d.breakers.map(b => `<tr><td>${esc(b.provider)}</td><td>${pill(b.state, b.state === "CLOSED" ? "ok" : "fail")}</td><td>${esc(b.reason || "–")}</td><td class="num">${b.failures}</td><td class="num">${esc(b.reopen_at ? fmtDateTime(b.reopen_at) : "–")}</td></tr>`).join("") : `<tr><td colspan="5" class="empty">Chưa có breaker nào ghi nhận.</td></tr>`;
-  const pr = Object.entries(d.probes).map(([k, v]) => `<tr><td>${esc(k)}</td><td>${pill(v.state === "ok" ? "khoẻ" : "bất thường", v.state === "ok" ? "ok" : "fail")}</td><td class="num">${esc(fmtDateTime(v.since))}</td></tr>`).join("") || `<tr><td colspan="3" class="empty">Chưa có phép đo.</td></tr>`;
-  const ev = d.events.map(e => `<tr><td class="num">${esc(fmtDateTime(e.ts))}</td><td>${pill(e.level, e.level === "warn" ? "warn" : "fail")}</td><td class="mono">${esc(e.kind)}</td><td>${esc(e.message.slice(0, 220))}</td></tr>`).join("") || `<tr><td colspan="4" class="empty">Không có sự kiện cảnh báo gần đây.</td></tr>`;
+  const br = d.breakers.length ? d.breakers.map(b => `<tr><td>${esc(b.provider)}</td><td>${pill(b.state, b.state === "CLOSED" ? "ok" : "fail")}</td><td>${esc(lab("failure_class", b.reason))}</td><td class="num">${b.failures}</td><td class="num">${esc(b.reopen_at ? fmtDateTime(b.reopen_at) : "–")}</td></tr>`).join("") : `<tr><td colspan="5" class="empty">Chưa có breaker nào ghi nhận. Breaker xuất hiện khi một nhà cung cấp lỗi liên tiếp.</td></tr>`;
+  const pr = Object.entries(d.probes).map(([k, v]) => `<tr><td>${esc(k)}</td><td>${pill(v.state === "ok" ? "khoẻ" : "bất thường", v.state === "ok" ? "ok" : "fail")}</td><td class="num">${esc(fmtDateTime(v.since))}</td></tr>`).join("") || `<tr><td colspan="3" class="empty">Chưa có phép đo nào. Daemon ghi phép đo ở chu kỳ đầu tiên.</td></tr>`;
+  const ev = d.events.map(e => `<tr><td class="num">${esc(fmtDateTime(e.ts))}</td><td>${pill(e.level, e.level === "warn" ? "warn" : "fail")}</td><td class="mono">${esc(e.kind)}</td><td>${esc(e.message.slice(0, 220))}</td></tr>`).join("") || `<tr><td colspan="4" class="empty">Không có sự kiện cảnh báo gần đây. Hệ thống không cần bạn can thiệp.</td></tr>`;
   const dg = d.diagnoses.map(x => `<li><span class="muted">${esc(x.ts.slice(5, 16).replace("T", " "))}</span> ${esc(x.message)}<br><code>${esc(x.data.command || "none")}</code> ${esc(x.data.rationale || "")}</li>`).join("");
-  return `<div class="grid2"><div><h2>Breaker provider</h2><div class="panel scroll"><table><thead><tr><th>Provider</th><th>Trạng thái</th><th>Lý do</th><th>Lỗi</th><th>Mở lại</th></tr></thead><tbody>${br}</tbody></table></div></div>
+  return `<div class="grid2"><div><h2>Breaker của nhà cung cấp</h2><div class="panel scroll"><table><thead><tr><th>Nhà cung cấp</th><th>Trạng thái</th><th>Lý do</th><th>Lỗi</th><th>Mở lại</th></tr></thead><tbody>${br}</tbody></table></div></div>
   <div><h2>Phép đo sức khoẻ</h2><div class="panel scroll"><table><thead><tr><th>Phép đo</th><th>Trạng thái</th><th>Từ</th></tr></thead><tbody>${pr}</tbody></table></div></div></div>
-  <h2>Sự kiện cảnh báo trở lên</h2><div class="panel scroll"><table><thead><tr><th>Lúc</th><th>Mức</th><th>Loại</th><th>Nội dung</th></tr></thead><tbody>${ev}</tbody></table></div>
-  <h2>Chẩn đoán của ops-sentinel</h2><div class="panel pad">${dg ? `<ul class="plain">${dg}</ul>` : `<span class="muted">Chưa có chẩn đoán nào.</span>`}</div>`;
+  <h2>Sự kiện từ mức cảnh báo</h2><div class="panel scroll"><table><thead><tr><th>Lúc</th><th>Mức</th><th>Loại</th><th>Nội dung</th></tr></thead><tbody>${ev}</tbody></table></div>
+  <h2>Chẩn đoán của ops-sentinel</h2><div class="panel pad">${dg ? `<ul class="plain">${dg}</ul>` : `<span class="muted">Chưa có chẩn đoán nào. ops-sentinel chỉ chẩn đoán khi có sự cố.</span>`}</div>`;
 }
 
 // ── Cải tiến ─────────────────────────────────────────────────────────────────
+const ACT_TEXT = { defer: "Hoãn 30 ngày", reject: "Bác 30 ngày" };
+function propButtons(p) {
+  const key = p.id + ":", asking = sel.confirm && sel.confirm.startsWith(key);
+  if (asking) {
+    const act = sel.confirm.slice(key.length);
+    return `<span class="muted" style="align-self:center">Xác nhận ${esc(ACT_TEXT[act].toLowerCase())}?</span><button class="danger" data-prop="${p.id}" data-act="${act}" data-yes="1">Xác nhận</button><button data-cancel="1">Huỷ</button>`;
+  }
+  return `<button class="primary" data-prop="${p.id}" data-act="open_story">Mở story</button><button data-ask="${p.id}:defer">${ACT_TEXT.defer}</button><button data-ask="${p.id}:reject">${ACT_TEXT.reject}</button>`;
+}
 function spark(series, color) {
   if (series.length < 2) return `<span class="muted">chưa đủ dữ liệu</span>`;
   const w = 220, h = 40, lo = Math.min(...series), hi = Math.max(...series), r = (hi - lo) || 1;
@@ -338,13 +354,13 @@ async function viewImprove() {
   const [props, kpi] = await Promise.all([api("/api/improvements"), api("/api/kpi")]);
   const s = kpi.series;
   const label = { first_pass_yield: "Nhận đủ bài lượt đầu", tokens_per_article: "Token mỗi bài", repair_share: "Tỷ lệ token ở bước vá", avg_latency_s: "Độ trễ lô (giây)" };
-  const trends = Object.keys(label).map(k => `<div class="panel pad"><h3>${label[k]}</h3>${spark(s[k])}<div class="note">${s[k].length ? "gần nhất " + (k === "first_pass_yield" || k === "repair_share" ? pct(s[k][s[k].length - 1]) : Math.round(s[k][s[k].length - 1])) + " · " + s[k].length + " đợt" : "chưa có đợt DONE có vết"}</div></div>`).join("");
+  const trends = Object.keys(label).map(k => `<div class="panel pad"><h3>${label[k]}</h3>${spark(s[k])}<div class="note">${s[k].length ? "gần nhất " + (k === "first_pass_yield" || k === "repair_share" ? pct(s[k][s[k].length - 1]) : Math.round(s[k][s[k].length - 1])) + " · " + s[k].length + " đợt" : "chưa có đợt xong nào có vết"}</div></div>`).join("");
   const cards = props.map(p => `<div class="panel pad" style="margin-bottom:12px"><div style="display:flex;gap:10px;justify-content:space-between;flex-wrap:wrap"><div style="min-width:0;flex:1"><b>#${p.id} ${esc(p.title)}</b><div class="note">${esc(p.kind)} · tác động ${num(p.impact)} · ${fmtDate(p.created_at)} ${pill(p.status, p.status === "open" ? "warn" : "ok")}${p.story_id ? " · story <code>" + esc(p.story_id) + "</code>" : ""}</div></div>
-    ${p.status === "open" ? `<div style="display:flex;gap:6px;align-items:flex-start"><button class="primary" data-prop="${p.id}" data-act="open_story">Mở story</button><button data-prop="${p.id}" data-act="defer">Hoãn</button><button data-prop="${p.id}" data-act="reject">Bác</button></div>` : ""}</div>
+    ${p.status === "open" ? `<div style="display:flex;gap:6px;align-items:flex-start">${propButtons(p)}</div>` : ""}</div>
     <details data-d="${p.id}" ${sel.open.has(String(p.id)) ? "open" : ""} style="margin-top:8px"><summary class="muted" style="cursor:pointer">Bằng chứng</summary><pre class="mono" style="white-space:pre-wrap;margin:6px 0 0">${esc(JSON.stringify(p.evidence, null, 2))}</pre></details></div>`).join("");
-  return `<h2>Hộp thư cải tiến</h2>${cards || `<div class="panel empty">Chưa có đề xuất nào. Bộ phát hiện chạy mỗi giờ trên vết và KPI; đề xuất xuất hiện khi có bằng chứng đủ mạnh.</div>`}
-  <p class="note">Đề xuất tự sinh không bao giờ tự thi hành. Chỉ <b>Mở story</b> mới tạo intake và story ở trạng thái <code>planned</code> trong harness.</p>
-  <h2>Xu hướng KPI (đợt DONE trong 14 ngày)</h2><div class="grid2">${trends}</div>`;
+  return `<h2>Hộp thư cải tiến</h2>${cards || `<div class="panel empty">Chưa có đề xuất nào. Bộ phát hiện chạy mỗi giờ trên vết và KPI. Đề xuất chỉ xuất hiện khi có bằng chứng đủ mạnh.</div>`}
+  <p class="note">Đề xuất tự sinh không bao giờ tự thi hành. Chỉ <b>Mở story</b> mới tạo story ở trạng thái <code>planned</code> trong harness. Hoãn và Bác ẩn đề xuất 30 ngày.</p>
+  <h2>Xu hướng KPI (đợt xong trong 14 ngày)</h2><div class="grid2">${trends}</div>`;
 }
 
 // ── định tuyến, làm mới ──────────────────────────────────────────────────────
@@ -357,16 +373,31 @@ async function render() {
   try {
     const [html, st] = await Promise.all([fn(), api("/api/state")]);
     renderStrip(st);
-    const y = window.scrollY;
-    document.getElementById("view").innerHTML = html;
-    window.scrollTo(0, y);
-    bind();
+    const view = document.getElementById("view");
+    if (html !== lastHtml || tab !== lastTab) {
+      const y = window.scrollY, focus = focusKey();
+      view.innerHTML = html;
+      window.scrollTo(0, y);
+      bind();
+      restoreFocus(focus);
+      lastHtml = html;
+    }
   } catch (e) {
-    document.getElementById("view").innerHTML = `<div class="panel empty">Không đọc được dữ liệu: ${esc(e.message)}. Daemon có đang chạy không?</div>`;
+    document.getElementById("view").innerHTML = `<div class="panel empty">Không đọc được dữ liệu: ${esc(e.message)}. Kiểm tra daemon bằng python scripts/ops_daemon.py status.</div>`;
   }
   lastTab = tab;
 }
+const FOCUS_ATTRS = ["data-wave", "data-agent", "data-ask", "data-cancel", "data-prop"];
+function focusKey() {
+  const el = document.activeElement;
+  if (!el || el === document.body) return null;
+  for (const a of FOCUS_ATTRS) if (el.hasAttribute(a)) return `[${a}="${CSS.escape(el.getAttribute(a))}"]`;
+  return null;
+}
+function restoreFocus(key) { const el = key && document.querySelector(key); if (el) el.focus({ preventScroll: true }); }
 function bind() {
+  document.querySelectorAll("[data-ask]").forEach(b => b.addEventListener("click", () => { sel.confirm = b.dataset.ask; render(); }));
+  document.querySelectorAll("[data-cancel]").forEach(b => b.addEventListener("click", () => { sel.confirm = null; render(); }));
   document.querySelectorAll("[data-wave]").forEach(el => {
     const go = () => { sel.wave = el.dataset.wave; if ((location.hash || "#overview") !== "#waves") location.hash = "#waves"; else render(); };
     el.addEventListener("click", go); el.addEventListener("keydown", e => { if (e.key === "Enter") go(); });
@@ -378,8 +409,9 @@ function bind() {
   document.querySelectorAll("details[data-d]").forEach(d => d.addEventListener("toggle", () => { d.open ? sel.open.add(d.dataset.d) : sel.open.delete(d.dataset.d); }));
   document.querySelectorAll("[data-prop]").forEach(b => b.addEventListener("click", async () => {
     b.disabled = true;
+    sel.confirm = null;
     const r = await post(`/api/improvements/${b.dataset.prop}/${b.dataset.act}`);
-    if (r.status !== 200) alert_(r.body.message || r.body.error || "Lỗi");
+    if (r.status !== 200) alert_(r.body.message || r.body.error || "Không thực hiện được thao tác. Thử lại sau.");
     render();
   }));
 }

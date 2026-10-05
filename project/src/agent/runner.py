@@ -60,6 +60,11 @@ class AgentRunner:
         finally:
             conn.close()
 
+    # Phiên bản gói công việc của Article Lane. 1.1 đổi nguồn thân bài sang Silver
+    # đầy đủ để khớp với packet và trích dẫn (ADR 0018): gói 1.0 cũ ghi đoạn trích
+    # RSS nên trích dẫn Silver không đối chiếu được. Gói cũ tự dựng lại ở lần nạp tới.
+    WORK_PACKAGE_VERSION = "1.1"
+
     def _register_article_lane_item(self, article_id: str) -> dict | None:
         """Đăng ký work_item và work_package cho bài từ Article Lane khi chưa có.
 
@@ -69,11 +74,16 @@ class AgentRunner:
         Returns:
             Từ điển dữ liệu bản ghi work_item vừa đăng ký, hoặc None khi không tìm thấy bài.
         """
+        from src.agent.silver_source import read_silver_text
+
         article = self.store.get_by_hash(article_id)
         if article is None:
             return None
 
-        content = article.content_text or article.title or ""
+        silver_text = read_silver_text(getattr(article, "source_domain", None),
+                                       getattr(article, "published_at", None),
+                                       article_id)
+        content = silver_text or article.content_text or article.title or ""
         raw_sha256 = hashlib.sha256(content.encode("utf-8")).hexdigest()
 
         project_root = Path(__file__).resolve().parents[2]
@@ -83,12 +93,13 @@ class AgentRunner:
 
         if not wp_file.exists():
             wp_data = {
-                "work_package_version": "1.0",
+                "work_package_version": self.WORK_PACKAGE_VERSION,
                 "article_id": article_id,
                 "title": article.title or "",
                 "domain": article.source_domain or "",
                 "published_at": article.published_at or "",
                 "cleaned_text": content,
+                "text_source": "silver" if silver_text else "rss",
                 "raw_sha256": raw_sha256,
                 "structure": {
                     "text_quality": "high",
@@ -97,6 +108,23 @@ class AgentRunner:
                 "change_state": "NEW",
             }
             wp_file.write_text(json.dumps(wp_data, ensure_ascii=False, indent=2), encoding="utf-8")
+        else:
+            try:
+                kept = json.loads(wp_file.read_text(encoding="utf-8")) or {}
+            except (OSError, ValueError):
+                kept = {}
+            if kept.get("work_package_version") != self.WORK_PACKAGE_VERSION:
+                kept["work_package_version"] = self.WORK_PACKAGE_VERSION
+                kept["cleaned_text"] = content
+                kept["text_source"] = "silver" if silver_text else "rss"
+                kept["raw_sha256"] = raw_sha256
+                kept.setdefault("title", article.title or "")
+                kept.setdefault("domain", article.source_domain or "")
+                kept.setdefault("published_at", article.published_at or "")
+                structure = kept.get("structure") or {}
+                structure["content_length"] = len(content)
+                kept["structure"] = structure
+                wp_file.write_text(json.dumps(kept, ensure_ascii=False, indent=2), encoding="utf-8")
 
         rel_path = f"data/work_packages/{article_id}.json"
 

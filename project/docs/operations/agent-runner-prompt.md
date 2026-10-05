@@ -2,6 +2,9 @@
 
 Cập nhật: 2026-08-20 · Trạng thái: **ARCHIVED REFERENCE** · Đối tượng: agent có tool đọc/ghi file cục bộ (Claude Code, Cursor, MCP filesystem…).
 
+> [!CAUTION]
+> **Không dùng tài liệu này để chỉ dẫn agent.** Hợp đồng hiện hành là `project/schemas/article-compact-v2.schema.json` (ADR 0017, rule 11). Tài liệu này dạy agent tự ghi tệp theo từng bài và nêu các trường đã ngừng, trái Article Lane.
+
 > [!NOTE]
 > **Tài liệu Kế thừa (Reference Only — Hợp đồng v1):**
 > Phiếu giao việc này mô tả luồng chạy hai hàng đợi L1 và Bóc tách thủ công trước khi hợp nhất Article Lane (ADR 0010). Hiện tại toàn bộ tác vụ được đóng gói qua `article_run.py` theo chuẩn `v2-lean`. Các trường `materiality.score`, `impact_area`, `event_type` KHÔNG áp dụng vào runtime hiện hành.

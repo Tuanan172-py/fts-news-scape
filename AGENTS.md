@@ -26,7 +26,7 @@ At most **one** story `in_progress` at a time. If an urgent request interrupts, 
 Read these before inventing context; do NOT create a new knowledge folder:
 0. `.agents/registry.yaml` + `.agents/pipeline.yaml` — **nguồn chân lý** cho mạng lưới tác nhân (ai tồn tại, class operator/cognitive/conductor, ranh giới I/O, DoD, KPI) và DAG điều phối. **Chạy thế nào mỗi ngày:** `.agents/dsh/RUNBOOK-article-lane.md` (Article Lane trên DSH, preset `news-scape-conductor`). Thiết kế Article Lane: `plans/20260918-1651-article-lane-unified/plan.md`; quyết định ngừng lane L1/Gold: `docs/decisions/0010-ngung-lane-l1-gold-article-lane-duy-nhat.md`. Quy tắc tăng trưởng: `.agents/rules/07-agent-registry-governance.md`.
 
-1. `.agents/skills/*` — operational & governance skills: `pipeline-radar`, `dsh-conductor` (trong `.agents/dsh/presets/news-scape-conductor/skills/`), `watchlist-curator`, `token-auditor`, `dod-gatekeeper`, `multi-agent-orchestrator-governance`, `l1-entity-matcher` (kiến thức nhận diện thực thể của `article-processor`); agent đặc nhiệm draft: `story-dedup-clusterer`, `entity-curator`, `adversarial-dod-verifier`, `daily-brief-synthesizer`, `harness-auditor`. Skill `gold-financial-analyst` và `news-scape-agent-operations` mô tả lane L1/Gold đã ngừng (ADR 0010), chỉ còn giá trị tham khảo.
+1. `.agents/skills/*` — operational & governance skills: `pipeline-radar`, `dsh-conductor` (trong `.agents/dsh/presets/news-scape-conductor/skills/`), `watchlist-curator`, `token-auditor`, `dod-gatekeeper`, `multi-agent-orchestrator-governance`, `l1-entity-matcher` (kiến thức nhận diện thực thể của `article-processor`); agent đặc nhiệm draft: `entity-curator`, `adversarial-dod-verifier`, `daily-brief-synthesizer`, `harness-auditor`. Skill `gold-financial-analyst` và `news-scape-agent-operations` mô tả lane L1/Gold đã ngừng (ADR 0010), chỉ còn giá trị tham khảo.
 2. `project/docs/skills/*` — per-domain scraper knowledge (cafef, fireant, rss-sources, tnck).
 3. `project/docs/{design,dev,domains,operations}/` — architecture, how-tos, source taxonomy, ops.
 4. `project/docs/charter.md` + `project/docs/ARCHITECTURE.md` — goals, phases, TDRs.
@@ -109,7 +109,7 @@ Maturity: this harness is at **H2-H5 (Durable SQLite + Active Observability + Au
    - **Đóng gói đợt** (`article_run.py` → `article_pack.py`): chọn bài chưa được mô hình phân tích, xếp tầng ưu tiên, ghi packet `data/agent_tasks/article/`, sinh sẵn chương trình điều phối `wave_<mã>.conductor.ts`.
    - **Hoàn tất đợt** (`article_run.py --finish`): bung bản ghi gọn thành hai lược đồ, nạp qua cổng DoD (`l1_ingest.py`, `agent_ingest.py`, chỉ tệp của đúng đợt), hậu kiểm độ phủ, ghi sổ cái token, sinh bàn giao.
    - **Giao hàng**: phân tuyến theo watchlist, xuất `users/output/<user>/<date>.xlsx`.
-2. **Agent `article-processor`** (công cụ `agent_article`, model `deepseek-flash`, không tool, đúng một bước mỗi lô): xử lý **trọn một bài trong một lượt**, gồm cả hai lớp nghiệp vụ:
+2. **Agent `article-processor`** (công cụ `agent_article` trên DSH hoặc runner `agy`/`openrouter`, không tool, đúng một bước mỗi lô): xử lý **trọn một bài trong một lượt**, gồm cả hai lớp nghiệp vụ:
    - **Nhận diện thực thể** từ tiêu đề và nội dung: mã CP, doanh nghiệp, sàn, ngành, chỉ số, vĩ mô → `l1-entity-output-v1`.
    - **Phân tích nội dung**: tóm tắt, luận điểm, hàm ý thị trường, `sentiment`, `time_sensitivity`, trích dẫn theo chỉ số đoạn → `agent-output-v2-lean`.
    - **Đầu ra sạch**: không sinh `materiality`, `event_type`, `impact_area`. Ba trường này đã ngừng dùng ở mọi tầng (mô hình, DB mới, giao hàng).
@@ -121,7 +121,7 @@ Maturity: this harness is at **H2-H5 (Durable SQLite + Active Observability + Au
 - **Token là số ghi nhận, không phải cổng.** Không có giới hạn hay mức cảnh báo token nào, theo bài, theo lô hay theo đợt. Sổ cái (`token_ledger`, chỉ tính phiên worker) ghi token và USD để người dùng tự đánh giá, tự ước lượng. Không dừng đợt, không giảm số bài, không chia nhỏ lô vì token.
 - **Đọc trọn nội dung.** Packet mang toàn bộ đoạn văn nguyên văn của bài (trần chắt lọc đã tắt). Chỉ giữ tiêu đề và đoạn văn, bỏ link, ảnh, menu. Không dòng nào vượt trần cắt dòng của công cụ đọc.
 - **Trích dẫn theo chỉ số đoạn.** Mô hình trả chỉ số, script dựng lại đoạn nguyên văn, nên trích dẫn đúng nguyên văn do cấu trúc.
-- **Mọi bài đều được xử lý đầy đủ.** Xếp tầng theo watchlist (nhận rộng: mã theo dõi, ngành liên quan, vĩ mô khẩn) chỉ quyết định **thứ tự**, không quyết định độ sâu. Không còn lọc Subscriber-Gated. Người dùng đã duyệt về nguyên tắc (2026-10-01) một ngoại lệ: bài xác định là trùng được miễn bước LLM và kế thừa kết quả của bài gốc. Ngoại lệ chỉ có hiệu lực khi bước cụm hoá trùng lặp được triển khai và có ADR riêng (`docs/proposals/dedup-architecture-2026-10-01.md`).
+- **Mọi bài đều được xử lý đầy đủ.** Xếp tầng theo watchlist (nhận rộng: mã theo dõi, ngành liên quan, vĩ mô khẩn) chỉ quyết định **thứ tự**, không quyết định độ sâu. Không còn lọc Subscriber-Gated. Một ngoại lệ có hiệu lực theo ADR 0016 (2026-10-02): bài `copy` (nội dung trùng tuyệt đối, hoặc containment từ 0,95 và cùng số liệu, cùng mã CP) không vào packet và nhận kết quả `l1_source = 'inherited'` từ bài gốc. Bản viết lại và bài cùng sự kiện vẫn được phân tích đầy đủ.
 - **Đối chiếu tất định chỉ để kiểm, không để thay.** Bộ nhận diện theo danh mục (có `Capitalized Suffix Guard` và `Prefix Guard`) được dùng để đối chiếu với kết quả mô hình. Bản code-first không bao giờ được tính là "đã phân tích" (`l1_source = 'code_first'` bị loại khỏi mọi phép đếm và khỏi bộ chọn bài).
 - **Cổng thật của một đợt là cổng kỹ thuật.** DB ghi được (kiểm trước khi tiêu token), nạp không lỗi, độ phủ của đợt ≥ 90% ở cả hai lớp. Chỉ khi cả ba đạt thì `--finish` mới thoát 0 và in `✅ ĐỢT <mã> HOÀN TẤT`.
 - **Bảo toàn raw gốc.** `raw_html` và `meta.json` luôn giữ nguyên tại Bronze để kiểm toán.
@@ -129,7 +129,7 @@ Maturity: this harness is at **H2-H5 (Durable SQLite + Active Observability + Au
 ### C. Cấm Giả lập Trí tuệ Agent bằng Script (No Script Emulation)
 
 - **Không viết script thay agent.** Không dùng regex hay heuristic để sinh kết quả nhận diện hay phân tích.
-- **Vùng độc quyền của LLM.** Ngữ nghĩa, trích xuất thực thể, tóm tắt, hàm ý và trích dẫn là việc của `article-processor`, gọi qua `tools.agent_article` trong chương trình điều phối. Mọi model là `deepseek-flash` (ADR 0009 D6).
+- **Vùng độc quyền của LLM.** Ngữ nghĩa, trích xuất thực thể, tóm tắt, hàm ý và trích dẫn là việc của `article-processor`, gọi qua `tools.agent_article` trong chương trình điều phối. Provider và model nào cũng đi qua một hợp đồng đầu ra và một hàm kiểm duy nhất (ADR 0017, rule 11); provider mới phải qua bộ vàng, chuẩn đo là agy, `claude` chưa thuộc lane. ADR 0009 D6 (mọi model là `deepseek-flash`) không còn đúng.
 - **Zero Hallucination User Manifest.** Khi báo cáo phân phối, chỉ tham chiếu người dùng đang bật trong `project/config/entities/manifest.yaml`. Tra bằng `pipeline_radar.py users`, không chép danh sách vào tài liệu.
 
 ## 7. Code Quality & Production Docstring Standards (Bắt Buộc Cho Mọi Agent)
@@ -172,3 +172,9 @@ Chi tiết quy chuẩn bất biến tại [`.agents/rules/10-thu-thap-tron-ven.m
 - **Không có trạng thái "đã bỏ".** Mọi URL phát hiện được đều vào sổ phát hiện trước mọi bước lọc. Trạng thái cuối chỉ là `captured`, `alias`, `gone` hoặc `dead_letter` có lý do.
 - **Phân trang theo watermark, tự bù sau khi máy tắt, đối chiếu sitemap hằng ngày.** Thiếu so với kênh đối chiếu > 2% trong một ngày là ĐỎ.
 - **Trùng lặp là dữ liệu.** Bài trùng có thể miễn LLM, nhưng luôn được giữ và đếm vào chỉ số tần suất, độ rộng đưa tin.
+
+## 11. Bất Biến Đóng Phiên & Quản Trị Git Cơ Học (Bắt Buộc Cho Mọi Phiên)
+
+- **Cấm Treo Cây Làm Việc Dồn Ứ (No Dangling Dirty Tree)**: Mọi ca làm việc có sửa đổi mã nguồn hoặc tài liệu BẮT BUỘC phải thực thi `& "C:\venvs\news-scape\Scripts\python.exe" scripts/harness_cli.py git status`. Nếu `clean_for_closure == false`, Agent KHÔNG ĐƯỢC PHÉP coi là hoàn tất phiên.
+- **Quy Chuẩn Commit Cơ Học**: Bắt buộc tạo commit Conventional Commits (≤ 72 ký tự, mang mã `(US-XXX)`) bằng công cụ `harness_cli.py git template` và đẩy mã nguồn (`git push origin <branch>`) trước khi bàn giao `SESSION-LATEST.md`.
+

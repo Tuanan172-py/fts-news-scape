@@ -8,6 +8,48 @@
 
 ---
 
+## CON-1. Hợp đồng đầu ra thống nhất cho mọi provider (ADR 0017, US-034) — việc còn lại, 2026-10-05
+
+Đã làm: schema `article-compact-v2` và module `article_contract.py` (nguồn chân lý), bộ kiểm dùng chung cho agy, openrouter, opencode và bộ bung, gỡ mặc định ngữ nghĩa ở expander, một khung đầu vào, tham số chuẩn, meta bắt buộc, lô chuẩn 50, `--analyze` từ chối runner lạ, `provider_conformance.py`, prefix và rule 11.
+
+Người vận hành làm hoặc quyết định:
+
+1. **Restart host DSH và mở phiên mới.** Prefix đã đổi (hash `b7cd7e93820adc5e`) và persona trong `agent.cordis.yml` đã được đồng bộ. Preset nạp lúc mount nên DSH chạy bản cũ cho tới khi restart (rule 09). Đợt DSH trước restart vẫn bị cổng mới kiểm chặt hơn prefix cũ.
+2. **Gán nhãn bộ vàng 30 bài** (`sn`, `ts`, tập TIC) rồi chạy `provider_conformance.py baseline` với đầu ra của agy. Chưa có bộ vàng thì chưa chấm được provider khác. Ngưỡng tạm: mức agy trừ 5 điểm phần trăm.
+3. **Sổ cái token chưa gắn nguồn theo meta.** `token_ledger.py --source` chỉ nhận `dsh` và `agy`, nên chi phí openrouter và opencode vẫn bị gán sai. Cần mở rộng `--source` và đọc `usage` từ meta.
+4. **opencode chưa có `--runner`.** Adapter `opencode_native_run.py` đã dùng bộ kiểm chung, nhưng đợt vẫn do phiên OpenCode điều khiển bằng tay. Việc nâng thành runner chính thức cần quyết định riêng.
+5. **Giảm tỷ lệ bị từ chối ở giai đoạn đầu.** Đo trước khi siết: agy 5,5% `c` ngắn và 1,8% `k` ngắn, openrouter 9,3% `k` dài. Đo lại bằng kịch bản audit sau vài đợt, và điều chỉnh prefix nếu một loại lỗi vượt vài phần trăm.
+6. **Xung đột với ADR 0016 P3.** Trường `same_event_as` mà ADR 0016 dự kiến thêm sẽ bị schema đóng (`additionalProperties: false`) từ chối. Đổi hợp đồng phải sửa schema trước.
+7. **Đợt DSH cũ** (W09241605, W09241723, W365, W1, W2) dùng lược đồ thực thể khác và không tái mở rộng được dưới resolver hiện tại.
+8. **Hằng số v1 còn sót** ở `src/agent/packet.py`, `batch_handoff.py`, `dod.py`.
+9. **Chưa có đợt chạy thật dưới cổng mới.** Phát lại đợt `W10051050` (sinh bằng prefix cũ) cho 38/100 bản ghi bị từ chối, 32 bài do `c` có 5 hoặc 6 chỉ số. Prefix mới đã nói rõ 2 đến 4, nhưng tỷ lệ từ chối mới chưa đo. Chạy một đợt agy 50 bài trước khi nâng daemon lên L1.
+10. **Đường vá đã sửa** để dùng cùng bộ kiểm với bộ bung (`pending_batches`, `wave_received_ids`). Trước đó bản ghi sai vẫn được tính là đã nhận nên không bao giờ được vá. Đợt `W10051050` và `W10051042` đang `Lỗi` từ 04/10 (độ phủ dưới 90%, tỷ lệ hỏng vượt ngưỡng); chạy `--repair` thay vì `--finish`.
+11. **`max_tokens` của OpenRouter** nâng từ 24000 lên 32000 để giảm cắt cụt. Cần đo xem lô 50 bài có còn bị `PARTIAL` do trần đầu ra không.
+12. **[MỚI 2026-10-05, Tier 3 — DỪNG Ở HARD GATE] Trần nội dung với bài tin vắn 1 đoạn.** Đợt W10051122 (500 bài, OpenRouter stealth/space-bunny-alpha free $0): sau 5 vòng vá đạt 499/500 bản ghi (L1 100%) nhưng nội dung chỉ 360/500 (72% < ngưỡng 90%). Toàn bộ ~140 bài thiếu đều là tin vắn đúng 1 đoạn văn (mẫu: "65 cổ phiếu bị cắt margin", 199 ký tự) — hợp đồng đòi ≥2 trích dẫn nên không worker nào qua được, vá thêm vô ích. Lựa chọn (cần Human duyệt ADR): (a) cho phép 1 trích dẫn với bài 1 đoạn, (b) miễn gold cho tin vắn, (c) loại tin vắn khỏi mẫu số verify. Chưa đổi gate nào; `--finish` W10051122 vẫn từ chối đúng thiết kế.
+
+---
+
+## CAP-1. Thu thập trọn vẹn, cụm hoá trùng lặp, tín hiệu insight (ADR 0013, 0016, US-033) — việc còn lại, 2026-10-02
+
+Đã làm: sổ phát hiện URL, chuẩn hoá khoá bài theo 7 nguồn, gỡ lọc mờ ở tầng cào, phân trang theo watermark (baodautu, tnck), đối chiếu sitemap (baodautu, cafef, tnck, vneconomy), cào bù và phục hồi Bronze, cụm hoá, kế thừa kết quả cho bài chép, bảng tín hiệu và sheet Radar chú ý.
+
+Số đo lúc bắt đầu (02/10, so với sitemap): cafef thiếu 64%, tnck 68%, baodautu 44%, vneconomy 9%. Radar có dòng "Độ phủ thu thập". Tác vụ nền xả tồn đọng chạy theo ngân sách; xem `python scripts/capture_reconcile.py status`.
+
+Người vận hành làm hoặc quyết định:
+
+1. **Bronze ghi sai gốc: đã gộp, còn chờ khởi động lại morninger (US-035, 2026-10-05).** 2.750 tệp ở `<gốc repo>/data/raw_html` đã chuyển vào `project/data/raw_html`. 1.607 tệp trùng tên khác nội dung nằm ở `C:\data
+ews-scapeecoveredoot_raw_html_conflicts_20261005`. `RawStore` nay neo vào `PROJECT_ROOT`, lần cào lỗi không ghi đè bản tốt, khoá `silver_failures` được chuẩn hoá. **Người vận hành:** khởi động lại `python -m src.morninger` (PID 42208, chạy từ 02/10) để nhận mã mới, rồi kiểm `pipeline_radar.py status`: dòng Bronze kẹt phải về 0. Chưa xử lý: `silver`, `agent_tasks`, `work_packages`, `agent_outputs*`, `exports` còn ở `<gốc repo>/data`.
+2. **Ba nguồn chưa có kênh đối chiếu độc lập:** vietstock, vietnambiz, thoibaotaichinhvietnam. Sitemap của chúng cũ hoặc không có. Độ phủ của ba nguồn này chưa đo được.
+3. **fireant là API, không cào bù được theo URL.** Bài fireant ở trạng thái `discovered` được lấy lại khi chúng xuất hiện lại trong danh sách API; nếu không, chúng sang `dead_letter` sau 5 lần thử.
+4. **Tải xử lý tăng.** Cào bù thêm vài trăm bài mỗi ngày cho ngày hôm nay và hôm qua. Daemon ở L1 sẽ tự đưa chúng vào đợt, nên token tăng tương ứng. Token là số ghi nhận, không phải cổng (ADR 0010).
+5. **P3 chế độ chênh** (ADR 0016 §2.8): cần quyết định đổi hợp đồng `agent-output-v2-lean` và một đợt thử có người duyệt mẫu `same_event_as`. Hiện bài `candidate` vẫn được phân tích đầy đủ, nên chưa tiết kiệm được phần này.
+6. **I3 đối chiếu với giá:** cần nguồn OHLCV và xác minh điều khoản sử dụng. Cho tới khi có, các chỉ số trong `signal_daily` chỉ được gọi là mức độ chú ý và giọng điệu báo chí, không phải tín hiệu giao dịch.
+7. **Diễn giải `ama_z`:** nền thưa kết hợp sàn độ lệch chuẩn 0,5 làm z phình lớn với mã ít được nhắc (đo được z từ 17 đến 27). Radar chỉ hiện mã có ít nhất 3 bài và 2 nguồn. Độ phủ phân tích mới khoảng 21 đến 34%, nên cần đọc kèm `coverage_pct`.
+8. **Giao hàng chưa gộp dòng theo cụm.** Bài chép vẫn xuất thành dòng riêng với kết quả kế thừa. Gộp dòng đổi cấu trúc tệp giao hàng nên cần quyết định riêng.
+9. **`test_cli_entrypoints.py` vẫn ghi DDL vào DB vận hành** (tồn đọng từ 24/09). Bộ test được chạy với `--ignore` cho tệp này.
+
+---
+
 ## OPS-1. Vận hành tự chủ khi máy mở (ADR 0012 + sửa đổi 01/10, US-029) — việc còn lại, 2026-10-01
 
 Trạng thái:
@@ -323,4 +365,44 @@ thực tế vì bài bị gỡ thường được phát hiện muộn hơn ngày
 **Kiểm tay sau khi sửa:** 25 dòng ngẫu nhiên của AnPT → **0/29 mã không có căn cứ trong tiêu đề**.
 **pytest:** 413 passed (100% green, cập nhật 2026-09-17 — gồm 10 test CLI entry point chạy thật
 qua subprocess, bổ sung sau sự cố 3 lỗi sản xuất vô hình với test import hàm).
+
+---
+
+## E. NEMOTRON 3 ULTRAFREE EVAL (US-NEMO01, 2026-10-01) — việc mới phát sinh
+
+### E1. Repair duplicate batch bug (Cấp 2)
+
+**Mô tả:** `cmd_repair` chạy lần 2 tạo cả `r02` (repair trực tiếp gốc) VÀ `r01_r01` (repair của repair lần 1), nhưng lô `r01` (repair lần 1) không được chạy tự động.
+
+**Hệ quả:** 5 lô r01 (179 bài) phải chạy thủ công qua runner. Tổng repair batches: 20 thay vì 15.
+
+**File:** `project/scripts/article_run.py` hàm `cmd_repair` (dòng 323-423)
+
+**Sửa:** Logic tạo repair batch cần loại trừ các batch đã có repair pending (r01) thay vì tạo repair của repair.
+
+### E2. Token ledger không ghi cho OpenRouterRunner (Cấp 2)
+
+**Mô tả:** `token_ledger.py append --source openrouter --since <epoch>` không tìm thấy phiên DSH worker vì OpenRouterRunner không chạy trong DSH.
+
+**Hệ quả:** Chi phí token free-tier vô hình, chỉ đoán qua context usage 88%.
+
+**File:** `project/scripts/token_ledger.py`, `project/scripts/article_run.py` (hàm `cmd_finish` dòng 691-702)
+
+**Sửa:** Ledger đọc `usage` từ `meta.json` của các batch thay vì query DSH sessions.
+
+### E3. Model partial response rate cao (Cấp 3 - theo dõi)
+
+**Mô tả:** Nemotron 3 UltraFree trả partial (~65 bài/100 lô đầu) vs Muse Spark (100/100). Cần 2 vòng repair để đạt 500 bài.
+
+**Hệ quả:** Tăng thời gian 17%, token +48%, độ phức tạp vận hành.
+
+**Theo dõi:** So sánh quality output (sentiment, key_points, citations) giữa 2 model trước khi quyết định chuẩn hóa.
+
+### E4. Concurrency limit free tier (Cấp 2 - vận hành)
+
+**Mô tả:** OpenRouter free tier ~20 req/phút → concurrency=2 tối đa. DSH concurrency=10.
+
+**Hệ quả:** Thời gian wave ~56 phút vs 48 phút Muse Spark.
+
+**Workaround:** Chạy sequential waves, hoặc dùng paid tier nếu cần throughput cao.
 

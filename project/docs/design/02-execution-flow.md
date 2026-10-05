@@ -47,16 +47,17 @@ Template method, **không override được**. Thứ tự cứng:
 1. `errors=[]`, `started=monotonic()`. Nếu `self.disabled` → trả `ScrapeResult` rỗng ngay (`:36-38`).
 2. **fetch** — `fetch_list()` trong try; Exception → log + `errors.append("fetch_list: …")`, `raw_items=[]` (`:40-45`).
 3. **parse** — loop `parse_item(raw)`; Exception → warn + `errors.append`, continue. Chỉ giữ item truthy (`:48-56`).
-4. **dedup** (`:58-67`) — `fuzzy = cfg.get("fuzzy_dedup", True)`. Mỗi article:
+4. **ghi sổ rồi bỏ bản sao kỹ thuật** — mỗi article trước hết vào sổ phát hiện qua
+   `dedup.discover(url, domain, via)`. Sau đó:
    - `dedup.is_duplicate(url, title)` → skip (hash exact).
-   - fuzzy và `dedup.is_similar_title(title, name)` → **`mark_seen` ngay** rồi skip (khỏi so lại cycle sau).
-   - else → `new.append(a)`.
+   - cùng mã bài đã `captured` mà URL ở dạng khác, hoặc trùng khoá trong cùng chu kỳ → skip và ghi bí danh.
+   - else → `new.append(a)`. Không có bước loại theo độ giống tiêu đề (rule 10).
 5. **enrich** — CHỈ cho `a in new` (`:69-77`). `enrich(a)` trong try; lỗi → warn + `errors.append`, **giữ article** (fallback summary). Sau đó `a.processed_at = now_vn_iso()` + `dedup.mark_seen(url, title, name)`.
 6. Trả `ScrapeResult(scraper, fetched=len(raw_items), new, errors=list(self.errors), duration_s)` (`:82-83`).
 
 **Bất biến quan trọng:**
 - Scraper **không ghi DB** — chỉ trả `ScrapeResult.new`.
-- Article "sạch" chỉ được `mark_seen` **sau enrich** (`:77`); article bị fuzzy-loại thì `mark_seen` ngay (`:65`).
+- Article chỉ thành `captured` trong sổ phát hiện khi `store.insert_batch` ghi `articles` (cùng transaction).
 - Mọi lỗi trở thành string trong `errors[]`, không bao giờ raise.
 
 ## 4. Enrich & cap chi tiết

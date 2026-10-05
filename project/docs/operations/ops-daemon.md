@@ -30,6 +30,8 @@ Cài `ops_daemon`, cấp mandate và xử lý cảnh báo hằng ngày, để đ
 | 7 | Gõ `/level L1` trên Telegram, rồi bấm **Xác nhận** | `/mandate` báo L1 và hạn 30 ngày |
 
 Sau bước 7, máy mở và đủ điều kiện thì daemon tự mở và chạy trọn đợt. Bạn không phải bấm gì từng đợt.
+Mỗi đợt DONE tự xuất xlsx giao hàng cho ngày của đợt (`write_user_output.py --date`);
+lỗi giao hàng không lật DONE, daemon báo `wave.deliver_failed` và lệnh bù tay.
 
 ## 4. Xử lý sự cố
 

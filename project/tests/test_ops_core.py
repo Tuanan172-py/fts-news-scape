@@ -244,7 +244,7 @@ def test_probe_edges_alert_once_and_on_recovery(env):
     assert len(store.unsent_alerts()) == 1
     apply_edges(store, [ProbeResult("capture", True, "error", "tươi")])
     texts = [r["text"] for r in store.unsent_alerts()]
-    assert any(t.startswith("Hồi phục") for t in texts)
+    assert any("đã hồi phục" in t for t in texts)
 
 
 # ── lệnh ─────────────────────────────────────────────────────────────────────
@@ -328,3 +328,55 @@ def test_order_extend_from_l0_starts_l1(env):
     o = load_order(paths.standing_order)
     assert o.effective_level() == "L1"
     assert date.fromisoformat(o.valid_until) == date.today() + timedelta(days=3)
+
+
+# ── giao hàng tự động sau DONE ─────────────────────────────────────────────
+def _deliver_steps(env, ok=True):
+    from pathlib import Path as _P
+
+    from src.ops.procrun import StepResult
+    from src.ops.wave_flow import WaveSteps
+
+    cfg, paths, store = env
+    calls = []
+
+    def fake_executor(cmd, **kw):
+        calls.append(cmd)
+        return StepResult(returncode=0 if ok else 1, outcome="ok" if ok else "failed",
+                          duration_s=1.0, tail="", log_path=_P(str(kw.get("log_path") or "x")))
+
+    steps = WaveSteps(store, cfg, paths, executor=fake_executor)
+    return steps, calls
+
+
+def test_finalize_done_runs_deliver_per_date(env):
+    from src.ops.wave_flow import WaveSpec
+
+    steps, calls = _deliver_steps(env, ok=True)
+    spec = WaveSpec(wave_id="WD1", target_date="2026-10-02", trigger="T1", level="L1")
+    assert steps.finalize(spec, "DONE", "xong", counts_as_failure=False) == "DONE"
+    assert any(any("write_user_output.py" in part for part in c) and "2026-10-02" in c
+               for c in calls)
+    kinds = [e["kind"] for e in steps.store.events(limit=20)]
+    assert "wave.delivered" in kinds
+
+
+def test_finalize_done_deliver_failure_keeps_done(env):
+    from src.ops.wave_flow import WaveSpec
+
+    steps, _ = _deliver_steps(env, ok=False)
+    spec = WaveSpec(wave_id="WD2", target_date="2026-10-02", trigger="T1", level="L1")
+    assert steps.finalize(spec, "DONE", "xong", counts_as_failure=False) == "DONE"
+    kinds = [e["kind"] for e in steps.store.events(limit=20)]
+    assert "wave.deliver_failed" in kinds
+    assert steps.store.unsent_alerts()
+
+
+def test_finalize_not_done_skips_deliver(env):
+    from src.ops.wave_flow import WaveSpec
+
+    steps, calls = _deliver_steps(env, ok=True)
+    spec = WaveSpec(wave_id="WD3", target_date="2026-10-02", trigger="T1", level="L1")
+    assert steps.finalize(spec, "FAILED", "hong", counts_as_failure=True) == "FAILED"
+    assert steps.finalize(spec, "DONE", "rong", counts_as_failure=False, clean=False) == "DONE"
+    assert calls == []

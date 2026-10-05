@@ -1,0 +1,15 @@
+#!/bin/sh
+# News-Scape Git Pre-Commit Hook (Mechanical Enforcement)
+# Chặn đứng commit nếu vi phạm AST hoặc chứa file cấm
+
+echo "🔍 [GIT HOOK] Kiem tra chat luong code va ve sinh repo..."
+"C:/venvs/news-scape/Scripts/python.exe" scripts/harness_cli.py git verify
+
+STATUS=$?
+if [ $STATUS -ne 0 ]; then
+    echo "❌ [GIT HOOK FAILED] Harness git verify that bai (ma loi: $STATUS). Khong the commit!"
+    exit 1
+fi
+
+echo "✅ [GIT HOOK PASSED] AST hop le, khong co tep cam."
+exit 0

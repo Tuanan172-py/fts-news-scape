@@ -138,7 +138,8 @@ def test_agy_batch_records_agent_span_with_tool_flags(env, monkeypatch, tmp_path
         {"i": 1, "t": "Tiêu đề hai", "p": ["Đoạn văn thứ hai cũng đủ dài để làm trích dẫn."]}]}
     task = tmp_path / "article_W7_01.task.json"
     task.write_text(json.dumps(packet, ensure_ascii=False), encoding="utf-8")
-    rec = {"i": 0, "e": [], "s": "Tóm tắt có dấu", "k": ["luận điểm"], "im": "hàm ý thị trường",
+    rec = {"i": 0, "e": [], "s": "Tóm tắt có dấu", "k": ["luận điểm một", "luận điểm hai"],
+           "im": "Hàm ý thị trường đủ dài để vượt ngưỡng bốn mươi ký tự.",
            "sn": "neu", "ts": "week", "c": [0]}
     usage = {"input_tokens": 100, "output_tokens": 20, "total_tokens": 120}
 

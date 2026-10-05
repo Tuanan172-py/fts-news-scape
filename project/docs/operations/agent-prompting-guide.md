@@ -3,6 +3,9 @@
 Cập nhật: 2026-08-19 · Trạng thái: **ARCHIVED REFERENCE** · Đối tượng: người điều khiển agent (provider bất kỳ) xử lý 2 handoff:
 **L1 nhận diện entity** và **bóc tách** (summary/implication/materiality…).
 
+> [!CAUTION]
+> **Không dùng tài liệu này để chỉ dẫn agent.** Hợp đồng hiện hành là `project/schemas/article-compact-v2.schema.json` (ADR 0017, rule 11). Tài liệu này dạy agent tự ghi tệp theo từng bài và nêu các trường đã ngừng, trái Article Lane.
+
 > [!NOTE]
 > **Tài liệu Kế thừa (Reference Only — Hợp đồng v1):**
 > Hướng dẫn này thuộc về kiến trúc 2-lane cũ (L1/Gold) và schema `agent-output-v1`. Hiện tại runtime vận hành bằng Article Lane duy nhất theo chuẩn `v2-lean` (`build_article_prefix.py`). Các trường `materiality.score`, `impact_area`, `event_type` KHÔNG áp dụng vào runtime hiện hành.

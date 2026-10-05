@@ -12,17 +12,17 @@ from typing import Any
 from src.ops.breakers import Breakers
 from src.ops.config import OpsPaths
 from src.ops.order import load_order
+from src.ops import pipeline_spec
 from src.ops.present import (BREAKER_STATE, FAILURE_CLASS, WAVE_STATUS, label, success_rate)
 from src.ops.store import OpsStore, now_vn, parse_iso
 
 AGENTS_DIR = Path(__file__).resolve().parents[3] / ".agents"
 
 # Dây chuyền chính của một đợt, theo thứ tự dữ liệu chảy (lọc theo trạng thái trong registry).
-MAIN_CHAIN = ("scraper-orchestrator", "article-packer", "article-processor", "article-expander",
-              "l1-ingest-gate", "gold-ingest-gate", "token-ledger", "delivery-writer")
+MAIN_CHAIN = pipeline_spec.main_chain()
 TOP_LEFT = ("pipeline-radar",)
 TOP_RIGHT = ("ops-sentinel", "improvement-proposer")
-OUTSIDE_WAVE = ("scraper-orchestrator", "delivery-writer")
+OUTSIDE_WAVE = ("scraper-orchestrator",)
 MAP_WIDTH = 1180
 
 _cache: dict[str, tuple[float, Any]] = {}

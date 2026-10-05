@@ -25,6 +25,7 @@ wave:
     analyze: 45
     repair: 25
     finish: 30                   # nạp DB không nhận lệnh dừng; deadline chỉ dành cho treo thật
+    deliver: 10                  # xuất xlsx giao hàng sau DONE, best-effort, không lật DONE
 
 autonomy:
   demote_after_failures: 2       # số đợt hỏng liên tiếp thì L1 về L0

@@ -11,7 +11,7 @@
 # optional: true  -> stage draft/chưa kích hoạt, radar chỉ hiển thị "available".
 
 version: 2
-updated: "2026-09-23"
+updated: "2026-10-02"
 registry: .agents/registry.yaml
 
 stages:
@@ -24,11 +24,27 @@ stages:
     cli: '& "C:\venvs\news-scape\Scripts\python.exe" scripts/run_once.py'
     liveness_check: "max(fetched_at) trong articles <= 30 phút => 🟢"
 
+  # ─────────── Thu thập trọn vẹn và cụm hoá trùng lặp (ADR 0013, ADR 0016) ───────────
+  - id: capture_reconcile
+    agent: capture-reconciler
+    class: operator
+    needs: [scrape]
+    produces: "discovered_urls + capture_coverage; bài cào bù vào articles và data/raw_html"
+    cli: '& "C:\venvs\news-scape\Scripts\python.exe" scripts/capture_reconcile.py run --limit 100 --budget 600'
+    gate: "thiếu so với sitemap <= 2% mỗi ngày mỗi nguồn (radar báo ĐỎ khi vượt)"
+
+  - id: story_cluster
+    agent: story-clusterer
+    class: operator
+    needs: [scrape]
+    produces: "story_clusters + cluster_members; l1_outputs/agent_outputs inherited cho bài copy"
+    cli: '& "C:\venvs\news-scape\Scripts\python.exe" scripts/story_cluster.py run --days 3'
+
   # ─────────── Article Lane — một agent, một bước cho cả lô ───────────
   - id: article_pack
     agent: article-packer
     class: operator
-    needs: [scrape]
+    needs: [scrape, story_cluster]
     produces: "data/agent_tasks/article/article_<wave>_NN.task.json + .map.json + wave_<wave>.json + wave_<wave>.conductor.ts"
     cli: '& "C:\venvs\news-scape\Scripts\python.exe" scripts/article_run.py --wave <wave> --date <YYYY-MM-DD> --limit <n> --batch 100'
     gate: "DB ghi được (preflight) + prefix khớp persona"
@@ -61,13 +77,12 @@ stages:
       của đợt, ghi sổ cái token (chỉ ghi nhận) và sinh tệp bàn giao.
 
   # ─────────── Cổng đặc nhiệm tùy chọn (draft) ───────────
-  - id: story_dedup
-    agent: story-dedup-clusterer
-    class: cognitive
+  - id: signal_build
+    agent: signal-builder
+    class: operator
     needs: [article_expand]
-    optional: true
-    gate: dod-gatekeeper#dedup
-    intent: "Gộp cùng sự kiện đa nguồn, gán N nguồn."
+    produces: "signal_daily + entity_links + source_profile"
+    cli: '& "C:\venvs\news-scape\Scripts\python.exe" scripts/signal_build.py --days 30'
 
   - id: gold_qa
     agent: adversarial-dod-verifier
@@ -125,6 +140,23 @@ ops_loop:
     class: operator
     trigger: "mỗi giờ trong daemon (improve_tick); chỉ ghi đề xuất vào ops_proposals, không thi hành"
     status_cli: 'Phòng điều khiển http://127.0.0.1:8787 (màn Cải tiến) hoặc /improve trên Telegram'
+
+# ─────────────── Khối máy đọc cho mã vận hành (src/ops/pipeline_spec.py) ───────────────
+# Thứ tự và tên ở đây là nguồn duy nhất. Điều kiện rẽ nhánh (độ phủ, breaker, vá) ở lại trong
+# mã tất định. tests/test_pipeline_spec.py chặn lệch giữa khối này, registry và mã.
+ops_spec:
+  main_chain: [scraper-orchestrator, article-packer, article-processor, article-expander,
+               l1-ingest-gate, gold-ingest-gate, token-ledger, delivery-writer]
+  finish_steps: [expand, ingest, verify, ledger, handoff]
+  wave_ops: [preflight, prepare, analyze, stop_requested, finish, finalize]
+  script_actors:
+    article_pack.py: article-packer
+    article_expand.py: article-expander
+    l1_ingest.py: l1-ingest-gate
+    agent_ingest.py: gold-ingest-gate
+    token_ledger.py: token-ledger
+    handoff.py: token-ledger
+    ctx_probe.py: token-ledger
 
 # ─────────────── Bất biến điều phối (Conductor phải tuân) ───────────────
 invariants:

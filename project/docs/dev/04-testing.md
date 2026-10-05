@@ -24,7 +24,12 @@ Cập nhật: 2026-07-26 · 112 test, chạy `pytest -q`. Nguồn: `tests/`.
 | `test_sentiment.py` | lexicon load, n-gram longest-first, negation, ngưỡng pos/neg |
 | `test_store.py` | schema, INSERT OR IGNORE dedup, to_row/from_row |
 | `test_dedup.py` | hash exact, mark_seen, normalize_title giữ dấu |
-| `test_fuzzy_dedup.py` | rapidfuzz token_set_ratio ≥90, cross-domain, window 48h |
+| `test_capture_registry.py` | url_key theo từng nguồn, sổ phát hiện, bí danh, không loại bài theo độ giống |
+| `test_capture_reconcile.py` | phân trang theo watermark, đối chiếu sitemap, trích tiêu đề trang |
+| `test_capture_backfill.py` | cào bù URL, ngân sách thời gian, phục hồi Bronze đã mất |
+| `test_story_cluster.py` | cụm hoá: bản chép, bản viết lại, chuyên mục định kỳ, văn mẫu, chuỗi cùng mã |
+| `test_inherit.py` | kế thừa kết quả, không ghi đè kết quả thật, bộ chọn bài giữ bài chép |
+| `test_signal_build.py` | bảng tín hiệu insight, phiên giao dịch, cụm và sentiment |
 | `test_tickers.py` | tag_tickers gắn mã từ watchlist |
 | `test_orchestrator.py` | run_cycle: classify+sentiment áp đúng chỗ, EN→neutral |
 | `test_monitor_notify.py` | heartbeat/metrics ghi đúng bảng; format notify |

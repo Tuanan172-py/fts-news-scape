@@ -33,9 +33,9 @@ hoặc tăng interval.
 `config/domains/baodautu.yaml` `enabled: false` — feed trả XML hợp lệ nhưng **0 `<item>`**
 (verified nhiều UA/client). Giống NDH. Bật lại: đổi `enabled: true` khi feed hồi.
 
-### 2.3 vndirect là aggregator → phụ thuộc fuzzy dedup
-vndirect trả link báo gốc; tin trùng với nguồn khác chỉ được khử ở **lớp 2 fuzzy** (khác URL).
-Nếu tắt `fuzzy_dedup` → xuất hiện trùng nội dung khác URL.
+### 2.3 vndirect là aggregator → trùng nội dung khác URL
+vndirect trả link báo gốc nên tin có thể trùng với nguồn khác. Lọc mờ ở tầng cào đã gỡ (ADR 0013).
+Trùng được cụm hoá sau Bronze (ADR 0016) và vẫn giữ nguyên trong `articles`.
 
 ## 3. Code / tài liệu
 
@@ -44,13 +44,11 @@ Nếu tắt `fuzzy_dedup` → xuất hiện trùng nội dung khác URL.
 (JSON-feed). Đã verify feedparser xử được 2026-07-25 nhưng **chưa có test cố định** → rủi ro
 regression nếu feedparser/endpoint đổi. → **Đề xuất:** thêm fixture + test.
 
-### 3.2 Mâu thuẫn tài liệu TDR-003 (difflib vs rapidfuzz)
-`docs/decisions.md` TDR-003: header nói rapidfuzz ≥90 nhưng body cũ còn ghi difflib >0.85.
-**Bản implement đúng = rapidfuzz `token_set_ratio ≥ 90`** (`dedup.py`). → Cần sửa body decisions.md.
+### 3.2 TDR-003 (rapidfuzz ≥90) không còn hiệu lực
+Lọc mờ theo tiêu đề đã gỡ khỏi tầng cào theo ADR 0013 vì loại nhầm bài. Cụm hoá theo ADR 0016 thay thế.
 
-### 3.3 Fuzzy dedup gắn nhãn "Phase 4"
-Lớp 2 có code + test + được gọi trong `run()` khi `fuzzy_dedup=True` (mặc định), nhưng comment
-vẫn ghi "Phase 4" gây tưởng chưa bật. Thực tế đang chạy.
+### 3.3 Cấu hình `fuzzy_dedup` còn sót trong test
+Một số cấu hình test vẫn khai `fuzzy_dedup: False`. Khoá này không còn tác dụng và có thể xoá.
 
 ### 3.4 Legacy config còn sót
 `config/domains.yaml` (số ít, cũ) chứa 3 domain (vnexpress, cafef, ndh) với CSS selectors +

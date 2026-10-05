@@ -120,6 +120,9 @@ def rederive_incremental(
     if not watermark:
         watermark = ""
 
+    if persist:
+        store.normalize_silver_failure_keys()
+
     raw_path_res = str(resolve_project_path(raw_dir))
     silver_path_res = str(resolve_project_path(silver_dir))
     package_path_res = str(resolve_project_path(package_dir))

@@ -69,7 +69,7 @@ def test_map_nodes_follow_registry_and_runtime_state(env):
     assert by["article-processor"]["state"] == "run" and by["article-processor"]["tools"] == 0
     assert by["article-processor"]["stats"]["tokens"] > 0
     assert by["article-packer"]["state"] == "idle"
-    assert by["story-dedup-clusterer"]["state"] == "draft"          # draft hiện, không chạy
+    assert "story-dedup-clusterer" not in by                          # retired không hiện
     assert "l1-router" not in by                                      # retired không hiện
     assert m["chain"][:4] == ["scraper-orchestrator", "article-packer", "article-processor",
                               "article-expander"]
@@ -304,7 +304,7 @@ def test_mandate_blocked_by_unhealthy_system_and_alerts(env, setup, reason):
     assert res["action"] == "blocked" and any(reason in r for r in res["reasons"])
     assert date.fromisoformat(load_order(paths.standing_order).valid_until) \
         == date.today() + timedelta(days=3)                                       # hạn không đổi
-    assert any("KHÔNG tự gia hạn" in a["text"] for a in store.unsent_alerts())
+    assert any("không tự gia hạn" in a["text"] for a in store.unsent_alerts())
 
 
 def test_mandate_blocked_by_tool_violation_in_7_days(env):
@@ -389,3 +389,22 @@ def test_wave_done_pushes_no_alert_unless_configured(env, tmp_path):
     store.upsert_wave("W2", status="SENSED")
     steps2.finalize(WaveSpec("W2", "2026-10-01", "T1", "L1"), "DONE", "ok")
     assert [a for a in store.unsent_alerts() if "W2" in a["text"]]
+
+
+def test_attention_orders_by_severity_and_drives_health(env):
+    cfg, paths, store, breakers = env
+    st = {"daemon": {"alive": False, "heartbeat_age_s": None}, "kill_switch": False, "paused": True,
+          "breakers": [{"provider": "agy", "state": "OPEN", "reason": "AUTH"}],
+          "mandate": {"exists": False, "days_left": None}, "alerts_unsent": 2, "proposals_open": 1}
+    items = sv.attention(store, st)
+    assert [i["severity"] for i in items] == sorted((i["severity"] for i in items),
+                                                    key={"bad": 0, "warn": 1, "info": 2}.get)
+    assert items[0]["severity"] == "bad"
+    assert any(i["action"] == "/reset agy" for i in items)
+    assert sv.health_of(items)["level"] == "bad"
+
+
+def test_health_levels_ignore_info_only():
+    assert sv.health_of([])["level"] == "ok"
+    assert sv.health_of([{"severity": "info"}])["level"] == "ok"
+    assert sv.health_of([{"severity": "info"}, {"severity": "warn"}])["level"] == "warn"
