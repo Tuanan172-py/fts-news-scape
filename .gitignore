@@ -1,0 +1,99 @@
+desktop.ini
+**/desktop.ini
+~$*.xlsx
+
+# Output per-user hằng ngày (sinh bởi write_user_output.py) — KHÔNG commit
+users/output/
+# Cảnh báo entity nhập sai (auto) — KHÔNG commit
+users/subscriptions/_unknown/
+users/input/*/_unknown.txt
+# GIỮ commit: users/subscriptions/manifest.yaml. File đăng ký .xlsx của chuyên viên là dữ liệu, lưu ở SharePoint
+
+
+# Runtime data
+logs/
+**/logs/
+*.db
+*.db-wal
+*.db-shm
+**/data/raw/
+**/data/dedup_cache.json
+**/data/notifications/
+**/data/exports/
+**/data/archive_conflicts/
+# Single-instance lock cua run_daily.ps1
+**/data/.pipeline.lock
+# Handoff & pipeline artifacts (tái sinh được — KHÔNG commit)
+# task-packets L1 + bóc tách (l1_route.py / agent_export.py)
+**/data/agent_tasks/
+# output agent bóc tách nộp về
+**/data/agent_outputs/
+# output agent L1 nộp về
+**/data/agent_outputs_l1/
+# output agent article & mentions nộp về
+**/data/agent_outputs_article/
+**/data/article_mentions/
+# trạng thái handoff giữa các phiên
+**/data/state/
+# Silver (dẫn xuất Bronze qua derive)
+**/data/silver/
+# Report ngay do domain_check/daily_reporter sinh
+**/data/reports/
+# work-package cho handoff
+**/data/work_packages/
+# Bronze raw HTML (nặng — tái scrape được)
+**/data/raw_html/
+# Bronze bao cao dinh ky NSO (HTML + .xlsx/.docx)
+**/data/raw_reports/
+project/src/data/
+# Kho lưu trữ lane L1/Gold đã ngừng (có MANIFEST.json, ~19 MB) — dữ liệu, KHÔNG commit
+project/data/archive/
+# Bản xung đột OneDrive sinh theo tên máy
+**/*-DESKTOP-*
+
+# Harness Durable SQLite
+harness.db*
+
+# Python & Environment
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.venv/
+
+# Scratch & Temporary Testing Files
+scratch/
+**/scratch/
+.kilo/
+.opencode/
+**/exclude*.txt
+**/test1.py
+**/test_scratch*.py
+# Temporary runner files & binary documents
+*expand_*.json
+**/C*
+*.pdf
+openrouter/check_key.py
+benchmark_openrouter_models.json
+openrouter/outputs/
+openrouter/packets/
+other/meeting-minutes/
+
+# Binary documents & spreadsheets (SharePoint managed)
+*.docx
+*.xlsx
+*.xls
+*.parquet
+*.tar.zst
+
+# Generated entities & data
+**/data/entities/*.json
+**/data/entities/*.csv
+**/data/entities/*.xlsx
+**/data/labeled/
+project/reports/
+/reports/
+project/.git/
+.code-review-graph/
+# Tài liệu tham khảo dạng bảng là dữ liệu, không commit
+project/thamkhao/**/*.csv

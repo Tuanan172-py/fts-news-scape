@@ -1,0 +1,71 @@
+# nations.yaml — alias địa chính trị, quốc gia và khu vực kinh tế lớn.
+# Nạp bởi scripts/build_entities.py → gộp vào entities.json.
+
+MY:
+  canonical_name: "Mỹ"
+  aliases:
+    - "Mỹ"
+    - "Hoa Kỳ"
+    - "US"
+    - "USA"
+    - "United States"
+    - "Nhà Trắng"
+    - "Washington"
+    - "Wall Street"
+
+TRUNG_QUOC:
+  canonical_name: "Trung Quốc"
+  aliases:
+    - "Trung Quốc"
+    - "TQ"
+    - "China"
+    - "Bắc Kinh"
+    - "Thượng Hải"
+    - "PBOC"
+
+EU:
+  canonical_name: "Châu Âu"
+  aliases:
+    - "Châu Âu"
+    - "Liên minh châu Âu"
+    - "EU"
+    - "Eurozone"
+    - "Frankfurt"
+
+NHAT_BAN:
+  canonical_name: "Nhật Bản"
+  aliases:
+    - "Nhật Bản"
+    - "Japan"
+    - "Tokyo"
+    - "đồng Yên"
+
+HAN_QUOC:
+  canonical_name: "Hàn Quốc"
+  aliases:
+    - "Hàn Quốc"
+    - "Korea"
+    - "Seoul"
+    - "đồng Won"
+
+NGA:
+  canonical_name: "Nga"
+  aliases:
+    - "Nga"
+    - "Russia"
+    - "Moskva"
+    - "Điện Kremlin"
+
+DONG_NAM_A:
+  canonical_name: "Đông Nam Á"
+  aliases:
+    - "Đông Nam Á"
+    - "ASEAN"
+    - "khu vực Đông Nam Á"
+
+AN_DO:
+  canonical_name: "Ấn Độ"
+  aliases:
+    - "Ấn Độ"
+    - "India"
+    - "New Delhi"

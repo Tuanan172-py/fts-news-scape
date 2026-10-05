@@ -1,0 +1,36 @@
+name: cafef
+enabled: true
+method: api
+rate_limit: 3.0
+timeout: 30
+api:
+  endpoint: "https://cafef.vn/du-lieu/Ajax/PageNew/News.ashx"
+  http_method: GET
+  # symbol inject per watchlist item (lowercase). Type=1 BẮT BUỘC (Type=2 → rỗng, verified 2026-07-24)
+  params:
+    Newstype: 0
+    PageIndex: 1
+    PageSize: 20      # steady-state: cycle 15 phút, dedup skip bài cũ
+    Type: 1
+  headers:
+    Referer: "https://cafef.vn/"
+# RSS per-category — bổ sung tin KHÔNG gắn mã CK (API symbol-driven bỏ lỡ vĩ mô/BĐS/quốc tế).
+rss:
+  feeds:
+    - {url: "https://cafef.vn/thi-truong-chung-khoan.rss", name: "CafeF Thị trường CK"}
+    - {url: "https://cafef.vn/tai-chinh-ngan-hang.rss", name: "CafeF Tài chính - Ngân hàng"}
+    - {url: "https://cafef.vn/tai-chinh-quoc-te.rss", name: "CafeF Tài chính quốc tế"}
+    - {url: "https://cafef.vn/vi-mo-dau-tu.rss", name: "CafeF Vĩ mô - Đầu tư"}
+    - {url: "https://cafef.vn/bat-dong-san.rss", name: "CafeF Bất động sản"}
+    - {url: "https://cafef.vn/doanh-nghiep.rss", name: "CafeF Doanh nghiệp"}
+detail:
+  content_selector: "div#mainContent"
+  max_details_per_cycle: 30
+capture:
+  raw_dir: "data/raw_html"       # RawStore lưu full raw HTML byte-exact + .meta.json
+  min_body_bytes: 2048           # dưới ngưỡng → _looks_complete=False (partial/incomplete_render)
+compliance:
+  respect_robots: true           # RobotsGate gate trước fetch detail (AC9)
+  proxy_rotation: false          # off mặc định; true cần proxies pool
+  proxies: []
+pitfalls: "List = API symbol-driven (theo watchlist) + RSS per-category (tin không gắn mã CK). Detail server-rendered. /Date(ms[+tz])/ date format. Cần UA + Referer. LinkDetail relative + utm_source. RSS items có shape khác (_rss=True) → parse_item rẽ nhánh."

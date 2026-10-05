@@ -1,0 +1,22 @@
+feedparser>=6.0.0
+trafilatura>=2.0.0
+requests>=2.31.0
+pyyaml>=6.0
+lxml>=5.0.0
+loguru>=0.7.0
+beautifulsoup4>=4.12.0
+requests-cache>=1.2.0
+tenacity>=8.2.0
+apscheduler>=3.10.0,<4.0
+dbos>=3.2,<4.0
+psutil>=5.9
+pyvi>=0.1.1
+rapidfuzz>=3.0.0
+truststore>=0.9.0
+readability-lxml>=0.8.1     # D5: text-density fallback cho content_html khi selector miss
+jsonschema>=4.20.0          # handoff contract validation (work-package + agent-output)
+openpyxl>=3.1.0             # đọc subscription .xlsx + ghi deliverable .xlsx (US-101)
+pandas>=2.0.0               # xử lý bảng dữ liệu entities & maintenance
+pyarrow>=15.0.0              # engine đọc parquet cho pandas trong build_entities.py
+pytest>=8.0.0               # AGENTS.md §3 chạy `python -m pytest tests/` sau khi cài file này
+

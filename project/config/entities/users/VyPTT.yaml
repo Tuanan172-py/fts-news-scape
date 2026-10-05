@@ -1,0 +1,69 @@
+# AUTO-GENERATED từ users/subscriptions/VyPTT_news.csv — ĐỪNG sửa tay.
+# Chạy lại: python scripts/compile_users.py --all
+tickers:
+- ABB
+- ACB
+- BAB
+- BID
+- BVB
+- CTG
+- EIB
+- HDB
+- KLB
+- LPB
+- MBB
+- MSB
+- NAB
+- NVB
+- OCB
+- PGB
+- SGB
+- SHB
+- SSB
+- STB
+- TCB
+- TPB
+- VAB
+- VBB
+- VCB
+- VIB
+- VPB
+- F88
+indices:
+- VN30
+- VNINDEX
+exchanges:
+- HOSE
+- HNX
+- UPCOM
+industries:
+- NGAN_HANG
+- CONG_TY_CHUNG_KHOAN
+- TAI_CHINH_CHUYEN_BIET_KHAC
+nations:
+- MY
+- TRUNG_QUOC
+- EU
+- NHAT_BAN
+- DONG_NAM_A
+themes:
+- LAI_SUAT
+- TY_GIA
+- LAM_PHAT
+- GDP_TANG_TRUONG
+- DAU_TU_CONG
+- FDI
+- TIN_DUNG
+- NANG_HANG_TTCK
+assets:
+- TRAI_PHIEU
+- CO_PHIEU
+- VANG
+- BAT_DONG_SAN_TAI_SAN
+institutions:
+- NHNN
+- BO_TAI_CHINH
+- FED
+- ECB
+- BOJ
+- WB_IMF

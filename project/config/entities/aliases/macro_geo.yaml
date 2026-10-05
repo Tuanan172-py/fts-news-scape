@@ -1,0 +1,83 @@
+# macro_geo.yaml — alias địa chính trị và chủ đề vĩ mô.
+# Nạp bởi scripts/build_entities.py → gộp vào entities.json.
+
+MY:
+  canonical_name: "Mỹ"
+  aliases:
+    - "Mỹ"
+    - "Hoa Kỳ"
+    - "US"
+    - "USA"
+    - "United States"
+    - "Nhà Trắng"
+    - "Washington"
+    - "Wall Street"
+
+TRUNG_QUOC:
+  canonical_name: "Trung Quốc"
+  aliases:
+    - "Trung Quốc"
+    - "TQ"
+    - "China"
+    - "Bắc Kinh"
+    - "Thượng Hải"
+    - "PBOC"
+
+EU:
+  canonical_name: "Châu Âu"
+  aliases:
+    - "Châu Âu"
+    - "Liên minh châu Âu"
+    - "EU"
+    - "Eurozone"
+    - "ECB"
+    - "Frankfurt"
+
+NHAT_BAN:
+  canonical_name: "Nhật Bản"
+  aliases:
+    - "Nhật Bản"
+    - "Japan"
+    - "Tokyo"
+    - "BOJ"
+    - "đồng Yên"
+
+LAI_SUAT:
+  canonical_name: "Lãi suất"
+  aliases:
+    - "lãi suất"
+    - "lãi suất điều hành"
+    - "lãi suất tái cấp vốn"
+    - "lãi suất huy động"
+    - "lãi suất cho vay"
+    - "trần lãi suất"
+    - "lãi suất liên ngân hàng"
+
+TY_GIA:
+  canonical_name: "Tỷ giá"
+  aliases:
+    - "tỷ giá"
+    - "tỷ giá USD/VND"
+    - "DXY"
+    - "đồng USD"
+    - "ngoại tệ"
+    - "dự trữ ngoại hối"
+    - "phá giá tiền tệ"
+
+LAM_PHAT:
+  canonical_name: "Lạm phát"
+  aliases:
+    - "lạm phát"
+    - "CPI"
+    - "chỉ số giá tiêu dùng"
+    - "lạm phát cơ bản"
+
+THUE_THUONG_MAI:
+  canonical_name: "Thuế & Thương mại"
+  aliases:
+    - "thuế chống bán phá giá"
+    - "thuế chống trợ cấp"
+    - "thuế quan"
+    - "chiến tranh thương mại"
+    - "thuế tối thiểu toàn cầu"
+    - "hàng rào thuế quan"

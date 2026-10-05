@@ -1,0 +1,31 @@
+# Pipelines Index
+
+Luồng xử lý, xếp theo 3 vòng của [kiến trúc end-to-end](../references/architecture.md).
+
+## Điều phối
+
+- [Morninger](morninger.md) — **entrypoint prod**, 1 tiến trình / 3 job (capture 15′, re-derive 30′, drift sáng)
+
+## Vòng 1 — Capture (Bronze)
+
+- [Capture Orchestrator](ingestion_scheduler.md) — chu kỳ scraper, dedup, capture raw byte-exact
+- [DBWriter](db_writer.md) — single-writer thread ghi bảng `articles`
+
+## Vòng 2 — Standardize (Silver)
+
+- [Silver Derive](silver_derive.md) — Bronze → Silver → change-detection → work-package → catalog
+
+## Vòng 3 — Agent handoff (Gold)
+
+- [Article Lane](article_lane.md) — **đường mặc định từ 2026-09-18**: gộp L1 + Gold thành MỘT lượt gọi cho trọn lô, chạy trên harness DSH
+- [Agent Handoff](agent_handoff.md) — đường 2 lớp, giữ để **quay lui**; export/ingest packet, cổng DoD
+- [User Output Workflow](user_output.md) — gate 2 lớp, định tuyến entity, ghi CSV người dùng
+
+## Ngoài chu kỳ (opt-in, tần suất thấp)
+
+- [Periodic Reports (NSO)](periodic_reports.md) — báo cáo KTXH định kỳ + file số liệu gốc; **không** chạy trong cycle 15′, dedup theo kỳ chứ không theo URL
+
+## Legacy
+
+- [Sentiment Pipeline](sentiment_pipeline.md) — ⚠️ *deprecated*: sentiment rule-based đã gỡ khỏi
+  workflow; chỉ bước classify còn chạy

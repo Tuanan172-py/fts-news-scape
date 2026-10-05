@@ -1,0 +1,3 @@
+# Raw HTML capture artifacts — giữ local, không commit (Q2: keep all + gitignore)
+*
+!.gitignore

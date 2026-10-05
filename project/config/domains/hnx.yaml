@@ -1,0 +1,13 @@
+name: hnx
+enabled: false   # disabled 2026-08-03: focus on cafef + vietstock only
+method: rss
+rate_limit: 3.0
+timeout: 30
+rss:
+  feeds:
+    - {url: "https://www.hnx.vn/vi-vn/1/vi_vn/thong-tin-cong-bo-tu-so.rss", name: "HNX Công bố từ Sở"}
+link_rewrites:
+  - {pattern: ":7978", replace: ""}
+  - {pattern: "^http://", replace: "https://"}
+detail: {extract_full: true, max_details_per_cycle: 15}
+pitfalls: "LAYER 0 chính thống. Item links kèm port nội bộ :7978 → link_rewrites. BOM utf-8. 50 items. Follow 302. Verified 2026-07-25 (probe report 02)."
