@@ -8,6 +8,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Alignment, Border, Font, Side
 
 from src.core.staging import safe_atomic_write
+from src.export.radar_sheet import add_radar_sheet
 
 SHEET_NAME = "Watchlist News"
 
@@ -146,15 +147,19 @@ def build_workbook(rows: list[dict]) -> Workbook:
     return wb
 
 
-def write_delivery_xlsx(path: str | Path, rows: list[dict]) -> tuple[Path, bool]:
+def write_delivery_xlsx(path: str | Path, rows: list[dict],
+                        radar_rows: list[dict] | None = None) -> tuple[Path, bool]:
     """Ghi bảng dữ liệu ra tệp Excel (.xlsx) qua cơ chế nguyên tử an toàn.
 
     Args:
         path: Đường dẫn tệp đích cần ghi.
         rows: Danh sách từ điển dữ liệu bài viết.
+        radar_rows: Dòng tín hiệu cho sheet Radar chú ý; rỗng hoặc None thì không thêm sheet.
 
     Returns:
         Tuple gồm đường dẫn tệp thực tế đã ghi và cờ báo tệp có bị rơi về snapshot khóa hay không.
     """
     wb = build_workbook(rows)
+    if radar_rows:
+        add_radar_sheet(wb, radar_rows)
     return safe_atomic_write(Path(path), wb.save, binary=True, fallback_on_lock=True)

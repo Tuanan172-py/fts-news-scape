@@ -14,6 +14,7 @@ from src.agent.entities import _fold
 from src.core.models import VN_TZ
 from src.core.staging import safe_atomic_write
 from src.export import checkpoint as ckpt
+from src.export.radar_sheet import radar_rows
 from src.export.xlsx_delivery import write_delivery_xlsx
 from src.users.compile import DEFAULT_OUTPUT_ROOT
 
@@ -366,6 +367,22 @@ class UserOutputWriter:
                         return True
         return False
 
+    def _radar_rows(self, user: str, day: str) -> list[dict]:
+        """Đọc dòng tín hiệu theo watchlist của người dùng cho sheet Radar chú ý.
+
+        Args:
+            user: Tên người dùng.
+            day: Ngày giao hàng ISO `YYYY-MM-DD`.
+
+        Returns:
+            Danh sách dòng tín hiệu; rỗng khi không có đăng ký hay bảng chưa có dữ liệu.
+        """
+        conn = self.store._connect_ro()
+        try:
+            return radar_rows(conn, self.reg.resolve_subscription(user), day)
+        finally:
+            conn.close()
+
     # -- route + write --------------------------------------------------------
     def write(self, *, date: str | None = None, days: int | None = None,
               write_master: bool = True, force: bool = False) -> dict[str, int]:
@@ -456,7 +473,8 @@ class UserOutputWriter:
                 counts[user] = counts.get(user, 0) + len(finals)
                 continue
 
-            actual, was_locked = write_delivery_xlsx(file_path, finals)
+            actual, was_locked = write_delivery_xlsx(
+                file_path, finals, radar_rows=self._radar_rows(user, d))
             n_l1_only = sum(1 for v in statuses.values() if v == "L1_ONLY")
             if was_locked:
                 # File đích KHÔNG đổi → chưa giao hàng. Không mark checkpoint, để lần chạy sau

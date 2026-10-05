@@ -1,6 +1,6 @@
 # Đề xuất hướng khai thác insight từ dữ liệu tin (2026-10-01)
 
-> Trạng thái: **đề xuất, chờ duyệt**. Góc nhìn: data analyst khám phá dữ liệu hiện có.
+> Trạng thái: **đã duyệt và triển khai một phần (2026-10-02, ADR 0016, story US-033)**. Đã làm: I1, I2 (trừ `cascade_minutes` vì cụm còn thưa), I4 và sheet Radar chú ý. Chưa làm: I3 (cần dữ liệu giá), I5 (đổi hợp đồng mô hình). Góc nhìn: data analyst khám phá dữ liệu hiện có.
 > Số liệu minh hoạ đo trên DB vận hành (chỉ đọc), 11.591 bài từ 01/09, trong đó 3.873 bài có kết quả nhận diện thực thể và 3.120 bài có phân tích nội dung. Các con số minh hoạ **chưa được kiểm chứng với giá hay khối lượng giao dịch**. Đây là hướng đi, chưa phải tín hiệu dùng được ngay.
 > Liên quan: `docs/proposals/dedup-architecture-2026-10-01.md` (cụm trùng là đầu vào), ADR 0013 (thu thập trọn vẹn).
 

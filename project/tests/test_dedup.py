@@ -49,14 +49,5 @@ def test_legacy_json_migration(store, tmp_path):
     cache.close()
 
 
-def test_recent_titles_excludes_own_domain(store):
-    cache = DedupCache(store, legacy_json_path="")
-    cache.mark_seen("https://a.com/1", "Tin HPG tăng trần", "a.com")
-    cache.mark_seen("https://b.com/1", "Tin VNM giảm sàn", "b.com")
-    titles = cache.recent_titles(hours=1, exclude_domain="a.com")
-    assert titles == [(normalize_title("Tin VNM giảm sàn"), "b.com")]
-    cache.close()
-
-
 def test_normalize_title():
     assert normalize_title("  Tin   HPG\tTăng ") == "tin hpg tăng"

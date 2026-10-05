@@ -1,4 +1,4 @@
-"""Kiểm tra và xử lý chống trùng lặp bài viết (mã băm chính xác và so khớp mờ)."""
+"""Kiểm tra bài đã thấy bằng mã băm chính xác và ghi sổ phát hiện URL."""
 
 from __future__ import annotations
 
@@ -10,6 +10,7 @@ import time
 from loguru import logger
 
 from src.core.models import normalize_title, sha256_hash
+from src.db import registry
 from src.db.store import ArticleStore
 
 _LEGACY_JSON = "data/dedup_cache.json"
@@ -75,47 +76,42 @@ class DedupCache:
         )
         self._conn.commit()
 
-    def recent_titles(self, hours: float = 48.0,
-                      exclude_domain: str = "") -> list[tuple[str, str]]:
-        """Lấy danh sách tiêu đề chuẩn hóa gần đây từ các nguồn khác để đối chiếu mờ.
+    def discover(self, url: str, source_domain: str, via: str = "listing") -> tuple[str, bool, bool]:
+        """Ghi URL vào sổ phát hiện trước mọi bước lọc.
 
         Args:
-            hours: Khoảng thời gian quét tính bằng giờ.
-            exclude_domain: Tên miền cần loại trừ không so sánh.
+            url: URL như nguồn trả về.
+            source_domain: Tên miền nguồn.
+            via: Kênh phát hiện: listing, rss, api, sitemap hoặc reconcile.
 
         Returns:
-            Danh sách bộ (tiêu đề chuẩn hóa, tên miền).
+            Bộ (khoá bài, là bài mới, là dạng URL khác dạng đã thấy đầu tiên).
         """
-        cutoff = time.time() - hours * 3600
-        rows = self._conn.execute(
-            "SELECT title_norm, source_domain FROM seen_articles "
-            "WHERE seen_at > ? AND source_domain != ? AND title_norm != ''",
-            (cutoff, exclude_domain)).fetchall()
-        return [(r["title_norm"], r["source_domain"]) for r in rows]
+        res = registry.discover(self._conn, url, source_domain, via)
+        self._conn.commit()
+        return res
 
-    def is_similar_title(self, title: str, source_domain: str,
-                         hours: float = 48.0, threshold: int = 90) -> bool:
-        """Đối chiếu độ tương đồng tiêu đề bài viết giữa các nguồn tin khác nhau.
+    def is_captured(self, key: str) -> bool:
+        """Kiểm tra bài mang khoá này đã được lưu thành bài trong kho hay chưa.
 
         Args:
-            title: Tiêu đề bài viết cần kiểm tra.
-            source_domain: Tên miền của bài viết hiện tại.
-            hours: Khoảng thời gian quét đối chiếu tính bằng giờ.
-            threshold: Ngưỡng điểm tương đồng tối thiểu (0-100).
+            key: Khoá bài từ `src.core.urlnorm.url_key`.
 
         Returns:
-            True nếu phát hiện tiêu đề trùng lặp ngữ nghĩa vượt ngưỡng.
+            True nếu sổ phát hiện ghi trạng thái captured.
         """
-        from rapidfuzz import fuzz
+        return registry.is_captured(self._conn, key)
 
-        norm = normalize_title(title)
-        if not norm:
-            return False
-        for candidate, dom in self.recent_titles(hours, exclude_domain=source_domain):
-            if fuzz.token_set_ratio(norm, candidate) >= threshold:
-                logger.debug("Fuzzy dup: '{}' ~ '{}' ({})", norm[:50], candidate[:50], dom)
-                return True
-        return False
+    def known_keys(self, keys: list[str]) -> set[str]:
+        """Lọc ra các khoá bài đã được lưu thành bài trong kho.
+
+        Args:
+            keys: Danh sách khoá bài cần tra.
+
+        Returns:
+            Tập khoá đã ở trạng thái captured, dùng làm mốc dừng phân trang.
+        """
+        return registry.known_keys(self._conn, keys)
 
     def cleanup(self, max_age_days: int = 30) -> int:
         """Xóa các bản ghi đã xem cũ hơn số ngày quy định.

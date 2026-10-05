@@ -1,6 +1,6 @@
 # Đề xuất kiến trúc xử lý bài trùng lặp đa nguồn (2026-10-01)
 
-> Trạng thái: **đề xuất, chờ duyệt**. Phần P0 là sửa lỗi (Cấp 2). Phần P1–P3 đổi lược đồ DB, đổi hợp đồng dữ liệu và đổi một bất biến của Article Lane, nên là Cấp 3: cần ADR 0014 và người duyệt trước khi làm.
+> Trạng thái: **đã duyệt và triển khai một phần (2026-10-02, ADR 0013 và ADR 0016, story US-033)**. Đã làm: C1 đến C5 của §9, P1 và P2. Chưa làm: P3 (chế độ chênh), P4 (embedding) và gộp dòng theo cụm ở giao hàng. Xem `docs/OPEN-ITEMS.md` mục CAP-1.
 > Số đo lấy từ `C:\data\news-scape\monocle.db` (chỉ đọc), cửa sổ 3 ngày 28/09–01/10, 1.759 bài trong `articles`, 2.074 hàng trong `seen_articles`. Script đo nằm ngoài kho (scratchpad), có thể đưa vào `scripts/` ở P0.
 
 ## 0. Chốt của người dùng (2026-10-01, vòng 2)
@@ -170,7 +170,7 @@ Quyết định và phân tích làm trong cùng một lượt, không thêm age
 
 Bộ nhận diện theo danh mục (AGENTS.md §6.B) được dùng ở đây **chỉ để chia khối và chặn gộp**, không sinh kết quả nhận diện, không được tính là đã phân tích. Đúng phạm vi "đối chiếu để kiểm, không để thay".
 
-### 4.4. Bất biến cần sửa (ADR 0014)
+### 4.4. Bất biến cần sửa (ADR 0016)
 
 | Bất biến hiện tại                                    | Đề xuất                                                                                                                                                           |
 | -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
