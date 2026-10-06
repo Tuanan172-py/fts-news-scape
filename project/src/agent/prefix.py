@@ -29,7 +29,7 @@ import yaml
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 REPO_ROOT = PROJECT_ROOT.parent
 
-PREFIX_DIR = PROJECT_ROOT / "data" / "prefix"
+PREFIX_DIR = PROJECT_ROOT / "assets" / "prefix"
 PREFIX_PATH = PREFIX_DIR / "ARTICLE_SYSTEM_CORE.md"
 PREFIX_META = PREFIX_DIR / "ARTICLE_SYSTEM_CORE.meta.json"
 

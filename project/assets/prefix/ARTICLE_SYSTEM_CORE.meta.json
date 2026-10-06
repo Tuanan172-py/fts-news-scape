@@ -9,5 +9,5 @@
   "variants": {
     "tickers": false
   },
-  "source": "C:\\Users\\anpt\\OneDrive - fpts.com.vn\\FRA_DataIngestion - news-scape\\project\\data\\entities\\entities.json"
+  "source": "entities/entities.json"
 }
