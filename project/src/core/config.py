@@ -7,49 +7,21 @@ from pathlib import Path
 
 import yaml
 
+from src.core import paths
+
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
-
-def to_project_relative(path: str | Path) -> str:
-    """Chuyển đổi đường dẫn tuyệt đối thành đường dẫn tương đối so với thư mục gốc dự án.
-
-    Args:
-        path: Đường dẫn tệp hoặc thư mục cần chuyển đổi.
-
-    Returns:
-        Chuỗi đường dẫn tương đối hoặc chuỗi đường dẫn gốc nếu nằm ngoài dự án.
-    """
-    p = Path(path)
-    try:
-        return p.resolve().relative_to(PROJECT_ROOT).as_posix()
-    except ValueError:
-        return str(path)
-
-
-def resolve_project_path(path: str | Path) -> Path:
-    """Chuyển đổi đường dẫn tương đối thành đường dẫn tuyệt đối dựa trên thư mục gốc dự án.
-
-    Args:
-        path: Đường dẫn tệp hoặc thư mục dạng chuỗi hoặc Path.
-
-    Returns:
-        Đối tượng Path tuyệt đối.
-    """
-    p = Path(path)
-    return p if p.is_absolute() else (PROJECT_ROOT / p)
 CONFIG_DIR = PROJECT_ROOT / "config"
 DOMAINS_DIR = CONFIG_DIR / "domains"
 
-DATA_DIR = PROJECT_ROOT / "data"
-LOGS_DIR = PROJECT_ROOT / "logs"
 REPO_ROOT = PROJECT_ROOT.parent
 
-OPERATIONAL_DB_PATH = Path("C:/data/news-scape/monocle.db")
+OPERATIONAL_DB_PATH = paths.DEFAULT_DATA_ROOT / "monocle.db"
 ALLOW_SYNCED_DB_ENV = "MONOCLE_ALLOW_SYNCED_DB"
 
 _DEFAULT_SETTINGS = {
-    "database": {"path": str(OPERATIONAL_DB_PATH)},
-    "logging": {"level": "INFO", "dir": str(LOGS_DIR)},
+    "database": {},
+    "logging": {"level": "INFO"},
     "scheduler": {"interval_minutes": 15},
     "http": {"rate_limit": 3.0, "timeout": 30, "max_retries": 3},
     "morninger": {
@@ -87,14 +59,17 @@ def load_settings() -> dict:
     """
     cfg = _deep_merge(_DEFAULT_SETTINGS, _load_yaml(CONFIG_DIR / "settings.yaml"))
 
-    env_data_dir = os.getenv("MONOCLE_DATA_DIR")
+    env_data_dir = os.getenv(paths.DATA_DIR_ENV)
     env_db_path = os.getenv("MONOCLE_DB_PATH")
     if env_db_path:
         cfg.setdefault("database", {})["path"] = env_db_path
     elif env_data_dir:
-        cfg.setdefault("database", {})["path"] = str(Path(env_data_dir) / "monocle.db")
+        cfg.setdefault("database", {})["path"] = str(paths.db_path())
 
     cfg.setdefault("database", {})["path"] = str(resolve_db_path(cfg))
+    log_dir = (cfg.get("logging") or {}).get("dir")
+    cfg.setdefault("logging", {})["dir"] = str(
+        paths.resolve_data_path(log_dir) if log_dir else paths.logs_dir())
     return cfg
 
 
@@ -128,7 +103,8 @@ def resolve_db_path(settings: dict | None = None) -> Path:
     """Phân giải đường dẫn tuyệt đối của DB vận hành và chặn vị trí không an toàn.
 
     Thứ tự ưu tiên: `MONOCLE_DB_PATH`, rồi `MONOCLE_DATA_DIR`, rồi `database.path` trong
-    `settings.yaml`. Đường dẫn tương đối tính từ thư mục `project/`, không theo cwd.
+    `settings.yaml`, cuối cùng là `monocle.db` dưới `paths.data_root()`. Đường dẫn tương
+    đối tính từ thư mục `project/`, không theo cwd.
 
     Args:
         settings: Cấu hình đã tải; None thì tự tải.
@@ -141,7 +117,7 @@ def resolve_db_path(settings: dict | None = None) -> Path:
             `MONOCLE_ALLOW_SYNCED_DB` không được đặt.
     """
     cfg = settings if settings is not None else load_settings()
-    raw = (cfg.get("database") or {}).get("path") or str(OPERATIONAL_DB_PATH)
+    raw = (cfg.get("database") or {}).get("path") or str(paths.db_path())
     p = Path(raw)
     p = (p if p.is_absolute() else PROJECT_ROOT / p).resolve()
     if is_synced_location(p) and not os.getenv(ALLOW_SYNCED_DB_ENV):
