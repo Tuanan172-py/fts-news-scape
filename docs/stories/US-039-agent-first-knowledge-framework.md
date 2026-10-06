@@ -3,6 +3,7 @@ id: US-039
 type: story
 title: Agent-first knowledge framework
 status: in_progress
+branch: feature/us039-knowledge-framework
 lane: high-risk
 created: 2026-10-06
 updated: 2026-10-06
@@ -37,7 +38,7 @@ After this story, any agent (Claude, Codex, agy, opencode, an OpenRouter model) 
 - Contract and validator follow the ADR-0017 pattern: one schema, one validator, one gate for every model.
 - `project/scripts/doc_lint.py` keeps its Vietnamese rules for legacy files and skips any file whose frontmatter declares `type`; those files belong to `scripts/knowledge.py`.
 - Work happens in worktree `C:/src/news-scape-us039`, branch `feature/us039-knowledge-framework` from `dev/us038`, because another session edits `doc_lint.py` and ADR-0020 on `dev/us038`.
-- WIP note: US-038 is `in_progress` in a parallel session on another worktree; the operator launched both.
+- WIP is per worktree (ADR-0022): US-038 runs in parallel on `dev/us038` in another worktree.
 
 ## Verification
 

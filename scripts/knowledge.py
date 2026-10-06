@@ -432,6 +432,7 @@ def lint(root: Path = REPO_ROOT, only: set[str] | None = None) -> list[Finding]:
             for target in as_list(d.meta.get(key)):
                 if str(target) not in known and str(target) != str(d.meta.get("id")):
                     out.append(Finding("K07", d.path, f"{key} -> {target} does not resolve"))
+    out += _check_wip(governed)
     rev = reverse_links(governed)
     status_of = {str(d.meta.get("id")): d.meta.get("status") for d in governed}
     for d in governed:
@@ -445,6 +446,34 @@ def lint(root: Path = REPO_ROOT, only: set[str] | None = None) -> list[Finding]:
     if only is not None:
         out = [f for f in out if f.path in only]
     return sorted(out, key=lambda f: (f.path, f.code))
+
+
+def wip_by_branch(docs: list[Doc]) -> dict[str, list[str]]:
+    """Group in-progress story ids by the branch they declare (ADR-0022).
+
+    Args:
+        docs: Documents with frontmatter.
+
+    Returns:
+        Mapping branch -> story ids with status in_progress.
+    """
+    out: dict[str, list[str]] = {}
+    for d in docs:
+        if d.dtype == "story" and d.meta.get("status") == "in_progress" and d.meta.get("branch"):
+            out.setdefault(str(d.meta["branch"]), []).append(str(d.meta.get("id")))
+    return out
+
+
+def _check_wip(docs: list[Doc]) -> list[Finding]:
+    """Report K13 when one branch carries more than one in-progress story."""
+    out = []
+    path_of = {str(d.meta.get("id")): d.path for d in docs}
+    for branch, ids in wip_by_branch(docs).items():
+        if len(ids) > 1:
+            for sid in sorted(ids):
+                out.append(Finding("K13", path_of[sid],
+                                   f"WIP=1 per worktree: branch {branch} has {sorted(ids)} in_progress"))
+    return out
 
 
 def _legacy_ids(legacy: set[str]) -> set[str]:

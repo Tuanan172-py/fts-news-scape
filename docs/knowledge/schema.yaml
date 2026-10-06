@@ -7,7 +7,7 @@ common:
   required: [id, type, title, status, created, updated, lang, summary]
   optional: [lane, authors, approvers, story, adr, plan, proposal, supersedes, superseded_by,
              amends, amended_by, related, evidence, tags, summary_vi, original, reconstructed,
-             retires, verified, verify, trigger, description, wave]
+             retires, verified, verify, trigger, description, wave, branch]
   # List-valued keys. A scalar is accepted and read as a one-item list.
   lists: [authors, approvers, story, adr, plan, proposal, supersedes, superseded_by, amends,
           amended_by, related, evidence, tags, retires]
@@ -52,6 +52,8 @@ types:
     statuses: [planned, in_progress, blocked, deferred, implemented, changed, retired]
     lang: [en]
     required: [lane, verify]
+    required_when:
+      in_progress: [branch]
     sections: [Contract, Acceptance Criteria, Design Notes, Verification, Evidence]
     floors:
       Contract: {min_words: 20}

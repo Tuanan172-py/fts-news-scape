@@ -224,3 +224,17 @@ def test_doc_lint_defers_contract_files() -> None:
 def test_repository_passes_contract() -> None:
     findings = k.lint(ROOT_DIR)
     assert findings == [], "\n".join(str(f) for f in findings)
+
+
+def test_wip_is_per_branch(repo: Path) -> None:
+    for n, branch in ((1, "feat/a"), (2, "feat/b")):
+        res = k.new_doc(repo, "story", f"Story {n}", today=date(2026, 10, 6))
+        p = repo / res["path"]
+        p.write_text(p.read_text(encoding="utf-8").replace(
+            "status: planned", f"status: in_progress\nbranch: {branch}"), encoding="utf-8")
+    assert "K13" not in _codes(repo)
+    p = repo / "docs/stories/US-002-story-2.md"
+    p.write_text(p.read_text(encoding="utf-8").replace("branch: feat/b", "branch: feat/a"), encoding="utf-8")
+    assert _codes(repo).count("K13") == 2
+    p.write_text(p.read_text(encoding="utf-8").replace("branch: feat/a\n", ""), encoding="utf-8")
+    assert "K01" in _codes(repo)

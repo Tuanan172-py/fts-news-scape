@@ -27,9 +27,9 @@ Mọi prompt/yêu cầu đều đi qua 3 bước cốt lõi: **Classify (3 Tiers
 6. Closure    BẮT BUỘC xuất Bảng Nghiệm thu Đóng phiên (Harness Closure Table).
 ```
 
-## 3. WIP = 1 (Interrupt Discipline)
+## 3. WIP = 1 per worktree (Interrupt Discipline)
 
-At most **one** story `in_progress`. On interruption:
+At most **one** story `in_progress` per git worktree, declared by its `branch` (ADR-0022). Other worktrees run in parallel with equal authority. On interruption inside a worktree:
 1. Do NOT abandon the current story silently.
 2. Set it `blocked` or `deferred` with a one-line reason (and `Depends On:` if applicable).
 3. Create/parks the new story, finish it, then resume the old one (read its notes first).

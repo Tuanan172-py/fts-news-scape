@@ -538,9 +538,21 @@ def cmd_audit(db_path: str = DEFAULT_DB_PATH, check_codebase: bool = False) -> d
         # 2. In-progress story count (WIP = 1 check)
         in_prog = conn.execute("SELECT id FROM story WHERE status = 'in_progress'").fetchall()
         checks["in_progress_count"] = len(in_prog)
-        if len(in_prog) > 1:
-            checks["wip_violation"] = [r["id"] for r in in_prog]
-            total_penalty += 0.25
+        # WIP=1 per worktree (ADR-0022): count by the branch each story file declares.
+        try:
+            sys.path.insert(0, str(Path(__file__).resolve().parent))
+            import knowledge
+
+            docs = [d for d in knowledge.discover(knowledge.REPO_ROOT) if d.has_frontmatter]
+            by_branch = knowledge.wip_by_branch(docs)
+            attributed = {sid for ids in by_branch.values() for sid in ids}
+            crowded = {b: ids for b, ids in by_branch.items() if len(ids) > 1}
+            if crowded:
+                checks["wip_violation"] = crowded
+                total_penalty += 0.25
+            checks["wip_unattributed"] = [r["id"] for r in in_prog if r["id"] not in attributed]
+        except Exception as e:
+            checks["wip_check_error"] = str(e)
             
         # 3. Missing traces for stories
         no_trace = conn.execute(

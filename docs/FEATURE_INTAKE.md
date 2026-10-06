@@ -65,7 +65,7 @@ Any hard gate   → high-risk (unless the human narrows scope)
 
 ## 5. WIP=1 at intake
 
-Before accepting a new change: if a story is already `in_progress`, either finish it or PARK it (`blocked`/`deferred` + reason) — see [HARNESS.md](HARNESS.md) §3. An urgent interrupt that cannot wait → park current, intake the interrupt, resume after. Never two `in_progress`.
+Before accepting a new change in this worktree: if this worktree's story is already `in_progress`, either finish it or PARK it (`blocked`/`deferred` + reason) — see [HARNESS.md](HARNESS.md) §3. An urgent interrupt that cannot wait → park current, intake the interrupt, resume after. Never two `in_progress` on one branch; parallel work goes to its own worktree (ADR-0022).
 
 ## 6. Intake output — you must be able to state this
 
