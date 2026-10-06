@@ -11,10 +11,13 @@ if [ $STATUS -ne 0 ]; then
     exit 1
 fi
 
-"C:/venvs/news-scape/Scripts/python.exe" scripts/harness_cli.py doc lint --staged
-if [ $? -ne 0 ]; then
-    echo "[GIT HOOK FAILED] Tai lieu tri thuc vi pham hop dong ADR-0021 (docs/knowledge/README.md)."
-    exit 1
+# Hook dung chung moi worktree; nhanh chua co ADR-0021 thi bo qua buoc nay.
+if [ -f scripts/knowledge.py ]; then
+    "C:/venvs/news-scape/Scripts/python.exe" scripts/harness_cli.py doc lint --staged
+    if [ $? -ne 0 ]; then
+        echo "[GIT HOOK FAILED] Tai lieu tri thuc vi pham hop dong ADR-0021 (docs/knowledge/README.md)."
+        exit 1
+    fi
 fi
 
 echo "✅ [GIT HOOK PASSED] AST hop le, khong co tep cam."
