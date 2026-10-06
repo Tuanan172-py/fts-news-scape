@@ -12,6 +12,8 @@
 
 Kế hoạch và hướng dẫn từng bước: [`plans/20261005-1800-us038-repo-to-chuc-va-data-plane/plan.md`](../plans/20261005-1800-us038-repo-to-chuc-va-data-plane/plan.md).
 
+Audit 2026-10-06 và lộ trình Đ1–Đ6 (5 mục P0 chặn mở lại vận hành): [`docs/proposals/audit-migration-us038-2026-10-06.md`](proposals/audit-migration-us038-2026-10-06.md). Cutover N4 đã chạy ngày 06/10; vận hành đang dừng khẩn chờ Đ1–Đ3.
+
 | Mục | Ai | Việc | Trạng thái |
 |---|---|---|---|
 | N1 | Người | `git push fpa import/clean-20261005:refs/heads/main` (đang chờ cấp quyền GitHub) | CHẶN PR |
@@ -57,10 +59,7 @@ Số đo lúc bắt đầu (02/10, so với sitemap): cafef thiếu 64%, tnck 68
 
 Người vận hành làm hoặc quyết định:
 
-1. **Bronze ghi sai gốc: đã gộp, còn chờ khởi động lại morninger (US-035, 2026-10-05).** 2.750 tệp ở `<gốc repo>/data/raw_html` đã chuyển vào `project/data/raw_html`. 1.607 tệp trùng tên khác nội dung nằm ở `C:\data
-ews-scape
-ecovered
-oot_raw_html_conflicts_20261005`. `RawStore` nay neo vào `PROJECT_ROOT`, lần cào lỗi không ghi đè bản tốt, khoá `silver_failures` được chuẩn hoá. **Người vận hành:** khởi động lại `python -m src.morninger` (PID 42208, chạy từ 02/10) để nhận mã mới, rồi kiểm `pipeline_radar.py status`: dòng Bronze kẹt phải về 0. Phần còn lại của `<gốc repo>/data` đã dọn theo phương án E: `silver`, `work_packages`, `agent_tasks`, `agent_outputs*` (259 tệp) sang `C:\data\news-scape\recovered\root_data_20261005`; 4 CSV `exports` chưa có ở project đã gộp vào `project/data/exports`, 1 CSV trùng tên giữ ở `recovered`. Các điểm ghi `exports`, `notifications`, `staging`, `work_packages` đã neo vào `PROJECT_ROOT`. Còn dùng đường dẫn tương đối nhưng thuộc lane L1/Gold đã ngừng: `batch_handoff.py`, `l1_router.py`, `packet.py`, `runner.py`, `l1_runner.py`.
+1. **Bronze ghi sai gốc: đã gộp, còn chờ khởi động lại morninger (US-035, 2026-10-05).** 2.750 tệp ở `<gốc repo>/data/raw_html` đã chuyển vào `project/data/raw_html`. 1.607 tệp trùng tên khác nội dung nằm ở `C:\data\news-scape\recovered\root_raw_html_conflicts_20261005`. `RawStore` nay neo vào `PROJECT_ROOT`, lần cào lỗi không ghi đè bản tốt, khoá `silver_failures` được chuẩn hoá. **Người vận hành:** khởi động lại `python -m src.morninger` (PID 42208, chạy từ 02/10) để nhận mã mới, rồi kiểm `pipeline_radar.py status`: dòng Bronze kẹt phải về 0. Phần còn lại của `<gốc repo>/data` đã dọn theo phương án E: `silver`, `work_packages`, `agent_tasks`, `agent_outputs*` (259 tệp) sang `C:\data\news-scape\recovered\root_data_20261005`; 4 CSV `exports` chưa có ở project đã gộp vào `project/data/exports`, 1 CSV trùng tên giữ ở `recovered`. Các điểm ghi `exports`, `notifications`, `staging`, `work_packages` đã neo vào `PROJECT_ROOT`. Còn dùng đường dẫn tương đối nhưng thuộc lane L1/Gold đã ngừng: `batch_handoff.py`, `l1_router.py`, `packet.py`, `runner.py`, `l1_runner.py`.
 2. **Ba nguồn chưa có kênh đối chiếu độc lập:** vietstock, vietnambiz, thoibaotaichinhvietnam. Sitemap của chúng cũ hoặc không có. Độ phủ của ba nguồn này chưa đo được.
 3. **fireant là API, không cào bù được theo URL.** Bài fireant ở trạng thái `discovered` được lấy lại khi chúng xuất hiện lại trong danh sách API; nếu không, chúng sang `dead_letter` sau 5 lần thử.
 4. **Tải xử lý tăng.** Cào bù thêm vài trăm bài mỗi ngày cho ngày hôm nay và hôm qua. Daemon ở L1 sẽ tự đưa chúng vào đợt, nên token tăng tương ứng. Token là số ghi nhận, không phải cổng (ADR 0010).
