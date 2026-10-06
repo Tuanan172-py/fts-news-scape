@@ -1,104 +1,123 @@
-# ADR 0007 — Toàn vẹn watermark Silver & bảng `silver_failures`
-
-- **Ngày:** 2026-09-17
-- **Trạng thái:** **accepted** (người dùng duyệt hướng đi 2026-09-17; ADR lập theo AGENTS.md §0 Cấp 3)
-- **Lane:** **high-risk** — đổi schema `monocle.db` (Hard Gate)
-- **Story:** US-016 · **Tác động:** `src/pipeline/derive.py`, `src/pipeline/run.py`, `src/db/store.py`, `scripts/pipeline_radar.py`
-- **Kế hoạch:** `plans/20260917-1420-pipeline-integrity-remediation/phase-01-silver-watermark-integrity.md`
-
+---
+id: ADR-0007
+type: adr
+title: Silver watermark integrity and the silver_failures table
+status: accepted
+lane: high-risk
+created: 2026-09-17
+updated: 2026-10-06
+lang: en
+authors: [An Pham Thanh (commit author)]
+approvers: [operator 2026-09-17]
+story: [US-016]
+related: [ADR-0013]
+evidence:
+  - commit:0f1a65c
+  - path:plans/20260917-1420-pipeline-integrity-remediation/phase-01-silver-watermark-integrity.md
+  - path:project/src/pipeline/derive.py
+  - path:project/src/db/store.py
+  - path:project/scripts/pipeline_radar.py
+  - test:project/tests/test_silver_watermark_integrity.py
+  - metric:7203 articles captured versus 424 past the delivery gate, end-to-end review 2026-09-17
+  - metric:7402 Bronze files times 3 reads per cycle on OneDrive, 2026-09-17
+original: "commit:0f1a65c"
+reconstructed: 2026-10-06
+summary: The Silver derive watermark becomes a low-water mark that never passes an unresolved failure; failures go to a new silver_failures table with a 5-attempt dead-letter threshold, and the radar must show dead-letters.
+summary_vi: Watermark Silver chuyển sang low-water mark không vượt qua bài lỗi chưa giải quyết, sổ lỗi silver_failures với ngưỡng dead-letter 5 lần, và radar phải hiện số dead-letter.
 ---
 
-## 1. Bối cảnh & Vấn đề
+# ADR-0007 — Silver watermark integrity and the silver_failures table
 
-Rà soát end-to-end 2026-09-17 phát hiện **mất dữ liệu âm thầm** ở tầng Silver.
+## Context
 
-`src/pipeline/derive.py`:
+- The end-to-end review of 2026-09-17 found silent data loss in the Silver layer.
+- In `src/pipeline/derive.py`, `_should_process` selected a file only when `fetch_ts > watermark` (lines 51 to 57).
+- The new watermark was `max(ok_ts)`, the maximum over successful files only (line 130).
+- Failed files (`continue` at lines 115 to 117, `raw_missing`, `raw_read_error`) did not contribute to `ok_ts`.
+- Example: file A with `fetch_ts` 10:00 fails and file B at 11:00 succeeds. The watermark jumps to 11:00 and A never satisfies `> watermark` again.
+- There was no warning, no attempt counter and no dead-letter, only one log line.
+- A second leak: an article with `silver_ok=False` but `pkg_ok=True` still returned `res["ok"]=True` (`run.py:122`). The watermark advanced and the article was never derived again.
+- Architectural impact: the Bronze "no article left behind" work (US-011, US-012, US-015) was voided one layer later. Bronze kept the article, Silver dropped it, and it never reached L1, Gold or a user.
+- Related measurement: 7,203 articles captured, 424 articles past the delivery gate.
 
 ```python
-def _should_process(fetch_ts, watermark):     # dòng 51-57
+def _should_process(fetch_ts, watermark):     # lines 51-57
     return fetch_ts > watermark
 
-watermark_new = max(ok_ts) if ok_ts else watermark    # dòng 130 — max của CHỈ bài thành công
+watermark_new = max(ok_ts) if ok_ts else watermark    # line 130, max over successes ONLY
 ```
 
-Bài lỗi (`continue` dòng 115-117, `raw_missing`, `raw_read_error`) không góp vào `ok_ts`. Nếu file A
-có `fetch_ts` 10:00 bị lỗi còn file B 11:00 thành công, watermark nhảy lên 11:00 và **A vĩnh viễn
-không bao giờ thoả `> watermark`** nữa. Không cảnh báo, không đếm số lần thử, không dead-letter —
-chỉ một dòng log rồi đi tiếp.
+## Decision
 
-Thêm một đường rò nữa: bài `silver_ok=False` nhưng `pkg_ok=True` vẫn trả `res["ok"]=True`
-(`run.py:122`) nên watermark vẫn đẩy qua, và bài đó không bao giờ được derive lại.
-
-**Hệ quả nghiêm trọng về mặt kiến trúc:** toàn bộ nỗ lực "không bỏ sót bài tin" ở tầng Bronze
-(US-011, US-012, US-015) bị vô hiệu ngay tầng kế tiếp. Bronze giữ đủ bài, Silver lặng lẽ đánh rơi,
-và bài đã rơi thì không bao giờ tới L1, Gold hay tay người dùng. Số đo liên quan: 7.203 bài đã cào,
-424 bài qua cổng giao hàng.
-
-## 2. Quyết định
-
-### 2.1 Watermark chuyển sang ngữ nghĩa low-water mark
+- D1. The watermark uses low-water-mark semantics. If unresolved failures remain, `watermark_new` is the minimum `fetch_ts` of failures not yet dead-lettered. If none remain, it is `max(ok_ts)`. The watermark MUST NOT pass an unresolved failure.
 
 ```
-watermark_new = min(fetch_ts của các lỗi CHƯA dead-letter)   nếu còn lỗi
-              = max(ok_ts)                                    nếu sạch
+watermark_new = min(fetch_ts of failures NOT yet dead-lettered)   if failures remain
+              = max(ok_ts)                                         if clean
 ```
 
-Watermark **không bao giờ vượt qua một lỗi chưa được giải quyết**.
+- D2. New table `silver_failures` in `monocle.db` (schema change, Hard Gate). The reverse risk of D1 is head-of-line blocking, where one permanently broken file stalls Silver. A durable failure ledger with a give-up threshold is therefore mandatory.
 
-### 2.2 Bảng mới `silver_failures` (đổi schema — Hard Gate)
-
-Rủi ro ngược của 2.1 là head-of-line blocking: một file hỏng vĩnh viễn chặn đứng Silver. Nên bắt
-buộc có sổ lỗi bền vững kèm ngưỡng bỏ cuộc.
-
-| Cột | Kiểu | Ý nghĩa |
+| Column | Type | Meaning |
 |---|---|---|
-| `meta_path` | TEXT PK | Đường dẫn `.meta.json` (tương đối theo `PROJECT_ROOT`) |
-| `url_title_hash` | TEXT | Liên kết về `articles` khi xác định được |
-| `fetch_ts` | TEXT | Mốc thời gian dùng để chặn watermark |
-| `attempts` | INTEGER | Số lần đã thử, tăng mỗi chu kỳ derive |
-| `last_error` | TEXT | Thông điệp lỗi gần nhất |
-| `last_at` | TEXT | ISO `+07:00` |
-| `dead_letter` | INTEGER | 0/1 — khi 1 thì thôi chặn watermark |
+| `meta_path` | TEXT PK | Path of the `.meta.json`, relative to `PROJECT_ROOT` |
+| `url_title_hash` | TEXT | Link to `articles` when it can be resolved |
+| `fetch_ts` | TEXT | Timestamp used to hold the watermark |
+| `attempts` | INTEGER | Attempts so far, incremented each derive cycle |
+| `last_error` | TEXT | Latest error message |
+| `last_at` | TEXT | ISO timestamp, `+07:00` |
+| `dead_letter` | INTEGER | 0 or 1; at 1 the row stops holding the watermark |
 
-- **Ngưỡng dead-letter: 5 lần thử** (đồng bộ `deferred_max_attempts` của backfill).
-- Bài thành công bị **xoá khỏi bảng**, không để rác tích tụ.
+- D2a. The dead-letter threshold is 5 attempts, aligned with `deferred_max_attempts` of the backfill.
+- D2b. A file that succeeds MUST be deleted from the table so no residue accumulates.
+- D3. Dead-letters MUST be visible. `pipeline_radar.py` MUST show "Bronze articles stuck or dead-lettered in Silver: N" with a `HIGH` recommendation when N is above 0. A silent dead-letter recreates the very bug being fixed, so this is a mandatory acceptance condition, not an option.
 
-### 2.3 Dead-letter bắt buộc phải nhìn thấy được
+## Alternatives
 
-`pipeline_radar.py` phải hiện "Bài Bronze kẹt / dead-letter ở Silver: N", kèm khuyến nghị `HIGH`
-khi N > 0. **Dead-letter im lặng là quay lại đúng lỗi đang sửa**, nên đây là điều kiện nghiệm thu
-bắt buộc chứ không phải tuỳ chọn.
-
-## 3. Phương án đã cân nhắc
-
-| Phương án | Vì sao không chọn |
+| Option | Why rejected |
 |---|---|
-| **JSON blob trong `pipeline_state`** — không đổi schema, lane `normal`, làm ngay | Người dùng chọn bảng riêng để **truy vấn và báo cáo** được. JSON blob khó lọc theo domain/thời gian, khó nối với `articles`, và phình dần trong một ô |
-| Giữ `max(ok_ts)`, thêm danh sách "luôn thử lại" | Vẫn là sổ lỗi, chỉ khác chỗ lưu; không giải quyết việc watermark đã vượt qua bài lỗi từ các lần chạy trước |
-| Bỏ watermark, mỗi chu kỳ quét lại toàn bộ | 7.402 file × 3 lượt đọc/chu kỳ trên OneDrive — đã là điểm nghẽn hiệu năng hiện tại |
+| JSON blob in `pipeline_state`: no schema change, lane `normal`, immediate | The operator chose a separate table so failures can be queried and reported. A JSON blob is hard to filter by domain or time, hard to join with `articles`, and grows inside one cell. |
+| Keep `max(ok_ts)` and add an "always retry" list | Still a failure ledger in a different place; it does not recover files the watermark already passed in earlier runs. |
+| Drop the watermark and rescan everything each cycle | 7,402 files times 3 reads per cycle on OneDrive; this was already the current performance bottleneck. |
 
-## 4. Hệ quả
+## Consequences
 
-**Tích cực:** không còn đường mất bài âm thầm giữa Bronze và Silver; mọi ca rơi đều có hồ sơ truy
-vấn được và hiện trên radar.
+Gains:
 
-**Tiêu cực / rủi ro phải quản:**
+- No silent path for losing articles between Bronze and Silver remains. Every drop has a queryable record and shows on the radar.
 
-1. **Head-of-line blocking** nếu ngưỡng quá cao hoặc sổ lỗi hỏng → Silver đứng im. Giảm thiểu: log
-   mức ERROR khi watermark bị chặn quá 2 chu kỳ liên tiếp.
-2. **Backlog dồn ở lần chạy đầu** — có thể lôi lại nhiều bài từng bị bỏ qua. **Bắt buộc chạy thử
-   trên bản sao DB trước** để biết khối lượng.
-3. **Migration**: bảng mới tạo qua `CREATE TABLE IF NOT EXISTS` trong `ArticleStore`, không đụng
-   bảng cũ, không mất dữ liệu. Vẫn **bắt buộc sao lưu `monocle.db` trước khi chạy lần đầu**.
+Risks to manage:
 
-## 5. Nghiệm thu
+- Head-of-line blocking if the threshold is too high or the ledger breaks, which stalls Silver. Mitigation: log at ERROR level when the watermark is held for more than 2 consecutive cycles.
+- Backlog on the first run, which may pull back many previously skipped articles. A dry run on a copy of the database MUST come first to size the volume.
+- Migration: the table is created with `CREATE TABLE IF NOT EXISTS` in `ArticleStore`. Old tables are untouched and no data is lost. A backup of `monocle.db` is still mandatory before the first run.
 
-| Tier | Điều kiện |
+Acceptance tiers defined by the original ADR:
+
+| Tier | Condition |
 |---|---|
-| Unit | File lỗi có `fetch_ts` cũ hơn file thành công: chu kỳ sau **vẫn** được chọn lại (test này fail trên code hiện tại) |
-| Unit | Đủ 5 lần thử → `dead_letter=1`, watermark được phép tiến |
-| Unit | Bài thành công bị xoá khỏi `silver_failures` |
-| Integration | Bronze hỏng xen kẽ Bronze tốt, chạy nhiều lượt, khẳng định không bài nào biến mất |
-| **Platform** | Chạy trong morninger thật, 2 chu kỳ derive liên tiếp + radar hiện số dead-letter |
+| Unit | A failed file older than a successful file is selected again next cycle (fails on the old code) |
+| Unit | After 5 attempts `dead_letter=1` and the watermark may advance |
+| Unit | A successful file is deleted from `silver_failures` |
+| Integration | Broken and good Bronze files interleaved over several runs; no article disappears |
+| Platform | Real morninger run, 2 consecutive derive cycles, radar shows the dead-letter count |
 
-Story chỉ đạt `implemented` khi có đủ tier Platform (AGENTS.md rule 06 §4.4).
+The story reaches `implemented` only with the Platform tier (rule 06 §4.4).
+
+### Current status (2026-10-06)
+
+- D1 in force. `derive.py` records failures through `store.record_silver_failure` and holds the watermark on blocking rows.
+- D2 and D2a in force. `DEFAULT_MAX_ATTEMPTS = 5` in `derive.py` cites this ADR.
+- D3 in force. `pipeline_radar.py` reads `silver_failures` and counts blocking and dead-letter rows.
+- ADR-0013 builds on this ADR: a URL may end only as `captured`, `alias`, `gone` or `dead_letter` with a reason.
+
+## Rollback
+
+- The original ADR names no rollback procedure. Reverting the `derive.py`, `run.py` and `store.py` changes of commit 0f1a65c restores `max(ok_ts)` and with it the silent loss (reconstructed from the commit file list).
+- The `silver_failures` table is additive; leaving it in place does not affect old tables. The mandated pre-run backup of `monocle.db` is the data restore point.
+- Under the high-risk lane (`AGENTS.md` §0) a rollback needs operator approval.
+
+## Follow-up
+
+- [x] Low-water mark, `silver_failures` and radar line shipped with tests in commit 0f1a65c (US-016).
+- [ ] Platform tier: two consecutive real derive cycles with the dead-letter count on the radar. Its status was not verified during normalization; check `harness_cli.py query matrix` for US-016.

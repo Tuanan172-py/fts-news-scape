@@ -1,131 +1,126 @@
-# ADR 0008 — Kích hoạt Gold bắt buộc có người trong vòng lặp & trần token
-
-- **Ngày:** 2026-09-17
-- **Trạng thái:** **accepted, đã amendment 2026-09-18** (§2.1 và §2.3 hết hiệu lực; §2.4 giữ nguyên)
-- **Trạng thái gốc:** accepted (người dùng chỉ định 2026-09-17: *"bắt buộc human phải ở trong loop
-  và đưa ra permission"*)
-- **Lane:** **high-risk** — kiểm soát chi phí token & quyền kích hoạt tác nhân ngoài
-- **Story:** US-017 · **Tác động:** `scripts/auto_pilot.py`, `scripts/run_daily.ps1`, `src/agent/batch_handoff.py`
-- **Kế hoạch:** `plans/20260917-1420-pipeline-integrity-remediation/phase-02-destructive-automation.md`
-
+---
+id: ADR-0008
+type: adr
+title: Human-in-the-loop Gold activation and token cap
+status: superseded
+lane: high-risk
+created: 2026-09-17
+updated: 2026-10-06
+lang: en
+authors: [An Pham Thanh (commit author)]
+approvers: [operator 2026-09-17, operator 2026-09-18 (amendment)]
+story: [US-017]
+evidence:
+  - commit:0f1a65c
+  - commit:3f9d59e
+  - commit:eeccd9f
+  - commit:46f617f
+  - path:plans/20260917-1420-pipeline-integrity-remediation/phase-02-destructive-automation.md
+  - path:plans/20260918-1651-article-lane-unified/plan.md
+  - path:project/scripts/auto_pilot.py
+  - test:project/tests/test_destructive_automation_guards.py
+  - metric:pre-run token estimate deviated 21 to 90 times from measured cost, article-lane plan 2026-09-18
+  - metric:about 0.31 USD per 1,000 articles per day at off-peak pricing, article-lane plan 2026-09-18
+  - operator:"bắt buộc human phải ở trong loop và đưa ra permission" (2026-09-17)
+  - operator:"bỏ hẳn cổng ADR 0008 (người xác nhận), tôi sẽ quản lý theo batch hoặc wave" (2026-09-18)
+original: "commit:3f9d59e"
+reconstructed: 2026-10-06
+summary: Required explicit operator confirmation and a per-run token cap before any LLM runner spent tokens, and made failures loud; the gate and cap were voided on 2026-09-18 and by ADR-0010; only fail-loud survives.
+summary_vi: Bắt buộc người vận hành xác nhận và có trần token trước khi tiêu token, thất bại phải ồn ào; cổng và trần đã bị gỡ, chỉ còn nguyên tắc thất bại phải ồn ào.
 ---
 
-## 1. Bối cảnh & Vấn đề
+# ADR-0008 — Human-in-the-loop Gold activation and token cap
 
-`auto_pilot.py:80-88` gọi CLI ngoài `agy` kèm cờ **`--dangerously-skip-permissions`**:
+## Context
+
+- `auto_pilot.py` lines 80 to 88 called the external CLI `agy` with the flag `--dangerously-skip-permissions`.
+- Four problems stacked up.
+- P1, no human in the loop. The LLM agent was triggered automatically and spent the user's account tokens without confirmation. The flag also disabled the tool's own permission prompts.
+- P2, no cost cap. No limit on batches, no token estimate before running, no stop on exceeding a budget.
+- P3, silent failure reported as success. `run_cmd` (lines 29 to 31) only printed errors and continued. A bare `except Exception` (line 89) swallowed `FileNotFoundError` when `agy` was missing.
+- Line 100 printed "100% complete" unconditionally. Combined with batch-name collisions (`batch_NN` restarted at 01 every run), the system could re-ingest old data and report success.
+- P4, not reproducible. `agy.exe` lived in the user's `AppData\Local\agy\bin\` folder, outside the repository, with no pinned version and no entry in `requirements.txt`.
 
 ```
 agy -p <prompt> --dangerously-skip-permissions --effort low
 ```
 
-Bốn vấn đề chồng lên nhau:
+The operator directive on 2026-09-17 was: "bắt buộc human phải ở trong loop và đưa ra permission".
 
-1. **Không có người trong vòng lặp.** Tác nhân LLM được kích hoạt tự động, tiêu thụ token của tài
-   khoản người dùng mà không ai xác nhận. Cờ `--dangerously-skip-permissions` tắt luôn lớp hỏi
-   quyền của chính công cụ đó.
-2. **Không có trần chi phí.** Không giới hạn số batch, không ước lượng token trước khi chạy, không
-   dừng khi vượt ngân sách.
-3. **Thất bại im lặng, báo thành công giả.** `run_cmd` (dòng 29-31) chỉ *in* lỗi rồi đi tiếp;
-   `except Exception` (dòng 89) nuốt cả `FileNotFoundError` khi thiếu `agy`; dòng 100 in
-   "hoàn tất 100%" vô điều kiện. Kết hợp với lỗi va chạm tên batch (`batch_NN` đánh số lại từ 01
-   mỗi lần chạy), hệ thống có thể **ingest lại dữ liệu cũ rồi báo thành công**.
-4. **Không tái lập được.** `agy.exe` nằm ở `C:\Users\anpt\AppData\Local\agy\bin\`, ngoài repo, không
-   pin version, không có trong `requirements.txt`.
+## Decision
 
-## 2. Quyết định
+- D1. Gold MUST NOT be activated without explicit operator confirmation. Every path that calls `agy`, or any later LLM runner, MUST stop and ask first. It MUST show the number of batches and articles, the token or cost estimate, and the `--effort` mode.
+- D1a. Running without confirmation is allowed only through an explicit flag such as `--yes`, typed by the operator. The default is always to ask.
+- D2. The flag `--dangerously-skip-permissions` is removed from the default path. It MAY be used only when the operator turns it on, with clear logging. By default `agy` keeps its own permission prompts.
+- D3. Token cap per run. A cap parameter (maximum batches and/or estimated token budget) is added. Exceeding it MUST stop cleanly and report the work done, following the `--budget-seconds` pattern already applied to `backfill_deferred`.
+- D4. Failures MUST be loud. `run_cmd` returns non-zero when a child command fails. The bare `except` is removed. The output file MUST be verified to exist before a batch counts as done. The summary line reflects the real number of successful batches.
+- D5. `run_daily.ps1 -Mode full` is removed. `full` did not run Gold (`[ValidateSet('api')]` blocked the `hierarchy` branch and the `default` branch only printed text) yet still deleted packets. Only `emit` and `ingest` remain; the agent call is the middle step, triggered by the operator under D1.
+- D6. `agy` becomes a declared dependency: pinned version, documented in the install guide, and checked for existence before running instead of letting `FileNotFoundError` be swallowed.
 
-> ## AMENDMENT 2026-09-18 — gỡ cổng xác nhận, giữ nguyên "thất bại phải ồn ào"
->
-> **Người dùng chỉ định:** *"bỏ hẳn cổng ADR 0008 (người xác nhận), tôi sẽ quản lý theo batch hoặc wave"*.
->
-> **Vì sao quyết định gốc không còn phù hợp.** ADR này ra đời khi việc tiêu token diễn ra qua một công cụ ngoài repo chạy kèm cờ bỏ qua mọi lớp hỏi quyền, không ước lượng trước, không đo sau, và báo thành công vô điều kiện. Trong hoàn cảnh đó, cổng hỏi người là lớp bảo vệ duy nhất.
->
-> Ba điều kiện đó nay đều đã đổi:
->
-> 1. **Mọi lần tiêu token đều bắt đầu bằng một lệnh tường minh của người vận hành** (`article_run.py --wave N`). Không còn đường nào tự khởi động. Chạy lệnh tức là đã quyết.
-> 2. **Có dự toán trước và số đo thật sau.** `estimate_wave.py` in chi phí trước khi chạy; `token_ledger.py` ghi số thật đọc từ runtime sau khi chạy, kèm đối chiếu sai số. Cổng hỏi người trước đây chỉ hiển thị một con số ước lượng, mà con số ấy về sau bị chứng minh là lệch thực tế 21 đến 90 lần.
-> 3. **Chi phí đã đo được và rất nhỏ.** Một nghìn bài mỗi ngày tốn khoảng 0,31 đô la ở khung giá thấp điểm. Ràng buộc thật là hạn mức token của tài khoản, và hạn mức đó được theo dõi bằng sổ cái chứ không bằng một câu hỏi trước mỗi lần chạy.
->
-> **§2.1 và §2.3 hết hiệu lực.** Không dựng lại cổng hỏi người dưới bất kỳ tên nào. Thay bằng **hai chốt kỹ thuật tự động**, và cần phân biệt rõ: chúng bảo vệ **chất lượng**, không phải bảo vệ ví, nên chúng không hỏi ai cả.
->
-> | Chốt | Kích hoạt khi | Hành vi |
-> |---|---|---|
-> | Trần ngữ cảnh | ước tính một lô vượt 25% cửa sổ | `article_pack.py` tự chia nhỏ lô |
-> | Ngưỡng hỏng | tỷ lệ bản ghi hỏng vượt 10% trong một đợt | `article_run.py` dừng đợt trước khi nạp cơ sở dữ liệu |
->
-> **§2.4 giữ nguyên toàn bộ — thất bại phải ồn ào.** Đây là điều khoản đáng giá nhất của ADR này và không liên quan gì tới cổng xác nhận. Nó đã được thi hành trong mã: lệnh con trả mã khác 0 thì cả đợt dừng và in rõ lý do, không đi tiếp trong im lặng.
->
-> **§2.2, §2.5, §2.6 không còn đối tượng áp dụng** vì công cụ ngoài repo đã bị thay bằng runtime trong tầm kiểm soát.
->
-> Neo: `plans/20260918-1651-article-lane-unified/plan.md` §2 Q4, §9.2.
+### Amendment history
 
----
+**2026-09-18, operator directive** "bỏ hẳn cổng ADR 0008 (người xác nhận), tôi sẽ quản lý theo batch hoặc wave". Anchor: `plans/20260918-1651-article-lane-unified/plan.md` §2 Q4 and §9.2. Content preserved:
 
-### 2.1 Không kích hoạt Gold khi chưa có xác nhận tường minh của người dùng
+- Why the original no longer fit. The ADR was written when tokens were spent through an external tool with all permission prompts skipped, no estimate before, no measurement after, and unconditional success reports. The human gate was then the only protection.
+- All three conditions changed. First, every token spend now starts with an explicit operator command (`article_run.py --wave N`); no path starts by itself, so running the command is the decision.
+- Second, there is an estimate before and a measurement after. `estimate_wave.py` prints the cost before running and `token_ledger.py` records real runtime figures afterwards with a deviation check. The old gate showed only an estimate, later shown to deviate 21 to 90 times from reality.
+- Third, cost is measured and small: about 0.31 USD for 1,000 articles a day at off-peak pricing. The real constraint is the account token quota, tracked by the ledger rather than a question before each run.
+- D1 and D3 are void. No human confirmation gate may be rebuilt under any name. Two automatic technical stops replace them. They protect quality, not the wallet, so they ask nobody.
 
-> **[HẾT HIỆU LỰC 2026-09-18 — xem amendment ở đầu §2]**
+| Stop | Triggers when | Behaviour |
+|---|---|---|
+| Context ceiling | estimated batch exceeds 25% of the window | `article_pack.py` splits the batch |
+| Failure threshold | broken records exceed 10% in a wave | `article_run.py` stops the wave before loading the database |
 
-Mọi đường dẫn dẫn tới việc gọi `agy` (hay bất kỳ runner LLM nào sau này) **bắt buộc dừng lại xin
-xác nhận**, hiển thị trước:
+- D4 is kept in full. It is the most valuable clause of this ADR and unrelated to the confirmation gate. It is implemented in code: a non-zero child exit stops the whole wave and prints the reason.
+- D2, D5 and D6 no longer have an object, because the external tool was replaced by a runtime under project control.
 
-- số batch và số bài sẽ xử lý,
-- ước lượng token/chi phí,
-- chế độ `--effort` sẽ dùng.
+## Alternatives
 
-Chạy không xác nhận chỉ được phép qua cờ tường minh (ví dụ `--yes`) do người vận hành tự gõ, và
-mặc định luôn là **hỏi**.
-
-### 2.2 Bỏ cờ `--dangerously-skip-permissions` khỏi đường chạy mặc định
-
-Cờ này chỉ được dùng khi người vận hành chủ động bật, kèm ghi log rõ ràng. Mặc định để công cụ
-`agy` giữ nguyên lớp hỏi quyền của nó.
-
-### 2.3 Trần token theo lần chạy
-
-> **[HẾT HIỆU LỰC 2026-09-18 — thay bằng hai chốt kỹ thuật tự động, xem amendment ở đầu §2]**
-
-Thêm tham số trần (số batch tối đa và/hoặc ngân sách token ước lượng). Vượt trần thì **dừng sạch và
-báo cáo phần đã làm**, theo đúng khuôn mẫu `--budget-seconds` đã áp cho `backfill_deferred` hôm nay.
-
-### 2.4 Thất bại phải ồn ào
-
-`run_cmd` trả mã khác 0 khi lệnh con lỗi; bỏ `except` trần; kiểm tra file output **thật sự được
-sinh** trước khi coi batch là xong; dòng tổng kết phản ánh số batch thành công thật.
-
-### 2.5 `run_daily.ps1 -Mode full` bị bỏ hẳn
-
-`full` hiện không chạy Gold (`[ValidateSet('api')]` chặn nhánh `hierarchy`, nhánh `default` chỉ in
-chữ) nhưng vẫn xoá packet. Chỉ còn `emit` và `ingest`; việc gọi tác nhân nằm ở bước giữa do người
-vận hành chủ động kích hoạt theo §2.1.
-
-### 2.6 `agy` trở thành phụ thuộc được khai báo
-
-Pin version, ghi vào tài liệu cài đặt, và kiểm tra sự tồn tại **trước** khi chạy (thay vì để
-`FileNotFoundError` bị nuốt).
-
-## 3. Phương án đã cân nhắc
-
-| Phương án | Vì sao không chọn |
+| Option | Why rejected |
 |---|---|
-| Giữ nguyên, chỉ vá va chạm batch | Không giải quyết việc token bị tiêu thụ không ai duyệt — đúng mối lo người dùng nêu |
-| Thay `agy` bằng SDK trong repo | Đổi kiến trúc lớn; cần ADR riêng và chốt nhà cung cấp. Không chặn đợt vá này |
-| Tự động hoàn toàn kèm trần token, không hỏi | Người dùng chỉ định rõ **bắt buộc** có người trong vòng lặp; trần token một mình không thay thế được sự đồng ý |
+| Keep everything and only fix the batch-name collision | Does not address tokens spent without approval, which was the operator's stated concern. |
+| Replace `agy` with an SDK inside the repository | Large architecture change that needs its own ADR and a provider choice; it must not block this remediation. |
+| Full automation with a token cap and no confirmation | The operator explicitly required a human in the loop; a token cap alone does not replace consent. |
 
-## 4. Hệ quả
+## Consequences
 
-**Tích cực:** không còn khả năng đốt token ngoài ý muốn; thất bại lộ ra ngay thay vì bị che bởi
-"hoàn tất 100%"; Gold tái lập được trên máy khác.
+Gains at acceptance:
 
-**Tiêu cực:** Gold **không còn chạy hoàn toàn không người trực**. Đây là đánh đổi có chủ đích —
-người dùng ưu tiên kiểm soát chi phí hơn tự động hoá trọn vẹn. Hàng đợi Gold sẽ dài ra trong thời
-gian không có người kích hoạt; radar phải hiện rõ để không bị quên.
+- No accidental token burn; failures surface instead of hiding behind "100% complete"; Gold becomes reproducible on another machine.
 
-## 5. Nghiệm thu
+Costs accepted at acceptance:
 
-| Tier | Điều kiện |
+- Gold no longer runs fully unattended. This was a deliberate trade: the operator preferred cost control over full automation.
+- The Gold queue grows while nobody triggers it; the radar MUST show it clearly so it is not forgotten.
+
+Acceptance tiers defined by the original ADR:
+
+| Tier | Condition |
 |---|---|
-| Unit | Thiếu `agy` → báo lỗi rõ ràng, mã thoát khác 0, **không** nuốt |
-| Unit | Hai lần gọi `split_tasks_into_batches` sinh tên batch khác nhau |
-| Unit | Vượt trần batch/token → dừng sạch, báo cáo phần đã làm |
-| Integration | `agy` giả lập lỗi → **không** in "hoàn tất 100%" |
-| **Platform** | Chạy thật: xác nhận có bước hỏi quyền trước khi tiêu thụ token |
+| Unit | Missing `agy` gives a clear error and non-zero exit, not swallowed |
+| Unit | Two calls of `split_tasks_into_batches` produce different batch names |
+| Unit | Exceeding the batch or token cap stops cleanly and reports work done |
+| Integration | A simulated `agy` failure does not print "100% complete" |
+| Platform | Real run shows a permission prompt before tokens are spent |
+
+### Current status (2026-10-06)
+
+- Status `superseded`. ADR-0010 declares that it supersedes this ADR.
+- D1 dead since the 2026-09-18 amendment. ADR-0014 states the human approval gate MUST NOT be rebuilt.
+- D3 dead. ADR-0010.D5 makes tokens a recorded figure, never a gate, at article, batch or wave level.
+- The amendment's context-ceiling stop was removed on 2026-09-21 (commit eeccd9f): it never triggered, and `--batch` became the only batch splitter.
+- The amendment's 10% failure threshold survives inside `--finish`; `article_run.py` sets `MIN_COVERAGE = 0.90` and ties it to that threshold.
+- D4 lives on as `--finish` fail-loud. Commit 46f617f made `l1_ingest.py` and `agent_ingest.py` exit non-zero when DoD rejects a record, citing this clause.
+- D2, D5 and D6 dead (no object). The `agy` runner is governed by ADR-0011.
+
+## Rollback
+
+- The original ADR names no rollback procedure. Restoring the gate means reverting the 2026-09-18 amendment of commit 3f9d59e and rebuilding the confirmation path in `auto_pilot.py` (reconstructed from the commit history).
+- Any such rollback conflicts with ADR-0010 and ADR-0014, so it needs a new high-risk ADR approved by the operator.
+
+## Follow-up
+
+- [x] Fail-loud exit codes for ingest commands (commit 46f617f).
+- [x] Context-ceiling auto split removed (commit eeccd9f).
+- No open items. Later direction belongs to ADR-0010 and ADR-0014.

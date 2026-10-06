@@ -12,10 +12,6 @@
 .agents/rules/10-thu-thap-tron-ven.md
 .agents/rules/11-hop-dong-dau-ra-thong-nhat.md
 .agents/rules/entity-system-invariants.md
-docs/decisions/0006-agent-network-registry-pipeline-metrics.md
-docs/decisions/0007-silver-watermark-integrity-va-bang-silver-failures.md
-docs/decisions/0008-gold-activation-human-in-the-loop-va-tran-token.md
-docs/decisions/0009-deepseek-harness-runtime-dieu-phoi.md
 docs/decisions/0010-ngung-lane-l1-gold-article-lane-duy-nhat.md
 docs/decisions/0011-antigravity-cli-article-runner.md
 docs/decisions/0012-ops-daemon-van-hanh-tu-chu-24-7.md
