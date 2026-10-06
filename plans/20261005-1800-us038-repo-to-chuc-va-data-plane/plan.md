@@ -155,16 +155,27 @@ git clone https://github.com/Research-FPA/news-scraper.git C:\src\news-scraper
 **Bước 5. Sao chép dữ liệu nóng sang `C:\data\news-scape`** (sao chép, chưa xoá bản cũ)
 ```powershell
 $old = "C:\Users\anpt\OneDrive - fpts.com.vn\FRA_DataIngestion - news-scape"
-robocopy "$old\project\data" C:\data\news-scape /E /COPY:DAT /R:1 /W:1 /XD archive archive_conflicts /NFL /NDL /LOG:C:\data\news-scape\archive\cutover-robocopy.log
-robocopy "$old\users\output" C:\data\news-scape\users_output /E /R:1 /W:1 /NFL /NDL /LOG+:C:\data\news-scape\archive\cutover-robocopy.log
+$log = "C:\data\news-scape\archive\cutover-robocopy.log"
+robocopy "$old\project\data" C:\data\news-scape /E /COPY:DAT /R:1 /W:1 /XD archive archive_conflicts prefix lexicon /XF monocle*.db* /NFL /NDL /LOG:$log
+robocopy "$old\project\logs" C:\data\news-scape\logs /E /R:1 /W:1 /NFL /NDL /LOG+:$log
+robocopy "$old\users\output" C:\data\news-scape\users_output /E /R:1 /W:1 /NFL /NDL /LOG+:$log
+robocopy "$old\users\subscriptions" C:\data\news-scape\subscriptions /E /R:1 /W:1 /NFL /NDL /LOG+:$log
 ```
-- Tên thư mục đích (`users_output` và các thư mục con) theo bố cục mà A3 chốt trong `core/paths.py`. Agent cập nhật lệnh này khi A3 merge.
+- Bố cục đích do `core/paths.py` chốt (A3). Thư mục con của `project\data` giữ nguyên tên dưới `C:\data\news-scape`: `raw_html`, `raw_reports`, `silver`, `work_packages`, `agent_tasks`, `agent_outputs`, `agent_outputs_l1`, `agent_outputs_article`, `article_mentions`, `state`, `exports`, `reports`, `notifications`, `entities`, `staging`.
+- `users\output` đổi thành `users_output`; `users\subscriptions` đổi thành `subscriptions`. **Phải có** `C:\data\news-scape\subscriptions\manifest.yaml`. Thiếu tệp này thì mọi người dùng được coi là đang bật.
+- `prefix` và `lexicon` đã thành tài sản mã ở `project\assets\`, không chép.
 - Robocopy trả mã 0–7 là thành công, từ 8 trở lên là lỗi. Xem dòng tổng kết ở cuối tệp log.
 - Tệp ở trạng thái chỉ-trên-mây sẽ được tải về trong lúc chép, nên bước này có thể mất 20–40 phút.
 
 **Bước 6. Chuyển đổi đường dẫn trong DB** (agent chạy, bạn xác nhận)
-- Agent chạy script của A3 với `--dry-run` và báo số dòng sẽ đổi.
-- Bạn đồng ý thì agent chạy `--apply`.
+```powershell
+cd C:\src\news-scraper\project
+C:\venvs\news-scape\Scripts\python.exe scripts\maintenance\migrate_data_root.py --dry-run
+```
+- Lệnh in số dòng sẽ đổi theo từng bảng và cột. Agent đối chiếu con số với bạn.
+- Bạn đồng ý thì chạy lại lệnh với `--apply` thay cho `--dry-run`, khi daemon vẫn đang dừng.
+- Dòng cũ dạng `data/...` vẫn đọc được trước khi chuyển đổi. Riêng dòng tuyệt đối trỏ vào OneDrive phải qua `--apply` mới trỏ đúng bản mới.
+- Đổi `MONOCLE_DATA_DIR` thì phải khởi động lại morninger và `ops_daemon`, vì thư mục được chốt lúc import. Bước 10 đã làm việc này.
 
 **Bước 7. Cài lại Task Scheduler từ thư mục mới**
 ```powershell

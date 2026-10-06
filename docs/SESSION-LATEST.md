@@ -25,11 +25,11 @@
 
 ## Next Steps
 
-> **Phiên US-038 2026-10-05 (high-risk, blocked chờ người):** đưa mã lên `Research-FPA/news-scraper`, đề xuất ADR 0020.
-> - Nhánh cục bộ `import/clean-20261005` (df021e6): snapshot lịch sử mới của 986a7c6, 888 tệp, 8,2 MB, không dữ liệu, không bí mật thật. Kho tổ chức đang rỗng và private.
-> - Push bị chặn quyền trong phiên agent. Người vận hành chạy: `git push fpa import/clean-20261005:refs/heads/main`.
-> - Dữ liệu cũ đã chuyển (không xoá) vào `C:/data/news-scape/archive/20261005-cleanup/` kèm `MANIFEST.txt`. `C:/data/news-scape/raw_html` (legacy 08/09) chưa chuyển do bị chặn quyền; dòng manifest của nó ghi nhầm là đã chuyển. `project/src/data` nằm trong archive và chứa Bronze duy nhất, không xoá.
-> - `FRA - Data` = teamsite `sites/FRA/Data` qua shortcut OneDrive, Files On-Demand chỉ-trên-mây. ADR 0020 (proposed): xuất bản một chiều, chỉ thêm, manifest SHA256, thang L0/L1/L2.
+> **Phiên US-038 2026-10-06 (high-risk, in_progress, chờ N1):** mã lên `Research-FPA/news-scraper`, data plane SharePoint (ADR 0020 accepted).
+> - Phát triển ở worktree `C:\src\news-scraper-dev`, nhánh `dev/us038` (tách từ snapshot df021e6). Thư mục OneDrive vẫn chạy mã cũ cho daemon tới khung N4.
+> - Xong A2 (cách ly test), A3 (`core/paths.py`, gốc dữ liệu duy nhất `MONOCLE_DATA_DIR`), A4 (publisher một chiều, mặc định tắt). Test: 888 passed, 1 fail có từ trước `test_inherit` (phụ thuộc ngày).
+> - Commit mới trên thư mục OneDrive phải được cherry-pick sang `dev/us038` trước N4 (phiên US-029 đã làm cho a2233b1, 2d47285).
+> - Bảng việc: `docs/OPEN-ITEMS.md` mục REPO-1. Runbook người vận hành: plan US-038 §3.
 
 1. Người vận hành push snapshot lên `fpa` (lệnh trên). Sau đó phát triển trên nhánh tách từ `fpa/main`.
 2. Duyệt ADR 0020 và trả lời ba câu hỏi mở ở §6 của ADR 0020 (quyền ghi `sites/FRA/Data`, tài khoản dịch vụ, hạn mức).
