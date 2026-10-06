@@ -12,6 +12,7 @@ from loguru import logger
 
 from datetime import datetime
 
+from src.core import paths
 from src.core.config import PROJECT_ROOT, resolve_db_path
 from src.core.models import VN_TZ, Article, normalize_title, now_vn_iso
 from src.db import registry
@@ -774,25 +775,22 @@ class ArticleStore:
     # -- sổ lỗi derive Bronze→Silver (ADR 0007) --------------------------------
     @staticmethod
     def canonical_meta_key(meta_path: str) -> str:
-        """Chuẩn hoá khoá của `silver_failures` về dạng tương đối so với gốc dự án.
+        """Chuẩn hoá khoá của `silver_failures` về dạng tương đối so với gốc dữ liệu.
 
         Cùng một tệp Bronze có thể được gọi bằng đường dẫn tuyệt đối hoặc tương đối,
-        dấu gạch chéo xuôi hoặc ngược. Khoá không chuẩn làm dòng lỗi cũ không bao giờ
-        được xoá hay tăng số lần thử, và ghim watermark mãi.
+        dấu gạch chéo xuôi hoặc ngược, có hoặc không có tiền tố `data/` kiểu cũ. Khoá
+        không chuẩn làm dòng lỗi cũ không bao giờ được xoá hay tăng số lần thử, và
+        ghim watermark mãi.
 
         Args:
             meta_path: Đường dẫn tệp `.meta.json`.
 
         Returns:
-            Đường dẫn dùng dấu gạch chéo xuôi, tương đối khi tệp nằm trong gốc dự án.
+            Đường dẫn dùng dấu gạch chéo xuôi, tương đối khi tệp nằm trong gốc dữ liệu.
         """
-        p = Path(meta_path)
-        if p.is_absolute():
-            try:
-                p = p.relative_to(PROJECT_ROOT)
-            except ValueError:
-                pass
-        return str(p).replace("\\", "/")
+        if Path(meta_path).is_absolute():
+            return paths.to_data_relative(meta_path).replace("\\", "/")
+        return paths.strip_legacy_prefix(str(meta_path))
 
     def normalize_silver_failure_keys(self) -> int:
         """Đưa mọi khoá trong `silver_failures` về dạng chuẩn, gộp các dòng trùng.

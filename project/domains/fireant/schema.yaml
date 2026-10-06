@@ -93,7 +93,7 @@ output_fields:
   metadata.capture:     { source: "RawStore.save() — body JSON", type: dict, required: true, health_threshold: 1.0 }
 
 capture:
-  raw_dir: "data/raw_html/fireant.vn/<yyyymmdd>/<url_title_hash>.html"
+  raw_dir: "<MONOCLE_DATA_DIR>/raw_html/fireant.vn/<yyyymmdd>/<url_title_hash>.html"
   note: "Đuôi .html là quy ước layout của RawStore; NỘI DUNG là JSON (xem response_headers.content-type)."
   min_body_bytes: 512
   max_per_cycle: 30

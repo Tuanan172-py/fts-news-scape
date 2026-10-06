@@ -164,7 +164,8 @@ def test_missing_agy_reports_and_stops(tmp_path, monkeypatch, capsys):
     monkeypatch.chdir(tmp_path)
     monkeypatch.setattr(auto_pilot, "run_cmd", lambda *a, **k: None)
     monkeypatch.setattr(auto_pilot, "PROJECT_ROOT", tmp_path)
-    _write_packet(tmp_path / "data" / "agent_tasks", "batch_01", ["a1"])
+    monkeypatch.setenv("MONOCLE_DATA_DIR", str(tmp_path))
+    _write_packet(tmp_path / "agent_tasks", "batch_01", ["a1"])
     monkeypatch.setattr(auto_pilot.shutil, "which", lambda _n: None)
 
     rc = auto_pilot.run_gold_pipeline(date="today", assume_yes=True)

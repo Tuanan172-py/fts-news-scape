@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-from src.core.config import resolve_project_path
+from src.core import paths
 import signal
 import sys
 import time
 from datetime import datetime
-from pathlib import Path
 
 from src.core.models import VN_TZ
 from src.export.csv_export import export as export_csv
@@ -86,9 +85,7 @@ class Orchestrator:
         )
         self.dedup = DedupCache(self.store)
         self.heartbeat = Heartbeat(self.store)
-        notif_dir = self.settings.get("notifications", {}).get(
-            "dir", "data/notifications"
-        )
+        notif_dir = self.settings.get("notifications", {}).get("dir")
         self.notifier = FileNotifier(out_dir=notif_dir)
         self._stopped = False
         self._lock_owner = lock_owner()          # Fix F: định danh giữ scheduler lock
@@ -176,9 +173,10 @@ class Orchestrator:
         exp = self.settings.get("export", {})
         if not exp.get("enabled", True):
             return
-        out_dir = exp.get("dir", "data/exports")
+        out_dir = exp.get("dir")
         try:
-            out = Path(resolve_project_path(out_dir)) / f"articles-{datetime.now(VN_TZ):%Y-%m-%d}.csv"
+            root = paths.resolve_data_path(out_dir) if out_dir else paths.exports_dir()
+            out = root / f"articles-{datetime.now(VN_TZ):%Y-%m-%d}.csv"
             _, n = export_csv(
                 db_path=self.settings["database"]["path"], today=True, out=str(out)
             )

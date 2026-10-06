@@ -12,7 +12,7 @@ from pathlib import Path
 
 from loguru import logger
 
-from src.core.config import resolve_project_path
+from src.core import paths
 from src.core.stdio import force_utf8_stdio
 from src.pipeline.run import process_meta
 
@@ -60,16 +60,16 @@ def _read_fetch_ts(meta_path: str) -> str:
     return meta.get("fetch_ts", "") or ""
 
 
-def iter_meta_paths(raw_dir: str = "data/raw_html") -> list[str]:
+def iter_meta_paths(raw_dir: str | None = None) -> list[str]:
     """Liệt kê toàn bộ các tệp .meta.json trong thư mục lưu trữ Bronze theo thứ tự ổn định.
 
     Args:
-        raw_dir: Đường dẫn thư mục gốc chứa dữ liệu thô Bronze.
+        raw_dir: Đường dẫn thư mục gốc chứa dữ liệu thô Bronze. Mặc định `paths.bronze_dir()`.
 
     Returns:
         Danh sách đường dẫn các tệp siêu dữ liệu.
     """
-    root = Path(raw_dir)
+    root = paths.resolve_data_path(raw_dir) if raw_dir else paths.bronze_dir()
     if not root.exists():
         return []
     return sorted(str(p) for p in root.rglob("*.meta.json"))
@@ -87,9 +87,9 @@ def _should_process(fetch_ts: str, watermark: str) -> bool:
 def rederive_incremental(
     store,
     *,
-    raw_dir: str = "data/raw_html",
-    silver_dir: str = "data/silver",
-    package_dir: str = "data/work_packages",
+    raw_dir: str | None = None,
+    silver_dir: str | None = None,
+    package_dir: str | None = None,
     watermark: str | None = None,
     t_content: int = 6,
     t_template: int = 12,
@@ -123,11 +123,11 @@ def rederive_incremental(
     if persist:
         store.normalize_silver_failure_keys()
 
-    raw_path_res = str(resolve_project_path(raw_dir))
-    silver_path_res = str(resolve_project_path(silver_dir))
-    package_path_res = str(resolve_project_path(package_dir))
+    raw_path_res = str(paths.resolve_data_path(raw_dir) if raw_dir else paths.bronze_dir())
+    silver_path_res = str(paths.resolve_data_path(silver_dir) if silver_dir else paths.silver_dir())
+    package_path_res = str(paths.resolve_data_path(package_dir) if package_dir else paths.work_packages_dir())
 
-    print(f"[derive] Quét thư mục Bronze '{raw_dir}' (watermark={watermark or 'bắt đầu'})...", flush=True)
+    print(f"[derive] Quét thư mục Bronze '{raw_path_res}' (watermark={watermark or 'bắt đầu'})...", flush=True)
     all_paths = iter_meta_paths(raw_path_res)
     # Đọc fetch_ts MỘT lần cho mỗi tệp rồi tái dùng. Trước đây mỗi tệp bị đọc/parse 3 lần
     # mỗi chu kỳ (~22k lượt đọc/30 phút trên OneDrive).

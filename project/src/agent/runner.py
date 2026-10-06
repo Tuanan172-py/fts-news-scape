@@ -10,7 +10,7 @@ from loguru import logger
 
 from src.agent.dod import check_dod, verify_preconditions
 from src.agent.packet import build_task_packet, write_packet
-from src.core.config import resolve_project_path
+from src.core import paths
 from src.core.models import now_vn_iso
 from src.handoff.catalog import Catalog
 
@@ -24,22 +24,22 @@ class AgentRunner:
         task_dir: Thư mục lưu trữ các tệp gói công việc JSON.
     """
 
-    def __init__(self, store, *, task_dir: str = "data/agent_tasks"):
+    def __init__(self, store, *, task_dir: str | Path | None = None):
         """Khởi tạo bộ điều phối AgentRunner.
 
         Args:
             store: Kho lưu trữ cơ sở dữ liệu.
-            task_dir: Thư mục lưu trữ tệp gói công việc. Mặc định 'data/agent_tasks'.
+            task_dir: Thư mục lưu trữ tệp gói công việc. Mặc định `paths.agent_tasks_dir()`.
         """
         self.store = store
         self.catalog = Catalog(store)
-        self.task_dir = task_dir
+        self.task_dir = str(task_dir or paths.agent_tasks_dir())
 
     # -- helpers --------------------------------------------------------------
     @staticmethod
     def _load_work_package(package_path: str) -> dict:
-        # resolve_project_path: doc duoc ca ban tuong doi moi lan ban tuyet doi cu trong DB
-        return json.loads(resolve_project_path(package_path).read_text(encoding="utf-8"))
+        # Đọc được bản tương đối theo gốc dữ liệu, bản có tiền tố data/ và bản tuyệt đối cũ.
+        return json.loads(paths.resolve_data_path(package_path).read_text(encoding="utf-8"))
 
     def _work_item_for(self, article_id: str) -> dict | None:
         """Lấy bản ghi công việc gần nhất tương ứng với mã bài viết.
@@ -86,8 +86,7 @@ class AgentRunner:
         content = silver_text or article.content_text or article.title or ""
         raw_sha256 = hashlib.sha256(content.encode("utf-8")).hexdigest()
 
-        project_root = Path(__file__).resolve().parents[2]
-        wp_dir = project_root / "data" / "work_packages"
+        wp_dir = paths.work_packages_dir()
         wp_dir.mkdir(parents=True, exist_ok=True)
         wp_file = wp_dir / f"{article_id}.json"
 
@@ -126,7 +125,7 @@ class AgentRunner:
                 kept["structure"] = structure
                 wp_file.write_text(json.dumps(kept, ensure_ascii=False, indent=2), encoding="utf-8")
 
-        rel_path = f"data/work_packages/{article_id}.json"
+        rel_path = paths.to_data_relative(wp_file)
 
         conn = self.store.connect()
         try:

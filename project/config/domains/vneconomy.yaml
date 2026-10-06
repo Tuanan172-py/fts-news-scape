@@ -19,7 +19,6 @@ detail:
   content_selector: "#article-editor"   # body biên tập (verified 2026-08-17, ổn định 3 section)
   max_details_per_cycle: 30
 capture:
-  raw_dir: "data/raw_html"       # RawStore lưu full raw HTML byte-exact + .meta.json
   min_body_bytes: 2048
 compliance:
   respect_robots: true           # robots.txt: article cho phép, crawl-delay 1s cho AI bot

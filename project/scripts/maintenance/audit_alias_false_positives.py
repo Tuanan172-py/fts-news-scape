@@ -9,12 +9,11 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
+from src.core.config import resolve_db_path
 from src.core.stdio import force_utf8_stdio
 
 force_utf8_stdio()
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_DB = PROJECT_ROOT / "data" / "monocle.db"
 
 
 def _bare_short_keys(reg, max_len: int) -> dict[str, list[str]]:
@@ -43,7 +42,7 @@ def _alias_shape(reg, eid: str, key: str) -> str:
 
 def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--db", default=str(DEFAULT_DB), help="Duong dan monocle.db")
+    ap.add_argument("--db", default=None, help="Duong dan monocle.db (mac dinh DB van hanh)")
     ap.add_argument("--max-len", type=int, default=6, help="Do dai toi da (sau fold) cua alias 1-tu can soi")
     ap.add_argument("--min-hits", type=int, default=2, help="Chi bao cao entity co >= so lan khop nay")
     ap.add_argument("--examples", type=int, default=6, help="So vi du tieu de in ra moi entity")
@@ -55,7 +54,7 @@ def main(argv: list[str]) -> int:
     reg = load_registry()
     bare_short = _bare_short_keys(reg, args.max_len)
 
-    con = sqlite3.connect(args.db)
+    con = sqlite3.connect(args.db or str(resolve_db_path()))
     cur = con.cursor()
     cur.execute("SELECT title FROM articles WHERE title IS NOT NULL AND title != ''")
     titles = [r[0] for r in cur.fetchall()]

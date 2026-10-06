@@ -22,6 +22,7 @@ from datetime import datetime, timezone
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.agent.prefix import cached_prefix_tokens    # noqa: E402
+from src.core import paths                           # noqa: E402
 from src.core.stdio import force_utf8_stdio          # noqa: E402
 from src.telemetry.dsh_usage import (                # noqa: E402
     is_peak,
@@ -38,10 +39,7 @@ HARNESS_DB = os.path.join(
 
 # Mô tả đợt nằm cạnh packet; đọc từ đây để biết một đợt có bao nhiêu LƯỢT GỌI
 # worker, thay vì suy từ số phiên DSH vốn gồm cả phiên Conductor.
-TASK_DIR = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    "data", "agent_tasks", "article",
-)
+TASK_DIR = str(paths.article_packets_dir())
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS token_ledger (
@@ -213,10 +211,7 @@ def cmd_append(args: argparse.Namespace) -> int:
 
     if is_runner_meta:
         provider = "agy" if is_agy else "openrouter"
-        out_dir = os.path.join(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-            "data", "agent_outputs_article"
-        )
+        out_dir = str(paths.agent_outputs_dir("_article"))
         meta_files = glob.glob(os.path.join(out_dir, f"article_{args.wave}_*.meta.json"))
         if not meta_files:
             print(f"⚠️  Không tìm thấy tệp meta nào của {provider} cho đợt {args.wave}. Không ghi gì.")

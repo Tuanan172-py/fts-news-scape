@@ -60,7 +60,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--dry-run", action="store_true", help="chỉ tính, không ghi DB")
     args = ap.parse_args(argv)
 
-    db_path = args.db or load_settings().get("database", {}).get("path", "data/monocle.db")
+    db_path = args.db or load_settings()["database"]["path"]
     store = ArticleStore(db_path=db_path)
     started = time.monotonic()
     conn = store._connect()

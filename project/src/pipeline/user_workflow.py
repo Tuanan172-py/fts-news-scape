@@ -89,7 +89,7 @@ def run(*, input_root: str | Path = DEFAULT_INPUT_ROOT,
     if store is None:
         from src.core.config import load_settings
         from src.db.store import ArticleStore
-        store = ArticleStore(db_path=db_path or load_settings().get("database", {}).get("path", "data/monocle.db"))
+        store = ArticleStore(db_path=db_path or load_settings()["database"]["path"])
 
     # 4. ingest output đã nộp (nếu có) — idempotent (DB trả cached khi đã đạt)
     if l1_outputs_dir:

@@ -29,6 +29,7 @@ from pathlib import Path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.agent.prefix import prefix_hash              # noqa: E402
+from src.core import paths                             # noqa: E402
 from src.core.stdio import force_utf8_stdio            # noqa: E402
 from src.db.preflight import probe_write, resolve_db_path  # noqa: E402
 from src.ops import pipeline_spec, trace as tracing      # noqa: E402
@@ -38,10 +39,10 @@ force_utf8_stdio()
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = PROJECT_ROOT.parent
 SCRIPTS = PROJECT_ROOT / "scripts"
-TASK_DIR = PROJECT_ROOT / "data" / "agent_tasks" / "article"
-OUT_DIR = PROJECT_ROOT / "data" / "agent_outputs_article"
-L1_OUT_DIR = PROJECT_ROOT / "data" / "agent_outputs_l1"
-GOLD_OUT_DIR = PROJECT_ROOT / "data" / "agent_outputs"
+TASK_DIR = paths.article_packets_dir()
+OUT_DIR = paths.agent_outputs_dir("_article")
+L1_OUT_DIR = paths.agent_outputs_dir("_l1")
+GOLD_OUT_DIR = paths.agent_outputs_dir()
 PYTHON = sys.executable
 FINISH_STEPS = pipeline_spec.finish_steps()
 # Cùng ngưỡng với tỷ lệ hỏng mười phần trăm của bước bung bản ghi.
@@ -153,7 +154,8 @@ def conductor_program(manifest: dict, *, concurrency: int) -> str:
     Returns:
         Mã nguồn chương trình dạng chuỗi.
     """
-    batches = [{"id": b["batch_id"], "path": b["path"], "n": b["n"],
+    # Chương trình chạy trong DSH với cwd bất kỳ, nên đường dẫn packet phải tuyệt đối.
+    batches = [{"id": b["batch_id"], "path": str(paths.resolve_data_path(b["path"])), "n": b["n"],
                 "windows": b["windows"]} for b in manifest["batches"]]
     out_dir = str(OUT_DIR).replace("\\", "\\\\")
     warm_block = "" if len(batches) < 2 else f"""const WARM = {json.dumps(warm_packet(), ensure_ascii=False)};
@@ -428,7 +430,7 @@ def cmd_repair(args: argparse.Namespace) -> int:
                    "created_at": datetime.now().isoformat(timespec="seconds"),
                    "index": index, "tier": tier, "reason": reason}
         rpath, _mpath, budget = write_packet(rid, items, new_map, TASK_DIR)
-        repairs.append({"batch_id": rid, "path": str(rpath), "n": len(items),
+        repairs.append({"batch_id": rid, "path": paths.to_data_relative(rpath), "n": len(items),
                         "windows": budget["windows"], "from": batch_id})
 
     # Làm mới packet cũ: bài chưa có nội dung đạt trong DB mà thân Silver hiện
@@ -490,7 +492,7 @@ def cmd_repair(args: argparse.Namespace) -> int:
                        "index": index, "tier": tier, "reason": reason,
                        "kind": "refresh"}
             rpath, _mpath, budget = write_packet(rid, items, new_map, TASK_DIR)
-            repairs.append({"batch_id": rid, "path": str(rpath), "n": len(items),
+            repairs.append({"batch_id": rid, "path": paths.to_data_relative(rpath), "n": len(items),
                             "windows": budget["windows"], "from": batch_id + " (làm mới)"})
     total_missing += total_refresh
 
@@ -1006,10 +1008,19 @@ def cmd_where(_args: argparse.Namespace) -> int:
     print(f"DB ghi        : {'✅ ' if probe.ok else '❌ '}{probe.reason}")
     if not probe.ok:
         print(f"                {probe.hint()}")
+    print(f"data_root     : {paths.data_root()}  (MONOCLE_DATA_DIR)")
+    print(f"Bronze        : {paths.bronze_dir()}")
+    print(f"Silver        : {paths.silver_dir()}")
+    print(f"work_packages : {paths.work_packages_dir()}")
     print(f"packet đợt    : {TASK_DIR}")
     print(f"đầu ra mô hình: {OUT_DIR}")
-    print(f"bàn giao      : {PROJECT_ROOT / 'data' / 'state' / 'HANDOFF-latest.md'}")
-    print(f"giao hàng     : {DEFAULT_OUTPUT_ROOT}  (gốc kho, không nằm trong project/)")
+    print(f"đầu ra L1/Gold: {L1_OUT_DIR} | {GOLD_OUT_DIR}")
+    print(f"mentions      : {paths.article_mentions_dir()}")
+    print(f"thực thể      : {paths.entities_dir()}")
+    print(f"logs          : {paths.logs_dir()}")
+    print(f"bàn giao      : {paths.state_dir() / 'HANDOFF-latest.md'}")
+    print(f"đăng ký       : {paths.subscriptions_dir()}")
+    print(f"giao hàng     : {DEFAULT_OUTPUT_ROOT}")
     print("preset DSH    : news-scape-conductor, quyền workspace-write")
     print("=" * 84)
     return 0 if probe.ok else 1

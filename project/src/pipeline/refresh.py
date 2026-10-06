@@ -82,10 +82,10 @@ def refresh_row(http, raw_store: RawStore, robots: RobotsGate | None, row: dict,
 
 
 def refresh_watchlist(store, http, *, limit: int = 50, domains: list[str] | None = None,
-                      respect_robots: bool = True, raw_dir: str = "data/raw_html",
+                      respect_robots: bool = True, raw_dir: str | None = None,
                       timeout: int = 30, do_process: bool = True,
-                      silver_dir: str = "data/silver",
-                      package_dir: str = "data/work_packages") -> dict:
+                      silver_dir: str | None = None,
+                      package_dir: str | None = None) -> dict:
     """Tải lại danh sách theo dõi và kích hoạt chuỗi xử lý tinh chế phát hiện thay đổi.
 
     Args:

@@ -11,6 +11,7 @@ from collections import Counter
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.agent.l1_runner import L1Runner              # noqa: E402
+from src.core import paths                            # noqa: E402
 from src.core.config import load_settings             # noqa: E402
 from src.core.stdio import force_utf8_stdio           # noqa: E402
 from src.db.store import ArticleStore                 # noqa: E402
@@ -18,20 +19,22 @@ from src.db.store import ArticleStore                 # noqa: E402
 force_utf8_stdio()
 
 
-def _iter_sources(source: str, reverse: bool = True):
+def _iter_sources(source: str | None, reverse: bool = True):
     """Liệt kê danh sách tệp nguồn theo thời gian sửa đổi gần nhất.
 
     Args:
-        source: Thư mục gốc chứa các gói công việc.
+        source: Thư mục gốc chứa các gói công việc. Mặc định `paths.work_packages_dir()`.
         reverse: Có sắp xếp thời gian giảm dần hay không. Mặc định True.
 
     Returns:
         Danh sách đường dẫn tệp JSON đã sắp xếp.
     """
-    pats = [os.path.join(source, "*", "*", "*.json")]
+    root = str(paths.resolve_data_path(source) if source else paths.work_packages_dir())
+    silver = str(paths.silver_dir())
+    pats = [os.path.join(root, "*", "*", "*.json")]
     files = [f for p in pats for f in glob.glob(p)]
-    if not files and source != "data/silver":
-        files = glob.glob(os.path.join("data/silver", "*", "*", "*.json"))
+    if not files and root != silver:
+        files = glob.glob(os.path.join(silver, "*", "*", "*.json"))
 
     def _mtime(f: str) -> float:
         try:
@@ -44,7 +47,7 @@ def _iter_sources(source: str, reverse: bool = True):
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="Định tuyến và phát gói công việc nhận diện thực thể L1")
-    ap.add_argument("--source", default="data/work_packages")
+    ap.add_argument("--source", default=None)
     ap.add_argument("--from-db", action="store_true",
                     help="Lấy trực tiếp bài viết từ bảng `articles` của SQLite thay vì quét file work_packages")
     ap.add_argument("--date", type=str, default=None,
@@ -75,7 +78,7 @@ def main(argv=None) -> int:
     else:
         limit = 50
 
-    db_path = load_settings().get("database", {}).get("path", "data/monocle.db")
+    db_path = load_settings()["database"]["path"]
     store = ArticleStore(db_path=db_path)
     runner = L1Runner(store)
 
@@ -196,7 +199,7 @@ def main(argv=None) -> int:
             print(f"📦 Đã đóng gói {len(batches)} mini-batch L1 (size={args.mini_batch}) "
                   f"→ {runner.task_dir}/l1_batch_XX.task.json")
             print(f"   Agent đọc l1_batch_XX.task.json, ghi 1 mảng JSON vào "
-                  f"data/agent_outputs_l1/l1_batch_XX.output.json")
+                  f"{paths.agent_outputs_dir('_l1')}/l1_batch_XX.output.json")
 
     return 0
 

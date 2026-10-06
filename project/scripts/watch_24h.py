@@ -10,6 +10,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from src.core import paths
 from src.core.config import load_settings
 from src.core.models import now_vn_iso
 from src.db.store import ArticleStore
@@ -57,6 +58,6 @@ def main(hours: float, out: str) -> int:
 if __name__ == "__main__":
     p = argparse.ArgumentParser()
     p.add_argument("--hours", type=float, default=24)
-    p.add_argument("--out", default="data/watch_24h.csv")
+    p.add_argument("--out", default=str(paths.reports_dir() / "watch_24h.csv"))
     a = p.parse_args()
     sys.exit(main(a.hours, a.out))

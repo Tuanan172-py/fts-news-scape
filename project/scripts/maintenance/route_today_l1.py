@@ -20,7 +20,7 @@ from src.db.store import ArticleStore
 force_utf8_stdio()
 
 def run_route():
-    db_path = load_settings().get("database", {}).get("path", "C:/data/news-scape/monocle.db")
+    db_path = load_settings()["database"]["path"]
     store = ArticleStore(db_path=db_path)
     reg = load_registry()
     runner = L1Runner(store, registry=reg)

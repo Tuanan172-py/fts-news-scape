@@ -8,6 +8,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from src.core import paths                             # noqa: E402
 from src.core.config import load_settings              # noqa: E402
 from src.core.stdio import force_utf8_stdio            # noqa: E402
 from src.db.store import ArticleStore                  # noqa: E402
@@ -150,10 +151,10 @@ def main(argv: list[str]) -> int:
     ap.add_argument("--json", action="store_true", help="Xuất JSON thay vì bảng")
     args = ap.parse_args(argv)
 
-    db_path = load_settings().get("database", {}).get("path", "data/monocle.db")
+    db_path = load_settings()["database"]["path"]
     m = collect(ArticleStore(db_path=db_path))
 
-    l1_dir, gold_dir = Path("data/agent_tasks/l1"), Path("data/agent_tasks")
+    l1_dir, gold_dir = paths.agent_tasks_dir() / "l1", paths.agent_tasks_dir()
     packets = {
         "l1_single": count_packets(l1_dir, "*.task.json") - count_packets(l1_dir, "l1_batch_*.task.json"),
         "l1_batch": count_packets(l1_dir, "l1_batch_*.task.json"),

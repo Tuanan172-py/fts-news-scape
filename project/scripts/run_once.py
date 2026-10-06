@@ -19,7 +19,7 @@ force_utf8_stdio()
 if __name__ == "__main__":
     code = main(["--once"] + [a for a in sys.argv[1:] if a != "all"])
     if code == 0:
-        db_path = load_settings().get("database", {}).get("path", "data/monocle.db")
+        db_path = load_settings()["database"]["path"]
         store = ArticleStore(db_path=db_path)
         rederive_incremental(store)
     sys.exit(code)

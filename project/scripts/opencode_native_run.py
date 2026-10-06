@@ -17,11 +17,12 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.agent.article_contract import CONTRACT_VERSION, validate_record  # noqa: E402
+from src.core import paths                             # noqa: E402
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-TASK_DIR = PROJECT_ROOT / "data" / "agent_tasks" / "article"
-OUT_DIR = PROJECT_ROOT / "data" / "agent_outputs_article"
-OPS_DB = Path("C:/data/news-scape/ops.db")
+TASK_DIR = paths.article_packets_dir()
+OUT_DIR = paths.agent_outputs_dir("_article")
+OPS_DB = paths.data_root() / "ops.db"
 VN_TZ = timezone(timedelta(hours=7))
 
 def log_event(wave_id: str, step: str, kind: str, message: str,

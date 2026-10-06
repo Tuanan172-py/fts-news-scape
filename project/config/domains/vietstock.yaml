@@ -19,7 +19,6 @@ detail:
   content_selector: "div.article-content, div.single_post_content, article"
   max_details_per_cycle: 30
 capture:
-  raw_dir: "data/raw_html"       # RawStore lưu full raw HTML byte-exact + .meta.json
   min_body_bytes: 2048
 compliance:
   respect_robots: true           # robots.txt disallow /*.js,/*.css,/manager — ta chỉ fetch article

@@ -8,6 +8,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.agent.l1_runner import L1Runner
+from src.core import paths
 from src.core.config import load_settings
 from src.core.stdio import force_utf8_stdio
 from src.db.store import ArticleStore
@@ -29,7 +30,8 @@ def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(description="Nạp output tra soát của agent L1")
     ap.add_argument("target", nargs="*",
                     help="một hoặc nhiều output.json, hoặc thư mục chứa outputs")
-    ap.add_argument("--task-dir", default="data/agent_tasks/l1", help="Thư mục task packets L1 (mặc định: data/agent_tasks/l1)")
+    ap.add_argument("--task-dir", default=None,
+                    help=f"Thư mục task packets L1 (mặc định: {paths.agent_tasks_dir() / 'l1'})")
     ap.add_argument("--no-archive", action="store_true", help="Không tự động archive task packet khi DoD pass")
     ap.add_argument("--code-first", action="store_true",
                     help="Vật chất hoá l1_tasks route=resolved (tra danh mục tất định) → l1_outputs")
@@ -37,7 +39,7 @@ def main(argv: list[str]) -> int:
     ap.add_argument("--dry-run", action="store_true", help="Chỉ đếm, không ghi DB")
     args = ap.parse_args(argv)
 
-    db_path = load_settings().get("database", {}).get("path", "data/monocle.db")
+    db_path = load_settings()["database"]["path"]
     runner = L1Runner(ArticleStore(db_path=db_path), task_dir=args.task_dir)
 
     if args.code_first:

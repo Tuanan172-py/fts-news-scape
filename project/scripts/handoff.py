@@ -22,16 +22,16 @@ from pathlib import Path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from scripts.article_pack import ANALYZED_L1, load_candidates  # noqa: E402
+from src.core import paths                             # noqa: E402
 from src.core.stdio import force_utf8_stdio          # noqa: E402
 from src.db.preflight import resolve_db_path         # noqa: E402
 
 force_utf8_stdio()
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-DATA_ROOT = PROJECT_ROOT / "data"
-STATE_DIR = DATA_ROOT / "state"
-ARTICLE_TASK_DIR = DATA_ROOT / "agent_tasks" / "article"
-ARTICLE_OUT_DIR = DATA_ROOT / "agent_outputs_article"
+STATE_DIR = paths.state_dir()
+ARTICLE_TASK_DIR = paths.article_packets_dir()
+ARTICLE_OUT_DIR = paths.agent_outputs_dir("_article")
 
 
 def get_db_connection() -> sqlite3.Connection:

@@ -9,6 +9,7 @@ from __future__ import annotations
 import hashlib
 from pathlib import Path
 
+from src.core import paths
 from src.handoff.contract_validator import validate as schema_validate
 
 _SCHEMAS_DIR = Path(__file__).resolve().parents[2] / "schemas"
@@ -74,7 +75,7 @@ def verify_preconditions(work_package: dict, *, check_integrity: bool = True) ->
         raw_path = work_package.get("raw_html_path", "")
         want = work_package.get("raw_sha256", "")
         if raw_path:
-            p = Path(raw_path)
+            p = paths.resolve_data_path(raw_path)
             if not p.is_file():
                 reasons.append(f"precondition: raw missing {raw_path}")
             else:

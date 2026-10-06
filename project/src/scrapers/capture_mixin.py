@@ -22,7 +22,7 @@ class CaptureMixin:
     def _init_capture(self) -> None:
         """Khởi tạo các thành phần RawStore, RobotsGate và SourceBackoff từ cấu hình."""
         cap_cfg = self.config.get("capture", {}) or {}
-        self.raw_store = RawStore(cap_cfg.get("raw_dir", "data/raw_html"))
+        self.raw_store = RawStore(cap_cfg.get("raw_dir"))
         self.min_body_bytes = cap_cfg.get("min_body_bytes", 2048)
         comp = self.config.get("compliance", {}) or {}
         self.respect_robots = comp.get("respect_robots", True)

@@ -14,6 +14,7 @@ from urllib.parse import urljoin, urlparse
 from bs4 import BeautifulSoup
 from loguru import logger
 
+from src.core import paths
 from src.core.models import now_vn_iso
 from src.crawler.raw_store import RawStore
 from src.crawler.robots import RobotsGate
@@ -25,7 +26,6 @@ SOURCE_DOMAIN = "nso.gov.vn"
 KTXH_TAG = 727
 
 _ATTACH_EXT = (".xlsx", ".xls", ".docx", ".doc", ".pdf")
-RAW_REPORTS_DIR = "data/raw_reports"
 
 _MONTH_WORDS = {
     "một": 1, "mot": 1, "giêng": 1, "gieng": 1,
@@ -132,12 +132,12 @@ def _safe_key(period: str, filename: str) -> str:
 class PeriodicReportSource:
     """Driver báo cáo định kỳ NSO. Không raise ra ngoài — lỗi gom vào self.errors."""
 
-    def __init__(self, http, store, *, raw_dir: str = RAW_REPORTS_DIR,
+    def __init__(self, http, store, *, raw_dir: str | None = None,
                  tag: int = KTXH_TAG, respect_robots: bool = True,
                  timeout: int = 30, fetch_attachments: bool = True):
         self.http = http
         self.store = store
-        self.raw_store = RawStore(raw_dir)
+        self.raw_store = RawStore(raw_dir or paths.raw_reports_dir())
         self.tag = tag
         self.timeout = timeout
         self.fetch_attachments = fetch_attachments
@@ -214,7 +214,7 @@ class PeriodicReportSource:
         cap = self.raw_store.save(SOURCE_DOMAIN, link, key, resp,
                                   fetched_at=fetched_at)
         result["capture_status"] = cap.get("capture_status", "failed")
-        result["html_path"] = cap.get("html_path", "")
+        result["html_path"] = paths.to_data_relative(cap["html_path"]) if cap.get("html_path") else ""
         if cap.get("capture_status") != "ok" or resp is None:
             self.errors.append(f"report capture failed: {link}")
             return result
@@ -240,7 +240,8 @@ class PeriodicReportSource:
             if acap.get("capture_status") != "ok":
                 self.errors.append(f"attachment failed: {item['url']}")
             saved.append({**item,
-                          "path": acap.get("binary_path", ""),
+                          "path": (paths.to_data_relative(acap["binary_path"])
+                                   if acap.get("binary_path") else ""),
                           "sha256": acap.get("content_sha256"),
                           "bytes": acap.get("content_length_bytes", 0),
                           "content_type": acap.get("content_type", ""),

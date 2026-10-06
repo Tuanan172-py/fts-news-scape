@@ -118,17 +118,12 @@ def test_header_subset_excludes_set_cookie(tmp_path):
     assert "set-cookie" not in hdrs and "authorization" not in hdrs
 
 
-def test_duong_dan_tuong_doi_duoc_neo_vao_goc_du_an_khong_theo_cwd(tmp_path, monkeypatch):
-    """Chạy ở thư mục khác vẫn ghi Bronze dưới gốc dự án, meta ghi đường dẫn tương đối."""
-    from src.crawler import raw_store as rs
-
-    project = tmp_path / "project"
+def test_duong_dan_tuong_doi_duoc_neo_vao_goc_du_lieu_khong_theo_cwd(tmp_path, monkeypatch):
+    """Chạy ở thư mục khác vẫn ghi Bronze dưới gốc dữ liệu, meta ghi đường dẫn tương đối."""
+    root = tmp_path / "root"
     elsewhere = tmp_path / "elsewhere"
-    project.mkdir()
     elsewhere.mkdir()
-    monkeypatch.setattr(rs, "PROJECT_ROOT", project)
-    monkeypatch.setattr(rs, "resolve_project_path",
-                        lambda p: p if Path(p).is_absolute() else project / p)
+    monkeypatch.setenv("MONOCLE_DATA_DIR", str(root))
     monkeypatch.chdir(elsewhere)
 
     store = RawStore()
@@ -136,11 +131,11 @@ def test_duong_dan_tuong_doi_duoc_neo_vao_goc_du_an_khong_theo_cwd(tmp_path, mon
                      FakeResponse("<html>x</html>", status=200), fetched_at=FETCHED)
 
     assert Path(cap["html_path"]).is_absolute()
-    assert Path(cap["html_path"]).exists() and project in Path(cap["html_path"]).parents
+    assert Path(cap["html_path"]).exists() and root / "raw_html" in Path(cap["html_path"]).parents
     assert not (elsewhere / "data").exists()
     meta = json.loads(Path(_meta_path(cap)).read_text(encoding="utf-8"))
-    assert not Path(meta["html_path"]).is_absolute()
-    assert (project / meta["html_path"]).exists()
+    assert meta["html_path"].startswith("raw_html/")
+    assert (root / meta["html_path"]).exists()
 
 
 def test_lan_cao_loi_khong_ghi_de_ban_cao_tot(tmp_path):

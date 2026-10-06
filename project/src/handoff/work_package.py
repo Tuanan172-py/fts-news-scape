@@ -6,7 +6,7 @@ kèm siêu dữ liệu nguồn thành tệp tin JSON tự mô tả.
 
 from __future__ import annotations
 
-from src.core.config import resolve_project_path
+from src.core import paths
 import json
 import os
 
@@ -68,12 +68,12 @@ def _atomic_write(path: str, data: bytes) -> None:
     os.replace(tmp, path)
 
 
-def write_package(package: dict, base_dir: str = "data/work_packages") -> str:
+def write_package(package: dict, base_dir: str | None = None) -> str:
     """Lưu gói công việc ra tệp tin JSON trên đĩa theo phân cấp tên miền và ngày tháng.
 
     Args:
         package: Dữ liệu gói công việc đã khởi tạo.
-        base_dir: Thư mục cơ sở lưu trữ các gói công việc.
+        base_dir: Thư mục cơ sở lưu trữ các gói công việc. Mặc định `paths.work_packages_dir()`.
 
     Returns:
         Đường dẫn tuyệt đối hoặc tương đối tới tệp tin gói công việc đã lưu.
@@ -84,7 +84,8 @@ def write_package(package: dict, base_dir: str = "data/work_packages") -> str:
         parts = package["raw_html_path"].replace("\\", "/").split("/")
         if len(parts) >= 2:
             yyyymmdd = parts[-2]
-    directory = os.path.join(str(resolve_project_path(base_dir)), domain,
+    root = paths.resolve_data_path(base_dir) if base_dir else paths.work_packages_dir()
+    directory = os.path.join(str(root), domain,
                              yyyymmdd or "unknown-date")
     os.makedirs(directory, exist_ok=True)
     path = os.path.join(directory, f"{package['article_id']}.json")

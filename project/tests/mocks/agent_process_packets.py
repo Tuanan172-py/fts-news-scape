@@ -19,6 +19,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.agent.dod import check_dod, verify_preconditions
+from src.core import paths
 from src.agent.entities import load_registry
 from src.agent.l1_router import check_l1_dod
 from src.core.models import now_vn_iso
@@ -325,18 +326,18 @@ def main(argv: list[str]) -> int:
     parser.add_argument("--model", default="gemini-3.7-flash", help="model_used in metadata")
     args = parser.parse_args(argv)
 
-    l1_tasks = PROJECT_ROOT / "data" / "agent_tasks" / "l1"
-    l1_out = PROJECT_ROOT / "data" / "agent_outputs_l1"
-    body_tasks = PROJECT_ROOT / "data" / "agent_tasks"
-    body_out = PROJECT_ROOT / "data" / "agent_outputs"
+    l1_tasks = paths.agent_tasks_dir() / "l1"
+    l1_out = paths.agent_outputs_dir("_l1")
+    body_tasks = paths.agent_tasks_dir()
+    body_out = paths.agent_outputs_dir()
 
     if args.queue in ("all", "l1"):
         l1_w, l1_total = process_l1_queue(l1_tasks, l1_out, args.provider, args.model)
-        print(f"L1: {l1_total} packet -> {l1_w} output đã ghi ({l1_out.relative_to(PROJECT_ROOT)}/)")
+        print(f"L1: {l1_total} packet -> {l1_w} output đã ghi ({l1_out}/)")
 
     if args.queue in ("all", "body"):
         b_w, b_total, skipped = process_body_queue(body_tasks, body_out, args.provider, args.model)
-        print(f"Bóc tách: {b_total} packet -> {b_w} output đã ghi ({body_out.relative_to(PROJECT_ROOT)}/)")
+        print(f"Bóc tách: {b_total} packet -> {b_w} output đã ghi ({body_out}/)")
         if skipped:
             print(f"Bỏ qua: {len(skipped)} bài ({', '.join(skipped[:5])}{'...' if len(skipped) > 5 else ''})")
         else:

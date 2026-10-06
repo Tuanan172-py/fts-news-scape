@@ -14,6 +14,7 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from src.core import paths
 from src.core.stdio import force_utf8_stdio
 from src.db.preflight import resolve_db_path
 
@@ -23,7 +24,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS_DIR = PROJECT_ROOT / "scripts"
 PYTHON_EXE = sys.executable
 
-DATA_DIR = Path(os.environ.get("MONOCLE_DATA_DIR", r"C:\data\news-scape"))
+DATA_DIR = paths.data_root()
 KILL_SWITCH_PATH = DATA_DIR / "AGY_STOP"
 LOCK_FILE_PATH = DATA_DIR / ".pipeline.lock"
 STANDING_ORDER_PATH = DATA_DIR / "agy_standing_order.yaml"

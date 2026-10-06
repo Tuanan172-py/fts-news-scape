@@ -10,6 +10,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
+from src.core import paths  # noqa: E402
 from src.core.stdio import force_utf8_stdio  # noqa: E402
 
 force_utf8_stdio()
@@ -17,8 +18,8 @@ force_utf8_stdio()
 
 def get_task_counts() -> tuple[int, int]:
     """Đếm số lượng task packets đang chờ xử lý."""
-    l1_dir = PROJECT_ROOT / "data" / "agent_tasks" / "l1"
-    gold_dir = PROJECT_ROOT / "data" / "agent_tasks"
+    l1_dir = paths.agent_tasks_dir() / "l1"
+    gold_dir = paths.agent_tasks_dir()
 
     l1_count = len(list(l1_dir.glob("*.task.json"))) if l1_dir.exists() else 0
     gold_count = (
@@ -31,8 +32,8 @@ def get_task_counts() -> tuple[int, int]:
 
 def get_output_counts() -> tuple[int, int]:
     """Đếm số lượng output JSON đã được sinh ra."""
-    l1_out = PROJECT_ROOT / "data" / "agent_outputs_l1"
-    gold_out = PROJECT_ROOT / "data" / "agent_outputs"
+    l1_out = paths.agent_outputs_dir("_l1")
+    gold_out = paths.agent_outputs_dir()
 
     l1_count = len(list(l1_out.glob("*.json"))) if l1_out.exists() else 0
     gold_count = (
@@ -131,7 +132,7 @@ def run_export(batch_size: int = 50, order: str = "desc", sync_silver: bool = Tr
 
     # 3. Hiển thị bảng tóm tắt lô task vừa xuất
     from src.agent.manifest import load_batch_manifest, print_batch_summary_table
-    gold_manifest = load_batch_manifest(PROJECT_ROOT / "data" / "agent_tasks")
+    gold_manifest = load_batch_manifest(paths.agent_tasks_dir())
     if gold_manifest:
         print_batch_summary_table(gold_manifest)
 
@@ -152,7 +153,7 @@ def run_ingest() -> bool:
     print(f"  - L1 code-first: {res_cf.stdout.strip()}")
 
     # Ingest L1
-    l1_out_dir = "data/agent_outputs_l1"
+    l1_out_dir = str(paths.agent_outputs_dir("_l1"))
     res_l1 = subprocess.run(
         [sys.executable, "scripts/l1_ingest.py", l1_out_dir],
         capture_output=True,
@@ -163,7 +164,7 @@ def run_ingest() -> bool:
     print(f"  • L1 Ingest:\n    {res_l1.stdout.strip()}")
 
     # Ingest Gold
-    gold_out_dir = "data/agent_outputs"
+    gold_out_dir = str(paths.agent_outputs_dir())
     res_gold = subprocess.run(
         [sys.executable, "scripts/agent_ingest.py", gold_out_dir],
         capture_output=True,
@@ -270,10 +271,10 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.batch_info:
         from src.agent.manifest import load_batch_manifest, print_batch_summary_table
-        gold_manifest = load_batch_manifest("data/agent_tasks")
-        l1_manifest = load_batch_manifest("data/agent_tasks/l1")
+        gold_manifest = load_batch_manifest(paths.agent_tasks_dir())
+        l1_manifest = load_batch_manifest(paths.agent_tasks_dir() / "l1")
         if not gold_manifest and not l1_manifest:
-            print("⚠️ Chưa có batch_manifest.json nào trong data/agent_tasks/. Vui lòng chạy --export trước.")
+            print(f"⚠️ Chưa có batch_manifest.json nào trong {paths.agent_tasks_dir()}. Vui lòng chạy --export trước.")
             return 0
         if gold_manifest:
             print_batch_summary_table(gold_manifest)

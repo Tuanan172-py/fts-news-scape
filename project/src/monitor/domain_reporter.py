@@ -16,11 +16,12 @@ from typing import Any
 import yaml
 from loguru import logger
 
+from src.core import paths
 from src.core.config import resolve_source_domain
 from src.core.models import VN_TZ
 
 DOMAINS_DIR = Path(__file__).resolve().parents[2] / "domains"
-REPORTS_DIR = Path(__file__).resolve().parents[2] / "data" / "reports" / "daily"
+REPORTS_DIR = paths.reports_dir() / "daily"
 
 
 class DomainReporter:

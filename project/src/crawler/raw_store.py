@@ -12,7 +12,7 @@ from urllib.parse import urljoin, urlparse
 from bs4 import BeautifulSoup
 from loguru import logger
 
-from src.core.config import PROJECT_ROOT, resolve_project_path
+from src.core import paths
 
 # Bộ lọc header cần giữ lại nhằm đảm bảo vệ sinh dữ liệu bảo mật.
 _HEADER_WHITELIST = ("content-type", "content-length", "last-modified",
@@ -29,32 +29,30 @@ class RawStore:
         base_dir: Đường dẫn tuyệt đối của thư mục gốc lưu trữ dữ liệu thô Bronze.
     """
 
-    def __init__(self, base_dir: str = "data/raw_html"):
-        """Khởi tạo kho Bronze, neo đường dẫn tương đối vào gốc dự án.
+    def __init__(self, base_dir: str | os.PathLike | None = None):
+        """Khởi tạo kho Bronze, neo đường dẫn tương đối vào gốc dữ liệu.
 
         Đường dẫn tương đối không được hiểu theo thư mục làm việc hiện hành, vì một
-        tiến trình chạy ở gốc repo sẽ ghi Bronze ra ngoài nơi Silver đọc.
+        tiến trình chạy ở thư mục khác sẽ ghi Bronze ra ngoài nơi Silver đọc.
 
         Args:
-            base_dir: Thư mục gốc Bronze, tuyệt đối hoặc tương đối so với gốc dự án.
+            base_dir: Thư mục gốc Bronze, tuyệt đối hoặc tương đối so với gốc dữ liệu.
+                Mặc định `paths.bronze_dir()`.
         """
-        self.base_dir = str(resolve_project_path(base_dir))
+        root = paths.resolve_data_path(base_dir) if base_dir else paths.bronze_dir()
+        self.base_dir = str(root)
 
     @staticmethod
     def _portable_path(path: str) -> str:
-        """Đưa đường dẫn trong gốc dự án về dạng tương đối để ghi vào tệp meta.
+        """Đưa đường dẫn trong gốc dữ liệu về dạng tương đối để ghi vào tệp meta.
 
         Args:
             path: Đường dẫn tệp Bronze.
 
         Returns:
-            Đường dẫn tương đối so với gốc dự án khi tệp nằm trong đó, ngược lại giữ nguyên.
+            Đường dẫn tương đối so với gốc dữ liệu khi tệp nằm trong đó, ngược lại giữ nguyên.
         """
-        try:
-            return os.path.relpath(path, PROJECT_ROOT) if os.path.commonpath(
-                [os.path.abspath(path), str(PROJECT_ROOT)]) == str(PROJECT_ROOT) else path
-        except ValueError:
-            return path
+        return paths.to_data_relative(path)
 
     @staticmethod
     def _yyyymmdd(fetched_at: str) -> str:

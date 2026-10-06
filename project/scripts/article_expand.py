@@ -23,6 +23,7 @@ from pathlib import Path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.agent.entities import load_registry           # noqa: E402
+from src.core import paths                             # noqa: E402
 from src.agent.intent_resolve import (                 # noqa: E402
     GROUPS_WITHOUT_RESOLVER,
     IntentResolver,
@@ -43,12 +44,11 @@ from src.core.stdio import force_utf8_stdio            # noqa: E402
 force_utf8_stdio()
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-DATA_ROOT = PROJECT_ROOT / "data"
-TASK_DIR = DATA_ROOT / "agent_tasks" / "article"
-IN_DIR = DATA_ROOT / "agent_outputs_article"
-L1_OUT_DIR = DATA_ROOT / "agent_outputs_l1"
-GOLD_OUT_DIR = DATA_ROOT / "agent_outputs"
-MENTIONS_DIR = DATA_ROOT / "article_mentions"
+TASK_DIR = paths.article_packets_dir()
+IN_DIR = paths.agent_outputs_dir("_article")
+L1_OUT_DIR = paths.agent_outputs_dir("_l1")
+GOLD_OUT_DIR = paths.agent_outputs_dir()
+MENTIONS_DIR = paths.article_mentions_dir()
 
 CATEGORY_KEYS = ("ticker_company", "etf_fund", "index", "exchange",
                  "industry_sector", "macro_geo", "asset_class", "institution")

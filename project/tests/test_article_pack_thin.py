@@ -83,7 +83,7 @@ def test_row_paragraphs_uu_tien_goi_silver(tmp_path, monkeypatch):
     pkg = tmp_path / "w.json"
     pkg.write_text(json.dumps({"cleaned_text": f"{LONG_A}\n\n{LONG_B}"}),
                    encoding="utf-8")
-    monkeypatch.setattr(article_pack, "PROJECT_ROOT", tmp_path)
+    monkeypatch.setenv("MONOCLE_DATA_DIR", str(tmp_path))
 
     class Row(dict):
         pass

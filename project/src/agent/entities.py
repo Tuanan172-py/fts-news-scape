@@ -11,8 +11,10 @@ import yaml
 
 from loguru import logger as _LOG
 
+from src.core import paths
+
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-ENTITIES_JSON = PROJECT_ROOT / "data" / "entities" / "entities.json"
+ENTITIES_JSON = paths.entities_dir() / "entities.json"
 USERS_DIR = PROJECT_ROOT / "config" / "entities" / "users"
 MANIFEST_YAML = PROJECT_ROOT / "config" / "entities" / "manifest.yaml"
 CONTEXT_GUARDS_YAML = PROJECT_ROOT / "config" / "entities" / "aliases" / "_context_guards.yaml"

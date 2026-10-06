@@ -37,7 +37,6 @@ detail:
   author_selector: "a.author"                # a.author.cl_green
   max_details_per_cycle: 30
 capture:
-  raw_dir: "data/raw_html"
   min_body_bytes: 2048
 compliance:
   respect_robots: true      # robots: "User-agent: * / Allow: /" — không Disallow, không Crawl-delay

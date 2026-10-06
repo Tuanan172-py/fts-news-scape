@@ -40,7 +40,6 @@ detail:
   content_selector: "div.article__body"   # div.article__body.cms-body (verified 2026-09-07)
   max_details_per_cycle: 40
 capture:
-  raw_dir: "data/raw_html"
   min_body_bytes: 2048
 compliance:
   respect_robots: true

@@ -9,11 +9,12 @@ import time
 
 from loguru import logger
 
+from src.core import paths
 from src.core.models import normalize_title, sha256_hash
 from src.db import registry
 from src.db.store import ArticleStore
 
-_LEGACY_JSON = "data/dedup_cache.json"
+_LEGACY_JSON = str(paths.data_root() / "dedup_cache.json")
 
 
 class DedupCache:

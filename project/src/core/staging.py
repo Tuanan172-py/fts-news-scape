@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from src.core.config import resolve_project_path
 import json
 import os
 import time
@@ -13,12 +12,11 @@ from typing import Callable, Any
 
 from loguru import logger
 
+from src.core import paths
 from src.core.models import VN_TZ
 
-DEFAULT_STAGING_DIR = "data/staging"
 
-
-def ensure_staging_dir(base_dir: str | Path = DEFAULT_STAGING_DIR) -> Path:
+def ensure_staging_dir(base_dir: str | Path | None = None) -> Path:
     """Tạo thư mục staging nếu chưa tồn tại.
 
     Args:
@@ -27,7 +25,7 @@ def ensure_staging_dir(base_dir: str | Path = DEFAULT_STAGING_DIR) -> Path:
     Returns:
         Đối tượng Path của thư mục staging.
     """
-    p = Path(resolve_project_path(base_dir))
+    p = paths.resolve_data_path(base_dir) if base_dir else paths.staging_dir()
     p.mkdir(parents=True, exist_ok=True)
     return p
 
@@ -49,7 +47,7 @@ def safe_atomic_write(
         fallback_on_lock: Nếu True và gặp PermissionError trên Windows, sinh file version mới (stem_HHMMSS.ext) thay vì raise.
         encoding: Encoding cho text mode (mặc định utf-8).
         binary: True nếu ghi file nhị phân.
-        staging_dir: Thư mục staging tùy chọn (mặc định data/staging hoặc cùng thư mục đích).
+        staging_dir: Thư mục staging tùy chọn (mặc định cùng thư mục đích).
 
     Returns:
         tuple[Path, bool]: (Đường dẫn file thực tế đã ghi, True nếu là fallback version do bị lock)
@@ -154,19 +152,19 @@ def safe_json_dump(
 
 
 def clean_stale_staging(
-    staging_dir: str | Path = DEFAULT_STAGING_DIR,
+    staging_dir: str | Path | None = None,
     max_age_seconds: int = 86400,
 ) -> int:
     """Dọn dẹp các tệp tạm .tmp tồn đọng trong thư mục staging vượt quá thời gian tối đa.
 
     Args:
-        staging_dir: Đường dẫn thư mục staging cần dọn dẹp.
+        staging_dir: Đường dẫn thư mục staging cần dọn dẹp. Mặc định `paths.staging_dir()`.
         max_age_seconds: Tuổi thọ tối đa của tệp tính bằng giây trước khi xóa.
 
     Returns:
         Số lượng tệp tạm đã được xóa bỏ thành công.
     """
-    p = Path(staging_dir)
+    p = Path(staging_dir) if staging_dir else paths.staging_dir()
     if not p.exists():
         return 0
     now = time.time()

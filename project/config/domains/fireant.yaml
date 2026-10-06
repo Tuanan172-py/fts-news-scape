@@ -16,7 +16,6 @@ detail:
   # KHÔNG có content_selector: Bronze là JSON, không phải HTML.
   # SilverBuilder nhận diện Content-Type: application/json rồi bóc trường `content`.
 capture:
-  raw_dir: "data/raw_html"       # Bronze = body JSON byte-exact của API detail
   min_body_bytes: 512            # JSON gọn hơn HTML nhiều
 compliance:
   respect_robots: true
