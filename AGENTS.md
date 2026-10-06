@@ -13,9 +13,9 @@
 | 2 NORMAL | Feature, refactor, deep research | Intake, bounded context, WIP=1, story `US-NNN`, proof test, standard trace, closure table |
 | 3 HIGH-RISK | DB schema, data contract, API token, harness core | Intake, stop at the hard gate (`status: blocked`), ADR, human approval, detailed trace, closure table |
 
-## 1. WIP = 1
+## 1. WIP = 1 per worktree
 
-At most one story is `in_progress`. An urgent interruption parks the current story first (`blocked` or `deferred`, with a reason). Never two `in_progress`.
+WIP=1 applies per git worktree (ADR-0022). In one worktree at most one story is `in_progress`, and it declares its `branch`. Agents on different worktrees work in parallel with equal, full authority over their own worktree. An urgent interruption inside a worktree parks that worktree's story first (`blocked` or `deferred`, with a reason).
 
 ## 2. Knowledge contract (ADR-0021)
 
