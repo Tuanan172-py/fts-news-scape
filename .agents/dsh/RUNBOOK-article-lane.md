@@ -18,7 +18,7 @@
 
 ```powershell
 cmd /c mklink /J "$env:USERPROFILE\.dsh\.agent-presets\news-scape-conductor" ^
-  "C:\Users\anpt\OneDrive - fpts.com.vn\FRA_DataIngestion - news-scape\.agents\dsh\presets\news-scape-conductor"
+  "C:\src\news-scraper\.agents\dsh\presets\news-scape-conductor"
 ```
 
 **Bước 2 — sinh prefix và dán vào preset:**

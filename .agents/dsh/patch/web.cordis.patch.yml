@@ -10,5 +10,5 @@
   config:
     default: news-scape-conductor
     roots:
-      - path: 'C:\Users\anpt\OneDrive - fpts.com.vn\FRA_DataIngestion - news-scape\.agents\dsh\presets'
+      - path: 'C:\src\news-scraper\.agents\dsh\presets'
         trust: user
