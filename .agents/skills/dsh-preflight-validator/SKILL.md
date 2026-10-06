@@ -157,7 +157,7 @@ Xem khối mã bên dưới. Nguyên tắc: gom mọi lệnh kiểm vào **một
 
 ```ts
 const PY = 'C:\\venvs\\news-scape\\Scripts\\python.exe';
-const WD = 'C:\\Users\\anpt\\OneDrive - fpts.com.vn\\FRA_DataIngestion - news-scape\\project';
+const WD = 'C:\\src\\news-scraper\\project';
 const PRESET = WD.replace(/\\project$/, '') +
   '\\.agents\\dsh\\presets\\news-scape-conductor\\agent.cordis.yml';
 

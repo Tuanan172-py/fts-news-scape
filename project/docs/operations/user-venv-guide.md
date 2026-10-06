@@ -11,7 +11,7 @@
 | **Đường dẫn Venv** | `C:\venvs\news-scape` |
 | **Python Binary** | `C:\venvs\news-scape\Scripts\python.exe` |
 | **Database Chính** | `C:\data\news-scape\monocle.db` (biến môi trường `MONOCLE_DB_PATH`) |
-| **Working Tree** | `C:\Users\anpt\OneDrive - fpts.com.vn\FRA_DataIngestion - news-scape` |
+| **Working Tree** | `C:\src\news-scraper` |
 
 ---
 
