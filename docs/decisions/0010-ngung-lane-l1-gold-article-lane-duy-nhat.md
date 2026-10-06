@@ -79,7 +79,7 @@ The unified plan scheduled archive and deprecation of the old path as step 6, af
 ### Current status (2026-10-06)
 
 - In force. ADR-0016 (copy articles inherit results), ADR-0018 (single-paragraph citations) and ADR-0019 (thin articles leave the packet) amend it and declare the link.
-- DSH is no longer used; the runners are agy and opencode (commit 2497137). The single-path rule and D4 to D6 still hold.
+- DSH, agy, opencode and other runtimes are interchangeable options for the Article Lane (FACT-llm-runtimes-are-interchangeable). The single-path rule and D4 to D6 still hold.
 
 ## Rollback
 

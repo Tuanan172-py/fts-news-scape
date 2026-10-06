@@ -24,7 +24,7 @@ evidence:
   - metric:163 L1 batches waiting for a manual subagent, 90 articles not yet routed to L1, proposal 2026-09-17
   - metric:845K-token trace in the 2026-09-17 session run through the generic subagent, article-lane plan 2026-09-18
   - operator:plan decisions D1-D6 approved 2026-09-17
-  - operator:DSH no longer used as runner; runners are agy and opencode (SESSION-LATEST 2026-10-06)
+  - operator:2026-10-06 DSH is one interchangeable LLM runtime option, never retired (FACT-llm-runtimes-are-interchangeable)
 original: "commit:3f9d59e"
 reconstructed: 2026-10-06
 summary: DSH became the orchestration runtime with cognitive agents as in-process subagents, DeepSeek Flash only, ADR-0008 gate with L1 60,000 and Gold 40,000 token caps, PTC conductor, agy kept as non-default option.
@@ -110,11 +110,11 @@ Acceptance tiers defined by the original ADR:
 
 - D1 amended by ADR-0010: rows `agent_l1` and `agent_gold` were removed from the preset; `article-processor` is the only cognitive worker.
 - D2 reversed by ADR-0011: `agy` became a headless Article Lane runner next to DSH, no longer only an option.
-- D3 dead in practice. On 2026-10-06 the operator stated that DSH is no longer used as runner; the runners are agy and opencode (commit 2497137, `docs/SESSION-LATEST.md`).
+- D3 narrowed. DSH is no longer the only runtime; it is one interchangeable option next to agy, opencode, OpenRouter, Claude and Codex, chosen per task (FACT-llm-runtimes-are-interchangeable, operator 2026-10-06).
 - D4 dead. H3 and H4 were deferred in the plan status table and no `@news-scape/dsh-harness` bundle was found.
 - D5 dead. ADR-0008 is superseded; ADR-0010.D5 removes every token cap and ADR-0014 forbids rebuilding the approval gate.
 - D6 overridden by ADR-0017: providers other than `deepseek-flash` are allowed once they pass the golden set.
-- D7 as amended remains the design of the DSH conductor program; it is inactive while DSH is not used as runner.
+- D7 as amended remains the design of the DSH conductor program and applies whenever DSH is the chosen runtime.
 
 ## Rollback
 
@@ -126,4 +126,4 @@ Acceptance tiers defined by the original ADR:
 
 - [x] H1 preset `news-scape-conductor` and skill, H2 `agent_l1` and `agent_gold` rows, registry moved to flash (plan status table, 2026-09-17).
 - [ ] H3 bundle, `ns_activate` and generator: deferred in the plan; superseded in practice by ADR-0010 and ADR-0011.
-- [ ] Write a new ADR that formally retires DSH as runner, citing the operator statement of 2026-10-06.
+- [x] Operator decided on 2026-10-06 that DSH is never retired; it stays a runtime option (FACT-llm-runtimes-are-interchangeable).

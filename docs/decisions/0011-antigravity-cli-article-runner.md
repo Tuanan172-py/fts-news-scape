@@ -87,7 +87,7 @@ summary_vi: Thêm runner agy chạy headless song song DSH; Python điều phố
 
 - The agy runner, worker profile and zero-tool principle remain in force. ADR-0017 makes agy the reference runner for the unified output contract.
 - D6 is amended by ADR-0012: `ops_daemon` replaced the scheduled `article_tick.py`, which still runs by hand and shares `.pipeline.lock`.
-- DSH is no longer used; the runners are agy and opencode (commit 2497137), so the dual-runner split of D1 is historical.
+- The dual-runner split of D1 generalized: DSH, agy, opencode and OpenRouter are interchangeable runtime options (FACT-llm-runtimes-are-interchangeable).
 
 ## Rollback
 
