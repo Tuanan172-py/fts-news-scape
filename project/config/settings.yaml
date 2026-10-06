@@ -6,8 +6,7 @@ database:
   path: C:/data/news-scape/monocle.db
 
 logging:
-  level: INFO
-  dir: logs
+  level: INFO               # thư mục log: <MONOCLE_DATA_DIR>/logs (src/core/paths.py)
 
 scheduler:
   interval_minutes: 15     # polling cycle (spec §6)
@@ -19,7 +18,7 @@ http:
 
 export:
   enabled: true            # tự xuất CSV 'hôm nay' cuối mỗi cycle
-  dir: data/exports        # data/exports/articles-YYYY-MM-DD.csv (ghi đè mỗi cycle)
+  # Tệp xuất: <MONOCLE_DATA_DIR>/exports/articles-YYYY-MM-DD.csv (ghi đè mỗi cycle)
 
 morninger:
   capture_interval_minutes: 10   # nhịp capture Bronze (job 1). ĐO THẬT 2026-09-17: một lượt job

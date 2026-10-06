@@ -10,6 +10,8 @@ from typing import Any
 
 import yaml
 
+from src.core import paths as data_paths
+
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 CONFIG_PATH = PROJECT_ROOT / "config" / "ops.yaml"
 
@@ -109,7 +111,7 @@ def resolve_paths(data_dir: Path | None = None) -> OpsPaths:
     """Dựng tập đường dẫn vận hành từ `MONOCLE_DATA_DIR` hoặc thư mục chỉ định.
 
     Args:
-        data_dir: Thư mục dữ liệu. Mặc định `C:\\data\\news-scape`.
+        data_dir: Thư mục dữ liệu. Mặc định `src.core.paths.data_root()`.
 
     Returns:
         Đối tượng OpsPaths.
@@ -117,10 +119,7 @@ def resolve_paths(data_dir: Path | None = None) -> OpsPaths:
     Raises:
         RuntimeError: Khi thư mục dữ liệu nằm trong OneDrive hoặc SharePoint.
     """
-    d = Path(data_dir or os.environ.get("MONOCLE_DATA_DIR", r"C:\data\news-scape"))
-    low = str(d).lower()
-    if "onedrive" in low or "sharepoint" in low:
-        raise RuntimeError(f"Thư mục dữ liệu vận hành {d} nằm trong OneDrive/SharePoint.")
+    d = data_paths.check_data_root(Path(data_dir)) if data_dir else data_paths.data_root()
     return OpsPaths(
         data_dir=d,
         ops_db=d / "ops.db",
