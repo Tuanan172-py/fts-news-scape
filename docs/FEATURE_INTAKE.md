@@ -61,7 +61,7 @@ Any hard gate   → high-risk (unless the human narrows scope)
 |------|------------------|
 | **Tiny** | Note intake inline → patch directly → keep docs current → run a quick check. Skip the story packet (do NOT skip intake). |
 | **Normal** | Create/update 1 story from [templates/story.md](templates/story.md) → link OKF docs → state validation expectations → record proof in the story + TEST_MATRIX. |
-| **High-risk** | Story + ask the human if direction is unclear → record an ADR (`decisions/NNNN-*.md` from [templates/decision.md](templates/decision.md)). A trace note does NOT replace the ADR. |
+| **High-risk** | Story + ask the human if direction is unclear → record an ADR (`decisions/NNNN-*.md` from [templates/adr.md](templates/adr.md)). A trace note does NOT replace the ADR. |
 
 ## 5. WIP=1 at intake
 

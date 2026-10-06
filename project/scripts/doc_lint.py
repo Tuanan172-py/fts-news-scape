@@ -40,6 +40,9 @@ _LEGACY_ALLOW = ("agy_standing_order", "Tên cũ")
 # Mã nội bộ không được lộ ra người đọc cuối.
 _INTERNAL_CODE_RE = re.compile(r"\bUS-(?!IMP\b)[A-Z0-9]+\b|\bD-[A-E]\b")
 
+# Tệp có frontmatter `type:` thuộc hợp đồng tri thức ADR-0021, do `scripts/knowledge.py` kiểm.
+_CONTRACT_FM_RE = re.compile(r"\A---\r?\n(?:.*\r?\n)*?type:\s*\w+", re.M)
+
 MAX_SENTENCE_WORDS = 25
 RUNBOOK_HEADINGS = ("Mục đích", "Điều kiện", "Các bước", "Xử lý sự cố", "Quay lui", "Tham chiếu")
 ADR_HEADINGS = ("Bối cảnh", "Quyết định", "Phương án đã loại", "Hệ quả", "Quay lui")
@@ -271,6 +274,8 @@ def lint_repo(root: Path = REPO_ROOT) -> list[Finding]:
     for pattern in DOC_GLOBS:
         for f in sorted(root.glob(pattern)):
             rel = f.relative_to(root).as_posix()
+            if _CONTRACT_FM_RE.match(f.read_text(encoding="utf-8")):
+                continue
             is_glossary = rel == "docs/GLOSSARY.md"
             is_template = rel.startswith("docs/templates/")
             out += lint_markdown(rel, f.read_text(encoding="utf-8"), root=root,
@@ -281,6 +286,8 @@ def lint_repo(root: Path = REPO_ROOT) -> list[Finding]:
         if not m or int(m.group(1)) < ADR_MIN_LINT:
             continue
         rel = f.relative_to(root).as_posix()
+        if _CONTRACT_FM_RE.match(f.read_text(encoding="utf-8")):
+            continue
         out += lint_markdown(rel, f.read_text(encoding="utf-8"), root=root, reader_facing=False,
                              check_terms=False, adr_number=int(m.group(1)),
                              check_length=int(m.group(1)) >= ADR_MIN_STRUCTURE)

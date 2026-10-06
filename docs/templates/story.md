@@ -1,40 +1,49 @@
-# US-XXX — <short title>
+---
+id: {{id}}
+type: story
+title: {{title}}
+status: planned
+lane: {{lane}}
+created: {{date}}
+updated: {{date}}
+lang: en
+authors: [{{author}}]
+adr: []
+plan: []
+evidence: []
+verify: "python -m pytest tests/<file>.py -q"
+summary: One sentence stating the user-visible outcome this story delivers.
+---
 
-- **Status:** planned | in_progress | implemented | changed | retired
-- **Lane:** tiny | normal | high-risk
-- **Parent / Epic:** <free text, e.g. "Phase 3 — Gold / agent-extract"> <!-- Epic surrogate; no epic folders at H1 -->
-- **Intake date:** YYYY-MM-DD
-- **Depends On:** <US-YYY, or none>
+# {{id}} — {{title}}
 
-## Product Contract
-<What must be true when done, from the user/consumer's view. Link OKF docs (project/docs/skills/*, design/*).>
+<!--
+Contract: docs/knowledge/README.md. WIP=1: at most one story with status in_progress.
+Status vocabulary: planned, in_progress, blocked, deferred, implemented, changed, retired.
+`verify` is the single command that proves the story; harness_cli story complete runs it.
+-->
+
+## Contract
+
+<!-- What the product or harness MUST do after this story, from the user's side. 20+ words. -->
 
 ## Acceptance Criteria
-- [ ] <observable criterion 1>
-- [ ] <observable criterion 2>
+
+- [ ] <!-- measurable criterion 1 -->
+- [ ] <!-- measurable criterion 2 -->
 
 ## Design Notes
-<Smallest real slice. Which project/src module. What NOT to do. Boundary respected (Silver = pure fn of Bronze, etc.).>
 
-## Validation
-| Tier | Command | Status | Evidence |
-|------|---------|:------:|----------|
-| Unit | `cd project; python -m pytest tests/...` | not run | |
-| Integration | | — | |
-| E2E | | — | |
-| Platform | | — | |
+<!-- Approach, touched modules, constraints from ADRs and rules (cite ids). -->
 
-> "No proof = not implemented." Set a tier to passed only after the command ran and output is recorded.
+## Verification
 
-## Harness Delta
-<Any backlog entry / decision / doc created because of this story. "none" only after checking.>
+| Tier | Command or check | Result |
+|---|---|---|
+| Unit | <!-- pytest path --> | <!-- pass/fail, count --> |
+| Integration | | |
+| Platform | | |
 
 ## Evidence
-<Paste command output / file paths / commit hash proving each passed tier.>
 
-## Trace (inline, H1)
-- **Actions:** <a, b, c>
-- **Files read:** <...>
-- **Files changed:** <...>
-- **Outcome:** completed | blocked | partial | failed
-- **Friction:** <specific pain + missing capability, or "none">
+<!-- Commits, metrics, wave codes. Mirror them in frontmatter `evidence`. -->
