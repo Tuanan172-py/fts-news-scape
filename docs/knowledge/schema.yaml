@@ -1,0 +1,122 @@
+# Knowledge document contract (ADR-0021). Single source for scripts/knowledge.py and for agents.
+# Agents: read this file and docs/knowledge/README.md before writing any governed document.
+version: 1
+
+# Keys every governed document carries in its YAML frontmatter.
+common:
+  required: [id, type, title, status, created, updated, lang, summary]
+  optional: [lane, authors, approvers, story, adr, plan, proposal, supersedes, superseded_by,
+             amends, amended_by, related, evidence, tags, summary_vi, original, reconstructed,
+             retires, verified, verify, trigger, description, wave]
+  # List-valued keys. A scalar is accepted and read as a one-item list.
+  lists: [authors, approvers, story, adr, plan, proposal, supersedes, superseded_by, amends,
+          amended_by, related, evidence, tags, retires]
+  enums:
+    lane: [tiny, normal, high-risk]
+  date_keys: [created, updated, reconstructed, verified]
+  # Allowed prefixes for entries in `evidence`.
+  evidence_prefixes: ["commit:", "path:", "metric:", "test:", "wave:", "url:", "operator:"]
+  # Keys whose values are document ids that must resolve.
+  link_keys: [story, adr, plan, proposal, supersedes, superseded_by, amends, amended_by, related]
+
+language:
+  # Characters specific to Vietnamese. A line in a `lang: en` body that contains one of them
+  # is a finding unless it sits in a code span, a fenced block, a blockquote or double quotes.
+  vi_chars: "ăâđêôơưàáạảãằắặẳẵầấậẩẫèéẹẻẽềếệểễìíịỉĩòóọỏõồốộổỗờớợởỡùúụủũừứựửữỳýỵỷỹĂÂĐÊÔƠƯÀÁẠẢÃẰẮẶẲẴẦẤẬẨẪÈÉẸẺẼỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕỒỐỘỔỖỜỚỢỞỠÙÚỤỦŨỪỨỰỬỮỲÝỴỶỸ"
+  max_sentence_words: 35
+  banned_phrases: ["basically", "it is worth noting", "it should be noted", "needless to say",
+                   "in conclusion", "seamless", "seamlessly", "robust", "cutting-edge",
+                   "leverage", "comprehensive", "state-of-the-art", "game-changer"]
+
+types:
+  adr:
+    id_pattern: '^ADR-\d{4}$'
+    path_glob: docs/decisions/*.md
+    filename: '{num:04d}-{slug}.md'
+    statuses: [proposed, accepted, rejected, superseded]
+    lang: [en]
+    required: [lane, evidence, summary_vi]
+    required_when:
+      accepted: [approvers]
+    sections: [Context, Decision, Alternatives, Consequences, Rollback, Follow-up]
+    floors:
+      Context: {min_words: 60}
+      Decision: {min_words: 40}
+      Alternatives: {min_table_rows: 2}
+      Consequences: {min_words: 30}
+      Rollback: {min_words: 15}
+  story:
+    id_pattern: '^US-\d{3}$'
+    path_glob: docs/stories/*.md
+    filename: 'US-{num:03d}-{slug}.md'
+    statuses: [planned, in_progress, blocked, deferred, implemented, changed, retired]
+    lang: [en]
+    required: [lane, verify]
+    sections: [Contract, Acceptance Criteria, Design Notes, Verification, Evidence]
+    floors:
+      Contract: {min_words: 20}
+      Acceptance Criteria: {min_list_items: 2}
+  proposal:
+    id_pattern: '^PRP-\d{8}-[a-z0-9-]+$'
+    path_glob: docs/proposals/*.md
+    filename: '{date}-{slug}.md'
+    statuses: [draft, decided, parked, rejected]
+    lang: [en]
+    required: [summary_vi]
+    required_when:
+      decided: [outcome_link]
+    sections: [Question, Findings, Options, Recommendation, Outcome]
+    floors:
+      Findings: {min_words: 60}
+      Options: {min_table_rows: 2}
+  plan:
+    id_pattern: '^PLN-\d{8}-\d{4}-[a-z0-9-]+$'
+    path_glob: plans/*/plan.md
+    filename: '{date}-{time}-{slug}/plan.md'
+    statuses: [draft, approved, executing, done, superseded, parked]
+    lang: [en]
+    required: [lane]
+    sections: [Context, Decisions, Design, Roadmap, Verification, Out of Scope, Risks]
+    floors:
+      Roadmap: {min_table_rows: 1}
+  fact:
+    id_pattern: '^FACT-[a-z0-9-]+$'
+    path_glob: docs/knowledge/facts/*.md
+    filename: '{slug}.md'
+    statuses: [active, stale, retired]
+    lang: [en]
+    required: [evidence, verified]
+    sections: [Fact, Why, How to Apply]
+    floors:
+      Fact: {min_words: 10}
+  rule:
+    id_pattern: '^RULE-\d{2}$'
+    path_glob: .agents/rules/*.md
+    filename: '{num:02d}-{slug}.md'
+    statuses: [active, retired]
+    lang: [en]
+    required: [adr]
+    sections: [Scope, Rules, Verification]
+  run:
+    id_pattern: '^RUN-W[0-9A-Z]+$'
+    path_glob: docs/runs/*.md
+    filename: '{wave}.md'
+    statuses: [open, closed]
+    lang: [en]
+    required: [wave]
+    sections: [Summary, Metrics, Issues]
+  runbook:
+    id_pattern: '^RB-[a-z0-9-]+$'
+    path_glob: project/docs/operations/*.md
+    filename: '{slug}.md'
+    statuses: [active, retired]
+    lang: [en, vi]
+    required: [adr]
+    sections: [Purpose, Preconditions, Steps, Troubleshooting, Rollback, References]
+    # Operations hold reference pages too; only files that declare frontmatter are governed.
+    opt_in: true
+
+# Status that ends a document's life. An accepted document superseded by another accepted
+# document must carry the terminal status of its type.
+superseded_status: {adr: superseded, plan: superseded, story: retired, rule: retired,
+                    fact: retired, runbook: retired, proposal: parked}

@@ -38,6 +38,7 @@ CAPABILITIES = [
     "verify-gate",
     "codebase-audit",
     "git-lifecycle",
+    "knowledge-docs",
 ]
 
 
@@ -570,7 +571,19 @@ def cmd_audit(db_path: str = DEFAULT_DB_PATH, check_codebase: bool = False) -> d
         
         # 6. Schema health
         checks["schema_version"] = get_schema_version(conn)
-        
+
+        # 6b. Knowledge document contract (ADR-0021)
+        try:
+            sys.path.insert(0, str(Path(__file__).resolve().parent))
+            import knowledge
+
+            k_findings = knowledge.lint(knowledge.REPO_ROOT)
+            checks["knowledge_contract_findings"] = [str(f) for f in k_findings]
+            checks["knowledge_unmigrated"] = len(knowledge.load_legacy(knowledge.REPO_ROOT))
+            total_penalty += min(0.3, len(k_findings) * 0.02)
+        except Exception as e:
+            checks["knowledge_contract_error"] = str(e)
+
         # 7. Codebase & Git hygiene
         if check_codebase:
             try:
@@ -918,6 +931,35 @@ def cmd_git_template(args: argparse.Namespace) -> dict[str, Any]:
 # CLI Argument Parser Setup
 # ---------------------------------------------------------------------------
 
+def cmd_doc(args: argparse.Namespace) -> dict[str, Any]:
+    """Run a knowledge-document action under the ADR-0021 contract.
+
+    Args:
+        args: Parsed arguments with `doc_action` and action-specific options.
+
+    Returns:
+        Result mapping; status is "error" when lint finds violations.
+    """
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import knowledge
+
+    root = knowledge.REPO_ROOT
+    if args.doc_action == "new":
+        return {"status": "success", **knowledge.new_doc(
+            root, args.type, args.title, lane=args.lane, author=args.author, slug=args.slug,
+            wave=args.wave, db_path=args.db, adopt_id=args.id)}
+    if args.doc_action == "lint":
+        only = knowledge.staged_paths(root) if args.staged else None
+        findings = knowledge.lint(root, only)
+        return {"status": "error" if findings else "success", "count": len(findings),
+                "findings": [str(f) for f in findings]}
+    if args.doc_action == "index":
+        return knowledge.write_index(root)
+    if args.doc_action == "sync":
+        return knowledge.sync_db(root, args.db)
+    return {"status": "error", "message": f"unknown doc action {args.doc_action}"}
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="News-Scape Harness CLI (H2-H5 Durable Layer)")
     parser.add_argument("--db", default=DEFAULT_DB_PATH, help="Path to harness.db SQLite file")
@@ -1053,6 +1095,23 @@ def build_parser() -> argparse.ArgumentParser:
     git_tmpl.add_argument("--title", required=True, help="Short commit description in imperative mood")
     git_tmpl.add_argument("--body", help="Optional commit body explaining reason/context")
 
+    # knowledge documents (ADR-0021)
+    doc_p = subparsers.add_parser("doc", help="Create, lint, index and sync knowledge documents")
+    doc_sub = doc_p.add_subparsers(dest="doc_action", required=True)
+    d_new = doc_sub.add_parser("new", help="Allocate an id and create a document from its template")
+    d_new.add_argument("--type", required=True,
+                       choices=["adr", "story", "proposal", "plan", "fact", "rule", "run", "runbook"])
+    d_new.add_argument("--title", required=True, help="Title in English")
+    d_new.add_argument("--lane", default="normal", choices=["tiny", "normal", "high-risk"])
+    d_new.add_argument("--author", default="agent", help="Agent or human recorded in authors")
+    d_new.add_argument("--slug", help="File slug; derived from the title when omitted")
+    d_new.add_argument("--wave", help="Wave code, required for --type run")
+    d_new.add_argument("--id", help="Adopt an adr or story id already registered in harness.db")
+    d_lint = doc_sub.add_parser("lint", help="Validate governed documents against docs/knowledge/schema.yaml")
+    d_lint.add_argument("--staged", action="store_true", help="Report only on staged files")
+    doc_sub.add_parser("index", help="Regenerate docs/INDEX.md from frontmatter")
+    doc_sub.add_parser("sync", help="Upsert story and decision rows in harness.db from frontmatter")
+
     # audit & propose
     audit_p = subparsers.add_parser("audit", help="Run harness drift & entropy audit")
     audit_p.add_argument("--codebase", action="store_true", help="Include Git codebase and AST hygiene audit")
@@ -1137,6 +1196,8 @@ def main() -> None:
                 res = cmd_git_verify(args)
             elif args.git_action == "template":
                 res = cmd_git_template(args)
+        elif args.command == "doc":
+            res = cmd_doc(args)
         elif args.command == "audit":
             res = cmd_audit(args.db, check_codebase=getattr(args, "codebase", False))
         elif args.command == "propose":

@@ -23,7 +23,7 @@
 | **Bàn giao (handoff)** | Bước cuối của vòng thay đổi: ghi đè [SESSION-LATEST.md](SESSION-LATEST.md) để phiên sau biết đang ở đâu và làm gì tiếp. |
 | **Ma sát (friction)** | Một khó khăn hoặc thiếu sót cụ thể gặp khi làm việc, ghi vào [HARNESS_BACKLOG.md](HARNESS_BACKLOG.md). |
 | **WIP = 1** | Tại một thời điểm chỉ một story `in_progress`. Việc chen ngang phải đưa story hiện tại sang `blocked` hoặc `deferred` trước. |
-| **ADR** | Bản ghi quyết định kiến trúc hoặc hành vi. Khuôn: [templates/decision.md](templates/decision.md); các bản ở [decisions/](decisions/). ADR đã `accepted` không sửa nội dung; muốn đổi thì lập ADR mới. |
+| **ADR** | Bản ghi quyết định kiến trúc hoặc hành vi. Khuôn: [templates/adr.md](templates/adr.md); các bản ở [decisions/](decisions/). ADR đã `accepted` không sửa nội dung; muốn đổi thì lập ADR mới. |
 | **Độ trưởng thành (H0–H5)** | Mức tiến hoá của harness. Hiện ở H2 đến H5: SQLite bền, quan sát chủ động, tự kiểm, quy trình tự cải tiến. |
 | **Closure** | Bảng nghiệm thu đóng phiên bắt buộc ở cuối mỗi yêu cầu (AGENTS.md §0). |
 

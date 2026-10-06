@@ -1,42 +1,48 @@
-# Đề xuất — <chủ đề>
+---
+id: {{id}}
+type: proposal
+title: {{title}}
+status: draft
+lane: {{lane}}
+created: {{date}}
+updated: {{date}}
+lang: en
+authors: [{{author}}]
+adr: []
+story: []
+plan: []
+evidence: []
+summary: One sentence stating the question and the recommended answer.
+summary_vi: Một câu tiếng Việt cho người duyệt.
+---
 
-- **Loại tài liệu:** giải thích (explanation). Một đề xuất tách ba phần: phán quyết, nhật ký thực thi, kết quả.
-- **Ngày:** YYYY-MM-DD
-- **Trạng thái:** draft | decided | executed | superseded
-- **Lane:** tiny | normal | high-risk
-- **Hồ sơ nguồn:** đường dẫn bằng chứng và báo cáo thành viên
+# {{id}} — {{title}}
 
-## Quy ước mã
+<!--
+A proposal answers one question and ends in exactly one terminal state:
+decided (link the resulting adr, story or plan in frontmatter), parked, or rejected.
+Council working papers go in a sibling folder named after the id; this file is the verdict.
+-->
 
-Mọi mã tham chiếu trong tài liệu (A1, G3, D-A) phải được định nghĩa tại đây.
+## Question
 
-| Mã | Nghĩa |
-|---|---|
-| A1, A2, ... | Phát hiện về kiến trúc |
-| D-A, D-B, ... | Quyết định cần người vận hành chốt |
+<!-- The single question the operator must answer. -->
 
-## 1. Phán quyết
+## Findings
 
-Kết luận cố định, viết một lần. Không sửa sau khi trạng thái chuyển sang `decided`.
+<!-- Measured facts, each with evidence. 60+ words. -->
 
-## 2. Phát hiện
+## Options
 
-| Mã | Phát hiện | Bằng chứng | Mức |
-|---|---|---|---|
-| X1 | Mô tả một câu | `tệp:dòng` hoặc số đo | Chặn, Nặng, Vừa hoặc Nhẹ |
-
-## 3. Quyết định của người vận hành
-
-| Mã | Quyết định | Ngày | Hệ quả |
-|---|---|---|---|
-
-## 4. Nhật ký thực thi
-
-Chỉ nối thêm. Mỗi dòng có ngày, việc đã làm và bằng chứng. Phần này không thay đổi phán quyết ở mục 1.
-
-| Ngày | Việc | Bằng chứng |
+| Option | Benefit | Cost or risk |
 |---|---|---|
+| <!-- A --> | | |
+| <!-- B --> | | |
 
-## 5. Kết quả
+## Recommendation
 
-Trạng thái cuối của từng mã phát hiện: đã xử lý, còn mở, hoặc không làm và lý do.
+<!-- One option, with the reason. -->
+
+## Outcome
+
+<!-- Filled when status leaves draft: operator decision, date, linked ids. Append-only. -->
