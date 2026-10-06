@@ -30,8 +30,8 @@ Kế hoạch và hướng dẫn từng bước: [`plans/20261005-1800-us038-repo
 
 Người vận hành làm hoặc quyết định:
 
-1. **Restart host DSH và mở phiên mới.** Prefix đã đổi (hash `b7cd7e93820adc5e`) và persona trong `agent.cordis.yml` đã được đồng bộ. Preset nạp lúc mount nên DSH chạy bản cũ cho tới khi restart (rule 09). Đợt DSH trước restart vẫn bị cổng mới kiểm chặt hơn prefix cũ.
-2. **Gán nhãn bộ vàng 30 bài** (`sn`, `ts`, tập TIC) rồi chạy `provider_conformance.py baseline` với đầu ra của agy. Chưa có bộ vàng thì chưa chấm được provider khác. Ngưỡng tạm: mức agy trừ 5 điểm phần trăm.
+1. **[ĐÓNG 2026-10-06 — người vận hành] DSH không còn dùng.** Runner hiện hành là `agy` và opencode (Muse Spark 1.3). Không cần restart host DSH. Nếu sau này dùng lại DSH thì restart host trước (prefix `b7cd7e93820adc5e`, rule 09).
+2. **[PENDING theo yêu cầu người vận hành 2026-10-06, chưa nghiệm thu] Gán nhãn bộ vàng 30 bài** (`sn`, `ts`, tập TIC) rồi chạy `provider_conformance.py baseline` với đầu ra của agy. Chưa có bộ vàng thì chưa chấm được provider khác. Ngưỡng tạm: mức agy trừ 5 điểm phần trăm.
 3. **Sổ cái token chưa gắn nguồn theo meta.** `token_ledger.py --source` chỉ nhận `dsh` và `agy`, nên chi phí openrouter và opencode vẫn bị gán sai. Cần mở rộng `--source` và đọc `usage` từ meta.
 4. **opencode chưa có `--runner`.** Adapter `opencode_native_run.py` đã dùng bộ kiểm chung, nhưng đợt vẫn do phiên OpenCode điều khiển bằng tay. Việc nâng thành runner chính thức cần quyết định riêng.
 5. **Giảm tỷ lệ bị từ chối ở giai đoạn đầu.** Đo trước khi siết: agy 5,5% `c` ngắn và 1,8% `k` ngắn, openrouter 9,3% `k` dài. Đo lại bằng kịch bản audit sau vài đợt, và điều chỉnh prefix nếu một loại lỗi vượt vài phần trăm.
@@ -77,12 +77,13 @@ Trạng thái:
 
 Người vận hành làm, theo thứ tự (runbook `project/docs/operations/ops-daemon.md` §1):
 
-1. **[CHẶN L1] Telegram:** tạo bot với @BotFather, nhắn `/start` cho bot **trong chat riêng**, rồi chạy `python scripts/ops_daemon.py telegram --token <TOKEN>`. Chưa có bước này thì cảnh báo chỉ nằm trong `ops.db` và console.
-2. **Cấp quyền tự chủ:** `python scripts/ops_daemon.py order --level L1 --days 7`. Từ lúc này, máy mở và đủ điều kiện thì daemon tự chạy trọn đợt.
+1. **[ĐÓNG 2026-10-05] Telegram:** token đã thay (BotFather `/revoke`, 15:07). Daemon gửi được tin lúc 15:09. Token mới đã xuất hiện trong một phiên chat agent; muốn sạch hẳn thì `/revoke` lần nữa và tự chạy `ops_daemon.py telegram --token` ở terminal của mình.
+2. **Cấp quyền tự chủ (người vận hành tự cấp):** `/level L1` trên Telegram. Lần cấp 05/10 10:40 tự hạ về L0 sau 2 đợt hỏng (W10051042, W10051050, do packet cũ của ADR 0018, nay đã nhả).
 3. (Tuỳ chọn) healthchecks.io, period 1 ngày, nếu muốn biết khi máy tắt lâu.
 4. **Ngoài phạm vi (task riêng của người vận hành):** khoảng 10,9 nghìn bài tồn đọng ngoài `lookback_days`. Giao hàng xlsx cấu hình theo người dùng (D11) cũng là story riêng.
 5. **ops-sentinel:** draft. Chấm 10 lần chẩn đoán thật để chuyển active (rule 07).
-6. **Ngoài phạm vi của US-029, chưa sửa:** diff chưa commit của `openrouter_runner.py` đặt `max_tokens: 24000`, trái ADR 0010 (hội đồng C6). Tệp này không do phiên ops viết.
+6. **`max_tokens` của OpenRouter:** đã nâng 24000 → 32000 (CON-1 mục 11), vẫn là một trần; cần đo `PARTIAL`.
+7. **[ĐÓNG 2026-10-06] Khởi động lại daemon thoát oan:** sau `schtasks /End` + `/Run`, tiến trình con cũ còn giữ `ops_daemon.lock` vài giây nên bản mới thoát mã 3. Sửa: `acquire_single_instance` chờ ân hạn `daemon.lock_grace_seconds` (45 s). Test `tests/test_ops_restart_lock.py`, kiểm thật trên task.
 
 ---
 
