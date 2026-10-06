@@ -2,6 +2,12 @@
 
 <!-- Step 9 handoff. OVERWRITE this (never append) at the end of every session. Keep to one screen. -->
 
+> **Phiên ops 2026-10-06 (tiny/normal, trên `feature/article-lane-remove-gates`, chưa commit):**
+> - Sửa khởi động lại daemon thoát oan (mã 3): `acquire_single_instance` chờ ân hạn `daemon.lock_grace_seconds` 45 s; test `tests/test_ops_restart_lock.py`; kiểm thật bằng `schtasks /End` + `/Run`.
+> - Radar không còn đẩy `recapture` cho dòng `raw_missing` mồ côi (bài không còn trong kho); 1.241 dòng cũ đã được phiên khác xử lý, còn 2 dead-letter thật.
+> - OPEN-ITEMS: CON-1 mục 1 đóng (không dùng DSH; runner là agy + opencode Muse Spark 1.3), mục 2 bộ vàng PENDING; OPS-1 cập nhật Telegram và L1.
+> - Test toàn bộ: 841 đạt, 6 đỏ ngoài phạm vi (`test_inherit` 1, `test_periodic_reports` 4, `test_doc_lint` do ADR 0020 thiếu mục). **Cần cherry-pick 4 tệp sang `dev/us038`.**
+
 > **Phiên OpenCode 2026-10-05 (Tier 2+3, DONE): đợt W10051122 HOÀN TẤT 500/500.**
 > - 5 vòng vá OpenRouter free $0 (256→36→30→11→0) rồi phát hiện packet cũ: đóng lúc Silver chưa có, trích RSS ngắn.
 > - Sửa lane đọc Silver trước (pack/runner/wp v1.1), `--repair` làm mới, expand dồn hàng cũ, ingest bỏ tệp rỗng. Finish 15:30: L1 100%, nội dung 100%.
