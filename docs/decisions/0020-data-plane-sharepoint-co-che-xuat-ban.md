@@ -50,10 +50,12 @@ Máy vận hành  C:\data\news-scape   ──publisher──▶   SharePoint  FR
 |---|---|---|---|
 | `review/monocle_review_<YYYYMMDD>.db` | `VACUUM INTO` từ DB vận hành, chỉ đọc | hằng ngày, giữ 7 bản | không |
 | `parquet/<bảng>/year=YYYY/month=MM/part-<YYYYMMDD>.parquet` | articles, mentions, analysis | hằng ngày | không |
-| `bronze/YYYY/MM/DD/<nguồn>.tar.zst` | raw_html và meta.json của ngày, nén | hằng ngày, sau khi ngày đóng | không |
+| `bronze/YYYY/MM/DD/<nguồn>.tar.xz` | raw_html và meta.json của ngày, nén | hằng ngày, sau khi ngày đóng | không |
 | `users/output/<user>/<YYYY-MM-DD>.xlsx` | giao hàng | theo `write_user_output` | không |
 | `users/subscriptions/` | đăng ký do chuyên viên sửa | người sửa | có (đầu vào) |
 | `_manifest/<YYYYMMDD>.json`, `_manifest/latest.json` | danh sách tệp, kích thước, SHA256, số dòng | mỗi lần xuất bản | chỉ `latest.json` |
+
+Bronze nén bằng `.tar.xz` của `tarfile` trong thư viện chuẩn, để publisher không thêm dependency như zstd.
 
 ### 2.3. Giao thức ghi
 
@@ -115,4 +117,4 @@ Khi GitHub là nơi giữ mã, bản sao trên thư viện `FRA_DataIngestion` t
 
 1. Tài khoản vận hành có quyền ghi trên `sites/FRA/Data` không, và có được tạo thư mục `news/` không.
 2. Có cấp được tài khoản dịch vụ và app registration cho mức L2 không.
-3. Hạn mức dung lượng của thư viện `FRA/Data`. raw_html hiện 3,2 GB chưa nén. HTML nén zstd thường còn 10–20%, nên Bronze nén ước dưới 1 GB mỗi tháng, cần đo lại bằng gói ngày đầu tiên.
+3. Hạn mức dung lượng của thư viện `FRA/Data`. raw_html hiện 3,2 GB chưa nén. HTML nén xz thường còn 10–20%, nên Bronze nén ước dưới 1 GB mỗi tháng, cần đo lại bằng gói ngày đầu tiên.

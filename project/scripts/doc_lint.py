@@ -15,7 +15,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 # Phạm vi kiểm tra. Tài liệu cũ ngoài danh sách này chưa bị áp chuẩn.
 DOC_GLOBS = ("docs/GLOSSARY.md", "docs/templates/*.md", "project/docs/operations/ops-daemon*.md",
-             ".agents/skills/ops-supervision/SKILL.md")
+             "project/docs/operations/publisher.md", ".agents/skills/ops-supervision/SKILL.md")
 ADR_GLOB = "docs/decisions/*.md"
 ADR_MIN_LINT = 14        # blacklist và emoji áp từ ADR này
 ADR_MIN_STRUCTURE = 15   # cấu trúc bắt buộc áp từ ADR này
