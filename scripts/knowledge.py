@@ -201,6 +201,16 @@ def load_legacy(root: Path = REPO_ROOT) -> set[str]:
             if ln.strip() and not ln.startswith("#")}
 
 
+def legacy_files(legacy: set[str]) -> set[str]:
+    """Return only the file paths of a legacy list, without declared ids."""
+    return {p for p in legacy if not p.startswith("id:")}
+
+
+def _declared_ids(legacy: set[str]) -> set[str]:
+    """Return ids declared as `id:<ID>` in legacy.txt: registered work without a file yet."""
+    return {p[3:].strip() for p in legacy if p.startswith("id:")}
+
+
 def _prose_lines(text: str) -> list[str]:
     """Return lines outside fenced blocks, with inline code removed."""
     out, in_fence = [], False
@@ -438,8 +448,8 @@ def lint(root: Path = REPO_ROOT, only: set[str] | None = None) -> list[Finding]:
 
 
 def _legacy_ids(legacy: set[str]) -> set[str]:
-    """Derive ids of unmigrated ADR and story files so links to them still resolve."""
-    out = set()
+    """Derive ids of unmigrated files and declared ids so links to them still resolve."""
+    out = _declared_ids(legacy)
     for p in legacy:
         name = p.split("/")[-1]
         m = re.match(r"^(\d{4})-", name)
@@ -552,7 +562,7 @@ def new_doc(root: Path, dtype: str, title: str, *, lane: str = "normal", author:
         if not re.match(schema["types"][dtype]["id_pattern"], adopt_id) or dtype not in ("adr", "story"):
             raise ValueError(f"--id {adopt_id} is not a valid {dtype} id; only adr and story ids can be adopted")
         taken = {str(d.meta.get("id")) for d in discover(root, schema) if d.has_frontmatter}
-        taken |= _legacy_ids(load_legacy(root))
+        taken |= _legacy_ids(legacy_files(load_legacy(root)))
         if adopt_id in taken:
             raise ValueError(f"{adopt_id} already has a file")
     if dtype == "adr":
@@ -611,7 +621,7 @@ def build_index(root: Path = REPO_ROOT) -> str:
     """
     schema = load_schema(root)
     docs = [d for d in discover(root, schema) if d.has_frontmatter]
-    legacy = sorted(load_legacy(root))
+    legacy = sorted(legacy_files(load_legacy(root)))
     rev = reverse_links(docs)
     lines = [
         "# Knowledge Index",
@@ -687,7 +697,7 @@ def sync_db(root: Path, db_path: str) -> dict[str, Any]:
                    doc_path=excluded.doc_path, updated_at=excluded.updated_at""",
                 (m["id"], m.get("title", ""), m.get("status", "proposed"), d.path, ts, ts))
         conn.commit()
-        file_ids = {str(d.meta["id"]) for d in stories} | _legacy_ids(load_legacy(root))
+        file_ids = {str(d.meta["id"]) for d in stories} | _legacy_ids(legacy_files(load_legacy(root)))
         db_only = sorted(sid for (sid,) in conn.execute("SELECT id FROM story") if sid not in file_ids)
     return {"status": "success", "stories": len(stories), "decisions": len(adrs),
             "db_only_stories": db_only}

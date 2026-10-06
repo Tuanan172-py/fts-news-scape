@@ -82,3 +82,25 @@ plans/20261001-1500-supervisor-control-room/plan.md
 plans/20261001-1630-fpa-toolkit-integration-strategy/plan.md
 plans/20261002-1500-sharepoint-data-plane-and-org-pr/plan.md
 plans/20261005-1800-us038-repo-to-chuc-va-data-plane/plan.md
+# Ids registered in harness.db that have no file yet (G4 writes them).
+id:US-005
+id:US-010
+id:US-016
+id:US-017
+id:US-018
+id:US-019
+id:US-020
+id:US-021
+id:US-022
+id:US-023
+id:US-024
+id:US-025
+id:US-026
+id:US-027
+id:US-028
+id:US-029
+id:US-031
+id:US-032
+id:US-033
+id:US-037
+id:US-038

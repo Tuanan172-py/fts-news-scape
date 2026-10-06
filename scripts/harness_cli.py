@@ -579,7 +579,7 @@ def cmd_audit(db_path: str = DEFAULT_DB_PATH, check_codebase: bool = False) -> d
 
             k_findings = knowledge.lint(knowledge.REPO_ROOT)
             checks["knowledge_contract_findings"] = [str(f) for f in k_findings]
-            checks["knowledge_unmigrated"] = len(knowledge.load_legacy(knowledge.REPO_ROOT))
+            checks["knowledge_unmigrated"] = len(knowledge.legacy_files(knowledge.load_legacy(knowledge.REPO_ROOT)))
             total_penalty += min(0.3, len(k_findings) * 0.02)
         except Exception as e:
             checks["knowledge_contract_error"] = str(e)
