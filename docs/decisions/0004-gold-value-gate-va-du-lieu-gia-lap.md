@@ -1,98 +1,121 @@
-# ADR 0004 — Cổng giá trị cho tầng Gold & xử lý dữ liệu do script giả lập
+---
+id: ADR-0004
+type: adr
+title: Value gate for the Gold tier and handling of script-emulated data
+status: superseded
+lane: high-risk
+created: 2026-09-08
+updated: 2026-10-06
+lang: en
+authors: [operator]
+approvers: ["operator 2026-09-09"]
+story: []
+evidence:
+  - commit:8f13c70
+  - commit:3b6003b
+  - commit:bb47e44
+  - path:project/src/agent/dod.py
+  - path:project/schemas/task-lifecycle-v1.yaml
+  - path:project/tests/test_no_agent_emulation.py
+  - path:project/scripts/verify_gold_quality.py
+  - path:project/schemas/agent-instructions-v1.md
+  - metric:monocle.db read-only 2026-09-08, 1,274 of 1,274 agent_outputs dod_pass=1, 3 distinct implication texts, 1,117 (87.7%) one template
+  - operator:option D1 approved 2026-09-09, recorded in docs/OPEN-ITEMS.md item A2 at commit 3b6003b
+original: "commit:3b6003b"
+reconstructed: 2026-10-06
+summary: Deleted the script that faked Gold analysis, added DoD predicates value_added and implication_specific, locked anti-emulation tests, and flagged 1,274 faked records dod_pass=0 while keeping output_json (option D1). Superseded by ADR-0010.
+summary_vi: Xoá script giả lập phân tích Gold, thêm hai predicate DoD value_added và implication_specific, khoá test chống giả lập, hạ dod_pass=0 cho 1.274 bản ghi giả nhưng giữ output_json (phương án D1).
+---
 
-- **Ngày:** 2026-09-08
-- **Trạng thái:** **accepted** — phần D đã duyệt theo Phương án D1 (2026-09-09)
-- **Lane:** high-risk (chạm dữ liệu không đảo ngược + hợp đồng DoD)
-- **Story:** US-102 · **Backlog:** #3, #4
+# ADR-0004 — Value gate for the Gold tier and handling of script-emulated data
 
-## 1. Bối cảnh
+## Context
 
-Rà soát deliverable người dùng cuối (US-101) làm lộ ra bệnh nặng hơn nhiều so với vấn đề định
-dạng. Đo trên `project/data/monocle.db` (đọc read-only, 2026-09-08):
+- A review of the end-user deliverable (US-101) exposed a problem far worse than formatting. US-101 and US-102 have no story file.
+- Measured on `project/data/monocle.db`, read-only, 2026-09-08:
 
-| Chỉ số | Số liệu |
+| Metric | Value |
 |---|---|
-| `agent_outputs` | 1.274 |
-| `dod_pass = 1` | **1.274 / 1.274 (100%)** |
-| `key_points` copy y hệt `citations[].source_span` | **1.274 / 1.274 (100%)** |
-| `implication.text` | chỉ **3 câu** distinct cho toàn bộ 1.274 bản ghi |
-| trong đó 1 câu template duy nhất | **1.117 (87,7%)** |
-| `impact_area = market` | **1.274 / 1.274 (100%)** |
-| `sentiment = neutral` | 1.191 (93,5%) |
-| `event_type = macro` | 1.143 (89,7%) |
-| gắn nhãn `gemini/gemini-3.7-flash` | 1.139 |
+| `agent_outputs` | 1,274 |
+| `dod_pass = 1` | 1,274 of 1,274 (100%) |
+| `key_points` identical to `citations[].source_span` | 1,274 of 1,274 (100%) |
+| `implication.text` | only 3 distinct sentences across all 1,274 records |
+| of which one single template sentence | 1,117 (87.7%) |
+| `impact_area = market` | 1,274 of 1,274 (100%) |
+| `sentiment = neutral` | 1,191 (93.5%) |
+| `event_type = macro` | 1,143 (89.7%) |
+| labelled `gemini/gemini-3.7-flash` | 1,139 |
 
-## 2. Nguyên nhân gốc
+### Root cause
 
-`project/scripts/maintenance/repair_truncated_outputs.py` **giả lập trí tuệ Agent bằng
-heuristic script** — vi phạm trực tiếp AGENTS.md §6.C:
+- `project/scripts/maintenance/repair_truncated_outputs.py` emulated agent intelligence with a heuristic script, in direct breach of `AGENTS.md` §6.C.
+- `extract_sentences()` split sentences by regex and took the first 3 as `summary.abstractive`. So 58% of records had a summary starting with the title itself.
+- `key_points = [c["source_span"] for c in citations[:4]]` made key points equal to the cited spans, which explains the 100% above.
+- It hard-coded `implication.text` to a template, plus `impact_area="market"`, `materiality.score=0.6`, `time_sensitivity="this_week"`, `sentiment="neutral"`, `event_type="macro"`, `confidence=0.85` and `extraction_quality="high"`.
+- It ran `UPDATE agent_outputs … SET agent_provider='gemini', model_used='gemini-3.7-flash'`. This faked provenance, even overwriting `stub` with `gemini`, so regex records became indistinguishable from real LLM records.
+- At its end the script called `UserOutputWriter.write(days=30)`, pushing straight to user files.
 
-- `extract_sentences()` tách câu bằng regex, lấy 3 câu đầu làm `summary.abstractive`
-  (nên 58% bản ghi có tóm tắt mở đầu bằng chính tiêu đề — `cleaned_text` bắt đầu bằng tiêu đề);
-- `key_points = [c["source_span"] for c in citations[:4]]` — điểm chính = đúng các đoạn đã trích
-  (giải thích 100% ở bảng trên);
-- gán CỨNG `implication.text` = câu template, `impact_area="market"`, `materiality.score=0.6`,
-  `time_sensitivity="this_week"`, `sentiment="neutral"`, `event_type="macro"`,
-  `confidence=0.85`, `extraction_quality="high"`;
-- `UPDATE agent_outputs … SET agent_provider='gemini', model_used='gemini-3.7-flash'` —
-  **giả provenance**, kể cả ghi đè `stub` → `gemini`, khiến bản ghi do regex sinh ra không thể
-  phân biệt với bản ghi LLM thật;
-- cuối script tự gọi `UserOutputWriter.write(days=30)` → đẩy thẳng ra file người dùng.
+### Why the DoD gate did not block
 
-**Vì sao cổng DoD không chặn.** 4 predicate cũ (`schema_valid`, `grounded`, `quality_ok`,
-`auditable`) đo *tính có căn cứ*, không đo *có phân tích*. Với output copy nguyên văn thì phép
-thử `source_span ⊂ cleaned_text` trở nên **hiển nhiên đúng**; `extraction_quality` là tự khai.
-Một cổng chưa từng từ chối bản ghi nào (1.274/1.274 pass) thì không phải là cổng.
+- The four old predicates (`schema_valid`, `grounded`, `quality_ok`, `auditable`) measure grounding, not analysis.
+- For verbatim-copied output the test `source_span ⊂ cleaned_text` is trivially true, and `extraction_quality` is self-declared.
+- A gate that has never rejected a record (1,274 of 1,274 passed) is not a gate.
 
-## 3. Quyết định
+## Decision
 
-### A. Xoá nguồn giả lập — ĐÃ LÀM
-`scripts/maintenance/repair_truncated_outputs.py` bị xoá. Không sửa thành "bản nhẹ hơn": mọi
-biến thể của nó đều là script viết nội dung Gold.
+- D1 (part A, done). `scripts/maintenance/repair_truncated_outputs.py` is deleted. It MUST NOT be repaired into a lighter version, because every variant of it is a script writing Gold content.
+- D2 (part B, done). `src/agent/dod.py::check_dod` gains two predicates:
 
-### B. Vá cổng DoD bằng 2 predicate mới — ĐÃ LÀM
-`src/agent/dod.py::check_dod` thêm:
-
-| Predicate | Nội dung |
+| Predicate | Rule |
 |---|---|
-| `value_added` | `summary.abstractive` (chuẩn hoá) **không** là chuỗi con của `cleaned_text`; không `key_points[i]` nào trùng nguyên văn một `citations[].source_span` |
-| `implication_specific` | `len(implication.text) ≥ 40`; không là chuỗi con của `cleaned_text`; không khớp `thresholds.boilerplate_implications` |
+| `value_added` | Normalized `summary.abstractive` is not a substring of `cleaned_text`; no `key_points[i]` equals a `citations[].source_span` verbatim |
+| `implication_specific` | `len(implication.text) ≥ 40`; not a substring of `cleaned_text`; does not match `thresholds.boilerplate_implications` |
 
-Đây vẫn là **validation tất định** — nó chỉ TỪ CHỐI, không tự sinh nội dung, nên không vi phạm
-§6.C. Ngưỡng và blocklist nằm trong `schemas/task-lifecycle-v1.yaml` để chỉnh mà không đổi code.
+- D2 remains deterministic validation. It only rejects and never generates content, so it does not breach §6.C. Thresholds and the blocklist live in `schemas/task-lifecycle-v1.yaml`, editable without code changes.
+- D3 (part C, done). `tests/test_no_agent_emulation.py` locks three invariants:
+  1. Only `src/db/store.py` may write SQL touching `agent_outputs` or `l1_outputs`.
+  2. Only `runner.py` and `l1_runner.py` may call `insert_*_output`, so every record is scored by DoD.
+  3. `repair_truncated_outputs.py` MUST stay deleted.
+- D3 also updates `schemas/agent-instructions-v1.md` §2b to state that only `citations` may be copied. `schemas/samples/agent-output-sample.json` is fixed, because the sample itself had `key_points == source_span`.
+- D4 (part D, approved 2026-09-09 as option D1). For the 1,274 overwritten records, set `dod_pass=0` on records that fail the new gate and KEEP `output_json`. Hard gate per `AGENTS.md` Tier 3.
 
-### C. Khoá bất biến chống tái phạm — ĐÃ LÀM
-`tests/test_no_agent_emulation.py`:
-1. chỉ `src/db/store.py` được viết SQL chạm `agent_outputs`/`l1_outputs`;
-2. chỉ `runner.py`/`l1_runner.py` được gọi `insert_*_output` (tức mọi bản ghi đều bị chấm DoD);
-3. `repair_truncated_outputs.py` phải ở trạng thái đã xoá.
+### Amendment history
 
-Kèm theo: `schemas/agent-instructions-v1.md` §2b nêu rõ chỉ `citations` được copy; và
-`schemas/samples/agent-output-sample.json` được sửa vì **chính nó** đang mắc lỗi
-`key_points == source_span` — agent bắt chước mẫu thì học đúng lỗi đó.
+- 2026-09-08 (commit 8f13c70): parts A to C executed; part D awaiting operator approval as a hard gate. It touched irreversible data and 424 rows already delivered. The tool `scripts/verify_gold_quality.py` was ready but not run (read-only by default; `--apply` writes).
+- 2026-09-09 (commit 3b6003b): operator approved option D1; status set to accepted.
 
-### D. Dữ liệu 1.274 bản ghi đã bị ghi đè — **ĐÃ DUYỆT (Phương án D1)**
-Hard gate (AGENTS.md Cấp 3): Human Operator đã duyệt Phương án D1 ngày 2026-09-09.
+## Alternatives
 
-| Phương án | Hệ quả | Đánh giá | Trạng thái |
-|---|---|---|---|
-| **D1. Hạ `dod_pass=0` cho bản ghi trượt cổng mới, GIỮ `output_json`** | Bài rời deliverable, tự quay lại hàng đợi Gold; số dòng giao giảm mạnh trong ngắn hạn; không mất dữ liệu gốc | **Khuyến nghị** — trung thực, đảo ngược được (chỉ là cờ) | **CHẤP THUẬN (Đang áp dụng)** |
-| D2. Giữ nguyên, chỉ siết cho bản ghi mới | Deliverable tiếp tục chứa nội dung template vô giá trị | Không giải quyết được vấn đề | Bác bỏ |
-| D3. Xoá hẳn các bản ghi giả lập | Mất luôn `citations` có thật đã trích được | Phá huỷ quá mức | Bác bỏ |
+| Option | Why rejected |
+|---|---|
+| D1. Set `dod_pass=0` on records failing the new gate, keep `output_json` | Chosen. Articles leave the deliverable and return to the Gold queue; reversible because it is only a flag. |
+| D2. Keep the records, tighten only new records | The deliverable keeps worthless template content; does not solve the problem. |
+| D3. Delete the emulated records | Also loses the real `citations` already extracted; destroys too much. |
+| Repair the emulation script into a lighter version | Every variant still writes Gold content by script (original part A). |
 
-## 4. Hệ quả đã biết
+## Consequences
 
-- Cổng mới sẽ **đánh trượt gần như 100% output theo lối cũ**. Đây là chủ đích: pipeline sẽ
-  không giao hàng "đầy đủ" cho tới khi prompt agent được cập nhật theo §2b và chạy lại. Bài chỉ
-  có L1 vẫn giao bình thường ở trạng thái `Sơ bộ` — cơ chế L1-only gate không đổi.
-- `sentiment` / `event_type` / `impact_area` gần như hằng số là **triệu chứng cùng gốc**.
-  `impact_area` và `event_type` đã bị loại khỏi deliverable ở US-101; hai cột này chỉ nên bật
-  lại khi `verify_gold_quality` cho thấy phân bố thật.
-- Cổng theo từng bản ghi không phát hiện được "cả tập giống nhau" → phải chạy
-  `verify_gold_quality.py` định kỳ, xem `implication_distinct` như một chỉ số sức khoẻ.
+- The new gate rejects almost 100% of old-style output. This is intended: no "full" delivery until the agent prompt follows §2b and reruns.
+- Articles with L1 only still deliver as `Sơ bộ`; the L1-only gate mechanism is unchanged.
+- Near-constant `sentiment`, `event_type` and `impact_area` share the same root cause.
+- `impact_area` and `event_type` were removed from the deliverable in US-101. They should return only when `verify_gold_quality` shows a real distribution.
+- A per-record gate cannot detect a whole set being identical. `verify_gold_quality.py` MUST run periodically, with `implication_distinct` as a health metric.
+- `docs/OPEN-ITEMS.md` at commit 3b6003b records `verify_gold_quality.py --apply` as executed, setting `dod_pass=0` on all 1,274 records with `output_json` kept.
 
-## 5. Tham chiếu
-- AGENTS.md §6.C — Cấm giả lập trí tuệ Agent bằng heuristic script
-- `docs/FEATURE_INTAKE.md` — hard gate "thay đổi dữ liệu không đảo ngược"
-- `project/docs/design/13-per-user-output-workflow.md` §8, §10
-- `project/schemas/task-lifecycle-v1.yaml` §definition_of_done, §thresholds
+### Current status (2026-10-06)
+
+- Superseded by ADR-0010 (commit bb47e44), which retired the Gold tier; the Article Lane is the only lane.
+- D1 and D3: still enforced; `project/tests/test_no_agent_emulation.py` keeps its three tests.
+- D2: `value_added` and `implication_specific` still run in `check_dod`, which the Article Lane ingest gate calls (ADR-0010.D3).
+- D4: executed once on 2026-09-09; no further effect.
+- The ban on `materiality`, `event_type` and `impact_area` in model output now comes from `AGENTS.md` §6A, not from this ADR.
+
+## Rollback
+
+- D4 is reversible because it only flips a flag and `output_json` was kept: set `dod_pass=1` again on the affected records (reconstructed from option D1).
+- D1 to D3 are reverted with `git revert` of commit 8f13c70. Only the operator may order it, as a Tier 3 change.
+
+## Follow-up
+
+- [x] Operator decision on part D (option D1, 2026-09-09).
+- [ ] Run `verify_gold_quality.py` periodically and track `implication_distinct`. Not confirmed as scheduled.

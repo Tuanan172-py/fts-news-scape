@@ -12,11 +12,6 @@
 .agents/rules/10-thu-thap-tron-ven.md
 .agents/rules/11-hop-dong-dau-ra-thong-nhat.md
 .agents/rules/entity-system-invariants.md
-docs/decisions/0001-harness-first-approach.md
-docs/decisions/0002-durable-layer-sqlite-python.md
-docs/decisions/0003-code-first-l1-delivery.md
-docs/decisions/0004-gold-value-gate-va-du-lieu-gia-lap.md
-docs/decisions/0005-subscriber-gated-gold-va-morphological-l1-guard.md
 docs/decisions/0006-agent-network-registry-pipeline-metrics.md
 docs/decisions/0007-silver-watermark-integrity-va-bang-silver-failures.md
 docs/decisions/0008-gold-activation-human-in-the-loop-va-tran-token.md
