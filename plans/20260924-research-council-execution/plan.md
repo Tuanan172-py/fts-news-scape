@@ -1,6 +1,6 @@
 # Plan thực thi — xử lý toàn bộ phát hiện của hội đồng nghiên cứu 2026-09-24
 
-- **Nguồn:** `docs/proposals/research-council-2026-09-24.md`
+- **Nguồn:** `docs/proposals/20260924-research-council.md`
 - **Trạng thái:** chờ duyệt. Chưa agent nào được giao việc.
 - **Quyết định đã chốt (người dùng, 2026-09-24):** ngừng dùng `materiality` và `event_type`, giữ đầu ra sạch. Mọi xếp hạng hay cảnh báo chỉ dùng tín hiệu sẵn có: `time_sensitivity`, tầng watchlist, kích thước cụm và số nguồn.
 
@@ -14,7 +14,7 @@
 | Fixture test bỏ ba trường, `time_sensitivity` lên cấp đỉnh | `project/tests/_userkit.py` | như trên |
 | AGENTS.md §2, §6A: bỏ `materiality`, thêm điều khoản "đầu ra sạch" | `AGENTS.md` | đọc lại |
 | `materiality-triage` → `retired`; gỡ stage `materiality_triage` | `.agents/registry.yaml`, `.agents/pipeline.yaml` | `yaml.safe_load` OK |
-| Báo cáo hội đồng sửa theo quyết định | `docs/proposals/research-council-2026-09-24.md` | — |
+| Báo cáo hội đồng sửa theo quyết định | `docs/proposals/20260924-research-council.md` | — |
 
 Dữ liệu raw trong DB (`agent_outputs.output_json` cũ theo lược đồ v1) **không bị sửa**. Chỉ đường đọc và đường xuất bỏ ba trường này.
 

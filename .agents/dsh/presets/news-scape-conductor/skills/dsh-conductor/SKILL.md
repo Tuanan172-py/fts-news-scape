@@ -9,7 +9,7 @@ description: Điều phối đợt xử lý bài đăng trên DSH — chạy tr�
 
 - `.agents/dsh/RUNBOOK-article-lane.md` — quy trình vận hành, đọc cái này trước
 - `plans/20260918-1651-article-lane-unified/plan.md` — thiết kế và lý do
-- `docs/proposals/dsh-surface-verified-2026-09-18.md` — bề mặt DSH kèm số dòng mã nguồn
+- `docs/proposals/20260918-dsh-surface-verified.md` — bề mặt DSH kèm số dòng mã nguồn
 - `.agents/pipeline.yaml` · `.agents/registry.yaml` — DAG và danh sách tác nhân
 
 ---

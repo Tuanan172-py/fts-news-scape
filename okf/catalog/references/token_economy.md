@@ -24,7 +24,7 @@ sources:
     resource: project/scripts/estimate_wave.py
     title: Dự toán trước đợt và đối chiếu sau đợt
   - id: surface
-    resource: docs/proposals/dsh-surface-verified-2026-09-18.md
+    resource: docs/proposals/20260918-dsh-surface-verified.md
     title: Bề mặt DSH đã xác minh bằng mã nguồn
   - id: plan
     resource: plans/20260918-1651-article-lane-unified/plan.md

@@ -16,8 +16,8 @@ evidence:
   - commit:bfbd5e6
   - path:plans/20260924-1627-codebase-audit-cleanup-modularization/plan.md
   - path:plans/20260924-1627-codebase-audit-cleanup-modularization/reports/R2-architecture-critique.md
-  - path:docs/proposals/research-council-2026-09-24.md
-  - path:docs/proposals/dedup-architecture-2026-10-01.md
+  - path:docs/proposals/20260924-research-council.md
+  - path:docs/proposals/20261001-dedup-architecture.md
   - 'metric:about 1,566 hashes in seen_articles with no row in articles, including CBTT titles such as "VHM: CBTT...", research council finding L1, 2026-09-24'
 original: "commit:dd1e709"
 reconstructed: 2026-10-06
@@ -31,7 +31,7 @@ This whole record is reconstructed on 2026-10-06 from the sources in `evidence`.
 
 ## Context
 
-- The research council of 2026-09-24 found that crawl-layer fuzzy dedup dropped articles, even comparing a source against itself (finding L1, reconstructed from `docs/proposals/research-council-2026-09-24.md`).
+- The research council of 2026-09-24 found that crawl-layer fuzzy dedup dropped articles, even comparing a source against itself (finding L1, reconstructed from `docs/proposals/20260924-research-council.md`).
   - `src/core/base_scraper.py` passed `self.name` ("cafef") while `seen_articles.source_domain` also held "cafef.vn". The `!=` filter in `dedup.py` therefore failed to exclude the same source.
   - `token_set_ratio` returns 100 when one title is a subset of another.
   - About 1,566 hashes existed in `seen_articles` with no row in `articles`, including disclosure titles such as "VHM: CBTT…". No Bronze was stored, so they could not be recovered.

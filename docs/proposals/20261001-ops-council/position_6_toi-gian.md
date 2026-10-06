@@ -1,7 +1,7 @@
 # Lập trường 6 — Phản biện tối giản (YAGNI) cho plan vận hành tự chủ 24/7
 
 - **Ngày:** 2026-10-01
-- **Vai:** devil's advocate, chỉ đọc. Nguồn: `plans/20261001-1100-autonomous-ops-24x7/plan.md`, `project/scripts/article_tick.py`, ADR 0011, `docs/proposals/agy-automation-council-2026-09-23.md`, `docs/proposals/research-council-2026-09-24.md`, `docs/OPEN-ITEMS.md`, `docs/SESSION-LATEST.md`, radar lúc 10:41.
+- **Vai:** devil's advocate, chỉ đọc. Nguồn: `plans/20261001-1100-autonomous-ops-24x7/plan.md`, `project/scripts/article_tick.py`, ADR 0011, `docs/proposals/20260923-agy-automation-council.md`, `docs/proposals/20260924-research-council.md`, `docs/OPEN-ITEMS.md`, `docs/SESSION-LATEST.md`, radar lúc 10:41.
 - **Bối cảnh đội ngũ:** một người vận hành kiêm dev, một máy Windows, một lane.
 
 ---

@@ -133,7 +133,7 @@ WIP=1 ở mức story. Song song chỉ ở mức task có tập tệp rời nhau
 | 0014 | Provenance và backfill 664 dòng `agent_outputs` | S3 (phần backfill) |
 | 0015 | Chính sách fuzzy dedup cho tin CBTT | S1 (phần miễn fuzzy) |
 
-Đề xuất `agy-automation-council-2026-09-23.md` đang tự gọi mình là "ADR 0010" và "Intake #25", cả hai số đã dùng. Đổi số trong S0.
+Đề xuất `20260923-agy-automation-council.md` đang tự gọi mình là "ADR 0010" và "Intake #25", cả hai số đã dùng. Đổi số trong S0.
 
 ## 7. Quyết định cần người dùng
 

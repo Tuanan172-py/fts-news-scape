@@ -149,7 +149,7 @@ flowchart TD
 - DB có 838 dòng `antigravity/flash`, mới nhất 23/09 16:55. Toàn bộ 664 dòng từ 18/09 có `confidence=0.9` [V `e_db_ro.py`].
 - Lớp L1 thì ghi đúng `dsh/deepseek-flash` (`article_expand.py:53-54, 235-240`). Một bài vì vậy mang hai nhãn nguồn khác nhau.
 - `user_output._agent_row` đọc `processing_metadata` rồi `ag.get("agent_provider")`, nên cột `agent_provider` và `model_used` trong xlsx để trống cho mọi bài của Article Lane (`src/export/user_output.py:308-322`).
-- Hội đồng Jev ghi "Provenance: không đổi" (`docs/proposals/jev-integration-council-2026-09-24.md:162`) và bỏ sót lỗi này.
+- Hội đồng Jev ghi "Provenance: không đổi" (`docs/proposals/20260924-jev-integration-council.md:162`) và bỏ sót lỗi này.
 
 **Đề xuất.**
 - `article_expand` truyền provider và model vào hàm nạp: đọc từ cấu hình preset hoặc từ tham số `--finish`, không hardcode. `runner.ingest_output` ghi NULL khi thiếu, không bịa. Test: nạp bản ghi lean → DB mang `dsh/deepseek-flash`, `confidence IS NULL`. **Cấp 2** (trùng T3.3a).

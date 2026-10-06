@@ -10,7 +10,7 @@ lang: en
 authors: [claude-opus-5-5]
 adr: [ADR-0012]
 evidence:
-  - "path: docs/proposals/ops-council-2026-10-01.md"
+  - "path: docs/proposals/20261001-ops-council.md"
   - "operator: 2026-10-01 decisions D1' and D8 to D13 after the ops council"
 summary: The operator chose Telegram, full article text to every provider, running only while the machine is on, no per-wave approval, and per-user delivery separate from waves.
 ---
@@ -19,7 +19,7 @@ summary: The operator chose Telegram, full article text to every provider, runni
 
 ## Fact
 
-Decisions of 2026-10-01 after the council in `docs/proposals/ops-council-2026-10-01.md` section 9:
+Decisions of 2026-10-01 after the council in `docs/proposals/20261001-ops-council.md` section 9:
 
 - Telegram (BotFather) is the main channel.
 - Full cleaned article text (packet with `i/t/p` only) goes to every provider. Articles are public, with no copyright issue.

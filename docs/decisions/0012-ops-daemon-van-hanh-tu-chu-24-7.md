@@ -16,7 +16,7 @@ evidence:
   - commit:579163c
   - commit:4e461cd
   - path:plans/20261001-1100-autonomous-ops-24x7/plan.md
-  - path:docs/proposals/ops-council-2026-10-01.md
+  - path:docs/proposals/20261001-ops-council.md
   - path:project/docs/operations/ops-daemon.md
   - path:project/src/ops/dbos_flow.py
   - path:project/scripts/ops_install.ps1
@@ -45,7 +45,7 @@ Measured on 2026-10-01:
 - No durable wave state existed: a crash mid-wave lost track of the wave.
 - The operator had to be present to trigger each wave.
 
-The plan `plans/20261001-1100-autonomous-ops-24x7/plan.md` compared workflow engines and human channels for one Windows machine. A six-position review council (`docs/proposals/ops-council-2026-10-01.md`) then found seven blocking items (B1 to B7) and asked the operator to decide D1' and D8 to D14. The original title said "24/7"; the amendment below limits operation to the time the machine is on.
+The plan `plans/20261001-1100-autonomous-ops-24x7/plan.md` compared workflow engines and human channels for one Windows machine. A six-position review council (`docs/proposals/20261001-ops-council.md`) then found seven blocking items (B1 to B7) and asked the operator to decide D1' and D8 to D14. The original title said "24/7"; the amendment below limits operation to the time the machine is on.
 
 ## Decision
 
@@ -99,7 +99,7 @@ The amendment history at the end of this section overrides D1 (24/7 scope), D5 (
 
 ### Amendment history
 
-**2026-10-01, after the review council (in force; replaces conflicting items above).** Source: `docs/proposals/ops-council-2026-10-01.md` §2 (blocking items B1 to B7) and §9 (operator decisions D1', D8 to D14).
+**2026-10-01, after the review council (in force; replaces conflicting items above).** Source: `docs/proposals/20261001-ops-council.md` §2 (blocking items B1 to B7) and §9 (operator decisions D1', D8 to D14).
 
 - Operating model (D9, D10 of the council). No 24/7 operation. The daemon runs while the machine is on; when it sleeps or shuts down, everything stops and articles wait.
   - Disabling sleep, auto-logon and Defender exclusions are dropped.

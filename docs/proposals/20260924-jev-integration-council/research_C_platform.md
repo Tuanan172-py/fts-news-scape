@@ -69,7 +69,7 @@ Nhận xét kết cấu [I]:
 | Phiên điều phối chạy preset `news-scape-conductor`, `mode: ptc`. Một đợt = **một** `run_code` chạy `wave_<mã>.conductor.ts` do `article_run.py:120-236 conductor_program()` sinh | [V] |
 | Chương trình gọi `tools.read` (đọc packet theo cửa sổ dòng), `tools.agent_article` (worker), `tools.write` (ghi output). Hâm cache khi ≥ 2 lô | [V] `article_run.py:153-219` |
 | Worker `agent_article`: row `dsh-tool-subagent`, `provider: spawn`, `agentOptions: {provider: deepseek-official, model: deepseek-flash, reasoningEffort: "off"}`, `toolFilter.allow: []`, `maxDepth: 1`, `backgroundMode: one-shot` | [V] `agent.cordis.yml:192-545` |
-| `maxDepth: 0` **cấm delegation hoàn toàn** (con đầu đã là depth 1) → phải là 1 | [V] `agent.cordis.yml:172-176`; `dsh-surface-verified-2026-09-18.md` |
+| `maxDepth: 0` **cấm delegation hoàn toàn** (con đầu đã là depth 1) → phải là 1 | [V] `agent.cordis.yml:172-176`; `20260918-dsh-surface-verified.md` |
 | Dưới `ptc`, `run_code` được chèn lại **sau** `toolFilter` → con không bao giờ 0 tool thật, chỉ "sdkSchemas rỗng + turns == 1" | [V] `agent.cordis.yml:178-183` |
 | Row subagent chỉ có 9 khoá, `agentOptions` 4 khoá (`provider, model, reasoningEffort, maxTokens`); con không đặt được `mode`, kế thừa của cha | [V] `dsh-surface-verified` §6.1 |
 | Chỉ `print`/`return` của chương trình vào ngữ cảnh cha; kết quả con ở lại log bền | [V] `agent.cordis.yml:566-585` |
@@ -91,7 +91,7 @@ Nhận xét kết cấu [I]:
 
 | Sự thật | Nhãn |
 |---|---|
-| Kiến trúc chọn: **Python là conductor**, `agy -p` là hàm nhận thức thuần một tiến trình/một lô/một lượt, không tool, hồ sơ worker cô lập, stdin `stream-json`, Python parse + validate | [S] `docs/proposals/agy-automation-council-2026-09-23.md` §0, §3 |
+| Kiến trúc chọn: **Python là conductor**, `agy -p` là hàm nhận thức thuần một tiến trình/một lô/một lượt, không tool, hồ sơ worker cô lập, stdin `stream-json`, Python parse + validate | [S] `docs/proposals/20260923-agy-automation-council.md` §0, §3 |
 | Kích hoạt bằng Task Scheduler `article_tick.py`, thang tự chủ L0→L1→L2, kill switch, quota guard | [S] như trên §3.4–3.5 |
 | Trạng thái: **proposal**, Tier 3, cần ADR + Human duyệt; số ADR "0010" trong đề xuất **đã bị ADR 0010 (ngừng lane L1/Gold) chiếm** → ADR agy phải lấy số mới | [V] `docs/decisions/` |
 | ⇒ Với agy, Python đã là conductor, nên Jev cắm vào đúng chỗ đó (một hàm `jev_classify()` trong vòng `article_run --runner agy`) mà không phụ thuộc agy. Jev độc lập với lựa chọn runner DSH/agy | [I] |

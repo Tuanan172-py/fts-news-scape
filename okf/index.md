@@ -59,7 +59,7 @@ OKF **mô tả** hệ thống; nguồn đúng vẫn là code và `project/docs/`
 - `project/schemas/` — 5 hợp đồng JSON Schema + hướng dẫn prompt
 - `.agents/dsh/` — vận hành Article Lane trên DSH: `RUNBOOK-article-lane.md` (gõ gì),
   `WORKFLOW-article-lane.md` (sáu lưu đồ), `DSH-VIEC-THU-CONG.md` (việc chỉ làm được bằng tay)
-- `docs/proposals/dsh-surface-verified-2026-09-18.md` — bề mặt DSH xác minh bằng mã nguồn
+- `docs/proposals/20260918-dsh-surface-verified.md` — bề mặt DSH xác minh bằng mã nguồn
 
 ## Kiểm tra độ tươi
 

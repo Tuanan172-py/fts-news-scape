@@ -10,7 +10,7 @@ lang: en
 authors: [claude-opus-5-5]
 adr: []
 evidence:
-  - "path: docs/proposals/dsh-surface-verified-2026-09-18.md"
+  - "path: docs/proposals/20260918-dsh-surface-verified.md"
   - "path: .agents/dsh/RUNBOOK-article-lane.md"
 summary: In DSH 0.1.5 a PTC parent can only spawn PTC children that always keep run_code, and maxDepth 0 forbids any delegation.
 ---

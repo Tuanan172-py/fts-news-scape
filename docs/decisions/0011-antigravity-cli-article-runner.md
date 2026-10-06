@@ -15,8 +15,8 @@ related: [ADR-0010]
 evidence:
   - commit:dd1e709
   - commit:8ec12f8
-  - path:docs/proposals/agy-automation-council-2026-09-23.md
-  - path:docs/proposals/agy-council-2026-09-23/spike2-RESULTS.md
+  - path:docs/proposals/20260923-agy-automation-council.md
+  - path:docs/proposals/20260923-agy-automation-council/spike2-RESULTS.md
   - path:project/src/agent/agy_runner.py
   - path:project/scripts/article_tick.py
   - test:project/tests/test_agy_runner.py
@@ -40,7 +40,7 @@ summary_vi: Thêm runner agy chạy headless song song DSH; Python điều phố
   - Sandbox writable roots. DSH writes only inside the repository or a temp folder, while the production DB lives at `C:\data\news-scape\monocle.db`, outside OneDrive sync.
   - Load at mount (rule 09). DSH loads the preset when the host starts; config edits without a host restart drift silently.
   - Subscription model. The project uses a paid Antigravity account with a "Work Done" pool refreshed every 5 hours. It is metered by session quota, not per token.
-- A three-position architecture council with two spikes evaluated agy automation on 2026-09-23 (`docs/proposals/agy-automation-council-2026-09-23.md`). It verified that `agy -p` ignores stdin in text mode and that `--json-schema` conflicts with zero tools (council F1, F8).
+- A three-position architecture council with two spikes evaluated agy automation on 2026-09-23 (`docs/proposals/20260923-agy-automation-council.md`). It verified that `agy -p` ignores stdin in text mode and that `--json-schema` conflicts with zero tools (council F1, F8).
 
 ## Decision
 
