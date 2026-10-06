@@ -14,12 +14,16 @@ Kế hoạch và hướng dẫn từng bước: [`plans/20261005-1800-us038-repo
 
 | Mục | Ai | Việc | Trạng thái |
 |---|---|---|---|
-| N1 | Người | `git push fpa import/clean-20261005:refs/heads/main` | CHẶN mọi bước sau |
-| N2 | Người | Chuyển `C:\data\news-scape\raw_html` cũ vào archive | Chờ |
-| N3 | Người | Duyệt ADR 0020, kiểm quyền ghi `sites/FRA/Data`, tạo `news/` | CHẶN A4 |
-| A1–A3 | Agent | Chuyển nhánh sang `fpa/main`, cách ly test, `core/paths.py` | Chờ N1 |
-| N4 | Người + agent | Khung chuyển đổi: mã sang `C:\src\news-scraper`, dữ liệu sang `C:\data\news-scape` | Chờ A3 |
-| A4, N5 | Agent, người | Publisher L1 và kiểm lần xuất bản đầu | Chờ N3, N4 |
+| N1 | Người | `git push fpa import/clean-20261005:refs/heads/main` (đang chờ cấp quyền GitHub) | CHẶN PR |
+| N2 | Người | Chuyển `C:\data\news-scape\raw_html` cũ vào archive | Xong 2026-10-05 |
+| N3 | Người | ADR 0020 đã duyệt. Còn: quyền ghi `sites/FRA/Data`, hạn mức, khả năng xin L2 (§6) | CHẶN bật publisher |
+| A1 | Agent | Nhánh `dev/us038` tách từ snapshot df021e6, worktree `C:\src\news-scraper-dev` | Xong |
+| A2 | Agent | Cách ly test, chốt chặn DB vận hành (0474966) | Xong |
+| A3 | Agent | `core/paths.py`, tài sản sang `project/assets`, `migrate_data_root.py`, test kín (5a73ad5) | Xong, 888 passed, 1 fail có từ trước (`test_inherit`) |
+| A4 | Agent | Publisher một chiều, probe, runbook `project/docs/operations/publisher.md` (69142e7) | Xong, mặc định tắt |
+| PR | Người | Sau N1: `git push fpa dev/us038`, mở PR `dev/us038` → `main` | Chờ N1 |
+| N4 | Người + agent | Khung chuyển đổi theo plan §N4 | Chờ PR merge |
+| N5 | Người | Bật publisher, kiểm lần xuất bản đầu | Chờ N3, N4 |
 | N6, N7 | Người | Ngừng đồng bộ thư mục mã cũ sau 14 ngày; xin ứng dụng Graph cho L2 | Sau |
 
 ---
