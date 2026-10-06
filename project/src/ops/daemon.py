@@ -15,7 +15,7 @@ from src.ops.config import OpsPaths
 from src.ops.order import PROVIDERS, load_order
 from src.ops.present import alert_card
 from src.ops.probes import (apply_edges, probe_capture, probe_coverage, probe_db, probe_dead_letter,
-                            probe_disk, probe_order)
+                            probe_disk, probe_order, probe_publish)
 from src.ops.sensor import cooldown_active, decide, read_pending
 from src.ops.store import ACTIVE_WAVE_STATUSES, OpsStore, iso, now_vn, parse_iso
 from src.ops.supervisor import CaptureSupervisor
@@ -274,6 +274,7 @@ class OpsDaemon:
             ("digest", 30, self.digest_tick),
             ("mandate", 600, self.mandate_tick),
             ("improve", 3600, self.improve_tick),
+            ("publish", 600, self.publish_tick),
         ):
             if self._due(name, every):
                 try:
@@ -326,7 +327,42 @@ class OpsDaemon:
                                       int(p["dead_letter_alert_delta"])),
                     probe_coverage(self.monocle_db),
                     probe_order(self.paths.standing_order)]
+        if (self.cfg.get("publish") or {}).get("enabled"):
+            from src.export.publisher import publish_target
+            results.append(probe_publish(publish_target(), self.cfg["publish"]))
         apply_edges(self.store, results)
+
+    def publish_tick(self) -> None:
+        """Xuất bản ngày hôm qua lên SharePoint một lần mỗi ngày, ở luồng riêng (ADR 0020).
+
+        Chỉ chạy khi `publish.enabled` bật, `NEWS_SCAPE_PUBLISH_DIR` có giá trị và đã qua
+        `publish.hour`. Ngày đạt `ok` thì không chạy lại; lỗi chỉ ghi sự kiện, lần sau làm tiếp.
+        """
+        cfg = self.cfg.get("publish") or {}
+        from src.export.publisher import publish_day, publish_target
+        if not cfg.get("enabled") or publish_target() is None:
+            return
+        now = now_vn()
+        if now.hour < int(cfg.get("hour", 1)):
+            return
+        day = now.date() - timedelta(days=1)
+        key = f"publish:{day.isoformat()}"
+        if self.store.get_state(key) == "ok" or getattr(self, "_publishing", False):
+            return
+        self._publishing = True
+
+        def work() -> None:
+            try:
+                res = publish_day(day, keep_review_days=int(cfg.get("keep_review_days", 7)))
+                self.store.set_state(key, res.status)
+                level = {"ok": "info", "partial": "warn", "disabled": "info"}.get(
+                    res.status, "error")
+                self.store.emit(f"publish.{res.status}", res.message, level=level,
+                                data=res.to_dict())
+            finally:
+                self._publishing = False
+
+        threading.Thread(target=work, name="publisher", daemon=True).start()
 
     def digest_tick(self) -> None:
         """Gửi bản tin vào các mốc giờ cấu hình, mỗi mốc một lần mỗi ngày."""

@@ -78,3 +78,9 @@ alerts:
 
 telegram:
   poll_timeout_seconds: 25
+
+publish:                         # xuất bản một chiều lên SharePoint (ADR 0020); đích là NEWS_SCAPE_PUBLISH_DIR
+  enabled: false                 # bật sau khi người vận hành xác nhận quyền ghi trên thư mục đích
+  hour: 1                        # xuất bản ngày hôm qua sau giờ này
+  keep_review_days: 7            # số bản review/monocle_review_<ngày>.db giữ lại ở đích
+  stale_hours: 26                # latest.json cũ hơn mức này thì probe báo đỏ
