@@ -5,7 +5,7 @@ Thay cho lệnh xoá trắng cũ trong `run_daily.ps1` (`Get-ChildItem -Recurse`
 ai chạm tới (ADR 0008 §1, `docs/OPEN-ITEMS.md` §A0-2).
 
 Bằng chứng hoàn tất lấy từ database, không suy đoán theo tên tệp:
-  - packet L1   → `l1_outputs.dod_pass = 1`
+  - packet L1   → `l1_outputs.dod_pass = 1` và không phải bản code-first
   - packet Gold → `agent_outputs.dod_pass = 1`
 Packet gom lô chỉ bị xoá khi TOÀN BỘ bài bên trong đều đã hoàn tất.
 """
@@ -19,6 +19,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
+from src.agent.article_contract import analyzed_l1_sql  # noqa: E402
 from src.core import paths                         # noqa: E402
 from src.core.config import load_settings          # noqa: E402
 from src.core.stdio import force_utf8_stdio        # noqa: E402
@@ -53,10 +54,24 @@ def _article_ids(packet_path: Path) -> list[str]:
 
 
 def _is_done(conn, article_id: str, is_l1: bool) -> bool:
-    """Kiểm tra một bài đã hoàn tất ở tầng tương ứng chưa (DoD đạt)."""
-    table = "l1_outputs" if is_l1 else "agent_outputs"
+    """Kiểm tra một bài đã hoàn tất ở tầng tương ứng chưa.
+
+    Bản code-first không tính là hoàn tất, nên packet của bài chỉ có bản ấy được giữ.
+
+    Args:
+        conn: Kết nối SQLite.
+        article_id: Mã bài.
+        is_l1: True khi xét tầng nhận diện (`l1_outputs`), False khi xét `agent_outputs`.
+
+    Returns:
+        True khi bài đã có bản ghi đạt ở tầng tương ứng.
+    """
+    if is_l1:
+        table, cond = "l1_outputs", analyzed_l1_sql()
+    else:
+        table, cond = "agent_outputs", "dod_pass = 1"
     row = conn.execute(
-        f"SELECT 1 FROM {table} WHERE article_id=? AND dod_pass=1 LIMIT 1",
+        f"SELECT 1 FROM {table} WHERE article_id=? AND {cond} LIMIT 1",
         (article_id,)).fetchone()
     return row is not None
 

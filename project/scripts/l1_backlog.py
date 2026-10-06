@@ -8,6 +8,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from src.agent.article_contract import analyzed_l1_sql  # noqa: E402
 from src.core import paths                             # noqa: E402
 from src.core.config import load_settings              # noqa: E402
 from src.core.stdio import force_utf8_stdio            # noqa: E402
@@ -17,9 +18,9 @@ force_utf8_stdio()
 
 # Điều kiện dùng lại nhiều lần — giữ 1 chỗ để không lệch định nghĩa giữa các truy vấn.
 _NO_L1 = ("NOT EXISTS (SELECT 1 FROM l1_outputs l1 "
-          "WHERE l1.article_id = a.url_title_hash AND l1.dod_pass = 1)")
+          f"WHERE l1.article_id = a.url_title_hash AND {analyzed_l1_sql('l1')})")
 _HAS_L1 = ("EXISTS (SELECT 1 FROM l1_outputs l1 "
-           "WHERE l1.article_id = a.url_title_hash AND l1.dod_pass = 1)")
+           f"WHERE l1.article_id = a.url_title_hash AND {analyzed_l1_sql('l1')})")
 _NO_GOLD = ("NOT EXISTS (SELECT 1 FROM agent_outputs ag "
             "WHERE ag.article_id = a.url_title_hash AND ag.dod_pass = 1)")
 _HAS_GOLD = ("EXISTS (SELECT 1 FROM agent_outputs ag "
@@ -50,7 +51,7 @@ QUERIES: dict[str, str] = {
     # -- T4: rò rỉ — đã tốn công agent nhưng không bao giờ giao được ------------
     "t4_l1task_orphan": """SELECT COUNT(*) FROM l1_tasks t WHERE NOT EXISTS
         (SELECT 1 FROM articles a WHERE a.url_title_hash = t.article_id)""",
-    "t4_l1out_orphan": """SELECT COUNT(*) FROM l1_outputs l1 WHERE l1.dod_pass = 1 AND NOT EXISTS
+    "t4_l1out_orphan": f"""SELECT COUNT(*) FROM l1_outputs l1 WHERE {analyzed_l1_sql("l1")} AND NOT EXISTS
         (SELECT 1 FROM articles a WHERE a.url_title_hash = l1.article_id)""",
     "t4_gold_orphan": """SELECT COUNT(DISTINCT ag.article_id) FROM agent_outputs ag
         WHERE ag.dod_pass = 1 AND NOT EXISTS

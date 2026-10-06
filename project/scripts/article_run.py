@@ -28,6 +28,7 @@ from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from src.agent.article_contract import not_code_first_sql_for  # noqa: E402
 from src.agent.prefix import prefix_hash              # noqa: E402
 from src.core import paths                             # noqa: E402
 from src.core.stdio import force_utf8_stdio            # noqa: E402
@@ -917,6 +918,9 @@ def wave_article_ids(wave: str) -> list[str]:
 def coverage_of(conn, article_ids: list[str]) -> dict[str, set[str]]:
     """Đếm bài của đợt đã có bản ghi đạt và trượt nghiệm thu trong cơ sở dữ liệu.
 
+    Bản code-first ở `l1_outputs` không được tính, kể cả là trượt: bài chỉ có bản ấy
+    được coi là chưa có kết quả nhận diện để `--repair` đóng gói lại.
+
     Args:
         conn: Kết nối SQLite chỉ đọc.
         article_ids: Định danh bài của đợt.
@@ -925,13 +929,15 @@ def coverage_of(conn, article_ids: list[str]) -> dict[str, set[str]]:
         Từ điển các tập `l1_ok`, `l1_fail`, `gold_ok`, `gold_fail`.
     """
     out = {k: set() for k in ("l1_ok", "l1_fail", "gold_ok", "gold_fail")}
+    guard = not_code_first_sql_for(conn)
     for i in range(0, len(article_ids), 500):
         chunk = article_ids[i:i + 500]
         marks = ",".join("?" * len(chunk))
-        for table, key in (("l1_outputs", "l1"), ("agent_outputs", "gold")):
+        for table, key, extra in (("l1_outputs", "l1", f" AND {guard}"),
+                                  ("agent_outputs", "gold", "")):
             rows = conn.execute(
                 f"SELECT article_id, max(dod_pass) FROM {table} "
-                f"WHERE article_id IN ({marks}) GROUP BY article_id", chunk)
+                f"WHERE article_id IN ({marks}){extra} GROUP BY article_id", chunk)
             for aid, passed in rows:
                 out[f"{key}_ok" if passed else f"{key}_fail"].add(aid)
     return out

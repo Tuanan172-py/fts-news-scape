@@ -30,7 +30,7 @@ from src.agent.distill import (                      # noqa: E402
     distill_stats,
     estimate_tokens,
 )
-from src.agent.article_contract import MIN_CITATION_CHARS  # noqa: E402
+from src.agent.article_contract import MIN_CITATION_CHARS, analyzed_l1_sql  # noqa: E402
 from src.agent.silver_source import read_silver_text  # noqa: E402
 from src.agent.entities import load_registry          # noqa: E402
 from src.agent.prefix import (                        # noqa: E402
@@ -176,7 +176,7 @@ def tier_of(title: str, reg, watched: set[str], industries: set[str]) -> tuple[i
 # code-first là bản tra bảng tạm (ADR 0003), không phải phân tích: tính nó là "xong"
 # thì bộ chọn bài bỏ qua bài ấy vĩnh viễn, và bài không bao giờ có phần nội dung. Đo
 # ngày 2026-09-23: 2.915 bài ngày 10–17/09 kẹt đúng như vậy.
-ANALYZED_L1 = "o.dod_pass = 1 AND COALESCE(o.l1_source, 'agent') <> 'code_first'"
+ANALYZED_L1 = analyzed_l1_sql("o")
 
 
 def load_candidates(conn: sqlite3.Connection, *, date: str | None, limit: int,

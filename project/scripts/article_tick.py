@@ -14,6 +14,7 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from src.agent.article_contract import analyzed_l1_sql
 from src.core import paths
 from src.core.stdio import force_utf8_stdio
 from src.db.preflight import resolve_db_path
@@ -170,8 +171,7 @@ def count_pending_articles(db_path: Path) -> int:
         "  AND NOT EXISTS ("
         "      SELECT 1 FROM l1_outputs o "
         "      WHERE o.article_id = a.url_title_hash "
-        "        AND o.dod_pass = 1 "
-        "        AND COALESCE(o.l1_source, 'agent') <> 'code_first'"
+        f"        AND {analyzed_l1_sql('o')}"
         "  )"
     )
 
