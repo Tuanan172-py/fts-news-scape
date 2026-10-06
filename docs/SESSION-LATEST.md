@@ -2,6 +2,11 @@
 
 <!-- Step 9 handoff. OVERWRITE this (never append) at the end of every session. Keep to one screen. -->
 
+> **Session US-039 2026-10-06 (high-risk, ADR-0021 accepted by operator Q1-Q4), branch `feature/us039-knowledge-framework`, worktree `C:/src/news-scape-us039`:**
+> - Knowledge contract: `docs/knowledge/{README.md,schema.yaml}`, `scripts/knowledge.py`, `harness_cli.py doc new|lint|index|sync`, lint in pre-commit (installed, guarded) and `audit`. English templates for 8 types.
+> - ADR-0001 to ADR-0019 normalized to English with commit evidence; ADR-0015 recorded as rejected. 20 Claude memories are now `docs/knowledge/facts/FACT-*`. `AGENTS.md` in English; `CLAUDE.md`, `GEMINI.md` redirect.
+> - Next: G4 stories/proposals, G2 rules, G5 plans + per-lane handoff, G6 drift; ADR-0020 after US-038 merges; reduce Claude `MEMORY.md` to a pointer only after this branch merges.
+
 > **Phiên ops 2026-10-06 (tiny/normal, trên `feature/article-lane-remove-gates`, chưa commit):**
 > - Sửa khởi động lại daemon thoát oan (mã 3): `acquire_single_instance` chờ ân hạn `daemon.lock_grace_seconds` 45 s; test `tests/test_ops_restart_lock.py`; kiểm thật bằng `schtasks /End` + `/Run`.
 > - Radar không còn đẩy `recapture` cho dòng `raw_missing` mồ côi (bài không còn trong kho); 1.241 dòng cũ đã được phiên khác xử lý, còn 2 dead-letter thật.
