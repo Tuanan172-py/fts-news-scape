@@ -1,175 +1,247 @@
-# ADR 0017 — Hợp đồng đầu ra Article Lane thống nhất cho mọi provider
+---
+id: ADR-0017
+type: adr
+title: Unified Article Lane output contract for every provider
+status: accepted
+lane: high-risk
+created: 2026-10-05
+updated: 2026-10-06
+lang: en
+authors: [An Pham Thanh]
+approvers: [operator 2026-10-05]
+story: [US-034]
+amends: [ADR-0009, ADR-0011]
+related: [ADR-0010]
+evidence:
+  - commit:a7e9db8
+  - path:docs/stories/US-034-hop-dong-dau-ra-article-lane-thong-nhat.md
+  - path:.agents/rules/11-hop-dong-dau-ra-thong-nhat.md
+  - path:project/schemas/article-compact-v2.schema.json
+  - path:project/src/agent/article_contract.py
+  - path:project/src/agent/conformance.py
+  - path:project/scripts/provider_conformance.py
+  - path:project/config/ops.yaml
+  - test:project/tests/test_article_contract.py
+  - test:project/tests/test_conformance.py
+  - metric:audit of 467 output files across agy, openrouter, opencode and DSH, 2026-10-05
+  - metric:missing ids 623 (43 of 124 batches) agy, 299 (33 of 79 batches) openrouter
+  - metric:2988 entity pairs unresolvable in legacy DSH waves
+  - operator:parameters fixed 2026-10-05 (c 2-4, batch 50, agy benchmark, claude not in lane)
+original: "commit:a7e9db8"
+reconstructed: 2026-10-06
+summary: One JSON Schema and one parse_and_validate function govern the compact record for agy, OpenRouter, opencode and DSH; silent semantic defaults are banned, and new providers pass a 30-article golden set benchmarked on agy.
+summary_vi: Một hợp đồng đầu ra và một hàm kiểm duy nhất cho mọi provider; cấm sửa ngầm; provider mới phải qua bộ vàng 30 bài, agy là thước đo.
+---
 
-- **Loại tài liệu:** giải thích (explanation), ghi lại một quyết định.
-- **Ngày:** 2026-10-05
-- **Trạng thái:** accepted
-- **Lane:** high-risk (sửa Data Contract của `article-processor`, sửa runner và expander)
-- **Story:** US-034
-- **Kế thừa:** ADR 0009 D6 (nay không còn đúng vì không phải mọi model là `deepseek-flash`), ADR 0010, ADR 0011. Không đổi lược đồ mở rộng `agent-output-v2-lean` và `l1-entity-output-v1`.
-- **Người duyệt:** người vận hành, 2026-10-05. Hard Gate đã mở.
+# ADR-0017 — Unified Article Lane output contract for every provider
 
-## 0. Tham số đã chốt (2026-10-05)
+## Context
 
-| Tham số | Giá trị |
-|---|---|
-| Số chỉ số `c` | 2 đến 4 |
-| Kích thước lô chuẩn | 50 |
-| Provider chuẩn đo bộ vàng | agy (`gemini-3.8-flash-low`) |
-| Ngưỡng khớp bộ vàng | Tạm thời: provider khác đạt từ mức agy đo được trên bộ vàng trừ 5 điểm phần trăm ở `sn`, `ts` và tập TIC. Số cụ thể chốt sau lần đo agy đầu tiên (D7). |
-| `claude` | Chưa đưa vào lane. Không thêm `--runner claude` ở D6. |
+- The Article Lane runs on several providers: agy (`gemini-3.8-flash-low`), OpenRouter, opencode (Muse Spark) and DSH (`deepseek-flash`). The same article produced different output per provider.
+- An audit on 2026-10-05 covered three angles: contract and gates, prompt and runner, and measurement over 467 output files. The cause was structural, not one specific model.
+- The decision touches the Data Contract of `article-processor`, the runners and the expander, so it is high-risk. The operator approved it on 2026-10-05 and opened the Hard Gate.
+- It amends ADR-0009 D6, which said every model is `deepseek-flash`. It also builds on ADR-0010 and ADR-0011. The extended schemas `agent-output-v2-lean` and `l1-entity-output-v1` are unchanged.
 
-> ADR đã `accepted` không sửa nội dung. Muốn đổi thì lập ADR mới.
+### Evidence 1. The compact record has no source of truth
 
-## 1. Bối cảnh
+- The compact record `{i,e,s,k,im,sn,ts,c}` had no JSON Schema, pydantic model or constants module.
+- It existed piecemeal in `build_article_prefix.py`, `article_expand.py`, `agy_runner.py`, `openrouter_runner.py`, `opencode_native_run.py` and `intent_resolve.py`.
+- The two extended schemas existed as files but only checked expander output, which is correct by construction. They could not check the model.
 
-Article Lane chạy với nhiều provider: agy (gemini-3.8-flash-low), OpenRouter, opencode (Muse Spark), DSH (deepseek-flash). Cùng một bài nhưng đầu ra khác nhau. Audit ngày 2026-10-05 có ba hướng: hợp đồng và cổng kiểm, prompt và runner, đo thực nghiệm trên 467 tệp đầu ra. Kết quả cho thấy nguyên nhân là cấu trúc, không phải một model cụ thể.
+### Evidence 2. Four JSON parsers and three validators with different strictness
 
-**Bằng chứng 1. Record gọn `{i,e,s,k,im,sn,ts,c}` không có nguồn chân lý.** Không có JSON Schema, pydantic hay module hằng số cho record này. Nó tồn tại rời rạc ở `build_article_prefix.py`, `article_expand.py`, `agy_runner.py`, `openrouter_runner.py`, `opencode_native_run.py`, `intent_resolve.py`. Hai schema mở rộng có tệp thật nhưng chỉ kiểm đầu ra của expander, vốn đúng theo cấu trúc, nên không kiểm được model.
-
-**Bằng chứng 2. Bốn bộ phân tích JSON và ba validator, mức nghiêm khác nhau trên cùng một đầu ra.**
-
-| Đường | Phân tích | Kiểm |
+| Path | Parsing | Validation |
 |---|---|---|
-| agy | `salvage_json_records`, lỗi cắt cụt thì mất cả lô | từ chối theo `c` và nhóm; không kiểm enum, độ dài `im`, số `k` |
-| openrouter | tha thứ nhất, cứu từng đối tượng | tự sửa: bịa chữ đệm vào `im`, map `sn` theo chuỗi con, điền `c` thiếu, nhận khoá đồng nghĩa |
-| opencode | không phân tích | nghiêm nhất: đủ 8 khoá, `k` 2-4, `im` từ 40 ký tự, enum đúng |
-| DSH | không kiểm trước | chỉ `article_expand.salvage_records` |
+| agy | `salvage_json_records`; a truncation error loses the whole batch | rejects on `c` and group; no check of enums, `im` length or `k` count |
+| openrouter | most lenient, salvages each object | self-repairs: pads `im` with invented text, maps `sn` by substring, fills missing `c`, accepts synonym keys |
+| opencode | no parsing | strictest: all 8 keys, `k` 2-4, `im` 40+ characters, valid enums |
+| DSH | no pre-check | only `article_expand.salvage_records` |
 
-**Bằng chứng 3. Cổng chung `article_expand.py` im lặng gán giá trị mặc định.** Cụ thể: `sn` sai thành `neutral`; `ts` sai thành `this_week` (openrouter lại mặc định `today`). `c` ít hơn 2 chỉ số hợp lệ thì tự điền các đoạn đầu. `k` kiểu chuỗi bị tách thành từng ký tự và không có giới hạn tối đa 4. `c` trùng sinh trích dẫn trùng. Chỉ số `c` 1-based lệch mọi trích dẫn mà không báo lỗi. Độ lệch giữa provider vì vậy bị che đi, không bị đo.
+### Evidence 3. The shared gate `article_expand.py` silently applied defaults
 
-**Bằng chứng 4. Số đo độ lệch (đầu ra thật, tỷ lệ theo record).**
+- An invalid `sn` became `neutral`. An invalid `ts` became `this_week`, while openrouter defaulted to `today`.
+- When `c` had fewer than 2 valid indices, the first paragraphs were filled in.
+- A string `k` was split into single characters, with no maximum of 4.
+- Duplicate `c` values produced duplicate citations. A 1-based `c` shifted every citation without an error.
+- Provider drift was therefore hidden, not measured.
 
-| Lớp lệch | agy | openrouter | opencode | DSH cũ |
+### Evidence 4. Measured drift (real output, rate per record)
+
+| Drift class | agy | openrouter | opencode | legacy DSH |
 |---|---|---|---|---|
-| Thiếu id (lô PARTIAL) | 623 id, 43/124 lô | 299 id, 33/79 lô | 0 | không đo được |
-| `c` dưới 2 chỉ số hợp lệ (bị đệm im lặng) | 5,5% | 1,3% | 1,2% | 10 record |
-| `c` dài bất thường | tối đa 9 | tối đa 16, 136 record từ 9 chỉ số | luôn đúng 3 | tối đa 12 |
-| `k` lớn hơn 4 | 0 | 9,3% | 0 | 1,4% |
-| `k` nhỏ hơn 2 | 1,8% | 0 | 0 | 4 record |
-| Cặp thực thể trùng | 1,2% | 1,0% | 0 | 55 cặp |
-| TIC sai dạng (`TPBank`, `Vinhomes`) | 14 | 24 | 3 | 50 |
-| `ts` ngoài enum | 2 (`year`) | 0 | 0 | 0 |
-| `e` rỗng | 0,5% | 1 | 0,8% | 0 |
-| Lệch phân phối | `sn` pos 53% | `sn` pos 36% | `ts` month 75%, `c` luôn 3 | khác lược đồ thực thể |
+| Missing ids (PARTIAL batches) | 623 ids, 43/124 batches | 299 ids, 33/79 batches | 0 | not measurable |
+| `c` below 2 valid indices (silently padded) | 5.5% | 1.3% | 1.2% | 10 records |
+| `c` abnormally long | max 9 | max 16, 136 records with 9+ indices | always exactly 3 | max 12 |
+| `k` above 4 | 0 | 9.3% | 0 | 1.4% |
+| `k` below 2 | 1.8% | 0 | 0 | 4 records |
+| Duplicate entity pairs | 1.2% | 1.0% | 0 | 55 pairs |
+| Malformed TIC (`TPBank`, `Vinhomes`) | 14 | 24 | 3 | 50 |
+| `ts` outside enum | 2 (`year`) | 0 | 0 | 0 |
+| Empty `e` | 0.5% | 1 | 0.8% | 0 |
+| Distribution skew | `sn` pos 53% | `sn` pos 36% | `ts` month 75%, `c` always 3 | different entity schema |
 
-Hai điều rút ra. Một: lệch cấu trúc JSON là thiểu số. Chi phí lớn nhất là lô thiếu id (cắt cụt, trần đầu ra OpenRouter 24000 token) và độ lệch về kích thước danh sách. Hai: các đợt DSH cũ (W09241605, W09241723, W365, W1, W2) dùng lược đồ thực thể khác hẳn. 2988 cặp không resolve được dưới resolver hiện tại.
+- JSON structure drift is the minority. The largest cost is batches with missing ids, from truncation at the OpenRouter output ceiling of 24000 tokens, and drift in list sizes.
+- The legacy DSH waves (W09241605, W09241723, W365, W1, W2) used a different entity schema. 2988 pairs do not resolve under the current resolver.
 
-**Bằng chứng 5. Quy trình và tài liệu mâu thuẫn.**
+### Evidence 5. Process and documents contradicted each other
 
-- Khung prompt người dùng không chung. agy thêm khối "QUY TẮC BẮT BUỘC" và tiêu đề `## Packet`. openrouter đóng gói lại packet thành `{d,n,a}`. DSH gửi nguyên văn tệp packet.
-- Lấy mẫu không chung: openrouter `temperature 0.1`, `max_tokens 24000`, `reasoning minimal`; DSH `reasoning off`; agy không đặt gì. Không provider nào đặt seed.
-- Prefix tự mâu thuẫn. Ví dụ phát ra thực thể không nằm trong văn bản, trong khi luật bắt buộc nguyên văn. Ví dụ có record `k` một mục, trong khi luật là 2-4. Prefix cấm code fence, trong khi expander và tài liệu opencode kỳ vọng có fence.
-- `registry.yaml` ghi `article-processor` dùng skill `l1-entity-matcher` (lane đã ngừng) và xuất hai tên schema mà prefix không phát ra. AGENTS.md ghi mọi model là `deepseek-flash`, trái với agy, OpenRouter, opencode và mặc định daemon là agy.
-- `agent-runner-prompt.md` và `agent-prompting-guide.md` (đã lưu trữ) dạy agent tự đọc packet, ghi một tệp mỗi bài, báo cáo "đã ghi tệp", nêu `materiality` và `impact_area`. Đây là hợp đồng ngược với Article Lane. Không có đường chạy `claude` trong mã, nên agent kiểu Claude chỉ có hai tài liệu này để theo.
-- Meta provenance sai. Expander mặc định `dsh/deepseek-flash` khi thiếu meta. Sổ cái token chỉ gắn `--source agy` cho agy, nên chi phí openrouter và opencode bị gán sai nguồn. `cmd_analyze` rơi về agy với mọi runner khác openrouter.
+- The user prompt frame differed. agy added a block "QUY TẮC BẮT BUỘC" and a `## Packet` heading. openrouter repacked the packet as `{d,n,a}`. DSH sent the packet file verbatim.
+- Sampling differed: openrouter `temperature 0.1`, `max_tokens 24000`, `reasoning minimal`; DSH `reasoning off`; agy set nothing. No provider set a seed.
+- The prefix contradicted itself. Its example emitted an entity absent from the text, while the rule required verbatim surfaces. Its example had a one-item `k`, while the rule said 2-4.
+- The prefix banned code fences, while the expander and the opencode docs expected them.
+- `registry.yaml` bound `article-processor` to skill `l1-entity-matcher` of the retired lane, with two schema names the prefix never emits. AGENTS.md said every model is `deepseek-flash`, contrary to agy, OpenRouter, opencode and the agy daemon default.
+- The archived `agent-runner-prompt.md` and `agent-prompting-guide.md` taught agents to read packets themselves and write one file per article. They also required a report of written files plus `materiality` and `impact_area`.
+- That is the inverse of the Article Lane contract. No `claude` run path existed in code, so Claude-style agents had only these two documents to follow.
+- Provenance metadata was wrong. The expander defaulted to `dsh/deepseek-flash` when meta was missing. The token ledger tagged `--source agy` only for agy, so openrouter and opencode cost was misattributed.
+- `cmd_analyze` fell back to agy for every runner other than openrouter.
 
-**Giới hạn phải nói thẳng.** "Giống nhau" không thể là giống từng ký tự giữa các model. Tóm tắt, `sn` và danh sách thực thể là phán đoán ngôn ngữ, nên hai model khác nhau sẽ khác nhau. ADR này đảm bảo tất định ba điều. Một: hình dạng và dạng chuẩn của đầu ra. Hai: mọi lệch đều bị phát hiện và vào vòng vá. Ba: mức đồng thuận ngữ nghĩa giữa provider được đo bằng bộ vàng.
+### Stated limit
 
-## 2. Quyết định
+Sameness cannot mean character-identical output across models. Summary, `sn` and entity lists are language judgements, so two models will differ. This ADR makes three things deterministic. First, the shape and canonical form of the output. Second, every deviation is detected and enters the repair loop. Third, semantic agreement between providers is measured on a golden set.
 
-### D1. Một nguồn chân lý cho record gọn
+## Decision
 
-Tạo `project/schemas/article-compact-v2.schema.json` (JSON Schema) và một module duy nhất `project/src/agent/article_contract.py` đọc schema này, xuất ra hằng số (nhóm thực thể, enum, giới hạn). Ba nơi sau chỉ được **sinh** từ nguồn này, không chép tay: prefix (`build_article_prefix.py`), validator, bảng đổi `sn`/`ts` của expander. Test `test_article_contract_sync.py` chặn lệch, theo mẫu `test_pipeline_spec.py`.
+### Fixed parameters (2026-10-05)
 
-### D2. Luật đóng cho từng trường
-
-| Trường | Luật cứng |
+| Parameter | Value |
 |---|---|
-| `i` | số nguyên, có trong packet, duy nhất, thứ tự tăng dần |
-| `e` | mảng cặp đúng 2 phần tử `[bề mặt, MÃ_NHÓM]`, mã nhóm thuộc 11 mã, không trùng (so khớp không phân biệt hoa thường), mảng rỗng hợp lệ |
-| `s` | chuỗi, 1 đến 3 câu |
-| `k` | mảng chuỗi, **đúng 2 đến 4 mục**, không có mục trùng trích dẫn |
-| `im` | chuỗi từ 40 ký tự, không sao chép nguyên văn |
-| `sn` | đúng `pos`, `neg`, `neu` |
-| `ts` | đúng `urg`, `today`, `week`, `month`, `arch` |
-| `c` | mảng số nguyên **0-based**, không trùng, tăng dần, trong `[0, n_đoạn)`, từ 2 đến 4 chỉ số (con số 4 chờ người vận hành chốt) |
-| khoá lạ | bị từ chối, không bỏ qua |
+| Number of `c` indices | 2 to 4 |
+| Standard batch size | 50 |
+| Golden-set benchmark provider | agy (`gemini-3.8-flash-low`) |
+| Golden-set match threshold | Provisional: another provider reaches the agy golden-set score minus 5 percentage points on `sn`, `ts` and the TIC set. The final figure is fixed after the first agy measurement (D7). |
+| `claude` | Not admitted to the lane. D6 does not add `--runner claude`. |
 
-Ngôn ngữ của `s`, `k`, `im` là tiếng Việt, ghi vào prefix.
+### D1. One source of truth for the compact record
 
-### D3. Cấm sửa ngầm
+- Create `project/schemas/article-compact-v2.schema.json` (JSON Schema) and one module `project/src/agent/article_contract.py` that reads it and exports constants: entity groups, enums and limits.
+- The prefix (`build_article_prefix.py`), the validator and the expander `sn`/`ts` mapping MUST be generated from this source, never copied by hand.
+- Test `test_article_contract_sync.py` blocks drift, following the pattern of `test_pipeline_spec.py`.
 
-Cấm mọi mặc định ngữ nghĩa. Không `sn` sai thành `neutral`, không `ts` sai thành `this_week` hay `today`, không tự điền `c`, không đệm `im`, không nhận khoá đồng nghĩa, không tách `k` kiểu chuỗi. Record vi phạm bị loại khỏi lô và vào `--repair` kèm mã lỗi. Chỉ cho phép hai nhóm chuẩn hoá cơ học, đều ghi vào meta thành bộ đếm:
+### D2. Closed rule for each field
 
-1. Bóc vỏ truyền tải: envelope của vendor, code fence, văn bản trước `[`, cứu từng đối tượng khi cắt cụt.
-2. Dạng chuẩn do mã quyết định, không do model: `c` sắp tăng dần, `e` sắp theo (thứ tự nhóm, bề mặt), `k` giữ thứ tự model. Việc này cơ học, không thay thế phán đoán LLM nên không vi phạm mục C của AGENTS.md.
-
-### D4. Một hàm phân tích và kiểm duy nhất
-
-`article_contract.parse_and_validate(text, packet) -> (records_hợp_lệ, lỗi_theo_id, bộ_đếm_vỏ)`. Gọi từ agy, openrouter, opencode, conductor DSH (qua bước hậu kiểm của `article_run.py`) và expander. Xoá `agy_runner.validate_records`, `openrouter_runner.validate_records`, hai `salvage_json_records`, `ENTITY_GROUP_MAP` và các bản chép `VALID_ENTITY_GROUPS`. Expander chỉ nhận record đã qua hàm này, nên gỡ các nhánh mặc định của nó.
-
-### D5. Một khung đầu vào, một bộ tham số
-
-- Một hàm `build_user_message(packet)` duy nhất; không agy-guard riêng, không đóng gói lại packet. Mọi provider nhận cùng byte.
-- Prefix hệ thống một tệp (đã có), thêm SHA256 vào meta. Bản dán tay trong `agent.cordis.yml` tiếp tục bị `--check` chặn lệch.
-- Tham số chuẩn: `temperature 0`, seed cố định nếu provider hỗ trợ, không `reasoning` hoặc mức thấp nhất. `max_tokens` bằng trần của provider. Đó là giới hạn truyền tải để tránh cắt cụt, không phải trần token theo quy tắc "token là ghi nhận". Provider không hỗ trợ tham số nào thì ghi rõ vào meta.
-- Meta bắt buộc mỗi lô: `provider`, `model`, tham số lấy mẫu, SHA256 prefix, phiên bản hợp đồng. Thiếu meta thì `--finish` thất bại; bỏ mặc định `dsh/deepseek-flash` của expander; sổ cái gắn nguồn theo meta.
-- Kích thước lô một giá trị chuẩn cho mọi provider (đề xuất 50, theo daemon). Chênh lệch theo provider chỉ khi có số đo và ghi vào `ops.yaml`.
-
-### D6. Quy trình một vòng đời, provider chỉ là bộ chuyển vận
-
-Mọi provider đi cùng đường: `pack` → `run` (adapter chỉ làm việc gửi và nhận) → `parse_and_validate` → `repair` → `expand` → `--finish`. Giao diện adapter: `run_batch(packet_text) -> raw_text`. Opencode và agent kiểu Claude đi qua `append_records` vào đúng hàm của D4, không có validator riêng. Thêm `--runner` cho `opencode` và `claude` vào `article_run.py`, và sửa `cmd_analyze` để runner lạ báo lỗi thay vì rơi về agy.
-
-### D7. Cổng cho provider hoặc model mới (bộ vàng)
-
-Một bộ vàng gồm 30 bài cố định, nhãn bởi người vận hành qua màn duyệt mẫu S-13, cùng lệnh `python scripts/provider_conformance.py --runner <r> --model <m>`. Provider hoặc model chỉ được vào lane khi đạt ba điều kiện. Một: tỷ lệ record vi phạm cấu trúc bằng 0 sau bóc vỏ. Hai: không thiếu id. Ba: độ khớp nhãn vàng ở `sn`, `ts` và tập TIC đạt ngưỡng đã chốt. Kết quả ghi thành bản kiểm ở `docs/templates/validation-report.md`. Lệnh này tiêu token nên chỉ chạy khi có model mới, không chạy mỗi đợt.
-
-### D8. Dọn mâu thuẫn tài liệu và cấu hình
-
-- Sửa prefix: ví dụ phải tuân đúng luật (thực thể nằm trong văn bản, `k` 2-4 mục). Thống nhất chính sách code fence: cấm, và vẫn bóc nếu có.
-- Sửa `registry.yaml` cho `article-processor`: skill hiện hành, schema đầu ra là record gọn, `model` theo cấu hình thật.
-- Sửa AGENTS.md mục 6.A: "mọi model là deepseek-flash" thành danh sách provider được phép theo bộ vàng.
-- Đưa `agent-runner-prompt.md` và `agent-prompting-guide.md` ra khỏi đường đọc của agent bằng banner thu hồi kèm đường dẫn tới hợp đồng mới. Hai tài liệu này trái hợp đồng hiện hành.
-- Luật mới `.agents/rules/11-hop-dong-dau-ra-thong-nhat.md` tóm tắt D1 đến D7 thành bất biến cấp dự án. Chỉ viết sau khi ADR được duyệt.
-
-### D9. Đợt cũ
-
-Năm đợt DSH cũ giữ nguyên ở Bronze và DB, đánh dấu `contract=legacy` trong báo cáo, không tái mở rộng. Không xoá.
-
-## 3. Phương án đã loại
-
-| Phương án | Lý do loại |
+| Field | Hard rule |
 |---|---|
-| Ép mọi provider dùng một model | Không bảo đảm được: free tier hết hạn, giá khác nhau, người vận hành đã chọn đa provider. |
-| Giữ expander mặc định và thêm validator thứ tư | Thêm một bản chép nữa vào bốn bản đã lệch nhau. |
-| Dùng structured output của từng provider | Không provider nào trong lane đang dùng, hỗ trợ không đồng đều (agy CLI, opencode phiên sống). Có thể bổ sung sau như lớp phụ, không thay D4. |
-| Dùng regex hoặc heuristic để sửa đầu ra sai | Vi phạm mục C AGENTS.md; sửa ngầm chính là nguyên nhân che độ lệch. |
-| Đặt trần số bài hay token để giảm cắt cụt | Trái quy tắc "token là ghi nhận, không phải cổng". |
+| `i` | integer, present in the packet, unique, ascending |
+| `e` | array of pairs of exactly 2 items `[surface, GROUP_CODE]`; group code is one of 11 codes; no duplicates (case-insensitive); an empty array is valid |
+| `s` | string, 1 to 3 sentences |
+| `k` | array of strings, exactly 2 to 4 items, no item duplicating a citation |
+| `im` | string of 40+ characters, not a verbatim copy |
+| `sn` | exactly `pos`, `neg`, `neu` |
+| `ts` | exactly `urg`, `today`, `week`, `month`, `arch` |
+| `c` | array of 0-based integers, unique, ascending, within `[0, n_paragraphs)`, 2 to 4 indices (the 4 awaited operator confirmation) |
+| unknown keys | rejected, not ignored |
 
-## 4. Hệ quả
+The language of `s`, `k` and `im` is Vietnamese, and the prefix states it.
 
-**Được:**
+### D3. No silent repair
 
-- Một chỗ sửa hợp đồng; test chặn lệch giữa prompt, validator và expander.
-- Độ lệch giữa provider hiện ra thành số đo và hàng đợi vá, không bị che bởi giá trị mặc định.
-- Provider mới có cổng vào rõ ràng, có số đo.
-- Provenance và chi phí gán đúng nguồn.
+- Every semantic default is banned. No invalid `sn` to `neutral`, no invalid `ts` to `this_week` or `today`, no filled `c`, no padded `im`, no synonym keys, no split string `k`.
+- A violating record is dropped from the batch and enters `--repair` with an error code.
+- Only two kinds of mechanical normalization are allowed. Both are recorded in meta as counters.
+- First, transport unwrapping: vendor envelope, code fence, text before `[`, and per-object salvage on truncation.
+- Second, canonical form decided by code, not by the model: `c` sorted ascending, `e` sorted by group order then surface, `k` kept in model order.
+- This normalization is mechanical and does not replace LLM judgement, so it does not violate AGENTS.md section C.
 
-**Phải chấp nhận:**
+### D4. One parse and validate function
 
-- Tỷ lệ record bị từ chối tăng trong thời gian đầu (agy: khoảng 5,5% `c` ngắn, 1,8% `k` ngắn; openrouter: 9,3% `k` dài; trước đây bị che). Giảm bằng vòng `--repair` có sẵn, và chỉnh prefix cho đúng các điểm lệch đã đo.
-- Chi phí token thêm cho vòng vá. Ghi nhận, không phải cổng.
-- Sửa nhiều tệp trên đường chạy tới hạn; cần cửa sổ không có đợt mở song song với daemon.
-- Bộ vàng phụ thuộc công gán nhãn của người vận hành.
+- `article_contract.parse_and_validate(text, packet)` returns valid records, errors by id and envelope counters.
+- agy, openrouter, opencode, the DSH conductor (through the post-check of `article_run.py`) and the expander MUST call it.
+- Delete `agy_runner.validate_records`, `openrouter_runner.validate_records`, both `salvage_json_records`, `ENTITY_GROUP_MAP` and the copies of `VALID_ENTITY_GROUPS`.
+- The expander accepts only records that passed this function, so its default branches are removed.
 
-## 5. Quay lui
+### D5. One input frame, one parameter set
 
-Mỗi bước D1 đến D8 là một commit riêng, hoàn tác bằng `git revert`. Cờ `contract.strict: false` trong `ops.yaml` trả expander về hành vi cũ trong thời gian chuyển tiếp (người vận hành bật). Chỉ người vận hành được tắt cổng bộ vàng.
+- One function `build_user_message(packet)`. No agy-specific guard and no packet repacking. Every provider receives the same bytes.
+- One system prefix file, as before, with its SHA256 added to meta. The hand-pasted copy in `agent.cordis.yml` stays guarded by `--check`.
+- Standard parameters: `temperature 0`, a fixed seed where supported, no `reasoning` or its lowest level. `max_tokens` equals the provider ceiling.
+- That ceiling is a transport limit to avoid truncation, not a token cap under the rule "token là ghi nhận". Unsupported parameters are stated in meta.
+- Each batch MUST carry meta: `provider`, `model`, sampling parameters, prefix SHA256 and contract version. Missing meta fails `--finish`.
+- The expander default `dsh/deepseek-flash` is removed, and the ledger tags the source from meta.
+- One standard batch size for every provider (proposed 50, following the daemon). Per-provider deviation requires a measurement and an entry in `ops.yaml`.
 
-## 6. Việc theo dõi
+### D6. One lifecycle; a provider is only a transport adapter
 
-- [ ] Người vận hành duyệt ADR; chốt giới hạn `c` (2 đến 4 hay khác), kích thước lô chuẩn, ngưỡng khớp bộ vàng.
-- [ ] Mở story. Thứ tự đề xuất: D1 và D4, D3, D5, D2 và D8, D6, D7.
-- [ ] Hỏi người vận hành: dùng provider nào làm bản chuẩn đo bộ vàng, và có đưa `claude` vào lane hay không.
-- [ ] Tái đo độ lệch sau D3 bằng đúng kịch bản của audit này để so trước và sau.
-- [ ] Rà `src/agent/packet.py`, `batch_handoff.py`, `dod.py` còn hằng số v1 (nằm ngoài phạm vi ADR này, ghi vào `OPEN-ITEMS.md`).
+- Every provider follows the same path: `pack`, `run`, `parse_and_validate`, `repair`, `expand`, `--finish`. In `run` the adapter only sends and receives.
+- Adapter interface: `run_batch(packet_text) -> raw_text`.
+- opencode and Claude-style agents go through `append_records` into the D4 function, with no validator of their own.
+- Add `--runner` values `opencode` and `claude` to `article_run.py`. `cmd_analyze` MUST raise an error for an unknown runner instead of falling back to agy.
 
-## 7. Điều chỉnh khi thi công
+### D7. Golden-set gate for a new provider or model
 
-Các điều chỉnh sau đã áp dụng ở US-034. Chúng không đổi hướng của quyết định.
+- A fixed golden set of 30 articles is labelled by the operator through review screen S-13, with command `python scripts/provider_conformance.py --runner <r> --model <m>`.
+- A provider or model enters the lane only when three conditions hold. Structural violations after unwrapping are zero. No ids are missing.
+- The third condition is that agreement with the golden labels on `sn`, `ts` and the TIC set reaches the fixed threshold.
+- The result is written as a report from `docs/templates/validation-report.md`. The command spends tokens, so it runs only for a new model, not every wave.
 
-- **D2, `e` và `c` trùng:** mã chuẩn hoá cơ học (bỏ phần tử trùng, sắp thứ tự) và ghi bộ đếm, thay vì từ chối record. Lý do: trùng không đổi nghĩa, từ chối sẽ đẩy cả bài vào vòng vá. Số chỉ số `c` được tính sau khi bỏ trùng.
-- **D2, `s` 1 đến 3 câu:** chỉ cảnh báo bằng bộ đếm `warn_summary_sentences`, không từ chối. Lý do: chữ viết tắt tiếng Việt như "TP. Hồ Chí Minh" làm bộ đếm câu bằng dấu chấm đếm sai.
-- **D2, `c` và đoạn ngắn:** chỉ số trỏ vào đoạn dưới 20 ký tự bị từ chối. Khi bài có ít hơn hai đoạn đủ dài thì số chỉ số tối thiểu giảm theo số đoạn đó.
-- **D2, kiểm dấu tiếng Việt:** giữ kiểm tra `lost_diacritics` vốn có ở agy và đưa vào bộ kiểm chung.
-- **§5, cờ `contract.strict`:** không thực hiện. Quay lui bằng `git revert` từng commit.
+### D8. Clean up contradicting documents and configuration
+
+- Fix the prefix so its examples obey the rules: entities occur in the text and `k` has 2-4 items. Code fences are banned and still unwrapped if present.
+- Fix `registry.yaml` for `article-processor`: current skill, compact record as output schema, `model` per real configuration.
+- Change AGENTS.md section 6.A from "every model is deepseek-flash" to the list of providers admitted by the golden set.
+- Remove `agent-runner-prompt.md` and `agent-prompting-guide.md` from the agent read path with a withdrawal banner linking the new contract. Both contradict the current contract.
+- New rule `.agents/rules/11-hop-dong-dau-ra-thong-nhat.md` condenses D1 to D7 into a project invariant. It is written only after this ADR is approved.
+
+### D9. Legacy waves
+
+The five legacy DSH waves stay unchanged in Bronze and the DB. Reports mark them `contract=legacy`, and they are not re-expanded. Nothing is deleted.
+
+### Amendment history
+
+The original section 7 recorded these adjustments made during implementation under US-034. They do not change the direction of the decision.
+
+- D2, duplicate `e` and `c`: code normalizes mechanically by dropping duplicates and sorting, with a counter, instead of rejecting the record. A duplicate does not change meaning, and rejection would send the whole article to repair. The `c` count is taken after deduplication.
+- D2, `s` with 1 to 3 sentences: only a warning counter `warn_summary_sentences`, no rejection. Vietnamese abbreviations such as "TP. Hồ Chí Minh" break a period-based sentence count.
+- D2, `c` and short paragraphs: an index pointing to a paragraph under 20 characters is rejected. When an article has fewer than two long-enough paragraphs, the minimum index count drops to that number.
+- D2, Vietnamese diacritics check: the existing agy `lost_diacritics` check is kept and moved into the shared validator.
+- Section 5, flag `contract.strict`: not implemented. Rollback is by `git revert` of each commit.
+
+## Alternatives
+
+| Option | Why rejected |
+|---|---|
+| Force every provider onto one model | Not guaranteed: free tiers expire, prices differ, and the operator chose multiple providers. |
+| Keep expander defaults and add a fourth validator | Adds one more copy to four copies that already drifted. |
+| Use each provider's structured output | No lane provider uses it today, and support is uneven (agy CLI, opencode live session). It may be added later as an extra layer, not as a replacement for D4. |
+| Use regex or heuristics to fix bad output | Violates AGENTS.md section C; silent repair is exactly what hid the drift. |
+| Cap articles or tokens to reduce truncation | Contradicts the rule that tokens are recorded, not gated. |
+
+## Consequences
+
+Gains:
+
+- One place to change the contract; a test blocks drift between prompt, validator and expander.
+- Provider drift appears as measurements and as a repair queue, not hidden by defaults.
+- A new provider has a clear, measured entry gate.
+- Provenance and cost are attributed to the right source.
+
+Costs accepted:
+
+- The rejection rate rises at first: agy about 5.5% short `c` and 1.8% short `k`; openrouter 9.3% long `k`. These were hidden before. The existing `--repair` loop and prefix fixes at the measured drift points reduce it.
+- Extra tokens are spent on repair rounds. They are recorded, not gated.
+- Many files on the critical run path change, so implementation needs a window with no wave open alongside the daemon.
+- The golden set depends on operator labelling effort.
+
+### Current status (2026-10-06)
+
+- D1 to D6 and D8 shipped in commit a7e9db8 under US-034. Standard batch 50 is set in `project/config/ops.yaml`.
+- The D1 sync check lives in `test_article_contract.py` (`test_prefix_khop_hop_dong`), not in a separate `test_article_contract_sync.py`.
+- The golden set is still unlabelled, so D7 cannot score providers yet (`docs/OPEN-ITEMS.md` CON-1 item 2).
+- The token ledger still accepts only `dsh` and `agy` as `--source` (CON-1 item 3).
+- opencode has no official `--runner` yet; its adapter already uses the shared validator (CON-1 item 4).
+- The rejection rate under the new gate is not yet measured on a real wave (CON-1 item 9).
+- v1 constants remain in `src/agent/packet.py`, `batch_handoff.py` and `dod.py` (CON-1 item 8).
+- DSH is no longer used as of 2026-10-06 (CON-1 item 1).
+
+## Rollback
+
+- Each step D1 to D8 is a separate change that `git revert` undoes.
+- The planned `contract.strict: false` flag was not implemented, so rollback is only by revert.
+- Only the operator may disable the golden-set gate.
+
+## Follow-up
+
+- [x] Operator approves the ADR and fixes the `c` limit, the standard batch size and the golden-set threshold (2026-10-05).
+- [x] Open the story. Proposed order: D1 and D4, D3, D5, D2 and D8, D6, D7 (US-034).
+- [x] Ask the operator which provider is the golden-set benchmark and whether `claude` joins the lane (agy; `claude` not admitted).
+- [ ] Re-measure drift after D3 with the same audit script to compare before and after.
+- [ ] Review `src/agent/packet.py`, `batch_handoff.py` and `dod.py` for v1 constants (out of scope, tracked in `docs/OPEN-ITEMS.md`).
