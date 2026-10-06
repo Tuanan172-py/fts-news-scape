@@ -1,0 +1,1057 @@
+{
+ "schema_version": "1.2.0",
+ "entity_count": 54,
+ "note": "Danh mục thu nhỏ cho bộ test, sinh từ config/entities/aliases và vài mã mẫu.",
+ "entities": [
+  {
+   "entity_id": "TICKER:HPG",
+   "type": "TICKER",
+   "code": "HPG",
+   "canonical_name": "CTCP Tập đoàn Hòa Phát",
+   "aliases": [
+    "CTCP Tập đoàn Hòa Phát",
+    "Hòa Phát",
+    "Hoa Phat",
+    "Tập đoàn Hòa Phát"
+   ],
+   "attributes": {
+    "tier": 1,
+    "is_active": true,
+    "listed_universe": true
+   },
+   "sources": [
+    "tests/fixtures"
+   ]
+  },
+  {
+   "entity_id": "TICKER:VND",
+   "type": "TICKER",
+   "code": "VND",
+   "canonical_name": "CTCP Chứng khoán VNDIRECT",
+   "aliases": [
+    "CTCP Chứng khoán VNDIRECT",
+    "Chứng khoán VNDIRECT",
+    "VNDirect",
+    "VNDIRECT"
+   ],
+   "attributes": {
+    "tier": 1,
+    "is_active": true,
+    "listed_universe": true
+   },
+   "sources": [
+    "tests/fixtures"
+   ]
+  },
+  {
+   "entity_id": "TICKER:VIC",
+   "type": "TICKER",
+   "code": "VIC",
+   "canonical_name": "Tập đoàn Vingroup - CTCP",
+   "aliases": [
+    "Tập đoàn Vingroup - CTCP",
+    "Vingroup",
+    "VinFast",
+    "VinFast Auto",
+    "Vinpearl",
+    "Vinschool",
+    "Vinmec",
+    "Xanh SM",
+    "GSM"
+   ],
+   "attributes": {
+    "tier": 1,
+    "is_active": true,
+    "listed_universe": true
+   },
+   "sources": [
+    "tests/fixtures"
+   ]
+  },
+  {
+   "entity_id": "TICKER:FPT",
+   "type": "TICKER",
+   "code": "FPT",
+   "canonical_name": "CTCP FPT",
+   "aliases": [
+    "CTCP FPT",
+    "FPT",
+    "FPT Corporation",
+    "Tập đoàn FPT"
+   ],
+   "attributes": {
+    "tier": 1,
+    "is_active": true,
+    "listed_universe": true
+   },
+   "sources": [
+    "tests/fixtures"
+   ]
+  },
+  {
+   "entity_id": "TICKER:VCB",
+   "type": "TICKER",
+   "code": "VCB",
+   "canonical_name": "Ngân hàng TMCP Ngoại thương Việt Nam",
+   "aliases": [
+    "Ngân hàng TMCP Ngoại thương Việt Nam",
+    "Ngoại thương Việt Nam",
+    "Vietcombank"
+   ],
+   "attributes": {
+    "tier": 1,
+    "is_active": true,
+    "listed_universe": true
+   },
+   "sources": [
+    "tests/fixtures"
+   ]
+  },
+  {
+   "entity_id": "TICKER:SSI",
+   "type": "TICKER",
+   "code": "SSI",
+   "canonical_name": "CTCP Chứng khoán SSI",
+   "aliases": [
+    "CTCP Chứng khoán SSI",
+    "Chứng khoán SSI"
+   ],
+   "attributes": {
+    "tier": 1,
+    "is_active": true,
+    "listed_universe": true
+   },
+   "sources": [
+    "tests/fixtures"
+   ]
+  },
+  {
+   "entity_id": "TICKER:MWG",
+   "type": "TICKER",
+   "code": "MWG",
+   "canonical_name": "CTCP Đầu tư Thế Giới Di Động",
+   "aliases": [
+    "CTCP Đầu tư Thế Giới Di Động",
+    "Đầu tư Thế Giới Di Động",
+    "Thế Giới Di Động",
+    "Thegioididong",
+    "Bách Hóa Xanh",
+    "Bach Hoa Xanh",
+    "Điện Máy Xanh",
+    "Dien May Xanh",
+    "An Khang",
+    "EraBlue"
+   ],
+   "attributes": {
+    "tier": 1,
+    "is_active": true,
+    "listed_universe": true
+   },
+   "sources": [
+    "tests/fixtures"
+   ]
+  },
+  {
+   "entity_id": "TICKER:HSG",
+   "type": "TICKER",
+   "code": "HSG",
+   "canonical_name": "CTCP Tập đoàn Hoa Sen",
+   "aliases": [
+    "CTCP Tập đoàn Hoa Sen",
+    "Hoa Sen",
+    "Tôn Hoa Sen",
+    "Tập đoàn Hoa Sen"
+   ],
+   "attributes": {
+    "tier": 1,
+    "is_active": true,
+    "listed_universe": true
+   },
+   "sources": [
+    "tests/fixtures"
+   ]
+  },
+  {
+   "entity_id": "ETF:E1VFVN30",
+   "type": "ETF",
+   "code": "E1VFVN30",
+   "canonical_name": "Quỹ ETF DCVFMVN30",
+   "aliases": [
+    "Quỹ ETF DCVFMVN30",
+    "E1VFVN30"
+   ],
+   "attributes": {
+    "tier": 1,
+    "is_active": true
+   },
+   "sources": [
+    "tests/fixtures"
+   ]
+  },
+  {
+   "entity_id": "INDEX:VNINDEX",
+   "type": "INDEX",
+   "code": "VNINDEX",
+   "canonical_name": "VN-Index",
+   "aliases": [
+    "VN-Index",
+    "VNINDEX",
+    "VN Index"
+   ],
+   "attributes": {
+    "exchange": "HOSE"
+   },
+   "sources": [
+    "tests/fixtures"
+   ]
+  },
+  {
+   "entity_id": "INDEX:VN30",
+   "type": "INDEX",
+   "code": "VN30",
+   "canonical_name": "VN30-Index",
+   "aliases": [
+    "VN30",
+    "VN30-Index",
+    "rổ VN30"
+   ],
+   "attributes": {
+    "exchange": "HOSE"
+   },
+   "sources": [
+    "tests/fixtures"
+   ]
+  },
+  {
+   "entity_id": "INDEX:HNXINDEX",
+   "type": "INDEX",
+   "code": "HNXINDEX",
+   "canonical_name": "HNX-Index",
+   "aliases": [
+    "HNX-Index",
+    "HNXINDEX",
+    "HNX Index"
+   ],
+   "attributes": {
+    "exchange": "HNX"
+   },
+   "sources": [
+    "tests/fixtures"
+   ]
+  },
+  {
+   "entity_id": "EXCHANGE:HOSE",
+   "type": "EXCHANGE",
+   "code": "HOSE",
+   "canonical_name": "Sở Giao dịch Chứng khoán TP. Hồ Chí Minh",
+   "aliases": [
+    "HOSE",
+    "HSX",
+    "Sở GDCK TP.HCM",
+    "sàn HOSE",
+    "sàn TP.HCM"
+   ],
+   "attributes": {},
+   "sources": [
+    "tests/fixtures"
+   ]
+  },
+  {
+   "entity_id": "EXCHANGE:HNX",
+   "type": "EXCHANGE",
+   "code": "HNX",
+   "canonical_name": "Sở Giao dịch Chứng khoán Hà Nội",
+   "aliases": [
+    "HNX",
+    "Sở GDCK Hà Nội",
+    "sàn Hà Nội"
+   ],
+   "attributes": {},
+   "sources": [
+    "tests/fixtures"
+   ]
+  },
+  {
+   "entity_id": "EXCHANGE:UPCOM",
+   "type": "EXCHANGE",
+   "code": "UPCOM",
+   "canonical_name": "Thị trường giao dịch cổ phiếu công ty đại chúng chưa niêm yết",
+   "aliases": [
+    "UPCOM",
+    "UPCoM",
+    "sàn UPCoM"
+   ],
+   "attributes": {},
+   "sources": [
+    "tests/fixtures"
+   ]
+  },
+  {
+   "entity_id": "IND_GICS1:TAI_CHINH",
+   "type": "INDUSTRY_GICS1",
+   "code": "TAI_CHINH",
+   "canonical_name": "Tài chính",
+   "aliases": [
+    "Tài chính"
+   ],
+   "attributes": {
+    "parent": null,
+    "ticker_count": 1
+   },
+   "sources": [
+    "industry_classification/industry_classification.xlsx"
+   ]
+  },
+  {
+   "entity_id": "IND_GICS2:NGAN_HANG",
+   "type": "INDUSTRY_GICS2",
+   "code": "NGAN_HANG",
+   "canonical_name": "Ngân hàng",
+   "aliases": [
+    "Ngân hàng",
+    "ngân hàng",
+    "ngành ngân hàng",
+    "nhà băng",
+    "tổ chức tín dụng",
+    "TCTD",
+    "room tín dụng",
+    "ngân hàng thương mại"
+   ],
+   "attributes": {
+    "parent": "Tài chính",
+    "ticker_count": 1
+   },
+   "sources": [
+    "industry_classification/industry_classification.xlsx"
+   ]
+  },
+  {
+   "entity_id": "IND_GICS3:QUY",
+   "type": "INDUSTRY_GICS3",
+   "code": "QUY",
+   "canonical_name": "Quỹ",
+   "aliases": [
+    "Quỹ",
+    "quỹ",
+    "quỹ đầu tư",
+    "quỹ đầu tư mạo hiểm",
+    "quỹ mở đầu tư",
+    "quỹ đóng",
+    "quỹ thành viên",
+    "quỹ ngoại",
+    "quỹ ETF",
+    "chứng chỉ quỹ",
+    "công ty quản lý quỹ",
+    "quản lý quỹ",
+    "quỹ tương hỗ",
+    "quỹ hưu trí",
+    "quỹ trái phiếu",
+    "quỹ cổ phiếu",
+    "quỹ chỉ số",
+    "quỹ đầu tư chứng khoán",
+    "venture capital",
+    "quỹ hoán đổi danh mục"
+   ],
+   "attributes": {
+    "parent": "Tài chính",
+    "ticker_count": 1
+   },
+   "sources": [
+    "industry_classification/industry_classification.xlsx"
+   ]
+  },
+  {
+   "entity_id": "IND_GICS1:NGUYEN_VAT_LIEU",
+   "type": "INDUSTRY_GICS1",
+   "code": "NGUYEN_VAT_LIEU",
+   "canonical_name": "Nguyên vật liệu",
+   "aliases": [
+    "Nguyên vật liệu"
+   ],
+   "attributes": {
+    "parent": null,
+    "ticker_count": 1
+   },
+   "sources": [
+    "industry_classification/industry_classification.xlsx"
+   ]
+  },
+  {
+   "entity_id": "IND_GICS3:THEP",
+   "type": "INDUSTRY_GICS3",
+   "code": "THEP",
+   "canonical_name": "Thép",
+   "aliases": [
+    "Thép",
+    "thép",
+    "ngành thép",
+    "thép xây dựng",
+    "thép cuộn cán nóng",
+    "HRC",
+    "tôn mạ",
+    "thép lá",
+    "phôi thép"
+   ],
+   "attributes": {
+    "parent": "Nguyên vật liệu",
+    "ticker_count": 1
+   },
+   "sources": [
+    "industry_classification/industry_classification.xlsx"
+   ]
+  },
+  {
+   "entity_id": "IND_GICS1:CONG_NGHIEP",
+   "type": "INDUSTRY_GICS1",
+   "code": "CONG_NGHIEP",
+   "canonical_name": "Công nghiệp",
+   "aliases": [
+    "Công nghiệp"
+   ],
+   "attributes": {
+    "parent": null,
+    "ticker_count": 1
+   },
+   "sources": [
+    "industry_classification/industry_classification.xlsx"
+   ]
+  },
+  {
+   "entity_id": "IND_GICS3:VAN_TAI_DUONG_BO_DUONG_SAT",
+   "type": "INDUSTRY_GICS3",
+   "code": "VAN_TAI_DUONG_BO_DUONG_SAT",
+   "canonical_name": "Vận tải đường bộ & đường sắt",
+   "aliases": [
+    "Vận tải đường bộ & đường sắt"
+   ],
+   "attributes": {
+    "parent": "Công nghiệp",
+    "ticker_count": 1
+   },
+   "sources": [
+    "industry_classification/industry_classification.xlsx"
+   ]
+  },
+  {
+   "entity_id": "IND_GICS2:BAT_DONG_SAN",
+   "type": "INDUSTRY_GICS2",
+   "code": "BAT_DONG_SAN",
+   "canonical_name": "Bất động sản",
+   "aliases": [
+    "Bất động sản"
+   ],
+   "attributes": {
+    "parent": null,
+    "ticker_count": 1
+   },
+   "sources": [
+    "industry_classification/industry_classification.xlsx"
+   ]
+  },
+  {
+   "entity_id": "MACRO_GEO:MY",
+   "type": "MACRO_GEO",
+   "code": "MY",
+   "canonical_name": "Mỹ",
+   "aliases": [
+    "Mỹ",
+    "Hoa Kỳ",
+    "US",
+    "USA",
+    "United States",
+    "Nhà Trắng",
+    "Washington",
+    "Wall Street"
+   ],
+   "attributes": {
+    "category": "macro_geo"
+   },
+   "sources": [
+    "config/entities/aliases/nations.yaml"
+   ]
+  },
+  {
+   "entity_id": "MACRO_GEO:TRUNG_QUOC",
+   "type": "MACRO_GEO",
+   "code": "TRUNG_QUOC",
+   "canonical_name": "Trung Quốc",
+   "aliases": [
+    "Trung Quốc",
+    "TQ",
+    "China",
+    "Bắc Kinh",
+    "Thượng Hải",
+    "PBOC"
+   ],
+   "attributes": {
+    "category": "macro_geo"
+   },
+   "sources": [
+    "config/entities/aliases/nations.yaml"
+   ]
+  },
+  {
+   "entity_id": "MACRO_GEO:EU",
+   "type": "MACRO_GEO",
+   "code": "EU",
+   "canonical_name": "Châu Âu",
+   "aliases": [
+    "Châu Âu",
+    "Liên minh châu Âu",
+    "EU",
+    "Eurozone",
+    "Frankfurt"
+   ],
+   "attributes": {
+    "category": "macro_geo"
+   },
+   "sources": [
+    "config/entities/aliases/nations.yaml"
+   ]
+  },
+  {
+   "entity_id": "MACRO_GEO:NHAT_BAN",
+   "type": "MACRO_GEO",
+   "code": "NHAT_BAN",
+   "canonical_name": "Nhật Bản",
+   "aliases": [
+    "Nhật Bản",
+    "Japan",
+    "Tokyo",
+    "đồng Yên"
+   ],
+   "attributes": {
+    "category": "macro_geo"
+   },
+   "sources": [
+    "config/entities/aliases/nations.yaml"
+   ]
+  },
+  {
+   "entity_id": "MACRO_GEO:HAN_QUOC",
+   "type": "MACRO_GEO",
+   "code": "HAN_QUOC",
+   "canonical_name": "Hàn Quốc",
+   "aliases": [
+    "Hàn Quốc",
+    "Korea",
+    "Seoul",
+    "đồng Won"
+   ],
+   "attributes": {
+    "category": "macro_geo"
+   },
+   "sources": [
+    "config/entities/aliases/nations.yaml"
+   ]
+  },
+  {
+   "entity_id": "MACRO_GEO:NGA",
+   "type": "MACRO_GEO",
+   "code": "NGA",
+   "canonical_name": "Nga",
+   "aliases": [
+    "Nga",
+    "Russia",
+    "Moskva",
+    "Điện Kremlin"
+   ],
+   "attributes": {
+    "category": "macro_geo"
+   },
+   "sources": [
+    "config/entities/aliases/nations.yaml"
+   ]
+  },
+  {
+   "entity_id": "MACRO_GEO:DONG_NAM_A",
+   "type": "MACRO_GEO",
+   "code": "DONG_NAM_A",
+   "canonical_name": "Đông Nam Á",
+   "aliases": [
+    "Đông Nam Á",
+    "ASEAN",
+    "khu vực Đông Nam Á"
+   ],
+   "attributes": {
+    "category": "macro_geo"
+   },
+   "sources": [
+    "config/entities/aliases/nations.yaml"
+   ]
+  },
+  {
+   "entity_id": "MACRO_GEO:AN_DO",
+   "type": "MACRO_GEO",
+   "code": "AN_DO",
+   "canonical_name": "Ấn Độ",
+   "aliases": [
+    "Ấn Độ",
+    "India",
+    "New Delhi"
+   ],
+   "attributes": {
+    "category": "macro_geo"
+   },
+   "sources": [
+    "config/entities/aliases/nations.yaml"
+   ]
+  },
+  {
+   "entity_id": "MACRO_THEME:LAI_SUAT",
+   "type": "MACRO_THEME",
+   "code": "LAI_SUAT",
+   "canonical_name": "Lãi suất",
+   "aliases": [
+    "lãi suất",
+    "lãi suất điều hành",
+    "lãi suất tái cấp vốn",
+    "lãi suất huy động",
+    "lãi suất cho vay",
+    "trần lãi suất",
+    "lãi suất liên ngân hàng"
+   ],
+   "attributes": {
+    "category": "macro_theme"
+   },
+   "sources": [
+    "config/entities/aliases/themes.yaml"
+   ]
+  },
+  {
+   "entity_id": "MACRO_THEME:TY_GIA",
+   "type": "MACRO_THEME",
+   "code": "TY_GIA",
+   "canonical_name": "Tỷ giá & Ngoại tệ",
+   "aliases": [
+    "tỷ giá",
+    "tỷ giá USD/VND",
+    "DXY",
+    "đồng USD",
+    "ngoại tệ",
+    "dự trữ ngoại hối",
+    "phá giá tiền tệ"
+   ],
+   "attributes": {
+    "category": "macro_theme"
+   },
+   "sources": [
+    "config/entities/aliases/themes.yaml"
+   ]
+  },
+  {
+   "entity_id": "MACRO_THEME:LAM_PHAT",
+   "type": "MACRO_THEME",
+   "code": "LAM_PHAT",
+   "canonical_name": "Lạm phát & CPI",
+   "aliases": [
+    "lạm phát",
+    "CPI",
+    "chỉ số giá tiêu dùng",
+    "lạm phát cơ bản"
+   ],
+   "attributes": {
+    "category": "macro_theme"
+   },
+   "sources": [
+    "config/entities/aliases/themes.yaml"
+   ]
+  },
+  {
+   "entity_id": "MACRO_THEME:THUE_THUONG_MAI",
+   "type": "MACRO_THEME",
+   "code": "THUE_THUONG_MAI",
+   "canonical_name": "Thuế quan & Thương mại",
+   "aliases": [
+    "thuế chống bán phá giá",
+    "thuế chống trợ cấp",
+    "thuế quan",
+    "chiến tranh thương mại",
+    "thuế tối thiểu toàn cầu",
+    "hàng rào thuế quan"
+   ],
+   "attributes": {
+    "category": "macro_theme"
+   },
+   "sources": [
+    "config/entities/aliases/themes.yaml"
+   ]
+  },
+  {
+   "entity_id": "MACRO_THEME:GDP_TANG_TRUONG",
+   "type": "MACRO_THEME",
+   "code": "GDP_TANG_TRUONG",
+   "canonical_name": "Tăng trưởng GDP",
+   "aliases": [
+    "tăng trưởng GDP",
+    "GDP",
+    "tăng trưởng kinh tế",
+    "tổng sản phẩm quốc nội",
+    "suy thoái kinh tế"
+   ],
+   "attributes": {
+    "category": "macro_theme"
+   },
+   "sources": [
+    "config/entities/aliases/themes.yaml"
+   ]
+  },
+  {
+   "entity_id": "MACRO_THEME:DAU_TU_CONG",
+   "type": "MACRO_THEME",
+   "code": "DAU_TU_CONG",
+   "canonical_name": "Đầu tư công & Hạ tầng",
+   "aliases": [
+    "đầu tư công",
+    "giải ngân vốn đầu tư công",
+    "dự án trọng điểm quốc gia",
+    "cao tốc Bắc Nam",
+    "sân bay Long Thành"
+   ],
+   "attributes": {
+    "category": "macro_theme"
+   },
+   "sources": [
+    "config/entities/aliases/themes.yaml"
+   ]
+  },
+  {
+   "entity_id": "MACRO_THEME:FDI",
+   "type": "MACRO_THEME",
+   "code": "FDI",
+   "canonical_name": "Vốn FDI & Đầu tư nước ngoài",
+   "aliases": [
+    "FDI",
+    "vốn đầu tư nước ngoài",
+    "vốn ngoại",
+    "doanh nghiệp FDI",
+    "thu hút FDI"
+   ],
+   "attributes": {
+    "category": "macro_theme"
+   },
+   "sources": [
+    "config/entities/aliases/themes.yaml"
+   ]
+  },
+  {
+   "entity_id": "MACRO_THEME:TIN_DUNG",
+   "type": "MACRO_THEME",
+   "code": "TIN_DUNG",
+   "canonical_name": "Tín dụng & Tăng trưởng tín dụng",
+   "aliases": [
+    "tín dụng",
+    "tăng trưởng tín dụng",
+    "room tín dụng",
+    "dư nợ tín dụng",
+    "nợ xấu"
+   ],
+   "attributes": {
+    "category": "macro_theme"
+   },
+   "sources": [
+    "config/entities/aliases/themes.yaml"
+   ]
+  },
+  {
+   "entity_id": "MACRO_THEME:NANG_HANG_TTCK",
+   "type": "MACRO_THEME",
+   "code": "NANG_HANG_TTCK",
+   "canonical_name": "Nâng hạng thị trường chứng khoán",
+   "aliases": [
+    "nâng hạng thị trường",
+    "nâng hạng TTCK",
+    "FTSE Russell",
+    "MSCI",
+    "thị trường mới nổi",
+    "Emerging Markets"
+   ],
+   "attributes": {
+    "category": "macro_theme"
+   },
+   "sources": [
+    "config/entities/aliases/themes.yaml"
+   ]
+  },
+  {
+   "entity_id": "ASSET_CLASS:TRAI_PHIEU",
+   "type": "ASSET_CLASS",
+   "code": "TRAI_PHIEU",
+   "canonical_name": "Trái phiếu",
+   "aliases": [
+    "trái phiếu",
+    "TPDN",
+    "TPCP",
+    "trái phiếu doanh nghiệp",
+    "trái phiếu chính phủ",
+    "trái chủ",
+    "lợi suất trái phiếu",
+    "coupon",
+    "đáo hạn trái phiếu",
+    "mua lại trước hạn"
+   ],
+   "attributes": {
+    "category": "asset"
+   },
+   "sources": [
+    "config/entities/aliases/assets.yaml"
+   ]
+  },
+  {
+   "entity_id": "ASSET_CLASS:CO_PHIEU",
+   "type": "ASSET_CLASS",
+   "code": "CO_PHIEU",
+   "canonical_name": "Cổ phiếu",
+   "aliases": [
+    "cổ phiếu",
+    "thị trường chứng khoán",
+    "TTCK",
+    "khớp lệnh",
+    "khối ngoại",
+    "tự doanh",
+    "thanh khoản thị trường",
+    "thị trường cơ sở"
+   ],
+   "attributes": {
+    "category": "asset"
+   },
+   "sources": [
+    "config/entities/aliases/assets.yaml"
+   ]
+  },
+  {
+   "entity_id": "ASSET_CLASS:VANG",
+   "type": "ASSET_CLASS",
+   "code": "VANG",
+   "canonical_name": "Vàng & Kim loại quý",
+   "aliases": [
+    "vàng",
+    "vàng SJC",
+    "vàng nhẫn",
+    "giá vàng",
+    "vàng miếng",
+    "vàng 9999"
+   ],
+   "attributes": {
+    "category": "asset"
+   },
+   "sources": [
+    "config/entities/aliases/assets.yaml"
+   ]
+  },
+  {
+   "entity_id": "ASSET_CLASS:DAU_THO",
+   "type": "ASSET_CLASS",
+   "code": "DAU_THO",
+   "canonical_name": "Dầu thô & Năng lượng",
+   "aliases": [
+    "dầu thô",
+    "dầu Brent",
+    "dầu WTI",
+    "giá dầu",
+    "OPEC",
+    "xăng dầu"
+   ],
+   "attributes": {
+    "category": "asset"
+   },
+   "sources": [
+    "config/entities/aliases/assets.yaml"
+   ]
+  },
+  {
+   "entity_id": "ASSET_CLASS:BAT_DONG_SAN_TAI_SAN",
+   "type": "ASSET_CLASS",
+   "code": "BAT_DONG_SAN_TAI_SAN",
+   "canonical_name": "Bất động sản tài sản",
+   "aliases": [
+    "bất động sản",
+    "nhà đất",
+    "địa ốc",
+    "căn hộ",
+    "đất nền",
+    "giá nhà"
+   ],
+   "attributes": {
+    "category": "asset"
+   },
+   "sources": [
+    "config/entities/aliases/assets.yaml"
+   ]
+  },
+  {
+   "entity_id": "ASSET_CLASS:TIEN_MA_HOA",
+   "type": "ASSET_CLASS",
+   "code": "TIEN_MA_HOA",
+   "canonical_name": "Tiền mã hóa & Tài sản số",
+   "aliases": [
+    "tiền mã hóa",
+    "tiền số",
+    "crypto",
+    "cryptocurrency",
+    "Bitcoin",
+    "BTC",
+    "Ethereum",
+    "tài sản số"
+   ],
+   "attributes": {
+    "category": "asset"
+   },
+   "sources": [
+    "config/entities/aliases/assets.yaml"
+   ]
+  },
+  {
+   "entity_id": "ASSET_CLASS:HANG_HOA_NONG_SAN",
+   "type": "ASSET_CLASS",
+   "code": "HANG_HOA_NONG_SAN",
+   "canonical_name": "Hàng hóa & Nông sản",
+   "aliases": [
+    "hàng hóa nguyên liệu",
+    "nông sản",
+    "giá gạo",
+    "xuất khẩu gạo",
+    "cà phê",
+    "giá cà phê",
+    "cao su",
+    "giá cao su"
+   ],
+   "attributes": {
+    "category": "asset"
+   },
+   "sources": [
+    "config/entities/aliases/assets.yaml"
+   ]
+  },
+  {
+   "entity_id": "INSTITUTION:NHNN",
+   "type": "INSTITUTION",
+   "code": "NHNN",
+   "canonical_name": "Ngân hàng Nhà nước",
+   "aliases": [
+    "Ngân hàng Nhà nước",
+    "NHNN",
+    "SBV",
+    "Thống đốc",
+    "thị trường mở",
+    "OMO",
+    "tín phiếu"
+   ],
+   "attributes": {
+    "category": "institution"
+   },
+   "sources": [
+    "config/entities/aliases/institutions.yaml"
+   ]
+  },
+  {
+   "entity_id": "INSTITUTION:UBCKNN",
+   "type": "INSTITUTION",
+   "code": "UBCKNN",
+   "canonical_name": "Ủy ban Chứng khoán Nhà nước",
+   "aliases": [
+    "Ủy ban Chứng khoán Nhà nước",
+    "UBCKNN",
+    "SSC",
+    "hệ thống KRX"
+   ],
+   "attributes": {
+    "category": "institution"
+   },
+   "sources": [
+    "config/entities/aliases/institutions.yaml"
+   ]
+  },
+  {
+   "entity_id": "INSTITUTION:BO_TAI_CHINH",
+   "type": "INSTITUTION",
+   "code": "BO_TAI_CHINH",
+   "canonical_name": "Bộ Tài chính",
+   "aliases": [
+    "Bộ Tài chính",
+    "BTC",
+    "Bộ trưởng Bộ Tài chính",
+    "Tổng cục Thuế",
+    "Tổng cục Hải quan"
+   ],
+   "attributes": {
+    "category": "institution"
+   },
+   "sources": [
+    "config/entities/aliases/institutions.yaml"
+   ]
+  },
+  {
+   "entity_id": "INSTITUTION:FED",
+   "type": "INSTITUTION",
+   "code": "FED",
+   "canonical_name": "Cục Dự trữ Liên bang Mỹ",
+   "aliases": [
+    "Cục Dự trữ Liên bang",
+    "Fed",
+    "FED",
+    "FOMC",
+    "Jerome Powell",
+    "lãi suất Fed"
+   ],
+   "attributes": {
+    "category": "institution"
+   },
+   "sources": [
+    "config/entities/aliases/institutions.yaml"
+   ]
+  },
+  {
+   "entity_id": "INSTITUTION:ECB",
+   "type": "INSTITUTION",
+   "code": "ECB",
+   "canonical_name": "Ngân hàng Trung ương Châu Âu",
+   "aliases": [
+    "Ngân hàng Trung ương Châu Âu",
+    "ECB",
+    "Christine Lagarde"
+   ],
+   "attributes": {
+    "category": "institution"
+   },
+   "sources": [
+    "config/entities/aliases/institutions.yaml"
+   ]
+  },
+  {
+   "entity_id": "INSTITUTION:BOJ",
+   "type": "INSTITUTION",
+   "code": "BOJ",
+   "canonical_name": "Ngân hàng Trung ương Nhật Bản",
+   "aliases": [
+    "Ngân hàng Trung ương Nhật Bản",
+    "BOJ",
+    "Kazuo Ueda"
+   ],
+   "attributes": {
+    "category": "institution"
+   },
+   "sources": [
+    "config/entities/aliases/institutions.yaml"
+   ]
+  },
+  {
+   "entity_id": "INSTITUTION:WB_IMF",
+   "type": "INSTITUTION",
+   "code": "WB_IMF",
+   "canonical_name": "Ngân hàng Thế giới & IMF",
+   "aliases": [
+    "World Bank",
+    "Ngân hàng Thế giới",
+    "IMF",
+    "Quỹ Tiền tệ Quốc tế"
+   ],
+   "attributes": {
+    "category": "institution"
+   },
+   "sources": [
+    "config/entities/aliases/institutions.yaml"
+   ]
+  }
+ ]
+}

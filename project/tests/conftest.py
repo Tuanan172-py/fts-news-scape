@@ -5,6 +5,9 @@ một thư mục tạm, nên mọi đường phân giải mặc định (kể c�
 ghi vào đó. Một chốt chặn trên `sqlite3.connect` làm test thất bại ngay khi có kết nối
 tới thư mục dữ liệu vận hành hoặc `harness.db` của kho.
 
+Danh mục thực thể thu nhỏ `tests/fixtures/entities_min.json` được chép vào thư mục tạm
+đó, nên mọi test dùng `load_registry()` chạy được trên bản clone sạch.
+
 Không chdir toàn cục: vài module (notifier, sentiment) tải config theo đường dẫn tương
 đối; capture tests tự cô lập `raw_dir` qua fixture `env` của chúng (monkeypatch.chdir).
 """
@@ -24,6 +27,11 @@ _TEST_DATA_DIR = Path(tempfile.mkdtemp(prefix="news-scape-test-"))
 os.environ["MONOCLE_DATA_DIR"] = str(_TEST_DATA_DIR)
 os.environ["MONOCLE_DB_PATH"] = str(_TEST_DATA_DIR / "monocle.db")
 os.environ.pop("MONOCLE_ALLOW_SYNCED_DB", None)
+os.environ.pop("NEWS_SCAPE_SUBSCRIPTIONS_DIR", None)
+
+_ENTITIES_FIXTURE = PROJECT_ROOT / "tests" / "fixtures" / "entities_min.json"
+(_TEST_DATA_DIR / "entities").mkdir(parents=True, exist_ok=True)
+(_TEST_DATA_DIR / "entities" / "entities.json").write_bytes(_ENTITIES_FIXTURE.read_bytes())
 
 import pytest  # noqa: E402
 from src.core.config import OPERATIONAL_DB_PATH  # noqa: E402
