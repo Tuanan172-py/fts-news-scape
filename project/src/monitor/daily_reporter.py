@@ -15,6 +15,7 @@ from typing import Any
 
 from loguru import logger
 
+from src.core import paths
 from src.core.config import load_settings
 from src.core.models import VN_TZ
 from src.core.staging import safe_atomic_write
@@ -62,14 +63,8 @@ class DailyReporter:
     """
     def __init__(self, db_path: str | None = None, users_output_dir: str | Path | None = None):
         settings = load_settings()
-        self.db_path = db_path or settings.get("database", {}).get("path", "data/monocle.db")
-        if users_output_dir:
-            self.users_output_dir = Path(users_output_dir)
-        else:
-            # Tìm users/output: ưu tiên repo root ../users/output, fallback users/output
-            p1 = Path(__file__).resolve().parent.parent.parent.parent / "users" / "output"
-            p2 = Path("users/output")
-            self.users_output_dir = p1 if p1.exists() else p2
+        self.db_path = db_path or settings["database"]["path"]
+        self.users_output_dir = Path(users_output_dir) if users_output_dir else paths.users_output_dir()
 
     def _connect_ro(self) -> sqlite3.Connection:
         """Kết nối DB chế độ Read-Only an toàn, không tranh chấp lock."""

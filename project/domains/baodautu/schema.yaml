@@ -129,7 +129,7 @@ output_fields:
     health_threshold: 1.0
 
 capture:
-  raw_dir: "data/raw_html/baodautu.vn/<yyyymmdd>/<url_title_hash>.{html,meta.json}"
+  raw_dir: "<MONOCLE_DATA_DIR>/raw_html/baodautu.vn/<yyyymmdd>/<url_title_hash>.{html,meta.json}"
   render_method: "requests (server-rendered)"
   content_selector: "#content_detail_news"
   min_body_bytes: 2048

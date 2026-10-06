@@ -7,20 +7,21 @@ import sqlite3
 from pathlib import Path
 from loguru import logger
 
+from src.core import paths
 from src.core.staging import safe_atomic_write
 
 
 def create_db_snapshot(
-    src_db_path: str | Path = "data/monocle.db",
-    dst_db_path: str | Path = "data/monocle_review.db",
+    src_db_path: str | Path | None = None,
+    dst_db_path: str | Path | None = None,
     *,
     overwrite: bool = True,
 ) -> Path:
     """Tạo bản sao snapshot của cơ sở dữ liệu phục vụ mục đích tra cứu và kiểm thử.
 
     Args:
-        src_db_path: Đường dẫn cơ sở dữ liệu nguồn.
-        dst_db_path: Đường dẫn tệp snapshot đích cần tạo.
+        src_db_path: Đường dẫn cơ sở dữ liệu nguồn. Mặc định DB vận hành.
+        dst_db_path: Đường dẫn tệp snapshot đích. Mặc định `<gốc>/snapshots/monocle_review.db`.
         overwrite: Cờ cho phép tự động ghi đè tệp đích nếu đã tồn tại.
 
     Returns:
@@ -29,8 +30,11 @@ def create_db_snapshot(
     Raises:
         FileNotFoundError: Khi tệp cơ sở dữ liệu nguồn không tồn tại.
     """
+    if src_db_path is None:
+        from src.core.config import resolve_db_path
+        src_db_path = resolve_db_path()
     src = Path(src_db_path).resolve()
-    dst = Path(dst_db_path).resolve()
+    dst = Path(dst_db_path or paths.snapshots_dir() / "monocle_review.db").resolve()
 
     if not src.exists():
         raise FileNotFoundError(f"Database nguồn không tồn tại: {src}")

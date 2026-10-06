@@ -16,6 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from loguru import logger
 
+from src.core import paths
 from src.core.config import (
     load_domain_config,
     load_secrets,
@@ -37,7 +38,6 @@ from src.processor.extractor import extract_text
 # định dùng encoding hệ thống (cp1252) và sẽ crash khi in tiếng Việt/emoji.
 force_utf8_stdio()
 
-RAW_DIR = "data/raw_html"
 
 DEFAULT_MAX_ATTEMPTS = 5
 
@@ -62,7 +62,7 @@ _FAILED_WHERE = ("(metadata_json LIKE '%\"capture_status\": \"failed\"%' "
 
 
 def _find_bronze(domain: str, url_title_hash: str,
-                 raw_dir: str = RAW_DIR) -> str | None:
+                 raw_dir: str | None = None) -> str | None:
     """Tìm file Bronze .html DÙNG ĐƯỢC của bài. None nếu chưa có hoặc không hợp lệ.
 
     `RawStore.save` vẫn ghi body khi HTTP lỗi (giữ lại để soi), nên một trang 404/500
@@ -70,6 +70,7 @@ def _find_bronze(domain: str, url_title_hash: str,
     backfill sau sẽ bóc nội dung TRANG LỖI ra làm nội dung bài. Thiếu sidecar thì chấp
     nhận (artifact cũ hoặc đặt tay).
     """
+    raw_dir = raw_dir or str(paths.bronze_dir())
     hits = sorted(glob.glob(os.path.join(raw_dir, domain, "*",
                                          f"{url_title_hash}.html")))
     for html_path in reversed(hits):      # bản mới nhất trước
@@ -243,11 +244,11 @@ def _record_attempt(conn, row, cap: dict, max_attempts: int) -> None:
 
 
 def main(domain: str | None, limit: int, do_fetch: bool, dry_run: bool,
-         db_path: str | None = None, raw_dir: str = RAW_DIR,
+         db_path: str | None = None, raw_dir: str | None = None,
          dates_only: bool = False, mode: str = "deferred",
          max_attempts: int = DEFAULT_MAX_ATTEMPTS,
          retry_window_hours: int = 0, budget_seconds: int = 0) -> int:
-    """db_path/raw_dir override để test cô lập được (mặc định: settings + RAW_DIR).
+    """db_path/raw_dir override để test cô lập được (mặc định: settings + `paths.bronze_dir()`).
 
     Args:
         mode: `deferred` (bài vượt cap), `failed` (bài lỗi tạm thời), `all` (cả hai).
@@ -259,6 +260,7 @@ def main(domain: str | None, limit: int, do_fetch: bool, dry_run: bool,
             timeout — hết giờ mà không tự dừng thì bị giết giữa chừng, mất báo cáo.
     """
     settings = load_settings()
+    raw_dir = raw_dir or str(paths.bronze_dir())
     setup_logging(settings["logging"]["level"], settings["logging"]["dir"])
     store = ArticleStore(db_path or settings["database"]["path"])
 

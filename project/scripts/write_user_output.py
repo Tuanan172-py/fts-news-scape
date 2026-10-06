@@ -37,7 +37,7 @@ def main(argv: list[str]) -> int:
         print("lưu ý          : thư mục này ở GỐC KHO, không nằm trong project/")
         return 0
 
-    db_path = load_settings().get("database", {}).get("path", "data/monocle.db")
+    db_path = load_settings()["database"]["path"]
     reg = load_registry()
     if args.users:
         enabled = {u.strip() for u in args.users.split(",") if u.strip()}

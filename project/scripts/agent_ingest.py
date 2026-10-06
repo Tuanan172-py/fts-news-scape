@@ -9,6 +9,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.agent.runner import AgentRunner
+from src.core import paths
 from src.core.config import load_settings
 from src.core.stdio import force_utf8_stdio
 from src.db.store import ArticleStore
@@ -33,11 +34,12 @@ def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(description="Nạp agent-output-v1 do agent NGOÀI sinh ra")
     ap.add_argument("target", nargs="+",
                     help="một hoặc nhiều output.json, hoặc thư mục chứa outputs")
-    ap.add_argument("--task-dir", default="data/agent_tasks", help="Thư mục task packets (mặc định: data/agent_tasks)")
+    ap.add_argument("--task-dir", default=None,
+                    help=f"Thư mục task packets (mặc định: {paths.agent_tasks_dir()})")
     ap.add_argument("--no-archive", action="store_true", help="Không tự động archive task packet khi DoD pass")
     args = ap.parse_args(argv)
 
-    db_path = load_settings().get("database", {}).get("path", "data/monocle.db")
+    db_path = load_settings()["database"]["path"]
     runner = AgentRunner(ArticleStore(db_path=db_path), task_dir=args.task_dir)
     done = failed = 0
     done_aids: list[str] = []

@@ -17,7 +17,7 @@ force_utf8_stdio()
 
 def main(argv: list[str]) -> int:
     limit = int(argv[0]) if argv else 100
-    db_path = load_settings().get("database", {}).get("path", "data/monocle.db")
+    db_path = load_settings()["database"]["path"]
     store = ArticleStore(db_path=db_path)
     rows = list_drift(store, limit=limit)
     if not rows:

@@ -10,14 +10,15 @@ from pathlib import Path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.agent.conformance import MARGIN, check_against_baseline, score_outputs  # noqa: E402
+from src.core import paths                             # noqa: E402
 from src.core.stdio import force_utf8_stdio                                      # noqa: E402
 
 force_utf8_stdio()
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-TASK_DIR = PROJECT_ROOT / "data" / "agent_tasks" / "article"
-OUT_DIR = PROJECT_ROOT / "data" / "agent_outputs_article"
-BASELINE_PATH = PROJECT_ROOT / "data" / "conformance" / "baseline_agy.json"
+TASK_DIR = paths.article_packets_dir()
+OUT_DIR = paths.agent_outputs_dir("_article")
+BASELINE_PATH = paths.data_root() / "conformance" / "baseline_agy.json"
 
 
 def _score(args: argparse.Namespace) -> dict:

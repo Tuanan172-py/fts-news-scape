@@ -45,6 +45,7 @@ BAODAUTU_HTML = (
 @pytest.fixture
 def env(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("MONOCLE_DATA_DIR", str(tmp_path))
     db = str(tmp_path / "t.db")
     store = ArticleStore(db_path=db)
     a = Article(url="https://vietnambiz.vn/bai-test-123.htm",
@@ -82,7 +83,7 @@ def test_no_bronze_no_write(env):
 def test_backfill_from_existing_bronze(env):
     """Có Bronze → dựng lại content TỪ FILE, không chạm mạng, và gỡ cờ deferred."""
     store, a, tmp, db = env
-    d = tmp / "data" / "raw_html" / "vietnambiz.vn" / "20260907"
+    d = tmp / "raw_html" / "vietnambiz.vn" / "20260907"
     d.mkdir(parents=True)
     (d / f"{a.url_title_hash}.html").write_text(DETAIL_HTML, encoding="utf-8")
 
@@ -202,7 +203,7 @@ def test_mode_failed_recovers_transient_failure_from_bronze(env):
                                "capture": {"capture_status": "failed",
                                            "http_status": 503}})
     store.insert(failed)
-    d = tmp / "data" / "raw_html" / "vietnambiz.vn" / "20260907"
+    d = tmp / "raw_html" / "vietnambiz.vn" / "20260907"
     d.mkdir(parents=True)
     (d / f"{failed.url_title_hash}.html").write_text(DETAIL_HTML, encoding="utf-8")
 
@@ -249,7 +250,7 @@ def test_deferred_where_excludes_source_deleted(env):
 
 def test_dry_run_writes_nothing(env):
     store, a, tmp, db = env
-    d = tmp / "data" / "raw_html" / "vietnambiz.vn" / "20260907"
+    d = tmp / "raw_html" / "vietnambiz.vn" / "20260907"
     d.mkdir(parents=True)
     (d / f"{a.url_title_hash}.html").write_text(DETAIL_HTML, encoding="utf-8")
 
@@ -263,9 +264,10 @@ def test_dry_run_writes_nothing(env):
 
 def test_find_bronze_picks_latest(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("MONOCLE_DATA_DIR", str(tmp_path))
     h = "a" * 64
     for day in ("20260901", "20260907"):
-        d = tmp_path / "data" / "raw_html" / "vietnambiz.vn" / day
+        d = tmp_path / "raw_html" / "vietnambiz.vn" / day
         d.mkdir(parents=True)
         (d / f"{h}.html").write_text("x", encoding="utf-8")
     got = backfill._find_bronze("vietnambiz.vn", h)
@@ -280,8 +282,9 @@ def test_find_bronze_rejects_error_page_artifact(tmp_path, monkeypatch):
     trong trang 404/500 ra làm content_text của bài.
     """
     monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("MONOCLE_DATA_DIR", str(tmp_path))
     h = "c" * 64
-    d = tmp_path / "data" / "raw_html" / "vietnambiz.vn" / "20260917"
+    d = tmp_path / "raw_html" / "vietnambiz.vn" / "20260917"
     d.mkdir(parents=True)
     (d / f"{h}.html").write_text("<html>404 not found</html>", encoding="utf-8")
     meta = d / f"{h}.meta.json"
@@ -384,7 +387,7 @@ def test_dates_only_mode(env):
                   published_at="",                     # ← cột rỗng, cần chữa
                   metadata={"language": "vi"})
     store.insert(bdt)
-    d = tmp / "data" / "raw_html" / "baodautu.vn" / "20260907"
+    d = tmp / "raw_html" / "baodautu.vn" / "20260907"
     d.mkdir(parents=True)
     (d / f"{bdt.url_title_hash}.html").write_text(BAODAUTU_HTML, encoding="utf-8")
 

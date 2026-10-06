@@ -126,7 +126,7 @@ output_fields:
 # Bronze capture (design 06)
 # ---------------------------------------------------------------------------
 capture:
-  raw_dir: "data/raw_html/vietnambiz.vn/<yyyymmdd>/<url_title_hash>.{html,meta.json}"
+  raw_dir: "<MONOCLE_DATA_DIR>/raw_html/vietnambiz.vn/<yyyymmdd>/<url_title_hash>.{html,meta.json}"
   render_method: "requests (server-rendered, không cần JS)"
   content_selector: "div.vnbcbc-body"
   min_body_bytes: 2048

@@ -224,11 +224,11 @@ def test_b6_finish_runs_without_stop_hook(env, tmp_path):
 def test_b6_agy_ledger_rerun_replaces_row(tmp_path, monkeypatch):
     import scripts.token_ledger as tl
 
-    out_dir = tmp_path / "data" / "agent_outputs_article"
+    out_dir = tmp_path / "agent_outputs_article"
     out_dir.mkdir(parents=True)
     (out_dir / "article_WX_01.meta.json").write_text(
         '{"usage": {"input_tokens": 10, "output_tokens": 5}}', encoding="utf-8")
-    monkeypatch.setattr(tl, "__file__", str(tmp_path / "scripts" / "token_ledger.py"))
+    monkeypatch.setenv("MONOCLE_DATA_DIR", str(tmp_path))
     db = str(tmp_path / "h.db")
     ns = tl.argparse.Namespace(db=db, wave="WX", batch=None, items=1, since=0,
                                window_min=60, workers_only=True, source="agy",

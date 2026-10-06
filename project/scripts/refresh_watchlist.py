@@ -31,7 +31,7 @@ def main(argv: list[str]) -> int:
     domains = args.domains_pos if args.domains_pos else args.domains
 
     settings = load_settings()
-    db_path = settings.get("database", {}).get("path", "data/monocle.db")
+    db_path = settings["database"]["path"]
     http = HTTPClient(
         rate_limit_delay=settings.get("http", {}).get("rate_limit", 3.0),
         max_retries=settings.get("http", {}).get("max_retries", 3),

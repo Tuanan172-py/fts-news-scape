@@ -19,13 +19,14 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
+from src.core import paths                         # noqa: E402
 from src.core.config import load_settings          # noqa: E402
 from src.core.stdio import force_utf8_stdio        # noqa: E402
 from src.db.store import ArticleStore              # noqa: E402
 
 force_utf8_stdio()
 
-TASK_DIR = "data/agent_tasks"
+TASK_DIR = str(paths.agent_tasks_dir())
 
 
 def _article_ids(packet_path: Path) -> list[str]:

@@ -21,13 +21,14 @@ from src.agent.article_contract import (
     result_meta,
     validate_response,
 )
+from src.core import paths
 from src.core.staging import safe_json_dump
 from src.core.stdio import force_utf8_stdio
 
 force_utf8_stdio()
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-CORE_PATH = PROJECT_ROOT / "data" / "prefix" / "ARTICLE_SYSTEM_CORE.md"
+CORE_PATH = PROJECT_ROOT / "assets" / "prefix" / "ARTICLE_SYSTEM_CORE.md"
 OPENROUTER_ENV = PROJECT_ROOT.parent / "openrouter" / ".env"
 DEFAULT_MODEL = "stealth/space-bunny-alpha"
 DEFAULT_BASE_URL = "https://openrouter.ai/api/v1"
@@ -378,8 +379,8 @@ class OpenRouterRunner:
                 bid = b["batch_id"]
                 task_file_str = b.get("path") or b.get("packet_file") or b.get("task_file")
                 if not task_file_str:
-                    task_file_str = str(PROJECT_ROOT / "data" / "agent_tasks" / "article" / f"{bid}.task.json")
-                tpath = Path(task_file_str)
+                    task_file_str = str(paths.article_packets_dir() / f"{bid}.task.json")
+                tpath = paths.resolve_data_path(task_file_str)
                 future = executor.submit(self.run_batch, bid, tpath, out_dir, 2, force)
                 future_to_batch[future] = bid
 

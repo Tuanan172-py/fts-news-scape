@@ -27,7 +27,6 @@ detail:
   content_selector: "div#mainContent"
   max_details_per_cycle: 30
 capture:
-  raw_dir: "data/raw_html"       # RawStore lưu full raw HTML byte-exact + .meta.json
   min_body_bytes: 2048           # dưới ngưỡng → _looks_complete=False (partial/incomplete_render)
 compliance:
   respect_robots: true           # RobotsGate gate trước fetch detail (AC9)

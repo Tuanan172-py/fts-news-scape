@@ -8,12 +8,13 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
+from src.core import paths
 from src.core.stdio import force_utf8_stdio
 
 force_utf8_stdio()
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-ENTITIES_JSON = PROJECT_ROOT / "data" / "entities" / "entities.json"
+ENTITIES_JSON = paths.entities_dir() / "entities.json"
 
 # type thực thể -> khoá nhóm trong _load_all_domain_aliases()
 _TYPE_TO_GROUP = {

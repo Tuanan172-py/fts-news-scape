@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from src.core.config import load_domain_config
+from src.core.config import load_domain_config, resolve_db_path
 from src.core.stdio import force_utf8_stdio
 
 force_utf8_stdio()
@@ -15,7 +15,7 @@ DRY = "--dry-run" in sys.argv
 cfg = load_domain_config("yahoofinance")
 block_terms = [str(t).lower() for t in (cfg.get("filter") or {}).get("none", [])]
 
-c = sqlite3.connect("data/monocle.db")
+c = sqlite3.connect(str(resolve_db_path()))
 c.row_factory = sqlite3.Row
 rows = c.execute(
     "SELECT id, title, summary FROM articles WHERE source_domain='finance.yahoo.com'"

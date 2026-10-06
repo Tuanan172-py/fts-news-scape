@@ -7,6 +7,7 @@ from pathlib import Path
 from loguru import logger
 
 from src.agent.l1_classifier import classify_title
+from src.core import paths
 from src.agent.l1_router import (
     CODE_FIRST_PROVIDER, build_code_first_output, build_l1_task_packet, check_l1_dod,
     route_article, write_l1_packet,
@@ -23,7 +24,7 @@ class L1Runner:
         reg: Sổ đăng ký thực thể EntityRegistry.
     """
 
-    def __init__(self, store, registry=None, *, task_dir: str = "data/agent_tasks/l1"):
+    def __init__(self, store, registry=None, *, task_dir: str | Path | None = None):
         """Khởi tạo bộ điều phối L1Runner.
 
         Args:
@@ -32,7 +33,7 @@ class L1Runner:
             task_dir: Thư mục lưu trữ các tệp gói công việc L1.
         """
         self.store = store
-        self.task_dir = task_dir
+        self.task_dir = str(task_dir or paths.agent_tasks_dir() / "l1")
         if registry is None:
             from src.agent.entities import load_registry
             registry = load_registry()

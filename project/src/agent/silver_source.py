@@ -9,15 +9,16 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-_PROJECT_ROOT = Path(__file__).resolve().parents[2]
-SILVER_ROOT = _PROJECT_ROOT / "data" / "silver"
+from src.core import paths
+
+SILVER_ROOT = paths.silver_dir()
 
 
 def silver_package_path(source_domain: str | None, published_at: str | None,
                          article_id: str) -> Path | None:
     """Tìm gói Silver của bài theo bố cục kho.
 
-    Bố cục kho Silver là `data/silver/<domain>/<yyyymmdd>/<hash>.json`, ngày là
+    Bố cục kho Silver là `<data_root>/silver/<domain>/<yyyymmdd>/<hash>.json`, ngày là
     ngày build gói chứ không phải ngày đăng bài, nên tìm đúng ngày trước rồi quét
     các ngày khác trong cùng domain khi trượt.
 

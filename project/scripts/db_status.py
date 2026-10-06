@@ -39,7 +39,7 @@ def _print(title, rows, cols=None):
 
 def main(argv):
     ap = argparse.ArgumentParser()
-    ap.add_argument("--db", default=load_settings().get("database", {}).get("path", "data/monocle.db"))
+    ap.add_argument("--db", default=load_settings()["database"]["path"])
     ap.add_argument("--date", help="YYYY-MM-DD (mặc định: hôm nay giờ VN)")
     args = ap.parse_args(argv)
     day = args.date or f"{datetime.now(VN_TZ):%Y-%m-%d}"

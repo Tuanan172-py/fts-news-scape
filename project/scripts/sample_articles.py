@@ -14,6 +14,7 @@ except Exception:
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from src.core import paths
 from src.core.config import list_domains, load_domain_config
 from src.core.logging import setup_logging
 from src.crawler.http_client import HTTPClient
@@ -27,7 +28,7 @@ import src.scrapers  # noqa: F401
 
 _SNIP = 240
 _RAW_VAL = 110
-OUT_DIR = Path("logs/sample_articles")
+OUT_DIR = paths.logs_dir() / "sample_articles"
 
 # Phân nhóm theo tầng nguồn tin — khớp taxonomy docs/domains/
 GROUPS = {
@@ -215,7 +216,7 @@ def _compact_card(scraper, raw, a, sentiment_engine) -> list[str]:
 
 
 def dump(only: list[str] | None = None, n: int = 2) -> int:
-    setup_logging("ERROR", "logs")
+    setup_logging("ERROR")
     store = ArticleStore()
     dedup = DedupCache(store)
     http = HTTPClient(rate_limit_delay=3.0, max_retries=3)

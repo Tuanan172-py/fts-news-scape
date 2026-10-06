@@ -13,7 +13,7 @@ from openpyxl.worksheet.datavalidation import DataValidation  # noqa: E402
 
 from src.core.stdio import force_utf8_stdio            # noqa: E402
 from src.users.compile import (                        # noqa: E402
-    DEFAULT_INPUT_ROOT, DEFAULT_SUBSCRIPTIONS_ROOT, GROUP_KEYS, REPO_ROOT, USERS_CONFIG_DIR,
+    DEFAULT_INPUT_ROOT, DEFAULT_SUBSCRIPTIONS_ROOT, GROUP_KEYS, USERS_CONFIG_DIR,
     write_user_csv, write_user_xlsx,
 )
 
@@ -94,7 +94,7 @@ def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--seed", metavar="NAME", help="seed users/subscriptions/<NAME>_news.csv từ config yaml")
     ap.add_argument("--out-csv", default=str(DEFAULT_SUBSCRIPTIONS_ROOT / "_template_news.csv"))
-    ap.add_argument("--out-xlsx", default=str(REPO_ROOT / "users" / "template" / "entities_template.xlsx"))
+    ap.add_argument("--out-xlsx", default=str(DEFAULT_SUBSCRIPTIONS_ROOT / "_template" / "entities_template.xlsx"))
     args = ap.parse_args(argv)
 
     if args.seed:

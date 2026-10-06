@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any
 
 from src.agent.dod import load_thresholds
+from src.core import paths
 from src.core.models import VN_TZ
 from src.core.staging import safe_json_dump
 
@@ -110,8 +111,8 @@ def build_l1_batch_packet(tasks: list[dict], batch_id: str) -> dict:
         "task_count": len(batch_tasks),
         "tasks": batch_tasks,
         "entity_catalog_ref": {
-            "entities": "data/entities/entities.json",
-            "taxonomy": "data/entities/taxonomy.json",
+            "entities": "entities/entities.json",
+            "taxonomy": "entities/taxonomy.json",
         },
         "output_contract": {
             "schema_name": L1_OUTPUT_SCHEMA,
@@ -130,7 +131,7 @@ def build_l1_batch_packet(tasks: list[dict], batch_id: str) -> dict:
     }
 
 
-def write_batch_packet(batch_packet: dict, base_dir: str = "data/agent_tasks") -> str:
+def write_batch_packet(batch_packet: dict, base_dir: str | Path | None = None) -> str:
     """Ghi gói tác vụ gom lô ra đĩa theo cơ chế hoán đổi nguyên tử an toàn.
 
     Args:
@@ -140,6 +141,7 @@ def write_batch_packet(batch_packet: dict, base_dir: str = "data/agent_tasks") -
     Returns:
         Đường dẫn chuỗi tới tệp tin gói tác vụ đã ghi.
     """
+    base_dir = paths.resolve_data_path(base_dir) if base_dir else paths.agent_tasks_dir()
     os.makedirs(base_dir, exist_ok=True)
     batch_id = batch_packet.get("batch_id", "batch_01")
     target_path = os.path.join(base_dir, f"{batch_id}.task.json")
@@ -150,7 +152,7 @@ def write_batch_packet(batch_packet: dict, base_dir: str = "data/agent_tasks") -
 def split_tasks_into_batches(
     tasks: list[dict],
     batch_size: int = 10,
-    base_dir: str = "data/agent_tasks",
+    base_dir: str | Path | None = None,
     prefix: str = "batch",
     builder=None,
 ) -> list[str]:
@@ -193,11 +195,12 @@ def split_tasks_into_batches(
 def split_l1_tasks_into_batches(
     tasks: list[dict],
     batch_size: int = 25,
-    base_dir: str = "data/agent_tasks/l1",
+    base_dir: str | Path | None = None,
     prefix: str = "l1_batch",
 ) -> list[str]:
     """Gom lô cho lớp L1 (packet chỉ có tiêu đề nên lô lớn hơn Gold được)."""
-    return split_tasks_into_batches(tasks, batch_size=batch_size, base_dir=base_dir,
+    return split_tasks_into_batches(tasks, batch_size=batch_size,
+                                    base_dir=base_dir or paths.agent_tasks_dir() / "l1",
                                     prefix=prefix, builder=build_l1_batch_packet)
 
 

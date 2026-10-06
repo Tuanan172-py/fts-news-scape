@@ -24,7 +24,7 @@ def main(argv: list[str]) -> int:
     ap.add_argument("--allow-write", action="store_true", help="cho phép câu lệnh ghi (nguy hiểm)")
     a = ap.parse_args(argv)
 
-    db = a.db or load_settings().get("database", {}).get("path", "data/monocle.db")
+    db = a.db or load_settings()["database"]["path"]
     is_write = a.sql.strip().lower().startswith(_WRITE_KW)
     if is_write and not a.allow_write:
         print("TỪ CHỐI: câu lệnh có vẻ GHI dữ liệu. Thêm --allow-write nếu chắc chắn (nên backup trước).")

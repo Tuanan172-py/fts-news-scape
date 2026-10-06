@@ -11,11 +11,15 @@ from pathlib import Path
 import openpyxl
 import yaml
 
+from src.core import paths
+
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 REPO_ROOT = PROJECT_ROOT.parent
-DEFAULT_SUBSCRIPTIONS_ROOT = REPO_ROOT / "users" / "subscriptions"
-DEFAULT_INPUT_ROOT = DEFAULT_SUBSCRIPTIONS_ROOT if DEFAULT_SUBSCRIPTIONS_ROOT.exists() else (REPO_ROOT / "users" / "input")
-DEFAULT_OUTPUT_ROOT = REPO_ROOT / "users" / "output"
+DEFAULT_SUBSCRIPTIONS_ROOT = paths.subscriptions_dir()
+# Bố cục cũ `users/input` được chép về `<gốc>/inputs/users` ở khung chuyển dữ liệu.
+LEGACY_INPUT_ROOT = paths.inputs_dir() / "users"
+DEFAULT_INPUT_ROOT = DEFAULT_SUBSCRIPTIONS_ROOT if DEFAULT_SUBSCRIPTIONS_ROOT.exists() else LEGACY_INPUT_ROOT
+DEFAULT_OUTPUT_ROOT = paths.users_output_dir()
 USERS_CONFIG_DIR = PROJECT_ROOT / "config" / "entities" / "users"
 
 # Nhóm hợp lệ trong sheet entities khớp với EntityRegistry.select
@@ -293,8 +297,8 @@ def compile_all(input_root: str | Path | None = None, registry=None,
     if input_root is None:
         if DEFAULT_SUBSCRIPTIONS_ROOT.exists():
             input_root = DEFAULT_SUBSCRIPTIONS_ROOT
-        elif (REPO_ROOT / "users" / "input").exists():
-            input_root = REPO_ROOT / "users" / "input"
+        elif LEGACY_INPUT_ROOT.exists():
+            input_root = LEGACY_INPUT_ROOT
         else:
             input_root = DEFAULT_SUBSCRIPTIONS_ROOT
     input_root = Path(input_root)
@@ -345,13 +349,13 @@ def load_manifest(input_root: str | Path | None = None) -> dict[str, bool]:
     if input_root is None:
         candidates = [
             DEFAULT_SUBSCRIPTIONS_ROOT / "manifest.yaml",
-            REPO_ROOT / "users" / "input" / "manifest.yaml",
+            LEGACY_INPUT_ROOT / "manifest.yaml",
         ]
     else:
         candidates = [
             Path(input_root) / "manifest.yaml",
             DEFAULT_SUBSCRIPTIONS_ROOT / "manifest.yaml",
-            REPO_ROOT / "users" / "input" / "manifest.yaml",
+            LEGACY_INPUT_ROOT / "manifest.yaml",
         ]
 
     for path in candidates:
@@ -377,7 +381,7 @@ def enabled_users(input_root: str | Path | None = None,
     if names is None:
         names_found: set[str] = set()
         root = Path(input_root) if input_root else (
-            DEFAULT_SUBSCRIPTIONS_ROOT if DEFAULT_SUBSCRIPTIONS_ROOT.exists() else (REPO_ROOT / "users" / "input")
+            DEFAULT_SUBSCRIPTIONS_ROOT if DEFAULT_SUBSCRIPTIONS_ROOT.exists() else LEGACY_INPUT_ROOT
         )
         if root.exists():
             for p in root.iterdir():

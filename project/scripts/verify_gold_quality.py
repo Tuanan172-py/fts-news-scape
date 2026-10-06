@@ -119,7 +119,7 @@ def main(argv: list[str]) -> int:
     ap.add_argument("--json", action="store_true", help="in ket qua dang JSON")
     args = ap.parse_args(argv)
 
-    db_path = load_settings().get("database", {}).get("path", "data/monocle.db")
+    db_path = load_settings()["database"]["path"]
     store = ArticleStore(db_path=db_path, init_schema=False)
     res = analyse(store)
 

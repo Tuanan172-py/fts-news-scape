@@ -6,7 +6,7 @@ Cung cấp lớp FileNotifier đối chiếu bài viết với các quy tắc th
 
 from __future__ import annotations
 
-from src.core.config import resolve_project_path
+from src.core import paths
 import re
 from datetime import datetime
 from pathlib import Path
@@ -28,9 +28,9 @@ class FileNotifier:
     def __init__(
         self,
         config_path: str = "config/notifications.yaml",
-        out_dir: str = "data/notifications",
+        out_dir: str | None = None,
     ):
-        self.out_dir = Path(resolve_project_path(out_dir))
+        self.out_dir = paths.resolve_data_path(out_dir) if out_dir else paths.notifications_dir()
         self.rules = []
         p = Path(config_path)
         if p.exists():

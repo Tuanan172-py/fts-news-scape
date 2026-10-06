@@ -6,7 +6,7 @@ Bất biến chính:
 - `modified` đổi → revision MỚI, không ghi đè bản cũ
 - không parse được kỳ → HELD + cảnh báo, TUYỆT ĐỐI không đoán bừa
 - attachment nhị phân lưu byte-exact, không parse
-- Bronze ở ROOT RIÊNG data/raw_reports/ — derive của bài báo không nuốt nhầm
+- Bronze ở ROOT RIÊNG <data_root>/raw_reports/ — derive của bài báo không nuốt nhầm
 """
 
 import hashlib
@@ -94,12 +94,13 @@ class FakeHTTP:
 @pytest.fixture
 def env(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("MONOCLE_DATA_DIR", str(tmp_path))
     store = ArticleStore(db_path=str(tmp_path / "t.db"))
     yield store, tmp_path
 
 
 def _src(http, store, **kw):
-    # root RIENG data/raw_reports (mac dinh) - derive cua bai bao KHONG quet vao day
+    # root RIENG <data_root>/raw_reports (mac dinh) - derive cua bai bao KHONG quet vao day
     return PeriodicReportSource(http, store, respect_robots=False, **kw)
 
 
@@ -161,13 +162,13 @@ def test_capture_creates_bronze_html_and_binaries(env):
     assert summary["captured"] == 1 and summary["attachments"] == 2
     assert summary["held_unparsed"] == 0 and summary["failed"] == 0
 
-    files = sorted(p.name for p in (tmp / "data/raw_reports/nso.gov.vn").rglob("*")
+    files = sorted(p.name for p in (tmp / "raw_reports/nso.gov.vn").rglob("*")
                    if p.is_file())
     assert "monthly-2026-08-r1.html" in files
     assert "monthly-2026-08-r1__02-Bieu-T8.2026.xlsx" in files
     assert "monthly-2026-08-r1__01-Loi-van-T8.2026-final.docx" in files
     # byte-exact + sha khớp
-    xlsx = next(p for p in (tmp / "data/raw_reports/nso.gov.vn").rglob("*.xlsx"))
+    xlsx = next(p for p in (tmp / "raw_reports/nso.gov.vn").rglob("*.xlsx"))
     assert xlsx.read_bytes() == XLSX_BYTES
     meta = json.loads((xlsx.parent / (xlsx.name + ".binmeta.json")).read_text("utf-8"))
     assert meta["content_sha256"] == hashlib.sha256(XLSX_BYTES).hexdigest()
@@ -205,7 +206,7 @@ def test_modified_creates_new_revision(env):
                         "ORDER BY revision").fetchall()
     conn.close()
     assert [r["revision"] for r in rows] == [1, 2], "bản cũ phải còn nguyên"
-    names = {p.name for p in (tmp / "data/raw_reports/nso.gov.vn").rglob("*.html")}
+    names = {p.name for p in (tmp / "raw_reports/nso.gov.vn").rglob("*.html")}
     assert {"monthly-2026-08-r1.html", "monthly-2026-08-r2.html"} <= names
 
 
@@ -231,7 +232,7 @@ def test_no_attachments_flag(env):
     summary = _src(http, store, fetch_attachments=False).run()
     assert summary["captured"] == 1
     assert http.calls["attach"] == 0
-    assert not list((tmp / "data/raw_reports/nso.gov.vn").rglob("*.xlsx"))
+    assert not list((tmp / "raw_reports/nso.gov.vn").rglob("*.xlsx"))
 
 
 def test_discover_failure_is_graceful(env):
@@ -268,8 +269,8 @@ def test_bronze_root_is_separate_from_articles(env):
     http = FakeHTTP([_post(1, "Báo cáo tình hình kinh tế - xã hội tháng 8 năm 2026",
                            "2026-09-03T09:00:02")])
     _src(http, store).run()
-    assert (tmp / "data/raw_reports/nso.gov.vn").exists()
-    assert not (tmp / "data/raw_html").exists(), "KHONG duoc ghi vao raw_html"
+    assert (tmp / "raw_reports/nso.gov.vn").exists()
+    assert not (tmp / "raw_html").exists(), "KHONG duoc ghi vao raw_html"
 
 
 def test_binary_meta_suffix_not_scanned_by_derive(env):
@@ -279,7 +280,7 @@ def test_binary_meta_suffix_not_scanned_by_derive(env):
     http = FakeHTTP([_post(1, "Báo cáo tình hình kinh tế - xã hội tháng 8 năm 2026",
                            "2026-09-03T09:00:02")])
     _src(http, store).run()
-    root = tmp / "data/raw_reports/nso.gov.vn"
+    root = tmp / "raw_reports/nso.gov.vn"
     plain = sorted(p.name for p in root.rglob("*.meta.json")
                    if not p.name.endswith(".binmeta.json"))
     assert plain == ["monthly-2026-08-r1.meta.json"], \

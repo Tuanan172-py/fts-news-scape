@@ -9,7 +9,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from src.core.config import load_settings, resolve_project_path
+from src.core import paths
+from src.core.config import load_settings
 from src.core.models import Article, sha256_hash
 from src.core.stdio import force_utf8_stdio
 from src.db.store import ArticleStore
@@ -63,7 +64,7 @@ def main(argv: list[str]) -> int:
     ap.add_argument("--dry-run", action="store_true", help="Chỉ đếm, không ghi")
     args = ap.parse_args(argv)
 
-    store = ArticleStore(db_path=load_settings().get("database", {}).get("path", "data/monocle.db"))
+    store = ArticleStore(db_path=load_settings()["database"]["path"])
     conn = store.connect()
     try:
         l1_titles = {r["article_id"]: r["title"] for r in conn.execute("SELECT article_id, title FROM l1_tasks")}
@@ -74,7 +75,7 @@ def main(argv: list[str]) -> int:
     stat, rebuilt = Counter(), []
     for r in rows:
         try:
-            pkg = json.loads(resolve_project_path(r["package_path"]).read_text(encoding="utf-8"))
+            pkg = json.loads(paths.resolve_data_path(r["package_path"]).read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
             stat["thiếu/hỏng work-package"] += 1
             continue

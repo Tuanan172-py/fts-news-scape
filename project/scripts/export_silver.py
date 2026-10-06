@@ -24,7 +24,7 @@ if __name__ == "__main__":
     p.add_argument("--out", help="đường dẫn CSV tuỳ chọn")
     args = p.parse_args()
 
-    db_path = load_settings().get("database", {}).get("path", "data/monocle.db")
+    db_path = load_settings()["database"]["path"]
     store = ArticleStore(db_path=db_path)
     path, n = export_silver_manifest(
         store, today=args.today, days=args.days, out=args.out

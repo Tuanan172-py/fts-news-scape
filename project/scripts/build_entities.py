@@ -20,6 +20,7 @@ except ImportError:
     pd = None
 
 from src.agent.entities import GENERIC_ALIAS_STOPLIST, _fold
+from src.core import paths
 from src.core.stdio import force_utf8_stdio
 force_utf8_stdio()
 
@@ -35,7 +36,7 @@ _POSSIBLE_DATA_ROOTS = [
     Path(__file__).resolve().parents[2] / "FRA - Data",
 ]
 DEFAULT_DATA_ROOT = next((p for p in _POSSIBLE_DATA_ROOTS if p.exists()), _POSSIBLE_DATA_ROOTS[0])
-DEFAULT_OUT = Path(__file__).resolve().parents[1] / "data" / "entities"
+DEFAULT_OUT = paths.entities_dir()
 ALIASES_DIR = Path(__file__).resolve().parents[1] / "config" / "entities" / "aliases"
 USERS_DIR = Path(__file__).resolve().parents[1] / "config" / "entities" / "users"
 

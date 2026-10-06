@@ -1,11 +1,13 @@
 """Dọn dẹp và di dời các task packet cũ còn tồn đọng tại thư mục gốc data/agent_tasks."""
 from __future__ import annotations
 
-import os
 import shutil
-import sqlite3
 import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
+from src.core import paths  # noqa: E402
 
 # Cấu hình UTF-8 cho Windows console
 if sys.platform == "win32":
@@ -17,9 +19,9 @@ if sys.platform == "win32":
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 REPO_ROOT = PROJECT_ROOT.parent
+# Vị trí cũ ở gốc kho mã, chỉ đọc để dọn; không phải nơi ghi dữ liệu.
 SRC_TASKS_DIR = REPO_ROOT / "data" / "agent_tasks"
-ARCHIVE_DIR = PROJECT_ROOT / "data" / "agent_tasks" / "archive" / "legacy_root"
-DB_PATH = Path("C:/data/news-scape/monocle.db")
+ARCHIVE_DIR = paths.agent_tasks_dir() / "archive" / "legacy_root"
 
 
 def cleanup_legacy_root_tasks() -> None:

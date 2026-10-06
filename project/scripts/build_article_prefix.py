@@ -30,14 +30,15 @@ from src.agent.prefix import (                       # noqa: E402
     compare_persona,
     digest,
 )
+from src.core import paths                             # noqa: E402
 from src.core.stdio import force_utf8_stdio          # noqa: E402
 
 force_utf8_stdio()
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-ENTITIES_JSON = PROJECT_ROOT / "data" / "entities" / "entities.json"
-TAXONOMY_JSON = PROJECT_ROOT / "data" / "entities" / "taxonomy.json"
-OUT_DIR = PROJECT_ROOT / "data" / "prefix"
+ENTITIES_JSON = paths.entities_dir() / "entities.json"
+TAXONOMY_JSON = paths.entities_dir() / "taxonomy.json"
+OUT_DIR = PROJECT_ROOT / "assets" / "prefix"
 
 # Nhóm đóng: liệt kê được toàn bộ nên đưa hết vào prefix, model không phải đoán.
 CLOSED_TYPES = [
@@ -444,7 +445,7 @@ def main(argv=None) -> int:
         "fund_lines": len(digest_lines(items, FUND_TYPES)),
         "ticker_lines": len(tickers),
         "variants": {"tickers": bool(tickers)},
-        "source": str(ENTITIES_JSON),
+        "source": paths.to_data_relative(ENTITIES_JSON),
     }
     meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
 

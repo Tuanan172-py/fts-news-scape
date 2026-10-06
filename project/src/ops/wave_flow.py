@@ -11,6 +11,7 @@ from datetime import timedelta
 from pathlib import Path
 from typing import Any, Callable, Protocol
 
+from src.core import paths
 from src.ops import breakers as br
 from src.ops import metrics as wave_metrics
 from src.ops import trace as tracing
@@ -22,8 +23,8 @@ from src.ops.store import OpsStore, iso, now_vn
 from src.ops.trace import Tracer
 
 SCRIPTS = PROJECT_ROOT / "scripts"
-TASK_DIR = PROJECT_ROOT / "data" / "agent_tasks" / "article"
-OUT_DIR = PROJECT_ROOT / "data" / "agent_outputs_article"
+TASK_DIR = paths.article_packets_dir()
+OUT_DIR = paths.agent_outputs_dir("_article")
 MIN_COVERAGE = 0.90
 
 _BATCH_LINE = re.compile(r"^\s*(✅|⚠️)\s+(\S+):\s+([A-Z_]+)\s+\((\d+) bài\)\s*(.*)$")

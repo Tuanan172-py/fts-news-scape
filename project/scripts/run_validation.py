@@ -8,6 +8,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from scripts.process_l1_pipeline import build_l1_output, check_l1_dod
+from src.core import paths
 
 total = 0
 passed = 0
@@ -16,7 +17,7 @@ recognized = 0
 unrecognized_list = []
 
 for b in range(1, 17):
-    p = PROJECT_ROOT / f"data/agent_tasks/l1/l1_batch_{b:02d}.task.json"
+    p = paths.agent_tasks_dir() / "l1" / f"l1_batch_{b:02d}.task.json"
     with open(p, "r", encoding="utf-8") as f:
         data = json.load(f)
     for t in data["tasks"]:

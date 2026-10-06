@@ -26,6 +26,7 @@ from scripts.token_ledger import (                         # noqa: E402
     worker_calls,
 )
 from src.agent.prefix import cached_prefix_tokens          # noqa: E402
+from src.core import paths                                 # noqa: E402
 from src.db.preflight import probe_write, resolve_db_path  # noqa: E402
 from src.telemetry.dsh_usage import (                      # noqa: E402
     billed_usd,
@@ -34,9 +35,8 @@ from src.telemetry.dsh_usage import (                      # noqa: E402
     load_pricing,
 )
 
-DATA_ROOT = PROJECT_ROOT / "data"
-ARTICLE_TASK_DIR = DATA_ROOT / "agent_tasks" / "article"
-USER_OUTPUT_DIR = PROJECT_ROOT.parent / "users" / "output"
+ARTICLE_TASK_DIR = paths.article_packets_dir()
+USER_OUTPUT_DIR = paths.users_output_dir()
 MANIFEST_YAML = PROJECT_ROOT / "config" / "entities" / "manifest.yaml"
 HARNESS_DB = PROJECT_ROOT.parent / "harness.db"
 PY = '& "C:\\venvs\\news-scape\\Scripts\\python.exe"'
@@ -720,7 +720,7 @@ def cmd_users(args: argparse.Namespace) -> None:
     print()
 
     # Kiểm tra xem có file subscription excel mới nào chưa được kích hoạt không
-    subs_dir = PROJECT_ROOT.parent / "users" / "subscriptions"
+    subs_dir = paths.subscriptions_dir()
     if subs_dir.exists():
         excel_files = glob.glob(str(subs_dir / "*_news.xlsx"))
         unregistered = []

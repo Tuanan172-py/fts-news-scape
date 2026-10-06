@@ -13,6 +13,7 @@ from urllib.parse import urlparse
 
 from bs4 import BeautifulSoup
 
+from src.core import paths
 from src.core.models import sha256_hash
 from src.processor.extractor import extract_content, extract_text
 
@@ -237,12 +238,12 @@ def _atomic_write(path: str, data: bytes) -> None:
     os.replace(tmp, path)
 
 
-def write_silver(silver: dict, base_dir: str = "data/silver") -> str:
+def write_silver(silver: dict, base_dir: str | None = None) -> str:
     """Lưu trữ đối tượng Silver ra đĩa theo cấu trúc phân vùng tên miền và ngày tháng.
 
     Args:
         silver: Từ điển dữ liệu Silver đã tinh chế.
-        base_dir: Thư mục gốc lưu trữ dữ liệu tầng Silver.
+        base_dir: Thư mục gốc lưu trữ dữ liệu tầng Silver. Mặc định `paths.silver_dir()`.
 
     Returns:
         Đường dẫn tới tệp tin Silver JSON đã lưu.
@@ -253,7 +254,8 @@ def write_silver(silver: dict, base_dir: str = "data/silver") -> str:
         parts = silver["built_from_raw_path"].replace("\\", "/").split("/")
         if len(parts) >= 2:
             yyyymmdd = parts[-2]
-    directory = os.path.join(base_dir, domain, yyyymmdd or "unknown-date")
+    root = paths.resolve_data_path(base_dir) if base_dir else paths.silver_dir()
+    directory = os.path.join(str(root), domain, yyyymmdd or "unknown-date")
     os.makedirs(directory, exist_ok=True)
     path = os.path.join(directory, f"{silver['article_id']}.json")
     _atomic_write(path, json.dumps(silver, ensure_ascii=False, indent=2).encode("utf-8"))

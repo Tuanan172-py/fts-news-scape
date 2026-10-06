@@ -38,6 +38,7 @@ from src.agent.prefix import (                        # noqa: E402
     cached_prefix_tokens,
     persona_tokens,
 )
+from src.core import paths                             # noqa: E402
 from src.core.stdio import force_utf8_stdio           # noqa: E402
 from src.db.preflight import resolve_db_path          # noqa: E402
 from src.pipeline.cluster_job import refresh as refresh_clusters  # noqa: E402
@@ -46,8 +47,7 @@ from src.pipeline.inherit import hold_cutoff          # noqa: E402
 force_utf8_stdio()
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-DATA_ROOT = PROJECT_ROOT / "data"
-TASK_DIR = DATA_ROOT / "agent_tasks" / "article"
+TASK_DIR = paths.article_packets_dir()
 
 # Ba trần dưới đây là số thật của công cụ đọc trong DSH, đọc từ README của
 # `dsh-tool-fs`: `readMaxLineLength` 2000 ký tự mỗi dòng, `readMaxBytes` 51.200 byte
@@ -265,14 +265,12 @@ def read_cleaned_text(package_path: str) -> str:
     """Đọc nội dung đã chuẩn hóa từ gói dữ liệu tầng bạc.
 
     Args:
-        package_path: Đường dẫn gói, tương đối với thư mục dự án hoặc tuyệt đối.
+        package_path: Đường dẫn gói, tương đối với gốc dữ liệu hoặc tuyệt đối.
 
     Returns:
         Nội dung bài viết, hoặc chuỗi rỗng khi không đọc được.
     """
-    p = Path(package_path)
-    if not p.is_absolute():
-        p = PROJECT_ROOT / package_path
+    p = paths.resolve_data_path(package_path)
     try:
         with open(p, encoding="utf-8") as f:
             return (json.load(f) or {}).get("cleaned_text") or ""
@@ -717,8 +715,8 @@ def main(argv=None) -> int:
         est_out = len(chunk) * args.out_tokens_per_article
         batches.append({
             "batch_id": batch_id,
-            "path": str(packet_path),
-            "map": str(map_path),
+            "path": paths.to_data_relative(packet_path),
+            "map": paths.to_data_relative(map_path),
             "n": len(chunk),
             "tier1": sum(1 for a in chunk if a["tier"] == 1),
             "est_miss": est_in - pfx,

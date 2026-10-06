@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 
 from src.agent.dod import load_thresholds
+from src.core import paths
 from src.agent.pruner import clean_article_paragraphs
 
 _SCHEMAS_DIR = Path(__file__).resolve().parents[2] / "schemas"
@@ -119,7 +120,7 @@ def build_task_packet(
 from src.core.staging import safe_json_dump
 
 
-def write_packet(packet: dict, base_dir: str = "data/agent_tasks") -> str:
+def write_packet(packet: dict, base_dir: str | Path | None = None) -> str:
     """Lưu gói công việc ra đĩa an toàn qua cơ chế staging nguyên tử.
 
     Args:
@@ -129,6 +130,7 @@ def write_packet(packet: dict, base_dir: str = "data/agent_tasks") -> str:
     Returns:
         Đường dẫn tệp gói tác vụ đã ghi trên đĩa.
     """
+    base_dir = paths.resolve_data_path(base_dir) if base_dir else paths.agent_tasks_dir()
     os.makedirs(base_dir, exist_ok=True)
     target_path = os.path.join(base_dir, f"{packet['article_id']}.task.json")
     final_path, _ = safe_json_dump(packet, target_path, indent=2)

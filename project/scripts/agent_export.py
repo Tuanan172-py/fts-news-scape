@@ -58,7 +58,7 @@ def main(argv: list[str]) -> int:
                 if item_clean:
                     user_filter.append(item_clean)
 
-    db_path = load_settings().get("database", {}).get("path", "data/monocle.db")
+    db_path = load_settings()["database"]["path"]
     store = ArticleStore(db_path=db_path)
     if args.sync:
         from src.pipeline.derive import rederive_incremental

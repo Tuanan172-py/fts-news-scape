@@ -14,7 +14,8 @@ from src.db.store import ArticleStore
 
 force_utf8_stdio()
 
-# ".../<bat ky>/project/data/agent_tasks/l1/x.json" -> "data/agent_tasks/l1/x.json"
+# .../<bat ky>/project/data/agent_tasks/l1/x.json -> data/agent_tasks/l1/x.json (dang cu,
+# src.core.paths.resolve_data_path van doc duoc; migrate_data_root.py dua ve dang moi).
 _ABS_RE = re.compile(r"^.*[\\/]project[\\/]", re.IGNORECASE)
 
 _TARGETS = (("l1_tasks", "packet_path"), ("work_items", "package_path"))
@@ -32,7 +33,7 @@ def main(argv: list[str]) -> int:
     ap.add_argument("--dry-run", action="store_true", help="Chỉ đếm, không ghi")
     args = ap.parse_args(argv)
 
-    db_path = load_settings().get("database", {}).get("path", "data/monocle.db")
+    db_path = load_settings()["database"]["path"]
     conn = ArticleStore(db_path=db_path).connect()
     try:
         total = 0

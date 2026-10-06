@@ -9,14 +9,15 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from loguru import logger
 
-from src.core.config import load_settings, resolve_project_path
+from src.core import paths
+from src.core.config import load_settings
 from src.core.stdio import force_utf8_stdio
 from src.db.store import ArticleStore
 from src.pipeline.run import process_meta
 
 force_utf8_stdio()
 
-RAW_DIR = resolve_project_path("data/raw_html")
+RAW_DIR = paths.bronze_dir()
 
 
 def iter_meta(domain: str | None, date: str | None):
@@ -31,7 +32,7 @@ def iter_meta(domain: str | None, date: str | None):
 def main(argv: list[str]) -> int:
     domain = argv[0] if len(argv) > 0 else None
     date = argv[1] if len(argv) > 1 else None
-    db_path = load_settings().get("database", {}).get("path", "data/monocle.db")
+    db_path = load_settings()["database"]["path"]
     store = ArticleStore(db_path=db_path)
 
     logger.info("Scanning Bronze meta files (domain={}, date={})...", domain or "all", date or "all")

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from src.core.config import resolve_project_path
+from src.core import paths
 import csv
 import sqlite3
 from collections import Counter
@@ -12,8 +12,6 @@ from pathlib import Path
 from src.core.models import VN_TZ
 from src.core.staging import safe_atomic_write
 
-DB_PATH = "data/monocle.db"
-EXPORT_DIR = "data/exports"
 
 # Thứ tự cột trong CSV.
 COLUMNS = [
@@ -27,13 +25,13 @@ def _date_prefix(iso: str) -> str:
     return (iso or "")[:10]
 
 
-def query_rows(db_path: str = DB_PATH, *, today: bool = False,
+def query_rows(db_path: str | None = None, *, today: bool = False,
                days: int | None = None, domains: list[str] | None = None,
                with_symbols: bool = False, limit: int | None = None) -> list:
     """Truy vấn các dòng dữ liệu bài viết theo tiêu chí lọc chỉ định.
 
     Args:
-        db_path: Đường dẫn tới tệp cơ sở dữ liệu SQLite.
+        db_path: Đường dẫn tới tệp cơ sở dữ liệu SQLite. Mặc định DB vận hành.
         today: Chỉ lấy các bài viết được thu thập trong ngày hôm nay.
         days: Số ngày gần nhất cần lấy dữ liệu.
         domains: Danh sách tên miền nguồn cần lọc.
@@ -44,6 +42,9 @@ def query_rows(db_path: str = DB_PATH, *, today: bool = False,
         Danh sách các dòng bản ghi sqlite3.Row tương ứng.
     """
     # Mở mode read-only an toàn để không cạnh tranh lock với writer
+    if db_path is None:
+        from src.core.config import resolve_db_path
+        db_path = str(resolve_db_path())
     resolved_db = Path(db_path).resolve()
     if resolved_db.exists():
         uri_path = f"file:{resolved_db.as_posix()}?mode=ro"
@@ -101,17 +102,17 @@ def write_csv(rows: list, out_path: Path) -> Path:
 def _auto_name(today: bool, days: int | None) -> Path:
     stamp = f"{datetime.now(VN_TZ):%Y%m%d}"
     suffix = "-today" if today else (f"-{days}d" if days else "")
-    return Path(resolve_project_path(EXPORT_DIR)) / f"articles-{stamp}{suffix}.csv"
+    return paths.exports_dir() / f"articles-{stamp}{suffix}.csv"
 
 
-def export(*, db_path: str = DB_PATH, today: bool = False, days: int | None = None,
+def export(*, db_path: str | None = None, today: bool = False, days: int | None = None,
            domains: list[str] | None = None, with_symbols: bool = False,
            limit: int | None = None, out: str | None = None,
            verbose: bool = False) -> tuple[Path, int]:
     """Xuất tập dữ liệu bài viết ra tệp CSV qua cơ chế ghi nguyên tử an toàn.
 
     Args:
-        db_path: Đường dẫn cơ sở dữ liệu SQLite.
+        db_path: Đường dẫn cơ sở dữ liệu SQLite. Mặc định DB vận hành.
         today: Có chỉ lọc các bài viết trong ngày hôm nay hay không.
         days: Số ngày gần nhất cần xuất dữ liệu.
         domains: Danh sách tên miền nguồn muốn lọc.

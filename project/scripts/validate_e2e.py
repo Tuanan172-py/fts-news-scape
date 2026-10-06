@@ -36,7 +36,7 @@ def _make_bronze(tmp: Path) -> str:
     body = _HTML.encode("utf-8")
     sha = hashlib.sha256(body).hexdigest()
     hash_ = "e2e" + sha[:61]
-    d = tmp / "data" / "raw_html" / "example.vn" / "20260813"
+    d = tmp / "raw_html" / "example.vn" / "20260813"
     d.mkdir(parents=True, exist_ok=True)
     html_path = d / f"{hash_}.html"
     html_path.write_bytes(body)
@@ -89,8 +89,8 @@ def main() -> int:
     res = process_meta(
         store,
         meta_path,
-        silver_dir=str(tmp / "data/silver"),
-        package_dir=str(tmp / "data/work_packages"),
+        silver_dir=str(tmp / "silver"),
+        package_dir=str(tmp / "work_packages"),
     )
     checks.append(
         ("silver built", Path(res["silver_path"]).exists(), res["silver_path"])

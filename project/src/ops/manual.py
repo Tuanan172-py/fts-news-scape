@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 from typing import Callable
 
+from src.core import paths
 from src.ops import trace as tracing
 from src.ops.config import resolve_paths
 from src.ops.lanes import lane_of
@@ -13,7 +14,7 @@ from src.ops.store import ACTIVE_WAVE_STATUSES, OpsStore
 
 MODES = ("backlog", "bench", "adhoc")
 DAEMON_TRIGGERS = ("T1", "T2", "T3", "retry", "manual-run")
-BENCH_ROOT = Path(__file__).resolve().parents[2] / "data" / "agent_bench"
+BENCH_ROOT = paths.data_root() / "agent_bench"
 
 
 class ManualGate:

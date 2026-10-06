@@ -7,7 +7,7 @@ import os
 from src.agent.entities import EntityRegistry, load_registry
 from src.agent.l1_classifier import classify_article, title_of
 from src.handoff.contract_validator import validate as schema_validate
-from src.core.config import to_project_relative
+from src.core import paths
 from src.core.models import now_vn_iso
 
 L1_TASK_VERSION = "1.0"
@@ -70,8 +70,8 @@ def build_l1_task_packet(article: dict, code_first: dict) -> dict:
         "input": {
             "title": title_of(article),
             "entity_catalog_ref": {
-                "entities": "data/entities/entities.json",
-                "taxonomy": "data/entities/taxonomy.json",
+                "entities": "entities/entities.json",
+                "taxonomy": "entities/taxonomy.json",
             },
             # kết quả code-first để TRA SOÁT: xác nhận / sửa / bổ sung entity bị bỏ sót
             "code_first": {
@@ -100,7 +100,7 @@ def build_l1_task_packet(article: dict, code_first: dict) -> dict:
 from src.core.staging import safe_json_dump
 
 
-def write_l1_packet(packet: dict, base_dir: str = "data/agent_tasks/l1") -> str:
+def write_l1_packet(packet: dict, base_dir: str | os.PathLike | None = None) -> str:
     """Lưu gói công việc L1 vào đĩa qua cơ chế staging nguyên tử.
 
     Args:
@@ -110,10 +110,11 @@ def write_l1_packet(packet: dict, base_dir: str = "data/agent_tasks/l1") -> str:
     Returns:
         Đường dẫn tương đối tới tệp task packet đã ghi.
     """
+    base_dir = paths.resolve_data_path(base_dir) if base_dir else paths.agent_tasks_dir() / "l1"
     os.makedirs(base_dir, exist_ok=True)
     target_path = os.path.join(base_dir, f"{packet['article_id']}.task.json")
     final_path, _ = safe_json_dump(packet, target_path, indent=2)
-    return to_project_relative(final_path)      # tuong doi -> chay duoc tren ca 2 may
+    return paths.to_data_relative(final_path)      # tuong doi -> chay duoc tren ca 2 may
 
 
 

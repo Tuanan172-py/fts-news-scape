@@ -22,6 +22,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+from src.core import paths  # noqa: E402
 from src.core.stdio import force_utf8_stdio  # noqa: E402
 
 force_utf8_stdio()
@@ -150,7 +151,7 @@ def run_gold_pipeline(date: str | None = None, limit: int = 10, mini_batch: int 
              "--limit", str(limit), "--mini-batch", str(mini_batch)])
 
     task_batches = sorted(glob.glob(
-        str(PROJECT_ROOT / "data" / "agent_tasks" / "batch_*.task.json")))
+        str(paths.agent_tasks_dir() / "batch_*.task.json")))
     if not task_batches:
         print("ℹ️ [AutoPilot] Không có batch Gold nào đang chờ trong data/agent_tasks/.")
         return 0
@@ -171,7 +172,7 @@ def run_gold_pipeline(date: str | None = None, limit: int = 10, mini_batch: int 
     done = 0
     for b_path in task_batches:
         b_name = os.path.basename(b_path)
-        out_path = PROJECT_ROOT / "data" / "agent_outputs" / \
+        out_path = paths.agent_outputs_dir() / \
             b_name.replace(".task.json", ".output.json")
         if out_path.exists():
             print(f"⏩ [AutoPilot] Bỏ qua {b_name}, output đã tồn tại.")
@@ -204,7 +205,7 @@ def run_gold_pipeline(date: str | None = None, limit: int = 10, mini_batch: int 
     if done:
         try:
             run_cmd([PYTHON_EXEC, "scripts/agent_ingest.py",
-                     str(PROJECT_ROOT / "data" / "agent_outputs")])
+                     str(paths.agent_outputs_dir())])
             run_cmd([PYTHON_EXEC, "scripts/write_user_output.py", "--date", target_date])
         except CommandFailed as e:
             failures.append(str(e))

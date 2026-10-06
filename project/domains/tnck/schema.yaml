@@ -186,7 +186,7 @@ output_fields:
     health_threshold: 1.0
 
 capture:
-  raw_dir: "data/raw_html/tinnhanhchungkhoan.vn/<yyyymmdd>/<url_title_hash>.{html,meta.json}"
+  raw_dir: "<MONOCLE_DATA_DIR>/raw_html/tinnhanhchungkhoan.vn/<yyyymmdd>/<url_title_hash>.{html,meta.json}"
   render_method: "requests (server-rendered, không cần JS)"
   content_selector: "div.article__body"
   min_body_bytes: 2048

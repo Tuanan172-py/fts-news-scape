@@ -22,7 +22,6 @@ detail:
   category_meta: "article:section"
   max_details_per_cycle: 40
 capture:
-  raw_dir: "data/raw_html"
   min_body_bytes: 2048
 compliance:
   respect_robots: true
