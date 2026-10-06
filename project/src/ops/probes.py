@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import json
 import shutil
 import sqlite3
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
@@ -177,6 +179,84 @@ def probe_order(order_path: Path) -> ProbeResult:
     return ProbeResult("order", True, "info", f"{order.level} tới {order.valid_until}.")
 
 
+def _onedrive_running() -> bool:
+    """Cho biết tiến trình `OneDrive.exe` có đang chạy không.
+
+    Returns:
+        True khi tìm thấy tiến trình.
+    """
+    import psutil
+
+    for proc in psutil.process_iter(["name"]):
+        if (proc.info.get("name") or "").lower() == "onedrive.exe":
+            return True
+    return False
+
+
+def probe_publish(target: Path | None, cfg: dict,
+                  onedrive_running: Callable[[], bool] = _onedrive_running,
+                  now: float | None = None) -> ProbeResult:
+    """Kiểm sức khoẻ thư mục xuất bản SharePoint theo ADR 0020 mục 2.6.
+
+    Bốn điều kiện: OneDrive.exe đang chạy; đích ghi được (ghi rồi xoá `_manifest/.probe`);
+    không có tệp `*-DESKTOP-*` hay `*.partial` cũ hơn 2 giờ; `latest.json` không cũ hơn
+    `stale_hours`.
+
+    Args:
+        target: Thư mục đích; None khi chưa đặt `NEWS_SCAPE_PUBLISH_DIR`.
+        cfg: Mục `publish` của cấu hình.
+        onedrive_running: Hàm kiểm tiến trình OneDrive, thay được khi kiểm thử.
+        now: Thời điểm epoch giây; None thì lấy giờ hệ thống.
+
+    Returns:
+        ProbeResult; không khoẻ khi có ít nhất một điều kiện hỏng.
+    """
+    if target is None:
+        return ProbeResult("publish", False, "error",
+                           "Publisher bật nhưng chưa đặt NEWS_SCAPE_PUBLISH_DIR.")
+    now = time.time() if now is None else now
+    problems = []
+    try:
+        if not onedrive_running():
+            problems.append("OneDrive.exe không chạy")
+    except Exception as exc:  # noqa: BLE001
+        problems.append(f"không kiểm được OneDrive.exe ({exc})")
+    probe = target / "_manifest" / ".probe"
+    try:
+        probe.parent.mkdir(parents=True, exist_ok=True)
+        probe.write_text("probe", encoding="utf-8")
+        probe.unlink()
+    except OSError as exc:
+        problems.append(f"đích không ghi được ({exc})")
+    stale = []
+    try:
+        for p in target.rglob("*"):
+            name = p.name
+            if ("-DESKTOP-" in name or name.endswith(".partial")) and p.is_file()                     and now - p.stat().st_mtime > 2 * 3600:
+                stale.append(p.relative_to(target).as_posix())
+    except OSError:
+        pass
+    if stale:
+        problems.append(f"{len(stale)} tệp xung đột hoặc partial cũ, ví dụ {stale[0]}")
+    latest = target / "_manifest" / "latest.json"
+    limit_h = float(cfg.get("stale_hours", 26))
+    if not latest.is_file():
+        problems.append("chưa có latest.json")
+    else:
+        age_h = (now - latest.stat().st_mtime) / 3600
+        try:
+            updated = parse_iso(json.loads(latest.read_text(encoding="utf-8")).get("updated_at"))
+            if updated is not None:
+                age_h = (now - updated.timestamp()) / 3600
+        except (OSError, ValueError, AttributeError):
+            pass
+        if age_h > limit_h:
+            problems.append(f"latest.json cũ {age_h:.0f} giờ (> {limit_h:.0f})")
+    if problems:
+        return ProbeResult("publish", False, "error", "Xuất bản: " + "; ".join(problems) + ".")
+    return ProbeResult("publish", True, "info", "Thư mục xuất bản khoẻ.")
+
+
 # Việc người vận hành cần làm khi một phép đo bất thường, và lệnh để xem thêm.
 PROBE_ACTION = {
     "capture": ("bài mới không được thu thập", "kiểm morninger, thử /capture restart", "/log 15"),
@@ -186,6 +266,8 @@ PROBE_ACTION = {
     "coverage": ("bài của một số nguồn chưa được thu thập đủ",
                  "chờ cào bù, xem capture_reconcile.py status", "/status"),
     "order": ("daemon sắp về L0 và dừng tự mở đợt", "gia hạn bằng /order extend 30", "/mandate"),
+    "publish": ("chuyên viên không thấy dữ liệu mới trên SharePoint",
+                "xem docs/operations/publisher.md mục Xử lý sự cố", "/log 15"),
 }
 
 
