@@ -113,7 +113,7 @@ python scripts/harness_cli.py doc sync              # derive story/decision rows
    - Wave packing (`article_run.py` to `article_pack.py`): select articles not yet analysed by a model, rank priority tiers, write packets to `data/agent_tasks/article/`, generate `wave_<code>.conductor.ts`.
    - Wave finish (`article_run.py --finish`): expand compact records into both schemas, ingest through the DoD gate (`l1_ingest.py`, `agent_ingest.py`, only this wave's files), post-check coverage, write the token ledger, produce the handoff.
    - Delivery: route by watchlist, export `users/output/<user>/<date>.xlsx`.
-2. Agent `article-processor` (tool `agent_article` on DSH, or runner `agy`/`openrouter`; no tools, exactly one step per batch) processes one whole article per pass, covering both business layers:
+2. Agent `article-processor` (on any interchangeable LLM runtime: DSH `agent_article`, `agy`, `opencode`, `openrouter`, Claude or Codex, see FACT-llm-runtimes-are-interchangeable; no tools, exactly one step per batch) processes one whole article per pass, covering both business layers:
    - Entity recognition from title and body: tickers, companies, exchanges, sectors, indices, macro, output `l1-entity-output-v1`.
    - Content analysis: summary, arguments, market implication, `sentiment`, `time_sensitivity`, citations by paragraph index, output `agent-output-v2-lean`.
    - Clean output: no `materiality`, `event_type` or `impact_area`; these fields are retired at every layer.
@@ -158,7 +158,7 @@ Detail: `.agents/rules/08-context-and-zero-probe-guardrails.md`.
 - Progressive bounded context: never load huge dictionaries (`entities.json`, 1.5 MB) or raw folder dumps. Start from at most three files: `AGENTS.md`, `docs/SESSION-LATEST.md`, the relevant skill. Use `docs/INDEX.md` to find the rest.
 - Continuous policy distillation: every friction found (permission timeout, better flag, new entity) becomes a `FACT-*` document, a rule or a skill update before the session closes, so later agents inherit it.
 
-## 10. Infrastructure gate before operating on DSH
+## 10. Infrastructure gate before operating on DSH (applies whenever DSH is the chosen runtime)
 
 Detail: `.agents/rules/09-dsh-preflight-gate.md`.
 

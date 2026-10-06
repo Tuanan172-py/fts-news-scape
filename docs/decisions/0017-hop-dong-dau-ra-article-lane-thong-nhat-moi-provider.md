@@ -230,7 +230,7 @@ Costs accepted:
 - opencode has no official `--runner` yet; its adapter already uses the shared validator (CON-1 item 4).
 - The rejection rate under the new gate is not yet measured on a real wave (CON-1 item 9).
 - v1 constants remain in `src/agent/packet.py`, `batch_handoff.py` and `dod.py` (CON-1 item 8).
-- DSH is no longer used as of 2026-10-06 (CON-1 item 1).
+- DSH remains a runtime option under this contract; the operator ruled on 2026-10-06 that no runtime is retired (FACT-llm-runtimes-are-interchangeable).
 
 ## Rollback
 
