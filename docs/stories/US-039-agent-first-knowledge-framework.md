@@ -26,9 +26,11 @@ After this story, any agent (Claude, Codex, agy, opencode, an OpenRouter model) 
 - [x] `docs/knowledge/schema.yaml` defines eight types; `harness_cli.py doc new|lint|index|sync` exist and are tested.
 - [x] `doc new` never reuses an id present on disk, on any git branch or in `harness.db`.
 - [x] The pre-commit hook rejects a staged governed document that fails `doc lint`.
-- [ ] ADR-0001 to ADR-0020 pass `doc lint` with `original` and `reconstructed` recorded, ADR-0015 exists as rejected.
+- [x] ADR-0001 to ADR-0019 pass `doc lint` with `original` and `reconstructed` recorded, ADR-0015 exists as rejected. ADR-0020 waits for US-038, which owns it.
 - [ ] `docs/knowledge/legacy.txt` is empty or every remaining entry has a phase owner in ADR-0021 follow-up.
-- [ ] Twenty Claude memory files exist as `FACT-*` documents, and tool-private plans are moved into `plans/`.
+- [x] Twenty Claude memory files exist as `FACT-*` documents.
+- [ ] Tool-private plans are moved into `plans/`, and `SESSION-LATEST.md` is split by lane (G5 remainder).
+- [ ] Stories, proposals and rules are migrated (G4, G2 rules), and drift items are fixed (G6).
 
 ## Design Notes
 
@@ -41,10 +43,11 @@ After this story, any agent (Claude, Codex, agy, opencode, an OpenRouter model) 
 
 | Tier | Command or check | Result |
 |---|---|---|
-| Unit | `python -m pytest tests/test_knowledge.py -q` | pending |
-| Integration | `python scripts/harness_cli.py doc lint` on the repository | pending |
-| Platform | pre-commit hook rejects a broken staged ADR | pending |
+| Unit | `python -m pytest tests/test_knowledge.py -q` | 15 passed |
+| Integration | `python scripts/harness_cli.py doc lint` on the repository | 0 findings, 20 ADRs and 20 facts governed |
+| Platform | pre-commit hook rejects a broken staged ADR | rejected `0099-broken.md` with K01, K02, K05 |
 
 ## Evidence
 
+- Commits 6004c47 to the ADR-0010 batch on `feature/us039-knowledge-framework`.
 - Audit reports of 2026-10-06 (ADR quality, harness rules, stories and memory) summarized in ADR-0021 Context.
