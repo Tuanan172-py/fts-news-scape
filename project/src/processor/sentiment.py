@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+LEXICON_DIR = Path(__file__).resolve().parents[2] / "assets" / "lexicon"
+
 from loguru import logger
 
 from src.processor.segment import seg
@@ -43,7 +45,7 @@ class SentimentEngine:
         neg_threshold: Ngưỡng điểm xác định sắc thái tiêu cực.
     """
 
-    def __init__(self, lexicon_dir: str = "data/lexicon",
+    def __init__(self, lexicon_dir: str | Path = LEXICON_DIR,
                  pos_threshold: float = 0.2, neg_threshold: float = -0.2):
         d = Path(lexicon_dir)
         self.lex = _load_tsv(d / "vswn_polarity.tsv")

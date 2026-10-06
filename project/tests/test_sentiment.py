@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parent.parent
 
 @pytest.fixture(scope="module")
 def engine():
-    return SentimentEngine(lexicon_dir=str(ROOT / "data" / "lexicon"))
+    return SentimentEngine(lexicon_dir=str(ROOT / "assets" / "lexicon"))
 
 
 def test_positive_finance_phrase(engine):
@@ -55,7 +55,7 @@ def test_finance_overrides_general(engine):
 
 
 def test_accuracy_on_validation_set(engine):
-    path = ROOT / "data" / "labeled" / "sentiment_validation.csv"
+    path = ROOT / "tests" / "fixtures" / "sentiment_validation.csv"
     rows = list(csv.DictReader(path.open(encoding="utf-8")))
     assert len(rows) == 50
     correct = sum(1 for r in rows
