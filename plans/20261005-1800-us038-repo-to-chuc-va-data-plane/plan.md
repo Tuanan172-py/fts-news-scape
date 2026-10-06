@@ -49,19 +49,30 @@ Mọi lệnh chạy trong PowerShell. Nếu chạy ngay trong phiên Claude Code
 
 Điều kiện: tài khoản GitHub trên máy có quyền Write trên `Research-FPA/news-scraper`.
 
-1. Đứng ở thư mục kho:
+**Ánh xạ 1:1 giữa kho cá nhân và kho tổ chức.** Tuyến lịch sử sạch đã nằm trên kho cá nhân `origin` (Tuanan172-py/fts-news-scape) với đúng các nhánh sẽ lên kho tổ chức:
+
+| Nhánh trên `origin` | Nhánh trên `fpa` (Research-FPA/news-scraper) | Nội dung |
+|---|---|---|
+| `import/clean-20261005` | `main` (và giữ thêm `import/clean-20261005`) | snapshot gốc df021e6 |
+| `dev/us038` | `dev/us038` | A2, A3, A4, chuyển đổi N4 |
+
+Các nhánh cũ trên `origin` (`main`, `feature/*`) mang lịch sử có dữ liệu cá nhân, **không** đẩy lên `fpa`.
+
+1. Đứng ở cây mã mới:
    ```powershell
-   cd "C:\Users\anpt\OneDrive - fpts.com.vn\FRA_DataIngestion - news-scape"
+   cd C:\src\news-scraper
+   git fetch origin
    ```
 2. Kiểm snapshot đúng là bản sạch. Lệnh in `888` và không in tên tệp dữ liệu nào:
    ```powershell
-   git ls-tree -r --name-only import/clean-20261005 | Measure-Object -Line
-   git ls-tree -r --name-only import/clean-20261005 | Select-String -Pattern '\.(db|xlsx|xls|csv|parquet|docx)$'
+   git ls-tree -r --name-only origin/import/clean-20261005 | Measure-Object -Line
+   git ls-tree -r --name-only origin/dev/us038 | Select-String -Pattern '\.(db|xlsx|xls|parquet|docx)$'
    ```
-3. Push thành nhánh `main` của kho tổ chức:
+3. Push theo bảng ánh xạ:
    ```powershell
-   git push fpa import/clean-20261005:refs/heads/main
+   git push fpa origin/import/clean-20261005:refs/heads/main origin/import/clean-20261005:refs/heads/import/clean-20261005 origin/dev/us038:refs/heads/dev/us038
    ```
+   Sau đó mở PR `dev/us038` → `main` trên GitHub. Từ lúc này mọi nhánh mới tách từ `fpa/main`, và kho tổ chức thành nguồn chính.
    - Nếu hiện cửa sổ đăng nhập GitHub, đăng nhập bằng tài khoản có quyền trên tổ chức Research-FPA.
    - Lỗi `403` hoặc `Permission denied`: nhờ chủ tổ chức thêm tài khoản với vai trò Write, rồi chạy lại.
 4. Kiểm trên web: mở `https://github.com/Research-FPA/news-scraper`. Có 1 commit "feat(repo): initial import of news-scape codebase (US-038)", có `AGENTS.md`, `project/`, `.agents/`.
