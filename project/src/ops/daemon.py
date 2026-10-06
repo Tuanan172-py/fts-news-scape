@@ -22,6 +22,40 @@ from src.ops.supervisor import CaptureSupervisor
 from src.ops.wave_flow import WaveSpec, WaveSteps, _default_db_probe
 
 
+def acquire_single_instance(path, *, grace_s: float = 45, poll_s: float = 3,
+                            stop_event: threading.Event | None = None):
+    """Chiếm khoá một thể hiện của daemon, chờ một khoảng ân hạn trước khi bỏ cuộc.
+
+    Khi khởi động lại bằng `schtasks /End` rồi `/Run`, tiến trình con của launcher venv
+    còn giữ khoá vài giây sau khi launcher đã chết. Thoát ngay ở lần thử đầu khiến hệ
+    thống không có daemon cho tới nhịp watchdog kế tiếp.
+
+    Args:
+        path: Đường dẫn tệp khoá.
+        grace_s: Số giây chờ tối đa.
+        poll_s: Chu kỳ thử lại.
+        stop_event: Sự kiện dừng; được đặt thì bỏ cuộc ngay.
+
+    Returns:
+        Đối tượng khoá đã chiếm, hoặc None khi daemon khác vẫn giữ sau ân hạn.
+    """
+    from src.core.proclock import SingleInstanceLock
+
+    lock = SingleInstanceLock(path)
+    deadline = time.monotonic() + max(0.0, grace_s)
+    while True:
+        if lock.acquire():
+            return lock
+        if time.monotonic() >= deadline:
+            print(f"Daemon khác đang chạy ({lock.holder()}). Thoát.")
+            return None
+        if stop_event is not None:
+            if stop_event.wait(poll_s):
+                return None
+        else:
+            time.sleep(poll_s)
+
+
 def repair_cap_reason(store: OpsStore, cfg: dict, wave_id: str) -> str | None:
     """Trả lý do từ chối chạy lại khi đợt đã vá quá trần tổng số vòng.
 
@@ -96,11 +130,10 @@ class OpsDaemon:
         Returns:
             False khi daemon khác đang chạy.
         """
-        from src.core.proclock import SingleInstanceLock
-
-        lock = SingleInstanceLock(self.paths.daemon_lock)
-        if not lock.acquire():
-            print(f"Daemon khác đang chạy ({lock.holder()}). Thoát.")
+        grace = float((self.cfg.get("daemon") or {}).get("lock_grace_seconds", 45))
+        lock = acquire_single_instance(self.paths.daemon_lock, grace_s=grace,
+                                       stop_event=self.stop_event)
+        if lock is None:
             return False
         self._locks.append(lock)
         from scripts.article_tick import PipelineLock

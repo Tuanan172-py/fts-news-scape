@@ -49,6 +49,9 @@ breaker:
   empty_trip: 2
   quota_open_minutes: 300        # pool "Work Done" của Antigravity làm mới mỗi 5 giờ
 
+daemon:
+  lock_grace_seconds: 45        # chờ tiến trình cũ nhả khoá khi khởi động lại bằng schtasks /End + /Run
+
 heartbeat:
   interval_seconds: 60
 

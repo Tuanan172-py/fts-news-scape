@@ -252,8 +252,11 @@ def cmd_status(args: argparse.Namespace) -> None:
         coverage = [(r[0], int(r[1] or 0), int(r[2] or 0)) for r in cur.fetchall()]
         cur.execute("SELECT count(1) FROM discovered_urls WHERE state='discovered'")
         capture_pending = int(cur.fetchone()[0])
-        cur.execute("SELECT count(1) FROM silver_failures WHERE dead_letter=1 "
-                    "AND last_error LIKE '%raw_missing%'")
+        # Chỉ đếm dòng còn bài trong kho: `recapture` cào lại theo URL của bài, nên dòng
+        # mồ côi (bài đã bị đổi khoá hoặc xoá) không cứu được và không phải việc cần làm.
+        cur.execute("SELECT count(1) FROM silver_failures f WHERE f.dead_letter=1 "
+                    "AND f.last_error LIKE '%raw_missing%' AND EXISTS (SELECT 1 FROM "
+                    "articles a WHERE a.url_title_hash = f.url_title_hash)")
         raw_lost = int(cur.fetchone()[0])
     except sqlite3.OperationalError:
         coverage, capture_pending, raw_lost = [], 0, 0
