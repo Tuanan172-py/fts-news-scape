@@ -101,6 +101,8 @@ summary_vi: Thêm vết ops_spans, Phòng điều khiển cục bộ, Telegram c
 
 ### Current status (2026-10-06)
 
+- Correction: the statement that `agent_metrics` had zero rows before 2026-10-01 holds for one `harness.db` copy only. The copy at `C:/src/news-scraper/harness.db` has 9 rows from 2026-09-15 to 2026-09-17 (read-only check, 2026-10-06).
+
 - Implemented: `ops_spans`, the control room at `http://127.0.0.1:8787`, digests, the new commands, the mandate and the improvement inbox (`docs/OPEN-ITEMS.md` OPS-2).
 - US-037 (session 2026-10-05) added spans for the OpenRouter runner and traced manual waves (`docs/SESSION-LATEST.md`).
 - Still open: `harness-auditor` activation, remote access (D-B), a Phoenix spike (D-C) and a quality golden set.

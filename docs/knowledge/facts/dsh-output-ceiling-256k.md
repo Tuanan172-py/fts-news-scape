@@ -10,7 +10,7 @@ lang: en
 authors: [claude-opus-5-5]
 adr: []
 evidence:
-  - "path: docs/proposals/dsh-surface-verified-2026-09-18.md"
+  - "path: docs/proposals/20260918-dsh-surface-verified.md"
   - "path: project/scripts/article_run.py"
 summary: The real DSH output ceiling is 256,000 tokens per request; the old 40,000 limit was set by the project itself, so a 100-article wave runs in one call.
 ---
@@ -20,7 +20,7 @@ summary: The real DSH output ceiling is 256,000 tokens per request; the old 40,0
 ## Fact
 
 - The default DSH `maxTokens` is 256,000 tokens per request (`DEFAULT_MAX_TOKENS = 256e3`). A child inherits it from the parent when its row sets none.
-- Source: `docs/proposals/dsh-surface-verified-2026-09-18.md` sections 6.1 and 6.2, read from the DSH source.
+- Source: `docs/proposals/20260918-dsh-surface-verified.md` sections 6.1 and 6.2, read from the DSH source.
 - DSH has no token or cost ceiling per session or per day.
 - The 40,000 figure once called a "provider ceiling" was a value the project itself set on the `tool-subagent-article` row.
 - That value truncated the 100-article batches of W1 and W2 and forced 10 calls of 10 articles. It was removed on 2026-09-21; the three subagent rows are now identical.

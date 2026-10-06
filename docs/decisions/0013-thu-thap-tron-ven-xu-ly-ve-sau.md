@@ -15,8 +15,8 @@ evidence:
   - commit:579163c
   - commit:bfbd5e6
   - path:.agents/rules/10-thu-thap-tron-ven.md
-  - path:docs/proposals/dedup-architecture-2026-10-01.md
-  - path:docs/proposals/insight-analytics-2026-10-01.md
+  - path:docs/proposals/20261001-dedup-architecture.md
+  - path:docs/proposals/20261001-insight-analytics.md
   - path:project/scripts/capture_reconcile.py
   - test:project/tests/test_capture_registry.py
   - test:project/tests/test_capture_reconcile.py

@@ -216,10 +216,19 @@ vật chất hoá kết quả tra danh mục tất định (`code_first`) vào `
 toàn bộ 1.274 bản ghi Gold giả lập/template đã được hạ `dod_pass=0` (giữ nguyên `output_json`),
 rút hoàn toàn khỏi deliverable người dùng và quay về hàng đợi Gold. Xem D14.
 
+> **Đối chiếu 2026-10-06 (chỉ đọc):** A2 đúng. `--apply` đã chạy ngày 09/09 trên máy vận hành, sau
+> bản sao lưu `monocle_backup_260909_pre_a2.db`. DB vận hành hiện tại `C:\data\news-scape\monocle.db`
+> còn 1.092/1.274 id gốc, tất cả `dod_pass=0`, `output_json` giữ nguyên; 182 id còn lại bị ghi đè
+> ngày 10/09 bởi lượt chạy lại Gold. Xem `FACT-adr-0004-d4-applied-to-operational-db`.
+
 ### A3. Chưa có gì chạy trên DB vận hành
 
 Toàn bộ số liệu trong tài liệu này đo trên bản sao. Máy vận hành phải `git pull` rồi chạy §B.
 **Bước sao lưu là bắt buộc** — quy trình có `ALTER TABLE l1_outputs ADD COLUMN l1_source`.
+
+> **Đối chiếu 2026-10-06 (chỉ đọc):** A3 đã lỗi thời ngay ở commit 3b6003b. Mục này viết trên máy dev
+> (commit 31d539d) về bản sao. Trên DB vận hành, cả A2 lẫn cột `l1_outputs.l1_source` đều đã có
+> trước 17/09 (đối chiếu `monocle_backup_pre_adr0007_260917.db`).
 
 ---
 

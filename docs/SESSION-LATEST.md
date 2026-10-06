@@ -18,7 +18,7 @@
 > - Sửa lane đọc Silver trước (pack/runner/wp v1.1), `--repair` làm mới, expand dồn hàng cũ, ingest bỏ tệp rỗng. Finish 15:30: L1 100%, nội dung 100%.
 > - ADR 0018 accepted (Human duyệt hướng a). Test 146 passed. 5 test khác rớt do phiên US-036, không thuộc phạm vi này.
 
-> **Phiên ổn định pipeline 2026-10-05 (US-037, một phần):** audit điều phối `docs/proposals/audit-dieu-phoi-agent-2026-10-05.md`, kế hoạch `~/.claude/plans/lovely-herding-moler.md`.
+> **Phiên ổn định pipeline 2026-10-05 (US-037, một phần):** audit điều phối `docs/proposals/20261005-audit-dieu-phoi-agent.md`, kế hoạch `~/.claude/plans/lovely-herding-moler.md`.
 > - Xong (R-01 đến R-05): phản hồi thô của agy lưu khi lô rỗng (`ops_logs/waves/<đợt>/raw/`); `/retry` bị chặn sau 2 lần `max_repair_rounds` vòng vá; mỗi vòng vá tính lần thử cho từng bài; nghỉ 30 phút sau đợt hỏng (`wave.cooldown_minutes`); lệnh dạng đường dẫn Git Bash được khôi phục hoặc bị từ chối; chạy tay có ba chế độ `--mode backlog|bench|adhoc` tự đăng ký `ops_waves`, vết, giữ chỗ, khoá provider, kiểm va chạm (`src/ops/manual.py`); span cho OpenRouter; probe độ phủ thu thập. Daemon đã khởi động lại bằng mã mới.
 > - Đã nhả W10021650, W10051042, W10051050 (`/cancel`). Phân luồng (`src/ops/lanes.py`): auto, backlog, bench; mỗi luồng tối đa một đợt, đợt tay không còn chặn sensor; `/stop` huỷ mọi luồng. Mô tả ở `ops-daemon-reference.md` mục 8.
 > - Chưa làm: R-06, R-07 (cào bù và `raw_html`) vì trùng phạm vi phiên US-036 đang chạy; R-08 phần nhả đợt hỏng.

@@ -84,6 +84,8 @@ Verification at acceptance (commit e765737):
 
 ### Current status (2026-10-06)
 
+- `agent_metrics` in `harness.db` holds 108 article-lane rows from 2026-10-01 to 2026-10-05 (read-only check, 2026-10-06), so the follow-up to write rows from real waves is met in practice.
+
 - D1 in force. `.agents/registry.yaml` still declares `class` for every entry.
 - D2 in force, amended by ADR-0010: `l1-router`, `gold-exporter`, `l1-entity-matcher` and `gold-financial-analyst` are now `status: retired`.
 - D3 in force, amended by ADR-0010: stages `l1_route`, `l1_match`, `gold_export` and `gold_analyze` were removed from the pipeline.

@@ -2,7 +2,7 @@
 
 - **Ngày:** 2026-10-01
 - **Vai:** Thành viên 3 hội đồng phản biện `plans/20261001-1100-autonomous-ops-24x7/plan.md`
-- **Phạm vi:** §5.3 thang tự chủ, §7 quan sát, §8 mặt điều khiển, §11 quyết định; đối chiếu `docs/proposals/agy-automation-council-2026-09-23.md`, ADR 0008 (amendment 2026-09-18) và mã nháp đã có trong `project/src/ops/` (chưa commit).
+- **Phạm vi:** §5.3 thang tự chủ, §7 quan sát, §8 mặt điều khiển, §11 quyết định; đối chiếu `docs/proposals/20260923-agy-automation-council.md`, ADR 0008 (amendment 2026-09-18) và mã nháp đã có trong `project/src/ops/` (chưa commit).
 - **Nhãn bằng chứng:** [M] đọc mã · [D] tài liệu kho · [S] nguồn ngoài · [I] suy luận.
 
 ---

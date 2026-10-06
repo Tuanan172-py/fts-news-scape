@@ -2,7 +2,7 @@
 
 - **Ngày:** 2026-10-01 15:45
 - **Trạng thái:** kế hoạch, **chưa sửa mã**. Mỗi gói việc (WP) chỉ bắt đầu khi gói trước đạt nghiệm thu và cổng người (H) tương ứng đã mở.
-- **Phạm vi:** những mục còn mở sau khi B1–B7, R2 và D9–D11 đã sửa (`docs/proposals/ops-council-2026-10-01.md` §10). Không làm lại việc đã xong.
+- **Phạm vi:** những mục còn mở sau khi B1–B7, R2 và D9–D11 đã sửa (`docs/proposals/20261001-ops-council.md` §10). Không làm lại việc đã xong.
 
 ---
 
@@ -35,7 +35,7 @@
 **Ngoài phạm vi kế hoạch này, chỉ trỏ tới:**
 - Story giao hàng theo người dùng (D11, D12).
 - Tồn đọng 10,8 nghìn bài.
-- Chống trùng đa nguồn (`docs/proposals/dedup-architecture-2026-10-01.md`, đang chờ duyệt riêng).
+- Chống trùng đa nguồn (`docs/proposals/20261001-dedup-architecture.md`, đang chờ duyệt riêng).
 
 ---
 

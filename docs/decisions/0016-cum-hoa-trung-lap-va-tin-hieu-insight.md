@@ -15,8 +15,8 @@ related: [ADR-0012, ADR-0013]
 evidence:
   - commit:fb9b1c2
   - commit:bfbd5e6
-  - path:docs/proposals/dedup-architecture-2026-10-01.md
-  - path:docs/proposals/insight-analytics-2026-10-01.md
+  - path:docs/proposals/20261001-dedup-architecture.md
+  - path:docs/proposals/20261001-insight-analytics.md
   - path:project/src/pipeline/story_cluster.py
   - path:project/src/pipeline/inherit.py
   - path:project/scripts/signal_build.py
@@ -44,7 +44,7 @@ summary_vi: Cụm hoá bài trùng mà không xoá bài; bài chép từ 0,95 tr
 - Coverage frequency and breadth of a topic are investment signals, so duplicate articles MUST NOT be deleted (ADR-0013).
 - Adding sources raises the duplicate rate, and tokens are spent on articles that add no information.
 
-This was a Hard Gate decision. It adds DB tables, changes an Article Lane invariant of ADR-0010 and adds a new `l1_source` value. The operator approved both source proposals on 2026-10-02 with the words "đồng ý triển khai trọn vẹn". The proposals are `docs/proposals/dedup-architecture-2026-10-01.md` and `docs/proposals/insight-analytics-2026-10-01.md`. The ADR text names story US-033. The clustering code landed in commit fb9b1c2 labelled US-035, and the inheritance module landed in commit bfbd5e6 labelled US-033.
+This was a Hard Gate decision. It adds DB tables, changes an Article Lane invariant of ADR-0010 and adds a new `l1_source` value. The operator approved both source proposals on 2026-10-02 with the words "đồng ý triển khai trọn vẹn". The proposals are `docs/proposals/20261001-dedup-architecture.md` and `docs/proposals/20261001-insight-analytics.md`. The ADR text names story US-033. The clustering code landed in commit fb9b1c2 labelled US-035, and the inheritance module landed in commit bfbd5e6 labelled US-033.
 
 ## Decision
 

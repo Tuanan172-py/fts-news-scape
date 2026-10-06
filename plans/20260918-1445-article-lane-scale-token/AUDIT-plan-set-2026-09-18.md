@@ -239,7 +239,7 @@ Nhưng artefact sửa Lớp B — `article_run.py` gộp cả wave vào **một 
 
 Không ai đọc song song hai tài liệu khi đang viết code.
 
-**Đề xuất giải:** hợp nhất thành **một** tài liệu quy phạm trước khi implement. 1133 giữ nguyên trạng thái SUPERSEDED làm hồ sơ thiết kế nền. 1624 giữ lại §6 (bề mặt DSH đã xác minh, có file:line) tách thành `docs/proposals/dsh-surface-verified-2026-09-18.md` để so lại khi nâng cấp DSH — phần này có giá trị độc lập và lâu dài.
+**Đề xuất giải:** hợp nhất thành **một** tài liệu quy phạm trước khi implement. 1133 giữ nguyên trạng thái SUPERSEDED làm hồ sơ thiết kế nền. 1624 giữ lại §6 (bề mặt DSH đã xác minh, có file:line) tách thành `docs/proposals/20260918-dsh-surface-verified.md` để so lại khi nâng cấp DSH — phần này có giá trị độc lập và lâu dài.
 
 ### H2 — Vòng lặp audit tự nuôi
 

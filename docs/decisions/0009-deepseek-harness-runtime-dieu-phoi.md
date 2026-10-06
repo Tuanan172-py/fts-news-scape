@@ -18,8 +18,8 @@ evidence:
   - commit:dd1e709
   - commit:2497137
   - path:plans/20260917-1538-dsh-harness-integration/plan.md
-  - path:docs/proposals/dsh-harness-mapping-2026-09-17.md
-  - path:docs/proposals/dsh-surface-verified-2026-09-18.md
+  - path:docs/proposals/20260917-dsh-harness-mapping.md
+  - path:docs/proposals/20260918-dsh-surface-verified.md
   - path:plans/20260918-1651-article-lane-unified/plan.md
   - metric:163 L1 batches waiting for a manual subagent, 90 articles not yet routed to L1, proposal 2026-09-17
   - metric:845K-token trace in the 2026-09-17 session run through the generic subagent, article-lane plan 2026-09-18
@@ -40,7 +40,7 @@ summary_vi: Chọn DSH làm runtime điều phối với subagent in-process, ch
 - `OPEN-ITEMS A0-6` recorded that `agy.exe --dangerously-skip-permissions` lived outside the repository, with no pinned version, and was not reproducible.
 - US-016 to US-019 had fixed the data integrity defects and built the demand-driven pull model (Q5).
 - ADR-0008 required a human in the loop and a token cap before any token spend.
-- Measured backlog at proposal time: 163 L1 batches waiting for a manual subagent, 90 articles not routed to L1, 0 Gold articles waiting (reconstructed from `docs/proposals/dsh-harness-mapping-2026-09-17.md` §0).
+- Measured backlog at proposal time: 163 L1 batches waiting for a manual subagent, 90 articles not routed to L1, 0 Gold articles waiting (reconstructed from `docs/proposals/20260917-dsh-harness-mapping.md` §0).
 - The proposal mapped DSH features to the gap: in-process subagents with per-child tool control, agent presets and PTC mode (reconstructed from the same proposal).
 - It also listed automatic skill loading from `.agents/skills` and a hook pipeline for WIP=1 and gate checks (reconstructed from the same proposal).
 
