@@ -10,6 +10,7 @@ from pathlib import Path
 
 from loguru import logger
 
+from src.agent.article_contract import analyzed_l1_sql
 from src.agent.entities import _fold
 from src.core.models import VN_TZ
 from src.core.staging import safe_atomic_write
@@ -18,14 +19,15 @@ from src.export.radar_sheet import radar_rows
 from src.export.xlsx_delivery import write_delivery_xlsx
 from src.users.compile import DEFAULT_OUTPUT_ROOT
 
-_GATED_SQL = """
+# Chỉ bài đã được mô hình phân tích mới vào giao hàng; bản code-first bị loại (ADR 0010 D4).
+_GATED_SQL = f"""
 SELECT a.url_title_hash AS article_id, a.title, a.url, a.source_domain,
        a.published_at, a.fetched_at,
        a.content_text, a.symbols, a.categories,
        l1.output_json AS l1_json, l1.l1_source AS l1_source,
        ag.output_json AS agent_json
 FROM articles a
-JOIN l1_outputs l1 ON l1.article_id = a.url_title_hash AND l1.dod_pass = 1
+JOIN l1_outputs l1 ON l1.article_id = a.url_title_hash AND {analyzed_l1_sql("l1")}
 LEFT JOIN (
     SELECT o.article_id, o.output_json
     FROM agent_outputs o

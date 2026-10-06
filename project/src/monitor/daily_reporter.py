@@ -15,6 +15,7 @@ from typing import Any
 
 from loguru import logger
 
+from src.agent.article_contract import not_code_first_sql_for
 from src.core import paths
 from src.core.config import load_settings
 from src.core.models import VN_TZ
@@ -84,6 +85,18 @@ class DailyReporter:
         except sqlite3.OperationalError as e:
             logger.debug(f"Query skipped or table missing: {e}")
             return []
+
+    def _not_code_first(self) -> str:
+        """Dựng điều kiện loại bản code-first theo lược đồ thật của DB.
+
+        Returns:
+            Biểu thức SQL; hằng đúng khi DB chưa có bảng hay cột `l1_source`.
+        """
+        try:
+            with self._connect_ro() as con:
+                return not_code_first_sql_for(con)
+        except (sqlite3.Error, FileNotFoundError):
+            return "1 = 1"
 
     def collect_metrics(self, date_str: str | None = "today", days: int = 0) -> dict[str, Any]:
         """Thu thập đầy đủ số liệu 5 tầng cho ngày hoặc khoảng ngày chỉ định."""
@@ -213,13 +226,15 @@ class DailyReporter:
         l1_tasks_total = sum(r["count"] for r in l1_tasks_summary)
         gold_items_total = sum(r["count"] for r in gold_items_summary)
 
-        # 4. Tầng AI Agents Review & DoD Quality
+        # 4. Tầng AI Agents Review & DoD Quality; bản code-first không tính (ADR 0010 D4).
+        cf_guard = self._not_code_first()
         if start_date and end_date:
             l1_outputs_summary = self._query(
-                """
+                f"""
                 SELECT agent_provider, model_used, dod_pass, count(*) as count
                 FROM l1_outputs
                 WHERE substr(created_at, 1, 10) >= ? AND substr(created_at, 1, 10) <= ?
+                  AND {cf_guard}
                 GROUP BY agent_provider, model_used, dod_pass
                 """,
                 (start_date, end_date),
@@ -235,9 +250,10 @@ class DailyReporter:
             )
         else:
             l1_outputs_summary = self._query(
-                """
+                f"""
                 SELECT agent_provider, model_used, dod_pass, count(*) as count
                 FROM l1_outputs
+                WHERE {cf_guard}
                 GROUP BY agent_provider, model_used, dod_pass
                 """
             )

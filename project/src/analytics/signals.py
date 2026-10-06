@@ -10,6 +10,8 @@ from collections import Counter, defaultdict
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
 
+from src.agent.article_contract import analyzed_l1_sql
+
 VN_TZ = timezone(timedelta(hours=7))
 
 ENTITY_PREFIXES = ("TICKER:", "IND_GICS3:", "MACRO", "ASSET_CLASS:")
@@ -182,8 +184,8 @@ def load_data(conn: sqlite3.Connection, since_day: str) -> tuple[list[Art], Coun
             SELECT a.url_title_hash, a.source_domain, {expr}, l1.output_json, ag.output_json,
                    cm.cluster_id, cm.role, cm.evidence
             FROM articles a
-            JOIN l1_outputs l1 ON l1.article_id = a.url_title_hash AND l1.dod_pass = 1
-                 AND COALESCE(l1.l1_source, 'agent') <> 'code_first'
+            JOIN l1_outputs l1 ON l1.article_id = a.url_title_hash
+                 AND {analyzed_l1_sql("l1")}
             LEFT JOIN (SELECT o.article_id, o.output_json FROM agent_outputs o
                        JOIN (SELECT article_id, MAX(id) AS id FROM agent_outputs
                              WHERE dod_pass = 1 GROUP BY article_id) m ON m.id = o.id) ag
