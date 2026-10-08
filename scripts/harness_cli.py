@@ -1015,14 +1015,17 @@ def cmd_session_close(args: argparse.Namespace) -> dict[str, Any]:
         evidence_str = "Verified"
         if not getattr(args, "skip_verify", False) and verify_cmd:
             print(f"[*] [SESSION CLOSE] Running verification gate: {verify_cmd}", file=sys.stderr)
-            res_v = subprocess.run(verify_cmd, shell=True, capture_output=True, text=True)
+            res_v = subprocess.run(
+                verify_cmd, shell=True, capture_output=True, text=True,
+                encoding="utf-8", errors="replace",
+            )
             if res_v.returncode != 0:
                 return {
                     "status": "error",
                     "error_code": "VERIFICATION_FAILED",
                     "message": f"Verification gate failed with exit code {res_v.returncode}",
-                    "stderr": res_v.stderr[:1000],
-                    "stdout": res_v.stdout[:1000],
+                    "stderr": (res_v.stderr or "")[:1000],
+                    "stdout": (res_v.stdout or "")[:1000],
                 }
             evidence_str = f"Verification passed: {verify_cmd}"
         elif getattr(args, "skip_verify", False):
@@ -1073,8 +1076,11 @@ def cmd_session_close(args: argparse.Namespace) -> dict[str, Any]:
                     else:
                         c_msg = f"chore(session): {summary_text}"
 
-                subprocess.run(["git", "add", "-u"], capture_output=True, text=True)
-                res_cmt = subprocess.run(["git", "commit", "-m", c_msg], capture_output=True, text=True)
+                subprocess.run(["git", "add", "-u"], capture_output=True, text=True, encoding="utf-8", errors="replace")
+                res_cmt = subprocess.run(
+                    ["git", "commit", "-m", c_msg], capture_output=True, text=True,
+                    encoding="utf-8", errors="replace",
+                )
                 if res_cmt.returncode == 0:
                     git_commit = get_git_head_commit()
                     committed = True
