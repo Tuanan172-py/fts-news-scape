@@ -19,8 +19,7 @@ from src.core.stdio import force_utf8_stdio
 force_utf8_stdio()
 
 from src.lakehouse.consolidator import consolidate_dropzone
-from src.lakehouse.delivery import distribute_to_users
-from src.lakehouse.ingest import parse_date_components, publish_batch
+from src.lakehouse.ingest import publish_batch
 from src.lakehouse.manifest import verify_manifest
 from src.lakehouse.storage import LocalOneDriveStorageAdapter
 
@@ -117,47 +116,6 @@ def handle_consolidate(args: argparse.Namespace) -> int:
     return 0
 
 
-def handle_deliver(args: argparse.Namespace) -> int:
-    """Xử lý lệnh phân phối báo cáo Excel 2 sheets cho từng người dùng.
-
-    Args:
-        args: Các tham số dòng lệnh đã phân tích cú pháp.
-
-    Returns:
-        Mã trạng thái kết thúc tiến trình (0 nếu thành công).
-    """
-    storage_root = resolve_storage_root(args.root)
-    date_str = args.date or datetime.now(timezone.utc).strftime("%Y-%m-%d")
-
-    # Xác định đường dẫn tệp Parquet tổng hợp
-    if args.parquet:
-        p_path = Path(args.parquet).resolve()
-    else:
-        year, month, _, yyyymmdd = parse_date_components(date_str)
-        p_path = storage_root / "parquet" / "articles" / f"year={year}" / f"month={month}" / f"part-{yyyymmdd}.parquet"
-
-    if not p_path.exists():
-        print(f"Lỗi: Không tìm thấy tệp Parquet tại: {p_path}", file=sys.stderr)
-        return 1
-
-    manifest_cfg = Path(args.manifest_config or PROJECT_ROOT / "config" / "entities" / "manifest.yaml").resolve()
-    users_cfg_dir = Path(args.users_config_dir or PROJECT_ROOT / "config" / "entities" / "users").resolve()
-    out_dir = Path(args.output_dir or PROJECT_ROOT.parent / "users" / "output").resolve()
-
-    deliveries = distribute_to_users(
-        date_str=date_str,
-        parquet_path=str(p_path),
-        manifest_config_path=str(manifest_cfg),
-        users_config_dir=str(users_cfg_dir),
-        output_dir=str(out_dir),
-    )
-
-    print(f"Đã phân phối báo cáo cho {len(deliveries)} người dùng:")
-    for user, path in deliveries.items():
-        print(f"- {user}: {path}")
-    return 0
-
-
 def handle_verify(args: argparse.Namespace) -> int:
     """Xử lý lệnh kiểm chứng tính toàn vẹn của tệp kê khai Manifest.
 
@@ -229,15 +187,6 @@ def build_parser() -> argparse.ArgumentParser:
         help="Thư mục gốc lưu trữ phân vùng Parquet.",
     )
     p_cons.set_defaults(func=handle_consolidate)
-
-    # Deliver
-    p_deliv = subparsers.add_parser("deliver", help="Phân phối báo cáo Excel 2 sheets cho người dùng.")
-    p_deliv.add_argument("--date", "-d", help="Chuỗi ngày xuất bản (YYYY-MM-DD).")
-    p_deliv.add_argument("--parquet", help="Đường dẫn tệp Parquet tổng hợp (tùy chọn).")
-    p_deliv.add_argument("--manifest-config", help="Đường dẫn tệp manifest.yaml quản lý người dùng.")
-    p_deliv.add_argument("--users-config-dir", help="Thư mục chứa cấu hình YAML người dùng.")
-    p_deliv.add_argument("--output-dir", help="Thư mục xuất tệp Excel giao hàng.")
-    p_deliv.set_defaults(func=handle_deliver)
 
     # Verify
     p_ver = subparsers.add_parser("verify", help="Kiểm chứng tính toàn vẹn của tệp Manifest.")

@@ -8,8 +8,6 @@ import sys
 import tempfile
 from pathlib import Path
 
-import yaml
-
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 CLI_PATH = PROJECT_ROOT / "scripts" / "lakehouse_cli.py"
 
@@ -34,21 +32,15 @@ def test_cli_help() -> None:
     stdout = proc.stdout or ""
     assert "ingest" in stdout
     assert "consolidate" in stdout
-    assert "deliver" in stdout
     assert "verify" in stdout
 
 
 def test_cli_e2e_pipeline() -> None:
-    """Kiểm tra toàn bộ chuỗi lệnh CLI: ingest -> consolidate -> deliver -> verify."""
+    """Kiểm tra toàn bộ chuỗi lệnh CLI: ingest -> consolidate -> verify."""
     with tempfile.TemporaryDirectory() as tmp_dir:
         base = Path(tmp_dir)
         storage_root = base / "news-data"
-        users_cfg_dir = base / "users_cfg"
-        manifest_path = base / "manifest.yaml"
-        output_dir = base / "output"
         input_json = base / "articles.json"
-
-        users_cfg_dir.mkdir(parents=True)
 
         date_str = "2026-10-08"
 
@@ -67,13 +59,6 @@ def test_cli_e2e_pipeline() -> None:
         ]
         with open(input_json, "w", encoding="utf-8") as f:
             json.dump(articles_data, f)
-
-        # Tạo cấu hình user AnPT
-        with open(users_cfg_dir / "AnPT.yaml", "w", encoding="utf-8") as f:
-            yaml.safe_dump({"tickers": ["FPT"]}, f)
-
-        with open(manifest_path, "w", encoding="utf-8") as f:
-            yaml.safe_dump({"enabled": True, "users": {"AnPT": True}}, f)
 
         # 2. Chạy lệnh ingest
         proc_ingest = run_cli(
@@ -97,22 +82,7 @@ def test_cli_e2e_pipeline() -> None:
         assert "Hoàn tất hợp nhất dữ liệu" in proc_cons.stdout
         assert "Số bài viết duy nhất: 1" in proc_cons.stdout
 
-        # 4. Chạy lệnh deliver
-        proc_deliv = run_cli(
-            "--root", str(storage_root),
-            "deliver",
-            "--date", date_str,
-            "--manifest-config", str(manifest_path),
-            "--users-config-dir", str(users_cfg_dir),
-            "--output-dir", str(output_dir),
-        )
-        assert proc_deliv.returncode == 0
-        assert "Đã phân phối báo cáo cho 1 người dùng" in proc_deliv.stdout
-
-        user_excel = output_dir / "AnPT" / f"{date_str}.xlsx"
-        assert user_excel.exists()
-
-        # 5. Chạy lệnh verify
+        # 4. Chạy lệnh verify
         proc_ver = run_cli(
             "--root", str(storage_root),
             "verify",
