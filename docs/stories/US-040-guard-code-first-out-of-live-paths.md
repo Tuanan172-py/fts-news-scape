@@ -63,3 +63,11 @@ summary: Code-first L1 rows never reach delivery, insight signals, selectors, co
 - `commit:072eb8f` carries the guard and the regression tests.
 - Before the fix, 154 code-first articles also had a passing Gold output, so they were delivered as "Full" rows.
 - The other code-first articles were delivered as "Preliminary" rows, with entities taken from the deterministic lookup.
+
+## Delivery cleanup (2026-10-08, operator approved)
+
+- Scope: `C:\data\news-scape\users_output`, the live output root. Before the cleanup it held 580 user xlsx files and 168 `_master` CSV files containing code-first articles.
+- Method: regenerated every delivery file with the fixed writer into a staging folder, compared by article id, then applied. The comparison found 0 non-code-first articles lost and 7,302 user-date deliveries of code-first articles removed (3,069 distinct ids).
+- Applied: 272 files replaced, 656 files moved to archive (317 user xlsx with only code-first articles, the rest `_master` CSV). After the change no live checkpoint or `_master` CSV row carries a code-first id.
+- Rollback: full copy in `C:\data\news-scape\archive\20261008-us040-code-first-delivery\pre_users_output`, manifest with hashes in `MANIFEST.txt`. Nothing was deleted.
+- Left as is: three hand-made files not tracked by any checkpoint (`AnPT/2026-09-29-OpenRouter-AnPT.xlsx`, `PhoHG/2026-09-15-FPA-AnPT.xlsx`, `UyenNNT/2026-09-15-FPA-AnPT.xlsx`), and the legacy copy `users/output` inside the OneDrive repo folder (580 xlsx, last written 2026-10-05).
