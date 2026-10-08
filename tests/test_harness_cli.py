@@ -34,6 +34,7 @@ from scripts.harness_cli import (
     cmd_git_verify,
     cmd_git_checkpoint,
     cmd_git_template,
+    cmd_session_close,
     calculate_score_trace,
     calculate_score_context,
 )
@@ -328,6 +329,84 @@ class TestHarnessCLI(unittest.TestCase):
         self.assertEqual(res["header"], "feat(core): integrate git lifecycle (US-030)")
         self.assertTrue(res["compliant_length"])
         self.assertIn("Context: connecting harness to git.", res["message"])
+
+    def test_session_close_lifecycle_and_table(self):
+        # 1. Thêm story mẫu vào test db
+        s_args = argparse.Namespace(
+            db=self.db_path,
+            id="US-101",
+            title="Atomic session closure feature",
+            parent="Harness Epic",
+            status="in_progress",
+            lane="normal",
+            contract="Fast closure command",
+            criteria="Verify passes, trace recorded, closure table generated",
+            verify_cmd='python -c "print(\'VERIFY_OK\')"',
+        )
+        cmd_story_add(s_args)
+
+        # 2. Gọi cmd_session_close với no_commit để kiểm tra chuỗi logic nguyên tử
+        close_args = argparse.Namespace(
+            db=self.db_path,
+            story="US-101",
+            summary="Implemented session closure test",
+            lane="normal",
+            intake=None,
+            verify_cmd=None,
+            skip_verify=False,
+            commit_msg=None,
+            no_commit=True,
+            push=False,
+            json=True,
+        )
+        res = cmd_session_close(close_args)
+        self.assertEqual(res["status"], "success")
+        self.assertTrue(res["session_closed"])
+        self.assertTrue(res["story_updated"])
+        self.assertGreater(res["trace_id"], 0)
+        self.assertEqual(res["story_id"], "US-101")
+        self.assertIn("### 📋 Harness Closure Protocol", res["closure_table"])
+        self.assertIn("Trace ID #", res["closure_table"])
+        self.assertIn("US-101", res["closure_table"])
+
+    def test_session_close_verification_failure_blocks(self):
+        # Thêm story có lệnh verify thất bại
+        s_args = argparse.Namespace(
+            db=self.db_path,
+            id="US-102",
+            title="Failing verification story",
+            parent="Harness Epic",
+            status="in_progress",
+            lane="normal",
+            contract="Failing verify contract",
+            criteria="Must be blocked",
+            verify_cmd='python -c "import sys; sys.exit(1)"',
+        )
+        cmd_story_add(s_args)
+
+        close_args = argparse.Namespace(
+            db=self.db_path,
+            story="US-102",
+            summary="Attempt closure on broken test",
+            lane="normal",
+            intake=None,
+            verify_cmd=None,
+            skip_verify=False,
+            commit_msg=None,
+            no_commit=True,
+            push=False,
+            json=True,
+        )
+        res = cmd_session_close(close_args)
+        self.assertEqual(res["status"], "error")
+        self.assertEqual(res["error_code"], "VERIFICATION_FAILED")
+
+    def test_git_status_c_light_trace_check(self):
+        # Kiểm tra cờ has_trace_record trong cmd_git_status
+        status_args = argparse.Namespace(db=self.db_path)
+        status_res = cmd_git_status(status_args)
+        self.assertEqual(status_res["status"], "success")
+        self.assertIn("has_trace_record", status_res)
 
 
 if __name__ == "__main__":

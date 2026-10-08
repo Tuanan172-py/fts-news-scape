@@ -40,6 +40,12 @@ Nhằm bảo đảm toàn bộ thay đổi đủ quan trọng đều được Gi
 4. **Vệ sinh tệp (Hygiene Invariant):** TUYỆT ĐỐI KHÔNG commit tệp rác, file chạy thử (`scratch/`, `test_scratch*.py`, `check_key*.py`, `-HOSTNAME`). Chạy `python scripts/harness_cli.py git verify` trước khi kết thúc ca.
 
 ## 4. Giao thức Đóng Phiên Bắt buộc (Mandatory Harness Closure Protocol)
+Để triệt tiêu hiện tượng bỏ sót bước, quy trình đóng phiên được gộp vào lệnh nguyên tử duy nhất (Hybrid Strategy B + C-Light):
+```powershell
+python scripts/harness_cli.py session close --story US-XXX --summary "<nội dung>" [--push]
+```
+Lệnh này tự động kiểm tra verify gate, cập nhật story sang `implemented`, commit git, lưu `trace` vào `harness.db`, và in sẵn Bảng Nghiệm thu Đóng phiên (Harness Closure Table) ra stdout.
+
 Ở cuối **MỖI CÂU TRẢ LỜI / PHIÊN THỰC THI**, Agent BẮT BUỘC phải xuất Bảng Nghiệm thu Đóng phiên (Harness Closure Table) minh bạch định tuyến ghi nhận file/DB và trạng thái Git:
 
 ```markdown

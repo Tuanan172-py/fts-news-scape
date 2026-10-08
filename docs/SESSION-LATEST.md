@@ -1,32 +1,37 @@
 # Bàn giao Phiên Vận Hành (Session Handoff)
 
-**Thời điểm:** 2026-10-08 16:10 (GMT+7)  
-**Nhánh:** dev/us038 | **Story:** US-042 | **Trạng thái:** clean_for_closure: true
+**Thời điểm:** 2026-10-08 16:55 (GMT+7)  
+**Nhánh:** dev/us038 | **Story:** US-043 | **Trạng thái:** in_progress -> closing
 
 ---
 
-## 1. Trọng Tâm Đã Hoàn Tất (Story US-042)
+## 1. Trọng Tâm Đã Hoàn Tất (Story US-043)
 
-1. **Hiện thực hóa Module CQRS Lakehouse Data Plane (`project/src/lakehouse/`):**
-   - **`ingest.py`**: Dropzone Parquet Ingestor nạp phân mảnh bài viết bất biến (`publish_batch`), định dạng tên độc lập `dropzone/YYYY/MM/DD/part-<date>-<dev_id>-<batch_id>.parquet`, chuẩn hóa schema 22 trường (`LAKEHOUSE_ARTICLE_SCHEMA`) với nén ZSTD.
-   - **`consolidator.py`**: Động cơ DuckDB Consolidator (`consolidate_dropzone`) khử trùng lặp có thứ tự ưu tiên (`updated_at DESC, batch_id DESC`), tự động nạp gia tăng (incremental compaction) với tệp phân vùng đã có, đạt hiệu năng 115ms cho 1.300 bài viết (0 LLM token).
-   - **`manifest.py`**: Kê khai toàn vẹn dữ liệu cryptographic (`write_manifests`, `verify_manifest`), tạo `_manifest/<date>.json` và con trỏ nguyên tử `_manifest/latest.json` kèm mã băm SHA-256 đối soát.
-   - **`storage.py`**: Lớp trừu tượng hóa lưu trữ (`LocalOneDriveStorageAdapter`, `GraphApiStorageAdapter`), thực thi staging atomic write an toàn, bypass ghi thừa nếu SHA256 trùng khớp, tự động fallback snapshot khi Windows file lock.
-   - **Tách biệt Data Plane & Delivery (ADR-0023.D6)**: Giữ sạch kiến trúc Data Plane thuần túy, bàn giao Excel vẫn do `xlsx_delivery.py` và `user_output.py` quản lý theo đúng chuẩn 15 cột.
+1. **Hiện thực hóa Lệnh Đóng Phiên Nguyên Tử (`scripts/harness_cli.py session close`):**
+   - Đóng gói toàn bộ chuỗi đóng phiên phân mảnh vào **đúng 1 lệnh CLI duy nhất**:
+     `python scripts/harness_cli.py session close --story US-XXX --summary "..." [--push]`
+   - Tự động thực thi:
+     1. Verification Proof Gate (kiểm tra test, exit code != 0 sẽ chặn đóng).
+     2. Cập nhật Story sang `implemented` (đồng bộ cả CSDL `harness.db` và tệp `docs/stories/*.md`).
+     3. Tự động commit git theo chuẩn Conventional Commits.
+     4. Ghi nhận bản ghi `trace` vào `harness.db`.
+     5. Tự động render và in Bảng Nghiệm Thu Đóng Phiên (`Harness Closure Protocol`) ra stdout.
+   - Thêm `"session-closure"` vào danh mục `CAPABILITIES` của Harness.
 
-2. **Giao diện Dòng lệnh Quản trị (`project/scripts/lakehouse_cli.py`):**
-   - Cung cấp 3 lệnh con: `ingest`, `consolidate`, `verify`.
-   - Đã tích hợp vào danh mục `AUTOMATION_CLIS` của `project/tests/test_cli_entrypoints.py`.
+2. **Lớp Chốt Chặn Nhẹ C-Light Guard (`cmd_git_status`):**
+   - Bổ sung trường `has_trace_record` và `trace_warning` trong `harness_cli.py git status`.
+   - Cảnh báo rõ ràng khi commit chưa có trace mà không làm gián đoạn (hard-break) thao tác của lập trình viên con người.
 
-3. **Kiểm Định Chất Lượng & Đo Lường:**
-   - **25/25 tests Lakehouse PASS**: bao gồm mô phỏng 3 Devs đẩy đồng thời không xung đột (`test_lakehouse_concurrency.py`), khử trùng lặp (`test_lakehouse_dedup.py`), kiểm chứng manifest (`test_lakehouse_manifest.py`), SLA tốc độ dưới 1s (`test_lakehouse_perf.py`), và kiểm thử đối kháng (`test_lakehouse_adversarial_challenger2.py`).
-   - **14/14 tests CLI entrypoints PASS**: thực thi trơn tru qua pipe encoding UTF-8 (Rule 03 §5).
+3. **Cập nhật Hướng Dẫn & Quy Chuẩn:**
+   - Cập nhật [AGENTS.md](AGENTS.md) §12 và [.agents/rules/04-harness-durable-invariants.md](.agents/rules/04-harness-durable-invariants.md) §4 hướng dẫn sử dụng lệnh `session close`.
+
+4. **Kiểm Định Chất Lượng:**
+   - **13/13 tests `test_harness_cli.py` PASS**: bao gồm kiểm tra chuỗi `session close`, kiểm tra chặn khi verify gate fail, và kiểm tra C-Light trace check.
    - **16/16 tests Knowledge Contract PASS**: `tests/test_knowledge.py` đạt 100%.
-   - Đã đồng bộ trạng thái Story US-042 sang `implemented` trong `harness.db` và `docs/stories/`.
+   - **0 findings**: `harness_cli.py doc lint`.
 
 ---
 
 ## 2. Kế Thừa Phiên Kế Tiếp
 
-- Kết nối `write_user_output.py` hoặc các query tools để đọc trực tiếp từ canonical Parquet partitions của Lakehouse qua DuckDB views.
-- Thiết lập quy trình dọn dẹp (retention pruning) các file trong dropzone cũ sau khi đã consolidated và verify.
+- Các phiên làm việc và Agents tiếp theo bắt buộc sử dụng `harness_cli.py session close --story US-XXX --summary "..."` ở cuối mỗi ca để đóng phiên tự động, loại bỏ 100% hiện tượng quên ghi trace hoặc quên in bảng Closure Table.
