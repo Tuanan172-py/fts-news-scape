@@ -38,3 +38,5 @@ plans/20261005-1800-us038-repo-to-chuc-va-data-plane/plan.md
 # Ids registered in harness.db that have no file yet (G4 writes them).
 id:US-038
 id:US-040
+docs/proposals/audit-migration-us038-2026-10-06.md
+docs/stories/US-041-test-xanh-va-so-cai-token-theo-provider.md
