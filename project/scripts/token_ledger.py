@@ -69,6 +69,79 @@ CREATE INDEX IF NOT EXISTS idx_token_ledger_ts   ON token_ledger(ts);
 """
 
 
+RUNNER_SOURCES = ("agy", "openrouter", "opencode-native", "auto")
+# Đơn giá agy (USD/1M token) theo bảng giá Gemini Flash Low dùng từ ADR 0011.
+AGY_USD_PER_M = {"in": 0.075, "out": 0.30}
+
+
+def normalize_usage(provider: str, usage: dict | None) -> dict:
+    """Quy `usage` của từng provider về cùng một bộ cột của sổ cái.
+
+    Args:
+        provider: Tên provider ghi trong meta (`agy`, `openrouter`, `opencode-native`).
+        usage: Khối `usage` trong tệp meta, có thể thiếu hoặc không chứa số.
+
+    Returns:
+        Từ điển `miss`, `hit`, `out`, `reasoning`, `usd`, `has_usage`.
+    """
+    u = usage if isinstance(usage, dict) else {}
+    if provider == "agy" or "input_tokens" in u:
+        hit = int(u.get("cache_read_tokens") or 0)
+        prompt = int(u.get("input_tokens") or 0)
+        out = int(u.get("output_tokens") or 0)
+        reasoning = int(u.get("thinking_tokens") or 0)
+        usd = ((prompt - hit) * AGY_USD_PER_M["in"] + out * AGY_USD_PER_M["out"]) / 1e6
+        return {"miss": max(0, prompt - hit), "hit": hit, "out": out, "reasoning": reasoning,
+                "usd": usd, "has_usage": bool(prompt or out)}
+    prompt = int(u.get("prompt_tokens") or 0)
+    if not prompt and not u.get("completion_tokens") and u.get("total_tokens"):
+        prompt = int(u["total_tokens"])
+    hit = int((u.get("prompt_tokens_details") or {}).get("cached_tokens") or 0)
+    out = int(u.get("completion_tokens") or 0)
+    reasoning = int((u.get("completion_tokens_details") or {}).get("reasoning_tokens") or 0)
+    try:
+        usd = float(u.get("cost") or 0)
+    except (TypeError, ValueError):
+        usd = 0.0
+    return {"miss": max(0, prompt - hit), "hit": hit, "out": out, "reasoning": reasoning,
+            "usd": usd, "has_usage": bool(prompt or out)}
+
+
+def aggregate_meta(meta_files: list[str], fallback: str | None) -> dict[str, dict]:
+    """Cộng `usage` của các tệp meta theo đúng provider ghi trong từng tệp.
+
+    Một đợt có thể chạy lượt đầu bằng agy rồi vá bằng openrouter, nên gán cả đợt cho
+    một provider sẽ ghi sai nguồn chi phí.
+
+    Args:
+        meta_files: Đường dẫn các tệp `*.meta.json` của đợt.
+        fallback: Provider dùng khi tệp meta không ghi `agent_provider`.
+
+    Returns:
+        Từ điển theo provider gồm `batches`, `items`, các cột token, `usd`, `has_usage`.
+    """
+    totals: dict[str, dict] = {}
+    for mf in meta_files:
+        try:
+            with open(mf, encoding="utf-8") as f:
+                mdata = json.load(f)
+        except (OSError, ValueError):
+            continue
+        provider = mdata.get("agent_provider") or fallback
+        if not provider or provider == "auto":
+            continue
+        u = normalize_usage(provider, mdata.get("usage"))
+        t = totals.setdefault(provider, {"batches": 0, "items": 0, "miss": 0, "hit": 0,
+                                         "out": 0, "reasoning": 0, "usd": 0.0,
+                                         "has_usage": False})
+        t["batches"] += 1
+        t["items"] += int(mdata.get("items_valid") or 0)
+        for k in ("miss", "hit", "out", "reasoning", "usd"):
+            t[k] += u[k]
+        t["has_usage"] = t["has_usage"] or u["has_usage"]
+    return totals
+
+
 def latest_snapshots(rows: list) -> list:
     """Giữ lại ảnh chụp mới nhất của mỗi đợt, bỏ các ảnh chụp cũ hơn của cùng đợt.
 
@@ -207,70 +280,49 @@ def cmd_append(args: argparse.Namespace) -> int:
                     is_agy = True
         except Exception:
             pass
-    is_runner_meta = is_agy or getattr(args, "source", None) == "openrouter"
+    source = getattr(args, "source", None)
+    is_runner_meta = is_agy or source in RUNNER_SOURCES
 
     if is_runner_meta:
-        provider = "agy" if is_agy else "openrouter"
+        fallback = "agy" if is_agy and source in (None, "auto") else source
         out_dir = str(paths.agent_outputs_dir("_article"))
         meta_files = glob.glob(os.path.join(out_dir, f"article_{args.wave}_*.meta.json"))
         if not meta_files:
-            print(f"⚠️  Không tìm thấy tệp meta nào của {provider} cho đợt {args.wave}. Không ghi gì.")
+            print(f"⚠️  Không tìm thấy tệp meta nào của runner cho đợt {args.wave}. Không ghi gì.")
             return 2
-        total_in = 0
-        total_out = 0
-        total_reasoning = 0
-        total_cost = 0.0
-        n_batches = len(meta_files)
-        for mf in meta_files:
-            try:
-                with open(mf, encoding="utf-8") as f:
-                    mdata = json.load(f)
-                    u = mdata.get("usage", {})
-                    if provider == "agy":
-                        total_in += u.get("input_tokens", 0)
-                        total_out += u.get("output_tokens", 0)
-                    else:
-                        total_in += u.get("prompt_tokens", 0)
-                        total_out += u.get("completion_tokens", 0)
-                        if not u.get("prompt_tokens") and u.get("total_tokens"):
-                            total_in += u.get("total_tokens", 0)
-                        details = u.get("completion_tokens_details") or {}
-                        total_reasoning += details.get("reasoning_tokens", 0) or 0
-                        try:
-                            total_cost += float(u.get("cost", 0) or 0)
-                        except (TypeError, ValueError):
-                            pass
-            except Exception:
-                pass
-        quota_tokens = total_in + total_out
-        if provider == "agy":
-            billed_usd = round((total_in * 0.075 + total_out * 0.30) / 1e6, 6)
-        else:
-            billed_usd = round(total_cost, 6)
-        agent_id = f"article-processor-{provider}"
+        totals = aggregate_meta(meta_files, fallback)
+        if not totals:
+            print(f"⚠️  Tệp meta của đợt {args.wave} không ghi provider. Truyền --source.")
+            return 2
         conn = connect(args.db)
         # Số của runner cộng từ mọi tệp meta của đợt nên đã là ảnh chụp trọn đợt:
-        # chạy lại `--finish` thay dòng cũ thay vì thêm dòng trùng.
+        # chạy lại `--finish` thay mọi dòng runner cũ của đợt thay vì thêm dòng trùng.
         conn.execute("DELETE FROM token_ledger WHERE wave IS ? AND batch_id IS ? "
-                     "AND agent_id = ?", (args.wave, args.batch, agent_id))
-        conn.execute(
-            """INSERT INTO token_ledger
-               (ts, wave, batch_id, agent_id, n_items, n_sessions, miss_tokens, hit_tokens,
-                out_tokens, reasoning_tokens, quota_tokens, turns_max, ctx_peak, ctx_pct,
-                est_miss, est_out, billed_usd, peak_window, note)
-               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-            (datetime.now(timezone.utc).isoformat(timespec="seconds"),
-             args.wave, args.batch, agent_id, args.items, n_batches,
-             total_in, 0, total_out, total_reasoning, quota_tokens, 1, 0, 0.0,
-             args.est_miss, args.est_out, billed_usd, 0, f"runner={provider}"),
-        )
+                     "AND agent_id LIKE 'article-processor-%'", (args.wave, args.batch))
+        single = len(totals) == 1
+        for provider, t in sorted(totals.items()):
+            quota_tokens = t["miss"] + t["hit"] + t["out"]
+            n_items = args.items if single else t["items"]
+            note = f"runner={provider}" + ("" if t["has_usage"] else " usage=không ghi")
+            conn.execute(
+                """INSERT INTO token_ledger
+                   (ts, wave, batch_id, agent_id, n_items, n_sessions, miss_tokens, hit_tokens,
+                    out_tokens, reasoning_tokens, quota_tokens, turns_max, ctx_peak, ctx_pct,
+                    est_miss, est_out, billed_usd, peak_window, note)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                 args.wave, args.batch, f"article-processor-{provider}", n_items,
+                 t["batches"], t["miss"], t["hit"], t["out"], t["reasoning"], quota_tokens,
+                 1, 0, 0.0, args.est_miss if single else None,
+                 args.est_out if single else None, round(t["usd"], 6), 0, note),
+            )
+            print(f"✅ Đã ghi sổ cái ({provider}): wave={args.wave or '-'} "
+                  f"({t['batches']} lô, {n_items} bài)")
+            print(f"   quota {quota_tokens:,} token (miss {t['miss']:,} · hit {t['hit']:,} · "
+                  f"out {t['out']:,} · ~${t['usd']:.4f})"
+                  + ("" if t["has_usage"] else " · provider không ghi usage"))
         conn.commit()
         conn.close()
-        per_item = quota_tokens / args.items if args.items else 0
-        print(f"✅ Đã ghi sổ cái ({provider}): wave={args.wave or '-'} ({n_batches} lô, {args.items} bài)")
-        print(f"   quota {quota_tokens:,} token (in {total_in:,} · out {total_out:,} · ~${billed_usd:.4f})")
-        if args.items:
-            print(f"   {per_item:,.0f} token/bài (runner {provider})")
         return 0
 
     wave = wave_usage(since, cwd_filter=args.cwd_filter, with_reasoning=not args.no_reasoning,
@@ -531,8 +583,9 @@ def main(argv=None) -> int:
     a.add_argument("--workers-only", action="store_true",
                    help="Chỉ gộp phiên worker được tạo sau --since; bỏ phiên điều phối "
                         "và mọi phiên mở từ trước còn đang hoạt động")
-    a.add_argument("--source", choices=["dsh", "agy", "openrouter"],
-                     help="Nguồn runtime: dsh, agy hoặc openrouter (đọc usage từ meta)")
+    a.add_argument("--source", choices=["dsh", *RUNNER_SOURCES],
+                     help="Nguồn runtime: dsh (phiên DSH), hoặc agy/openrouter/opencode-native/auto "
+                          "(đọc usage từ meta; auto lấy provider ghi trong từng tệp)")
 
     r = sub.add_parser("report", help="In báo cáo sổ cái")
     r.add_argument("--wave", help="Lọc theo đợt")

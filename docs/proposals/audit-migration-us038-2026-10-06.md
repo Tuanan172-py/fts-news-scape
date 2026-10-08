@@ -54,7 +54,7 @@ Phần lõi của migration đã chạy được: mã, dữ liệu và DB đã t
 | P1-7 | Nhiều worktree trên một gitdir | Có thư mục OneDrive (`feature/article-lane-remove-gates`), `news-scraper` (`dev/us038`), `news-scraper-dev` (detached, thừa), `news-scape-us039`, `.kilo/granite-asphalt` (thừa) | Sau khi push `fpa`: gỡ hai worktree thừa. Nhánh US-039 đã chung tuyến sạch, mở PR riêng vào `fpa/main` |
 | P1-8 | Kho tổ chức chỉ có một ngày dữ liệu | `_manifest` mới có 20261005. Bronze có từ tháng 8 | Bù lùi bằng `publish.py --date` cho từng ngày đã đóng, làm sau P0-4. Bản review chỉ xuất cho ngày gần nhất, Parquet và Bronze xuất đủ |
 | P1-9 | Bản review quá nặng để xuất hằng ngày | 758 MB mỗi ngày, giữ 7 bản là 5,3 GB, tải lên 758 MB mỗi đêm | Xuất review mỗi tuần, giữ 4 bản. Chuyên viên tra hằng ngày bằng Parquet. Cần hạn mức site (ADR 0020 §6) |
-| P1-10 | `test_inherit` hỏng theo ngày | `stats["copy"] == 0`, dùng ngày bài cố định với `days=3` | Cố định "hôm nay" trong test bằng monkeypatch |
+| P1-10 | `test_inherit` hỏng theo ngày | `stats["copy"] == 0`, dùng ngày bài cố định với `days=3` | **Đã sửa ở nhánh `fix/us041-unblock-tests-ledger` (2026-10-08):** `cluster_job.refresh` nhận `today`, test truyền ngày cố định |
 
 ### P2 — cải tiến sau
 

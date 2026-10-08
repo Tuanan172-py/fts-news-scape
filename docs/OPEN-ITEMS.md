@@ -38,7 +38,7 @@ Người vận hành làm hoặc quyết định:
 
 1. **[ĐÓNG 2026-10-06 — người vận hành] DSH không còn dùng.** Runner hiện hành là `agy` và opencode (Muse Spark 1.3). Không cần restart host DSH. Nếu sau này dùng lại DSH thì restart host trước (prefix `b7cd7e93820adc5e`, rule 09).
 2. **[PENDING theo yêu cầu người vận hành 2026-10-06, chưa nghiệm thu] Gán nhãn bộ vàng 30 bài** (`sn`, `ts`, tập TIC) rồi chạy `provider_conformance.py baseline` với đầu ra của agy. Chưa có bộ vàng thì chưa chấm được provider khác. Ngưỡng tạm: mức agy trừ 5 điểm phần trăm.
-3. **Sổ cái token chưa gắn nguồn theo meta.** `token_ledger.py --source` chỉ nhận `dsh` và `agy`, nên chi phí openrouter và opencode vẫn bị gán sai. Cần mở rộng `--source` và đọc `usage` từ meta.
+3. **[ĐÓNG 2026-10-08, US-041] Sổ cái token gắn nguồn theo meta.** Mỗi tệp meta tính cho đúng `agent_provider` của nó, nên đợt pha agy và openrouter ghi hai dòng. Token cache vào `hit_tokens`. opencode được nhận nhưng meta của nó không ghi số token, nên dòng có ghi chú `usage=không ghi`. `--finish` mặc định `--source auto`. Còn mở: adapter opencode cần ghi `usage` thật.
 4. **opencode chưa có `--runner`.** Adapter `opencode_native_run.py` đã dùng bộ kiểm chung, nhưng đợt vẫn do phiên OpenCode điều khiển bằng tay. Việc nâng thành runner chính thức cần quyết định riêng.
 5. **Giảm tỷ lệ bị từ chối ở giai đoạn đầu.** Đo trước khi siết: agy 5,5% `c` ngắn và 1,8% `k` ngắn, openrouter 9,3% `k` dài. Đo lại bằng kịch bản audit sau vài đợt, và điều chỉnh prefix nếu một loại lỗi vượt vài phần trăm.
 6. **Xung đột với ADR 0016 P3.** Trường `same_event_as` mà ADR 0016 dự kiến thêm sẽ bị schema đóng (`additionalProperties: false`) từ chối. Đổi hợp đồng phải sửa schema trước.
@@ -52,6 +52,14 @@ Người vận hành làm hoặc quyết định:
 ---
 
 ## CAP-1. Thu thập trọn vẹn, cụm hoá trùng lặp, tín hiệu insight (ADR 0013, 0016, US-033) — việc còn lại, 2026-10-02
+
+**Phân tích độ phủ 2026-10-08 (US-041, đọc DB, không cào):**
+
+- **cafef:** listing (RSS và chuyên mục) chỉ bắt được khoảng 40% số URL trong sitemap. Từ 02/10: 762 URL qua listing, 1.352 qua cào bù. Đây là giới hạn cấu trúc; cào bù là kênh chính, không phải kênh phụ.
+- **Tồn đọng hiện tại:** 765 URL cafef, 56 tnck, 53 baodautu, 16 vneconomy. Tất cả có `attempts=0`, phát hiện từ 05/10 09:40. Nguyên nhân là morninger dừng (05/10 15:04, rồi dừng migration 06/10), không phải lỗi cào.
+- **Năng lực cào bù:** 40 URL / 120 s mỗi chu kỳ. Chu kỳ đã chiếm khoảng 7 trên 10 phút (`settings.yaml`), nên không nâng giới hạn trong chu kỳ.
+- **Gỡ chặn khi mở lại vận hành (thêm vào runbook Đ3, sau bước 5):** xả tồn đọng một lần bằng lệnh tay, cào web, 0 token: `python scripts/capture_reconcile.py run --limit 900 --budget 2400`. Kiểm bằng `capture_reconcile.py status`, mục tiêu `discovered` < 50.
+- **Việc cải tiến sau:** mở rộng listing cafef để giảm phụ thuộc vào cào bù.
 
 Đã làm: sổ phát hiện URL, chuẩn hoá khoá bài theo 7 nguồn, gỡ lọc mờ ở tầng cào, phân trang theo watermark (baodautu, tnck), đối chiếu sitemap (baodautu, cafef, tnck, vneconomy), cào bù và phục hồi Bronze, cụm hoá, kế thừa kết quả cho bài chép, bảng tín hiệu và sheet Radar chú ý.
 
@@ -400,7 +408,10 @@ qua subprocess, bổ sung sau sự cố 3 lỗi sản xuất vô hình với tes
 
 ## E. NEMOTRON 3 ULTRAFREE EVAL (US-NEMO01, 2026-10-01) — việc mới phát sinh
 
-### E1. Repair duplicate batch bug (Cấp 2)
+### E1. Repair duplicate batch bug (Cấp 2) — ĐÓNG
+
+**Đã sửa (đối chiếu 2026-10-08):** `cmd_repair` giữ tập `claimed`, mỗi bài thiếu chỉ vào một packet vá trong một lần chạy. Bài của lô vá chưa chạy được gom vào lô vá kế tiếp.
+
 
 **Mô tả:** `cmd_repair` chạy lần 2 tạo cả `r02` (repair trực tiếp gốc) VÀ `r01_r01` (repair của repair lần 1), nhưng lô `r01` (repair lần 1) không được chạy tự động.
 
@@ -410,7 +421,10 @@ qua subprocess, bổ sung sau sự cố 3 lỗi sản xuất vô hình với tes
 
 **Sửa:** Logic tạo repair batch cần loại trừ các batch đã có repair pending (r01) thay vì tạo repair của repair.
 
-### E2. Token ledger không ghi cho OpenRouterRunner (Cấp 2)
+### E2. Token ledger không ghi cho OpenRouterRunner (Cấp 2) — ĐÓNG
+
+**Đã sửa:** sổ cái đọc `usage` từ meta theo provider của từng tệp (US-041, xem CON-1 mục 3).
+
 
 **Mô tả:** `token_ledger.py append --source openrouter --since <epoch>` không tìm thấy phiên DSH worker vì OpenRouterRunner không chạy trong DSH.
 
