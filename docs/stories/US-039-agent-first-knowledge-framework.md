@@ -6,7 +6,7 @@ status: in_progress
 branch: feature/us039-knowledge-framework
 lane: high-risk
 created: 2026-10-06
-updated: 2026-10-06
+updated: 2026-10-08
 lang: en
 authors: [claude-opus-5-5]
 adr: [ADR-0021]
@@ -31,7 +31,8 @@ After this story, any agent (Claude, Codex, agy, opencode, an OpenRouter model) 
 - [ ] `docs/knowledge/legacy.txt` is empty or every remaining entry has a phase owner in ADR-0021 follow-up.
 - [x] Twenty Claude memory files exist as `FACT-*` documents.
 - [ ] Tool-private plans are moved into `plans/`, and `SESSION-LATEST.md` is split by lane (G5 remainder).
-- [ ] Stories, proposals and rules are migrated (G4, G2 rules), and drift items are fixed (G6).
+- [x] Stories and proposals are migrated (G4): 37 story files, US-035 and US-036 collisions resolved, 10 proposals with verdicts, 2 wave checkpoints moved to type run.
+- [ ] Rules are migrated (G2 rules) and drift items are fixed (G6).
 
 ## Design Notes
 
@@ -45,7 +46,7 @@ After this story, any agent (Claude, Codex, agy, opencode, an OpenRouter model) 
 | Tier | Command or check | Result |
 |---|---|---|
 | Unit | `python -m pytest tests/test_knowledge.py -q` | 15 passed |
-| Integration | `python scripts/harness_cli.py doc lint` on the repository | 0 findings, 20 ADRs and 20 facts governed |
+| Integration | `python scripts/harness_cli.py doc lint` on the repository | 0 findings, 94 governed documents on 2026-10-08 |
 | Platform | pre-commit hook rejects a broken staged ADR | rejected `0099-broken.md` with K01, K02, K05 |
 
 ## Evidence
