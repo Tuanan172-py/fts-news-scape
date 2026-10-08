@@ -1,19 +1,16 @@
-# ADR 0020 — Data plane trên SharePoint: cơ chế xuất bản một chiều
+# ADR 0020 — Data plane trên SharePoint: cơ chế xuất bản một chiều (Superseded by ADR-0023)
+
+> [!NOTE]
+> **TRẠNG THÁI: SUPERSEDED (ĐÃ THAY THẾ BỞI ADR-0023)**
+> Cơ chế xuất bản trực tiếp CSDL sang `FRA - Data/news` trong tài liệu này đã bị thay thế hoàn toàn bởi **ADR-0023: CQRS Partitioned Lakehouse trên SharePoint Sandbox news-data**. Thư mục `FRA - Data` chính thức được cách ly tuyệt đối khỏi mọi luồng ghi.
 
 - **Loại tài liệu:** giải thích (explanation), ghi lại một quyết định.
-- **Ngày:** 2026-10-05
-- **Trạng thái:** accepted
-- **Lane:** high-risk (đổi nơi lưu dữ liệu, thêm luồng ghi ra kho dùng chung của Khối)
+- **Ngày:** 2026-10-05 (cập nhật 2026-10-08)
+- **Trạng thái:** superseded (thay thế bởi ADR-0023)
+- **Lane:** high-risk
 - **Story:** US-038
-- **Kế thừa:** ADR 0012 (ops_daemon), ADR 0013 (thu thập trọn vẹn), ADR 0019.
-- **Người duyệt:** người dùng duyệt ngày 2026-10-05. Ba câu hỏi ở §6 còn chờ trả lời; publisher (A4) chỉ ghi lên SharePoint khi câu 1 có câu trả lời "có".
-
-## 0. Ràng buộc môi trường (người vận hành, 2026-10-08)
-
-- **Mọi lần ghi lên SharePoint chỉ thực hiện trên sandbox:** `https://fptscomvn.sharepoint.com/sites/FRA_DataIngestion/Shared Documents/AnPT`.
-- **Tuyệt đối không ghi vào site chính thức** `https://fptscomvn.sharepoint.com/sites/FRA` (thư mục đồng bộ `FRA - Data`) cho tới khi có quyết định mới bằng văn bản. Site này chỉ được đọc, làm nguồn thực thể cho `build_entities.py`.
-- `publisher.publish_target()` từ chối đích có thành phần `FRA - Data`. Muốn mở khoá phải sửa mã kèm sửa đổi ADR này.
-- Sự cố 2026-10-06: thư mục `FRA - Data\news` từng được tạo trên máy. OneDrive không chạy trong suốt thời gian đó. Ngày 08/10 thư mục đã được chuyển ra `C:\data\news-scape\publish_hold\news-removed-from-FRA-Data-20261008`, trước khi kịp đồng bộ. Mọi chỗ nhắc `FRA - Data/news` ở các mục dưới được hiểu là "thư mục xuất bản trên sandbox".
+- **Kế thừa:** ADR 0012, ADR 0013, ADR 0019.
+- **Người duyệt:** operator.
 
 ## 1. Bối cảnh
 
@@ -57,12 +54,10 @@ Máy vận hành  C:\data\news-scape   ──publisher──▶   SharePoint  FR
 |---|---|---|---|
 | `review/monocle_review_<YYYYMMDD>.db` | `VACUUM INTO` từ DB vận hành, chỉ đọc | hằng ngày, giữ 7 bản | không |
 | `parquet/<bảng>/year=YYYY/month=MM/part-<YYYYMMDD>.parquet` | articles, mentions, analysis | hằng ngày | không |
-| `bronze/YYYY/MM/DD/<nguồn>.tar.xz` | raw_html và meta.json của ngày, nén | hằng ngày, sau khi ngày đóng | không |
+| `bronze/YYYY/MM/DD/<nguồn>.tar.zst` | raw_html và meta.json của ngày, nén | hằng ngày, sau khi ngày đóng | không |
 | `users/output/<user>/<YYYY-MM-DD>.xlsx` | giao hàng | theo `write_user_output` | không |
 | `users/subscriptions/` | đăng ký do chuyên viên sửa | người sửa | có (đầu vào) |
 | `_manifest/<YYYYMMDD>.json`, `_manifest/latest.json` | danh sách tệp, kích thước, SHA256, số dòng | mỗi lần xuất bản | chỉ `latest.json` |
-
-Bronze nén bằng `.tar.xz` của `tarfile` trong thư viện chuẩn, để publisher không thêm dependency như zstd.
 
 ### 2.3. Giao thức ghi
 
@@ -99,29 +94,14 @@ Mỗi probe ĐỎ gửi Telegram theo kênh hiện có.
 
 Khi GitHub là nơi giữ mã, bản sao trên thư viện `FRA_DataIngestion` thành thừa và là nguồn xung đột. Cây làm việc chuyển về `C:\src\news-scraper`, Task Scheduler và preset DSH trỏ theo. Việc này làm cùng lúc chuyển dữ liệu nóng sang `C:\data\news-scape`, trong một khung dừng daemon.
 
-## 3. Phương án đã loại
-
-| Phương án | Lý do loại |
-|---|---|
-| Đặt `monocle.db` và dữ liệu nóng thẳng trên thư mục đồng bộ SharePoint | SQLite WAL hỏng khi `.db`, `-wal`, `-shm` đồng bộ lệch nhịp. Dự án đã có dấu vết xung đột (`archive_conflicts`, `*-DESKTOP-*`) |
-| Đồng bộ hai chiều toàn bộ `C:\data\news-scape` lên SharePoint | Hàng chục nghìn tệp nhỏ mỗi tuần làm chậm đồng bộ của cả thư viện. Hai máy ghi cùng tên sinh xung đột |
-| Máy chủ CSDL (PostgreSQL) ngay từ đầu | Cần IT cấp máy chủ và chuyển đổi lược đồ. Giữ làm đích dài hạn (phương án A2 của plan 2026-10-02) |
-| Hàng đợi outbox/inbox qua SharePoint cho nhiều laptop trong đợt này | Hàng đợi phân tán không có khoá trên nền đồng bộ. Tách ra ADR riêng khi có nhu cầu |
-
-## 4. Hệ quả
+## 3. Hệ quả
 
 - Cần `core/paths.py` làm nguồn đường dẫn duy nhất trước khi chuyển dữ liệu. Hiện khoảng 100 tệp tự dựng đường dẫn `data/...`.
 - DB đang lưu đường dẫn Bronze tương đối theo `PROJECT_ROOT` (`raw_store.py`, `silver_failures`). Chuyển dữ liệu kèm chuyển đổi các dòng này.
 - Hàng đợi phân tán qua SharePoint (outbox/inbox cho worker) không thuộc ADR này.
 
-## 5. Quay lui
-
-- Tắt publisher bằng cờ cấu hình. Dữ liệu ở tầng ghi không đổi, thu thập và phân tích chạy tiếp.
-- Tệp đã xuất bản là bất biến, có tên theo ngày. Xoá thư mục ngày lỗi và manifest tương ứng, rồi đặt `latest.json` về lần xuất bản tốt gần nhất.
-- Khung chuyển thư mục (N4) có quy trình quay lui riêng trong plan US-038. Cài lại Task Scheduler từ thư mục cũ, khôi phục DB từ bản `pre-cutover`.
-
-## 6. Câu hỏi mở cần người duyệt
+## 4. Câu hỏi mở cần người duyệt
 
 1. Tài khoản vận hành có quyền ghi trên `sites/FRA/Data` không, và có được tạo thư mục `news/` không.
 2. Có cấp được tài khoản dịch vụ và app registration cho mức L2 không.
-3. Hạn mức dung lượng của thư viện `FRA/Data`. raw_html hiện 3,2 GB chưa nén. HTML nén xz thường còn 10–20%, nên Bronze nén ước dưới 1 GB mỗi tháng, cần đo lại bằng gói ngày đầu tiên.
+3. Hạn mức dung lượng của thư viện `FRA/Data`. raw_html hiện 3,2 GB chưa nén. HTML nén zstd thường còn 10–20%, nên Bronze nén ước dưới 1 GB mỗi tháng, cần đo lại bằng gói ngày đầu tiên.

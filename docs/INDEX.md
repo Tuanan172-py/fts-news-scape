@@ -8,7 +8,7 @@ any governed document; open a body only when its summary is relevant.
 
 | ID | Status | Title | Summary |
 |---|---|---|---|
-| [ADR-0001](decisions/0001-harness-first-approach.md) | accepted (amended by ADR-0021, ADR-0022) | Harness-first approach for agentic collaboration | Build the operating harness (intake gate, bounded context, mechanical proof, durable records) around the product before extending product features; every request passes risk classification first. |
+| [ADR-0001](decisions/0001-harness-first-approach.md) | accepted (amended by ADR-0021, ADR-0022, ADR-0024) | Harness-first approach for agentic collaboration | Build the operating harness (intake gate, bounded context, mechanical proof, durable records) around the product before extending product features; every request passes risk classification first. |
 | [ADR-0002](decisions/0002-durable-layer-sqlite-python.md) | accepted (amended by ADR-0021) | Durable layer using SQLite and a Python CLI | Harness state (story, intake, decision, backlog, trace, intervention, tool) lives in a WAL-mode SQLite file harness.db, isolated from monocle.db, and is operated through the Python CLI scripts/harness_cli.py. |
 | [ADR-0003](decisions/0003-code-first-l1-delivery.md) | superseded (by ADR-0010) | Deterministic code-first L1 results are written to l1_outputs and delivered | Allowed catalog-lookup (code-first) L1 entity matches into l1_outputs, tagged l1_source='code_first', so deliveries no longer waited on an unrun LLM step; agent output may overwrite them. Superseded by ADR-0010. |
 | [ADR-0004](decisions/0004-gold-value-gate-va-du-lieu-gia-lap.md) | superseded (by ADR-0010) | Value gate for the Gold tier and handling of script-emulated data | Deleted the script that faked Gold analysis, added DoD predicates value_added and implication_specific, locked anti-emulation tests, and flagged 1,274 faked records dod_pass=0 while keeping output_json (option D1). Superseded by ADR-0010. |
@@ -28,7 +28,9 @@ any governed document; open a body only when its summary is relevant.
 | [ADR-0018](decisions/0018-mot-trich-dan-cho-bai-mot-doan.md) | accepted | Silver body for the lane and one citation for one-paragraph articles | Packets, the thin filter and work packages read the full Silver body first; stale packets are re-packed from Silver; a truly one-paragraph article needs one citation, marked by citation_basis. |
 | [ADR-0019](decisions/0019-loai-bai-mong-khoi-packet-article-lane.md) | accepted | Exclude thin articles from Article Lane packets | Articles whose packet paragraphs contain fewer than two paragraphs of MIN_CITATION_CHARS are thin; load_candidates excludes them by default, radar counts them separately, and one threshold lives in article_contract.py. |
 | [ADR-0021](decisions/0021-agent-first-knowledge-framework.md) | accepted | Agent-first knowledge framework, model-agnostic | One frontmatter contract, one language (English), one id allocator and one lint gate for every knowledge document, so any model writes ADRs, stories, plans and facts the same way. |
-| [ADR-0022](decisions/0022-wip-one-per-worktree.md) | accepted | WIP limit of one story per worktree | WIP=1 applies per git worktree, keyed by branch; agents on different worktrees work in parallel with equal authority, and lint blocks two in_progress stories on one branch. |
+| [ADR-0022](decisions/0022-wip-one-per-worktree.md) | accepted (amended by ADR-0024) | WIP limit of one story per worktree | WIP=1 applies per git worktree, keyed by branch; agents on different worktrees work in parallel with equal authority, and lint blocks two in_progress stories on one branch. |
+| [ADR-0023](decisions/0023-cqrs-partitioned-lakehouse-sharepoint.md) | accepted | CQRS Partitioned Lakehouse on SharePoint Data Plane | Establishes CQRS Partitioned Lakehouse on SharePoint news-data sandbox with lock-free dropzone, DuckDB deduplication, and strictly isolates official FRA - Data site. |
+| [ADR-0024](decisions/0024-canonical-local-codebase-and-hybrid-workspace.md) | accepted | Canonical Local Codebase Standardization and Hybrid Workspace Governance | Establishes C:/src/news-scraper as the sole canonical worktree, isolates git database and virtual environment outside OneDrive, and deprecates development on cloud-synced folders. |
 
 ## story
 
@@ -72,6 +74,8 @@ any governed document; open a body only when its summary is relevant.
 | [US-036](stories/US-036-bronze-ghi-nham-goc-va-khoa-so-loi-silver.md) | implemented | Bronze written to the wrong root and Silver failure ledger keys | Captured articles are never reported lost because Bronze and other data products always resolve under project/data, a failed capture never overwrites a good one, and stale Silver failure rows no longer pin the watermark. |
 | [US-037](stories/US-037-pipeline-stabilization-orchestration-audit.md) | implemented | Pipeline stabilization after the orchestration audit | Self-running waves cannot drift after the 2026-10-05 audit; provider is locked per wave, repair rounds are capped, failed waves cool down, manual runs are registered, thin articles leave packets, and data leaves git. |
 | [US-039](stories/US-039-agent-first-knowledge-framework.md) | in_progress | Agent-first knowledge framework | Every agent writes ADRs, stories, proposals, plans and facts through one English frontmatter contract with an id allocator and a blocking lint, and thin historical ADRs are rebuilt from commit evidence. |
+| [US-040](stories/US-040-guard-code-first-out-of-live-paths.md) | implemented | Guard code_first out of every live path | Code-first L1 rows never reach delivery, insight signals, selectors, counts, packet cleanup or Parquet exports. |
+| [US-042](stories/US-042-cqrs-partitioned-lakehouse-data-plane.md) | planned | CQRS Partitioned Lakehouse on SharePoint Data Plane | Implement lock-free dropzone ingestion and DuckDB consolidation for the SharePoint news-data sandbox. |
 
 ## proposal
 
@@ -131,5 +135,5 @@ any governed document; open a body only when its summary is relevant.
 
 ## unmigrated
 
-35 files still lack frontmatter; see `docs/knowledge/legacy.txt`.
+37 files still lack frontmatter; see `docs/knowledge/legacy.txt`.
 
