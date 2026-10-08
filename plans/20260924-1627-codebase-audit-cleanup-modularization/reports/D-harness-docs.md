@@ -139,7 +139,7 @@
 | Hợp đồng đầu ra agent | **5** | `project/schemas/*.json`, `design/09-agent-io-contract.md`, `okf/catalog/references/agent_contracts.md`, skill `dod-gatekeeper`, rule 05 |
 | Quyết định | **3 nơi, 2 dãy số** | `docs/decisions/0001-0010` (ADR), `project/docs/others/decisions.md` (TDR-001..006), bảng `decision` trong harness.db (4 dòng) |
 | Danh sách user bật | **2 manifest** | `users/subscriptions/manifest.yaml` (chỉ `AnPT`; `compile.py` đọc tệp này, user vắng mặt được mặc định bật) và `project/config/entities/manifest.yaml` (5 user, `default: false`; radar đọc tệp này) [PLAN T4.3] |
-| Bề mặt DSH | **3** | `dsh/README.md`, `DSH-VIEC-THU-CONG.md`, `docs/proposals/dsh-surface-verified-2026-09-18.md` |
+| Bề mặt DSH | **3** | `dsh/README.md`, `DSH-VIEC-THU-CONG.md`, `docs/proposals/20260918-dsh-surface-verified.md` |
 
 ---
 
@@ -174,12 +174,12 @@
 | `plans/20260918-1133`, `1445`, `1624` | Đã ghi SUPERSEDED (tốt) | Lưu trữ |
 | `plans/20260918-1651-article-lane-unified` | Là thiết kế chuẩn mà AGENTS.md trỏ tới. **Không có dòng trạng thái.** `:125,299,323,351,560,585,664` còn mô tả "distillation là đòn bẩy chính" và van xả "siết distillation". Cả hai trái với nguyên tắc "đọc trọn nội dung" | Thêm header "implemented + amendment 21/09 (tắt chắt lọc) + ADR 0010". Gạch các đoạn distillation hoặc thêm chú thích trỏ về memory/RUNBOOK |
 | `plans/20260924-research-council-execution` | "Chờ duyệt" | Xem §4.2 |
-| `proposals/dsh-harness-mapping-2026-09-17.md` | "DRAFT — chờ Human duyệt". Đã được ADR 0009 thay. Dẫn tới `scripts/build_dsh_harness.py` và `.agents/dsh/gen/*` không tồn tại (`:71,213-217`) | Đánh dấu superseded bởi ADR 0009 |
-| `proposals/dsh-surface-verified-2026-09-18.md` | Tham chiếu kỹ thuật còn sống (tự ghi "không hết hạn") | Chuyển sang `.agents/dsh/` hoặc `okf/catalog/references/`, vì đây không phải đề xuất |
-| `proposals/agy-automation-council-2026-09-23.md` | Đề xuất Cấp 3 **đang treo**. `:5,133,147` gọi ADR của nó là "**ADR 0010**" và "Intake #25". **Cả hai số đã bị dùng**: ADR 0010 là ngừng lane L1/Gold, intake #25 là US-025 | **Sửa ngay:** đổi thành "ADR 0011 (dự kiến)" để tránh nhầm với ADR 0010 thật. Đánh dấu treo hoặc từ chối sau khi người dùng quyết |
-| `proposals/jev-integration-council-2026-09-24.md` + thư mục con | Đề xuất Cấp 3, treo. Dẫn tới `jev_shadow_eval.py`, `jev_triage.py` chưa tồn tại (bình thường với đề xuất) | Giữ, gắn trạng thái |
-| `proposals/jev-entity-linking-brainstorm-2026-09-24.md` | Brainstorm, "chưa phải đề xuất" | Giữ |
-| `proposals/research-council-2026-09-24.md` | Nguồn của plan thực thi 24/09 | Khi plan được duyệt, ghi "→ plan 20260924" |
+| `proposals/20260917-dsh-harness-mapping.md` | "DRAFT — chờ Human duyệt". Đã được ADR 0009 thay. Dẫn tới `scripts/build_dsh_harness.py` và `.agents/dsh/gen/*` không tồn tại (`:71,213-217`) | Đánh dấu superseded bởi ADR 0009 |
+| `proposals/20260918-dsh-surface-verified.md` | Tham chiếu kỹ thuật còn sống (tự ghi "không hết hạn") | Chuyển sang `.agents/dsh/` hoặc `okf/catalog/references/`, vì đây không phải đề xuất |
+| `proposals/20260923-agy-automation-council.md` | Đề xuất Cấp 3 **đang treo**. `:5,133,147` gọi ADR của nó là "**ADR 0010**" và "Intake #25". **Cả hai số đã bị dùng**: ADR 0010 là ngừng lane L1/Gold, intake #25 là US-025 | **Sửa ngay:** đổi thành "ADR 0011 (dự kiến)" để tránh nhầm với ADR 0010 thật. Đánh dấu treo hoặc từ chối sau khi người dùng quyết |
+| `proposals/20260924-jev-integration-council.md` + thư mục con | Đề xuất Cấp 3, treo. Dẫn tới `jev_shadow_eval.py`, `jev_triage.py` chưa tồn tại (bình thường với đề xuất) | Giữ, gắn trạng thái |
+| `proposals/20260924-jev-entity-linking-brainstorm.md` | Brainstorm, "chưa phải đề xuất" | Giữ |
+| `proposals/20260924-research-council.md` | Nguồn của plan thực thi 24/09 | Khi plan được duyệt, ghi "→ plan 20260924" |
 
 ### 4.2 Đối chiếu với `plans/20260924-research-council-execution/plan.md`, tránh làm hai lần
 
@@ -309,7 +309,7 @@ Chỉ có 4 dòng: 0001, 0002, 0006, 0010. Thiếu 0003, 0004, 0005, 0007, 0008,
 |---|---|---|---|
 | 1 | Viết lại hoặc lưu trữ `.agents/AGENT_RUNBOOK.md`. Trỏ `master-orchestrator.skill` sang `dsh-conductor` | MỚI | 2 |
 | 2 | `dsh-preflight-validator`: bỏ D2 `requeue`, sửa 12 → 14, bỏ kiểm junction | MỚI | 1 |
-| 3 | Sửa "ADR 0010" và "Intake #25" trong `agy-automation-council-2026-09-23.md` thành "ADR (dự kiến)" | MỚI | 1 |
+| 3 | Sửa "ADR 0010" và "Intake #25" trong `20260923-agy-automation-council.md` thành "ADR (dự kiến)" | MỚI | 1 |
 | 4 | Lập ADR 0011 hồi tố cho việc ngừng materiality/event_type/impact_area, kèm story | MỚI | 3 (hồ sơ) |
 | 5 | Sửa I/O registry: manifest, đường dẫn DB, `--date`, "chắt lọc", `invoke_subagent` | MỚI | 3 (registry là Harness Core) |
 | 6 | Viết lại `token-auditor` và `multi-agent-orchestrator-governance`. Sửa dòng mở đầu rule 01, 02, 07 | MỚI | 2 |

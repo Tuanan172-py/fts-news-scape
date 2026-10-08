@@ -1,92 +1,111 @@
-# 0003 — Kết quả nhận diện TẤT ĐỊNH (code-first) được ghi vào `l1_outputs` và giao hàng
-
-- **Status:** accepted (Duyệt bởi Human Operator ngày 2026-09-09)
-- **Date:** 2026-09-08
-- **Decision-makers:** Human Operator & Agent
-- **Parent / Scope:** L1 Entity Recognition → User Delivery
-- **Liên quan:** [0001](0001-harness-first-approach.md) (Hard Gate), AGENTS.md §6C (No Script Emulation)
-
 ---
+id: ADR-0003
+type: adr
+title: Deterministic code-first L1 results are written to l1_outputs and delivered
+status: superseded
+lane: high-risk
+created: 2026-09-08
+updated: 2026-10-06
+lang: en
+authors: [operator, agent]
+approvers: ["operator 2026-09-09"]
+story: []
+related: [ADR-0001]
+evidence:
+  - commit:8f13c70
+  - commit:3b6003b
+  - commit:bb47e44
+  - path:project/src/export/user_output.py
+  - path:project/src/db/store.py
+  - path:project/scripts/article_pack.py
+  - path:project/config/entities/aliases/_context_guards.yaml
+  - metric:monocle.db copy 2026-09-07, 7,219 articles, 1,787 l1_tasks, 424 gated articles, 146 matching AnPT
+  - metric:alias guards on 1,787 real titles removed 270 false matches and added 37 correct ones; TICKER:IVS 164 to 0
+  - operator:approved 2026-09-09, recorded in docs/OPEN-ITEMS.md item A1 at commit 3b6003b
+original: "commit:3b6003b"
+reconstructed: 2026-10-06
+summary: Allowed catalog-lookup (code-first) L1 entity matches into l1_outputs, tagged l1_source='code_first', so deliveries no longer waited on an unrun LLM step; agent output may overwrite them. Superseded by ADR-0010.
+summary_vi: Cho phép ghi kết quả tra danh mục tất định (code-first) vào l1_outputs với l1_source='code_first' để mở lại đường giao hàng; output của Agent được ghi đè; đã bị ADR-0010 thay thế.
+---
+
+# ADR-0003 — Deterministic code-first L1 results are written to l1_outputs and delivered
 
 ## Context
 
-Cổng giao hàng cho người dùng (`src/export/user_output.py:35-50`) bắt buộc
-`articles ⨝ l1_outputs (dod_pass=1)`. Bảng `l1_outputs` chỉ có MỘT nguồn ghi duy nhất:
-`L1Runner.ingest_output()` — tức chỉ khi một LLM subagent đã nộp output.
+- The user delivery gate (`src/export/user_output.py:35-50`) required `articles ⨝ l1_outputs (dod_pass=1)`.
+- `l1_outputs` had exactly one writer, `L1Runner.ingest_output()`, which ran only after an LLM subagent submitted output.
+- The deterministic tier `l1_classifier` (0 token) already resolved entities into `l1_tasks.code_first_json`. No path carried that data to the delivery gate.
+- Articles with `route='resolved'`, the ones where code-first had found a subscribed ticker, stayed `status='pending'` forever.
+- No automated LLM runner existed in the repository. `requirements.txt` had no SDK, and `scripts/agent_stub.py`, called by `run_daily.ps1`, did not exist.
+- The queues only grew: 1,102 pending `l1_tasks` plus 3,477 pending `work_items`. The gate depended on a manual step nobody ran, so in practice it was closed.
 
-Trong khi đó tầng 1 `l1_classifier` (tất định, 0 token) đã tra được thực thể và lưu vào
-`l1_tasks.code_first_json`, nhưng **không có đường nào để dữ liệu đó tới cổng giao hàng**.
-Bài `route='resolved'` — chính là những bài code-first ĐÃ tìm thấy mã người dùng đăng ký —
-nằm `status='pending'` vĩnh viễn.
+Measurements on `data/monocle.db`, 2026-09-07:
 
-Số đo trên `data/monocle.db` ngày 2026-09-07:
-
-| | |
+| Metric | Value |
 |---|---|
-| `articles` | 7.219 |
-| `l1_tasks` | 1.787 — trong đó `resolved` có TICKER: **562** |
-| lượt TICKER trong `code_first_json` | **710** (216 entity_id riêng) |
-| `l1_outputs` | 685 (dừng hẳn từ 2026-08-25) — **0 entity TICKER** |
-| bài qua cổng giao hàng | 424 → khớp danh mục AnPT: **146** |
-| nếu đọc `code_first` | 1.320 → khớp AnPT: **743** (gấp 5,1 lần) |
-
-Đồng thời không có runner LLM tự động nào trong repo (`requirements.txt` không có SDK nào;
-`scripts/agent_stub.py` được `run_daily.ps1` gọi nhưng **không tồn tại**). Hàng đợi chỉ lớn dần:
-1.102 `l1_tasks` + 3.477 `work_items` pending. Nói cách khác, cổng hiện tại phụ thuộc vào một
-bước thủ công không được vận hành, nên trên thực tế nó là cổng ĐÓNG.
+| `articles` | 7,219 |
+| `l1_tasks` | 1,787, of which `resolved` with a TICKER: 562 |
+| TICKER hits in `code_first_json` | 710 (216 distinct `entity_id`) |
+| `l1_outputs` | 685, stopped since 2026-08-25, with 0 TICKER entities |
+| Articles passing the delivery gate | 424, of which 146 match the AnPT watchlist |
+| If `code_first` were read | 1,320, of which 743 match AnPT (5.1 times more) |
 
 ## Decision
 
-Cho phép ghi vào `l1_outputs` các bản ghi có nguồn gốc **tra bảng tất định**, đánh dấu tách bạch
-bằng cột mới `l1_source ∈ {'agent','code_first'}`.
+- D1. Records produced by deterministic catalog lookup MAY be written to `l1_outputs`. They MUST be marked by a new column `l1_source ∈ {'agent','code_first'}`.
+- D2. Allowed under `AGENTS.md` §6C: mapping a string to an `entity_id` by lookup in the standard catalog `data/entities/entities.json` (2,152 entities issued by the organization). This is a verifiable, 100% reproducible lookup with no inference.
+- D3. Still forbidden for scripts, and 100% owned by the LLM subagent: summary, `implication`, `materiality_score`, `sentiment`, `event_type`, semantic `citations`, and entities absent from the catalog (`unlisted_candidates`).
+- D4. Articles with `route='needs_agent'` (code-first matched nothing; 541 articles) MUST still go through the agent. This ADR does not shrink the agent's scope; it stops discarding what lookup already found.
+- D5. The `code_first` record is provisional. When the agent processes the same `article_id`, its output MAY overwrite it (`l1_source='agent'`). The reverse MUST NOT happen.
 
-Ranh giới với AGENTS.md §6C ("Cấm giả lập trí tuệ Agent bằng heuristic script"):
+### Amendment history
 
-* **ĐƯỢC phép** — ánh xạ chuỗi ký tự → `entity_id` bằng cách tra danh mục chuẩn
-  (`data/entities/entities.json`, 2.152 thực thể do tổ chức phát hành). Đây là *lookup*, kết quả
-  kiểm chứng được, tái lập 100%, không có suy diễn. Bản thân `l1_classifier` đã làm đúng việc này
-  từ đầu và kết quả của nó đã được tin dùng để định tuyến `resolved` vs `needs_agent`.
-* **KHÔNG được phép** (giữ nguyên) — tóm tắt, `implication`, `materiality_score`, `sentiment`,
-  `event_type`, `citations` ngữ nghĩa, và nhận diện thực thể **không có trong danh mục**
-  (`unlisted_candidates`). Toàn bộ phần này vẫn 100% thuộc Subagent LLM.
-* Bài `route='needs_agent'` (code-first không khớp gì — 541 bài) **vẫn bắt buộc qua Agent**.
-  Quyết định này không thu hẹp vùng trí tuệ của Agent, nó chỉ ngừng vứt bỏ phần đã tra được.
+- 2026-09-08 (commit 8f13c70): written as proposed, awaiting operator approval as a Tier 3 high-risk change to a data contract and DB schema.
+- 2026-09-09 (commit 3b6003b): status changed to accepted after operator approval.
 
-Bản `code_first` là **tạm** theo nghĩa: khi Agent xử lý cùng `article_id`, output của Agent
-được phép GHI ĐÈ (`l1_source='agent'`). Chiều ngược lại không được phép.
+## Alternatives
+
+| Option | Why rejected |
+|---|---|
+| Status quo: deliver only agent-written `l1_outputs` | The gate depended on a manual LLM step that was not operated; 424 articles passed versus 1,320 with code-first (original Context). |
+| Run the LLM L1 subagent on every pending task | No automated runner existed in the repository; `agent_stub.py` was missing (reconstructed from the original Context). |
+| Open the gate without fixing alias false positives | `TICKER:IVS` alone would have sent 164 wrong articles to users (original Consequences). |
 
 ## Consequences
 
-* **Tích cực**
-  * Mở lại đường giao hàng: ~1.320 bài đủ điều kiện thay vì 424; AnPT từ 146 → ~700.
-  * Hệ thống hết phụ thuộc vào một bước thủ công không ai chạy để có output hằng ngày.
-  * Tiết kiệm token: 1.246/1.787 (70%) bài không cần gọi LLM cho L1.
-  * `l1_source` cho phép đo riêng chất lượng 2 nguồn thay vì trộn lẫn.
+Gains, as projected in the original:
 
-* **Đánh đổi / Rủi ro**
-  * Nhận diện tất định chỉ chạy trên **tiêu đề**, không có ngữ cảnh thân bài → bỏ sót thực thể
-    chỉ xuất hiện trong body. Không hồi quy so với hiện tại (Agent L1 cũng chỉ nhận tiêu đề).
-  * **False positive theo alias.** Đây là rủi ro chính và đã được xử lý TRƯỚC khi mở cổng
-    (xem "Điều kiện tiên quyết"). Nếu mở cổng mà không xử lý, riêng `TICKER:IVS` sẽ phát tán
-    164 bài sai cho người dùng.
-  * Nhập nhằng nghĩa từ còn tồn đọng (`IND_GICS3:NUOC` với "trong nước"/"nước ngoài",
-    `MACRO_GEO:MY` với "thẩm mỹ") — tầng tất định không giải được, cần Agent hoặc sửa dữ liệu
-    alias biên tập. Ghi nhận, chưa chặn.
+- Reopens delivery: about 1,320 eligible articles instead of 424; AnPT from 146 to about 700.
+- Daily output no longer depends on a manual step nobody runs.
+- Token saving: 1,246 of 1,787 articles (70%) need no LLM call for L1.
+- `l1_source` lets the quality of the two sources be measured separately.
 
-* **Điều kiện tiên quyết (ĐÃ hoàn thành trước ADR này)**
-  * `GENERIC_ALIAS_STOPLIST` — chặn alias địa danh/hậu tố chung sinh tự động từ tên pháp lý.
-  * Guard ngữ cảnh mã 3 ký tự ("TP.HCM" không còn là `TICKER:HCM`).
-  * Guard bỏ dấu cho alias 1 từ ngắn ("quý 3" không còn là `IND_GICS*:QUY`).
-  * DoD L1 kiểm `entity_id` có thật trong danh mục.
-  * Kết quả đo trên 1.787 tiêu đề thật: **loại 270 khớp sai, thêm 37 khớp đúng**;
-    `TICKER:IVS` từ 164 → 0.
+Costs and risks accepted:
+
+- Deterministic matching ran on titles only, so entities that appear only in the body are missed. This is no regression, because the L1 agent also received titles only.
+- Alias false positives were the main risk and were handled before the gate opened.
+- Residual ambiguity was recorded but not blocking: `IND_GICS3:NUOC` ("trong nước", "nước ngoài") and `MACRO_GEO:MY` ("thẩm mỹ"). It needs the agent or edited alias data.
+
+Preconditions completed before this ADR (commit 8f13c70):
+
+- `GENERIC_ALIAS_STOPLIST` blocks place-name and generic-suffix aliases generated from legal names.
+- A context guard for 3-letter tickers: "TP.HCM" is no longer `TICKER:HCM`.
+- A diacritic-folding guard for short one-word aliases: "quý 3" is no longer `IND_GICS*:QUY`.
+- L1 DoD checks that each `entity_id` exists in the catalog.
+- On 1,787 real titles: 270 false matches removed, 37 correct matches added; `TICKER:IVS` from 164 to 0.
+
+### Current status (2026-10-06)
+
+- Superseded by ADR-0010 (commit bb47e44). The L1/Gold two-tier lane that produced `code_first` records was retired.
+- D1: the `l1_source` column remains in `project/src/db/store.py`. Per ADR-0010.D4, `code_first` rows never count as analysed and are excluded from the Article Lane selector (`project/scripts/article_pack.py`).
+- D2 and D3: the boundary lives on in `AGENTS.md` §6C and in ADR-0010; catalog matching is used only to cross-check model output.
+- D4 and D5: dead with the retired lane.
 
 ## Rollback
 
-Đặt lại cổng cũ bằng một điều kiện SQL: thêm `AND l1.l1_source = 'agent'` vào `_GATED_SQL`.
-Không cần đổi schema ngược, không mất dữ liệu.
+- Restore the old gate with one SQL condition: add `AND l1.l1_source = 'agent'` to `_GATED_SQL`.
+- No reverse schema change is needed and no data is lost.
 
-## Actual Outcome
+## Follow-up
 
-_(điền sau khi vận hành 1 tuần: số bài giao / tỉ lệ khớp đúng khi kiểm tay 20 dòng /
-số lần Agent phải ghi đè bản code_first)_
+- [ ] Original follow-up, never filled: after one week of operation, record delivered articles, the correct-match rate from a 20-row manual check, and how often the agent overwrote `code_first`. Obsolete since ADR-0010.

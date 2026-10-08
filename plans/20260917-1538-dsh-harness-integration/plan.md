@@ -6,7 +6,7 @@
 | Trạng thái | **DRAFT — chưa implement** (chờ anh duyệt plan; H1 chỉ được chạy read-only)                                                                                                                    |
 | Phân loại  | **Cấp 3 — HIGH-RISK** (chạm Harness Core / automation substrate)                                                                                                                               |
 | Nền tảng    | `.agents/registry.yaml`, `.agents/pipeline.yaml`, `.agents/AGENT_NETWORK_DESIGN.md`, ADR 0006/0007/0008, plan `plans/20260917-1420-pipeline-integrity-remediation` |
-| Đề xuất gốc | `docs/proposals/dsh-harness-mapping-2026-09-17.md` (đã được anh đồng ý phần lớn mapping)                                                                                              |
+| Đề xuất gốc | `docs/proposals/20260917-dsh-harness-mapping.md` (đã được anh đồng ý phần lớn mapping)                                                                                              |
 | Câu hỏi mở | Xem §9 — chưa chốt thì chưa code phase tương ứng                                                                                                                                               |
 
 ## 0. Cổng phê duyệt

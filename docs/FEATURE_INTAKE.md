@@ -61,11 +61,11 @@ Any hard gate   → high-risk (unless the human narrows scope)
 |------|------------------|
 | **Tiny** | Note intake inline → patch directly → keep docs current → run a quick check. Skip the story packet (do NOT skip intake). |
 | **Normal** | Create/update 1 story from [templates/story.md](templates/story.md) → link OKF docs → state validation expectations → record proof in the story + TEST_MATRIX. |
-| **High-risk** | Story + ask the human if direction is unclear → record an ADR (`decisions/NNNN-*.md` from [templates/decision.md](templates/decision.md)). A trace note does NOT replace the ADR. |
+| **High-risk** | Story + ask the human if direction is unclear → record an ADR (`decisions/NNNN-*.md` from [templates/adr.md](templates/adr.md)). A trace note does NOT replace the ADR. |
 
 ## 5. WIP=1 at intake
 
-Before accepting a new change: if a story is already `in_progress`, either finish it or PARK it (`blocked`/`deferred` + reason) — see [HARNESS.md](HARNESS.md) §3. An urgent interrupt that cannot wait → park current, intake the interrupt, resume after. Never two `in_progress`.
+Before accepting a new change in this worktree: if this worktree's story is already `in_progress`, either finish it or PARK it (`blocked`/`deferred` + reason) — see [HARNESS.md](HARNESS.md) §3. An urgent interrupt that cannot wait → park current, intake the interrupt, resume after. Never two `in_progress` on one branch; parallel work goes to its own worktree (ADR-0022).
 
 ## 6. Intake output — you must be able to state this
 

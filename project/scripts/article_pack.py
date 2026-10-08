@@ -72,7 +72,7 @@ DEFAULT_OUT_TOKENS_PER_ARTICLE = 900
 # Mốc tham chiếu đầu ra của một lượt, chỉ để ƯỚC LƯỢNG chi phí.
 #
 # 256.000 là `maxTokens` mặc định của DSH (`DEFAULT_MAX_TOKENS = 256e3` trong
-# `dsh-llm-deepseek`), nguồn: `docs/proposals/dsh-surface-verified-2026-09-18.md`
+# `dsh-llm-deepseek`), nguồn: `docs/proposals/20260918-dsh-surface-verified.md`
 # §6.1–6.2. Đây là `max_tokens` của một request, KHÔNG phải cổng chặn đợt.
 #
 # Chạm mốc này không gây lỗi và không huỷ lượt: adapter ánh xạ `finish_reason`

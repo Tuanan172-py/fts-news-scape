@@ -1,5 +1,7 @@
 # Hướng dẫn Chạy Scripts & Quản lý Môi trường Venv Cục bộ (User Guide)
 
+> Lưu ý 2026-10-06: `verify_gold_quality.py --apply` thuộc lane Gold đã ngừng (ADR-0010). Lệnh đã chạy trên DB vận hành ngày 2026-09-09; không chạy lại. Xem `docs/knowledge/facts/adr-0004-d4-applied-to-operational-db.md`.
+
 > **Dành cho Người dùng & Vận hành viên:** Hướng dẫn các câu lệnh chuẩn để chạy pipeline, kiểm thử và xử lý dữ liệu với môi trường Python cách ly ngoài OneDrive tại `C:\venvs\news-scape`.
 
 ---

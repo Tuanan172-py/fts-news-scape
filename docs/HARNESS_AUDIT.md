@@ -11,7 +11,7 @@ Lệnh `python scripts/harness_cli.py audit` (hoặc mở rộng với `--codeba
 | # | Tiêu chí Kiểm toán | Mô tả & Rủi ro | Điểm phạt (Penalty) |
 |:---|:---|:---|:---:|
 | **1** | **Unproven Implemented Stories** | Story được đánh dấu `implemented` nhưng toàn bộ các cột proof (`unit`, `integ`, `e2e`, `platform`) đều bằng 0. | $-0.20$ / story |
-| **2** | **WIP = 1 Violation** | Có nhiều hơn 1 Story đang ở trạng thái `in_progress` cùng lúc. | $-0.25$ |
+| **2** | **WIP = 1 Violation** | Có nhiều hơn 1 Story `in_progress` khai cùng một `branch` (ADR-0022). | $-0.25$ |
 | **3** | **Missing Traces** | Story đã `implemented` hoặc `blocked` nhưng không có bản ghi trace nào trong bảng `trace`. | $-0.10$ / story |
 | **4** | **Backlog Accumulation** | Có hơn 5 mục ma sát (friction) ở trạng thái `open` chưa được xử lý. | $-0.15$ |
 | **5** | **High-Risk Missing Intake/ADR** | Story thuộc làn `high-risk` nhưng không có bản ghi intake liên kết hoặc thiếu ADR. | $-0.15$ / story |

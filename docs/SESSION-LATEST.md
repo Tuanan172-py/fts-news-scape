@@ -2,6 +2,11 @@
 
 <!-- Step 9 handoff. OVERWRITE this (never append) at the end of every session. Keep to one screen. -->
 
+> **Session US-039 2026-10-06 (high-risk, ADR-0021 accepted by operator Q1-Q4), branch `feature/us039-knowledge-framework`, worktree `C:/src/news-scape-us039`:**
+> - Knowledge contract: `docs/knowledge/{README.md,schema.yaml}`, `scripts/knowledge.py`, `harness_cli.py doc new|lint|index|sync`, lint in pre-commit (installed, guarded) and `audit`. English templates for 8 types.
+> - ADR-0001 to ADR-0019 normalized to English with commit evidence; ADR-0015 recorded as rejected. 20 Claude memories are now `docs/knowledge/facts/FACT-*`. `AGENTS.md` in English; `CLAUDE.md`, `GEMINI.md` redirect.
+> - Next: G4 stories/proposals, G2 rules, G5 plans + per-lane handoff, G6 drift; ADR-0020 after US-038 merges; reduce Claude `MEMORY.md` to a pointer only after this branch merges.
+
 > **Phiên ops 2026-10-06 (tiny/normal, trên `feature/article-lane-remove-gates`, chưa commit):**
 > - Sửa khởi động lại daemon thoát oan (mã 3): `acquire_single_instance` chờ ân hạn `daemon.lock_grace_seconds` 45 s; test `tests/test_ops_restart_lock.py`; kiểm thật bằng `schtasks /End` + `/Run`.
 > - Radar không còn đẩy `recapture` cho dòng `raw_missing` mồ côi (bài không còn trong kho); 1.241 dòng cũ đã được phiên khác xử lý, còn 2 dead-letter thật.
@@ -13,7 +18,7 @@
 > - Sửa lane đọc Silver trước (pack/runner/wp v1.1), `--repair` làm mới, expand dồn hàng cũ, ingest bỏ tệp rỗng. Finish 15:30: L1 100%, nội dung 100%.
 > - ADR 0018 accepted (Human duyệt hướng a). Test 146 passed. 5 test khác rớt do phiên US-036, không thuộc phạm vi này.
 
-> **Phiên ổn định pipeline 2026-10-05 (US-037, một phần):** audit điều phối `docs/proposals/audit-dieu-phoi-agent-2026-10-05.md`, kế hoạch `~/.claude/plans/lovely-herding-moler.md`.
+> **Phiên ổn định pipeline 2026-10-05 (US-037, một phần):** audit điều phối `docs/proposals/20261005-audit-dieu-phoi-agent.md`, kế hoạch `~/.claude/plans/lovely-herding-moler.md`.
 > - Xong (R-01 đến R-05): phản hồi thô của agy lưu khi lô rỗng (`ops_logs/waves/<đợt>/raw/`); `/retry` bị chặn sau 2 lần `max_repair_rounds` vòng vá; mỗi vòng vá tính lần thử cho từng bài; nghỉ 30 phút sau đợt hỏng (`wave.cooldown_minutes`); lệnh dạng đường dẫn Git Bash được khôi phục hoặc bị từ chối; chạy tay có ba chế độ `--mode backlog|bench|adhoc` tự đăng ký `ops_waves`, vết, giữ chỗ, khoá provider, kiểm va chạm (`src/ops/manual.py`); span cho OpenRouter; probe độ phủ thu thập. Daemon đã khởi động lại bằng mã mới.
 > - Đã nhả W10021650, W10051042, W10051050 (`/cancel`). Phân luồng (`src/ops/lanes.py`): auto, backlog, bench; mỗi luồng tối đa một đợt, đợt tay không còn chặn sensor; `/stop` huỷ mọi luồng. Mô tả ở `ops-daemon-reference.md` mục 8.
 > - Chưa làm: R-06, R-07 (cào bù và `raw_html`) vì trùng phạm vi phiên US-036 đang chạy; R-08 phần nhả đợt hỏng.

@@ -508,7 +508,7 @@ Mỗi phase trả đủ **Unit + Integration + Platform**. Phase 00 có bằng c
 | --- | --- |
 | `AGENTS.md` | Thêm §9 "Kinh tế Token & Phân làn công việc" trỏ `docs/TOKEN_ECONOMY.md`; sửa §6A/§6B cho mô hình 1 agent (E11) |
 | `docs/TOKEN_ECONOMY.md` | **MỚI** — §5 của plan này |
-| `docs/proposals/dsh-surface-verified-2026-09-18.md` | **MỚI** — §6 với file:line, để so lại khi nâng cấp DSH |
+| `docs/proposals/20260918-dsh-surface-verified.md` | **MỚI** — §6 với file:line, để so lại khi nâng cấp DSH |
 | `.agents/rules/01` | Cập nhật 2-I/O cho worker 0-tool (E11) |
 | `.agents/rules/05` | §4.4 bỏ `--dangerously-skip-permissions` (C1); §4 bỏ định mức bịa (C2); §2.7 cập nhật schema (E11) |
 | `.agents/rules/08` | Bổ sung "cấm read-back", "cấm đọc nguồn để suy ra hợp đồng", "cấm LLM làm việc script làm được" |

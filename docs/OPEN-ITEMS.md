@@ -67,7 +67,10 @@ Số đo lúc bắt đầu (02/10, so với sitemap): cafef thiếu 64%, tnck 68
 
 Người vận hành làm hoặc quyết định:
 
-1. **Bronze ghi sai gốc: đã gộp, còn chờ khởi động lại morninger (US-035, 2026-10-05).** 2.750 tệp ở `<gốc repo>/data/raw_html` đã chuyển vào `project/data/raw_html`. 1.607 tệp trùng tên khác nội dung nằm ở `C:\data\news-scape\recovered\root_raw_html_conflicts_20261005`. `RawStore` nay neo vào `PROJECT_ROOT`, lần cào lỗi không ghi đè bản tốt, khoá `silver_failures` được chuẩn hoá. **Người vận hành:** khởi động lại `python -m src.morninger` (PID 42208, chạy từ 02/10) để nhận mã mới, rồi kiểm `pipeline_radar.py status`: dòng Bronze kẹt phải về 0. Phần còn lại của `<gốc repo>/data` đã dọn theo phương án E: `silver`, `work_packages`, `agent_tasks`, `agent_outputs*` (259 tệp) sang `C:\data\news-scape\recovered\root_data_20261005`; 4 CSV `exports` chưa có ở project đã gộp vào `project/data/exports`, 1 CSV trùng tên giữ ở `recovered`. Các điểm ghi `exports`, `notifications`, `staging`, `work_packages` đã neo vào `PROJECT_ROOT`. Còn dùng đường dẫn tương đối nhưng thuộc lane L1/Gold đã ngừng: `batch_handoff.py`, `l1_router.py`, `packet.py`, `runner.py`, `l1_runner.py`.
+1. **Bronze ghi sai gốc: đã gộp, còn chờ khởi động lại morninger (US-036, 2026-10-05; mã US-035 cũ đã đổi theo ADR-0021 G4).** 2.750 tệp ở <gốc repo>/data/raw_html đã chuyển vào project/data/raw_html. 1.607 tệp trùng tên khác nội dung nằm ở C:\data\news-scape\recovered\root_raw_html_conflicts_20261005. RawStore nay neo vào PROJECT_ROOT, lần cào lỗi không ghi đè bản tốt, khoá silver_failures được chuẩn hoá. **Người vận hành:** khởi động lại python -m src.morninger (PID 42208, chạy từ 02/10) để nhận mã mới, rồi kiểm pipeline_radar.py status: dòng Bronze kẹt phải về 0. Phần còn lại của <gốc repo>/data đã dọn theo phương án E: silver, work_packages, gent_tasks, gent_outputs* (259 tệp) sang C:\data\news-scape\recovered\root_data_20261005; 4 CSV exports chưa có ở project đã gộp vào project/data/exports, 1 CSV trùng tên giữ ở 
+ecovered. Các điểm ghi exports, 
+otifications, staging, work_packages đã neo vào PROJECT_ROOT. Còn dùng đường dẫn tương đối nhưng thuộc lane L1/Gold đã ngừng: atch_handoff.py, l1_router.py, packet.py, 
+unner.py, l1_runner.py.
 2. **Ba nguồn chưa có kênh đối chiếu độc lập:** vietstock, vietnambiz, thoibaotaichinhvietnam. Sitemap của chúng cũ hoặc không có. Độ phủ của ba nguồn này chưa đo được.
 3. **fireant là API, không cào bù được theo URL.** Bài fireant ở trạng thái `discovered` được lấy lại khi chúng xuất hiện lại trong danh sách API; nếu không, chúng sang `dead_letter` sau 5 lần thử.
 4. **Tải xử lý tăng.** Cào bù thêm vài trăm bài mỗi ngày cho ngày hôm nay và hôm qua. Daemon ở L1 sẽ tự đưa chúng vào đợt, nên token tăng tương ứng. Token là số ghi nhận, không phải cổng (ADR 0010).
@@ -227,10 +230,19 @@ vật chất hoá kết quả tra danh mục tất định (`code_first`) vào `
 toàn bộ 1.274 bản ghi Gold giả lập/template đã được hạ `dod_pass=0` (giữ nguyên `output_json`),
 rút hoàn toàn khỏi deliverable người dùng và quay về hàng đợi Gold. Xem D14.
 
+> **Đối chiếu 2026-10-06 (chỉ đọc):** A2 đúng. `--apply` đã chạy ngày 09/09 trên máy vận hành, sau
+> bản sao lưu `monocle_backup_260909_pre_a2.db`. DB vận hành hiện tại `C:\data\news-scape\monocle.db`
+> còn 1.092/1.274 id gốc, tất cả `dod_pass=0`, `output_json` giữ nguyên; 182 id còn lại bị ghi đè
+> ngày 10/09 bởi lượt chạy lại Gold. Xem `FACT-adr-0004-d4-applied-to-operational-db`.
+
 ### A3. Chưa có gì chạy trên DB vận hành
 
 Toàn bộ số liệu trong tài liệu này đo trên bản sao. Máy vận hành phải `git pull` rồi chạy §B.
 **Bước sao lưu là bắt buộc** — quy trình có `ALTER TABLE l1_outputs ADD COLUMN l1_source`.
+
+> **Đối chiếu 2026-10-06 (chỉ đọc):** A3 đã lỗi thời ngay ở commit 3b6003b. Mục này viết trên máy dev
+> (commit 31d539d) về bản sao. Trên DB vận hành, cả A2 lẫn cột `l1_outputs.l1_source` đều đã có
+> trước 17/09 (đối chiếu `monocle_backup_pre_adr0007_260917.db`).
 
 ---
 

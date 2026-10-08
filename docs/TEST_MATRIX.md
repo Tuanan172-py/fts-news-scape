@@ -14,7 +14,7 @@ Golden rule: **"No proof = not implemented."** A claim without a mechanical resu
 | Status | Meaning |
 |--------|---------|
 | `planned` | Story exists, not started. |
-| `in_progress` | Being worked (WIP=1 — only one at a time). |
+| `in_progress` | Being worked (WIP=1 per worktree, ADR-0022). |
 | `implemented` | Reached ONLY via a real validation command that ran + is recorded. Never hand-flipped. |
 | `changed` | Previously implemented, since modified (needs re-proof). |
 | `retired` | Removed / superseded. |

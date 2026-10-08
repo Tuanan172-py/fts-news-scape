@@ -1,74 +1,123 @@
-# ADR 0014 — Giám sát multi-agent: vết ops_spans, Phòng điều khiển, Telegram giám sát, mandate tự gia hạn
+---
+id: ADR-0014
+type: adr
+title: Multi-agent supervision; ops_spans traces, control room, Telegram oversight, self-renewing mandate
+status: accepted
+lane: high-risk
+created: 2026-10-01
+updated: 2026-10-06
+lang: en
+authors: [An Pham Thanh]
+approvers: [operator 2026-10-01]
+story: [US-031]
+amends: [ADR-0006, ADR-0012]
+related: [ADR-0008, ADR-0010]
+evidence:
+  - commit:579163c
+  - commit:0340f64
+  - path:plans/20261001-1500-supervisor-control-room/plan.md
+  - path:project/src/ops/trace.py
+  - path:project/src/ops/control_room.py
+  - path:project/src/ops/mandate.py
+  - path:project/src/ops/improve.py
+  - path:project/config/ops.yaml
+  - test:project/tests/test_ops_trace.py
+  - test:project/tests/test_ops_supervision.py
+  - metric:agent_metrics table had zero rows before this ADR, 2026-10-01
+  - operator:approved 2026-10-01 ("đồng ý thực thi toàn bộ quy trình, với các mục quyết định cần chốt đồng ý định hướng đề xuất"), decisions D-A to D-E
+original: "commit:579163c"
+reconstructed: 2026-10-06
+summary: Adds runtime span traces in ops.db, a local read-only control room, a Telegram role change from approval to exception reporting, a 30-day conditionally self-renewing mandate replacing the 7-day standing order, and a deterministic improvement inbox.
+summary_vi: Thêm vết ops_spans, Phòng điều khiển cục bộ, Telegram chỉ báo ngoại lệ, mandate 30 ngày tự gia hạn có điều kiện và hộp thư cải tiến tất định.
+---
 
-- **Ngày:** 2026-10-01
-- **Trạng thái:** **accepted**. Người vận hành duyệt ngày 2026-10-01 ("đồng ý thực thi toàn bộ quy trình, với các mục quyết định cần chốt đồng ý định hướng đề xuất"), theo `plans/20261001-1500-supervisor-control-room/plan.md` và các quyết định D-A đến D-E trong đó.
-- **Lane:** high-risk cho phần uỷ quyền (mandate tự gia hạn); normal cho phần quan sát.
-- **Story:** US-031.
-- **Kế thừa và sửa đổi:** ADR 0008 (không dựng lại cổng hỏi người), ADR 0010 (token chỉ ghi nhận), ADR 0012 (ops_daemon). Mục standing order 7 ngày của ADR 0012 được thay bằng mandate ở §2.4.
+# ADR-0014 — Multi-agent supervision; ops_spans traces, control room, Telegram oversight, self-renewing mandate
 
-## 1. Bối cảnh
+## Context
 
-Sau ADR 0012 hệ thống tự chạy trọn một đợt, nhưng người vận hành chưa thấy được các agent tương tác ra sao, mỗi bước chạy script nào, gọi công cụ nào, tốn bao nhiêu, và hỏng ở đâu. Người vận hành quyết định đổi vai: không còn bấm chấp thuận, chỉ giám sát và cải tiến quy trình.
+- After ADR-0012 the system runs a whole wave by itself. The operator still cannot see how agents interact, which script each step runs, which tools it calls, what it costs and where it fails.
+- The operator changed role: no more approving waves, only supervising and improving the process.
+- Measured state on 2026-10-01:
+  - `registry.yaml` already declares each agent's skill, entrypoint, I/O, allowed tools and KPIs. The gap is the runtime record.
+  - Inside `article_run.py` each stage leaves only a log file.
+  - `AgyRunner` reads `tool_invoked` and `denied_actions` but drops them after classifying errors.
+  - The `agent_metrics` table has no rows.
+- The design is `plans/20261001-1500-supervisor-control-room/plan.md`. Observation parts (P0 to P3) are lane normal; the self-renewing delegation (P4) is high-risk and needs this ADR.
 
-Hiện trạng đo được: `registry.yaml` đã khai sẵn skill, entrypoint, I/O, công cụ cho phép và KPI của từng agent. Chỗ trống là bản ghi lúc chạy. Bên trong `article_run.py` mỗi khâu chỉ để lại một tệp log, và `AgyRunner` đọc được `tool_invoked` cùng `denied_actions` nhưng bỏ đi sau khi phân loại lỗi. Bảng `agent_metrics` chưa có dòng nào.
+## Decision
 
-## 2. Quyết định
+- D1. Two data layers.
+  - A static map from `registry.yaml` and `pipeline.yaml`: who exists, class, skill, reads and writes, allowed tools.
+  - Runtime traces in table `ops_spans` of `ops.db`. A wave is a span tree: `workflow` → `step` → `script`, `agent`, `gate`. `trace_id` is the wave code; `actor_id` matches the registry id.
+  - Span attributes include model, tokens, latency, `tool_invoked`, `denied_actions`, `prefix_hash` and attempt count. Fields are OpenTelemetry-compatible, so a later push to Phoenix or Langfuse needs no change to span code (D-C).
+  - Span code (`src/ops/trace.py`) MUST do nothing when `OPS_TRACE_DB`, `OPS_TRACE_WAVE` or `OPS_TRACE_PARENT` is missing. A manual `article_run.py` writes nothing and behaves the same. Every trace-write error is swallowed: a broken trace never breaks a wave.
+  - Span ids are fixed by (wave, attempt, step), so a workflow rerun after a crash overwrites instead of duplicating.
+  - Span points: each step in `wave_flow`; each stage in `article_run.py` (pack, expand, L1 ingest, Gold ingest, post-check, ledger, handoff); each batch in `AgyRunner`. Only `AgyRunner` is instrumented; the OpenRouter runner and the OpenCode adapter are not yet.
+  - Per-agent KPIs are written to `agent_metrics` in `harness.db` when a wave settles, derived from traces. When `resolve_paths` receives an explicit folder (tests), KPIs go there and never touch the real `harness.db`.
+- D2. Control room. An HTTP server inside the daemon (`ThreadingHTTPServer`, no new library), listening only on `127.0.0.1` (D-B: no remote access yet). Five screens: Overview, Waves, Agents, Incidents, Improvements.
+  - It accepts only requests whose `Host` header is a local address (DNS-rebinding defence).
+  - The only write action is deciding an improvement proposal. It needs a pass token generated at each start and embedded by the page.
+  - The server disables `SO_REUSEADDR`, because on Windows it lets two processes bind one port, unlike Linux. If the port is taken, the control room is skipped and the daemon keeps running.
+  - Data is read only from `ops.db`; there is no second source of truth.
+- D3. Telegram changes role.
+  - Per-wave approval buttons end. A normal wave only enters the digest (`alerts.push_wave_info: false`); individual messages are sent only for exceptions.
+  - Digests at 08:00 and 18:00 list each agent (spans, success rate, tokens, latency), anomalies and open proposals. An anomaly deviates more than 2 standard deviations from the last 7 days, with at least 5 waves (D-D).
+  - New commands: `/map`, `/trace`, `/agent`, `/mandate`, `/improve`, `/prop`.
+- D4. Conditionally self-renewing mandate (D-A). The 7-day standing order of ADR-0012 is replaced by a 30-day mandate. With under 7 days left and a healthy system, the daemon extends it by 30 days and records `mandate.renewed`. Health is checked every 10 minutes:
+  1. no red-level event in 24 hours;
+  2. clean-wave streak of at least 5;
+  3. no failed-wave streak;
+  4. no Zero-Tool violation in 7 days.
 
-### 2.1 Hai lớp dữ liệu
+  If the conditions fail, renewal stops, the reason is reported and the mandate runs out to L0. Two things never change. A mandate never granted or already expired MUST NOT be re-granted automatically; that is a human action (`/level L1`). `/stop` always revokes. Privilege-raising commands still need a second confirmation (ADR-0012).
 
-- **Bản đồ tĩnh** từ `registry.yaml` và `pipeline.yaml`: ai tồn tại, class, skill, đọc ghi ở đâu, công cụ được phép.
-- **Vết lúc chạy** trong bảng `ops_spans` của `ops.db`. Một đợt là một cây span: `workflow` → `step` → `script`, `agent`, `gate`. `trace_id` là mã đợt, `actor_id` khớp id trong registry, thuộc tính gồm model, token, độ trễ, `tool_invoked`, `denied_actions`, `prefix_hash`, số lần thử. Trường tương thích OpenTelemetry để đẩy sang Phoenix hay Langfuse sau này mà không đổi mã tạo span (D-C).
-- Mã tạo span (`src/ops/trace.py`) **không làm gì khi thiếu biến môi trường** `OPS_TRACE_DB`, `OPS_TRACE_WAVE`, `OPS_TRACE_PARENT`. Chạy tay `article_run.py` không ghi gì và không đổi hành vi. Mọi lỗi ghi vết bị nuốt: vết hỏng không bao giờ làm hỏng đợt.
-- Span có mã cố định theo (đợt, lần thử, bước), nên workflow chạy lại sau crash ghi đè thay vì nhân bản.
-- Điểm đặt span: từng step trong `wave_flow`; từng khâu trong `article_run.py` (đóng gói, bung, nạp L1, nạp Gold, hậu kiểm, sổ cái, bàn giao); từng lô trong `AgyRunner`. Chỉ `AgyRunner` được đặt span; runner OpenRouter và adapter OpenCode chưa được đo.
-- KPI từng tác nhân ghi vào `agent_metrics` của `harness.db` khi đợt chốt, rút từ vết. Khi `resolve_paths` nhận thư mục chỉ định tường minh (kiểm thử), KPI ghi vào thư mục đó, không đụng `harness.db` thật.
+  This does not rebuild a human approval gate, in line with the ADR-0008 amendment. It replaces a time-based safety latch with a condition-based one, which is why it needs this ADR.
+- D5. Improvement inbox (D-E). A new agent `improvement-proposer` (operator class, 0 tokens) scans traces and KPIs hourly with deterministic detectors.
+  - Detectors: first pass missing articles and tokens spent in repair, prefix cache not reused, Zero-Tool violations, repeated breaker opens, articles out of attempts, rising dead-letter.
+  - At most 5 new proposals per week. A proposal deferred or rejected is not raised again for 30 days. Invariant violations always rank first.
+  - Proposals MUST NOT execute themselves. Only **Open story** calls `harness_cli intake` and `story add` (`US-IMP-nnn`, `planned`). Detectors only measure and produce no semantic content, so they do not emulate an agent.
+- D6. Out of scope at decision time:
+  - `harness-auditor` stays draft. The plan expected it, but it is an LLM agent and rule 07 requires activation evidence that does not exist. The deterministic operator generates proposals instead.
+  - No remote access (D-B). Telegram `/map` and `/trace` cover quick viewing.
+  - No Phoenix or Langfuse yet (D-C); compatibility only.
+  - No mandate granted. The daemon stays at L0 until the operator types `/level L1` and confirms.
+  - P0 acceptance with a real wave through the daemon did not exist at writing time. Traces were tested with fake processes and a fake `AgyRunner`. The first real wave after L1 is the missing evidence.
 
-### 2.2 Phòng điều khiển
+## Alternatives
 
-Một máy chủ HTTP trong daemon, `ThreadingHTTPServer`, không thêm thư viện, chỉ nghe `127.0.0.1` (D-B: chưa truy cập từ xa). Năm màn: Toàn cảnh, Đợt, Tác nhân, Sự cố, Cải tiến.
+| Option | Why rejected |
+|---|---|
+| Keep the 7-day standing order with manual renewal (D-A) | Requires a human click every week while the operator role is now supervision only; the conditional mandate keeps the latch without rebuilding an approval gate (reconstructed from plan §7 D-A). |
+| Arize Phoenix over OpenTelemetry instead of a home-made UI (D-C) | Data already lives in `ops.db`, no new infrastructure is needed, and the trace tree carries project columns (skill, entrypoint, DoD gate). Phoenix stays a later spike (reconstructed from plan §7 D-C). |
+| Remote control room access from phones (D-B) | Needs an authenticated public tunnel under IT policy; a Telegram Mini App also needs a public HTTPS URL. Telegram `/map` and `/trace` suffice (reconstructed from plan §7 D-B). |
+| Activate the LLM `harness-auditor` to write proposals | Rule 07 requires activation evidence that does not exist; a deterministic operator measures without emulating an agent (D6). |
 
-- Chỉ nhận yêu cầu có header `Host` là địa chỉ cục bộ (chống DNS rebinding).
-- Thao tác ghi duy nhất là quyết định đề xuất cải tiến, và cần mã thông hành sinh mới mỗi lần khởi động, do trang tự nhúng.
-- Máy chủ tắt `SO_REUSEADDR`: trên Windows tuỳ chọn này cho phép hai tiến trình bind chung một cổng, khác với Linux. Cổng bị chiếm thì Phòng điều khiển bỏ qua, daemon vẫn chạy.
-- Dữ liệu chỉ đọc từ `ops.db`; không có nguồn sự thật thứ hai.
+## Consequences
 
-### 2.3 Telegram đổi vai
+- Two extra `ops.db` writes per span; writes happen per step and per batch, not per article.
+- The sensor no longer measures during a wave and never reads content columns, so supervision does not compete with the wave.
+- The ingest gate, the token-recorded-only invariant and the "one wave, one program" rule do not change.
+- Known risks from the plan: supervision slowing the system (target wave time increase at most 2%), and a false sense of control where quality is unmeasured; unmeasured metrics MUST show "not measured".
 
-Hết nút chấp thuận từng đợt. Đợt bình thường chỉ vào bản tin tổng hợp (`alerts.push_wave_info: false`); tin riêng chỉ khi ngoại lệ. Bản tin 08:00 và 18:00 liệt kê từng tác nhân (span, tỷ lệ thành công, token, độ trễ), điểm khác thường (lệch quá 2 độ lệch chuẩn so với 7 ngày, tối thiểu 5 đợt, D-D) và số đề xuất đang mở. Lệnh mới: `/map`, `/trace`, `/agent`, `/mandate`, `/improve`, `/prop`.
+### Current status (2026-10-06)
 
-### 2.4 Mandate tự gia hạn có điều kiện (D-A)
+- Correction: the statement that `agent_metrics` had zero rows before 2026-10-01 holds for one `harness.db` copy only. The copy at `C:/src/news-scraper/harness.db` has 9 rows from 2026-09-15 to 2026-09-17 (read-only check, 2026-10-06).
 
-Standing order 7 ngày của ADR 0012 được thay bằng mandate 30 ngày. Khi còn dưới 7 ngày và hệ thống khoẻ, daemon gia hạn thêm 30 ngày và ghi sự kiện `mandate.renewed`. Điều kiện khoẻ, kiểm mỗi 10 phút:
+- Implemented: `ops_spans`, the control room at `http://127.0.0.1:8787`, digests, the new commands, the mandate and the improvement inbox (`docs/OPEN-ITEMS.md` OPS-2).
+- US-037 (session 2026-10-05) added spans for the OpenRouter runner and traced manual waves (`docs/SESSION-LATEST.md`).
+- Still open: `harness-auditor` activation, remote access (D-B), a Phoenix spike (D-C) and a quality golden set.
 
-1. không có sự kiện mức đỏ trong 24 giờ;
-2. chuỗi đợt sạch ≥ 5;
-3. không có chuỗi đợt hỏng;
-4. không có lượt gọi công cụ trái Zero-Tool trong 7 ngày.
+## Rollback
 
-Không đủ điều kiện thì **dừng gia hạn**, báo lý do và để hạn tự cạn về L0. Hai điều không đổi: mandate chưa từng cấp hoặc đã hết hạn **không bao giờ tự cấp lại** (đó là hành động của người, `/level L1`), và `/stop` luôn thu hồi được. Lệnh nâng quyền vẫn cần bấm xác nhận lần hai (ADR 0012).
+- `control_room.enabled: false` in `config/ops.yaml` disables the control room.
+- Removing or not setting the `OPS_TRACE_*` environment variables stops span writes.
+- `alerts.push_wave_info: true` restores individual messages per wave.
+- The mandate returns to a fixed term with `autonomy.renew_when_days_left: -1`.
 
-Điều này không dựng lại cổng hỏi người, đúng tinh thần amendment ADR 0008. Nó thay một chốt an toàn có tính thời gian bằng chốt có tính điều kiện, nên cần ADR này.
+## Follow-up
 
-### 2.5 Hộp thư cải tiến (D-E)
-
-Tác nhân mới `improvement-proposer` (operator, 0 token) quét vết và KPI mỗi giờ bằng các bộ phát hiện tất định: lượt đầu thiếu bài và token ở bước vá, bộ nhớ đệm không được dùng lại, vi phạm Zero-Tool, breaker mở lặp, bài hết lượt thử, dead-letter tăng. Tối đa 5 đề xuất mới mỗi tuần; đề xuất Hoãn hoặc Bác không nêu lại trong 30 ngày; vi phạm bất biến luôn xếp đầu.
-
-Đề xuất **không bao giờ tự thi hành**. Chỉ **Mở story** mới gọi `harness_cli intake` và `story add` (`US-IMP-nnn`, `planned`). Bộ phát hiện chỉ đo, không sinh nội dung ngữ nghĩa, nên không vi phạm quy tắc cấm script giả lập agent.
-
-## 3. Những gì không làm
-
-- **`harness-auditor` chưa lên active.** Plan dự kiến, nhưng đó là agent LLM và rule 07 đòi bằng chứng kích hoạt chưa có. Đề xuất do operator tất định sinh ra thay thế.
-- **Chưa truy cập từ xa** (D-B). Telegram `/map` và `/trace` lo nhu cầu xem nhanh.
-- **Chưa có Phoenix hay Langfuse** (D-C), chỉ giữ sẵn tương thích.
-- **Chưa cấp mandate.** Daemon ở L0 cho tới khi người vận hành gõ `/level L1` và xác nhận.
-- **Nghiệm thu P0 bằng đợt thật qua daemon chưa có** tại thời điểm viết. Vết được kiểm bằng test với tiến trình giả và AgyRunner giả. Đợt thật đầu tiên sau khi bật L1 là bằng chứng còn thiếu.
-
-## 4. Hệ quả
-
-- Tăng hai lần ghi `ops.db` cho mỗi span; ghi theo bước và theo lô, không theo bài.
-- Sensor không còn đo khi đang có đợt, và không đọc cột nội dung, để giám sát không cạnh tranh với đợt.
-- Cổng nạp, bất biến token chỉ ghi nhận và quy tắc "một đợt, một chương trình" không đổi.
-
-## 5. Quay lui
-
-`control_room.enabled: false` trong `config/ops.yaml` tắt Phòng điều khiển. Xoá biến môi trường `OPS_TRACE_*` (hoặc không đặt) thì mã tạo span ngừng ghi. `alerts.push_wave_info: true` trả lại tin riêng cho từng đợt. Mandate quay về hạn cố định bằng cách đặt `autonomy.renew_when_days_left: -1`.
+- [x] P0 to P4 implemented with US-031 (commit 579163c); closure gate and supervision fixes with commit 0340f64.
+- [ ] P0 acceptance with a real wave through the daemon showing a full span tree.
+- [ ] Span for the `opencode_native_run.py` adapter.
+- [ ] `harness-auditor` to active after 10 correct diagnoses (rule 07).
+- [ ] Quality golden set, so the control room can show correctness, not only coverage, latency and tokens.

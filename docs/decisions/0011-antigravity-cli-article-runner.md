@@ -1,62 +1,103 @@
-# ADR 0011 — Tích hợp Antigravity CLI (`agy`) runner và bộ điều phối headless cho Article Lane
-
-- **Ngày:** 2026-09-25
-- **Trạng thái:** **accepted**. Người dùng duyệt ngày 2026-09-25 (triển khai theo kết luận hội đồng thẩm định kiến trúc 2026-09-23 và kế hoạch US-028).
-- **Lane:** **high-risk**, vì chạm automation substrate, bổ sung cognitive runner mới và cơ chế trigger chạy nền.
-- **Story:** US-028 (Runner `agy`, Sandboxed Worker Profile, CLI `--runner agy`, trigger `article_tick.py`)
-- **Kế thừa & Phát triển:** [ADR 0010](0010-ngung-lane-l1-gold-article-lane-duy-nhat.md) (Article Lane duy nhất, token là ghi nhận không phải cổng), kế thừa kết quả thực nghiệm tại [`docs/proposals/agy-automation-council-2026-09-23.md`](../proposals/agy-automation-council-2026-09-23.md).
-
+---
+id: ADR-0011
+type: adr
+title: Antigravity CLI (agy) runner and headless conductor for Article Lane
+status: accepted
+lane: high-risk
+created: 2026-09-25
+updated: 2026-10-06
+lang: en
+authors: [An Pham Thanh]
+approvers: [operator 2026-09-25]
+story: [US-028]
+amends: [ADR-0009]
+related: [ADR-0010]
+evidence:
+  - commit:dd1e709
+  - commit:8ec12f8
+  - path:docs/proposals/20260923-agy-automation-council.md
+  - path:docs/proposals/20260923-agy-automation-council/spike2-RESULTS.md
+  - path:project/src/agent/agy_runner.py
+  - path:project/scripts/article_tick.py
+  - test:project/tests/test_agy_runner.py
+  - test:project/tests/test_article_tick.py
+  - metric:custom agent in worker profile cut input 24.9k to 13.6k tokens per call (-45%), spike 2026-09-23
+  - metric:Windows argv ceiling 32,767 characters, 32,800 fails with WinError 206, council F2
+  - operator:approved 2026-09-25 after the 2026-09-23 architecture council
+original: "commit:dd1e709"
+reconstructed: 2026-10-06
+summary: Adds a headless agy runner beside DSH; Python conducts, agy is a stateless zero-tool single-turn function in an isolated worker profile, fed by stdin stream-json, validated in Python, triggered by article_tick.py, with no token ceiling.
+summary_vi: Thêm runner agy chạy headless song song DSH; Python điều phối, agy là hàm nhận thức một lượt không tool trong hồ sơ cô lập, không trần token.
 ---
 
-## 1. Bối cảnh
+# ADR-0011 — Antigravity CLI (agy) runner and headless conductor for Article Lane
 
-Từ ngày 2026-09-23 (ADR 0010), Article Lane là đường xử lý duy nhất của News-Scape. Quá trình phân tích nhận thức được thực thi bởi agent `article-processor` thông qua giao diện DeepSeek Harness (DSH). Tuy nhiên, môi trường DSH bộc lộ các hạn chế lớn đối với mục tiêu vận hành tự động hoá doanh nghiệp:
+## Context
 
-1. **Thiếu khả năng chạy không giám sát (Headless Incompatibility)**: DSH Conductor chạy trong trình duyệt web, đòi hỏi người vận hành sao chép và dán chương trình TypeScript (`wave_<W>.conductor.ts`) vào môi trường `run_code`. Không thể lập lịch tự động định kỳ vào các khung giờ thị trường (07:30, 12:30, 15:30, 17:30).
-2. **Hạn chế quyền ghi tập tin (Sandbox WritableRoots)**: Sandbox của DSH chỉ cho phép ghi tập tin bên trong thư mục kho mã hoặc thư mục tạm, trong khi cơ sở dữ liệu sản xuất nằm tại `C:\data\news-scape\monocle.db` để tránh xung đột đồng bộ OneDrive.
-3. **Hiện tượng nạp cấu hình lúc mount (Rule 09)**: DSH nạp preset lúc khởi động tiến trình host, nếu có cập nhật cấu hình mà không khởi động lại máy chủ sẽ dẫn đến sai lệch ngầm.
-4. **Đặc thù gói Subscription Antigravity**: Dự án sử dụng tài khoản Antigravity trả phí (pool "Work Done" làm mới mỗi 5 giờ). Tài khoản này không tính phí theo từng token riêng lẻ mà quản trị theo hạn mức phiên, cho phép phân tích trọn vẹn toàn bộ bài báo mà không lo phát sinh chi phí biến đổi vượt tầm kiểm soát.
+- Since ADR-0010 (2026-09-23), Article Lane is the only processing path. `article-processor` ran through the DeepSeek Harness (DSH) web interface.
+- DSH blocked unattended operation in four ways:
+  - Headless incompatibility. The DSH Conductor runs in a browser. The operator had to paste `wave_<W>.conductor.ts` into `run_code`. No schedule at market windows (07:30, 12:30, 15:30, 17:30) was possible.
+  - Sandbox writable roots. DSH writes only inside the repository or a temp folder, while the production DB lives at `C:\data\news-scape\monocle.db`, outside OneDrive sync.
+  - Load at mount (rule 09). DSH loads the preset when the host starts; config edits without a host restart drift silently.
+  - Subscription model. The project uses a paid Antigravity account with a "Work Done" pool refreshed every 5 hours. It is metered by session quota, not per token.
+- A three-position architecture council with two spikes evaluated agy automation on 2026-09-23 (`docs/proposals/20260923-agy-automation-council.md`). It verified that `agy -p` ignores stdin in text mode and that `--json-schema` conflicts with zero tools (council F1, F8).
 
----
+## Decision
 
-## 2. Quyết định
+- D1. Dual-runner Article Lane. Add runner `agy` (model `gemini-3.8-flash-low`) beside the default runner `dsh` (`deepseek-flash`). `dsh` serves supervised interactive sessions; `agy` serves unattended headless waves.
+- D2. Stateless pure cognitive function. Python is the conductor (0 tokens, deterministic). `agy` is a single-turn function, prompt in and JSON out, and MUST NOT be granted any tool (`tools: []`). This removes prompt-injection risk and background-process bugs #1044 and #902.
+- D3. Isolation through a sandboxed worker profile:
+  - Each automated wave creates its own profile at `%LOCALAPPDATA%\news-scape\agy_profiles\<wave>\`.
+  - The profile has an empty `permissions.allow: []` and MUST NOT inherit the main user's shell permissions.
+  - A global custom agent with `excludeDefaultComponents: true` embeds `project/data/prefix/ARTICLE_SYSTEM_CORE.md` verbatim. This cuts fixed token overhead by 45% without trimming article content.
+  - A `PreToolUse` hook denies every unexpected tool call.
+- D4. I/O protocol:
+  - Article data goes through stdin as `stream-json` (one-line NDJSON), bypassing the Windows command-line limit of 32,767 characters.
+  - The `--json-schema` flag MUST NOT be used, because agy implements it with a hidden `finish` tool that conflicts with `tools: []`.
+  - Python extracts results with `salvage_records`, validates JSON Schema and checks the domain: 11 group codes, Vietnamese diacritics, citation index range.
+- D5. No token ceiling:
+  - Every proposal for a daily token ceiling, word ceiling or character limit that trims articles or stops a wave is rejected.
+  - Tokens are only recorded in `token_ledger` and wave metadata for ROI and performance audit.
+  - Batch size for `agy` is fixed at 50 articles per batch, for network stability and response time.
+- D6. Headless conductor with a hybrid trigger:
+  - `scripts/article_tick.py` runs periodically from Windows Task Scheduler.
+  - It opens a wave when at least 50 articles are pending (fast path) or at a market closing window (07:30, 12:30, 15:30, 17:30).
+  - Safety: a single-process lock `.pipeline.lock` and an emergency stop flag `AGY_STOP`, both in `C:\data\news-scape\`.
 
-1. **Dual-Runner Article Lane**:
-   - Bổ sung runner `agy` (sử dụng mô hình `gemini-3.8-flash-low`) hoạt động song song với runner mặc định `dsh` (`deepseek-flash`).
-   - Phân công: `dsh` tiếp tục phục vụ các phiên làm việc tương tác có người giám sát; `agy` đảm nhận các đợt chạy tự động không giám sát (headless automation).
-2. **Nguyên tắc Hàm Nhận thức Thuần (Stateless Pure Cognitive Function)**:
-   - Python giữ vai trò điều phối viên (Conductor, 0 token, tất định).
-   - `agy` chỉ đóng vai trò hàm nhận thức một lượt (Single-turn, prompt-in / JSON-out), **không được cấp bất kỳ công cụ nào** (`tools: []`). Triệt tiêu 100% rủi ro prompt injection và các lỗi tiến trình nền (#1044, #902).
-3. **Cô lập Bằng Sandboxed Worker Profile**:
-   - Mỗi đợt chạy tự động sinh một hồ sơ làm việc độc lập tại `%LOCALAPPDATA%\news-scape\agy_profiles\<wave>\`.
-   - Cấu hình rỗng `permissions.allow: []`, không kế thừa quyền chạy lệnh shell của người dùng chính.
-   - Nạp Custom Agent toàn cục với `excludeDefaultComponents: true`, body nhúng nguyên văn [`project/data/prefix/ARTICLE_SYSTEM_CORE.md`](../../project/data/prefix/ARTICLE_SYSTEM_CORE.md). Giảm 45% token overhead cố định mà không cần cắt bớt nội dung bài báo.
-   - Bổ sung hook `PreToolUse` từ chối mọi yêu cầu gọi tool bất thường.
-4. **Giao thức Nhập/Xuất Dữ liệu**:
-   - Dữ liệu bài viết truyền qua stdin định dạng `stream-json` (NDJSON 1 dòng) để vượt qua giới hạn độ dài dòng lệnh Windows (32.767 ký tự).
-   - **Tuyệt đối không dùng cờ `--json-schema`** (vì agy hiện thực schema bằng tool ẩn `finish`, xung đột với cấu hình `tools: []`). Python đảm nhận bóc tách kết quả bằng `salvage_records`, kiểm định JSON Schema và kiểm tra miền nghiệp vụ (11 mã nhóm, dấu tiếng Việt, dải chỉ số trích dẫn).
-5. **Tuyệt đối Không Sử dụng Trần Token**:
-   - Bác bỏ mọi đề xuất về trần token theo ngày, trần từ hay giới hạn ký tự làm cắt xén bài viết hoặc ngắt đợt xử lý của agent.
-   - Token chỉ ghi nhận vào sổ cái `token_ledger` và tệp metadata để kiểm toán ROI và hiệu năng.
-   - Kích thước lô cố định 50 bài/lô đối với `agy` nhằm tối ưu hóa độ ổn định mạng và thời gian phản hồi.
-6. **Bộ Điều Phối Headless & Cơ Chế Kích Hoạt Kép (Hybrid Trigger)**:
-   - Script điều phối `scripts/article_tick.py` được lập lịch định kỳ qua Windows Task Scheduler.
-   - Điều kiện kích hoạt: Mở đợt khi số bài chờ phân tích $\ge 50$ bài (Fast Path) **hoặc** khi chạm các khung giờ chốt phiên thị trường (07:30, 12:30, 15:30, 17:30).
-   - Quản trị an toàn: Khóa đơn tiến trình `.pipeline.lock` tại `C:\data\news-scape\`, cờ dừng khẩn cấp `AGY_STOP` tại `C:\data\news-scape\`.
+## Alternatives
 
----
+| Option | Why rejected |
+|---|---|
+| Earlier draft: stdin `--input-format text`, `--dangerously-skip-permissions`, array schema with `prefixItems`, batch 25 | Stdin is ignored in text mode (F1); skipping permissions breaks ADR-0008 §2.2; the schema returns HTTP 400 (F8) (reconstructed from the council proposal §4). |
+| Fully autonomous conductor where agy decides which scripts to run | Violates rule 01 §1 and rule 07; bugs #1044, #902, #1077; prompt-injection risk from articles with 57 tools and a `.py` allowlist (reconstructed from the council proposal §4). |
+| MCP pull-worker (claim and submit) | Works without skipping permissions, but took 7 turns and 96.5k tokens for 3 articles, about 2.5 to 30 times one-shot. Its own proponent withdrew it (reconstructed from the council proposal §4). |
+| Long-lived multi-turn `stream-json` worker | Context grows, batches leak into each other, and in-conversation cache does not repay the cost (reconstructed from the council proposal §4). |
+| Sidecar, `agentapi` or remote-control | Requires the Antigravity app running and manual enabling; remote-control is a human UI only (F10) (reconstructed from the council proposal §4). |
+| Daily quota guard of 3M tokens with an absolute ceiling | Proposed by the council (§3.5) but contradicts ADR-0010.D5; rejected in D5 of this ADR. |
+| Prefect or Dagster as scheduler; a hook inside `morninger`; a watchdog on the OneDrive folder | Too heavy for one machine; the `morninger` job swallows exceptions and was about 56% busy; OneDrive events are duplicated and partial (reconstructed from the council proposal §4). |
 
-## 3. Hệ quả
+## Consequences
 
-- `article_run.py` hỗ trợ tham số `--runner {dsh,agy}` và cờ `--analyze` tự động hóa cho `agy`.
-- `article_expand.py` tự động nhận diện provenance từ tệp metadata (`agent_provider="agy"`, `model="gemini-3.8-flash-low"`).
-- Dữ liệu nạp vào cơ sở dữ liệu `monocle.db` tuân thủ 100% Data Contract hiện hành qua hai cổng DoD `l1_ingest` và `agent_ingest`.
-- Quản trị nhịp độ (Pacing): Xử lý tối đa 100 bài (2 lô $\times$ 50 bài) mỗi đợt để không gây nghẽn hạn mức phiên 5 giờ của tài khoản Antigravity.
+- `article_run.py` accepts `--runner {dsh,agy}` and an `--analyze` flag that automates the `agy` run.
+- `article_expand.py` detects provenance from the metadata file (`agent_provider="agy"`, `model="gemini-3.8-flash-low"`).
+- Data written to `monocle.db` follows the current data contract through the two DoD gates `l1_ingest` and `agent_ingest`.
+- Pacing: at most 100 articles per wave (2 batches of 50), to avoid exhausting the 5-hour Antigravity session quota.
 
----
+### Current status (2026-10-06)
 
-## 4. Quay lui
+- The agy runner, worker profile and zero-tool principle remain in force. ADR-0017 makes agy the reference runner for the unified output contract.
+- D6 is amended by ADR-0012: `ops_daemon` replaced the scheduled `article_tick.py`, which still runs by hand and shares `.pipeline.lock`.
+- The dual-runner split of D1 generalized: DSH, agy, opencode and OpenRouter are interchangeable runtime options (FACT-llm-runtimes-are-interchangeable).
 
-Nếu runner `agy` phát sinh lỗi kỹ thuật hoặc tỷ lệ vượt cổng DoD $< 90\%$ trong hai đợt liên tiếp:
-- Người vận hành chỉ cần tạo tệp cờ `C:\data\news-scape\AGY_STOP` để tạm dừng bộ kích hoạt ngầm.
-- Hệ thống tiếp tục vận hành bình thường thông qua runner mặc định `dsh` bằng lệnh `article_run.py --runner dsh`. Toàn bộ dữ liệu Silver và mã nguồn lõi không bị ảnh hưởng.
+## Rollback
+
+- Trigger: the `agy` runner fails technically, or its DoD pass rate falls below 90% in two consecutive waves.
+- The operator creates the flag file `C:\data\news-scape\AGY_STOP` to pause the background trigger.
+- The system continues through the default runner with `article_run.py --runner dsh`. Silver data and core code are not affected.
+
+## Follow-up
+
+- [x] `agy_runner.py`, `--runner agy`, provenance in `article_expand.py`, `token_ledger` source (commit dd1e709).
+- [x] `article_tick.py` with lock and `AGY_STOP` (commit dd1e709).
+- [x] Unattended scheduling moved to `ops_daemon` (ADR-0012).
+- [ ] Confirm agy version pinning and the model assertion against silent model changes (council risks 3 and 10); their status is not recorded in this ADR.

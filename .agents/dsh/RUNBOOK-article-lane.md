@@ -6,7 +6,7 @@
 | Thay thế | Quy trình L1 → Gold hai tầng. Lane cũ ngừng hẳn từ 2026-09-23, xem §5 |
 | Thiết kế | `plans/20260918-1651-article-lane-unified/plan.md` |
 | Lưu đồ vận hành | [`WORKFLOW-article-lane.md`](WORKFLOW-article-lane.md) — sáu lưu đồ: toàn cảnh đợt, trình tự gọi, bên trong chương trình điều phối, vòng đời token, cây quyết định sự cố, ranh giới máy/LLM/người |
-| Bề mặt DSH | `docs/proposals/dsh-surface-verified-2026-09-18.md` |
+| Bề mặt DSH | `docs/proposals/20260918-dsh-surface-verified.md` |
 
 > **Một đợt = một mục tiêu = một phiên.** Xong đợt thì đọc bàn giao và đóng phiên. Mở phiên mới rẻ hơn mang theo ngữ cảnh đã phình, vì bộ nhớ đệm nằm ở phía nhà cung cấp chứ không gắn với phiên.
 

@@ -8,7 +8,7 @@
   - Bảng điều khiển là TUI ANSI không phụ thuộc thư viện ngoài, thay cho Textual.
   - Telegram gọi Bot API trực tiếp qua `requests`.
 - **Lane của tài liệu:** normal (nghiên cứu, thiết kế). **Lane của phần triển khai:** high-risk (automation substrate, DB vận hành mới, kênh điều khiển từ xa), cần ADR 0012 và duyệt trước khi code.
-- **Kế thừa:** ADR 0010 (Article Lane duy nhất, token là số ghi nhận), ADR 0011 (runner `agy`, `article_tick.py`, `AGY_STOP`, `.pipeline.lock`), `docs/proposals/agy-automation-council-2026-09-23.md` (thang L0→L2, standing order).
+- **Kế thừa:** ADR 0010 (Article Lane duy nhất, token là số ghi nhận), ADR 0011 (runner `agy`, `article_tick.py`, `AGY_STOP`, `.pipeline.lock`), `docs/proposals/20260923-agy-automation-council.md` (thang L0→L2, standing order).
 
 ---
 

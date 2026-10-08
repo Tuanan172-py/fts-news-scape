@@ -1,0 +1,40 @@
+# Files created before ADR-0021. Governed paths listed here pass K00 until migrated.
+# Migrating a file removes its line. This list MUST only shrink.
+.agents/rules/01-subagent-guardrails.md
+.agents/rules/02-financial-domain-rules.md
+.agents/rules/03-io-concurrency-guardrails.md
+.agents/rules/04-harness-durable-invariants.md
+.agents/rules/05-gold-agent-and-payload-invariants.md
+.agents/rules/06-code-and-docstring-standards.md
+.agents/rules/07-agent-registry-governance.md
+.agents/rules/08-context-and-zero-probe-guardrails.md
+.agents/rules/09-dsh-preflight-gate.md
+.agents/rules/10-thu-thap-tron-ven.md
+.agents/rules/11-hop-dong-dau-ra-thong-nhat.md
+.agents/rules/entity-system-invariants.md
+docs/decisions/0020-data-plane-sharepoint-co-che-xuat-ban.md
+plans/20260724-0859-scraping-expansion-phase1/plan.md
+plans/20260725-1339-source-expansion-phase2/plan.md
+plans/20260813-0736-raw-html-capture-vietstock-cafef/plan.md
+plans/20260814-0301-raw-to-agent-standardization-framework/plan.md
+plans/20260817-1040-vneconomy-source-research/plan.md
+plans/20260817-1536-harness-h1-newsscape/plan.md
+plans/20260817-1553-okf-deep-integration/plan.md
+plans/20260818-0645-per-user-output-workflow/plan.md
+plans/20260907-0834-market-sources-expansion/plan.md
+plans/20260917-1420-pipeline-integrity-remediation/plan.md
+plans/20260917-1538-dsh-harness-integration/plan.md
+plans/20260918-1133-l1-llm-lean-token/plan.md
+plans/20260918-1445-article-lane-scale-token/plan.md
+plans/20260918-1624-dsh-token-economy-workmethod/plan.md
+plans/20260918-1651-article-lane-unified/plan.md
+plans/20260924-1627-codebase-audit-cleanup-modularization/plan.md
+plans/20260924-research-council-execution/plan.md
+plans/20261001-1100-autonomous-ops-24x7/plan.md
+plans/20261001-1500-supervisor-control-room/plan.md
+plans/20261001-1630-fpa-toolkit-integration-strategy/plan.md
+plans/20261002-1500-sharepoint-data-plane-and-org-pr/plan.md
+plans/20261005-1800-us038-repo-to-chuc-va-data-plane/plan.md
+# Ids registered in harness.db that have no file yet (G4 writes them).
+id:US-038
+id:US-040
