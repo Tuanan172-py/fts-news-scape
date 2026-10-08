@@ -25,6 +25,8 @@
 
 ## Next Steps
 
+> **US-038 bàn giao 2026-10-08:** đọc trước [`plans/20261005-1800-us038-repo-to-chuc-va-data-plane/HANDOFF-20261008.md`](../plans/20261005-1800-us038-repo-to-chuc-va-data-plane/HANDOFF-20261008.md) (bản đồ vị trí, ràng buộc, việc T0/P0/P1). Vận hành đang dừng khẩn từ 06/10, cào tin ngừng; `OneDrive.exe` tắt nên SharePoint chưa nhận dữ liệu; kho `fpa` còn rỗng.
+>
 > **Phiên US-038 2026-10-06 (high-risk, in_progress, chờ N1):** mã lên `Research-FPA/news-scraper`, data plane SharePoint (ADR 0020 accepted).
 > - Phát triển ở worktree `C:\src\news-scraper-dev`, nhánh `dev/us038` (tách từ snapshot df021e6). Thư mục OneDrive vẫn chạy mã cũ cho daemon tới khung N4.
 > - Xong A2 (cách ly test), A3 (`core/paths.py`, gốc dữ liệu duy nhất `MONOCLE_DATA_DIR`), A4 (publisher một chiều, mặc định tắt). Test: 888 passed, 1 fail có từ trước `test_inherit` (phụ thuộc ngày).
