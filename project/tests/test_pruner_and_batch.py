@@ -329,8 +329,8 @@ def test_export_tasks_user_and_date_filters(tmp_path):
     conn.execute("""
         INSERT INTO l1_outputs (article_id, output_json, dod_pass, l1_source)
         VALUES 
-            ('h1', '{"entities":[{"entity_id":"TICKER:HPG"}]}', 1, 'code_first'),
-            ('h2', '{"entities":[{"entity_id":"TICKER:VHM"}]}', 1, 'code_first')
+            ('h1', '{"entities":[{"entity_id":"TICKER:HPG"}]}', 1, 'agent'),
+            ('h2', '{"entities":[{"entity_id":"TICKER:VHM"}]}', 1, 'agent')
     """)
     conn.commit()
     conn.close()
