@@ -152,7 +152,7 @@ def test_refresh_end_to_end_clusters_then_inherits(tmp_path):
     st.insert_batch([first, second])
     _analyse_source(st, first)
     conn = st._connect()
-    stats = refresh(conn, days=3)
+    stats = refresh(conn, days=3, today=NOW)
     assert stats["copy"] == 1 and stats["inherit_inherited"] == 1
     assert conn.execute("SELECT COUNT(*) FROM l1_outputs WHERE l1_source='inherited'").fetchone()[0] == 1
     conn.close()
