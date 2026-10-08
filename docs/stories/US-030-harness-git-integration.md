@@ -1,38 +1,68 @@
-# US-030 — Tích hợp quy trình Git toàn diện vào khung quản trị Harness
-
-**Trạng thái:** `in_progress`  
-**Cấp độ rủi ro (Lane):** `normal`  
-**Parent Epic:** `Harness Core Governance`  
-**Intake ID:** 28  
-
+---
+id: US-030
+type: story
+title: Harness git governance and session closure gate
+status: implemented
+lane: normal
+created: 2026-10-01
+updated: 2026-10-06
+lang: en
+authors: [An Pham Thanh, claude-opus-5-5]
+adr: []
+plan: []
+evidence:
+  - commit:1561636
+  - commit:de34143
+  - commit:0340f64
+  - path:scripts/harness_cli.py
+  - path:scripts/schema/004-git-tracking.sql
+  - path:scripts/git_hooks/pre-commit
+  - path:docs/GIT_COMMIT_STANDARD.md
+  - path:.agents/skills/git-codebase-governance/SKILL.md
+  - path:.agents/rules/04-harness-durable-invariants.md
+  - test:tests/test_harness_cli.py
+  - metric:pytest tests/test_harness_cli.py -k git, 2 passed, 7 deselected, 2026-10-01
+verify: "python -m pytest tests/test_harness_cli.py -k git -q"
+original: "commit:1561636"
+reconstructed: 2026-10-06
+summary: The harness records branch and commit on stories and traces, offers git checkpoint, verify, status and template commands, and blocks session closure and commits while the tree is dirty or invalid.
 ---
 
-## 1. Bối cảnh & Vấn đề
+# US-030 — Harness git governance and session closure gate
 
-- **Vết đứt gãy giữa Git và Harness**: Trước US-030, `harness_cli.py` quản lý `intake`, `story`, `decision`, `trace` trong SQLite `harness.db`, nhưng hoàn toàn không có tương tác cơ học với Git.
-- **Hệ quả tiêu cực**:
-  - Nhiều story đạt trạng thái `implemented` nhưng không có commit tương ứng trên Git (ví dụ US-028).
-  - Tệp rác và tệp thử nghiệm nhanh (`test1.py`, `check_key.py`, worktree rác `.kilo`) nằm tự do ở trạng thái untracked, dễ bị stage nhầm.
-  - Bảng `Harness Closure Protocol` thiếu dòng báo cáo bắt buộc về trạng thái Git.
+## Contract
 
----
+After this story, the harness knows which git branch and commit each story and trace belongs to. Agents commit through a mechanical Conventional Commits template, and a session cannot be called closed while the working tree is dirty.
 
-## 2. Tiêu chí Chấp thuận (Acceptance Criteria)
+## Acceptance Criteria
 
-1. **Hygiene & Dọn dẹp**:
-   - Gỡ bỏ và dọn dẹp worktree rác `.kilo/worktrees/pushy-cheddar`.
-   - Cập nhật `.gitignore` để tự động loại trừ `scratch/`, `openrouter/*_key.py`, `**/test_scratch*.py`.
-2. **Schema Migration (004-git-tracking.sql)**:
-   - Bổ sung cột `git_commit TEXT` và `git_branch TEXT` vào bảng `story`.
-   - Bổ sung cột `git_commit TEXT` và `git_branch TEXT` vào bảng `trace`.
-3. **Harness CLI Mechanical Git Integration**:
-   - `harness_cli.py` tự động phát hiện nhánh hiện tại và commit hash mới nhất.
-   - Khi ghi nhận trace (`cmd_trace`), tự động lưu `git_commit` và `git_branch`.
-   - Lệnh `story complete`: Hỗ trợ cờ `--commit` để tự động tạo commit chuẩn `type(scope): title (US-XXX)` khi vượt qua verification gate, đồng thời lưu hash vào story.
-   - Thêm nhóm lệnh `harness_cli.py git` (`checkpoint`, `verify`, `status`).
-4. **Cập nhật Bất biến Quản trị (Rules & Skills)**:
-   - Cập nhật `.agents/rules/04-harness-durable-invariants.md`: Thêm ràng buộc Git vào bảng Harness Closure Protocol (dòng thứ 7).
-   - Cập nhật `.agents/skills/git-codebase-governance/SKILL.md`: Chuẩn hóa quy trình Commit / Push / PR gắn liền với Harness Story.
-5. **Kiểm thử (Proof)**:
-   - Thêm unit test kiểm tra chức năng Git trong `tests/test_harness_cli.py`.
-   - Toàn bộ test suite pass 100%.
+- [x] Schema migration `004-git-tracking.sql` adds `git_commit` and `git_branch` to the `story` and `trace` tables.
+- [x] `harness_cli.py` detects the current branch and latest commit and stores them on every trace.
+- [x] `story complete --commit` creates a `type(scope): title (US-XXX)` commit after the verification gate and stores its hash.
+- [x] `harness_cli.py git checkpoint|verify|status` exist; `git template` prints a commit message of at most 72 characters.
+- [x] `.gitignore` excludes `scratch/`, `openrouter/*_key.py` and `**/test_scratch*.py`; the stray `.kilo/worktrees/pushy-cheddar` worktree is removed.
+- [x] Rule 04 adds git to the Harness Closure table; the `git-codebase-governance` skill ties commit, push and PR to a story.
+- [x] A pre-commit hook runs `harness_cli.py git verify` and rejects the commit on failure (commit labelled US-036, see Evidence).
+- [x] `AGENTS.md` section 11 and rule 01 section 7 forbid closing a session while `clean_for_closure` is false.
+
+## Design Notes
+
+- Problem before this story (reconstructed from the original Vietnamese file): stories reached `implemented` without a matching commit, with US-028 as the cited case.
+- Scratch files such as `test1.py` and `check_key.py` sat untracked and risked being staged by mistake.
+- Parent epic in `harness.db`: "Harness Core Governance". Intake id 28.
+- The closure gate of commit 0340f64 is harness governance by content, so it belongs here even though its subject carries US-036.
+
+## Verification
+
+| Tier | Command or check | Result |
+|---|---|---|
+| Unit | `python -m pytest tests/test_harness_cli.py -k git -q` | 2 passed, 7 deselected (harness.db evidence, 2026-10-01) |
+| Integration | `harness_cli.py git status` reports `clean_for_closure` | used as the closure gate in later sessions |
+| Platform | pre-commit hook runs `git verify` on every commit | installed in commit 0340f64 |
+
+## Evidence
+
+- Commit 1561636: git lifecycle in `harness_cli.py`, schema 004, rule 04, governance skill and tests. `harness.db` stores it as the story commit.
+- Commit de34143: `docs/GIT_COMMIT_STANDARD.md` and the `git template` command with tests.
+- Commit 0340f64 (commit labelled US-036): session closure gate in rule 01 section 7, `AGENTS.md` section 11 and `scripts/git_hooks/pre-commit`.
+- ADR-0002 Context cites migration 004 and commit 1561636 for this story.

@@ -9,7 +9,7 @@ updated: 2026-10-06
 lang: en
 authors: [An Pham Thanh]
 approvers: [operator 2026-10-02]
-story: [US-033, US-035]
+story: [US-035]
 amends: [ADR-0010]
 related: [ADR-0012, ADR-0013]
 evidence:

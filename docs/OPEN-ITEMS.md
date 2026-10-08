@@ -53,7 +53,7 @@ Số đo lúc bắt đầu (02/10, so với sitemap): cafef thiếu 64%, tnck 68
 
 Người vận hành làm hoặc quyết định:
 
-1. **Bronze ghi sai gốc: đã gộp, còn chờ khởi động lại morninger (US-035, 2026-10-05).** 2.750 tệp ở `<gốc repo>/data/raw_html` đã chuyển vào `project/data/raw_html`. 1.607 tệp trùng tên khác nội dung nằm ở `C:\data
+1. **Bronze ghi sai gốc: đã gộp, còn chờ khởi động lại morninger (US-036, 2026-10-05; mã US-035 cũ đã đổi theo ADR-0021 G4).** 2.750 tệp ở `<gốc repo>/data/raw_html` đã chuyển vào `project/data/raw_html`. 1.607 tệp trùng tên khác nội dung nằm ở `C:\data
 ews-scape
 ecovered
 oot_raw_html_conflicts_20261005`. `RawStore` nay neo vào `PROJECT_ROOT`, lần cào lỗi không ghi đè bản tốt, khoá `silver_failures` được chuẩn hoá. **Người vận hành:** khởi động lại `python -m src.morninger` (PID 42208, chạy từ 02/10) để nhận mã mới, rồi kiểm `pipeline_radar.py status`: dòng Bronze kẹt phải về 0. Phần còn lại của `<gốc repo>/data` đã dọn theo phương án E: `silver`, `work_packages`, `agent_tasks`, `agent_outputs*` (259 tệp) sang `C:\data\news-scape\recovered\root_data_20261005`; 4 CSV `exports` chưa có ở project đã gộp vào `project/data/exports`, 1 CSV trùng tên giữ ở `recovered`. Các điểm ghi `exports`, `notifications`, `staging`, `work_packages` đã neo vào `PROJECT_ROOT`. Còn dùng đường dẫn tương đối nhưng thuộc lane L1/Gold đã ngừng: `batch_handoff.py`, `l1_router.py`, `packet.py`, `runner.py`, `l1_runner.py`.

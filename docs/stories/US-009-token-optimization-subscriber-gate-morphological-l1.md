@@ -1,46 +1,64 @@
-# Story US-009: Tối Ưu Hóa Token Burn Toàn Hệ Thống & Triệt Tiêu Sai Lệch Thực Thể L1
-
-- **ID**: US-009
-- **Phân loại rủi ro**: Cấp 2 (NORMAL)
-- **Trạng thái**: `implemented`
-- **Chủ đề**: Subscriber-Gated Gold Export, Morphological Capitalized Suffix Guard, 3-Pass Semantic Pruner, L1 Missed-Only Routing
-- **Liên kết**: [ADR 0005](../decisions/0005-subscriber-gated-gold-va-morphological-l1-guard.md), US-007, US-008
-
+---
+id: US-009
+type: story
+title: System-wide token burn optimization and L1 entity false-positive removal
+status: retired
+lane: normal
+created: 2026-09-11
+updated: 2026-10-06
+lang: en
+authors: [An Pham Thanh]
+adr: [ADR-0005, ADR-0010]
+related: [US-007, US-008]
+evidence: ["commit:d119a8f", "path:project/src/agent/entities.py", "path:project/src/handoff/catalog.py", "test:project/tests/test_entities.py", "metric:37/37 targeted tests passed", "metric:947 of 1505 L1 articles selected, 37.1 percent Gold tokens saved"]
+verify: "pytest tests/test_entities.py tests/test_pruner_and_batch.py tests/test_l1_router.py tests/test_user_output.py -v"
+original: "commit:d119a8f"
+reconstructed: 2026-10-06
+summary: Subscriber-gated Gold export, a morphological guard for Vietnamese compound names, a 3-pass pruner and missed-only L1 routing cut token waste; the gate and lane were retired by ADR-0010.
 ---
 
-## 1. Bối cảnh & Vấn đề
+# US-009 — System-wide token burn optimization and L1 entity false-positive removal
 
-- **Rò rỉ token tầng Gold**: `agent_export.py` bốc mọi bài có L1 mà không quan tâm bài viết có người dùng active nào đăng ký hay không. Trên thực tế đo được 483/1.274 bài (~38%) chạy Gold lãng phí token vì không ai nhận.
-- **Bẫy danh từ riêng ghép tiếng Việt ở L1**: Từ đơn có dấu như `"Mỹ"` bị regex `\bMỹ\b` bắt trúng các địa danh ghép (*"Mỹ Thuận"*, *"Mỹ Tho"*, *"Mỹ Thủy"*), tên người (*"Phạm Thị Mỹ Diệu"*), thương hiệu (*"Á Mỹ Grupo"*), gán nhầm sang `MACRO_GEO:MY`.
-- **Trần ký tự pruner cũ**: 4.000 ký tự gây phình input token không cần thiết; duyệt tuần tự break sớm có thể bỏ sót đoạn văn chứa mã CP ở cuối bài.
-- **Định tuyến L1 cũ**: Mặc định `--review all` khiến LLM phải duyệt lại 62% bài đã được code-first giải quyết xong.
+## Contract
 
----
+- Gold export MUST pick only articles whose L1 entities sit in an active user's watchlist, so no Gold tokens go to articles nobody receives.
+- L1 matching MUST NOT map Vietnamese compound place names, personal names or brands to `MACRO_GEO:MY`.
+- The pruner MUST keep paragraphs with stock codes at the end of an article under a lower character ceiling.
+- L1 routing MUST stop asking the model to re-review articles that code-first already resolved.
 
-## 2. Giải pháp Đã Triển Khai
+## Acceptance Criteria
 
-1. **Morphological & Prefix Guard (`src/agent/entities.py`)**:
-   - `Capitalized Suffix Guard`: Chặn alias *"Mỹ"* nếu từ liền sau viết hoa mà không nằm trong `_INTL_AFTER_MY` (`Trump`, `Biden`, `Fed`, `Wall Street`...).
-   - `Prefix Guard`: Chặn nếu từ liền trước là tiền tố thương hiệu (`Á`, `Phú`, `Phù`) hoặc danh xưng (`Bà`, `Ông`, `Thị`).
-   - Tinh chỉnh `_context_guards.yaml` loại bỏ các từ ghép dễ đè từ thường khi fold (`my lam` đè `Mỹ làm`).
-2. **Cổng Chặn Subscriber-Gated Export (`src/handoff/catalog.py`, `src/agent/runner.py`, `scripts/agent_export.py`)**:
-   - Thêm `allowed_article_ids` vào `Catalog.claim` sử dụng SQLite temp table `_allowed_aids`.
-   - `AgentRunner.export_tasks` thêm cờ `subscriber_only=True` (mặc định BẬT), chỉ bốc các bài viết có `l1_entities` nằm trong Watchlist của người dùng đang active (`manifest.yaml`).
-   - `agent_export.py` bổ sung cờ `--subscriber-only` / `--no-subscriber-only`.
-3. **Semantic Pruner 3-Pass (`src/agent/pruner.py`, `src/agent/packet.py`)**:
-   - Hạ trần mặc định từ `4.000` xuống `2.200` ký tự.
-   - Thuật toán 3-pass: Giữ tối đa 2 đoạn đầu (Sapo) $\rightarrow$ Ưu tiên quét đoạn chứa mã CP từ `l1_entities` / từ khóa tài chính $\rightarrow$ Điền đầy theo thứ tự gốc.
-   - `build_gold_input` trong `packet.py` truyền `l1_entities` vào pruner.
-4. **Tối ưu Định tuyến L1 (`scripts/l1_route.py`, `scripts/run_agent_hierarchy.py`)**:
-   - Đổi mặc định `--review` thành `missed`.
-   - `run_agent_hierarchy.py` gọi `l1_route.py --review missed` và `agent_export.py --subscriber-only`.
+- [x] `Capitalized Suffix Guard` and `Prefix Guard` in `src/agent/entities.py` drop every false positive of `MACRO_GEO:MY` on the 7,656-article DB while keeping all 300 real US macro articles.
+- [x] `Catalog.claim` accepts `allowed_article_ids`; `AgentRunner.export_tasks` has `subscriber_only=True` by default; `agent_export.py` has `--subscriber-only` and `--no-subscriber-only`.
+- [x] The pruner ceiling falls from 4,000 to 2,200 characters with a 3-pass algorithm, and `build_gold_input` passes `l1_entities` to it.
+- [x] `l1_route.py --review` defaults to `missed`, and `run_agent_hierarchy.py` calls `l1_route.py --review missed` and `agent_export.py --subscriber-only`.
+- [x] Targeted tests pass: 37/37.
 
----
+## Design Notes
 
-## 3. Bằng Chứng Kiểm Thử (Verification Proof)
+- Gold token leak: `agent_export.py` took every article with L1 regardless of subscribers. Measured: 483 of 1,274 articles (about 38%) ran Gold for nobody.
+- Compound proper-noun trap: the alias "Mỹ" matched by regex `\bMỹ\b` hit compound place names ("Mỹ Thuận", "Mỹ Tho", "Mỹ Thủy").
+- It also hit personal names ("Phạm Thị Mỹ Diệu") and brands ("Á Mỹ Grupo"), all mapped to `MACRO_GEO:MY`.
+- Old pruner: the 4,000-character ceiling inflated input tokens, and the sequential early-break scan could miss stock-code paragraphs at the end.
+- Old L1 routing: the default `--review all` made the model re-review 62% of articles already resolved by code-first.
+- `Capitalized Suffix Guard` blocks the alias "Mỹ" when the next word is capitalized and absent from `_INTL_AFTER_MY` (`Trump`, `Biden`, `Fed`, `Wall Street`).
+- `Prefix Guard` blocks the match when the previous word is a brand prefix ("Á", "Phú", "Phù") or a title ("Bà", "Ông", "Thị").
+- `_context_guards.yaml` dropped compounds that collide with common words after folding (`my lam` collided with "Mỹ làm").
+- The subscriber gate uses a SQLite temp table `_allowed_aids` and reads active users from `manifest.yaml`.
+- The 3-pass pruner keeps up to the first 2 paragraphs (lead), then paragraphs with `l1_entities` codes or financial keywords, then fills in original order.
+- Retired: ADR-0010 ended the two-tier L1/Gold lane, the subscriber gate, `l1_route.py` and `run_agent_hierarchy.py`. Every article is now fully processed.
+- The morphological guard survives in the deterministic catalog matcher, used only to cross-check model results under ADR-0010.D4.
+- Reconstructed: the `harness.db` row US-009 describes a different story ("Zero-Probe context and continuous learning protocol", 2026-09-15). The id was reused; this file is the 2026-09-11 story from commit d119a8f.
 
-- Unit test toàn bộ các module liên quan: `pytest tests/test_entities.py tests/test_pruner_and_batch.py tests/test_l1_router.py tests/test_user_output.py -v` $\rightarrow$ **37/37 passed (100% green)**.
-- Kiểm thử thực tế trên 7.656 bài trong `monocle.db`:
-  - 100% false positive `MACRO_GEO:MY` (Mỹ Thuận, Á Mỹ, Mỹ Diệu, Mỹ Thủy, Mỹ Lâm...) giảm về 0.
-  - 300 bài viết vĩ mô Mỹ thực sự được bảo toàn 100%.
-- Kiểm thử phễu subscriber: 947 / 1505 bài L1 được chọn, loại bỏ 558 bài không ai xem (tiết kiệm 37.1% token Gold).
+## Verification
+
+| Tier | Command or check | Result |
+|---|---|---|
+| Unit | `pytest tests/test_entities.py tests/test_pruner_and_batch.py tests/test_l1_router.py tests/test_user_output.py -v` | passed, 37/37 |
+| Integration | entity matcher run over 7,656 articles in `monocle.db` | `MACRO_GEO:MY` false positives down to 0; 300 real US macro articles kept |
+| Platform | subscriber funnel on live data | 947 of 1,505 L1 articles selected; 558 dropped; 37.1% Gold tokens saved |
+
+## Evidence
+
+- Commit d119a8f (2026-09-11): "feat: token optimization, L1 precision & recall v2, and customizable gold export (ADR 0005, US-009/010/011)".
+- Decision record: ADR-0005.

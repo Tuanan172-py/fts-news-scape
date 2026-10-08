@@ -1,37 +1,59 @@
-# Story US-007: Tối ưu hóa Context & Handoff Subagents Gold (Payload Pruning, L1 Enrichment & Batch Handoff)
+---
+id: US-007
+type: story
+title: Gold task payload optimization, verbatim paragraph pruning and consolidated mini-batch handoff
+status: retired
+lane: normal
+created: 2026-09-07
+updated: 2026-10-06
+lang: en
+authors: [An Pham Thanh]
+adr: [ADR-0010]
+evidence: ["commit:193bfaf", "path:project/src/agent/pruner.py", "path:project/src/agent/batch_handoff.py", "test:project/tests/test_pruner_and_batch.py", "metric:6/6 tests passed, 263 suite passed", "metric:task packet size 182 KB to 6-8 KB"]
+verify: "cd project; python -m pytest tests/test_pruner_and_batch.py"
+original: "commit:193bfaf"
+summary: Gold task packets shrank by 96 percent through link and image removal and verbatim paragraph pruning, and mini-batches cut subagent tool calls by 90 percent; retired by ADR-0010.
+---
 
-- **ID**: US-007
-- **Phân loại rủi ro**: Cấp 2 (NORMAL)
-- **Trạng thái**: `implemented`
-- **Chủ đề**: Task Packet Payload Compression, Verbatim Paragraph Pruning, L1-Assisted Triage & Consolidated Batch Handoff
+# US-007 — Gold task payload optimization, verbatim paragraph pruning and consolidated mini-batch handoff
 
-## 1. Bối cảnh & Vấn đề
+## Contract
 
-- Nút thắt cổ chai ở tầng Gold (Agents Realm): Task packet đơn lẻ `04019f860...task.json` nặng tới 182 KB (chứa hàng ngàn menu links và image URLs từ DOM), khiến LLM bị ngốn cạn token input, chậm I/O và dễ suy giảm khả năng chú ý (attention degradation).
-- Lô 50 bài cần 100 tool calls tuần tự, gây lãng phí lớn.
-- Khâu bóc tách `cleaned_text` đôi khi còn sót lại boilerplate chân trang tòa soạn, thông tin hotline, teaser bài liên quan.
-- Kết quả L1 chưa được tận dụng để tiếp sức cho Gold.
+- Gold task packets MUST carry only the fields the analyst needs, so one packet no longer burns input tokens on DOM menus and image URLs.
+- Pruned paragraphs MUST stay 100% verbatim so `citations` match `cleaned_text` character for character.
+- Subagents MUST receive several articles per batch packet instead of one tool call pair per article.
+- Gold tasks MUST carry the stock codes already found by L1.
 
-## 2. Giải pháp Triển khai
+## Acceptance Criteria
 
-1. **Paragraph Pruner (`src/agent/pruner.py`)**:
-   - Loại bỏ triệt để các đoạn văn rác (teaser "Bài liên quan", thông tin tòa soạn, hotline, email, copyright, nguồn vặt).
-   - Áp dụng nguyên lý Inverted Pyramid với trần ký tự (4.000 chars), bảo toàn 100% nguyên văn các đoạn văn để đảm bảo trích dẫn `citations` khớp chính xác từng ký tự trong `cleaned_text`.
-2. **Zero-Waste Task Packet (`src/agent/packet.py`)**:
-   - `build_gold_input()`: Loại bỏ 100% `structure.links` và `images`, chỉ giữ các trường cốt lõi. Giảm dung lượng file task từ 182 KB xuống 6–8 KB (giảm 96%).
-3. **Consolidated Mini-Batch Handoff (`src/agent/batch_handoff.py`)**:
-   - Gom 5–10 bài vào 1 batch packet `batch_XX.task.json`.
-   - `unpack_batch_output()` giải nén linh hoạt các định dạng batch output để nạp database.
-   - Giảm 90% số lượng tool calls cho Subagents (từ 20 calls/10 bài xuống còn 2 calls).
-4. **L1 Metadata Enrichment (`src/agent/runner.py`)**:
-   - Tự động nạp mã CP từ `l1_outputs` vào trường `input.l1_entities` của Gold task.
-5. **Cập nhật Scripts & Subagent Skill**:
-   - Bổ sung `--mini-batch` vào `agent_export.py` và `run_agent_hierarchy.py`.
-   - Cập nhật `.agents/skills/gold-financial-analyst/SKILL.md` hướng dẫn chế độ Batch Mode.
-   - Sửa lỗi phụ trợ `_is_owner_alive()` trong `src/db/store.py` cho opaque identifiers.
+- [x] `src/agent/pruner.py` removes junk paragraphs and keeps verbatim paragraphs under a 4,000 character ceiling.
+- [x] `build_gold_input()` in `src/agent/packet.py` drops `structure.links` and `images`; packet size falls from 182 KB to 6 to 8 KB.
+- [x] `src/agent/batch_handoff.py` groups 5 to 10 articles into `batch_XX.task.json`, and `unpack_batch_output()` unpacks batch outputs for ingest.
+- [x] `src/agent/runner.py` fills `input.l1_entities` from `l1_outputs`.
+- [x] `--mini-batch` exists in `agent_export.py` and `run_agent_hierarchy.py`.
+- [x] `tests/test_pruner_and_batch.py` passes (6 tests).
 
-## 3. Bằng chứng Kiểm thử (Verification Proof)
+## Design Notes
 
-- Unit test: `tests/test_pruner_and_batch.py` (6 tests passed).
-- Test suite toàn dự án: 263 passed, 0 failed.
-- Benchmark thực tế: Kích thước task packet giảm 96%, batch packet 5 bài chỉ ~25 KB.
+- Problem: one task packet `04019f860...task.json` weighed 182 KB with thousands of menu links and image URLs. This drained input tokens, slowed I/O and degraded model attention.
+- Problem: a batch of 50 articles needed 100 sequential tool calls.
+- Problem: `cleaned_text` sometimes kept newsroom footer boilerplate, hotline details and related-article teasers. L1 results were not reused by Gold.
+- Paragraph pruner: removes "related article" teasers, newsroom details, hotline, email, copyright and minor source lines.
+- The pruner applies the inverted pyramid with a 4,000 character ceiling and keeps paragraphs verbatim.
+- Zero-waste packet: `build_gold_input()` keeps only core fields, a 96% reduction.
+- Mini-batch handoff: tool calls drop by 90%, from 20 calls per 10 articles to 2 calls.
+- Also updated `.agents/skills/gold-financial-analyst/SKILL.md` with batch mode and fixed `_is_owner_alive()` in `src/db/store.py` for opaque identifiers.
+- The original story file was lost on disk on 2026-09-07 (see US-008 data-loss incident). `pruner.py`, `batch_handoff.py` and the test were rebuilt from bytecode.
+- Retired: ADR-0010 ended the two-tier L1/Gold lane. The Article Lane now sends full verbatim content; the pruner ceiling is disabled.
+
+## Verification
+
+| Tier | Command or check | Result |
+|---|---|---|
+| Unit | `cd project; python -m pytest tests/test_pruner_and_batch.py` | passed, 6/6 in 0.48s |
+| Integration | full project suite | 263 passed, 0 failed |
+| Platform | packet size benchmark | packet size down 96%; a 5-article batch packet is about 25 KB |
+
+## Evidence
+
+- `harness.db` story row US-007 (updated 2026-09-07) records unit, integration and e2e proof with the 6-test pytest run.

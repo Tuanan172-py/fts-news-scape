@@ -1,64 +1,63 @@
-# US-012 — Content Recovery Engine (retry có trạng thái, ngưỡng bỏ cuộc, khôi phục lỗi tạm thời)
+---
+id: US-012
+type: story
+title: Content recovery engine with stateful retry, give-up cap and transient-failure recovery
+status: implemented
+lane: normal
+created: 2026-09-17
+updated: 2026-10-06
+lang: en
+authors: [An Pham Thanh]
+adr: []
+related: [US-011]
+evidence: ["commit:0f1a65c", "path:project/scripts/maintenance/backfill_deferred.py", "test:project/tests/test_backfill_deferred.py", "metric:403 tests passed (from 395, plus 8)"]
+verify: "cd project; C:/venvs/news-scape/Scripts/python.exe -m pytest tests/ -q"
+original: "commit:0f1a65c"
+summary: Every article without full content is retried with a recorded, bounded attempt count; 404/410 and exhausted articles leave the queue, ending the infinite refetch loop US-011 introduced.
+---
 
-- **Status:** implemented
-- **Lane:** normal
-- **Parent / Epic:** Bronze Ingestion Pipeline
-- **Intake date:** 2026-09-17 (intake #12)
-- **Depends On:** US-011 — **story này sửa lỗi hồi quy do US-011 gây ra**
+# US-012 — Content recovery engine with stateful retry, give-up cap and transient-failure recovery
 
-## Product Contract
+## Contract
 
-Mọi bài chưa lấy được nội dung đầy đủ đều được thử lại **có giới hạn và có ghi sổ**. Bài đã xác
-nhận mất vĩnh viễn (nguồn xóa 404/410) hoặc đã thử đủ ngưỡng bị loại khỏi hàng đợi, không còn bị
-fetch lại vô hạn.
-
-## Lỗi hồi quy được sửa
-
-US-011 thêm bộ lọc loại bài `source_deleted` khỏi `_DEFERRED_WHERE`, nhưng **không có gì ghi cờ đó
-xuống DB trên đường backfill**. `backfill_deferred.py:244-246` khi gặp thất bại chỉ `stats["failed"] += 1`
-rồi `continue` — không chạm DB. Nguyên nhân gốc: `_INSERT_SQL` của ArticleStore là `INSERT OR IGNORE`
-(`project/src/db/store.py:78-81`) nên row đã tồn tại không bao giờ tự cập nhật; bắt buộc `UPDATE` tường
-minh. Hệ quả nếu không vá: sau khi restart morninger, mỗi bài đã bị xóa vĩnh viễn sẽ bị fetch lại mỗi
-5 phút — khoảng 288 request rác/ngày/bài, không bao giờ dừng.
+- Every article without full content MUST be retried with a bound and a record.
+- An article confirmed lost for good (source deleted with 404/410) or retried up to the cap MUST leave the queue.
+- No article may be refetched forever.
 
 ## Acceptance Criteria
 
-- [x] `_record_attempt()` ghi `capture_retry.{attempts,last_at,last_status}` vào `metadata_json` ở
-      **mọi** nhánh thất bại (HTTP lỗi, thiếu file, bóc ra rỗng).
-- [x] 404/410 → `source_deleted: true`; đủ `max_attempts` → `capture_giveup: true`.
-- [x] `_EXCLUDE_DEAD` dùng chung, loại cả hai cờ khỏi `_DEFERRED_WHERE` và `_FAILED_WHERE`.
-- [x] `--mode {deferred,failed,all}` (mặc định `deferred` — giữ nguyên runbook + test cũ);
-      morninger gọi `--mode all`.
-- [x] `--max-attempts` (5) và `--retry-window-hours` (morninger truyền 24; CLI mặc định 0 = không
-      giới hạn, giữ nguyên backfill thủ công hàng loạt).
-- [x] `SourceBackoff.before_fetch/observe` bao quanh mọi fetch của đường backfill.
-- [x] `--dry-run` không ghi sổ retry.
-- [x] Early-exit khi không có row → không dựng `HTTPClient`/`RobotsGate` thừa.
-- [x] Artifact của **trang lỗi** không được dùng làm nội dung bài (phát sinh từ test, xem dưới).
+- [x] `_record_attempt()` writes `capture_retry.{attempts,last_at,last_status}` into `metadata_json` on every failure branch (HTTP error, missing file, empty extraction).
+- [x] 404/410 sets `source_deleted: true`; reaching `max_attempts` sets `capture_giveup: true`.
+- [x] A shared `_EXCLUDE_DEAD` removes both flags from `_DEFERRED_WHERE` and `_FAILED_WHERE`.
+- [x] `--mode {deferred,failed,all}` defaults to `deferred` (keeps the runbook and old tests); `morninger` calls `--mode all`.
+- [x] `--max-attempts` (5) and `--retry-window-hours` exist; `morninger` passes 24, the CLI default 0 means no limit for manual bulk backfill.
+- [x] `SourceBackoff.before_fetch/observe` wraps every fetch on the backfill path.
+- [x] `--dry-run` records no retry.
+- [x] Early exit when no row exists, so no `HTTPClient` or `RobotsGate` is built for nothing.
+- [x] An error-page artifact is never used as article content (found by a test, see Design Notes).
 
 ## Design Notes
 
-**Lỗi thứ hai do test phát hiện.** Test `test_transient_failure_gives_up_after_max_attempts` ban đầu
-đỏ vì lý do bất ngờ: `RawStore.save()` vẫn ghi body khi HTTP lỗi (`raw_store.py`, chú thích *"partial
-body vẫn lưu để inspect"*), nên một trang 500 cũng sinh file `.html`. Lượt backfill kế tiếp thấy file
-đó qua `_find_bronze()`, bóc chữ trong **trang lỗi** ra làm `content_text` của bài rồi đánh dấu
-`backfilled_from_bronze` — nội dung bài bị thay bằng nội dung trang lỗi. Đây là hành vi có sẵn từ
-trước, nhưng trước US-011 backfill chỉ chạy tay hiếm khi nên ít lộ; chạy 5 phút/lần thì nó thành một
-đường làm hỏng dữ liệu. Vá bằng cách cho `_find_bronze()` soi sidecar `.meta.json` và chỉ chấp nhận
-artifact có `capture_status` là `ok`/`partial`; thiếu sidecar thì vẫn chấp nhận (artifact cũ/đặt tay).
+- Regression fixed: US-011 excluded `source_deleted` articles from `_DEFERRED_WHERE`, but nothing wrote that flag on the backfill path.
+- `backfill_deferred.py:244-246` on failure only did `stats["failed"] += 1` and `continue`, never touching the DB.
+- Root cause: `_INSERT_SQL` of ArticleStore is `INSERT OR IGNORE` (`project/src/db/store.py:78-81`), so an existing row never updates itself. An explicit `UPDATE` is required.
+- Without the fix, after a `morninger` restart each permanently deleted article would be refetched every 5 minutes: about 288 junk requests per article per day, forever.
+- Second bug, found by a test: `test_transient_failure_gives_up_after_max_attempts` first failed for an unexpected reason.
+- `RawStore.save()` still writes the body on HTTP errors (`raw_store.py`, comment "partial body still saved for inspection"), so a 500 page also produces an `.html` file.
+- The next backfill found that file through `_find_bronze()`, extracted the error-page text as `content_text` and marked it `backfilled_from_bronze`. Article content was replaced by the error page.
+- The behavior predated US-011, but manual backfill rarely ran. At every 5 minutes it became a data-corruption path.
+- Fix: `_find_bronze()` reads the `.meta.json` sidecar and accepts only `capture_status` of `ok` or `partial`. A missing sidecar is still accepted (old or hand-placed artifacts).
+- `SourceBackoff` reacts only to 429/503, caps at 16s and keeps in-memory state, so it protects only within one run.
+- The real cross-run brake is the attempt cap; backoff is courtesy to the source. The base pace of 3s per domain already comes from `HTTPClient`.
 
-**Về `SourceBackoff` — ghi chú trung thực:** lớp này chỉ phản ứng với 429/503, trần 16s, state thuần
-in-memory nên **chỉ bảo vệ trong phạm vi một lần chạy**. Cơ chế chặn thật xuyên các lần chạy là
-attempt cap; backoff chỉ là lớp lịch sự với nguồn. Nhịp cơ bản 3s/domain vốn đã có sẵn từ `HTTPClient`.
+## Verification
 
-## Validation
-
-| Tier | Command | Status | Evidence |
-|------|---------|:------:|----------|
-| Unit | `cd project; C:/venvs/news-scape/Scripts/python.exe -m pytest tests/ -q` | passed | 403 passed (từ 395, +8 test) |
-| Integration | (cùng lệnh — backfill chạy thật qua fake HTTP + Bronze thật trên đĩa) | passed | xem Evidence |
-| E2E | — | — | không gọi mạng thật trong phiên |
-| Platform | — | — | chờ restart morninger (xem US-011 §Ops) |
+| Tier | Command or check | Result |
+|---|---|---|
+| Unit | `cd project; C:/venvs/news-scape/Scripts/python.exe -m pytest tests/ -q` | passed, 403 (from 395, plus 8 tests) |
+| Integration | same command; backfill runs through fake HTTP and real Bronze files on disk | passed |
+| E2E | real network | not run in the session |
+| Platform | `morninger` restart | pending at the time; see US-011 and US-015 |
 
 ## Evidence
 
@@ -66,18 +65,9 @@ attempt cap; backoff chỉ là lớp lịch sự với nguồn. Nhịp cơ bản
 403 passed, 550 warnings in 120.96s (0:02:00)
 ```
 
-Test then chốt chứng minh vòng lặp vô hạn đã bị chặn:
-- `test_retry_404_marks_source_deleted_and_stops_requerying` — `fake.calls == 1` sau **hai** lượt
-  chạy: lượt hai không chạm mạng nữa vì row đã bị loại khỏi hàng đợi.
-- `test_transient_failure_gives_up_after_max_attempts` — `fake.calls == 3` với `max_attempts=3`, dù
-  gọi `main()` 6 lần.
-- `test_find_bronze_rejects_error_page_artifact` — artifact `deleted_at_source`/`failed` bị từ chối.
-
-## Harness Delta
-
-Không phát sinh backlog mới. Ma sát đã ghi trong trace #46 (lỗi artifact trang lỗi).
-
-## Trace (inline)
-
-- **Trace:** #46, `score_trace = 1.0`, `score_context = 1.0`.
-- **Outcome:** completed.
+- `test_retry_404_marks_source_deleted_and_stops_requerying`: `fake.calls == 1` after two runs; the second run made no network call because the row had left the queue.
+- `test_transient_failure_gives_up_after_max_attempts`: `fake.calls == 3` with `max_attempts=3`, although `main()` ran 6 times.
+- `test_find_bronze_rejects_error_page_artifact`: `deleted_at_source` and `failed` artifacts are rejected.
+- Also: `test_mode_failed_recovers_transient_failure_from_bronze`, `test_backoff_wraps_every_fetch`, `test_dry_run_records_no_attempt` (from the `harness.db` row).
+- Trace #46: `score_trace = 1.0`, `score_context = 1.0`. Outcome: completed. No new backlog item.
+- Commit f8f4321 also carries the tag US-012 but belongs to a different story (Gold output schema v2-lean); the id was reused.
