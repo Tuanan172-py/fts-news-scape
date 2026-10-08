@@ -68,6 +68,18 @@ def test_disabled_without_env(env):
     assert not (env["data"] / "publish_staging").exists()
 
 
+def test_official_site_target_is_refused(env, tmp_path, monkeypatch):
+    official = tmp_path / "OneDrive - fpts.com.vn" / "FRA - Data" / "news"
+    monkeypatch.setenv(pub.PUBLISH_DIR_ENV, str(official))
+    assert pub.publish_target() is None
+    res = pub.publish_day(DAY, db_path=env["db"])
+    assert res.status == "failed" and "chính thức" in res.message
+    assert not official.exists()
+    assert not (env["data"] / "publish_staging").exists()
+    sandbox = tmp_path / "OneDrive - fpts.com.vn" / "FRA_DataIngestion - AnPT" / "news-data"
+    assert pub.publish_target(sandbox) == sandbox.absolute()
+
+
 def test_dry_run_writes_nothing(env):
     res = _run(env, dry_run=True)
     assert res.status == "ok"

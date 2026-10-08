@@ -9,7 +9,7 @@ Lý do thiết kế nằm ở [ADR 0020](../../../docs/decisions/0020-data-plane
 
 ## 1. Mục đích
 
-Xuất bản một chiều dữ liệu của ngày đã đóng sang thư mục `FRA - Data\news` trên SharePoint. Chuyên viên và fpa-toolkit đọc ở đó, không đọc tầng ghi.
+Xuất bản một chiều dữ liệu của ngày đã đóng sang một thư mục SharePoint đồng bộ về máy. Hiện chỉ được dùng sandbox `sites/FRA_DataIngestion/Shared Documents/AnPT` (ADR 0020 §0). Site chính thức `sites/FRA` (`FRA - Data`) bị cấm, và publisher từ chối đích đó. Chuyên viên và fpa-toolkit đọc ở thư mục xuất bản, không đọc tầng ghi.
 
 Mỗi ngày gồm năm loại tệp:
 
@@ -23,8 +23,8 @@ Mỗi ngày gồm năm loại tệp:
 
 ## 2. Điều kiện
 
-- Máy vận hành có shortcut `FRA - Data` đồng bộ qua OneDrive, và tài khoản có quyền ghi.
-- Thư mục `news` đặt "Always keep on this device".
+- Máy vận hành có shortcut tới thư mục sandbox dưới `AnPT` của thư viện `FRA_DataIngestion`, đồng bộ qua OneDrive và `OneDrive.exe` đang chạy.
+- Thư mục xuất bản đặt "Always keep on this device".
 - Mọi lệnh dưới đây chạy với thư mục hiện tại là `project/`.
 - Không đặt `NEWS_SCAPE_PUBLISH_DIR` thì publisher tắt và không ghi gì.
 
@@ -32,7 +32,7 @@ Mỗi ngày gồm năm loại tệp:
 
 | Bước | Hành động | Kết quả mong đợi |
 |---|---|---|
-| 1 | `[Environment]::SetEnvironmentVariable("NEWS_SCAPE_PUBLISH_DIR", "<đường dẫn FRA - Data>\news", "User")` | Biến môi trường người dùng có giá trị sau khi mở terminal mới |
+| 1 | `[Environment]::SetEnvironmentVariable("NEWS_SCAPE_PUBLISH_DIR", "<thư mục sandbox đồng bộ>\news-data", "User")` | Biến môi trường người dùng có giá trị sau khi mở terminal mới |
 | 2 | `python scripts/publish.py --date yesterday --dry-run` | In bảng tệp ở trạng thái `planned`, đích chưa có tệp mới |
 | 3 | `python scripts/publish.py --date yesterday` | Trạng thái `ok`, `_manifest/latest.json` trỏ tới ngày hôm qua |
 | 4 | Sửa `config/ops.yaml`, đặt `publish.enabled: true` | Khối `publish` bật |

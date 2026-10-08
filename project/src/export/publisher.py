@@ -31,6 +31,7 @@ from typing import Any
 from src.core import paths
 
 PUBLISH_DIR_ENV = "NEWS_SCAPE_PUBLISH_DIR"
+OFFICIAL_TARGET_MARKERS = frozenset({"fra - data"})
 MANIFEST_SCHEMA = "news-scape-publish-manifest/1"
 DEFAULT_KEEP_REVIEW_DAYS = 7
 DEPRECATED_COLUMNS = frozenset({"materiality", "event_type", "impact_area"})
@@ -112,6 +113,22 @@ class PublishResult:
         return out
 
 
+def is_official_target(path: Path) -> bool:
+    """Cho biết đích nằm trong thư mục đồng bộ của site SharePoint chính thức của Khối.
+
+    Site chính thức (`sites/FRA`, đồng bộ về máy thành `FRA - Data`) chưa được duyệt làm
+    đích xuất bản; mọi lần chạy thử chỉ được ghi vào sandbox `sites/FRA_DataIngestion`.
+    Mở khoá đòi sửa mã kèm ADR, không có biến môi trường bỏ qua.
+
+    Args:
+        path: Đích tuyệt đối.
+
+    Returns:
+        True khi một thành phần đường dẫn trùng tên thư mục đồng bộ của site chính thức.
+    """
+    return any(part.lower() in OFFICIAL_TARGET_MARKERS for part in path.parts)
+
+
 def publish_target(override: str | Path | None = None) -> Path | None:
     """Phân giải thư mục đích xuất bản.
 
@@ -119,10 +136,14 @@ def publish_target(override: str | Path | None = None) -> Path | None:
         override: Đích dùng thay biến môi trường cho lần chạy này.
 
     Returns:
-        Đường dẫn tuyệt đối của đích, hoặc None khi publisher tắt.
+        Đường dẫn tuyệt đối của đích, hoặc None khi publisher tắt hoặc đích thuộc site
+        chính thức.
     """
     raw = str(override) if override else os.environ.get(PUBLISH_DIR_ENV, "").strip()
-    return Path(raw).expanduser().absolute() if raw else None
+    if not raw:
+        return None
+    tgt = Path(raw).expanduser().absolute()
+    return None if is_official_target(tgt) else tgt
 
 
 def sha256_file(path: Path) -> str:
@@ -538,6 +559,11 @@ def publish_day(day: date, *, dry_run: bool = False, force: bool = False,
     """
     tgt = publish_target(target)
     if tgt is None:
+        raw = str(target) if target else os.environ.get(PUBLISH_DIR_ENV, "").strip()
+        if raw:
+            return PublishResult("failed", day.isoformat(),
+                                 f"Đích {raw} thuộc site SharePoint chính thức, chưa được duyệt "
+                                 f"(ADR 0020 §0). Chỉ dùng sandbox sites/FRA_DataIngestion.")
         return PublishResult("disabled", day.isoformat(),
                              f"Chưa đặt {PUBLISH_DIR_ENV}: publisher tắt (mức L0).")
     try:

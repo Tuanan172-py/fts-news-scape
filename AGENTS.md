@@ -36,7 +36,7 @@ Read these before inventing context; do NOT create a new knowledge folder:
 
 Môi trường Python được cách ly ngoài OneDrive tại `C:\venvs\news-scape`. Tuyệt đối không tạo `.venv` nội bộ.
 
-Cây mã vận hành nằm ở `C:\src\news-scraper`, ngoài OneDrive (ADR 0020). Dữ liệu ghi nằm dưới `MONOCLE_DATA_DIR` (mặc định `C:\data\news-scape`), đường dẫn do `project/src/core/paths.py` quyết định. Dữ liệu dùng chung xuất bản một chiều lên SharePoint `FRA - Data/news/` qua `scripts/publish.py`. Thư mục `FRA_DataIngestion - news-scape` trên OneDrive là bản cũ, không chạy mã từ đó.
+Cây mã vận hành nằm ở `C:\src\news-scraper`, ngoài OneDrive (ADR 0020). Dữ liệu ghi nằm dưới `MONOCLE_DATA_DIR` (mặc định `C:\data\news-scape`), đường dẫn do `project/src/core/paths.py` quyết định. Dữ liệu dùng chung xuất bản một chiều lên SharePoint qua `scripts/publish.py`, **chỉ vào sandbox `sites/FRA_DataIngestion/Shared Documents/AnPT`**. Cấm ghi vào site chính thức `sites/FRA` (`FRA - Data`) cho tới khi có quyết định mới (ADR 0020 §0); publisher từ chối đích này. Thư mục `FRA_DataIngestion - news-scape` trên OneDrive là bản cũ, không chạy mã từ đó.
 
 ```powershell
 # Kích hoạt môi trường (chỉ cần 1 lần / phiên terminal):

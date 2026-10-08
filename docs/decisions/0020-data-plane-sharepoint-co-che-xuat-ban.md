@@ -8,6 +8,13 @@
 - **Kế thừa:** ADR 0012 (ops_daemon), ADR 0013 (thu thập trọn vẹn), ADR 0019.
 - **Người duyệt:** người dùng duyệt ngày 2026-10-05. Ba câu hỏi ở §6 còn chờ trả lời; publisher (A4) chỉ ghi lên SharePoint khi câu 1 có câu trả lời "có".
 
+## 0. Ràng buộc môi trường (người vận hành, 2026-10-08)
+
+- **Mọi lần ghi lên SharePoint chỉ thực hiện trên sandbox:** `https://fptscomvn.sharepoint.com/sites/FRA_DataIngestion/Shared Documents/AnPT`.
+- **Tuyệt đối không ghi vào site chính thức** `https://fptscomvn.sharepoint.com/sites/FRA` (thư mục đồng bộ `FRA - Data`) cho tới khi có quyết định mới bằng văn bản. Site này chỉ được đọc, làm nguồn thực thể cho `build_entities.py`.
+- `publisher.publish_target()` từ chối đích có thành phần `FRA - Data`. Muốn mở khoá phải sửa mã kèm sửa đổi ADR này.
+- Sự cố 2026-10-06: thư mục `FRA - Data\news` từng được tạo trên máy. OneDrive không chạy trong suốt thời gian đó. Ngày 08/10 thư mục đã được chuyển ra `C:\data\news-scape\publish_hold\news-removed-from-FRA-Data-20261008`, trước khi kịp đồng bộ. Mọi chỗ nhắc `FRA - Data/news` ở các mục dưới được hiểu là "thư mục xuất bản trên sandbox".
+
 ## 1. Bối cảnh
 
 Mục tiêu: mã nguồn sống trên GitHub `Research-FPA/news-scraper`, toàn bộ dữ liệu và dữ liệu sinh ra khi vận hành được quản lý trên SharePoint.
