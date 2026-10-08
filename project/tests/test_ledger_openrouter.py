@@ -82,3 +82,60 @@ def test_ledger_giu_nguyen_nhanh_agy(tmp_path, monkeypatch):
     rows = _run("agy", [m], monkeypatch, tmp_path)
     assert rows[0][:5] == ("article-processor-agy", 1000, 200, 0, 1200)
     assert rows[0][6] == "runner=agy"
+
+
+def _pmeta(tmp_path, name, provider, usage, items=0):
+    p = tmp_path / name
+    p.write_text(json.dumps({"agent_provider": provider, "usage": usage,
+                             "items_valid": items}), encoding="utf-8")
+    return str(p)
+
+
+def _rows(db):
+    out = sqlite3.connect(db)
+    try:
+        return out.execute("SELECT agent_id, n_items, miss_tokens, hit_tokens, out_tokens,"
+                           " note FROM token_ledger ORDER BY agent_id").fetchall()
+    finally:
+        out.close()
+
+
+def test_ledger_tach_dong_theo_provider_cua_tung_meta(tmp_path, monkeypatch):
+    """Đợt chạy agy rồi vá bằng openrouter ghi hai dòng, mỗi provider đúng phần của mình."""
+    m1 = _pmeta(tmp_path, "a.meta.json", "agy",
+                {"input_tokens": 1000, "output_tokens": 200, "cache_read_tokens": 400}, 40)
+    m2 = _pmeta(tmp_path, "b.meta.json", "openrouter",
+                {"prompt_tokens": 500, "completion_tokens": 100, "cost": 0,
+                 "prompt_tokens_details": {"cached_tokens": 300}}, 10)
+    _run("auto", [m1, m2], monkeypatch, tmp_path)
+    assert _rows(str(tmp_path / "ledger.db")) == [
+        ("article-processor-agy", 40, 600, 400, 200, "runner=agy"),
+        ("article-processor-openrouter", 10, 200, 300, 100, "runner=openrouter"),
+    ]
+
+
+def test_ledger_opencode_khong_usage_van_ghi_dong(tmp_path, monkeypatch):
+    """opencode không ghi số token: vẫn có dòng để thấy số lô, kèm ghi chú thiếu usage."""
+    m = _pmeta(tmp_path, "a.meta.json", "opencode-native",
+               {"note": "free-tier"}, 50)
+    _run("auto", [m], monkeypatch, tmp_path)
+    rows = _rows(str(tmp_path / "ledger.db"))
+    assert rows == [("article-processor-opencode-native", 10, 0, 0, 0,
+                     "runner=opencode-native usage=không ghi")]
+
+
+def test_ledger_chay_lai_thay_moi_dong_runner_cu(tmp_path, monkeypatch):
+    """Chạy lại `--finish` sau khi đổi provider không để lại dòng của provider cũ."""
+    m1 = _pmeta(tmp_path, "a.meta.json", "agy", {"input_tokens": 10, "output_tokens": 1})
+    _run("auto", [m1], monkeypatch, tmp_path)
+    m2 = _pmeta(tmp_path, "b.meta.json", "openrouter",
+                {"prompt_tokens": 5, "completion_tokens": 1, "cost": 0})
+    monkeypatch.setattr(token_ledger, "glob", _Glob([m2]))
+    db = str(tmp_path / "ledger.db")
+    monkeypatch.setattr(token_ledger, "connect", lambda _db: sqlite3.connect(db))
+    args = argparse.Namespace(wave="W-E2", batch=None, items=10, est_miss=None,
+                              est_out=None, since=0.0, window_min=60, workers_only=False,
+                              source="auto", db=db, cwd_filter=None, no_reasoning=False,
+                              peak=None, note=None, agent="x")
+    assert token_ledger.cmd_append(args) == 0
+    assert [r[0] for r in _rows(db)] == ["article-processor-openrouter"]
