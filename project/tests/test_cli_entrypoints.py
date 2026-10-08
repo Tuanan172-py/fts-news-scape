@@ -33,6 +33,7 @@ AUTOMATION_CLIS = [
     "scripts/pipeline_radar.py",
     "scripts/article_run.py",
     "scripts/article_tick.py",
+    "scripts/lakehouse_cli.py",
 ]
 
 
