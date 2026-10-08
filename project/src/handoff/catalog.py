@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from loguru import logger
 
+from src.agent.article_contract import analyzed_l1_sql
 from src.core.models import now_vn_iso
 
 _HELD_STATES = {"SELECTOR_BROKEN", "TEMPLATE_DRIFT"}
@@ -204,7 +205,7 @@ class Catalog:
             )
             l1_clause = (
                 " AND EXISTS (SELECT 1 FROM l1_outputs l1"
-                " WHERE l1.article_id = work_items.article_id AND l1.dod_pass = 1)"
+                f" WHERE l1.article_id = work_items.article_id AND {analyzed_l1_sql('l1')})"
                 if require_l1 else ""
             )
             if allowed_article_ids is not None:

@@ -8,6 +8,7 @@ from pathlib import Path
 
 from loguru import logger
 
+from src.agent.article_contract import analyzed_l1_sql
 from src.agent.dod import check_dod, verify_preconditions
 from src.agent.packet import build_task_packet, write_packet
 from src.core import paths
@@ -190,7 +191,7 @@ class AgentRunner:
 
                 conn = self.store.connect()
                 try:
-                    rows = conn.execute("SELECT article_id, output_json FROM l1_outputs WHERE dod_pass = 1").fetchall()
+                    rows = conn.execute(f"SELECT article_id, output_json FROM l1_outputs WHERE {analyzed_l1_sql()}").fetchall()
                     allowed_aids = set()
                     for r in rows:
                         out_json = r["output_json"]
@@ -218,7 +219,7 @@ class AgentRunner:
             conn = self.store.connect()
             try:
                 order_clause = "ORDER BY enqueued_at DESC, id DESC" if order.lower() == "desc" else "ORDER BY enqueued_at ASC, id ASC"
-                l1_clause = " AND EXISTS (SELECT 1 FROM l1_outputs l1 WHERE l1.article_id = work_items.article_id AND l1.dod_pass = 1)" if require_l1 else ""
+                l1_clause = f" AND EXISTS (SELECT 1 FROM l1_outputs l1 WHERE l1.article_id = work_items.article_id AND {analyzed_l1_sql('l1')})" if require_l1 else ""
                 if allowed_aids is not None:
                     if not allowed_aids:
                         return []

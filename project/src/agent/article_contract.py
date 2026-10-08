@@ -38,6 +38,57 @@ SAMPLING = {"temperature": 0, "seed": 20261005}
 MIN_CITATION_CHARS = 20
 MAX_SUMMARY_SENTENCES = 3
 
+# Nguồn bản ghi `l1_outputs` do bộ tra danh mục tất định ghi (ADR 0003). Bản này chỉ để
+# đối chiếu, không bao giờ được tính là đã phân tích (ADR 0010 D4).
+CODE_FIRST_SOURCE = "code_first"
+
+
+def not_code_first_sql(alias: str = "") -> str:
+    """Dựng điều kiện SQL loại bản code-first khỏi bảng `l1_outputs`, giữ bản trượt DoD.
+
+    Args:
+        alias: Bí danh bảng `l1_outputs` trong truy vấn; chuỗi rỗng khi không dùng bí danh.
+
+    Returns:
+        Biểu thức SQL dùng được trong mệnh đề WHERE hoặc ON.
+    """
+    p = f"{alias}." if alias else ""
+    return f"COALESCE({p}l1_source, 'agent') <> '{CODE_FIRST_SOURCE}'"
+
+
+def not_code_first_sql_for(conn: Any, alias: str = "") -> str:
+    """Dựng điều kiện loại bản code-first theo lược đồ thật của kết nối.
+
+    DB cũ chưa có cột `l1_source` thì không thể chứa bản code-first, nên điều kiện là
+    hằng đúng. Dùng cho kết nối chỉ đọc không chạy được bước nâng cấp lược đồ.
+
+    Args:
+        conn: Kết nối SQLite.
+        alias: Bí danh bảng `l1_outputs` trong truy vấn; chuỗi rỗng khi không dùng bí danh.
+
+    Returns:
+        Biểu thức SQL dùng được trong mệnh đề WHERE hoặc ON.
+    """
+    cols = {row[1] for row in conn.execute("PRAGMA table_info(l1_outputs)")}
+    return not_code_first_sql(alias) if "l1_source" in cols else "1 = 1"
+
+
+def analyzed_l1_sql(alias: str = "") -> str:
+    """Dựng điều kiện SQL "bài đã được mô hình phân tích" trên bảng `l1_outputs`.
+
+    Điều kiện đòi bản ghi đạt DoD và loại bản code-first. Mọi truy vấn đếm, chọn bài,
+    giao hàng hay xuất dữ liệu đọc `l1_outputs` dùng chung điều kiện này để không lệch
+    định nghĩa giữa các đường.
+
+    Args:
+        alias: Bí danh bảng `l1_outputs` trong truy vấn; chuỗi rỗng khi không dùng bí danh.
+
+    Returns:
+        Biểu thức SQL dùng được trong mệnh đề WHERE hoặc ON.
+    """
+    p = f"{alias}." if alias else ""
+    return f"{p}dod_pass = 1 AND {not_code_first_sql(alias)}"
+
 SENTIMENT_MAP = {"pos": "positive", "neg": "negative", "neu": "neutral"}
 TIME_MAP = {"urg": "urgent", "today": "today", "week": "this_week",
             "month": "this_month", "arch": "archive"}

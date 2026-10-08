@@ -28,6 +28,7 @@ from datetime import date, datetime
 from pathlib import Path
 from typing import Any
 
+from src.agent.article_contract import not_code_first_sql
 from src.core import paths
 
 PUBLISH_DIR_ENV = "NEWS_SCAPE_PUBLISH_DIR"
@@ -45,6 +46,10 @@ PARQUET_TABLES: dict[str, tuple[str, str]] = {
     "analysis": ("agent_outputs", "created_at"),
     "mentions": ("l1_outputs", "created_at"),
 }
+
+# Điều kiện lọc dòng thêm theo bảng DB. Bản code-first không phải kết quả phân tích nên
+# không vào bảng `mentions` (ADR 0010 D4).
+ROW_FILTERS: dict[str, str] = {"l1_outputs": not_code_first_sql()}
 
 _MANIFEST_RE = re.compile(r"^(\d{8})(?:\.r(\d+))?\.json$")
 _CHUNK = 1 << 20
@@ -363,8 +368,9 @@ def _build_parquet(db: Path, table: str, date_col: str, day: date, out: Path) ->
         keep = [c for c in cols if c not in HEAVY_COLUMNS and c not in DEPRECATED_COLUMNS]
         if not keep:
             raise RuntimeError(f"Bảng {table} không có trong DB.")
+        extra = f" AND {ROW_FILTERS[table]}" if table in ROW_FILTERS else ""
         sql = (f"SELECT {', '.join(keep)} FROM {table} "
-               f"WHERE substr({date_col}, 1, 10) = ? ORDER BY rowid")
+               f"WHERE substr({date_col}, 1, 10) = ?{extra} ORDER BY rowid")
         frame = pd.read_sql_query(sql, conn, params=(day.isoformat(),))
     finally:
         conn.close()

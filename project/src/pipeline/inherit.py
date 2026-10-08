@@ -6,11 +6,13 @@ import json
 import sqlite3
 from datetime import datetime, timedelta, timezone
 
+from src.agent.article_contract import analyzed_l1_sql
+
 VN_TZ = timezone(timedelta(hours=7))
 INHERITED = "inherited"
 HOLD_HOURS = 48          # bài chép chờ bài gốc tối đa ngần này giờ rồi được trả về bộ chọn bài
 
-_PASSING_L1 = "dod_pass = 1 AND COALESCE(l1_source, 'agent') <> 'code_first'"
+_PASSING_L1 = analyzed_l1_sql()
 
 
 def _loads(raw: str | None) -> dict:
