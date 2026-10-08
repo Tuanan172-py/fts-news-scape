@@ -88,6 +88,12 @@ any governed document; open a body only when its summary is relevant.
 | [PRP-20261001-ops-council](proposals/20261001-ops-council.md) | decided | Review council for autonomous 24/7 operations with human in the loop | Should the uncommitted ops daemon run Article Lane waves autonomously? Council kept the direction, raised seven blockers B1-B7, removed the per-wave approval gate; operator accepted, ADR-0012 and ADR-0014 followed. |
 | [PRP-20261005-audit-dieu-phoi-agent](proposals/20261005-audit-dieu-phoi-agent.md) | decided | Orchestration audit of agents acting outside the workflow | Asks whether agents ran outside the workflow or against instructions; finds daemon and article-processor compliant, with violations from manual waves and three mechanism gaps, fixed in order under US-037. |
 
+## plan
+
+| ID | Status | Title | Summary |
+|---|---|---|---|
+| [PLN-20261008-0923-us039-handoff-remaining-work](../plans/20261008-0923-us039-handoff-remaining-work/plan.md) | executing | US-039 handoff, remaining knowledge framework work | Compact state of the ADR-0021 knowledge framework after G1-G4, and the work packages another agent can pick up without this conversation. |
+
 ## fact
 
 | ID | Status | Title | Summary |
