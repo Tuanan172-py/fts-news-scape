@@ -15,8 +15,8 @@ Mục đích: Cung cấp quy chuẩn, runbook và công cụ kiểm định tự
 
 Mọi thao tác can thiệp vào codebase và Git repository bắt buộc tuân thủ 5 bất biến:
 
-1. **Bất biến WIP = 1**:
-   Chỉ có tối đa 1 story/tác vụ ở trạng thái `in_progress` tại một thời điểm. Khi có yêu cầu khẩn cấp ngắt ngang, lưu trữ (`stash`) hoặc chuyển trạng thái tác vụ hiện tại sang `blocked` hoặc `deferred` trước khi nhận việc mới.
+1. **Bất biến WIP = 1 Per Worktree (ADR-0022)**:
+   Mỗi Git worktree/nhánh chỉ có tối đa 1 story ở trạng thái `in_progress`. Khi có yêu cầu khẩn cấp ngắt ngang trong cùng một worktree, lưu trữ (`stash`) hoặc chuyển trạng thái tác vụ hiện tại sang `blocked` hoặc `deferred` trước khi nhận việc mới. Các worktree khác nhau hoàn toàn bình đẳng và được phép chạy song song các story độc lập.
 2. **Bất biến Thẩm Định Trước Khi Commit (Pre-commit Quality Gate)**:
    Mọi commit phải vượt qua 3 cổng kiểm soát:
    - Cú pháp AST hợp lệ (`ast.parse`) trên toàn bộ tệp Python được sửa đổi.

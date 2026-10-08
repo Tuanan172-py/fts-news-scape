@@ -160,7 +160,7 @@ ops_spec:
 
 # ─────────────── Bất biến điều phối (Conductor phải tuân) ───────────────
 invariants:
-  - "WIP=1: không 2 story in_progress đồng thời (AGENTS.md §1)."
+  - "WIP=1 per worktree: không 2 story in_progress trên cùng một nhánh/worktree; cho phép đa Agent chạy song song trên các worktree độc lập (ADR-0022)."
   - "Một đợt tại một thời điểm: đợt gần nhất chưa xong (radar báo lệnh của đợt) thì không mở đợt mới."
   - "Một đợt = một lệnh run_code; không tách chương trình điều phối thành nhiều bước."
   - "Token là số ghi nhận, không phải cổng: không trần, không ngưỡng cảnh báo theo bài, lô hay đợt."

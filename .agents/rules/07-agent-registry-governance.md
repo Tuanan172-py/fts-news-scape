@@ -36,7 +36,7 @@ Thiếu bất kỳ bước nào → agent giữ `status: draft`, không được
 - `harness_cli.py propose` đọc `agent_metrics` để gắn cờ agent `dod_pass_rate < 95%` hoặc `fp_flags > 0`. Đề xuất nâng lane `high-risk` phải được RCA và đưa vào backlog/ADR nếu tái diễn.
 
 ## 6. Bất biến điều phối (Conductor)
-- **WIP = 1 cho mỗi worktree**: không 2 story `in_progress` trên cùng một nhánh (ADR-0022, AGENTS.md §1).
+- **WIP = 1 per Worktree**: không 2 story `in_progress` trên cùng một nhánh/worktree; cho phép đa Agent chạy song song trên các worktree độc lập (ADR-0022, rule 04).
 - **Controlled Wave**: chờ nghiệm thu đợt hiện tại mới kích hoạt đợt kế (chống `RESOURCE_EXHAUSTED` 429).
 - **Gate-before-advance**: stage có `gate` phải đạt DoD pass mới cho stage sau chạy.
 - **No Script Emulation** (rule 05 §3): cấm dùng regex/heuristic thay thế vùng trí tuệ cognitive agent.
