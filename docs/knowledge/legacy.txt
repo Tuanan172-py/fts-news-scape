@@ -37,3 +37,4 @@ plans/20261002-1500-sharepoint-data-plane-and-org-pr/plan.md
 plans/20261005-1800-us038-repo-to-chuc-va-data-plane/plan.md
 # Ids registered in harness.db that have no file yet (G4 writes them).
 id:US-038
+id:US-040
