@@ -820,11 +820,14 @@ def cmd_finish(args: argparse.Namespace) -> int:
         if manifest.get("est_miss_total") is not None:
             ledger_cmd += ["--est-miss", str(manifest["est_miss_total"]),
                            "--est-out", str(manifest["est_out_total"])]
+        # Sổ cái đọc usage và provider từ meta của từng lô; tên runner chỉ là giá trị
+        # dự phòng cho meta cũ không ghi `agent_provider`.
+        known = ("agy", "openrouter", "opencode-native")
         runner = getattr(args, "runner", "dsh")
-        if runner in ("agy", "openrouter"):
-            ledger_cmd += ["--source", runner]
-        elif manifest.get("runner") in ("agy", "openrouter"):
-            ledger_cmd += ["--source", manifest["runner"]]
+        source = (runner if runner in known
+                  else manifest.get("runner") if manifest.get("runner") in known
+                  else "auto")
+        ledger_cmd += ["--source", source]
         if run(ledger_cmd, check=False) != 0:
             soft.append("sổ cái token không ghi được dòng mới")
 
