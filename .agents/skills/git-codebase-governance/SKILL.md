@@ -156,6 +156,55 @@ Mọi commit bắt buộc tuân thủ phân tầng 3 Tiers của Harness:
 
 ---
 
+### SOP 6: Quy Trình Phối Hợp Qua Pull Request Trên Repo Tổ Chức (Enterprise PR Workflow)
+
+Áp dụng bắt buộc khi đóng góp mã nguồn vào kho lưu trữ chung của tổ chức (`Research-FPA/news-scraper`):
+
+```
+[Main Sạch] ──> [Tạo Nhánh feature/fix] ──> [Phát Triển & Test] ──> [Commit Chuẩn Doanh Nghiệp]
+      ▲                                                                     │
+      │                                                                     ▼
+[Sync Cục Bộ] ◄── [Merge PR trên Web] ◄── [Review & Gate] ◄── [Push Nhánh & Mở PR]
+```
+
+1. **Bước 1: Đồng bộ nhánh `main` trước khi tạo việc mới**:
+   ```powershell
+   git checkout main
+   git pull fpa main
+   ```
+2. **Bước 2: Tạo nhánh tính năng/sửa lỗi từ `main`**:
+   - Tính năng mới: `git checkout -b feature/<ma-story>-<ten-ngan>` (VD: `feature/us042-duckdb-lakehouse`).
+   - Sửa lỗi: `git checkout -b fix/<ma-story>-<ten-ngan>` (VD: `fix/us040-code-first-guard`).
+3. **Bước 3: Thực thi kiểm định Quality Gate trước khi commit**:
+   - Kiểm tra AST và vệ sinh tệp:
+     ```powershell
+     & "C:\venvs\news-scape\Scripts\python.exe" scripts/harness_cli.py git verify
+     ```
+   - Chạy toàn bộ bộ kiểm thử đơn vị:
+     ```powershell
+     & "C:\venvs\news-scape\Scripts\python.exe" -m pytest project/tests/ -q
+     ```
+4. **Bước 4: Đóng gói commit chuẩn danh tính tổ chức**:
+   - Đảm bảo commit mang email công ty (`anpt@fpts.com.vn`).
+   - Tiêu đề commit: `<type>(<scope>): <mo-ta> (US-XXX)`.
+   - Cấm tuyệt đối chèn trailer `Co-Authored-By: Claude...`.
+5. **Bước 5: Đẩy nhánh lên kho tổ chức**:
+   ```powershell
+   git push -u fpa feature/<ten-nhanh>
+   ```
+6. **Bước 6: Mở và xét duyệt Pull Request trên GitHub**:
+   - Truy cập `https://github.com/Research-FPA/news-scraper/compare/main...<ten-nhanh>?expand=1`.
+   - Kiểm tra tab **Files changed**: Xác nhận 0 file rác, 0 credentials/keys, 0 file nhị phân lớn.
+   - Xét duyệt (Review) và chọn **Create a merge commit** (hoặc Squash and merge tùy chỉ đạo).
+7. **Bước 7: Đồng bộ kết quả về máy trạm và dọn dẹp**:
+   ```powershell
+   git checkout main
+   git pull fpa main
+   git branch -d feature/<ten-nhanh>
+   ```
+
+---
+
 ## 4. Runbook Xử Lý Tình Huống Sự Cố (Disaster Recovery)
 
 ### Tình huống 1: Tệp Untracked Ngăn Cản Tiến Trình Pull
@@ -198,7 +247,49 @@ Mọi commit bắt buộc tuân thủ phân tầng 3 Tiers của Harness:
 
 ---
 
-## 5. Danh Mục Kiểm Tra Tra Soát Nhanh (Audit Checklist)
+## 5. Quy Chuẩn Chuyển Dịch Từ Repo Cá Nhân Lên Repo Tổ Chức (Enterprise Migration Governance)
+
+Khi chuyển dịch mã nguồn từ kho nghiên cứu cá nhân (`fts-news-scape`) sang kho chính thức của tổ chức (`Research-FPA/news-scraper`), bắt buộc tuân thủ 4 nguyên tắc định hướng:
+
+### 1. Phân định Vai trò 2 Remote (Dual-Remote Strategy)
+- **Remote Tổ chức (`fpa` hoặc `origin` mới)**:
+  - URL: `https://github.com/Research-FPA/news-scraper.git`
+  - Vai trò: **Single Source of Truth (Nguồn chân lý duy nhất)**.
+  - Quy chuẩn: Nhánh `main` được bảo vệ, mọi thay đổi qua PR, lịch sử commit sạch, không chứa artifacts/data/credentials.
+- **Remote Cá nhân (`personal` hoặc `origin` cũ)**:
+  - URL: `https://github.com/Tuanan172-py/fts-news-scape.git`
+  - Vai trò: **Mirror / Sandbox R&D cá nhân**.
+  - Quy chuẩn: Chỉ phục vụ backup thử nghiệm độc lập; không dùng làm nguồn kéo mã chính thức cho các agent vận hành.
+
+### 2. Bất biến Danh tính Doanh nghiệp (Enterprise Identity Invariant)
+- Mọi commit trên repo tổ chức BẮT BUỘC mang thông tin định danh chính thức của nhân sự trong doanh nghiệp:
+  ```powershell
+  git config user.name "An Pham Thanh"
+  git config user.email "anpt@fpts.com.vn"
+  ```
+- **Cấm Tuyệt Đối**:
+  - Không sử dụng email cá nhân (`@gmail.com`) đẩy lên repo tổ chức để tránh lộ thông tin ngoài luồng.
+  - Không để các agent/tool tự động chèn trailer `Co-Authored-By: Claude...` hoặc tên bot AI vào commit message.
+
+### 3. Bất biến Cách ly Vùng Làm việc (Execution Isolation Invariant)
+- Toàn bộ hoạt động code, chạy pipeline và test BẮT BUỘC thực thi tại thư mục cục bộ độc lập:
+  `C:\src\news-scraper` (worktree của `C:\gitdirs\news-scape.git`).
+- TUYỆT ĐỐI KHÔNG chạy runtime hay thao tác git trực tiếp trong thư mục đồng bộ OneDrive/SharePoint để triệt tiêu nguy cơ xung đột khóa tệp (`PermissionError`) và phân mảnh lịch sử git (khớp Rule 03).
+
+### 4. Quy trình Tẩy sạch Metadata Agent trước khi Nhập kho Tổ chức
+Khi phát hiện lịch sử cũ còn vướng email cá nhân hoặc trailer Co-Authored-By, sử dụng `git-filter-repo` (đã tích hợp trong venv `C:\venvs\news-scape`) để xử lý toàn diện:
+```powershell
+& "C:\venvs\news-scape\Scripts\python.exe" -m git_filter_repo `
+  --refs <danh-sach-nhanh> `
+  --message-callback "return re.sub(br'(?m)^\s*Co-Authored-By:.*$', b'', message)" `
+  --email-callback "return b'anpt@fpts.com.vn'" `
+  --name-callback "return b'An Pham Thanh'" `
+  --force
+```
+
+---
+
+## 6. Danh Mục Kiểm Tra Tra Soát Nhanh (Audit Checklist)
 
 Bảng kiểm tra định kỳ hàng ngày dành cho quản trị viên và hệ thống kiểm toán tự động:
 
@@ -208,3 +299,4 @@ Bảng kiểm tra định kỳ hàng ngày dành cho quản trị viên và hệ
 - [ ] Nhánh làm việc đồng bộ với nhánh remote chỉ định (`up to date`).
 - [ ] Toàn bộ unit tests đạt trạng thái PASS khi chạy trên môi trường chuẩn `C:\venvs\news-scape`.
 - [ ] Mã nguồn tuân thủ đầy đủ quy chuẩn không sử dụng từ cấm thuộc Blacklist.
+- [ ] Git commit author phản ánh đúng danh tính tổ chức (`anpt@fpts.com.vn`), 0 vết Co-Authored-By AI.
