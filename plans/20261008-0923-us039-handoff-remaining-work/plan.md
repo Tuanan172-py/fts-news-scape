@@ -93,7 +93,9 @@ summary: Compact state of the ADR-0021 knowledge framework after G1-G4, and the 
 ## Risks
 
 - Operator decisions still open:
-  - Regenerate the 490 delivered user xlsx files and 156 `_master/*_L1.csv` files that contain 2,570 `code_first` articles. The US-040 fix only stops new leaks.
+  - Done 2026-10-08 (operator approved): the live delivery root `C:/data/news-scape/users_output` was regenerated with the US-040 fix. 272 files were replaced and 656 moved to `C:/data/news-scape/archive/20261008-us040-code-first-delivery`. No legitimate article was lost.
+  - Still open: the legacy copy `users/output` in the OneDrive repo folder (580 xlsx, last written 2026-10-05) still holds code-first articles. Decide whether users read that copy; if yes, apply the same staged files there.
+  - Still open: three hand-made files (`2026-09-29-OpenRouter-AnPT.xlsx` and two `2026-09-15-FPA-AnPT.xlsx`) were not checked for code-first rows.
   - Confirm the ADR-0007 live-system acceptance proof (two real derive cycles with the dead-letter count on the radar). It was never checked.
 - Known failing tests outside this work: `test_inherit.py::test_refresh_end_to_end_clusters_then_inherits` (fails on the base commit too) and four `test_periodic_reports` tests.
 - Open items inherited from stories:
