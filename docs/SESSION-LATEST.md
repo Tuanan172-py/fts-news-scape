@@ -1,37 +1,51 @@
 # Bàn giao Phiên Vận Hành (Session Handoff)
 
-**Thời điểm:** 2026-10-08 16:55 (GMT+7)  
-**Nhánh:** dev/us038 | **Story:** US-043 | **Trạng thái:** in_progress -> closing
+**Thời điểm:** 2026-10-09 13:55 (GMT+7)  
+**Nhánh:** dev/us038 | **Nhiệm vụ:** Kích hoạt Đóng Gói 4 Đợt & Xử lý Thành công Đợt W1009_OCT08 (Báo cáo Hạn ngạch Quota)
 
 ---
 
-## 1. Trọng Tâm Đã Hoàn Tất (Story US-043)
+## 1. Kết Quả Kích Hoạt Đợt Vừa Qua
 
-1. **Hiện thực hóa Lệnh Đóng Phiên Nguyên Tử (`scripts/harness_cli.py session close`):**
-   - Đóng gói toàn bộ chuỗi đóng phiên phân mảnh vào **đúng 1 lệnh CLI duy nhất**:
-     `python scripts/harness_cli.py session close --story US-XXX --summary "..." [--push]`
-   - Tự động thực thi:
-     1. Verification Proof Gate (kiểm tra test, exit code != 0 sẽ chặn đóng).
-     2. Cập nhật Story sang `implemented` (đồng bộ cả CSDL `harness.db` và tệp `docs/stories/*.md`).
-     3. Tự động commit git theo chuẩn Conventional Commits.
-     4. Ghi nhận bản ghi `trace` vào `harness.db`.
-     5. Tự động render và in Bảng Nghiệm Thu Đóng Phiên (`Harness Closure Protocol`) ra stdout.
-   - Thêm `"session-closure"` vào danh mục `CAPABILITIES` của Harness.
+1. **Đóng Gói Thành Công Cả 4 Đợt Tồn Đọng (05/10 – 08/10/2026):**
+   - Đã sinh xong manifest và task packet cho 4 ngày riêng biệt:
+     - `W1009_OCT08`: 46 bài (1 lô)
+     - `W1009_OCT07`: 125 bài (3 lô)
+     - `W1009_OCT06`: 447 bài (9 lô)
+     - `W1009_OCT05`: 317 bài (7 lô)
+   - *Tổng cộng: 935 bài trong 20 lô đã sẵn sàng trong thư mục task packet.*
 
-2. **Lớp Chốt Chặn Nhẹ C-Light Guard (`cmd_git_status`):**
-   - Bổ sung trường `has_trace_record` và `trace_warning` trong `harness_cli.py git status`.
-   - Cảnh báo rõ ràng khi commit chưa có trace mà không làm gián đoạn (hard-break) thao tác của lập trình viên con người.
+2. **Thực Thi Thành Công Đợt `W1009_OCT08` (Ngày 08/10/2026):**
+   - Phân tích và vá hoàn tất: **46/46 bài đạt chuẩn 100%** (12 bài được vá thành công qua `_r01`).
+   - Bung schema và nạp CSDL `monocle.db` thành công 46 bài.
+   - Sổ cái ghi nhận: 87.760 token (~0.0090 USD).
+   - Độ phủ ngày 2026-10-08 tăng lên **608/631 bài (96.4%)**. Số bài pending còn lại của ngày 08/10 giảm từ 123 xuống **77 bài**.
 
-3. **Cập nhật Hướng Dẫn & Quy Chuẩn:**
-   - Cập nhật [AGENTS.md](AGENTS.md) §12 và [.agents/rules/04-harness-durable-invariants.md](.agents/rules/04-harness-durable-invariants.md) §4 hướng dẫn sử dụng lệnh `session close`.
+3. **Cập Nhật Giao Hàng Excel Toàn Bộ 5 Users:**
+   - Kích hoạt `write_user_output.py --force`, ghi nhận tổng cộng **7.693 dòng final** (+24 dòng mới cho các user trong ngày 08/10):
+     - AnPT: 2.186 dòng (+7)
+     - VyPTT: 2.071 dòng (+9)
+     - UyenNNT: 1.195 dòng (+3)
+     - ThanhTD: 1.142 dòng (+2)
+     - PhoHG: 1.099 dòng (+3)
 
-4. **Kiểm Định Chất Lượng:**
-   - **13/13 tests `test_harness_cli.py` PASS**: bao gồm kiểm tra chuỗi `session close`, kiểm tra chặn khi verify gate fail, và kiểm tra C-Light trace check.
-   - **16/16 tests Knowledge Contract PASS**: `tests/test_knowledge.py` đạt 100%.
-   - **0 findings**: `harness_cli.py doc lint`.
+4. **Ghi Nhận Sự Cố Hạn Ngạch Quota Headless CLI (`agy.exe`):**
+   - Khi chuyển sang chạy đợt kế tiếp (`W1009_OCT07`), `agy.exe` báo lỗi chạm trần hạn ngạch cá nhân:
+     `RESOURCE_EXHAUSTED (code 429): Individual quota reached. Resets in 28h17m32s.`
+   - Các gói task packet cho `W1009_OCT07`, `W1009_OCT06`, `W1009_OCT05` đã được đóng gói sẵn và bảo toàn nguyên vẹn trên đĩa.
 
 ---
 
-## 2. Kế Thừa Phiên Kế Tiếp
+## 2. Kế Thừa & Hướng Dẫn Vận Hành Tiếp Theo
 
-- Các phiên làm việc và Agents tiếp theo bắt buộc sử dụng `harness_cli.py session close --story US-XXX --summary "..."` ở cuối mỗi ca để đóng phiên tự động, loại bỏ 100% hiện tượng quên ghi trace hoặc quên in bảng Closure Table.
+1. **Phương Án 1 (DSH Host / Web Presets):**
+   - Phiên DSH Web (`preset news-scape-conductor`) sử dụng kết nối service key/host riêng biệt, có thể chạy tiếp các file conductor TS đã sinh:
+     - `data/agent_tasks/article/wave_W1009_OCT07.conductor.ts`
+     - `data/agent_tasks/article/wave_W1009_OCT06.conductor.ts`
+     - `data/agent_tasks/article/wave_W1009_OCT05.conductor.ts`
+   - Sau khi chạy xong, chỉ cần gõ lệnh hoàn tất:
+     `& "C:\venvs\news-scape\Scripts\python.exe" project/scripts/article_run.py --wave <mã_wave> --finish --force`
+
+2. **Phương Án 2 (Khi Quota agy Reset hoặc đổi API Key):**
+   - Tiếp tục chạy lệnh phân tích:
+     `& "C:\venvs\news-scape\Scripts\python.exe" project/scripts/article_run.py --wave W1009_OCT07 --runner agy --analyze`

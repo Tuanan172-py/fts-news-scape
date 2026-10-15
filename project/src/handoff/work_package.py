@@ -9,6 +9,7 @@ from __future__ import annotations
 from src.core import paths
 import json
 import os
+import time
 
 WORK_PACKAGE_SCHEMA_VERSION = "1.0"
 
@@ -61,11 +62,24 @@ class WorkPackageBuilder:
 
 
 def _atomic_write(path: str, data: bytes) -> None:
-    """Ghi dữ liệu ra tệp tạm thời rồi hoán đổi nguyên tử (atomic swap)."""
+    """Ghi dữ liệu ra tệp tạm thời rồi hoán đổi nguyên tử có cơ chế thử lại."""
     tmp = f"{path}.tmp"
     with open(tmp, "wb") as f:
         f.write(data)
-    os.replace(tmp, path)
+    last_err: Exception | None = None
+    for attempt in range(4):
+        try:
+            os.replace(tmp, path)
+            return
+        except (PermissionError, OSError) as e:
+            last_err = e
+            time.sleep(0.15 * (attempt + 1))
+    try:
+        os.remove(tmp)
+    except OSError:
+        pass
+    if last_err is not None:
+        raise last_err
 
 
 def write_package(package: dict, base_dir: str | None = None) -> str:

@@ -85,11 +85,12 @@ def main(argv: list[str]) -> int:
 
     if done_aids and not args.no_archive:
         from src.agent.archive import archive_completed_tasks
-        archived_cnt = archive_completed_tasks(done_aids, args.task_dir)
-        print(f"📦 archived: {archived_cnt}/{len(done_aids)} L1 task packets → {args.task_dir}/archive/")
+        task_dir = args.task_dir or (paths.agent_tasks_dir() / "l1")
+        archived_cnt = archive_completed_tasks(done_aids, task_dir)
+        print(f"📦 archived: {archived_cnt}/{len(done_aids)} L1 task packets → {task_dir}/archive/")
 
         # Tu dong don dep cac file batch hoan tat neu tat ca cac task trong batch deu da pass
-        task_dir_path = Path(args.task_dir)
+        task_dir_path = Path(task_dir)
         done_set = set(done_aids)
         for b_file in task_dir_path.glob("l1_batch_*.task.json"):
             try:

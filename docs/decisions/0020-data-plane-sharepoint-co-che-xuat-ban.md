@@ -2,7 +2,7 @@
 
 > [!NOTE]
 > **TRẠNG THÁI: SUPERSEDED (ĐÃ THAY THẾ BỞI ADR-0023)**
-> Cơ chế xuất bản trực tiếp CSDL sang `FRA - Data/news` trong tài liệu này đã bị thay thế hoàn toàn bởi **ADR-0023: CQRS Partitioned Lakehouse trên SharePoint Sandbox news-data**. Thư mục `FRA - Data` chính thức được cách ly tuyệt đối khỏi mọi luồng ghi.
+> Cơ chế xuất bản này đã bị thay thế bởi **ADR-0023: CQRS Partitioned Lakehouse**. Thư mục `FRA - Data` được cách ly tuyệt đối khỏi luồng ghi.
 
 - **Loại tài liệu:** giải thích (explanation), ghi lại một quyết định.
 - **Ngày:** 2026-10-05 (cập nhật 2026-10-08)
@@ -105,3 +105,13 @@ Khi GitHub là nơi giữ mã, bản sao trên thư viện `FRA_DataIngestion` t
 1. Tài khoản vận hành có quyền ghi trên `sites/FRA/Data` không, và có được tạo thư mục `news/` không.
 2. Có cấp được tài khoản dịch vụ và app registration cho mức L2 không.
 3. Hạn mức dung lượng của thư viện `FRA/Data`. raw_html hiện 3,2 GB chưa nén. HTML nén zstd thường còn 10–20%, nên Bronze nén ước dưới 1 GB mỗi tháng, cần đo lại bằng gói ngày đầu tiên.
+
+## 5. Phương án đã loại
+
+- **Ghi trực tiếp SQLite lên SharePoint**: Bị loại vì xung đột khóa tệp hai chiều và hỏng CSDL khi đồng bộ.
+- **Dùng Graph API upload file đơn lẻ từng bài**: Quá tải hạn mức HTTP và phát sinh chi phí giao dịch không cần thiết.
+
+## 6. Quay lui
+
+- Khi có sự cố xuất bản, khôi phục snapshot cơ sở dữ liệu cục bộ và giữ nguyên dữ liệu nóng tại `C:\data\news-scape`.
+- Hủy bỏ các gói phân vùng lỗi bằng cách xóa snapshot tương ứng trên thư mục xuất bản tạm.

@@ -397,7 +397,7 @@ class DailyReporter:
             model_rows.append(f"| Gold Analyst | `{g['agent_provider']}` | `{g['model_used']}` | `dod_pass={g['dod_pass']}` | {g['count']} |")
         model_table = "\n".join(model_rows) if model_rows else "| — | — | — | — | 0 |"
 
-        md = f"""# 🛡️ BÁO CÁO GIÁM SÁT TOÀN DIỆN HỆ THỐNG NEWS-SCAPE
+        md = f"""# BÁO CÁO GIÁM SÁT HỆ THỐNG NEWS-SCAPE
 **Thời gian lập báo cáo:** {q_time} (Giờ VN)
 **Kỳ phân tích:** `{label}`
 

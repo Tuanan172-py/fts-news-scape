@@ -80,8 +80,9 @@ def main(argv: list[str]) -> int:
 
     if done_aids and not args.no_archive:
         from src.agent.archive import archive_completed_tasks
-        archived_cnt = archive_completed_tasks(done_aids, args.task_dir)
-        print(f"📦 archived: {archived_cnt}/{len(done_aids)} task packets → {args.task_dir}/archive/")
+        task_dir = args.task_dir or paths.agent_tasks_dir()
+        archived_cnt = archive_completed_tasks(done_aids, task_dir)
+        print(f"📦 archived: {archived_cnt}/{len(done_aids)} task packets → {task_dir}/archive/")
 
     print(f"\ningested: done={done} failed={failed}")
     # Bản ghi bị DoD loại hoặc tệp không đọc được là lỗi nạp: trả mã khác 0 để

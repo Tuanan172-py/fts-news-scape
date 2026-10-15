@@ -30,7 +30,8 @@ force_utf8_stdio()
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 CORE_PATH = PROJECT_ROOT / "assets" / "prefix" / "ARTICLE_SYSTEM_CORE.md"
 OPENROUTER_ENV = PROJECT_ROOT.parent / "openrouter" / ".env"
-DEFAULT_MODEL = "stealth/space-bunny-alpha"
+DEFAULT_MODEL = "nvidia/nemotron-3.5-lightning:free"
+FALLBACK_MODEL = "nvidia/nemotron-3.5-lightning:free"
 DEFAULT_BASE_URL = "https://openrouter.ai/api/v1"
 DEFAULT_TIMEOUT_SECONDS = 300
 DEFAULT_MAX_TOKENS = 32000
@@ -229,7 +230,7 @@ class OpenRouterRunner:
                 {"role": "system", "content": self.core_text},
                 {"role": "user", "content": user_message},
             ],
-            "reasoning": {"effort": "minimal"},
+            "reasoning": {"effort": "none"},
             "temperature": SAMPLING["temperature"],
             "seed": SAMPLING["seed"],
             "max_tokens": self.max_tokens,

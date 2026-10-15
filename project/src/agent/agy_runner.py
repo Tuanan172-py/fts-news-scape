@@ -163,6 +163,8 @@ def build_sandbox_profile(
         "- Bạn là bộ xử lý JSON thuần túy (Prompt-in, JSON-out).\n"
         "- TUYỆT ĐỐI KHÔNG GỌI BẤT KỲ CÔNG CỤ NÀO (kể cả manage_task, run_code, schedule, v.v.).\n"
         "- Trả kết quả trực tiếp dưới dạng duy nhất là mảng JSON hợp lệ chứa các bản ghi phân tích.\n"
+        "- Mã nhóm thực thể (e) BẮT BUỘC chỉ gồm đúng 1 trong 11 mã chuẩn (3 ký tự): TIC, COM, PER, FND, IDX, EXC, IND, GEO, THM, AST, INS. TUYỆT ĐỐI KHÔNG dùng tiền tố phân cấp cũ (như IND_GICS1, IND_GICS2, MACRO_GEO, MACRO_THEME). Quỹ đầu tư / ETF bắt buộc dùng mã FND.\n"
+        "- Mảng trích dẫn (c) BẮT BUỘC phải có từ 2 đến 4 chỉ số đoạn văn khác nhau (ví dụ: [0, 1] hoặc [1, 2]), không được chỉ có 1 chỉ số, và phải nằm trong phạm vi mảng p của bài viết đó (từ 0 đến len(p)-1).\n"
     )
     agent_content = frontmatter + (core_text or "") + instruction_guard
     agent_path.write_text(agent_content, encoding="utf-8")
@@ -371,8 +373,8 @@ class AgyRunner:
             ensure_ascii=False,
         ) + "\n"
 
-        # 4. Thực thi subprocess (kèm tự động thử lại nếu gặp lỗi tạm thời RETRYABLE)
-        max_attempts = 2
+        # 4. Thực thi subprocess (kèm tự động thử lại nếu gặp lỗi tạm thời RETRYABLE hoặc 429 QUOTA)
+        max_attempts = 3
         for attempt in range(max_attempts):
             if mock_subprocess:
                 proc_res = mock_subprocess(cmd, ndjson_input, env, work_dir)
@@ -412,6 +414,14 @@ class AgyRunner:
                     )
 
             err_lower = (stderr_text or "").lower()
+            is_429 = (
+                return_code != 0
+                and (
+                    "429" in err_lower
+                    or "resource_exhausted" in err_lower
+                    or "quota" in err_lower
+                )
+            )
             is_retryable = (
                 return_code != 0
                 and (
@@ -423,8 +433,9 @@ class AgyRunner:
                     or "bad gateway" in err_lower
                 )
             )
-            if is_retryable and attempt < max_attempts - 1:
-                time.sleep(3)
+            if (is_retryable or is_429) and attempt < max_attempts - 1:
+                sleep_sec = 15 if (is_429 and not mock_subprocess) else (3 if not mock_subprocess else 0.001)
+                time.sleep(sleep_sec)
                 continue
             break
 

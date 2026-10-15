@@ -37,6 +37,7 @@ def detail_html():
 @pytest.fixture
 def env(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)  # cô lập RawStore ghi data/raw_html vào tmp
+    monkeypatch.setenv("MONOCLE_DATA_DIR", str(tmp_path))
     store = ArticleStore(db_path=str(tmp_path / "t.db"))
     dedup = DedupCache(store, legacy_json_path="")
     yield dedup
