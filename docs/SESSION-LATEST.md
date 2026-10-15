@@ -1,51 +1,45 @@
 # Bàn giao Phiên Vận Hành (Session Handoff)
 
-**Thời điểm:** 2026-10-09 13:55 (GMT+7)  
-**Nhánh:** dev/us038 | **Nhiệm vụ:** Kích hoạt Đóng Gói 4 Đợt & Xử lý Thành công Đợt W1009_OCT08 (Báo cáo Hạn ngạch Quota)
+**Thời điểm:** 2026-10-15 16:30 (GMT+7)  
+**Nhánh:** dev/us038 | **Nhiệm vụ:** Fix Tồn Đọng, Nghiệm Thu DB & SharePoint, Hoàn Tất W1012_BACKLOG500
 
 ---
 
-## 1. Kết Quả Kích Hoạt Đợt Vừa Qua
+## 1. Kết Quả Thực Thi & Đã Nghiệm Thu
 
-1. **Đóng Gói Thành Công Cả 4 Đợt Tồn Đọng (05/10 – 08/10/2026):**
-   - Đã sinh xong manifest và task packet cho 4 ngày riêng biệt:
-     - `W1009_OCT08`: 46 bài (1 lô)
-     - `W1009_OCT07`: 125 bài (3 lô)
-     - `W1009_OCT06`: 447 bài (9 lô)
-     - `W1009_OCT05`: 317 bài (7 lô)
-   - *Tổng cộng: 935 bài trong 20 lô đã sẵn sàng trong thư mục task packet.*
+1. **Chuẩn hóa Codebase & Vệ sinh Git (Rule 06 & Git Invariant):**
+   - Đã xử lý từ cấm Rule 06 và emoji trang trí tại `project/src/monitor/daily_reporter.py:400`.
+   - Toàn bộ 324 tệp Python hợp lệ cú pháp AST 100%. Không có tệp conflict OneDrive (`*-DESKTOP-*` = 0).
+   - Đã đóng gói commit checkpoint `ee27491` trên nhánh `dev/us038`. Cây làm việc đạt `clean_for_closure: true`.
 
-2. **Thực Thi Thành Công Đợt `W1009_OCT08` (Ngày 08/10/2026):**
-   - Phân tích và vá hoàn tất: **46/46 bài đạt chuẩn 100%** (12 bài được vá thành công qua `_r01`).
-   - Bung schema và nạp CSDL `monocle.db` thành công 46 bài.
-   - Sổ cái ghi nhận: 87.760 token (~0.0090 USD).
-   - Độ phủ ngày 2026-10-08 tăng lên **608/631 bài (96.4%)**. Số bài pending còn lại của ngày 08/10 giảm từ 123 xuống **77 bài**.
+2. **Giải Phóng Tồn Đọng Sitemap & Cào Bù:**
+   - Đợt cào bù sitemap `capture_reconcile.py run` hoàn tất thành công 67/67 URL (`captured: 67, failed: 0`).
+   - Hàng đợi chờ cào bù sitemap đưa về **0**.
 
-3. **Cập Nhật Giao Hàng Excel Toàn Bộ 5 Users:**
-   - Kích hoạt `write_user_output.py --force`, ghi nhận tổng cộng **7.693 dòng final** (+24 dòng mới cho các user trong ngày 08/10):
-     - AnPT: 2.186 dòng (+7)
-     - VyPTT: 2.071 dòng (+9)
-     - UyenNNT: 1.195 dòng (+3)
-     - ThanhTD: 1.142 dòng (+2)
-     - PhoHG: 1.099 dòng (+3)
+3. **Hoàn Tất Dứt Điểm Đợt `W1012_BACKLOG500`:**
+   - Đã vá và nạp DB thành công qua `--finish --only ingest,verify,ledger,handoff`.
+   - Kết quả hậu kiểm:
+     - Nhận diện thực thể: **490/499 bài (98.2% ✅)**.
+     - Phân tích nội dung: **489/499 bài (98.0% ✅)**.
+     - Đã ghi sổ cái token (agy: 1.108.007 tokens, openrouter: 47.481 tokens) và ghi tệp bàn giao.
 
-4. **Ghi Nhận Sự Cố Hạn Ngạch Quota Headless CLI (`agy.exe`):**
-   - Khi chuyển sang chạy đợt kế tiếp (`W1009_OCT07`), `agy.exe` báo lỗi chạm trần hạn ngạch cá nhân:
-     `RESOURCE_EXHAUSTED (code 429): Individual quota reached. Resets in 28h17m32s.`
-   - Các gói task packet cho `W1009_OCT07`, `W1009_OCT06`, `W1009_OCT05` đã được đóng gói sẵn và bảo toàn nguyên vẹn trên đĩa.
+4. **Cập Nhật Giao Hàng Excel Toàn Bộ 5 Users:**
+   - Kích hoạt `write_user_output.py --days 7`, ghi nhận **1.036 dòng final** giao hàng cho 5 chuyên viên (AnPT=300, VyPTT=298, UyenNNT=178, ThanhTD=162, PhoHG=98) tại `C:\data\news-scape\users_output`.
+
+5. **Nghiệm Thu Kênh Xuất Bản SharePoint & Cơ Sở Dữ Liệu (ADR-0023, ADR-0024):**
+   - Đã kiểm chứng toàn bộ bộ test `pytest -k "lakehouse or publish or paths"`: **62/62 tests PASS (100%)**.
+   - DB vận hành `C:\data\news-scape\monocle.db` hoạt động ghi tốt, cách ly hoàn toàn khỏi OneDrive.
+   - Thư mục sandbox Lakehouse Parquet tại `publish_hold` đã kiểm chứng manifest `_manifest/latest.json` hợp lệ.
+   - Đã gỡ cờ dừng khẩn `AGY_STOP` (`ops_daemon.py send /unstop`).
 
 ---
 
 ## 2. Kế Thừa & Hướng Dẫn Vận Hành Tiếp Theo
 
-1. **Phương Án 1 (DSH Host / Web Presets):**
-   - Phiên DSH Web (`preset news-scape-conductor`) sử dụng kết nối service key/host riêng biệt, có thể chạy tiếp các file conductor TS đã sinh:
-     - `data/agent_tasks/article/wave_W1009_OCT07.conductor.ts`
-     - `data/agent_tasks/article/wave_W1009_OCT06.conductor.ts`
-     - `data/agent_tasks/article/wave_W1009_OCT05.conductor.ts`
-   - Sau khi chạy xong, chỉ cần gõ lệnh hoàn tất:
-     `& "C:\venvs\news-scape\Scripts\python.exe" project/scripts/article_run.py --wave <mã_wave> --finish --force`
+1. **Phân tích bài mới hôm nay (15/10/2026):**
+   - Đang có bài mới tích lũy của ngày 14/10 và 15/10. Có thể mở đợt mới:
+     `& "C:\venvs\news-scape\Scripts\python.exe" project/scripts/article_run.py --wave W10151630 --today --limit 100`
 
-2. **Phương Án 2 (Khi Quota agy Reset hoặc đổi API Key):**
-   - Tiếp tục chạy lệnh phân tích:
-     `& "C:\venvs\news-scape\Scripts\python.exe" project/scripts/article_run.py --wave W1009_OCT07 --runner agy --analyze`
+2. **Kích hoạt tự động hóa L1 trên Ops Daemon:**
+   - Daemon hiện đang sống ở mức L0 với `AGY_STOP: tắt`.
+   - Để Daemon tự động xử lý các lô bài chờ theo sensor: gõ `/level L1` trên Telegram hoặc cấu hình mandate.
