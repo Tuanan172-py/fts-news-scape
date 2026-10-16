@@ -699,6 +699,166 @@ def cmd_token(args: argparse.Namespace) -> None:
     print()
 
 
+def cmd_backlog(args: argparse.Namespace) -> None:
+    """Báo cáo toàn cảnh kho dữ liệu và phân bổ bài viết tồn đọng trong hệ thống."""
+    conn = get_db_connection()
+    try:
+        total_articles = conn.execute("SELECT COUNT(*) FROM articles").fetchone()[0]
+        gold_done = conn.execute(
+            "SELECT COUNT(DISTINCT article_id) FROM agent_outputs WHERE dod_pass = 1"
+        ).fetchone()[0]
+        llm_l1 = conn.execute(
+            "SELECT COUNT(DISTINCT article_id) FROM l1_outputs WHERE l1_source != 'code_first' AND dod_pass = 1"
+        ).fetchone()[0]
+        code_first_l1 = conn.execute(
+            "SELECT COUNT(DISTINCT article_id) FROM l1_outputs WHERE l1_source = 'code_first'"
+        ).fetchone()[0]
+
+        has_clusters = conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='cluster_members'"
+        ).fetchone()
+        cluster_copies = (
+            conn.execute("SELECT COUNT(*) FROM cluster_members WHERE role='copy'").fetchone()[0]
+            if has_clusters else 0
+        )
+
+        gold_pending = total_articles - gold_done
+
+        work_items_raw = conn.execute(
+            "SELECT status, COUNT(*) FROM work_items GROUP BY status"
+        ).fetchall()
+        work_items = {r[0]: r[1] for r in work_items_raw}
+
+        from scripts.article_pack import watchlist_universe, tier_of
+        from src.agent.entities import load_registry
+
+        reg = load_registry()
+        watched, industries = watchlist_universe(reg)
+
+        rows_pending = conn.execute("""
+            SELECT a.title FROM articles a
+            WHERE NOT EXISTS (
+                SELECT 1 FROM agent_outputs g 
+                WHERE g.article_id = a.url_title_hash AND g.dod_pass = 1
+            )
+        """).fetchall()
+
+        tier1_cnt = 0
+        tier2_cnt = 0
+        for r in rows_pending:
+            t, _ = tier_of(r[0], reg, watched, industries)
+            if t == 1:
+                tier1_cnt += 1
+            else:
+                tier2_cnt += 1
+
+        sql_summary_period = """
+        SELECT 
+            CASE 
+                WHEN a.published_at IS NULL OR a.published_at = '' THEN 'Khuyết ngày đăng'
+                WHEN substr(a.published_at, 1, 10) >= '2026-10-09' THEN substr(a.published_at, 1, 10)
+                WHEN substr(a.published_at, 1, 7) = '2026-10' THEN '2026-10 (01->08)'
+                WHEN substr(a.published_at, 1, 7) = '2026-09' THEN '2026-09'
+                WHEN substr(a.published_at, 1, 7) = '2026-08' THEN '2026-08'
+                ELSE 'Lịch sử (< 2026-08)'
+            END as period_group,
+            COUNT(*) as total,
+            SUM(CASE WHEN EXISTS (SELECT 1 FROM agent_outputs g WHERE g.article_id = a.url_title_hash AND g.dod_pass = 1) THEN 1 ELSE 0 END) as done,
+            SUM(CASE WHEN NOT EXISTS (SELECT 1 FROM agent_outputs g WHERE g.article_id = a.url_title_hash AND g.dod_pass = 1) THEN 1 ELSE 0 END) as pending
+        FROM articles a
+        GROUP BY period_group
+        ORDER BY 
+            CASE 
+                WHEN period_group = 'Khuyết ngày đăng' THEN '0000-00-00'
+                WHEN period_group LIKE 'Lịch sử%' THEN '0001-01-01'
+                ELSE period_group
+            END DESC
+        """
+        period_rows = conn.execute(sql_summary_period).fetchall()
+
+        sql_domain = """
+        SELECT 
+            a.source_domain,
+            COUNT(*) as total,
+            SUM(CASE WHEN EXISTS (SELECT 1 FROM agent_outputs g WHERE g.article_id = a.url_title_hash AND g.dod_pass = 1) THEN 1 ELSE 0 END) as done,
+            SUM(CASE WHEN NOT EXISTS (SELECT 1 FROM agent_outputs g WHERE g.article_id = a.url_title_hash AND g.dod_pass = 1) THEN 1 ELSE 0 END) as pending
+        FROM articles a
+        GROUP BY a.source_domain
+        ORDER BY pending DESC
+        """
+        domain_rows = conn.execute(sql_domain).fetchall()
+
+    finally:
+        conn.close()
+
+    sep = "=" * 80
+    print(sep)
+    print(" TOÀN CẢNH KHO DỮ LIỆU & BẢN ĐỒ BÀI VIẾT TỒN ĐỌNG (WAREHOUSE BACKLOG RADAR)")
+    print(sep)
+    print("1. TỔNG QUAN KHO & CÁC TẦNG DỮ LIỆU:")
+    print(f"   • Tổng số bài thu thập trong kho (articles): {total_articles:,} bài")
+    pct_gold = (gold_done / total_articles * 100) if total_articles else 0
+    pct_pending = (gold_pending / total_articles * 100) if total_articles else 0
+    print(f"   • Đã phân tích Gold đạt chuẩn DoD          : {gold_done:,} bài ({pct_gold:.1f}%)")
+    print(f"   • TỒN ĐỌNG CHƯA PHÂN TÍCH GOLD (PENDING)   : {gold_pending:,} bài ({pct_pending:.1f}%)")
+    pct_l1 = (llm_l1 / total_articles * 100) if total_articles else 0
+    print(f"   • Đã phân tích L1 bằng LLM đạt chuẩn       : {llm_l1:,} bài ({pct_l1:.1f}%)")
+    print(f"   • L1 Code-First nạp nhanh (chưa qua LLM)   : {code_first_l1:,} bài")
+    print(f"   • Bài kế thừa cụm tin trùng (cluster copy) : {cluster_copies:,} bài")
+    print(f"   • Trạng thái work_items (hàng đợi)         : " + ", ".join(f"{k}={v:,}" for k, v in work_items.items()))
+    print()
+
+    print("2. PHÂN LOẠI THEO MỨC ĐỘ ƯU TIÊN (PRIORITY TIERS):")
+    pct_t1 = (tier1_cnt / gold_pending * 100) if gold_pending else 0
+    pct_t2 = (tier2_cnt / gold_pending * 100) if gold_pending else 0
+    print(f"   • TIER 1 (Ưu tiên cao nhất - Watchlist & Vĩ mô khẩn) : {tier1_cnt:,} bài ({pct_t1:.1f}%)")
+    print(f"   • TIER 2 & 3 (Hàng đợi nền - Tin thị trường chung)   : {tier2_cnt:,} bài ({pct_t2:.1f}%)")
+    print()
+
+    print("3. PHÂN BỔ TỒN ĐỌNG THEO TRỤC THỜI GIAN:")
+    print(f"   {'Giai đoạn / Ngày':<24} | {'Tổng bài':>10} | {'Đã xử lý':>10} | {'Tồn đọng':>10} | {'Tỷ lệ tồn':>10}")
+    print(f"   {'-'*24}-+-{'-'*10}-+-{'-'*10}-+-{'-'*10}-+-{'-'*10}")
+    for r in period_rows:
+        grp = r[0]
+        tot = r[1]
+        dn = r[2] or 0
+        pnd = r[3] or 0
+        ratio = (pnd / tot * 100) if tot else 0
+        print(f"   {grp:<24} | {tot:>10,d} | {dn:>10,d} | {pnd:>10,d} | {ratio:>9.1f}%")
+    print()
+
+    print("4. PHÂN BỔ TỒN ĐỌNG THEO NGUỒN THU THẬP (SOURCE DOMAINS):")
+    print(f"   {'Tên miền (Domain)':<28} | {'Tổng bài':>10} | {'Đã xử lý':>10} | {'Tồn đọng':>10} | {'Tỷ lệ tồn':>10}")
+    print(f"   {'-'*28}-+-{'-'*10}-+-{'-'*10}-+-{'-'*10}-+-{'-'*10}")
+    for r in domain_rows[:10]:
+        dom = r[0] or "N/A"
+        tot = r[1]
+        dn = r[2] or 0
+        pnd = r[3] or 0
+        ratio = (pnd / tot * 100) if tot else 0
+        print(f"   {dom:<28} | {tot:>10,d} | {dn:>10,d} | {pnd:>10,d} | {ratio:>9.1f}%")
+    print()
+
+    print("5. CHIẾN LƯỢC ĐIỀU PHỐI ĐỢT CUỐN CHIẾU (RECOMMENDED ROLLING WAVES):")
+    est_cost = (gold_pending / 1000) * 0.23
+    est_waves = (gold_pending + 499) // 500
+    print(f"   • Định mức chi phí dự toán (Gemini 3.8 Flash) : ~${est_cost:.2f} USD cho {gold_pending:,} bài")
+    print(f"   • Quy mô đợt khuyến nghị (Wave Size)         : 500 bài / wave (~{est_waves} waves)")
+    print()
+    print("   [Pha 1] Xử lý dữ liệu nóng gần nhất theo ngày (Tháng 10/2026):")
+    print('      & "C:\\venvs\\news-scape\\Scripts\\python.exe" project/scripts/article_run.py --wave W_OCT15 --date 2026-10-15 --runner agy')
+    print('      & "C:\\venvs\\news-scape\\Scripts\\python.exe" project/scripts/article_run.py --wave W_OCT15 --runner agy --analyze --concurrency 1')
+    print('      & "C:\\venvs\\news-scape\\Scripts\\python.exe" project/scripts/article_run.py --wave W_OCT15 --finish --force')
+    print('      & "C:\\venvs\\news-scape\\Scripts\\python.exe" project/scripts/write_user_output.py --date 2026-10-15 --force')
+    print()
+    print("   [Pha 2] Xử lý gom đợt lớn tồn đọng (500 bài / wave):")
+    print('      & "C:\\venvs\\news-scape\\Scripts\\python.exe" project/scripts/article_run.py --wave W_BACKLOG500 --limit 500 --runner agy')
+    print('      & "C:\\venvs\\news-scape\\Scripts\\python.exe" project/scripts/article_run.py --wave W_BACKLOG500 --runner agy --analyze --concurrency 1')
+    print('      & "C:\\venvs\\news-scape\\Scripts\\python.exe" project/scripts/article_run.py --wave W_BACKLOG500 --finish --force')
+    print('      & "C:\\venvs\\news-scape\\Scripts\\python.exe" project/scripts/write_user_output.py --force')
+    print(sep)
+
+
 def cmd_users(args: argparse.Namespace) -> None:
     """Quan sát và phát hiện các thay đổi đăng ký người dùng mới / thiếu hụt thực thể."""
     print(f"================================================================================")
@@ -761,6 +921,9 @@ def main() -> None:
     # Lệnh users
     subparsers.add_parser("users", help="Quan sát và tra soát trạng thái người dùng & danh mục theo dõi.")
 
+    # Lệnh backlog
+    subparsers.add_parser("backlog", help="Quan sát toàn cảnh kho dữ liệu và phân bổ bài viết tồn đọng.")
+
     args = parser.parse_args()
     if args.command == "status":
         cmd_status(args)
@@ -768,7 +931,10 @@ def main() -> None:
         cmd_token(args)
     elif args.command == "users":
         cmd_users(args)
+    elif args.command == "backlog":
+        cmd_backlog(args)
 
 
 if __name__ == "__main__":
     main()
+

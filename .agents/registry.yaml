@@ -239,13 +239,13 @@ agents:
     class: operator
     status: active
     entrypoint: "project/scripts/pipeline_radar.py"
-    cli: 'scripts/pipeline_radar.py status|users|token [--date <date>]'
+    cli: 'scripts/pipeline_radar.py status|users|token|backlog [--date <date>]'
     io_boundary:
       read:  ["data/monocle.db (mode=ro)", "data/agent_tasks/article/**", "data/agent_outputs_article/**"]
       write: ["stdout (gợi ý lệnh copy-paste)"]
     responsibility: >-
       Trinh sát điểm chạm Article Lane: độ tươi cào tin, quyền ghi DB, trạng thái đợt gần nhất
-      theo vòng đời, số bài chờ phân tích; in đúng một lệnh kế tiếp. Token chỉ báo cáo, không so
+      theo vòng đời, số bài chờ phân tích, bức tranh kho dữ liệu & phân bổ tồn đọng; in đúng một lệnh kế tiếp. Token chỉ báo cáo, không so
       với ngưỡng nào. Không tự chạy hành động — chỉ gợi ý.
     cost_budget: { tokens_per_item: 0 }
     owner_rules: ["04-harness-durable-invariants"]
