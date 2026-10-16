@@ -1,45 +1,44 @@
 # Bàn giao Phiên Vận Hành (Session Handoff)
 
-**Thời điểm:** 2026-10-15 16:30 (GMT+7)  
-**Nhánh:** dev/us038 | **Nhiệm vụ:** Fix Tồn Đọng, Nghiệm Thu DB & SharePoint, Hoàn Tất W1012_BACKLOG500
+**Thời điểm:** 2026-10-16 14:25 (GMT+7)  
+**Nhánh:** dev/us038 | **Nhiệm vụ:** Vận Hành Toàn Tuyến Article Lane Ngày 16/10/2026
 
 ---
 
-## 1. Kết Quả Thực Thi & Đã Nghiệm Thu
+## 1. Kết Quả Vận Hành Ngày 16/10/2026
 
-1. **Chuẩn hóa Codebase & Vệ sinh Git (Rule 06 & Git Invariant):**
-   - Đã xử lý từ cấm Rule 06 và emoji trang trí tại `project/src/monitor/daily_reporter.py:400`.
-   - Toàn bộ 324 tệp Python hợp lệ cú pháp AST 100%. Không có tệp conflict OneDrive (`*-DESKTOP-*` = 0).
-   - Đã đóng gói commit checkpoint `ee27491` trên nhánh `dev/us038`. Cây làm việc đạt `clean_for_closure: true`.
+1. **Chuẩn Bị & Đóng Gói Đợt `W1016_DAY`:**
+   - Kiểm tra prefix: cache hit `b7cd7e93820adc5e` khớp catalog 100%.
+   - Đóng gói 325 bài viết mới trong ngày vào 7 lô chuẩn (tối đa 50 bài/lô).
 
-2. **Giải Phóng Tồn Đọng Sitemap & Cào Bù:**
-   - Đợt cào bù sitemap `capture_reconcile.py run` hoàn tất thành công 67/67 URL (`captured: 67, failed: 0`).
-   - Hàng đợi chờ cào bù sitemap đưa về **0**.
+2. **Thực Thi Phân Tích Nhận Thức Mô Hình (`agy` Runner):**
+   - Lượt 1: Phân tích 7 lô, trích xuất 199 bài.
+   - Lượt 2 (Gói vá `_r01`): Phân tích tự động 7 lô vá, trích xuất thêm 125 bài.
+   - Tổng cộng trích xuất đạt: **324/325 bài (99.7%)**.
 
-3. **Hoàn Tất Dứt Điểm Đợt `W1012_BACKLOG500`:**
-   - Đã vá và nạp DB thành công qua `--finish --only ingest,verify,ledger,handoff`.
-   - Kết quả hậu kiểm:
-     - Nhận diện thực thể: **490/499 bài (98.2% ✅)**.
-     - Phân tích nội dung: **489/499 bài (98.0% ✅)**.
-     - Đã ghi sổ cái token (agy: 1.108.007 tokens, openrouter: 47.481 tokens) và ghi tệp bàn giao.
+3. **Nghiệm Thu Hậu Kiểm & Nạp CSDL `monocle.db`:**
+   - **Nhận diện thực thể:** Đạt **324/325 bài (99.7% ✅)**.
+   - **Phân tích nội dung:** Đạt **323/325 bài (99.4% ✅)**.
+   - DoD Gatekeeper: `done=323, failed=0`. Vượt ngưỡng hoàn tất ($\ge 90\%$).
+   - Sổ cái ghi nhận: 714.283 tokens (~0.0764 USD).
 
-4. **Cập Nhật Giao Hàng Excel Toàn Bộ 5 Users:**
-   - Kích hoạt `write_user_output.py --days 7`, ghi nhận **1.036 dòng final** giao hàng cho 5 chuyên viên (AnPT=300, VyPTT=298, UyenNNT=178, ThanhTD=162, PhoHG=98) tại `C:\data\news-scape\users_output`.
+4. **Xuất Bản Báo Cáo Giao Hàng Excel (16/10/2026):**
+   - Kích hoạt `write_user_output.py --date 2026-10-16 --force`, hoàn tất **249 dòng final** cho 5 chuyên viên tại `C:\data\news-scape\users_output`:
+     - AnPT: 74 dòng
+     - VyPTT: 73 dòng
+     - ThanhTD: 39 dòng
+     - UyenNNT: 37 dòng
+     - PhoHG: 26 dòng
 
-5. **Nghiệm Thu Kênh Xuất Bản SharePoint & Cơ Sở Dữ Liệu (ADR-0023, ADR-0024):**
-   - Đã kiểm chứng toàn bộ bộ test `pytest -k "lakehouse or publish or paths"`: **62/62 tests PASS (100%)**.
-   - DB vận hành `C:\data\news-scape\monocle.db` hoạt động ghi tốt, cách ly hoàn toàn khỏi OneDrive.
-   - Thư mục sandbox Lakehouse Parquet tại `publish_hold` đã kiểm chứng manifest `_manifest/latest.json` hợp lệ.
-   - Đã gỡ cờ dừng khẩn `AGY_STOP` (`ops_daemon.py send /unstop`).
+5. **Cào Bù & Vệ Sinh Kho:**
+   - Cào bù thành công thêm 10/10 URL sitemap còn thiếu.
+   - Độ tươi cào tin duy trì mức 🟢 Tươi mới (1 phút trước).
+   - Cây mã đạt chuẩn `clean_for_closure: true`.
 
 ---
 
 ## 2. Kế Thừa & Hướng Dẫn Vận Hành Tiếp Theo
 
-1. **Phân tích bài mới hôm nay (15/10/2026):**
-   - Đang có bài mới tích lũy của ngày 14/10 và 15/10. Có thể mở đợt mới:
-     `& "C:\venvs\news-scape\Scripts\python.exe" project/scripts/article_run.py --wave W10151630 --today --limit 100`
-
-2. **Kích hoạt tự động hóa L1 trên Ops Daemon:**
-   - Daemon hiện đang sống ở mức L0 với `AGY_STOP: tắt`.
-   - Để Daemon tự động xử lý các lô bài chờ theo sensor: gõ `/level L1` trên Telegram hoặc cấu hình mandate.
+1. **Giám sát tự động:**
+   - `ops_daemon` đang hoạt động ở mức L0, cào tin liên tục theo thời gian thực.
+   - Cuối ngày có thể chạy thêm 1 wave nhỏ (~20-30 bài cào thêm chiều nay) nếu cần bao phủ 100% trước giờ đóng phiên.
