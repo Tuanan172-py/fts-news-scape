@@ -1,44 +1,42 @@
 # Bàn giao Phiên Vận Hành (Session Handoff)
 
-**Thời điểm:** 2026-10-16 14:25 (GMT+7)  
-**Nhánh:** dev/us038 | **Nhiệm vụ:** Vận Hành Toàn Tuyến Article Lane Ngày 16/10/2026
+**Thời điểm:** 2026-10-16 14:45 (GMT+7)  
+**Nhánh:** dev/us038 | **Nhiệm vụ:** Thiết Lập Skill & Radar Giám Sát Toàn Cảnh Kho Dữ Liệu Cho Operator
 
 ---
 
-## 1. Kết Quả Vận Hành Ngày 16/10/2026
+## 1. Kết Quả Phiên Làm Việc
 
-1. **Chuẩn Bị & Đóng Gói Đợt `W1016_DAY`:**
-   - Kiểm tra prefix: cache hit `b7cd7e93820adc5e` khớp catalog 100%.
-   - Đóng gói 325 bài viết mới trong ngày vào 7 lô chuẩn (tối đa 50 bài/lô).
+1. **Bổ Sung Lệnh Trinh Sát Kho Dữ Liệu (`pipeline_radar.py backlog`):**
+   - Đã tích hợp lệnh `pipeline_radar.py backlog` vào bộ công cụ radar trung tâm, tuân thủ nguyên tắc Zero-Probe (Rule 08).
+   - In tức thời bức tranh toàn cảnh kho CSDL, phân tầng dữ liệu, tỷ lệ tồn đọng theo Tiers ưu tiên, trục thời gian, nguồn tin và lộ trình đợt cuốn chiếu mẫu.
 
-2. **Thực Thi Phân Tích Nhận Thức Mô Hình (`agy` Runner):**
-   - Lượt 1: Phân tích 7 lô, trích xuất 199 bài.
-   - Lượt 2 (Gói vá `_r01`): Phân tích tự động 7 lô vá, trích xuất thêm 125 bài.
-   - Tổng cộng trích xuất đạt: **324/325 bài (99.7%)**.
+2. **Xây Dựng Kỹ Năng Quản Trị Hệ Thống (`warehouse-backlog-observability`):**
+   - Đã tạo tệp kỹ năng chuẩn: [`.agents/skills/warehouse-backlog-observability/SKILL.md`](../.agents/skills/warehouse-backlog-observability/SKILL.md).
+   - Thiết lập ranh giới phân quyền rõ ràng:
+     - **Operator:** Kiểm soát chiến lược kho dữ liệu, cấp hạn ngạch, ấn định ngân sách token, duyệt lộ trình 4 pha.
+     - **Conductor:** Thực thi chiến thuật từng wave (pack -> analyze -> repair -> finish -> deliver).
+   - Đồng bộ hóa [`.agents/skills/backlog-article-workflow/SKILL.md`](../.agents/skills/backlog-article-workflow/SKILL.md) và [`.agents/registry.yaml`](../.agents/registry.yaml).
 
-3. **Nghiệm Thu Hậu Kiểm & Nạp CSDL `monocle.db`:**
-   - **Nhận diện thực thể:** Đạt **324/325 bài (99.7% ✅)**.
-   - **Phân tích nội dung:** Đạt **323/325 bài (99.4% ✅)**.
-   - DoD Gatekeeper: `done=323, failed=0`. Vượt ngưỡng hoàn tất ($\ge 90\%$).
-   - Sổ cái ghi nhận: 714.283 tokens (~0.0764 USD).
-
-4. **Xuất Bản Báo Cáo Giao Hàng Excel (16/10/2026):**
-   - Kích hoạt `write_user_output.py --date 2026-10-16 --force`, hoàn tất **249 dòng final** cho 5 chuyên viên tại `C:\data\news-scape\users_output`:
-     - AnPT: 74 dòng
-     - VyPTT: 73 dòng
-     - ThanhTD: 39 dòng
-     - UyenNNT: 37 dòng
-     - PhoHG: 26 dòng
-
-5. **Cào Bù & Vệ Sinh Kho:**
-   - Cào bù thành công thêm 10/10 URL sitemap còn thiếu.
-   - Độ tươi cào tin duy trì mức 🟢 Tươi mới (1 phút trước).
-   - Cây mã đạt chuẩn `clean_for_closure: true`.
+3. **Hiện Trạng Toàn Hệ Thống Tính Đến 16/10/2026:**
+   - **Tổng số bài trong kho:** 31.704 bài
+   - **Đã phân tích Gold (DoD pass):** 9.028 bài (28,5%)
+   - **Tồn đọng chờ LLM (Pending):** 22.676 bài (71,5%)
+   - **Tier 1 (Watchlist & Vĩ mô khẩn):** 11.367 bài (50,1%)
+   - **Tier 2 & 3 (Hàng đợi nền):** 11.309 bài (49,9%)
+   - **Dự toán chi phí giải phóng toàn bộ (Gemini 3.8 Flash):** ~$5,22 USD (~46 waves).
 
 ---
 
-## 2. Kế Thừa & Hướng Dẫn Vận Hành Tiếp Theo
+## 2. Lệnh Trinh Sát & Vận Hành Chuẩn Dành Cho Operator
 
-1. **Giám sát tự động:**
-   - `ops_daemon` đang hoạt động ở mức L0, cào tin liên tục theo thời gian thực.
-   - Cuối ngày có thể chạy thêm 1 wave nhỏ (~20-30 bài cào thêm chiều nay) nếu cần bao phủ 100% trước giờ đóng phiên.
+```powershell
+# 1. Soi toàn cảnh kho dữ liệu và phân bổ tồn đọng (0-token):
+& "C:\venvs\news-scape\Scripts\python.exe" project/scripts/pipeline_radar.py backlog
+
+# 2. Soi trạng thái Article Lane và điểm chạm hôm nay:
+& "C:\venvs\news-scape\Scripts\python.exe" project/scripts/pipeline_radar.py status
+
+# 3. Kích hoạt Conductor chạy cuốn chiếu đợt 500 bài:
+& "C:\venvs\news-scape\Scripts\python.exe" project/scripts/article_run.py --wave W_BACKLOG500 --limit 500 --runner agy
+```
