@@ -1,7 +1,7 @@
 # Bàn giao Phiên Vận Hành (Session Handoff)
 
-**Thời điểm:** 2026-10-19 16:55 (GMT+7)  
-**Nhánh:** dev/us038 | **Nhiệm vụ:** Rà Soát Automate & Xử Lý Cuốn Chiếu 1.500 Bài Backlog (Runner AGY)
+**Thời điểm:** 2026-10-19 17:28 (GMT+7)  
+**Nhánh:** dev/us038 | **Nhiệm vụ:** Rà Soát Automate & Xử Lý Cuốn Chiếu 2.000 Bài Backlog (Runner AGY)
 
 ---
 
@@ -60,27 +60,32 @@ Thực thi tuần tự các đợt 500 bài pending theo lệnh của Operator q
 | **`W_BACKLOG_500_01`** | 500 | 300 (60.0%) | 270 + 228 + 2 = **499** | **99.8% ✅** | 1.120.385 | ~$0.1201 | 499 bài |
 | **`W_BACKLOG_500_02`** | 500 | 263 (52.6%) | 333 + 166 + 1 = **500** | **100.0% ✅** | 993.577 | ~$0.1084 | 499 bài |
 | **`W_BACKLOG_500_03`** | 499 | 301 (60.3%) | 351 + 146 + 2 = **499** | **100.0% ✅** | 960.047 | ~$0.1039 | 499 bài |
-| **TỔNG 3 ĐỢT** | **1.499 bài** | **864 bài (57.6%)** | **1.498 bài** | **99.9%** | **3.074.009** | **~$0.3324** | **1.497 bài** |
+| **`W_BACKLOG_500_04`** | 499 | 262 (52.5%) | 308 + 185 + 22 + 9 = **499** | **100.0% ✅** | 1.192.072 | ~$0.1221 | 499 bài |
+| **TỔNG 4 ĐỢT** | **1.998 bài** | **1.126 bài (56.4%)** | **1.997 bài** | **99.9%** | **4.266.081** | **~$0.4545** | **1.996 bài** |
 
 ### Cập Nhật Deliverables Cho 5 Chuyên Viên Phân Tích
-Đã chạy `write_user_output.py --force`, cập nhật **12.968 dòng final** qua các file `.xlsx` cho 5 chuyên viên:
-- **AnPT**: **3.761 dòng final** (+136 dòng)
-- **VyPTT**: **3.664 dòng final** (+120 dòng)
-- **UyenNNT**: **2.022 dòng final** (+44 dòng)
-- **ThanhTD**: **1.935 dòng final** (+43 dòng)
-- **PhoHG**: **1.586 dòng final** (+34 dòng)
+Đã chạy `write_user_output.py --force`, cập nhật **13.314 dòng final** (+346 dòng) qua các file `.xlsx` cho 5 chuyên viên:
+- **AnPT**: **3.860 dòng final** (+99 dòng)
+- **VyPTT**: **3.774 dòng final** (+110 dòng)
+- **UyenNNT**: **2.079 dòng final** (+57 dòng)
+- **ThanhTD**: **1.981 dòng final** (+46 dòng)
+- **PhoHG**: **1.620 dòng final** (+34 dòng)
 
-### Hiện Trạng Kho Sau 3 Đợt Cuốn Chiếu
-- **Tổng số bài đã phân tích Gold**: **16.067 bài (~47.6% toàn kho)** (tăng từ 14.543 bài lúc đầu ngày).
-- **Tồn đọng còn lại**: **16.843 bài** (giảm 1.817 bài so với 18.660 bài).
+### Hiện Trạng Kho Sau 4 Đợt Cuốn Chiếu
+- **Tổng số bài đã phân tích Gold**: **16.570 bài (~49.1% toàn kho)** (tăng từ 14.543 bài lúc đầu ngày).
+- **Tồn đọng còn lại**: **16.381 bài** (đã giải phóng 2.279 bài so với 18.660 bài).
 
 ---
 
-## 4. Trạng Thái Codebase & Bàn Giao
+## 4. Cải Tiến Kiến Trúc & Kiểm Định Chất Lượng
 
-1. **Bộ Kiểm Thử**:
-   - 63/63 tests PASS (`test_ops_core.py`, `test_ops_runtime.py`) trong 20.6s.
+1. **Bản Vá Nâng Cấp Tự Động Gói Công Việc (Auto-Upgrade Legacy Work Package)**:
+   - *Nguyên nhân*: Các bài viết cũ có `work_package` v1.0 tạo từ tháng 09/2026 mang `raw_sha256` của bản cào sơ khởi. Khi trang web được Bronze re-crawl, `raw_sha256` trên đĩa thay đổi khiến `verify_preconditions` báo lỗi `raw_sha256 mismatch (integrity)` khi nạp vào DB.
+   - *Giải pháp*: Cập nhật `AgentRunner._register_article_lane_item` và `ingest_output` trong `src/agent/runner.py`: Tự động nhận diện các gói công việc cũ (`work_package_version != "1.1"`), nâng cấp tức thì lên bản 1.1 dựa trên nội dung Silver chuẩn và đồng bộ `work_items` table.
+   - *Kiểm chứng*: Thêm unit test `test_runner_ingest_upgrades_legacy_work_package`. 100% 499 bài của đợt 4 nạp DB sạch sẽ (`ingested: done=499 failed=0`).
+2. **Bộ Kiểm Thử**:
+   - 79/79 tests PASS (`test_ops_core.py`, `test_ops_runtime.py`, `test_agent_infra.py`) trong 19.4s.
    - AST syntax validation đạt chuẩn Google Python Style.
-2. **Quy Chuẩn Git**:
+3. **Quy Chuẩn Git**:
    - Cây làm việc sạch sẽ, commit chuẩn Conventional Commits kèm mã `(US-038)`.
    - Sẵn sàng đóng phiên (`clean_for_closure: true`).

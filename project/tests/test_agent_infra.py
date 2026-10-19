@@ -246,3 +246,28 @@ def test_export_embeds_l1_entity_ids(tmp_path):
     assert exported[0]["l1_entities"] == ["TICKER:HPG", "TICKER:VCB"]
     packet = json.loads(open(exported[0]["path"], encoding="utf-8").read())
     assert packet["input"]["l1_entities"] == ["TICKER:HPG", "TICKER:VCB"]
+
+
+def test_runner_ingest_upgrades_legacy_work_package(tmp_path):
+    """Gói 1.0 cũ có raw_sha256 lệch đĩa phải tự nâng cấp sang bản 1.1 để nạp thành công."""
+    store = _store(tmp_path)
+    wp, wp_path, sha = _make_wp(tmp_path, article_id="art_legacy")
+    # Giả lập raw_html bị thay đổi trên đĩa khiến raw_sha256 trong gói cũ bị lệch
+    wp["raw_sha256"] = "outdated_sha_from_old_scrape"
+    with open(wp_path, "w", encoding="utf-8") as f:
+        json.dump(wp, f)
+
+    Catalog(store).enqueue("art_legacy", "outdated_sha_from_old_scrape", "cafef.vn", wp_path, "NEW")
+    with store.connect() as conn:
+        conn.execute(
+            "INSERT INTO articles (url_title_hash, url, title, source_domain, content_text, published_at, fetched_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            ("art_legacy", "https://cafef.vn/x.chn", "Tin cu", "cafef.vn", CLEANED, "2026-09-21T10:00:00+07:00", "2026-09-21T10:05:00+07:00")
+        )
+        conn.commit()
+
+    runner = AgentRunner(store, task_dir=str(tmp_path / "tasks"))
+    out = _make_output(article_id="art_legacy")
+    res = runner.ingest_output(out)
+    assert res["dod_pass"] is True
+    assert res["ok"] is True

@@ -141,6 +141,14 @@ class AgentRunner:
                 conn.commit()
                 cur = conn.execute("SELECT * FROM work_items WHERE article_id=?", (article_id,))
                 row = cur.fetchone()
+            elif row["package_path"] != rel_path or row["raw_sha256"] != raw_sha256:
+                conn.execute(
+                    "UPDATE work_items SET raw_sha256=?, package_path=? WHERE id=?",
+                    (raw_sha256, rel_path, row["id"]),
+                )
+                conn.commit()
+                cur = conn.execute("SELECT * FROM work_items WHERE id=?", (row["id"],))
+                row = cur.fetchone()
             return dict(row) if row else None
         finally:
             conn.close()
@@ -334,6 +342,17 @@ class AgentRunner:
             wp = self._load_work_package(item["package_path"])
         except (OSError, json.JSONDecodeError) as e:
             return {"ok": False, "article_id": article_id, "reason": f"package_unreadable: {e}"}
+
+        # Nếu là gói cũ (chưa đạt chuẩn Article Lane 1.1), tự dựng lại sang bản 1.1 (ADR 0018)
+        if wp.get("work_package_version") != self.WORK_PACKAGE_VERSION:
+            upgraded = self._register_article_lane_item(article_id)
+            if upgraded:
+                item = upgraded
+                raw_sha256 = item["raw_sha256"]
+                try:
+                    wp = self._load_work_package(item["package_path"])
+                except (OSError, json.JSONDecodeError) as e:
+                    return {"ok": False, "article_id": article_id, "reason": f"package_unreadable: {e}"}
 
         # Preconditions (guardrail) rồi DoD.
         pre_ok, pre_reasons = verify_preconditions(wp)
