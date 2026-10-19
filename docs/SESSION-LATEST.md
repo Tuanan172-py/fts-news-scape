@@ -1,7 +1,7 @@
 # Bàn giao Phiên Vận Hành (Session Handoff)
 
-**Thời điểm:** 2026-10-19 10:40 (GMT+7)  
-**Nhánh:** dev/us038 | **Nhiệm vụ:** Rà Soát Quy Trình Automate Hàng Ngày & Tự Chủ Hóa Article Lane (Mandate L1)
+**Thời điểm:** 2026-10-19 15:52 (GMT+7)  
+**Nhánh:** dev/us038 | **Nhiệm vụ:** Rà Soát Automate Hàng Ngày & Xử Lý Cuốn Chiếu 500 Bài Backlog (Runner AGY)
 
 ---
 
@@ -47,15 +47,39 @@ Toàn bộ bài đăng trong 2 ngày nghỉ cuối tuần đã được đối c
    - Khởi động lại task `\news-scape-ops` để nạp mã mới vào tiến trình `pythonw.exe`.
    - Đợt `W10191035` gom thành công 3 bài hợp lệ còn sót của ngày 18/10, hoàn tất nạp DB (3/3 bài, 100%).
    - Sensor chuyển sạch sẽ: `per_date: [('2026-10-18', 0), ('2026-10-19', 105)]` $\rightarrow$ `target_date = 2026-10-19`.
-   - Đợt `W10191037` cho ngày hôm nay **19/10/2026 (99 bài, 2 lô song song)** đã tự động mở và đang xử lý trơn tru ở mức tự chủ L1.
+   - Đợt `W10191037` cho ngày hôm nay **19/10/2026 (99 bài, 2 lô song song)** đã tự động mở và nạp DB đạt **99/99 bài (100.0%)**.
 
 ---
 
-## 3. Trạng Thái Codebase & Bàn Giao
+## 3. Vận Hành Giải Phóng Tồn Đọng Cuốn Chiếu (Đợt W_BACKLOG_500_01)
+
+Thực thi theo yêu cầu của Operator: `xử lý tuần tự 500 bài pending 1 lượt`:
+- **Mã đợt:** `W_BACKLOG_500_01` (Runner `agy`, concurrency 2).
+- **Khối lượng:** 500 bài đóng gói (trong đó có **300 bài Tier 1** ưu tiên cao nhất: Watchlist 5 chuyên viên + Biến động vĩ mô khẩn).
+- **Tiến độ phân tích:**
+  - Lượt 1: 270 bài.
+  - Vòng vá 1 (`_r01`): 228 bài.
+  - Vòng vá 2 (`_r02`): 2 bài.
+  - **Tổng đạt chuẩn:** **499 / 500 bài (99.8% DoD Pass ✅)**.
+- **Nạp CSDL & Sổ Cái:**
+  - Nhận diện thực thể (L1): **500/500 bài (100.0%)**.
+  - Phân tích nội dung (Gold): **499/500 bài (99.8%)** nạp an toàn vào `monocle.db`.
+  - Quota token: **1.120.385 tokens** (chi phí cực kỳ tiết kiệm: **~$0.1201**).
+- **Xuất bản Deliverables:**
+  - Đã chạy `write_user_output.py --force`, cập nhật **12.207 dòng final** qua các file `.xlsx` cho 5 chuyên viên:
+    - `AnPT`: 3.506 dòng
+    - `VyPTT`: 3.425 dòng
+    - `UyenNNT`: 1.929 dòng
+    - `ThanhTD`: 1.838 dòng
+    - `PhoHG`: 1.509 dòng
+
+---
+
+## 4. Trạng Thái Codebase & Bàn Giao
 
 1. **Bộ Kiểm Thử**:
    - 63/63 tests PASS (`test_ops_core.py`, `test_ops_runtime.py`) trong 20.6s.
    - AST syntax validation đạt chuẩn Google Python Style.
 2. **Quy Chuẩn Git**:
-   - Đóng gói commit chuẩn Conventional Commits kèm mã `(US-038)`.
+   - Đã commit và push `23977e8` (`fix(ops): fix candidate streaming and thin filtering in sensor (US-038)`).
    - Cây làm việc sạch sẽ, sẵn sàng đóng phiên (`clean_for_closure: true`).
