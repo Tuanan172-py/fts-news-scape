@@ -250,15 +250,22 @@ def load_candidates(conn: sqlite3.Connection, *, date: str | None, limit: int,
     # mới trúng cache. Chỉ `published_at DESC` thì các bài trùng mốc thời gian đổi
     # chỗ tuỳ kế hoạch truy vấn, và mọi token sau bài đầu tiên bị đổi chỗ đều trượt.
     sql.append("ORDER BY a.published_at DESC, a.url_title_hash")
-    sql.append("LIMIT ?")
-    params.append(limit)
-    rows = list(conn.execute("\n".join(sql), params))
     if not exclude_thin:
-        return rows
-    # Chỉ loại khi đọc được nội dung và xác định mỏng. Không đọc được gì thì giữ
-    # lại để vòng đóng gói loại sau như cũ (fail-open: thiếu dữ kiện thì không giấu
-    # tồn đọng khỏi radar và sensor).
-    return [r for r in rows if not is_thin_row(r)]
+        sql.append("LIMIT ?")
+        params.append(limit)
+        return list(conn.execute("\n".join(sql), params))
+
+    # Khi exclude_thin=True: gom đủ `limit` bài đạt chuẩn (không mỏng), dừng ngay
+    # khi đủ số lượng để không duyệt thừa. Tránh lỗi nghẽn: nếu LIMIT đặt trong SQL
+    # thì mẩu tin ngắn đầu danh sách chiếm trọn hạn mức, khiến bài hợp lệ phía sau
+    # không bao giờ được chạm tới và trả về rỗng.
+    rows: list[sqlite3.Row] = []
+    for r in conn.execute("\n".join(sql), params):
+        if not is_thin_row(r):
+            rows.append(r)
+            if len(rows) >= limit:
+                break
+    return rows
 
 
 def read_cleaned_text(package_path: str) -> str:

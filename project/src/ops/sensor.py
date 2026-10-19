@@ -94,7 +94,7 @@ def read_pending(db_path: Path, lookback_days: int, *, now: datetime | None = No
         oldest: datetime | None = None
         for d in scope_dates(lookback_days, now):
             rows = load_candidates(conn, date=d, limit=1_000_000, only_pending=True,
-                                   exclude=exclude, with_content=False)
+                                   exclude=exclude, with_content=True)
             reading.per_date.append((d, len(rows)))
             ids = [r["article_id"] for r in rows]
             for i in range(0, len(ids), 500):
@@ -109,7 +109,7 @@ def read_pending(db_path: Path, lookback_days: int, *, now: datetime | None = No
         if with_backlog:
             reading.backlog_all = len(load_candidates(conn, date=None, limit=10_000_000,
                                                       only_pending=True, exclude=exclude,
-                                                      with_content=False))
+                                                      with_content=False, exclude_thin=False))
     finally:
         conn.close()
     return reading
