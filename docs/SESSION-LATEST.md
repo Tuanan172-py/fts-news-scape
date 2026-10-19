@@ -1,7 +1,7 @@
 # Bàn giao Phiên Vận Hành (Session Handoff)
 
-**Thời điểm:** 2026-10-19 15:52 (GMT+7)  
-**Nhánh:** dev/us038 | **Nhiệm vụ:** Rà Soát Automate Hàng Ngày & Xử Lý Cuốn Chiếu 500 Bài Backlog (Runner AGY)
+**Thời điểm:** 2026-10-19 16:25 (GMT+7)  
+**Nhánh:** dev/us038 | **Nhiệm vụ:** Rà Soát Automate & Xử Lý Cuốn Chiếu 1.000 Bài Backlog (Runner AGY)
 
 ---
 
@@ -51,27 +51,27 @@ Toàn bộ bài đăng trong 2 ngày nghỉ cuối tuần đã được đối c
 
 ---
 
-## 3. Vận Hành Giải Phóng Tồn Đọng Cuốn Chiếu (Đợt W_BACKLOG_500_01)
+## 3. Vận Hành Giải Phóng Tồn Đọng Cuốn Chiếu (Rolling Backlog Waves)
 
-Thực thi theo yêu cầu của Operator: `xử lý tuần tự 500 bài pending 1 lượt`:
-- **Mã đợt:** `W_BACKLOG_500_01` (Runner `agy`, concurrency 2).
-- **Khối lượng:** 500 bài đóng gói (trong đó có **300 bài Tier 1** ưu tiên cao nhất: Watchlist 5 chuyên viên + Biến động vĩ mô khẩn).
-- **Tiến độ phân tích:**
-  - Lượt 1: 270 bài.
-  - Vòng vá 1 (`_r01`): 228 bài.
-  - Vòng vá 2 (`_r02`): 2 bài.
-  - **Tổng đạt chuẩn:** **499 / 500 bài (99.8% DoD Pass ✅)**.
-- **Nạp CSDL & Sổ Cái:**
-  - Nhận diện thực thể (L1): **500/500 bài (100.0%)**.
-  - Phân tích nội dung (Gold): **499/500 bài (99.8%)** nạp an toàn vào `monocle.db`.
-  - Quota token: **1.120.385 tokens** (chi phí cực kỳ tiết kiệm: **~$0.1201**).
-- **Xuất bản Deliverables:**
-  - Đã chạy `write_user_output.py --force`, cập nhật **12.207 dòng final** qua các file `.xlsx` cho 5 chuyên viên:
-    - `AnPT`: 3.506 dòng
-    - `VyPTT`: 3.425 dòng
-    - `UyenNNT`: 1.929 dòng
-    - `ThanhTD`: 1.838 dòng
-    - `PhoHG`: 1.509 dòng
+Thực thi tuần tự các đợt 500 bài pending theo lệnh của Operator qua runner `agy` (`gemini-3.8-flash-low`):
+
+| Mã Wave | Bài đóng gói | Tier 1 (Watchlist) | Hoàn tất phân tích | Tỷ lệ đạt | Quota Token | Phí ước tính | Nạp DB |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **`W_BACKLOG_500_01`** | 500 | 300 (60.0%) | 270 + 228 + 2 = **499** | **99.8% ✅** | 1.120.385 | ~$0.1201 | 499 bài |
+| **`W_BACKLOG_500_02`** | 500 | 263 (52.6%) | 333 + 166 + 1 = **500** | **100.0% ✅** | 993.577 | ~$0.1084 | 499 bài |
+| **TỔNG 2 ĐỢT** | **1.000 bài** | **563 bài** | **999 bài** | **99.9%** | **2.113.962** | **~$0.2285** | **998 bài** |
+
+### Cập Nhật Deliverables Cho 5 Chuyên Viên Phân Tích
+Đã chạy `write_user_output.py --force`, cập nhật **12.591 dòng final** qua các file `.xlsx` cho 5 chuyên viên:
+- **AnPT**: **3.625 dòng final**
+- **VyPTT**: **3.544 dòng final**
+- **UyenNNT**: **1.978 dòng final**
+- **ThanhTD**: **1.892 dòng final**
+- **PhoHG**: **1.552 dòng final**
+
+### Hiện Trạng Kho Sau 2 Đợt Cuốn Chiếu
+- **Tổng số bài đã phân tích Gold**: **15.568 bài (46.2% toàn kho)** (tăng từ 14.543 bài).
+- **Tồn đọng còn lại**: **18.161 bài** (Tháng 10 còn 343 bài, Tháng 9 còn 6.567 bài, Tháng 8 còn 3.164 bài, Lịch sử + Khuyết ngày còn 8.087 bài).
 
 ---
 
@@ -81,5 +81,5 @@ Thực thi theo yêu cầu của Operator: `xử lý tuần tự 500 bài pendin
    - 63/63 tests PASS (`test_ops_core.py`, `test_ops_runtime.py`) trong 20.6s.
    - AST syntax validation đạt chuẩn Google Python Style.
 2. **Quy Chuẩn Git**:
-   - Đã commit và push `23977e8` (`fix(ops): fix candidate streaming and thin filtering in sensor (US-038)`).
-   - Cây làm việc sạch sẽ, sẵn sàng đóng phiên (`clean_for_closure: true`).
+   - Cây làm việc sạch sẽ, commit chuẩn Conventional Commits kèm mã `(US-038)`.
+   - Sẵn sàng đóng phiên (`clean_for_closure: true`).
