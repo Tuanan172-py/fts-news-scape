@@ -18,7 +18,10 @@ from typing import Any
 
 PROTOCOL_VERSION = "harness-orchestration-v1"
 CURRENT_SCHEMA_VERSION = 4
-DEFAULT_DB_PATH = "harness.db"
+DEFAULT_DB_PATH = os.environ.get(
+    "NEWS_SCAPE_HARNESS_DB",
+    str(Path(__file__).resolve().parent.parent / "harness.db")
+)
 DEFAULT_SCHEMA_DIR = "scripts/schema"
 
 CAPABILITIES = [
@@ -853,6 +856,18 @@ def cmd_git_status(args: argparse.Namespace) -> dict[str, Any]:
     except Exception:
         pass
 
+    # PR Divergence check so với fpa/main
+    ahead_count = 0
+    try:
+        res_ahead = subprocess.run(
+            ["git", "rev-list", "--count", "fpa/main..HEAD"],
+            capture_output=True, text=True, encoding="utf-8", errors="replace"
+        )
+        if res_ahead.returncode == 0 and res_ahead.stdout.strip().isdigit():
+            ahead_count = int(res_ahead.stdout.strip())
+    except Exception:
+        pass
+
     res_status: dict[str, Any] = {
         "status": "success",
         "branch": branch,
@@ -860,12 +875,27 @@ def cmd_git_status(args: argparse.Namespace) -> dict[str, Any]:
         "is_dirty": dirty,
         "status_lines": status_lines[:25],
         "forbidden_files": forbidden,
-        "clean_for_closure": not dirty and len(forbidden) == 0,
+        "clean_for_closure": not dirty and len(forbidden) == 0 and has_trace,
         "has_trace_record": has_trace,
+        "ahead_of_main": ahead_count,
     }
     if trace_warning:
         res_status["trace_warning"] = trace_warning
+    if ahead_count >= 10 and branch:
+        res_status["pr_warning"] = f"Branch '{branch}' is ahead of fpa/main by {ahead_count} commits. Open PR at: https://github.com/Research-FPA/news-scraper/compare/main...{branch}?expand=1"
     return res_status
+
+
+def push_to_configured_remotes(branch: str) -> dict[str, bool]:
+    """Đẩy nhánh lên toàn bộ các remote được cấu hình (ưu tiên fpa và origin)."""
+    p = subprocess.run(["git", "remote"], capture_output=True, text=True, encoding="utf-8", errors="replace")
+    remotes = [r.strip() for r in (p.stdout or "").splitlines() if r.strip()]
+    results: dict[str, bool] = {}
+    target_remotes = [r for r in ["fpa", "origin"] if r in remotes] or remotes
+    for r in target_remotes:
+        res = subprocess.run(["git", "push", r, branch], capture_output=True, text=True, encoding="utf-8", errors="replace")
+        results[r] = (res.returncode == 0)
+    return results
 
 
 def cmd_git_checkpoint(args: argparse.Namespace) -> dict[str, Any]:
@@ -889,17 +919,17 @@ def cmd_git_checkpoint(args: argparse.Namespace) -> dict[str, Any]:
         return {"status": "error", "message": f"Git commit failed: {res.stderr.strip()}"}
 
     commit = get_git_head_commit()
-    pushed = False
+    pushed_remotes: dict[str, bool] = {}
     if getattr(args, "push", False) and branch:
-        res_push = subprocess.run(["git", "push", "origin", branch], capture_output=True, text=True)
-        pushed = (res_push.returncode == 0)
+        pushed_remotes = push_to_configured_remotes(branch)
 
     return {
         "status": "success",
         "action": "checkpoint_created",
         "commit": commit,
         "branch": branch,
-        "pushed": pushed,
+        "pushed": any(pushed_remotes.values()) if pushed_remotes else False,
+        "pushed_remotes": pushed_remotes,
         "message": msg,
     }
 
@@ -1092,11 +1122,9 @@ def cmd_session_close(args: argparse.Namespace) -> dict[str, Any]:
                     }
 
             if getattr(args, "push", False) and git_branch:
-                subprocess.run(["git", "push", "origin", git_branch], capture_output=True, text=True)
+                push_to_configured_remotes(git_branch)
 
-        status_info = cmd_git_status(args)
-
-        # 4. Record Trace in DB
+        # 4. Record Trace in DB (Record trace before final git status check)
         actions = ["session_close"]
         if verify_cmd and not getattr(args, "skip_verify", False):
             actions.append("verify_gate")
@@ -1117,11 +1145,14 @@ def cmd_session_close(args: argparse.Namespace) -> dict[str, Any]:
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (story_id, getattr(args, "intake", None), args.summary, actions_json, "[]",
-             json.dumps(status_info.get("status_lines", []), ensure_ascii=False),
+             json.dumps([], ensure_ascii=False),
              "completed", score_c, score_t, "", "", git_commit, git_branch, now_iso())
         )
         conn.commit()
         trace_id = cur.lastrowid
+
+        # 5. Get final clean status info (has_trace_record will now be True)
+        status_info = cmd_git_status(args)
 
         # 5. Build Markdown Closure Table
         story_label = f"`docs/stories/{story_id}.md`" if story_id else "`docs/stories/US-XXX.md`"

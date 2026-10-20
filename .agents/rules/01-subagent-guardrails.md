@@ -40,6 +40,9 @@ Ranh giới quyền hạn bất biến cho MỌI Subagent trong hệ thống New
 
 ## 7. Bất Biến Đóng Phiên & Vệ Sinh Codebase (Session Closure & Git Invariant)
 - **Kiểm định đóng phiên**: Mọi phiên làm việc có sửa đổi mã nguồn hoặc tài liệu BẮT BUỘC phải thực thi lệnh `harness_cli.py git status`.
-- **Cấm treo cây làm việc dồn ứ (No Dangling Dirty Tree)**: Nếu `clean_for_closure == false`, Agent KHÔNG ĐƯỢC PHÉP coi là hoàn thành phiên. Bắt buộc phải thực hiện đóng gói commit chuẩn (Conventional Commits ≤ 72 ký tự kèm mã `(US-XXX)`) và đẩy mã nguồn (`git push`) trước khi kết thúc lượt hoặc cập nhật `SESSION-LATEST.md`.
+- **Cấm treo cây làm việc dồn ứ (No Dangling Dirty Tree)**: Nếu `clean_for_closure == false`, Agent KHÔNG ĐƯỢC PHÉP coi là hoàn thành phiên. Điều kiện `clean_for_closure` đòi hỏi đồng thời: working tree sạch, không có forbidden files, và **commit HEAD bắt buộc phải có bản ghi trace trong `harness.db`**.
+- **Đóng phiên nguyên tử**: Bắt buộc kết thúc phiên bằng lệnh:
+  `& "C:\venvs\news-scape\Scripts\python.exe" scripts/harness_cli.py session close --summary "<mô tả công việc>" --push`
+  Lệnh này tự động chạy verification gate, commit chuẩn Conventional Commits, ghi trace bền vững vào `harness.db`, đẩy mã nguồn đồng thời lên cả hai remote (`fpa` và `origin`), và in bảng Harness Closure Protocol.
 
 

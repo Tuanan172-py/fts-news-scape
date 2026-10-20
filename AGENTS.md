@@ -181,6 +181,6 @@ Detail: `.agents/rules/10-thu-thap-tron-ven.md`; decision ADR-0013.
 
 ## 12. Session closure and mechanical git governance
 
-- No dangling dirty tree. Every session that changes code or documents runs `& "C:\venvs\news-scape\Scripts\python.exe" scripts/harness_cli.py git status`. If `clean_for_closure` is false, the session is not complete.
-- Commits follow Conventional Commits (at most 72 characters, carrying `(US-NNN)`), generated with `harness_cli.py git template`, and are pushed (`git push origin <branch>`) before `docs/SESSION-LATEST.md` is handed off.
-- Atomic closure: Agents can run `& "C:\venvs\news-scape\Scripts\python.exe" scripts/harness_cli.py session close --story US-NNN --summary "<summary>"` to atomically execute the verification gate, advance the story status, commit code, persist the durable trace, and print the Harness Closure Protocol table.
+- No dangling dirty tree. Every session that changes code or documents runs `& "C:\venvs\news-scape\Scripts\python.exe" scripts/harness_cli.py git status`. If `clean_for_closure` is false (requires a clean working tree, no forbidden files, and commit HEAD recorded in `harness.db`), the session is not complete.
+- Dual-remote push: Commits follow Conventional Commits (at most 72 characters, carrying `(US-NNN)`), generated with `harness_cli.py git template`, and are pushed to both remotes (`fpa` and `origin`) before `docs/SESSION-LATEST.md` is handed off.
+- Atomic closure: Agents must run `& "C:\venvs\news-scape\Scripts\python.exe" scripts/harness_cli.py session close --summary "<summary>" --push` to atomically execute the verification gate, advance/record the story status, commit code, persist the durable trace, push to both remotes, and print the Harness Closure Protocol table.
