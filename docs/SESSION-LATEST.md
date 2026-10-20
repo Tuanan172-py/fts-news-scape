@@ -94,11 +94,32 @@ FRA_DataIngestion - news-data/
 
 ---
 
-## 5. Kiểm Thử Hệ Thống & Kiểm Định Quy Chuẩn Git
+## 5. Triển Khai Hoàn Tất FPTS Market Intel Unified Plugin
+
+Đã hiện thực hóa toàn bộ gói plugin [`plugins/fpts-market-intel/`](file:///c:/src/news-scraper/plugins/fpts-market-intel/) và trình cài đặt tự động:
+1. **Manifest & Rules**:
+   - [`plugin.json`](file:///c:/src/news-scraper/plugins/fpts-market-intel/plugin.json): Khai báo 4 câu `suggestedPrompts` mẫu trên UI.
+   - [`rules/AGENTS.md`](file:///c:/src/news-scraper/plugins/fpts-market-intel/rules/AGENTS.md): Ranh giới kiểm soát miền tài chính, chống ảo giác và chuẩn hóa sắc thái.
+2. **Động cơ DuckDB Nhúng (`tools/lakehouse_client.py`)**:
+   - Tự động nhận diện shortcut OneDrive trên mọi máy trạm qua cơ chế 3 cấp.
+   - Thực thi truy vấn Parquet tốc độ cao (0 token LLM), hỗ trợ `list_contains(symbols, ?)`, chuẩn hóa sắc thái cả mã ngắn (`pos`, `neg`, `neu`) và mã đầy đủ (`positive`, `negative`, `neutral`).
+3. **Bộ 4 Kỹ Năng Nghiệp Vụ (`skills/`)**:
+   - [`news-ticker-screener`](file:///c:/src/news-scraper/plugins/fpts-market-intel/skills/news-ticker-screener/SKILL.md): Soi tin chi tiết theo mã CP.
+   - [`news-daily-brief`](file:///c:/src/news-scraper/plugins/fpts-market-intel/skills/news-daily-brief/SKILL.md): Tổng hợp Morning Brief cho danh mục cá nhân.
+   - [`news-sector-pulse`](file:///c:/src/news-scraper/plugins/fpts-market-intel/skills/news-sector-pulse/SKILL.md): Quét nhịp đập 11 ngành GICS & vĩ mô.
+   - [`news-lakehouse-explorer`](file:///c:/src/news-scraper/plugins/fpts-market-intel/skills/news-lakehouse-explorer/SKILL.md): Kiểm toán `latest.json` & chạy SQL tùy biến.
+4. **Trình Cài Đặt 1-Click**:
+   - [`scripts/install_market_intel_plugin.py`](file:///c:/src/news-scraper/scripts/install_market_intel_plugin.py) & `.ps1`: Tự động kiểm tra DuckDB, ghim tệp ngoại tuyến và cài đặt sang `%USERPROFILE%\.gemini\config\plugins\fpts-market-intel`.
+
+---
+
+## 6. Kiểm Thử Hệ Thống & Kiểm Định Quy Chuẩn Git
 
 1. **Bộ Kiểm Thử (Pytest Integrity)**:
-   - 39/39 tests PASS (`test_publisher.py`, `test_lakehouse_perf.py`, `test_lakehouse_cli.py`, `test_lakehouse_concurrency.py`, `test_lakehouse_dedup.py`, `test_lakehouse_manifest.py`, `test_lakehouse_storage.py`).
-2. **Cấu Hình Tự Động Hóa (Ops Daemon)**:
-   - Đã kích hoạt `publish.enabled: true` trong [`project/config/ops.yaml`](file:///c:/src/news-scraper/project/config/ops.yaml) để tự động hóa tiến trình xuất bản hàng ngày sau 01:00 sáng.
-3. **Quy Chuẩn Đóng Phiên (Rule 01 §7)**:
+   - **48/48 tests PASS** (Toàn bộ 39 tests hạ tầng Lakehouse/Publisher + 9 tests plugin `test_plugin_lakehouse_client.py` và `test_plugin_manifest.py`).
+2. **Kiểm Định Hợp Đồng Tri Thức**:
+   - `scripts/harness_cli.py doc lint` đạt 0 lỗi, index và database đồng bộ hoàn toàn.
+3. **Cấu Hình Tự Động Hóa (Ops Daemon)**:
+   - Đã kích hoạt `publish.enabled: true` trong [`project/config/ops.yaml`](file:///c:/src/news-scraper/project/config/ops.yaml).
+4. **Quy Chuẩn Đóng Phiên (Rule 01 §7)**:
    - Cây làm việc sạch sẽ, commit chuẩn Conventional Commits kèm mã `(US-038)`.

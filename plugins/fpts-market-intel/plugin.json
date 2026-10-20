@@ -1,0 +1,11 @@
+{
+  "name": "fpts-market-intel",
+  "description": "Bộ công cụ khai phá dữ liệu tin tức tài chính FPTS: tra cứu mã CP, xung lực ngành & vĩ mô, lập Morning Brief từ News Lakehouse.",
+  "version": "1.0.0",
+  "suggestedPrompts": [
+    "Soi tin tức mã HPG trong 3 ngày gần nhất",
+    "Tổng hợp Morning Brief cho danh mục hôm nay",
+    "Quét nhịp đập và sắc thái ngành Ngân hàng tuần qua",
+    "Kiểm tra độ tươi dữ liệu Lakehouse hôm nay"
+  ]
+}
