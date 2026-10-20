@@ -84,12 +84,21 @@ FRA_DataIngestion - news-data/
 
 ---
 
-## 4. Kiểm Thử Hệ Thống & Kiểm Định Quy Chuẩn Git
+## 4. Chốt Quyết Định Kiến Trúc Đóng Gói Client (/learn & ADR-0025)
+
+Đã chốt quyết định kiến trúc và phê chuẩn [ADR-0025](file:///c:/src/news-scraper/docs/decisions/0025-unified-plugin-architecture-for-lakehouse-consumption.md) cùng [FACT-LAKEHOUSE-PLUGIN-LAYOUT](file:///c:/src/news-scraper/docs/knowledge/facts/lakehouse-client-plugin-layout.md):
+- **Unified Plugin (`fpts-market-intel`)**: Đóng gói toàn bộ kỹ năng khai phá dữ liệu vào một plugin duy nhất tại `~/.gemini/config/plugins/fpts-market-intel/` dùng chung cho cả `agy` và `gemini`. Cấm phân phối các skills rời rạc nhằm triệt tiêu nguy cơ lệch phiên bản (anti-version-skew).
+- **Zero-Config Auto-Discovery**: Tự động dò tìm đường dẫn shortcut OneDrive trên máy chuyên viên theo 3 cấp (biến môi trường $\rightarrow$ shortcut chuẩn $\rightarrow$ quét filesystem).
+- **Vectorized Zero-Token Tooling**: Tái sử dụng module `tools/lakehouse_client.py` chạy DuckDB nhúng, quét trực tiếp OBT 22 cột Parquet mà không tốn token LLM.
+- **Trải nghiệm 1-Click**: Cung cấp sẵn các `suggestedPrompts` trên UI chat để chuyên viên phân tích bấm là chạy ngay.
+
+---
+
+## 5. Kiểm Thử Hệ Thống & Kiểm Định Quy Chuẩn Git
 
 1. **Bộ Kiểm Thử (Pytest Integrity)**:
    - 39/39 tests PASS (`test_publisher.py`, `test_lakehouse_perf.py`, `test_lakehouse_cli.py`, `test_lakehouse_concurrency.py`, `test_lakehouse_dedup.py`, `test_lakehouse_manifest.py`, `test_lakehouse_storage.py`).
 2. **Cấu Hình Tự Động Hóa (Ops Daemon)**:
    - Đã kích hoạt `publish.enabled: true` trong [`project/config/ops.yaml`](file:///c:/src/news-scraper/project/config/ops.yaml) để tự động hóa tiến trình xuất bản hàng ngày sau 01:00 sáng.
 3. **Quy Chuẩn Đóng Phiên (Rule 01 §7)**:
-   - Không còn file rác treo ngoài cây làm việc.
-   - Sẵn sàng commit chuẩn Conventional Commits kèm mã `(US-038)`.
+   - Cây làm việc sạch sẽ, commit chuẩn Conventional Commits kèm mã `(US-038)`.
