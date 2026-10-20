@@ -51,7 +51,7 @@ PARQUET_TABLES: dict[str, tuple[str, str]] = {
 # không vào bảng `mentions` (ADR 0010 D4).
 ROW_FILTERS: dict[str, str] = {"l1_outputs": not_code_first_sql()}
 
-_MANIFEST_RE = re.compile(r"^(\d{8})(?:\.r(\d+))?\.json$")
+_MANIFEST_RE = re.compile(r"^(\d{4}-?\d{2}-?\d{2})(?:\.r(\d+))?\.json$")
 _CHUNK = 1 << 20
 
 
@@ -257,9 +257,10 @@ def _day_manifests(target: Path) -> dict[str, tuple[int, Path]]:
         m = _MANIFEST_RE.match(p.name)
         if not m:
             continue
+        clean_key = m.group(1).replace("-", "")
         rev = int(m.group(2) or 1)
-        if m.group(1) not in out or rev > out[m.group(1)][0]:
-            out[m.group(1)] = (rev, p)
+        if clean_key not in out or rev > out[clean_key][0]:
+            out[clean_key] = (rev, p)
     return out
 
 
@@ -312,10 +313,10 @@ def _plan(day: date, db: Path) -> list[FileOutcome]:
         Danh sách FileOutcome ở trạng thái planned.
     """
     ymd = _ymd(day)
-    plan = [FileOutcome(f"review/monocle_review_{ymd}.db", "review")]
-    for name in PARQUET_TABLES:
-        plan.append(FileOutcome(
-            f"parquet/{name}/year={day:%Y}/month={day:%m}/part-{ymd}.parquet", "parquet"))
+    plan = [
+        FileOutcome(f"review/monocle_review_{ymd}.db", "review"),
+        FileOutcome(f"parquet/articles/year={day:%Y}/month={day:%m}/part-{ymd}.parquet", "parquet"),
+    ]
     bronze = paths.bronze_dir()
     if bronze.is_dir():
         for src_dir in sorted(bronze.iterdir()):
@@ -345,38 +346,129 @@ def _build_review(db: Path, out: Path) -> None:
         os.replace(final, out)
 
 
-def _build_parquet(db: Path, table: str, date_col: str, day: date, out: Path) -> int:
-    """Xuất các dòng của một ngày từ một bảng DB sang Parquet.
-
-    Bỏ cột nội dung nặng (đã có HTML thô ở Bronze) và cột đã ngừng dùng.
+def _build_obt_parquet(db: Path, day: date, out: Path) -> int:
+    """Xuất các bài viết của một ngày từ DB sang Parquet Một Bảng Hợp Nhất (OBT 22 cột).
 
     Args:
         db: DB vận hành.
-        table: Bảng nguồn.
-        date_col: Cột ngày dùng để chọn dòng.
         day: Ngày xuất bản.
         out: Tệp đích ở staging.
 
     Returns:
         Số dòng đã ghi.
     """
-    import pandas as pd
+    from src.lakehouse.ingest import LAKEHOUSE_ARTICLE_SCHEMA, records_to_parquet_bytes
 
+    day_str = day.isoformat()
     conn = sqlite3.connect(f"file:{db.as_posix()}?mode=ro", uri=True, timeout=30)
+    query = """
+    SELECT a.url_title_hash AS article_id, a.title, a.url, a.source_domain,
+           a.published_at, a.fetched_at, a.symbols, a.categories,
+           ag.raw_sha256, ag.output_json AS agent_json, ag.agent_provider, ag.created_at AS agent_created_at,
+           l1.output_json AS l1_json, l1.l1_source
+    FROM articles a
+    LEFT JOIN (
+        SELECT article_id, raw_sha256, output_json, agent_provider, created_at
+        FROM agent_outputs
+        WHERE id IN (SELECT MAX(id) FROM agent_outputs WHERE dod_pass = 1 GROUP BY article_id)
+    ) ag ON ag.article_id = a.url_title_hash
+    LEFT JOIN (
+        SELECT article_id, output_json, l1_source
+        FROM l1_outputs
+        WHERE id IN (SELECT MAX(id) FROM l1_outputs WHERE dod_pass = 1 GROUP BY article_id)
+    ) l1 ON l1.article_id = a.url_title_hash
+    WHERE substr(a.published_at, 1, 10) = ? OR (a.published_at IS NULL AND substr(a.fetched_at, 1, 10) = ?)
+    ORDER BY a.published_at DESC
+    """
     try:
-        cols = [r[1] for r in conn.execute(f"PRAGMA table_info({table})")]
-        keep = [c for c in cols if c not in HEAVY_COLUMNS and c not in DEPRECATED_COLUMNS]
-        if not keep:
-            raise RuntimeError(f"Bảng {table} không có trong DB.")
-        extra = f" AND {ROW_FILTERS[table]}" if table in ROW_FILTERS else ""
-        sql = (f"SELECT {', '.join(keep)} FROM {table} "
-               f"WHERE substr({date_col}, 1, 10) = ?{extra} ORDER BY rowid")
-        frame = pd.read_sql_query(sql, conn, params=(day.isoformat(),))
+        rows = conn.execute(query, (day_str, day_str)).fetchall()
     finally:
         conn.close()
+
+    records = []
+    for r in rows:
+        (art_id, title, url, domain, pub_at, fetch_at, symbols, categories,
+         raw_sha, ag_json_str, ag_prov, ag_created, l1_json_str, l1_src) = r
+
+        ag = {}
+        if ag_json_str:
+            try:
+                ag = json.loads(ag_json_str)
+            except Exception:
+                ag = {}
+
+        l1 = {}
+        if l1_json_str:
+            try:
+                l1 = json.loads(l1_json_str)
+            except Exception:
+                l1 = {}
+
+        summary_val = ag.get("summary") or ag.get("s") or ""
+        if isinstance(summary_val, dict):
+            summary_val = summary_val.get("abstractive") or ""
+        key_points = ag.get("key_points") or ag.get("k") or []
+        implication_val = ag.get("implication") or ag.get("im") or ""
+        if isinstance(implication_val, dict):
+            implication_val = implication_val.get("text") or ""
+        sentiment_val = ag.get("sentiment") or ag.get("sn") or "neutral"
+        time_sens_val = ag.get("time_sensitivity") or ag.get("ts") or "today"
+        citations_val = ag.get("citations") or ag.get("c") or []
+
+        intent_llm, intent_code, intent_source = "", "", ""
+        entities_list = []
+        if l1:
+            matched_entities = l1.get("entities") or []
+            llm_ents, code_ents = [], []
+            for ent in matched_entities:
+                ename = ent.get("entity_id") or ent.get("name") or ""
+                etype = ent.get("type") or ""
+                if ename:
+                    entities_list.append(f"{ename} [{etype}]" if etype else str(ename))
+                src_flag = ent.get("source") or ("BOTH" if ent.get("in_list") else "LLM_ONLY")
+                if src_flag in ("BOTH", "LLM_ONLY") and ename:
+                    llm_ents.append(ename)
+                if src_flag in ("BOTH", "CODE_ONLY") and ename:
+                    code_ents.append(ename)
+            intent_llm = "; ".join(dict.fromkeys(llm_ents))
+            intent_code = "; ".join(dict.fromkeys(code_ents))
+            intent_source = l1_src or ("BOTH" if (intent_llm and intent_code) else ("LLM_ONLY" if intent_llm else "CODE_ONLY"))
+
+        rec = {
+            "article_id": art_id,
+            "url": url or "",
+            "title": title or "",
+            "source_domain": domain or "",
+            "published_at": pub_at or fetch_at or day_str,
+            "updated_at": ag_created or fetch_at or day_str,
+            "dev_id": ag_prov or "news_scape",
+            "batch_id": f"b_{day_str.replace('-', '')}",
+            "summary": summary_val,
+            "key_points": key_points,
+            "implication": implication_val,
+            "sentiment": sentiment_val,
+            "time_sensitivity": time_sens_val,
+            "citations": citations_val,
+            "entities": entities_list,
+            "symbols": symbols or "",
+            "categories": categories or "",
+            "intent_llm": intent_llm,
+            "intent_code": intent_code,
+            "intent_source": intent_source,
+            "gold_status": "GOLD" if ag else ("L1_ONLY" if l1 else "RAW"),
+            "raw_sha256": raw_sha or "",
+        }
+        records.append(rec)
+
     out.parent.mkdir(parents=True, exist_ok=True)
-    frame.to_parquet(out, engine="pyarrow", index=False)
-    return len(frame)
+    parquet_bytes = records_to_parquet_bytes(
+        records,
+        dev_id="publisher",
+        batch_id=f"b_{day_str.replace('-', '')}",
+        schema=LAKEHOUSE_ARTICLE_SCHEMA,
+    )
+    out.write_bytes(parquet_bytes)
+    return len(records)
 
 
 def _build_bronze(src_dir: Path, out: Path) -> list[dict[str, Any]]:
