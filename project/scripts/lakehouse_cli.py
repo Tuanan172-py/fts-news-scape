@@ -32,13 +32,27 @@ def resolve_storage_root(root_arg: str | None) -> Path:
 
     Returns:
         Đối tượng Path trỏ tới thư mục gốc kho dữ liệu.
+
+    Raises:
+        PermissionError: Khi đường dẫn thuộc site SharePoint chính thức bị cấm.
     """
+    from src.export.publisher import is_official_target
+
     if root_arg:
-        return Path(root_arg).resolve()
-    env_root = os.getenv("NEWS_DATA_ROOT")
-    if env_root:
-        return Path(env_root).resolve()
-    return (PROJECT_ROOT.parent / "news-data").resolve()
+        target = Path(root_arg).resolve()
+    else:
+        env_root = os.getenv("NEWS_DATA_ROOT") or os.getenv("NEWS_SCAPE_PUBLISH_DIR")
+        if env_root:
+            target = Path(env_root).resolve()
+        else:
+            target = (PROJECT_ROOT.parent / "news-data").resolve()
+
+    if is_official_target(target):
+        raise PermissionError(
+            f"Đích {target} thuộc site SharePoint chính thức (FRA - Data), bị cấm theo ADR-0023. "
+            f"Chỉ được phép sử dụng sandbox FRA_DataIngestion."
+        )
+    return target
 
 
 def handle_ingest(args: argparse.Namespace) -> int:
@@ -99,11 +113,14 @@ def handle_consolidate(args: argparse.Namespace) -> int:
 
     date_str = args.date or datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
+    auto_purge = not getattr(args, "no_purge", False)
+
     res = consolidate_dropzone(
         date_str=date_str,
         storage=storage,
         dropzone_pattern=args.dropzone_pattern,
         output_base=args.output_base,
+        auto_purge=auto_purge,
     )
 
     print(f"Hoàn tất hợp nhất dữ liệu ngày: {res.date_str}")
@@ -185,6 +202,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--output-base",
         default="parquet/articles",
         help="Thư mục gốc lưu trữ phân vùng Parquet.",
+    )
+    p_cons.add_argument(
+        "--no-purge",
+        action="store_true",
+        help="Không xóa tệp phân mảnh trong dropzone sau khi hợp nhất.",
     )
     p_cons.set_defaults(func=handle_consolidate)
 

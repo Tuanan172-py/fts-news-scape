@@ -32,7 +32,7 @@ LAKEHOUSE_ARTICLE_SCHEMA = pa.schema(
         ("time_sensitivity", pa.string()),
         ("citations", pa.list_(pa.string())),
         ("entities", pa.list_(pa.string())),
-        ("symbols", pa.string()),
+        ("symbols", pa.list_(pa.string())),
         ("categories", pa.string()),
         ("intent_llm", pa.string()),
         ("intent_code", pa.string()),
@@ -89,11 +89,13 @@ def _normalize_string_list(val: Any) -> list[str]:
                     return [str(x).strip() for x in parsed if x is not None and str(x).strip()]
             except Exception:
                 pass
-        # Phân tách theo dòng hoặc dấu chấm phẩy
+        # Phân tách theo dòng hoặc dấu chấm phẩy, dấu phẩy
         if "\n" in raw:
             return [line.lstrip("-*• ").strip() for line in raw.splitlines() if line.strip()]
         if ";" in raw:
             return [item.strip() for item in raw.split(";") if item.strip()]
+        if "," in raw:
+            return [item.strip() for item in raw.split(",") if item.strip()]
         return [raw]
     return [str(val)]
 
@@ -120,6 +122,9 @@ def sanitize_article_record(
     rec_updated = str(record.get("updated_at") or default_timestamp).strip()
     rec_pub = str(record.get("published_at") or default_timestamp).strip()
 
+    raw_symbols = _normalize_string_list(record.get("symbols"))
+    clean_symbols = [s.upper() for s in raw_symbols if s and s.strip()]
+
     return {
         "article_id": str(record.get("article_id") or "").strip(),
         "url": str(record.get("url") or "").strip(),
@@ -136,7 +141,7 @@ def sanitize_article_record(
         "time_sensitivity": str(record.get("time_sensitivity") or "today").strip().lower(),
         "citations": _normalize_string_list(record.get("citations")),
         "entities": _normalize_string_list(record.get("entities")),
-        "symbols": str(record.get("symbols") or "").strip().upper(),
+        "symbols": clean_symbols,
         "categories": str(record.get("categories") or "").strip(),
         "intent_llm": str(record.get("intent_llm") or "").strip(),
         "intent_code": str(record.get("intent_code") or "").strip(),

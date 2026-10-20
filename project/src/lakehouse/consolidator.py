@@ -48,6 +48,7 @@ def consolidate_dropzone(
     storage: BaseStorageAdapter,
     dropzone_pattern: str = "dropzone/*/*/*/*.parquet",
     output_base: str = "parquet/articles",
+    auto_purge: bool = True,
 ) -> ConsolidationResult:
     """Quét vùng nạp Dropzone, khử trùng lặp theo article_id và kết xuất phân vùng Parquet.
 
@@ -197,6 +198,14 @@ def consolidate_dropzone(
             storage=storage,
             engine_name=f"DuckDB {duckdb.__version__}",
         )
+
+        # Tự động dọn dẹp các tệp phân mảnh trong dropzone sau khi hợp nhất thành công
+        if auto_purge and matched_dropzone:
+            for dz_file in matched_dropzone:
+                try:
+                    storage.delete(dz_file)
+                except Exception:
+                    pass
 
         elapsed_ms = (time.perf_counter() - t_start) * 1000
 

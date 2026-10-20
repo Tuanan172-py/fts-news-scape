@@ -127,8 +127,18 @@ class LocalOneDriveStorageAdapter(BaseStorageAdapter):
 
         Args:
             root_dir: Thư mục gốc dùng làm kho lưu trữ dữ liệu.
+
+        Raises:
+            PermissionError: Khi thư mục gốc trỏ vào site chính thức bị cấm theo ADR-0023.
         """
+        from src.export.publisher import is_official_target
+
         resolved = Path(root_dir).resolve()
+        if is_official_target(resolved):
+            raise PermissionError(
+                f"Đích {resolved} thuộc site SharePoint chính thức (FRA - Data), bị cấm theo ADR-0023. "
+                f"Chỉ được phép sử dụng sandbox FRA_DataIngestion."
+            )
         self.root_dir = self._strip_extended_prefix(resolved)
         self.root_dir.mkdir(parents=True, exist_ok=True)
 
