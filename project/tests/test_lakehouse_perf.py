@@ -168,3 +168,32 @@ def test_benchmark_duckdb_vectorized_dedup_speed(tmp_path: Path):
 
     assert res.unique_articles == 1000
     assert elapsed < 1.0, f"Thời gian khử trùng lặp DuckDB vượt ngưỡng 1s: {elapsed:.3f}s"
+
+
+def test_duckdb_symbols_list_contains_and_autopurge(tmp_path: Path):
+    """Kiểm tra DuckDB list_contains(symbols, 'HPG') và cơ chế auto-purge dropzone."""
+    import duckdb
+
+    storage = LocalOneDriveStorageAdapter(root_dir=tmp_path / "lakehouse")
+    date_str = "2026-10-08"
+
+    _build_perf_dataset(storage, date_str)
+    assert len(storage.list_files("dropzone/*/*/*/*.parquet")) == 3
+
+    res = consolidate_dropzone(date_str=date_str, storage=storage, auto_purge=True)
+    parquet_path = storage.get_local_path(res.partition_file).as_posix()
+
+    # Dropzone phải được tự động dọn sạch 100%
+    assert len(storage.list_files("dropzone/*/*/*/*.parquet")) == 0
+
+    # DuckDB truy vấn list_contains phải thành công không lỗi casting
+    con = duckdb.connect()
+    df = con.execute(f"""
+        SELECT article_id, symbols, title 
+        FROM read_parquet('{parquet_path}') 
+        WHERE list_contains(symbols, 'HPG')
+    """).df()
+    assert len(df) > 0
+    for sym_list in df["symbols"]:
+        assert "HPG" in sym_list
+    con.close()

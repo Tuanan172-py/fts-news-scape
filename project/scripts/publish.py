@@ -44,11 +44,35 @@ def main(argv: list[str]) -> int:
     """
     ap = argparse.ArgumentParser(description="Xuất bản một chiều lên SharePoint (ADR 0020).")
     ap.add_argument("--date", default="yesterday", help="YYYY-MM-DD hoặc yesterday (mặc định)")
+    ap.add_argument("--from-date", help="Ngày bắt đầu backfill (YYYY-MM-DD)")
+    ap.add_argument("--to-date", help="Ngày kết thúc backfill (YYYY-MM-DD, mặc định yesterday)")
     ap.add_argument("--dry-run", action="store_true", help="chỉ in kế hoạch tệp, không ghi gì")
     ap.add_argument("--force", action="store_true",
                     help="kiểm và chép lại phần thiếu dù manifest ngày đã đủ; không ghi đè")
     ap.add_argument("--target", help=f"đích dùng thay {PUBLISH_DIR_ENV} cho lần chạy này")
     args = ap.parse_args(argv)
+
+    if args.from_date:
+        from datetime import timedelta
+        try:
+            start_day = parse_day(args.from_date)
+            end_day = parse_day(args.to_date) if args.to_date else parse_day("yesterday")
+        except ValueError as e:
+            print(f"Lỗi định dạng ngày: {e}")
+            return 1
+
+        print(f"Bắt đầu backfill từ {start_day.isoformat()} đến {end_day.isoformat()}...")
+        cur = start_day
+        overall_status = 0
+        while cur <= end_day:
+            print(f"\n--- Xuất bản ngày: {cur.isoformat()} ---")
+            res = publish_day(cur, dry_run=args.dry_run, force=args.force, target=args.target)
+            print(f"  Trạng thái: {res.status} — {res.message}")
+            if res.status == "failed":
+                overall_status = 1
+            cur += timedelta(days=1)
+        print(f"\nHoàn tất backfill.")
+        return overall_status
 
     try:
         day = parse_day(args.date)

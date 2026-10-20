@@ -1,92 +1,95 @@
 # Bàn giao Phiên Vận Hành (Session Handoff)
 
-**Thời điểm:** 2026-10-20 10:05 (GMT+7)  
-**Nhánh:** dev/us038 | **Nhiệm vụ:** Rà Soát Automate & Xử Lý Cuốn Chiếu 2.500 Bài Backlog (Runner AGY)
+**Thời điểm:** 2026-10-20 11:05 (GMT+7)  
+**Nhánh:** dev/us038 | **Nhiệm vụ:** Hoàn Tất Chuẩn Hóa Lakehouse & Di Chuyển Sang Sandbox Mới (FRA_DataIngestion)
 
 ---
 
-## 1. Kết Quả Vận Hành Dữ Liệu Cuối Tuần (17/10 & 18/10/2026)
+## 1. Kết Quả Di Chuyển & Chuẩn Hóa Hồ Dữ Liệu (SharePoint Sandbox Migration)
 
-Toàn bộ bài đăng trong 2 ngày nghỉ cuối tuần đã được đối chiếu sitemap độc lập, cào bù đầy đủ các nguồn và phân tích hoàn tất qua runner `agy` (`gemini-3.8-flash-low`):
+Toàn bộ hạ tầng Lakehouse phục vụ khai phá dữ liệu (EDA) và phân phối tin tức đã được di chuyển thành công sang SharePoint Sandbox mới dành riêng cho dữ liệu:
+- **SharePoint Site:** `[FRA_DataIngestion - Home](https://fptscomvn.sharepoint.com/sites/FRA_DataIngestion)`
+- **Thư mục đồng bộ máy trạm:** `C:\Users\anpt\OneDrive - fpts.com.vn\Shortcuts\FRA_DataIngestion - news-data`
+- **Chốt chặn an toàn (Target Guard):** Ngăn chặn tuyệt đối việc ghi nhầm vào site chính thức `FRA - Data` (`is_official_target()` ném `PermissionError`).
 
-| Ngày dữ liệu | Mã Wave | Bài đóng gói | Xong (Lượt 1 + Các vòng vá) | Tỷ lệ đạt | Quota Token | Phí ước tính | Dòng Excel Final |
-| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **17/10/2026** | `W1017_DAY` | 82 | 57 + 26 = **83** | **98.8% ✅** | 190.664 | ~$0.0207 | **46 dòng** |
-| **18/10/2026** | `W1018_DAY` + `W10191035` | 150 + 3 | 150 + 3 = **153** | **100.0% ✅** | ~395.000 | ~$0.0425 | **116 dòng** |
-| **TỔNG** | — | **235** | **236 bài** | **100.0%** | **~585.664** | **~$0.0632** | **162 dòng** |
+### 1.1. Chuẩn Hóa Schema Parquet — Một Bảng Hợp Nhất (OBT 22 Cột)
+- **Kiểu dữ liệu `symbols`**: Đã đổi từ `pa.string()` sang `pa.list_(pa.string())` trong [`project/src/lakehouse/ingest.py`](file:///c:/src/news-scraper/project/src/lakehouse/ingest.py).
+- **Hỗ trợ truy vấn DuckDB**: Chuyên viên phân tích và các Skills có thể trực tiếp lọc mã cổ phiếu bằng `list_contains(symbols, 'HPG')` hoặc giải nén mảng bằng `unnest(symbols)` mà không gặp lỗi `Type VARCHAR can't be cast to VARCHAR[]`.
+- **Hợp nhất bảng thô**: Loại bỏ các bảng phân mảnh cũ (`parquet/analysis`, `parquet/mentions`) trong [`project/src/export/publisher.py`](file:///c:/src/news-scraper/project/src/export/publisher.py), tập trung vào Một Bảng Hợp Nhất duy nhất `parquet/articles/` (OBT) đầy đủ 22 trường nghiệp vụ (nội dung, tóm tắt, luận điểm, hàm ý, sắc thái, độ nhạy thời gian, intent).
 
-Đã xuất bản đầy đủ file Excel tại `C:\data\news-scape\users_output\<user>\` cho 5 chuyên viên (`AnPT`, `PhoHG`, `ThanhTD`, `UyenNNT`, `VyPTT`).
-
----
-
-## 2. Rà Soát Quy Trình Automate & Khắc Phục Lỗi Vòng Lặp Mở Đợt Rác (Ops Daemon)
-
-### 2.1. Triệu chứng & Báo động
-- NewsBot gửi cảnh báo lúc 09:49: `[CẢNH BÁO] Đủ điều kiện mở đợt (260 ≥ 100 bài) nhưng chưa có mandate`.
-- Người vận hành đã cấp mandate `/level L1` (hiệu lực đến 31/10/2026).
-- Sau khi có mandate L1, `ops_daemon` tự động mở đợt liên tục mỗi 2 phút cho ngày `18/10/2026` (`W10191014`, `W10191016`, `W10191021`...), nhưng bước `prepare` thoát với mã 2 (`Không còn bài để xử lý`), chặn đứng 99 bài mới của ngày `19/10/2026`.
-
-### 2.2. Phân tích Nguyên nhân Gốc (Root Cause Analysis)
-1. **Lỗi Fail-Open trong Sensor (`src/ops/sensor.py`)**:
-   - `read_pending()` gọi `load_candidates(..., with_content=False)`.
-   - Vì không nạp cột `content_text`, hàm `is_thin_row()` thiếu dữ kiện để đếm số đoạn văn $\rightarrow$ trả về `False` (fail-open).
-   - Hơn 100 mẩu tin ngắn/stub crawl từ Cafef/Vietnambiz (< 2 đoạn trích dẫn) bị sensor tính nhầm là bài chờ hợp lệ trên ngày 18/10. Sensor thấy 18/10 còn bài nên cố định `target_date = 2026-10-18`.
-2. **Lỗi Nghẽn LIMIT SQL Trước Tầng Lọc Python (`scripts/article_pack.py`)**:
-   - Trong `load_candidates()`, câu lệnh SQL chèn `LIMIT 100` **trước** khi đưa qua bộ lọc `[r for r in rows if not is_thin_row(r)]`.
-   - 100 bài mới nhất theo `published_at DESC` của chiều 18/10 đều là mẩu tin ngắn. SQL lấy trọn 100 bài này, Python lọc mỏng loại bỏ toàn bộ 100 bài $\rightarrow$ trả về rỗng! 3 bài hợp lệ xuất bản buổi sáng bị chặn ngoài cửa sổ `LIMIT 100` nên không bao giờ được chạm tới.
-3. **Nghẽn Đo Backlog Toàn CSDL (821s thay vì 0.9s)**:
-   - Khi đo `backlog_all`, `load_candidates` mặc định `exclude_thin=True` đã duyệt và quét tệp đĩa của 18.000 bài trong CSDL, làm luồng sensor bị nghẽn 13.6 phút.
-
-### 2.3. Giải Pháp & Bản Vá
-1. **`project/src/ops/sensor.py`**:
-   - Đổi `with_content=True` trong vòng lặp ngày để `is_thin_row` lọc chính xác bài mỏng, đồng bộ hoàn toàn với `article_pack.py`.
-   - Thêm `exclude_thin=False` cho nhánh `with_backlog` (chỉ dùng báo cáo hiển thị) $\rightarrow$ thời gian đo giảm từ 821s xuống **2.3s**.
-2. **`project/scripts/article_pack.py`**:
-   - Khi `exclude_thin=True`, chuyển sang cơ chế streaming cursor gom đủ `limit` bài đạt chuẩn mới dừng (`break`), không chèn `LIMIT` cứng trong SQL làm nghẽn các bài hợp lệ phía sau.
-3. **Khởi động lại Scheduled Task & Nghiệm thu Thực tế**:
-   - Khởi động lại task `\news-scape-ops` để nạp mã mới vào tiến trình `pythonw.exe`.
-   - Đợt `W10191035` gom thành công 3 bài hợp lệ còn sót của ngày 18/10, hoàn tất nạp DB (3/3 bài, 100%).
-   - Sensor chuyển sạch sẽ: `per_date: [('2026-10-18', 0), ('2026-10-19', 105)]` $\rightarrow$ `target_date = 2026-10-19`.
-   - Đợt `W10191037` cho ngày hôm nay **19/10/2026 (99 bài, 2 lô song song)** đã tự động mở và nạp DB đạt **99/99 bài (100.0%)**.
+### 1.2. Cơ Chế Auto-Purge Dropzone & Ghim Tệp Ngoại Tuyến
+- **Dọn dẹp tự động (Auto-Purge)**: Tham số `auto_purge=True` trong [`project/src/lakehouse/consolidator.py`](file:///c:/src/news-scraper/project/src/lakehouse/consolidator.py) tự động xóa sạch các tệp phân mảnh tạm thời trong `dropzone/YYYY/MM/DD/` ngay sau khi DuckDB hoàn tất nén và ghi đè phân vùng canonical. Người dùng và Skills hoàn toàn không thấy rác dropzone.
+- **Ghim tệp ngoại tuyến (Files On-Demand Pinning)**: Đã chạy `attrib -U +P` cho toàn bộ thư mục đích, đảm bảo tệp luôn có sẵn trên đĩa cục bộ, triệt tiêu độ trễ tải mạng khi truy vấn DuckDB.
 
 ---
 
-## 3. Vận Hành Giải Phóng Tồn Đọng Cuốn Chiếu (Rolling Backlog Waves)
+## 2. Kết Quả Backfill & Kiểm Chứng Toàn Vẹn Thực Địa
 
-Thực thi tuần tự các đợt 500 bài pending theo lệnh của Operator qua runner `agy` (`gemini-3.8-flash-low`):
+Đã xuất bản thành công dữ liệu 4 ngày liên tiếp sang Sandbox mới:
 
-| Mã Wave | Bài đóng gói | Tier 1 (Watchlist) | Hoàn tất phân tích | Tỷ lệ đạt | Quota Token | Phí ước tính | Nạp DB |
-| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **`W_BACKLOG_500_01`** | 500 | 300 (60.0%) | 270 + 228 + 2 = **499** | **99.8% ✅** | 1.120.385 | ~$0.1201 | 499 bài |
-| **`W_BACKLOG_500_02`** | 500 | 263 (52.6%) | 333 + 166 + 1 = **500** | **100.0% ✅** | 993.577 | ~$0.1084 | 499 bài |
-| **`W_BACKLOG_500_03`** | 499 | 301 (60.3%) | 351 + 146 + 2 = **499** | **100.0% ✅** | 960.047 | ~$0.1039 | 499 bài |
-| **`W_BACKLOG_500_04`** | 499 | 262 (52.5%) | 308 + 185 + 22 + 9 = **499** | **100.0% ✅** | 1.192.072 | ~$0.1221 | 499 bài |
-| **`W_BACKLOG_500_05`** | 499 | 305 (61.1%) | 324 + 97 + 5 = **499** | **100.0% ✅** | 1.060.250 | ~$0.1145 | 499 bài |
-| **TỔNG 5 ĐỢT** | **2.497 bài** | **1.431 bài (57.3%)** | **2.496 bài** | **99.96%** | **5.326.331** | **~$0.5690** | **2.495 bài** |
+| Ngày dữ liệu | Phân vùng Parquet (OBT 22 cột) | Số bài viết | Dung lượng Parquet | File Manifest | Review DB | Deliverable Excel |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **2026-10-16** | `part-20261016.parquet` | 890 bài | 531 KB | `2026-10-16.json` | `monocle_review_20261016.db` | Có (5 users) |
+| **2026-10-17** | `part-20261017.parquet` | 274 bài | 172 KB | `2026-10-17.json` | `monocle_review_20261017.db` | Có (5 users) |
+| **2026-10-18** | `part-20261018.parquet` | 304 bài | 184 KB | `2026-10-18.json` | `monocle_review_20261018.db` | Có (5 users) |
+| **2026-10-19** | `part-20261019.parquet` | 1.437 bài | 694 KB | `2026-10-19.json` | `monocle_review_20261019.db` | Có (5 users) |
+| **TỔNG CỘNG** | **4 phân vùng** | **2.905 bài** | **~1.58 MB** | **5 manifests** | **4 snapshots (7d max)** | **14.015 dòng** |
 
-### Cập Nhật Deliverables Cho 5 Chuyên Viên Phân Tích
-Đã chạy `write_user_output.py --force`, cập nhật **14.015 dòng final** (+701 dòng) qua các file `.xlsx` cho 5 chuyên viên:
-- **AnPT**: **4.057 dòng final** (+197 dòng)
-- **VyPTT**: **3.973 dòng final** (+199 dòng)
-- **UyenNNT**: **2.208 dòng final** (+129 dòng)
-- **ThanhTD**: **2.091 dòng final** (+110 dòng)
-- **PhoHG**: **1.686 dòng final** (+66 dòng)
-
-### Hiện Trạng Kho Sau 5 Đợt Cuốn Chiếu
-- **Tổng số bài đã phân tích Gold**: **17.069 bài (~50.6% toàn kho - VƯỢT MỐC 50%)**.
-- **Tồn đọng còn lại**: **16.550 bài** (ngoài phạm vi tự động).
+- **Kiểm chứng tính toàn vẹn (Verification Gate)**:
+  `lakehouse_cli.py verify` trả về PASS 100% đối chiếu SHA-256 từng tệp phân vùng với con trỏ nguyên tử `_manifest/latest.json`.
+- **Đo lường hiệu năng DuckDB (EDA Benchmark)**:
+  Truy vấn quét toàn bộ 2.905 bài viết nén ZSTD chỉ mất **0.42 giây** trên máy trạm cục bộ.
 
 ---
 
-## 4. Cải Tiến Kiến Trúc & Kiểm Định Chất Lượng
+## 3. Cấu Trúc Thư Mục Chuẩn 5 Tầng Trên Sandbox
 
-1. **Bản Vá Nâng Cấp Tự Động Gói Công Việc (Auto-Upgrade Legacy Work Package)**:
-   - *Nguyên nhân*: Các bài viết cũ có `work_package` v1.0 tạo từ tháng 09/2026 mang `raw_sha256` của bản cào sơ khởi. Khi trang web được Bronze re-crawl, `raw_sha256` trên đĩa thay đổi khiến `verify_preconditions` báo lỗi `raw_sha256 mismatch (integrity)` khi nạp vào DB.
-   - *Giải pháp*: Cập nhật `AgentRunner._register_article_lane_item` và `ingest_output` trong `src/agent/runner.py`: Tự động nhận diện các gói công việc cũ (`work_package_version != "1.1"`), nâng cấp tức thì lên bản 1.1 dựa trên nội dung Silver chuẩn và đồng bộ `work_items` table.
-   - *Kiểm chứng*: Thêm unit test `test_runner_ingest_upgrades_legacy_work_package`. 100% 499 bài của đợt 4 nạp DB sạch sẽ (`ingested: done=499 failed=0`).
-2. **Bộ Kiểm Thử**:
-   - 79/79 tests PASS (`test_ops_core.py`, `test_ops_runtime.py`, `test_agent_infra.py`) trong 19.4s.
-   - AST syntax validation đạt chuẩn Google Python Style.
-3. **Quy Chuẩn Git**:
-   - Cây làm việc sạch sẽ, commit chuẩn Conventional Commits kèm mã `(US-038)`.
-   - Sẵn sàng đóng phiên (`clean_for_closure: true`).
+```text
+FRA_DataIngestion - news-data/
+├── _manifest/                                 # [1. Siêu dữ liệu & La bàn cho Skills]
+│   ├── latest.json                            # Con trỏ nguyên tử cập nhật ngày mới nhất
+│   ├── 2026-10-16.json
+│   ├── 2026-10-17.json
+│   ├── 2026-10-18.json
+│   └── 2026-10-19.json
+│
+├── parquet/                                   # [2. Hồ dữ liệu chính thức cho Skills / DuckDB]
+│   └── articles/
+│       └── year=2026/
+│           └── month=10/                      # Phân vùng chuẩn OBT 22 cột (list<string> symbols)
+│               ├── part-20261016.parquet
+│               ├── part-20261017.parquet
+│               ├── part-20261018.parquet
+│               └── part-20261019.parquet
+│
+├── users/                                     # [3. Thành phẩm Excel xem trực tiếp]
+│   └── output/
+│       ├── AnPT/                              # File .xlsx lọc theo watchlist cá nhân
+│       ├── PhoHG/
+│       ├── ThanhTD/
+│       ├── UyenNNT/
+│       └── VyPTT/
+│
+├── review/                                    # [4. Tra cứu nhanh SQLite chỉ đọc (giữ 7 ngày)]
+│   ├── monocle_review_20261016.db
+│   ├── monocle_review_20261017.db
+│   ├── monocle_review_20261018.db
+│   └── monocle_review_20261019.db
+│
+└── bronze/                                    # [5. Lưu trữ thô HTML + meta (dự phòng đối soát)]
+    └── 2026/10/
+        ├── 16/
+        └── 19/
+```
+
+---
+
+## 4. Kiểm Thử Hệ Thống & Kiểm Định Quy Chuẩn Git
+
+1. **Bộ Kiểm Thử (Pytest Integrity)**:
+   - 39/39 tests PASS (`test_publisher.py`, `test_lakehouse_perf.py`, `test_lakehouse_cli.py`, `test_lakehouse_concurrency.py`, `test_lakehouse_dedup.py`, `test_lakehouse_manifest.py`, `test_lakehouse_storage.py`).
+2. **Cấu Hình Tự Động Hóa (Ops Daemon)**:
+   - Đã kích hoạt `publish.enabled: true` trong [`project/config/ops.yaml`](file:///c:/src/news-scraper/project/config/ops.yaml) để tự động hóa tiến trình xuất bản hàng ngày sau 01:00 sáng.
+3. **Quy Chuẩn Đóng Phiên (Rule 01 §7)**:
+   - Không còn file rác treo ngoài cây làm việc.
+   - Sẵn sàng commit chuẩn Conventional Commits kèm mã `(US-038)`.

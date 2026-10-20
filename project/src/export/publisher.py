@@ -377,7 +377,7 @@ def _build_obt_parquet(db: Path, day: date, out: Path) -> int:
         FROM l1_outputs
         WHERE id IN (SELECT MAX(id) FROM l1_outputs WHERE dod_pass = 1 GROUP BY article_id)
     ) l1 ON l1.article_id = a.url_title_hash
-    WHERE substr(a.published_at, 1, 10) = ? OR (a.published_at IS NULL AND substr(a.fetched_at, 1, 10) = ?)
+    WHERE (substr(a.published_at, 1, 10) = ? OR ((a.published_at IS NULL OR a.published_at = '') AND substr(a.fetched_at, 1, 10) = ?))
     ORDER BY a.published_at DESC
     """
     try:
@@ -519,9 +519,7 @@ def _build(item: FileOutcome, day: date, db: Path, stage: Path) -> None:
         if item.kind == "review":
             _build_review(db, out)
         elif item.kind == "parquet":
-            name = item.path.split("/")[1]
-            table, col = PARQUET_TABLES[name]
-            item.rows = _build_parquet(db, table, col, day, out)
+            item.rows = _build_obt_parquet(db, day, out)
         elif item.kind == "bronze":
             source = Path(item.path).name[: -len(".tar.xz")]
             item.members = _build_bronze(paths.bronze_dir() / source / _ymd(day), out)
@@ -601,8 +599,9 @@ def _write_day_manifest(target: Path, day: date, files: list[FileOutcome],
         if old_set == {(e["path"], e["sha256"]) for e in entries}:
             return f"_manifest/{existing[1].name}"
     rev = existing[0] + 1 if existing else 1
-    name = f"{_ymd(day)}.json" if rev == 1 else f"{_ymd(day)}.r{rev}.json"
-    data = {"schema": MANIFEST_SCHEMA, "day": day.isoformat(), "revision": rev,
+    iso_d = day.isoformat()
+    name = f"{iso_d}.json" if rev == 1 else f"{iso_d}.r{rev}.json"
+    data = {"schema": MANIFEST_SCHEMA, "day": iso_d, "revision": rev,
             "generated_at": _now_iso(), "host": socket.gethostname(), "files": entries}
     stage = paths.publish_staging_dir() / "_manifest"
     stage.mkdir(parents=True, exist_ok=True)
@@ -625,11 +624,33 @@ def _write_latest(target: Path, day: date, manifest_rel: str, pruned: list[str])
     days = _day_manifests(target)
     newest = max(days)
     latest_rel = f"_manifest/{days[newest][1].name}"
-    data = {"schema": MANIFEST_SCHEMA, "updated_at": _now_iso(), "host": socket.gethostname(),
-            "day": f"{newest[:4]}-{newest[4:6]}-{newest[6:]}", "manifest": latest_rel,
-            "manifests": sorted(f"_manifest/{p.name}" for _, p in days.values()),
-            "last_published": {"day": day.isoformat(), "manifest": manifest_rel},
-            "pruned": pruned}
+    latest_day_manifest = _load_json(target / latest_rel) or {}
+    parquet_files = [
+        {
+            "path": f["path"],
+            "rows": f.get("rows", 0),
+            "size_bytes": f.get("size", 0),
+            "sha256": f.get("sha256", ""),
+        }
+        for f in latest_day_manifest.get("files", [])
+        if f.get("kind") == "parquet"
+    ]
+    formatted_day = f"{newest[:4]}-{newest[4:6]}-{newest[6:]}" if len(newest) == 8 else newest
+    data = {
+        "schema": MANIFEST_SCHEMA,
+        "latest_date": formatted_day,
+        "manifest_ref": latest_rel,
+        "updated_at": _now_iso(),
+        "host": socket.gethostname(),
+        "day": formatted_day,
+        "manifest": latest_rel,
+        "total_partitions": len(parquet_files),
+        "total_unique_articles": sum(p["rows"] for p in parquet_files),
+        "files": parquet_files,
+        "manifests": sorted(f"_manifest/{p.name}" for _, p in days.values()),
+        "last_published": {"day": day.isoformat(), "manifest": manifest_rel},
+        "pruned": pruned,
+    }
     _write_json_replace(target / "_manifest" / "latest.json", data)
 
 

@@ -94,7 +94,7 @@ def test_publish_all_kinds_and_manifest_matches(env):
     res = _run(env)
     assert res.status == "ok", res.message
     t = env["target"]
-    manifest = json.loads((t / "_manifest" / "20261004.json").read_text(encoding="utf-8"))
+    manifest = json.loads((t / "_manifest" / "2026-10-04.json").read_text(encoding="utf-8"))
     paths = {f["path"]: f for f in manifest["files"]}
     assert "review/monocle_review_20261004.db" in paths
     assert "bronze/2026/10/04/a.vn.tar.xz" in paths
@@ -102,13 +102,11 @@ def test_publish_all_kinds_and_manifest_matches(env):
     assert "users/output/an/2026-10-04.xlsx" in paths
     art = "parquet/articles/year=2026/month=10/part-20261004.parquet"
     assert paths[art]["rows"] == 2
-    assert paths["parquet/analysis/year=2026/month=10/part-20261004.parquet"]["rows"] == 1
-    assert paths["parquet/mentions/year=2026/month=10/part-20261004.parquet"]["rows"] == 1
     for rel, f in paths.items():
         assert pub.sha256_file(t / rel) == f["sha256"]
         assert (t / rel).stat().st_size == f["size"]
     cols = pq.read_table(t / art).column_names
-    assert "content_html" not in cols and "content_text" in cols
+    assert "symbols" in cols and "summary" in cols and "sentiment" in cols
     members = paths["bronze/2026/10/04/a.vn.tar.xz"]["members"]
     assert sorted(m["name"] for m in members) == ["a.vn/20261004/h1.html",
                                                  "a.vn/20261004/h1.meta.json"]
@@ -150,7 +148,7 @@ def test_conflicting_target_is_reported_not_overwritten(env):
     bad = [f for f in res.files if f.action == "conflict"]
     assert [f.path for f in bad] == ["users/output/an/2026-10-04.xlsx"]
     assert dst.read_bytes() == b"khac"
-    assert not (env["target"] / "_manifest" / "20261004.json").exists()
+    assert not (env["target"] / "_manifest" / "2026-10-04.json").exists()
     assert not (env["target"] / "_manifest" / "latest.json").exists()
 
 
@@ -170,9 +168,11 @@ def test_latest_written_last(env, monkeypatch):
     monkeypatch.setattr(pub, "_write_json_replace", spy_latest)
     assert _run(env).status == "ok"
     assert order[-1] == "latest.json"
-    assert order[-2] == "20261004.json"
+    assert order[-2] == "2026-10-04.json"
     latest = json.loads((env["target"] / "_manifest/latest.json").read_text(encoding="utf-8"))
-    assert latest["manifest"] == "_manifest/20261004.json"
+    assert latest["manifest"] == "_manifest/2026-10-04.json"
+    assert latest["total_partitions"] == 1
+    assert latest["total_unique_articles"] == 2
 
 
 def test_review_retention_only_removes_own_reviews(env):
