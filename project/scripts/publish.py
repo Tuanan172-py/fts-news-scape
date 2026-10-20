@@ -50,10 +50,16 @@ def main(argv: list[str]) -> int:
     ap.add_argument("--force", action="store_true",
                     help="kiểm và chép lại phần thiếu dù manifest ngày đã đủ; không ghi đè")
     ap.add_argument("--target", help=f"đích dùng thay {PUBLISH_DIR_ENV} cho lần chạy này")
+    ap.add_argument("--skip-review", action="store_true",
+                    help="bỏ qua review DB snapshot (khuyên dùng khi backfill lịch sử)")
+    ap.add_argument("--skip-bronze", action="store_true",
+                    help="bỏ qua nén và xuất bản các gói Bronze HTML thô")
     args = ap.parse_args(argv)
 
     if args.from_date:
-        from datetime import timedelta
+        import sqlite3
+        from src.core.config import resolve_db_path
+
         try:
             start_day = parse_day(args.from_date)
             end_day = parse_day(args.to_date) if args.to_date else parse_day("yesterday")
@@ -61,16 +67,41 @@ def main(argv: list[str]) -> int:
             print(f"Lỗi định dạng ngày: {e}")
             return 1
 
-        print(f"Bắt đầu backfill từ {start_day.isoformat()} đến {end_day.isoformat()}...")
-        cur = start_day
+        db = Path(resolve_db_path())
+        conn = sqlite3.connect(f"file:{db.as_posix()}?mode=ro", uri=True)
+        try:
+            cur_rows = conn.execute(
+                "SELECT DISTINCT substr(coalesce(nullif(published_at,''), fetched_at), 1, 10) as d "
+                "FROM articles "
+                "WHERE coalesce(nullif(published_at,''), fetched_at) >= ? "
+                "  AND coalesce(nullif(published_at,''), fetched_at) <= ? "
+                "ORDER BY d",
+                (start_day.isoformat(), end_day.isoformat()),
+            ).fetchall()
+            target_dates = [parse_day(r[0]) for r in cur_rows if r[0]]
+        finally:
+            conn.close()
+
+        print(f"Bắt đầu backfill từ {start_day.isoformat()} đến {end_day.isoformat()} "
+              f"({len(target_dates)} ngày có dữ liệu)...")
         overall_status = 0
-        while cur <= end_day:
+        for cur in target_dates:
+            cur_include_review = not args.skip_review
+            if cur_include_review and (parse_day("today") - cur).days > 7:
+                cur_include_review = False
+
             print(f"\n--- Xuất bản ngày: {cur.isoformat()} ---")
-            res = publish_day(cur, dry_run=args.dry_run, force=args.force, target=args.target)
+            res = publish_day(
+                cur,
+                dry_run=args.dry_run,
+                force=args.force,
+                target=args.target,
+                include_review=cur_include_review,
+                include_bronze=not args.skip_bronze,
+            )
             print(f"  Trạng thái: {res.status} — {res.message}")
             if res.status == "failed":
                 overall_status = 1
-            cur += timedelta(days=1)
         print(f"\nHoàn tất backfill.")
         return overall_status
 
@@ -79,7 +110,14 @@ def main(argv: list[str]) -> int:
     except ValueError:
         print(f"Ngày không hợp lệ: {args.date}. Dùng YYYY-MM-DD hoặc yesterday.")
         return 1
-    res = publish_day(day, dry_run=args.dry_run, force=args.force, target=args.target)
+    res = publish_day(
+        day,
+        dry_run=args.dry_run,
+        force=args.force,
+        target=args.target,
+        include_review=not args.skip_review,
+        include_bronze=not args.skip_bronze,
+    )
     print(f"ngày    : {res.day}")
     print(f"đích    : {res.target or '(chưa đặt)'}")
     if res.files:

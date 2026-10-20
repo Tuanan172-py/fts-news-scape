@@ -2,7 +2,7 @@
 id: US-038
 type: story
 title: Codebase len Research-FPA/news-scraper va data plane SharePoint
-status: in_progress
+status: implemented
 branch: dev/us038
 lane: high-risk
 created: 2026-10-05

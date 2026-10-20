@@ -164,7 +164,7 @@ def test_daily_reporter_metrics(tmp_path):
 
     # Check markdown output
     md = reporter.generate_markdown(m)
-    assert "BÁO CÁO GIÁM SÁT TOÀN DIỆN HỆ THỐNG NEWS-SCAPE" in md
+    assert "BÁO CÁO GIÁM SÁT HỆ THỐNG NEWS-SCAPE" in md
     assert "2026-08-18" in md
     assert "cafef.vn" in md
     assert "vietstock.vn" in md
