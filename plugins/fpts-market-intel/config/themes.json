@@ -1,0 +1,125 @@
+{
+  "_doc": "Từ điển chủ đề do analyst tự chỉnh. Mỗi chủ đề khớp bài khi bài có một thực thể trong 'entities' HOẶC tiêu đề/tóm tắt chứa một từ khoá trong 'keywords'. Dùng lệnh 'lookup --text <chuỗi>' để tra mã thực thể.",
+  "themes": {
+    "lai_suat": {
+      "label": "Lãi suất",
+      "group": "vi_mo",
+      "entities": ["MACRO_THEME:LAI_SUAT"],
+      "keywords": ["lãi suất"]
+    },
+    "ty_gia": {
+      "label": "Tỷ giá USD/VND",
+      "group": "vi_mo",
+      "entities": ["MACRO_THEME:TY_GIA"],
+      "keywords": ["tỷ giá", "USD/VND"]
+    },
+    "chinh_sach_tien_te": {
+      "label": "Điều hành tiền tệ NHNN",
+      "group": "vi_mo",
+      "entities": ["INSTITUTION:NHNN"],
+      "keywords": ["tín phiếu", "Ngân hàng Nhà nước"]
+    },
+    "tin_dung": {
+      "label": "Tăng trưởng tín dụng",
+      "group": "vi_mo",
+      "entities": ["MACRO_THEME:TIN_DUNG"],
+      "keywords": ["tín dụng"]
+    },
+    "lam_phat": {
+      "label": "Lạm phát / CPI",
+      "group": "vi_mo",
+      "entities": ["MACRO_THEME:LAM_PHAT"],
+      "keywords": ["lạm phát", "CPI"]
+    },
+    "tang_truong": {
+      "label": "Tăng trưởng GDP",
+      "group": "vi_mo",
+      "entities": ["MACRO_THEME:GDP_TANG_TRUONG"],
+      "keywords": ["GDP", "tăng trưởng kinh tế"]
+    },
+    "fdi": {
+      "label": "Dòng vốn FDI",
+      "group": "vi_mo",
+      "entities": ["MACRO_THEME:FDI"],
+      "keywords": ["FDI", "vốn ngoại"]
+    },
+    "fed": {
+      "label": "Chính sách Fed",
+      "group": "quoc_te",
+      "entities": ["INSTITUTION:FED"],
+      "keywords": ["Fed ", "Cục Dự trữ Liên bang"]
+    },
+    "thue_quan_my": {
+      "label": "Thuế quan Mỹ",
+      "group": "dia_chinh_tri",
+      "entities": [],
+      "keywords": ["thuế quan", "thuế đối ứng", "chống bán phá giá"]
+    },
+    "xung_dot": {
+      "label": "Xung đột địa chính trị",
+      "group": "dia_chinh_tri",
+      "entities": [],
+      "keywords": ["xung đột", "chiến tranh", "Biển Đỏ", "Trung Đông", "Ukraine"]
+    },
+    "dau_tu_cong": {
+      "label": "Đầu tư công",
+      "group": "cau_chuyen_dau_tu",
+      "entities": ["MACRO_THEME:DAU_TU_CONG"],
+      "keywords": ["đầu tư công", "giải ngân vốn"]
+    },
+    "nang_hang": {
+      "label": "Nâng hạng thị trường",
+      "group": "cau_chuyen_dau_tu",
+      "entities": [],
+      "keywords": ["nâng hạng", "FTSE", "MSCI"]
+    },
+    "krx": {
+      "label": "Hệ thống KRX",
+      "group": "cau_chuyen_dau_tu",
+      "entities": [],
+      "keywords": ["KRX"]
+    },
+    "ban_dan": {
+      "label": "Bán dẫn",
+      "group": "cau_chuyen_dau_tu",
+      "entities": [],
+      "keywords": ["bán dẫn", "chip"]
+    },
+    "tin_chi_carbon": {
+      "label": "Tín chỉ carbon",
+      "group": "cau_chuyen_dau_tu",
+      "entities": [],
+      "keywords": ["tín chỉ carbon", "thị trường carbon"]
+    },
+    "bat_dong_san": {
+      "label": "Bất động sản",
+      "group": "nganh",
+      "entities": ["ASSET_CLASS:BAT_DONG_SAN_TAI_SAN", "IND_GICS2:QUAN_LY_VA_PHAT_TRIEN_BAT_DONG_SAN"],
+      "keywords": ["bất động sản"]
+    },
+    "trai_phieu": {
+      "label": "Trái phiếu doanh nghiệp",
+      "group": "nganh",
+      "entities": ["ASSET_CLASS:TRAI_PHIEU"],
+      "keywords": ["trái phiếu"]
+    },
+    "gia_vang": {
+      "label": "Giá vàng",
+      "group": "hang_hoa",
+      "entities": ["ASSET_CLASS:VANG"],
+      "keywords": ["giá vàng"]
+    },
+    "gia_dau": {
+      "label": "Giá dầu",
+      "group": "hang_hoa",
+      "entities": ["ASSET_CLASS:DAU_THO"],
+      "keywords": ["giá dầu", "giá xăng"]
+    },
+    "gia_thep": {
+      "label": "Giá thép",
+      "group": "hang_hoa",
+      "entities": [],
+      "keywords": ["giá thép", "thép"]
+    }
+  }
+}

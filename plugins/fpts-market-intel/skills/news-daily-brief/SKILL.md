@@ -1,58 +1,58 @@
 ---
 name: news-daily-brief
-description: Tổng hợp bản tin sáng (Morning Brief) hoặc bản tin cuối ngày từ News Lakehouse, lọc các sự kiện khẩn cấp và theo dõi danh mục cá nhân.
+description: Lập bản tin sáng (Morning Brief) ba tầng từ News Lakehouse — tin của watchlist/danh mục, vĩ mô qua đêm, và các tin được nhiều báo cùng đăng nhất — kèm danh sách mã nóng tin bất thường.
 ---
 
-# Kỹ Năng Lập Bản Tin Thị Trường (News Daily Brief)
+# Bản Tin Sáng Ba Tầng (News Daily Brief)
 
-Kỹ năng này giúp chuyên viên phân tích tự động tạo bản tin giao ban sáng (Morning Brief) hoặc tổng kết cuối ngày một cách có cấu trúc, chắt lọc từ toàn bộ các nguồn tin tức tài chính chính thống đã qua kiểm định chất lượng Gold.
+Bàn Morning / Tư vấn dùng mỗi sáng. Thay vì liệt kê tin dàn trải, bản tin chia ba tầng theo mức liên quan và độ lan toả.
 
----
+## 1. Khi nào kích hoạt
+- *"Tổng hợp Morning Brief hôm nay"*, *"Điểm tin sáng cho danh mục HPG, VCB, FPT, MWG"*
+- *"Có tin gì nóng cần chú ý trong phiên không?"*
 
-## 1. Khi Nào Kích Hoạt Kỹ Năng Này
-- Chuyên viên gõ lệnh hoặc yêu cầu: *"Tổng hợp Morning Brief hôm nay"*, *"Điểm tin thị trường sáng nay"*, *"Bản tin đầu ngày có sự kiện gì quan trọng?"*.
-- Chuyên viên yêu cầu lọc tin khẩn cấp: *"Có tin gì nóng cần chú ý trong phiên không?"*.
-
----
-
-## 2. Quy Trình Trích Xuất Dữ Liệu (Execution Protocol)
-
-### Bước 1: Trích Xuất Tin Tức Khẩn Cấp
-Chạy lệnh dòng lệnh để lấy danh sách tin tức có độ nhạy thời gian cao nhất (`urg`, `today`):
+## 2. Thu thập dữ liệu (0 token)
 ```powershell
-python "%USERPROFILE%\.gemini\config\plugins\fpts-market-intel\tools\lakehouse_client.py" urgent --limit 25 --json
+$LH = "$env:USERPROFILE\.gemini\config\plugins\fpts-market-intel\tools\lakehouse_client.py"
+python $LH status                                            # kiểm tra độ tươi trước khi viết
+python $LH brief --watchlist HPG,VCB,FPT,MWG                 # ngày mới nhất + tin qua đêm
+python $LH brief --date 2026-10-19 --watchlist HPG,VCB --lookback-days 2   # sau cuối tuần
 ```
+- `watchlist`: story theo từng mã (tin cấp thiết và lan toả xếp trước).
+- `macro`: story vĩ mô, chính sách, địa chính trị, hàng hoá không gắn mã cụ thể.
+- `spread`: story được ≥ 2 báo cùng đăng, xếp theo `n_sources`.
+- `buzz`: mã có lượng tin đột biến (`z ≥ 2`); xem `buzz.baseline.sufficient`.
+- Không có watchlist: hỏi analyst danh mục, hoặc bỏ tầng 1 và ghi rõ.
 
-### Bước 2: Phân Loại & Lọc Trùng Lặp Sự Kiện
-Nhóm các bài viết thu được thành 3 khối nghiệp vụ:
-1. **Khối Vĩ Mô & Chính Sách**: Lãi suất điều hành NHNN, tỷ giá USD/VND, thanh khoản thị trường, chính sách thuế, gói tín dụng.
-2. **Khối Doanh Nghiệp Trọng Tâm**: BCTC quý, biến động nhân sự cấp cao, trả cổ tức tỷ lệ cao, giao dịch cổ đông lớn, dự án trúng thầu.
-3. **Khối Cảnh Báo Rủi Ro**: Khởi tố, thanh tra, xử phạt vi phạm pháp luật/thuế, giải chấp cổ phiếu lãnh đạo, tranh chấp hợp đồng.
+## 3. Phân tích
+1. Mỗi tầng chọn tin quan trọng nhất, gộp tin cùng sự kiện, viết 1 dòng sự kiện + 1 dòng hàm ý.
+2. Ưu tiên tin `is_hot` (khẩn cấp / trong ngày) và `n_sources` cao.
+3. Gắn cảnh báo cho tin tiêu cực trọng yếu (pháp lý, khởi tố, giải chấp, thua lỗ).
 
----
-
-## 3. Cấu Trúc Trình Bày Bản Tin Chuẩn FPTS
-
+## 4. Khuôn đầu ra
 ```markdown
-# FPTS MORNING BRIEF — ĐIỂM TIN ĐẦU NGÀY
-*Ngày: YYYY-MM-DD | Nguồn: FPTS News Lakehouse Intelligence*
+# FPTS MORNING BRIEF — <YYYY-MM-DD>
+*Nguồn: FPTS News Lakehouse · Dữ liệu đến <data_to> · Cửa sổ <from> → <to>*
 
----
+## I. Danh mục theo dõi
+| Mã | Sự kiện | Sắc thái | Hàm ý | Nguồn |
+|---|---|---|---|---|
 
-### I. ĐIỂM NÓNG VĨ MÔ & THỊ TRƯỜNG CHUNG
-- **Tiêu đề / Sự kiện**: [Nội dung tóm tắt ngắn]
-  - *Hàm ý*: [Tác động tới thanh khoản thị trường hoặc nhóm ngành liên quan]
+## II. Vĩ mô & chính sách qua đêm
+- **<Sự kiện>** — <hàm ý> *(nguồn, giờ đăng)*
 
----
+## III. Tin lan toả nhất
+| Sự kiện | Số báo đăng | Báo đăng đầu tiên | Sắc thái |
+|---|---|---|---|
 
-### II. DOANH NGHIỆP TRỌNG TÂM TRONG PHIÊN
-| Mã CP | Sự kiện chính | Sắc thái | Hàm ý thị trường / Tác động giá |
-| :---: | :--- | :---: | :--- |
-| **HPG** | Ký kết hợp đồng xuất khẩu sang thị trường mới... | `pos` | Kỳ vọng cải thiện biên lợi nhuận Q4. |
-| **VCB** | Công bố ngày đăng ký cuối cùng nhận cổ tức... | `pos` | Dòng tiền hỗ trợ giữ nhịp chỉ số. |
+## IV. Mã nóng tin bất thường
+| Mã | Tin hôm nay / TB nền | z | Sự kiện chính |
+|---|---|---|---|
 
----
-
-### III. CẢNH BÁO RỦI RO & SỰ KIỆN ĐỘT BIẾN (WATCHOUT)
-- [Cảnh báo rủi ro về doanh nghiệp hoặc mã cổ phiếu có tin tức tiêu cực đáng kể]
+## Cảnh báo
+- <tin tiêu cực trọng yếu, nếu có>
 ```
+
+## 5. Lưu ý
+- `status.is_stale = true`: đặt cảnh báo dữ liệu cũ ở đầu bản tin.
+- Không đưa khuyến nghị mua/bán; chỉ tóm lược tin và hàm ý có trong dữ liệu.

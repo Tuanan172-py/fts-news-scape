@@ -108,10 +108,10 @@ def main() -> int:
     print("   CAI DAT HOAN TAT! KHOI DONG AGY HOAC GEMINI DE BAT DAU ")
     print("==========================================================")
     print("Cac cau lenh goi y co the thu ngay trong chat:")
-    print("  * 'Soi tin tuc ma HPG trong 3 ngay gan nhat'")
-    print("  * 'Tong hop Morning Brief cho danh muc hom nay'")
-    print("  * 'Quet nhip dap va sac thai nganh Ngan hang tuan qua'")
-    print("  * 'Kiem tra do tuoi du lieu Lakehouse hom nay'")
+    print("  * 'Tong hop dong su kien cua HPG trong 3 thang qua'")
+    print("  * 'Ma nao dang nong tin bat thuong hom nay?'")
+    print("  * 'Dien bien ty gia va dieu hanh NHNN 6 thang qua'")
+    print("  * 'Lap Morning Brief cho danh muc HPG, VCB, FPT, MWG'")
     return 0
 
 

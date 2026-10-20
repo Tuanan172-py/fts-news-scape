@@ -24,6 +24,8 @@ python "%USERPROFILE%\.gemini\config\plugins\fpts-market-intel\tools\lakehouse_c
 ```
 *(Nếu chuyên viên yêu cầu lọc riêng tin tích cực hoặc tiêu cực, thêm tham số `--sentiment pos` hoặc `--sentiment neg`).*
 
+Bài được chọn theo thực thể `TICKER:<MÃ>` trong cột `entities` (hợp nhất với `symbols`), nên bắt được cả bài chỉ nhắc mã trong nội dung. Khi chuyên viên hỏi theo khoảng thời gian (*"3 tháng qua"*, *"từ ngày… đến ngày…"*), chuyển sang kỹ năng `news-ticker-timeline`.
+
 ### Bước 2: Phân Tích & Tổng Hợp Dữ Liệu
 Sau khi nhận mảng JSON từ công cụ:
 1. **Tính toán Chỉ số Tâm lý Ròng (Net Sentiment)**:

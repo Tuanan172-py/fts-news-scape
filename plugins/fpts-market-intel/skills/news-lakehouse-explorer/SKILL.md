@@ -31,18 +31,18 @@ Chuyên viên có thể yêu cầu truy vấn bất kỳ trên bảng hợp nh�
 python "%USERPROFILE%\.gemini\config\plugins\fpts-market-intel\tools\lakehouse_client.py" query --sql "<CÂU_SQL_AN_TOÀN>" --json
 ```
 
+**Các bảng có sẵn:**
+- `{articles}`: OBT Parquet nguyên gốc.
+- `articles`: OBT kèm cột dẫn xuất `pub_date` (DATE), `story_key` (tiêu đề chuẩn hoá, gộp bài trùng giữa các báo), `sent_score` (1 / 0 / -1), `is_hot` (tin `urgent`/`today`).
+- `article_entities`: dạng dài `article_id, entity_id, kind`, hợp nhất cột `entities` và `symbols`. `kind` gồm `TICKER`, `IND_GICS1/2/3`, `MACRO_THEME`, `MACRO_GEO`, `ASSET_CLASS`, `INSTITUTION`, `INDEX`, `EXCHANGE`. Tra mã: `lookup --text "<chuỗi>"`.
+
 **Các mẫu SQL hữu ích:**
-1. **Top cổ phiếu được nhắc đến nhiều nhất:**
+1. **Top cổ phiếu được nhắc đến nhiều nhất (theo thực thể, không chỉ cột `symbols`):**
    ```sql
-   WITH unnested AS (
-       SELECT unnest(symbols) as sym 
-       FROM {articles} 
-       WHERE len(symbols) > 0
-   ) 
-   SELECT sym, count(*) as count 
-   FROM unnested 
-   GROUP BY sym 
-   ORDER BY count DESC LIMIT 10
+   SELECT entity_id, count(*) AS n_articles
+   FROM article_entities
+   WHERE kind = 'TICKER'
+   GROUP BY 1 ORDER BY n_articles DESC LIMIT 10
    ```
 
 2. **Thống kê số lượng bài theo tên miền nguồn tin:**
@@ -52,3 +52,14 @@ python "%USERPROFILE%\.gemini\config\plugins\fpts-market-intel\tools\lakehouse_c
    GROUP BY source_domain
    ORDER BY total DESC
    ```
+
+3. **Số story và số nguồn theo ngày của một mã:**
+   ```sql
+   SELECT a.pub_date, count(*) AS n_articles, count(DISTINCT a.story_key) AS n_stories,
+          count(DISTINCT a.source_domain) AS n_sources, round(avg(a.sent_score), 3) AS net_sent
+   FROM articles a JOIN article_entities e USING (article_id)
+   WHERE e.entity_id = 'TICKER:HPG'
+   GROUP BY 1 ORDER BY 1
+   ```
+
+**Các lệnh lens dựng sẵn** (trả JSON): `timeline`, `window`, `buzz`, `pulse`, `themes`, `cooccur`, `brief`, `lookup`, `themes-list`. Xem `python "%USERPROFILE%\.gemini\config\plugins\fpts-market-intel\tools\lakehouse_client.py" <lệnh> --help`.

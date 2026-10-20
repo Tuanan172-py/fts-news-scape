@@ -34,13 +34,23 @@ def test_plugin_rules_and_tools():
 
 
 def test_plugin_skills_catalog():
-    """Kiểm tra cả 4 kỹ năng nghiệp vụ đều có SKILL.md với frontmatter chuẩn."""
+    """Kiểm tra mọi kỹ năng nghiệp vụ theo team đều có SKILL.md với frontmatter chuẩn."""
     expected_skills = [
         "news-ticker-screener",
+        "news-ticker-timeline",
+        "news-catalyst-tracker",
+        "news-sector-impact",
+        "news-buzz-radar",
+        "news-sentiment-pulse",
+        "news-price-explainer",
+        "news-macro-timeline",
+        "news-theme-trend",
+        "news-geo-link",
         "news-daily-brief",
-        "news-sector-pulse",
         "news-lakehouse-explorer",
     ]
+    present = {p.name for p in (PLUGIN_ROOT / "skills").iterdir() if p.is_dir()}
+    assert present == set(expected_skills)
 
     for skill_name in expected_skills:
         skill_file = PLUGIN_ROOT / "skills" / skill_name / "SKILL.md"
@@ -55,3 +65,29 @@ def test_plugin_skills_catalog():
         meta = yaml.safe_load(parts[1])
         assert meta.get("name") == skill_name, f"Tên skill không khớp trong {skill_file}"
         assert "description" in meta and len(meta["description"]) > 10
+
+
+def test_skill_commands_exist_in_client():
+    """Kiểm tra mọi lệnh lens được SKILL.md gọi đều là lệnh con hợp lệ của lakehouse_client."""
+    import re
+    import sys
+
+    sys.path.insert(0, str(PLUGIN_ROOT / "tools"))
+    from lakehouse_client import build_parser
+
+    sub = next(a for a in build_parser()._actions if a.dest == "action")
+    valid = set(sub.choices)
+    for skill_file in (PLUGIN_ROOT / "skills").glob("*/SKILL.md"):
+        text = skill_file.read_text(encoding="utf-8")
+        for cmd in re.findall(r"python \$LH ([a-z-]+)", text):
+            assert cmd in valid, f"{skill_file.parent.name} gọi lệnh không tồn tại: {cmd}"
+
+
+def test_themes_config_valid():
+    """Kiểm tra `config/themes.json` có cấu trúc hợp lệ và mã thực thể đúng dạng KIND:CODE."""
+    data = json.loads((PLUGIN_ROOT / "config" / "themes.json").read_text(encoding="utf-8"))
+    assert data["themes"]
+    for key, th in data["themes"].items():
+        assert th.get("label"), key
+        assert th.get("entities") or th.get("keywords"), key
+        assert all(":" in e and e == e.upper() for e in th.get("entities", [])), key

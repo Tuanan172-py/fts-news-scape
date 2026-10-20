@@ -1,11 +1,13 @@
 {
   "name": "fpts-market-intel",
-  "description": "Bộ công cụ khai phá dữ liệu tin tức tài chính FPTS: tra cứu mã CP, xung lực ngành & vĩ mô, lập Morning Brief từ News Lakehouse.",
-  "version": "1.0.0",
+  "description": "Bộ công cụ khai phá dữ liệu tin tức tài chính FPTS cho các team Cơ bản, Thị trường/Kỹ thuật, Vĩ mô và Morning: dòng sự kiện theo mã, radar mã nóng tin, nhịp tâm lý, biên niên vĩ mô, câu chuyện đầu tư, tác động ngành và bản tin sáng từ News Lakehouse.",
+  "version": "1.1.0",
   "suggestedPrompts": [
-    "Soi tin tức mã HPG trong 3 ngày gần nhất",
-    "Tổng hợp Morning Brief cho danh mục hôm nay",
-    "Quét nhịp đập và sắc thái ngành Ngân hàng tuần qua",
-    "Kiểm tra độ tươi dữ liệu Lakehouse hôm nay"
+    "Tổng hợp dòng sự kiện của HPG trong 3 tháng qua",
+    "Mã nào đang nóng tin bất thường hôm nay?",
+    "Diễn biến tỷ giá và điều hành NHNN 6 tháng qua",
+    "Lập Morning Brief cho danh mục HPG, VCB, FPT, MWG",
+    "Câu chuyện đầu tư nào đang nóng lên tuần này?",
+    "Vì sao VHM biến động mạnh ngày 15/05?"
   ]
 }

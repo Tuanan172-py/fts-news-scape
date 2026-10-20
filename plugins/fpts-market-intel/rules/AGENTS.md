@@ -21,9 +21,22 @@ Khi lọc hoặc tổng hợp thông tin theo mã cổ phiếu, Agent phải tô
   - `neg` (Tiêu cực): Rủi ro, thua lỗ, nợ xấu, chậm tiến độ, tranh chấp/vi phạm pháp luật, bị phạt thuế, bán giải chấp.
   - `neu` (Trung lập): Thông báo hành chính định kỳ, tài liệu ĐHCĐ thường niên, dữ liệu thống kê hai chiều.
 - **Độ nhạy thời gian (`time_sensitivity`)**:
-  - `urg` (Khẩn cấp) & `today` (Hôm nay): Biến cố bất thường, khởi tố lãnh đạo, thay đổi lãi suất đột ngột, công bố BCTC quý/năm, trả cổ tức tỷ lệ cao. Ưu tiên đưa lên đầu trong các bản tin Morning Brief.
-  - `week`, `month`, `arch`: Hoạt động sản xuất thường nhật, thông tin tham khảo dài hạn.
+  - `urgent` (Khẩn cấp) & `today` (Hôm nay): Biến cố bất thường, khởi tố lãnh đạo, thay đổi lãi suất đột ngột, công bố BCTC quý/năm, trả cổ tức tỷ lệ cao. Đây là nhóm "tin cấp thiết" (`is_hot`), ưu tiên đưa lên đầu trong các bản tin.
+  - `this_week`, `this_month`, `archive`: Hoạt động sản xuất thường nhật, thông tin tham khảo dài hạn.
+- Sentiment gắn với **cả bài**, không riêng cho từng mã; bài nhắc nhiều mã phải được chú thích khi quy sentiment cho một mã.
 
 ## 4. Định Dạng Trình Bày Chuẩn Cho Chuyên Viên Phân Tích
 - Trình bày thông tin bằng bảng Markdown gọn gàng, trực diện.
 - Trích dẫn rõ `implication` (hàm ý thị trường / tác động dòng tiền) để mang lại giá trị gia tăng phân tích, tránh chỉ liệt kê tiêu đề thuần túy.
+
+## 5. Tách Bạch Đo Lường và Diễn Giải
+- Mỗi báo cáo có hai phần: **[Đo lường]** (số liệu lấy nguyên từ đầu ra JSON của lens: số bài, z-score, net sentiment, phân vị, lift) và **[Diễn giải]** (phân loại, kết luận, hàm ý do Agent suy luận).
+- Không làm tròn lại hay tự tính lại số liệu đã có trong JSON; không đưa số liệu tự ước tính vào phần [Đo lường].
+
+## 6. Khai Báo Mức Nền và Độ Phủ Dữ Liệu
+- Các lens trả khối `baseline`, `coverage` hoặc `history`. Khi `sufficient = false`, `window_starts_before_data = true`, `state = "Chưa đủ lịch sử"` hoặc số kỳ lịch sử ít, Agent phải ghi rõ giới hạn đó ngay dưới bảng [Đo lường].
+- Đếm theo **story** (bài cùng tiêu đề chuẩn hoá giữa các báo) khi nói về số sự kiện; đếm theo **bài** khi nói về độ phủ truyền thông. Số nguồn (`n_sources`) là thước đo mức lan toả.
+
+## 7. Phạm Vi Khuyến Nghị
+- Tín hiệu tin tức (đột biến, sentiment, phân vị) là chỉ báo chú ý, không phải khuyến nghị mua/bán và không phải tín hiệu giá.
+- Kết luận nhân quả (ví dụ nguyên nhân biến động giá, ai hưởng lợi) phải kèm trích dẫn bài và mức độ chắc chắn.

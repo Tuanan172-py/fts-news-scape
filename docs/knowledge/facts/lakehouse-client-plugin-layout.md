@@ -23,7 +23,7 @@ summary: Defines standard directory layout and zero-config path discovery for th
 - Client-side Lakehouse querying capabilities are packaged as a single plugin at `~/.gemini/config/plugins/fpts-market-intel/`.
 - The plugin bundle contains `plugin.json`, `rules/AGENTS.md`, `skills/`, and shared Python tooling in `tools/lakehouse_client.py`.
 - Path discovery resolves OneDrive shortcuts via a three-tier sequence: environment variable `$env:NEWS_DATA_ROOT`, standard shortcut paths, and filesystem scan for `_manifest/latest.json`.
-- DuckDB executes in-memory against canonical Parquet partitions (`parquet/articles/year=YYYY/month=MM/part-YYYYMMDD.parquet`) using array filtering `list_contains(symbols, '...')`.
+- DuckDB executes in-memory against canonical Parquet partitions (`parquet/articles/year=YYYY/month=MM/part-YYYYMMDD.parquet`) and selects tickers through the `article_entities` view (FACT-lakehouse-symbols-column-is-sparse-filter-tickers-by).
 - Scanning over 2,900 articles consumes 0.42 seconds and zero LLM input tokens.
 
 ## Why

@@ -1,52 +1,70 @@
 # FPTS Market Intel — Unified Lakehouse Plugin
 
-Plugin khai phá dữ liệu tin tức tài chính và phân tích tâm lý thị trường dành cho chuyên viên phân tích FPTS trên nền tảng **Antigravity (AGY)** và **Gemini IDE**.
+Plugin khai phá dữ liệu tin tức tài chính đã qua xử lý LLM, dành cho chuyên viên phân tích FPTS trên nền tảng **Antigravity (AGY)** và **Gemini IDE**.
 
 ---
 
 ## 1. Tính Năng Nổi Bật
 
-- **Zero-Token Local Execution**: Quét trực tiếp hồ dữ liệu Parquet (OBT 22 cột) trên máy trạm thông qua DuckDB nhúng, tốc độ dưới 0.5s, không tốn token LLM cho tầng trích xuất.
-- **Zero-Config Auto-Discovery**: Tự động nhận diện shortcut thư mục SharePoint OneDrive (`FRA_DataIngestion - news-data`) trên mọi máy trạm Windows.
-- **Bộ 4 Kỹ Năng Tích Hợp**:
-  1. `news-ticker-screener`: Soi tin tức chuyên sâu theo từng mã cổ phiếu (tiêu đề, tóm tắt, luận điểm, hàm ý dòng tiền, sắc thái).
-  2. `news-daily-brief`: Tổng hợp bản tin sáng (Morning Brief) theo Watchlist cá nhân hoặc VN30.
-  3. `news-sector-pulse`: Đo lường xung lực & ma trận tâm lý 11 nhóm ngành GICS và tin tức vĩ mô.
-  4. `news-lakehouse-explorer`: Kiểm toán độ tươi dữ liệu (`_manifest/latest.json`) và chạy các câu lệnh SQL DuckDB tùy biến.
+- **Zero-Token Local Execution**: DuckDB nhúng quét trực tiếp Parquet (OBT) trên máy trạm; tầng lọc, đếm, so mức nền không tốn token LLM. LLM chỉ đọc gói bằng chứng đã cô đọng.
+- **Zero-Config Auto-Discovery**: Tự nhận diện shortcut SharePoint OneDrive (`FRA_DataIngestion - news-data`).
+- **Truy hồi theo thực thể**: View `article_entities` hợp nhất `entities` và `symbols`, nên lọc theo mã/ngành/chủ đề vĩ mô bắt được cả bài chỉ nhắc đối tượng trong nội dung.
+- **Đếm theo story**: Bài cùng tiêu đề chuẩn hoá giữa các báo gộp thành một story; số nguồn đăng là thước đo lan toả.
 
----
+## 2. Bản Đồ Kỹ Năng Theo Team
 
-## 2. Hướng Dẫn Kích Hoạt & Sử Dụng
+Mọi kỹ năng dùng chung một khuôn: **Đối tượng** (mã / ngành / chủ đề) + **Khoảng thời gian** + **Câu hỏi**.
 
-### A. Kích hoạt trong Antigravity (AGY) hoặc Gemini IDE
-Khi mở AGY / Gemini IDE, plugin xuất hiện trong tab **Plugins** với tên **`fpts-market-intel`**. 
-Chuyên viên có thể gạt công tắc **Bật (Enable)** hoặc bấm trực tiếp các câu prompt gợi ý có sẵn:
-- *"Soi tin tức mã HPG trong 3 ngày gần nhất"*
-- *"Tổng hợp Morning Brief cho danh mục hôm nay"*
-- *"Quét nhịp đập và sắc thái ngành Ngân hàng tuần qua"*
-- *"Kiểm tra độ tươi dữ liệu Lakehouse hôm nay"*
+| Team | Kỹ năng | Tình huống | Lens |
+|---|---|---|---|
+| Cơ bản | `news-ticker-timeline` | Dòng sự kiện của một mã trong [từ–đến] cho báo cáo Update | `timeline` |
+| Cơ bản | `news-catalyst-tracker` | Tiến độ dự án/luận điểm 6–12 tháng, phát ngôn so với thực tế | `timeline --keywords` |
+| Cơ bản | `news-sector-impact` | Tin ngành/đầu vào ảnh hưởng mã nào | `cooccur` |
+| Cơ bản / Tư vấn | `news-ticker-screener` | Tin mới nhất của một mã | `ticker` |
+| Thị trường / Kỹ thuật | `news-buzz-radar` | Mã có lượng tin đột biến so với 20 phiên | `buzz` |
+| Thị trường / Kỹ thuật | `news-sentiment-pulse` | Tâm lý tin tức và phân vị 1 năm, tin cấp thiết | `pulse` |
+| Thị trường / Kỹ thuật | `news-price-explainer` | Giải thích một phiên biến động giá (T-3…T+2) | `window` |
+| Vĩ mô | `news-macro-timeline` | Biên niên chủ đề vĩ mô / địa chính trị 3–6 tháng | `timeline` |
+| Vĩ mô | `news-theme-trend` | Câu chuyện đầu tư nóng lên hay nguội đi (7/30/90 ngày) | `themes` |
+| Vĩ mô | `news-geo-link` | Sự kiện địa chính trị liên quan ngành/mã Việt Nam | `cooccur` |
+| Morning | `news-daily-brief` | Bản tin sáng ba tầng | `brief` |
+| Quant | `news-lakehouse-explorer` | Kiểm tra độ tươi, SQL tùy biến | `status`, `query` |
 
-### B. Kiểm tra Đường dẫn Dữ liệu (Shortcut OneDrive)
-Plugin đọc dữ liệu từ shortcut SharePoint đã đồng bộ về máy:
+## 3. Lệnh Lens (`tools/lakehouse_client.py`)
+
+```powershell
+$LH = "$env:USERPROFILE\.gemini\config\plugins\fpts-market-intel\tools\lakehouse_client.py"
+python $LH status
+python $LH lookup --text "lai suat"
+python $LH timeline --target HPG --days 90 --grain week
+python $LH window   --target VHM --date 2026-05-15
+python $LH buzz     --top 10
+python $LH pulse    --days 30
+python $LH themes
+python $LH cooccur  --target MACRO_GEO:MY --kinds IND_GICS3,TICKER
+python $LH brief    --watchlist HPG,VCB,FPT
+```
+
+`--target` nhận mã cổ phiếu (`HPG`), mã thực thể (`MACRO_GEO:MY`, `IND_GICS3:NGAN_HANG`), tên chủ đề trong `config/themes.json` (`dau_tu_cong`) hoặc từ khoá tự do (`"Dung Quất"`).
+
+## 4. Cấu Hình Chủ Đề
+
+`config/themes.json` định nghĩa các câu chuyện đầu tư và chủ đề vĩ mô bằng tập thực thể và từ khoá. Analyst có thể thêm chủ đề mới mà không cần sửa mã.
+
+## 5. Kiểm Tra Đường Dẫn Dữ Liệu
+
 - **SharePoint Site**: `https://fptscomvn.sharepoint.com/sites/FRA_DataIngestion`
 - **Thư mục cục bộ chuẩn**: `%USERPROFILE%\OneDrive - fpts.com.vn\Shortcuts\FRA_DataIngestion - news-data`
-*(Nếu lưu tại vị trí khác, có thể thiết lập biến môi trường `NEWS_DATA_ROOT` trỏ tới thư mục trên).*
+- Có thể đặt biến môi trường `NEWS_DATA_ROOT` trỏ tới thư mục trên.
 
----
-
-## 3. Kiến Trúc & Cấu Trúc Thư Mục
+## 6. Cấu Trúc Thư Mục
 
 ```text
 fpts-market-intel/
-├── plugin.json                      # Manifest đăng ký plugin & suggestedPrompts
-├── README.md                        # Hướng dẫn sử dụng
-├── rules/
-│   └── AGENTS.md                    # Guardrails miền tài chính & chống ảo giác
-├── skills/
-│   ├── news-ticker-screener/        # Kỹ năng soi mã cổ phiếu
-│   ├── news-daily-brief/            # Kỹ năng lập Morning Brief
-│   ├── news-sector-pulse/           # Kỹ năng phân tích ngành & vĩ mô
-│   └── news-lakehouse-explorer/     # Kỹ năng kiểm toán & chạy SQL
-└── tools/
-    └── lakehouse_client.py          # Động cơ DuckDB nhúng & Auto-Discovery
+├── plugin.json            # Manifest & suggestedPrompts
+├── README.md
+├── config/themes.json     # Từ điển chủ đề do analyst cấu hình
+├── rules/AGENTS.md        # Guardrails: căn cứ dữ liệu, đo lường vs diễn giải, mức nền
+├── skills/                # 12 kỹ năng theo team
+└── tools/lakehouse_client.py   # DuckDB nhúng, view phân tích và các lens
 ```
