@@ -83,9 +83,10 @@ def main(argv: list[str] | None = None) -> int:
     """
     ap = argparse.ArgumentParser(description="Tự động giải phóng bài viết tồn đọng qua OpenCode Runner")
     ap.add_argument("--waves", type=int, default=40, help="Số đợt tối đa cần chạy (mặc định 40)")
-    ap.add_argument("--limit", type=int, default=500, help="Số bài tối đa trong mỗi đợt (mặc định 500)")
+    ap.add_argument("--limit", type=int, default=250, help="Số bài tối đa trong mỗi đợt (mặc định 250 bài = 5 lô con)")
     ap.add_argument("--concurrency", type=int, default=2, help="Số lô chạy song song trong mỗi đợt (mặc định 2)")
     ap.add_argument("--runner", default="opencode", choices=["opencode", "agy", "openrouter"], help="Runner nhận thức")
+    ap.add_argument("--min-coverage", type=float, default=0.20, help="Độ phủ tối thiểu để nạp CSDL cuốn chiếu (mặc định 0.20 = 20%)")
     ap.add_argument("--cooldown", type=int, default=10, help="Thời gian nghỉ (giây) giữa các đợt (mặc định 10)")
     ap.add_argument("--max-runtime-hours", type=float, default=6.0, help="Trần thời gian tự dừng (giờ, mặc định 6.0)")
     ap.add_argument("--dry-run", action="store_true", help="Chỉ đóng gói, không gọi phân tích và nạp CSDL")
@@ -138,6 +139,7 @@ def main(argv: list[str] | None = None) -> int:
             "--wave", wave_id,
             "--limit", str(args.limit),
             "--runner", args.runner,
+            "--mode", "backlog",
             "--force",
         ]
         rc, out = run_command(pack_cmd, desc=f"Đóng gói bài viết đợt {wave_id}")
@@ -181,6 +183,8 @@ def main(argv: list[str] | None = None) -> int:
             PYTHON, str(ARTICLE_RUN),
             "--wave", wave_id,
             "--runner", args.runner,
+            "--mode", "backlog",
+            "--force",
             "--analyze",
             "--concurrency", str(args.concurrency),
         ]
@@ -196,6 +200,8 @@ def main(argv: list[str] | None = None) -> int:
             PYTHON, str(ARTICLE_RUN),
             "--wave", wave_id,
             "--runner", args.runner,
+            "--mode", "backlog",
+            "--force",
             "--repair",
             "--concurrency", str(args.concurrency),
         ]
@@ -210,8 +216,11 @@ def main(argv: list[str] | None = None) -> int:
         finish_cmd = [
             PYTHON, str(ARTICLE_RUN),
             "--wave", wave_id,
+            "--runner", args.runner,
+            "--mode", "backlog",
             "--finish",
             "--force",
+            "--min-coverage", str(args.min_coverage),
         ]
         rc_finish, out_finish = run_command(finish_cmd, desc=f"Kiểm định DoD và nạp CSDL cho {wave_id}")
 

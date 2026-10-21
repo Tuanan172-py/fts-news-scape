@@ -1,8 +1,9 @@
 # PowerShell script khởi chạy điều phối tự động giải phóng tồn đọng bằng OpenCode Free Tier
 param(
     [int]$Waves = 40,
-    [int]$Limit = 500,
+    [int]$Limit = 250,
     [int]$Concurrency = 2,
+    [double]$MinCoverage = 0.20,
     [int]$Cooldown = 10,
     [double]$MaxRuntimeHours = 6.0,
     [switch]$DryRun
@@ -16,6 +17,7 @@ $ArgsList = @(
     "--waves", $Waves,
     "--limit", $Limit,
     "--concurrency", $Concurrency,
+    "--min-coverage", $MinCoverage,
     "--cooldown", $Cooldown,
     "--max-runtime-hours", $MaxRuntimeHours
 )

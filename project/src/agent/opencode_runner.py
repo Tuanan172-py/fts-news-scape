@@ -272,13 +272,12 @@ class OpencodeRunner:
                 "run",
                 "--format", "json",
                 "-m", current_model,
-                prompt_payload,
             ]
 
             try:
                 proc = subprocess.run(
                     cmd,
-                    input="",
+                    input=prompt_payload,
                     capture_output=True,
                     text=True,
                     encoding="utf-8",
