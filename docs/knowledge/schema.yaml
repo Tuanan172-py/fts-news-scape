@@ -15,7 +15,7 @@ common:
     lane: [tiny, normal, high-risk]
   date_keys: [created, updated, reconstructed, verified]
   # Allowed prefixes for entries in `evidence`.
-  evidence_prefixes: ["commit:", "path:", "metric:", "test:", "wave:", "url:", "operator:"]
+  evidence_prefixes: ["commit:", "path:", "metric:", "test:", "wave:", "url:", "operator:", "trace:"]
   # Keys whose values are document ids that must resolve.
   link_keys: [story, adr, plan, proposal, supersedes, superseded_by, amends, amended_by, related]
 

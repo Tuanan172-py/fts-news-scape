@@ -3,6 +3,9 @@
 Cập nhật: 2026-09-17 · Tác giả: Antigravity 2.0 · Trạng thái: ACTIVE.
 Tài liệu hóa chi tiết workflow 3 tầng Medallion theo định dạng trực quan (ASCII execution flow) từ cào dữ liệu gốc đến phân tích chuyên sâu và giao hàng.
 
+> [!NOTE]
+> **Trạng thái Kế thừa (tầng Gold):** phần L1 Code-First (`l1_route.py`) và Gold Financial Analyst bên dưới mô tả lane đã nghỉ hưu (ADR-0010). Đường xử lý hiện hành là Article Lane: xem [00-end-to-end-architecture](00-end-to-end-architecture.md) §6. Khi mâu thuẫn, tài liệu 00 thắng.
+
 ---
 
 ## 1. Tầng Bronze: Thu thập & Lưu trữ Nguyên bản (Raw WORM Ingestion)

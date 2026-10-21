@@ -51,7 +51,7 @@ description: Quy trình điều phối mạng lưới Agent đa tầng (Master, 
 ### 2. `Watchlist & Entity Monitor Agent` — Quan Sát Người Dùng
 
 - **Nhiệm vụ**:
-  - Quét thư mục `users/subscriptions/*.xlsx` để phát hiện ngay khi có người dùng mới thêm file đăng ký mà chưa được kích hoạt trong `config/entities/manifest.yaml`.
+  - Quét thư mục `users/subscriptions/*.xlsx` để phát hiện ngay khi có người dùng mới thêm file đăng ký mà chưa được kích hoạt trong `subscriptions/manifest.yaml`.
   - Giám sát các thực thể lạ (`unlisted_candidates`) do Subagents nhận diện để đề xuất Dev cập nhật từ điển catalog `data/entities/entities.json`.
 - **Công cụ chuẩn**:
   ```powershell

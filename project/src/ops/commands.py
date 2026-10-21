@@ -9,7 +9,7 @@ from typing import Protocol
 from src.ops import reports
 from src.ops.breakers import Breakers
 from src.ops.config import OpsPaths
-from src.ops.order import FAILOVER_VALUES, LEVELS, PROVIDERS, extend, load_order, save_order
+from src.ops.order import FAILOVER_VALUES, LEVELS, MAX_LIMIT_CEILING, PROVIDERS, extend, load_order, save_order
 from src.ops.present import fmt_date
 from src.ops.store import OpsStore
 
@@ -34,7 +34,7 @@ Xem
 /capture restart — thử lại khởi động morninger
 
 Mandate và provider (cần bấm xác nhận khi nâng quyền)
-/level L0|L1 — L0 chỉ báo; L1 tự chạy trọn đợt tới nạp DB
+/level L0|L1 [số bài] — L0 chỉ báo; L1 tự chạy trọn đợt tới nạp DB, trần số bài mỗi đợt
 /order extend <ngày> — gia hạn mandate tay (mandate cũng tự gia hạn khi hệ thống khoẻ)
 /provider agy|openrouter, /failover never|ask|auto
 /reset <provider> — đóng breaker sau khi đã sửa nguyên nhân
@@ -248,16 +248,28 @@ def _dispatch(cmd: str, args: list[str], ctl: Controller) -> Reply:
         return Reply(f"Đã yêu cầu huỷ {args[0]} ở ranh giới bước kế tiếp.")
     if cmd == "/level":
         if not args or args[0].upper() not in LEVELS:
-            return Reply("Dùng: /level L0|L1")
+            if args and args[0].upper() in ("L2", "L3"):
+                return Reply("Hệ thống đã chuẩn hóa L0/L1 theo ADR-0012 (Amended). "
+                             "Vui lòng dùng /level L1 <số bài>")
+            return Reply("Dùng: /level L0|L1 [số bài]")
+        cap = None
+        extra = [a for a in args[1:] if a != CONFIRM]
+        if extra:
+            if args[0].upper() != "L1" or not extra[0].isdigit()                     or not 1 <= int(extra[0]) <= MAX_LIMIT_CEILING:
+                return Reply(f"Số bài phải từ 1 đến {MAX_LIMIT_CEILING}: /level L1 <số bài>")
+            cap = int(extra[0])
         order = load_order(paths.standing_order)
         if not order.exists or order.expired():
             order = extend(order, ctl.cfg["autonomy"]["max_order_days"],
                            ctl.cfg["autonomy"]["max_order_days"])
         order.level = args[0].upper()
+        if cap is not None:
+            order.max_limit = cap
         order.created_by = "human:level"
         save_order(paths.standing_order, order)
         store.set_state("fail_streak", "0")
-        return Reply(f"Mức tự chủ: {order.level}, hiệu lực tới {fmt_date(order.valid_until)}.")
+        tail = f", trần {order.max_limit} bài/đợt" if order.level == "L1" else ""
+        return Reply(f"Mức tự chủ: {order.level}{tail}, hiệu lực tới {fmt_date(order.valid_until)}.")
     if cmd == "/order":
         if len(args) < 2 or args[0] != "extend" or not args[1].isdigit():
             return Reply("Dùng: /order extend <số ngày>")

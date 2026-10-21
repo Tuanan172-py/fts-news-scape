@@ -12,11 +12,11 @@ import yaml
 from loguru import logger as _LOG
 
 from src.core import paths
+from src.core.user_manifest import load_user_manifest
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 ENTITIES_JSON = paths.entities_dir() / "entities.json"
 USERS_DIR = PROJECT_ROOT / "config" / "entities" / "users"
-MANIFEST_YAML = PROJECT_ROOT / "config" / "entities" / "manifest.yaml"
 CONTEXT_GUARDS_YAML = PROJECT_ROOT / "config" / "entities" / "aliases" / "_context_guards.yaml"
 
 # Mã 3 ký tự dễ nhầm với từ viết tắt trong tin tài chính -> không auto-match by code.
@@ -504,15 +504,8 @@ class EntityRegistry:
 
 
 def _load_manifest() -> dict:
-    """Tải tệp manifest quy định trạng thái kích hoạt người dùng."""
-    if not MANIFEST_YAML.exists():
-        return {"enabled": True, "default": True, "users": {}}
-    m = yaml.safe_load(MANIFEST_YAML.read_text(encoding="utf-8")) or {}
-    return {
-        "enabled": bool(m.get("enabled", True)),
-        "default": bool(m.get("default", True)),
-        "users": m.get("users") or {},
-    }
+    """Tải công tắc người dùng từ `<gốc>/subscriptions/manifest.yaml` (ADR-0026.D5)."""
+    return load_user_manifest()
 
 
 def _user_enabled(manifest: dict, stem: str) -> bool:
@@ -551,7 +544,7 @@ def _load_subscriptions(reg: EntityRegistry) -> tuple[dict, dict]:
             _LOG.warning(
                 "[entities] users/{}.yaml co ton tai nhung KHONG duoc bat trong {} "
                 "(default={}) -> nguoi dung nay se khong nhan duoc bai nao.",
-                f.stem, MANIFEST_YAML.name, manifest.get("default", True))
+                f.stem, "subscriptions/manifest.yaml", manifest.get("default", True))
             continue                               # DEV tat user nay -> bo qua
         doc = yaml.safe_load(f.read_text(encoding="utf-8")) or {}
         ids, unknown = reg.select(doc)

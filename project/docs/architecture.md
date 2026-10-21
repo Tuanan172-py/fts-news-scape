@@ -1,17 +1,19 @@
 # Architecture & Technical Decisions
 
-Cập nhật: 2026-07-24 (Phase 1 foundation refactor — SQLite-only, standalone).
+Cập nhật: 2026-10-21 (nền tảng Phase 1: SQLite-only, standalone).
 
 > 📍 File này mô tả **ingestion Phase-1** (scrape → dedup → SQLite). Toàn cảnh
-> end-to-end 3 vòng (Bronze → Silver → change-detect → handoff → agent) xem
+> end-to-end 6 lớp (điều khiển → Bronze → Silver → Article Lane → Lakehouse → harness) xem
 > **[design/00-end-to-end-architecture.md](design/00-end-to-end-architecture.md)**.
+> Chi tiết đã đổi so với bản gốc: chu kỳ capture hiện là 10 phút (không phải 15), DB nằm ngoài repo
+> tại `MONOCLE_DATA_DIR` (mặc định `C:\data\news-scape\monocle.db`), lane L1/Gold đã nghỉ hưu (ADR-0010).
 
 ## Kiến trúc tổng thể
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                ORCHESTRATOR / SCHEDULER                      │
-│  APScheduler (coalesce, max_instances=1) — Phase 6           │
+│  APScheduler in src/morninger.py (coalesce, max_instances=1) │
 │  Singleton: 1 cycle chạy xong mới chạy cycle tiếp            │
 └────────────────────┬────────────────────────────────────────┘
                      │
@@ -37,7 +39,7 @@ Cập nhật: 2026-07-24 (Phase 1 foundation refactor — SQLite-only, standalon
                      ▼
             ┌──────────────────┐
             │  DBWriter thread │  single-writer queue, batch ≤50/txn
-            │  → SQLite (WAL)  │  data/monocle.db — DB DUY NHẤT
+            │  → SQLite (WAL)  │  monocle.db (ngoài repo) — DB nghiệp vụ
             └────────┬─────────┘
                      ▼
             ┌──────────────────┐

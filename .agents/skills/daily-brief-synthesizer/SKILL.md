@@ -15,7 +15,7 @@ description: Tổng hợp bản tin cuối ngày cá nhân hóa theo watchlist t
 
 ## 2. Ràng buộc Danh tính User (Zero Hallucination User Manifest)
 
-1. Đọc `users/input/manifest.yaml` để lấy tập user thực được BẬT (hiện tại: `AnPT`).
+1. Đọc `subscriptions/manifest.yaml` để lấy tập user thực được BẬT (hiện tại: `AnPT`).
 2. Chỉ sinh brief cho user có trong manifest. Bỏ qua mọi tên ngoài danh sách.
 3. Cấm bịa user hư cấu, cấm gộp nhiều user vào một brief.
 4. User không có mục nào chạm watchlist trong ngày -> ghi brief với các mục rỗng và một dòng ghi chú "Không có tin chạm watchlist trong ngày", không suy diễn thêm.
@@ -67,11 +67,11 @@ Cấu trúc:
 - Mọi mục điểm nóng trích dẫn `article_id` có thật trong dữ liệu ngày.
 - Chỉ tham chiếu entity thuộc watchlist user.
 - Không lặp lại nguyên văn `summary` Gold; diễn giải cô đọng.
-- Chỉ sinh brief cho user thực trong `users/input/manifest.yaml`.
+- Chỉ sinh brief cho user thực trong `subscriptions/manifest.yaml`.
 
 ## 6. Chế độ I/O
 
-- **Đọc**: `view_file` trên dữ liệu tổng hợp trong ngày (`agent_outputs` + `l1_outputs` từ `data/monocle.db`) và `users/input/manifest.yaml`.
+- **Đọc**: `view_file` trên dữ liệu tổng hợp trong ngày (`agent_outputs` + `l1_outputs` từ `data/monocle.db`) và `subscriptions/manifest.yaml`.
 - **Ghi**: `write_to_file` một file brief cho mỗi user.
 - **Điều phối**: Mỗi user một lô (`wave_batch: 1`), một luồng (`concurrency: 1`).
 

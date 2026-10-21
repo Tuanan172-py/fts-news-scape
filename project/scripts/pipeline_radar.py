@@ -27,6 +27,7 @@ from scripts.token_ledger import (                         # noqa: E402
 )
 from src.agent.prefix import cached_prefix_tokens          # noqa: E402
 from src.core import paths                                 # noqa: E402
+from src.core.user_manifest import load_user_manifest      # noqa: E402
 from src.db.preflight import probe_write, resolve_db_path  # noqa: E402
 from src.telemetry.dsh_usage import (                      # noqa: E402
     billed_usd,
@@ -37,7 +38,6 @@ from src.telemetry.dsh_usage import (                      # noqa: E402
 
 ARTICLE_TASK_DIR = paths.article_packets_dir()
 USER_OUTPUT_DIR = paths.users_output_dir()
-MANIFEST_YAML = PROJECT_ROOT / "config" / "entities" / "manifest.yaml"
 HARNESS_DB = PROJECT_ROOT.parent / "harness.db"
 PY = '& "C:\\venvs\\news-scape\\Scripts\\python.exe"'
 
@@ -865,15 +865,8 @@ def cmd_users(args: argparse.Namespace) -> None:
     print(f" 👥  NEWS-SCAPE USER WATCHLIST & ENTITY MONITOR")
     print(f"================================================================================")
 
-    if not MANIFEST_YAML.exists():
-        print(f"❌ Không tìm thấy tệp manifest tại: {MANIFEST_YAML}")
-        return
-
-    import yaml
-    with open(MANIFEST_YAML, "r", encoding="utf-8") as f:
-        manifest = yaml.safe_load(f) or {}
-
-    users = manifest.get("users", {})
+    manifest = load_user_manifest()
+    users = manifest["users"]
     active_users = [u for u, is_active in users.items() if is_active]
     inactive_users = [u for u, is_active in users.items() if not is_active]
 
@@ -896,9 +889,9 @@ def cmd_users(args: argparse.Namespace) -> None:
 
         print(f"2. PHÁT HIỆN TẬP TIN ĐĂNG KÝ MỚI (SUBSCRIPTION DISCOVERY):")
         if unregistered:
-            print(f"   ⚠️  Phát hiện {len(unregistered)} người dùng có file đăng ký nhưng CHƯA khai báo trong manifest.yaml:")
+            print(f"   ⚠️  Phát hiện {len(unregistered)} người dùng có file đăng ký nhưng CHƯA khai báo trong subscriptions/manifest.yaml:")
             for u in unregistered:
-                print(f"      👉 User: '{u}' -> Cần thêm vào config/entities/manifest.yaml")
+                print(f"      👉 User: '{u}' -> Cần thêm vào subscriptions/manifest.yaml")
         else:
             print(f"   ✅ Toàn bộ file đăng ký đã được đồng bộ chuẩn với manifest.yaml.")
     print(f"================================================================================\n")

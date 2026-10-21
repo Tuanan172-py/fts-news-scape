@@ -4,23 +4,24 @@ type: fact
 title: LLM runtimes are interchangeable options
 status: active
 created: 2026-10-06
-updated: 2026-10-06
-verified: 2026-10-06
+updated: 2026-10-21
+verified: 2026-10-21
 lang: en
 authors: [claude-opus-5-5]
-adr: [ADR-0009, ADR-0011, ADR-0017]
+adr: [ADR-0009, ADR-0011, ADR-0017, ADR-0026]
 evidence:
   - "operator: 2026-10-06 DSH is treated like OpenRouter, agy, Claude and Codex; never retire DSH"
   - path:docs/decisions/0017-hop-dong-dau-ra-article-lane-thong-nhat-moi-provider.md
-summary: DSH, agy, opencode, OpenRouter, Claude and Codex are equal, optional LLM runtimes for executing Article Lane tasks; none is retired and none is privileged except agy as the conformance benchmark.
+  - "operator: 2026-10-21 Claude is never a replacement runtime; runner order is agy, opencode run, OpenRouter (ADR-0026.D3)"
+summary: DSH, agy, opencode and OpenRouter are optional LLM runtimes for Article Lane tasks, ranked agy, opencode run, OpenRouter; none is retired and Claude is never a replacement runtime.
 ---
 
 # FACT-llm-runtimes-are-interchangeable — LLM runtimes are interchangeable options
 
 ## Fact
 
-- The runtime layer chooses one LLM runtime per execution task (Article Lane wave or batch). The options are DSH, agy, opencode, OpenRouter API, Claude and Codex.
-- Every option is treated the same way: one output contract and one validator (ADR-0017). A runtime enters the lane after it passes the golden set.
+- The runtime layer chooses one LLM runtime per execution task (Article Lane wave or batch). The options are agy (rank 1), `opencode run` (rank 2), OpenRouter API (rank 3) and DSH `agent_article` (interactive conductor). Claude and Codex are authoring tools for the repository, never replacement runtimes of the lane (ADR-0026.D3).
+- Every option is held to the same bar: one output contract and one validator (ADR-0017). A runtime enters the lane after it passes the golden set.
 - No runtime is retired. The operator ruled on 2026-10-06: "tuyệt đối ko có ý niệm loại bỏ DSH".
 - agy keeps its role as the conformance benchmark (ADR-0017). That role does not make it the only runner.
 

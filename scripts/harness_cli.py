@@ -1042,28 +1042,40 @@ def cmd_session_close(args: argparse.Namespace) -> dict[str, Any]:
                 except Exception:
                     pass
 
-        evidence_str = "Verified"
-        if not getattr(args, "skip_verify", False) and verify_cmd:
-            print(f"[*] [SESSION CLOSE] Running verification gate: {verify_cmd}", file=sys.stderr)
+        # Tracking first: verification records proof, it does not block the session
+        # unless --strict is passed (ADR-0026.D2).
+        verify_status = "none"
+        evidence_str = "No verify command defined"
+        friction: list[str] = []
+        if getattr(args, "skip_verify", False):
+            verify_status = "skipped"
+            evidence_str = "Verification skipped (--skip-verify)"
+        elif verify_cmd:
+            print(f"[*] [SESSION CLOSE] Running verification: {verify_cmd}", file=sys.stderr)
             res_v = subprocess.run(
                 verify_cmd, shell=True, capture_output=True, text=True,
                 encoding="utf-8", errors="replace",
             )
-            if res_v.returncode != 0:
-                return {
-                    "status": "error",
-                    "error_code": "VERIFICATION_FAILED",
-                    "message": f"Verification gate failed with exit code {res_v.returncode}",
-                    "stderr": (res_v.stderr or "")[:1000],
-                    "stdout": (res_v.stdout or "")[:1000],
-                }
-            evidence_str = f"Verification passed: {verify_cmd}"
-        elif getattr(args, "skip_verify", False):
-            evidence_str = "Verification skipped (--skip-verify)"
+            if res_v.returncode == 0:
+                verify_status = "passed"
+                evidence_str = f"Verification passed: {verify_cmd}"
+            else:
+                verify_status = "failed"
+                evidence_str = f"Verification failed (exit {res_v.returncode}): {verify_cmd}"
+                friction.append(evidence_str)
+                if getattr(args, "strict", False):
+                    return {
+                        "status": "error",
+                        "error_code": "VERIFICATION_FAILED",
+                        "message": f"Verification failed with exit code {res_v.returncode}",
+                        "stderr": (res_v.stderr or "")[:1000],
+                        "stdout": (res_v.stdout or "")[:1000],
+                    }
 
-        # 2. Update Story (if story provided)
+        # 2. Update Story (if story provided). Only a passing verify promotes the story
+        # and records proof; otherwise the status stays and the evidence is noted.
         story_updated = False
-        if story_id:
+        if story_id and verify_status == "passed":
             conn.execute(
                 """
                 UPDATE story SET status = 'implemented', unit_proof = 1, evidence = ?,
@@ -1086,6 +1098,7 @@ def cmd_session_close(args: argparse.Namespace) -> dict[str, Any]:
                     pass
 
         # 3. Git commit & Clean Status Check
+        push_results: dict[str, bool] = {}
         git_commit = get_git_head_commit()
         git_branch = get_git_branch()
         committed = False
@@ -1122,20 +1135,28 @@ def cmd_session_close(args: argparse.Namespace) -> dict[str, Any]:
                     }
 
             if getattr(args, "push", False) and git_branch:
-                push_to_configured_remotes(git_branch)
+                push_results = push_to_configured_remotes(git_branch)
+                failed_remotes = [r for r, ok in push_results.items() if not ok]
+                if failed_remotes:
+                    friction.append(f"push failed: {', '.join(failed_remotes)}")
 
         # 4. Record Trace in DB (Record trace before final git status check)
         actions = ["session_close"]
-        if verify_cmd and not getattr(args, "skip_verify", False):
-            actions.append("verify_gate")
-        if story_id:
+        if verify_status != "none":
+            actions.append(f"verify_{verify_status}")
+        if story_updated:
             actions.append("story_implemented")
         if committed:
             actions.append("git_commit")
+        if push_results:
+            actions.append("push")
 
         actions_json = json.dumps(actions, ensure_ascii=False)
         score_t = 1.0 if committed or not is_git_working_tree_dirty() else 0.8
         score_c = 1.0
+        pushed_ok = all(push_results.values()) if push_results else True
+        outcome = "completed" if verify_status in ("passed", "none") and pushed_ok else "partial"
+        friction_text = "; ".join(friction)
 
         cur = conn.execute(
             """
@@ -1146,7 +1167,7 @@ def cmd_session_close(args: argparse.Namespace) -> dict[str, Any]:
             """,
             (story_id, getattr(args, "intake", None), args.summary, actions_json, "[]",
              json.dumps([], ensure_ascii=False),
-             "completed", score_c, score_t, "", "", git_commit, git_branch, now_iso())
+             outcome, score_c, score_t, friction_text, "", git_commit, git_branch, now_iso())
         )
         conn.commit()
         trace_id = cur.lastrowid
@@ -1157,7 +1178,9 @@ def cmd_session_close(args: argparse.Namespace) -> dict[str, Any]:
         # 5. Build Markdown Closure Table
         story_label = f"`docs/stories/{story_id}.md`" if story_id else "`docs/stories/US-XXX.md`"
         story_update_status = "**Yes**" if story_updated else "**No**"
-        story_reason = "Status: implemented, Proof verified" if story_updated else "No story associated (General session)"
+        story_reason = ("Status: implemented, Proof verified" if story_updated
+                        else f"Status unchanged, verify: {verify_status}" if story_id
+                        else "No story associated (General session)")
 
         git_status_str = "Clean" if status_info["clean_for_closure"] else "Dirty"
         git_label = f"Commit `{git_commit[:7] if git_commit else 'none'}` on `{git_branch}`, clean_for_closure: {str(status_info['clean_for_closure']).lower()}"
@@ -1166,9 +1189,9 @@ def cmd_session_close(args: argparse.Namespace) -> dict[str, Any]:
 
 | File / Component | Updated? | Reason & Evidence |
 |:---|:---:|:---|
-| `harness.db` *(Trace & Intake)* | **Yes** | Trace ID #{trace_id} (Lane: {getattr(args, 'lane', 'normal')}, Outcome: completed) |
+| `harness.db` *(Trace & Intake)* | **Yes** | Trace ID #{trace_id} (Lane: {getattr(args, 'lane', 'normal')}, Outcome: {outcome}) |
 | {story_label} | {story_update_status} | {story_reason} |
-| `docs/TEST_MATRIX.md` | **No** | Verified via verification gate ({evidence_str}) |
+| `docs/TEST_MATRIX.md` | **No** | {evidence_str} |
 | `docs/decisions/NNNN-*.md` | **No** | No architecture hard-gate changes |
 | `docs/SESSION-LATEST.md` | **{'Yes' if Path('docs/SESSION-LATEST.md').exists() else 'No'}** | Session closure completed |
 | `docs/HARNESS_BACKLOG.md` | **No** | Clean execution without unhandled friction |
@@ -1183,6 +1206,10 @@ def cmd_session_close(args: argparse.Namespace) -> dict[str, Any]:
             "git_commit": git_commit,
             "git_branch": git_branch,
             "committed": committed,
+            "verify_status": verify_status,
+            "outcome": outcome,
+            "push_results": push_results,
+            "friction": friction,
             "clean_for_closure": status_info["clean_for_closure"],
             "closure_table": closure_markdown,
         }
@@ -1389,7 +1416,8 @@ def build_parser() -> argparse.ArgumentParser:
     s_close.add_argument("--lane", choices=["tiny", "normal", "high-risk"], default="normal", help="Risk lane")
     s_close.add_argument("--intake", type=int, help="Associated Intake ID")
     s_close.add_argument("--verify-cmd", dest="verify_cmd", help="Verification command override")
-    s_close.add_argument("--skip-verify", dest="skip_verify", action="store_true", help="Skip verification command execution")
+    s_close.add_argument("--skip-verify", dest="skip_verify", action="store_true", help="Skip the verify command; the story is not promoted")
+    s_close.add_argument("--strict", action="store_true", help="Abort when verification fails (default: record it and continue)")
     s_close.add_argument("--commit-msg", dest="commit_msg", help="Custom git commit message")
     s_close.add_argument("--no-commit", dest="no_commit", action="store_true", help="Do not perform git commit")
     s_close.add_argument("--push", action="store_true", help="Push to remote branch after commit")

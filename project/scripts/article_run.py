@@ -511,7 +511,7 @@ def cmd_repair(args: argparse.Namespace) -> int:
     program = conductor_program(manifest, concurrency=len(repairs))
     prog_path = TASK_DIR / f"wave_{args.wave}.repair.ts"
     prog_path.write_text(program, encoding="utf-8")
-    if getattr(args, "runner", "dsh") in ("agy", "openrouter"):
+    if getattr(args, "runner", "dsh") in ("agy", "openrouter", "opencode"):
         runner_type = getattr(args, "runner", "dsh")
         print()
         print("-" * 84)
@@ -520,6 +520,9 @@ def cmd_repair(args: argparse.Namespace) -> int:
         if runner_type == "agy":
             from src.agent.agy_runner import AgyRunner
             runner = AgyRunner()
+        elif runner_type == "opencode":
+            from src.agent.opencode_runner import OpencodeRunner
+            runner = OpencodeRunner()
         else:
             from src.agent.openrouter_runner import OpenRouterRunner
             runner = OpenRouterRunner()
@@ -637,7 +640,7 @@ def cmd_prepare(args: argparse.Namespace) -> int:
     prog_path = TASK_DIR / f"wave_{args.wave}.conductor.ts"
     prog_path.write_text(program, encoding="utf-8")
 
-    if getattr(args, "runner", "dsh") in ("agy", "openrouter"):
+    if getattr(args, "runner", "dsh") in ("agy", "openrouter", "opencode"):
         runner_type = getattr(args, "runner", "dsh")
         print()
         print("-" * 84)
@@ -690,8 +693,12 @@ def cmd_analyze(args: argparse.Namespace) -> int:
         from src.agent.agy_runner import AgyRunner
         runner = AgyRunner()
         title = "AGY RUNNER (gemini-3.8-flash-low)"
+    elif runner_type == "opencode":
+        from src.agent.opencode_runner import OpencodeRunner
+        runner = OpencodeRunner()
+        title = "OPENCODE RUNNER (opencode/deepseek-v4.1-flash-free)"
     else:
-        print(f"❌ --analyze chỉ chạy với --runner agy hoặc openrouter, nhận '{runner_type}'. "
+        print(f"❌ --analyze chỉ chạy với --runner agy, openrouter hoặc opencode, nhận '{runner_type}'. "
               "Runner dsh chạy qua chương trình điều phối wave_<mã>.conductor.ts.")
         return 2
 
@@ -825,7 +832,8 @@ def cmd_finish(args: argparse.Namespace) -> int:
         # dự phòng cho meta cũ không ghi `agent_provider`.
         known = ("agy", "openrouter", "opencode-native")
         runner = getattr(args, "runner", "dsh")
-        source = (runner if runner in known
+        source = ("opencode-native" if runner == "opencode"
+                  else runner if runner in known
                   else manifest.get("runner") if manifest.get("runner") in known
                   else "auto")
         ledger_cmd += ["--source", source]
@@ -1075,12 +1083,13 @@ def main(argv=None) -> int:
                          + ",".join(FINISH_STEPS))
     ap.add_argument("--min-coverage", type=float, default=MIN_COVERAGE,
                     help="Tỷ lệ bài tối thiểu của đợt phải vào DB ở mỗi lớp")
-    ap.add_argument("--runner", choices=["dsh", "agy", "openrouter"], default="dsh",
-                    help="Runner nhận thức: 'dsh' (DeepSeek Flash), 'agy' (Gemini 3.8 Flash Low), hoặc 'openrouter' (stealth/space-bunny-alpha)")
+    ap.add_argument("--runner", choices=["dsh", "agy", "openrouter", "opencode"], default="dsh",
+                    help="Runner nhận thức: 'dsh' (DeepSeek Flash), 'agy' (Gemini 3.8 Flash Low), "
+                         "'openrouter' (stealth/space-bunny-alpha), hoặc 'opencode' (opencode/deepseek-v4.1-flash-free)")
     ap.add_argument("--exclude-file",
                     help="Tệp định danh bài không được đóng gói (ops_daemon giữ chỗ)")
     ap.add_argument("--analyze", action="store_true",
-                    help="Chạy phân tích trực tiếp cho các lô của wave (dùng cho --runner agy)")
+                    help="Chạy phân tích trực tiếp cho các lô của wave (dùng cho --runner agy/openrouter/opencode)")
     ap.add_argument("--mode", choices=["backlog", "bench", "adhoc"],
                     help="Chế độ chạy tay: backlog (dọn bài tồn, nạp DB), bench (thử agent, "
                          "không nạp DB, đầu ra ở data/agent_bench/<đợt>), adhoc. Daemon phát "

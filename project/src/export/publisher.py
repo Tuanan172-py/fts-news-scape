@@ -1,4 +1,4 @@
-"""Xuất bản một chiều dữ liệu của một ngày đã đóng sang thư mục SharePoint (ADR 0020).
+"""Xuất bản một chiều dữ liệu của một ngày đã đóng sang thư mục SharePoint (ADR 0023).
 
 Đích xuất bản là biến môi trường `NEWS_SCAPE_PUBLISH_DIR`. Không đặt thì publisher tắt
 (mức L0) và không ghi gì. Mọi tệp được dựng ở `paths.publish_staging_dir()` rồi mới chép
@@ -724,7 +724,7 @@ def publish_day(day: date, *, dry_run: bool = False, force: bool = False,
         if raw:
             return PublishResult("failed", day.isoformat(),
                                  f"Đích {raw} thuộc site SharePoint chính thức, chưa được duyệt "
-                                 f"(ADR 0020 §0). Chỉ dùng sandbox sites/FRA_DataIngestion.")
+                                 f"(ADR 0023). Chỉ dùng sandbox sites/FRA_DataIngestion.")
         return PublishResult("disabled", day.isoformat(),
                              f"Chưa đặt {PUBLISH_DIR_ENV}: publisher tắt (mức L0).")
     try:

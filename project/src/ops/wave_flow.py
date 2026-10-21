@@ -307,8 +307,9 @@ class WaveSteps:
             excl_path = self._log(spec, "prepare").with_name("exclude.txt")
             excl_path.parent.mkdir(parents=True, exist_ok=True)
             excl_path.write_text("\n".join(sorted(exclude)), encoding="utf-8")
+            limit = min(int(w["limit"]), load_order(self.paths.standing_order).max_limit)
             res = self._run(spec, "prepare", "--wave", spec.wave_id, "--runner", spec.provider,
-                            "--limit", str(w["limit"]), "--batch", str(w["batch"]),
+                            "--limit", str(limit), "--batch", str(w["batch"]),
                             "--date", spec.target_date, "--exclude-file", str(excl_path),
                             parent=parent)
             m = self.manifest(spec.wave_id)

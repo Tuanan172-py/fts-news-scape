@@ -1,7 +1,7 @@
-# HARNESS.md — The human ↔ agent collaboration model (news-scape, H1)
+# HARNESS.md — The human ↔ agent collaboration model (news-scape, H5)
 
 The "constitution" doc. Stable, rarely edited. Vocabulary: [GLOSSARY.md](GLOSSARY.md).
-Maturity **H1**: pure markdown, no database, no CLI. The 8+1 loop below is done by hand.
+Maturity **H5**: durable layer (`harness.db`, `scripts/harness_cli.py`), scoring, auto-verification and self-improvement (see HARNESS_MATURITY.md). The loop below is tracked by the CLI; it records state and does not gate work (ADR-0026.D2).
 
 ## 1. Two layers
 

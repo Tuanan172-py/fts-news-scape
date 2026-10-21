@@ -25,7 +25,7 @@ Ranh giới quyền hạn bất biến cho MỌI Subagent trong hệ thống New
 - **Sentiment Enum**: `sentiment` chỉ được phép là 1 trong: `['pos', 'neg', 'neu']`.
 - **Time Sensitivity Enum**: `time_sensitivity` chỉ được phép là 1 trong: `['urg', 'today', 'week', 'month', 'arch']`.
 - **Entity Group Codes**: Mã nhóm trong thực thể chỉ gồm 11 mã chuẩn: `['TIC', 'COM', 'PER', 'FND', 'IDX', 'EXC', 'IND', 'GEO', 'THM', 'AST', 'INS']`.
-- **Zero Hallucination User Manifest**: Khi phân tích hoặc báo cáo phân phối tin, chỉ được phép tham chiếu các người dùng thực tế được định nghĩa trong `config/entities/users/` và `users/input/manifest.yaml` (hiện tại: `AnPT`). Tuyệt đối không bịa đặt người dùng hư cấu.
+- **Zero Hallucination User Manifest**: Khi phân tích hoặc báo cáo phân phối tin, chỉ được phép tham chiếu các người dùng thực tế được định nghĩa trong `config/entities/users/` và `subscriptions/manifest.yaml` (hiện tại: `AnPT`). Tuyệt đối không bịa đặt người dùng hư cấu.
 
 ## 5. Ràng Buộc Nhận Diện Thực Thể Độc Lập (Independent Intent Recognition)
 - **Nhận diện độc lập**: Subagent bóc tách thực thể hoàn toàn dựa trên ngữ nghĩa văn bản, không nhận bất kỳ gợi ý (hints) nào từ Code-First để triệt tiêu thiên kiến (Confirmation Bias).

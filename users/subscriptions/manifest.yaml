@@ -1,4 +1,14 @@
-# Bật/tắt user cho workflow output. Vắng tên = mặc định BẬT.
-# Thư mục input tên bắt đầu bằng '_' luôn bị bỏ qua.
+# Nguồn chân lý duy nhất (SSOT) bật/tắt người dùng nhận tin (ADR-0026.D5).
+# Bản chạy thật nằm ở <gốc dữ liệu>/subscriptions/manifest.yaml; tệp này là bản mẫu trong repo.
+#   enabled : false = tắt TOÀN BỘ người dùng.
+#   default : trạng thái cho người chưa liệt kê dưới `users` (mặc định true = BẬT).
+#   users   : bật/tắt từng người dùng; khoá là tên trong <tên>_news.xlsx.
+# Thư mục đăng ký có tên bắt đầu bằng '_' luôn bị bỏ qua.
+enabled: true
+default: true
 users:
   AnPT: true
+  PhoHG: true
+  ThanhTD: true
+  VyPTT: true
+  UyenNNT: true

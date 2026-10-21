@@ -5,6 +5,9 @@ Quyết định owner (2026-08-17): "chỉ cần hệ thống spec + infrastruct
 tự viết prompt dựa trên spec/guideline/ràng buộc đã dựng". Liên kết: [09](09-agent-io-contract.md),
 [10](10-agent-orchestration-governance.md), [11](11-e2e-standardization-governance.md).
 
+> [!NOTE]
+> **Trạng thái Kế thừa (lane L1/Gold):** tài liệu này mô tả hạ tầng `agent_export` → agent → `agent_ingest` của lane đã nghỉ hưu (ADR-0010, 2026-09-23). Đường xử lý hiện hành là Article Lane: xem [00-end-to-end-architecture](00-end-to-end-architecture.md) §6. Khi mâu thuẫn, tài liệu 00 thắng.
+
 ## 1. Ý tưởng
 Producer KHÔNG gọi model. Chỉ cung cấp **khung cắm** để agent của người dùng (prompt tự viết,
 provider bất kỳ) tiêu thụ việc chuẩn hoá và nộp kết quả — validate + DoD làm cổng nghiệm thu.

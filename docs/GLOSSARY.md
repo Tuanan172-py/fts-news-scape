@@ -40,7 +40,7 @@
 | **Pipeline** | `.agents/pipeline.yaml`, khai báo luồng điều phối: stage, tác nhân phụ trách, cổng. |
 | **Skill** | Gói tri thức `SKILL.md` của một tác nhân. Tác nhân lúc chạy không nạp skill động; skill là phần nội dung đã nhúng vào persona. |
 | **Mandate** | Uỷ quyền vận hành có hạn do người cấp (`/level L1`), lưu ở `agy_standing_order.yaml`. Tự gia hạn khi hệ thống khoẻ. Tên cũ: *standing order*. |
-| **Cấp tự chủ** | L0 chỉ đo và báo. L1 tự mở đợt và chạy trọn tới nạp DB. Hai cấp L2, L3 trước đây đã gỡ. |
+| **Cấp tự chủ** | L0 chỉ đo và báo. L1 tự mở đợt và chạy trọn tới nạp DB, kèm trần số bài mỗi đợt (`/level L1 <số bài>`, 1 đến 500). Chỉ có hai cấp này (ADR-0012 sửa bởi ADR-0026). |
 | **Breaker** | Bộ ngắt mạch theo provider: chặn gọi provider sau chuỗi lỗi đăng nhập, hạn mức, mạng, treo hoặc trả rỗng. |
 | **Sentinel** | `ops-sentinel`: agent chẩn đoán sự cố, chỉ đề xuất một lệnh trong danh sách trắng. Người bấm thì daemon mới thi hành. |
 | **Provider** | Nơi chạy mô hình: `agy` (mặc định), `openrouter`. |
@@ -109,4 +109,4 @@
 | batch, mini-batch | lô | Chỉ giữ `batch` trong mã nguồn và `--batch` |
 | trace (của ops_spans) | vết, cây vết | `trace` chỉ còn nghĩa bản ghi phiên của harness |
 | hàng chờ, backlog | bài chờ, tồn đọng | Phân biệt theo phạm vi tự động |
-| L2, L3 | không còn | Hai cấp này đã gỡ (ADR 0014) |
+| L2, L3 | không còn | Hai cấp này đã gỡ; `/level L2` và `/level L3` bị từ chối (ADR-0026) |

@@ -107,6 +107,8 @@ python scripts/harness_cli.py doc sync              # derive story/decision rows
 - The Article Lane is the only processing path (ADR-0010). The two-tier L1/Gold lane (`l1_route` to `agent_l1` to `agent_export` to `agent_gold`) is retired: not in presets, scheduler, radar or pipeline. Never call `l1_route.py`, `l1_ingest.py --code-first`, `agent_export.py` or `requeue.py`.
 - Capture everything, process later (ADR-0013, rule 10). Every article a source has is fetched. The crawl layer filters nothing by similarity, section or relevance and never stops hard at page 1. Every discovered URL leaves a trace in the discovery ledger. Dedup, cleaning and prioritization happen after Bronze and never delete articles. Duplicates keep every source and timestamp because coverage frequency is a signal.
 
+- Decided operating contracts (ADR-0026): the only production publish path is `scripts/publish.py` to `src.export.publisher.publish_day()`; `scripts/lakehouse_cli.py` only verifies and receives the external dropzone. LLM runners rank `agy`, then `opencode run`, then OpenRouter; Claude is never a replacement runtime. Autonomy has two levels only, L0 (stop) and L1 (mandate with a per-wave article cap, `/level L1 <n>`). Excel delivery lives at `<DATA_ROOT>/users/output/<user>/<date>.xlsx`, the same tree as SharePoint.
+
 ### 7.1 Split of work: deterministic scripts (0 token) versus agents
 
 1. Deterministic scripts (0 token):
@@ -115,7 +117,7 @@ python scripts/harness_cli.py doc sync              # derive story/decision rows
    - Wave packing (`article_run.py` to `article_pack.py`): select articles not yet analysed by a model, rank priority tiers, write packets to `data/agent_tasks/article/`, generate `wave_<code>.conductor.ts`.
    - Wave finish (`article_run.py --finish`): expand compact records into both schemas, ingest through the DoD gate (`l1_ingest.py`, `agent_ingest.py`, only this wave's files), post-check coverage, write the token ledger, produce the handoff.
    - Delivery: route by watchlist, export `users/output/<user>/<date>.xlsx`.
-2. Agent `article-processor` (on any interchangeable LLM runtime: DSH `agent_article`, `agy`, `opencode`, `openrouter`, Claude or Codex, see FACT-llm-runtimes-are-interchangeable; no tools, exactly one step per batch) processes one whole article per pass, covering both business layers:
+2. Agent `article-processor` (on a ranked LLM runner: `agy`, then `opencode run`, then `openrouter`, plus DSH `agent_article` as the interactive conductor; Claude is never a replacement runtime, see FACT-llm-runtimes-are-interchangeable and ADR-0026.D3; no tools, exactly one step per batch) processes one whole article per pass, covering both business layers:
    - Entity recognition from title and body: tickers, companies, exchanges, sectors, indices, macro, output `l1-entity-output-v1`.
    - Content analysis: summary, arguments, market implication, `sentiment`, `time_sensitivity`, citations by paragraph index, output `agent-output-v2-lean`.
    - Clean output: no `materiality`, `event_type` or `impact_area`; these fields are retired at every layer.
@@ -136,7 +138,7 @@ python scripts/harness_cli.py doc sync              # derive story/decision rows
 
 - Never write a script that replaces the agent. No regex or heuristic produces recognition or analysis results.
 - Semantics, entity extraction, summaries, implications and citations belong to `article-processor`, called through `tools.agent_article` in the conductor program. Every provider and model passes one output contract and one validator (ADR-0017, rule 11). A new provider must pass the golden set; agy is the benchmark; `claude` is not yet in the lane. ADR-0009 D6 (every model is `deepseek-flash`) no longer holds.
-- Zero-hallucination user manifest: delivery reports reference only users enabled in `project/config/entities/manifest.yaml`. Look them up with `pipeline_radar.py users`; never copy the list into documents.
+- Zero-hallucination user manifest: delivery reports reference only users enabled in `<DATA_ROOT>/subscriptions/manifest.yaml` (ADR-0026.D5). Look them up with `pipeline_radar.py users`; never copy the list into documents.
 
 ## 8. Code quality and docstrings
 
@@ -183,4 +185,4 @@ Detail: `.agents/rules/10-thu-thap-tron-ven.md`; decision ADR-0013.
 
 - No dangling dirty tree. Every session that changes code or documents runs `& "C:\venvs\news-scape\Scripts\python.exe" scripts/harness_cli.py git status`. If `clean_for_closure` is false (requires a clean working tree, no forbidden files, and commit HEAD recorded in `harness.db`), the session is not complete.
 - Dual-remote push: Commits follow Conventional Commits (at most 72 characters, carrying `(US-NNN)`), generated with `harness_cli.py git template`, and are pushed to both remotes (`fpa` and `origin`) before `docs/SESSION-LATEST.md` is handed off.
-- Atomic closure: Agents must run `& "C:\venvs\news-scape\Scripts\python.exe" scripts/harness_cli.py session close --summary "<summary>" --push` to atomically execute the verification gate, advance/record the story status, commit code, persist the durable trace, push to both remotes, and print the Harness Closure Protocol table.
+- Atomic closure (tracking, not a gate: a failed verify or push is recorded as friction and the session continues; `--strict` aborts): Agents must run `& "C:\venvs\news-scape\Scripts\python.exe" scripts/harness_cli.py session close --summary "<summary>" --push` to atomically execute the verification gate, advance/record the story status, commit code, persist the durable trace, push to both remotes, and print the Harness Closure Protocol table.

@@ -70,7 +70,7 @@ DB/logs.
 ## Lớp người dùng
 | Code / config | OKF file |
 |---|---|
-| `project/src/users/compile.py`, `config/entities/manifest.yaml`, `users/subscriptions/**` | [catalog/configurations/user_subscriptions.md](catalog/configurations/user_subscriptions.md) |
+| `project/src/users/compile.py`, `project/src/core/user_manifest.py`, `users/subscriptions/**` | [catalog/configurations/user_subscriptions.md](catalog/configurations/user_subscriptions.md) |
 | `project/src/export/{user_output,checkpoint}.py`, `src/pipeline/user_workflow.py` | [catalog/pipelines/user_output.md](catalog/pipelines/user_output.md), [catalog/datasets/user_deliverables.md](catalog/datasets/user_deliverables.md) |
 
 ## Config hệ thống

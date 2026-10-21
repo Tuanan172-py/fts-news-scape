@@ -90,22 +90,22 @@ Loader đọc mọi file trong `users/`, ánh xạ mỗi nhóm → `entity_id` (
 ngành GICS như THEP/NGAN_HANG, KHÔNG theo tên; báo `subscription_warnings` nếu sai). Ánh xạ tin→người đăng ký:
 `registry.subscribers_for(entity_ids)`.
 
-### Công tắc DEV: `config/entities/manifest.yaml` (ngoài `users/`)
+### Công tắc người dùng: `<gốc dữ liệu>/subscriptions/manifest.yaml`
 
-End-user chỉ đặt file trong `users/`; **DEV** quyết định file nào ĐANG ÁP DỤNG qua `manifest.yaml`
-(đặt ngoài `users/`, end-user không sửa):
+Một nguồn chân lý duy nhất (ADR-0026.D5) cho việc bật/tắt người dùng. Bản mẫu trong repo:
+`users/subscriptions/manifest.yaml`. `project/config/entities/manifest.yaml` đã khai tử.
 
 ```yaml
 enabled: true        # false = tắt TOÀN BỘ lớp đăng ký
-default: false       # trạng thái cho user chưa liệt kê (an toàn: mặc định tắt)
+default: true        # trạng thái cho user chưa liệt kê (vắng tên = BẬT)
 users:
   AnPT: true
-  A: true
-  B: false           # dev tạm tắt B (file users/B.yaml vẫn giữ)
+  B: false           # tạm tắt B (file users/B.yaml vẫn giữ)
 ```
 
-Loader chỉ nạp user được bật (`_user_enabled`): `manifest.users[<tên>]` → fallback `default`;
-`enabled: false` tắt tất. Thiếu file manifest → nạp tất (tương thích cũ).
+Loader dùng chung `src/core/user_manifest.py` cho `entities.py`, `compile.py` và `pipeline_radar.py users`.
+`entities._user_enabled`: `users[<tên>]` → fallback `default`; `enabled: false` tắt tất.
+Thiếu file manifest → nạp tất.
 
 ## Sử dụng
 

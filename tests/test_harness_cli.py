@@ -39,6 +39,7 @@ from scripts.harness_cli import (
     calculate_score_context,
 )
 import argparse
+import sqlite3
 
 
 class TestHarnessCLI(unittest.TestCase):
@@ -369,37 +370,43 @@ class TestHarnessCLI(unittest.TestCase):
         self.assertIn("Trace ID #", res["closure_table"])
         self.assertIn("US-101", res["closure_table"])
 
-    def test_session_close_verification_failure_blocks(self):
-        # Thêm story có lệnh verify thất bại
-        s_args = argparse.Namespace(
-            db=self.db_path,
-            id="US-102",
-            title="Failing verification story",
-            parent="Harness Epic",
-            status="in_progress",
-            lane="normal",
-            contract="Failing verify contract",
-            criteria="Must be blocked",
+    def _failing_story_close(self, story_id, **overrides):
+        cmd_story_add(argparse.Namespace(
+            db=self.db_path, id=story_id, title="Failing verification story",
+            parent="Harness Epic", status="in_progress", lane="normal",
+            contract="Failing verify contract", criteria="Recorded, not blocked",
             verify_cmd='python -c "import sys; sys.exit(1)"',
+        ))
+        args = argparse.Namespace(
+            db=self.db_path, story=story_id, summary="Closure on broken test", lane="normal",
+            intake=None, verify_cmd=None, skip_verify=False, commit_msg=None,
+            no_commit=True, push=False, json=True,
         )
-        cmd_story_add(s_args)
+        for k, v in overrides.items():
+            setattr(args, k, v)
+        return cmd_session_close(args)
 
-        close_args = argparse.Namespace(
-            db=self.db_path,
-            story="US-102",
-            summary="Attempt closure on broken test",
-            lane="normal",
-            intake=None,
-            verify_cmd=None,
-            skip_verify=False,
-            commit_msg=None,
-            no_commit=True,
-            push=False,
-            json=True,
-        )
-        res = cmd_session_close(close_args)
+    def test_session_close_verification_failure_is_recorded_not_blocking(self):
+        res = self._failing_story_close("US-102")
+        self.assertEqual(res["status"], "success")
+        self.assertEqual(res["verify_status"], "failed")
+        self.assertEqual(res["outcome"], "partial")
+        self.assertFalse(res["story_updated"])
+        self.assertTrue(res["friction"])
+        conn = sqlite3.connect(self.db_path)
+        row = conn.execute("SELECT status, unit_proof FROM story WHERE id = 'US-102'").fetchone()
+        conn.close()
+        self.assertEqual(row, ("in_progress", 0))
+
+    def test_session_close_strict_blocks_on_failure(self):
+        res = self._failing_story_close("US-103", strict=True)
         self.assertEqual(res["status"], "error")
         self.assertEqual(res["error_code"], "VERIFICATION_FAILED")
+
+    def test_session_close_skip_verify_does_not_grant_proof(self):
+        res = self._failing_story_close("US-104", skip_verify=True)
+        self.assertEqual(res["verify_status"], "skipped")
+        self.assertFalse(res["story_updated"])
 
     def test_git_status_c_light_trace_check(self):
         # Kiểm tra cờ has_trace_record trong cmd_git_status

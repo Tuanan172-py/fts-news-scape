@@ -89,7 +89,7 @@ agents:
     entrypoint: null   # đã ngừng: tệp thuộc lane cũ, không gọi
     cli: null          # không có lệnh chạy. Article Lane xử lý mọi bài, không lọc Subscriber-Gated
     io_boundary:
-      read:  ["data/monocle.db (articles + l1_outputs)", "config/entities/manifest.yaml"]
+      read:  ["data/monocle.db (articles + l1_outputs)", "subscriptions/manifest.yaml"]
       write: ["data/agent_tasks/batch_XX.task.json"]
     responsibility: >-
       Lọc Subscriber-Gating + Dynamic 3-Pass Pruning (<=2200 chars) + nhúng l1_entities,
@@ -118,7 +118,7 @@ agents:
     entrypoint: "project/scripts/write_user_output.py"
     cli: 'scripts/write_user_output.py --date <date|all>'
     io_boundary:
-      read:  ["data/monocle.db (l1_outputs + agent_outputs)", "users/input/manifest.yaml"]
+      read:  ["data/monocle.db (l1_outputs + agent_outputs)", "subscriptions/manifest.yaml"]
       write: ["users/output/<user>/<date>.xlsx"]
     responsibility: "Phân tuyến theo Watchlist, xuất Excel đơn sắc; Idempotency Skip Guard chống ghi thừa."
     cost_budget: { tokens_per_item: 0 }
@@ -400,7 +400,7 @@ agents:
     skill: .agents/skills/daily-brief-synthesizer/SKILL.md
     stage_role: post-delivery
     io_boundary:
-      read:  ["data/monocle.db (agent_outputs + l1_outputs)", "users/input/manifest.yaml"]
+      read:  ["data/monocle.db (agent_outputs + l1_outputs)", "subscriptions/manifest.yaml"]
       write: ["users/output/<user>/brief-<date>.md"]
     tools_allowed: [view_file, write_to_file]
     dod_contract: dod-gatekeeper#brief

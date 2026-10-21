@@ -11,7 +11,7 @@ authors: [An Pham Thanh]
 approvers: [operator 2026-10-01]
 story: [US-029]
 amends: [ADR-0011]
-related: [ADR-0010, ADR-0008, ADR-0014]
+related: [ADR-0010, ADR-0008, ADR-0014, ADR-0026]
 evidence:
   - commit:579163c
   - commit:4e461cd
@@ -107,7 +107,7 @@ The amendment history at the end of this section overrides D1 (24/7 scope), D5 (
 - The autonomy ladder keeps only L0 and L1.
   - L0 only measures and reports.
   - L1 opens a wave when conditions hold and runs it through DB ingest with no per-wave approval gate. This matches the ADR-0008 amendment: "không dựng lại cổng hỏi người dưới bất kỳ tên nào". State `AWAIT_APPROVAL` and commands `/approve`, `/reject` are removed.
-  - An old command file saying L2 or L3 is read as L1.
+  - ~~An old command file saying L2 or L3 is read as L1.~~ Amended by ADR-0026.D4 (2026-10-21). There is no L2/L3 mapping now. An unknown level reads as L0, and `/level L2` or `/level L3` is refused. `/level L1 <n>` caps each wave at n articles (1 to 500).
   - `article_tick.py` (ADR-0011) still reads L1 as "analyse only". The daemon command file says L1, so a manual `article_tick` run stays safe by not loading the DB. `article_tick` is no longer scheduled.
 - Delivery (council D11) is outside the wave lifecycle. The DB is the source of truth; delivery is a separate per-user process under its own story.
 - Data (council D8). Full cleaned article text MAY be sent to every provider. Packets carry only `i/t/p`. Internal data (logs, config, secrets) MUST NOT travel in payloads. Every event, alert and `ops-sentinel` context passes through `src/ops/redact.py`.

@@ -293,7 +293,7 @@ class DailyReporter:
                             "user": user_folder.name,
                             "date": stem_date,
                             "file_name": csv_file.name,
-                            "relative_path": str(csv_file.relative_to(self.users_output_dir.parent)),
+                            "relative_path": str(csv_file.relative_to(self.users_output_dir.parents[1])),
                             "row_count": row_count,
                             "size_bytes": csv_file.stat().st_size,
                         })

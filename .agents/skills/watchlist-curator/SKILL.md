@@ -14,7 +14,7 @@ description: Chuyên viên quản trị danh mục theo dõi người dùng (Wat
 1. **Ranh Giới Người Dùng (Zero Hallucination User Manifest)**:
    - Hệ thống CHỈ công nhận và xử lý cho các người dùng được định nghĩa chính thức trong:
      - `project/config/entities/users/<username>.yaml`
-     - `project/config/entities/manifest.yaml`
+     - `subscriptions/manifest.yaml`
    - Tuyệt đối không sinh thêm người dùng ảo.
 2. **Kiến Trúc Phân Tầng Cổ Phiếu Ticker 3 Tiers (US-014)**:
    - **Tier 1 (Core Universe — 742 mã)**: 100% mã trong Watchlist của người dùng đang active + doanh nghiệp lớn vốn hóa $\ge 300$ tỷ VND. Được nhận diện bình thường qua mã 3 ký tự in hoa và alias thương hiệu.
@@ -34,7 +34,7 @@ description: Chuyên viên quản trị danh mục theo dõi người dùng (Wat
        ▼
 [Bước 1: Phát hiện Tệp Đăng Ký Mới (Subscription Discovery)]
   ├── Tìm thấy file <user>_news.xlsx mới xuất hiện
-  └── Đối chiếu với config/entities/manifest.yaml
+  └── Đối chiếu với subscriptions/manifest.yaml
        │
        ├─► Nếu CHƯA CÓ trong manifest:
        │     👉 Báo cáo Dev: "Phát hiện file đăng ký mới của <user>. Cần thêm vào manifest.yaml để kích hoạt."
@@ -72,7 +72,7 @@ Khi phát hiện người dùng mới hoặc cần bổ sung mã cổ phiếu, C
 ⚠️ PHÁT HIỆN NGƯỜI DÙNG MỚI:
 Phát hiện tệp 'users/subscriptions/GiangNT_news.xlsx' đã được tạo nhưng chưa khai báo.
 👉 Hành động đề xuất:
-1. Mở 'project/config/entities/manifest.yaml' và thêm:
+1. Mở 'subscriptions/manifest.yaml' và thêm:
    users:
      GiangNT: true
 2. Chạy: & "C:\venvs\news-scape\Scripts\python.exe" scripts/compile_users.py

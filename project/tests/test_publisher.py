@@ -44,7 +44,7 @@ def env(tmp_path, monkeypatch):
     (bronze / "h1.meta.json").write_text('{"url": "https://a.vn/0"}', encoding="utf-8")
     (data / "raw_html" / "b.vn" / "20261005").mkdir(parents=True)
     (data / "raw_html" / "b.vn" / "20261005" / "z.html").write_text("x", encoding="utf-8")
-    user = data / "users_output" / "an"
+    user = data / "users" / "output" / "an"
     user.mkdir(parents=True)
     (user / "2026-10-04.xlsx").write_bytes(b"xlsx-bytes")
     return {"data": data, "target": target, "db": db}

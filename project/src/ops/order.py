@@ -7,11 +7,12 @@ from dataclasses import dataclass
 from datetime import date, timedelta
 from pathlib import Path
 
-# L0: chỉ đo và báo. L1: đủ điều kiện thì mở đợt và chạy trọn tới nạp DB, không hỏi
-# từng đợt (amendment ADR 0008). Mức L2/L3 cũ (chờ duyệt, tự giao xlsx) đã gỡ; tệp lệnh
-# còn ghi L2/L3 được đọc thành L1.
+# L0: dừng/khoá, chỉ đo và báo. L1: mandate có trần bài mỗi đợt, đủ điều kiện thì mở đợt
+# và chạy trọn tới nạp DB, không hỏi từng đợt (ADR-0012 D5 đã sửa bởi ADR-0026.D4).
+# Mức khác L0/L1 không hợp lệ: tệp lệnh ghi mức lạ được đọc thành L0 (an toàn).
 LEVELS = ("L0", "L1")
-_LEGACY_LEVELS = {"L2": "L1", "L3": "L1"}
+DEFAULT_MAX_LIMIT = 100
+MAX_LIMIT_CEILING = 500
 FAILOVER_VALUES = ("never", "ask", "auto")
 PROVIDERS = ("agy", "openrouter")
 
@@ -25,6 +26,7 @@ class StandingOrder:
         valid_until: Ngày hết hạn (YYYY-MM-DD).
         provider: Provider chính.
         failover: Chính sách chuyển provider.
+        max_limit: Trần số bài mỗi đợt mà mandate L1 cho phép.
         created_by: Nguồn tạo hoặc sửa lệnh gần nhất.
         exists: False khi tệp chưa tồn tại.
     """
@@ -33,6 +35,7 @@ class StandingOrder:
     valid_until: str = ""
     provider: str = "agy"
     failover: str = "never"
+    max_limit: int = DEFAULT_MAX_LIMIT
     created_by: str = ""
     exists: bool = False
 
@@ -87,7 +90,7 @@ class StandingOrder:
         Returns:
             12 ký tự đầu của SHA-256.
         """
-        raw = f"{self.level}|{self.valid_until}|{self.provider}|{self.failover}"
+        raw = f"{self.level}|{self.valid_until}|{self.provider}|{self.failover}|{self.max_limit}"
         return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:12]
 
 
@@ -110,7 +113,10 @@ def load_order(path: Path) -> StandingOrder:
         k, v = s.split(":", 1)
         data[k.strip()] = v.strip().strip("'\"")
     level = data.get("level", "L0").upper()
-    level = _LEGACY_LEVELS.get(level, level)
+    try:
+        max_limit = int(data.get("max_limit", DEFAULT_MAX_LIMIT))
+    except ValueError:
+        max_limit = DEFAULT_MAX_LIMIT
     failover = data.get("failover", "never").lower()
     provider = data.get("provider", "agy").lower()
     return StandingOrder(
@@ -118,6 +124,7 @@ def load_order(path: Path) -> StandingOrder:
         valid_until=data.get("valid_until", ""),
         provider=provider if provider in PROVIDERS else "agy",
         failover=failover if failover in FAILOVER_VALUES else "never",
+        max_limit=max(1, min(max_limit, MAX_LIMIT_CEILING)),
         created_by=data.get("created_by", ""),
         exists=True,
     )
@@ -139,7 +146,7 @@ def save_order(path: Path, order: StandingOrder) -> None:
         f"provider: {order.provider}\n"
         f"failover: {order.failover}\n"
         f"created_by: {order.created_by}\n"
-        f"max_limit: 100\n"
+        f"max_limit: {order.max_limit}\n"
     )
     tmp = path.with_suffix(".tmp")
     tmp.write_text(text, encoding="utf-8")

@@ -12,8 +12,8 @@ sources:
     resource: project/src/users/compile.py
     title: read_user_file / compile_all / load_manifest / enabled_users
   - id: manifest
-    resource: project/config/entities/manifest.yaml
-    title: Manifest bật/tắt (DEV switch)
+    resource: project/src/core/user_manifest.py
+    title: Manifest bật/tắt người dùng (SSOT)
   - id: anpt-yaml
     resource: project/config/entities/users/AnPT.yaml
     title: Ví dụ config AUTO-GENERATED
@@ -85,45 +85,23 @@ Nhóm hợp lệ: `tickers`, `etfs`, `indices`, `exchanges`, `industries`, `nati
 
 Template: `python scripts/make_user_template.py` (thêm `--seed <name>` để đổ sẵn từ yaml có).
 
-# Hai manifest — hai tầng gác khác nhau
+# Một manifest duy nhất (ADR-0026.D5)
 
-Đây **không** phải một file bị trùng: hai file, hai module đọc, hai quy ước mặc định.
-
-| File | Ai đọc | Gác cái gì | Mặc định khi vắng tên |
-|---|---|---|---|
-| `users/subscriptions/manifest.yaml` | `compile.py::load_manifest` / `enabled_users` | người dùng nào **được nhận output** | **BẬT** (`manifest.get(n, True)`) |
-| `project/config/entities/manifest.yaml` | `entities.py::_load_manifest` | file `config/entities/users/*.yaml` nào **được nạp vào registry** | theo khoá `default` (đang là **TẮT**) |
+`<gốc dữ liệu>/subscriptions/manifest.yaml` (bản mẫu `users/subscriptions/manifest.yaml`) là nguồn chân lý
+duy nhất bật/tắt người dùng. `project/config/entities/manifest.yaml` đã khai tử. Cả `compile.py`
+(`load_manifest`/`enabled_users`) và `entities.py` (`_load_manifest`) đọc qua `src/core/user_manifest.py`.
 
 ```yaml
-# users/subscriptions/manifest.yaml — vắng tên = mặc định BẬT
-users:
-  AnPT: true
-
-# project/config/entities/manifest.yaml — công tắc DEV
 enabled: true      # false = tắt TOÀN BỘ lớp đăng ký
-default: false     # user chưa liệt kê → TẮT
+default: true      # user chưa liệt kê → BẬT
 users:
   AnPT: true
+  PhoHG: true
 ```
 
-⚠️ **Một người dùng phải qua CẢ HAI cửa mới nhận được tin.** Vì manifest DEV để
-`default: false`, thêm file đăng ký thôi là **chưa đủ** — bắt buộc liệt kê tên trong khoá
-`users:` của `config/entities/manifest.yaml`.
-
-Trạng thái 3 người dùng (2026-09-07):
-
-| User | File đăng ký | Cửa 1 (output) | Cửa 2 (registry) | `config/entities/users/<name>.yaml` |
-|---|---|---|---|---|
-| AnPT | `AnPT_news.xlsx` | ✅ | ✅ liệt kê | đã có |
-| PhoHG | `PhoHG_news.xlsx` | ✅ vắng tên = BẬT | ✅ liệt kê 2026-09-07 | **compile sinh** |
-| ThanhTD | `ThanhTD_news.xlsx` | ✅ vắng tên = BẬT | ✅ liệt kê 2026-09-07 | **compile sinh** |
-
-`config/entities/users/*.yaml` là **AUTO-GENERATED** — không tạo tay; lần
-`scripts/compile_users.py --all` kế tiếp sẽ sinh `PhoHG.yaml` và `ThanhTD.yaml`, và cả hai được
-manifest DEV cho qua ngay.
-
-`A.yaml` / `B.yaml` còn trong `config/entities/users/` nhưng không có file đăng ký tương ứng và
-không nằm trong manifest DEV ⇒ bị bỏ qua (tàn dư, xoá được).
+Muốn thêm chuyên viên: đặt `<tên>_news.xlsx` vào thư mục đăng ký, chạy `scripts/compile_users.py --all`,
+thêm tên vào `users:` nếu cần liệt kê rõ. `config/entities/users/*.yaml` là **AUTO-GENERATED**, không tạo tay.
+Tra trạng thái bằng `python scripts/pipeline_radar.py users`.
 
 # Kết quả compile
 
@@ -136,6 +114,6 @@ Cuối `compile_all()` gọi `load_registry.cache_clear()` để subscription m�
 - [User Deliverables](../datasets/user_deliverables.md) · [Daily Agent Run](../playbooks/daily_agent_run.md)
 
 [^compile]: [compile.py](project/src/users/compile.py)
-[^manifest]: [manifest.yaml (DEV switch)](project/config/entities/manifest.yaml)
+[^manifest]: [user_manifest.py](project/src/core/user_manifest.py)
 [^anpt-yaml]: [AnPT.yaml](project/config/entities/users/AnPT.yaml)
 [^user-workflow-design]: [Per-user output workflow](project/docs/design/13-per-user-output-workflow.md)

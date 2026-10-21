@@ -173,10 +173,17 @@ def test_order_roundtrip_and_expiry(tmp_path):
     assert demote("L1") == "L0" and demote("L0") == "L0"
 
 
-def test_legacy_l2_l3_order_reads_as_l1(tmp_path):
+def test_unknown_level_reads_as_l0(tmp_path):
     p = tmp_path / "order.yaml"
-    p.write_text(f"level: L3\nvalid_until: {date.today().isoformat()}\n", encoding="utf-8")
-    assert load_order(p).effective_level() == "L1"
+    for lvl in ("L2", "L3"):
+        p.write_text(f"level: {lvl}\nvalid_until: {date.today().isoformat()}\n", encoding="utf-8")
+        assert load_order(p).effective_level() == "L0"
+
+
+def test_order_max_limit_round_trip(tmp_path):
+    p = tmp_path / "order.yaml"
+    save_order(p, extend(StandingOrder(level="L1", max_limit=40), 3, 7))
+    assert load_order(p).max_limit == 40
 
 
 def test_order_file_stays_readable_by_article_tick(tmp_path, monkeypatch):
@@ -292,6 +299,14 @@ def test_commands_pause_stop_level_reset(env):
     assert load_order(paths.standing_order).effective_level() == "L1"
     commands.execute("/failover ask", ctl)
     assert load_order(paths.standing_order).failover == "ask"
+
+    r = commands.execute("/level L2", ctl)
+    assert "Hệ thống đã chuẩn hóa L0/L1 theo ADR-0012 (Amended)" in r.text
+    assert "/level L1 <số bài>" in r.text
+    assert "L3" not in load_order(paths.standing_order).level
+    commands.execute("/level L1 40 confirm", ctl)
+    assert load_order(paths.standing_order).max_limit == 40
+    assert "Số bài" in commands.execute("/level L1 9999 confirm", ctl).text
 
     ctl.breakers.record("agy", br.AUTH)
     commands.execute("/reset agy", ctl)

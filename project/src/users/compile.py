@@ -12,6 +12,7 @@ import openpyxl
 import yaml
 
 from src.core import paths
+from src.core.user_manifest import load_user_manifest
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 REPO_ROOT = PROJECT_ROOT.parent
@@ -346,24 +347,10 @@ def load_manifest(input_root: str | Path | None = None) -> dict[str, bool]:
     Returns:
         Từ điển ánh xạ từ tên người dùng sang trạng thái bật/tắt (True/False).
     """
-    if input_root is None:
-        candidates = [
-            DEFAULT_SUBSCRIPTIONS_ROOT / "manifest.yaml",
-            LEGACY_INPUT_ROOT / "manifest.yaml",
-        ]
-    else:
-        candidates = [
-            Path(input_root) / "manifest.yaml",
-            DEFAULT_SUBSCRIPTIONS_ROOT / "manifest.yaml",
-            LEGACY_INPUT_ROOT / "manifest.yaml",
-        ]
-
-    for path in candidates:
-        if path.exists():
-            data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
-            users = data.get("users") or {}
-            return {str(k): bool(v) for k, v in users.items()}
-    return {}
+    manifest = load_user_manifest(input_root)
+    if not manifest["enabled"]:
+        return {n: False for n in manifest["users"]}
+    return manifest["users"]
 
 
 def enabled_users(input_root: str | Path | None = None,

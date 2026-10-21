@@ -1,6 +1,7 @@
 # OPEN-ITEMS — việc tồn đọng của tuyến L1 → giao hàng người dùng
 
-- **Cập nhật:** 2026-09-17 (bổ sung C5 manh mối Errno 22, C6 tối ưu cycle, C7 metric phát hiện)
+- **Cập nhật:** 2026-10-21 (US-045 / ADR-0026); nội dung các mục bên dưới giữ nguyên mốc ngày ghi trong từng mục.
+- **Việc chờ người vận hành (US-045):** dừng daemon, chạy `python scripts/maintenance/migrate_users_output.py --apply` (chạy thử đã báo 607 tệp, 0 xung đột), rồi bật lại.
 - **Bối cảnh:** rà soát vì sao mapping từ L1 sang danh mục người dùng ghi nhận rất ít số liệu.
 - **Số đo tham chiếu:** trên **bản sao** `project/data/monocle.db` (7.219 articles, chụp 2026-09-07).
   Chưa có thay đổi nào được áp lên DB vận hành.
@@ -39,7 +40,7 @@ Người vận hành làm hoặc quyết định:
 1. **[ĐÓNG 2026-10-06 — người vận hành] DSH không còn dùng.** Runner hiện hành là `agy` và opencode (Muse Spark 1.3). Không cần restart host DSH. Nếu sau này dùng lại DSH thì restart host trước (prefix `b7cd7e93820adc5e`, rule 09).
 2. **[PENDING theo yêu cầu người vận hành 2026-10-06, chưa nghiệm thu] Gán nhãn bộ vàng 30 bài** (`sn`, `ts`, tập TIC) rồi chạy `provider_conformance.py baseline` với đầu ra của agy. Chưa có bộ vàng thì chưa chấm được provider khác. Ngưỡng tạm: mức agy trừ 5 điểm phần trăm.
 3. **[ĐÓNG 2026-10-08, US-041] Sổ cái token gắn nguồn theo meta.** Mỗi tệp meta tính cho đúng `agent_provider` của nó, nên đợt pha agy và openrouter ghi hai dòng. Token cache vào `hit_tokens`. opencode được nhận nhưng meta của nó không ghi số token, nên dòng có ghi chú `usage=không ghi`. `--finish` mặc định `--source auto`. Còn mở: adapter opencode cần ghi `usage` thật.
-4. **opencode chưa có `--runner`.** Adapter `opencode_native_run.py` đã dùng bộ kiểm chung, nhưng đợt vẫn do phiên OpenCode điều khiển bằng tay. Việc nâng thành runner chính thức cần quyết định riêng.
+4. **[ĐÃ CÓ MÃ, CHỜ NGHIỆM THU] `--runner opencode`.** `src/agent/opencode_runner.py` và `article_run.py --runner opencode` (cùng `scripts/run_backlog_opencode.py`) đã có trong cây làm việc, dùng bộ kiểm chung `article_contract`. Chưa commit, chưa có đợt thật, daemon chưa dùng (`PROVIDERS` còn `agy`, `openrouter`). Hạng 2 trong thứ tự runner (ADR-0026.D3).
 5. **Giảm tỷ lệ bị từ chối ở giai đoạn đầu.** Đo trước khi siết: agy 5,5% `c` ngắn và 1,8% `k` ngắn, openrouter 9,3% `k` dài. Đo lại bằng kịch bản audit sau vài đợt, và điều chỉnh prefix nếu một loại lỗi vượt vài phần trăm.
 6. **Xung đột với ADR 0016 P3.** Trường `same_event_as` mà ADR 0016 dự kiến thêm sẽ bị schema đóng (`additionalProperties: false`) từ chối. Đổi hợp đồng phải sửa schema trước.
 7. **Đợt DSH cũ** (W09241605, W09241723, W365, W1, W2) dùng lược đồ thực thể khác và không tái mở rộng được dưới resolver hiện tại.
@@ -116,7 +117,7 @@ Việc kỹ thuật còn treo (chưa làm trong US-031):
 | Việc | Ghi chú |
 |---|---|
 | Nghiệm thu P0 bằng đợt thật qua daemon | Chưa có đợt nào chạy sau khi bật vết. Đợt đầu tiên ở L1 hoặc `/run` sẽ cho cây vết đầy đủ; các đợt cũ hiện hiển thị "chưa có span" |
-| Span cho runner OpenRouter và adapter `opencode_native_run.py` | Chỉ `AgyRunner` được đo. Đợt chạy bằng runner khác không có cây vết cấp lô |
+| Span cho runner OpenRouter và opencode (`opencode_native_run.py`, `opencode_runner.py`) | Chỉ `AgyRunner` được đo. Đợt chạy bằng runner khác không có cây vết cấp lô |
 | `harness-auditor` lên active | Cần 10 lần chẩn đoán đúng theo rule 07. Hiện đề xuất do operator tất định `improvement-proposer` sinh |
 | Truy cập Phòng điều khiển từ xa (D-B) | Cần CNTT cho đường hầm có xác thực; Telegram `/map`, `/trace` thay tạm |
 | Thử Arize Phoenix qua OpenTelemetry (D-C) | Span đã giữ trường tương thích; cần một spike nhỏ |
@@ -129,7 +130,7 @@ Việc kỹ thuật còn treo (chưa làm trong US-031):
 1. **Nối vào phiên US-036 (thu thập):** cào bù đang xả chậm vì `gap_backfill_limit` mặc định 40 và `gap_budget_seconds` 120 chưa có trong `config/settings.yaml`; chu kỳ 10 phút với 700 URL cafef chờ. Radar vẫn khuyên `recapture` cho `raw_missing`, trái với CAP-1 mục 1 (gộp `data/raw_html` rồi derive lại). Người vận hành đã đồng ý sao chép, không cào lại web.
 2. **Nhả đợt hỏng** (cần xác nhận): W10021650, W10051042, W10051050. Chạy `--repair` (không `--finish`) nếu muốn giữ bài, hoặc `/cancel <đợt>` để nhả.
 3. **Chạy lô agy 50 bài một lần có tệp phản hồi thô** để biết nguyên nhân lô trả 0 bài; kết quả quyết định có hạ lô xuống 25 hay không (CON-1 mục 9 và 11).
-4. **`--runner opencode` chính thức** (CON-1 mục 4): chạy tay bằng OpenCode hiện đăng ký provider `dsh` mặc định; cần nhãn đúng khi có runner mới.
+4. **Nghiệm thu `--runner opencode`** (CON-1 mục 4): chạy một đợt thật, xác nhận nhãn provider `opencode-native` trong sổ cái, rồi quyết định có thêm vào `PROVIDERS` của daemon hay không.
 5. **Cấp lại L1** khi đủ điều kiện ổn định (kế hoạch mục 5): ba đợt liền DONE, độ phủ thu thập thiếu dưới 2%, không đợt tay vô hình.
 
 ## A0. RÀ SOÁT END-TO-END 2026-09-17 — mất dữ liệu âm thầm & ngõ cụt trạng thái

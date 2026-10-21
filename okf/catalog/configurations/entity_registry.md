@@ -57,7 +57,7 @@ project/data/entities/entities.xlsx      # master catalog người dùng tra mã
 project/data/entities/{taxonomy,stats}.json
 project/config/entities/aliases/*.yaml   # 7 file alias theo miền
 project/config/entities/brand_aliases.yaml
-project/config/entities/manifest.yaml    # công tắc DEV bật/tắt người dùng
+subscriptions/manifest.yaml (dưới gốc dữ liệu)  # công tắc bật/tắt người dùng
 project/config/entities/users/<name>.yaml  # AUTO-GENERATED — xem User Subscriptions
 ```
 

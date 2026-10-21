@@ -210,9 +210,9 @@ def users_output_dir() -> Path:
     """Trả về thư mục giao hàng theo người dùng.
 
     Returns:
-        Đường dẫn `<gốc>/users_output`.
+        Đường dẫn `<gốc>/users/output`, cùng cây thư mục với SharePoint (ADR-0026.D6).
     """
-    return _sub("users_output")
+    return _sub("users", "output")
 
 
 def subscriptions_dir() -> Path:
