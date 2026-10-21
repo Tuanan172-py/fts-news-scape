@@ -1,4 +1,4 @@
-"""Tiện ích tạo bản sao dữ liệu snapshot không gây khóa cơ sở dữ liệu chính."""
+"""Create database snapshot copies without locking the main database."""
 
 from __future__ import annotations
 
@@ -17,18 +17,18 @@ def create_db_snapshot(
     *,
     overwrite: bool = True,
 ) -> Path:
-    """Tạo bản sao snapshot của cơ sở dữ liệu phục vụ mục đích tra cứu và kiểm thử.
+    """Create a snapshot copy of the database for lookup and testing.
 
     Args:
-        src_db_path: Đường dẫn cơ sở dữ liệu nguồn. Mặc định DB vận hành.
-        dst_db_path: Đường dẫn tệp snapshot đích. Mặc định `<gốc>/snapshots/monocle_review.db`.
-        overwrite: Cờ cho phép tự động ghi đè tệp đích nếu đã tồn tại.
+        src_db_path: Source database path. Defaults to the operational DB.
+        dst_db_path: Destination snapshot path. Defaults to `<root>/snapshots/monocle_review.db`.
+        overwrite: If True, overwrite the destination file when it exists.
 
     Returns:
-        Đối tượng Path trỏ tới tệp snapshot vừa tạo.
+        Path of the snapshot file created.
 
     Raises:
-        FileNotFoundError: Khi tệp cơ sở dữ liệu nguồn không tồn tại.
+        FileNotFoundError: If the source database file does not exist.
     """
     if src_db_path is None:
         from src.core.config import resolve_db_path
@@ -48,17 +48,16 @@ def create_db_snapshot(
         except Exception:
             pass
 
-    # Kết nối nguồn bằng mode read-only để không lock writer
+    # Open the source read-only so the writer is not locked.
     src_uri = f"file:{src.as_posix()}?mode=ro"
     con = sqlite3.connect(src_uri, uri=True, timeout=30.0)
     try:
-        # Sử dụng VACUUM INTO ra file tạm
-        # Chuyển path sang POSIX dạng an toàn cho SQL string literal
+        # VACUUM INTO writes to a temp file; the POSIX path is escaped for use in an SQL string literal.
         escaped_temp = temp_dst.as_posix().replace("'", "''")
         con.execute(f"VACUUM INTO '{escaped_temp}'")
     except Exception as e:
         logger.warning(f"VACUUM INTO thất bại ({e}), chuyển sang dùng SQLite Backup API...")
-        # Fallback sang SQLite Backup API nếu SQLite không hỗ trợ VACUUM INTO
+        # Fall back to the SQLite Backup API when VACUUM INTO is unsupported.
         dst_conn = sqlite3.connect(temp_dst)
         try:
             src_conn = sqlite3.connect(src_uri, uri=True, timeout=30.0)
@@ -70,12 +69,12 @@ def create_db_snapshot(
     finally:
         con.close()
 
-    # Atomic swap sang file đích
+    # Swap atomically onto the destination file.
     try:
         os.replace(temp_dst, dst)
         final_path = dst
     except PermissionError:
-        # Nếu user đang mở DB snapshot trong DB Browser, fallback sang file có PID/timestamp
+        # If the snapshot is open in DB Browser, fall back to a timestamped file.
         from datetime import datetime
         from src.core.models import VN_TZ
         ts = datetime.now(VN_TZ).strftime("%H%M%S")

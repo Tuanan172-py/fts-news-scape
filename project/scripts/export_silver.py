@@ -1,4 +1,4 @@
-"""Xuất danh sách bài viết chuẩn Silver ra tệp CSV manifest."""
+"""Export the Silver-grade article list to a CSV manifest file."""
 
 from __future__ import annotations
 

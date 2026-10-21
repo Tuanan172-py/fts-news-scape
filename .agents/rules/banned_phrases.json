@@ -1,0 +1,99 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Banned phrases for docstrings and comments (news-scape)",
+  "description": "Repo-local copy of the codebase-docstring-refactoring dictionary, tuned for English docstrings (rule 06). Used with scan_code_phrases.py --dict.",
+  "categories": {
+    "filler_connectors": {
+      "severity": "WARNING",
+      "description": "Filler and vague generalization",
+      "phrases": [
+        "basically",
+        "generally speaking",
+        "in general",
+        "more or less",
+        "at the end of the day",
+        "as you can see",
+        "simply put",
+        "it is worth noting",
+        "please note",
+        "note that",
+        "nhìn chung",
+        "thông thường",
+        "nói chung",
+        "về cơ bản"
+      ]
+    },
+    "hype_and_emotional": {
+      "severity": "ERROR",
+      "description": "Hype and subjective evaluation",
+      "phrases": [
+        "crucial",
+        "seamlessly",
+        "game-changing",
+        "comprehensive",
+        "robust",
+        "powerful",
+        "state-of-the-art",
+        "cutting-edge",
+        "incredibly",
+        "extremely efficient",
+        "silver bullet",
+        "elegant",
+        "đáng chú ý",
+        "đóng vai trò quan trọng",
+        "toàn diện",
+        "mạnh mẽ",
+        "tuyệt vời"
+      ]
+    },
+    "pedagogical_and_pronouns": {
+      "severity": "ERROR",
+      "description": "Tutorial tone and first-person pronouns",
+      "phrases": [
+        "let's",
+        "we can",
+        "we should",
+        "you should",
+        "you can",
+        "as we know",
+        "chúng ta",
+        "hãy cùng xem",
+        "tôi sẽ"
+      ]
+    },
+    "temporary_debt": {
+      "severity": "WARNING",
+      "description": "Draft markers and unresolved debt tags",
+      "phrases": [
+        "FIXME_LATER",
+        "HACK_TEMP",
+        "[LEGACY",
+        "draft version",
+        "temp fix",
+        "sửa tạm"
+      ]
+    }
+  },
+  "patterns": {
+    "rhetorical_questions": {
+      "severity": "ERROR",
+      "description": "Sentence ending with a question mark",
+      "regex": "\\?\\s*$"
+    },
+    "first_person_plural": {
+      "severity": "ERROR",
+      "description": "Standalone we/our/us in prose",
+      "regex": "\\b(?:We|we|Our|our)\\s+[a-z]+"
+    },
+    "emoji": {
+      "severity": "ERROR",
+      "description": "Emoji and decorative pictographs",
+      "regex": "[\\U0001F300-\\U0001FAFF\\u2600-\\u27BF\\u2B50\\uFE0F]"
+    },
+    "bare_todo": {
+      "severity": "WARNING",
+      "description": "TODO without a story id; standard form is # TODO(US-NNN): ...",
+      "regex": "#\\s*TODO(?![\\(\\[][A-Za-z0-9_-]+[\\)\\]]:)"
+    }
+  }
+}

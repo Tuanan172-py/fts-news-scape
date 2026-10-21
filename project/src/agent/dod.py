@@ -1,8 +1,4 @@
-"""Tiêu chuẩn hoàn thành (Definition-of-Done) và kiểm tra điều kiện tiên quyết cho Agent.
-
-Cung cấp các hàm kiểm tra tính hợp lệ về cấu trúc, độ xác thực căn cứ (groundedness),
-tính phân tích gia tăng giá trị (value added) và loại bỏ câu sáo rỗng (boilerplate).
-"""
+"""Check Definition-of-Done criteria and preconditions for agent outputs."""
 
 from __future__ import annotations
 
@@ -31,15 +27,22 @@ _MIN_SPAN_LEN = 20
 
 
 def _norm(s: str) -> str:
-    """Chuẩn hóa chuỗi văn bản bằng cách gộp khoảng trắng và chuyển thành chữ thường."""
+    """Normalize text by collapsing whitespace and lowercasing.
+
+    Args:
+        s: Text to normalize; None is treated as empty.
+
+    Returns:
+        Normalized lowercase string.
+    """
     return " ".join((s or "").split()).lower()
 
 
 def load_thresholds() -> dict:
-    """Tải cấu hình các ngưỡng kiểm định chất lượng từ tệp task-lifecycle-v1.yaml.
+    """Load the quality thresholds from task-lifecycle-v1.yaml.
 
     Returns:
-        Từ điển chứa các ngưỡng kiểm định (min_citations, min_implication_len, ...).
+        Dict of thresholds (min_citations, min_implication_len, ...); defaults apply when the file is unreadable.
     """
     t = dict(_DEFAULT_THRESHOLDS)
     try:
@@ -59,14 +62,14 @@ def load_thresholds() -> dict:
 
 
 def verify_preconditions(work_package: dict, *, check_integrity: bool = True) -> tuple[bool, list[str]]:
-    """Kiểm tra các điều kiện tiên quyết của gói công việc trước khi bàn giao cho Agent.
+    """Check the preconditions of a work package before hand-off to an agent.
 
     Args:
-        work_package: Dữ liệu gói công việc cần bàn giao.
-        check_integrity: Cờ kiểm tra tính toàn vẹn mã băm SHA-256 tệp thô.
+        work_package: Work package to hand off.
+        check_integrity: Whether to verify the SHA-256 hash of the raw file.
 
     Returns:
-        Tuple gồm cờ thành công (True/False) và danh sách chuỗi lý do từ chối nếu có.
+        Tuple of the success flag and the list of rejection reasons, if any.
     """
     reasons: list[str] = []
     if work_package.get("change_state") in _HELD_STATES:
@@ -87,28 +90,28 @@ def verify_preconditions(work_package: dict, *, check_integrity: bool = True) ->
 
 def check_dod(agent_output: dict, work_package: dict,
               thresholds: dict | None = None) -> tuple[bool, list[str]]:
-    """Kiểm định kết quả xử lý của Agent theo bộ 6 tiêu chí hoàn thành Definition-of-Done.
+    """Validate an agent output against the six Definition-of-Done criteria.
 
-    Bao gồm:
-    1. Lược đồ hợp lệ (schema_valid)
-    2. Độ xác thực căn cứ trích dẫn trong văn bản (grounded)
-    3. Chất lượng trích xuất đạt yêu cầu (quality_ok)
-    4. Đầy đủ siêu dữ liệu kiểm toán (auditable)
-    5. Có giá trị phân tích mới, không chép nguyên văn (value_added)
-    6. Hàm ý sâu sắc, không dùng câu mẫu sáo rỗng (implication_specific)
+    Criteria:
+    1. Valid schema (schema_valid)
+    2. Citations grounded in the text (grounded)
+    3. Acceptable extraction quality (quality_ok)
+    4. Complete audit metadata (auditable)
+    5. New analytical content, not a verbatim copy (value_added)
+    6. Specific implication, not a template sentence (implication_specific)
 
     Args:
-        agent_output: Dữ liệu kết quả do Agent nộp lại.
-        work_package: Gói công việc gốc đã giao.
-        thresholds: Cấu hình các ngưỡng kiểm định (tùy chọn).
+        agent_output: Result data submitted by the agent.
+        work_package: Original work package that was handed off.
+        thresholds: Optional validation thresholds; defaults to load_thresholds().
 
     Returns:
-        Tuple gồm cờ đạt chuẩn (True/False) và danh sách các vi phạm nếu có.
+        Tuple of the pass flag and the list of violations, if any.
     """
     t = thresholds or load_thresholds()
     reasons: list[str] = []
 
-    # 1) schema_valid (hard) - Hỗ trợ cả agent-output-v2-lean và agent-output-v1
+    # 1) schema_valid (hard): supports agent-output-v2-lean and agent-output-v1.
     is_lean = (
         isinstance(agent_output.get("summary"), str)
         or isinstance(agent_output.get("implication"), str)
@@ -118,7 +121,7 @@ def check_dod(agent_output: dict, work_package: dict,
     schema_name = "agent-output-v2-lean" if is_lean else "agent-output-v1"
     ok, errs = schema_validate(agent_output, schema_name)
     if not ok:
-        # Fallback thử schema còn lại nếu phán đoán sơ bộ bị lệch
+        # Try the other schema when the initial detection was wrong.
         alt_schema = "agent-output-v1" if is_lean else "agent-output-v2-lean"
         ok_alt, _ = schema_validate(agent_output, alt_schema)
         if ok_alt:
@@ -127,9 +130,9 @@ def check_dod(agent_output: dict, work_package: dict,
     if not ok:
         reasons.append(f"schema_invalid: {errs[:2]}")
 
-    # 2) grounded — đủ trích dẫn theo ngưỡng, mỗi source_span ⊂ cleaned_text.
-    # Bài một đoạn văn do bộ bung đánh dấu `citation_basis` thì một trích dẫn là
-    # đủ (ADR 0018); còn lại giữ ngưỡng `min_citations`.
+    # 2) grounded: enough citations per threshold and every source_span is inside cleaned_text.
+    # A single-paragraph article marked with `citation_basis` by the expander needs only
+    # one citation (ADR 0018); otherwise `min_citations` applies.
     cites = agent_output.get("citations") or []
     cleaned = work_package.get("cleaned_text", "") or ""
     need_cites = (1 if agent_output.get("citation_basis") == "single-paragraph"
@@ -148,13 +151,13 @@ def check_dod(agent_output: dict, work_package: dict,
         elif span not in cleaned:
             reasons.append(f"citation[{i}] not grounded in cleaned_text")
 
-    # 3) quality_ok (extraction_quality ∈ {high, medium}) — chỉ kiểm tra ở schema v1 cũ
+    # 3) quality_ok (extraction_quality in {high, medium}): checked for schema v1 only.
     if not is_lean:
         q = agent_output.get("extraction_quality")
         if q not in t["quality_ok"]:
             reasons.append(f"extraction_quality={q!r} not in {t['quality_ok']}")
 
-    # 4) auditable — processing_metadata đủ provider/model/timestamp (v1). v2-lean do hệ thống tự điền.
+    # 4) auditable: processing_metadata has provider, model and timestamp (v1); the system fills them for v2-lean.
     if not is_lean:
         pm = agent_output.get("processing_metadata") or {}
         for k in ("agent_provider", "model_used", "timestamp"):
@@ -173,7 +176,7 @@ def check_dod(agent_output: dict, work_package: dict,
         n_abs = ""
         key_pts = []
 
-    # 5) value_added — tóm tắt phải là văn bản MỚI, điểm chính phải khác trích dẫn.
+    # 5) value_added: the summary must be new text and key points must differ from the citations.
     if n_abs and n_clean and n_abs in n_clean:
         reasons.append("summary.abstractive là trích nguyên văn cleaned_text, không phải tóm tắt")
     spans = set()
@@ -187,7 +190,7 @@ def check_dod(agent_output: dict, work_package: dict,
             reasons.append(f"key_points[{i}] copy nguyên văn citations[].source_span")
             break
 
-    # 6) implication_specific — "so-what" phải là nhận định riêng, không phải câu mẫu.
+    # 6) implication_specific: the implication must be an original assessment, not a template sentence.
     impl = agent_output.get("implication")
     if isinstance(impl, str):
         impl_text = impl

@@ -1,4 +1,4 @@
-"""Xuất bản dữ liệu của một ngày đã đóng sang thư mục SharePoint, chạy với cwd = project/."""
+"""Publish the data of a closed day to the SharePoint folder, run with cwd = project/."""
 from __future__ import annotations
 
 import argparse
@@ -16,13 +16,13 @@ EXIT_CODES = {"ok": 0, "disabled": 0, "partial": 2}
 
 
 def _fmt_size(n: int | None) -> str:
-    """Định dạng kích thước byte cho bảng in.
+    """Format a byte size for the printed table.
 
     Args:
-        n: Số byte hoặc None.
+        n: Size in bytes, or None when unknown.
 
     Returns:
-        Chuỗi ngắn như `12.3 MB`, hoặc `-` khi chưa biết.
+        Short string such as `12.3 MB`, or `-` when unknown.
     """
     if n is None:
         return "-"
@@ -34,13 +34,13 @@ def _fmt_size(n: int | None) -> str:
 
 
 def main(argv: list[str]) -> int:
-    """Chạy một lần xuất bản và in bảng tệp.
+    """Run one publish and print the file table.
 
     Args:
-        argv: Tham số dòng lệnh, không gồm tên chương trình.
+        argv: Command-line arguments without the program name.
 
     Returns:
-        0 khi ok hoặc disabled, 2 khi partial, 1 khi failed.
+        0 on ok or disabled, 2 on partial, 1 on failed.
     """
     ap = argparse.ArgumentParser(description="Xuất bản một chiều lên SharePoint (ADR 0020).")
     ap.add_argument("--date", default="yesterday", help="YYYY-MM-DD hoặc yesterday (mặc định)")

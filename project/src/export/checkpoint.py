@@ -1,4 +1,4 @@
-"""Quản lý điểm kiểm tra (checkpoint) tiến trình xuất dữ liệu cho người dùng."""
+"""Manage the export progress checkpoint of each user."""
 from __future__ import annotations
 
 import json
@@ -13,17 +13,25 @@ CHECKPOINT_NAME = "_checkpoint.json"
 
 
 def _path(user_dir: str | Path) -> Path:
+    """Return the checkpoint file path of a user directory.
+
+    Args:
+        user_dir: Export directory of the user.
+
+    Returns:
+        Path of the checkpoint file.
+    """
     return Path(user_dir) / CHECKPOINT_NAME
 
 
 def load_checkpoint(user_dir: str | Path) -> dict:
-    """Đọc dữ liệu điểm kiểm tra của người dùng từ đĩa.
+    """Read the checkpoint data of a user from disk.
 
     Args:
-        user_dir: Thư mục xuất dữ liệu của người dùng.
+        user_dir: Export directory of the user.
 
     Returns:
-        Từ điển dữ liệu điểm kiểm tra gồm danh sách bài đã ghi và mốc thời gian chạy.
+        Checkpoint dict with the written articles and the run timestamps.
     """
     p = _path(user_dir)
     if not p.exists():
@@ -37,44 +45,44 @@ def load_checkpoint(user_dir: str | Path) -> dict:
 
 
 def _entries(user_dir: str | Path, date: str) -> dict[str, str]:
-    """Lấy danh sách bản ghi bài viết kèm trạng thái xử lý theo ngày.
+    """Return the article records of a day with their processing status.
 
     Args:
-        user_dir: Thư mục xuất dữ liệu của người dùng.
-        date: Ngày xuất bản dạng 'YYYY-MM-DD'.
+        user_dir: Export directory of the user.
+        date: Publication date as 'YYYY-MM-DD'.
 
     Returns:
-        Từ điển ánh xạ mã bài viết sang trạng thái phân tích ('GOLD' hoặc 'L1_ONLY').
+        Dict mapping article id to analysis status ('GOLD' or 'L1_ONLY').
     """
     raw = load_checkpoint(user_dir).get("written", {}).get(date, {})
     if isinstance(raw, dict):
         return {str(k): str(v or "") for k, v in raw.items()}
-    return {str(aid): "" for aid in (raw or [])}             # định dạng cũ
+    return {str(aid): "" for aid in (raw or [])}             # legacy list format
 
 
 def written_ids(user_dir: str | Path, date: str) -> set[str]:
-    """Lấy tập hợp các mã bài viết đã được ghi nhận trong ngày.
+    """Return the article ids already recorded for a day.
 
     Args:
-        user_dir: Thư mục xuất dữ liệu của người dùng.
-        date: Ngày xuất bản dạng 'YYYY-MM-DD'.
+        user_dir: Export directory of the user.
+        date: Publication date as 'YYYY-MM-DD'.
 
     Returns:
-        Tập hợp các mã bài viết đã ghi.
+        Set of the article ids written.
     """
     return set(_entries(user_dir, date))
 
 
 def filter_new(user_dir: str | Path, date: str, article_ids) -> list[str]:
-    """Lọc danh sách các mã bài viết mới chưa từng được xuất trong ngày.
+    """Filter the article ids that were not yet exported on a day.
 
     Args:
-        user_dir: Thư mục xuất dữ liệu của người dùng.
-        date: Ngày xuất bản dạng 'YYYY-MM-DD'.
-        article_ids: Danh sách mã bài viết cần kiểm tra.
+        user_dir: Export directory of the user.
+        date: Publication date as 'YYYY-MM-DD'.
+        article_ids: Article ids to check.
 
     Returns:
-        Danh sách mã bài viết mới chưa xuất hiện trong điểm kiểm tra.
+        Deduplicated ids that are not in the checkpoint.
     """
     seen = written_ids(user_dir, date)
     out, dedup = [], set()
@@ -85,15 +93,15 @@ def filter_new(user_dir: str | Path, date: str, article_ids) -> list[str]:
 
 
 def filter_upgraded(user_dir: str | Path, date: str, statuses: dict[str, str]) -> list[str]:
-    """Lọc các bài viết được nâng cấp trạng thái từ L1_ONLY lên GOLD.
+    """Filter the articles upgraded from L1_ONLY to GOLD.
 
     Args:
-        user_dir: Thư mục xuất dữ liệu của người dùng.
-        date: Ngày xuất bản dạng 'YYYY-MM-DD'.
-        statuses: Từ điển trạng thái hiện tại của các bài viết.
+        user_dir: Export directory of the user.
+        date: Publication date as 'YYYY-MM-DD'.
+        statuses: Current status of the articles keyed by article id.
 
     Returns:
-        Danh sách mã bài viết vừa được bổ sung phân tích chuyên sâu Gold.
+        Ids of the articles that just received Gold in-depth analysis.
     """
     prev = _entries(user_dir, date)
     return [aid for aid, st in statuses.items()
@@ -101,16 +109,16 @@ def filter_upgraded(user_dir: str | Path, date: str, statuses: dict[str, str]) -
 
 
 def mark_written(user_dir: str | Path, date: str, article_ids, statuses=None) -> bool:
-    """Cập nhật trạng thái các bài viết đã xuất vào tệp điểm kiểm tra.
+    """Record the exported articles in the checkpoint file.
 
     Args:
-        user_dir: Thư mục xuất dữ liệu của người dùng.
-        date: Ngày xuất bản dạng 'YYYY-MM-DD'.
-        article_ids: Danh sách các mã bài viết đã ghi thành công.
-        statuses: Từ điển trạng thái tương ứng của từng bài viết tùy chọn.
+        user_dir: Export directory of the user.
+        date: Publication date as 'YYYY-MM-DD'.
+        article_ids: Ids of the articles written successfully.
+        statuses: Optional status of each article keyed by article id.
 
     Returns:
-        True nếu lưu thành công, False nếu tệp bị khóa.
+        True if saved, False if the file is locked.
     """
     p = _path(user_dir)
     p.parent.mkdir(parents=True, exist_ok=True)
@@ -123,9 +131,9 @@ def mark_written(user_dir: str | Path, date: str, article_ids, statuses=None) ->
     data["last_run_at"] = now_vn_iso()
     data["last_date"] = date
     try:
-        # safe_atomic_write dùng tmp tên unique (pid+uuid) → hai run song song không giẫm lên
-        # nhau như tên tmp cố định `_checkpoint.json.tmp` trước đây.
-        # fallback_on_lock=False: snapshot `_checkpoint_HHMMSS.json` vô nghĩa vì không ai đọc nó.
+        # safe_atomic_write uses a unique temp name (pid+uuid), so two parallel runs do not
+        # overwrite each other as a fixed `_checkpoint.json.tmp` name would.
+        # fallback_on_lock=False: a `_checkpoint_HHMMSS.json` snapshot is useless because nothing reads it.
         safe_atomic_write(p, json.dumps(data, ensure_ascii=False, indent=2),
                           fallback_on_lock=False, encoding="utf-8")
         return True

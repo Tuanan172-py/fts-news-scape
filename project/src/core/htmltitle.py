@@ -1,4 +1,4 @@
-"""Trích tiêu đề bài từ HTML trang chi tiết và kiểm tra tiêu đề hợp lệ."""
+"""Extract the article title from a detail-page HTML and validate titles."""
 
 from __future__ import annotations
 
@@ -11,26 +11,26 @@ _SITE_SUFFIX = re.compile(r"\s*[|–—-]\s*(?:[^|–—-]{2,40})$")
 
 
 def is_valid_title(title: str) -> bool:
-    """Kiểm tra tiêu đề đủ dài và không chỉ gồm chữ số hay ký hiệu.
+    """Check that a title is long enough and not made only of digits or symbols.
 
     Args:
-        title: Tiêu đề cần kiểm tra.
+        title: Title to check.
 
     Returns:
-        True nếu tiêu đề dùng được làm khoá băm và hiển thị.
+        True if the title is usable as a hash key and for display.
     """
     t = (title or "").strip()
     return len(t) >= MIN_TITLE_CHARS and any(ch.isalpha() for ch in t)
 
 
 def extract_page_title(html: str) -> str:
-    """Lấy tiêu đề bài từ `og:title`, rồi `<h1>`, rồi `<title>` đã bỏ hậu tố tên báo.
+    """Extract the title from `og:title`, then `<h1>`, then `<title>` with the site-name suffix removed.
 
     Args:
-        html: Mã nguồn HTML trang chi tiết.
+        html: HTML source of the detail page.
 
     Returns:
-        Tiêu đề hợp lệ đầu tiên tìm được, hoặc chuỗi rỗng.
+        First valid title found, or an empty string.
     """
     if not html:
         return ""

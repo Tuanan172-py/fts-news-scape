@@ -1,4 +1,4 @@
-"""Ghi vết span của một đợt vào `ops_spans`; không làm gì khi thiếu biến môi trường."""
+"""Record the spans of a wave into `ops_spans` and do nothing when the environment variables are missing."""
 
 from __future__ import annotations
 
@@ -43,7 +43,7 @@ CREATE INDEX IF NOT EXISTS idx_ops_spans_actor ON ops_spans(actor_id, started_at
 CREATE INDEX IF NOT EXISTS idx_ops_spans_parent ON ops_spans(parent_id);
 """
 
-# Script chạy bên trong `article_run.py` và tác nhân tương ứng trong registry.
+# Scripts that run inside `article_run.py` and their matching agents in the registry.
 SCRIPT_ACTORS = pipeline_spec.script_actors()
 
 
@@ -53,24 +53,24 @@ def _now() -> str:
 
 @lru_cache(maxsize=1)
 def _registry() -> dict[str, dict]:
-    """Đọc `registry.yaml` một lần và trả về từ điển theo id tác nhân."""
+    """Read `registry.yaml` once and return a dict keyed by agent id."""
     try:
         import yaml
 
         data = yaml.safe_load(REGISTRY_PATH.read_text(encoding="utf-8")) or {}
         return {a["id"]: a for a in data.get("agents", []) if isinstance(a, dict) and "id" in a}
-    except Exception:  # noqa: BLE001 — thiếu registry không được làm hỏng đợt
+    except Exception:  # noqa: BLE001 — a missing registry must not break the wave
         return {}
 
 
 def registry_info(actor_id: str | None) -> tuple[str | None, str | None]:
-    """Tra skill và entrypoint của một tác nhân.
+    """Look up the skill and entrypoint of an agent.
 
     Args:
-        actor_id: Mã tác nhân trong registry.
+        actor_id: Agent identifier in the registry.
 
     Returns:
-        Cặp (skill, entrypoint), None khi không có.
+        Pair (skill, entrypoint), None where absent.
     """
     if not actor_id:
         return None, None
@@ -89,21 +89,21 @@ def _connect(path: str | Path) -> sqlite3.Connection:
 
 
 class Tracer:
-    """Ghi span vào `ops.db`; mọi lỗi ghi bị nuốt để không ảnh hưởng đợt.
+    """Write spans to `ops.db`; every write error is swallowed so the wave is unaffected.
 
     Attributes:
-        db_path: Đường dẫn `ops.db`.
-        trace_id: Mã đợt.
-        parent_id: Span cha mặc định của span mới.
+        db_path: Path of `ops.db`.
+        trace_id: Wave identifier.
+        parent_id: Default parent span of new spans.
     """
 
     def __init__(self, db_path: str | Path, trace_id: str, parent_id: str | None = None) -> None:
-        """Gắn tracer vào một đợt.
+        """Bind the tracer to a wave.
 
         Args:
-            db_path: Đường dẫn `ops.db`.
-            trace_id: Mã đợt.
-            parent_id: Span cha mặc định.
+            db_path: Path of `ops.db`.
+            trace_id: Wave identifier.
+            parent_id: Default parent span.
         """
         self.db_path = str(db_path)
         self.trace_id = trace_id
@@ -117,18 +117,18 @@ class Tracer:
 
     def begin(self, name: str, kind: str, actor_id: str | None = None, *,
               span_id: str | None = None, parent_id: str | None = ..., **attrs: Any) -> str | None:
-        """Mở một span ở trạng thái `running`; mở lại cùng `span_id` thì ghi đè.
+        """Open a span in the `running` status; reopening the same `span_id` overwrites it.
 
         Args:
-            name: Tên span.
-            kind: workflow, step, script, agent, tool, gate hoặc human.
-            actor_id: Mã tác nhân trong registry.
-            span_id: Mã span cố định (để chạy lại sau crash không nhân bản).
-            parent_id: Span cha; bỏ trống dùng cha mặc định, None cho span gốc.
-            **attrs: Thuộc tính ban đầu.
+            name: Span name.
+            kind: workflow, step, script, agent, tool, gate or human.
+            actor_id: Agent identifier in the registry.
+            span_id: Fixed span identifier (so a rerun after a crash does not duplicate).
+            parent_id: Parent span; the default uses the default parent, None makes a root span.
+            **attrs: Initial attributes.
 
         Returns:
-            Mã span, hoặc None khi ghi lỗi.
+            The span identifier, or None when the write fails.
         """
         try:
             sid = span_id or f"{self.trace_id}.{kind}.{int(time.time() * 1000)}"
@@ -148,12 +148,12 @@ class Tracer:
             return None
 
     def finish(self, span_id: str | None, status: str = "ok", **attrs: Any) -> None:
-        """Đóng span, gộp thuộc tính mới vào thuộc tính cũ.
+        """Close a span, merging new attributes into the existing ones.
 
         Args:
-            span_id: Mã span từ `begin`.
-            status: ok, fail, timeout, skipped, parked, cancelled hoặc interrupted.
-            **attrs: Thuộc tính bổ sung.
+            span_id: Span identifier from `begin`.
+            status: ok, fail, timeout, skipped, parked, cancelled or interrupted.
+            **attrs: Additional attributes.
         """
         if not span_id:
             return
@@ -175,13 +175,13 @@ class Tracer:
             return
 
     def close_running(self, status: str = "interrupted") -> int:
-        """Đóng mọi span còn `running` của đợt (tiến trình chết, đợt đã chốt).
+        """Close every span of the wave still `running` (process died, wave finalized).
 
         Args:
-            status: Trạng thái gán cho span bị bỏ dở.
+            status: Status assigned to abandoned spans.
 
         Returns:
-            Số span đã đóng.
+            Number of spans closed.
         """
         try:
             with _connect(self.db_path) as conn:
@@ -195,13 +195,13 @@ class Tracer:
             return 0
 
     def child_env(self, parent_id: str | None) -> dict[str, str]:
-        """Dựng biến môi trường để tiến trình con ghi span dưới `parent_id`.
+        """Build environment variables so a child process writes spans under `parent_id`.
 
         Args:
-            parent_id: Span cha của các span tiến trình con sẽ tạo.
+            parent_id: Parent span of the spans the child process will create.
 
         Returns:
-            Từ điển biến môi trường.
+            Dict of environment variables.
         """
         env = {ENV_DB: self.db_path, ENV_WAVE: self.trace_id}
         if parent_id:
@@ -210,18 +210,19 @@ class Tracer:
 
 
 class SpanHandle:
-    """Tay cầm của một span đang mở, dùng trong khối `with`.
+    """Handle of an open span, used in a `with` block.
 
     Attributes:
-        id: Mã span, None khi không ghi vết.
+        id: Span identifier, None when tracing is off.
+        status: Final status that will be recorded when the span closes.
     """
 
     def __init__(self, tracer: Tracer | None, span_id: str | None) -> None:
-        """Gắn tay cầm vào span đã mở.
+        """Bind the handle to an open span.
 
         Args:
-            tracer: Tracer sở hữu span.
-            span_id: Mã span.
+            tracer: Tracer that owns the span.
+            span_id: Span identifier.
         """
         self._tracer = tracer
         self.id = span_id
@@ -229,35 +230,39 @@ class SpanHandle:
         self.status = "ok"
 
     def set(self, **attrs: Any) -> None:
-        """Ghi thuộc tính sẽ gộp vào span lúc đóng.
+        """Record attributes that will be merged into the span when it closes.
 
         Args:
-            **attrs: Thuộc tính.
+            **attrs: Attributes.
         """
-        if "status" in attrs:  # `status` là tham số của finish(); giữ giá trị dưới tên khác
+        if "status" in attrs:  # `status` is a parameter of finish(); keep the value under another name
             attrs["result_status"] = attrs.pop("status")
         self._attrs.update(attrs)
 
     def fail(self, status: str = "fail", **attrs: Any) -> None:
-        """Đánh dấu span kết thúc không thành công.
+        """Mark the span as ended unsuccessfully.
 
         Args:
-            status: Trạng thái cuối.
-            **attrs: Thuộc tính bổ sung.
+            status: Final status.
+            **attrs: Additional attributes.
         """
         self.status = status
         self._attrs.update(attrs)
 
     def env(self) -> dict[str, str]:
-        """Biến môi trường cho tiến trình con của span này."""
+        """Return the environment variables for the child process of this span.
+
+        Returns:
+            Dict of environment variables, empty when tracing is off.
+        """
         return self._tracer.child_env(self.id) if self._tracer and self.id else {}
 
 
 def from_env() -> Tracer | None:
-    """Dựng tracer từ biến môi trường do daemon đặt; None khi chạy tay.
+    """Build a tracer from the environment variables set by the daemon; None on manual runs.
 
     Returns:
-        Tracer với cha mặc định là `OPS_TRACE_PARENT`, hoặc None.
+        A Tracer whose default parent is `OPS_TRACE_PARENT`, or None.
     """
     db, wave = os.environ.get(ENV_DB), os.environ.get(ENV_WAVE)
     if not db or not wave:
@@ -268,20 +273,20 @@ def from_env() -> Tracer | None:
 @contextmanager
 def span(name: str, kind: str, actor_id: str | None = None, *, tracer: Tracer | None = None,
          span_id: str | None = None, **attrs: Any) -> Iterator[SpanHandle]:
-    """Mở một span cho khối lệnh; ngoại lệ đánh dấu `fail` rồi ném lại.
+    """Open a span around a block; an exception marks it `fail` and is re-raised.
 
-    Không làm gì (tay cầm rỗng) khi không có tracer và không có biến môi trường.
+    Does nothing (empty handle) when there is no tracer and no environment variables.
 
     Args:
-        name: Tên span.
-        kind: Loại span.
-        actor_id: Mã tác nhân trong registry.
-        tracer: Tracer chỉ định; bỏ trống thì dựng từ môi trường.
-        span_id: Mã span cố định.
-        **attrs: Thuộc tính ban đầu.
+        name: Span name.
+        kind: Span kind.
+        actor_id: Agent identifier in the registry.
+        tracer: Explicit tracer; when omitted one is built from the environment.
+        span_id: Fixed span identifier.
+        **attrs: Initial attributes.
 
     Yields:
-        SpanHandle.
+        The SpanHandle.
     """
     tr = tracer or from_env()
     sid = tr.begin(name, kind, actor_id, span_id=span_id, **attrs) if tr else None

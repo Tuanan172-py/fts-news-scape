@@ -1,8 +1,4 @@
-"""Bộ xây dựng và lưu trữ gói công việc (Work Package) bàn giao cho Agent.
-
-Cung cấp lớp WorkPackageBuilder và hàm ghi tệp an toàn để đóng gói dữ liệu Silver
-kèm siêu dữ liệu nguồn thành tệp tin JSON tự mô tả.
-"""
+"""Build and store the Work Package JSON files handed to the Agent from Silver data and source metadata."""
 
 from __future__ import annotations
 
@@ -15,27 +11,27 @@ WORK_PACKAGE_SCHEMA_VERSION = "1.0"
 
 
 class WorkPackageBuilder:
-    """Bộ khởi tạo cấu trúc gói công việc bàn giao cho các agent xử lý.
+    """Build the structure of the work package handed to the processing agents.
 
     Attributes:
-        schema_version: Phiên bản lược đồ của gói công việc bàn giao.
+        schema_version: Schema version of the hand-off work package.
     """
 
     schema_version = WORK_PACKAGE_SCHEMA_VERSION
 
     def build(self, silver: dict, meta: dict, change_state: str, *,
               published_at: str | None = None, scraper_version: str = "") -> dict:
-        """Đóng gói dữ liệu tầng Silver và metadata tầng Bronze thành gói công việc.
+        """Package Silver data and Bronze metadata into a work package.
 
         Args:
-            silver: Dữ liệu bài viết đã xử lý sạch tầng Silver.
-            meta: Siêu dữ liệu thu thập tầng Bronze (metadata capture).
-            change_state: Trạng thái thay đổi bài viết ('new', 'unchanged', 'mutated').
-            published_at: Thời điểm xuất bản bài viết theo chuẩn ISO 8601.
-            scraper_version: Phiên bản của bộ thu thập dữ liệu nguồn.
+            silver: Cleaned article data from the Silver layer.
+            meta: Bronze capture metadata.
+            change_state: Article change state ('new', 'unchanged', 'mutated').
+            published_at: Article publication time in ISO 8601.
+            scraper_version: Version of the source scraper.
 
         Returns:
-            Từ điển chứa cấu trúc gói công việc theo lược đồ work-package-v1.
+            Dict with the work package structure following the work-package-v1 schema.
         """
         return {
             "schema_version": self.schema_version,
@@ -62,7 +58,15 @@ class WorkPackageBuilder:
 
 
 def _atomic_write(path: str, data: bytes) -> None:
-    """Ghi dữ liệu ra tệp tạm thời rồi hoán đổi nguyên tử có cơ chế thử lại."""
+    """Write data to a temporary file, then swap it in atomically with retries.
+
+    Args:
+        path: Destination file path.
+        data: Bytes to write.
+
+    Raises:
+        OSError: If the temporary file cannot be moved into place after all retries.
+    """
     tmp = f"{path}.tmp"
     with open(tmp, "wb") as f:
         f.write(data)
@@ -83,14 +87,14 @@ def _atomic_write(path: str, data: bytes) -> None:
 
 
 def write_package(package: dict, base_dir: str | None = None) -> str:
-    """Lưu gói công việc ra tệp tin JSON trên đĩa theo phân cấp tên miền và ngày tháng.
+    """Write a work package to a JSON file on disk, grouped by domain and date.
 
     Args:
-        package: Dữ liệu gói công việc đã khởi tạo.
-        base_dir: Thư mục cơ sở lưu trữ các gói công việc. Mặc định `paths.work_packages_dir()`.
+        package: Built work package data.
+        base_dir: Base directory for work packages. Defaults to `paths.work_packages_dir()`.
 
     Returns:
-        Đường dẫn tuyệt đối hoặc tương đối tới tệp tin gói công việc đã lưu.
+        Absolute or relative path of the saved work package file.
     """
     domain = package.get("domain") or "unknown"
     yyyymmdd = ""

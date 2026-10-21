@@ -1,4 +1,4 @@
-"""Đo lường chất lượng phân tích chuyên sâu Gold và kiểm định cổng DoD."""
+"""Measure the quality of Gold deep analysis and check the DoD gate."""
 from __future__ import annotations
 
 import argparse
@@ -25,6 +25,7 @@ LEFT JOIN work_items w ON w.id = o.work_item_id
 
 
 def _load(s):
+    """Parse a JSON string, returning an empty dict when it is empty or invalid."""
     try:
         return json.loads(s) if s else {}
     except (TypeError, json.JSONDecodeError):
@@ -32,7 +33,7 @@ def _load(s):
 
 
 def _cleaned_text(package_path: str | None) -> str:
-    """`cleaned_text` của work-package. Thiếu file → chuỗi rỗng (predicate liên quan bỏ qua)."""
+    """Return the `cleaned_text` of a work package, or an empty string when the file is missing (the related predicates are skipped)."""
     if not package_path:
         return ""
     try:
@@ -42,6 +43,14 @@ def _cleaned_text(package_path: str | None) -> str:
 
 
 def analyse(store: ArticleStore) -> dict:
+    """Compute quality statistics over all stored agent outputs.
+
+    Args:
+        store: Article store that provides read-only database access.
+
+    Returns:
+        Dict of counts and percentages; the `_failing` key lists records that fail the new gate.
+    """
     conn = store._connect_ro()
     try:
         rows = [dict(r) for r in conn.execute(_SQL)]
@@ -72,8 +81,9 @@ def analyse(store: ArticleStore) -> dict:
 
         wp = {"cleaned_text": _cleaned_text(r["package_path"])}
         ok, reasons = check_dod(o, wp)
-        # Predicate `grounded`/`auditable` cần work-package; thiếu file thì bỏ qua để không
-        # kết tội oan vì Bronze đã dọn, chỉ giữ các lý do đọc được từ chính output.
+        # The `grounded`/`auditable` predicates need the work package; skip them when the file
+        # is missing so records are not wrongly failed after Bronze cleanup, keeping only
+        # reasons derivable from the output itself.
         if not wp["cleaned_text"]:
             reasons = [x for x in reasons if "grounded" not in x and "cleaned_text" not in x]
             ok = not reasons
@@ -98,6 +108,7 @@ def analyse(store: ArticleStore) -> dict:
 
 
 def _print_report(res: dict) -> None:
+    """Print the quality statistics as a text report."""
     n = res["total"] or 1
     print(f"agent_outputs           : {res['total']}")
     print(f"dang dod_pass=1         : {res['dod_pass']} ({round(100*res['dod_pass']/n,1)}%)")
@@ -113,6 +124,14 @@ def _print_report(res: dict) -> None:
 
 
 def main(argv: list[str]) -> int:
+    """Report Gold quality and optionally downgrade records that fail the new gate.
+
+    Args:
+        argv: Command-line arguments.
+
+    Returns:
+        Exit code 0.
+    """
     ap = argparse.ArgumentParser()
     ap.add_argument("--apply", action="store_true",
                     help="ha dod_pass ve 0 cho ban ghi truot cong moi (doc ADR 0004 truoc)")

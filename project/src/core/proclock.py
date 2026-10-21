@@ -1,52 +1,53 @@
-"""Tiện ích khóa cố vấn (advisory lock) cho tiến trình lập lịch scheduler."""
+"""Provide advisory and single-instance locks for scheduler processes."""
 
 from __future__ import annotations
 
 import os
 import socket
 
-SCHEDULER_LOCK_STALE_SECONDS = 2400  # 40 phút
+SCHEDULER_LOCK_STALE_SECONDS = 2400  # 40 minutes
 
 
 def lock_owner() -> str:
-    """Tạo định danh duy nhất cho tiến trình sở hữu khóa dạng hostname:pid.
+    """Build a unique `hostname:pid` identity for the process that owns a lock.
 
     Returns:
-        Chuỗi định danh tiến trình hiện tại.
+        Identity string of the current process.
     """
     return f"{socket.gethostname()}:{os.getpid()}"
 
 
 CAPTURE_LOCK_NAME = "capture.lock"
-# Khoá một byte ở xa phần nội dung để tiến trình khác vẫn đọc được định danh chủ khoá.
+# Lock one byte far from the content so other processes can still read the lock owner identity.
 _LOCK_OFFSET = 1 << 20
 
 
 class SingleInstanceLock:
-    """Khoá tệp độc quyền giữ suốt đời tiến trình, hệ điều hành tự nhả khi tiến trình chết.
+    """Hold an exclusive file lock for the lifetime of a process; the OS releases it when the process dies.
 
-    Khoá cố vấn trong `pipeline_state` phụ thuộc nhịp tim và ngưỡng cũ, nên hai tiến
-    trình cào vẫn có thể cùng chạy. Khoá tệp này không có trạng thái cũ: tiến trình giữ
-    khoá còn sống thì tiến trình khác không chiếm được, tiến trình chết thì khoá tự mất.
+    The advisory lock in `pipeline_state` depends on a heartbeat and a staleness
+    threshold, so two scrape processes can still run together. This file lock has no
+    stale state: while the holder is alive no other process can take it, and when the
+    holder dies the lock disappears.
 
     Attributes:
-        path: Đường dẫn tệp khoá, đặt trên đĩa cục bộ cạnh DB vận hành.
+        path: Lock file path, placed on a local disk next to the operational DB.
     """
 
     def __init__(self, path: str | os.PathLike) -> None:
-        """Ghi nhận đường dẫn tệp khoá, chưa mở tệp.
+        """Record the lock file path without opening the file.
 
         Args:
-            path: Đường dẫn tệp khoá.
+            path: Lock file path.
         """
         self.path = os.fspath(path)
         self._fh = None
 
     def acquire(self) -> bool:
-        """Chiếm khoá không chờ.
+        """Take the lock without waiting.
 
         Returns:
-            True khi chiếm được, False khi tiến trình khác đang giữ.
+            True if the lock was taken, False if another process holds it.
         """
         os.makedirs(os.path.dirname(self.path) or ".", exist_ok=True)
         fh = open(self.path, "a+", encoding="utf-8")
@@ -68,10 +69,10 @@ class SingleInstanceLock:
         return True
 
     def holder(self) -> str:
-        """Đọc định danh tiến trình ghi trong tệp khoá.
+        """Read the process identity written in the lock file.
 
         Returns:
-            Chuỗi `hostname:pid`, rỗng khi không đọc được.
+            `hostname:pid` string, empty if it cannot be read.
         """
         try:
             with open(self.path, encoding="utf-8") as f:
@@ -80,7 +81,7 @@ class SingleInstanceLock:
             return ""
 
     def release(self) -> None:
-        """Nhả khoá nếu đang giữ; gọi lại nhiều lần không lỗi."""
+        """Release the lock if held; repeated calls are safe."""
         if self._fh is None:
             return
         try:
@@ -99,13 +100,13 @@ class SingleInstanceLock:
 
 
 def capture_lock() -> SingleInstanceLock:
-    """Tạo khoá dùng chung cho mọi tiến trình cào tin (morninger, run_once, orchestrator).
+    """Create the lock shared by every scraping process (morninger, run_once, orchestrator).
 
-    Tệp khoá nằm cạnh DB vận hành, ngoài OneDrive, nên mọi tiến trình trên cùng máy
-    trỏ vào cùng một tệp.
+    The lock file sits next to the operational DB, outside OneDrive, so every process on
+    the same machine points to the same file.
 
     Returns:
-        Đối tượng khoá chưa chiếm.
+        A lock that is not yet taken.
     """
     from src.core.config import resolve_db_path
     return SingleInstanceLock(resolve_db_path().parent / CAPTURE_LOCK_NAME)

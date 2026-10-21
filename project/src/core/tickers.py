@@ -1,4 +1,4 @@
-"""Nhận diện và gán nhãn mã cổ phiếu xuất hiện trong văn bản theo danh sách theo dõi."""
+"""Detect and tag stock tickers that appear in text against a watchlist."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ import re
 
 _TICKER_RE = re.compile(r"\b[A-Z]{3}\b")
 
-# Danh sách từ viết hoa 3 chữ cái phổ biến cần loại trừ nhằm giảm thiểu false positive.
+# Common three-letter uppercase words excluded to reduce false positives.
 DEFAULT_STOPLIST = frozenset({
     "GDP", "CPI", "PMI", "FED", "USD", "EUR", "JPY", "CNY", "VND",
     "CEO", "CFO", "COO", "HHĐ", "ETF", "IPO", "ROE", "ROA", "EPS",
@@ -16,15 +16,15 @@ DEFAULT_STOPLIST = frozenset({
 
 def tag_tickers(text: str, watchlist: list[str] | set[str],
                 stoplist: frozenset[str] = DEFAULT_STOPLIST) -> list[str]:
-    """Trích xuất danh sách mã cổ phiếu duy nhất xuất hiện trong văn bản.
+    """Extract the unique stock tickers that appear in a text.
 
     Args:
-        text: Đoạn văn bản cần tìm mã cổ phiếu.
-        watchlist: Danh sách hoặc tập hợp mã cổ phiếu được theo dõi.
-        stoplist: Tập hợp từ viết hoa 3 chữ cái cần loại trừ.
+        text: Text to search for tickers.
+        watchlist: Tickers being watched.
+        stoplist: Three-letter uppercase words to exclude.
 
     Returns:
-        Danh sách mã cổ phiếu hợp lệ theo thứ tự xuất hiện đầu tiên.
+        Matching tickers in order of first appearance.
     """
     if not text:
         return []

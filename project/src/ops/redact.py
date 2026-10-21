@@ -1,4 +1,4 @@
-"""Che bí mật trong văn bản trước khi ghi vào sự kiện, cảnh báo, nhật ký hoặc prompt."""
+"""Mask secrets in text before it is written to events, alerts, logs or prompts."""
 
 from __future__ import annotations
 
@@ -8,24 +8,24 @@ from typing import Any
 MASK = "***"
 
 _PATTERNS = (
-    # Token bot Telegram, kể cả khi nằm trong URL `.../bot<token>/sendMessage`.
+    # Telegram bot token, including when it sits in a URL such as `.../bot<token>/sendMessage`.
     re.compile(r"(?<!\d)\d{6,12}:[A-Za-z0-9_-]{30,}"),
-    # URL ping healthchecks.io: phần định danh sau tên miền là bí mật.
+    # healthchecks.io ping URL: the identifier after the domain is the secret.
     re.compile(r"(?<=hc-ping\.com/)[A-Za-z0-9_-]{8,}(?:/[A-Za-z0-9_-]+)?"),
-    # Khoá API dạng `sk-...` (OpenRouter, OpenAI) và tiêu đề Bearer.
+    # API keys of the form `sk-...` (OpenRouter, OpenAI) and Bearer headers.
     re.compile(r"\bsk-[A-Za-z0-9_-]{16,}\b"),
     re.compile(r"(?i)(?<=bearer )[A-Za-z0-9._~+/=-]{16,}"),
 )
 
 
 def redact(text: str | None) -> str | None:
-    """Thay mọi chuỗi trông như bí mật bằng dấu che.
+    """Replace every secret-like string with the mask.
 
     Args:
-        text: Văn bản cần che, có thể None.
+        text: Text to mask, possibly None.
 
     Returns:
-        Văn bản đã che, hoặc None khi đầu vào là None.
+        The masked text, or None when the input is None.
     """
     if not text:
         return text
@@ -36,13 +36,13 @@ def redact(text: str | None) -> str | None:
 
 
 def redact_data(value: Any) -> Any:
-    """Che bí mật trong mọi chuỗi của một cấu trúc từ điển hoặc danh sách lồng nhau.
+    """Mask secrets in every string of a nested dict or list structure.
 
     Args:
-        value: Giá trị bất kỳ.
+        value: Any value.
 
     Returns:
-        Bản sao đã che; giá trị không phải chuỗi giữ nguyên.
+        A masked copy; non-string values are kept unchanged.
     """
     if isinstance(value, str):
         return redact(value)

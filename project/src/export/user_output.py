@@ -1,4 +1,4 @@
-"""Xuất báo cáo tổng hợp theo dõi tin tức theo từng người dùng."""
+"""Export per-user news watchlist reports."""
 from __future__ import annotations
 
 import csv
@@ -19,7 +19,7 @@ from src.export.radar_sheet import radar_rows
 from src.export.xlsx_delivery import write_delivery_xlsx
 from src.users.compile import DEFAULT_OUTPUT_ROOT
 
-# Chỉ bài đã được mô hình phân tích mới vào giao hàng; bản code-first bị loại (ADR 0010 D4).
+# Only articles analyzed by the model enter the delivery; code-first rows are excluded (ADR 0010 D4).
 _GATED_SQL = f"""
 SELECT a.url_title_hash AS article_id, a.title, a.url, a.source_domain,
        a.published_at, a.fetched_at,
@@ -42,18 +42,18 @@ FINAL_COLUMNS = [
     "implication", "time_sensitivity",
     "sentiment", "gold_status", "url", "source_domain",
     "article_id", "agent_provider", "model_used",
-    # Ba cột minh bạch nguồn nhận diện, nối thêm vào CUỐI nên không đổi nghĩa hay
-    # thứ tự của cột nào đang có; người tiêu thụ hiện tại không vỡ.
-    # `intent_llm` là thực thể do mô hình tự nhận ra, `intent_code` là thực thể do
-    # tầng mã tất định khớp được, `intent_source` là nhãn đối chiếu giữa hai bên.
-    # Giá trị của cặp này nằm ở nhãn LLM_ONLY: đó chính là phần mô hình thấy mà từ
-    # điển cứng không thấy, gồm thương hiệu con, ngành suy ra từ ngữ cảnh và chủ đề vĩ mô.
+    # Three columns that expose the recognition source, appended at the END so the meaning
+    # and order of existing columns do not change and current consumers keep working.
+    # `intent_llm` holds entities the model recognized, `intent_code` holds entities the
+    # deterministic code layer matched, `intent_source` is the reconciliation label.
+    # The value of this group is the LLM_ONLY label: what the model sees and the hard
+    # dictionary does not, such as sub-brands, industries inferred from context and macro themes.
     "intent_llm", "intent_code", "intent_source",
 ]
 
 MASTER_COLUMNS = FINAL_COLUMNS + ["l1_source", "noise_signals"]
 
-# Thứ tự ưu tiên đọc: tin gấp lên trước. Giá trị lạ/rỗng xuống cuối.
+# Reading priority: urgent news first; unknown or empty values last.
 _TIME_RANK = {"urgent": 0, "today": 1, "this_week": 2, "this_month": 3, "archive": 4}
 L1_COLUMNS = ["article_id", "date", "title", "entities", "categories", "agent_provider", "model_used"]
 AGENT_COLUMNS = ["article_id", "date", "summary", "implication",
@@ -64,10 +64,26 @@ _SAFE = re.compile(r"[^0-9A-Za-z._-]")
 
 
 def _safe_name(name: str) -> str:
+    """Convert a user name into a file-system-safe directory name.
+
+    Args:
+        name: User name.
+
+    Returns:
+        Name with unsafe characters replaced by underscores, or `_unknown_user` when empty.
+    """
     return _SAFE.sub("_", str(name)) or "_unknown_user"
 
 
 def _loads(s):
+    """Parse a JSON string leniently.
+
+    Args:
+        s: JSON string, or None.
+
+    Returns:
+        Parsed object, or an empty dict if the string is empty or invalid.
+    """
     try:
         return json.loads(s) if s else {}
     except (TypeError, json.JSONDecodeError):
@@ -75,6 +91,14 @@ def _loads(s):
 
 
 def _parse_row_dt(r: dict) -> datetime | None:
+    """Parse the publication time of a row into Vietnam time.
+
+    Args:
+        r: Row dict with `published_at` or `fetched_at`.
+
+    Returns:
+        Timezone-aware datetime, or None if the time is missing or invalid.
+    """
     raw = (r.get("published_at") or r.get("fetched_at") or "").strip()
     if not raw:
         return None
@@ -90,6 +114,14 @@ def _parse_row_dt(r: dict) -> datetime | None:
 
 
 def _row_datetime_str(r: dict) -> str:
+    """Format the publication time of a row as 'YYYY-MM-DD HH:MM'.
+
+    Args:
+        r: Row dict with `published_at` or `fetched_at`.
+
+    Returns:
+        Formatted time, or a truncated raw value or `unknown-date` when unparseable.
+    """
     dt = _parse_row_dt(r)
     if dt is not None:
         return dt.strftime("%Y-%m-%d %H:%M")
@@ -97,6 +129,14 @@ def _row_datetime_str(r: dict) -> str:
 
 
 def _row_date(r: dict) -> str:
+    """Format the publication date of a row as 'YYYY-MM-DD'.
+
+    Args:
+        r: Row dict with `published_at` or `fetched_at`.
+
+    Returns:
+        Formatted date, or a truncated raw value or `unknown-date` when unparseable.
+    """
     dt = _parse_row_dt(r)
     if dt is not None:
         return dt.strftime("%Y-%m-%d")
@@ -104,16 +144,16 @@ def _row_date(r: dict) -> str:
 
 
 def _atomic_write_csv(path: Path, columns: list[str], rows: list[dict], *, force: bool = False) -> tuple[Path, bool]:
-    """Ghi dữ liệu ra tệp CSV qua cơ chế nguyên tử an toàn.
+    """Write data to a CSV file through a safe atomic write.
 
     Args:
-        path: Đường dẫn tệp đích cần ghi.
-        columns: Danh sách tiêu đề cột.
-        rows: Danh sách các dòng dữ liệu từ điển.
-        force: Ép buộc ghi đè ngay cả khi nội dung không đổi.
+        path: Target file path.
+        columns: Column headers.
+        rows: Row dicts.
+        force: Overwrite even when the content is unchanged.
 
     Returns:
-        Tuple chứa đường dẫn tệp thực tế đã lưu và cờ báo tệp có bị khóa phải tạo bản sao dự phòng hay không.
+        Tuple of the path actually saved and the flag that a lock forced a fallback copy.
     """
     def _write(f):
         w = csv.DictWriter(f, fieldnames=columns, extrasaction="ignore")
@@ -138,40 +178,40 @@ def _atomic_write_csv(path: Path, columns: list[str], rows: list[dict], *, force
 
 
 class UserOutputWriter:
-    """Bộ xuất dữ liệu báo cáo tin tức phân phối theo người dùng.
+    """Write per-user news report files.
 
     Attributes:
-        store: Kho dữ liệu cơ sở SQLite.
-        reg: Sổ đăng ký thực thể EntityRegistry.
-        output_root: Thư mục gốc lưu trữ tệp báo cáo xuất bản.
-        enabled: Tập hợp tài khoản người dùng được kích hoạt nhận tin.
+        store: SQLite data store.
+        reg: EntityRegistry.
+        output_root: Root directory that stores the published report files.
+        enabled: User accounts enabled to receive news; None enables every user.
     """
 
     def __init__(self, store, registry, *, output_root: str | Path = DEFAULT_OUTPUT_ROOT,
                  enabled: set[str] | None = None):
-        """Khởi tạo UserOutputWriter.
+        """Initialize the UserOutputWriter.
 
         Args:
-            store: Kho dữ liệu cơ sở SQLite.
-            registry: Sổ đăng ký thực thể EntityRegistry.
-            output_root: Đường dẫn thư mục gốc xuất dữ liệu.
-            enabled: Tập hợp tài khoản người dùng được bật tùy chọn.
+            store: SQLite data store.
+            registry: EntityRegistry.
+            output_root: Root directory of the export.
+            enabled: Optional set of user accounts that are switched on.
         """
         self.store = store
         self.reg = registry
         self.output_root = Path(output_root)
-        self.enabled = set(enabled) if enabled is not None else None  # None = mọi user
+        self.enabled = set(enabled) if enabled is not None else None  # None = every user
 
     # -- query gated ----------------------------------------------------------
     def gated_rows(self, *, date: str | None = None, days: int | None = None) -> list[dict]:
-        """Truy vấn các bài viết đã vượt qua cổng kiểm định L1 từ cơ sở dữ liệu.
+        """Query the articles that passed the L1 gate from the database.
 
         Args:
-            date: Lọc theo ngày cụ thể dạng 'YYYY-MM-DD', 'today', hoặc 'all'.
-            days: Số ngày gần nhất tính từ thời điểm hiện tại.
+            date: Filter by a date ('YYYY-MM-DD'), 'today' or 'all'.
+            days: Number of most recent days from now.
 
         Returns:
-            Danh sách từ điển dữ liệu bài viết kèm kết quả L1 và Agent.
+            Article data dicts with the L1 and agent results.
         """
         where_clauses = []
         params = []
@@ -197,12 +237,27 @@ class UserOutputWriter:
 
     # -- flatten --------------------------------------------------------------
     def _entity_ids(self, l1_json: str) -> set[str]:
+        """Extract the in-catalog entity ids from an L1 result.
+
+        Args:
+            l1_json: JSON string of the L1 recognition result.
+
+        Returns:
+            Set of entity ids marked `in_list`.
+        """
         d = _loads(l1_json)
         return {e.get("entity_id") for e in (d.get("entities") or [])
                 if e.get("in_list") and e.get("entity_id")}
 
     def _codes(self, entity_ids) -> str:
-        """Chuyển đổi danh sách entity_id thành chuỗi các mã định danh đã khử trùng."""
+        """Convert entity ids into a deduplicated string of codes.
+
+        Args:
+            entity_ids: Entity ids to convert.
+
+        Returns:
+            Codes joined by semicolons; the entity id is used when no code exists.
+        """
         out = []
         for eid in sorted(entity_ids):
             e = self.reg.get(eid)
@@ -210,17 +265,18 @@ class UserOutputWriter:
         return "; ".join(dict.fromkeys(out))
 
     def _intent_columns(self, l1_json: str) -> dict[str, str]:
-        """Tách thực thể của một bài thành hai cột theo nguồn nhận diện.
+        """Split the entities of an article into columns by recognition source.
 
-        Nhãn đối chiếu do `article_expand.py` ghi sẵn vào siêu dữ liệu khi bung bản
-        ghi, nên ở đây chỉ là việc trình bày lại, không tính toán gì thêm. Bài xử lý
-        bằng đường cũ không có nhãn thì ba cột để trống thay vì đoán.
+        The reconciliation labels are written into the metadata by `article_expand.py`
+        when records are expanded, so this method only presents them and computes nothing
+        new. An article processed through the legacy path has no labels and the three
+        columns stay empty instead of being guessed.
 
         Args:
-            l1_json: Chuỗi JSON kết quả nhận diện thực thể của bài.
+            l1_json: JSON string of the entity recognition result of the article.
 
         Returns:
-            Từ điển ba cột `intent_llm`, `intent_code` và `intent_source`.
+            Dict with the three columns `intent_llm`, `intent_code` and `intent_source`.
         """
         d = _loads(l1_json)
         labels = ((d.get("processing_metadata") or {}).get("intent_source") or {})
@@ -250,13 +306,22 @@ class UserOutputWriter:
         }
 
     def _final_row(self, r: dict, matched: set[str]) -> dict:
+        """Flatten a gated row into a delivery row.
+
+        Args:
+            r: Row from `gated_rows`.
+            matched: Entity ids of the article that the user watches.
+
+        Returns:
+            Delivery row dict keyed by FINAL_COLUMNS.
+        """
         ag = _loads(r.get("agent_json"))
         summ = ag.get("summary") or {}
         impl = ag.get("implication") or {}
         sent = ag.get("sentiment") or {}
         meta = ag.get("processing_metadata") or {}
 
-        # Hỗ trợ cả schema v2-lean (chuỗi phẳng) lẫn v1 (object lồng nhau)
+        # Support both the v2-lean schema (flat strings) and v1 (nested objects).
         summary_val = summ if isinstance(summ, str) else (summ.get("abstractive") or "")
         raw_key_points = ag.get("key_points") or (summ.get("key_points") if isinstance(summ, dict) else []) or []
         key_points_formatted = "\n".join(f"- {p}" for p in raw_key_points if p) if raw_key_points else ""
@@ -284,20 +349,28 @@ class UserOutputWriter:
 
     @staticmethod
     def _sort_key(r: dict, frow: dict) -> tuple:
-        """Tạo khóa sắp xếp thứ tự hiển thị: mới nhất lên đầu, cùng giờ thì theo thực thể và tiêu đề.
+        """Build the display sort key: newest first, then entity and title for the same time.
 
         Args:
-            r: Dòng dữ liệu thô từ truy vấn giao hàng.
-            frow: Dòng đã làm phẳng tương ứng.
+            r: Raw row from the delivery query.
+            frow: Corresponding flattened row.
 
         Returns:
-            Bộ khoá sắp xếp tất định.
+            Deterministic sort key tuple.
         """
         dt = _parse_row_dt(r)
         ts_val = dt.timestamp() if dt is not None else 0.0
         return (-ts_val, frow.get("matched_entities") or "", frow.get("title") or "")
 
     def _l1_row(self, r: dict) -> dict:
+        """Flatten the L1 result of a gated row for the L1 audit file.
+
+        Args:
+            r: Row from `gated_rows`.
+
+        Returns:
+            Row dict keyed by L1_COLUMNS.
+        """
         d = _loads(r.get("l1_json"))
         meta = d.get("processing_metadata") or {}
         ents = "; ".join(f"{e.get('entity_id')}({e.get('type')})"
@@ -309,6 +382,14 @@ class UserOutputWriter:
                 "model_used": meta.get("model_used") or ""}
 
     def _agent_row(self, r: dict) -> dict:
+        """Flatten the agent result of a gated row for the agent audit file.
+
+        Args:
+            r: Row from `gated_rows`.
+
+        Returns:
+            Row dict keyed by AGENT_COLUMNS.
+        """
         ag = _loads(r.get("agent_json"))
         summ = ag.get("summary") or {}
         impl = ag.get("implication") or {}
@@ -325,7 +406,15 @@ class UserOutputWriter:
                 "model_used": meta.get("model_used") or ag.get("model_used") or ""}
 
     def _silver_noise_signals(self, matched_eids: set[str], r: dict) -> str:
-        """Thu thập các chỉ số tín hiệu tần suất xuất hiện alias phục vụ quan sát."""
+        """Collect alias frequency signals for monitoring.
+
+        Args:
+            matched_eids: Entity ids matched in the article.
+            r: Row from `gated_rows`.
+
+        Returns:
+            Semicolon-separated `key=value` signal string.
+        """
         title_lower = (r.get("title") or "").lower()
         body_lower = (r.get("content_text") or "").lower()
         symbols = (r.get("symbols") or "").upper()
@@ -350,16 +439,25 @@ class UserOutputWriter:
                 f"cats={(r.get('categories') or '').replace(';', '|')}")
 
     def _passes_noise_filter(self, matched_eids: set[str], r: dict) -> bool:
-        """Kiểm tra bài viết có thỏa mãn điều kiện lọc nhiễu thực thể vĩ mô hay không."""
+        """Check whether an article passes the macro-entity noise filter.
+
+        Args:
+            matched_eids: Entity ids matched in the article.
+            r: Row from `gated_rows`.
+
+        Returns:
+            True if the article has a specific entity or an alias of a broad entity appears in the title.
+        """
         broad_types = {"MACRO_GEO", "MACRO_THEME", "ASSET_CLASS"}
         matched_types = {self.reg.get(eid)["type"] for eid in matched_eids if self.reg.get(eid)}
-        # Nếu có ít nhất 1 entity cụ thể (TICKER, ETF, INDUSTRY, INDEX, EXCHANGE, INSTITUTION) -> Pass luôn
+        # At least one specific entity (TICKER, ETF, INDUSTRY, INDEX, EXCHANGE, INSTITUTION) passes at once.
         if any(t not in broad_types for t in matched_types):
             return True
-        # Chỉ có broad entities -> alias của entity phải xuất hiện ngay trong title
-        # _fold (khong chi .lower()): tang nhan dien khop tren ban DA BO DAU, neu o day chi ha
-        # chu thuong thi bai khop qua alias khong dau se bi rot oan — dung nhom MACRO/ASSET ma
-        # nguoi dung dang ky nhieu (VANG, DAU_THO, LAI_SUAT, TY_GIA, MY).
+        # Only broad entities: an alias of the entity must appear in the title.
+        # _fold is used instead of .lower() because the recognition layer matches on the
+        # diacritic-free form; lowercasing alone would wrongly drop articles that match an
+        # accent-less alias, which hits the MACRO/ASSET groups users subscribe to most
+        # (VANG, DAU_THO, LAI_SUAT, TY_GIA, MY).
         title_folded = _fold(r.get("title") or "")
         for eid in matched_eids:
             ent = self.reg.get(eid)
@@ -370,14 +468,14 @@ class UserOutputWriter:
         return False
 
     def _radar_rows(self, user: str, day: str) -> list[dict]:
-        """Đọc dòng tín hiệu theo watchlist của người dùng cho sheet Radar chú ý.
+        """Read the signal rows of a user watchlist for the attention-radar sheet.
 
         Args:
-            user: Tên người dùng.
-            day: Ngày giao hàng ISO `YYYY-MM-DD`.
+            user: User name.
+            day: Delivery date as ISO `YYYY-MM-DD`.
 
         Returns:
-            Danh sách dòng tín hiệu; rỗng khi không có đăng ký hay bảng chưa có dữ liệu.
+            Signal rows; empty when there is no subscription or the table has no data.
         """
         conn = self.store._connect_ro()
         try:
@@ -388,22 +486,22 @@ class UserOutputWriter:
     # -- route + write --------------------------------------------------------
     def write(self, *, date: str | None = None, days: int | None = None,
               write_master: bool = True, force: bool = False) -> dict[str, int]:
-        """Định tuyến và xuất dữ liệu tin tức ra tệp giao hàng Excel cho người dùng.
+        """Route the news data and write the Excel delivery files for users.
 
         Args:
-            date: Ngày xuất bản cần xử lý ('YYYY-MM-DD', 'today', 'all').
-            days: Số ngày gần nhất cần xuất.
-            write_master: Có xuất các tệp CSV tổng hợp _master hay không.
-            force: Ép buộc ghi đè tệp báo cáo ngay cả khi không có bài mới.
+            date: Publication date to process ('YYYY-MM-DD', 'today', 'all').
+            days: Number of most recent days to export.
+            write_master: Whether to write the aggregate _master CSV files.
+            force: Overwrite the report file even when there are no new articles.
 
         Returns:
-            Từ điển thống kê số lượng bài viết đã xuất cho từng người dùng.
+            Dict with the number of articles exported per user.
         """
         rows = self.gated_rows(date=date, days=days)
         # bucket[(user, date)] = list of (final_row, l1_row, agent_row, article_id)
         bucket: dict[tuple[str, str], list[tuple]] = {}
         matched_article_ids: set[str] = set()
-        locked: list[tuple[Path, Path]] = []      # (file đích stale, snapshot đã ghi thay)
+        locked: list[tuple[Path, Path]] = []      # (stale target file, snapshot written instead)
 
         for r in rows:
             eset = self._entity_ids(r["l1_json"])
@@ -426,7 +524,7 @@ class UserOutputWriter:
                      self._sort_key(r, frow)))
 
 
-        # Ghi master audit nếu được bật (dạng phẳng: users/output/_master/{YYYY-MM-DD}.csv)
+        # Write the master audit files when enabled (flat form: users/output/_master/{YYYY-MM-DD}.csv).
         if write_master and rows:
             master_bucket: dict[str, list[tuple]] = {}
             for r in rows:
@@ -455,22 +553,22 @@ class UserOutputWriter:
 
         counts: dict[str, int] = {}
         for (user, d), items in sorted(bucket.items()):
-            # dedupe theo article_id (rewrite toàn tập → idempotent), rồi sắp thứ tự đọc.
+            # Deduplicate by article_id (full rewrite keeps the write idempotent), then sort for reading.
             seen, finals, l1s, agents, aids = set(), [], [], [], []
             for frow, l1row, arow, aid, _sk in sorted(items, key=lambda t: t[4]):
                 if aid in seen:
                     continue
                 seen.add(aid); finals.append(frow); l1s.append(l1row); agents.append(arow); aids.append(aid)
             user_dir = self.output_root / _safe_name(user)
-            # Deliverable duy nhất, phẳng, ĐƠN SẮC. CSV bỏ từ 2026-09-08 (US-101): nó không
-            # lưu được width/freeze/filter/wrap nên người dùng phải định dạng lại mỗi ngày.
+            # The only deliverable: flat and monochrome. CSV is not delivered (US-101) because
+            # it cannot store width, freeze, filter or wrap, so users would reformat it daily.
             file_path = user_dir / f"{d}.xlsx"
             statuses = {row["article_id"]: row["gold_status"] for row in finals}
             new = ckpt.filter_new(user_dir, d, aids)
-            upgraded = ckpt.filter_upgraded(user_dir, d, statuses)     # L1_ONLY → GOLD
+            upgraded = ckpt.filter_upgraded(user_dir, d, statuses)     # L1_ONLY -> GOLD
 
-            # Idempotency Guard: Nếu file đã tồn tại và không có bài mới hay nâng cấp, bỏ qua không ghi đè
-            # để chống xung đột và fork file song song trên OneDrive/SharePoint
+            # Idempotency guard: when the file exists and there is no new or upgraded article,
+            # skip the write to avoid conflicts and parallel file forks on OneDrive/SharePoint.
             if not force and file_path.exists() and not new and not upgraded:
                 counts[user] = counts.get(user, 0) + len(finals)
                 continue
@@ -479,8 +577,8 @@ class UserOutputWriter:
                 file_path, finals, radar_rows=self._radar_rows(user, d))
             n_l1_only = sum(1 for v in statuses.values() if v == "L1_ONLY")
             if was_locked:
-                # File đích KHÔNG đổi → chưa giao hàng. Không mark checkpoint, để lần chạy sau
-                # ghi lại và vẫn báo đúng new/upgraded thay vì tưởng đã xong.
+                # The target file did NOT change, so nothing was delivered. Do not mark the
+                # checkpoint; the next run rewrites it and still reports new/upgraded correctly.
                 locked.append((file_path, actual))
                 logger.warning(
                     "user={} date={}: '{}' đang bị khoá bởi tiến trình khác (Excel/OneDrive) → "
@@ -488,7 +586,7 @@ class UserOutputWriter:
                     "Không mark checkpoint.",
                     user, d, file_path.name, len(finals), actual.name)
             else:
-                ckpt.mark_written(user_dir, d, aids, statuses)         # mark SAU khi replace
+                ckpt.mark_written(user_dir, d, aids, statuses)         # mark only AFTER the replace
                 logger.info("done user={} date={} rows={} (new={} upgraded={} l1_only={}) file={}",
                             user, d, len(finals), len(new), len(upgraded), n_l1_only, actual.name)
             counts[user] = counts.get(user, 0) + len(finals)

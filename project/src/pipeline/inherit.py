@@ -1,4 +1,4 @@
-"""Kế thừa kết quả phân tích từ bài gốc cho bài chép lại trong cùng cụm (ADR 0016)."""
+"""Inherit analysis results from the source article to copied articles in the same cluster (ADR 0016)."""
 
 from __future__ import annotations
 
@@ -10,12 +10,13 @@ from src.agent.article_contract import analyzed_l1_sql
 
 VN_TZ = timezone(timedelta(hours=7))
 INHERITED = "inherited"
-HOLD_HOURS = 48          # bài chép chờ bài gốc tối đa ngần này giờ rồi được trả về bộ chọn bài
+HOLD_HOURS = 48          # a copy waits at most this many hours for its source, then returns to the article picker
 
 _PASSING_L1 = analyzed_l1_sql()
 
 
 def _loads(raw: str | None) -> dict:
+    """Parse a JSON object string, returning an empty dict on any failure."""
     try:
         val = json.loads(raw) if raw else {}
     except (TypeError, ValueError):
@@ -24,30 +25,31 @@ def _loads(raw: str | None) -> dict:
 
 
 def hold_cutoff(now: datetime | None = None) -> str:
-    """Trả mốc thời gian ISO mà bài chép quyết định sau đó còn bị giữ lại chờ kế thừa.
+    """Return the ISO timestamp after which a copy decided later is still held for inheritance.
 
     Args:
-        now: Thời điểm hiện tại; mặc định lấy từ đồng hồ.
+        now: Current time; defaults to the clock.
 
     Returns:
-        Chuỗi ISO có múi giờ +07:00, cùng định dạng với `cluster_members.decided_at`.
+        ISO string with the +07:00 offset, in the same format as `cluster_members.decided_at`.
     """
     now = now or datetime.now(VN_TZ)
     return (now - timedelta(hours=HOLD_HOURS)).isoformat(timespec="seconds")
 
 
 def apply_inheritance(conn: sqlite3.Connection, now: datetime | None = None) -> dict[str, int]:
-    """Ghi kết quả kế thừa cho mọi bài `copy` mà bài gốc đã có kết quả đạt chuẩn.
+    """Write inherited results for every `copy` article whose source already has passing results.
 
-    Chỉ ghi khi bài chép chưa có kết quả mô hình đạt chuẩn và bài gốc có đủ hai lớp
-    (nhận diện và nội dung) đạt cổng DoD. Dòng ghi mang `l1_source = 'inherited'`.
+    Writes only when the copy has no passing model result yet and the source has both layers
+    (identification and content) passing the DoD gate. The written row carries
+    `l1_source = 'inherited'`.
 
     Args:
-        conn: Kết nối ghi tới DB vận hành, row_factory là sqlite3.Row hoặc tuple.
-        now: Thời điểm hiện tại; mặc định lấy từ đồng hồ.
+        conn: Write connection to the operational DB; row_factory is sqlite3.Row or tuple.
+        now: Current time; defaults to the clock.
 
     Returns:
-        Đếm: candidates, inherited, source_not_ready.
+        Counter dict with keys candidates, inherited, source_not_ready.
     """
     now_iso = (now or datetime.now(VN_TZ)).isoformat(timespec="seconds")
     stats = {"candidates": 0, "inherited": 0, "source_not_ready": 0}

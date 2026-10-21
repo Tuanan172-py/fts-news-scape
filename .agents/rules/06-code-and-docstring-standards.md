@@ -1,110 +1,90 @@
 ---
 trigger: always_on
 ---
-# 06 — Code Quality & Production Docstring Standards
+# 06 — Code Quality and Docstring Standards
 
-Quy chuẩn bắt buộc cho MỌI Agent và Subagent khi viết mới, bảo trì hoặc refactor mã nguồn trong hệ thống News-Scape theo chuẩn **Google Python Style Guide** và phong cách **Production Deliverable**.
-
----
-
-## 1. Triết Lý Trình Bày (Production Deliverable Standard)
-
-Mã nguồn bàn giao cho doanh nghiệp phải đạt tính trực diện, chính xác và chuyên nghiệp:
-- **Mục đích**: Định nghĩa chính xác hàm/lớp/module nhận gì, xử lý gì và trả về gì.
-- **Văn phong**: Dùng câu khẳng định, mệnh lệnh trực diện (imperative mood), khách quan và súc tích.
-- **Chủ ngữ**: Không ngôi (khuyết chủ ngữ, bắt đầu bằng động từ hành động như "Tính toán...", "Phân loại...", "Xây dựng..."). Tuyệt đối không dùng ngôi thứ nhất ("chúng ta", "tôi", "hãy cùng").
-- **Comments**: Chỉ giải thích logic nghiệp vụ hoặc thuật toán không hiển nhiên. Tuyệt đối không ghi nhật ký gỡ lỗi, lịch sử thay đổi hay giải trình cá nhân trong code.
+Mandatory for every agent and subagent that writes, maintains or refactors source code in news-scape. Style: Google Python Style Guide, production-deliverable tone. Language: English (AGENTS.md §8, ADR-0021.D4). Vietnamese stays only in quoted data, regex/keyword literals and delivered user output.
 
 ---
 
-## 2. Danh Mục Từ Cấm & Sáo Ngữ (Strict Blacklist)
+## 1. Presentation
 
-Tuyệt đối KHÔNG sử dụng các cụm từ và mẫu ký tự sau trong docstrings, comments và tài liệu kỹ thuật:
+- A docstring defines the contract: what the entity takes, what it does, what it returns or raises.
+- Declarative, imperative, objective, concise. Subject-less: start with an action verb ("Compute...", "Parse...", "Build...").
+- No first person ("we", "I", "let's"), no tutorial tone, no rhetorical questions.
+- Comments explain non-obvious business logic or algorithm choices (the why). No debugging diary, change history, personal narrative or commented-out code; Git keeps history.
 
-1. **Từ nối dông dài / Khái quát hóa thừa**:
-   - `nhìn chung`, `thông thường`, `nói chung`, `về cơ bản`
-2. **Sáo ngữ & Cảm thán**:
-   - `đáng chú ý`, `cần lưu ý rằng`, `đóng vai trò quan trọng`
-   - `toàn diện`, `mạnh mẽ`, `hiệu quả cao`, `tối ưu nhất`
-3. **Giọng văn giảng giải / Sư phạm / Ngôi thứ nhất**:
-   - `chúng ta`, `chúng ta hãy`, `tôi`, `bạn có thể thấy rằng`
-4. **Câu hỏi tu từ**:
-   - Bất kỳ câu văn nào kết thúc bằng dấu chấm hỏi `?` trong docstrings kỹ thuật.
-5. **Emoji & Ký tự trang trí**:
-   - Loại bỏ 100% emoji (⚠️, ⨝, 🚀, 💡,...) trong docstrings và comments kỹ thuật.
-6. **Thẻ tạm / Vết định danh phiên bản nháp**:
-   - `[LEGACY / COLD BACKUP...]`, `TODO tạm thời`, `ĐÓNG BĂNG`, `L1_VERSION`.
+## 2. Banned content
 
----
+The dictionary is `.agents/rules/banned_phrases.json` (used by `scan_code_phrases.py --dict`). Categories:
 
-## 3. Cấu Trúc Docstring Chuẩn (Google Style)
+1. Filler and vague generalization (`basically`, `in general`, `note that`).
+2. Hype and subjective evaluation (`robust`, `comprehensive`, `powerful`, `elegant`).
+3. First person and tutorial tone (`let's`, `we can`, `you should`).
+4. Questions: a docstring or comment sentence ending in `?`.
+5. Emoji and decorative pictographs, 100%.
+6. Draft markers (`[LEGACY...`, `temp fix`) and bare `# TODO`. The only TODO form is `# TODO(US-NNN): <task>`.
 
-### A. Module Docstring (Đầu tệp)
-- Tóm tắt vai trò của module bằng **1 câu khẳng định duy nhất**.
-- Nếu có cấu hình/hằng số quan trọng, liệt kê bằng gạch đầu dòng ngắn gọn.
+## 3. Docstring structure (Google style)
+
+### Module
+Exactly one declarative sentence ending with a period.
 ```python
-"""Quản lý tiến trình phân phối và đóng gói tác vụ phân tích tin tức."""
+"""Orchestrate packing and hand-off of article analysis work packages."""
 ```
 
-### B. Class Docstring (Lớp đối tượng)
-- Dòng đầu tiên tóm tắt vai trò của lớp.
-- Theo sau là section `Attributes:` (nếu có thuộc tính công khai).
+### Class
+Line 1 states the role. Add `Attributes:` for public attributes.
 ```python
 class AgentRunner:
-    """Điều phối vòng đời xuất tác vụ cho subagent và tiếp nhận kết quả.
+    """Drive the export lifecycle of subagent tasks and collect results.
 
     Attributes:
-        store: Phiên kết nối kho dữ liệu SQLite.
-        task_dir: Thư mục chứa gói công việc đầu ra.
+        store: SQLite connection to the operational database.
+        task_dir: Directory that receives the exported work packages.
     """
 ```
 
-### C. Function / Method Docstring (Hàm & Phương thức)
-- **Dòng 1**: Câu mệnh lệnh khẳng định kết thúc bằng dấu chấm (VD: "Tính toán...", "Xuất danh sách...").
-- **Args**: Tên tham số kèm kiểu và mô tả ý nghĩa logic.
-- **Returns**: Kiểu dữ liệu và mô tả giá trị trả về.
-- **Raises**: Các ngoại lệ có thể phát sinh (nếu có).
+### Function and method
+Line 1: imperative sentence ending with a period. Then, as applicable:
+- `Args:` one entry per parameter (including keyword-only); meaning and constraints, not the type when the signature has a hint.
+- `Returns:` meaning of the returned value. Omit for `None` and for `@property`.
+- `Yields:` required for generators.
+- `Raises:` every exception raised deliberately.
 ```python
 def export_tasks(self, limit: int = 20, *, require_l1: bool = True) -> list[dict]:
-    """Tiếp nhận các công việc đang chờ và xuất thành gói công việc JSON.
+    """Export pending jobs as JSON work packages.
 
     Args:
-        limit: Số lượng tác vụ tối đa cần xuất.
-        require_l1: Chỉ nhận bài viết đã qua kiểm định L1 đạt chuẩn.
+        limit: Maximum number of tasks to export.
+        require_l1: Accept only articles that passed L1 validation.
 
     Returns:
-        Danh sách từ điển thông tin các tác vụ đã xuất thành công.
+        One dict per task exported successfully.
 
     Raises:
-        RuntimeError: Khi thư mục xuất tác vụ không thể ghi dữ liệu.
+        RuntimeError: If the task directory is not writable.
     """
 ```
 
----
+### Scripts with a CLI
+A script that feeds `__doc__` to `argparse` keeps a first docstring line that is a complete sentence, because `__doc__.splitlines()[0]` is used as the description. Never reduce such a module docstring to an empty or multi-line-only string.
 
-## 4. Quy Chuẩn Viết Code & Kiểm Định Nghiêm Ngặt
+## 4. Verification gate
 
-1. **Bảo toàn Chữ ký & Logic**:
-   - Không tự ý đổi tên hàm, thứ tự tham số, kiểu dữ liệu trả về đã được thỏa thuận trong Data Contract.
-   - Không được làm ảnh hưởng đến các câu lệnh SQL, transaction và schema cơ sở dữ liệu (`monocle.db`).
-2. **Kiểm định Cú pháp AST**:
-   - Mọi tệp Python sau khi chỉnh sửa BẮT BUỘC phải biên dịch thành công qua `ast.parse()`, không có ngoại lệ cú pháp.
-3. **Bảo toàn Bộ Kiểm Thử (Pytest Integrity)**:
-   - Trước khi kết thúc phiên làm việc, BẮT BUỘC chạy `pytest` để kiểm chứng 100% unit tests vẫn PASS.
-
-4. **Bằng chứng phải gồm THỰC THI THẬT, không chỉ pytest xanh (Real-Execution Proof)**:
-
-   Sự cố 2026-09-17: 403 test PASS trong khi 3 lỗi đang sống trên đường sản xuất
-   (`__doc__.split("\n")[1]` → IndexError; `UnicodeEncodeError` khi in qua pipe; `subprocess`
-   thiếu `encoding` → `stdout=None`). Cả ba vô hình vì test import hàm trực tiếp, không đi qua
-   khối `if __name__ == "__main__"` và không vượt ranh giới tiến trình.
-
-   - **Sửa script có CLI**: BẮT BUỘC chạy thật ít nhất một lần đúng cách automation gọi nó
-     (kèm cờ thật, stdout là pipe), không được chỉ dựa vào test import hàm.
-   - **Đổi tham số vận hành theo thời gian** (interval, timeout, limit, batch size): BẮT BUỘC
-     ĐO trước khi đặt. Sự cố cùng ngày: đặt `capture_interval_minutes: 5` trong khi cycle thật
-     mất 335s, khiến job chồng lấn liên tục và mất sạch biên dự phòng.
-   - **Thêm job chạy nền định kỳ**: BẮT BUỘC có trần thời gian (budget) tự dừng sạch bên trong
-     tiến trình. Để `subprocess timeout` giết là mất trắng thống kê và không biết đã làm tới đâu.
-   - **Tiêu chí Done**: story chỉ đạt `implemented` khi có bằng chứng tier Platform (chạy trong
-     tiến trình thật) chứ không chỉ Unit/Integration, với mọi thay đổi chạm đường automation.
+1. Signatures, logic, SQL, transactions and the `monocle.db` schema are never changed by a documentation edit.
+2. Every touched Python file passes `ast.parse()`. For a docs-only refactor, the AST of each file with docstrings stripped is identical before and after.
+3. Docstring gate (run from the repo root):
+   ```powershell
+   $s = "<skill_path>\scripts"
+   python $s\ast_docstring_linter.py project\src --min-coverage 100
+   python $s\scan_code_phrases.py project\src --dict .agents\rules\banned_phrases.json
+   ```
+   Same for `project\scripts`. Required: 0 `MISSING_DOCSTRING` for public entities, 0 `EXTRA_PARAM`, scanner 0 ERROR. The scanner crashes with `--format json`; use text mode.
+4. `pytest tests/` shows no new failure.
+5. Real-execution proof, not only green pytest (incident 2026-09-17: 403 tests passed while three defects ran in production: `__doc__.split("\n")[1]` raised IndexError, `UnicodeEncodeError` on piped stdout, `subprocess` without `encoding` gave `stdout=None`; tests imported functions directly and never crossed the `if __name__ == "__main__"` or process boundary):
+   - Edited script with a CLI: run it once the way automation calls it (real flags, stdout piped).
+   - Changed time-based operating parameter (interval, timeout, limit, batch size): measure before setting. Incident: `capture_interval_minutes: 5` while a real cycle took 335 s made jobs overlap permanently.
+   - New periodic background job: it needs an internal time budget that stops it cleanly; a `subprocess` timeout kill loses all statistics.
+   - Done criterion: a story reaches `implemented` only with Platform-tier evidence (run in a real process) for any change touching an automation path.
+6. A refactor commit that only changes docstrings is separate from logic commits, and its hash is appended to `.git-blame-ignore-revs`.

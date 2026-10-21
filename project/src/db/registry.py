@@ -1,4 +1,4 @@
-"""Sổ phát hiện URL: ghi mọi URL thấy được trước mọi bước lọc (ADR 0013, rule 10)."""
+"""Maintain the URL discovery ledger that records every URL seen before any filter (ADR 0013, rule 10)."""
 
 from __future__ import annotations
 
@@ -17,16 +17,16 @@ def _now() -> str:
 
 def discover(conn: sqlite3.Connection, url: str, source_domain: str,
              via: str = "listing") -> tuple[str, bool, bool]:
-    """Ghi một URL vào sổ phát hiện và báo URL này là mới hay chỉ là dạng biến thể.
+    """Record a URL in the discovery ledger and report whether it is new or only a variant form.
 
     Args:
-        conn: Kết nối ghi tới DB vận hành. Hàm không commit.
-        url: URL như nguồn trả về, giữ nguyên dạng.
-        source_domain: Tên miền nguồn.
-        via: Kênh phát hiện: listing, rss, api, sitemap hoặc reconcile.
+        conn: Write connection to the operational DB. The function does not commit.
+        url: URL as returned by the source, kept unchanged.
+        source_domain: Source domain.
+        via: Discovery channel: listing, rss, api, sitemap or reconcile.
 
     Returns:
-        Bộ (khoá bài, là bài mới, là dạng URL khác với dạng đã thấy đầu tiên).
+        Tuple of (article key, is new article, is a URL form different from the first one seen).
     """
     key = url_key(url)
     if not key:
@@ -53,14 +53,14 @@ def discover(conn: sqlite3.Connection, url: str, source_domain: str,
 
 
 def is_captured(conn: sqlite3.Connection, key: str) -> bool:
-    """Kiểm tra bài đã có Bronze và dòng `articles` hay chưa.
+    """Check whether the article already has Bronze and an `articles` row.
 
     Args:
-        conn: Kết nối tới DB vận hành.
-        key: Khoá bài từ `url_key`.
+        conn: Connection to the operational DB.
+        key: Article key from `url_key`.
 
     Returns:
-        True nếu trạng thái là captured.
+        True if the state is captured.
     """
     row = conn.execute(
         "SELECT state FROM discovered_urls WHERE url_canonical=?", (key,)).fetchone()
@@ -68,14 +68,14 @@ def is_captured(conn: sqlite3.Connection, key: str) -> bool:
 
 
 def known_keys(conn: sqlite3.Connection, keys: list[str]) -> set[str]:
-    """Lọc ra các khoá đã ở trạng thái captured.
+    """Filter the keys that are already in the captured state.
 
     Args:
-        conn: Kết nối tới DB vận hành.
-        keys: Danh sách khoá bài cần tra.
+        conn: Connection to the operational DB.
+        keys: Article keys to look up.
 
     Returns:
-        Tập khoá đã captured.
+        Keys already captured.
     """
     out: set[str] = set()
     for i in range(0, len(keys), 500):
@@ -89,13 +89,13 @@ def known_keys(conn: sqlite3.Connection, keys: list[str]) -> set[str]:
 
 def mark_captured(conn: sqlite3.Connection, url: str, source_domain: str,
                   article_hash: str) -> None:
-    """Đánh dấu URL đã thành bài trong `articles`, tạo dòng nếu chưa có.
+    """Mark a URL as stored in `articles`, creating the row if missing.
 
     Args:
-        conn: Kết nối ghi. Gọi trong cùng transaction với việc ghi `articles`.
-        url: URL của bài.
-        source_domain: Tên miền nguồn.
-        article_hash: `url_title_hash` của bài trong `articles`.
+        conn: Write connection. Call it in the same transaction that writes `articles`.
+        url: Article URL.
+        source_domain: Source domain.
+        article_hash: `url_title_hash` of the article in `articles`.
     """
     key = url_key(url)
     if not key:
@@ -112,17 +112,17 @@ def mark_captured(conn: sqlite3.Connection, url: str, source_domain: str,
 
 def mark_failed(conn: sqlite3.Connection, key: str, error: str, *,
                 gone: bool = False, max_attempts: int = 5) -> str:
-    """Ghi một lần cào lỗi và chuyển trạng thái khi hết lượt thử.
+    """Record a failed scrape attempt and change the state when attempts run out.
 
     Args:
-        conn: Kết nối ghi.
-        key: Khoá bài.
-        error: Mô tả lỗi, tối đa 300 ký tự được lưu.
-        gone: True khi nguồn trả 404 hoặc 410.
-        max_attempts: Số lần thử tối đa trước khi sang dead_letter.
+        conn: Write connection.
+        key: Article key.
+        error: Error description; at most 300 characters are stored.
+        gone: True when the source returned 404 or 410.
+        max_attempts: Maximum attempts before the state becomes dead_letter.
 
     Returns:
-        Trạng thái mới của URL.
+        New state of the URL.
     """
     row = conn.execute(
         "SELECT attempts FROM discovered_urls WHERE url_canonical=?", (key,)).fetchone()
@@ -138,15 +138,15 @@ def mark_failed(conn: sqlite3.Connection, key: str, error: str, *,
 
 def pending(conn: sqlite3.Connection, source_domain: str | None = None,
             limit: int = 200) -> list[sqlite3.Row]:
-    """Liệt kê URL đã phát hiện nhưng chưa cào thành bài.
+    """List URLs that were discovered but not yet scraped into articles.
 
     Args:
-        conn: Kết nối tới DB vận hành, row_factory là sqlite3.Row.
-        source_domain: Giới hạn theo nguồn; None là mọi nguồn.
-        limit: Số dòng tối đa.
+        conn: Connection to the operational DB with row_factory set to sqlite3.Row.
+        source_domain: Restrict to one source; None means every source.
+        limit: Maximum number of rows.
 
     Returns:
-        Danh sách dòng, cũ nhất trước.
+        Rows, oldest first.
     """
     sql = ("SELECT url_canonical, source_domain, first_url, attempts, first_seen_via "
            "FROM discovered_urls WHERE state='discovered'")
@@ -160,16 +160,16 @@ def pending(conn: sqlite3.Connection, source_domain: str | None = None,
 
 
 def rekey(conn: sqlite3.Connection) -> dict[str, int]:
-    """Tính lại khoá bài của mọi dòng theo `url_key` hiện hành và gộp các dòng trùng khoá.
+    """Recompute the article key of every row with the current `url_key` and merge rows that share a key.
 
-    Dùng sau khi `url_key` được mở rộng mẫu mã bài cho thêm nguồn. Giữ trạng thái tiến xa nhất
-    (captured hơn discovered) khi hai dòng cùng khoá.
+    Use after `url_key` gains article ID patterns for more sources. Keeps the most advanced
+    state (captured over discovered) when two rows share a key.
 
     Args:
-        conn: Kết nối ghi. Hàm không commit.
+        conn: Write connection. The function does not commit.
 
     Returns:
-        Đếm: scanned, rekeyed, merged.
+        Counts: scanned, rekeyed, merged.
     """
     rank = {"captured": 3, "gone": 2, "dead_letter": 1, "discovered": 0}
     rows = conn.execute(
@@ -203,13 +203,13 @@ def rekey(conn: sqlite3.Connection) -> dict[str, int]:
 
 
 def backfill_from_articles(conn: sqlite3.Connection) -> int:
-    """Nạp sổ phát hiện từ bảng `articles` hiện có khi sổ còn trống.
+    """Fill the discovery ledger from the existing `articles` table when the ledger is empty.
 
     Args:
-        conn: Kết nối ghi. Hàm không commit.
+        conn: Write connection. The function does not commit.
 
     Returns:
-        Số dòng đã thêm.
+        Number of rows added.
     """
     if conn.execute("SELECT 1 FROM discovered_urls LIMIT 1").fetchone():
         return 0

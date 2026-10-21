@@ -1,4 +1,4 @@
-"""Bộ điều phối thực thi nhận diện thực thể tầng L1."""
+"""Orchestrate execution of L1 entity recognition."""
 from __future__ import annotations
 
 import json
@@ -16,21 +16,21 @@ from src.core.models import now_vn_iso
 
 
 class L1Runner:
-    """Điều phối quy trình nhận diện thực thể tầng L1 và xử lý kết quả.
+    """Drive the L1 entity recognition workflow and process its results.
 
     Attributes:
-        store: Kho dữ liệu cơ sở SQLite hoặc tương đương.
-        task_dir: Thư mục lưu trữ các gói công việc L1 dạng tệp JSON.
-        reg: Sổ đăng ký thực thể EntityRegistry.
+        store: Base data store (SQLite or equivalent).
+        task_dir: Directory that stores the L1 work packages as JSON files.
+        reg: EntityRegistry.
     """
 
     def __init__(self, store, registry=None, *, task_dir: str | Path | None = None):
-        """Khởi tạo bộ điều phối L1Runner.
+        """Initialize the L1Runner.
 
         Args:
-            store: Kho dữ liệu cơ sở lưu trữ bài viết và tác vụ.
-            registry: Sổ đăng ký thực thể tùy chọn. Mặc định tự nạp qua load_registry().
-            task_dir: Thư mục lưu trữ các tệp gói công việc L1.
+            store: Data store that holds articles and tasks.
+            registry: Optional entity registry; None loads it through load_registry().
+            task_dir: Directory that stores the L1 work package files.
         """
         self.store = store
         self.task_dir = str(task_dir or paths.agent_tasks_dir() / "l1")
@@ -39,16 +39,16 @@ class L1Runner:
             registry = load_registry()
         self.reg = registry
 
-    # -- producer: code-first → l1_tasks + packet -----------------------------
+    # -- producer: code-first -> l1_tasks + packet -----------------------------
     def route_and_export(self, article: dict, *, review: str = "all") -> dict:
-        """Phân loại thực thể tự động, lưu tác vụ và tạo tệp gói công việc.
+        """Classify entities automatically, store the task and write the work package file.
 
         Args:
-            article: Dữ liệu bài viết cần xử lý.
-            review: Chế độ xuất gói công việc ('all' hoặc 'missed').
+            article: Article data to process.
+            review: Package export mode ('all', 'missed' or 'none').
 
         Returns:
-            Từ điển kết quả phân loại kèm đường dẫn gói công việc nếu có.
+            Classification dict with the work package path when one is written.
         """
         rec = route_article(article, self.reg)
         aid = article.get("article_id")
@@ -71,25 +71,25 @@ class L1Runner:
         rec["packet_path"] = packet_path
         return rec
 
-    # -- producer 2: vat chat hoa ban TAT DINH -> l1_outputs ------------------
+    # -- producer 2: materialize the DETERMINISTIC result -> l1_outputs ----------
     def ingest_code_first(self, task: dict) -> dict:
-        """Vật chất hóa kết quả phân loại tự động thành bản ghi đầu ra L1 chuẩn.
+        """Materialize an automatic classification as a standard L1 output record.
 
         Args:
-            task: Dữ liệu bản ghi tác vụ từ bảng l1_tasks.
+            task: Task record from the l1_tasks table.
 
         Returns:
-            Từ điển kết quả xử lý gồm trạng thái hợp lệ, mã bài viết và danh sách lỗi.
+            Result dict with the validity status, article identifier and error list.
         """
         aid = task["article_id"]
         title = task.get("title") or ""
 
-        # Uu tien articles.title — do LA tieu de nguoi dung nhan duoc. Voi 122/1320 bai
-        # (chu yeu trang cong bo thong tin cua cafef) tieu de Silver lai la header trang ho so
-        # doanh nghiep ("Ngan hang TMCP Phat trien T.P Ho Chi Minh (HOSE)") trong khi bai that
-        # la "HDB: Thong bao thay doi dia diem...". Nhan dien tren tieu de sai vua lam MAT ma
-        # (HDB khop ngay bang code o tieu de that) vua khien `surface` khong the kiem chung
-        # duoc tren ban giao cho nguoi dung. Nguyen nhan goc nam o Silver title extraction.
+        # Prefer articles.title because it is the title the user sees. For 122 of 1320
+        # articles (mostly CafeF disclosure pages) the Silver title is the header of the
+        # company profile page (`Ngân hàng TMCP Phát triển T.P Hồ Chí Minh (HOSE)`) while the
+        # real article is `HDB: Thông báo thay đổi địa điểm...`. Recognition on the wrong
+        # title loses the code (HDB matches by code in the real title) and makes `surface`
+        # unverifiable in the user deliverable. The root cause is Silver title extraction.
         art = self.store.get_by_hash(aid)
         art_title = (getattr(art, "title", None) or "").strip() if art else ""
         if art_title and art_title != title:
@@ -101,8 +101,9 @@ class L1Runner:
         rec["domain"] = task.get("domain")
 
         if not (rec.get("entity_ids") or []):
-            # Matcher moi khong con khop gi — gan nhu chac chan ban cu khop nham. Khong ghi
-            # ban recognized=false (se khoa task o 'done' vinh vien), ma tra ve cho Agent.
+            # The new matcher finds nothing, so the earlier match was almost certainly wrong.
+            # Do not write recognized=false (it would lock the task at 'done' permanently);
+            # return the task to the agent instead.
             self.store.upsert_l1_task({
                 "article_id": aid, "domain": task.get("domain"), "title": title,
                 "code_first_json": json.dumps(rec, ensure_ascii=False),
@@ -111,8 +112,8 @@ class L1Runner:
             })
             return {"ok": False, "article_id": aid, "reason": "no_entity_after_recheck"}
 
-        # Dong bo lai title vao l1_tasks: DoD grounding va ban giao cho nguoi dung phai
-        # kiem chung tren CUNG mot tieu de.
+        # Sync the title back into l1_tasks: DoD grounding and the user deliverable must
+        # verify against the same title.
         if (task.get("title") or "") != (self.store.get_l1_task(aid) or {}).get("title"):
             self.store.upsert_l1_task({
                 "article_id": aid, "domain": task.get("domain"), "title": title,
@@ -129,7 +130,7 @@ class L1Runner:
             "recognized": 1,
             "agent_provider": CODE_FIRST_PROVIDER,
             "model_used": output["processing_metadata"]["model_used"],
-            "confidence": None,          # tra bang -> khong tu cham diem tin cay
+            "confidence": None,          # table lookup: no self-scored confidence
             "dod_pass": 1 if ok else 0,
             "dod_reasons": json.dumps(reasons, ensure_ascii=False),
             "created_at": now_vn_iso(),
@@ -143,14 +144,14 @@ class L1Runner:
                 "entity_ids": rec["entity_ids"]}
 
     def drain_code_first(self, *, limit: int | None = None, dry_run: bool = False) -> dict:
-        """Xử lý toàn bộ các tác vụ phân loại tự động đang ở trạng thái chờ.
+        """Process all pending automatic classification tasks.
 
         Args:
-            limit: Giới hạn số lượng tác vụ xử lý tối đa.
-            dry_run: Nếu True, chỉ thống kê và kiểm tra mà không ghi cơ sở dữ liệu.
+            limit: Maximum number of tasks to process.
+            dry_run: If True, only count and check without writing to the database.
 
         Returns:
-            Từ điển thống kê số lượng bản ghi đã quét, thành công, lỗi hoặc chuyển tuyến.
+            Dict with the counts of scanned, written, DoD-failed and rerouted records.
         """
         conn = self.store.connect()
         try:
@@ -184,21 +185,21 @@ class L1Runner:
         logger.info("[l1/code-first] {}", stat)
         return stat
 
-    # -- consumer: agent output → validate + DoD → mark -----------------------
+    # -- consumer: agent output -> validate + DoD -> mark -----------------------
     def _register_article_lane_task(self, aid: str) -> dict | None:
-        """Ghi dòng `l1_tasks` cho bài đi thẳng từ Article Lane mà chưa qua định tuyến L1.
+        """Write an `l1_tasks` row for an article that came from the Article Lane without L1 routing.
 
-        Article Lane chọn bài từ `work_items`, không qua `l1_route.py`, nên một số bài
-        chưa từng có dòng `l1_tasks`. Thiếu dòng ấy thì bản ghi nhận diện bị loại với
-        lý do "no l1_task" dù mô hình đã trả kết quả đúng. Tiêu đề lấy từ bảng
-        `articles` chứ không lấy từ đầu ra của mô hình, để cổng nghiệm thu vẫn đối
-        chiếu với nguồn gốc.
+        The Article Lane selects articles from `work_items` and bypasses `l1_route.py`, so
+        some articles never had an `l1_tasks` row. Without that row the recognition record
+        is rejected with "no l1_task" even when the model answered correctly. The title is
+        read from the `articles` table, not from the model output, so the acceptance gate
+        still checks against the source.
 
         Args:
-            aid: Định danh bài.
+            aid: Article identifier.
 
         Returns:
-            Dòng `l1_tasks` vừa ghi, hoặc None khi bài không tồn tại trong `articles`.
+            The `l1_tasks` row just written, or None when the article is not in `articles`.
         """
         article = self.store.get_by_hash(aid)
         if article is None:
@@ -215,13 +216,13 @@ class L1Runner:
         return self.store.get_l1_task(aid)
 
     def ingest_output(self, output: dict | str) -> dict:
-        """Tiếp nhận, kiểm tra chuẩn DoD và lưu kết quả từ agent.
+        """Accept, DoD-check and store an agent result.
 
         Args:
-            output: Từ điển dữ liệu hoặc đường dẫn tệp JSON chứa kết quả phân tích của agent.
+            output: Result dict, or path of a JSON file that holds the agent analysis.
 
         Returns:
-            Từ điển thông báo trạng thái xử lý và kết quả kiểm định DoD.
+            Dict with the processing status and the DoD result.
         """
         if isinstance(output, str):
             output = json.loads(Path(output).read_text(encoding="utf-8"))
@@ -233,11 +234,11 @@ class L1Runner:
         if task is None:
             return {"ok": False, "article_id": aid, "reason": "no l1_task"}
 
-        # Idempotent replay — da co output AGENT dat DoD thi tra cached.
+        # Idempotent replay: return the cached result when an agent output already passed DoD.
         cached = self.store.get_l1_output(aid)
         if cached and cached.get("dod_pass") and cached.get("l1_source", "agent") != CODE_FIRST_PROVIDER:
             return {"ok": True, "article_id": aid, "cached": True, "dod_pass": True}
-        # Ban code_first la TAM: agent co quyen ghi de (chieu nguoc lai thi khong).
+        # A code_first record is provisional: an agent may overwrite it, never the reverse.
         # docs/decisions/0003-code-first-l1-delivery.md
 
         title = task.get("title") or ""

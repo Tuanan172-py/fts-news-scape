@@ -1,4 +1,4 @@
-"""Nạp khối máy đọc `ops_spec` của `.agents/pipeline.yaml` thành hằng số cho mã vận hành."""
+"""Load the machine-readable `ops_spec` block of `.agents/pipeline.yaml` as constants for the operations code."""
 
 from __future__ import annotations
 
@@ -13,13 +13,13 @@ _REQUIRED = ("main_chain", "finish_steps", "script_actors", "wave_ops")
 
 @lru_cache(maxsize=1)
 def load_spec() -> dict:
-    """Đọc khối `ops_spec` từ `pipeline.yaml`.
+    """Read the `ops_spec` block from `pipeline.yaml`.
 
     Returns:
-        Từ điển có các khoá main_chain, finish_steps, script_actors, wave_ops.
+        Dict with the keys main_chain, finish_steps, script_actors, wave_ops.
 
     Raises:
-        RuntimeError: Khi thiếu tệp, thiếu khối `ops_spec` hoặc thiếu khoá bắt buộc.
+        RuntimeError: If the file, the `ops_spec` block or a required key is missing.
     """
     try:
         data = yaml.safe_load(PIPELINE_PATH.read_text(encoding="utf-8")) or {}
@@ -35,20 +35,36 @@ def load_spec() -> dict:
 
 
 def main_chain() -> tuple[str, ...]:
-    """Trả về thứ tự tác nhân của dây chuyền chính một đợt."""
+    """Return the agent order of the main chain of one wave.
+
+    Returns:
+        Agent identifiers in execution order.
+    """
     return tuple(load_spec()["main_chain"])
 
 
 def finish_steps() -> tuple[str, ...]:
-    """Trả về thứ tự các bước của nửa hoàn tất `article_run.py --finish`."""
+    """Return the step order of the finish half, `article_run.py --finish`.
+
+    Returns:
+        Step names in execution order.
+    """
     return tuple(load_spec()["finish_steps"])
 
 
 def script_actors() -> dict[str, str]:
-    """Trả về bảng tên script sang id tác nhân trong registry."""
+    """Return the mapping from script name to agent id in the registry.
+
+    Returns:
+        Dict of script name to agent id.
+    """
     return dict(load_spec()["script_actors"])
 
 
 def wave_ops() -> tuple[str, ...]:
-    """Trả về tên các bước mà `WaveOps` phải hiện thực."""
+    """Return the names of the steps that `WaveOps` must implement.
+
+    Returns:
+        Step method names.
+    """
     return tuple(load_spec()["wave_ops"])

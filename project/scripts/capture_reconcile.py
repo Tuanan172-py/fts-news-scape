@@ -1,4 +1,4 @@
-"""Đối chiếu kho với sitemap, cào bù URL thiếu và phục hồi Bronze đã mất (rule 10, ADR 0013)."""
+"""Reconcile the store against sitemaps, backfill missing URLs and recover lost Bronze files (rule 10, ADR 0013)."""
 
 from __future__ import annotations
 
@@ -19,18 +19,18 @@ from src.pipeline.reconcile import REFERENCE_DOMAINS, reconcile
 
 force_utf8_stdio()
 
-RED_MISSING_PCT = 2.0     # rule 10 §3: thiếu quá 2% trong một ngày là ĐỎ
+RED_MISSING_PCT = 2.0     # rule 10 §3: more than 2% missing in a day is RED
 
 
 def coverage_rows(store: ArticleStore, days: int) -> list[dict]:
-    """Đọc độ phủ thu thập các ngày gần nhất từ bảng `capture_coverage`.
+    """Read recent capture coverage from the `capture_coverage` table.
 
     Args:
-        store: ArticleStore của DB vận hành.
-        days: Số ngày gần nhất cần đọc.
+        store: ArticleStore of the operational DB.
+        days: Number of most recent days to read.
 
     Returns:
-        Danh sách dòng gồm ngày, nguồn, ref_n, in_db_n, missing_n, pct_missing và cờ đỏ.
+        Rows with day, source, ref_n, in_db_n, missing_n, pct_missing and the red flag.
     """
     conn = store._connect_ro()
     try:
@@ -48,14 +48,14 @@ def coverage_rows(store: ArticleStore, days: int) -> list[dict]:
 
 
 def cmd_status(store: ArticleStore, days: int) -> int:
-    """In bảng độ phủ thu thập và hàng đợi cào bù.
+    """Print the capture coverage table and the backfill queue.
 
     Args:
-        store: ArticleStore của DB vận hành.
-        days: Số ngày gần nhất cần in.
+        store: ArticleStore of the operational DB.
+        days: Number of most recent days to print.
 
     Returns:
-        1 nếu có ngày vượt ngưỡng thiếu, ngược lại 0.
+        1 if any day exceeds the missing threshold, otherwise 0.
     """
     rows = coverage_rows(store, days)
     print(f"{'ngày':10} {'nguồn':26} {'sitemap':>8} {'có':>6} {'thiếu':>6} {'%thiếu':>7}")
@@ -77,14 +77,14 @@ def cmd_status(store: ArticleStore, days: int) -> int:
 
 
 def _reconciled_recently(store: ArticleStore, minutes: float) -> bool:
-    """Kiểm tra lần đối chiếu gần nhất có còn trong khoảng giãn cách hay không.
+    """Check whether the last reconciliation is still within the minimum interval.
 
     Args:
-        store: ArticleStore của DB vận hành.
-        minutes: Khoảng giãn cách tính bằng phút; 0 là luôn đối chiếu.
+        store: ArticleStore of the operational DB.
+        minutes: Minimum interval in minutes; 0 means always reconcile.
 
     Returns:
-        True nếu lần trước cách hiện tại ít hơn `minutes` phút.
+        True if the previous run happened less than `minutes` minutes ago.
     """
     if minutes <= 0:
         return False
@@ -96,13 +96,13 @@ def _reconciled_recently(store: ArticleStore, minutes: float) -> bool:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Chạy một lệnh con: reconcile, backfill, recapture, run hoặc status.
+    """Run one subcommand: reconcile, backfill, recapture, run, status or rekey.
 
     Args:
-        argv: Tham số dòng lệnh; mặc định lấy từ sys.argv.
+        argv: Command-line arguments; defaults to `sys.argv`.
 
     Returns:
-        Mã thoát; `status` trả 1 khi có ngày vượt ngưỡng thiếu.
+        Exit code; `status` returns 1 when any day exceeds the missing threshold.
     """
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("cmd", choices=["reconcile", "backfill", "recapture", "run", "status", "rekey"])

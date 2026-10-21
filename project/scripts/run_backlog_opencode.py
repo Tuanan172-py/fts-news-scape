@@ -1,4 +1,4 @@
-"""Điều phối tiến trình tự động giải phóng bài viết tồn đọng bằng OpenCode Free Tier."""
+"""Drive rolling waves that clear the article backlog with the OpenCode free tier."""
 from __future__ import annotations
 
 import argparse
@@ -31,10 +31,10 @@ STATUS_FILE = LOGS_DIR / "backlog_opencode_status.json"
 
 
 def record_status(payload: dict[str, Any]) -> None:
-    """Ghi trạng thái tiến độ đợt vào tệp nhật ký giám sát.
+    """Write the wave progress state to the monitoring status file.
 
     Args:
-        payload: Từ điển dữ liệu tiến độ cần ghi.
+        payload: Progress data to write; `updated_at` is added in place.
     """
     LOGS_DIR.mkdir(parents=True, exist_ok=True)
     payload["updated_at"] = datetime.now(timezone.utc).isoformat()
@@ -45,14 +45,14 @@ def record_status(payload: dict[str, Any]) -> None:
 
 
 def run_command(cmd: list[str], *, desc: str) -> tuple[int, str]:
-    """Thực thi một lệnh con và in tiến trình.
+    """Run a child command and print its progress.
 
     Args:
-        cmd: Danh sách tham số câu lệnh.
-        desc: Mô tả ngắn gọn về bước thực thi.
+        cmd: Command and arguments.
+        desc: Short description of the step.
 
     Returns:
-        Cặp (mã_thoát, chuỗi_đầu_ra).
+        Pair of (exit code, captured stdout).
     """
     print(f"[{datetime.now().strftime('%H:%M:%S')}] {desc}...", flush=True)
     proc = subprocess.run(
@@ -65,7 +65,7 @@ def run_command(cmd: list[str], *, desc: str) -> tuple[int, str]:
     if proc.returncode != 0:
         print(f"   ⚠️ Lỗi (mã {proc.returncode}): {proc.stderr[:300].strip()}", flush=True)
     else:
-        # In một số dòng tóm tắt
+        # Print the last few summary lines.
         lines = [line.strip() for line in proc.stdout.splitlines() if line.strip()]
         for line in lines[-3:]:
             print(f"   ✓ {line}", flush=True)
@@ -73,13 +73,13 @@ def run_command(cmd: list[str], *, desc: str) -> tuple[int, str]:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Điều phối vòng lặp chạy đợt tự động cuốn chiếu.
+    """Run the rolling-wave loop that clears the backlog.
 
     Args:
-        argv: Danh sách tham số dòng lệnh (mặc định sys.argv[1:]).
+        argv: Command-line arguments; defaults to `sys.argv[1:]`.
 
     Returns:
-        Mã thoát 0 khi hoàn tất an toàn.
+        Exit code 0 on clean completion.
     """
     ap = argparse.ArgumentParser(description="Tự động giải phóng bài viết tồn đọng qua OpenCode Runner")
     ap.add_argument("--waves", type=int, default=40, help="Số đợt tối đa cần chạy (mặc định 40)")
@@ -133,7 +133,7 @@ def main(argv: list[str] | None = None) -> int:
             "step": "prepare",
         })
 
-        # Bước 1: Đóng gói đợt
+        # Step 1: pack the wave.
         pack_cmd = [
             PYTHON, str(ARTICLE_RUN),
             "--wave", wave_id,
@@ -172,7 +172,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"ⓘ  Dry-run: Đã đóng gói {articles_count} bài vào {wave_id}. Bỏ qua phân tích.")
             continue
 
-        # Bước 2: Phân tích nhận thức
+        # Step 2: run the analysis.
         record_status({
             "status": "RUNNING",
             "current_wave": wave_id,
@@ -190,7 +190,7 @@ def main(argv: list[str] | None = None) -> int:
         ]
         rc, out = run_command(analyze_cmd, desc=f"Phân tích nhận thức {wave_id} qua {args.runner}")
 
-        # Bước 3: Chạy vòng vá tự động nếu có bài sót
+        # Step 3: repair pass for articles that were missed.
         record_status({
             "status": "RUNNING",
             "current_wave": wave_id,
@@ -207,7 +207,7 @@ def main(argv: list[str] | None = None) -> int:
         ]
         run_command(repair_cmd, desc=f"Kiểm tra và vá bài sót {wave_id}")
 
-        # Bước 4: Hoàn tất nạp CSDL SQLite monocle.db
+        # Step 4: finish and load results into the SQLite monocle.db.
         record_status({
             "status": "RUNNING",
             "current_wave": wave_id,
@@ -224,7 +224,7 @@ def main(argv: list[str] | None = None) -> int:
         ]
         rc_finish, out_finish = run_command(finish_cmd, desc=f"Kiểm định DoD và nạp CSDL cho {wave_id}")
 
-        # Bước 5: Cập nhật tệp giao hàng Excel nếu bước finish thành công
+        # Step 5: refresh the Excel deliverables when the finish step succeeded.
         if rc_finish == 0:
             total_processed_articles += articles_count
             waves_completed += 1

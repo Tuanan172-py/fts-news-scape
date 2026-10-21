@@ -1,4 +1,4 @@
-"""Phân giải đường dẫn cơ sở dữ liệu vận hành và thử quyền ghi trước khi tiêu token."""
+"""Resolve the operational database path and probe write access before spending tokens."""
 from __future__ import annotations
 
 import sqlite3
@@ -12,24 +12,30 @@ REPO_ROOT = PROJECT_ROOT.parent
 
 
 def resolve_db_path() -> Path:
-    """Trả về đúng đường dẫn mà các script nạp dữ liệu sẽ ghi vào.
+    """Return the exact path that the ingestion scripts will write to.
 
-    Thứ tự ưu tiên trùng với `ArticleStore`: biến môi trường `MONOCLE_DB_PATH`, rồi
-    `MONOCLE_DATA_DIR`, rồi `database.path` trong `settings.yaml`. Đường dẫn tương đối
-    tính từ thư mục `project/`.
+    Priority order matches `ArticleStore`: environment variable `MONOCLE_DB_PATH`, then
+    `MONOCLE_DATA_DIR`, then `database.path` in `settings.yaml`. A relative path is taken
+    from the `project/` directory.
 
     Returns:
-        Đường dẫn tuyệt đối tới `monocle.db`.
+        Absolute path to `monocle.db`.
 
     Raises:
-        UnsafeDatabasePathError: Khi đường dẫn nằm trong OneDrive hoặc kho mã.
+        UnsafeDatabasePathError: If the path is in OneDrive or the code repository.
     """
     return Path(load_settings()["database"]["path"])
 
 
 @dataclass
 class WriteProbe:
-    """Kết quả thử quyền ghi lên cơ sở dữ liệu."""
+    """Result of a write-access probe on the database.
+
+    Attributes:
+        path: Database path that was probed.
+        ok: True if the database is writable.
+        reason: Short outcome description.
+    """
 
     path: Path
     ok: bool
@@ -37,10 +43,10 @@ class WriteProbe:
 
     @property
     def outside_workspace(self) -> bool:
-        """Cho biết tệp có nằm ngoài thư mục kho mã hay không.
+        """Check whether the file lies outside the code repository directory.
 
         Returns:
-            True khi đường dẫn không thuộc cây thư mục của kho.
+            True if the path is not under the repository tree.
         """
         try:
             self.path.resolve().relative_to(REPO_ROOT.resolve())
@@ -49,14 +55,14 @@ class WriteProbe:
             return True
 
     def hint(self) -> str:
-        """Diễn giải nguyên nhân thật của lỗi ghi thành một câu hành động được.
+        """Explain the real cause of a write failure as one actionable sentence.
 
-        Lỗi gốc của sqlite3 chỉ nói "attempt to write a readonly database", nghe như
-        thuộc tính tệp bị đặt chỉ đọc, và đẩy người sửa vào hướng sai. Nguyên nhân
-        thường gặp nhất trên DSH là sandbox `workspace-write` chặn ghi ra ngoài kho.
+        The raw sqlite3 error only says "attempt to write a readonly database", which sounds
+        like a read-only file attribute and sends the fixer in the wrong direction. The most
+        common cause on DSH is the `workspace-write` sandbox blocking writes outside the repository.
 
         Returns:
-            Câu gợi ý, rỗng khi thử ghi thành công.
+            Hint sentence, empty when the write probe succeeded.
         """
         if self.ok:
             return ""
@@ -71,20 +77,20 @@ class WriteProbe:
 
 
 def probe_write(path: Path | None = None, *, timeout: float = 5.0) -> WriteProbe:
-    """Ghi thử một bảng trong giao dịch rồi rollback, không để lại thay đổi nào.
+    """Create a table inside a transaction and roll it back, leaving no change.
 
-    Chỉ giành khoá là chưa đủ: trên tệp chỉ đọc `BEGIN IMMEDIATE` vẫn thành công, vì
-    SQLite chỉ báo lỗi khi thật sự ghi trang. Lệnh tạo bảng buộc ghi trang và ghi
-    nhật ký giao dịch, nên nó thất bại đúng ở những chỗ bước nạp dữ liệu sẽ thất bại.
-    Khoá bị tiến trình khác giữ nghĩa là quyền ghi vẫn có, chỉ đang bận, nên tính là
-    đạt.
+    Taking the lock alone is not enough: on a read-only file `BEGIN IMMEDIATE` still
+    succeeds, because SQLite reports an error only when a page is actually written. The
+    table creation forces a page write and a journal write, so it fails exactly where the
+    ingestion step would fail. A lock held by another process means write access exists
+    and is only busy, so it counts as a pass.
 
     Args:
-        path: Đường dẫn DB cần thử. Mặc định lấy từ :func:`resolve_db_path`.
-        timeout: Số giây chờ khoá trước khi kết luận.
+        path: DB path to probe. Defaults to :func:`resolve_db_path`.
+        timeout: Seconds to wait for the lock before concluding.
 
     Returns:
-        Kết quả thử ghi kèm lý do.
+        Probe result with the reason.
     """
     target = Path(path) if path else resolve_db_path()
     if not target.exists():

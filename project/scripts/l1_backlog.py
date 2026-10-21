@@ -1,4 +1,4 @@
-"""Kiểm kê và phân loại các tác vụ tồn đọng trong hàng đợi xử lý."""
+"""Inventory and classify the backlog tasks in the processing queues."""
 from __future__ import annotations
 
 import argparse
@@ -16,7 +16,7 @@ from src.db.store import ArticleStore                  # noqa: E402
 
 force_utf8_stdio()
 
-# Điều kiện dùng lại nhiều lần — giữ 1 chỗ để không lệch định nghĩa giữa các truy vấn.
+# Conditions reused across queries; defined once so the definitions cannot drift apart.
 _NO_L1 = ("NOT EXISTS (SELECT 1 FROM l1_outputs l1 "
           f"WHERE l1.article_id = a.url_title_hash AND {analyzed_l1_sql('l1')})")
 _HAS_L1 = ("EXISTS (SELECT 1 FROM l1_outputs l1 "
@@ -27,11 +27,11 @@ _HAS_GOLD = ("EXISTS (SELECT 1 FROM agent_outputs ag "
              "WHERE ag.article_id = a.url_title_hash AND ag.dod_pass = 1)")
 
 QUERIES: dict[str, str] = {
-    # -- đã qua gate export ----------------------------------------------------
+    # -- passed the export gate ------------------------------------------------
     "delivered_gold": f"SELECT COUNT(*) FROM articles a WHERE {_HAS_L1} AND {_HAS_GOLD}",
     "delivered_l1_only": f"SELECT COUNT(*) FROM articles a WHERE {_HAS_L1} AND {_NO_GOLD}",
 
-    # -- T1..T3: việc còn tồn, còn cứu được ------------------------------------
+    # -- T1..T3: remaining work that is still recoverable ----------------------
     "t1_gold_ready": f"SELECT COUNT(*) FROM articles a WHERE {_NO_L1} AND {_HAS_GOLD}",
     "t2_l1_only": f"SELECT COUNT(*) FROM articles a WHERE {_NO_L1} AND {_NO_GOLD}",
     "t2_has_packet": f"""SELECT COUNT(*) FROM articles a
@@ -41,14 +41,14 @@ QUERIES: dict[str, str] = {
         JOIN work_items w ON w.article_id = a.url_title_hash AND w.status = 'pending'
         WHERE {_HAS_L1} AND {_NO_GOLD}""",
 
-    # -- Kẹt: claimed nhưng không bao giờ được đòi lại (claim() chỉ đọc 'pending')
+    # -- Stuck: claimed but never reclaimed (claim() reads only 'pending')
     "stuck_claimed": "SELECT COUNT(*) FROM work_items WHERE status = 'claimed'",
     "stuck_claimed_no_gold": """SELECT COUNT(DISTINCT w.article_id) FROM work_items w
         JOIN articles a ON a.url_title_hash = w.article_id
         WHERE w.status = 'claimed' AND NOT EXISTS
         (SELECT 1 FROM agent_outputs ag WHERE ag.article_id = w.article_id AND ag.dod_pass = 1)""",
 
-    # -- T4: rò rỉ — đã tốn công agent nhưng không bao giờ giao được ------------
+    # -- T4: leaks, where agent work was spent but can never be delivered -------
     "t4_l1task_orphan": """SELECT COUNT(*) FROM l1_tasks t WHERE NOT EXISTS
         (SELECT 1 FROM articles a WHERE a.url_title_hash = t.article_id)""",
     "t4_l1out_orphan": f"""SELECT COUNT(*) FROM l1_outputs l1 WHERE {analyzed_l1_sql("l1")} AND NOT EXISTS
@@ -57,7 +57,7 @@ QUERIES: dict[str, str] = {
         WHERE ag.dod_pass = 1 AND NOT EXISTS
         (SELECT 1 FROM articles a WHERE a.url_title_hash = ag.article_id)""",
 
-    # -- hàng đợi thô ----------------------------------------------------------
+    # -- raw queues ------------------------------------------------------------
     "l1_tasks_pending": "SELECT COUNT(*) FROM l1_tasks WHERE status = 'pending'",
     "l1_tasks_failed": "SELECT COUNT(*) FROM l1_tasks WHERE status = 'failed'",
     "l1_out_dod_fail": "SELECT COUNT(*) FROM l1_outputs WHERE dod_pass = 0",
@@ -67,6 +67,14 @@ QUERIES: dict[str, str] = {
 
 
 def collect(store) -> dict[str, int]:
+    """Run every backlog query against a read-only connection.
+
+    Args:
+        store: ArticleStore of the operational DB.
+
+    Returns:
+        Mapping from query name to the count it returned.
+    """
     conn = store._connect_ro()
     try:
         return {k: conn.execute(q).fetchone()[0] for k, q in QUERIES.items()}
@@ -75,10 +83,28 @@ def collect(store) -> dict[str, int]:
 
 
 def count_packets(task_dir: Path, pattern: str) -> int:
+    """Count the packet files in a directory that match a pattern.
+
+    Args:
+        task_dir: Directory holding the task packets.
+        pattern: Glob pattern of the packet file names.
+
+    Returns:
+        Number of matching files, or 0 when the directory does not exist.
+    """
     return len(list(task_dir.glob(pattern))) if task_dir.is_dir() else 0
 
 
 def render(m: dict[str, int], packets: dict[str, int]) -> str:
+    """Render the backlog report and the recovery plan as text.
+
+    Args:
+        m: Query counts as returned by `collect`.
+        packets: Packet counts keyed `l1_single`, `l1_batch`, `gold_single` and `gold_batch`.
+
+    Returns:
+        Multi-line report text.
+    """
     gate_now = m["delivered_gold"] + m["delivered_l1_only"]
     recoverable = m["t1_gold_ready"] + m["t2_l1_only"]
     L: list[str] = []
@@ -148,6 +174,14 @@ def render(m: dict[str, int], packets: dict[str, int]) -> str:
 
 
 def main(argv: list[str]) -> int:
+    """Print the read-only backlog inventory of the pipeline.
+
+    Args:
+        argv: Command-line arguments, excluding the program name.
+
+    Returns:
+        Process exit code, always 0.
+    """
     ap = argparse.ArgumentParser(description="Kiểm kê tồn đọng pipeline (chỉ đọc)")
     ap.add_argument("--json", action="store_true", help="Xuất JSON thay vì bảng")
     args = ap.parse_args(argv)

@@ -1,4 +1,4 @@
-"""Thông dịch lệnh của người vận hành từ Telegram hoặc ops console."""
+"""Interpret operator commands arriving from Telegram or the ops console."""
 
 from __future__ import annotations
 
@@ -51,14 +51,14 @@ ELEVATING = {"/level", "/order", "/provider", "/failover"}
 
 
 def _needs_confirm(cmd: str, args: list[str]) -> bool:
-    """Cho biết lệnh có nâng quyền tự chủ hoặc đổi nơi nhận dữ liệu bài hay không.
+    """Report whether a command raises autonomy or changes where article data goes.
 
     Args:
-        cmd: Tên lệnh có dấu "/".
-        args: Tham số.
+        cmd: Command name including the leading "/".
+        args: Command arguments.
 
     Returns:
-        True khi lệnh phải được bấm xác nhận lần hai.
+        True when the command requires a second confirmation click.
     """
     if args and args[-1] == CONFIRM:
         return False
@@ -75,11 +75,11 @@ def _needs_confirm(cmd: str, args: list[str]) -> bool:
 
 @dataclass
 class Reply:
-    """Phản hồi cho một lệnh.
+    """Response to one command.
 
     Attributes:
-        text: Nội dung.
-        buttons: Hàng nút [[(nhãn, lệnh)]].
+        text: Message body.
+        buttons: Button rows as [[(label, command)]].
     """
 
     text: str
@@ -87,17 +87,57 @@ class Reply:
 
 
 class Controller(Protocol):
-    """Các hành động cần daemon thực hiện khi xử lý lệnh."""
+    """Actions the daemon must perform while handling commands.
+
+    Attributes:
+        store: Operations store.
+        paths: Operations filesystem paths.
+        cfg: Operations configuration.
+        breakers: Provider circuit breakers.
+    """
 
     store: OpsStore
     paths: OpsPaths
     cfg: dict
     breakers: Breakers
 
-    def request_wave(self) -> str: ...
-    def retry_wave(self, wave_id: str) -> str: ...
-    def diagnose_async(self, wave_id: str | None) -> str: ...
-    def capture_restart(self) -> str: ...
+    def request_wave(self) -> str:
+        """Request a new wave immediately.
+
+        Returns:
+            Message for the operator.
+        """
+        ...
+
+    def retry_wave(self, wave_id: str) -> str:
+        """Re-run a parked or failed wave.
+
+        Args:
+            wave_id: Wave identifier.
+
+        Returns:
+            Message for the operator.
+        """
+        ...
+
+    def diagnose_async(self, wave_id: str | None) -> str:
+        """Start an asynchronous diagnosis by ops-sentinel.
+
+        Args:
+            wave_id: Wave to diagnose, or None for the latest activity.
+
+        Returns:
+            Message for the operator.
+        """
+        ...
+
+    def capture_restart(self) -> str:
+        """Retry the startup of the morninger capture.
+
+        Returns:
+            Message for the operator.
+        """
+        ...
 
 
 _GIT_BASH_PREFIX_RE = re.compile(r"^[A-Za-z]:[/\\]Program Files(?: \(x86\))?[/\\]Git[/\\]")
@@ -105,27 +145,27 @@ _PATHLIKE_RE = re.compile(r"^[A-Za-z]:|\\|.+/")
 
 
 def normalize_command(text: str | None) -> str:
-    """Khôi phục lệnh bị Git Bash đổi thành đường dẫn tệp.
+    """Restore a command that Git Bash rewrote into a file path.
 
     Args:
-        text: Chuỗi lệnh thô, ví dụ `C:/Program Files/Git/retry W10011100`.
+        text: Raw command string, for example `C:/Program Files/Git/retry W10011100`.
 
     Returns:
-        Chuỗi lệnh dạng `/retry W10011100`; chuỗi không khớp được trả về đã cắt khoảng trắng.
+        Command string such as `/retry W10011100`; a non-matching string is returned stripped of whitespace.
     """
     return _GIT_BASH_PREFIX_RE.sub("/", (text or "").strip())
 
 
 def execute(text: str, ctl: Controller, actor: str = "human") -> Reply:
-    """Thông dịch và thực hiện một lệnh, ghi vết kiểm toán.
+    """Interpret and execute one command, writing an audit trail.
 
     Args:
-        text: Lệnh dạng `/pause` hoặc `/retry W10011100`.
-        ctl: Bộ điều khiển của daemon.
-        actor: Nguồn lệnh (telegram, console).
+        text: Command such as `/pause` or `/retry W10011100`.
+        ctl: Daemon controller.
+        actor: Command source (telegram, console).
 
     Returns:
-        Reply.
+        Reply to send back to the operator.
     """
     text = normalize_command(text)
     parts = text.split()
@@ -137,7 +177,7 @@ def execute(text: str, ctl: Controller, actor: str = "human") -> Reply:
                    actor="human", data={"source": actor})
         return Reply("Lệnh không hợp lệ: chuỗi trông như đường dẫn tệp. Gõ lệnh bắt đầu bằng "
                      "\"/\", ví dụ /retry W10011100. Trên Git Bash hãy chạy bằng PowerShell.")
-    # Chấp nhận lệnh không có dấu "/" (ví dụ `pause`).
+    # Accept commands without the leading "/" (for example `pause`).
     cmd = "/" + parts[0].split("@")[0].lower().lstrip("/")
     args = parts[1:]
     if cmd not in READ_ONLY:
@@ -145,7 +185,7 @@ def execute(text: str, ctl: Controller, actor: str = "human") -> Reply:
                    data={"source": actor})
     try:
         return _dispatch(cmd, args, ctl)
-    except Exception as exc:  # noqa: BLE001 — lỗi lệnh trả về cho người, không làm hỏng bot
+    except Exception as exc:  # noqa: BLE001 — command errors go back to the operator and must not crash the bot
         store.emit("human.command_failed", f"{text.strip()}: {exc}", level="warn",
                    actor="human")
         return Reply(f"Không thực hiện được lệnh {cmd}. Chi tiết đã ghi vào nhật ký, "
@@ -153,7 +193,14 @@ def execute(text: str, ctl: Controller, actor: str = "human") -> Reply:
 
 
 def _mandate_text(paths: OpsPaths) -> str:
-    """Mô tả mandate hiện hành bằng chữ (lệnh `/mandate`)."""
+    """Describe the current mandate in text for the `/mandate` command.
+
+    Args:
+        paths: Operations filesystem paths.
+
+    Returns:
+        Operator-facing mandate description.
+    """
     from src.ops import supervision as sv
 
     m = sv.mandate_info(paths)
@@ -239,7 +286,7 @@ def _dispatch(cmd: str, args: list[str], ctl: Controller) -> Reply:
             return Reply("Cần mã đợt: /cancel W10011100")
         w = store.wave(args[0])
         if w and w["status"] in ("PARKED", "FAILED"):
-            # Đợt đã dừng: huỷ ngay để nhả bài cho đợt sau.
+            # A stopped wave is cancelled immediately so its articles return to the queue.
             store.upsert_wave(args[0], status="CANCELLED", reason="Người vận hành huỷ.")
             store.emit("wave.cancelled", f"{args[0]}: người vận hành huỷ, nhả bài",
                        actor="human", wave_id=args[0])

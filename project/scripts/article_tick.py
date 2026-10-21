@@ -1,4 +1,4 @@
-"""Điều phối và tự động kích hoạt các đợt phân tích bài đăng theo lịch trình và ngưỡng bài chờ."""
+"""Trigger article analysis waves automatically based on schedule windows and the pending-article threshold."""
 from __future__ import annotations
 
 import argparse
@@ -36,10 +36,10 @@ DEFAULT_BATCH_SIZE = 50
 
 
 def check_kill_switch() -> bool:
-    """Kiểm tra sự tồn tại của tệp cờ dừng khẩn cấp.
+    """Check whether the emergency stop flag file exists.
 
     Returns:
-        True nếu tệp AGY_STOP tồn tại, ngược lại False.
+        True if the AGY_STOP file exists, otherwise False.
     """
     if KILL_SWITCH_PATH.exists():
         print(f"🛑 Phát hiện cờ dừng khẩn cấp tại {KILL_SWITCH_PATH}. Bỏ qua chu kỳ xử lý.")
@@ -48,13 +48,13 @@ def check_kill_switch() -> bool:
 
 
 def is_process_running(pid: int) -> bool:
-    """Kiểm tra một tiến trình theo PID có đang hoạt động trên hệ điều hành hay không.
+    """Check whether a process with the given PID is running on the operating system.
 
     Args:
-        pid: Mã định danh tiến trình.
+        pid: Process identifier.
 
     Returns:
-        True nếu tiến trình đang chạy, ngược lại False.
+        True if the process is running, otherwise False.
     """
     if pid <= 0:
         return False
@@ -71,27 +71,27 @@ def is_process_running(pid: int) -> bool:
 
 
 class PipelineLock:
-    """Quản lý khóa đơn tiến trình ngăn ngừa xung đột đợt chạy song song.
+    """Manage a single-process lock that prevents concurrent wave runs.
 
     Attributes:
-        lock_path: Đường dẫn tệp khóa trên đĩa cục bộ.
-        locked: Trạng thái hiện tại đã giữ khóa hay chưa.
+        lock_path: Path of the lock file on local disk.
+        locked: Whether this instance currently holds the lock.
     """
 
     def __init__(self, lock_path: Path = LOCK_FILE_PATH):
-        """Khởi tạo đối tượng PipelineLock.
+        """Initialize the lock.
 
         Args:
-            lock_path: Đường dẫn tệp khóa tiến trình.
+            lock_path: Path of the process lock file.
         """
         self.lock_path = lock_path
         self.locked = False
 
     def acquire(self) -> bool:
-        """Thử xác lập quyền sở hữu khóa tiến trình.
+        """Try to take ownership of the process lock.
 
         Returns:
-            True nếu chiếm khóa thành công, False nếu tiến trình khác đang giữ khóa.
+            True if the lock was acquired, False if another process holds it.
         """
         self.lock_path.parent.mkdir(parents=True, exist_ok=True)
         if self.lock_path.exists():
@@ -120,7 +120,7 @@ class PipelineLock:
             return False
 
     def release(self) -> None:
-        """Giải phóng khóa tiến trình sau khi hoàn tất."""
+        """Release the process lock when the run completes."""
         if self.locked and self.lock_path.exists():
             try:
                 self.lock_path.unlink(missing_ok=True)
@@ -129,20 +129,32 @@ class PipelineLock:
                 print(f"⚠️ Lỗi giải phóng tệp khóa: {exc}")
 
     def __enter__(self):
+        """Enter the context manager.
+
+        Returns:
+            This lock instance.
+        """
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        """Release the lock on context exit.
+
+        Args:
+            exc_type: Exception type raised in the block, if any.
+            exc_val: Exception instance raised in the block, if any.
+            exc_tb: Traceback of the exception, if any.
+        """
         self.release()
 
 
 def assert_db_path() -> Path:
-    """Xác nhận đường dẫn cơ sở dữ liệu sản xuất hợp lệ và nằm ngoài OneDrive.
+    """Verify that the production database path is valid and outside OneDrive.
 
     Returns:
-        Đường dẫn tệp cơ sở dữ liệu đã phân giải.
+        The resolved database file path.
 
     Raises:
-        RuntimeError: Khi đường dẫn cơ sở dữ liệu không hợp lệ.
+        RuntimeError: If the database path is inside OneDrive or SharePoint.
     """
     db_path = resolve_db_path()
     path_str = str(db_path).lower()
@@ -152,13 +164,13 @@ def assert_db_path() -> Path:
 
 
 def count_pending_articles(db_path: Path) -> int:
-    """Đếm số bài viết tầng bạc chưa được mô hình phân tích đạt chuẩn.
+    """Count silver-tier articles that have no accepted model analysis yet.
 
     Args:
-        db_path: Đường dẫn tệp cơ sở dữ liệu monocle.db.
+        db_path: Path of the monocle.db database file.
 
     Returns:
-        Số lượng bài viết đang chờ xử lý.
+        Number of articles waiting for processing.
     """
     if not db_path.exists():
         return 0
@@ -186,19 +198,19 @@ def count_pending_articles(db_path: Path) -> int:
 
 
 def is_flush_window(dt: datetime | None = None) -> tuple[bool, str]:
-    """Kiểm tra thời điểm hiện tại có thuộc khung giờ gom vét thị trường hay không.
+    """Check whether a time falls inside a market flush window.
 
-    Các khung giờ gom vét (giờ Việt Nam):
-    - 07:15 - 07:45 (Pre-market)
-    - 12:15 - 12:45 (Nghỉ trưa)
-    - 15:15 - 15:45 (Sau chốt ATC)
-    - 17:15 - 17:45 (Công bố BCTC cuối ngày)
+    Flush windows (Vietnam time):
+    - 07:15 - 07:45 (pre-market)
+    - 12:15 - 12:45 (lunch break)
+    - 15:15 - 15:45 (after the ATC closing auction)
+    - 17:15 - 17:45 (end-of-day financial report releases)
 
     Args:
-        dt: Đối tượng thời gian cần kiểm tra (mặc định là giờ hiện tại).
+        dt: Time to check. Defaults to the current time.
 
     Returns:
-        Cặp giá trị (True, tên_khung_giờ) nếu thỏa mãn, ngược lại (False, "").
+        `(True, window_name)` when inside a window, otherwise `(False, "")`.
     """
     now = dt or datetime.now()
     minutes = now.hour * 60 + now.minute
@@ -223,16 +235,16 @@ def evaluate_trigger(
     force: bool = False,
     now: datetime | None = None,
 ) -> tuple[bool, str]:
-    """Đánh giá điều kiện kích hoạt mở đợt xử lý bài đăng mới.
+    """Evaluate whether a new article wave should be triggered.
 
     Args:
-        n_pending: Số lượng bài viết đang chờ phân tích.
-        threshold: Ngưỡng tối thiểu kích hoạt theo khối lượng tích lũy.
-        force: Cờ ép buộc kích hoạt bỏ qua điều kiện.
-        now: Mốc thời gian đánh giá.
+        n_pending: Number of articles waiting for analysis.
+        threshold: Minimum accumulated volume that triggers a wave.
+        force: Trigger regardless of the conditions.
+        now: Time of evaluation.
 
     Returns:
-        Cặp giá trị (True, lý_do_kích_hoạt) nếu thỏa mãn, ngược lại (False, lý_do_bỏ_qua).
+        `(True, trigger_reason)` when a wave should run, otherwise `(False, skip_reason)`.
     """
     if force:
         return True, "forced"
@@ -251,13 +263,13 @@ def evaluate_trigger(
 
 
 def load_standing_order() -> dict[str, Any]:
-    """Nạp tệp chỉ lệnh ủy quyền vận hành có thời hạn nếu có.
+    """Load the time-limited standing order file if present.
 
     Returns:
-        Từ điển dữ liệu chỉ lệnh vận hành.
+        Standing order data as a dict.
     """
     if not STANDING_ORDER_PATH.exists():
-        # Mặc định vận hành ở mức L1 nếu chưa cấu hình tệp
+        # Default to level L1 when the file is not configured.
         return {
             "level": "L1",
             "model": "gemini-3.8-flash-low",
@@ -282,13 +294,13 @@ def load_standing_order() -> dict[str, Any]:
 
 
 def run_tick(args: argparse.Namespace) -> int:
-    """Thực thi một chu kỳ kiểm tra và kích hoạt đợt nếu thỏa mãn điều kiện.
+    """Run one check cycle and trigger a wave when the conditions are met.
 
     Args:
-        args: Tham số dòng lệnh đã phân tích.
+        args: Parsed command-line arguments.
 
     Returns:
-        Mã thoát tiến trình (0 thành công, khác 0 khi phát sinh lỗi).
+        Exit code (0 on success, non-zero on error).
     """
     if check_kill_switch():
         return 0
@@ -327,11 +339,11 @@ def run_tick(args: argparse.Namespace) -> int:
         if not should_run or args.dry_run:
             return 0
 
-        # Kích hoạt thực thi đợt
+        # Start the wave.
         wave_id = f"W{datetime.now():%m%d%H%M}"
         run_script = SCRIPTS_DIR / "article_run.py"
 
-        # Bước 1: Chuẩn bị và phân tích qua agy
+        # Step 1: prepare and analyze through agy.
         prep_cmd = [
             PYTHON_EXE,
             str(run_script),
@@ -351,7 +363,7 @@ def run_tick(args: argparse.Namespace) -> int:
             print(f"❌ Đợt {wave_id} thất bại tại khâu phân tích agy (code={res_prep.returncode}).")
             return res_prep.returncode
 
-        # Bước 2: Hoàn tất nạp CSDL (nếu mức tự chủ là L2 hoặc có cờ --finish)
+        # Step 2: finish and load into the database (autonomy level L2 or --finish flag).
         if level >= "L2" or args.finish:
             print(f"\n▶ Cấp tự chủ {level}: Tự động hoàn tất và nạp CSDL...")
             fin_cmd = [
@@ -380,13 +392,13 @@ def run_tick(args: argparse.Namespace) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Giao diện dòng lệnh chính của bộ điều phối article_tick.
+    """Run the article_tick command line.
 
     Args:
-        argv: Danh sách tham số dòng lệnh.
+        argv: Command-line arguments. Defaults to `sys.argv`.
 
     Returns:
-        Mã thoát tiến trình.
+        Process exit code.
     """
     ap = argparse.ArgumentParser(description="Bộ điều phối tự động kích hoạt Article Lane qua agy")
     ap.add_argument("--tick", action="store_true", help="Chạy một chu kỳ kiểm tra và thực thi")

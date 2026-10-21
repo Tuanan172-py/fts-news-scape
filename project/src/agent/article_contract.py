@@ -1,4 +1,4 @@
-"""Hợp đồng đầu ra của article-processor: nguồn hằng số, bộ bóc vỏ và bộ kiểm dùng chung mọi provider."""
+"""Define the article-processor output contract: constants, envelope unwrapping and validation shared by all providers."""
 from __future__ import annotations
 
 import json
@@ -12,10 +12,10 @@ CONTRACT_VERSION = "article-compact-v2"
 
 
 def _load_schema() -> dict:
-    """Nạp lược đồ bản ghi gọn từ tệp nguồn chân lý.
+    """Load the compact record schema from the source-of-truth file.
 
     Returns:
-        Từ điển JSON Schema của bản ghi gọn.
+        JSON Schema dict of the compact record.
     """
     return json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
 
@@ -31,60 +31,61 @@ K_MIN, K_MAX = _REC["k"]["minItems"], _REC["k"]["maxItems"]
 C_MIN, C_MAX = _REC["c"]["minItems"], _REC["c"]["maxItems"]
 IM_MIN_CHARS = _REC["im"]["minLength"]
 
-# Tham số lấy mẫu chuẩn (ADR 0017 D5). Provider không hỗ trợ tham số nào thì ghi
-# `unsupported` vào meta thay vì tự đổi giá trị.
+# Standard sampling parameters (ADR 0017 D5). A provider that does not support a
+# parameter records `unsupported` in the meta instead of changing the value.
 SAMPLING = {"temperature": 0, "seed": 20261005}
 
 MIN_CITATION_CHARS = 20
 MAX_SUMMARY_SENTENCES = 3
 
-# Nguồn bản ghi `l1_outputs` do bộ tra danh mục tất định ghi (ADR 0003). Bản này chỉ để
-# đối chiếu, không bao giờ được tính là đã phân tích (ADR 0010 D4).
+# Source of `l1_outputs` records written by the deterministic catalog lookup (ADR 0003).
+# These records are for comparison only and never count as analyzed (ADR 0010 D4).
 CODE_FIRST_SOURCE = "code_first"
 
 
 def not_code_first_sql(alias: str = "") -> str:
-    """Dựng điều kiện SQL loại bản code-first khỏi bảng `l1_outputs`, giữ bản trượt DoD.
+    """Build the SQL condition that excludes code-first rows from `l1_outputs` and keeps DoD failures.
 
     Args:
-        alias: Bí danh bảng `l1_outputs` trong truy vấn; chuỗi rỗng khi không dùng bí danh.
+        alias: Alias of the `l1_outputs` table in the query; empty when no alias is used.
 
     Returns:
-        Biểu thức SQL dùng được trong mệnh đề WHERE hoặc ON.
+        SQL expression usable in a WHERE or ON clause.
     """
     p = f"{alias}." if alias else ""
     return f"COALESCE({p}l1_source, 'agent') <> '{CODE_FIRST_SOURCE}'"
 
 
 def not_code_first_sql_for(conn: Any, alias: str = "") -> str:
-    """Dựng điều kiện loại bản code-first theo lược đồ thật của kết nối.
+    """Build the code-first exclusion condition for the real schema of a connection.
 
-    DB cũ chưa có cột `l1_source` thì không thể chứa bản code-first, nên điều kiện là
-    hằng đúng. Dùng cho kết nối chỉ đọc không chạy được bước nâng cấp lược đồ.
+    An old database without the `l1_source` column cannot hold code-first rows, so the
+    condition is a constant true. Used for read-only connections that cannot run the
+    schema upgrade.
 
     Args:
-        conn: Kết nối SQLite.
-        alias: Bí danh bảng `l1_outputs` trong truy vấn; chuỗi rỗng khi không dùng bí danh.
+        conn: SQLite connection.
+        alias: Alias of the `l1_outputs` table in the query; empty when no alias is used.
 
     Returns:
-        Biểu thức SQL dùng được trong mệnh đề WHERE hoặc ON.
+        SQL expression usable in a WHERE or ON clause.
     """
     cols = {row[1] for row in conn.execute("PRAGMA table_info(l1_outputs)")}
     return not_code_first_sql(alias) if "l1_source" in cols else "1 = 1"
 
 
 def analyzed_l1_sql(alias: str = "") -> str:
-    """Dựng điều kiện SQL "bài đã được mô hình phân tích" trên bảng `l1_outputs`.
+    """Build the SQL condition "article analyzed by the model" on `l1_outputs`.
 
-    Điều kiện đòi bản ghi đạt DoD và loại bản code-first. Mọi truy vấn đếm, chọn bài,
-    giao hàng hay xuất dữ liệu đọc `l1_outputs` dùng chung điều kiện này để không lệch
-    định nghĩa giữa các đường.
+    The condition requires a record that passed DoD and excludes code-first rows. Every
+    query that counts, selects, delivers or exports from `l1_outputs` shares this
+    condition so the definition does not diverge between paths.
 
     Args:
-        alias: Bí danh bảng `l1_outputs` trong truy vấn; chuỗi rỗng khi không dùng bí danh.
+        alias: Alias of the `l1_outputs` table in the query; empty when no alias is used.
 
     Returns:
-        Biểu thức SQL dùng được trong mệnh đề WHERE hoặc ON.
+        SQL expression usable in a WHERE or ON clause.
     """
     p = f"{alias}." if alias else ""
     return f"{p}dod_pass = 1 AND {not_code_first_sql(alias)}"
@@ -101,29 +102,29 @@ _VIETNAMESE_DIACRITICS_RE = re.compile(
 
 
 def has_vietnamese_diacritics(text: str) -> bool:
-    """Kiểm chuỗi có chứa ít nhất một ký tự tiếng Việt có dấu.
+    """Check whether a string has at least one accented Vietnamese character.
 
     Args:
-        text: Chuỗi cần kiểm.
+        text: String to check.
 
     Returns:
-        True khi có ký tự có dấu.
+        True if an accented character is present.
     """
     return bool(_VIETNAMESE_DIACRITICS_RE.search(text or ""))
 
 
 def unwrap_tool_envelope(text: str) -> str:
-    """Bóc lớp vỏ kết quả công cụ của DSH để lấy đúng phần văn bản mô hình trả về.
+    """Unwrap the DSH tool result envelope to get the text the model returned.
 
-    Công cụ gọi agent của DSH trả về `{"kind":..., "runId":..., "output":[{"type":
-    "text","text":"..."}]}`. Ghi nguyên đối tượng ấy ra đĩa thì bộ bóc bản ghi đọc
-    nhầm lớp vỏ thành một bản ghi rác có hai trường `type` và `text`.
+    The DSH agent-call tool returns `{"kind":..., "runId":..., "output":[{"type":
+    "text","text":"..."}]}`. If that object is written to disk as is, the record parser
+    reads the envelope as a junk record with the two fields `type` and `text`.
 
     Args:
-        text: Nội dung thô của tệp đầu ra.
+        text: Raw content of the output file.
 
     Returns:
-        Phần văn bản mô hình trả về, hoặc nguyên chuỗi vào khi không có lớp vỏ.
+        Text returned by the model, or the input unchanged when there is no envelope.
     """
     stripped = (text or "").strip()
     if not stripped.startswith("{"):
@@ -147,13 +148,13 @@ def unwrap_tool_envelope(text: str) -> str:
 
 
 def _strip_transport(text: str) -> str:
-    """Bỏ vỏ truyền tải: envelope vendor, rào mã và lời dẫn trước mảng JSON.
+    """Strip the transport wrapper: vendor envelope, code fence and prose before the JSON array.
 
     Args:
-        text: Nội dung thô do mô hình trả về.
+        text: Raw content returned by the model.
 
     Returns:
-        Chuỗi bắt đầu tại dấu `[` đầu tiên khi có lời dẫn phía trước.
+        String that starts at the first `[` when prose precedes it.
     """
     cleaned = unwrap_tool_envelope(text).strip()
     if cleaned.startswith("```"):
@@ -166,13 +167,13 @@ def _strip_transport(text: str) -> str:
 
 
 def transport_flags(text: str) -> dict[str, int]:
-    """Đếm các dạng vỏ truyền tải có trong đầu ra thô.
+    """Count the transport wrapper kinds present in the raw output.
 
     Args:
-        text: Nội dung thô do mô hình trả về.
+        text: Raw content returned by the model.
 
     Returns:
-        Bộ đếm `envelope`, `fence`, `prose_prefix`, mỗi khoá bằng 0 hoặc 1.
+        Counters `envelope`, `fence` and `prose_prefix`, each 0 or 1.
     """
     raw = (text or "").strip()
     unwrapped = unwrap_tool_envelope(text or "").strip()
@@ -187,17 +188,17 @@ def transport_flags(text: str) -> dict[str, int]:
 
 
 def salvage_records(text: str) -> tuple[list[dict], int]:
-    """Bóc các bản ghi khỏi đầu ra của mô hình, chịu được đầu ra hỏng.
+    """Extract records from model output, tolerating damaged output.
 
-    Đầu ra có thể cụt vì chạm trần token, có thể kèm lời dẫn hoặc rào mã. Hàm cứu
-    từng phần tử thay vì phân tích cú pháp một lần rồi bỏ cuộc. Hàm chỉ bóc vỏ và
-    tách bản ghi, không kiểm nội dung.
+    The output can be truncated at the token ceiling or carry prose or a code fence. The
+    function salvages element by element instead of parsing once and giving up. It only
+    unwraps and splits records and does not validate content.
 
     Args:
-        text: Nội dung thô do mô hình trả về.
+        text: Raw content returned by the model.
 
     Returns:
-        Cặp gồm danh sách bản ghi lấy được và số phần tử hỏng không cứu được.
+        Pair of the records recovered and the count of damaged elements that could not be saved.
     """
     if not text:
         return [], 0
@@ -255,13 +256,14 @@ def salvage_records(text: str) -> tuple[list[dict], int]:
 
 @dataclass
 class BatchResult:
-    """Kết quả kiểm một lô đầu ra theo hợp đồng.
+    """Validation result of one output batch against the contract.
 
     Attributes:
-        records: Bản ghi hợp lệ đã chuẩn hoá, khoá là chỉ số bài.
-        errors: Mã lỗi của từng bài bị từ chối, khoá là chỉ số bài. Bài bị từ chối
-            không có bản ghi và đi vào vòng vá.
-        counters: Bộ đếm vỏ truyền tải, phần tử hỏng, chuẩn hoá cơ học và cảnh báo.
+        records: Valid normalized records keyed by article index.
+        errors: Error codes of each rejected article keyed by article index. A rejected
+            article has no record and enters the repair round.
+        counters: Counters for transport wrappers, damaged elements, mechanical
+            normalization and warnings.
     """
 
     records: dict[int, dict] = field(default_factory=dict)
@@ -270,25 +272,25 @@ class BatchResult:
 
 
 def _count_sentences(text: str) -> int:
-    """Đếm số câu của một đoạn tóm tắt theo dấu kết câu đứng trước chữ hoa.
+    """Count the sentences of a summary by sentence-ending marks followed by a capital letter.
 
     Args:
-        text: Chuỗi tóm tắt.
+        text: Summary string.
 
     Returns:
-        Số câu ước lượng, tối thiểu 1 khi chuỗi không rỗng.
+        Estimated sentence count, at least 1 for a non-empty string.
     """
     return len(_SENTENCE_BREAK.split(text.strip())) if text.strip() else 0
 
 
 def _is_int(value: Any) -> bool:
-    """Kiểm giá trị là số nguyên thật, loại trừ kiểu logic.
+    """Check that a value is a real integer, excluding booleans.
 
     Args:
-        value: Giá trị cần kiểm.
+        value: Value to check.
 
     Returns:
-        True khi là `int` và không phải `bool`.
+        True if the value is an `int` and not a `bool`.
     """
     return isinstance(value, int) and not isinstance(value, bool)
 
@@ -296,19 +298,20 @@ def _is_int(value: Any) -> bool:
 def validate_record(rec: dict, paragraphs: list[str],
                     counters: dict[str, int] | None = None,
                     title: str = "") -> tuple[dict | None, list[str]]:
-    """Kiểm một bản ghi gọn và chuẩn hoá về dạng chuẩn.
+    """Validate a compact record and normalize it to the standard form.
 
-    Chỉ có hai phép chuẩn hoá cơ học: bỏ cặp thực thể và chỉ số `c` trùng, sắp `c`
-    tăng dần và `e` theo (thứ tự nhóm, chuỗi). Mọi sai lệch khác bị từ chối kèm mã lỗi.
+    Only two mechanical normalizations apply: remove duplicate entity pairs and duplicate
+    `c` indexes, sort `c` ascending and `e` by (group order, string). Any other deviation
+    is rejected with an error code.
 
     Args:
-        rec: Bản ghi do mô hình phát.
-        paragraphs: Các đoạn `p` của bài trong packet.
-        counters: Bộ đếm cộng dồn cho chuẩn hoá và cảnh báo.
-        title: Tiêu đề bài, dùng kiểm bảo toàn dấu tiếng Việt.
+        rec: Record emitted by the model.
+        paragraphs: Paragraphs `p` of the article in the packet.
+        counters: Accumulating counters for normalization and warnings.
+        title: Article title, used to check that Vietnamese diacritics are preserved.
 
     Returns:
-        Cặp (bản ghi chuẩn hoá hoặc None, danh sách mã lỗi). Danh sách rỗng khi hợp lệ.
+        Pair of the normalized record (or None) and the list of error codes; the list is empty when valid.
     """
     cnt = counters if counters is not None else {}
     errs: list[str] = []
@@ -405,14 +408,14 @@ def validate_record(rec: dict, paragraphs: list[str],
 
 
 def parse_and_validate(text: str, packet: dict) -> BatchResult:
-    """Bóc và kiểm một lô đầu ra thô theo hợp đồng, dùng chung cho mọi provider.
+    """Unwrap and validate a raw output batch against the contract, for all providers.
 
     Args:
-        text: Nội dung thô do provider trả về.
-        packet: Packet đã gửi, có khoá `a` là danh sách bài `{"i", "t", "p"}`.
+        text: Raw content returned by the provider.
+        packet: Packet that was sent; key `a` is the article list `{"i", "t", "p"}`.
 
     Returns:
-        Kết quả gồm bản ghi hợp lệ theo chỉ số bài, mã lỗi theo bài và bộ đếm.
+        Result with valid records by article index, error codes by article and counters.
     """
     result = BatchResult()
     cnt = result.counters
@@ -455,26 +458,26 @@ def parse_and_validate(text: str, packet: dict) -> BatchResult:
 
 
 def validate_response(text: str, packet_items: list[dict]) -> BatchResult:
-    """Bóc và kiểm phản hồi thô của một lượt gọi, cho các runner có sẵn danh sách bài.
+    """Unwrap and validate the raw response of one call, for runners that already hold the article list.
 
     Args:
-        text: Nội dung thô do provider trả về.
-        packet_items: Danh sách bài `{"i", "t", "p"}` đã gửi.
+        text: Raw content returned by the provider.
+        packet_items: Articles `{"i", "t", "p"}` that were sent.
 
     Returns:
-        Kết quả kiểm lô, xem :func:`parse_and_validate`.
+        Batch validation result, see :func:`parse_and_validate`.
     """
     return parse_and_validate(text, {"a": packet_items})
 
 
 def result_meta(result: BatchResult) -> dict[str, Any]:
-    """Dựng phần meta của hợp đồng để ghi vào tệp meta của lô.
+    """Build the contract part of the meta written to the batch meta file.
 
     Args:
-        result: Kết quả kiểm lô.
+        result: Batch validation result.
 
     Returns:
-        Từ điển gồm phiên bản hợp đồng, bộ đếm vỏ và chuẩn hoá, danh sách bài bị từ chối.
+        Dict with the contract version, wrapper and normalization counters, and the rejected articles.
     """
     return {
         "contract_version": CONTRACT_VERSION,
@@ -484,32 +487,32 @@ def result_meta(result: BatchResult) -> dict[str, Any]:
 
 
 def build_user_message(task_text: str) -> str:
-    """Dựng tin nhắn người dùng gửi cho mọi provider từ nội dung tệp packet.
+    """Build the user message sent to every provider from the packet file content.
 
-    Mọi provider nhận đúng byte của tệp packet, không thêm tiêu đề và không đóng
-    gói lại, để cùng một bài luôn đi vào mô hình theo cùng một dạng.
+    Every provider receives the exact bytes of the packet file, with no added header and
+    no repackaging, so the same article always reaches the model in the same form.
 
     Args:
-        task_text: Nội dung nguyên văn của tệp `.task.json`.
+        task_text: Verbatim content of the `.task.json` file.
 
     Returns:
-        Chuỗi gửi làm tin nhắn người dùng.
+        String sent as the user message.
     """
     return task_text
 
 
 def request_meta(provider: str, model: str, *, sampling: dict[str, Any],
                  prefix_sha256: str = "") -> dict[str, Any]:
-    """Dựng phần meta mô tả lượt gọi để ghi vào tệp meta của lô.
+    """Build the meta part that describes the call, written to the batch meta file.
 
     Args:
-        provider: Tên provider (`agy`, `openrouter`, `opencode-native`, `dsh`).
-        model: Tên mô hình đã dùng.
-        sampling: Tham số lấy mẫu thực tế đã gửi, hoặc giá trị `unsupported`.
-        prefix_sha256: Băm SHA256 của prefix hệ thống đã gửi.
+        provider: Provider name (`agy`, `openrouter`, `opencode-native`, `dsh`).
+        model: Model name used.
+        sampling: Sampling parameters actually sent, or the value `unsupported`.
+        prefix_sha256: SHA256 hash of the system prefix that was sent.
 
     Returns:
-        Từ điển các khoá nhà cung cấp, mô hình, tham số và băm prefix.
+        Dict with the provider, model, sampling parameters and prefix hash.
     """
     return {
         "agent_provider": provider,

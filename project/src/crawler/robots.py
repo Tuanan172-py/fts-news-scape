@@ -1,4 +1,4 @@
-"""Kiểm soát tuân thủ tệp robots.txt của các tên miền nguồn tin."""
+"""Enforce the robots.txt rules of source domains."""
 
 from __future__ import annotations
 
@@ -11,14 +11,20 @@ from loguru import logger
 
 
 class RobotsGate:
-    """Cổng kiểm tra quyền thu thập dữ liệu dựa trên tệp robots.txt (Thread-safe).
+    """Gate crawl permission based on robots.txt (thread-safe).
 
     Attributes:
-        http: Client HTTP dùng để tải tệp robots.txt.
-        ttl: Thời gian sống của bộ nhớ đệm robots tính bằng giây.
+        http: HTTP client used to download robots.txt.
+        ttl: Lifetime of the robots cache in seconds.
     """
 
     def __init__(self, http, ttl: float = 86400.0):
+        """Create the gate with an empty robots cache.
+
+        Args:
+            http: HTTP client used to download robots.txt.
+            ttl: Lifetime of the robots cache in seconds.
+        """
         self.http = http
         self.ttl = ttl
         self._cache: dict[str, tuple[RobotFileParser | None, float]] = {}
@@ -52,14 +58,14 @@ class RobotsGate:
         return rp
 
     def allowed(self, url: str, ua: str = "*") -> bool:
-        """Kiểm tra đường dẫn URL có được phép thu thập theo robots.txt hay không.
+        """Check whether robots.txt allows crawling a URL.
 
         Args:
-            url: Địa chỉ URL cần kiểm tra quyền truy cập.
-            ua: Tên User-Agent cần kiểm tra.
+            url: URL to check.
+            ua: User-Agent name to check.
 
         Returns:
-            True nếu được phép hoặc khi gặp lỗi tải robots.txt (fail-open).
+            True if allowed, or if robots.txt could not be loaded (fail-open).
         """
         rp = self._get_parser(urlparse(url).netloc)
         if rp is None:
@@ -70,14 +76,14 @@ class RobotsGate:
             return True
 
     def crawl_delay(self, domain: str, ua: str = "*") -> float | None:
-        """Lấy giá trị khoảng cách thu thập (crawl-delay) từ robots.txt nếu có.
+        """Get the crawl-delay value from robots.txt, if any.
 
         Args:
-            domain: Tên miền cần kiểm tra.
-            ua: Tên User-Agent cần kiểm tra.
+            domain: Domain to check.
+            ua: User-Agent name to check.
 
         Returns:
-            Khoảng cách thu thập tính bằng giây hoặc None nếu không quy định.
+            Crawl delay in seconds, or None if not specified.
         """
         rp = self._get_parser(domain)
         if rp is None:

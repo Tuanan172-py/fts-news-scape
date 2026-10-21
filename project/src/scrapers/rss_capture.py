@@ -1,4 +1,4 @@
-"""Bộ thu thập dữ liệu RSS tích hợp lưu trữ Bronze byte-exact cho trang chi tiết."""
+"""Scrape RSS feeds and store byte-exact Bronze copies of the detail pages."""
 
 from __future__ import annotations
 
@@ -13,14 +13,14 @@ from src.scrapers.rss_generic import RSSScraper
 
 
 def _meta_content(html: str, key: str) -> str:
-    """Trích xuất giá trị thuộc tính content từ thẻ meta trong tài liệu HTML.
+    """Extract the content attribute value of a meta tag in an HTML document.
 
     Args:
-        html: Chuỗi mã nguồn HTML trang chi tiết.
-        key: Tên thuộc tính (name hoặc property) của thẻ meta.
+        html: HTML source of the detail page.
+        key: Attribute value (name or property) that identifies the meta tag.
 
     Returns:
-        Nội dung thuộc tính content hoặc chuỗi rỗng nếu không tìm thấy.
+        Value of the content attribute, or an empty string when not found.
     """
     if not html or not key:
         return ""
@@ -36,15 +36,22 @@ def _meta_content(html: str, key: str) -> str:
 
 @register("_rss_capture")
 class RssCaptureScraper(CaptureMixin, RSSScraper):
-    """Lớp thu thập RSS kết hợp lưu trữ nguyên bản Bronze và phân tích DOM bài viết.
+    """Scrape RSS feeds with verbatim Bronze storage and article DOM parsing.
 
     Attributes:
-        content_selector: Bộ chọn CSS xác định vùng nội dung chính.
-        category_meta: Tên thẻ meta trích xuất chuyên mục bổ sung nếu có.
-        base_url: Đường dẫn gốc của nguồn tin.
+        content_selector: CSS selector of the main content area.
+        category_meta: Name of the meta tag that provides an extra category, if any.
+        base_url: Root URL of the news source.
     """
 
     def __init__(self, config, http, dedup):
+        """Initialize the scraper from its source config.
+
+        Args:
+            config: Source config dict.
+            http: HTTP client.
+            dedup: Deduplication cache.
+        """
         super().__init__(config, http, dedup)
         detail = config.get("detail", {})
         self.content_selector = detail.get("content_selector") or "article"
@@ -53,12 +60,12 @@ class RssCaptureScraper(CaptureMixin, RSSScraper):
         self._init_capture()
 
     def enrich(self, article: Article) -> None:
-        """Thu thập trang chi tiết, lưu trữ tạo tác Bronze và bóc tách nội dung bài viết.
+        """Capture the detail page, store the Bronze artifact and extract the article content.
 
         Args:
-            article: Đối tượng Article cần bổ sung dữ liệu.
+            article: Article to enrich.
         """
-        # inline = content:encoded (nếu feed có). Pop để không ghi vào metadata_json.
+        # inline = content:encoded (when the feed has it). Popped so it is not written to metadata_json.
         inline = article.metadata.pop("_inline_html", "")
 
         if self._details_fetched >= self.max_details:
@@ -71,8 +78,8 @@ class RssCaptureScraper(CaptureMixin, RSSScraper):
         html = self._capture_and_extract(article, article.source_domain,
                                          referer, self.content_selector)
         if html is None:
-            # capture fail/skip — mixin đã set content_text=summary + ghi self.errors.
-            # content:encoded chỉ là body DỰ PHÒNG, KHÔNG phải Bronze.
+            # Capture failed or skipped: the mixin already set content_text=summary and recorded self.errors.
+            # content:encoded is only a fallback body, not Bronze.
             if inline:
                 article.content_html = inline
                 article.content_text = extract_text(inline) or article.summary
@@ -83,4 +90,4 @@ class RssCaptureScraper(CaptureMixin, RSSScraper):
         if self.category_meta:
             section = _meta_content(html, self.category_meta)
             if section and section not in article.categories:
-                article.categories.insert(0, section)  # chuyên mục thật đứng đầu
+                article.categories.insert(0, section)  # the real section goes first

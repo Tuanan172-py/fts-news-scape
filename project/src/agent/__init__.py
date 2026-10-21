@@ -1,1 +1,1 @@
-"""Gói hạ tầng giao tiếp, tạo gói tác vụ và kiểm định kết quả cho các Agent."""
+"""Provide task packaging, communication and result validation for agents."""

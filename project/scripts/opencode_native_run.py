@@ -1,7 +1,4 @@
-"""Adapter chay Article Lane truc tiep tren OpenCode session (Muse Spark 1.3 Free).
-
-Docstring chuan Google Style, khong nhat ky go loi trong ma.
-"""
+"""Run the Article Lane directly on an OpenCode session (Muse Spark 1.3 Free)."""
 
 from __future__ import annotations
 
@@ -27,15 +24,15 @@ VN_TZ = timezone(timedelta(hours=7))
 
 def log_event(wave_id: str, step: str, kind: str, message: str,
               level: str = "info", data: dict | None = None) -> None:
-    """Ghi su kien van hanh vao ops.db kem ban sao JSONL.
+    """Write an operational event to ops.db.
 
     Args:
-        wave_id: Ma dot xu ly.
-        step: Buoc thuc thi (analyze/repair/finish).
-        kind: Loai su kien (runner.batch_error/runner.ok).
-        message: Mo ta ngan gon.
-        level: Muc do (debug/info/warn/error).
-        data: Du lieu bo sung da redact.
+        wave_id: Processing wave identifier.
+        step: Execution step (analyze/repair/finish).
+        kind: Event kind (runner.batch_error/runner.ok).
+        message: Short description.
+        level: Severity (debug/info/warn/error).
+        data: Additional redacted payload.
     """
     OPS_DB.parent.mkdir(parents=True, exist_ok=True)
     con = sqlite3.connect(str(OPS_DB), timeout=30)
@@ -57,17 +54,17 @@ def log_event(wave_id: str, step: str, kind: str, message: str,
 
 def append_records(wave: str, batch_id: str, records: list[dict[str, Any]],
                    latency_ms: int = 0, attempt: int = 1) -> dict[str, Any]:
-    """Noi ban ghi vao output, kiem dinh, ghi meta va ops_events.
+    """Append records to the batch output, validate them and write meta and ops_events.
 
     Args:
-        wave: Ma dot.
-        batch_id: Ma lo (article_W1001OPC01_01).
-        records: Danh sach ban ghi moi.
-        latency_ms: Do tre xu ly.
-        attempt: Lan thu.
+        wave: Wave identifier.
+        batch_id: Batch identifier (article_W1001OPC01_01).
+        records: New records to append.
+        latency_ms: Processing latency in milliseconds.
+        attempt: Attempt number.
 
     Returns:
-        Bao cao valid/invalid va duong dan tep.
+        Report with added and total counts, status and the output and meta paths.
     """
     task_path = TASK_DIR / f"{batch_id}.task.json"
     task = json.loads(task_path.read_text(encoding="utf-8"))
@@ -138,13 +135,13 @@ def append_records(wave: str, batch_id: str, records: list[dict[str, Any]],
 
 
 def wave_status(wave: str) -> dict[str, Any]:
-    """Tong hop tien do dot tu output hien co.
+    """Summarize wave progress from the existing outputs.
 
     Args:
-        wave: Ma dot.
+        wave: Wave identifier.
 
     Returns:
-        So lieu tong so bai theo tung lo.
+        Total article count and per-batch expected and present counts.
     """
     manifest = json.loads((TASK_DIR / f"wave_{wave}.json").read_text(encoding="utf-8"))
     rows = []

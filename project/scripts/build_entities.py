@@ -1,4 +1,4 @@
-"""Trích xuất và chuẩn hóa danh mục thực thể tài chính từ dữ liệu nguồn."""
+"""Extract and normalize the financial entity catalog from source data."""
 from __future__ import annotations
 
 import argparse
@@ -26,10 +26,10 @@ force_utf8_stdio()
 
 
 # ----------------------------------------------------------------------------
-# Cấu hình đường dẫn mặc định
+# Default path configuration
 # ----------------------------------------------------------------------------
-# Thứ tự ưu tiên: biến môi trường FRA_DATA_ROOT, thư mục đồng bộ SharePoint của
-# người dùng hiện tại, rồi thư mục cạnh kho mã.
+# Priority order: the FRA_DATA_ROOT environment variable, the current user's
+# synced SharePoint folder, then the folder next to the repository.
 _POSSIBLE_DATA_ROOTS = [
     *([Path(os.environ["FRA_DATA_ROOT"])] if os.environ.get("FRA_DATA_ROOT") else []),
     Path.home() / "OneDrive - fpts.com.vn" / "FRA - Data",
@@ -45,19 +45,36 @@ SCHEMA_VERSION = "1.2.0"
 
 
 # ----------------------------------------------------------------------------
-# Đọc dữ liệu (parquet trên OneDrive cần đọc qua BytesIO để tránh lỗi Errno 22)
+# Data reading (parquet on OneDrive must be read through BytesIO to avoid Errno 22)
 # ----------------------------------------------------------------------------
 def read_parquet(path: Path) -> pd.DataFrame:
+    """Read a parquet file through an in-memory buffer.
+
+    Args:
+        path: Parquet file path.
+
+    Returns:
+        The loaded DataFrame.
+    """
     with open(path, "rb") as f:
         return pd.read_parquet(io.BytesIO(f.read()))
 
 
 def read_excel(path: Path, **kw) -> pd.DataFrame:
+    """Read an Excel workbook.
+
+    Args:
+        path: Workbook path.
+        **kw: Keyword arguments forwarded to `pandas.read_excel`.
+
+    Returns:
+        The loaded DataFrame.
+    """
     return pd.read_excel(path, **kw)
 
 
 def _load_user_watchlist_tickers(users_dir: Path) -> set[str]:
-    """Tải tập hợp các mã chứng khoán được người dùng đăng ký trong config/entities/users/."""
+    """Load the set of tickers users registered in config/entities/users/."""
     out: set[str] = set()
     if not users_dir.exists():
         return out
@@ -72,9 +89,9 @@ def _load_user_watchlist_tickers(users_dir: Path) -> set[str]:
 
 
 # ----------------------------------------------------------------------------
-# Chuẩn hoá tên & sinh alias (surface forms để nhận diện trong tin tức)
+# Name normalization and alias generation (surface forms for recognition in news)
 # ----------------------------------------------------------------------------
-# Tiền tố pháp lý phổ biến ở đầu tên doanh nghiệp VN — cắt để lấy tên rút gọn.
+# Common legal prefixes at the start of Vietnamese company names, stripped to get the short name.
 _LEGAL_PREFIXES = [
     r"Tổng\s+Công\s+ty\s+Cổ\s+phần",
     r"Tổng\s+CTCP",
@@ -93,18 +110,35 @@ _LEGAL_PREFIXES = [
     r"Quỹ",
 ]
 _PREFIX_RE = re.compile(r"^(?:%s)\b[\s:.-]*" % "|".join(_LEGAL_PREFIXES), re.IGNORECASE)
-# Đuôi pháp lý: "... - CTCP", "... - Công ty Cổ phần"
+# Legal suffix: "... - CTCP", "... - Công ty Cổ phần"
 _SUFFIX_RE = re.compile(r"[\s]*[-–]\s*(?:CTCP|Công\s+ty\s+Cổ\s+phần)\s*$", re.IGNORECASE)
 _PAREN_RE = re.compile(r"\(([^)]+)\)")
 _WS_RE = re.compile(r"\s+")
 
 
 def clean_name(name: str) -> str:
+    """Trim a name and collapse internal whitespace.
+
+    Args:
+        name: Raw name.
+
+    Returns:
+        The name with single spaces only.
+    """
     return _WS_RE.sub(" ", str(name).strip())
 
 
 def short_name(name: str) -> str:
-    """Lõi thương hiệu: bỏ phần ngoặc + tiền tố + đuôi pháp lý ('Tập đoàn X - CTCP' → 'X')."""
+    """Extract the brand core by dropping parentheses, legal prefix and legal suffix.
+
+    Example: `Tập đoàn X - CTCP` becomes `X`.
+
+    Args:
+        name: Full company name.
+
+    Returns:
+        The short brand name, or the cleaned full name when nothing remains.
+    """
     s = _WS_RE.sub(" ", _PAREN_RE.sub("", clean_name(name))).strip()
     for _ in range(2):
         new = _PREFIX_RE.sub("", s).strip()
@@ -118,13 +152,24 @@ def short_name(name: str) -> str:
 
 
 def make_aliases(canonical: str, code: str, brand_map: dict | None = None) -> list[str]:
-    """Surface form (giữ thứ tự, unique): tên đầy đủ → tên rút gọn → thương hiệu trong
-    ngoặc → alias thương hiệu bổ sung tay (brand_aliases.yaml).
+    """Build the ordered, unique surface forms of an entity.
 
-    Alias SINH TỰ ĐỘNG (tên rút gọn + chuỗi trong ngoặc) phải lọc qua GENERIC_ALIAS_STOPLIST:
-    tên pháp lý VN thường chứa địa danh/hậu tố chung, và "(Việt Nam)" từng bị bơm thẳng thành
-    alias của TICKER:IVS khiến mã này khớp 164 bài — top-1 sai của cả hệ thống.
-    Tên đầy đủ và alias người biên tập nhập tay (brand_map) KHÔNG lọc — đó là chủ ý.
+    Order: full name, short name, parenthesized brand, then manually maintained brand
+    aliases (brand_aliases.yaml).
+
+    Auto-generated aliases (short name and parenthesized strings) are filtered through
+    GENERIC_ALIAS_STOPLIST: Vietnamese legal names often contain place names or generic
+    suffixes, and "(Việt Nam)" was once injected as an alias of TICKER:IVS, which made
+    that ticker match 164 articles, the worst false top-1 in the system. The full name
+    and editor-supplied aliases (brand_map) are deliberately not filtered.
+
+    Args:
+        canonical: Canonical full name.
+        code: Entity code, used to look up manual brand aliases.
+        brand_map: Mapping from code to manual brand aliases.
+
+    Returns:
+        Aliases in order, without duplicates.
     """
     out: list[str] = []
 
@@ -138,28 +183,37 @@ def make_aliases(canonical: str, code: str, brand_map: dict | None = None) -> li
 
     add(clean_name(canonical))
     add(short_name(canonical), filtered=True)
-    for m in _PAREN_RE.findall(str(canonical)):   # thương hiệu trong ngoặc: (CHOLIMEX)
+    for m in _PAREN_RE.findall(str(canonical)):   # parenthesized brand, e.g. (CHOLIMEX)
         add(m, filtered=True)
-    for b in (brand_map or {}).get(code, []):     # (Vietcombank), (BIDV)...
+    for b in (brand_map or {}).get(code, []):     # manual brands, e.g. (Vietcombank), (BIDV)
         add(b)
     return out
 
 
 # ----------------------------------------------------------------------------
-# Phân loại mã: STOCK / ETF / FUND-OTHER
+# Code classification: STOCK / ETF / FUND-OTHER
 # ----------------------------------------------------------------------------
 def classify_code(code: str, etf_codes: set[str]) -> str:
+    """Classify a security code as ETF, STOCK or OTHER.
+
+    Args:
+        code: Security code.
+        etf_codes: Codes known to be ETFs.
+
+    Returns:
+        One of `ETF`, `STOCK`, `OTHER`.
+    """
     if code in etf_codes or code.startswith(("E1", "FUE", "FUC")):
         return "ETF"
-    # Mã cổ phiếu VN = 3 ký tự [A-Z0-9], bắt đầu bằng chữ (vd HPG, A32, C32, L14)
+    # Vietnamese stock code = 3 chars [A-Z0-9] starting with a letter (e.g. HPG, A32, C32, L14).
     if re.fullmatch(r"[A-Z][A-Z0-9]{2}", code):
         return "STOCK"
-    # còn lại: quỹ đóng, trái phiếu, chứng quyền... -> OTHER
+    # Everything else (closed-end funds, bonds, warrants) is OTHER.
     return "OTHER"
 
 
 # ----------------------------------------------------------------------------
-# Ánh xạ tĩnh: sàn & chỉ số
+# Static mappings: exchanges and indices
 # ----------------------------------------------------------------------------
 EXCHANGES = [
     {"code": "HOSE", "name": "Sở Giao dịch Chứng khoán TP. Hồ Chí Minh",
@@ -180,13 +234,21 @@ INDEX_META = {
 }
 
 def _fold_diacritics(s: str) -> str:
-    """Bỏ dấu tiếng Việt: 'Bất động sản' -> 'Bat dong san' (đ/Đ -> d/D)."""
+    """Strip Vietnamese diacritics, e.g. `Bất động sản` becomes `Bat dong san`."""
     s = s.replace("đ", "d").replace("Đ", "D")
     s = unicodedata.normalize("NFD", s)
     return "".join(c for c in s if unicodedata.category(c) != "Mn")
 
 
 def slug(s: str) -> str:
+    """Convert text to an upper-case ASCII slug joined by underscores.
+
+    Args:
+        s: Input text.
+
+    Returns:
+        The slug, e.g. `BAT_DONG_SAN`.
+    """
     s = _fold_diacritics(str(s))
     s = re.sub(r"[^0-9A-Za-z]+", "_", s).strip("_")
     return s.upper()
@@ -203,7 +265,7 @@ def _load_yaml(path: Path) -> dict:
 
 
 def _load_all_domain_aliases() -> dict:
-    """Nạp toàn bộ alias từ config/entities/aliases/ (và fallback brand_aliases.yaml)."""
+    """Load all aliases from config/entities/aliases/ (falling back to brand_aliases.yaml)."""
     aliases_dir = ALIASES_DIR
     res = {
         "tickers": {},
@@ -224,7 +286,7 @@ def _load_all_domain_aliases() -> dict:
     raw_ind = _load_yaml(aliases_dir / "industries.yaml")
     res["industries"] = {str(k).strip(): list(v or []) for k, v in raw_ind.items()}
 
-    # Nations (Địa chính trị / Quốc gia)
+    # Nations (geopolitics / countries)
     raw_nations = _load_yaml(aliases_dir / "nations.yaml")
     if not raw_nations:
         # Fallback macro_geo
@@ -233,7 +295,7 @@ def _load_all_domain_aliases() -> dict:
         raw_nations = {k: v for k, v in raw_macro.items() if k not in macro_themes}
     res["nations"] = raw_nations
 
-    # Themes (Chủ đề vĩ mô)
+    # Themes (macro themes)
     raw_themes = _load_yaml(aliases_dir / "themes.yaml")
     if not raw_themes:
         # Fallback macro_geo
@@ -256,6 +318,15 @@ def _load_all_domain_aliases() -> dict:
 # Build
 # ----------------------------------------------------------------------------
 def build(data_root: Path, out_dir: Path) -> dict:
+    """Build the entity catalog and write all output files.
+
+    Args:
+        data_root: Root of the FRA data folder.
+        out_dir: Directory that receives the generated files.
+
+    Returns:
+        The statistics dict also written to `stats.json`.
+    """
     td = data_root / "trading_data"
     cd = data_root / "company_data"
     ic = data_root / "industry_classification"
@@ -279,7 +350,7 @@ def build(data_root: Path, out_dir: Path) -> dict:
     os_codes = set(osx.Ticker.astype(str).str.strip())
     ind_codes = set(ind.ticker.astype(str).str.strip())
 
-    # GICS mới nhất / ticker
+    # Latest GICS per ticker
     ind = ind.copy()
     ind["date"] = pd.to_datetime(ind["date"])
     latest = ind.sort_values("date").groupby("ticker").tail(1)
@@ -290,13 +361,13 @@ def build(data_root: Path, out_dir: Path) -> dict:
         for r in latest.itertuples()
     }
 
-    # OS (số lượng cổ phiếu lưu hành) mới nhất / ticker
+    # Latest OS (shares outstanding) per ticker
     osx = osx.copy()
     osx["Date"] = pd.to_datetime(osx["Date"])
     os_latest = osx.sort_values("Date").groupby("Ticker").tail(1)
     os_map = {str(r.Ticker).strip(): int(r.OS) for r in os_latest.itertuples() if pd.notna(r.OS)}
 
-    # Vốn hóa & Ngày hoạt động mới nhất / ticker (từ market_caps.parquet)
+    # Latest market cap and activity date per ticker (from market_caps.parquet)
     mc_copy = mc.copy()
     mc_copy["Date"] = pd.to_datetime(mc_copy["Date"])
     mc_latest = mc_copy.sort_values("Date").groupby("Ticker").tail(1)
@@ -316,7 +387,7 @@ def build(data_root: Path, out_dir: Path) -> dict:
 
     entities: list[dict] = []
 
-    # --- 1) SECURITIES: cổ phiếu / ETF / khác (union mọi nguồn có mã) -------
+    # --- 1) SECURITIES: stocks / ETFs / other (union of every source with a code) ---
     all_codes = set(comp_name) | mc_codes | os_codes | ind_codes | etf_codes
     for code in sorted(all_codes):
         kind = classify_code(code, etf_codes)
@@ -377,7 +448,7 @@ def build(data_root: Path, out_dir: Path) -> dict:
         }
         entities.append(ent)
 
-    # --- 2) INDEX: chỉ số ----------------------------------------------------
+    # --- 2) INDEX ------------------------------------------------------------
     for code in sorted(set(idx.Ticker.astype(str).str.strip())):
         meta = INDEX_META.get(code, {"name": code, "aliases": [code], "exchange": None})
         entities.append({
@@ -390,7 +461,7 @@ def build(data_root: Path, out_dir: Path) -> dict:
             "sources": ["trading_data/indices.parquet"],
         })
 
-    # --- 3) EXCHANGE: sàn ----------------------------------------------------
+    # --- 3) EXCHANGE ---------------------------------------------------------
     for ex in EXCHANGES:
         entities.append({
             "entity_id": f"EXCHANGE:{ex['code']}",
@@ -402,7 +473,7 @@ def build(data_root: Path, out_dir: Path) -> dict:
             "sources": ["static/derived"],
         })
 
-    # --- 4) INDUSTRY: ngành GICS 3 cấp --------------------------------------
+    # --- 4) INDUSTRY: three GICS levels -------------------------------------
     g1 = latest.groupby("GICS1_name").ticker.nunique()
     for name, n in g1.items():
         entities.append(_industry("GICS1", name, None, int(n), ind_aliases))
@@ -427,7 +498,7 @@ def build(data_root: Path, out_dir: Path) -> dict:
             "sources": ["config/entities/aliases/nations.yaml"],
         })
 
-    # --- 6) MACRO_THEME (Vĩ mô & Chủ đề kinh tế) ----------------------------
+    # --- 6) MACRO_THEME (macro and economic themes) -------------------------
     for code, info in all_domain_aliases["themes"].items():
         canonical = info.get("canonical_name", code)
         aliases = list(info.get("aliases", [canonical]))
@@ -495,6 +566,7 @@ def build(data_root: Path, out_dir: Path) -> dict:
 
 
 def _sources_for(code, comp_name, etf_codes, mc_codes, os_codes, gics):
+    """List the source files that contain the given code."""
     s = []
     if code in etf_codes: s.append("company_data/etf_name.xlsx")
     if code in comp_name: s.append("company_data/company_name.xlsx")
@@ -545,7 +617,7 @@ def _write_csv(path: Path, entities: list[dict]) -> None:
 
 
 def _write_xlsx(path: Path, entities: list[dict], archived_entities: list[dict] | None = None) -> None:
-    """Workbook đa sheet theo loại — chuẩn legacy dễ tra cứu và đăng ký."""
+    """Write a multi-sheet workbook grouped by entity type for lookup and registration."""
 
     def alias2(e):
         a = e.get("aliases") or []
@@ -634,7 +706,7 @@ def _write_xlsx(path: Path, entities: list[dict], archived_entities: list[dict] 
                    "sheet": _SHEET_OF.get(t, "")} for t in counts]
     index_rows.append({"type": "TỔNG", "count": sum(counts.values()), "description": "", "sheet": ""})
 
-    # Sheet hướng dẫn: người dùng cuối đăng ký bằng giá trị cột `code`.
+    # Guide sheet: end users register entities by the value of the `code` column.
     guide = pd.DataFrame([
         {"Khoá trong file đăng ký": "tickers", "Loại thực thể": "Cổ phiếu / ETF / khác",
          "Nhập giá trị ở CỘT": "code", "Sheet tra cứu": "Securities", "Ví dụ": "HPG"},
@@ -691,7 +763,7 @@ _SHEET_OF = {
 
 
 def _format_workbook(path: Path, sheets: dict) -> None:
-    """Freeze header + AutoFilter + độ rộng cột hợp lý."""
+    """Freeze the header row, add an auto filter and set column widths."""
     from openpyxl import load_workbook
     from openpyxl.styles import Alignment, Font, PatternFill
 
@@ -717,7 +789,7 @@ def _format_workbook(path: Path, sheets: dict) -> None:
 
 def _write_taxonomy(path: Path, entities: list[dict], latest: pd.DataFrame) -> None:
     tax = {"types": dict(Counter(e["type"] for e in entities))}
-    # cây GICS
+    # GICS tree
     tree: dict = {}
     for (g1, g2, g3), _ in latest.groupby(["GICS1_name", "GICS2_name", "GICS3_name"]):
         tree.setdefault(clean_name(g1), {}).setdefault(clean_name(g2), set()).add(clean_name(g3))
@@ -748,6 +820,14 @@ def _stats(active_entities, archived_entities, all_codes, comp_name, gics) -> di
 
 
 def main(argv=None) -> int:
+    """Run the entity catalog build command line.
+
+    Args:
+        argv: Command-line arguments. Defaults to `sys.argv`.
+
+    Returns:
+        Exit code 0 on success, 2 when the data root does not exist.
+    """
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
     ap = argparse.ArgumentParser(description="Build entity master list từ dữ liệu FRA - Data")

@@ -1,4 +1,4 @@
-"""Gói thư viện kiến trúc Lakehouse Data Plane phân tán trên SharePoint Sandbox."""
+"""Provide the distributed Lakehouse Data Plane library on the SharePoint Sandbox."""
 
 from __future__ import annotations
 

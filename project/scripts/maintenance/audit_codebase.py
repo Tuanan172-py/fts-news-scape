@@ -1,4 +1,4 @@
-"""Kiểm tra và tra soát đối chiếu trạng thái Git, cấu trúc codebase và ranh giới kiến trúc."""
+"""Audit Git state, codebase structure and architecture boundaries."""
 from __future__ import annotations
 
 import ast
@@ -34,12 +34,12 @@ FORBIDDEN_EXTENSIONS = {".pyc", ".pyd", ".db", ".db-wal", ".db-shm", ".sqlite", 
 
 
 class AuditResult(NamedTuple):
-    """Kết quả kiểm tra chi tiết từng hạng mục.
+    """Result of one audit category.
 
     Attributes:
-        category: Tên danh mục kiểm tra.
-        status: Trạng thái đánh giá (PASS, WARN, FAIL).
-        details: Danh sách thông tin chi tiết hoặc tệp vi phạm.
+        category: Audit category name.
+        status: Evaluation status (PASS, WARN, FAIL).
+        details: Detail messages or offending files.
     """
     category: str
     status: str
@@ -47,14 +47,14 @@ class AuditResult(NamedTuple):
 
 
 def run_git_command(args: list[str], cwd: Path) -> tuple[int, str]:
-    """Thực thi lệnh git và trả về mã thoát cùng nội dung đầu ra.
+    """Run a git command and return its exit code and output.
 
     Args:
-        args: Danh sách tham số dòng lệnh.
-        cwd: Thư mục thực thi.
+        args: Git arguments, without the `git` executable.
+        cwd: Working directory for the command.
 
     Returns:
-        Bộ giá trị gồm mã thoát và chuỗi đầu ra đã giải mã utf-8.
+        Tuple of exit code and stripped UTF-8 decoded stdout; on failure to launch, 1 and the error message.
     """
     try:
         proc = subprocess.run(
@@ -72,13 +72,13 @@ def run_git_command(args: list[str], cwd: Path) -> tuple[int, str]:
 
 
 def check_git_status(repo_root: Path) -> list[AuditResult]:
-    """Tra soát trạng thái vùng làm việc Git và đối chiếu remote.
+    """Check the Git working tree state and synchronization with the remote.
 
     Args:
         repo_root: Đường dẫn gốc của repository.
 
     Returns:
-        Danh sách các kết quả kiểm tra trạng thái Git.
+        Audit results for the Git state.
     """
     results: list[AuditResult] = []
 
@@ -146,13 +146,13 @@ def check_git_status(repo_root: Path) -> list[AuditResult]:
 
 
 def check_ast_and_syntax(repo_root: Path) -> AuditResult:
-    """Kiểm tra tính hợp lệ của cú pháp AST trên toàn bộ tệp mã nguồn Python.
+    """Validate the AST syntax of every Python source file.
 
     Args:
         repo_root: Đường dẫn gốc của repository.
 
     Returns:
-        Kết quả kiểm tra cú pháp AST.
+        Audit result for AST syntax.
     """
     syntax_errors: list[str] = []
     scanned_count = 0
@@ -176,13 +176,13 @@ def check_ast_and_syntax(repo_root: Path) -> AuditResult:
 
 
 def check_blacklisted_terms(repo_root: Path) -> AuditResult:
-    """Quét và phát hiện các cụm từ thuộc danh mục từ cấm trong docstrings và mã nguồn.
+    """Scan docstrings and source for phrases on the banned-phrase list.
 
     Args:
         repo_root: Đường dẫn gốc của repository.
 
     Returns:
-        Kết quả kiểm tra danh mục từ cấm.
+        Audit result for banned phrases.
     """
     violations: list[str] = []
     src_dirs = [repo_root / "project" / "src", repo_root / "project" / "scripts"]
@@ -215,13 +215,13 @@ def check_blacklisted_terms(repo_root: Path) -> AuditResult:
 
 
 def check_forbidden_files_in_git(repo_root: Path) -> AuditResult:
-    """Kiểm tra sự hiện diện của các tệp nhị phân hoặc dữ liệu cấm trong Git tracking.
+    """Detect forbidden binary or data files tracked by Git.
 
     Args:
         repo_root: Đường dẫn gốc của repository.
 
     Returns:
-        Kết quả kiểm tra tệp cấm được theo dõi.
+        Audit result for forbidden tracked files.
     """
     code, out = run_git_command(["ls-files"], repo_root)
     if code != 0:
@@ -241,13 +241,13 @@ def check_forbidden_files_in_git(repo_root: Path) -> AuditResult:
 
 
 def run_full_audit(repo_root: Path | None = None) -> dict[str, Any]:
-    """Thực hiện kiểm toán toàn bộ codebase và trả về từ điển kết quả.
+    """Run the full codebase audit and return the results.
 
     Args:
-        repo_root: Thư mục gốc repository. Tự động nhận diện nếu để None.
+        repo_root: Repository root; detected automatically when None.
 
     Returns:
-        Từ điển chứa trạng thái và chi tiết từng danh mục kiểm toán.
+        Dict with the overall status, repository root and per-category status and details.
     """
     if repo_root is None:
         script_dir = Path(__file__).resolve().parent
@@ -279,10 +279,10 @@ def run_full_audit(repo_root: Path | None = None) -> dict[str, Any]:
 
 
 def main() -> int:
-    """Thực thi quy trình kiểm tra và in bảng báo cáo trạng thái.
+    """Run the audit and print the status report.
 
     Returns:
-        Mã thoát 0 nếu đạt chuẩn hoặc chỉ có cảnh báo, 1 nếu có vi phạm nghiêm trọng.
+        Exit code 0 when the audit passes or only warns, 1 on a failure.
     """
     script_dir = Path(__file__).resolve().parent
     repo_root = script_dir.parent.parent

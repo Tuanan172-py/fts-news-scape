@@ -1,4 +1,4 @@
-"""Đo bài chờ phân tích và quyết định thời điểm mở đợt Article Lane."""
+"""Measure articles awaiting analysis and decide when to open an Article Lane wave."""
 
 from __future__ import annotations
 
@@ -12,12 +12,12 @@ from src.ops.store import VN_TZ, now_vn, parse_iso
 
 @dataclass
 class SensorReading:
-    """Kết quả đo bài chờ trong phạm vi ngày theo dõi.
+    """Measurement of pending articles within the monitored date scope.
 
     Attributes:
-        per_date: Số bài chờ theo ngày xuất bản, cũ trước.
-        oldest_fetched_at: Thời điểm cào của bài chờ lâu nhất.
-        backlog_all: Tổng bài chờ mọi ngày (chỉ để báo cáo).
+        per_date: Pending article count per publication date, oldest first.
+        oldest_fetched_at: Fetch time of the longest-waiting pending article.
+        backlog_all: Total pending articles across all dates (for reporting only).
     """
 
     per_date: list[tuple[str, int]] = field(default_factory=list)
@@ -26,25 +26,25 @@ class SensorReading:
 
     @property
     def total(self) -> int:
-        """Tổng bài chờ trong phạm vi theo dõi."""
+        """Return the total pending articles within the monitored scope."""
         return sum(n for _, n in self.per_date)
 
     @property
     def target_date(self) -> str | None:
-        """Ngày cũ nhất còn bài chờ, là ngày đợt kế tiếp sẽ lấy bài."""
+        """Return the oldest date that still has pending articles, which the next wave will take."""
         for d, n in self.per_date:
             if n > 0:
                 return d
         return None
 
     def oldest_age_minutes(self, now: datetime | None = None) -> float | None:
-        """Tính tuổi của bài chờ lâu nhất.
+        """Compute the age of the longest-waiting pending article.
 
         Args:
-            now: Thời điểm so sánh.
+            now: Comparison time.
 
         Returns:
-            Số phút, hoặc None khi không có bài chờ.
+            Number of minutes, or None when nothing is pending.
         """
         if self.oldest_fetched_at is None:
             return None
@@ -52,14 +52,14 @@ class SensorReading:
 
 
 def scope_dates(lookback_days: int, now: datetime | None = None) -> list[str]:
-    """Liệt kê các ngày xuất bản trong phạm vi theo dõi, cũ trước.
+    """List the publication dates in the monitored scope, oldest first.
 
     Args:
-        lookback_days: Số ngày lùi lại ngoài hôm nay.
-        now: Thời điểm tham chiếu.
+        lookback_days: Number of days to look back besides today.
+        now: Reference time.
 
     Returns:
-        Danh sách chuỗi YYYY-MM-DD.
+        List of YYYY-MM-DD strings.
     """
     today = (now or now_vn()).date()
     return [(today - timedelta(days=i)).isoformat()
@@ -69,21 +69,21 @@ def scope_dates(lookback_days: int, now: datetime | None = None) -> list[str]:
 def read_pending(db_path: Path, lookback_days: int, *, now: datetime | None = None,
                  with_backlog: bool = False,
                  exclude: set[str] | None = None) -> SensorReading:
-    """Đếm bài chờ theo đúng bộ chọn của `article_pack.load_candidates`.
+    """Count pending articles with the same selector as `article_pack.load_candidates`.
 
-    Bài trong `exclude` (đang thuộc một đợt chưa xong hoặc đã hết lượt thử) không
-    được tính, kể cả vào tuổi bài chờ lâu nhất, nên luật tuổi T2 không bắn lại vô hạn
-    vì một bài không bao giờ qua được cổng DoD.
+    Articles in `exclude` (belonging to an unfinished wave or out of attempts) are not
+    counted, including in the age of the longest-waiting article, so the T2 age rule does not
+    fire endlessly because of an article that never passes the DoD gate.
 
     Args:
-        db_path: Đường dẫn `monocle.db`.
-        lookback_days: Số ngày lùi lại ngoài hôm nay.
-        now: Thời điểm tham chiếu.
-        with_backlog: Đếm thêm tổng bài chờ mọi ngày.
-        exclude: Định danh bài phải bỏ qua.
+        db_path: Path of `monocle.db`.
+        lookback_days: Number of days to look back besides today.
+        now: Reference time.
+        with_backlog: Also count the total pending articles across all dates.
+        exclude: Article identifiers to skip.
 
     Returns:
-        SensorReading.
+        The SensorReading.
     """
     from scripts.article_pack import load_candidates
 
@@ -116,14 +116,14 @@ def read_pending(db_path: Path, lookback_days: int, *, now: datetime | None = No
 
 
 def in_windows(now: datetime, windows: list[str]) -> str | None:
-    """Kiểm tra thời điểm có nằm trong một khung giờ `HH:MM-HH:MM` không.
+    """Check whether a time falls inside a `HH:MM-HH:MM` window.
 
     Args:
-        now: Thời điểm kiểm tra.
-        windows: Danh sách khung giờ.
+        now: Time to check.
+        windows: List of time windows.
 
     Returns:
-        Chuỗi khung giờ khớp, hoặc None.
+        The matching window string, or None.
     """
     minutes = now.hour * 60 + now.minute
     for w in windows:
@@ -139,30 +139,30 @@ def in_windows(now: datetime, windows: list[str]) -> str | None:
 
 
 def cooldown_active(until: str | None, *, now: datetime | None = None) -> bool:
-    """Cho biết sensor còn trong thời gian nghỉ sau đợt hỏng hay không.
+    """Report whether the sensor is still in its cooldown after a failed wave.
 
     Args:
-        until: Mốc hết nghỉ dạng ISO, hoặc None khi không có.
-        now: Thời điểm xét, mặc định là hiện tại.
+        until: Cooldown end time in ISO form, or None when absent.
+        now: Time to evaluate, defaulting to the present.
 
     Returns:
-        True khi `until` còn ở tương lai.
+        True when `until` is still in the future.
     """
     return bool(until) and (now or now_vn()) < parse_iso(until)
 
 
 def decide(reading: SensorReading, cfg: dict, *, now: datetime | None = None,
            force: bool = False) -> tuple[bool, str, str]:
-    """Áp ba luật kích hoạt T1 khối lượng, T2 tuổi, T3 khung giờ.
+    """Apply the three trigger rules: T1 volume, T2 age, T3 time window.
 
     Args:
-        reading: Kết quả đo bài chờ.
-        cfg: Mục `sensor` của cấu hình.
-        now: Thời điểm đánh giá.
-        force: Bỏ qua luật, mở đợt khi còn bài chờ.
+        reading: Pending-article measurement.
+        cfg: The `sensor` section of the configuration.
+        now: Evaluation time.
+        force: Skip the rules and open a wave when articles are pending.
 
     Returns:
-        Bộ ba (mở đợt, mã luật, lý do).
+        Triple (open a wave, rule code, reason).
     """
     now = now or now_vn()
     if now.tzinfo is None:

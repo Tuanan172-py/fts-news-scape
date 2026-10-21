@@ -1,26 +1,4 @@
-"""Đọc số đo token, áp suất ngữ cảnh và chi phí thật từ runtime DSH.
-
-Module này là nguồn số liệu duy nhất cho `token_ledger.py`, `ctx_probe.py` và
-`pipeline_radar.py token`. Nó thay thế hoàn toàn các hằng số ước lượng cũ
-(450 token/bài tầng L1, 1.470 token/bài tầng Gold) vốn lệch thực tế 21-41 lần.
-
-Sáu luật kế toán bắt buộc, mỗi luật đã đối soát bằng số thật trên máy này:
-
-1. `inputTokens` trong event DSH là phần **chưa cache**, không phải kích thước
-   prompt. Hiểu nhầm trường này làm hụt chi phí khoảng 30 lần.
-2. Trong một request, `inputTokens + cacheReadTokens + outputTokens == totalTokens`.
-   `totalTokens` KHÔNG tích lũy, nên tuyệt đối không cộng dồn nó qua các request.
-3. `reasoningTokens` là tập con của `outputTokens`. Cộng cả hai là đếm trùng.
-4. `cacheWriteTokens` luôn bằng 0 với adapter DeepSeek, không dựng dòng chi phí cho nó.
-5. DSH không lưu bất kỳ dữ liệu giá nào, nên tiền luôn tính ngoài từ
-   `config/token_pricing.yaml`.
-6. `contextPressure.surfaceTokens` là `systemTokens + messageTokens` và KHÔNG gồm
-   `toolsTokens`; `pressureTokens` là tổng input của mẫu mới nhất và KHÔNG gồm output.
-
-Chi phí của agent con KHÔNG xuất hiện trong `tokenUsage` của phiên cha: mỗi con là
-một Session riêng có tệp projcache riêng. Muốn biết chi phí trọn một wave phải cộng
-cả phiên cha lẫn từng phiên con, xem :func:`wave_usage`.
-"""
+"""Read real token, context-pressure and cost measurements from the DSH runtime."""
 from __future__ import annotations
 
 import json
@@ -34,53 +12,71 @@ from pathlib import Path
 
 import yaml
 
+# Source of truth for `token_ledger.py`, `ctx_probe.py` and `pipeline_radar.py token`.
+#
+# Six mandatory accounting rules, each checked against real numbers on this machine:
+# 1. `inputTokens` in a DSH event is the UNCACHED part, not the prompt size. Misreading it
+#    understates cost by about 30 times.
+# 2. Within one request, `inputTokens + cacheReadTokens + outputTokens == totalTokens`.
+#    `totalTokens` does NOT accumulate, so never sum it across requests.
+# 3. `reasoningTokens` is a subset of `outputTokens`; adding both counts it twice.
+# 4. `cacheWriteTokens` is always 0 with the DeepSeek adapter; do not build a cost line for it.
+# 5. DSH stores no pricing data, so money is always computed outside from
+#    `config/token_pricing.yaml`.
+# 6. `contextPressure.surfaceTokens` is `systemTokens + messageTokens` and EXCLUDES
+#    `toolsTokens`; `pressureTokens` is the total input of the latest sample and EXCLUDES output.
+#
+# Sub-agent cost does NOT appear in the parent session's `tokenUsage`: each child is its own
+# Session with its own projcache file. The full cost of a wave is the parent plus every child
+# session; see :func:`wave_usage`.
+
 ZSTD_MAGIC = b"\x28\xb5\x2f\xfd"
 
 _PRICING_PATH = Path(__file__).resolve().parents[2] / "config" / "token_pricing.yaml"
 
 
 def dsh_home() -> Path:
-    """Xác định thư mục gốc của DSH trên máy hiện tại.
+    """Determine the DSH home directory on this machine.
 
     Returns:
-        Đường dẫn tới `%DSH_HOME%` nếu biến môi trường được đặt, ngược lại là `~/.dsh`.
+        Path in `%DSH_HOME%` if the environment variable is set, otherwise `~/.dsh`.
     """
     env = os.environ.get("DSH_HOME")
     return Path(env) if env else Path.home() / ".dsh"
 
 
 def projcache_dir() -> Path:
-    """Trả về thư mục chứa các tệp checkpoint projection của phiên DSH.
+    """Return the directory holding the projection checkpoint files of DSH sessions.
 
     Returns:
-        Đường dẫn tới thư mục `storages/session_projcache/sessions`.
+        Path of the `storages/session_projcache/sessions` directory.
     """
     return dsh_home() / "storages" / "session_projcache" / "sessions"
 
 
 def sessions_dir() -> Path:
-    """Trả về thư mục chứa nhật ký JSONL của các phiên DSH.
+    """Return the directory holding the JSONL logs of DSH sessions.
 
     Returns:
-        Đường dẫn tới thư mục `sessions`.
+        Path of the `sessions` directory.
     """
     return dsh_home() / "sessions"
 
 
 # ---------------------------------------------------------------------------
-# Bảng giá
+# Pricing
 # ---------------------------------------------------------------------------
 def load_pricing(path: str | Path | None = None) -> dict:
-    """Nạp bảng giá token từ tệp cấu hình.
+    """Load the token price table from the config file.
 
     Args:
-        path: Đường dẫn tệp giá. Mặc định dùng `config/token_pricing.yaml`.
+        path: Pricing file path. Defaults to `config/token_pricing.yaml`.
 
     Returns:
-        Từ điển cấu hình giá đã phân tích cú pháp.
+        Parsed pricing configuration.
 
     Raises:
-        FileNotFoundError: Khi tệp giá không tồn tại.
+        FileNotFoundError: If the pricing file does not exist.
     """
     p = Path(path) if path else _PRICING_PATH
     if not p.exists():
@@ -90,14 +86,14 @@ def load_pricing(path: str | Path | None = None) -> dict:
 
 
 def is_peak(ts: datetime | None = None, pricing: dict | None = None) -> bool:
-    """Xác định một thời điểm có rơi vào khung giờ cao điểm của nhà cung cấp không.
+    """Determine whether a time falls in the provider's peak-hours window.
 
     Args:
-        ts: Thời điểm cần xét. Mặc định là thời điểm hiện tại theo UTC.
-        pricing: Cấu hình giá đã nạp sẵn. Mặc định tự nạp từ tệp.
+        ts: Time to check. Defaults to the current UTC time.
+        pricing: Preloaded pricing configuration. Defaults to loading it from the file.
 
     Returns:
-        True khi thời điểm nằm trong khung cao điểm, ngược lại False.
+        True if the time is inside the peak window, otherwise False.
     """
     pricing = pricing or load_pricing()
     ts = (ts or datetime.now(timezone.utc)).astimezone(timezone.utc)
@@ -113,19 +109,19 @@ def is_peak(ts: datetime | None = None, pricing: dict | None = None) -> bool:
 def billed_usd(uncached: int, cache_read: int, output: int, *,
                peak: bool | None = None, ts: datetime | None = None,
                model: str = "deepseek-flash", pricing: dict | None = None) -> float:
-    """Tính chi phí tiền tệ từ ba rổ token rời rạc.
+    """Compute the monetary cost from three separate token buckets.
 
     Args:
-        uncached: Số token đầu vào không trúng bộ nhớ đệm.
-        cache_read: Số token đầu vào trúng bộ nhớ đệm.
-        output: Số token đầu ra, đã bao gồm phần suy luận.
-        peak: Ép dùng giá cao điểm hoặc thấp điểm. Mặc định suy ra từ `ts`.
-        ts: Thời điểm phát sinh chi phí, dùng khi `peak` không được chỉ định.
-        model: Tên model tra trong bảng giá.
-        pricing: Cấu hình giá đã nạp sẵn.
+        uncached: Input tokens that missed the cache.
+        cache_read: Input tokens that hit the cache.
+        output: Output tokens, including reasoning.
+        peak: Force peak or off-peak pricing. Defaults to being derived from `ts`.
+        ts: Time the cost was incurred, used when `peak` is not given.
+        model: Model name looked up in the price table.
+        pricing: Preloaded pricing configuration.
 
     Returns:
-        Chi phí quy đổi ra USD.
+        Cost in USD.
     """
     pricing = pricing or load_pricing()
     if peak is None:
@@ -138,11 +134,29 @@ def billed_usd(uncached: int, cache_read: int, output: int, *,
 
 
 # ---------------------------------------------------------------------------
-# Checkpoint projection — nguồn tổng hợp theo phiên
+# Projection checkpoint: per-session aggregate source
 # ---------------------------------------------------------------------------
 @dataclass
 class SessionUsage:
-    """Số đo tổng hợp của một phiên DSH đọc từ tệp checkpoint projection."""
+    """Aggregate measurements of one DSH session read from a projection checkpoint file.
+
+    Attributes:
+        session_id: Session identifier (checkpoint file stem).
+        cwd: Working directory of the session.
+        uncached_input: Input tokens that missed the cache.
+        output: Output tokens.
+        cache_read: Input tokens that hit the cache.
+        cache_write: Cache write tokens.
+        turns: Last turn number.
+        steps: Last step number.
+        surface_tokens: System plus message tokens, excluding tools.
+        pressure_tokens: Total input of the latest sample, excluding output.
+        context_window: Context window size in tokens.
+        seq: Sequence number of the `tokenUsage` row.
+        mtime: Modification time of the checkpoint file, epoch seconds.
+        path: Checkpoint file path.
+        created_at: Session creation time, epoch seconds.
+    """
 
     session_id: str
     cwd: str = ""
@@ -162,44 +176,44 @@ class SessionUsage:
 
     @property
     def is_child(self) -> bool:
-        """Cho biết phiên có phải phiên con do agent cha sinh ra hay không.
+        """Whether the session is a child spawned by a parent agent.
 
-        Phiên cấp cao nhất mang mã `session-<uuid>`, còn phiên con của lượt gọi agent
-        mang mã uuid trần. Đây là dấu hiệu duy nhất trong checkpoint phân biệt được
-        worker với phiên điều phối, vì phiên con kế thừa preset của cha.
+        A top-level session has the id `session-<uuid>`, while the child session of an agent
+        call has a bare uuid. This is the only marker in the checkpoint that tells a worker
+        from an orchestrating session, because a child inherits the parent's preset.
 
         Returns:
-            True khi mã phiên không mang tiền tố `session-`.
+            True when the session id lacks the `session-` prefix.
         """
         return not self.session_id.startswith("session-")
 
     @property
     def quota_tokens(self) -> int:
-        """Tổng token tính vào hạn mức, gồm cả phần trúng bộ nhớ đệm.
+        """Total tokens counted against the quota, including cache hits.
 
         Returns:
-            Tổng của ba rổ token đầu vào chưa cache, đầu vào trúng cache và đầu ra.
+            Sum of the three buckets: uncached input, cached input and output.
         """
         return self.uncached_input + self.cache_read + self.output
 
     @property
     def pressure_ratio(self) -> float:
-        """Tỷ lệ lấp đầy cửa sổ ngữ cảnh của phiên.
+        """Fill ratio of the session context window.
 
         Returns:
-            Giá trị từ 0 đến 1; trả về 0 khi chưa biết kích thước cửa sổ.
+            A value from 0 to 1; 0 when the window size is unknown.
         """
         return (self.pressure_tokens / self.context_window) if self.context_window else 0.0
 
     def usd(self, *, peak: bool | None = None, pricing: dict | None = None) -> float:
-        """Quy đổi số đo của phiên ra chi phí tiền tệ.
+        """Convert the session measurements to a monetary cost.
 
         Args:
-            peak: Ép dùng giá cao điểm hoặc thấp điểm.
-            pricing: Cấu hình giá đã nạp sẵn.
+            peak: Force peak or off-peak pricing.
+            pricing: Preloaded pricing configuration.
 
         Returns:
-            Chi phí USD của phiên.
+            Session cost in USD.
         """
         ts = datetime.fromtimestamp(self.mtime, tz=timezone.utc) if self.mtime else None
         return billed_usd(self.uncached_input, self.cache_read, self.output,
@@ -207,14 +221,14 @@ class SessionUsage:
 
 
 def _row_val(rows: dict, key: str) -> dict:
-    """Bóc phần giá trị của một hàng projection.
+    """Extract the value part of one projection row.
 
     Args:
-        rows: Từ điển các hàng projection của phiên.
-        key: Tên hàng cần lấy.
+        rows: Projection rows of the session.
+        key: Name of the row to take.
 
     Returns:
-        Nội dung trường `val` của hàng, hoặc từ điển rỗng khi không có.
+        Content of the row's `val` field, or an empty dict if absent.
     """
     node = rows.get(key) or {}
     val = node.get("val")
@@ -222,13 +236,13 @@ def _row_val(rows: dict, key: str) -> dict:
 
 
 def read_projcache(path: str | Path) -> SessionUsage | None:
-    """Đọc một tệp checkpoint projection thành số đo phiên.
+    """Read one projection checkpoint file into session measurements.
 
     Args:
-        path: Đường dẫn tệp JSON checkpoint.
+        path: Path of the JSON checkpoint file.
 
     Returns:
-        Đối tượng số đo phiên, hoặc None khi tệp hỏng hoặc không đúng định dạng.
+        The session measurements, or None if the file is corrupt or malformed.
     """
     p = Path(path)
     try:
@@ -266,13 +280,13 @@ def read_projcache(path: str | Path) -> SessionUsage | None:
 
 
 def _created_epoch(raw) -> float:
-    """Đổi mốc tạo phiên dạng mili giây của checkpoint sang epoch giây.
+    """Convert the checkpoint session creation time from milliseconds to epoch seconds.
 
     Args:
-        raw: Giá trị `identity.createdAt`, dạng số hoặc chuỗi mili giây.
+        raw: Value of `identity.createdAt`, a number or a string of milliseconds.
 
     Returns:
-        Epoch giây, hoặc 0 khi thiếu hoặc không đọc được.
+        Epoch seconds, or 0 when missing or unreadable.
     """
     try:
         return int(raw) / 1000.0
@@ -281,14 +295,14 @@ def _created_epoch(raw) -> float:
 
 
 def iter_sessions(cwd_filter: str | None = None, *, since: float = 0.0) -> list[SessionUsage]:
-    """Liệt kê số đo của các phiên DSH, mới nhất trước.
+    """List the measurements of DSH sessions, newest first.
 
     Args:
-        cwd_filter: Chỉ giữ phiên có thư mục làm việc chứa chuỗi này. None là lấy tất cả.
-        since: Chỉ giữ phiên có thời điểm sửa đổi lớn hơn mốc epoch này.
+        cwd_filter: Keep only sessions whose working directory contains this string. None keeps all.
+        since: Keep only sessions modified after this epoch time.
 
     Returns:
-        Danh sách số đo phiên sắp xếp giảm dần theo thời điểm sửa đổi.
+        Session measurements sorted by modification time, descending.
     """
     root = projcache_dir()
     if not root.is_dir():
@@ -306,16 +320,16 @@ def iter_sessions(cwd_filter: str | None = None, *, since: float = 0.0) -> list[
 
 
 # ---------------------------------------------------------------------------
-# Nhật ký JSONL — nguồn chi tiết theo từng bước
+# JSONL log: per-step detail source
 # ---------------------------------------------------------------------------
 def _decode_with_cli(blob: bytes) -> bytes | None:
-    """Giải nén bằng chương trình `zstd` ngoài nếu có sẵn trên máy.
+    """Decompress with the external `zstd` program if installed.
 
     Args:
-        blob: Dữ liệu nén nhiều khung.
+        blob: Multi-frame compressed data.
 
     Returns:
-        Dữ liệu đã giải nén, hoặc None khi không có chương trình hoặc lệnh thất bại.
+        Decompressed data, or None if the program is missing or the command fails.
     """
     exe = shutil.which("zstd")
     if not exe:
@@ -336,16 +350,16 @@ def _decode_with_cli(blob: bytes) -> bytes | None:
 
 
 def _decode_with_python(blob: bytes) -> bytes | None:
-    """Giải nén bằng thư viện zstd của Python nếu môi trường có cài.
+    """Decompress with a Python zstd library if installed.
 
-    Quét thủ công theo số nhận dạng khung vì tệp nhật ký là chuỗi nhiều khung nối
-    tiếp; gọi giải nén một lần chỉ trả về khung đầu tiên.
+    Frames are located manually by magic number because the log file is a sequence of
+    concatenated frames; a single decompress call returns only the first frame.
 
     Args:
-        blob: Dữ liệu nén nhiều khung.
+        blob: Multi-frame compressed data.
 
     Returns:
-        Dữ liệu đã giải nén, hoặc None khi không có thư viện phù hợp.
+        Decompressed data, or None if no suitable library is available.
     """
     decompress = None
     try:
@@ -375,15 +389,15 @@ def _decode_with_python(blob: bytes) -> bytes | None:
 
 
 def _decode_with_node(blob: bytes) -> bytes | None:
-    """Giải nén bằng Node bằng cách xử lý từng khung một.
+    """Decompress with Node, one frame at a time.
 
-    DSH chạy trên Node nên đây là đường dự phòng gần như luôn dùng được.
+    DSH runs on Node, so this fallback is almost always available.
 
     Args:
-        blob: Dữ liệu nén nhiều khung.
+        blob: Multi-frame compressed data.
 
     Returns:
-        Dữ liệu đã giải nén, hoặc None khi không gọi được Node.
+        Decompressed data, or None if Node cannot be called.
     """
     if not shutil.which("node"):
         return None
@@ -409,13 +423,13 @@ def _decode_with_node(blob: bytes) -> bytes | None:
 
 
 def _frame_spans(blob: bytes) -> list[list[int]]:
-    """Xác định vị trí bắt đầu và kết thúc của từng khung nén trong tệp.
+    """Locate the start and end of each compressed frame in the data.
 
     Args:
-        blob: Dữ liệu nén nhiều khung.
+        blob: Multi-frame compressed data.
 
     Returns:
-        Danh sách cặp chỉ số [bắt đầu, kết thúc) của mỗi khung.
+        List of [start, end) index pairs, one per frame.
     """
     starts: list[int] = []
     pos = blob.find(ZSTD_MAGIC)
@@ -427,17 +441,17 @@ def _frame_spans(blob: bytes) -> list[list[int]]:
 
 
 def decode_session_log(path: str | Path) -> str | None:
-    """Giải nén nhật ký phiên thành văn bản JSONL.
+    """Decompress a session log into JSONL text.
 
-    Thử lần lượt chương trình `zstd`, thư viện Python, rồi Node. Trả về None khi
-    không đường nào khả dụng; phía gọi phải xử lý được trường hợp này vì mọi số đo
-    cốt lõi vẫn lấy được từ checkpoint projection.
+    Tries the `zstd` program, then a Python library, then Node. Returns None when no route
+    is available; callers must handle this because every core measurement is still
+    available from the projection checkpoint.
 
     Args:
-        path: Đường dẫn tệp `session.v3.jsonl.zstd`.
+        path: Path of the `session.v3.jsonl.zstd` file.
 
     Returns:
-        Nội dung JSONL dạng văn bản, hoặc None khi không giải nén được.
+        JSONL content as text, or None if it cannot be decompressed.
     """
     p = Path(path)
     if not p.exists():
@@ -453,16 +467,16 @@ def decode_session_log(path: str | Path) -> str | None:
 
 
 def message_usage(path: str | Path) -> list[dict]:
-    """Bóc số đo token của từng thông điệp trợ lý trong một phiên.
+    """Extract the token measurements of each assistant message in a session.
 
-    Đây là đường duy nhất lấy được `reasoningTokens`, thứ không có trong checkpoint
-    projection nhưng cần để kiểm bất biến tắt suy luận của worker.
+    This is the only route to `reasoningTokens`, which the projection checkpoint lacks but
+    which is needed to check the worker invariant that reasoning is off.
 
     Args:
-        path: Đường dẫn tệp nhật ký phiên.
+        path: Path of the session log file.
 
     Returns:
-        Danh sách từ điển số đo theo thứ tự xuất hiện; rỗng khi không giải nén được.
+        Measurement dicts in order of appearance; empty if the log cannot be decompressed.
     """
     text = decode_session_log(path)
     if not text:
@@ -493,13 +507,13 @@ def message_usage(path: str | Path) -> list[dict]:
 
 
 def find_session_log(session_id: str) -> Path | None:
-    """Tìm tệp nhật ký JSONL tương ứng với một mã phiên.
+    """Find the JSONL log file of a session id.
 
     Args:
-        session_id: Mã phiên, có hoặc không có tiền tố `session-`.
+        session_id: Session id, with or without the `session-` prefix.
 
     Returns:
-        Đường dẫn tệp nhật ký, hoặc None khi không tìm thấy.
+        Path of the log file, or None if not found.
     """
     root = sessions_dir()
     if not root.is_dir():
@@ -518,11 +532,17 @@ def find_session_log(session_id: str) -> Path | None:
 
 
 # ---------------------------------------------------------------------------
-# Tổng hợp theo wave
+# Per-wave aggregation
 # ---------------------------------------------------------------------------
 @dataclass
 class WaveUsage:
-    """Số đo gộp của một đợt xử lý, gồm phiên điều phối và toàn bộ phiên con."""
+    """Combined measurements of one processing wave, covering the orchestrating session and all child sessions.
+
+    Attributes:
+        sessions: Sessions included in the wave.
+        reasoning_tokens: Total reasoning tokens read from the session logs.
+        reasoning_known: True if reasoning tokens could be read from at least one log.
+    """
 
     sessions: list[SessionUsage] = field(default_factory=list)
     reasoning_tokens: int = 0
@@ -530,59 +550,59 @@ class WaveUsage:
 
     @property
     def uncached_input(self) -> int:
-        """Tổng token đầu vào chưa trúng bộ nhớ đệm của cả đợt.
+        """Total uncached input tokens of the wave.
 
         Returns:
-            Tổng số token chưa cache.
+            Sum of uncached tokens.
         """
         return sum(s.uncached_input for s in self.sessions)
 
     @property
     def cache_read(self) -> int:
-        """Tổng token đầu vào trúng bộ nhớ đệm của cả đợt.
+        """Total cache-hit input tokens of the wave.
 
         Returns:
-            Tổng số token trúng cache.
+            Sum of cache-hit tokens.
         """
         return sum(s.cache_read for s in self.sessions)
 
     @property
     def output(self) -> int:
-        """Tổng token đầu ra của cả đợt.
+        """Total output tokens of the wave.
 
         Returns:
-            Tổng số token sinh ra.
+            Sum of generated tokens.
         """
         return sum(s.output for s in self.sessions)
 
     @property
     def quota_tokens(self) -> int:
-        """Tổng token tính vào hạn mức của cả đợt.
+        """Total tokens counted against the quota for the wave.
 
         Returns:
-            Tổng ba rổ token của mọi phiên trong đợt.
+            Sum of the three token buckets across every session in the wave.
         """
         return self.uncached_input + self.cache_read + self.output
 
     @property
     def hit_ratio(self) -> float:
-        """Tỷ lệ token đầu vào trúng bộ nhớ đệm.
+        """Share of input tokens that hit the cache.
 
         Returns:
-            Giá trị từ 0 đến 1; trả về 0 khi chưa có token đầu vào nào.
+            A value from 0 to 1; 0 when there are no input tokens.
         """
         total_in = self.uncached_input + self.cache_read
         return (self.cache_read / total_in) if total_in else 0.0
 
     def usd(self, *, peak: bool | None = None, pricing: dict | None = None) -> float:
-        """Quy đổi số đo của đợt ra chi phí tiền tệ.
+        """Convert the wave measurements to a monetary cost.
 
         Args:
-            peak: Ép dùng giá cao điểm hoặc thấp điểm.
-            pricing: Cấu hình giá đã nạp sẵn.
+            peak: Force peak or off-peak pricing.
+            pricing: Preloaded pricing configuration.
 
         Returns:
-            Chi phí USD của cả đợt.
+            Wave cost in USD.
         """
         return billed_usd(self.uncached_input, self.cache_read, self.output,
                           peak=peak, pricing=pricing)
@@ -590,24 +610,24 @@ class WaveUsage:
 
 def wave_usage(since: float, *, cwd_filter: str | None = None,
                with_reasoning: bool = True, workers_only: bool = False) -> WaveUsage:
-    """Gộp số đo của mọi phiên phát sinh sau một mốc thời gian.
+    """Combine the measurements of every session active after a point in time.
 
-    Chi phí của agent con không nằm trong số đo của phiên cha vì mỗi con là một
-    Session riêng, nên hàm này quét toàn bộ phiên mới thay vì chỉ đọc phiên cha.
+    Child-agent cost is not in the parent session's measurements because each child is its
+    own Session, so this function scans all new sessions instead of reading only the parent.
 
-    Số đo trong checkpoint là số cộng dồn trọn đời phiên. Lọc theo thời điểm sửa đổi
-    vì vậy kéo cả những phiên mở từ nhiều ngày trước nhưng còn hoạt động vào đợt, với
-    toàn bộ token của chúng. `workers_only` chỉ giữ phiên con được TẠO sau mốc, tức
-    đúng các lượt gọi worker của đợt.
+    Checkpoint figures are cumulative over the whole session life. Filtering by modification
+    time therefore also pulls in sessions opened days earlier that were still active during the
+    wave, with all of their tokens. `workers_only` keeps only child sessions CREATED after the
+    cutoff, which are exactly the worker calls of the wave.
 
     Args:
-        since: Mốc epoch, chỉ gộp phiên có thời điểm sửa đổi lớn hơn mốc này.
-        cwd_filter: Chỉ gộp phiên thuộc thư mục làm việc chứa chuỗi này.
-        with_reasoning: Có cố đọc thêm `reasoningTokens` từ nhật ký JSONL không.
-        workers_only: Chỉ gộp phiên con có mốc tạo sau `since`.
+        since: Epoch cutoff; only sessions modified after it are combined.
+        cwd_filter: Combine only sessions whose working directory contains this string.
+        with_reasoning: If True, also try to read `reasoningTokens` from the JSONL logs.
+        workers_only: Combine only child sessions created after `since`.
 
     Returns:
-        Số đo gộp của cả đợt.
+        Combined measurements of the wave.
     """
     sessions = iter_sessions(cwd_filter, since=since)
     if workers_only:

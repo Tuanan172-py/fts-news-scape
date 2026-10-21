@@ -1,4 +1,4 @@
-"""Bù đắp các bản ghi trace còn thiếu trong harness.db cho các commit đã qua kiểm định."""
+"""Backfill missing trace records in harness.db for commits that already passed validation."""
 import os
 import re
 import sys
@@ -15,7 +15,15 @@ DB_PATH = os.environ.get("NEWS_SCAPE_HARNESS_DB", str(REPO_ROOT / "harness.db"))
 
 
 def get_commits_range(start_commit: str = "6b1c34c", end_commit: str = "HEAD") -> list[dict]:
-    """Lấy danh sách các commit trong khoảng chỉ định."""
+    """List the commits in the given range, oldest first.
+
+    Args:
+        start_commit: Exclusive start of the range.
+        end_commit: Inclusive end of the range.
+
+    Returns:
+        One dict per commit with `commit`, `date` and `subject`; empty if git fails.
+    """
     cmd = ["git", "log", f"{start_commit}..{end_commit}", "--format=%H|%ad|%s", "--date=iso", "--reverse"]
     res = subprocess.run(cmd, cwd=str(REPO_ROOT), capture_output=True, text=True, encoding="utf-8")
     if res.returncode != 0:
@@ -38,7 +46,11 @@ def get_commits_range(start_commit: str = "6b1c34c", end_commit: str = "HEAD") -
 
 
 def backfill(apply: bool = False) -> None:
-    """Kiểm tra và bù đắp các trace còn thiếu vào harness.db."""
+    """Report commits that have no trace and optionally insert the missing traces.
+
+    Args:
+        apply: Insert the missing trace rows when True; only report when False.
+    """
     if not os.path.exists(DB_PATH):
         print(f"Database not found at {DB_PATH}", file=sys.stderr)
         sys.exit(1)
@@ -46,7 +58,7 @@ def backfill(apply: bool = False) -> None:
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
 
-    # Lấy các commit đã có trace
+    # Commits that already have a trace.
     existing_commits = {
         row["git_commit"] for row in conn.execute("SELECT git_commit FROM trace WHERE git_commit IS NOT NULL").fetchall()
     }

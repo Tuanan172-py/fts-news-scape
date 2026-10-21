@@ -1,4 +1,4 @@
-"""Mô hình đọc cho giám sát: bản đồ agent, danh sách đợt, cây vết, thẻ tác nhân, sự cố."""
+"""Provide read models for supervision: agent map, wave list, trace tree, agent card and incidents."""
 
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ from src.ops.store import OpsStore, now_vn, parse_iso
 
 AGENTS_DIR = Path(__file__).resolve().parents[3] / ".agents"
 
-# Dây chuyền chính của một đợt, theo thứ tự dữ liệu chảy (lọc theo trạng thái trong registry).
+# Main chain of a wave in data-flow order (filtered by status in the registry).
 MAIN_CHAIN = pipeline_spec.main_chain()
 TOP_LEFT = ("pipeline-radar",)
 TOP_RIGHT = ("ops-sentinel", "improvement-proposer")
@@ -29,7 +29,7 @@ _cache: dict[str, tuple[float, Any]] = {}
 
 
 def _load_yaml(name: str) -> dict:
-    """Đọc một tệp YAML của `.agents/`, nạp lại khi tệp đổi."""
+    """Read a YAML file from `.agents/`, reloading when the file changes."""
     import yaml
 
     path = AGENTS_DIR / name
@@ -46,7 +46,11 @@ def _load_yaml(name: str) -> dict:
 
 
 def registry() -> dict[str, dict]:
-    """Trả về các tác nhân trong `registry.yaml` theo id."""
+    """Return the agents in `registry.yaml` keyed by id.
+
+    Returns:
+        Dict of agent id to agent spec.
+    """
     return {a["id"]: a for a in _load_yaml("registry.yaml").get("agents", [])
             if isinstance(a, dict) and "id" in a}
 
@@ -71,15 +75,15 @@ def _tokens(attrs: dict) -> int:
     return int((attrs.get("usage") or {}).get("total_tokens") or 0)
 
 
-# ── trạng thái chung ─────────────────────────────────────────────────────────
+# ── overall state ────────────────────────────────────────────────────────────
 def mandate_info(paths: OpsPaths) -> dict:
-    """Mô tả mandate (standing order) hiện hành.
+    """Describe the current mandate (standing order).
 
     Args:
-        paths: Đường dẫn vận hành.
+        paths: Operations paths.
 
     Returns:
-        Từ điển: mức, ngày hết hạn, số ngày còn lại.
+        Dict with the level, expiry date and days left.
     """
     order = load_order(paths.standing_order)
     left = None
@@ -94,16 +98,16 @@ def mandate_info(paths: OpsPaths) -> dict:
 
 
 def state(store: OpsStore, cfg: dict, paths: OpsPaths, breakers: Breakers) -> dict:
-    """Gom trạng thái cho dải trạng thái của màn Toàn cảnh.
+    """Collect the state for the status strip of the Overview screen.
 
     Args:
-        store: Store vận hành.
-        cfg: Cấu hình đầy đủ.
-        paths: Đường dẫn vận hành.
-        breakers: Breaker theo provider.
+        store: Operations store.
+        cfg: Full configuration.
+        paths: Operations paths.
+        breakers: Per-provider breakers.
 
     Returns:
-        Từ điển trạng thái.
+        State dict.
     """
     hb = parse_iso(store.get_state("heartbeat_at"))
     age = (now_vn() - hb).total_seconds() if hb else None
@@ -141,15 +145,15 @@ _SEVERITY_RANK = {"bad": 0, "warn": 1, "info": 2}
 
 
 def attention(store: OpsStore, st: dict) -> list[dict]:
-    """Liệt kê việc cần người xem, nặng trước.
+    """List the items that need a human look, most severe first.
 
     Args:
-        store: Store vận hành.
-        st: Trạng thái đã gom (các khoá daemon, paused, kill_switch, breakers, mandate,
+        store: Operations store.
+        st: Collected state (keys daemon, paused, kill_switch, breakers, mandate,
             alerts_unsent, proposals_open).
 
     Returns:
-        Danh sách {severity, title, action}; severity là bad, warn hoặc info.
+        List of {severity, title, action}; severity is bad, warn or info.
     """
     items: list[dict] = []
 
@@ -193,13 +197,13 @@ def attention(store: OpsStore, st: dict) -> list[dict]:
 
 
 def health_of(items: list[dict]) -> dict:
-    """Tóm tắt sức khoẻ tổng thể từ danh sách việc cần người.
+    """Summarize overall health from the list of items that need a human.
 
     Args:
-        items: Kết quả của `attention`.
+        items: Result of `attention`.
 
     Returns:
-        Từ điển {level, label}; level là ok, warn hoặc bad. Mục `info` không đổi mức.
+        Dict {level, label}; level is ok, warn or bad. An `info` item does not change the level.
     """
     levels = {i["severity"] for i in items}
     if "bad" in levels:
@@ -209,9 +213,9 @@ def health_of(items: list[dict]) -> dict:
     return {"level": "ok", "label": "Khoẻ"}
 
 
-# ── bản đồ agent ─────────────────────────────────────────────────────────────
+# ── agent map ────────────────────────────────────────────────────────────────
 def _actor_runtime(store: OpsStore) -> dict[str, dict]:
-    """Thống kê span theo tác nhân: đang chạy, lần cuối, số liệu trong ngày."""
+    """Aggregate spans per agent: running, last run, and counts for the day."""
     out: dict[str, dict] = {}
     today = _today()
     for r in _rows(store, "SELECT actor_id, status, started_at, ended_at, attrs_json, kind "
@@ -251,16 +255,16 @@ def _node_state(spec: dict, rt: dict | None, alive: bool, active_wave: bool) -> 
 
 
 def build_map(store: OpsStore, cfg: dict, paths: OpsPaths, breakers: Breakers) -> dict:
-    """Dựng bản đồ agent sống: nút theo registry, trạng thái theo vết.
+    """Build the live agent map: nodes from the registry, state from traces.
 
     Args:
-        store: Store vận hành.
-        cfg: Cấu hình đầy đủ.
-        paths: Đường dẫn vận hành.
-        breakers: Breaker theo provider.
+        store: Operations store.
+        cfg: Full configuration.
+        paths: Operations paths.
+        breakers: Per-provider breakers.
 
     Returns:
-        Từ điển gồm nút (kèm toạ độ), cạnh, kho dữ liệu và dải trạng thái.
+        Dict with nodes (with coordinates), edges, data stores and the status strip.
     """
     reg = registry()
     rt = _actor_runtime(store)
@@ -310,16 +314,16 @@ def build_map(store: OpsStore, cfg: dict, paths: OpsPaths, breakers: Breakers) -
             "stores": stores, "state": st}
 
 
-# ── đợt và cây vết ───────────────────────────────────────────────────────────
+# ── waves and trace tree ─────────────────────────────────────────────────────
 def waves(store: OpsStore, limit: int = 20) -> list[dict]:
-    """Liệt kê đợt gần nhất kèm số đo rút ra từ vết.
+    """List the most recent waves with measurements derived from traces.
 
     Args:
-        store: Store vận hành.
-        limit: Số đợt tối đa.
+        store: Operations store.
+        limit: Maximum number of waves.
 
     Returns:
-        Danh sách đợt, mới trước.
+        List of waves, newest first.
     """
     out = []
     for w in store.waves(limit):
@@ -348,14 +352,14 @@ def waves(store: OpsStore, limit: int = 20) -> list[dict]:
 
 
 def trace_of(store: OpsStore, wave_id: str) -> dict:
-    """Trả về mọi span của một đợt kèm độ lệch thời gian cho biểu đồ Gantt.
+    """Return every span of a wave with time offsets for the Gantt chart.
 
     Args:
-        store: Store vận hành.
-        wave_id: Mã đợt.
+        store: Operations store.
+        wave_id: Wave identifier.
 
     Returns:
-        Từ điển gồm `spans` (đã sắp theo thời gian) và `duration_ms`.
+        Dict with `spans` (sorted by time) and `duration_ms`.
     """
     rows = _rows(store, "SELECT * FROM ops_spans WHERE trace_id = ? ORDER BY started_at, span_id",
                  (wave_id,))
@@ -379,17 +383,17 @@ def trace_of(store: OpsStore, wave_id: str) -> dict:
     return {"wave_id": wave_id, "spans": spans, "duration_ms": round(end_max)}
 
 
-# ── tác nhân ─────────────────────────────────────────────────────────────────
+# ── agents ───────────────────────────────────────────────────────────────────
 def agent_card(store: OpsStore, agent_id: str, days: int = 7) -> dict | None:
-    """Dựng thẻ một tác nhân: đặc tả từ registry và KPI các ngày gần đây.
+    """Build the card of one agent: spec from the registry and KPIs of recent days.
 
     Args:
-        store: Store vận hành.
-        agent_id: Mã tác nhân trong registry.
-        days: Số ngày xu hướng.
+        store: Operations store.
+        agent_id: Agent identifier in the registry.
+        days: Number of trend days.
 
     Returns:
-        Từ điển thẻ, hoặc None khi registry không có tác nhân này.
+        Card dict, or None when the registry has no such agent.
     """
     spec = registry().get(agent_id)
     if not spec:
@@ -431,14 +435,14 @@ def agent_card(store: OpsStore, agent_id: str, days: int = 7) -> dict | None:
 
 
 def kpi_series(store: OpsStore, days: int = 14) -> dict:
-    """Chuỗi KPI theo đợt từ bảng `ops_waves` và vết, dùng cho bản tin và phát hiện bất thường.
+    """Build per-wave KPI series from `ops_waves` and traces, for the digest and anomaly detection.
 
     Args:
-        store: Store vận hành.
-        days: Cửa sổ ngày.
+        store: Operations store.
+        days: Window in days.
 
     Returns:
-        Từ điển các danh sách theo thứ tự thời gian: first_pass_yield, tokens_per_article,
+        Dict of chronologically ordered lists: first_pass_yield, tokens_per_article,
         repair_share, avg_latency_s.
     """
     since = (now_vn() - timedelta(days=days)).date().isoformat()
@@ -462,15 +466,15 @@ def kpi_series(store: OpsStore, days: int = 14) -> dict:
 
 
 def anomalies(store: OpsStore, min_waves: int = 5, sigma: float = 2.0) -> list[dict]:
-    """Tìm số đo của đợt gần nhất lệch quá `sigma` độ lệch chuẩn so với các đợt trước.
+    """Find measurements of the latest wave that deviate more than `sigma` standard deviations from earlier waves.
 
     Args:
-        store: Store vận hành.
-        min_waves: Số đợt tối thiểu để so sánh (D-D).
-        sigma: Ngưỡng lệch.
+        store: Operations store.
+        min_waves: Minimum number of waves to compare (D-D).
+        sigma: Deviation threshold.
 
     Returns:
-        Danh sách {metric, value, mean, stdev}.
+        List of {metric, value, mean, stdev}.
     """
     out = []
     for metric, series in kpi_series(store, 7).items():
@@ -485,16 +489,16 @@ def anomalies(store: OpsStore, min_waves: int = 5, sigma: float = 2.0) -> list[d
     return out
 
 
-# ── sự cố ────────────────────────────────────────────────────────────────────
+# ── incidents ────────────────────────────────────────────────────────────────
 def incidents(store: OpsStore, breakers: Breakers) -> dict:
-    """Tập hợp breaker, probe, sự kiện bất thường và chẩn đoán gần đây.
+    """Gather breakers, probes, abnormal events and recent diagnoses.
 
     Args:
-        store: Store vận hành.
-        breakers: Breaker theo provider.
+        store: Operations store.
+        breakers: Per-provider breakers.
 
     Returns:
-        Từ điển các phần của màn Sự cố.
+        Dict of the sections of the Incidents screen.
     """
     probes = {}
     with store.conn() as c:
@@ -511,17 +515,17 @@ def incidents(store: OpsStore, breakers: Breakers) -> dict:
             "probes": probes, "events": events[::-1], "diagnoses": diag}
 
 
-# ── cải tiến ─────────────────────────────────────────────────────────────────
+# ── improvements ─────────────────────────────────────────────────────────────
 def proposals(store: OpsStore, status: str | None = None, limit: int = 50) -> list[dict]:
-    """Liệt kê đề xuất cải tiến, mở trước và tác động cao trước.
+    """List improvement proposals, open ones first and higher impact first.
 
     Args:
-        store: Store vận hành.
-        status: Lọc theo trạng thái.
-        limit: Số tối đa.
+        store: Operations store.
+        status: Filter by status.
+        limit: Maximum number of proposals.
 
     Returns:
-        Danh sách đề xuất.
+        List of proposals.
     """
     sql = "SELECT * FROM ops_proposals"
     params: tuple = ()

@@ -1,4 +1,4 @@
-"""Chạy và cấu hình control plane vận hành tự chủ của Article Lane (ADR 0012)."""
+"""Run and configure the autonomous operations control plane of the Article Lane (ADR 0012)."""
 
 from __future__ import annotations
 
@@ -16,10 +16,10 @@ from src.ops.config import load_config, load_secrets, resolve_paths, write_secre
 
 
 def _redirect_if_windowless(log_dir: Path) -> None:
-    """Chuyển stdout/stderr vào tệp khi chạy bằng pythonw (không có console).
+    """Redirect stdout and stderr to a file when running under pythonw (no console).
 
     Args:
-        log_dir: Thư mục nhật ký.
+        log_dir: Log directory.
     """
     if sys.stdout is None or sys.stderr is None:
         log_dir.mkdir(parents=True, exist_ok=True)
@@ -32,10 +32,13 @@ def _redirect_if_windowless(log_dir: Path) -> None:
 
 
 def cmd_run(_args: argparse.Namespace) -> int:
-    """Chạy daemon ở tiền cảnh đến khi nhận tín hiệu dừng.
+    """Run the daemon in the foreground until a stop signal arrives.
+
+    Args:
+        _args: Parsed command-line arguments; unused.
 
     Returns:
-        Mã thoát.
+        Exit code of the daemon loop.
     """
     cfg, paths = load_config(), resolve_paths()
     _redirect_if_windowless(paths.log_dir)
@@ -56,10 +59,13 @@ def cmd_run(_args: argparse.Namespace) -> int:
 
 
 def cmd_once(_args: argparse.Namespace) -> int:
-    """Đo một lượt (sensor, probe) và in kết quả; không mở đợt, không gửi cảnh báo.
+    """Measure one pass (sensor, probes) and print it; opens no wave and sends no alert.
+
+    Args:
+        _args: Parsed command-line arguments; unused.
 
     Returns:
-        Mã thoát 0.
+        Exit code 0.
     """
     from src.core.config import resolve_db_path
     from src.ops.probes import (probe_capture, probe_db, probe_dead_letter, probe_disk,
@@ -98,10 +104,13 @@ def cmd_once(_args: argparse.Namespace) -> int:
 
 
 def cmd_status(_args: argparse.Namespace) -> int:
-    """In trạng thái từ ops.db.
+    """Print the status from ops.db.
+
+    Args:
+        _args: Parsed command-line arguments; unused.
 
     Returns:
-        Mã thoát 0.
+        Exit code 0.
     """
     from src.ops.breakers import Breakers
     from src.ops.reports import status_text, waves_text
@@ -119,10 +128,13 @@ def cmd_status(_args: argparse.Namespace) -> int:
 
 
 def cmd_open(_args: argparse.Namespace) -> int:
-    """Mở Phòng điều khiển trong trình duyệt mặc định.
+    """Open the control room in the default browser.
+
+    Args:
+        _args: Parsed command-line arguments; unused.
 
     Returns:
-        Mã thoát 0 khi gửi được lệnh mở, 1 khi Phòng điều khiển đang tắt.
+        Exit code 0 when the open request was issued, 1 when the control room is disabled.
     """
     import webbrowser
 
@@ -135,13 +147,13 @@ def cmd_open(_args: argparse.Namespace) -> int:
 
 
 def cmd_order(args: argparse.Namespace) -> int:
-    """Tạo hoặc sửa standing order.
+    """Create or update the standing order.
 
     Args:
-        args: Tham số dòng lệnh.
+        args: Parsed command-line arguments.
 
     Returns:
-        Mã thoát 0.
+        Exit code 0.
     """
     from src.ops.order import extend, load_order, save_order
 
@@ -164,13 +176,13 @@ def cmd_order(args: argparse.Namespace) -> int:
 
 
 def cmd_telegram(args: argparse.Namespace) -> int:
-    """Lưu token bot, dò chat id từ tin nhắn đã gửi tới bot và gửi tin thử.
+    """Store the bot token, discover chat ids from messages sent to the bot and send a test message.
 
     Args:
-        args: Tham số dòng lệnh.
+        args: Parsed command-line arguments.
 
     Returns:
-        Mã thoát 0 khi gửi thử thành công.
+        Exit code 0 when the test message was sent, 2 when no unique private chat is available.
     """
     from src.ops.notify import TelegramClient
 
@@ -185,8 +197,8 @@ def cmd_telegram(args: argparse.Namespace) -> int:
     client = TelegramClient(token)
     chats = args.chat_id
     if not chats:
-        # Chỉ nhận chat riêng. Daemon từ chối mọi nhóm, và tự đưa mọi chat từng nhắn bot
-        # vào danh sách trắng là trao quyền điều khiển cho người lạ.
+        # Accept private chats only. The daemon rejects every group, and whitelisting
+        # every chat that ever messaged the bot would grant control to strangers.
         updates = client.get_updates(0, timeout=0)
         chats = sorted({str(u["message"]["chat"]["id"]) for u in updates
                         if u.get("message", {}).get("chat", {}).get("type") == "private"})
@@ -206,13 +218,13 @@ def cmd_telegram(args: argparse.Namespace) -> int:
 
 
 def cmd_healthcheck(args: argparse.Namespace) -> int:
-    """Lưu URL ping dead-man và ping thử.
+    """Store the dead-man ping URL and send a test ping.
 
     Args:
-        args: Tham số dòng lệnh.
+        args: Parsed command-line arguments.
 
     Returns:
-        Mã thoát 0 khi ping thành công.
+        Exit code 0 when the ping succeeded, 1 otherwise.
     """
     from src.ops.notify import ping_healthcheck
 
@@ -224,14 +236,18 @@ def cmd_healthcheck(args: argparse.Namespace) -> int:
 
 
 def cmd_watchdog(_args: argparse.Namespace) -> int:
-    """Báo khi daemon chết trong lúc máy đang mở; Task Scheduler gọi lệnh này mỗi 5 phút.
+    """Alert when the daemon died while the machine is awake; Task Scheduler calls this every 5 minutes.
 
-    Máy ngủ thì lệnh này cũng không chạy, nên không có báo động giả khi gập máy. Ngay
-    sau khi máy thức, nhịp tim có thể còn cũ vài phút trong lúc daemon chưa kịp ghi; vì
-    vậy chỉ báo khi nhịp tim cũ ở **hai lần kiểm liên tiếp**.
+    The command does not run while the machine sleeps, so closing the lid raises no
+    false alarm. Right after wake-up the heartbeat can be several minutes old before the
+    daemon writes again, so the alert fires only when the heartbeat is stale on two
+    consecutive checks.
+
+    Args:
+        _args: Parsed command-line arguments; unused.
 
     Returns:
-        Mã thoát 0.
+        Exit code 0.
     """
     from src.ops.notify import TelegramClient, ping_healthcheck
     from src.ops.present import alert_card
@@ -267,20 +283,20 @@ def cmd_watchdog(_args: argparse.Namespace) -> int:
         for c in chats:
             try:
                 client.send(c, text)
-            except Exception as exc:  # noqa: BLE001 — mạng lỗi: sự kiện đã ghi trong ops.db
+            except Exception as exc:  # noqa: BLE001 - network failure; the event is already recorded in ops.db
                 store.emit("watchdog.send_failed", str(exc), level="warn")
     ping_healthcheck(secrets.get("NEWS_SCAPE_HC_URL"), "/fail", text)
     return 0
 
 
 def cmd_send(args: argparse.Namespace) -> int:
-    """Đưa một lệnh vào hộp thư cho daemon đang chạy và chờ kết quả.
+    """Queue a command for the running daemon and wait for the result.
 
     Args:
-        args: Tham số dòng lệnh.
+        args: Parsed command-line arguments.
 
     Returns:
-        Mã thoát 0 khi daemon xử lý trong thời hạn.
+        Exit code 0 when the daemon handled the command in time, 1 otherwise.
     """
     from src.ops.store import OpsStore
 
@@ -300,13 +316,13 @@ def cmd_send(args: argparse.Namespace) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Giao diện dòng lệnh của ops_daemon.
+    """Run the ops_daemon command-line interface.
 
     Args:
-        argv: Tham số dòng lệnh.
+        argv: Command-line arguments without the program name.
 
     Returns:
-        Mã thoát.
+        Process exit code of the selected subcommand.
     """
     if sys.stdout is not None:
         from src.core.stdio import force_utf8_stdio

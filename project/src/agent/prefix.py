@@ -1,23 +1,4 @@
-"""Kích thước và tính toàn vẹn của phần tiền tố tĩnh gửi cho worker.
-
-Bốn nơi cần biết về prefix — bộ sinh, bộ đóng gói, sổ cái và radar — và trước đây
-mỗi nơi tự giữ một hằng số riêng. Hệ quả đã đo được: dự toán chỉ đếm phần `persona`
-mà bỏ quên phần harness nối thêm vào đầu mỗi request, nên số token trúng bộ nhớ đệm
-bị khai hụt và không ai đối chiếu được "cache có thật sự trúng không".
-
-Module này giữ một định nghĩa duy nhất cho hai đại lượng:
-
-- **`persona_tokens`** — phần dự án tự sinh và tự dán vào preset.
-- **`SYSTEM_OVERHEAD_TOKENS`** — phần harness luôn nối vào trước/sau persona mà dự án
-  không gỡ được. Nó vẫn tĩnh và byte-identical giữa các lượt, nên vẫn trúng cache;
-  bỏ nó khỏi dự toán chỉ làm sai con số, không làm rẻ đi.
-
-Bất biến quan trọng nhất ở đây là **`persona` trong preset phải giống hệt tệp prefix
-đã sinh, từng byte**. Chỉ lệch một khoảng trắng là toàn bộ phần sau nó trượt bộ nhớ
-đệm, mà không có tín hiệu nào báo: hoá đơn vẫn chạy, chỉ đắt hơn 50 lần ở phần lẽ ra
-phải rẻ. Trước đây `--check` chỉ so tệp với danh mục, tức thứ duy nhất bắt buộc giống
-nhau lại là thứ duy nhất không ai kiểm.
-"""
+"""Define the size and integrity checks of the static prefix sent to workers."""
 from __future__ import annotations
 
 import hashlib
@@ -26,6 +7,13 @@ from pathlib import Path
 
 import yaml
 
+# The generator, packer, ledger and radar share the definitions below:
+#   persona_tokens: the part the project generates and pastes into the preset.
+#   SYSTEM_OVERHEAD_TOKENS: the part the harness always adds around the persona. It is
+#   static and byte-identical between turns, so it is cached and must be in the estimate.
+# Invariant: the `persona` in the preset must equal the generated prefix file byte for
+# byte. A single whitespace difference makes every following token miss the cache with
+# no visible signal, and the bill grows about 50 times on the part that should be cheap.
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 REPO_ROOT = PROJECT_ROOT.parent
 
@@ -37,30 +25,30 @@ PRESET_PATH = (REPO_ROOT / ".agents" / "dsh" / "presets" / "news-scape-conductor
                / "agent.cordis.yml")
 WORKER_ROW_ID = "tool-subagent-article"
 
-# Quy đổi ký tự sang token, dùng chung với `src/agent/distill.py`.
+# Characters-to-tokens ratio, shared with `src/agent/distill.py`.
 CHARS_PER_TOKEN = 3
 
-# Dùng khi chưa sinh prefix. Không phải một định mức, chỉ là chỗ dựa để dự toán không
-# bằng không khi chạy trước lần sinh đầu tiên.
+# Fallback used before a prefix is generated. It is not a quota; it only keeps the
+# estimate above zero before the first generation.
 DEFAULT_PERSONA_TOKENS = 6400
 
-# Phần tĩnh do harness nối thêm vào mỗi request của worker, dự án KHÔNG gỡ được:
+# Static part that the harness adds to every worker request and the project cannot remove:
 #
-#   AGENTS.md nạp lại cho mọi agent kể cả con   ~4.069 token   (plan §4.2 R2)
-#   section `tools:ptc-only` + `tools:sdk`        ~640 token   (plan §4.2 R3)
-#   harness identity + persona suffix              ~90 token
+#   AGENTS.md reloaded for every agent, children included   ~4,069 tokens   (plan §4.2 R2)
+#   sections `tools:ptc-only` + `tools:sdk`                   ~640 tokens   (plan §4.2 R3)
+#   harness identity + persona suffix                          ~90 tokens
 #
-# Cả ba đều nằm TRƯỚC packet và không đổi giữa các lượt, nên chúng trúng cache y hệt
-# phần persona. Đưa vào dự toán để `est_hit` so được với `cacheReadTokens` thật.
+# All three precede the packet and do not change between turns, so they hit the cache like
+# the persona. They are included in the estimate so `est_hit` is comparable with the real
+# `cacheReadTokens`.
 SYSTEM_OVERHEAD_TOKENS = 4_800
 
 
 class _LenientLoader(yaml.SafeLoader):
-    """Bộ đọc YAML bỏ qua các thẻ riêng của composition thay vì ném lỗi.
+    """YAML loader that ignores composition-specific tags instead of raising.
 
-    Preset DSH dùng thẻ `!!js` cho vài trường điều kiện. `yaml.safe_load` từ chối
-    chúng, mà ở đây chỉ cần đọc đúng một chuỗi `persona`, nên mọi thẻ lạ được đọc
-    thành `None`.
+    DSH presets use the `!!js` tag for some conditional fields. `yaml.safe_load` rejects
+    them, and only the `persona` string is needed here, so every unknown tag loads as `None`.
     """
 
 
@@ -69,10 +57,10 @@ _LenientLoader.add_multi_constructor(
 
 
 def read_meta() -> dict:
-    """Đọc mô tả của prefix đang nằm trên đĩa.
+    """Read the metadata of the prefix currently on disk.
 
     Returns:
-        Từ điển mô tả, hoặc từ điển rỗng khi chưa sinh prefix hoặc tệp hỏng.
+        Metadata dict, or an empty dict if no prefix is generated or the file is corrupt.
     """
     try:
         with open(PREFIX_META, encoding="utf-8") as f:
@@ -82,33 +70,33 @@ def read_meta() -> dict:
 
 
 def prefix_hash() -> str | None:
-    """Lấy giá trị băm của prefix đang dùng.
+    """Return the hash of the prefix in use.
 
     Returns:
-        Chuỗi băm, hoặc None khi chưa sinh prefix.
+        Hash string, or None if no prefix is generated.
     """
     return read_meta().get("hash")
 
 
 def prefix_variants() -> dict:
-    """Lấy các biến thể đã bật khi sinh prefix đang nằm trên đĩa.
+    """Return the variants enabled when the prefix on disk was generated.
 
-    Biến thể được ghi lại để chế độ kiểm dựng lại đúng nội dung ấy. Không có nó thì
-    một prefix sinh kèm digest mã chứng khoán sẽ bị báo "lệch danh mục" ở mọi lần
-    kiểm, dù nó hoàn toàn đúng.
+    Variants are recorded so the check mode rebuilds exactly that content. Without them,
+    a prefix generated with the ticker digest is reported as a catalog mismatch on every
+    check even though it is correct.
 
     Returns:
-        Từ điển biến thể, rỗng khi prefix ở dạng mặc định.
+        Variant dict, empty when the prefix has the default form.
     """
     variants = read_meta().get("variants")
     return variants if isinstance(variants, dict) else {}
 
 
 def persona_tokens() -> int:
-    """Lấy kích thước phần persona của prefix.
+    """Return the size of the persona part of the prefix.
 
     Returns:
-        Số token ước lượng của persona, hoặc giá trị mặc định khi chưa sinh prefix.
+        Estimated persona token count, or the default when no prefix is generated.
     """
     try:
         return int(read_meta().get("approx_tokens") or DEFAULT_PERSONA_TOKENS)
@@ -117,28 +105,27 @@ def persona_tokens() -> int:
 
 
 def cached_prefix_tokens() -> int:
-    """Tổng số token tĩnh đứng trước packet trong mỗi request của worker.
+    """Return the total static tokens that precede the packet in each worker request.
 
-    Đây là con số phải đối chiếu với `cacheReadTokens` thật: từ lượt gọi thứ hai trở
-    đi, mỗi lượt phải đọc lại xấp xỉ bấy nhiêu token ở giá trúng cache.
+    Compare this figure with the real `cacheReadTokens`: from the second call on, each
+    call should read about this many tokens at the cache-hit price.
 
     Returns:
-        Tổng token của persona cộng phần harness nối thêm.
+        Persona tokens plus the harness overhead.
     """
     return persona_tokens() + SYSTEM_OVERHEAD_TOKENS
 
 
 def persona_from_preset(path: str | Path | None = None,
                         row_id: str = WORKER_ROW_ID) -> str | None:
-    """Bóc chuỗi `persona` của một row subagent trong preset.
+    """Extract the `persona` string of a subagent row from the preset.
 
     Args:
-        path: Đường dẫn tệp preset. Mặc định dùng preset của dự án.
-        row_id: Mã row cần bóc.
+        path: Preset file path; defaults to the project preset.
+        row_id: Identifier of the row to extract.
 
     Returns:
-        Nội dung persona, hoặc None khi không có tệp, không có row, hoặc row không
-        khai persona.
+        Persona text, or None if the file or row is missing or the row declares no persona.
     """
     p = Path(path) if path else PRESET_PATH
     try:
@@ -155,29 +142,29 @@ def persona_from_preset(path: str | Path | None = None,
 
 
 def digest(content: str) -> str:
-    """Tính giá trị băm rút gọn của một nội dung prefix.
+    """Compute the short hash of a prefix content.
 
     Args:
-        content: Toàn văn prefix.
+        content: Full prefix text.
 
     Returns:
-        Mười sáu ký tự đầu của SHA256.
+        First sixteen characters of the SHA256 hex digest.
     """
     return hashlib.sha256(content.encode("utf-8")).hexdigest()[:16]
 
 
 def compare_persona(content: str, path: str | Path | None = None) -> tuple[bool, str]:
-    """Đối chiếu persona trong preset với nội dung prefix chuẩn.
+    """Compare the persona in the preset with the canonical prefix content.
 
-    So sánh sau khi bỏ khoảng trắng ở hai đầu, vì bộ đọc YAML luôn chuẩn hoá ký tự
-    xuống dòng cuối khối. Mọi khác biệt bên trong đều tính là lệch.
+    The comparison strips leading and trailing whitespace because the YAML loader always
+    normalizes the trailing newline of a block. Any inner difference counts as a mismatch.
 
     Args:
-        content: Nội dung prefix chuẩn, thường là bản vừa sinh từ danh mục.
-        path: Đường dẫn preset. Mặc định dùng preset của dự án.
+        content: Canonical prefix content, usually freshly generated from the catalog.
+        path: Preset path; defaults to the project preset.
 
     Returns:
-        Cặp gồm kết quả khớp và một dòng mô tả để in ra cho người vận hành.
+        Pair of the match result and a description line to print for the operator.
     """
     persona = persona_from_preset(path)
     if persona is None:

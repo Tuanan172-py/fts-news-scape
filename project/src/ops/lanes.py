@@ -1,4 +1,4 @@
-"""Phân luồng đợt: mỗi đợt thuộc đúng một luồng, mỗi luồng tối đa một đợt đang chạy."""
+"""Assign waves to lanes, where each wave belongs to exactly one lane and each lane runs at most one wave."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ BACKLOG = "backlog"
 BENCH = "bench"
 LANES = (AUTO, BACKLOG, BENCH)
 
-# Luồng theo giá trị cột `ops_waves.trigger`. Giá trị lạ thuộc luồng auto để không bỏ sót đợt của daemon.
+# Lane by value of the `ops_waves.trigger` column. Unknown values belong to the auto lane so no daemon wave is missed.
 _TRIGGER_LANE = {
     "T1": AUTO, "T2": AUTO, "T3": AUTO, "retry": AUTO, "manual": AUTO,
     "backlog": BACKLOG, "adhoc": BACKLOG,
@@ -18,12 +18,12 @@ LANE_LABEL = {AUTO: "Luồng tự động", BACKLOG: "Luồng bài tồn", BENCH
 
 
 def lane_of(trigger: str | None) -> str:
-    """Trả về luồng của một đợt theo luật kích hoạt.
+    """Return the lane of a wave from its trigger rule.
 
     Args:
-        trigger: Giá trị cột `trigger` của đợt (T1, T2, T3, retry, backlog, adhoc, bench).
+        trigger: Value of the wave `trigger` column (T1, T2, T3, retry, backlog, adhoc, bench).
 
     Returns:
-        Một trong auto, backlog, bench.
+        One of auto, backlog, bench.
     """
     return _TRIGGER_LANE.get(trigger or "", AUTO)

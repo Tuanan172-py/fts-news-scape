@@ -1,4 +1,4 @@
-"""Xuất danh sách bài viết từ cơ sở dữ liệu ra tệp CSV."""
+"""Export the article list from the database to a CSV file."""
 
 from __future__ import annotations
 

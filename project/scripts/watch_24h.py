@@ -1,4 +1,4 @@
-"""Giám sát tính ổn định và hiệu năng hệ thống định kỳ 24 giờ."""
+"""Monitor system stability and performance periodically over 24 hours."""
 
 from __future__ import annotations
 
@@ -18,6 +18,14 @@ from src.monitor.health import check
 
 
 def snapshot(store: ArticleStore) -> list[dict]:
+    """Collect the health state and one-hour average cycle time of every scraper.
+
+    Args:
+        store: Article store used for health and metrics queries.
+
+    Returns:
+        One dict per scraper with health fields, timestamp and `avg_cycle_ms_1h`.
+    """
     from datetime import datetime, timedelta
     from src.core.models import VN_TZ
 
@@ -34,6 +42,15 @@ def snapshot(store: ArticleStore) -> list[dict]:
 
 
 def main(hours: float, out: str) -> int:
+    """Append an hourly health snapshot to a CSV file until the time budget ends.
+
+    Args:
+        hours: Total watch duration in hours.
+        out: Path of the CSV output file.
+
+    Returns:
+        Exit code 0.
+    """
     store = ArticleStore(load_settings()["database"]["path"])
     out_path = Path(out)
     out_path.parent.mkdir(parents=True, exist_ok=True)

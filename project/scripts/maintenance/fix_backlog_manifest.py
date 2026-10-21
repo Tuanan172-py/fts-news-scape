@@ -1,10 +1,11 @@
+"""Reduce the backlog wave manifest to the repair batches whose id ends with `_r01`."""
 import json
 from pathlib import Path
 
 manifest_path = Path(r"C:\data\news-scape\agent_tasks\article\wave_W1012_BACKLOG500.json")
 data = json.loads(manifest_path.read_text(encoding="utf-8"))
 
-# Chi giu lai cac lo repair _r01 de agy_runner chi tap trung chay 9 lo sua nay
+# Keep only the _r01 repair batches so agy_runner runs just those 9 repair batches.
 repair_batches = []
 for b in data.get("batches", []):
     bid = b.get("batch_id", "")

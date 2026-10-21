@@ -1,4 +1,4 @@
-"""Bộ thu thập dữ liệu nguồn CafeF (kết hợp API nội bộ và RSS theo chuyên mục)."""
+"""Scrape the CafeF source by combining its internal API and per-category RSS feeds."""
 
 from __future__ import annotations
 
@@ -24,13 +24,13 @@ _DATE_RE = re.compile(r"/Date\((\d+)(?:[+-]\d{4})?\)/")
 
 
 def parse_cafef_date(raw: str) -> str | None:
-    """Phân tích chuỗi ngày timestamp của CafeF sang mốc thời gian ISO 8601.
+    """Parse a CafeF timestamp date string into an ISO 8601 timestamp.
 
     Args:
-        raw: Chuỗi ngày thô có dạng '/Date(...)/'.
+        raw: Raw date string of the form '/Date(...)/'.
 
     Returns:
-        Chuỗi thời gian chuẩn ISO 8601 hoặc None nếu không khớp định dạng.
+        ISO 8601 timestamp, or None when the format does not match.
     """
     m = _DATE_RE.search(raw or "")
     if not m:
@@ -41,20 +41,27 @@ def parse_cafef_date(raw: str) -> str | None:
 
 @register("cafef")
 class CafeFScraper(CaptureMixin, BaseScraper):
-    """Lớp thu thập tin tức từ CafeF qua API theo mã cổ phiếu và RSS chuyên mục.
+    """Scrape CafeF news through the per-ticker API and per-category RSS feeds.
 
     Attributes:
-        endpoint: Địa chỉ API Ajax lấy danh sách bài viết.
-        params: Tham số truy vấn API.
-        headers: Các HTTP header yêu cầu cho API.
-        content_selector: Bộ chọn CSS vùng nội dung bài viết.
-        max_details: Số lượng bài chi tiết tối đa cần lấy mỗi chu kỳ.
-        watchlist: Danh sách mã cổ phiếu theo dõi.
-        feeds: Danh sách RSS feed chuyên mục bổ sung.
+        endpoint: URL of the Ajax API that lists articles.
+        params: API query parameters.
+        headers: HTTP headers sent to the API.
+        content_selector: CSS selector of the article content area.
+        max_details: Maximum number of article details to fetch per cycle.
+        watchlist: Stock tickers to watch.
+        feeds: Additional category RSS feeds.
     """
     BASE_URL = "https://cafef.vn"
 
     def __init__(self, config, http, dedup):
+        """Initialize the scraper from its source config.
+
+        Args:
+            config: Source config dict.
+            http: HTTP client.
+            dedup: Deduplication cache.
+        """
         super().__init__(config, http, dedup)
         api = config.get("api", {})
         self.endpoint = api.get("endpoint",
@@ -70,10 +77,10 @@ class CafeFScraper(CaptureMixin, BaseScraper):
         self._init_capture()
 
     def fetch_list(self) -> list[dict]:
-        """Lấy danh sách các bài viết thô từ API mã cổ phiếu và RSS chuyên mục.
+        """Fetch raw articles from the per-ticker API and the category RSS feeds.
 
         Returns:
-            Danh sách các dictionary chứa dữ liệu thô của bài viết.
+            One dict of raw article data per entry.
         """
         self._details_fetched = 0
         items: list[dict] = []
@@ -95,7 +102,7 @@ class CafeFScraper(CaptureMixin, BaseScraper):
             for it in rows:
                 it["_symbol"] = sym
                 items.append(it)
-        # Nhánh RSS per-category — bổ sung tin không gắn mã CK.
+        # Per-category RSS branch: adds news not tagged with a ticker.
         for feed_cfg in self.feeds:
             feed_url = feed_cfg["url"]
             feed_name = feed_cfg.get("name", feed_url)
@@ -123,13 +130,13 @@ class CafeFScraper(CaptureMixin, BaseScraper):
         return items
 
     def parse_item(self, raw: dict) -> Article | None:
-        """Phân tích bản ghi thô từ API hoặc RSS thành đối tượng Article.
+        """Parse a raw API or RSS record into an Article.
 
         Args:
-            raw: Bản ghi thô từ phản hồi API hoặc RSS feed.
+            raw: Raw record from an API response or an RSS feed.
 
         Returns:
-            Đối tượng Article hoặc None nếu bản ghi không hợp lệ.
+            Article, or None when the record is invalid.
         """
         if raw.get("_rss"):
             return self._parse_rss_item(raw)
@@ -153,13 +160,13 @@ class CafeFScraper(CaptureMixin, BaseScraper):
         )
 
     def _parse_rss_item(self, raw: dict) -> Article | None:
-        """Phân tích một bản ghi RSS feed chuyên mục thành đối tượng Article.
+        """Parse one category RSS feed record into an Article.
 
         Args:
-            raw: Bản ghi dữ liệu RSS entry.
+            raw: RSS entry data record.
 
         Returns:
-            Đối tượng Article hoặc None nếu thiếu thông tin URL/tiêu đề.
+            Article, or None when the URL or title is missing.
         """
         url = raw["link"]
         title = _clean_title(raw["title"])
@@ -180,10 +187,10 @@ class CafeFScraper(CaptureMixin, BaseScraper):
         )
 
     def enrich(self, article: Article) -> None:
-        """Tải trang chi tiết và lưu trữ Bronze byte-exact cho bài viết.
+        """Download the detail page and store a byte-exact Bronze copy for the article.
 
         Args:
-            article: Đối tượng Article cần bổ sung nội dung chi tiết.
+            article: Article to enrich with detail content.
         """
         if self._details_fetched >= self.max_details:
             article.content_text = article.summary

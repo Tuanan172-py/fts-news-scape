@@ -1,4 +1,4 @@
-"""Kiểm thử khép kín chu trình xử lý dữ liệu ở chế độ ngoại tuyến."""
+"""Validate the end-to-end data processing chain offline."""
 
 from __future__ import annotations
 
@@ -33,6 +33,14 @@ _HTML = (
 
 
 def _make_bronze(tmp: Path) -> str:
+    """Write a synthetic Bronze HTML file and its metadata under a temporary directory.
+
+    Args:
+        tmp: Temporary root directory.
+
+    Returns:
+        Tuple of the meta file path and the article hash.
+    """
     body = _HTML.encode("utf-8")
     sha = hashlib.sha256(body).hexdigest()
     hash_ = "e2e" + sha[:61]
@@ -71,6 +79,11 @@ def _make_bronze(tmp: Path) -> str:
 
 
 def main() -> int:
+    """Run the offline end-to-end chain checks and print a PASS/FAIL result.
+
+    Returns:
+        Exit code 0 when all checks pass, 1 otherwise.
+    """
     checks: list[tuple[str, bool, str]] = []
     tmp = Path(tempfile.mkdtemp(prefix="e2e_"))
     meta_path, hash_ = _make_bronze(tmp)
@@ -83,8 +96,9 @@ def main() -> int:
             published_at="2026-08-13T10:00:00+07:00",
         )
     )
-    # ép url_title_hash khớp Bronze bằng cách insert version trực tiếp không cần; process_meta
-    # dùng get_by_hash(hash_) → có thể None (title khác), published_at fallback None → OK.
+    # Forcing url_title_hash to match Bronze by inserting a version directly is not needed:
+    # process_meta uses get_by_hash(hash_), which may return None (different title), and
+    # the published_at fallback None is acceptable.
 
     res = process_meta(
         store,
@@ -105,7 +119,7 @@ def main() -> int:
         )
     )
 
-    # catalog claim round-trip
+    # catalog claim round trip
     cat = Catalog(store)
     claimed = cat.claim("e2e-worker")
     checks.append(
@@ -121,7 +135,7 @@ def main() -> int:
             ("mark_done → done", cat.counts().get("done", 0) == 1, str(cat.counts()))
         )
 
-    # agent-output sample validates
+    # the agent-output sample validates
     sample = json.loads(
         (SCHEMAS / "samples" / "agent-output-sample.json").read_text(encoding="utf-8")
     )

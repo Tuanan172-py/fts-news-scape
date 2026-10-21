@@ -1,1 +1,1 @@
-"""Gói thông báo trạng thái và cảnh báo phân phối tệp tin."""
+"""Deliver status notifications and file-based alerts."""

@@ -1,4 +1,4 @@
-"""Kiểm tra bài đã thấy bằng mã băm chính xác và ghi sổ phát hiện URL."""
+"""Check seen articles by exact hash and record URL discovery in the ledger."""
 
 from __future__ import annotations
 
@@ -18,13 +18,19 @@ _LEGACY_JSON = str(paths.data_root() / "dedup_cache.json")
 
 
 class DedupCache:
-    """Bộ nhớ đệm kiểm tra chống trùng lặp dựa trên bảng seen_articles trong SQLite.
+    """Duplicate-check cache backed by the `seen_articles` table in SQLite.
 
     Attributes:
-        store: Đối tượng ArticleStore quản lý cơ sở dữ liệu.
+        store: ArticleStore that manages the database.
     """
 
     def __init__(self, store: ArticleStore, legacy_json_path: str = _LEGACY_JSON):
+        """Open the cache on the store connection and migrate any legacy JSON cache.
+
+        Args:
+            store: ArticleStore that manages the database.
+            legacy_json_path: Path of the legacy `dedup_cache.json` to import and remove.
+        """
         self.store = store
         self._conn = store._connect()
         self._migrate_legacy_json(legacy_json_path)
@@ -48,14 +54,14 @@ class DedupCache:
             logger.warning("Legacy dedup migration skipped ({}): {}", path, e)
 
     def is_duplicate(self, url: str, title: str) -> bool:
-        """Kiểm tra bài viết đã từng xuất hiện qua mã băm SHA-256(url + title).
+        """Check whether an article was seen before, by the SHA-256(url + title) hash.
 
         Args:
-            url: Đường dẫn bài viết.
-            title: Tiêu đề bài viết.
+            url: Article URL.
+            title: Article title.
 
         Returns:
-            True nếu bài viết đã tồn tại trong bộ nhớ đệm.
+            True if the article is already in the cache.
         """
         h = sha256_hash(url, title)
         row = self._conn.execute(
@@ -63,12 +69,12 @@ class DedupCache:
         return row is not None
 
     def mark_seen(self, url: str, title: str, source_domain: str = "") -> None:
-        """Đánh dấu bài viết đã được ghi nhận vào bộ nhớ đệm chống trùng.
+        """Mark an article as seen in the duplicate cache.
 
         Args:
-            url: Đường dẫn bài viết.
-            title: Tiêu đề bài viết.
-            source_domain: Tên miền nguồn tin.
+            url: Article URL.
+            title: Article title.
+            source_domain: Domain of the news source.
         """
         self._conn.execute(
             "INSERT OR IGNORE INTO seen_articles (hash, title_norm, source_domain, seen_at) "
@@ -78,50 +84,50 @@ class DedupCache:
         self._conn.commit()
 
     def discover(self, url: str, source_domain: str, via: str = "listing") -> tuple[str, bool, bool]:
-        """Ghi URL vào sổ phát hiện trước mọi bước lọc.
+        """Record a URL in the discovery ledger before any filter.
 
         Args:
-            url: URL như nguồn trả về.
-            source_domain: Tên miền nguồn.
-            via: Kênh phát hiện: listing, rss, api, sitemap hoặc reconcile.
+            url: URL as returned by the source.
+            source_domain: Source domain.
+            via: Discovery channel: listing, rss, api, sitemap or reconcile.
 
         Returns:
-            Bộ (khoá bài, là bài mới, là dạng URL khác dạng đã thấy đầu tiên).
+            Tuple of (article key, is new article, is a URL form different from the first one seen).
         """
         res = registry.discover(self._conn, url, source_domain, via)
         self._conn.commit()
         return res
 
     def is_captured(self, key: str) -> bool:
-        """Kiểm tra bài mang khoá này đã được lưu thành bài trong kho hay chưa.
+        """Check whether the article with this key was already stored as an article.
 
         Args:
-            key: Khoá bài từ `src.core.urlnorm.url_key`.
+            key: Article key from `src.core.urlnorm.url_key`.
 
         Returns:
-            True nếu sổ phát hiện ghi trạng thái captured.
+            True if the discovery ledger records the captured state.
         """
         return registry.is_captured(self._conn, key)
 
     def known_keys(self, keys: list[str]) -> set[str]:
-        """Lọc ra các khoá bài đã được lưu thành bài trong kho.
+        """Filter the article keys already stored as articles.
 
         Args:
-            keys: Danh sách khoá bài cần tra.
+            keys: Article keys to look up.
 
         Returns:
-            Tập khoá đã ở trạng thái captured, dùng làm mốc dừng phân trang.
+            Keys already in the captured state, used as the pagination stop marker.
         """
         return registry.known_keys(self._conn, keys)
 
     def cleanup(self, max_age_days: int = 30) -> int:
-        """Xóa các bản ghi đã xem cũ hơn số ngày quy định.
+        """Delete seen records older than the given number of days.
 
         Args:
-            max_age_days: Số ngày lưu giữ tối đa.
+            max_age_days: Maximum retention in days.
 
         Returns:
-            Số bản ghi đã bị xóa bỏ.
+            Number of records deleted.
         """
         cutoff = time.time() - max_age_days * 86400
         cur = self._conn.execute("DELETE FROM seen_articles WHERE seen_at < ?", (cutoff,))
@@ -129,13 +135,13 @@ class DedupCache:
         return cur.rowcount
 
     def count(self) -> int:
-        """Đếm tổng số bản ghi đã ghi nhận trong bảng seen_articles.
+        """Count the records in the `seen_articles` table.
 
         Returns:
-            Số lượng bản ghi trong bảng.
+            Number of records in the table.
         """
         return self._conn.execute("SELECT COUNT(*) FROM seen_articles").fetchone()[0]
 
     def close(self) -> None:
-        """Đóng kết nối cơ sở dữ liệu của bộ nhớ đệm."""
+        """Close the database connection of the cache."""
         self._conn.close()

@@ -1,8 +1,4 @@
-"""Bộ phát hiện thay đổi nội dung và cấu trúc DOM của bài viết (Change Detection).
-
-Cung cấp các thuật toán sinh dấu vân tay (SimHash64, DOM path signature)
-và phân loại trạng thái bài viết (NEW, UNCHANGED, CONTENT_CHANGED, TEMPLATE_DRIFT, SELECTOR_BROKEN).
-"""
+"""Detect article content and DOM structure changes by fingerprinting (SimHash64, DOM path signature) and classifying states NEW, UNCHANGED, CONTENT_CHANGED, TEMPLATE_DRIFT and SELECTOR_BROKEN."""
 
 from __future__ import annotations
 
@@ -14,19 +10,19 @@ _TOKEN_RE = re.compile(r"\w+", re.UNICODE)
 
 
 def _token_hash64(token: str) -> int:
-    """Băm một token từ khóa thành số nguyên 64-bit bằng Blake2b."""
+    """Hash a keyword token into a 64-bit integer with Blake2b."""
     return int.from_bytes(hashlib.blake2b(token.encode("utf-8"), digest_size=8).digest(),
                           "big")
 
 
 def simhash64(text: str) -> int:
-    """Tính toán chữ ký SimHash 64-bit của đoạn văn bản.
+    """Compute the 64-bit SimHash signature of a text.
 
     Args:
-        text: Nội dung văn bản cần tính toán băm tương đồng.
+        text: Text content to hash for similarity.
 
     Returns:
-        Số nguyên 64-bit đại diện cho dấu vân tay nội dung (0 nếu văn bản rỗng).
+        64-bit integer fingerprint of the content (0 for empty text).
     """
     if not text:
         return 0
@@ -46,26 +42,27 @@ def simhash64(text: str) -> int:
 
 
 def hamming64(a: int, b: int) -> int:
-    """Tính khoảng cách Hamming (số bit khác biệt) giữa hai chữ ký 64-bit.
+    """Compute the Hamming distance (number of differing bits) between two 64-bit signatures.
 
     Args:
-        a: Số nguyên 64-bit thứ nhất.
-        b: Số nguyên 64-bit thứ hai.
+        a: First 64-bit integer.
+        b: Second 64-bit integer.
 
     Returns:
-        Số lượng bit khác biệt giữa a và b.
+        Number of bits that differ between a and b.
     """
     return bin((a ^ b) & _MASK64).count("1")
 
 
 def dom_path_sig(structure: dict) -> str:
-    """Tạo chữ ký cấu trúc DOM không phụ thuộc thứ tự từ siêu dữ liệu cấu trúc Silver.
+    """Build an order-independent DOM structure signature from Silver structure metadata.
 
     Args:
-        structure: Từ điển chứa các thành phần cấu trúc (headings, paragraphs, tables, links).
+        structure: Dict of structure components (headings, paragraphs, tables, links).
 
     Returns:
-        Chuỗi băm SHA-1 độ dài 12 ký tự biểu diễn cấu trúc DOM, hoặc rỗng nếu không có cấu trúc.
+        12-character SHA-1 digest of the DOM structure, or an empty string when there is
+        no structure.
     """
     if not structure:
         return ""
@@ -92,17 +89,17 @@ def dom_path_sig(structure: dict) -> str:
 
 def fingerprint(cleaned_text: str, structure: dict, *,
                 content_sha256: str, capture_status: str, missing: list | None) -> dict:
-    """Tổng hợp bộ dấu vân tay nội dung và trạng thái selector cho một bản capture.
+    """Assemble the content fingerprint set and selector status for one capture.
 
     Args:
-        cleaned_text: Văn bản sạch sau khi trích xuất.
-        structure: Cấu trúc thành phần DOM của bài viết.
-        content_sha256: Mã băm SHA-256 nội dung thô tầng Bronze.
-        capture_status: Trạng thái thu thập ('ok', 'partial', 'failed').
-        missing: Danh sách các thành phần bị thiếu trong capture.
+        cleaned_text: Clean text after extraction.
+        structure: DOM component structure of the article.
+        content_sha256: SHA-256 hash of the raw Bronze content.
+        capture_status: Capture status ('ok', 'partial', 'failed').
+        missing: Components missing from the capture.
 
     Returns:
-        Từ điển chứa các chỉ số dấu vân tay và cờ kiểm tra selector.
+        Dict of fingerprint values and the selector check flag.
     """
     missing = missing or []
     selector_ok = capture_status in ("ok", "partial") \
@@ -119,17 +116,18 @@ def fingerprint(cleaned_text: str, structure: dict, *,
 
 def classify(prev: dict | None, cur: dict, *,
              t_content: int = 6, t_template: int = 12) -> tuple[str, str]:
-    """Phân loại trạng thái thay đổi bằng cách so sánh hai dấu vân tay kế tiếp.
+    """Classify the change state by comparing two consecutive fingerprints.
 
     Args:
-        prev: Dấu vân tay của phiên bản trước đó (hoặc None nếu là bài mới).
-        cur: Dấu vân tay của phiên bản hiện tại.
-        t_content: Ngưỡng khoảng cách nội dung (tham số dự phòng).
-        t_template: Ngưỡng khoảng cách cấu trúc giao diện (tham số dự phòng).
+        prev: Fingerprint of the previous version, or None for a new article.
+        cur: Fingerprint of the current version.
+        t_content: Content distance threshold (reserved parameter).
+        t_template: Layout structure distance threshold (reserved parameter).
 
     Returns:
-        Tuple gồm mã trạng thái ('NEW', 'UNCHANGED', 'CONTENT_CHANGED',
-        'TEMPLATE_DRIFT', 'SELECTOR_BROKEN') và hành động khuyến nghị ('skip', 're_extract', 'manual_review').
+        Tuple of the state code ('NEW', 'UNCHANGED', 'CONTENT_CHANGED',
+        'TEMPLATE_DRIFT', 'SELECTOR_BROKEN') and the recommended action ('skip',
+        're_extract', 'manual_review').
     """
     if not cur.get("selector_ok", True):
         return "SELECTOR_BROKEN", "manual_review"

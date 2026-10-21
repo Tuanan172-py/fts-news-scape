@@ -1,4 +1,4 @@
-"""Gọi agent trực ban `ops-sentinel` qua agy để chẩn đoán sự cố và đề xuất một lệnh."""
+"""Call the on-duty `ops-sentinel` agent through agy to diagnose incidents and propose one command."""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ from src.ops.store import OpsStore
 
 SENTINEL_TIMEOUT_S = 240
 
-# Lệnh duy nhất sentinel được đề xuất; `<wave>` và `<provider>` là chỗ điền.
+# The only commands sentinel may propose; `<wave>` and `<provider>` are placeholders.
 WHITELIST = (
     "/retry <wave>", "/resume", "/pause", "/run", "/reset <provider>",
     "/provider openrouter", "/provider agy", "/capture restart", "none",
@@ -55,14 +55,14 @@ GUARD = """
 
 @dataclass
 class Diagnosis:
-    """Kết quả chẩn đoán đã kiểm định.
+    """Validated diagnosis result.
 
     Attributes:
-        summary: Chẩn đoán ngắn.
-        causes: Các nguyên nhân khả dĩ.
-        command: Lệnh đề xuất nằm trong danh sách trắng, hoặc `none`.
-        rationale: Lý do chọn lệnh.
-        raw: Văn bản gốc của mô hình.
+        summary: Short diagnosis.
+        causes: Possible causes.
+        command: Proposed command from the allow-list, or `none`.
+        rationale: Reason the command was chosen.
+        raw: Original model text.
     """
 
     summary: str
@@ -74,16 +74,16 @@ class Diagnosis:
 
 def build_context(store: OpsStore, breakers: Breakers, log_dir: Path,
                   wave_id: str | None) -> str:
-    """Gom trích đoạn vận hành làm đầu vào cho sentinel.
+    """Collect operations excerpts as input for sentinel.
 
     Args:
-        store: Store vận hành.
-        breakers: Breaker theo provider.
-        log_dir: Thư mục `ops_logs`.
-        wave_id: Đợt cần chẩn đoán, None thì lấy bối cảnh chung.
+        store: Operations store.
+        breakers: Per-provider breakers.
+        log_dir: The `ops_logs` directory.
+        wave_id: Wave to diagnose; None uses the general context.
 
     Returns:
-        Văn bản ngữ cảnh, giới hạn khoảng 12 nghìn ký tự.
+        Context text, limited to about 12 thousand characters.
     """
     parts: list[str] = []
     if wave_id:
@@ -105,14 +105,14 @@ def build_context(store: OpsStore, breakers: Breakers, log_dir: Path,
 
 
 def parse_diagnosis(text: str, wave_id: str | None) -> Diagnosis:
-    """Bóc đối tượng JSON của sentinel và ép lệnh về danh sách trắng.
+    """Extract the sentinel JSON object and constrain the command to the allow-list.
 
     Args:
-        text: Văn bản mô hình trả về.
-        wave_id: Đợt đang chẩn đoán, dùng để kiểm lệnh `/retry`.
+        text: Text returned by the model.
+        wave_id: Wave being diagnosed, used to validate the `/retry` command.
 
     Returns:
-        Diagnosis; lệnh ngoài danh sách trắng bị thay bằng `none`.
+        The Diagnosis; a command outside the allow-list is replaced by `none`.
     """
     obj: dict = {}
     m = re.search(r"\{.*\}", text or "", re.S)
@@ -135,17 +135,17 @@ def parse_diagnosis(text: str, wave_id: str | None) -> Diagnosis:
 
 
 def call_agy(prompt: str, *, timeout_s: int = SENTINEL_TIMEOUT_S) -> str:
-    """Gọi agy một lượt với agent `ops-sentinel` trong hồ sơ cô lập không tool.
+    """Call agy once with the `ops-sentinel` agent in an isolated profile without tools.
 
     Args:
-        prompt: Ngữ cảnh vận hành.
-        timeout_s: Trần thời gian.
+        prompt: Operations context.
+        timeout_s: Time limit.
 
     Returns:
-        Văn bản phản hồi của mô hình.
+        Response text of the model.
 
     Raises:
-        RuntimeError: Khi agy thất bại hoặc quá hạn.
+        RuntimeError: If agy fails, times out or returns an empty response.
     """
     from src.agent.agy_runner import DEFAULT_MODEL, build_sandbox_profile, resolve_agy
 
@@ -192,22 +192,22 @@ def call_agy(prompt: str, *, timeout_s: int = SENTINEL_TIMEOUT_S) -> str:
 
 def diagnose(store: OpsStore, breakers: Breakers, log_dir: Path, wave_id: str | None, *,
              call: Callable[[str], str] = call_agy) -> Diagnosis:
-    """Chẩn đoán và ghi kết quả thành sự kiện; không thi hành gì.
+    """Diagnose and record the result as an event; execute nothing.
 
     Args:
-        store: Store vận hành.
-        breakers: Breaker theo provider.
-        log_dir: Thư mục `ops_logs`.
-        wave_id: Đợt cần chẩn đoán.
-        call: Hàm gọi mô hình, thay được trong kiểm thử.
+        store: Operations store.
+        breakers: Per-provider breakers.
+        log_dir: The `ops_logs` directory.
+        wave_id: Wave to diagnose.
+        call: Function that calls the model; replaceable in tests.
 
     Returns:
-        Diagnosis.
+        The Diagnosis.
     """
     ctx = build_context(store, breakers, log_dir, wave_id)
     try:
         d = parse_diagnosis(call(ctx), wave_id)
-    except Exception as exc:  # noqa: BLE001 — sentinel lỗi không được làm hỏng daemon
+    except Exception as exc:  # noqa: BLE001 — a sentinel failure must not break the daemon
         d = Diagnosis(summary=f"Sentinel không chạy được: {exc}", causes=[], command="none",
                       rationale="Chẩn đoán thủ công bằng /log và pipeline_radar.py status.")
     store.emit("sentinel.diagnosis", d.summary, actor="sentinel", wave_id=wave_id,

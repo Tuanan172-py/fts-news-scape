@@ -1,8 +1,4 @@
-"""Đóng gói và giải nén tác vụ xử lý theo lô gom nhóm (Batch Handoff).
-
-Cung cấp các cơ chế gom nhiều bài viết thành một tệp gói tác vụ mini-batch duy nhất
-cho Agent (tầng L1 hoặc Gold) và giải nén các tệp kết quả trả về.
-"""
+"""Pack articles into mini-batch task packets for agents and unpack the returned outputs."""
 
 from __future__ import annotations
 
@@ -26,14 +22,14 @@ _OUTPUT_REQUIRED = [
 
 
 def build_batch_packet(tasks: list[dict], batch_id: str) -> dict:
-    """Đóng gói danh sách gói tác vụ đơn lẻ thành một gói tác vụ lô (batch packet) tầng Gold.
+    """Pack single task packets into one Gold-layer batch packet.
 
     Args:
-        tasks: Danh sách các gói tác vụ đơn lẻ cần gom nhóm.
-        batch_id: Mã định danh của lô công việc (ví dụ: 'batch_01').
+        tasks: Single task packets to group.
+        batch_id: Identifier of the batch (for example 'batch_01').
 
     Returns:
-        Từ điển cấu trúc gói tác vụ gom lô tự mô tả.
+        Self-describing batch packet dict.
     """
     t = load_thresholds()
     batch_tasks = []
@@ -78,14 +74,14 @@ _L1_OUTPUT_REQUIRED = [
 
 
 def build_l1_batch_packet(tasks: list[dict], batch_id: str) -> dict:
-    """Đóng gói danh sách bài viết thành gói tác vụ gom lô nhận diện thực thể tầng L1.
+    """Pack articles into an L1 entity-recognition batch packet.
 
     Args:
-        tasks: Danh sách các bài viết cần thẩm định nhận diện thực thể.
-        batch_id: Mã định danh của lô công việc L1.
+        tasks: Articles whose entity recognition must be audited.
+        batch_id: Identifier of the L1 batch.
 
     Returns:
-        Từ điển gói tác vụ gom lô tầng L1 kèm thông tin gợi ý code-first.
+        L1 batch packet dict with the code-first hints.
     """
     batch_tasks = []
     for tsk in tasks:
@@ -132,14 +128,14 @@ def build_l1_batch_packet(tasks: list[dict], batch_id: str) -> dict:
 
 
 def write_batch_packet(batch_packet: dict, base_dir: str | Path | None = None) -> str:
-    """Ghi gói tác vụ gom lô ra đĩa theo cơ chế hoán đổi nguyên tử an toàn.
+    """Write a batch packet to disk through an atomic swap.
 
     Args:
-        batch_packet: Dữ liệu gói tác vụ gom lô.
-        base_dir: Thư mục lưu trữ các tệp gói tác vụ.
+        batch_packet: Batch packet data.
+        base_dir: Directory that receives the packet files.
 
     Returns:
-        Đường dẫn chuỗi tới tệp tin gói tác vụ đã ghi.
+        Path string of the written packet file.
     """
     base_dir = paths.resolve_data_path(base_dir) if base_dir else paths.agent_tasks_dir()
     os.makedirs(base_dir, exist_ok=True)
@@ -156,17 +152,17 @@ def split_tasks_into_batches(
     prefix: str = "batch",
     builder=None,
 ) -> list[str]:
-    """Chia danh sách tác vụ thành các lô nhỏ và ghi ra các tệp gói tác vụ tương ứng.
+    """Split tasks into small batches and write one packet file per batch.
 
     Args:
-        tasks: Danh sách các tác vụ cần phân lô.
-        batch_size: Số lượng tác vụ trong mỗi lô.
-        base_dir: Thư mục lưu trữ kết quả.
-        prefix: Tiền tố đặt tên tệp lô (ví dụ: 'batch', 'l1_batch').
-        builder: Hàm đóng gói cấu trúc lô (mặc định là build_batch_packet).
+        tasks: Tasks to split.
+        batch_size: Number of tasks per batch.
+        base_dir: Directory that receives the output files.
+        prefix: Batch file name prefix (for example 'batch', 'l1_batch').
+        builder: Function that builds the batch packet; defaults to build_batch_packet.
 
     Returns:
-        Danh sách đường dẫn các tệp gói tác vụ lô đã tạo.
+        Paths of the batch packet files created.
     """
     out_paths: list[str] = []
     if not tasks:
@@ -175,11 +171,10 @@ def split_tasks_into_batches(
     builder = builder or build_batch_packet
     total = len(tasks)
     batch_idx = 1
-    # Nhãn định danh lần chạy. Trước đây mã lô luôn đếm lại từ 01 nên lô mới trùng tên lô
-    # cũ; AutoPilot thấy file output cùng tên liền bỏ qua lô MỚI rồi nạp lại dữ liệu CŨ và
-    # báo thành công (ADR 0008 §1.3).
-    # Dấu thời gian theo giây là CHƯA ĐỦ: hai lượt trong cùng một giây vẫn trùng. Ghép thêm
-    # 4 ký tự ngẫu nhiên để va chạm là không thể, không chỉ khó xảy ra.
+    # Run tag keeps batch ids unique across runs: a repeated id lets AutoPilot see an
+    # existing output file of the same name, skip the new batch and re-ingest stale data
+    # (ADR 0008 §1.3). A second-resolution timestamp alone still collides within one
+    # second, so 4 random hex characters are appended.
     run_tag = (f"{datetime.now(VN_TZ):%Y%m%dT%H%M%S}_{uuid.uuid4().hex[:4]}")
     for i in range(0, total, batch_size):
         chunk = tasks[i : i + batch_size]
@@ -198,20 +193,35 @@ def split_l1_tasks_into_batches(
     base_dir: str | Path | None = None,
     prefix: str = "l1_batch",
 ) -> list[str]:
-    """Gom lô cho lớp L1 (packet chỉ có tiêu đề nên lô lớn hơn Gold được)."""
+    """Split L1 tasks into batches; L1 packets carry titles only, so batches can be larger than Gold.
+
+    Args:
+        tasks: L1 tasks to split.
+        batch_size: Number of tasks per batch.
+        base_dir: Directory that receives the output files; defaults to the `l1` agent tasks directory.
+        prefix: Batch file name prefix.
+
+    Returns:
+        Paths of the batch packet files created.
+    """
     return split_tasks_into_batches(tasks, batch_size=batch_size,
                                     base_dir=base_dir or paths.agent_tasks_dir() / "l1",
                                     prefix=prefix, builder=build_l1_batch_packet)
 
 
 def unpack_batch_output(batch_output: dict | list | str | Path) -> list[dict]:
-    """
-    Giải nén output gom lô của Subagent thành danh sách các record agent-output-v1 đơn lẻ.
+    """Unpack a subagent batch output into single agent-output records.
 
-    Hỗ trợ 3 format phổ biến:
-    1. List các objects: [ {"article_id": "..."}, ... ]
-    2. Dict có key 'outputs' hoặc 'results': { "batch_id": "...", "outputs": [ ... ] }
-    3. Dict đơn lẻ (nếu agent trả 1 bài): { "article_id": "..." }
+    Supported formats:
+    1. List of objects: [ {"article_id": "..."}, ... ]
+    2. Dict with key 'outputs' or 'results': { "batch_id": "...", "outputs": [ ... ] }
+    3. Single dict when the agent returns one article: { "article_id": "..." }
+
+    Args:
+        batch_output: Parsed output, or path to a JSON file that holds it.
+
+    Returns:
+        Records that carry an `article_id`; empty when the path does not exist or the format is unknown.
     """
     data: Any = batch_output
     if isinstance(data, (str, Path)):

@@ -1,4 +1,4 @@
-"""Thu thập các báo cáo thống kê định kỳ từ Tổng cục Thống kê (NSO)."""
+"""Capture the periodic statistical reports published by the National Statistics Office (NSO)."""
 
 from __future__ import annotations
 
@@ -20,6 +20,14 @@ force_utf8_stdio()
 
 
 def cmd_list(store) -> int:
+    """Print the periodic reports already stored in the database.
+
+    Args:
+        store: ArticleStore of the operational DB.
+
+    Returns:
+        Process exit code, always 0.
+    """
     conn = store.connect()
     try:
         rows = conn.execute(
@@ -42,6 +50,14 @@ def cmd_list(store) -> int:
 
 
 def main(argv: list[str]) -> int:
+    """Discover and capture periodic reports, or list the stored ones.
+
+    Args:
+        argv: Command-line arguments, excluding the program name.
+
+    Returns:
+        1 when any report was held unparsed or failed, otherwise 0.
+    """
     p = argparse.ArgumentParser(description=(__doc__ or "").strip().splitlines()[0])
     p.add_argument("--after", default="", help="ISO date, vd 2026-08-01 (sync tăng dần)")
     p.add_argument("--per-page", type=int, default=20)
@@ -85,7 +101,7 @@ def main(argv: list[str]) -> int:
         print(f"errors ({len(src.errors)}):")
         for e in src.errors[:10]:
             print("  -", e)
-    # held_unparsed > 0 = có báo cáo không đọc được kỳ → cần người xem lại
+    # held_unparsed > 0 means a report whose period could not be read, which needs manual review.
     return 1 if summary["held_unparsed"] or summary["failed"] else 0
 
 

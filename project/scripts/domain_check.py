@@ -1,4 +1,4 @@
-"""Kiểm tra tính toàn vẹn và tình trạng hoạt động của các tên miền nguồn."""
+"""Check the integrity and operating health of the source domains."""
 
 from __future__ import annotations
 
@@ -18,12 +18,14 @@ force_utf8_stdio()
 
 
 def _build_http_client():
+    """Build an HTTP client with a low retry budget for diagnostics."""
     from src.crawler.http_client import HTTPClient
 
     return HTTPClient(rate_limit_delay=0.5, max_retries=1)
 
 
 def _build_dedup():
+    """Build a dedup cache backed by the operational database."""
     from src.core.config import load_settings
     from src.db.dedup import DedupCache
     from src.db.store import ArticleStore
@@ -34,7 +36,7 @@ def _build_dedup():
 
 
 def cmd_list():
-    """Liệt kê domain có schema.yaml."""
+    """List the domains that have a `schema.yaml`."""
     domains_dir = Path(__file__).resolve().parent.parent / "domains"
     for d in sorted(domains_dir.iterdir()):
         if d.is_dir() and (d / "schema.yaml").exists():
@@ -42,7 +44,14 @@ def cmd_list():
 
 
 def cmd_raw_check(domain: str):
-    """Kiểm tra raw response từ upstream."""
+    """Fetch the raw upstream response and compare it with the domain schema.
+
+    Args:
+        domain: Domain name to check.
+
+    Returns:
+        0 when the fetch succeeds, 1 on a config, build or fetch error or an empty response.
+    """
     from src.core.config import load_domain_config
     from src.scrapers import REGISTRY
 
@@ -116,7 +125,15 @@ def cmd_raw_check(domain: str):
 
 
 def cmd_validate(domain: str | None = None, store=None):
-    """Validate articles trong DB so với schema."""
+    """Validate the stored articles of each domain against its schema.
+
+    Args:
+        domain: Domain to validate; defaults to every domain that has a schema.
+        store: ArticleStore holding the articles to validate.
+
+    Returns:
+        1 when a DB error or a critical anomaly occurs, otherwise 0.
+    """
     from src.monitor.domain_validator import DomainValidator
 
     domains_dir = Path(__file__).resolve().parent.parent / "domains"
@@ -192,7 +209,11 @@ def cmd_validate(domain: str | None = None, store=None):
 
 
 def cmd_report(domains: list[str] | None = None):
-    """Generate daily report."""
+    """Generate the daily domain report.
+
+    Args:
+        domains: Domains to report on; defaults to all domains.
+    """
     from src.core.config import load_settings
     from src.db.store import ArticleStore
     from src.monitor.domain_reporter import DomainReporter
@@ -213,6 +234,11 @@ def cmd_report(domains: list[str] | None = None):
 
 
 def main():
+    """Dispatch the domain check command selected on the command line.
+
+    Returns:
+        Exit code of the selected command.
+    """
     parser = argparse.ArgumentParser(
         description="Domain Check — validate domain health"
     )

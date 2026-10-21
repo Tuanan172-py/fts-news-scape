@@ -1,8 +1,4 @@
-"""Bộ thu thập dữ liệu báo Báo Đầu Tư (baodautu.vn).
-
-Cung cấp lớp BaodautuScraper để trích xuất danh sách bài viết qua danh mục HTML
-và thu thập toàn bộ nội dung chi tiết bài viết kèm raw capture tầng Bronze.
-"""
+"""Scrape Bao Dau Tu (baodautu.vn) article lists from HTML category pages and capture full article details with Bronze raw capture."""
 
 from __future__ import annotations
 
@@ -30,14 +26,14 @@ _DATE_RE = re.compile(r"\b(\d{1,2})/(\d{1,2})/(\d{4})\s+(\d{1,2}):(\d{2})\b")
 
 
 def _parse_detail_date(html: str, scope_selector: str) -> str:
-    """Trích xuất ngày xuất bản bài viết theo định dạng dd/MM/yyyy HH:mm sang ISO 8601.
+    """Extract the publication date in dd/MM/yyyy HH:mm format and convert it to ISO 8601.
 
     Args:
-        html: Mã nguồn HTML bài viết chi tiết.
-        scope_selector: CSS selector định vị thẻ chứa chuỗi ngày xuất bản.
+        html: HTML source of the article detail page.
+        scope_selector: CSS selector of the element that holds the publication date string.
 
     Returns:
-        Chuỗi ngày tháng định dạng ISO 8601 múi giờ +07:00, hoặc chuỗi rỗng nếu không tìm thấy.
+        ISO 8601 date string with the +07:00 offset, or an empty string when not found.
     """
     if not html:
         return ""
@@ -58,13 +54,13 @@ def _parse_detail_date(html: str, scope_selector: str) -> str:
 
 
 def _slug_title(href: str) -> str:
-    """Dựng tiêu đề tạm từ slug URL khi listing không có tiêu đề hợp lệ.
+    """Build a provisional title from the URL slug when the listing has no valid title.
 
     Args:
-        href: Đường dẫn bài viết dạng `/ten-bai-d123456.html`.
+        href: Article path such as `/ten-bai-d123456.html`.
 
     Returns:
-        Chuỗi các từ trong slug, đã bỏ mã bài `-d<số>`.
+        Words of the slug with the `-d<number>` article id removed.
     """
     slug = href.rstrip("/").rsplit("/", 1)[-1]
     slug = re.sub(r"-d\d+\.html.*$", "", slug)
@@ -73,25 +69,33 @@ def _slug_title(href: str) -> str:
 
 @register("baodautu")
 class BaodautuScraper(CaptureMixin, BaseScraper):
-    """Bộ thu thập dữ liệu báo Báo Đầu Tư thông qua trích xuất danh mục HTML.
+    """Scrape Bao Dau Tu by extracting articles from HTML category pages.
 
     Attributes:
-        categories: Danh sách cấu hình chuyên mục cần thu thập.
-        pages_per_cycle: Số trang danh mục cần duyệt trong một chu kỳ.
-        item_selector: Bộ chọn CSS xác định khối bài viết.
-        link_selector: Bộ chọn CSS xác định liên kết bài viết.
-        sapo_selector: Bộ chọn CSS xác định phần tóm tắt ngắn (sapo).
-        link_pattern: Mẫu biểu thức chính quy kiểm tra định dạng liên kết bài viết.
-        content_selector: Bộ chọn CSS vùng nội dung chi tiết bài viết.
-        date_scope: Bộ chọn CSS định vị thời gian đăng bài viết.
-        author_selector: Bộ chọn CSS xác định tác giả.
-        max_details: Giới hạn số bài viết tải chi tiết trong một chu kỳ.
-        base_url: Địa chỉ gốc của trang web báo.
-        watchlist: Danh mục mã cổ phiếu cần theo dõi và gán nhãn.
-        language: Mã ngôn ngữ nội dung bài viết.
+        categories: Category configs to scrape.
+        pages_per_cycle: Number of category pages to visit per cycle.
+        max_pages: Maximum number of pages per category.
+        item_selector: CSS selector of the article block.
+        link_selector: CSS selector of the article link.
+        sapo_selector: CSS selector of the short summary (sapo).
+        link_pattern: Regular expression that validates article link format.
+        content_selector: CSS selector of the article detail content area.
+        date_scope: CSS selector that locates the publication time.
+        author_selector: CSS selector of the author.
+        max_details: Maximum number of article details to fetch per cycle.
+        base_url: Root URL of the news site.
+        watchlist: Stock tickers to watch and tag.
+        language: Language code of the article content.
     """
 
     def __init__(self, config, http, dedup):
+        """Initialize the scraper from its source config.
+
+        Args:
+            config: Source config dict.
+            http: HTTP client.
+            dedup: Deduplication cache.
+        """
         super().__init__(config, http, dedup)
         listing = config.get("listing", {}) or {}
         self.categories = listing.get("categories", [])
@@ -116,20 +120,20 @@ class BaodautuScraper(CaptureMixin, BaseScraper):
 
     # -- listing ------------------------------------------------------------
     def _page_url(self, slug: str, cid, page: int) -> str:
-        """Tạo đường dẫn phân trang cho chuyên mục."""
+        """Build the paginated URL of a category."""
         return (f"{self.base_url}/{slug}-d{cid}/" if page == 1
                 else f"{self.base_url}/{slug}-d{cid}/p{page}")
 
     def _parse_listing(self, html: str, cat: dict, listing_url: str) -> list[dict]:
-        """Phân tích cú pháp HTML danh mục để trích xuất danh sách bài viết.
+        """Parse category HTML to extract the article list.
 
         Args:
-            html: Chuỗi HTML trang danh mục.
-            cat: Cấu hình chuyên mục hiện tại.
-            listing_url: URL trang danh mục đang xử lý.
+            html: HTML string of the category page.
+            cat: Config of the current category.
+            listing_url: URL of the category page being processed.
 
         Returns:
-            Danh sách từ điển chứa thông tin bài viết thô trích xuất được.
+            One dict per extracted raw article.
         """
         out: list[dict] = []
         try:
@@ -168,10 +172,10 @@ class BaodautuScraper(CaptureMixin, BaseScraper):
         return out
 
     def fetch_list(self) -> list[dict]:
-        """Thu thập danh sách bài viết thô từ các trang danh mục cấu hình.
+        """Collect raw article entries from the configured category pages.
 
         Returns:
-            Danh sách bài viết thô thu được qua HTTP GET.
+            Raw articles obtained through HTTP GET.
         """
         self._details_fetched = 0
         items: list[dict] = []
@@ -197,13 +201,13 @@ class BaodautuScraper(CaptureMixin, BaseScraper):
         return items
 
     def parse_item(self, raw: dict) -> Article | None:
-        """Chuyển đổi từ điển bài viết thô từ danh mục thành đối tượng Article.
+        """Convert a raw category entry into an Article.
 
         Args:
-            raw: Dữ liệu bài viết thô thu thập từ danh mục.
+            raw: Raw article data collected from the category page.
 
         Returns:
-            Đối tượng Article hợp lệ, hoặc None nếu thiếu URL hoặc tiêu đề.
+            Valid Article, or None when the URL or title is missing.
         """
         url = (raw.get("link") or "").strip()
         title = (raw.get("title") or "").strip()
@@ -226,10 +230,10 @@ class BaodautuScraper(CaptureMixin, BaseScraper):
 
     # -- detail -------------------------------------------------------------
     def enrich(self, article: Article) -> None:
-        """Bổ sung nội dung chi tiết, tác giả, ngày đăng và lưu capture tầng Bronze.
+        """Add detail content, author and publication date, and store the Bronze capture.
 
         Args:
-            article: Đối tượng Article cần bổ sung thông tin.
+            article: Article to enrich.
         """
         if self._details_fetched >= self.max_details:
             article.content_text = article.summary

@@ -1,4 +1,4 @@
-"""Giữ tiến trình cào tin `morninger` luôn sống, khởi động lại có trần."""
+"""Keep the `morninger` capture process alive, restarting it up to a cap."""
 
 from __future__ import annotations
 
@@ -26,33 +26,38 @@ def _capture_lock_held(lock_path: Path) -> bool:
 
 
 class CaptureSupervisor:
-    """Giám sát `python -m src.morninger` theo kiểu cây giám sát một nhánh.
+    """Supervise `python -m src.morninger` as a single-branch supervision tree.
 
-    Tiến trình cào đã chạy sẵn bên ngoài (giữ `capture.lock`) thì chỉ theo dõi, không
-    sinh thêm. Tiến trình chết thì khởi động lại với backoff; quá `max_restarts` trong
-    `restart_window_minutes` thì dừng và gửi cảnh báo đỏ.
+    When a capture process is already running outside (holding `capture.lock`), it is only
+    observed and no extra process is spawned. A dead process is restarted with backoff; more
+    than `max_restarts` within `restart_window_minutes` stops restarts and sends a red alert.
 
     Attributes:
-        store: Store vận hành.
-        cfg: Mục `supervisor` của cấu hình.
-        lock_path: Tệp `capture.lock`.
-        log_path: Nhật ký stdout/stderr của tiến trình con.
+        store: Operations store.
+        cfg: The `supervisor` section of the configuration.
+        lock_path: The `capture.lock` file.
+        log_path: stdout/stderr log of the child process.
+        proc: The child process, or None.
+        mode: Current mode.
+        restarts: Monotonic times of recent restarts.
+        next_start_at: Earliest monotonic time of the next start.
+        gave_up: True after the restart cap was exceeded.
     """
 
     def __init__(self, store: OpsStore, cfg: dict, lock_path: Path, log_path: Path, *,
                  spawn: Callable[[], subprocess.Popen] | None = None,
                  lock_held: Callable[[Path], bool] = _capture_lock_held,
                  clock: Callable[[], float] = time.monotonic) -> None:
-        """Gắn phụ thuộc.
+        """Bind the dependencies.
 
         Args:
-            store: Store vận hành.
-            cfg: Mục `supervisor` của cấu hình.
-            lock_path: Tệp `capture.lock`.
-            log_path: Nhật ký tiến trình con.
-            spawn: Hàm sinh tiến trình, thay được trong kiểm thử.
-            lock_held: Hàm kiểm khoá cào đang bị giữ.
-            clock: Đồng hồ đơn điệu.
+            store: Operations store.
+            cfg: The `supervisor` section of the configuration.
+            lock_path: The `capture.lock` file.
+            log_path: Log of the child process.
+            spawn: Function that spawns the process; replaceable in tests.
+            lock_held: Function that checks whether the capture lock is held.
+            clock: Monotonic clock.
         """
         self.store = store
         self.cfg = cfg
@@ -78,16 +83,16 @@ class CaptureSupervisor:
                                 stdin=subprocess.DEVNULL, creationflags=CREATE_NO_WINDOW)
 
     def reset(self) -> None:
-        """Xoá trạng thái bỏ cuộc để thử khởi động lại theo lệnh người vận hành."""
+        """Clear the give-up state so a restart is attempted on operator command."""
         self.gave_up = False
         self.restarts.clear()
         self.next_start_at = 0.0
 
     def tick(self) -> str:
-        """Kiểm một lần và khởi động lại nếu cần.
+        """Check once and restart the process if needed.
 
         Returns:
-            Chế độ hiện tại: `disabled`, `external`, `child`, `backoff`, `gave_up`.
+            Current mode: `disabled`, `external`, `child`, `backoff`, `gave_up`.
         """
         if not self.cfg.get("manage_capture", True):
             self.mode = "disabled"

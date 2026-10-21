@@ -1,4 +1,4 @@
-"""Kiểm tra chuẩn trình bày của tài liệu, tin nhắn và giao diện vận hành, 0 token."""
+"""Check the presentation standard of documents, messages and the operations UI at zero token cost."""
 
 from __future__ import annotations
 
@@ -13,16 +13,16 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
-# Phạm vi kiểm tra. Tài liệu cũ ngoài danh sách này chưa bị áp chuẩn.
+# Lint scope. Older documents outside this list are not yet held to the standard.
 DOC_GLOBS = ("docs/GLOSSARY.md", "docs/templates/*.md", "project/docs/operations/ops-daemon*.md",
              "project/docs/operations/publisher.md", ".agents/skills/ops-supervision/SKILL.md")
 ADR_GLOB = "docs/decisions/*.md"
-ADR_MIN_LINT = 14        # blacklist và emoji áp từ ADR này
-ADR_MIN_STRUCTURE = 15   # cấu trúc bắt buộc áp từ ADR này
+ADR_MIN_LINT = 14        # blacklist and emoji rules apply from this ADR on
+ADR_MIN_STRUCTURE = 15   # mandatory structure applies from this ADR on
 PY_GLOBS = ("project/src/ops/*.py", "project/scripts/ops_daemon.py", "project/scripts/ops_console.py")
 HTML_GLOBS = ("project/src/ops/web/*.html",)
 
-# Rule 06 §2: danh mục từ cấm. Ranh giới từ tính theo ký tự Unicode.
+# Rule 06 §2: banned-phrase list. Word boundaries are computed on Unicode characters.
 BLACKLIST = ("nhìn chung", "thông thường", "nói chung", "về cơ bản", "đáng chú ý",
              "cần lưu ý rằng", "đóng vai trò quan trọng", "toàn diện", "mạnh mẽ",
              "hiệu quả cao", "tối ưu nhất", "chúng ta", "tôi", "bạn có thể thấy rằng")
@@ -31,16 +31,16 @@ _BLACKLIST_RE = re.compile(r"(?<!\w)(" + "|".join(re.escape(w) for w in BLACKLIS
 
 _EMOJI_RE = re.compile("[\U0001F300-\U0001FAFF\u2600-\u27BF\u2B50\u2B55\u23F8\u23F9\u25AB\u25D0"
                        "\u2705\u274C\u26A0\u2713\u2717]|\ufe0f")
-# Dòng giao thức đọc đầu ra của `article_run.py`, không phải chữ cho người đọc.
+# Protocol lines that parse the output of `article_run.py`; not text for human readers.
 _EMOJI_ALLOW = ("_BATCH_LINE", "(✅|⚠️)")
 
-# Tên cũ đã có tên chuẩn trong GLOSSARY mục 6.
+# Legacy names that have a canonical name in GLOSSARY section 6.
 LEGACY_TERMS = (("standing order", "mandate"), ("control room", "Phòng điều khiển"))
 _LEGACY_ALLOW = ("agy_standing_order", "Tên cũ")
-# Mã nội bộ không được lộ ra người đọc cuối.
+# Internal codes must not reach the end reader.
 _INTERNAL_CODE_RE = re.compile(r"\bUS-(?!IMP\b)[A-Z0-9]+\b|\bD-[A-E]\b")
 
-# Tệp có frontmatter `type:` thuộc hợp đồng tri thức ADR-0021, do `scripts/knowledge.py` kiểm.
+# Files with a `type:` frontmatter belong to the ADR-0021 knowledge contract, checked by `scripts/knowledge.py`.
 _CONTRACT_FM_RE = re.compile(r"\A---\r?\n(?:.*\r?\n)*?type:\s*\w+", re.M)
 
 MAX_SENTENCE_WORDS = 25
@@ -51,13 +51,13 @@ ADR_META = ("**Ngày:**", "**Trạng thái:**", "**Lane:**")
 
 @dataclass(frozen=True)
 class Finding:
-    """Một vi phạm chuẩn trình bày.
+    """Represent one violation of the presentation standard.
 
     Attributes:
-        rule: Mã luật (L01 đến L08).
-        path: Đường dẫn tương đối của tệp.
-        line: Số dòng, bắt đầu từ 1; 0 khi vi phạm ở cấp tệp.
-        message: Mô tả vi phạm.
+        rule: Rule code (L01 to L08).
+        path: Relative path of the file.
+        line: 1-based line number; 0 when the violation is at file level.
+        message: Description of the violation.
     """
 
     rule: str
@@ -70,13 +70,27 @@ class Finding:
 
 
 def _heading_texts(text: str) -> list[str]:
-    """Liệt kê nội dung các tiêu đề `##`, bỏ số thứ tự đầu dòng."""
+    """List the text of `##` headings, without the leading ordinal.
+
+    Args:
+        text: Markdown content.
+
+    Returns:
+        Heading texts in document order.
+    """
     return [re.sub(r"^\d+\.\s*", "", m.group(1)).strip()
             for m in re.finditer(r"^##\s+(.+)$", text, re.M)]
 
 
 def _strip_inline(line: str) -> str:
-    """Bỏ định dạng markdown khỏi một dòng để đếm từ."""
+    """Strip markdown formatting from a line so words can be counted.
+
+    Args:
+        line: One markdown line.
+
+    Returns:
+        The line without inline code, link targets and markup characters.
+    """
     line = re.sub(r"`[^`]*`", " ", line)
     line = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", line)
     return re.sub(r"[*_>#]", "", line)
@@ -85,19 +99,19 @@ def _strip_inline(line: str) -> str:
 def lint_markdown(path: str, text: str, *, root: Path = REPO_ROOT, reader_facing: bool = True,
                   check_terms: bool = True, adr_number: int | None = None,
                   check_length: bool = True) -> list[Finding]:
-    """Kiểm một tệp markdown.
+    """Lint one markdown file.
 
     Args:
-        path: Đường dẫn tương đối dùng để báo lỗi và giải liên kết.
-        text: Nội dung tệp.
-        root: Gốc kho dùng giải liên kết tương đối.
-        reader_facing: True khi áp luật mã nội bộ lộ ra người đọc cuối.
-        check_terms: True khi áp luật tên cũ (GLOSSARY và ADR được miễn).
-        adr_number: Số của ADR nếu tệp là ADR, để áp cấu trúc bắt buộc.
-        check_length: True khi áp luật độ dài câu.
+        path: Relative path used in findings and to resolve links.
+        text: File content.
+        root: Repository root used to resolve relative links.
+        reader_facing: True to apply the rule against internal codes shown to end readers.
+        check_terms: True to apply the legacy-name rule (GLOSSARY and ADRs are exempt).
+        adr_number: ADR number when the file is an ADR, to apply the mandatory structure.
+        check_length: True to apply the sentence-length rule.
 
     Returns:
-        Danh sách vi phạm.
+        List of violations.
     """
     out: list[Finding] = []
     in_fence = False
@@ -136,7 +150,16 @@ def lint_markdown(path: str, text: str, *, root: Path = REPO_ROOT, reader_facing
 
 
 def _lint_links(path: str, text: str, root: Path) -> list[Finding]:
-    """Báo liên kết tương đối trỏ tới tệp không tồn tại."""
+    """Report relative links that point to a missing file.
+
+    Args:
+        path: Relative path of the markdown file.
+        text: File content.
+        root: Repository root.
+
+    Returns:
+        List of L07 violations.
+    """
     out = []
     base = (root / path).parent
     in_fence = False
@@ -155,11 +178,28 @@ def _lint_links(path: str, text: str, root: Path) -> list[Finding]:
 
 
 def _lint_structure(path: str, text: str, adr_number: int | None) -> list[Finding]:
-    """Kiểm mục bắt buộc theo loại tài liệu khai báo hoặc theo số ADR."""
+    """Check the mandatory sections for the declared document type or ADR number.
+
+    Args:
+        path: Relative path of the markdown file.
+        text: File content.
+        adr_number: ADR number when the file is an ADR, otherwise None.
+
+    Returns:
+        List of L05 and L06 violations.
+    """
     out = []
     heads = _heading_texts(text)
 
     def missing(required: tuple[str, ...]) -> list[str]:
+        """Return the required headings absent from the document.
+
+        Args:
+            required: Heading prefixes that must be present.
+
+        Returns:
+            The required prefixes that no heading starts with.
+        """
         return [r for r in required if not any(h.lower().startswith(r.lower()) for h in heads)]
 
     if adr_number is not None and adr_number >= ADR_MIN_STRUCTURE:
@@ -175,7 +215,14 @@ def _lint_structure(path: str, text: str, adr_number: int | None) -> list[Findin
 
 
 def _docstring_lines(tree: ast.AST) -> set[int]:
-    """Tập số dòng thuộc docstring của module, lớp và hàm."""
+    """Collect the line numbers occupied by module, class and function docstrings.
+
+    Args:
+        tree: Parsed syntax tree.
+
+    Returns:
+        Set of 1-based line numbers.
+    """
     lines: set[int] = set()
     for node in ast.walk(tree):
         if isinstance(node, (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
@@ -188,14 +235,14 @@ def _docstring_lines(tree: ast.AST) -> set[int]:
 
 
 def lint_python(path: str, text: str) -> list[Finding]:
-    """Kiểm một tệp Python: từ cấm trong docstring và comment; emoji, tên cũ, mã nội bộ trong chuỗi.
+    """Lint one Python file: banned phrases in docstrings and comments; emoji, legacy names and internal codes in strings.
 
     Args:
-        path: Đường dẫn tương đối dùng để báo lỗi.
-        text: Nội dung tệp.
+        path: Relative path used in findings.
+        text: File content.
 
     Returns:
-        Danh sách vi phạm.
+        List of violations.
     """
     out: list[Finding] = []
     try:
@@ -235,14 +282,14 @@ def lint_python(path: str, text: str) -> list[Finding]:
 
 
 def lint_html(path: str, text: str) -> list[Finding]:
-    """Kiểm trang HTML: emoji, từ cấm, tên cũ và mã nội bộ trong chữ hiển thị.
+    """Lint one HTML page: emoji, banned phrases, legacy names and internal codes in visible text.
 
     Args:
-        path: Đường dẫn tương đối dùng để báo lỗi.
-        text: Nội dung tệp.
+        path: Relative path used in findings.
+        text: File content.
 
     Returns:
-        Danh sách vi phạm.
+        List of violations.
     """
     out: list[Finding] = []
     for no, line in enumerate(text.splitlines(), 1):
@@ -262,13 +309,13 @@ def lint_html(path: str, text: str) -> list[Finding]:
 
 
 def lint_repo(root: Path = REPO_ROOT) -> list[Finding]:
-    """Kiểm toàn bộ phạm vi đã khai báo của kho.
+    """Lint the whole declared scope of the repository.
 
     Args:
-        root: Gốc kho.
+        root: Repository root.
 
     Returns:
-        Danh sách vi phạm, sắp theo tệp và dòng.
+        Violations sorted by file and line.
     """
     out: list[Finding] = []
     for pattern in DOC_GLOBS:
@@ -301,13 +348,13 @@ def lint_repo(root: Path = REPO_ROOT) -> list[Finding]:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Chạy lint và in vi phạm; mã thoát 1 khi có vi phạm.
+    """Run the lint and print the violations.
 
     Args:
-        argv: Tham số dòng lệnh.
+        argv: Command-line arguments; defaults to `sys.argv`.
 
     Returns:
-        Mã thoát.
+        1 when any violation exists, otherwise 0.
     """
     ap = argparse.ArgumentParser(description="Lint chuẩn trình bày tài liệu và giao diện")
     ap.add_argument("--summary", action="store_true", help="Chỉ in số vi phạm theo luật")

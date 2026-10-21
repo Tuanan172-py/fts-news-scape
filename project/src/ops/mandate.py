@@ -1,4 +1,4 @@
-"""Mandate vận hành tự gia hạn có điều kiện (D-A): hệ thống khoẻ thì giữ uỷ quyền, có sự cố thì dừng."""
+"""Renew the operations mandate conditionally (D-A), keeping the delegation while the system is healthy and stopping on incidents."""
 
 from __future__ import annotations
 
@@ -12,18 +12,18 @@ from src.ops.store import OpsStore, iso, now_vn
 
 
 def health(store: OpsStore, cfg: dict) -> tuple[bool, list[str]]:
-    """Đánh giá điều kiện cho phép tự gia hạn mandate.
+    """Evaluate the conditions that allow the mandate to renew itself.
 
-    Điều kiện (D-A): không có sự kiện mức đỏ trong 24 giờ, chuỗi đợt sạch đủ dài,
-    không có chuỗi đợt hỏng, và không có lượt gọi công cụ trái bất biến Zero-Tool
-    trong 7 ngày.
+    Conditions (D-A): no critical-level event in 24 hours, a clean wave streak that is long
+    enough, no streak of failed waves, and no tool call violating the Zero-Tool invariant
+    in 7 days.
 
     Args:
-        store: Store vận hành.
-        cfg: Cấu hình đầy đủ.
+        store: Operations store.
+        cfg: Full configuration.
 
     Returns:
-        Cặp (khoẻ, danh sách lý do không khoẻ).
+        Pair (healthy, list of reasons it is not healthy).
     """
     a = cfg["autonomy"]
     reasons: list[str] = []
@@ -48,18 +48,18 @@ def health(store: OpsStore, cfg: dict) -> tuple[bool, list[str]]:
 
 
 def maybe_renew(store: OpsStore, cfg: dict, paths: OpsPaths) -> dict | None:
-    """Gia hạn mandate khi sắp hết hạn và hệ thống khoẻ; ngược lại báo lý do không gia hạn.
+    """Renew the mandate when it nears expiry and the system is healthy; otherwise report why not.
 
-    Mandate đã hết hạn hoặc chưa từng cấp thì không bao giờ tự cấp lại: việc cấp ban đầu
-    và cấp lại sau khi hết hạn là hành động của người.
+    A mandate that has expired or was never issued is never re-issued automatically: the
+    initial grant and any re-grant after expiry are human actions.
 
     Args:
-        store: Store vận hành.
-        cfg: Cấu hình đầy đủ.
-        paths: Đường dẫn vận hành.
+        store: Operations store.
+        cfg: Full configuration.
+        paths: Operations paths.
 
     Returns:
-        Từ điển mô tả hành động đã làm, hoặc None khi chưa cần.
+        Dict describing the action taken, or None when no action is needed.
     """
     order = load_order(paths.standing_order)
     if not order.exists or order.expired() or order.effective_level() == "L0":

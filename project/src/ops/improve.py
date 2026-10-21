@@ -1,4 +1,4 @@
-"""Phát hiện cơ hội cải tiến từ vết và KPI, rồi quản lý hộp thư đề xuất cho người duyệt."""
+"""Detect improvement opportunities from traces and KPIs and manage the proposal inbox for human review."""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 MAX_PER_WEEK = 5
 RESURFACE_DAYS = 30
 MIN_WAVES = 3
-INVARIANT_IMPACT = 1_000_000_000  # vi phạm bất biến luôn xếp trên mọi đề xuất tiết kiệm
+INVARIANT_IMPACT = 1_000_000_000  # an invariant violation always ranks above every savings proposal
 
 
 def _mean(xs: list[float]) -> float:
@@ -25,21 +25,21 @@ def _mean(xs: list[float]) -> float:
 
 
 def detect(store: OpsStore, cfg: dict) -> list[dict]:
-    """Chạy các bộ phát hiện tất định (0 token) và trả về ứng viên đề xuất.
+    """Run the deterministic detectors (0 tokens) and return proposal candidates.
 
     Args:
-        store: Store vận hành.
-        cfg: Cấu hình đầy đủ.
+        store: Operations store.
+        cfg: Full configuration.
 
     Returns:
-        Danh sách {dedup_key, kind, title, evidence, impact}, chưa lọc trùng.
+        Candidates as {dedup_key, kind, title, evidence, impact}, not yet deduplicated.
     """
     out: list[dict] = []
     ws = [w for w in sv.waves(store, 100) if w["status"] == "DONE" and w["n_articles"]]
     since = (now_vn() - timedelta(days=14)).date().isoformat()
     recent = [w for w in ws if w["opened_at"][:10] >= since]
 
-    # 1. Lượt phân tích đầu thiếu bài nên bước vá tốn token.
+    # 1. The first analysis pass misses articles, so the repair step spends tokens.
     yields = [w["first_pass_yield"] for w in recent if w["first_pass_yield"] is not None]
     shares = [w["repair_share"] for w in recent if w["repair_share"] is not None]
     if len(yields) >= MIN_WAVES and (_mean(yields) < 0.8 or _mean(shares) > 0.3):
@@ -53,7 +53,7 @@ def detect(store: OpsStore, cfg: dict) -> list[dict]:
                          "mean_repair_tokens_per_wave": round(rep_tokens)},
             "impact": round(rep_tokens)})
 
-    # 2. Bộ nhớ đệm không được dùng lại giữa các tiến trình agy.
+    # 2. The cache is not reused across agy processes.
     ag = sv._rows(store, "SELECT attrs_json FROM ops_spans WHERE kind = 'agent' AND started_at >= ?",
                   (since,))
     usages = [sv._attrs(a).get("usage") or {} for a in ag]
@@ -67,7 +67,7 @@ def detect(store: OpsStore, cfg: dict) -> list[dict]:
                          "cache_read_tokens": 0},
             "impact": round(mean_in * len(usages) / max(1, len(recent)))})
 
-    # 3. Vi phạm bất biến Zero-Tool.
+    # 3. Zero-Tool invariant violation.
     viol = [r for r in sv._rows(store, "SELECT span_id, trace_id, attrs_json FROM ops_spans "
                                        "WHERE kind = 'agent' AND started_at >= ?", (since,))
             if sv._attrs(r).get("tool_invoked") or sv._attrs(r).get("denied_actions")]
@@ -77,7 +77,7 @@ def detect(store: OpsStore, cfg: dict) -> list[dict]:
                     "evidence": {"spans": [v["span_id"] for v in viol[:5]]},
                     "impact": INVARIANT_IMPACT})
 
-    # 4. Breaker mở lặp lại.
+    # 4. Breaker opens repeatedly.
     br_events = sv._rows(store, "SELECT message FROM ops_events WHERE kind = 'breaker.opened' "
                                 "AND ts >= ?", (iso(now_vn() - timedelta(days=7)),))
     if len(br_events) >= 2:
@@ -87,7 +87,7 @@ def detect(store: OpsStore, cfg: dict) -> list[dict]:
                                  "samples": [e["message"][:120] for e in br_events[:3]]},
                     "impact": 100 * len(br_events)})
 
-    # 5. Bài hết lượt thử mà chưa qua DoD.
+    # 5. Articles out of attempts that never passed the DoD.
     n_attempts = int(cfg["wave"]["max_attempts_per_article"])
     stuck = sv._rows(store, "SELECT article_id FROM ops_article_attempts WHERE attempts >= ?",
                      (n_attempts,))
@@ -101,7 +101,7 @@ def detect(store: OpsStore, cfg: dict) -> list[dict]:
                     "evidence": {"count": len(stuck_ids), "sample": stuck_ids[:5]},
                     "impact": len(stuck_ids)})
 
-    # 6. Dead-letter Bronze tăng.
+    # 6. Bronze dead-letter growth.
     dl = sv._rows(store, "SELECT message FROM ops_events WHERE kind = 'probe.dead_letter.failed' "
                          "AND ts >= ? ORDER BY id DESC LIMIT 1", (iso(now_vn() - timedelta(days=7)),))
     if dl:
@@ -112,17 +112,17 @@ def detect(store: OpsStore, cfg: dict) -> list[dict]:
 
 
 def sync(store: OpsStore, cfg: dict, now=None) -> list[int]:
-    """Thêm ứng viên mới vào hộp thư, bỏ trùng và giữ trần số đề xuất mỗi tuần (D-E).
+    """Add new candidates to the inbox, skipping duplicates and enforcing the weekly proposal cap (D-E).
 
-    Đề xuất đã Hoãn hoặc Bác không xuất hiện lại trong `RESURFACE_DAYS` ngày.
+    A proposal that was deferred or rejected does not resurface within `RESURFACE_DAYS` days.
 
     Args:
-        store: Store vận hành.
-        cfg: Cấu hình đầy đủ.
-        now: Thời điểm tham chiếu, dùng cho kiểm thử.
+        store: Operations store.
+        cfg: Full configuration.
+        now: Reference time, used in tests.
 
     Returns:
-        Mã các đề xuất mới.
+        Identifiers of the new proposals.
     """
     now = now or now_vn()
     cap = int(cfg.get("improvement", {}).get("max_per_week", MAX_PER_WEEK))
@@ -153,7 +153,7 @@ def sync(store: OpsStore, cfg: dict, now=None) -> list[int]:
 
 
 def _harness(*args: str) -> subprocess.CompletedProcess:
-    """Gọi `scripts/harness_cli.py` từ gốc kho với đường dẫn mặc định của harness."""
+    """Call `scripts/harness_cli.py` from the repository root with the default harness paths."""
     return subprocess.run([sys.executable, str(REPO_ROOT / "scripts" / "harness_cli.py"), *args],
                           cwd=str(REPO_ROOT), capture_output=True, text=True, encoding="utf-8",
                           errors="replace", timeout=60)
@@ -161,20 +161,21 @@ def _harness(*args: str) -> subprocess.CompletedProcess:
 
 def decide(store: OpsStore, proposal_id: int, action: str, *, actor: str = "human",
            harness: Callable[..., subprocess.CompletedProcess] = _harness) -> dict:
-    """Ghi quyết định của người với một đề xuất; chỉ `open_story` đi vào quy trình story.
+    """Record the human decision on a proposal; only `open_story` enters the story workflow.
 
-    Đề xuất tự sinh không bao giờ tự thi hành: người chọn Mở story thì mới có intake và
-    story ở trạng thái `planned`, còn mọi thay đổi mã đi qua quy trình thường của repo.
+    A generated proposal is never executed automatically: only when the human chooses Open
+    story do an intake and a story in `planned` status get created, and every code change
+    follows the normal repository workflow.
 
     Args:
-        store: Store vận hành.
-        proposal_id: Mã đề xuất.
-        action: `open_story`, `defer` hoặc `reject`.
-        actor: Nguồn quyết định (web, telegram).
-        harness: Hàm gọi harness CLI, thay được trong kiểm thử.
+        store: Operations store.
+        proposal_id: Proposal identifier.
+        action: `open_story`, `defer` or `reject`.
+        actor: Decision source (web, telegram).
+        harness: Function that calls the harness CLI; replaceable in tests.
 
     Returns:
-        Từ điển {ok, status, story_id, message}.
+        Dict {ok, status, story_id, message}.
     """
     with store.conn() as c:
         row = c.execute("SELECT * FROM ops_proposals WHERE id = ?", (proposal_id,)).fetchone()

@@ -1,4 +1,4 @@
-"""Cấu hình hệ thống ghi log tập trung sử dụng Loguru."""
+"""Configure centralized Loguru logging."""
 
 from __future__ import annotations
 
@@ -13,14 +13,14 @@ _configured = False
 
 
 def setup_logging(level: str = "INFO", log_dir: str | Path | None = None):
-    """Khởi tạo cấu hình ghi log ra bảng điều khiển và tệp lưu trữ xoay vòng.
+    """Configure logging to the console and a rotating log file.
 
     Args:
-        level: Mức độ log tối thiểu cần ghi.
-        log_dir: Thư mục chứa tệp log lưu trữ. Mặc định `paths.logs_dir()`.
+        level: Minimum log level to record.
+        log_dir: Directory for the log file. Defaults to `paths.logs_dir()`.
 
     Returns:
-        Đối tượng Logger đã được cấu hình.
+        The configured Logger.
     """
     global _configured
     if _configured:

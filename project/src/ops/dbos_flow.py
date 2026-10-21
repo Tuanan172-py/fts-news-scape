@@ -1,4 +1,4 @@
-"""Bọc vòng đời đợt thành workflow DBOS bền, mỗi bước là một step có checkpoint."""
+"""Wrap the wave lifecycle in a durable DBOS workflow where each stage is a checkpointed step."""
 
 from __future__ import annotations
 
@@ -10,19 +10,19 @@ from dbos import DBOS, SetWorkflowID
 from src.ops.config import OpsPaths
 from src.ops.wave_flow import DirectOps, WaveSpec, WaveSteps, drive_wave
 
-# Ghim phiên bản ứng dụng: DBOS chỉ khôi phục workflow cùng phiên bản, mặc định phiên
-# bản băm từ mã nguồn nên sửa mã giữa chừng sẽ bỏ rơi đợt dang dở. Chỉ tăng số này khi
-# đổi thứ tự hoặc số lượng step của `drive_wave`.
+# Pinned application version: DBOS recovers only workflows of the same version, and the
+# default version is a hash of the source code, so editing code mid-run would orphan an
+# interrupted wave. Bump this number only when the order or count of `drive_wave` steps changes.
 APP_VERSION = "ops-v2"
 
 _runtime: dict[str, Any] = {}
 
 
 def init_dbos(paths: OpsPaths) -> None:
-    """Khởi tạo DBOS với DB hệ thống SQLite riêng ngoài OneDrive.
+    """Initialize DBOS with a dedicated SQLite system database outside OneDrive.
 
     Args:
-        paths: Đường dẫn vận hành.
+        paths: Operations paths.
     """
     url = "sqlite:///" + str(paths.dbos_db).replace("\\", "/")
     DBOS(config={"name": "news-scape-ops", "system_database_url": url,
@@ -30,11 +30,11 @@ def init_dbos(paths: OpsPaths) -> None:
 
 
 def bind(steps: WaveSteps, cfg: dict) -> None:
-    """Gắn bộ bước và cấu hình cho các step DBOS.
+    """Bind the step set and configuration for the DBOS steps.
 
     Args:
-        steps: WaveSteps của daemon.
-        cfg: Cấu hình đầy đủ.
+        steps: WaveSteps of the daemon.
+        cfg: Full configuration.
     """
     _runtime["direct"] = DirectOps(steps)
     _runtime["cfg"] = cfg
@@ -46,87 +46,185 @@ def _direct() -> DirectOps:
 
 @DBOS.step()
 def st_preflight(spec: dict) -> list:
-    """Step bền: preflight."""
+    """Run the durable preflight step.
+
+    Args:
+        spec: WaveSpec as a dict.
+
+    Returns:
+        Preflight result from the wave steps.
+    """
     return _direct().preflight(spec)
 
 
 @DBOS.step()
 def st_prepare(spec: dict) -> int:
-    """Step bền: đóng gói."""
+    """Run the durable packing step.
+
+    Args:
+        spec: WaveSpec as a dict.
+
+    Returns:
+        Number of articles packed.
+    """
     return _direct().prepare(spec)
 
 
 @DBOS.step()
 def st_analyze(spec: dict, round_no: int) -> dict:
-    """Step bền: phân tích hoặc vá."""
+    """Run the durable analysis or repair step.
+
+    Args:
+        spec: WaveSpec as a dict.
+        round_no: Analysis or repair round number.
+
+    Returns:
+        Round result from the wave steps.
+    """
     return _direct().analyze(spec, round_no)
 
 
 @DBOS.step()
 def st_stop_requested(spec: dict) -> bool:
-    """Step bền: đọc cờ dừng ở ranh giới trước bước nạp DB."""
+    """Run the durable step that reads the stop flag at the boundary before DB load.
+
+    Args:
+        spec: WaveSpec as a dict.
+
+    Returns:
+        True when a stop was requested.
+    """
     return _direct().stop_requested(spec)
 
 
 @DBOS.step()
 def st_finish(spec: dict) -> list:
-    """Step bền: hoàn tất và nạp DB."""
+    """Run the durable finish and DB load step.
+
+    Args:
+        spec: WaveSpec as a dict.
+
+    Returns:
+        Finish result from the wave steps.
+    """
     return _direct().finish(spec)
 
 
 @DBOS.step()
 def st_finalize(spec: dict, status: str, reason: str, flags: dict) -> str:
-    """Step bền: chốt trạng thái cuối."""
+    """Run the durable step that records the final wave status.
+
+    Args:
+        spec: WaveSpec as a dict.
+        status: Final wave status.
+        reason: Reason for the final status.
+        flags: Outcome flags.
+
+    Returns:
+        Final status recorded.
+    """
     return _direct().finalize(spec, status, reason, flags)
 
 
 class DbosOps:
-    """Bộ bước của `drive_wave` đi qua step DBOS."""
+    """Step set of `drive_wave` that routes through DBOS steps."""
 
     def preflight(self, spec: dict) -> list:
+        """Run preflight as a DBOS step.
+
+        Args:
+            spec: WaveSpec as a dict.
+
+        Returns:
+            Preflight result.
+        """
         return st_preflight(spec)
 
     def prepare(self, spec: dict) -> int:
+        """Run packing as a DBOS step.
+
+        Args:
+            spec: WaveSpec as a dict.
+
+        Returns:
+            Number of articles packed.
+        """
         return st_prepare(spec)
 
     def analyze(self, spec: dict, round_no: int) -> dict:
+        """Run analysis or repair as a DBOS step.
+
+        Args:
+            spec: WaveSpec as a dict.
+            round_no: Analysis or repair round number.
+
+        Returns:
+            Round result.
+        """
         return st_analyze(spec, round_no)
 
     def stop_requested(self, spec: dict) -> bool:
+        """Read the stop flag as a DBOS step.
+
+        Args:
+            spec: WaveSpec as a dict.
+
+        Returns:
+            True when a stop was requested.
+        """
         return st_stop_requested(spec)
 
     def finish(self, spec: dict) -> list:
+        """Run finish and DB load as a DBOS step.
+
+        Args:
+            spec: WaveSpec as a dict.
+
+        Returns:
+            Finish result.
+        """
         return st_finish(spec)
 
     def finalize(self, spec: dict, status: str, reason: str, flags: dict) -> str:
+        """Record the final wave status as a DBOS step.
+
+        Args:
+            spec: WaveSpec as a dict.
+            status: Final wave status.
+            reason: Reason for the final status.
+            flags: Outcome flags.
+
+        Returns:
+            Final status recorded.
+        """
         return st_finalize(spec, status, reason, flags)
 
 
 @DBOS.workflow()
 def wave_workflow(spec: dict) -> str:
-    """Workflow bền của một đợt.
+    """Run the durable workflow of one wave.
 
     Args:
-        spec: WaveSpec dạng từ điển.
+        spec: WaveSpec as a dict.
 
     Returns:
-        Trạng thái cuối.
+        Final status.
     """
     try:
         return drive_wave(spec, DbosOps(), _runtime["cfg"])
-    except Exception as exc:  # noqa: BLE001 — step ném lỗi thì đợt phải về FAILED, không kẹt
+    except Exception as exc:  # noqa: BLE001 — a step that raises must move the wave to FAILED, not leave it stuck
         return st_finalize(spec, "FAILED", f"Bước của đợt ném lỗi: {exc}"[:400],
                            {"failure": True})
 
 
 def start_wave(spec: WaveSpec) -> str:
-    """Khởi chạy workflow của đợt với mã idempotent.
+    """Start the wave workflow under an idempotent workflow id.
 
     Args:
-        spec: Thông số đợt.
+        spec: Wave parameters.
 
     Returns:
-        Mã workflow.
+        Workflow identifier.
     """
     with SetWorkflowID(spec.workflow_id):
         DBOS.start_workflow(wave_workflow, asdict(spec))

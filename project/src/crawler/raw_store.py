@@ -1,4 +1,4 @@
-"""Quản lý lưu trữ tạo tác thô Bronze (HTML/nhị phân nguyên bản) và tệp mô tả siêu dữ liệu."""
+"""Store raw Bronze artifacts (original HTML and binaries) together with their metadata files."""
 
 from __future__ import annotations
 
@@ -14,43 +14,43 @@ from loguru import logger
 
 from src.core import paths
 
-# Bộ lọc header cần giữ lại nhằm đảm bảo vệ sinh dữ liệu bảo mật.
+# Response headers to keep, so that no sensitive header is stored.
 _HEADER_WHITELIST = ("content-type", "content-length", "last-modified",
                      "etag", "server", "date")
-# Danh sách thuộc tính ảnh ưu tiên phân giải URL.
+# Image attributes tried in order when resolving the image URL.
 _LAZY_ATTRS = ("src", "data-src", "data-original", "original-src",
                "document-path", "data-lazy")
 
 
 class RawStore:
-    """Lớp quản lý lưu trữ dữ liệu thô Bronze byte-exact và siêu dữ liệu đi kèm.
+    """Store byte-exact raw Bronze data and its accompanying metadata.
 
     Attributes:
-        base_dir: Đường dẫn tuyệt đối của thư mục gốc lưu trữ dữ liệu thô Bronze.
+        base_dir: Absolute path of the root directory of the Bronze raw data.
     """
 
     def __init__(self, base_dir: str | os.PathLike | None = None):
-        """Khởi tạo kho Bronze, neo đường dẫn tương đối vào gốc dữ liệu.
+        """Initialize the Bronze store, anchoring a relative path to the data root.
 
-        Đường dẫn tương đối không được hiểu theo thư mục làm việc hiện hành, vì một
-        tiến trình chạy ở thư mục khác sẽ ghi Bronze ra ngoài nơi Silver đọc.
+        A relative path is not resolved against the current working directory, because a
+        process running in another directory would write Bronze outside the place Silver reads.
 
         Args:
-            base_dir: Thư mục gốc Bronze, tuyệt đối hoặc tương đối so với gốc dữ liệu.
-                Mặc định `paths.bronze_dir()`.
+            base_dir: Bronze root directory, absolute or relative to the data root.
+                Defaults to `paths.bronze_dir()`.
         """
         root = paths.resolve_data_path(base_dir) if base_dir else paths.bronze_dir()
         self.base_dir = str(root)
 
     @staticmethod
     def _portable_path(path: str) -> str:
-        """Đưa đường dẫn trong gốc dữ liệu về dạng tương đối để ghi vào tệp meta.
+        """Convert a path under the data root to a relative path for the meta file.
 
         Args:
-            path: Đường dẫn tệp Bronze.
+            path: Bronze file path.
 
         Returns:
-            Đường dẫn tương đối so với gốc dữ liệu khi tệp nằm trong đó, ngược lại giữ nguyên.
+            Path relative to the data root if the file is inside it, otherwise unchanged.
         """
         return paths.to_data_relative(path)
 
@@ -62,29 +62,29 @@ class RawStore:
             return "unknown-date"
 
     def _dir_for(self, domain: str, yyyymmdd: str) -> str:
-        """Tạo và trả về đường dẫn thư mục lưu trữ cho tên miền và ngày cụ thể.
+        """Create and return the storage directory for a domain and date.
 
         Args:
-            domain: Tên miền của nguồn tin.
-            yyyymmdd: Chuỗi ngày định dạng YYYYMMDD.
+            domain: Domain of the news source.
+            yyyymmdd: Date string in YYYYMMDD format.
 
         Returns:
-            Chuỗi đường dẫn thư mục lưu trữ.
+            Path of the storage directory.
         """
         d = os.path.join(self.base_dir, domain, yyyymmdd)
         os.makedirs(d, exist_ok=True)
         return d
 
     def paths_for(self, domain: str, url_title_hash: str, fetched_at: str) -> tuple[str, str]:
-        """Xác định trước đường dẫn tệp HTML và metadata mà không tạo thư mục.
+        """Determine the HTML and metadata file paths without creating directories.
 
         Args:
-            domain: Tên miền của nguồn tin.
-            url_title_hash: Mã băm định danh bài viết.
-            fetched_at: Thời điểm thu thập dữ liệu ISO.
+            domain: Domain of the news source.
+            url_title_hash: Hash that identifies the article.
+            fetched_at: ISO fetch time.
 
         Returns:
-            Bộ (html_path, meta_path) dạng chuỗi đường dẫn.
+            Tuple (html_path, meta_path) of path strings.
         """
         d = os.path.join(self.base_dir, domain, self._yyyymmdd(fetched_at))
         base = os.path.join(d, url_title_hash)
@@ -92,14 +92,14 @@ class RawStore:
 
     @staticmethod
     def _has_good_capture(html_path: str, meta_path: str) -> bool:
-        """Kiểm đã có bản cào tốt (`ok` hoặc `partial`) cùng tệp HTML tại đường dẫn này.
+        """Check whether a good capture (`ok` or `partial`) with its HTML file exists at this path.
 
         Args:
-            html_path: Đường dẫn tệp HTML Bronze.
-            meta_path: Đường dẫn tệp meta Bronze.
+            html_path: Bronze HTML file path.
+            meta_path: Bronze meta file path.
 
         Returns:
-            True khi meta đọc được, trạng thái là `ok` hoặc `partial` và HTML còn đó.
+            True if the meta is readable, its status is `ok` or `partial` and the HTML exists.
         """
         if not (os.path.exists(html_path) and os.path.exists(meta_path)):
             return False
@@ -111,11 +111,11 @@ class RawStore:
 
     @staticmethod
     def _write_atomic(path: str, data: bytes) -> None:
-        """Ghi dữ liệu ra tệp tạm và thay thế nguyên tử tệp đích với cơ chế thử lại.
+        """Write data to a temp file and atomically replace the destination, with retries.
 
         Args:
-            path: Đường dẫn tệp đích cần ghi.
-            data: Mảng byte dữ liệu cần ghi.
+            path: Destination file path.
+            data: Bytes to write.
         """
         tmp = f"{path}.tmp"
         with open(tmp, "wb") as f:
@@ -123,19 +123,27 @@ class RawStore:
         last_err: Exception | None = None
         for attempt in range(3):
             try:
-                os.replace(tmp, path)  # atomic trên cùng volume
+                os.replace(tmp, path)  # atomic on the same volume
                 return
-            except PermissionError as e:  # Windows file lock — thử lại ngắn
+            except PermissionError as e:  # Windows file lock: retry briefly
                 last_err = e
                 time.sleep(0.1 * (attempt + 1))
         try:
-            os.remove(tmp)  # dọn tmp rác trước khi báo lỗi
+            os.remove(tmp)  # remove the leftover temp file before raising
         except OSError:
             pass
         raise last_err  # type: ignore[misc]
 
     @staticmethod
     def _filter_headers(headers) -> dict:
+        """Keep only the whitelisted response headers.
+
+        Args:
+            headers: Response headers mapping.
+
+        Returns:
+            Whitelisted headers as strings.
+        """
         out: dict = {}
         getter = getattr(headers, "get", None)
         if getter is None:
@@ -146,9 +154,18 @@ class RawStore:
                 out[k] = str(v)
         return out
 
-    # -- image manifest (read-only, không sửa artifact) -----------------------
+    # -- image manifest (read-only, does not modify the artifact) --------------
     @staticmethod
     def _scan_images(body: bytes, base_url: str) -> list[dict]:
+        """Scan the HTML for images and resolve their URLs and captions.
+
+        Args:
+            body: HTML bytes.
+            base_url: Page URL used to resolve relative image URLs.
+
+        Returns:
+            One dict per image with its outer tag, resolved URL, alt, title and caption.
+        """
         try:
             soup = BeautifulSoup(body, "lxml")
         except Exception as e:  # pragma: no cover - defensive
@@ -187,20 +204,20 @@ class RawStore:
     def save(self, domain: str, url: str, url_title_hash: str, response,
              *, fetched_at: str, missing: list[str] | None = None,
              protection: str | None = None, render_method: str = "requests") -> dict:
-        """Lưu trữ tệp HTML thô nguyên bản và tệp siêu dữ liệu sidecar .meta.json.
+        """Store the original raw HTML and its sidecar .meta.json metadata file.
 
         Args:
-            domain: Tên miền của nguồn tin.
-            url: Đường dẫn gốc của bài viết.
-            url_title_hash: Mã băm định danh bài viết.
-            response: Đối tượng phản hồi HTTP hoặc None khi thu thập thất bại.
-            fetched_at: Thời điểm thu thập dữ liệu dạng chuỗi ISO.
-            missing: Danh sách các thành phần nội dung bị thiếu (tùy chọn).
-            protection: Cơ chế bảo vệ phát hiện được (tùy chọn).
-            render_method: Phương thức render nội dung (mặc định 'requests').
+            domain: Domain of the news source.
+            url: Original article URL.
+            url_title_hash: Hash that identifies the article.
+            response: HTTP response, or None when the fetch failed.
+            fetched_at: Fetch time as an ISO string.
+            missing: Optional list of missing content parts.
+            protection: Optional protection mechanism that was detected.
+            render_method: Content render method.
 
         Returns:
-            Dictionary chứa thông tin trạng thái capture của bài viết.
+            Dict with the capture status of the article.
         """
         yyyymmdd = self._yyyymmdd(fetched_at)
         directory = self._dir_for(domain, yyyymmdd)
@@ -246,9 +263,10 @@ class RawStore:
 
         ok = status is not None and 200 <= status < 300 and len(body) > 0
         if not ok:
-            # 404/410 = nguồn đã xóa bài (không phải lỗi tạm thời) — tách riêng để
-            # (a) không bị backfill_deferred retry vô ích, (b) đo được tần suất
-            # "đăng rồi xóa" đặc trưng của tin VN (pipeline_radar).
+            # 404/410 means the source deleted the article (not a transient error). It is kept
+            # separate so that (a) backfill_deferred does not retry it uselessly and (b) the
+            # "published then deleted" frequency typical of Vietnamese news can be measured
+            # (pipeline_radar).
             deleted_at_source = status in (404, 410)
             cap["error"] = {
                 "type": "deleted_at_source" if deleted_at_source else "http_error",
@@ -260,24 +278,24 @@ class RawStore:
                 cap["capture_status"] = "deleted_at_source"
             if not cap["missing"]:
                 cap["missing"] = ["article_body"]
-            # Lần cào lỗi không được ghi đè bản cào tốt đã có: Bronze bất biến.
+            # A failed fetch must not overwrite an existing good capture: Bronze is immutable.
             if self._has_good_capture(html_path, meta_path):
                 return cap
-            if len(body) > 0:  # partial body vẫn lưu để inspect
+            if len(body) > 0:  # a partial body is still stored for inspection
                 self._write_atomic(html_path, body)
                 cap["content_sha256"] = hashlib.sha256(body).hexdigest()
             self._write_meta(meta_path, cap)
             return cap
 
-        # success — ghi raw bytes NGUYÊN BẢN
+        # success: write the raw bytes unchanged
         self._write_atomic(html_path, body)
         cap["content_sha256"] = hashlib.sha256(body).hexdigest()
-        cap["images"] = self._scan_images(body, url)  # read-only, không sửa file
+        cap["images"] = self._scan_images(body, url)  # read-only, does not modify the file
         cap["capture_status"] = "partial" if cap["missing"] else "ok"
         self._write_meta(meta_path, cap)
         return cap
 
-    # -- attachment nhị phân (design 16 — NSO .xlsx/.docx/.pdf) ---------------
+    # -- binary attachments (design 16: NSO .xlsx/.docx/.pdf) -------------------
     _EXT_BY_TYPE = {
         "application/pdf": ".pdf",
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": ".xlsx",
@@ -289,17 +307,17 @@ class RawStore:
 
     def save_binary(self, domain: str, url: str, key: str, response,
                     *, fetched_at: str) -> dict:
-        """Lưu trữ tệp đính kèm nhị phân và tệp siêu dữ liệu .binmeta.json.
+        """Store a binary attachment and its .binmeta.json metadata file.
 
         Args:
-            domain: Tên miền của nguồn tin.
-            url: Đường dẫn tệp đính kèm.
-            key: Khóa định danh duy nhất cho tệp đính kèm.
-            response: Đối tượng phản hồi HTTP chứa nội dung nhị phân.
-            fetched_at: Thời điểm thu thập dữ liệu dạng chuỗi ISO.
+            domain: Domain of the news source.
+            url: Attachment URL.
+            key: Unique key identifying the attachment.
+            response: HTTP response holding the binary content.
+            fetched_at: Fetch time as an ISO string.
 
         Returns:
-            Dictionary chứa thông tin trạng thái capture tệp nhị phân.
+            Dict with the capture status of the binary file.
         """
         yyyymmdd = self._yyyymmdd(fetched_at)
         directory = self._dir_for(domain, yyyymmdd)
@@ -313,7 +331,7 @@ class RawStore:
             ext = tail if tail in {".pdf", ".xlsx", ".xls", ".docx", ".doc", ".zip"} else ".bin"
 
         bin_path = os.path.join(directory, f"{key}{ext}")
-        # Đuôi .binmeta.json được dùng riêng cho tệp nhị phân để tách biệt khỏi rglob *.meta.json của pipeline derive.
+        # The .binmeta.json suffix is reserved for binary files so the derive pipeline's rglob *.meta.json does not pick them up.
         meta_path = os.path.join(directory, f"{key}{ext}.binmeta.json")
 
         cap: dict = {
@@ -345,7 +363,7 @@ class RawStore:
             self._write_meta(meta_path, cap)
             return cap
 
-        self._write_atomic(bin_path, body)           # bytes NGUYÊN BẢN, không parse
+        self._write_atomic(bin_path, body)           # bytes unchanged, not parsed
         cap["content_length_bytes"] = len(body)
         cap["content_sha256"] = hashlib.sha256(body).hexdigest()
         cap["capture_status"] = "ok"
@@ -353,6 +371,12 @@ class RawStore:
         return cap
 
     def _write_meta(self, path: str, cap: dict) -> None:
+        """Write the capture metadata as JSON, storing `html_path` in portable form.
+
+        Args:
+            path: Meta file path.
+            cap: Capture dict to write.
+        """
         portable = dict(cap)
         if portable.get("html_path"):
             portable["html_path"] = self._portable_path(portable["html_path"])

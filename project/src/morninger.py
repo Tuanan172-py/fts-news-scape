@@ -1,4 +1,4 @@
-"""Bộ điều phối lập lịch và thực thi các chu kỳ xử lý pipeline ban ngày."""
+"""Schedule and run the daytime pipeline processing cycles."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ import time
 from datetime import datetime, timedelta
 from pathlib import Path
 
-# Đảm bảo project root luôn có trong sys.path khi chạy trực tiếp `python morninger.py`
+# Keep the project root on sys.path when running `python morninger.py` directly.
 _project_root = str(Path(__file__).resolve().parent.parent)
 if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
@@ -29,7 +29,7 @@ from src.orchestrator import Orchestrator
 
 
 def _force_utf8_stdio() -> None:
-    """Cấu hình lại luồng xuất nhập chuẩn sang UTF-8 tránh lỗi mã hóa ký tự."""
+    """Reconfigure the standard streams to UTF-8 to avoid character encoding errors."""
     for stream in (sys.stdout, sys.stderr):
         try:
             stream.reconfigure(encoding="utf-8", errors="replace")
@@ -38,21 +38,21 @@ def _force_utf8_stdio() -> None:
 
 
 def build_scheduler(capture_fn, derive_fn, drift_fn, cfg: dict, reclaim_fn=None):
-    """Khởi tạo bộ lập lịch BlockingScheduler với các tác vụ định kỳ.
+    """Build the BlockingScheduler with the periodic jobs.
 
-    Không có job định tuyến L1 code-first. Job ấy thuộc lane L1/Gold đã ngừng (ADR
-    0010): nó ghi bản tra bảng vào `l1_outputs`, và bộ chọn bài cũ coi bản ấy là đã
-    phân tích nên bỏ qua bài vĩnh viễn.
+    There is no code-first L1 routing job. That job belongs to the discontinued L1/Gold lane
+    (ADR 0010): it writes lookup results into `l1_outputs`, and the old article selector
+    treats them as analyzed and skips the article permanently.
 
     Args:
-        capture_fn: Hàm thực thi thu thập dữ liệu Bronze.
-        derive_fn: Hàm thực thi bóc tách tăng dần Silver.
-        drift_fn: Hàm kiểm tra sai lệch mẫu giao diện (drift).
-        cfg: Từ điển cấu hình thời gian chạy của morninger.
-        reclaim_fn: Hàm nhả gói công việc kẹt ở `claimed` quá hạn. None → không đăng ký.
+        capture_fn: Callable that runs Bronze capture.
+        derive_fn: Callable that runs incremental Silver derivation.
+        drift_fn: Callable that checks layout template drift.
+        cfg: Morninger runtime configuration.
+        reclaim_fn: Callable that releases work packages stuck in `claimed` past the limit. None skips registering the job.
 
     Returns:
-        Đối tượng BlockingScheduler đã đăng ký đầy đủ các công việc.
+        BlockingScheduler with every job registered.
     """
     from apscheduler.schedulers.blocking import BlockingScheduler
     from apscheduler.triggers.cron import CronTrigger
@@ -74,7 +74,7 @@ def build_scheduler(capture_fn, derive_fn, drift_fn, cfg: dict, reclaim_fn=None)
         misfire_grace_time=300,
         next_run_time=now,
     )
-    # re-derive bắt đầu sau capture ~1 phút (head start), rồi đều đặn.
+    # Re-derive starts about 1 minute after capture (head start), then runs regularly.
     scheduler.add_job(
         derive_fn,
         IntervalTrigger(minutes=rederive_interval),
@@ -92,7 +92,7 @@ def build_scheduler(capture_fn, derive_fn, drift_fn, cfg: dict, reclaim_fn=None)
         max_instances=1,
     )
     if reclaim_fn is not None:
-        # Không có worker nào claim thì cũng không ai nhả — phải có job riêng.
+        # Without a worker claiming, nothing would release stuck packages, so a dedicated job is needed.
         scheduler.add_job(
             reclaim_fn,
             IntervalTrigger(minutes=int(cfg.get("reclaim_interval_minutes", 30))),
@@ -106,17 +106,17 @@ def build_scheduler(capture_fn, derive_fn, drift_fn, cfg: dict, reclaim_fn=None)
 
 
 class Morninger:
-    """Điều phối tiến trình lập lịch thu thập và tinh chỉnh tin tức ban ngày.
+    """Coordinate the scheduled daytime news capture and refinement.
 
     Attributes:
-        settings: Cấu hình hệ thống chung.
-        store: Kho dữ liệu cơ sở ArticleStore.
-        cfg: Cấu hình riêng của mô-đun morninger.
-        orch: Đối tượng điều phối Orchestrator.
+        settings: Shared system settings.
+        store: ArticleStore holding the base data.
+        cfg: Configuration specific to the morninger module.
+        orch: Orchestrator that runs the capture cycle.
     """
 
     def __init__(self):
-        """Khởi tạo đối tượng điều phối Morninger."""
+        """Load settings, set up logging and create the store and orchestrator."""
         self.settings = load_settings()
         setup_logging(
             self.settings["logging"]["level"], self.settings["logging"]["dir"]
@@ -124,18 +124,20 @@ class Morninger:
         self.store = ArticleStore(self.settings["database"]["path"])
         self.cfg = self.settings.get("morninger", {})
         self.orch = Orchestrator()
-        self._lock_owner = lock_owner()          # Fix F
+        self._lock_owner = lock_owner()
         self._capture_lock = capture_lock()
         self._stopped = False
 
     # -- jobs -----------------------------------------------------------------
     def run_capture(self) -> int:
-        """Thực thi chu kỳ thu thập dữ liệu nguồn Bronze, nối tiếp bù ngay các bài
-        `detail_deferred` (vượt cap trong cycle) — giảm cửa sổ rủi ro nguồn xóa bài
-        trước khi kịp lấy nội dung đầy đủ (đặc điểm tin VN).
+        """Run the Bronze source capture cycle, then immediately backfill `detail_deferred` articles.
+
+        Backfilling right away (articles over the per-cycle cap) narrows the window in which
+        the source may delete an article before its full content is fetched, a trait of
+        Vietnamese news.
 
         Returns:
-            Số lượng bài viết mới được ghi nhận (chu kỳ capture chính).
+            Number of new articles recorded by the main capture cycle.
         """
         n = self.orch.run_cycle()
         self.run_backfill_deferred()
@@ -143,13 +145,13 @@ class Morninger:
         return n
 
     def run_capture_gap(self) -> int:
-        """Đối chiếu sitemap và cào bù URL thiếu ngay sau capture (rule 10, ADR 0013).
+        """Reconcile against the sitemap and backfill missing URLs right after capture (rule 10, ADR 0013).
 
-        Pha đối chiếu chỉ chạy khi lần trước đã cũ hơn `gap_reconcile_minutes`. Không chặn
-        cycle nếu lỗi.
+        The reconcile phase runs only when the previous one is older than `gap_reconcile_minutes`.
+        A failure does not block the cycle.
 
         Returns:
-            Exit code của tiến trình con, hoặc -1 nếu không chạy được.
+            Exit code of the child process, or -1 if it could not run.
         """
         limit = int(self.cfg.get("gap_backfill_limit", 40))
         budget = int(self.cfg.get("gap_budget_seconds", 120))
@@ -168,17 +170,18 @@ class Morninger:
                 logger.warning("[morninger] capture_gap exit={}: {}",
                                proc.returncode, proc.stderr[-500:])
             return proc.returncode
-        except Exception as e:  # noqa: BLE001 — job phụ trợ, không được làm hỏng capture
+        except Exception as e:  # noqa: BLE001 - auxiliary job must not break capture
             logger.error("[morninger] capture_gap lỗi (bỏ qua): {}", e)
             return -1
 
     def run_backfill_deferred(self) -> int:
-        """Gọi backfill_deferred.py ngay sau capture để bù nội dung đầy đủ cho bài bị
-        hoãn (vượt `max_details_per_cycle`) VÀ bài fetch lỗi tạm thời (timeout/5xx).
-        Không chặn cycle nếu lỗi.
+        """Run backfill_deferred.py right after capture to fetch the full content of deferred articles.
+
+        Covers articles deferred past `max_details_per_cycle` AND articles whose fetch failed
+        transiently (timeout or 5xx). A failure does not block the cycle.
 
         Returns:
-            Exit code của tiến trình con, hoặc -1 nếu không chạy được.
+            Exit code of the child process, or -1 if it could not run.
         """
         limit = int(self.cfg.get("deferred_backfill_limit", 60))
         max_attempts = int(self.cfg.get("deferred_max_attempts", 5))
@@ -191,10 +194,10 @@ class Morninger:
                  "--mode", "all", "--max-attempts", str(max_attempts),
                  "--retry-window-hours", str(window),
                  "--budget-seconds", str(budget)],
-                # timeout phải NỚI HƠN budget để script kịp tự dừng sạch và báo cáo;
-                # bị giết bởi timeout là mất trắng thống kê của lượt đó.
-                # encoding PHẢI khai tường minh: script con phát UTF-8, thiếu dòng này thì
-                # tiến trình cha giải mã theo cp1252, reader thread chết và stdout = None.
+                # The timeout must exceed the budget so the script can stop cleanly and report;
+                # a kill by timeout loses the statistics of that run.
+                # The encoding must be explicit: the child emits UTF-8, and without it the parent
+                # decodes as cp1252, the reader thread dies and stdout becomes None.
                 cwd=_project_root, capture_output=True, text=True, timeout=budget + 60,
                 encoding="utf-8", errors="replace",
             )
@@ -205,15 +208,15 @@ class Morninger:
                 logger.warning("[morninger] backfill_deferred exit={}: {}",
                                proc.returncode, proc.stderr[-500:])
             return proc.returncode
-        except Exception as e:  # noqa: BLE001 — job phụ trợ, không được làm hỏng capture
+        except Exception as e:  # noqa: BLE001 - auxiliary job must not break capture
             logger.error("[morninger] backfill_deferred lỗi (bỏ qua): {}", e)
             return -1
 
     def run_derive(self) -> dict:
-        """Thực thi chu kỳ chuyển đổi tăng dần từ Bronze sang Silver.
+        """Run the incremental Bronze-to-Silver conversion cycle.
 
         Returns:
-            Từ điển báo cáo tiến độ xử lý và thông tin manifest nếu đạt điểm kiểm tra.
+            Progress report dict, with manifest information when the checkpoint is reached.
         """
         s = rederive_incremental(self.store)
         self.run_story_cluster()
@@ -225,15 +228,15 @@ class Morninger:
                 s["manifest"] = str(path)
                 s["manifest_count"] = n
                 logger.info("[morninger] silver manifest: {} bài -> {}", n, path)
-            except Exception as e:  # noqa: BLE001 — export là tiện ích
+            except Exception as e:  # noqa: BLE001 - the export is an auxiliary utility
                 logger.error("silver manifest export lỗi (bỏ qua): {}", e)
         return s
 
     def run_story_cluster(self) -> dict:
-        """Cụm hoá trùng lặp và ghi kết quả kế thừa sau derive Silver (ADR 0016).
+        """Cluster duplicates and write the derived signals after the Silver derive (ADR 0016).
 
         Returns:
-            Thống kê cụm hoá và kế thừa; từ điển rỗng nếu lỗi. Không chặn derive.
+            Clustering and signal statistics; an empty dict on error. Never blocks the derive.
         """
         try:
             from src.analytics.signals import build_all
@@ -252,19 +255,18 @@ class Morninger:
                 conn.close()
             logger.info("[morninger] story_cluster: {}", stats)
             return stats
-        except Exception as e:  # noqa: BLE001 — job phụ trợ, không được làm hỏng derive
+        except Exception as e:  # noqa: BLE001 - auxiliary job must not break derive
             logger.error("[morninger] story_cluster lỗi (bỏ qua): {}", e)
             return {}
 
     def run_reclaim(self) -> int:
-        """Nhả các gói công việc kẹt ở `claimed` quá hạn về `pending`.
+        """Release work packages stuck in `claimed` past the limit back to `pending`.
 
-        Trước đây `reclaim_stale()` chỉ chạy bên trong `Catalog.claim()`, nên khi không có
-        worker nào đến nhận việc thì không ai nhả — hàng `claimed` treo vĩnh viễn (đo được
-        304 hàng ngày 2026-09-17).
+        `reclaim_stale()` otherwise runs only inside `Catalog.claim()`, so when no worker comes
+        to claim work nothing releases the rows and `claimed` rows hang forever.
 
         Returns:
-            Số gói công việc đã được hoàn trả hàng đợi.
+            Number of work packages returned to the queue, or -1 on error.
         """
         try:
             from src.handoff.catalog import Catalog
@@ -273,15 +275,15 @@ class Morninger:
             if n:
                 logger.info("[morninger] reclaim: nhả {} work_item kẹt ở 'claimed'", n)
             return n
-        except Exception as e:  # noqa: BLE001 — job phụ trợ, không được làm hỏng scheduler
+        except Exception as e:  # noqa: BLE001 - auxiliary job must not break the scheduler
             logger.error("[morninger] reclaim lỗi (bỏ qua): {}", e)
             return -1
 
     def run_drift(self) -> int:
-        """Kiểm tra và cảnh báo các bài viết gặp sai lệch mẫu hoặc bộ chọn.
+        """Check and warn about articles with template or selector drift.
 
         Returns:
-            Số lượng bài viết có trạng thái sai lệch phát hiện được.
+            Number of articles found in a drift state.
         """
         rows = list_drift(self.store, limit=int(self.cfg.get("drift_limit", 100)))
         if not rows:
@@ -302,10 +304,10 @@ class Morninger:
 
     # -- scheduler ------------------------------------------------------------
     def acquire_capture_lock(self) -> bool:
-        """Chiếm khoá tệp dùng chung của mọi tiến trình cào tin trên máy.
+        """Take the file lock shared by every scraping process on the machine.
 
         Returns:
-            True khi chiếm được, False khi tiến trình cào khác đang chạy.
+            True if the lock was taken, False if another scraping process is running.
         """
         if self._capture_lock.acquire():
             return True
@@ -315,15 +317,15 @@ class Morninger:
         return False
 
     def start_scheduler(self) -> bool:
-        """Chiếm khoá cào tin rồi chạy bộ lập lịch đến khi nhận tín hiệu dừng.
+        """Take the capture lock, then run the scheduler until a stop signal arrives.
 
         Returns:
-            False khi tiến trình cào khác đang giữ khoá, True khi bộ lập lịch đã chạy và dừng.
+            False if another scraping process holds the lock, True if the scheduler ran and stopped.
         """
         if not self.acquire_capture_lock():
             return False
-        # Fix F: chỉ 1 scheduler chạy. Chiếm lock; giao quyền heartbeat cho orchestrator
-        # nội bộ (cùng pid) — run_capture→orch.run_cycle sẽ refresh lock mỗi cycle.
+        # Only one scheduler may run. Take the lock and hand the heartbeat to the internal
+        # orchestrator (same pid): run_capture -> orch.run_cycle refreshes the lock every cycle.
         if not self.store.try_acquire_lock("scheduler", self._lock_owner,
                                            SCHEDULER_LOCK_STALE_SECONDS):
             logger.error("Scheduler khác đang chạy (lock trong pipeline_state). "
@@ -366,6 +368,7 @@ class Morninger:
         return True
 
     def shutdown(self) -> None:
+        """Flush the orchestrator and release the capture lock; repeated calls are safe."""
         if self._stopped:
             return
         self._stopped = True
@@ -376,6 +379,15 @@ class Morninger:
 
 
 def main(argv: list[str]) -> int:
+    """Run morninger once (`--once`) or start the scheduler.
+
+    Args:
+        argv: Command-line arguments without the program name. The first positional argument
+            selects the `--once` target: capture, derive (default) or drift.
+
+    Returns:
+        Process exit code: 0 on success, 1 if the capture lock is held, 2 for an unknown target.
+    """
     _force_utf8_stdio()
     args = [a for a in argv if not a.startswith("--")]
     once = "--once" in argv

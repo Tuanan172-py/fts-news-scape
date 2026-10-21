@@ -1,4 +1,4 @@
-"""Chấm độ phù hợp của provider với bộ vàng Article Lane, chi phí 0 token."""
+"""Score provider conformance against the Article Lane gold set at zero token cost."""
 from __future__ import annotations
 
 import argparse
@@ -22,13 +22,13 @@ BASELINE_PATH = paths.data_root() / "conformance" / "baseline_agy.json"
 
 
 def _score(args: argparse.Namespace) -> dict:
-    """Chấm các lô theo bộ vàng từ tham số dòng lệnh.
+    """Score batches against the gold set using command-line arguments.
 
     Args:
-        args: Tham số đã phân tích, cần `gold`, `batches`, `output_dir`, `task_dir`.
+        args: Parsed arguments; requires `gold`, `batches`, `output_dir` and `task_dir`.
 
     Returns:
-        Số đo của các lô.
+        Metrics of the scored batches.
     """
     gold_doc = json.loads(Path(args.gold).read_text(encoding="utf-8"))
     gold = {str(a["article_id"]): a for a in gold_doc["articles"]}
@@ -37,13 +37,13 @@ def _score(args: argparse.Namespace) -> dict:
 
 
 def main(argv=None) -> int:
-    """Chạy giao diện dòng lệnh chấm độ phù hợp provider.
+    """Run the provider conformance scoring CLI.
 
     Args:
-        argv: Danh sách tham số dòng lệnh. Mặc định lấy từ `sys.argv`.
+        argv: Command-line arguments; defaults to `sys.argv`.
 
     Returns:
-        Mã thoát 0 khi đạt, 1 khi không đạt, 2 khi thiếu mức agy để so.
+        Exit code 0 on pass, 1 on failure, 2 when the agy baseline is missing.
     """
     ap = argparse.ArgumentParser(description=__doc__)
     sub = ap.add_subparsers(dest="cmd", required=True)

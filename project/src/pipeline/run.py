@@ -1,8 +1,4 @@
-"""Điều phối toàn trình dữ liệu từ Bronze sang Silver, phát hiện thay đổi và đưa vào Catalog.
-
-Cung cấp hàm process_meta xử lý trọn vẹn một bản ghi siêu dữ liệu Bronze
-thành bản ghi Silver, lưu phiên bản, đóng gói Work Package và phân phối vào hàng đợi.
-"""
+"""Process a Bronze metadata record end to end into Silver, version it, package a Work Package and enqueue it in the Catalog."""
 
 from __future__ import annotations
 
@@ -22,7 +18,7 @@ SCRAPER_VERSION = "capture-1.0"
 
 
 def _prev_fp(v: dict | None) -> dict | None:
-    """Trích xuất dấu vân tay từ bản ghi phiên bản trước đó trong cơ sở dữ liệu."""
+    """Extract the fingerprint from the previous version record in the database."""
     if v is None:
         return None
     return {
@@ -37,19 +33,19 @@ def process_meta(store, meta_path: str, *, silver_dir: str | None = None,
                  package_dir: str | None = None,
                  t_content: int = 6, t_template: int = 12,
                  do_enqueue: bool = True) -> dict:
-    """Xử lý một tệp tin siêu dữ liệu Bronze qua chuỗi chuyển đổi toàn trình.
+    """Process one Bronze metadata file through the full conversion chain.
 
     Args:
-        store: Đối tượng ArticleStore quản lý cơ sở dữ liệu.
-        meta_path: Đường dẫn tới tệp tin .meta.json của tầng Bronze.
-        silver_dir: Thư mục đích lưu trữ tệp Silver JSON.
-        package_dir: Thư mục đích lưu trữ tệp Work Package JSON.
-        t_content: Ngưỡng khoảng cách nội dung.
-        t_template: Ngưỡng khoảng cách cấu trúc giao diện.
-        do_enqueue: Cờ cho phép đẩy bản ghi vào hàng đợi Catalog work_items.
+        store: ArticleStore object that manages the database.
+        meta_path: Path to the Bronze .meta.json file.
+        silver_dir: Target directory for the Silver JSON file.
+        package_dir: Target directory for the Work Package JSON file.
+        t_content: Content distance threshold.
+        t_template: Layout structure distance threshold.
+        do_enqueue: Allow pushing the record into the Catalog work_items queue.
 
     Returns:
-        Từ điển tóm tắt kết quả xử lý gồm trạng thái, mã phiên bản và đường dẫn tệp.
+        Dict summarizing the result with state, version id and file paths.
     """
     meta = json.loads(Path(meta_path).read_text(encoding="utf-8"))
     raw_path = meta.get("html_path", "")
@@ -64,7 +60,7 @@ def process_meta(store, meta_path: str, *, silver_dir: str | None = None,
         return {"article_id": meta.get("url_title_hash"), "ok": False,
                 "reason": f"raw_read_error: {e}", "state": "raw_read_error"}
 
-    # 1) Silver (+ hard-gate silver-v1: bug #3 — silver hỏng/cleaned rỗng → held)
+    # 1) Silver (+ hard gate silver-v1: invalid silver or empty cleaned text -> held)
     silver = SilverBuilder().build(meta, raw_bytes)
     silver_path = write_silver(silver, base_dir=silver_dir)
     silver_ok, silver_errs = schema_validate(silver, "silver-v1")
@@ -106,7 +102,7 @@ def process_meta(store, meta_path: str, *, silver_dir: str | None = None,
                                          scraper_version=SCRAPER_VERSION)
     package_path = paths.to_data_relative(write_package(package, base_dir=package_dir))
 
-    # 4) Validate (hard gate) + enqueue — held nếu silver HOẶC package không hợp lệ
+    # 4) Validate (hard gate) + enqueue — held if silver OR package is invalid
     ok, errors = schema_validate(package, "work-package-v1")
     held = (not ok) or (not silver_ok)
     enq_status = None

@@ -1,8 +1,4 @@
-"""Bộ tạo bản kê (Manifest) và hiển thị tóm tắt lô công việc cho Agent.
-
-Cung cấp các hàm lập bảng kê batch_manifest.json, trích xuất tiêu đề, thời gian
-và hiển thị bảng danh sách bài viết trực quan trên màn hình điều khiển.
-"""
+"""Build, load and print the batch_manifest.json summary of agent task batches."""
 from __future__ import annotations
 
 import json
@@ -15,13 +11,13 @@ from src.core.staging import safe_json_dump
 
 
 def format_short_time(iso_str: str) -> str:
-    """Định dạng chuỗi thời gian ISO thành dạng rút gọn 'DD/MM HH:MM'.
+    """Format an ISO timestamp as the short form 'DD/MM HH:MM'.
 
     Args:
-        iso_str: Chuỗi thời gian định dạng ISO 8601.
+        iso_str: ISO 8601 timestamp string.
 
     Returns:
-        Chuỗi thời gian rút gọn để hiển thị bảng.
+        Short timestamp for table display.
     """
     if not iso_str:
         return "--/-- --:--"
@@ -33,13 +29,13 @@ def format_short_time(iso_str: str) -> str:
 
 
 def extract_title(d: dict[str, Any]) -> str:
-    """Trích xuất tiêu đề bài viết từ đối tượng tác vụ với nhiều tầng dự phòng.
+    """Extract the article title from a task object with a multi-level fallback.
 
     Args:
-        d: Từ điển gói tác vụ hoặc thông tin bài viết.
+        d: Task packet or article info dict.
 
     Returns:
-        Chuỗi tiêu đề bài viết.
+        Article title string.
     """
     if d.get("title"):
         return str(d["title"]).strip()
@@ -59,13 +55,13 @@ def extract_title(d: dict[str, Any]) -> str:
 
 
 def extract_time(d: dict[str, Any]) -> str:
-    """Trích xuất thời điểm bài viết từ các trường thời gian khả dĩ.
+    """Extract the article timestamp from the candidate time fields.
 
     Args:
-        d: Từ điển chứa dữ liệu tác vụ.
+        d: Task data dict.
 
     Returns:
-        Chuỗi mốc thời gian bài viết.
+        Article timestamp string.
     """
     inp = d.get("input") or {}
     return (
@@ -85,16 +81,16 @@ def create_batch_manifest(
     batch_type: str = "gold",
     order: str = "desc",
 ) -> dict[str, Any]:
-    """Tạo tệp kê khai batch_manifest.json lưu trữ trong thư mục lô công việc.
+    """Create the batch_manifest.json file in the batch directory.
 
     Args:
-        tasks: Danh sách các gói tác vụ cần ghi nhận trong lô.
-        batch_dir: Thư mục chứa các tệp tác vụ của lô.
-        batch_type: Loại lô tác vụ ('gold' hoặc 'l1').
-        order: Thứ tự sắp xếp tác vụ ('asc' hoặc 'desc').
+        tasks: Task packets to record in the batch.
+        batch_dir: Directory that holds the task files of the batch.
+        batch_type: Batch type ('gold' or 'l1').
+        order: Task ordering ('asc' or 'desc').
 
     Returns:
-        Từ điển dữ liệu bảng kê khai đã lưu thành công.
+        Manifest dict that was saved.
     """
     batch_dir = Path(batch_dir)
     batch_dir.mkdir(parents=True, exist_ok=True)
@@ -135,11 +131,11 @@ def create_batch_manifest(
 
 
 def print_batch_summary_table(manifest: dict[str, Any], max_rows: int = 25) -> None:
-    """In bảng tóm tắt danh sách tin của lô tác vụ ra màn hình điều khiển.
+    """Print a summary table of the batch articles to the console.
 
     Args:
-        manifest: Dữ liệu bảng kê khai lô công việc.
-        max_rows: Số dòng bài viết tối đa hiển thị trực tiếp.
+        manifest: Batch manifest data.
+        max_rows: Maximum number of article rows printed.
     """
     batch_id = manifest.get("batch_id", "UNKNOWN")
     batch_size = manifest.get("batch_size", 0)
@@ -171,13 +167,13 @@ def print_batch_summary_table(manifest: dict[str, Any], max_rows: int = 25) -> N
 
 
 def load_batch_manifest(batch_dir: str | Path) -> dict[str, Any] | None:
-    """Đọc tệp tin bảng kê khai batch_manifest.json từ thư mục chỉ định nếu tồn tại.
+    """Load batch_manifest.json from the given directory if it exists.
 
     Args:
-        batch_dir: Thư mục chứa tệp batch_manifest.json.
+        batch_dir: Directory that holds batch_manifest.json.
 
     Returns:
-        Từ điển dữ liệu bản kê khai, hoặc None nếu không tìm thấy hoặc lỗi đọc tệp.
+        Manifest dict, or None if the file is missing or unreadable.
     """
     target = Path(batch_dir) / "batch_manifest.json"
     if not target.is_file():

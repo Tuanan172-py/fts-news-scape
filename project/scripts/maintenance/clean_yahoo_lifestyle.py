@@ -1,4 +1,4 @@
-"""Lọc và xóa các bài viết giải trí, đời sống của Yahoo Finance khỏi cơ sở dữ liệu."""
+"""Remove lifestyle and entertainment Yahoo Finance articles from the database."""
 
 import sqlite3
 import sys

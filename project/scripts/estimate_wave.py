@@ -1,13 +1,7 @@
-"""Dự toán chi phí một đợt trước khi chạy, và đối chiếu với số thật sau khi chạy.
-
-Đây là công cụ **để nhìn**, không phải cổng chặn. Nó không từ chối việc gì; nó chỉ
-đặt con số lên bàn trước khi tiêu token và nói lại sau khi tiêu xong đã lệch bao nhiêu.
-
-Sai số dự toán là chỉ số hạng nhất của cả hệ. Lý do: hai định mức cũ trong kho đã
-lệch thực tế từ 21 tới 90 lần mà không ai phát hiện, vì chưa bao giờ có chỗ nào đối
-chiếu dự toán với số đo. Chừng nào sai số còn lớn thì mọi kế hoạch ngân sách đều là
-phỏng đoán.
-"""
+"""Estimate the cost of a wave before it runs and compare it with the measured figures afterwards, as a report only and never a blocking gate."""
+# The estimation error is a first-class metric of the system: two earlier quotas in the
+# repository deviated from reality by 21x to 90x unnoticed, because nothing compared
+# estimates with measurements. While the error stays large, every budget plan is a guess.
 from __future__ import annotations
 
 import argparse
@@ -32,13 +26,13 @@ HARNESS_DB = PROJECT_ROOT.parent / "harness.db"
 
 
 def load_manifest(wave: str | None) -> dict | None:
-    """Nạp mô tả đợt gần nhất hoặc theo mã đợt chỉ định.
+    """Load the manifest of the latest wave or of a specified wave.
 
     Args:
-        wave: Mã đợt cần nạp. None thì lấy đợt mới nhất trên đĩa.
+        wave: Wave code to load. None selects the newest wave on disk.
 
     Returns:
-        Từ điển mô tả đợt, hoặc None khi không tìm thấy.
+        Wave manifest dict, or None when none is found.
     """
     if wave:
         p = TASK_DIR / f"wave_{wave}.json"
@@ -52,13 +46,13 @@ def load_manifest(wave: str | None) -> dict | None:
 
 
 def actual_from_ledger(wave: str) -> dict | None:
-    """Đọc số thật của một đợt từ sổ cái nếu đã ghi.
+    """Read the measured figures of a wave from the ledger when recorded.
 
     Args:
-        wave: Mã đợt.
+        wave: Wave code.
 
     Returns:
-        Từ điển số đo thật, hoặc None khi đợt chưa có dòng sổ cái.
+        Dict of measured figures, or None when the wave has no ledger row.
     """
     if not HARNESS_DB.exists():
         return None
@@ -76,13 +70,13 @@ def actual_from_ledger(wave: str) -> dict | None:
 
 
 def main(argv=None) -> int:
-    """Chạy giao diện dòng lệnh dự toán và đối chiếu.
+    """Run the command-line estimate and comparison report.
 
     Args:
-        argv: Danh sách tham số dòng lệnh. Mặc định lấy từ `sys.argv`.
+        argv: Command-line arguments. Defaults to `sys.argv`.
 
     Returns:
-        Mã thoát 0 khi in được báo cáo, 2 khi không tìm thấy đợt nào.
+        0 when the report is printed, 2 when no wave is found.
     """
     ap = argparse.ArgumentParser(description="Dự toán chi phí một đợt và đối chiếu số thật")
     ap.add_argument("--wave", help="Mã đợt. Bỏ trống thì lấy đợt mới nhất")
@@ -132,17 +126,17 @@ def main(argv=None) -> int:
         print("-" * 78)
         print("ĐỐI CHIẾU VỚI SỐ THẬT ĐÃ GHI SỔ CÁI")
         print("-" * 78)
-        # Chỉ hai khoản dưới đây là DỰ BÁO, tức sai số của chúng mới có nghĩa.
+        # Only the two items below are forecasts, so only their error is meaningful.
         print(f"{'khoản':26} {'dự toán':>12} {'thật':>14} {'lệch':>10}")
         for label, e, a in (("Đầu vào mới", est_miss, actual["miss_tokens"]),
                             ("Đầu ra", est_out, actual["out_tokens"])):
             diff = ((a - e) / e * 100) if e else 0.0
             print(f"{label:26} {e:>12,} {a:>14,} {diff:>+9.1f}%")
 
-        # `est_hit` là SÀN, không phải dự báo: nó đếm mỗi lượt gọi đọc lại tiền tố
-        # đúng một lần. Số thật còn gồm phần lịch sử gửi lại ở mỗi bước, nên vượt
-        # sàn nhiều lần là bình thường và lành mạnh — đó là lúc bộ nhớ đệm đang
-        # gánh thay giá token mới. Thấp hơn sàn mới là dấu hiệu hỏng.
+        # `est_hit` is a floor, not a forecast: it counts one prefix re-read per call.
+        # The measured figure also includes the history resent at each step, so
+        # exceeding the floor several times over is normal; the cache is then absorbing
+        # the cost of new tokens. Falling below the floor indicates a fault.
         hit_real = actual["hit_tokens"]
         verdict = "ĐẠT" if hit_real >= est_hit else f"HỤT {est_hit - hit_real:,}"
         print(f"{'Đầu vào tái dùng (sàn)':26} {est_hit:>12,} {hit_real:>14,} "

@@ -1,4 +1,4 @@
-"""Sổ đăng ký tập trung các bộ thu thập dữ liệu nguồn tin (Scraper Registry)."""
+"""Hold the central registry of news-source scrapers."""
 
 from __future__ import annotations
 
@@ -8,13 +8,13 @@ REGISTRY: dict[str, type[BaseScraper]] = {}
 
 
 def register(name: str):
-    """Decorator đăng ký một lớp scraper vào sổ đăng ký hệ thống theo tên định danh.
+    """Register a scraper class in the system registry under an identifier.
 
     Args:
-        name: Tên định danh của nguồn tin.
+        name: Identifier of the news source.
 
     Returns:
-        Hàm bọc lớp scraper cần đăng ký.
+        Decorator that registers the scraper class.
     """
     def wrap(cls: type[BaseScraper]) -> type[BaseScraper]:
         REGISTRY[name] = cls
@@ -22,7 +22,7 @@ def register(name: str):
     return wrap
 
 
-# Import cuối file để trigger @register (an toàn circular: register đã định nghĩa)
+# Import at the end of the file to trigger @register (safe against circular import: register is already defined).
 from src.scrapers import (  # noqa: E402,F401
     baodautu,
     cafef,

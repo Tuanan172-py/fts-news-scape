@@ -1,4 +1,4 @@
-"""Định tuyến và phát gói công việc nhận diện thực thể L1."""
+"""Route articles and emit the L1 entity recognition work packages."""
 from __future__ import annotations
 
 import argparse
@@ -20,14 +20,14 @@ force_utf8_stdio()
 
 
 def _iter_sources(source: str | None, reverse: bool = True):
-    """Liệt kê danh sách tệp nguồn theo thời gian sửa đổi gần nhất.
+    """List source files ordered by modification time.
 
     Args:
-        source: Thư mục gốc chứa các gói công việc. Mặc định `paths.work_packages_dir()`.
-        reverse: Có sắp xếp thời gian giảm dần hay không. Mặc định True.
+        source: Root directory holding the work packages. Defaults to `paths.work_packages_dir()`.
+        reverse: Whether to sort by descending modification time. Defaults to True.
 
     Returns:
-        Danh sách đường dẫn tệp JSON đã sắp xếp.
+        Sorted list of JSON file paths.
     """
     root = str(paths.resolve_data_path(source) if source else paths.work_packages_dir())
     silver = str(paths.silver_dir())
@@ -46,6 +46,14 @@ def _iter_sources(source: str | None, reverse: bool = True):
 
 
 def main(argv=None) -> int:
+    """Route articles through the code-first L1 step and export agent packets.
+
+    Args:
+        argv: Command-line arguments. Defaults to `sys.argv`.
+
+    Returns:
+        Process exit code, always 0.
+    """
     ap = argparse.ArgumentParser(description="Định tuyến và phát gói công việc nhận diện thực thể L1")
     ap.add_argument("--source", default=None)
     ap.add_argument("--from-db", action="store_true",
@@ -91,10 +99,10 @@ def main(argv=None) -> int:
         finally:
             conn.close()
 
-    # --only: thu hẹp phạm vi theo mức "lời" khi rút backlog.
-    #   gold-ready  = Gold đã xong nhưng thiếu L1 → công Gold đang nằm không, xong L1 là giao ngay.
-    #   in-articles = có dòng trong `articles` → loại work-package mồ côi (không có `articles`
-    #                 thì gate `articles ⨝ l1_outputs` không bao giờ chạm tới, chạy L1 là phí).
+    # --only: narrow the scope by payoff when draining the backlog.
+    #   gold-ready  = Gold is done but L1 is missing, so the Gold work sits idle; finishing L1 delivers at once.
+    #   in-articles = has a row in `articles`, which drops orphan work packages (without an `articles`
+    #                 row the `articles JOIN l1_outputs` gate never reaches them, so running L1 is wasted).
     _ONLY_SQL = {
         "gold-ready": """
             SELECT DISTINCT a.url_title_hash AS article_id
@@ -172,7 +180,7 @@ def main(argv=None) -> int:
                 "domain": art.get("domain", ""),
                 "time": art.get("published_at") or art.get("fetch_ts") or art.get("captured_at") or "",
                 "path": rec["packet_path"],
-                # code_first đi kèm để packet gom lô giữ được nhiệm vụ TRA SOÁT
+                # Carry code_first along so the batched packet keeps the REVIEW task.
                 "code_first": {
                     "route": rec.get("route"),
                     "relevance": rec.get("relevance"),

@@ -1,4 +1,4 @@
-"""Đóng gói gói công việc giao tác vụ cho agent."""
+"""Build task packets that hand work packages to agents."""
 
 from __future__ import annotations
 
@@ -24,15 +24,15 @@ _OUTPUT_REQUIRED = _OUTPUT_REQUIRED_V2
 
 
 def build_gold_input(work_package: dict, *, l1_entities: list[str] | None = None, prune: bool = True) -> dict:
-    """Tạo payload dữ liệu đầu vào đã làm sạch cho tác vụ agent.
+    """Build the cleaned input payload for an agent task.
 
     Args:
-        work_package: Gói công việc nguồn work-package-v1.
-        l1_entities: Danh sách thực thể L1 đã nhận diện tùy chọn.
-        prune: Có lọc bỏ văn bản rác và boilerplate hay không. Mặc định True.
+        work_package: Source work-package-v1 package.
+        l1_entities: Optional list of recognized L1 entities.
+        prune: Whether to strip junk text and boilerplate.
 
     Returns:
-        Từ điển dữ liệu đầu vào tinh gọn.
+        Compact input data dict.
     """
     raw_text = work_package.get("cleaned_text", "") or ""
     cleaned_text = clean_article_paragraphs(raw_text, l1_entities=l1_entities) if prune else raw_text
@@ -49,7 +49,7 @@ def build_gold_input(work_package: dict, *, l1_entities: list[str] | None = None
         "capture_status": work_package.get("capture_status", "ok"),
         "change_state": work_package.get("change_state", "OK"),
     }
-    # Loại bỏ triệt để structure.headings để tránh lọt tiêu đề tin rác/sidebar gây tốn token và hallucinate
+    # structure.headings is excluded on purpose: junk and sidebar headings waste tokens and induce hallucination.
 
     if l1_entities is not None:
         inp["l1_entities"] = l1_entities
@@ -64,17 +64,17 @@ def build_task_packet(
     prune: bool = True,
     schema_name: str = OUTPUT_SCHEMA,
 ) -> dict:
-    """Đóng gói công việc kèm hợp đồng dữ liệu đầu ra và ràng buộc.
+    """Build a task packet with the output contract and constraints.
 
     Args:
-        work_package: Gói công việc nguồn chứa nội dung bài viết.
-        work_item_id: Định danh bản ghi tác vụ trong hàng đợi xử lý.
-        l1_entities: Danh sách thực thể L1 đã gắn thẻ.
-        prune: Có lọc tỉa nội dung văn bản thừa hay không.
-        schema_name: Tên lược đồ hợp đồng đầu ra (mặc định agent-output-v2-lean).
+        work_package: Source work package that holds the article content.
+        work_item_id: Identifier of the task record in the processing queue.
+        l1_entities: Tagged L1 entities.
+        prune: Whether to strip redundant text.
+        schema_name: Name of the output contract schema.
 
     Returns:
-        Từ điển gói tác vụ đầy đủ tuân thủ hợp đồng giao tiếp agent.
+        Complete task packet dict that follows the agent communication contract.
     """
     t = load_thresholds()
     gold_input = build_gold_input(work_package, l1_entities=l1_entities, prune=prune)
@@ -102,16 +102,16 @@ def build_task_packet(
         "work_item_id": work_item_id,
         "article_id": work_package.get("article_id"),
         "raw_sha256": work_package.get("raw_sha256"),
-        # INPUT — agent đọc cleaned_text sạch (đã prune, loại bỏ boilerplate)
+        # Input: pruned cleaned_text without boilerplate.
         "input": gold_input,
-        # OUTPUT contract — agent PHẢI emit đúng schema này.
+        # Output contract: the agent must emit exactly this schema.
         "output_contract": {
             "schema_name": schema_name,
             "schema_path": f"schemas/{schema_name}.schema.json",
             "required": required_fields,
             "thinking_order": ["summary(tóm tắt)", "implication(hàm ý)", "sentiment", "time_sensitivity"],
         },
-        # Ràng buộc để agent tự canh trước khi nộp (khớp DoD ở ingest).
+        # Constraints the agent self-checks before submitting (match the DoD at ingest).
         "constraints": constraints,
         "instructions_ref": "schemas/agent-instructions-v1.md",
     }
@@ -121,14 +121,14 @@ from src.core.staging import safe_json_dump
 
 
 def write_packet(packet: dict, base_dir: str | Path | None = None) -> str:
-    """Lưu gói công việc ra đĩa an toàn qua cơ chế staging nguyên tử.
+    """Write a task packet to disk through atomic staging.
 
     Args:
-        packet: Dữ liệu gói công việc cần ghi.
-        base_dir: Thư mục gốc lưu trữ gói công việc.
+        packet: Packet data to write.
+        base_dir: Root directory that stores the packets.
 
     Returns:
-        Đường dẫn tệp gói tác vụ đã ghi trên đĩa.
+        Path of the packet file written to disk.
     """
     base_dir = paths.resolve_data_path(base_dir) if base_dir else paths.agent_tasks_dir()
     os.makedirs(base_dir, exist_ok=True)

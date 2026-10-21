@@ -1,4 +1,4 @@
-"""Bộ điều phối thực thi các tác vụ phân tích chuyên sâu của agent."""
+"""Orchestrate export and ingest of in-depth agent analysis tasks."""
 
 from __future__ import annotations
 
@@ -17,20 +17,20 @@ from src.handoff.catalog import Catalog
 
 
 class AgentRunner:
-    """Điều phối xuất gói công việc cho agent và tiếp nhận kết quả phân tích.
+    """Export work packages to agents and ingest their analysis results.
 
     Attributes:
-        store: Kho lưu trữ cơ sở dữ liệu.
-        catalog: Đối tượng quản lý danh mục công việc Catalog.
-        task_dir: Thư mục lưu trữ các tệp gói công việc JSON.
+        store: Database store.
+        catalog: Catalog object that manages the work item catalog.
+        task_dir: Directory that stores the JSON work package files.
     """
 
     def __init__(self, store, *, task_dir: str | Path | None = None):
-        """Khởi tạo bộ điều phối AgentRunner.
+        """Initialize the AgentRunner.
 
         Args:
-            store: Kho lưu trữ cơ sở dữ liệu.
-            task_dir: Thư mục lưu trữ tệp gói công việc. Mặc định `paths.agent_tasks_dir()`.
+            store: Database store.
+            task_dir: Directory that stores work package files; defaults to `paths.agent_tasks_dir()`.
         """
         self.store = store
         self.catalog = Catalog(store)
@@ -39,17 +39,17 @@ class AgentRunner:
     # -- helpers --------------------------------------------------------------
     @staticmethod
     def _load_work_package(package_path: str) -> dict:
-        # Đọc được bản tương đối theo gốc dữ liệu, bản có tiền tố data/ và bản tuyệt đối cũ.
+        # Accepts paths relative to the data root, paths with a data/ prefix, and legacy absolute paths.
         return json.loads(paths.resolve_data_path(package_path).read_text(encoding="utf-8"))
 
     def _work_item_for(self, article_id: str) -> dict | None:
-        """Lấy bản ghi công việc gần nhất tương ứng với mã bài viết.
+        """Return the most relevant work item record for an article.
 
         Args:
-            article_id: Mã băm định danh của bài viết.
+            article_id: Identity hash of the article.
 
         Returns:
-            Từ điển dữ liệu bản ghi công việc hoặc None nếu không tồn tại.
+            Work item record dict, or None if it does not exist.
         """
         conn = self.store.connect()
         try:
@@ -61,19 +61,20 @@ class AgentRunner:
         finally:
             conn.close()
 
-    # Phiên bản gói công việc của Article Lane. 1.1 đổi nguồn thân bài sang Silver
-    # đầy đủ để khớp với packet và trích dẫn (ADR 0018): gói 1.0 cũ ghi đoạn trích
-    # RSS nên trích dẫn Silver không đối chiếu được. Gói cũ tự dựng lại ở lần nạp tới.
+    # Work package version of the Article Lane. 1.1 takes the article body from the full
+    # Silver text to match the packet and citations (ADR 0018); a 1.0 package holds the RSS
+    # excerpt, so Silver citations cannot be verified against it. Old packages are rebuilt
+    # on the next ingest.
     WORK_PACKAGE_VERSION = "1.1"
 
     def _register_article_lane_item(self, article_id: str) -> dict | None:
-        """Đăng ký work_item và work_package cho bài từ Article Lane khi chưa có.
+        """Register the work_item and work_package of an Article Lane article when missing.
 
         Args:
-            article_id: Mã băm định danh của bài viết.
+            article_id: Identity hash of the article.
 
         Returns:
-            Từ điển dữ liệu bản ghi work_item vừa đăng ký, hoặc None khi không tìm thấy bài.
+            The work_item record just registered, or None when the article is not found.
         """
         from src.agent.silver_source import read_silver_text
 
@@ -153,7 +154,7 @@ class AgentRunner:
         finally:
             conn.close()
 
-    # -- export (producer → agent) --------------------------------------------
+    # -- export (producer -> agent) --------------------------------------------
     def export_tasks(self, limit: int = 20, *, worker_id: str = "exporter",
                      order: str = "desc", require_l1: bool = True,
                      subscriber_only: bool = True,
@@ -161,21 +162,21 @@ class AgentRunner:
                      date: str | None = None,
                      days: int | None = None,
                      dry_run: bool = False) -> list[dict]:
-        """Tiếp nhận các công việc đang chờ và xuất thành gói công việc JSON.
+        """Claim pending work items and export them as JSON work packages.
 
         Args:
-            limit: Giới hạn số lượng tác vụ xuất tối đa. Mặc định 20.
-            worker_id: Định danh tiến trình tiếp nhận công việc.
-            order: Thứ tự sắp xếp theo thời gian ('desc' hoặc 'asc').
-            require_l1: Chỉ nhận bài viết đã qua kiểm định L1 đạt chuẩn.
-            subscriber_only: Chỉ nhận bài viết liên quan danh mục người dùng theo dõi.
-            user: Tên người dùng hoặc danh sách người dùng cần lọc cụ thể.
-            date: Lọc theo ngày xuất bản cụ thể ('YYYY-MM-DD', 'today', 'all').
-            days: Giới hạn số ngày gần nhất tính từ thời điểm hiện tại.
-            dry_run: Chế độ chạy thử, chỉ đếm số lượng mà không nhận công việc.
+            limit: Maximum number of tasks to export.
+            worker_id: Identifier of the worker that claims the items.
+            order: Time ordering ('desc' or 'asc').
+            require_l1: Accept only articles that passed L1 validation.
+            subscriber_only: Accept only articles relevant to the watchlists of users.
+            user: User name or list of user names to filter by.
+            date: Filter by publication date ('YYYY-MM-DD', 'today', 'all').
+            days: Limit to the most recent number of days from now.
+            dry_run: Count and list only, without claiming items.
 
         Returns:
-            Danh sách từ điển thông tin các tác vụ đã xuất.
+            One info dict per task exported.
         """
 
         allowed_aids: set[str] | None = None
@@ -223,7 +224,7 @@ class AgentRunner:
 
         out: list[dict] = []
         if dry_run:
-            # Chỉ đếm và thu thập danh sách không chuyển trạng thái thành 'claimed'
+            # Count and list only; do not change the status to 'claimed'.
             conn = self.store.connect()
             try:
                 order_clause = "ORDER BY enqueued_at DESC, id DESC" if order.lower() == "desc" else "ORDER BY enqueued_at ASC, id ASC"
@@ -275,8 +276,8 @@ class AgentRunner:
                 logger.error("[agent] load package fail {}: {}", item["package_path"], e)
                 self.catalog.mark_failed(item["id"], f"package_unreadable: {e}")
                 continue
-            # Nhúng entity L1 đã bóc sẵn vào packet (rule 05 §2.5 — L1-Assisted Chaining).
-            # l1-entity-output-v1 dùng key `entity_id` (KHÔNG có `code`).
+            # Embed the extracted L1 entities in the packet (rule 05 §2.5, L1-Assisted Chaining).
+            # l1-entity-output-v1 uses the key `entity_id`, not `code`.
             l1_entities = None
             if hasattr(self.store, "get_l1_output"):
                 l1_rec = self.store.get_l1_output(item["article_id"])
@@ -311,15 +312,15 @@ class AgentRunner:
         logger.info("[agent] exported {} task-packets → {}", len(out), self.task_dir)
         return out
 
-    # -- ingest (agent → producer) --------------------------------------------
+    # -- ingest (agent -> producer) --------------------------------------------
     def ingest_output(self, output: dict | str) -> dict:
-        """Tiếp nhận kết quả phân tích của agent, kiểm định chất lượng và cập nhật trạng thái.
+        """Accept an agent analysis result, check its quality and update the status.
 
         Args:
-            output: Dữ liệu kết quả từ điển hoặc đường dẫn tệp JSON theo schema agent-output-v1.
+            output: Result dict, or path of a JSON file that follows the agent-output-v1 schema.
 
         Returns:
-            Từ điển báo cáo kết quả gồm trạng thái kiểm định, mã công việc và chi tiết lỗi nếu có.
+            Report dict with the validation status, work item id and error details, if any.
         """
         if isinstance(output, str):
             output = json.loads(Path(output).read_text(encoding="utf-8"))
@@ -332,7 +333,7 @@ class AgentRunner:
             return {"ok": False, "article_id": article_id, "reason": "no work_item"}
         raw_sha256 = item["raw_sha256"]
 
-        # Idempotent replay — đã có output đạt DoD thì trả cached.
+        # Idempotent replay: return the cached result when an output already passed DoD.
         cached = self.store.get_agent_output(article_id, raw_sha256)
         if cached and cached.get("dod_pass"):
             return {"ok": True, "article_id": article_id, "cached": True,
@@ -343,7 +344,7 @@ class AgentRunner:
         except (OSError, json.JSONDecodeError) as e:
             return {"ok": False, "article_id": article_id, "reason": f"package_unreadable: {e}"}
 
-        # Nếu là gói cũ (chưa đạt chuẩn Article Lane 1.1), tự dựng lại sang bản 1.1 (ADR 0018)
+        # Rebuild an old package (not yet Article Lane 1.1) as version 1.1 (ADR 0018).
         if wp.get("work_package_version") != self.WORK_PACKAGE_VERSION:
             upgraded = self._register_article_lane_item(article_id)
             if upgraded:
@@ -354,7 +355,7 @@ class AgentRunner:
                 except (OSError, json.JSONDecodeError) as e:
                     return {"ok": False, "article_id": article_id, "reason": f"package_unreadable: {e}"}
 
-        # Preconditions (guardrail) rồi DoD.
+        # Preconditions (guardrail) first, then DoD.
         pre_ok, pre_reasons = verify_preconditions(wp)
         dod_ok, dod_reasons = (False, list(pre_reasons)) if not pre_ok else check_dod(output, wp)
         if not pre_ok:

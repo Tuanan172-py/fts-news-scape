@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""Print the number of entities loaded from the entity registry."""
 import sys
 import json
 from pathlib import Path

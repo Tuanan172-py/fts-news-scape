@@ -1,4 +1,4 @@
-"""Chạy cụm hoá trùng lặp rồi ghi kết quả kế thừa trong một bước, 0 token."""
+"""Run duplicate clustering and then write the inheritance result in one step, with zero tokens."""
 
 from __future__ import annotations
 
@@ -11,15 +11,17 @@ from src.pipeline.inherit import apply_inheritance
 
 def refresh(conn: sqlite3.Connection, days: int = 3,
             today: datetime | None = None) -> dict[str, int]:
-    """Cụm hoá các ngày gần nhất rồi ghi kết quả kế thừa.
+    """Cluster the most recent days and then write the inheritance result.
 
     Args:
-        conn: Kết nối ghi tới DB vận hành.
-        days: Số ngày gần nhất cần cụm hoá, tính cả hôm nay.
-        today: Mốc "hôm nay" của cửa sổ cụm hoá và kế thừa; None là giờ hiện tại.
+        conn: Write connection to the operational DB.
+        days: Number of most recent days to cluster, including today.
+        today: "Today" reference of the clustering and inheritance window; None means the
+            current time.
 
     Returns:
-        Từ điển gộp thống kê cụm hoá và kế thừa; khoá kế thừa có tiền tố `inherit_`.
+        Merged dict of clustering and inheritance statistics; inheritance keys carry the
+        `inherit_` prefix.
     """
     stats = story_cluster.run(conn, days=days, today=today)
     inh = apply_inheritance(conn, now=today)

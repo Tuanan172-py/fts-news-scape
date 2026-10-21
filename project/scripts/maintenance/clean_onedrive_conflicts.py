@@ -1,4 +1,4 @@
-"""Quét và dọn dẹp các tệp tin xung đột đồng bộ OneDrive trong thư mục dự án."""
+"""Scan and clean OneDrive sync-conflict files in the project directory."""
 from __future__ import annotations
 
 import argparse
@@ -14,7 +14,7 @@ if hasattr(sys.stdout, "reconfigure"):
 if hasattr(sys.stderr, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8")
 
-# Tìm repo root
+# Locate the repo root.
 SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parent.parent
 if (REPO_ROOT / "project").exists():
@@ -22,7 +22,7 @@ if (REPO_ROOT / "project").exists():
 elif (REPO_ROOT.parent / "project").exists():
     REPO_ROOT = REPO_ROOT.parent
 
-# Danh sách hostname gây xung đột đã biết trên OneDrive của dự án
+# Hostnames known to produce conflicts on the project OneDrive.
 KNOWN_HOSTNAMES = {"FPA-AnPT", "DESKTOP-RSG7M2C"}
 comp_name = os.environ.get("COMPUTERNAME", "")
 if comp_name:
@@ -30,7 +30,7 @@ if comp_name:
 
 host_subpattern = "|".join(re.escape(h) for h in sorted(KNOWN_HOSTNAMES) if h)
 
-# Regex nhận diện hậu tố xung đột: -FPA-AnPT, -DESKTOP-RSG7M2C, - Copy, (1)
+# Conflict suffix regex: -FPA-AnPT, -DESKTOP-RSG7M2C, - Copy, (1).
 CONFLICT_RE = re.compile(
     rf"(-({host_subpattern})| - Copy.*|\s*\(\d+\))$",
     re.IGNORECASE
@@ -38,7 +38,14 @@ CONFLICT_RE = re.compile(
 
 
 def sha256_file(path: Path) -> str:
-    """Tính mã băm SHA-256 của file."""
+    """Compute the SHA-256 hash of a file.
+
+    Args:
+        path: File to hash.
+
+    Returns:
+        Hex digest of the file content.
+    """
     h = hashlib.sha256()
     with open(path, "rb") as f:
         while chunk := f.read(65536):
@@ -47,41 +54,46 @@ def sha256_file(path: Path) -> str:
 
 
 def find_conflicts(scan_root: Path) -> list[tuple[str, Path, Path | None]]:
-    """Quét tìm và phân loại file xung đột.
-    
-    Trả về danh sách tuple: (action, conflict_path, canonical_path_or_none)
-    action:
-      - 'delete_lock': File lock tạm của Office (~$*)
-      - 'delete_tmp': File tạm (.tmp)
-      - 'rename_conflict': File conflict duy nhất -> Đổi tên thành chuẩn
-      - 'promote_conflict': Bản conflict MỚI HƠN bản gốc -> Thay thế bản gốc
-      - 'delete_duplicate': Trùng khớp 100% hash/size -> Xóa bản conflict thừa
-      - 'delete_older_conflict': Bản conflict CŨ HƠN bản gốc -> Xóa bản conflict cũ
+    """Scan for OneDrive conflict files and classify the action for each.
+
+    Action codes in the returned tuples:
+      - `delete_lock`: temporary Office lock file (`~$*`)
+      - `delete_tmp`: leftover temporary file (`.tmp`)
+      - `rename_conflict`: only copy exists, rename it to the canonical name
+      - `promote_conflict`: conflict copy is newer than or equal to the original, replace the original
+      - `delete_duplicate`: identical size and SHA-256, delete the redundant conflict copy
+      - `delete_older_conflict`: conflict copy is older than the original, delete it
+
+    Args:
+        scan_root: Directory to scan recursively.
+
+    Returns:
+        List of tuples `(action, conflict_path, canonical_path_or_none)`.
     """
     items = []
     
-    # Bỏ qua các thư mục không liên quan
+    # Skip unrelated directories.
     ignore_dirs = {".git", ".pytest_cache", "__pycache__", ".venv", "node_modules", "archive_conflicts"}
 
     for root, dirs, files in os.walk(scan_root):
-        # Lọc thư mục bỏ qua in-place
+        # Prune ignored directories in place.
         dirs[:] = [d for d in dirs if d not in ignore_dirs]
         cur_dir = Path(root)
 
         for fname in files:
             p = cur_dir / fname
 
-            # 1. File lock của Office
+            # 1. Office lock file.
             if fname.startswith("~$"):
                 items.append(("delete_lock", p, None))
                 continue
 
-            # 2. File tmp sót lại
+            # 2. Leftover temporary file.
             if fname.endswith(".tmp") or ".tmp." in fname:
                 items.append(("delete_tmp", p, None))
                 continue
 
-            # 3. File có hậu tố xung đột
+            # 3. File with a conflict suffix.
             stem = p.stem
             suffix = p.suffix
             match = CONFLICT_RE.search(stem)
@@ -89,22 +101,22 @@ def find_conflicts(scan_root: Path) -> list[tuple[str, Path, Path | None]]:
                 clean_stem = stem[:match.start()]
                 canonical_path = cur_dir / f"{clean_stem}{suffix}"
                 
-                # Nếu file canonical chưa tồn tại: đổi tên bản conflict này về chuẩn -> rename
+                # Canonical file missing: rename this conflict copy to the canonical name.
                 if not canonical_path.exists():
                     items.append(("rename_conflict", p, canonical_path))
                 else:
-                    # Đã có file canonical: so sánh chi tiết để không làm mất bản sửa đổi mới nhất
+                    # Canonical file exists: compare in detail so the latest edit is never lost.
                     try:
                         p_stat = p.stat()
                         canon_stat = canonical_path.stat()
 
-                        # 3a. Trùng khớp hoàn toàn nội dung nhị phân (SHA256) -> Xóa bản thừa
+                        # 3a. Identical binary content (SHA-256): delete the redundant copy.
                         if p_stat.st_size == canon_stat.st_size and sha256_file(p) == sha256_file(canonical_path):
                             items.append(("delete_duplicate", p, canonical_path))
-                        # 3b. Bản conflict MỚI HƠN hoặc BẰNG mtime bản canonical (Người dùng sửa cục bộ) -> PROMOTE
+                        # 3b. Conflict copy has mtime newer than or equal to the canonical (local user edit): promote.
                         elif p_stat.st_mtime >= canon_stat.st_mtime:
                             items.append(("promote_conflict", p, canonical_path))
-                        # 3c. Bản canonical nghiêm ngặt mới hơn -> Bản conflict là bản cũ -> Xóa bản cũ
+                        # 3c. Canonical is strictly newer, so the conflict copy is stale: delete it.
                         else:
                             items.append(("delete_older_conflict", p, canonical_path))
                     except Exception:
@@ -114,6 +126,11 @@ def find_conflicts(scan_root: Path) -> list[tuple[str, Path, Path | None]]:
 
 
 def main() -> int:
+    """Scan for OneDrive conflict files and apply or preview the cleanup.
+
+    Returns:
+        Process exit code, always 0.
+    """
     parser = argparse.ArgumentParser(description="Dọn dẹp và hợp nhất file conflict OneDrive an toàn")
     parser.add_argument("--path", type=str, default=str(REPO_ROOT),
                         help="Thư mục bắt đầu quét (mặc định: Repo Root)")
@@ -172,7 +189,7 @@ def main() -> int:
             print(f"  - [PROMOTE] Bản conflict MỚI HƠN -> Cập nhật thành file chính: {rel_p} -> {rel_t.name}")
             if args.apply:
                 try:
-                    # Ghi đè file chính bằng bản mới hơn, sau đó xóa file conflict
+                    # Overwrite the canonical file with the newer copy, then delete the conflict file.
                     shutil.copy2(p, target)
                     p.unlink(missing_ok=True)
                 except Exception as e:

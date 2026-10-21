@@ -1,4 +1,4 @@
-"""Xuất danh sách bài viết chuẩn Silver ra tệp CSV manifest."""
+"""Export the Silver-layer article list to a CSV manifest file."""
 
 from __future__ import annotations
 
@@ -44,21 +44,29 @@ ORDER BY v.captured_at DESC
 
 
 def _date_prefix(iso: str) -> str:
+    """Extract the 'YYYY-MM-DD' date prefix from an ISO timestamp.
+
+    Args:
+        iso: ISO timestamp string; None is treated as empty.
+
+    Returns:
+        First 10 characters of the timestamp.
+    """
     return (iso or "")[:10]
 
 
 def query_manifest(
     store, *, today: bool = False, days: int | None = None
 ) -> list[dict]:
-    """Truy vấn danh sách bài viết Silver mới nhất từ cơ sở dữ liệu.
+    """Query the latest Silver-layer articles from the database.
 
     Args:
-        store: Kho dữ liệu cơ sở SQLite.
-        today: Chỉ lọc các bài viết được thu thập trong ngày hôm nay.
-        days: Số ngày gần nhất cần lấy dữ liệu.
+        store: SQLite data store.
+        today: Keep only articles captured today.
+        days: Number of most recent days to keep.
 
     Returns:
-        Danh sách từ điển dữ liệu bài viết chuẩn Silver.
+        Silver-layer article data dicts.
     """
     conn = store.connect()
     try:
@@ -75,6 +83,15 @@ def query_manifest(
 
 
 def _auto_name(today: bool, days: int | None) -> Path:
+    """Build the default output path from the date and the filter.
+
+    Args:
+        today: Whether the export is limited to today.
+        days: Number of most recent days, if any.
+
+    Returns:
+        Default CSV path in the exports directory.
+    """
     stamp = f"{datetime.now(VN_TZ):%Y%m%d}"
     suffix = "-today" if today else (f"-{days}d" if days else "")
     return paths.exports_dir() / f"silver-{stamp}{suffix}.csv"
@@ -83,16 +100,16 @@ def _auto_name(today: bool, days: int | None) -> Path:
 def export_silver_manifest(
     store, *, today: bool = False, days: int | None = None, out: str | None = None
 ) -> tuple[Path, int]:
-    """Xuất danh sách manifest Silver ra tệp CSV với mã hóa UTF-8 BOM.
+    """Export the Silver manifest list to a CSV file with UTF-8 BOM encoding.
 
     Args:
-        store: Kho dữ liệu cơ sở SQLite.
-        today: Có giới hạn trong ngày hôm nay hay không.
-        days: Số ngày gần nhất cần xuất.
-        out: Đường dẫn tệp đầu ra tùy chọn.
+        store: SQLite data store.
+        today: Limit the export to today.
+        days: Number of most recent days to export.
+        out: Optional output file path.
 
     Returns:
-        Tuple chứa đường dẫn tệp đã xuất và số lượng bài viết.
+        Tuple of the exported file path and the article count.
     """
     rows = query_manifest(store, today=today, days=days)
     out_path = Path(out) if out else _auto_name(today, days)

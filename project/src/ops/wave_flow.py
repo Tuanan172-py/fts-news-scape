@@ -1,4 +1,4 @@
-"""Điều phối một đợt Article Lane thành workflow bền: preflight → phân tích → nạp DB."""
+"""Orchestrate one Article Lane wave as a durable workflow from preflight through analysis to DB load."""
 
 from __future__ import annotations
 
@@ -32,16 +32,16 @@ _BATCH_LINE = re.compile(r"^\s*(✅|⚠️)\s+(\S+):\s+([A-Z_]+)\s+\((\d+) bài\
 
 @dataclass
 class WaveSpec:
-    """Thông số bất biến của một lần chạy đợt.
+    """Immutable parameters of one wave run.
 
     Attributes:
-        wave_id: Mã đợt, dùng làm tiền tố tên tệp packet.
-        target_date: Ngày xuất bản của bài được chọn.
-        trigger: Luật kích hoạt (T1, T2, T3, manual, retry).
-        level: Mức tự chủ lúc mở đợt (ghi nhận; đợt đã mở luôn chạy trọn tới nạp DB).
-        provider: Runner nhận thức.
-        attempt: Số lần chạy lại đợt.
-        order_hash: Băm standing order lúc mở đợt.
+        wave_id: Wave identifier, used as the prefix of packet file names.
+        target_date: Publication date of the selected articles.
+        trigger: Trigger rule (T1, T2, T3, manual, retry).
+        level: Autonomy level when the wave was opened (recorded only; an opened wave always runs through DB load).
+        provider: Analysis runner.
+        attempt: Number of times the wave has been re-run.
+        order_hash: Hash of the standing order when the wave was opened.
     """
 
     wave_id: str
@@ -54,22 +54,22 @@ class WaveSpec:
 
     @property
     def workflow_id(self) -> str:
-        """Mã workflow idempotent của lần chạy này."""
+        """Return the idempotent workflow identifier of this run."""
         base = f"wave-{self.wave_id}"
         return base if self.attempt == 0 else f"{base}-r{self.attempt}"
 
 
 @dataclass
 class AnalyzeOutcome:
-    """Kết quả một vòng phân tích hoặc vá.
+    """Result of one analysis or repair round.
 
     Attributes:
-        mode: `analyze`, `repair` hoặc `skip`.
-        step_outcome: Kết cục của tiến trình bước.
-        received: Số bài đã có bản ghi.
-        total: Số bài của đợt.
-        worst: Lớp lỗi nghiêm trọng nhất trong vòng.
-        batches: Danh sách (lô, trạng thái, số bài, lớp lỗi).
+        mode: `analyze`, `repair` or `skip`.
+        step_outcome: Outcome of the step process.
+        received: Number of articles that already have a record.
+        total: Number of articles in the wave.
+        worst: Most severe failure class in the round.
+        batches: List of (batch, status, article count, failure class).
     """
 
     mode: str
@@ -81,23 +81,23 @@ class AnalyzeOutcome:
 
     @property
     def complete(self) -> bool:
-        """True khi mọi bài đã có bản ghi."""
+        """Report whether every article already has a record."""
         return self.total > 0 and self.received >= self.total
 
     @property
     def coverage(self) -> float:
-        """Tỷ lệ bài đã có bản ghi."""
+        """Return the share of articles that already have a record."""
         return self.received / self.total if self.total else 0.0
 
 
 def parse_batch_lines(text: str) -> list[tuple[str, str, int, str]]:
-    """Đọc dòng kết quả từng lô mà `article_run.py --analyze/--repair` in ra.
+    """Parse the per-batch result lines printed by `article_run.py --analyze/--repair`.
 
     Args:
-        text: Nhật ký của bước.
+        text: Step log.
 
     Returns:
-        Danh sách (lô, trạng thái, số bài, thông điệp lỗi).
+        List of (batch, status, article count, error message).
     """
     out = []
     for line in text.splitlines():
@@ -108,32 +108,33 @@ def parse_batch_lines(text: str) -> list[tuple[str, str, int, str]]:
 
 
 class WaveSteps:
-    """Hiện thực từng bước của đợt bằng các lệnh sẵn có của Article Lane.
+    """Implement each wave step with the existing Article Lane commands.
 
     Attributes:
-        store: Store vận hành.
-        cfg: Cấu hình đầy đủ.
-        paths: Đường dẫn vận hành.
-        breakers: Circuit breaker theo provider.
-        executor: Hàm chạy bước, mặc định `run_step`.
-        task_dir: Thư mục packet của Article Lane.
-        out_dir: Thư mục đầu ra của mô hình.
+        store: Operations store.
+        cfg: Full configuration.
+        paths: Operations paths.
+        breakers: Per-provider circuit breakers.
+        executor: Function that runs a step, `run_step` by default.
+        task_dir: Packet directory of the Article Lane.
+        out_dir: Model output directory.
+        db_probe: Function that tests writing to the operations DB.
     """
 
     def __init__(self, store: OpsStore, cfg: dict, paths: OpsPaths, *,
                  executor: Callable[..., StepResult] = run_step,
                  task_dir: Path = TASK_DIR, out_dir: Path = OUT_DIR,
                  db_probe: Callable[[], tuple[bool, str]] | None = None) -> None:
-        """Gắn phụ thuộc của các bước.
+        """Bind the dependencies of the steps.
 
         Args:
-            store: Store vận hành.
-            cfg: Cấu hình đầy đủ.
-            paths: Đường dẫn vận hành.
-            executor: Hàm chạy bước.
-            task_dir: Thư mục packet.
-            out_dir: Thư mục đầu ra.
-            db_probe: Hàm thử ghi DB vận hành, trả (đạt, lý do).
+            store: Operations store.
+            cfg: Full configuration.
+            paths: Operations paths.
+            executor: Function that runs a step.
+            task_dir: Packet directory.
+            out_dir: Output directory.
+            db_probe: Function that tests writing to the operations DB, returning (passed, reason).
         """
         self.store = store
         self.cfg = cfg
@@ -144,7 +145,7 @@ class WaveSteps:
         self.out_dir = out_dir
         self.db_probe = db_probe or _default_db_probe
 
-    # ── tiện ích ─────────────────────────────────────────────────────────────
+    # ── utilities ────────────────────────────────────────────────────────────
     def _deadline(self, step: str) -> float:
         return float(self.cfg["wave"]["deadlines_minutes"].get(step, 10)) * 60
 
@@ -160,17 +161,17 @@ class WaveSteps:
         return f"{spec.wave_id}.a{spec.attempt}.{step}"
 
     def _tracer(self, spec: WaveSpec) -> Tracer:
-        """Tracer của đợt, span mới mặc định nằm dưới span gốc của lần chạy này."""
+        """Return the wave tracer; new spans default to sit under the root span of this run."""
         return Tracer(self.paths.ops_db, spec.wave_id, parent_id=self._root_id(spec))
 
     def stop_requested(self, wave_id: str) -> bool:
-        """Cho biết người vận hành đã yêu cầu dừng đợt hay chưa.
+        """Report whether the operator has requested the wave to stop.
 
         Args:
-            wave_id: Mã đợt.
+            wave_id: Wave identifier.
 
         Returns:
-            True khi có `AGY_STOP` hoặc lệnh huỷ đợt.
+            True when `AGY_STOP` exists or a cancel command was issued for the wave.
         """
         return self.paths.kill_switch.exists() or bool(self.store.get_state(f"cancel:{wave_id}"))
 
@@ -195,13 +196,13 @@ class WaveSteps:
         return res
 
     def manifest(self, wave_id: str) -> dict | None:
-        """Đọc manifest của đợt nếu đã đóng gói.
+        """Read the wave manifest if the wave has been packed.
 
         Args:
-            wave_id: Mã đợt.
+            wave_id: Wave identifier.
 
         Returns:
-            Nội dung manifest hoặc None.
+            Manifest content or None.
         """
         p = self.task_dir / f"wave_{wave_id}.json"
         if not p.exists():
@@ -221,7 +222,7 @@ class WaveSteps:
         return received, total
 
     def _count_repair_round(self, wave_id: str) -> None:
-        """Ghi một vòng vá vào bộ đếm bền của đợt và của từng bài còn thiếu."""
+        """Record one repair round in the durable counters of the wave and of each missing article."""
         from scripts import article_run as ar
 
         missing = sorted(set(ar.wave_article_ids(wave_id)) - set(ar.wave_received_ids(wave_id)))
@@ -232,15 +233,15 @@ class WaveSteps:
     def _has_outputs(self, wave_id: str) -> bool:
         return self._output_signature(wave_id)[0] > 0
 
-    # ── các bước ─────────────────────────────────────────────────────────────
+    # ── steps ────────────────────────────────────────────────────────────────
     def preflight(self, spec: WaveSpec) -> tuple[bool, str, bool]:
-        """Kiểm điều kiện trước khi tiêu token.
+        """Check the preconditions before spending tokens.
 
         Args:
-            spec: Thông số đợt.
+            spec: Wave parameters.
 
         Returns:
-            Bộ ba (đạt, lý do, chờ breaker) — phần tử cuối True khi lý do là provider.
+            Triple (passed, reason, wait for breaker); the last element is True when the reason is the provider.
         """
         self.store.upsert_wave(spec.wave_id, status="PREFLIGHT", step="preflight")
         tr = self._tracer(spec)
@@ -276,17 +277,18 @@ class WaveSteps:
         return True, "", False
 
     def prepare(self, spec: WaveSpec) -> int:
-        """Đóng gói đợt rồi giữ chỗ cho tập bài của nó; bỏ qua khi manifest đã có.
+        """Pack the wave and reserve its article set; skipped when the manifest already exists.
 
-        Bộ đóng gói bỏ qua bài đang thuộc đợt khác chưa xong và bài đã hết lượt thử.
-        Sau khi đóng gói, tập bài của đợt được ghi vào `ops_wave_articles`, nên đợt
-        PARKED hay FAILED vẫn giữ bài của nó cho tới khi chạy lại xong hoặc bị huỷ.
+        The packer skips articles that belong to another unfinished wave and articles that are
+        out of attempts. After packing, the article set of the wave is written to
+        `ops_wave_articles`, so a PARKED or FAILED wave keeps its articles until it is re-run
+        to completion or cancelled.
 
         Args:
-            spec: Thông số đợt.
+            spec: Wave parameters.
 
         Returns:
-            Số bài của đợt; 0 khi không có việc; -1 khi lỗi.
+            Number of articles in the wave; 0 when there is no work; -1 on error.
         """
         with tracing.span("prepare", "step", "article-packer", tracer=self._tracer(spec),
                           span_id=self._step_id(spec, "prepare"),
@@ -314,8 +316,8 @@ class WaveSteps:
                             parent=parent)
             m = self.manifest(spec.wave_id)
             if m is None:
-                # article_pack thoát 2 khi không còn bài nào thoả điều kiện: đó là
-                # "không có việc", không phải lỗi đóng gói.
+                # article_pack exits with 2 when no article qualifies: that means
+                # "no work", not a packing error.
                 return 0 if res.returncode == 2 else -1
         self.store.record_wave_articles(spec.wave_id, self.article_ids(spec.wave_id))
         n = int(m.get("articles") or 0)
@@ -323,13 +325,13 @@ class WaveSteps:
         return n
 
     def article_ids(self, wave_id: str) -> list[str]:
-        """Đọc định danh bài của đợt từ các bảng ánh xạ lô.
+        """Read the article identifiers of the wave from the batch map files.
 
         Args:
-            wave_id: Mã đợt.
+            wave_id: Wave identifier.
 
         Returns:
-            Danh sách định danh bài, không trùng.
+            List of unique article identifiers.
         """
         ids: list[str] = []
         for p in sorted(self.task_dir.glob(f"article_{wave_id}_*.map.json")):
@@ -341,14 +343,14 @@ class WaveSteps:
         return list(dict.fromkeys(ids))
 
     def analyze(self, spec: WaveSpec, round_no: int) -> AnalyzeOutcome:
-        """Chạy phân tích lần đầu, hoặc vá đúng phần thiếu khi đã có đầu ra.
+        """Run the first analysis, or repair exactly the missing part when outputs already exist.
 
         Args:
-            spec: Thông số đợt.
-            round_no: Số thứ tự vòng (0 là vòng đầu).
+            spec: Wave parameters.
+            round_no: Round number (0 is the first round).
 
         Returns:
-            AnalyzeOutcome.
+            The AnalyzeOutcome.
         """
         received, total = self._coverage(spec.wave_id)
         if total and received >= total:
@@ -433,20 +435,20 @@ class WaveSteps:
                              dedup_key=f"breaker:{spec.provider}:closed")
 
     def finish(self, spec: WaveSpec) -> StepResult:
-        """Bung, nạp qua cổng DoD và hậu kiểm độ phủ.
+        """Expand, load through the DoD gate and post-check coverage.
 
         Args:
-            spec: Thông số đợt.
+            spec: Wave parameters.
 
         Returns:
-            StepResult của `--finish`.
+            The StepResult of `--finish`.
         """
         self.store.upsert_wave(spec.wave_id, status="FINISHING")
         with tracing.span("finish", "step", "article-expander", tracer=self._tracer(spec),
                           span_id=self._step_id(spec, "finish"),
                           entrypoint="article_run.py --finish") as sp:
-            # Bước nạp DB không nhận lệnh dừng giữa chừng: AGY_STOP và /cancel chỉ có hiệu
-            # lực ở ranh giới bước. Chỉ deadline (dành cho trường hợp treo thật) mới kill.
+            # The DB load step does not accept a stop mid-run: AGY_STOP and /cancel take effect
+            # only at step boundaries. Only the deadline (for a real hang) kills it.
             res = self._run(spec, "finish", "--wave", spec.wave_id, "--runner", spec.provider,
                             "--finish", interruptible=False, parent=sp.id)
             sp.set(rc=res.returncode, outcome=res.outcome)
@@ -455,16 +457,16 @@ class WaveSteps:
             return res
 
     def _deliver(self, spec: WaveSpec) -> bool:
-        """Xuất xlsx giao hàng cho ngày của đợt, best-effort sau DONE.
+        """Export the delivery xlsx for the wave date on a best-effort basis after DONE.
 
-        Writer có Idempotency Guard và checkpoint nên gọi lại an toàn.
-        Lỗi giao hàng không lật trạng thái đợt (DB đã xong).
+        The writer has an Idempotency Guard and checkpoints, so calling it again is safe.
+        A delivery failure does not flip the wave status (the DB load is already done).
 
         Args:
-            spec: Thông số đợt.
+            spec: Wave parameters.
 
         Returns:
-            True khi tiến trình giao hàng thoát 0.
+            True when the delivery process exits with 0.
         """
         self.store.upsert_wave(spec.wave_id, step="deliver")
         self.store.emit("step.started", f"{spec.wave_id}: bắt đầu deliver",
@@ -491,22 +493,22 @@ class WaveSteps:
     def finalize(self, spec: WaveSpec, status: str, reason: str, *,
                  resume_on_breaker: bool = False, counts_as_failure: bool = False,
                  summary: dict | None = None, clean: bool = True) -> str:
-        """Chốt trạng thái cuối, cảnh báo và cập nhật chuỗi đợt sạch/hỏng.
+        """Record the final status, raise alerts and update the clean/failed wave streaks.
 
-        Chuỗi sạch chỉ tăng khi đợt DONE có bài thật (`clean`). Mọi kết cục khác đưa
-        chuỗi sạch về 0.
+        The clean streak grows only when a DONE wave had real articles (`clean`). Every other
+        outcome resets the clean streak to 0.
 
         Args:
-            spec: Thông số đợt.
-            status: DONE, FAILED, PARKED hoặc CANCELLED.
-            reason: Lý do.
-            resume_on_breaker: Đợt PARKED sẽ tự chạy tiếp khi breaker cho phép.
-            counts_as_failure: Tính vào chuỗi hỏng để tự hạ mức.
-            summary: Số liệu đính kèm.
-            clean: False với đợt DONE không có bài nào.
+            spec: Wave parameters.
+            status: DONE, FAILED, PARKED or CANCELLED.
+            reason: Reason for the status.
+            resume_on_breaker: A PARKED wave resumes automatically once the breaker allows.
+            counts_as_failure: Count toward the failure streak that triggers automatic demotion.
+            summary: Attached figures.
+            clean: False for a DONE wave that had no articles.
 
         Returns:
-            Trạng thái cuối.
+            Final status.
         """
         self.store.upsert_wave(spec.wave_id, status=status, reason=reason[:500],
                                finished_at=iso(), resume_on_breaker=int(resume_on_breaker))
@@ -517,7 +519,7 @@ class WaveSteps:
                   reason=reason[:300], final_status=status)
         try:
             wave_metrics.record_wave(self.paths, self.store, spec.wave_id, status)
-        except Exception as exc:  # noqa: BLE001 — KPI hỏng không được làm hỏng việc chốt đợt
+        except Exception as exc:  # noqa: BLE001 — a KPI failure must not break wave finalization
             self.store.emit("metrics.error", f"{spec.wave_id}: {exc}", level="warn",
                             actor="daemon", wave_id=spec.wave_id)
         self.store.set_state(f"cancel:{spec.wave_id}", None)
@@ -532,7 +534,7 @@ class WaveSteps:
             self.store.set_state("clean_streak", str(streak_clean))
             try:
                 delivered = self._deliver(spec)
-            except Exception as exc:  # noqa: BLE001 — giao hàng hỏng không được lật DONE
+            except Exception as exc:  # noqa: BLE001 — a delivery failure must not flip DONE
                 delivered = False
                 self.store.emit("wave.deliver_failed", f"{spec.wave_id}: {exc}"[:300],
                                 level="warn", actor="wave", wave_id=spec.wave_id)
@@ -552,7 +554,7 @@ class WaveSteps:
                     f"chạy write_user_output.py --date {spec.target_date}",
                     f"/log 10 {spec.wave_id}"),
                     dedup_key=f"deliver:{spec.wave_id}")
-            # Đợt bình thường đi vào bản tin; tin riêng chỉ khi cấu hình bật.
+            # A normal wave goes into the digest; a separate message is sent only when configured.
             if self.cfg["alerts"].get("push_wave_info"):
                 self.store.alert("info", f"Đợt {spec.wave_id} ({spec.target_date}) xong: {reason}",
                                  dedup_key=None)
@@ -594,7 +596,7 @@ class WaveSteps:
         return status
 
 
-# Ảnh hưởng và việc cần làm theo lớp lỗi khi breaker mở.
+# Impact and required action per failure class when a breaker opens.
 BREAKER_ACTION = {
     br.AUTH: ("đợt dừng cho tới khi đăng nhập lại, bài vẫn được giữ chỗ",
               "mở terminal, đăng nhập lại agy rồi bấm Reset"),
@@ -607,14 +609,14 @@ BREAKER_ACTION = {
 
 
 def breaker_head(provider: str, st: br.BreakerState) -> str:
-    """Soạn câu sự việc khi breaker mở.
+    """Compose the incident sentence for when a breaker opens.
 
     Args:
-        provider: Tên provider.
-        st: Trạng thái breaker.
+        provider: Provider name.
+        st: Breaker state.
 
     Returns:
-        Một câu mô tả sự việc.
+        One sentence describing the incident.
     """
     return {
         br.AUTH: f"{provider} mất phiên đăng nhập",
@@ -626,15 +628,15 @@ def breaker_head(provider: str, st: br.BreakerState) -> str:
 
 
 def breaker_alert_text(provider: str, st: br.BreakerState, detail: str) -> str:
-    """Soạn nội dung sự kiện khi breaker mở, kèm chi tiết lỗi.
+    """Compose the event text for when a breaker opens, including the error detail.
 
     Args:
-        provider: Tên provider.
-        st: Trạng thái breaker.
-        detail: Chi tiết lỗi.
+        provider: Provider name.
+        st: Breaker state.
+        detail: Error detail.
 
     Returns:
-        Văn bản sự kiện.
+        Event text.
     """
     head = {
         br.AUTH: f"{provider} mất phiên đăng nhập. Mở terminal và đăng nhập lại agy, "
@@ -655,19 +657,19 @@ def _default_db_probe() -> tuple[bool, str]:
 
 
 def l1_full_gold_short(wave_id: str) -> bool:
-    """Đợt hỏng có đáng miễn khỏi chuỗi hỏng để tự hạ mức không.
+    """Report whether a failed wave should be exempt from the failure streak that triggers demotion.
 
-    Miễn khi lớp nhận diện đã đủ 100% số bài của đợt: mô hình chạy, bung và nạp
-    đều xong; phần thiếu chỉ còn ở lớp nội dung (bài mỏng theo ADR 0018 hoặc
-    trượt DoD nội dung). Lỗi này không phản ánh sức khoẻ provider nên không được
-    góp vào `fail_streak` làm daemon hạ mức.
+    The wave is exempt when the identification layer covers 100% of the wave articles: the
+    model ran, and expansion and load all completed; only the content layer is short (thin
+    articles per ADR 0018 or a content DoD miss). This failure does not reflect provider
+    health, so it must not add to `fail_streak` and make the daemon demote.
 
     Args:
-        wave_id: Mã đợt vừa FAILED ở bước finish.
+        wave_id: Identifier of the wave that just FAILED at the finish step.
 
     Returns:
-        True khi L1 đủ và Gold thiếu; False trong mọi trường hợp khác (kể cả lỗi
-        đọc DB — thiếu dữ kiện thì giữ hành vi cũ).
+        True when L1 is complete and Gold is short; False in every other case (including a
+        DB read error, since without data the previous behavior is kept).
     """
     try:
         import sqlite3
@@ -690,34 +692,97 @@ def l1_full_gold_short(wave_id: str) -> bool:
 
 
 class WaveOps(Protocol):
-    """Giao diện các bước mà `drive_wave` gọi; bản DBOS bọc mỗi bước thành step bền."""
+    """Interface of the steps that `drive_wave` calls; the DBOS version wraps each step as a durable step."""
 
-    def preflight(self, spec: dict) -> list: ...
-    def prepare(self, spec: dict) -> int: ...
-    def analyze(self, spec: dict, round_no: int) -> dict: ...
-    def stop_requested(self, spec: dict) -> bool: ...
-    def finish(self, spec: dict) -> list: ...
-    def finalize(self, spec: dict, status: str, reason: str, flags: dict) -> str: ...
+    def preflight(self, spec: dict) -> list:
+        """Check the preconditions before spending tokens.
+
+        Args:
+            spec: WaveSpec as a dict.
+
+        Returns:
+            Triple [passed, reason, wait for breaker].
+        """
+        ...
+
+    def prepare(self, spec: dict) -> int:
+        """Pack the wave and reserve its articles.
+
+        Args:
+            spec: WaveSpec as a dict.
+
+        Returns:
+            Number of articles; 0 when there is no work; -1 on error.
+        """
+        ...
+
+    def analyze(self, spec: dict, round_no: int) -> dict:
+        """Run one analysis or repair round.
+
+        Args:
+            spec: WaveSpec as a dict.
+            round_no: Round number (0 is the first round).
+
+        Returns:
+            AnalyzeOutcome as a dict.
+        """
+        ...
+
+    def stop_requested(self, spec: dict) -> bool:
+        """Report whether the operator requested a stop.
+
+        Args:
+            spec: WaveSpec as a dict.
+
+        Returns:
+            True when a stop was requested.
+        """
+        ...
+
+    def finish(self, spec: dict) -> list:
+        """Expand, load into the DB and post-check coverage.
+
+        Args:
+            spec: WaveSpec as a dict.
+
+        Returns:
+            List [ok, outcome, tail].
+        """
+        ...
+
+    def finalize(self, spec: dict, status: str, reason: str, flags: dict) -> str:
+        """Record the final wave status.
+
+        Args:
+            spec: WaveSpec as a dict.
+            status: DONE, FAILED, PARKED or CANCELLED.
+            reason: Reason for the status.
+            flags: Outcome flags (resume_on_breaker, failure, summary, clean).
+
+        Returns:
+            Final status.
+        """
+        ...
 
 
 def drive_wave(spec_d: dict, ops: WaveOps, cfg: dict) -> str:
-    """Chạy trọn vòng đời một đợt theo máy trạng thái của ADR 0012 (sửa đổi 2026-10-01).
+    """Run the full lifecycle of one wave per the ADR 0012 state machine (amended 2026-10-01).
 
-    Đợt đã mở thì chạy tới nạp DB mà không hỏi người: chốt kỹ thuật của `--finish`
-    (độ phủ ≥ 90% ở cả hai lớp) quyết việc nạp, theo amendment ADR 0008. Người điều
-    khiển bằng standing order, `/pause` và `/stop`. Giao hàng chạy best-effort sau
-    DONE cho ngày của đợt; lỗi giao hàng không lật DONE.
+    An opened wave runs through DB load without asking a human: the technical gate of
+    `--finish` (coverage >= 90% in both layers) decides the load, per the ADR 0008 amendment.
+    The human steers through the standing order, `/pause` and `/stop`. Delivery runs on a
+    best-effort basis after DONE for the wave date; a delivery failure does not flip DONE.
 
-    Hàm chỉ chứa logic tất định; mọi tác dụng phụ đi qua `ops`, nên khi chạy trong
-    workflow DBOS mỗi lời gọi được checkpoint và không lặp lại sau khi khôi phục.
+    The function holds only deterministic logic; every side effect goes through `ops`, so
+    inside a DBOS workflow each call is checkpointed and not repeated after recovery.
 
     Args:
-        spec_d: WaveSpec dạng từ điển.
-        ops: Bộ bước.
-        cfg: Cấu hình đầy đủ.
+        spec_d: WaveSpec as a dict.
+        ops: Step set.
+        cfg: Full configuration.
 
     Returns:
-        Trạng thái cuối của đợt.
+        Final status of the wave.
     """
     ok, reason, breaker_wait = ops.preflight(spec_d)
     if not ok:
@@ -768,37 +833,89 @@ def drive_wave(spec_d: dict, ops: WaveOps, cfg: dict) -> str:
 
 
 class DirectOps:
-    """Bộ bước gọi thẳng WaveSteps, dùng cho kiểm thử và chạy không DBOS.
+    """Step set that calls WaveSteps directly, used in tests and runs without DBOS.
 
     Attributes:
-        steps: WaveSteps.
+        steps: The WaveSteps.
     """
 
     def __init__(self, steps: WaveSteps) -> None:
-        """Gắn bộ bước.
+        """Bind the step set.
 
         Args:
-            steps: WaveSteps.
+            steps: The WaveSteps.
         """
         self.steps = steps
 
     def preflight(self, spec: dict) -> list:
+        """Run preflight directly.
+
+        Args:
+            spec: WaveSpec as a dict.
+
+        Returns:
+            Triple [passed, reason, wait for breaker].
+        """
         return list(self.steps.preflight(WaveSpec(**spec)))
 
     def prepare(self, spec: dict) -> int:
+        """Run packing directly.
+
+        Args:
+            spec: WaveSpec as a dict.
+
+        Returns:
+            Number of articles in the wave.
+        """
         return self.steps.prepare(WaveSpec(**spec))
 
     def analyze(self, spec: dict, round_no: int) -> dict:
+        """Run one analysis or repair round directly.
+
+        Args:
+            spec: WaveSpec as a dict.
+            round_no: Round number (0 is the first round).
+
+        Returns:
+            AnalyzeOutcome as a dict.
+        """
         return asdict(self.steps.analyze(WaveSpec(**spec), round_no))
 
     def stop_requested(self, spec: dict) -> bool:
+        """Read the stop flag directly.
+
+        Args:
+            spec: WaveSpec as a dict.
+
+        Returns:
+            True when a stop was requested.
+        """
         return self.steps.stop_requested(spec["wave_id"])
 
     def finish(self, spec: dict) -> list:
+        """Run finish and DB load directly.
+
+        Args:
+            spec: WaveSpec as a dict.
+
+        Returns:
+            List [ok, outcome, tail].
+        """
         r = self.steps.finish(WaveSpec(**spec))
         return [r.ok, r.outcome, r.tail]
 
     def finalize(self, spec: dict, status: str, reason: str, flags: dict) -> str:
+        """Record the final wave status directly.
+
+        Args:
+            spec: WaveSpec as a dict.
+            status: DONE, FAILED, PARKED or CANCELLED.
+            reason: Reason for the status.
+            flags: Outcome flags (resume_on_breaker, failure, summary, clean).
+
+        Returns:
+            Final status.
+        """
         return self.steps.finalize(WaveSpec(**spec), status, reason,
                                    resume_on_breaker=bool(flags.get("resume_on_breaker")),
                                    counts_as_failure=bool(flags.get("failure")),

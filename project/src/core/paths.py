@@ -1,9 +1,4 @@
-"""Phân giải mọi đường dẫn dữ liệu vận hành từ một gốc duy nhất `data_root()`.
-
-- Gốc dữ liệu: biến môi trường `MONOCLE_DATA_DIR`, mặc định `C:\\data\\news-scape`.
-- Thư mục đăng ký người dùng: `NEWS_SCAPE_SUBSCRIPTIONS_DIR`, mặc định `<gốc>/subscriptions`.
-- Đường dẫn lưu bền (DB, meta Bronze, manifest đợt) ghi tương đối theo gốc dữ liệu.
-"""
+"""Resolve every operational data path from the single root `data_root()`, taken from `MONOCLE_DATA_DIR` (default `C:\\data\\news-scape`) with the subscriptions directory from `NEWS_SCAPE_SUBSCRIPTIONS_DIR`."""
 
 from __future__ import annotations
 
@@ -14,25 +9,25 @@ DATA_DIR_ENV = "MONOCLE_DATA_DIR"
 SUBSCRIPTIONS_DIR_ENV = "NEWS_SCAPE_SUBSCRIPTIONS_DIR"
 DEFAULT_DATA_ROOT = Path(r"C:\data\news-scape")
 
-# Tiền tố của đường dẫn tương đối kiểu cũ, khi dữ liệu còn nằm dưới `project/data`.
+# Prefixes of legacy relative paths, from when data lived under `project/data`.
 _LEGACY_PREFIXES = ("project/data/", "data/")
 
 
 class UnsafeDataRootError(RuntimeError):
-    """Báo gốc dữ liệu vận hành rơi vào thư mục đồng bộ OneDrive hoặc SharePoint."""
+    """Raised when the operational data root falls in a OneDrive or SharePoint synced folder."""
 
 
 def check_data_root(root: Path) -> Path:
-    """Từ chối gốc dữ liệu nằm trong vùng đồng bộ đám mây.
+    """Reject a data root located in a cloud-synced area.
 
     Args:
-        root: Gốc dữ liệu cần kiểm.
+        root: Data root to check.
 
     Returns:
-        Chính gốc dữ liệu khi hợp lệ.
+        The same data root when valid.
 
     Raises:
-        UnsafeDataRootError: Khi đường dẫn chứa `onedrive` hoặc `sharepoint`.
+        UnsafeDataRootError: If the path contains `onedrive` or `sharepoint`.
     """
     low = str(root).lower()
     if "onedrive" in low or "sharepoint" in low:
@@ -44,231 +39,231 @@ def check_data_root(root: Path) -> Path:
 
 
 def data_root() -> Path:
-    """Trả về gốc dữ liệu vận hành, đọc lại biến môi trường ở mỗi lần gọi.
+    """Return the operational data root, re-reading the environment variable on every call.
 
     Returns:
-        Đường dẫn tuyệt đối của gốc dữ liệu.
+        Absolute path of the data root.
 
     Raises:
-        UnsafeDataRootError: Khi gốc dữ liệu nằm trong OneDrive hoặc SharePoint.
+        UnsafeDataRootError: If the data root is in OneDrive or SharePoint.
     """
     raw = os.environ.get(DATA_DIR_ENV) or str(DEFAULT_DATA_ROOT)
     return check_data_root(Path(raw).expanduser().absolute())
 
 
 def _sub(*parts: str) -> Path:
-    """Ghép thư mục con dưới gốc dữ liệu.
+    """Join a subdirectory under the data root.
 
     Args:
-        *parts: Các thành phần đường dẫn tương đối.
+        *parts: Relative path components.
 
     Returns:
-        Đường dẫn tuyệt đối dưới gốc dữ liệu.
+        Absolute path under the data root.
     """
     return data_root().joinpath(*parts)
 
 
 def db_path() -> Path:
-    """Trả về đường dẫn mặc định của `monocle.db` dưới gốc dữ liệu.
+    """Return the default path of `monocle.db` under the data root.
 
     Returns:
-        Đường dẫn tuyệt đối tới DB vận hành.
+        Absolute path to the operational DB.
     """
     return _sub("monocle.db")
 
 
 def bronze_dir() -> Path:
-    """Trả về thư mục Bronze chứa HTML thô và `.meta.json`.
+    """Return the Bronze directory holding raw HTML and `.meta.json`.
 
     Returns:
-        Đường dẫn `<gốc>/raw_html`.
+        Path `<root>/raw_html`.
     """
     return _sub("raw_html")
 
 
 def raw_reports_dir() -> Path:
-    """Trả về thư mục Bronze của báo cáo định kỳ.
+    """Return the Bronze directory of periodic reports.
 
     Returns:
-        Đường dẫn `<gốc>/raw_reports`.
+        Path `<root>/raw_reports`.
     """
     return _sub("raw_reports")
 
 
 def silver_dir() -> Path:
-    """Trả về thư mục Silver JSON.
+    """Return the Silver JSON directory.
 
     Returns:
-        Đường dẫn `<gốc>/silver`.
+        Path `<root>/silver`.
     """
     return _sub("silver")
 
 
 def work_packages_dir() -> Path:
-    """Trả về thư mục work-package.
+    """Return the work-package directory.
 
     Returns:
-        Đường dẫn `<gốc>/work_packages`.
+        Path `<root>/work_packages`.
     """
     return _sub("work_packages")
 
 
 def agent_tasks_dir() -> Path:
-    """Trả về thư mục gốc của packet giao cho tác nhân.
+    """Return the root directory of packets handed to agents.
 
     Returns:
-        Đường dẫn `<gốc>/agent_tasks`.
+        Path `<root>/agent_tasks`.
     """
     return _sub("agent_tasks")
 
 
 def article_packets_dir() -> Path:
-    """Trả về thư mục packet và manifest đợt của Article Lane.
+    """Return the packet and batch-manifest directory of the Article Lane.
 
     Returns:
-        Đường dẫn `<gốc>/agent_tasks/article`.
+        Path `<root>/agent_tasks/article`.
     """
     return agent_tasks_dir() / "article"
 
 
 def agent_outputs_dir(kind: str = "") -> Path:
-    """Trả về thư mục đầu ra của tác nhân theo hậu tố loại.
+    """Return the agent output directory for a kind suffix.
 
     Args:
-        kind: Hậu tố tên thư mục, ví dụ `""`, `"_l1"`, `"_article"`.
+        kind: Directory name suffix, for example `""`, `"_l1"`, `"_article"`.
 
     Returns:
-        Đường dẫn `<gốc>/agent_outputs<kind>`.
+        Path `<root>/agent_outputs<kind>`.
     """
     return _sub(f"agent_outputs{kind}")
 
 
 def article_mentions_dir() -> Path:
-    """Trả về thư mục bản ghi nhắc thực thể theo bài.
+    """Return the directory of per-article entity mention records.
 
     Returns:
-        Đường dẫn `<gốc>/article_mentions`.
+        Path `<root>/article_mentions`.
     """
     return _sub("article_mentions")
 
 
 def state_dir() -> Path:
-    """Trả về thư mục trạng thái bàn giao giữa các phiên.
+    """Return the directory of hand-off state between sessions.
 
     Returns:
-        Đường dẫn `<gốc>/state`.
+        Path `<root>/state`.
     """
     return _sub("state")
 
 
 def exports_dir() -> Path:
-    """Trả về thư mục tệp xuất CSV.
+    """Return the CSV export directory.
 
     Returns:
-        Đường dẫn `<gốc>/exports`.
+        Path `<root>/exports`.
     """
     return _sub("exports")
 
 
 def notifications_dir() -> Path:
-    """Trả về thư mục thông báo dạng tệp.
+    """Return the file-based notification directory.
 
     Returns:
-        Đường dẫn `<gốc>/notifications`.
+        Path `<root>/notifications`.
     """
     return _sub("notifications")
 
 
 def reports_dir() -> Path:
-    """Trả về thư mục báo cáo vận hành.
+    """Return the operational report directory.
 
     Returns:
-        Đường dẫn `<gốc>/reports`.
+        Path `<root>/reports`.
     """
     return _sub("reports")
 
 
 def entities_dir() -> Path:
-    """Trả về thư mục danh mục thực thể sinh ra (`entities.json`, `taxonomy.json`, CSV).
+    """Return the directory of generated entity catalogs (`entities.json`, `taxonomy.json`, CSV).
 
     Returns:
-        Đường dẫn `<gốc>/entities`.
+        Path `<root>/entities`.
     """
     return _sub("entities")
 
 
 def logs_dir() -> Path:
-    """Trả về thư mục nhật ký ứng dụng.
+    """Return the application log directory.
 
     Returns:
-        Đường dẫn `<gốc>/logs`.
+        Path `<root>/logs`.
     """
     return _sub("logs")
 
 
 def users_output_dir() -> Path:
-    """Trả về thư mục giao hàng theo người dùng.
+    """Return the per-user delivery directory.
 
     Returns:
-        Đường dẫn `<gốc>/users/output`, cùng cây thư mục với SharePoint (ADR-0026.D6).
+        Path `<root>/users/output`, the same tree as SharePoint (ADR-0026.D6).
     """
     return _sub("users", "output")
 
 
 def subscriptions_dir() -> Path:
-    """Trả về thư mục đăng ký của người dùng.
+    """Return the user subscription directory.
 
     Returns:
-        Giá trị `NEWS_SCAPE_SUBSCRIPTIONS_DIR` khi có, ngược lại `<gốc>/subscriptions`.
+        The `NEWS_SCAPE_SUBSCRIPTIONS_DIR` value if set, otherwise `<root>/subscriptions`.
     """
     raw = os.environ.get(SUBSCRIPTIONS_DIR_ENV)
     return Path(raw).expanduser().absolute() if raw else _sub("subscriptions")
 
 
 def snapshots_dir() -> Path:
-    """Trả về thư mục bản chụp DB để rà soát.
+    """Return the directory of DB snapshots kept for review.
 
     Returns:
-        Đường dẫn `<gốc>/snapshots`.
+        Path `<root>/snapshots`.
     """
     return _sub("snapshots")
 
 
 def staging_dir() -> Path:
-    """Trả về thư mục đệm của cơ chế ghi tệp nguyên tử.
+    """Return the buffer directory of the atomic file write mechanism.
 
     Returns:
-        Đường dẫn `<gốc>/staging`.
+        Path `<root>/staging`.
     """
     return _sub("staging")
 
 
 def publish_staging_dir() -> Path:
-    """Trả về thư mục dựng tệp hoàn chỉnh trước khi xuất bản (ADR 0020 §2.3).
+    """Return the directory where complete files are built before publishing (ADR 0020 §2.3).
 
     Returns:
-        Đường dẫn `<gốc>/publish_staging`.
+        Path `<root>/publish_staging`.
     """
     return _sub("publish_staging")
 
 
 def inputs_dir() -> Path:
-    """Trả về thư mục bản chép đầu vào do người sửa (ADR 0020 §2.4).
+    """Return the directory of input copies edited by people (ADR 0020 §2.4).
 
     Returns:
-        Đường dẫn `<gốc>/inputs`.
+        Path `<root>/inputs`.
     """
     return _sub("inputs")
 
 
 def to_data_relative(path: str | Path) -> str:
-    """Đưa đường dẫn dưới gốc dữ liệu về dạng tương đối dấu gạch chéo xuôi.
+    """Convert a path under the data root to a relative path with forward slashes.
 
     Args:
-        path: Đường dẫn tuyệt đối hoặc tương đối.
+        path: Absolute or relative path.
 
     Returns:
-        Chuỗi tương đối theo gốc dữ liệu khi tệp nằm trong đó, ngược lại giữ nguyên chuỗi.
+        Path relative to the data root if the file is inside it, otherwise the string unchanged.
     """
     p = Path(path)
     if not p.is_absolute():
@@ -280,13 +275,13 @@ def to_data_relative(path: str | Path) -> str:
 
 
 def strip_legacy_prefix(stored: str) -> str:
-    """Bỏ tiền tố `data/` hoặc `project/data/` của đường dẫn tương đối kiểu cũ.
+    """Strip the `data/` or `project/data/` prefix of a legacy relative path.
 
     Args:
-        stored: Đường dẫn tương đối như đã lưu.
+        stored: Relative path as stored.
 
     Returns:
-        Đường dẫn tương đối theo gốc dữ liệu, dấu gạch chéo xuôi.
+        Path relative to the data root, with forward slashes.
     """
     s = stored.replace("\\", "/")
     while s.startswith("./"):
@@ -298,16 +293,16 @@ def strip_legacy_prefix(stored: str) -> str:
 
 
 def resolve_data_path(stored: str | Path) -> Path:
-    """Phân giải đường dẫn đã lưu bền thành đường dẫn tuyệt đối dưới gốc dữ liệu.
+    """Resolve a persisted path to an absolute path under the data root.
 
-    Chấp nhận ba dạng: tuyệt đối (giữ nguyên), tương đối kiểu mới (`raw_html/...`) và
-    tương đối kiểu cũ có tiền tố `data/` hoặc `project/data/`.
+    Accepts three forms: absolute (kept as is), new-style relative (`raw_html/...`) and
+    legacy relative with a `data/` or `project/data/` prefix.
 
     Args:
-        stored: Đường dẫn đọc từ DB, tệp meta hoặc manifest.
+        stored: Path read from the DB, a meta file or a manifest.
 
     Returns:
-        Đường dẫn tuyệt đối.
+        Absolute path.
     """
     p = Path(stored)
     if p.is_absolute():

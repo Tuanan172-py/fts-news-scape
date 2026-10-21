@@ -1,9 +1,4 @@
-"""Biên dịch dữ liệu đăng ký người dùng từ tệp Excel/CSV sang cấu hình YAML.
-
-Đọc bảng đăng ký thực thể quan tâm của người dùng, xác thực qua EntityRegistry,
-sinh tệp cấu hình máy đọc tại project/config/entities/users/ và ghi nhận cảnh báo
-các thực thể không nhận diện được.
-"""
+"""Compile user subscription data from Excel/CSV files into YAML config under project/config/entities/users/, validating through EntityRegistry and reporting unrecognized entities."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -17,19 +12,26 @@ from src.core.user_manifest import load_user_manifest
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 REPO_ROOT = PROJECT_ROOT.parent
 DEFAULT_SUBSCRIPTIONS_ROOT = paths.subscriptions_dir()
-# Bố cục cũ `users/input` được chép về `<gốc>/inputs/users` ở khung chuyển dữ liệu.
+# The legacy `users/input` layout is copied to `<root>/inputs/users` during the data migration.
 LEGACY_INPUT_ROOT = paths.inputs_dir() / "users"
 DEFAULT_INPUT_ROOT = DEFAULT_SUBSCRIPTIONS_ROOT if DEFAULT_SUBSCRIPTIONS_ROOT.exists() else LEGACY_INPUT_ROOT
 DEFAULT_OUTPUT_ROOT = paths.users_output_dir()
 USERS_CONFIG_DIR = PROJECT_ROOT / "config" / "entities" / "users"
 
-# Nhóm hợp lệ trong sheet entities khớp với EntityRegistry.select
+# Valid groups in the entities sheet, matching EntityRegistry.select.
 GROUP_KEYS = ("tickers", "etfs", "indices", "exchanges", "industries", "nations", "themes", "macro", "assets", "institutions", "entities")
 _UPPER_GROUPS = ("tickers", "etfs", "indices", "exchanges", "industries", "nations", "themes", "macro", "assets", "institutions")
 
 
 def _user_from_filename(filename: str) -> str:
-    """Tách tên người dùng từ tên tệp tin đăng ký."""
+    """Extract the user name from a subscription file name.
+
+    Args:
+        filename: Subscription file name, optionally ending in `_news`.
+
+    Returns:
+        The user name.
+    """
     stem = Path(filename).stem
     if stem.lower().endswith("_news"):
         return stem[:-5]
@@ -38,15 +40,15 @@ def _user_from_filename(filename: str) -> str:
 
 # ---- CSV & Excel I/O ----------------------------------------------------------
 def read_user_csv(path: str | Path) -> tuple[dict, dict]:
-    """Đọc tệp tin CSV đăng ký danh mục của người dùng.
+    """Read a user subscription CSV file.
 
-    Hỗ trợ cả định dạng ma trận ngang (cột là nhóm thực thể) và định dạng dọc (category, code).
+    Supports both the horizontal matrix layout (columns are entity groups) and the vertical layout (category, code).
 
     Args:
-        path: Đường dẫn tới tệp CSV đăng ký.
+        path: Path of the subscription CSV file.
 
     Returns:
-        Tuple gồm từ điển danh mục thực thể và siêu dữ liệu người dùng.
+        Tuple of the entity catalog dict and the user metadata dict.
     """
     import csv
     path = Path(path)
@@ -59,7 +61,7 @@ def read_user_csv(path: str | Path) -> tuple[dict, dict]:
     if not lines:
         return _normalize(doc), meta
 
-    # Tự động nhận diện dấu phân cách (hỗ trợ comma, tab, semicolon)
+    # Detect the delimiter automatically (comma, tab or semicolon).
     sample = "\n".join(lines[:10])
     try:
         dialect = csv.Sniffer().sniff(sample, delimiters=",\t;")
@@ -74,7 +76,7 @@ def read_user_csv(path: str | Path) -> tuple[dict, dict]:
 
     headers = [h.strip().lower() for h in rows[0]]
     
-    # Kiểm tra kiểu Vertical (category, code)
+    # Vertical layout (category, code).
     if "category" in headers or "group" in headers or "type" in headers:
         cat_idx = headers.index("category") if "category" in headers else (headers.index("group") if "group" in headers else headers.index("type"))
         code_idx = headers.index("code") if "code" in headers else (headers.index("value") if "value" in headers else (1 if len(headers) > 1 else 0))
@@ -85,7 +87,7 @@ def read_user_csv(path: str | Path) -> tuple[dict, dict]:
                 if c in GROUP_KEYS and v:
                     doc.setdefault(c, []).append(v)
     else:
-        # Kiểu Horizontal (mỗi cột là 1 nhóm)
+        # Horizontal layout (each column is one group).
         col_idx = {h: i for i, h in enumerate(headers) if h in GROUP_KEYS}
         for r in rows[1:]:
             for key, idx in col_idx.items():
@@ -96,7 +98,16 @@ def read_user_csv(path: str | Path) -> tuple[dict, dict]:
 
 
 def write_user_csv(path: str | Path, doc: dict, meta: dict | None = None) -> Path:
-    """Ghi danh mục user ra file CSV (dạng horizontal ma trận ngang)."""
+    """Write a user catalog to a CSV file in the horizontal matrix layout.
+
+    Args:
+        path: Destination CSV path.
+        doc: Entity catalog keyed by group.
+        meta: Additional user metadata; not written to the CSV.
+
+    Returns:
+        Path of the file written.
+    """
     import csv
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -113,13 +124,13 @@ def write_user_csv(path: str | Path, doc: dict, meta: dict | None = None) -> Pat
 
 
 def read_user_xlsx(path: str | Path) -> tuple[dict, dict]:
-    """Đọc tệp tin Excel đăng ký danh mục của người dùng.
+    """Read a user subscription Excel file.
 
     Args:
-        path: Đường dẫn tới tệp Excel (.xlsx).
+        path: Path of the Excel (.xlsx) file.
 
     Returns:
-        Tuple gồm từ điển danh mục thực thể và siêu dữ liệu người dùng.
+        Tuple of the entity catalog dict and the user metadata dict.
     """
     path = Path(path)
     wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
@@ -162,15 +173,15 @@ def read_user_xlsx(path: str | Path) -> tuple[dict, dict]:
 
 
 def write_user_xlsx(path: str | Path, doc: dict, meta: dict | None = None) -> Path:
-    """Ghi danh mục đăng ký ra tệp Excel định dạng tiêu chuẩn.
+    """Write a subscription catalog to a standard-format Excel file.
 
     Args:
-        path: Đường dẫn tệp tin đích.
-        doc: Từ điển danh mục thực thể theo nhóm.
-        meta: Siêu dữ liệu người dùng bổ sung (tùy chọn).
+        path: Destination file path.
+        doc: Entity catalog keyed by group.
+        meta: Optional additional user metadata.
 
     Returns:
-        Đường dẫn Path tới tệp Excel đã lưu.
+        Path of the saved Excel file.
     """
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -191,16 +202,16 @@ def write_user_xlsx(path: str | Path, doc: dict, meta: dict | None = None) -> Pa
 
 
 def read_user_file(path: str | Path) -> tuple[dict, dict]:
-    """Tự động nhận diện định dạng tệp (.csv hoặc .xlsx) và đọc nội dung đăng ký.
+    """Detect the file format (.csv or .xlsx) and read the subscription content.
 
     Args:
-        path: Đường dẫn tệp tin đăng ký của người dùng.
+        path: Path of the user subscription file.
 
     Returns:
-        Tuple gồm từ điển danh mục thực thể và siêu dữ liệu người dùng.
+        Tuple of the entity catalog dict and the user metadata dict.
 
     Raises:
-        ValueError: Nếu định dạng tệp không được hỗ trợ.
+        ValueError: If the file format is not supported.
     """
     p = Path(path)
     if p.suffix.lower() == ".csv":
@@ -211,7 +222,7 @@ def read_user_file(path: str | Path) -> tuple[dict, dict]:
 
 
 def _normalize(doc: dict) -> dict:
-    """Chuẩn hóa dữ liệu danh mục đăng ký (loại bỏ khoảng trắng, viết hoa mã)."""
+    """Normalize catalog data by trimming whitespace and uppercasing codes."""
     out: dict[str, list[str]] = {}
     for key, vals in doc.items():
         if not vals:
@@ -231,7 +242,7 @@ _YAML_HEADER = (
 
 
 def _write_yaml(yaml_path: Path, name: str, doc: dict) -> None:
-    """Ghi dữ liệu đăng ký ra tệp YAML có chú thích cảnh báo tự động sinh."""
+    """Write subscription data to a YAML file with an auto-generated warning header."""
     yaml_path.parent.mkdir(parents=True, exist_ok=True)
     body = yaml.safe_dump(
         {k: doc[k] for k in GROUP_KEYS if doc.get(k)},
@@ -243,17 +254,17 @@ def _write_yaml(yaml_path: Path, name: str, doc: dict) -> None:
 def compile_user(name: str, file_path: str | Path, registry,
                  *, users_config_dir: str | Path = USERS_CONFIG_DIR,
                  input_dir: str | Path | None = None) -> dict:
-    """Biên dịch tệp tin đăng ký của một người dùng thành tệp YAML hệ thống.
+    """Compile one user's subscription file into a system YAML file.
 
     Args:
-        name: Tên định danh của người dùng.
-        file_path: Đường dẫn tệp tin đăng ký (.csv hoặc .xlsx).
-        registry: Đối tượng EntityRegistry để ánh xạ và kiểm tra thực thể.
-        users_config_dir: Thư mục đích lưu cấu hình YAML.
-        input_dir: Thư mục chứa tệp đăng ký để ghi nhận cảnh báo nếu có.
+        name: User name.
+        file_path: Path of the subscription file (.csv or .xlsx).
+        registry: EntityRegistry used to map and validate entities.
+        users_config_dir: Destination directory of the YAML config.
+        input_dir: Directory of the subscription files, where the unknown-entity warning file is written.
 
     Returns:
-        Từ điển chứa tên, đường dẫn YAML, tập mã định danh và danh sách lỗi.
+        Dict with the name, YAML path, resolved entity ids, unknown entities and metadata.
     """
     doc, meta = read_user_file(file_path)
     ids, unknown = registry.select(doc)
@@ -281,15 +292,15 @@ def compile_user(name: str, file_path: str | Path, registry,
 
 def compile_all(input_root: str | Path | None = None, registry=None,
                 *, users_config_dir: str | Path = USERS_CONFIG_DIR) -> list[dict]:
-    """Quét toàn bộ các tệp đăng ký người dùng và biên dịch hàng loạt.
+    """Scan every user subscription file and compile them in bulk.
 
     Args:
-        input_root: Thư mục gốc chứa các tệp đăng ký người dùng.
-        registry: Đối tượng EntityRegistry dùng chung.
-        users_config_dir: Thư mục đích lưu cấu hình YAML.
+        input_root: Root directory of the user subscription files.
+        registry: Shared EntityRegistry; loaded when None.
+        users_config_dir: Destination directory of the YAML config.
 
     Returns:
-        Danh sách kết quả biên dịch cho từng người dùng.
+        Compile result per user.
     """
     if registry is None:
         from src.agent.entities import load_registry
@@ -337,15 +348,15 @@ def compile_all(input_root: str | Path | None = None, registry=None,
     return results
 
 
-# ---- manifest bật/tắt user ----------------------------------------------------
+# ---- user on/off manifest -----------------------------------------------------
 def load_manifest(input_root: str | Path | None = None) -> dict[str, bool]:
-    """Đọc tệp manifest.yaml để xác định trạng thái kích hoạt của người dùng.
+    """Read manifest.yaml to determine which users are enabled.
 
     Args:
-        input_root: Thư mục chứa tệp manifest.yaml.
+        input_root: Directory containing manifest.yaml.
 
     Returns:
-        Từ điển ánh xạ từ tên người dùng sang trạng thái bật/tắt (True/False).
+        Mapping of user name to enabled state (True or False).
     """
     manifest = load_user_manifest(input_root)
     if not manifest["enabled"]:
@@ -355,14 +366,14 @@ def load_manifest(input_root: str | Path | None = None) -> dict[str, bool]:
 
 def enabled_users(input_root: str | Path | None = None,
                   names: list[str] | None = None) -> set[str]:
-    """Xác định tập hợp tên người dùng đang được bật nhận tin.
+    """Determine the set of user names enabled to receive news.
 
     Args:
-        input_root: Thư mục gốc chứa tệp manifest và đăng ký.
-        names: Danh sách ứng viên người dùng (nếu None sẽ tự động phát hiện).
+        input_root: Root directory containing the manifest and subscription files.
+        names: Candidate user names; when None they are discovered automatically.
 
     Returns:
-        Tập hợp (set) chứa tên các người dùng được kích hoạt.
+        Names of the enabled users.
     """
     manifest = load_manifest(input_root)
     if names is None:

@@ -1,4 +1,4 @@
-"""Dựng các bảng tín hiệu insight phái sinh từ kết quả nhận diện và phân tích của mô hình."""
+"""Build the derived insight signal tables from model recognition and analysis results."""
 
 from __future__ import annotations
 
@@ -32,7 +32,19 @@ _SENTIMENT_SCORE = {"positive": 1, "negative": -1, "neutral": 0}
 
 @dataclass
 class Art:
-    """Một bài đã có kết quả nhận diện đạt, kèm sentiment và vai trò trong cụm."""
+    """One article with a passing recognition result, its sentiment and its role in a cluster.
+
+    Attributes:
+        id: Article identifier (`url_title_hash`).
+        source: Source domain.
+        ts: Publication time in Vietnam time.
+        trade_date: Trading session the article affects first.
+        entities: Recognized entity ids.
+        sentiment: Numeric sentiment (+1, 0, -1), or None if unavailable.
+        cluster: Story cluster id.
+        role: Role in the cluster (canonical, copy, candidate or series).
+        novelty: Novelty label from the cluster evidence, or None.
+    """
 
     id: str
     source: str
@@ -46,13 +58,13 @@ class Art:
 
 
 def next_session(d: date) -> date:
-    """Trả ngày làm việc đầu tiên sau ngày `d`, bỏ qua thứ Bảy và Chủ nhật.
+    """Return the first working day after day `d`, skipping Saturday and Sunday.
 
     Args:
-        d: Ngày xuất phát.
+        d: Starting day.
 
     Returns:
-        Ngày thứ Hai đến thứ Sáu kế tiếp.
+        The next day from Monday to Friday.
     """
     nxt = d + timedelta(days=1)
     while nxt.weekday() >= 5:
@@ -61,15 +73,15 @@ def next_session(d: date) -> date:
 
 
 def trade_date_of(ts: datetime) -> date:
-    """Xác định phiên giao dịch chịu tác động đầu tiên của một tin.
+    """Determine the trading session first affected by a news item.
 
-    Tin đăng sau 14:45 hoặc vào cuối tuần tính cho phiên làm việc kế tiếp. Ngày lễ không được xét.
+    News published after 14:45 or on a weekend counts for the next working session. Holidays are not considered.
 
     Args:
-        ts: Thời điểm đăng bài theo giờ Việt Nam.
+        ts: Publication time in Vietnam time.
 
     Returns:
-        Ngày phiên giao dịch.
+        Date of the trading session.
     """
     d = ts.date()
     if d.weekday() >= 5:
@@ -80,13 +92,13 @@ def trade_date_of(ts: datetime) -> date:
 
 
 def parse_ts(raw: str | None) -> datetime | None:
-    """Đọc chuỗi ISO 8601 thành datetime giờ Việt Nam.
+    """Parse an ISO 8601 string into a Vietnam-time datetime.
 
     Args:
-        raw: Chuỗi thời gian, có hoặc không có múi giờ.
+        raw: Time string, with or without a time zone.
 
     Returns:
-        datetime có múi giờ, hoặc None khi chuỗi rỗng hay sai định dạng.
+        A timezone-aware datetime, or None if the string is empty or malformed.
     """
     if not raw:
         return None
@@ -98,15 +110,15 @@ def parse_ts(raw: str | None) -> datetime | None:
 
 
 def sentiment_score(raw_json: str | None) -> int | None:
-    """Đọc sentiment số (+1, 0, -1) từ đầu ra phân tích của mô hình.
+    """Read the numeric sentiment (+1, 0, -1) from a model analysis output.
 
-    Chấp nhận dạng chuỗi của `agent-output-v2-lean` và dạng đối tượng có `polarity` của bản cũ.
+    Accepts the string form of `agent-output-v2-lean` and the older object form with `polarity`.
 
     Args:
-        raw_json: Nội dung cột `agent_outputs.output_json`.
+        raw_json: Content of the `agent_outputs.output_json` column.
 
     Returns:
-        Điểm sentiment, hoặc None khi không có hay không hợp lệ.
+        The sentiment score, or None if absent or invalid.
     """
     if not raw_json:
         return None
@@ -120,14 +132,14 @@ def sentiment_score(raw_json: str | None) -> int | None:
 
 
 def entity_ids(raw_json: str | None, prefixes: tuple[str, ...] = ENTITY_PREFIXES) -> frozenset[str]:
-    """Lấy các mã thực thể thuộc nhóm cho phép từ đầu ra nhận diện của mô hình.
+    """Extract the allowed entity ids from a model recognition output.
 
     Args:
-        raw_json: Nội dung cột `l1_outputs.output_json`.
-        prefixes: Tiền tố mã thực thể được giữ lại.
+        raw_json: Content of the `l1_outputs.output_json` column.
+        prefixes: Entity id prefixes to keep.
 
     Returns:
-        Tập entity_id.
+        Set of entity_id values.
     """
     if not raw_json:
         return frozenset()
@@ -141,14 +153,14 @@ def entity_ids(raw_json: str | None, prefixes: tuple[str, ...] = ENTITY_PREFIXES
 
 
 def zscore(value: float, sample: list[float]) -> float:
-    """Tính z-score của `value` so với `sample`, độ lệch chuẩn có sàn.
+    """Compute the z-score of `value` against `sample`, with a floor on the standard deviation.
 
     Args:
-        value: Giá trị cần chuẩn hoá.
-        sample: Các giá trị nền.
+        value: Value to standardize.
+        sample: Baseline values.
 
     Returns:
-        (value - trung bình) chia cho max(độ lệch chuẩn, sàn).
+        (value - mean) divided by max(standard deviation, floor).
     """
     return (value - statistics.fmean(sample)) / max(statistics.pstdev(sample), Z_SD_FLOOR)
 
@@ -164,14 +176,14 @@ def _evidence_novelty(raw: str | None) -> str | None:
 
 
 def load_data(conn: sqlite3.Connection, since_day: str) -> tuple[list[Art], Counter]:
-    """Đọc các bài đã phân tích đạt và đếm số bài đăng mỗi phiên giao dịch.
+    """Read the articles with a passing analysis and count the articles published per trading session.
 
     Args:
-        conn: Kết nối tới DB vận hành.
-        since_day: Ngày ISO `YYYY-MM-DD` là mốc dưới theo thời điểm đăng.
+        conn: Connection to the operational DB.
+        since_day: ISO date `YYYY-MM-DD` used as the lower bound on publication time.
 
     Returns:
-        Bộ (danh sách Art có ít nhất một thực thể, Counter trade_date -> tổng số bài đăng).
+        Tuple of (Art list with at least one entity, Counter of trade_date -> total articles published).
     """
     expr = "COALESCE(NULLIF(a.published_at, ''), a.fetched_at)"
     totals: Counter = Counter()
@@ -207,18 +219,19 @@ def load_data(conn: sqlite3.Connection, since_day: str) -> tuple[list[Art], Coun
 
 def build_source_profile(arts: list[Art], window_end: date,
                          days: int = PROFILE_DAYS) -> list[dict]:
-    """Tổng hợp hồ sơ từng nguồn trong cửa sổ `days` ngày kết thúc ở `window_end`.
+    """Summarize each source over a window of `days` days ending at `window_end`.
 
-    `lead_rate` là tỷ lệ bài của nguồn đăng sớm nhất trong cụm trên số bài của nguồn thuộc
-    cụm có từ hai nguồn trở lên; None khi nguồn không có bài nào thuộc cụm như vậy.
+    `lead_rate` is the share of a source's articles that were the earliest in their cluster,
+    among its articles in clusters with two or more sources; None when the source has no
+    article in such a cluster.
 
     Args:
-        arts: Các bài đã phân tích.
-        window_end: Ngày cuối của cửa sổ.
-        days: Độ dài cửa sổ tính bằng ngày.
+        arts: Analyzed articles.
+        window_end: Last day of the window.
+        days: Window length in days.
 
     Returns:
-        Danh sách dòng cho bảng `source_profile`.
+        Rows for the `source_profile` table.
     """
     start = window_end - timedelta(days=days - 1)
     win = [a for a in arts if start <= a.ts.date() <= window_end]
@@ -245,15 +258,15 @@ def build_source_profile(arts: list[Art], window_end: date,
 
 
 def build_entity_links(arts: list[Art], window_end: date, days: int = PROFILE_DAYS) -> list[dict]:
-    """Tính độ liên kết PMI giữa các cặp thực thể cùng xuất hiện trong một bài.
+    """Compute the PMI association between entity pairs that appear in the same article.
 
     Args:
-        arts: Các bài đã phân tích.
-        window_end: Ngày cuối của cửa sổ.
-        days: Độ dài cửa sổ tính bằng ngày.
+        arts: Analyzed articles.
+        window_end: Last day of the window.
+        days: Window length in days.
 
     Returns:
-        Danh sách dòng cho bảng `entity_links`, mỗi cặp có `entity_a < entity_b`.
+        Rows for the `entity_links` table, each pair with `entity_a < entity_b`.
     """
     start = window_end - timedelta(days=days - 1)
     sets = []
@@ -309,15 +322,15 @@ def _cascade_minutes(items: list[Art]) -> float | None:
 
 
 def build_signal_daily(arts: list[Art], totals: Counter, profile: list[dict]) -> list[dict]:
-    """Tính chỉ số chú ý và sentiment cho từng cặp thực thể và phiên giao dịch.
+    """Compute attention and sentiment metrics for each entity and trading session.
 
     Args:
-        arts: Các bài đã phân tích, gồm cả phần nền dùng tính z-score.
-        totals: Tổng số bài đăng mỗi phiên giao dịch, dùng tính `coverage_pct`.
-        profile: Kết quả `build_source_profile`, cung cấp mức sentiment nền của từng nguồn.
+        arts: Analyzed articles, including the baseline portion used for the z-score.
+        totals: Total articles published per trading session, used for `coverage_pct`.
+        profile: Result of `build_source_profile`, giving each source's baseline sentiment.
 
     Returns:
-        Danh sách dòng cho bảng `signal_daily`, trên mọi phiên có dữ liệu.
+        Rows for the `signal_daily` table, over every session that has data.
     """
     if not arts:
         return []
@@ -394,18 +407,18 @@ PROFILE_COLS = ["source_domain", "window_end", "n", "pos_rate", "neg_rate", "lea
 
 def build_all(conn: sqlite3.Connection, today: date | None = None, days: int = 30,
               write: bool = True) -> dict[str, list[dict]]:
-    """Dựng lại ba bảng tín hiệu trong cửa sổ `days` ngày và ghi vào DB.
+    """Rebuild the three signal tables over a window of `days` days and write them to the DB.
 
-    Xoá các dòng của cửa sổ rồi ghi lại, nên chạy lặp lại cho cùng kết quả.
+    Deletes the rows of the window before writing them again, so repeated runs give the same result.
 
     Args:
-        conn: Kết nối ghi tới DB vận hành. Hàm commit khi `write` là True.
-        today: Ngày kết thúc cửa sổ; mặc định là hôm nay theo giờ Việt Nam.
-        days: Số ngày của cửa sổ cần dựng lại.
-        write: False để chỉ tính, không ghi.
+        conn: Write connection to the operational DB. The function commits when `write` is True.
+        today: Last day of the window; defaults to today in Vietnam time.
+        days: Number of days of the window to rebuild.
+        write: If False, only compute without writing.
 
     Returns:
-        Từ điển các bảng `signal_daily`, `entity_links`, `source_profile` với danh sách dòng.
+        Dict of the tables `signal_daily`, `entity_links` and `source_profile` with their rows.
     """
     today = today or datetime.now(VN_TZ).date()
     since = today - timedelta(days=days - 1)

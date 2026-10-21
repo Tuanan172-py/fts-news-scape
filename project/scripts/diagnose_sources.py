@@ -1,4 +1,4 @@
-"""Kiểm tra và chẩn đoán khả năng thu thập dữ liệu của từng nguồn tin."""
+"""Diagnose the data capture capability of each news source."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ import sys
 import time
 from pathlib import Path
 
-# Windows console cp1252 → ép utf-8 để in tiếng Việt không crash
+# Windows console defaults to cp1252; force utf-8 so Vietnamese output does not crash.
 try:
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
 except Exception:
@@ -26,7 +26,16 @@ import src.scrapers  # noqa: F401 — trigger @register
 
 
 def diagnose(names: list[str] | None = None, enrich_test: bool = True) -> int:
-    setup_logging("WARNING")  # tắt log INFO ồn ào
+    """Probe each source for list fetching, parsing and enrichment, then print a summary.
+
+    Args:
+        names: Source names to probe; defaults to every configured domain, enabled or not.
+        enrich_test: Whether to fetch detail pages for the first parsed articles.
+
+    Returns:
+        Number of sources with a problem.
+    """
+    setup_logging("WARNING")  # suppress noisy INFO logs
     store = ArticleStore()
     dedup = DedupCache(store)
     http = HTTPClient(rate_limit_delay=3.0, max_retries=3)
@@ -66,7 +75,7 @@ def diagnose(names: list[str] | None = None, enrich_test: bool = True) -> int:
             rows.append(row)
             continue
 
-        # thử parse tối đa 10 item đầu, giữ lại article để test enrich
+        # Parse at most the first 10 items and keep the articles for the enrich test.
         parsed, perrs, arts = 0, [], []
         for item in raw[:10]:
             try:
@@ -78,8 +87,8 @@ def diagnose(names: list[str] | None = None, enrich_test: bool = True) -> int:
                 perrs.append(f"{type(e).__name__}: {str(e)[:60]}")
         row["parsed"] = parsed
 
-        # test enrich (fetch trang chi tiết) trên 2 bài đầu — điểm dễ lỗi
-        # bỏ qua api nặng (cafef/fireant enrich 600 bài, có luồng riêng)
+        # Enrich test (detail page fetch) on the first 2 articles, a failure-prone step.
+        # Skip heavy api sources (cafef/fireant enrich 600 articles in a separate flow).
         enr_ok, enr_err = 0, []
         if enrich_test and row["method"] != "api":
             for a in arts[:2]:
@@ -113,7 +122,7 @@ def diagnose(names: list[str] | None = None, enrich_test: bool = True) -> int:
 
     dedup.close()
 
-    # bảng tổng kết
+    # Summary table.
     print("\n" + "=" * 78)
     print(f"{'DOMAIN':<15}{'METHOD':<7}{'FETCH':>6}  {'STATUS':<11}DETAIL")
     print("-" * 78)

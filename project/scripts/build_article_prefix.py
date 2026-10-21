@@ -1,19 +1,19 @@
-"""Sinh prefix tĩnh cho worker xử lý bài đăng, trực tiếp từ catalog thực thể.
+"""Generate the static worker prefix for article processing directly from the entity catalog.
 
-Prefix được sinh chứ không gõ tay vì một lý do đã trả giá bằng token thật: bảng tra
-chép tay trong skill cũ thiếu tiền tố `IND_GICS*`, khiến agent phải tự mở
-`entities.json` để dò, và riêng việc đó chiếm 53% toàn bộ nội dung của vệt 845 nghìn
-token. Sinh từ nguồn thì bảng tra không bao giờ lệch catalog được nữa.
+The prefix is generated rather than hand-written because the hand-written lookup table
+in the old skill lacked the `IND_GICS*` prefixes, which forced the agent to open
+`entities.json` itself; that alone accounted for 53% of the content of an 845k-token
+trace. Generating from the source keeps the lookup table in sync with the catalog.
 
-Prefix phải giữ nguyên từng byte giữa các lô để trúng bộ nhớ đệm phía nhà cung cấp,
-nên tệp sinh ra kèm một giá trị băm; `article_run.py` đối chiếu băm này trước mỗi đợt.
+The prefix must stay byte-identical between batches to hit the provider-side cache, so
+the generated file carries a hash; `article_run.py` compares this hash before each run.
 
-Hai chế độ kiểm, và chúng canh hai thứ khác nhau:
+Two check modes guard two different things:
 
-- `--check` — tệp trên đĩa còn khớp danh mục không, **và** `persona` trong preset còn
-  khớp tệp trên đĩa không. Vế thứ hai mới là vế giữ bộ nhớ đệm: prefix đúng mà persona
-  dán thiếu một dòng thì cache vẫn trượt, chỉ khác là không ai thấy.
-- `--check-preset` — chỉ vế thứ hai, dùng khi vừa dán tay xong và muốn xác nhận ngay.
+- `--check` verifies that the file on disk matches the catalog, and that the `persona`
+  in the preset matches the file on disk. The second half protects the cache: a correct
+  prefix with a persona missing one line still misses the cache, silently.
+- `--check-preset` runs only the second half, for confirming right after a manual paste.
 """
 from __future__ import annotations
 
@@ -40,15 +40,15 @@ ENTITIES_JSON = paths.entities_dir() / "entities.json"
 TAXONOMY_JSON = paths.entities_dir() / "taxonomy.json"
 OUT_DIR = PROJECT_ROOT / "assets" / "prefix"
 
-# Nhóm đóng: liệt kê được toàn bộ nên đưa hết vào prefix, model không phải đoán.
+# Closed groups: fully enumerable, so all of them go into the prefix and the model does not guess.
 CLOSED_TYPES = [
     "MACRO_GEO", "MACRO_THEME", "ASSET_CLASS", "INSTITUTION",
     "INDEX", "EXCHANGE", "INDUSTRY_GICS1", "INDUSTRY_GICS2", "INDUSTRY_GICS3",
 ]
 FUND_TYPES = ["ETF", "SECURITY_OTHER"]
 
-# Mã nhóm model phát ra. Mỗi mã ứng với một thuật toán tra cứu riêng ở expander,
-# đó là lý do tách nhóm chứ không phải để phân loại cho đẹp.
+# Group codes emitted by the model. Each code maps to its own lookup algorithm in the
+# expander, which is why the groups are separate.
 GROUP_CODES = [
     ("TIC", "mã chứng khoán 3 ký tự in hoa xuất hiện nguyên dạng", "HPG, VND, FPT"),
     ("COM", "tên doanh nghiệp hoặc thương hiệu, kể cả thương hiệu con", "Hòa Phát, Bách Hóa Xanh, VinFast"),
@@ -65,13 +65,13 @@ GROUP_CODES = [
 
 
 def load_catalog() -> list[dict]:
-    """Nạp danh mục thực thể đang hiệu lực.
+    """Load the active entity catalog.
 
     Returns:
-        Danh sách bản ghi thực thể.
+        List of entity records.
 
     Raises:
-        FileNotFoundError: Khi tệp danh mục không tồn tại.
+        FileNotFoundError: If the catalog file does not exist.
     """
     if not ENTITIES_JSON.exists():
         raise FileNotFoundError(f"Thiếu danh mục thực thể: {ENTITIES_JSON}")
@@ -80,15 +80,15 @@ def load_catalog() -> list[dict]:
 
 
 def digest_lines(items: list[dict], types: list[str], *, with_alias: bool = True) -> list[str]:
-    """Nén các thực thể thuộc một số loại thành các dòng tra cứu ngắn gọn.
+    """Compress entities of the given types into short lookup lines.
 
     Args:
-        items: Toàn bộ danh mục thực thể.
-        types: Danh sách loại cần lấy.
-        with_alias: Có kèm danh sách tên gọi khác hay không.
+        items: Full entity catalog.
+        types: Entity types to include.
+        with_alias: Whether to append the alias list.
 
     Returns:
-        Danh sách dòng dạng `entity_id | tên chuẩn | các alias`.
+        Lines of the form `entity_id | canonical name | aliases`.
     """
     out: list[str] = []
     for t in types:
@@ -106,29 +106,30 @@ def digest_lines(items: list[dict], types: list[str], *, with_alias: bool = True
 
 
 def ticker_lines(items: list[dict]) -> list[str]:
-    """Nén danh mục mã chứng khoán thành các dòng tra cứu.
+    """Compress the ticker catalog into lookup lines.
 
-    Đây là **biến thể**, không phải mặc định, và lý do nằm ở kinh tế của bộ nhớ đệm
-    chứ không ở chất lượng nhận diện. Token nằm trong prefix từ lượt gọi thứ hai chỉ
-    còn một phần năm mươi giá token mới, nên nạp thêm bảng tra gần như miễn phí: trọn
-    danh mục 1.093 mã nặng khoảng 21.500 token, mà đo trên đợt 300 bài chia ba lô nó
-    chỉ làm hoá đơn tăng khoảng 1,5% (phần lớn là lượt hâm cache trả giá token mới
-    đúng một lần). Đổi lại nó có thể kéo recall nhóm `COM` lên, vì mô hình thấy được
-    tên chuẩn của doanh nghiệp thay vì chỉ suy từ trí nhớ.
+    This is a variant, not the default, for cache-economics reasons rather than
+    recognition quality. Tokens in the prefix cost one fiftieth of fresh tokens from
+    the second call onward, so the extra table is nearly free: the full catalog of
+    1,093 tickers is about 21,500 tokens, and measured on a 300-article run split into
+    three batches it raised the bill by about 1.5% (mostly the cache warm-up call paid
+    at the fresh-token price once). In return it may raise `COM` recall, because the
+    model sees canonical company names instead of relying on memory.
 
-    Vì là thí nghiệm có đánh đổi hành vi — bảng mã ngay trước mắt dễ khiến mô hình
-    phát định danh thay vì chuỗi nguyên văn — nó phải được bật tường minh và đo bằng
-    `resolve_rate` theo nhóm trước khi thành mặc định. Xem plan §13.
+    Because the variant changes model behavior (a visible ticker table may lead the
+    model to emit identifiers instead of verbatim strings), it must be enabled
+    explicitly and measured with per-group `resolve_rate` before becoming the default.
+    See plan section 13.
 
-    Lấy trọn danh mục thay vì riêng nhóm Tier-1 như plan phác thảo, vì danh sách theo
-    dõi đổi hàng tuần: buộc prefix theo nó là tự tạo thêm một nguồn làm vỡ cache, mà
-    mỗi lần vỡ lại kéo theo một lần dán tay vào preset.
+    The full catalog is used rather than only the Tier-1 group sketched in the plan,
+    because the watchlist changes weekly: tying the prefix to it would add another
+    cache-breaking source, and each break requires a manual paste into the preset.
 
     Args:
-        items: Toàn bộ danh mục thực thể.
+        items: Full entity catalog.
 
     Returns:
-        Danh sách dòng dạng `mã | tên chuẩn | các alias`.
+        Lines of the form `code | canonical name | aliases`.
     """
     out: list[str] = []
     for e in items:
@@ -145,22 +146,21 @@ def ticker_lines(items: list[dict]) -> list[str]:
 
 
 def build(items: list[dict], *, with_tickers: bool = False) -> str:
-    """Dựng toàn văn prefix tĩnh cho worker.
+    """Build the full text of the static worker prefix.
 
     Args:
-        items: Toàn bộ danh mục thực thể.
-        with_tickers: Có nạp thêm danh mục mã chứng khoán vào prefix không. Xem
-            :func:`ticker_lines` để biết vì sao đây là một biến thể chứ không phải
-            mặc định.
+        items: Full entity catalog.
+        with_tickers: Whether to add the ticker catalog to the prefix. See
+            :func:`ticker_lines` for why this is a variant and not the default.
 
     Returns:
-        Nội dung prefix dạng Markdown.
+        Prefix content as Markdown.
     """
     closed = digest_lines(items, CLOSED_TYPES)
     funds = digest_lines(items, FUND_TYPES)
     tickers = ticker_lines(items) if with_tickers else []
 
-    # Ánh xạ loại sang tiền tố định danh, đọc thẳng từ dữ liệu để không bao giờ lệch.
+    # Map type to identifier prefix, read straight from the data so it cannot drift.
     prefix_map: dict[str, str] = {}
     for e in items:
         prefix_map.setdefault(e["type"], e["entity_id"].split(":")[0])
@@ -333,13 +333,13 @@ def build(items: list[dict], *, with_tickers: bool = False) -> str:
 
 
 def read_variants(meta_path: Path) -> dict:
-    """Đọc các biến thể đã bật của prefix đang nằm trên đĩa.
+    """Read the enabled variants of the prefix currently on disk.
 
     Args:
-        meta_path: Đường dẫn tệp mô tả.
+        meta_path: Path of the metadata file.
 
     Returns:
-        Từ điển biến thể, rỗng khi chưa có hoặc tệp hỏng.
+        Variant dict, empty when the file is missing or corrupt.
     """
     try:
         with open(meta_path, encoding="utf-8") as f:
@@ -350,14 +350,14 @@ def read_variants(meta_path: Path) -> dict:
 
 
 def check_preset(content: str, preset: Path) -> bool:
-    """In kết quả đối chiếu persona trong preset với nội dung prefix chuẩn.
+    """Print the comparison of the preset persona against the reference prefix.
 
     Args:
-        content: Nội dung prefix chuẩn.
-        preset: Đường dẫn tệp preset.
+        content: Reference prefix content.
+        preset: Path of the preset file.
 
     Returns:
-        True khi persona khớp, ngược lại False.
+        True when the persona matches, otherwise False.
     """
     ok, detail = compare_persona(content, preset)
     if ok:
@@ -372,13 +372,13 @@ def check_preset(content: str, preset: Path) -> bool:
 
 
 def main(argv=None) -> int:
-    """Chạy giao diện dòng lệnh sinh prefix.
+    """Run the prefix generation command line.
 
     Args:
-        argv: Danh sách tham số dòng lệnh. Mặc định lấy từ `sys.argv`.
+        argv: Command-line arguments. Defaults to `sys.argv`.
 
     Returns:
-        Mã thoát 0 khi sinh thành công, 1 khi chế độ kiểm phát hiện lệch.
+        Exit code 0 on success, 1 when a check mode detects a mismatch.
     """
     ap = argparse.ArgumentParser(description="Sinh prefix tĩnh cho worker từ catalog")
     ap.add_argument("--out", default=str(OUT_DIR / "ARTICLE_SYSTEM_CORE.md"),
@@ -406,9 +406,9 @@ def main(argv=None) -> int:
         return 0 if check_preset(out_path.read_text(encoding="utf-8"), preset_path) else 1
 
     items = load_catalog()
-    # Ở chế độ kiểm, biến thể lấy theo thứ đã ghi trên đĩa trừ khi người vận hành nói
-    # khác. Không làm vậy thì một prefix sinh kèm digest mã chứng khoán sẽ bị báo lệch
-    # ở mọi lần kiểm dù nó đúng.
+    # In check mode the variant follows what is recorded on disk unless the operator
+    # overrides it; otherwise a prefix generated with the ticker digest would be
+    # reported as mismatched on every check even though it is correct.
     with_tickers = args.with_tickers
     if (args.check and not args.with_tickers
             and read_variants(meta_path).get("tickers")):

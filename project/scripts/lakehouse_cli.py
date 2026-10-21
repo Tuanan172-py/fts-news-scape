@@ -1,4 +1,4 @@
-"""Giao diện dòng lệnh CLI điều phối các hoạt động của Lakehouse Data Plane."""
+"""Command-line interface that drives the operations of the Lakehouse Data Plane."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
-# Thêm thư mục project vào sys.path để nạp các module nguồn
+# Add the project directory to sys.path so the source modules can be imported.
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
@@ -25,16 +25,16 @@ from src.lakehouse.storage import LocalOneDriveStorageAdapter
 
 
 def resolve_storage_root(root_arg: str | None) -> Path:
-    """Xác định đường dẫn thư mục gốc của kho dữ liệu Lakehouse.
+    """Resolve the root directory of the Lakehouse storage.
 
     Args:
-        root_arg: Giá trị tham số dòng lệnh do người dùng truyền vào.
+        root_arg: Command-line value passed by the user.
 
     Returns:
-        Đối tượng Path trỏ tới thư mục gốc kho dữ liệu.
+        Path of the storage root directory.
 
     Raises:
-        PermissionError: Khi đường dẫn thuộc site SharePoint chính thức bị cấm.
+        PermissionError: If the path belongs to the forbidden official SharePoint site.
     """
     from src.export.publisher import is_official_target
 
@@ -56,13 +56,13 @@ def resolve_storage_root(root_arg: str | None) -> Path:
 
 
 def handle_ingest(args: argparse.Namespace) -> int:
-    """Xử lý lệnh xuất bản gói bài viết vào vùng nạp Dropzone.
+    """Handle the command that publishes an article batch into the Dropzone.
 
     Args:
-        args: Các tham số dòng lệnh đã phân tích cú pháp.
+        args: Parsed command-line arguments.
 
     Returns:
-        Mã trạng thái kết thúc tiến trình (0 nếu thành công).
+        Process exit code (0 on success).
     """
     storage_root = resolve_storage_root(args.root)
     storage = LocalOneDriveStorageAdapter(storage_root)
@@ -100,13 +100,13 @@ def handle_ingest(args: argparse.Namespace) -> int:
 
 
 def handle_consolidate(args: argparse.Namespace) -> int:
-    """Xử lý lệnh hợp nhất và khử trùng lặp dữ liệu Dropzone qua DuckDB.
+    """Handle the command that consolidates and deduplicates Dropzone data through DuckDB.
 
     Args:
-        args: Các tham số dòng lệnh đã phân tích cú pháp.
+        args: Parsed command-line arguments.
 
     Returns:
-        Mã trạng thái kết thúc tiến trình (0 nếu thành công).
+        Process exit code (0 on success).
     """
     storage_root = resolve_storage_root(args.root)
     storage = LocalOneDriveStorageAdapter(storage_root)
@@ -134,13 +134,13 @@ def handle_consolidate(args: argparse.Namespace) -> int:
 
 
 def handle_verify(args: argparse.Namespace) -> int:
-    """Xử lý lệnh kiểm chứng tính toàn vẹn của tệp kê khai Manifest.
+    """Handle the command that verifies the integrity of a manifest file.
 
     Args:
-        args: Các tham số dòng lệnh đã phân tích cú pháp.
+        args: Parsed command-line arguments.
 
     Returns:
-        Mã trạng thái kết thúc tiến trình (0 nếu hợp lệ, 1 nếu có lỗi).
+        Process exit code (0 if valid, 1 on error).
     """
     storage_root = resolve_storage_root(args.root)
     storage = LocalOneDriveStorageAdapter(storage_root)
@@ -166,10 +166,10 @@ def handle_verify(args: argparse.Namespace) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    """Thiết lập cấu trúc các lệnh con và tham số của công cụ dòng lệnh.
+    """Build the subcommands and arguments of the command-line tool.
 
     Returns:
-        Đối tượng ArgumentParser đã được cấu hình đầy đủ.
+        Configured ArgumentParser.
     """
     parser = argparse.ArgumentParser(
         description="Giao diện quản trị Lakehouse Data Plane phân tán.",
@@ -219,10 +219,10 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main() -> int:
-    """Điểm nhập chính cho công cụ dòng lệnh Lakehouse CLI.
+    """Run the Lakehouse CLI.
 
     Returns:
-        Mã kết thúc tiến trình.
+        Process exit code of the selected subcommand.
     """
     parser = build_parser()
     args = parser.parse_args()

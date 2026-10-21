@@ -1,4 +1,4 @@
-"""Đo áp suất ngữ cảnh của phiên DSH và khuyến nghị thời điểm bàn giao."""
+"""Measure the context pressure of a DSH session and recommend when to hand off."""
 from __future__ import annotations
 
 import argparse
@@ -20,20 +20,20 @@ GREEN, AMBER, RED = "🟢", "🟡", "🔴"
 
 
 def classify(ratio: float, amber: float, red: float) -> tuple[str, str]:
-    """Xếp mức áp suất ngữ cảnh và nêu hành động tương ứng.
+    """Classify the context pressure level and state the matching action.
 
-    Ngưỡng được đặt thấp hơn nhiều so với mốc nén tự động 80% của DSH, vì DSH không
-    cắt tỉa gì trước mốc đó: bộ cắt kết quả công cụ không đăng ký listener nào nên chỉ
-    chạy bên trong một lượt nén. Nói cách khác, không có cơ chế nào giữ ngữ cảnh gọn
-    trước 80%, nên việc canh phải do phía dự án làm.
+    The thresholds sit well below the 80% auto-compaction point of DSH because DSH
+    prunes nothing before that point: the tool-result trimmer registers no listener
+    and only runs inside a compaction pass. No mechanism keeps the context small
+    before 80%, so the project must watch it.
 
     Args:
-        ratio: Tỷ lệ lấp đầy cửa sổ ngữ cảnh, từ 0 đến 1.
-        amber: Ngưỡng cảnh báo vàng.
-        red: Ngưỡng cảnh báo đỏ.
+        ratio: Context window fill ratio, from 0 to 1.
+        amber: Amber warning threshold.
+        red: Red warning threshold.
 
     Returns:
-        Cặp gồm biểu tượng mức và mô tả hành động cần làm.
+        Pair of the level icon and the description of the action to take.
     """
     if ratio >= red:
         return RED, "DỪNG NGAY sau batch hiện tại, sinh handoff rồi mở phiên mới"
@@ -43,13 +43,13 @@ def classify(ratio: float, amber: float, red: float) -> tuple[str, str]:
 
 
 def main(argv=None) -> int:
-    """Chạy giao diện dòng lệnh đo áp suất ngữ cảnh.
+    """Run the command-line probe for context pressure.
 
     Args:
-        argv: Danh sách tham số dòng lệnh. Mặc định lấy từ `sys.argv`.
+        argv: Command-line arguments. Defaults to `sys.argv`.
 
     Returns:
-        Mã thoát 0 khi áp suất dưới ngưỡng đỏ, 1 khi đã chạm ngưỡng đỏ.
+        0 when the pressure is below the red threshold, 1 when it reaches it.
     """
     ap = argparse.ArgumentParser(description="Đo áp suất ngữ cảnh phiên DSH")
     ap.add_argument("--cwd-filter", default="news-scape",

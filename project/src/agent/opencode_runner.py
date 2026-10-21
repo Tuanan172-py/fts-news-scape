@@ -1,4 +1,4 @@
-"""Thực thi và điều phối các tác vụ phân tích bài đăng bằng OpenCode CLI."""
+"""Run and orchestrate article analysis tasks through the OpenCode CLI."""
 from __future__ import annotations
 
 import concurrent.futures
@@ -52,16 +52,16 @@ INSTRUCTION_GUARD = (
 
 @dataclass
 class OpencodeExecutionResult:
-    """Kết quả thực thi một lô bài viết qua OpenCode CLI.
+    """Result of running one article batch through the OpenCode CLI.
 
     Attributes:
-        ok: Trạng thái thực thi đạt chuẩn hay không.
-        batch_id: Mã định danh của lô bài viết.
-        status: Phân loại trạng thái (OK, PARTIAL, RETRYABLE, FATAL, TIMEOUT).
-        records: Danh sách bản ghi trích xuất thành công.
-        usage: Thông tin số lượng token sử dụng.
-        latency_seconds: Thời gian thực thi tính bằng giây.
-        error_message: Thông điệp lỗi chi tiết nếu có.
+        ok: Whether the run met the requirements.
+        batch_id: Batch identifier.
+        status: Status class (OK, PARTIAL, RETRYABLE, FATAL, TIMEOUT).
+        records: Records extracted successfully.
+        usage: Token usage information.
+        latency_seconds: Run time in seconds.
+        error_message: Detailed error message, if any.
     """
 
     ok: bool
@@ -74,10 +74,10 @@ class OpencodeExecutionResult:
 
 
 def resolve_opencode() -> str:
-    """Tìm đường dẫn tuyệt đối của binary OpenCode trong môi trường hệ thống.
+    """Find the absolute path of the OpenCode binary in the system environment.
 
     Returns:
-        Đường dẫn khả thi tới tệp thực thi opencode, hoặc chuỗi 'opencode' dự phòng.
+        Path to the opencode executable, or the fallback string 'opencode'.
     """
     explicit = os.environ.get("OPENCODE_BIN")
     if explicit and Path(explicit).exists():
@@ -98,13 +98,13 @@ def resolve_opencode() -> str:
 
 
 class OpencodeRunner:
-    """Điều phối và thực thi các gói tác vụ nhận thức bằng OpenCode CLI Headless.
+    """Orchestrate and run cognitive task packets through the headless OpenCode CLI.
 
     Attributes:
-        model: Mã mô hình chính được cấu hình.
-        timeout_seconds: Giới hạn thời gian tối đa cho một lượt gọi.
-        core_text: Nội dung tiền tố hệ thống chuẩn mực.
-        opencode_bin: Đường dẫn thực thi binary OpenCode.
+        model: Primary model identifier.
+        timeout_seconds: Maximum time for one call.
+        core_text: Canonical system prefix text.
+        opencode_bin: Path of the OpenCode binary.
     """
 
     def __init__(
@@ -115,13 +115,13 @@ class OpencodeRunner:
         core_text: str | None = None,
         opencode_bin: str | None = None,
     ):
-        """Khởi tạo OpencodeRunner với mô hình và tiền tố hệ thống.
+        """Initialize the OpencodeRunner with a model and the system prefix.
 
         Args:
-            model: Tên mô hình chính cần dùng.
-            timeout_seconds: Thời gian tối đa chờ phản hồi của mỗi lô.
-            core_text: Toàn văn tiền tố hệ thống (None tải từ ARTICLE_SYSTEM_CORE.md).
-            opencode_bin: Đường dẫn cụ thể tới binary opencode (nếu có).
+            model: Primary model name to use.
+            timeout_seconds: Maximum time to wait for the response of each batch.
+            core_text: Full system prefix text; None loads ARTICLE_SYSTEM_CORE.md.
+            opencode_bin: Explicit path of the opencode binary, if any.
         """
         self.model = model
         self.timeout_seconds = timeout_seconds
@@ -146,17 +146,17 @@ class OpencodeRunner:
         max_attempts: int = 2,
         force: bool = False,
     ) -> OpencodeExecutionResult:
-        """Chạy một lô và ghi vết span `agent` khi có ngữ cảnh ghi vết của daemon.
+        """Run one batch and record an `agent` span when the daemon trace context exists.
 
         Args:
-            batch_id: Mã định danh của lô.
-            task_path: Đường dẫn tệp task.json đầu vào.
-            out_dir: Thư mục ghi tệp kết quả đầu ra.
-            max_attempts: Số lần thử lại tối đa khi gặp lỗi tạm thời.
-            force: Buộc chạy lại kể cả khi lô đã có kết quả đầu ra.
+            batch_id: Batch identifier.
+            task_path: Path of the input task.json file.
+            out_dir: Directory that receives the output files.
+            max_attempts: Maximum number of attempts on a transient error.
+            force: Rerun even if the batch already has an output.
 
         Returns:
-            Đối tượng OpencodeExecutionResult chứa kết quả và số đo chi tiết.
+            OpencodeExecutionResult with the result and detailed metrics.
         """
         from src.ops import trace as tracing
 
@@ -187,17 +187,17 @@ class OpencodeRunner:
         max_attempts: int = 2,
         force: bool = False,
     ) -> OpencodeExecutionResult:
-        """Thực thi phân tích một lô bài viết qua OpenCode CLI và ghi kết quả ra đĩa.
+        """Analyze one article batch through the OpenCode CLI and write the results to disk.
 
         Args:
-            batch_id: Mã định danh của lô bài viết.
-            task_path: Đường dẫn tệp packet đầu vào (.task.json).
-            out_dir: Thư mục lưu trữ kết quả đầu ra.
-            max_attempts: Số lần thử lại tối đa khi gặp lỗi có thể khôi phục.
-            force: Buộc chạy lại kể cả khi lô đã có kết quả đầu ra.
+            batch_id: Batch identifier.
+            task_path: Path of the input packet file (.task.json).
+            out_dir: Directory that receives the output files.
+            max_attempts: Maximum number of attempts on a recoverable error.
+            force: Rerun even if the batch already has an output.
 
         Returns:
-            Đối tượng kết quả thực thi chi tiết.
+            Detailed execution result.
         """
         out_file = out_dir / f"{batch_id}.output.json"
         meta_file = out_dir / f"{batch_id}.meta.json"
@@ -313,7 +313,7 @@ class OpencodeRunner:
             stderr_text = proc.stderr or ""
             return_code = proc.returncode
 
-            # Bóc tách NDJSON stream
+            # Parse the NDJSON stream.
             extracted_text = ""
             error_msg = ""
 
@@ -354,7 +354,7 @@ class OpencodeRunner:
                     time.sleep(3)
                     continue
 
-            # Kiểm tra và làm sạch Markdown codeblock nếu có
+            # Strip the Markdown code block, if present.
             if extracted_text:
                 cleaned_text = extracted_text.strip()
                 if cleaned_text.startswith("```"):
@@ -393,7 +393,7 @@ class OpencodeRunner:
                 error_message=last_error or "Không trích xuất được bản ghi hợp lệ nào sau các lần thử",
             )
 
-        # Ghi tệp kết quả output và meta
+        # Write the output and meta files.
         safe_atomic_write(out_file, json.dumps(valid_recs, ensure_ascii=False, indent=1))
 
         if not usage_data:
@@ -436,16 +436,16 @@ class OpencodeRunner:
         concurrency: int = 2,
         force: bool = False,
     ) -> dict[str, Any]:
-        """Chạy toàn bộ các lô bài viết trong một đợt phân tích.
+        """Run all article batches of a wave in parallel.
 
         Args:
-            manifest_data: Dữ liệu tệp manifest wave_<wave>.json.
-            out_dir: Thư mục lưu trữ kết quả đầu ra.
-            concurrency: Số luồng chạy song song tối đa (mặc định 2).
-            force: Buộc chạy lại kể cả khi lô đã có kết quả đầu ra.
+            manifest_data: Content of the manifest file wave_<wave>.json.
+            out_dir: Directory that receives the output files.
+            concurrency: Maximum number of parallel threads.
+            force: Rerun even if a batch already has an output.
 
         Returns:
-            Báo cáo tổng hợp kết quả của cả đợt.
+            Summary report of the whole wave.
         """
         batches = manifest_data.get("batches", [])
         wave = manifest_data.get("wave", "unknown")

@@ -1,19 +1,4 @@
-"""Gộp toàn bộ một đợt xử lý vào một lệnh duy nhất.
-
-Chi phí token của phiên điều phối tỉ lệ với **số bước**, không tỉ lệ với số bài: mỗi
-bước gửi lại toàn bộ lịch sử đã tích luỹ, và không có cơ chế nào cắt tỉa trước ngưỡng
-nén tám mươi phần trăm. Quy trình vận hành cũ mô tả năm bước cho mỗi đợt. Lệnh này
-gom chúng lại còn một, nên nó là đòn bẩy rẻ nhất trong cả kế hoạch và được làm trước
-mọi thứ khác.
-
-Script chạy được hai nửa của đợt và tự biết đang ở nửa nào:
-
-- **Nửa chuẩn bị, 0 token**: kiểm prefix, đóng gói packet, in ra đúng chương trình mà
-  phía điều phối cần chạy.
-- **Nửa hoàn tất, 0 token**: bung bản ghi, nạp cơ sở dữ liệu, ghi sổ cái, sinh bàn giao.
-
-Phần ở giữa là lượt gọi mô hình, do runtime thực hiện. Script không tự gọi mô hình.
-"""
+"""Run a whole processing wave of the article lane with a single command."""
 from __future__ import annotations
 
 import argparse
@@ -46,30 +31,37 @@ L1_OUT_DIR = paths.agent_outputs_dir("_l1")
 GOLD_OUT_DIR = paths.agent_outputs_dir()
 PYTHON = sys.executable
 FINISH_STEPS = pipeline_spec.finish_steps()
-# Cùng ngưỡng với tỷ lệ hỏng mười phần trăm của bước bung bản ghi.
+# Same threshold as the ten percent failure rate of the expand step.
 MIN_COVERAGE = 0.90
 LAST_VERIFY: dict = {}
 
 
 def _span_id(name: str) -> str | None:
-    """Mã span cố định dưới span cha do daemon đặt, None khi chạy tay."""
+    """Build a fixed span ID under the parent span set by the daemon.
+
+    Args:
+        name: Span name.
+
+    Returns:
+        The span ID, or None for a manual run.
+    """
     parent = os.environ.get(tracing.ENV_PARENT)
     return f"{parent}/{name}" if parent else None
 
 
 def run(cmd: list[str], *, cwd: Path = PROJECT_ROOT, check: bool = True) -> int:
-    """Chạy một lệnh con và in tiêu đề để người vận hành theo dõi được.
+    """Run a child command and print a header so the operator can follow it.
 
     Args:
-        cmd: Danh sách phần tử của lệnh.
-        cwd: Thư mục làm việc.
-        check: Có dừng cả đợt khi lệnh trả mã khác 0 không.
+        cmd: Command elements.
+        cwd: Working directory.
+        check: Stop the whole wave when the command returns a non-zero code.
 
     Returns:
-        Mã thoát của lệnh con.
+        Exit code of the child command.
 
     Raises:
-        SystemExit: Khi `check` bật và lệnh con thất bại.
+        SystemExit: If `check` is set and the child command fails.
     """
     label = " ".join(Path(c).name if c.endswith(".py") else c for c in cmd[1:3])
     print(f"\n▶ {label}")
@@ -89,17 +81,18 @@ def run(cmd: list[str], *, cwd: Path = PROJECT_ROOT, check: bool = True) -> int:
 
 
 def check_prefix() -> bool:
-    """Kiểm hai vế của prefix trước khi mở đợt.
+    """Check both sides of the prefix before opening a wave.
 
-    Vế một: tệp prefix trên đĩa còn khớp danh mục thực thể không. Lệch thì bảng tra
-    của mô hình sai.
+    Side one: the prefix file on disk still matches the entity catalog. A mismatch
+    makes the model lookup table wrong.
 
-    Vế hai: `persona` trong preset còn khớp tệp ấy không. Lệch thì bộ nhớ đệm phía
-    nhà cung cấp trượt, vì tiền tố không còn giống nhau từng byte giữa các lô — và
-    đây là vế duy nhất hỏng mà không để lại dấu vết nào ngoài hoá đơn.
+    Side two: `persona` in the preset still matches that file. A mismatch misses the
+    provider-side cache, because the prefix is no longer byte-identical across
+    batches; this is the only side that fails without leaving any trace besides the
+    invoice.
 
     Returns:
-        True khi cả hai vế đều khớp, ngược lại False.
+        True when both sides match, otherwise False.
     """
     res = subprocess.run([PYTHON, str(SCRIPTS / "build_article_prefix.py"), "--check"],
                          cwd=str(PROJECT_ROOT), capture_output=True, text=True,
@@ -109,20 +102,20 @@ def check_prefix() -> bool:
 
 
 def warm_packet() -> str:
-    """Dựng packet tí hon dùng để ghi bộ nhớ đệm cho phần tiền tố tĩnh.
+    """Build a tiny packet used to write the cache for the static prefix.
 
-    Bộ nhớ đệm của nhà cung cấp khớp theo tiền tố tính từ token 0, nên nó chỉ được
-    ghi khi có một request thật đi qua. Trước đây lô đầu tiên gánh việc này: nó chạy
-    một mình, xong rồi các lô còn lại mới được thả song song. Cái giá không nằm ở
-    tiền mà ở thời gian — cả đợt phải chờ trọn một lô trăm bài chỉ để ghi mười nghìn
-    token tiền tố.
+    The provider cache matches on the prefix from token 0, so it is written only when
+    a real request passes through. The first batch used to carry this: it ran alone and
+    the remaining batches were released in parallel afterwards. The cost is time, not
+    money: the whole wave waited for a full hundred-article batch only to write ten
+    thousand prefix tokens.
 
-    Một packet một bài rác ghi đúng phần tiền tố ấy trong vài giây, sau đó mọi lô
-    chạy song song ngay từ đầu. Phần đắt thêm là bản ghi của bài rác, khoảng 900
-    token đầu ra, tức dưới một phần nghìn đô la.
+    A one-article junk packet writes the same prefix in a few seconds, after which all
+    batches run in parallel from the start. The added cost is the junk article record,
+    about 900 output tokens, under a thousandth of a dollar.
 
     Returns:
-        Nội dung packet hâm cache, đúng định dạng packet thật.
+        Packet content for the cache warm-up, in the exact real packet format.
     """
     return json.dumps({
         "d": datetime.now().strftime("%Y-%m-%d"),
@@ -134,28 +127,28 @@ def warm_packet() -> str:
 
 
 def conductor_program(manifest: dict, *, concurrency: int) -> str:
-    """Sinh chương trình mà phía điều phối chạy trong đúng một bước.
+    """Generate the program the conductor runs in exactly one step.
 
-    Packet lớn hơn trần một lần đọc nên chương trình phân trang theo các cửa sổ dòng
-    đã tính sẵn. Các lần đọc đó nằm trong cùng một chương trình nên không sinh thêm
-    bước nào của mô hình, và kết quả của chúng ở lại trong chương trình chứ không vào
-    ngữ cảnh của phiên điều phối.
+    A packet larger than the single-read cap is paged through precomputed line
+    windows. Those reads live in the same program, so they add no model step, and their
+    results stay in the program instead of entering the conductor session context.
 
-    Đợt từ hai lô trở lên mở đầu bằng một lượt hâm bộ nhớ đệm (xem :func:`warm_packet`)
-    rồi mới thả các lô, nên **mọi** lô đều trúng tiền tố tĩnh, kể cả lô đầu.
+    A wave of two or more batches starts with a cache warm-up call (see
+    :func:`warm_packet`) before releasing the batches, so every batch, including the
+    first, hits the static prefix.
 
-    Đợt một lô thì không hâm. Không có lô thứ hai để hưởng tiền tố đã ghi, nên lượt
-    hâm chỉ chuyển chỗ đúng khoản token miss ấy sang một request khác, rồi tính thêm
-    một bản ghi đầu ra và một quãng chờ. Hâm cache chỉ có lãi khi có người dùng lại.
+    A one-batch wave is not warmed. No second batch benefits from the written prefix,
+    so the warm-up would only move the same token miss to another request and add an
+    output record and a wait. Cache warming pays off only when someone reuses it.
 
     Args:
-        manifest: Mô tả đợt do bước đóng gói sinh ra.
-        concurrency: Số lô chạy song song tối đa.
+        manifest: Wave description produced by the packing step.
+        concurrency: Maximum number of batches running in parallel.
 
     Returns:
-        Mã nguồn chương trình dạng chuỗi.
+        Program source code as a string.
     """
-    # Chương trình chạy trong DSH với cwd bất kỳ, nên đường dẫn packet phải tuyệt đối.
+    # The program runs in DSH with an arbitrary cwd, so packet paths must be absolute.
     batches = [{"id": b["batch_id"], "path": str(paths.resolve_data_path(b["path"])), "n": b["n"],
                 "windows": b["windows"]} for b in manifest["batches"]]
     out_dir = str(OUT_DIR).replace("\\", "\\\\")
@@ -253,13 +246,13 @@ return {{ wave: "{manifest['wave']}", batches: done.length,
 
 
 def pending_batches(wave: str) -> tuple[list[str], list[str]]:
-    """Xác định các lô đã chạy và chưa chạy của một đợt.
+    """Split the batches of a wave into those with and without output.
 
     Args:
-        wave: Mã đợt.
+        wave: Wave ID.
 
     Returns:
-        Cặp danh sách mã lô đã có đầu ra và mã lô còn thiếu.
+        Pair of lists: IDs of batches that have output and IDs of batches still missing.
     """
     packets = sorted(glob.glob(str(TASK_DIR / f"article_{wave}_*.task.json")))
     ids = [Path(p).name.replace(".task.json", "") for p in packets]
@@ -269,17 +262,17 @@ def pending_batches(wave: str) -> tuple[list[str], list[str]]:
 
 
 def missing_indices(batch_id: str) -> tuple[list[str], dict, dict]:
-    """Xác định những bài đã gửi nhưng chưa nhận được bản ghi.
+    """Find articles that were sent but have no record received.
 
-    Đây là cơ chế thay cho việc chia lô phòng xa: thay vì đoán trước một cái trần
-    chưa đo rồi chia nhỏ mọi lô, gửi trọn lô rồi đối chiếu số bản ghi nhận được với
-    số bài đã gửi. Chi phí khi ấy tỉ lệ với thứ thật sự mất.
+    This replaces defensive batch splitting: instead of guessing an unmeasured cap and
+    splitting every batch, send the whole batch and compare the number of records
+    received with the number of articles sent. Cost then follows what was actually lost.
 
     Args:
-        batch_id: Mã lô.
+        batch_id: Batch ID.
 
     Returns:
-        Bộ ba gồm danh sách chỉ số còn thiếu, nội dung packet và bảng ánh xạ.
+        Triple of the missing indices, the packet content, and the mapping table.
     """
     from src.agent.article_contract import parse_and_validate
 
@@ -298,16 +291,17 @@ def missing_indices(batch_id: str) -> tuple[list[str], dict, dict]:
 
 
 def wave_received_ids(wave: str) -> set[str]:
-    """Thu tập định danh bài đã nhận được bản ghi hợp lệ ở bất kỳ lô nào của đợt.
+    """Collect IDs of articles with a valid record in any batch of the wave.
 
-    Bài thiếu ở lô gốc nhưng đã có trong lô vá vẫn là bài đã nhận. Chỉ nhìn lô gốc
-    thì mỗi lần chạy lại `--repair` lại đóng gói bù đúng những bài đã vá xong.
+    An article missing from the original batch but present in a repair batch counts as
+    received. Looking only at the original batch would make every rerun of `--repair`
+    repack the articles that were already patched.
 
     Args:
-        wave: Mã đợt.
+        wave: Wave ID.
 
     Returns:
-        Tập định danh bài có bản ghi trong đầu ra của mô hình.
+        Set of article IDs that have a record in the model output.
     """
     from src.agent.article_contract import parse_and_validate
 
@@ -328,19 +322,21 @@ def wave_received_ids(wave: str) -> set[str]:
 
 
 def cmd_repair(args: argparse.Namespace) -> int:
-    """Đóng gói lại đúng những bài chưa nhận được bản ghi rồi sinh chương trình chạy bù.
+    """Repack the articles with no record received and generate a catch-up program.
 
-    Không cần tới cơ sở dữ liệu: nội dung bài đã nằm sẵn trong packet gốc, nên đường
-    vá này cũng tiêu 0 token. Mỗi bài thiếu chỉ vào đúng một packet vá trong một lần
-    chạy, dù nó thiếu ở nhiều thế hệ packet. Packet đóng lúc Silver chưa có mang đoạn
-    trích RSS ngắn nên trích dẫn cũ không đối chiếu được vào thân bài mới: những bài
-    này được đóng gói lại từ Silver đầy đủ (làm mới) thay vì vá quanh bản ghi cũ.
+    No database is needed: the article content is already in the original packet, so
+    this repair path also spends 0 tokens. Each missing article goes into exactly one
+    repair packet per run, even if it is missing from several packet generations. A
+    packet built before Silver existed holds a short RSS excerpt, so old citations
+    cannot be matched to the new body: those articles are repacked from the full Silver
+    (refresh) instead of patched around the old record.
 
     Args:
-        args: Tham số dòng lệnh đã phân tích.
+        args: Parsed command-line arguments.
 
     Returns:
-        Mã thoát 0 khi có việc để vá hoặc không còn gì thiếu, 2 khi chưa có đầu ra.
+        Exit code 0 when there is something to repair or nothing is missing, 2 when no
+        output exists yet.
     """
     from scripts.article_pack import fresh_wave_paragraphs, write_packet
     from src.agent.article_contract import MIN_CITATION_CHARS
@@ -362,8 +358,8 @@ def cmd_repair(args: argparse.Namespace) -> int:
     repairs: list[dict] = []
     total_missing = 0
     received = wave_received_ids(args.wave)
-    # Thân bài hiện tại (Silver đầy đủ) để đóng gói mới cho bài thiếu và phát
-    # hiện packet cũ. Không đọc được thì giữ nguyên hành vi cũ (packet gốc).
+    # Current article bodies (full Silver) used to repack missing articles and detect
+    # stale packets. If unreadable, keep the previous behavior (original packet).
     wave_ids: set[str] = set()
     for packet_path in packets:
         try:
@@ -373,8 +369,8 @@ def cmd_repair(args: argparse.Namespace) -> int:
         except (OSError, ValueError):
             continue
     fresh_paras = fresh_wave_paragraphs(wave_ids)
-    # Bài đã có nội dung đạt trong DB thì không cần chạy lại dù packet cũ: bản
-    # ghi của nó đã qua cổng và nằm trong độ phủ của đợt.
+    # Articles that already have passing content in the DB are not rerun even if the
+    # packet is stale: their record passed the gate and counts toward wave coverage.
     passing: set[str] = set()
     try:
         import sqlite3 as _sqlite3
@@ -389,17 +385,17 @@ def cmd_repair(args: argparse.Namespace) -> int:
             _conn.close()
     except Exception:
         passing = set()
-    # Một bài thiếu ở nhiều thế hệ packet (gốc + các lô vá) chỉ được đóng gói bù
-    # đúng một lần trong một lần chạy: packet duyệt trước (thế hệ cũ hơn, xếp trước
-    # theo thứ tự tên) giữ bài, các thế hệ sau bỏ qua. Không có tập này, một lần
-    # chạy đẻ ra nhiều packet vá chồng lấp cho cùng các bài (E1), đốt token trùng
-    # lặp và làm lệch đếm hỏng của expand.
+    # An article missing across several packet generations (original plus repair
+    # batches) is repacked exactly once per run: the earlier packet (older generation,
+    # sorted first by name) keeps it and later generations skip it. Without this set, one
+    # run emits overlapping repair packets for the same articles (E1), burning duplicate
+    # tokens and skewing the expand failure count.
     claimed: set[str] = set()
     for packet_path in packets:
         batch_id = Path(packet_path).name.replace(".task.json", "")
         missing, packet, mapping = missing_indices(batch_id)
-        # Gói làm mới sinh bản ghi thay thế cho bản cũ: bài thiếu bản ghi trong
-        # gói này thì đóng lại kể cả khi nó đã có bản ghi cũ ở gói khác.
+        # A refresh packet produces replacement records for the old ones: an article
+        # without a record in this packet is repacked even if another packet holds an old record.
         is_refresh = (mapping.get("kind") == "refresh")
         fresh = [i for i in missing
                  if mapping["index"][i] not in claimed
@@ -434,12 +430,13 @@ def cmd_repair(args: argparse.Namespace) -> int:
         repairs.append({"batch_id": rid, "path": paths.to_data_relative(rpath), "n": len(items),
                         "windows": budget["windows"], "from": batch_id})
 
-    # Làm mới packet cũ: bài chưa có nội dung đạt trong DB mà thân Silver hiện
-    # tại giàu đoạn văn hơn hẳn packet đang giữ (packet đóng lúc Silver chưa có,
-    # chỉ còn đoạn trích RSS ngắn). Trích dẫn cũ không đối chiếu được vào thân
-    # mới nên vá quanh bản ghi cũ chỉ thêm vòng hỏng. Bài đã đạt thì không đụng
-    # tới để khỏi đốt token trùng lặp. Nhóm theo packet gốc, mỗi gói vá tối đa
-    # 25 bài để vừa trần đầu ra của provider miễn phí.
+    # Refresh stale packets: articles without passing content in the DB whose current
+    # Silver body has clearly more paragraphs than the packet holds (the packet was built
+    # before Silver existed and kept only a short RSS excerpt). Old citations cannot be
+    # matched to the new body, so patching around the old record only adds failure rounds.
+    # Passing articles are left alone to avoid duplicate token spend. Group by original
+    # packet; each repair packet holds at most 25 articles to fit the output cap of the
+    # free provider.
     stale_by_batch: dict[str, list[tuple[str, dict]]] = {}
     refreshed: set[str] = set()
     for packet_path in packets:
@@ -546,23 +543,24 @@ def cmd_repair(args: argparse.Namespace) -> int:
 
 
 def cmd_prepare(args: argparse.Namespace) -> int:
-    """Chuẩn bị đợt: kiểm prefix, đóng gói packet, in chương trình điều phối.
+    """Prepare the wave: check the prefix, pack packets, print the conductor program.
 
     Args:
-        args: Tham số dòng lệnh đã phân tích.
+        args: Parsed command-line arguments.
 
     Returns:
-        Mã thoát 0 khi chuẩn bị xong, khác 0 khi không có việc hoặc prefix lệch.
+        Exit code 0 when preparation is done, non-zero when there is no work or the
+        prefix is out of date.
     """
     if not check_prefix():
         print("\n❌ Prefix lệch danh mục. Chạy `build_article_prefix.py` rồi cập nhật "
               "persona trong preset trước khi mở đợt, nếu không sẽ vỡ bộ nhớ đệm.")
         return 1
 
-    # Nửa chuẩn bị chỉ đọc DB và ghi tệp trong kho, nên chạy được dưới workspace-write.
-    # Chỉ báo trước cho người vận hành; chốt chặn thật nằm ở `--finish`, trước bước nạp.
-    # Đầu ra của mô hình nằm trên đĩa, nên thiếu quyền ghi không làm mất token nào:
-    # chạy lại `--finish` với quyền phù hợp là đủ.
+    # The prepare half only reads the DB and writes files in the repository, so it can run
+    # under workspace-write. This is an early notice only; the real guard is in `--finish`,
+    # before the ingest step. Model output is on disk, so a missing write permission loses
+    # no tokens: rerunning `--finish` with suitable permissions is enough.
     probe = probe_write()
     if not probe.ok:
         print(f"\nⓘ  Phiên này không ghi được DB ({probe.reason}). Đợt vẫn mở được; "
@@ -604,8 +602,8 @@ def cmd_prepare(args: argparse.Namespace) -> int:
     print("=" * 84)
     n_batches = len(manifest["batches"])
     print(f"Bài      : {manifest['articles']:,} ({manifest['tier1']:,} tầng ưu tiên)")
-    # Khoá `max_completion_tokens` chưa bao giờ tồn tại trong manifest, nên dòng này
-    # vẫn in "trần đầu ra 0 token" ở mọi đợt. Chia lô từ lâu chỉ còn theo `--batch`.
+    # The key `max_completion_tokens` never existed in the manifest, so this line still
+    # prints an output cap of 0 tokens in every wave. Batching follows `--batch` only.
     print(f"Lượt gọi : {n_batches} lô song song, tối đa "
           f"{manifest.get('per_call', '?')} bài mỗi lô (một lệnh run_code)")
     warm_note = (", sau một lượt hâm bộ nhớ đệm tí hon" if n_batches > 1
@@ -621,9 +619,9 @@ def cmd_prepare(args: argparse.Namespace) -> int:
           f"token tĩnh, {pfx_note}")
     print(f"Manifest : {manifest['manifest']}")
 
-    # Ghi ngày dữ liệu của đợt vào manifest. Bàn giao đọc lại khoá này để thống kê
-    # đúng ngày, thay vì mặc định lấy ngày chạy lệnh: đợt chạy bù cho một ngày cũ
-    # mà lấy ngày hiện tại thì bàn giao luôn báo độ phủ 0 dù hậu kiểm đã đạt.
+    # Record the wave data date in the manifest. The handoff reads this key to report the
+    # right day instead of defaulting to the run date: a catch-up wave for an old day would
+    # otherwise always report 0 coverage in the handoff even though verification passed.
     resolved_date = args.date or (datetime.now().strftime("%Y-%m-%d") if args.today else None)
     manifest_path = Path(manifest["manifest"])
     if resolved_date and manifest_path.exists():
@@ -670,13 +668,14 @@ def cmd_prepare(args: argparse.Namespace) -> int:
 
 
 def cmd_analyze(args: argparse.Namespace) -> int:
-    """Thực thi phân tích nhận thức cho các lô của đợt bằng runner agy hoặc openrouter.
+    """Run the cognitive analysis of the wave batches with the agy, openrouter or opencode runner.
 
     Args:
-        args: Tham số dòng lệnh đã phân tích.
+        args: Parsed command-line arguments.
 
     Returns:
-        Mã thoát 0 khi mọi lô đạt yêu cầu, 1 khi có lô thất bại, 2 khi thiếu manifest.
+        Exit code 0 when all batches pass, 1 when a batch fails, 2 when the manifest
+        is missing.
     """
     manifest_path = TASK_DIR / f"wave_{args.wave}.json"
     if not manifest_path.exists():
@@ -717,17 +716,18 @@ def cmd_analyze(args: argparse.Namespace) -> int:
 
 
 def cmd_finish(args: argparse.Namespace) -> int:
-    """Hoàn tất đợt: bung bản ghi, nạp cơ sở dữ liệu, hậu kiểm, ghi sổ cái, sinh bàn giao.
+    """Finish the wave: expand records, ingest into the database, verify, write the ledger, generate the handoff.
 
-    Dòng "HOÀN TẤT" chỉ được in khi mọi bước ghi dữ liệu thành công và hậu kiểm đạt
-    ngưỡng. `--only` chạy lại đúng những bước đã hỏng thay vì cả chuỗi.
+    The completion line is printed only when every write step succeeded and the
+    verification reached the threshold. `--only` reruns exactly the failed steps
+    instead of the whole chain.
 
     Args:
-        args: Tham số dòng lệnh đã phân tích.
+        args: Parsed command-line arguments.
 
     Returns:
-        Mã thoát 0 khi hoàn tất, 1 khi một bước ghi hỏng hoặc độ phủ dưới ngưỡng,
-        2 khi chưa có đầu ra nào để xử lý.
+        Exit code 0 when finished, 1 when a write step failed or coverage is below the
+        threshold, 2 when there is no output to process yet.
     """
     steps = parse_steps(args.only)
     rerun = f"python scripts/article_run.py --wave {args.wave} --finish --only"
@@ -743,9 +743,9 @@ def cmd_finish(args: argparse.Namespace) -> int:
                   f"{' …' if len(missing) > 5 else ''}")
             print("   Vẫn xử lý phần đã có; chạy lại lệnh này sau khi những lô kia xong.")
 
-    # Neo quy kết chi phí vào đúng thời điểm đóng gói đợt. Lấy mốc rộng hơn sẽ gộp
-    # nhầm những phiên DSH không liên quan đang mở song song và thổi phồng con số
-    # token mỗi bài lên hàng trăm lần.
+    # Anchor cost attribution to the moment the wave was packed. A wider window would
+    # merge unrelated DSH sessions open in parallel and inflate the per-article token
+    # figure hundredfold.
     manifest_path = TASK_DIR / f"wave_{args.wave}.json"
     manifest = {}
     if manifest_path.exists():
@@ -756,9 +756,9 @@ def cmd_finish(args: argparse.Namespace) -> int:
         print(f"⚠️  Manifest không có mốc thời gian đóng gói; lùi lại "
               f"{args.window_min} phút. Con số quy kết có thể gộp nhầm phiên khác.")
 
-    # Thử quyền ghi trước khi bung và nạp. Lỗi sandbox chỉ lộ ra dưới dạng
-    # "attempt to write a readonly database" ở giữa bước nạp, nghe như lỗi thuộc tính
-    # tệp và dẫn người sửa đi sai hướng.
+    # Probe write permission before expand and ingest. A sandbox failure otherwise
+    # surfaces only as "attempt to write a readonly database" mid-ingest, which reads like
+    # a file-attribute error and sends the fixer in the wrong direction.
     if "ingest" in steps:
         probe = probe_write()
         if not probe.ok:
@@ -773,23 +773,21 @@ def cmd_finish(args: argparse.Namespace) -> int:
             expand_cmd += ["--default-provider", "dsh", "--default-model", "deepseek-flash"]
         expand_rc = run(expand_cmd, check=False)
         if expand_rc != 0:
-            # Lệnh chạy lại phải BỎ QUA bước vừa hỏng, không lặp lại nó. Bung bản ghi
-            # đã ghi kết quả ra đĩa trước khi trả mã, và tỷ lệ hỏng là thuộc tính của
-            # đầu ra mô hình nên chạy lại cho ra đúng con số ấy. In `--finish` trần ở
-            # đây là một vòng lặp vô hạn theo cấu trúc: người vận hành chạy lại, gặp
-            # đúng khung này, và không có lối ra nào ngoài tự đoán ra `--only`.
+            # The rerun command must SKIP the step that just failed, not repeat it. Expand
+            # wrote its results to disk before returning the code, and the failure rate is a
+            # property of the model output, so a rerun yields the same figure. Printing a bare
+            # `--finish` here would be a structural infinite loop: the operator reruns, hits this
+            # same banner, and has no way out except guessing `--only`.
             why = ("Tỷ lệ hỏng vượt ngưỡng. Xem lại persona của worker rồi chạy lại "
                    "đúng các lô hỏng." if expand_rc == 1
                    else f"Bước bung bản ghi trả mã {expand_rc}.")
             fail_banner(args.wave, [why], f"{rerun} ingest,verify,ledger,handoff")
             return 1
 
-    # Nạp dữ liệu là bước ghi, không phải bước phụ trợ: hỏng thì dừng đợt ngay. Trước
-    # đây hai lệnh này chạy với check=False, nên đợt W365 in "HOÀN TẤT" và thoát 0
-    # trong khi cơ sở dữ liệu không nhận được dòng nào.
-    # Chỉ nạp tệp của đúng đợt này. Quét cả thư mục thì mỗi lần hoàn tất lại nạp lại
-    # mọi tệp cũ, kể cả tệp của lane L1/Gold đã ngừng, và dòng `failed` của lệnh nạp
-    # đầy những lỗi không thuộc đợt.
+    # Ingest is a write step, not an auxiliary one: on failure stop the wave at once.
+    # Ingest only this wave's files. Scanning the whole directory would reload every old
+    # file on each finish, including files of the retired L1/Gold lane, and fill the
+    # `failed` line of the ingest command with errors unrelated to the wave.
     if "ingest" in steps:
         failed = []
         for script, out_dir in (("l1_ingest.py", L1_OUT_DIR), ("agent_ingest.py", GOLD_OUT_DIR)):
@@ -806,9 +804,9 @@ def cmd_finish(args: argparse.Namespace) -> int:
             fail_banner(args.wave, failed, f"{rerun} ingest,verify,ledger,handoff")
             return 1
 
-    # Số `done/failed` của hai lệnh nạp là số cộng dồn trên cả thư mục, không phải
-    # của đợt này. Chỉ đối chiếu theo đúng tập bài trong bảng ánh xạ của đợt mới trả
-    # lời được câu "đợt này có vào cơ sở dữ liệu đủ không".
+    # The `done/failed` counts of the two ingest commands accumulate over the whole
+    # directory, not this wave. Only checking the exact article set in the wave mapping
+    # answers whether the wave is fully in the database.
     verify_ok = True
     if "verify" in steps:
         with tracing.span("verify_wave", "gate", "article-expander",
@@ -828,8 +826,8 @@ def cmd_finish(args: argparse.Namespace) -> int:
         if manifest.get("est_miss_total") is not None:
             ledger_cmd += ["--est-miss", str(manifest["est_miss_total"]),
                            "--est-out", str(manifest["est_out_total"])]
-        # Sổ cái đọc usage và provider từ meta của từng lô; tên runner chỉ là giá trị
-        # dự phòng cho meta cũ không ghi `agent_provider`.
+        # The ledger reads usage and provider from each batch meta; the runner name is only a
+        # fallback for old meta without `agent_provider`.
         known = ("agy", "openrouter", "opencode-native")
         runner = getattr(args, "runner", "dsh")
         source = ("opencode-native" if runner == "opencode"
@@ -867,16 +865,16 @@ def cmd_finish(args: argparse.Namespace) -> int:
 
 
 def parse_steps(only: str | None) -> list[str]:
-    """Chuyển tham số `--only` thành danh sách bước của nửa hoàn tất.
+    """Convert the `--only` argument into the list of steps of the finish half.
 
     Args:
-        only: Chuỗi tên bước phân tách bằng dấu phẩy, hoặc None để chạy mọi bước.
+        only: Comma-separated step names, or None to run every step.
 
     Returns:
-        Danh sách bước theo đúng thứ tự chạy.
+        Steps in execution order.
 
     Raises:
-        SystemExit: Khi có tên bước không hợp lệ.
+        SystemExit: If a step name is invalid.
     """
     if not only:
         return list(FINISH_STEPS)
@@ -889,12 +887,12 @@ def parse_steps(only: str | None) -> list[str]:
 
 
 def fail_banner(wave: str, reasons: list[str], next_cmd: str) -> None:
-    """In khung báo đợt chưa hoàn tất kèm lý do và đúng một lệnh chạy lại.
+    """Print a banner for an unfinished wave with the reasons and exactly one rerun command.
 
     Args:
-        wave: Mã đợt.
-        reasons: Các dòng lý do; dòng rỗng bị bỏ qua.
-        next_cmd: Lệnh cần chạy sau khi sửa nguyên nhân.
+        wave: Wave ID.
+        reasons: Reason lines; empty lines are skipped.
+        next_cmd: Command to run after fixing the cause.
     """
     print("\n" + "=" * 84)
     print(f" ❌  ĐỢT {wave} CHƯA HOÀN TẤT")
@@ -907,16 +905,16 @@ def fail_banner(wave: str, reasons: list[str], next_cmd: str) -> None:
 
 
 def wave_article_ids(wave: str) -> list[str]:
-    """Thu tập định danh bài của một đợt từ các bảng ánh xạ trên đĩa.
+    """Collect the article IDs of a wave from the mapping tables on disk.
 
-    Bảng ánh xạ của lô vá trỏ về đúng những bài của lô gốc, nên lấy hợp của mọi bảng
-    không làm phình số bài.
+    The mapping table of a repair batch points back to the same articles as the
+    original batch, so the union of all tables does not inflate the article count.
 
     Args:
-        wave: Mã đợt.
+        wave: Wave ID.
 
     Returns:
-        Danh sách định danh bài đã khử trùng lặp, theo thứ tự ổn định.
+        De-duplicated article IDs in stable order.
     """
     ids: dict[str, None] = {}
     for p in sorted(glob.glob(str(TASK_DIR / f"article_{wave}_*.map.json"))):
@@ -927,17 +925,18 @@ def wave_article_ids(wave: str) -> list[str]:
 
 
 def coverage_of(conn, article_ids: list[str]) -> dict[str, set[str]]:
-    """Đếm bài của đợt đã có bản ghi đạt và trượt nghiệm thu trong cơ sở dữ liệu.
+    """Count the wave articles with passing and failing records in the database.
 
-    Bản code-first ở `l1_outputs` không được tính, kể cả là trượt: bài chỉ có bản ấy
-    được coi là chưa có kết quả nhận diện để `--repair` đóng gói lại.
+    The code-first version in `l1_outputs` is not counted, even when it failed: an
+    article that has only that version is treated as having no recognition result, so
+    `--repair` repacks it.
 
     Args:
-        conn: Kết nối SQLite chỉ đọc.
-        article_ids: Định danh bài của đợt.
+        conn: Read-only SQLite connection.
+        article_ids: Article IDs of the wave.
 
     Returns:
-        Từ điển các tập `l1_ok`, `l1_fail`, `gold_ok`, `gold_fail`.
+        Dict of the sets `l1_ok`, `l1_fail`, `gold_ok`, `gold_fail`.
     """
     out = {k: set() for k in ("l1_ok", "l1_fail", "gold_ok", "gold_fail")}
     guard = not_code_first_sql_for(conn)
@@ -955,14 +954,15 @@ def coverage_of(conn, article_ids: list[str]) -> dict[str, set[str]]:
 
 
 def verify_wave(wave: str, *, min_coverage: float) -> int:
-    """Đối chiếu tập bài của đợt với những gì thật sự nằm trong cơ sở dữ liệu.
+    """Compare the wave article set with what is actually in the database.
 
     Args:
-        wave: Mã đợt.
-        min_coverage: Tỷ lệ bài tối thiểu phải có bản ghi đạt ở mỗi lớp.
+        wave: Wave ID.
+        min_coverage: Minimum share of articles that must have a passing record in each layer.
 
     Returns:
-        Mã thoát 0 khi cả hai lớp đạt ngưỡng, 1 khi thiếu, 2 khi không có bảng ánh xạ.
+        Exit code 0 when both layers reach the threshold, 1 when below, 2 when there is
+        no mapping table.
     """
     import sqlite3
 
@@ -1001,16 +1001,17 @@ def verify_wave(wave: str, *, min_coverage: float) -> int:
 
 
 def cmd_where(_args: argparse.Namespace) -> int:
-    """In hợp đồng đường dẫn và quyền ghi của đường xử lý bài đăng, 0 token.
+    """Print the path contract and write permission of the article lane, at 0 tokens.
 
-    Mọi câu hỏi "tệp ở đâu, chạy từ thư mục nào, DB có ghi được không" đều có câu trả
-    lời ở đây. Phía điều phối không cần đọc mã nguồn hay liệt kê thư mục.
+    Every question of the form "where is the file, which directory to run from, is the
+    DB writable" is answered here, so the conductor needs neither to read source code
+    nor to list directories.
 
     Args:
-        _args: Tham số dòng lệnh đã phân tích, không dùng.
+        _args: Parsed command-line arguments, unused.
 
     Returns:
-        Mã thoát 0 khi DB ghi được, 1 khi không.
+        Exit code 0 when the DB is writable, 1 otherwise.
     """
     from src.users.compile import DEFAULT_OUTPUT_ROOT
 
@@ -1044,13 +1045,13 @@ def cmd_where(_args: argparse.Namespace) -> int:
 
 
 def main(argv=None) -> int:
-    """Chạy giao diện dòng lệnh điều phối một đợt.
+    """Run the command-line interface that conducts a wave.
 
     Args:
-        argv: Danh sách tham số dòng lệnh. Mặc định lấy từ `sys.argv`.
+        argv: Command-line arguments. Defaults to `sys.argv`.
 
     Returns:
-        Mã thoát của nửa đợt được chọn.
+        Exit code of the selected wave half.
     """
     ap = argparse.ArgumentParser(description="Chạy trọn một đợt xử lý bài đăng")
     ap.add_argument("--wave", default=datetime.now().strftime("%Y%m%dT%H%M"),
@@ -1141,13 +1142,13 @@ def main(argv=None) -> int:
 
 
 def _dispatch(args: argparse.Namespace) -> int:
-    """Chạy đúng nửa của đợt theo cờ dòng lệnh.
+    """Run the wave half selected by the command-line flags.
 
     Args:
-        args: Tham số dòng lệnh đã phân tích.
+        args: Parsed command-line arguments.
 
     Returns:
-        Mã thoát của nửa đã chạy.
+        Exit code of the half that ran.
     """
     if args.analyze and not args.finish and not args.repair and not args.resume:
         manifest_path = TASK_DIR / f"wave_{args.wave}.json"

@@ -1,4 +1,4 @@
-"""Tiện ích phân đoạn từ tiếng Việt (word tokenization)."""
+"""Segment Vietnamese text into words (word tokenization)."""
 
 from __future__ import annotations
 
@@ -8,13 +8,13 @@ try:
     from pyvi import ViTokenizer
 
     def seg(text: str) -> list[str]:
-        """Phân tách chuỗi văn bản thành danh sách từ đơn và từ ghép tiếng Việt.
+        """Split a text into Vietnamese single and compound words.
 
         Args:
-            text: Chuỗi văn bản đầu vào.
+            text: Input text.
 
         Returns:
-            Danh sách các token từ vựng.
+            Word tokens.
         """
         if not text:
             return []
@@ -24,12 +24,12 @@ except ImportError:  # pragma: no cover
     logger.warning("pyvi not installed — falling back to whitespace tokenizer")
 
     def seg(text: str) -> list[str]:
-        """Phân tách chuỗi văn bản theo khoảng trắng khi không có thư viện phân đoạn.
+        """Split a text on whitespace when no segmentation library is available.
 
         Args:
-            text: Chuỗi văn bản đầu vào.
+            text: Input text.
 
         Returns:
-            Danh sách các từ đơn giản.
+            Whitespace-separated words.
         """
         return text.split() if text else []

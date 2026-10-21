@@ -1,4 +1,4 @@
-"""Phân loại lỗi provider và giữ circuit breaker bền cho từng provider."""
+"""Classify provider failures and keep a durable circuit breaker for each provider."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from src.ops.store import OpsStore, iso, now_vn, parse_iso
 OK, TIMEOUT, NETWORK, QUOTA, AUTH, EMPTY, FATAL = (
     "OK", "TIMEOUT", "NETWORK", "QUOTA", "AUTH", "EMPTY", "FATAL")
 
-# Thứ tự nghiêm trọng khi gộp nhiều lô về một lớp lỗi của cả đợt.
+# Severity order used when several batches collapse into one failure class for the whole wave.
 SEVERITY_ORDER = (AUTH, QUOTA, NETWORK, TIMEOUT, EMPTY, FATAL, OK)
 PROVIDER_CLASSES = (AUTH, QUOTA, NETWORK, TIMEOUT, EMPTY)
 
@@ -29,7 +29,7 @@ _PATTERNS: list[tuple[str, re.Pattern]] = [
                        r"stdout rỗng", re.I)),
 ]
 
-# Trạng thái lô mà runner in ra, ánh xạ sang lớp lỗi của breaker.
+# Batch status printed by the runner, mapped to the breaker failure class.
 RUNNER_STATUS_MAP = {
     "OK": OK, "PARTIAL": OK, "QUOTA": QUOTA, "TIMEOUT": TIMEOUT, "RETRYABLE": NETWORK,
     "SOFT_FAIL": EMPTY, "VIOLATION": FATAL,
@@ -37,13 +37,13 @@ RUNNER_STATUS_MAP = {
 
 
 def classify(text: str) -> str:
-    """Phân loại một đoạn lỗi thành lớp lỗi provider.
+    """Classify an error excerpt into a provider failure class.
 
     Args:
-        text: stderr, thông điệp lỗi hoặc đuôi nhật ký.
+        text: stderr, error message or log tail.
 
     Returns:
-        Một trong AUTH, QUOTA, NETWORK, TIMEOUT, EMPTY, FATAL.
+        One of AUTH, QUOTA, NETWORK, TIMEOUT, EMPTY, FATAL.
     """
     for cls, pat in _PATTERNS:
         if pat.search(text or ""):
@@ -52,14 +52,14 @@ def classify(text: str) -> str:
 
 
 def classify_batch(status: str, error: str) -> str:
-    """Phân loại kết quả một lô theo trạng thái runner và thông điệp lỗi.
+    """Classify the outcome of one batch from the runner status and error message.
 
     Args:
-        status: Trạng thái runner (OK, PARTIAL, QUOTA, TIMEOUT, FATAL, ...).
-        error: Thông điệp lỗi kèm theo.
+        status: Runner status (OK, PARTIAL, QUOTA, TIMEOUT, FATAL, ...).
+        error: Accompanying error message.
 
     Returns:
-        Lớp lỗi của breaker.
+        Breaker failure class.
     """
     status = (status or "").upper()
     if status == "RETRYABLE":
@@ -71,13 +71,13 @@ def classify_batch(status: str, error: str) -> str:
 
 
 def worst(classes: list[str]) -> str:
-    """Chọn lớp lỗi nghiêm trọng nhất.
+    """Select the most severe failure class.
 
     Args:
-        classes: Danh sách lớp lỗi.
+        classes: Failure classes to compare.
 
     Returns:
-        Lớp nghiêm trọng nhất, OK khi danh sách rỗng.
+        The most severe class, or OK when the list is empty.
     """
     present = set(classes)
     for cls in SEVERITY_ORDER:
@@ -88,15 +88,15 @@ def worst(classes: list[str]) -> str:
 
 @dataclass
 class BreakerState:
-    """Ảnh chụp trạng thái breaker của một provider.
+    """Snapshot of the breaker state of one provider.
 
     Attributes:
-        provider: Tên provider.
-        state: CLOSED, OPEN hoặc HALF_OPEN.
-        consecutive_failures: Số lỗi provider liên tiếp.
-        last_class: Lớp lỗi gần nhất.
-        reopen_at: Thời điểm được thử lại, None nghĩa là chờ người.
-        reason: Lý do mở.
+        provider: Provider name.
+        state: CLOSED, OPEN or HALF_OPEN.
+        consecutive_failures: Number of consecutive provider failures.
+        last_class: Most recent failure class.
+        reopen_at: Time at which a retry is allowed; None means wait for a human.
+        reason: Reason the breaker opened.
     """
 
     provider: str
@@ -108,31 +108,31 @@ class BreakerState:
 
 
 class Breakers:
-    """Circuit breaker bền theo provider, lưu trong `provider_breakers`.
+    """Durable per-provider circuit breaker stored in `provider_breakers`.
 
     Attributes:
-        store: Store vận hành.
-        cfg: Mục `breaker` của cấu hình.
+        store: Operations store.
+        cfg: The `breaker` section of the configuration.
     """
 
     def __init__(self, store: OpsStore, cfg: dict) -> None:
-        """Gắn store và cấu hình.
+        """Bind the store and configuration.
 
         Args:
-            store: Store vận hành.
-            cfg: Mục `breaker` của cấu hình.
+            store: Operations store.
+            cfg: The `breaker` section of the configuration.
         """
         self.store = store
         self.cfg = cfg
 
     def get(self, provider: str) -> BreakerState:
-        """Đọc trạng thái breaker, mặc định CLOSED.
+        """Read the breaker state, defaulting to CLOSED.
 
         Args:
-            provider: Tên provider.
+            provider: Provider name.
 
         Returns:
-            Trạng thái breaker.
+            Breaker state.
         """
         with self.store.conn() as c:
             row = c.execute("SELECT * FROM provider_breakers WHERE provider = ?",
@@ -157,13 +157,13 @@ class Breakers:
                  iso() if opened else None, s.reopen_at, s.reason, iso()))
 
     def allow(self, provider: str) -> tuple[bool, BreakerState]:
-        """Quyết định có được gọi provider không; OPEN quá hạn thì chuyển HALF_OPEN.
+        """Decide whether the provider may be called; an expired OPEN moves to HALF_OPEN.
 
         Args:
-            provider: Tên provider.
+            provider: Provider name.
 
         Returns:
-            Cặp (được phép, trạng thái sau khi đánh giá).
+            Pair of (allowed, state after evaluation).
         """
         s = self.get(provider)
         if s.state == "CLOSED" or s.state == "HALF_OPEN":
@@ -178,14 +178,14 @@ class Breakers:
         return False, s
 
     def record(self, provider: str, cls: str) -> str | None:
-        """Ghi một kết quả gọi provider và chuyển trạng thái breaker.
+        """Record one provider call outcome and transition the breaker state.
 
         Args:
-            provider: Tên provider.
-            cls: Lớp kết quả (OK hoặc lớp lỗi).
+            provider: Provider name.
+            cls: Outcome class (OK or a failure class).
 
         Returns:
-            `opened`, `closed` khi có chuyển trạng thái, ngược lại None.
+            `opened` or `closed` when a transition occurred, otherwise None.
         """
         s = self.get(provider)
         if cls == OK:
@@ -226,18 +226,18 @@ class Breakers:
         return None if already_open else "opened"
 
     def reset(self, provider: str) -> None:
-        """Đóng breaker theo lệnh của người vận hành.
+        """Close the breaker on operator command.
 
         Args:
-            provider: Tên provider.
+            provider: Provider name.
         """
         self._save(BreakerState(provider, "CLOSED", 0, None, None, None))
 
     def all(self) -> list[BreakerState]:
-        """Liệt kê mọi breaker đã có bản ghi.
+        """List every breaker that has a stored record.
 
         Returns:
-            Danh sách trạng thái breaker.
+            Breaker states.
         """
         with self.store.conn() as c:
             rows = c.execute("SELECT provider FROM provider_breakers ORDER BY provider").fetchall()

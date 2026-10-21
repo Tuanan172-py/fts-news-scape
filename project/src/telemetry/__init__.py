@@ -1,1 +1,1 @@
-"""Đọc số đo token và áp suất ngữ cảnh thật từ runtime DSH."""
+"""Read real token and context-pressure measurements from the DSH runtime."""

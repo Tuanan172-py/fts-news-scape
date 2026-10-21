@@ -1,4 +1,4 @@
-"""Hiển thị bảng tổng hợp trạng thái hoạt động của hệ thống thu thập tin tức."""
+"""Print a summary of the operating status of the news capture system."""
 from __future__ import annotations
 
 import argparse
@@ -17,6 +17,16 @@ force_utf8_stdio()
 
 
 def _rows(c, sql, params=()):
+    """Run a query and return its rows as dicts.
+
+    Args:
+        c: Open SQLite connection with `sqlite3.Row` row factory.
+        sql: SQL query text.
+        params: Query parameters.
+
+    Returns:
+        One dict per row, or a single `{"_error": message}` dict on `sqlite3.OperationalError`.
+    """
     try:
         return [dict(r) for r in c.execute(sql, params)]
     except sqlite3.OperationalError as e:
@@ -24,6 +34,13 @@ def _rows(c, sql, params=()):
 
 
 def _print(title, rows, cols=None):
+    """Print a titled table of rows.
+
+    Args:
+        title: Section heading.
+        rows: Row dicts as returned by `_rows`.
+        cols: Column names to print; defaults to the keys of the first row.
+    """
     print(f"\n=== {title} ===")
     if not rows:
         print("  (trống)")
@@ -38,6 +55,14 @@ def _print(title, rows, cols=None):
 
 
 def main(argv):
+    """Print the status tables of the operational database.
+
+    Args:
+        argv: Command-line arguments, excluding the program name.
+
+    Returns:
+        Process exit code, always 0.
+    """
     ap = argparse.ArgumentParser()
     ap.add_argument("--db", default=load_settings()["database"]["path"])
     ap.add_argument("--date", help="YYYY-MM-DD (mặc định: hôm nay giờ VN)")
@@ -64,7 +89,7 @@ def main(argv):
            _rows(c, "select key,substr(value,1,25) value,substr(updated_at,1,19) updated_at from pipeline_state "
                     "where key in ('silver_watermark','silver_checkpoint','lock:scheduler')"))
 
-    # 5) Độ trễ capture↔derive: max fetched (articles) vs watermark silver
+    # 5) Capture-to-derive lag: max fetched_at (articles) versus the silver watermark.
     wm = _rows(c, "select value from pipeline_state where key='silver_watermark'")
     wm_val = wm[0]["value"] if wm and "value" in wm[0] else "—"
     _print(f"5) Độ trễ capture↔derive (watermark silver = {wm_val})",

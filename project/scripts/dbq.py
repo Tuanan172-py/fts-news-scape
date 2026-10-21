@@ -1,4 +1,4 @@
-"""Thực thi truy vấn SQL trên cơ sở dữ liệu hệ thống ở chế độ an toàn."""
+"""Run an SQL query against the system database in read-only mode by default."""
 from __future__ import annotations
 
 import argparse
@@ -17,6 +17,14 @@ _WRITE_KW = ("insert", "update", "delete", "drop", "alter", "create", "replace",
 
 
 def main(argv: list[str]) -> int:
+    """Execute one SQL statement and print the result rows.
+
+    Args:
+        argv: Command-line arguments, excluding the program name.
+
+    Returns:
+        0 on success, 2 when a write statement is refused without `--allow-write`.
+    """
     ap = argparse.ArgumentParser()
     ap.add_argument("sql")
     ap.add_argument("--db", default=None)
@@ -33,7 +41,7 @@ def main(argv: list[str]) -> int:
     if a.allow_write:
         con = sqlite3.connect(db)
     else:
-        con = sqlite3.connect(f"file:{Path(db).as_posix()}?mode=ro", uri=True)   # read-only cứng
+        con = sqlite3.connect(f"file:{Path(db).as_posix()}?mode=ro", uri=True)   # hard read-only
     con.row_factory = sqlite3.Row
     try:
         cur = con.execute(a.sql)

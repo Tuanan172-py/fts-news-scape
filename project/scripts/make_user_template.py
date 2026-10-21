@@ -1,4 +1,4 @@
-"""Tạo tệp mẫu Excel cho người dùng đăng ký danh mục thực thể theo dõi."""
+"""Generate Excel and CSV template files for registering watched entity portfolios."""
 from __future__ import annotations
 
 import argparse
@@ -51,11 +51,18 @@ HUONG_DAN_LINES = [
 
 
 def build_csv_template(path: Path) -> Path:
-    """Sinh file template CSV phẳng có chú thích rõ ràng."""
+    """Write a flat CSV template with an instruction header and sample rows.
+
+    Args:
+        path: Destination CSV file; parent directories are created.
+
+    Returns:
+        The path that was written.
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
     lines = list(HUONG_DAN_LINES)
     lines.append(",".join(GROUP_KEYS))
-    # Dòng ví dụ mẫu
+    # Sample rows.
     lines.append("HPG,E1VFVN30,VNINDEX,HOSE,THEP,MY,LAI_SUAT,TRAI_PHIEU,NHNN,")
     lines.append("FPT,,VN30,HNX,NGAN_HANG,TRUNG_QUOC,TY_GIA,VANG,UBCKNN,")
     lines.append("MWG,,,,BAT_DONG_SAN,EU,DAU_TU_CONG,,,")
@@ -65,6 +72,14 @@ def build_csv_template(path: Path) -> Path:
 
 
 def build_template(path: Path) -> Path:
+    """Write an Excel template with one sample row and an exchange dropdown.
+
+    Args:
+        path: Destination XLSX file; parent directories are created.
+
+    Returns:
+        The path that was written.
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
     wb = Workbook()
     ws = wb.active
@@ -72,7 +87,7 @@ def build_template(path: Path) -> Path:
     ws.append(list(GROUP_KEYS))
     ws.append(["HPG", "E1VFVN30", "VNINDEX", "HOSE", "THEP", "MY", "LAI_SUAT", "TRAI_PHIEU", "NHNN", None])
     ws.freeze_panes = "A2"
-    # dropdown cho exchanges (cột D)
+    # Dropdown for the exchanges column (D).
     dv_ex = DataValidation(type="list", formula1='"%s"' % ",".join(EXCHANGES), allow_blank=True)
     ws.add_data_validation(dv_ex); dv_ex.add("D2:D200")
 
@@ -81,7 +96,15 @@ def build_template(path: Path) -> Path:
 
 
 def seed_from_yaml(name: str, target_dir: Path | None = None) -> Path:
-    """Tạo users/subscriptions/<name>_news.csv từ config yaml hiện có (giữ dữ liệu mẫu)."""
+    """Create users/subscriptions/<name>_news.csv from an existing YAML config.
+
+    Args:
+        name: User name; selects the YAML config and names the CSV file.
+        target_dir: Output directory; defaults to the subscriptions root.
+
+    Returns:
+        The path of the written CSV file.
+    """
     yaml_path = USERS_CONFIG_DIR / f"{name}.yaml"
     doc = yaml.safe_load(yaml_path.read_text(encoding="utf-8")) or {} if yaml_path.exists() else {}
     dest_dir = target_dir or DEFAULT_SUBSCRIPTIONS_ROOT
@@ -91,6 +114,14 @@ def seed_from_yaml(name: str, target_dir: Path | None = None) -> Path:
 
 
 def main(argv: list[str]) -> int:
+    """Run the template generator CLI.
+
+    Args:
+        argv: Command-line arguments without the program name.
+
+    Returns:
+        Process exit code, always 0.
+    """
     ap = argparse.ArgumentParser()
     ap.add_argument("--seed", metavar="NAME", help="seed users/subscriptions/<NAME>_news.csv từ config yaml")
     ap.add_argument("--out-csv", default=str(DEFAULT_SUBSCRIPTIONS_ROOT / "_template_news.csv"))

@@ -1,8 +1,4 @@
-"""Động cơ phân tích và lập báo cáo giám sát hệ thống theo mốc thời gian.
-
-Cung cấp lớp DailyReporter tổng hợp phễu chuyển đổi dữ liệu 5 tầng từ Bronze,
-Silver, Hàng đợi Work Packets, Thẩm định AI Agents đến Tệp tin bàn giao người dùng.
-"""
+"""Aggregate the 5-layer data funnel from Bronze to user deliverables into time-based monitoring reports."""
 
 from __future__ import annotations
 
@@ -23,14 +19,14 @@ from src.core.staging import safe_atomic_write
 
 
 def resolve_date_range(date_str: str | None = None, days: int = 0) -> tuple[str, str, list[str]]:
-    """Phân giải chuỗi ngày và tham số số ngày thành khoảng thời gian cụ thể.
+    """Resolve a date string and a day count into a concrete date range.
 
     Args:
-        date_str: Chuỗi ngày chỉ định (định dạng 'YYYY-MM-DD', 'today', 'yesterday', 'all').
-        days: Số lượng ngày quét lùi về trước.
+        date_str: Target date ('YYYY-MM-DD', 'today', 'yesterday' or 'all').
+        days: Number of days to look back.
 
     Returns:
-        Tuple gồm ngày bắt đầu, ngày kết thúc và danh sách các ngày trong khoảng.
+        Tuple of the start date, the end date and the list of dates in the range.
     """
     now = datetime.now(VN_TZ)
     if not date_str or date_str == "today":
@@ -56,19 +52,32 @@ def resolve_date_range(date_str: str | None = None, days: int = 0) -> tuple[str,
 
 
 class DailyReporter:
-    """Bộ tổng hợp chỉ số vận hành và xuất báo cáo trạng thái định kỳ.
+    """Aggregate operating metrics and produce periodic status reports.
 
     Attributes:
-        db_path: Đường dẫn tệp tin cơ sở dữ liệu SQLite.
-        users_output_dir: Thư mục chứa các tệp tin CSV bàn giao cho người dùng.
+        db_path: Path of the SQLite database file.
+        users_output_dir: Directory that holds the CSV files delivered to users.
     """
     def __init__(self, db_path: str | None = None, users_output_dir: str | Path | None = None):
+        """Initialize the reporter.
+
+        Args:
+            db_path: SQLite database path; None reads it from the settings.
+            users_output_dir: Directory of the user CSV deliverables; None uses `paths.users_output_dir()`.
+        """
         settings = load_settings()
         self.db_path = db_path or settings["database"]["path"]
         self.users_output_dir = Path(users_output_dir) if users_output_dir else paths.users_output_dir()
 
     def _connect_ro(self) -> sqlite3.Connection:
-        """Kết nối DB chế độ Read-Only an toàn, không tranh chấp lock."""
+        """Open the database in read-only mode so it never contends for locks.
+
+        Returns:
+            Read-only SQLite connection with row factory set.
+
+        Raises:
+            FileNotFoundError: If the database file does not exist.
+        """
         resolved = Path(self.db_path).resolve()
         if not resolved.exists():
             raise FileNotFoundError(f"Database not found: {self.db_path}")
@@ -79,6 +88,15 @@ class DailyReporter:
         return con
 
     def _query(self, sql: str, params: tuple = ()) -> list[dict]:
+        """Run a read-only query and return the rows as dicts.
+
+        Args:
+            sql: SQL statement.
+            params: Bound parameters.
+
+        Returns:
+            Result rows; empty when the table is missing or the query cannot run.
+        """
         try:
             with self._connect_ro() as con:
                 return [dict(r) for r in con.execute(sql, params)]
@@ -87,10 +105,10 @@ class DailyReporter:
             return []
 
     def _not_code_first(self) -> str:
-        """Dựng điều kiện loại bản code-first theo lược đồ thật của DB.
+        """Build the code-first exclusion condition for the real database schema.
 
         Returns:
-            Biểu thức SQL; hằng đúng khi DB chưa có bảng hay cột `l1_source`.
+            SQL expression; constant true when the database has no table or no `l1_source` column.
         """
         try:
             with self._connect_ro() as con:
@@ -99,12 +117,20 @@ class DailyReporter:
             return "1 = 1"
 
     def collect_metrics(self, date_str: str | None = "today", days: int = 0) -> dict[str, Any]:
-        """Thu thập đầy đủ số liệu 5 tầng cho ngày hoặc khoảng ngày chỉ định."""
+        """Collect the metrics of all 5 layers for a date or date range.
+
+        Args:
+            date_str: Target date ('YYYY-MM-DD', 'today', 'yesterday' or 'all').
+            days: Number of days to look back.
+
+        Returns:
+            Metrics dict with the funnel counts and the per-layer details.
+        """
         start_date, end_date, date_list = resolve_date_range(date_str, days)
         is_range = len(date_list) > 1
         filter_label = f"{start_date} -> {end_date}" if is_range else (start_date or "Toàn bộ lịch sử")
 
-        # 1. Tầng Bronze: Thu thập & Raw
+        # Layer 1, Bronze: collection and raw data.
         if start_date and end_date:
             articles_by_domain = self._query(
                 """
@@ -151,7 +177,7 @@ class DailyReporter:
             (start_date or "1970-01-01", end_date or "9999-12-31"),
         )
 
-        # 2. Tầng Silver & Change Detection
+        # Layer 2, Silver and change detection.
         if start_date and end_date:
             versions_stats = self._query(
                 """
@@ -195,7 +221,7 @@ class DailyReporter:
             (silver_watermark,),
         )
 
-        # 3. Tầng Work Packets (Hàng đợi tác vụ)
+        # Layer 3, work packets (task queue).
         if start_date and end_date:
             l1_tasks_summary = self._query(
                 """
@@ -226,7 +252,7 @@ class DailyReporter:
         l1_tasks_total = sum(r["count"] for r in l1_tasks_summary)
         gold_items_total = sum(r["count"] for r in gold_items_summary)
 
-        # 4. Tầng AI Agents Review & DoD Quality; bản code-first không tính (ADR 0010 D4).
+        # Layer 4, AI agent review and DoD quality; code-first rows are excluded (ADR 0010 D4).
         cf_guard = self._not_code_first()
         if start_date and end_date:
             l1_outputs_summary = self._query(
@@ -270,7 +296,7 @@ class DailyReporter:
         gold_passed = sum(r["count"] for r in gold_outputs_summary if r["dod_pass"] == 1)
         gold_failed = sum(r["count"] for r in gold_outputs_summary if r["dod_pass"] == 0)
 
-        # 5. Tầng User Deliverables (Bàn giao người dùng cuối)
+        # Layer 5, user deliverables (end-user hand-off).
         user_files: list[dict] = []
         user_delivered_total = 0
         if self.users_output_dir.exists():
@@ -278,7 +304,7 @@ class DailyReporter:
             for user_folder in sorted(self.users_output_dir.iterdir()):
                 if user_folder.is_dir() and not user_folder.name.startswith("."):
                     for csv_file in sorted(user_folder.glob("*.csv")):
-                        # csv_file name is YYYY-MM-DD.csv hoặc YYYY-MM-DD_L1.csv
+                        # The CSV file name is YYYY-MM-DD.csv or YYYY-MM-DD_L1.csv.
                         stem_date = csv_file.stem.split("_")[0]
                         if target_dates and stem_date not in target_dates:
                             continue
@@ -346,17 +372,24 @@ class DailyReporter:
         }
 
     def generate_markdown(self, m: dict[str, Any]) -> str:
-        """Tạo báo cáo Markdown chuẩn hóa, trực quan."""
+        """Generate the standard Markdown report.
+
+        Args:
+            m: Metrics dict from collect_metrics.
+
+        Returns:
+            Markdown report text.
+        """
         fn = m["funnel"]
         q_time = m["query_time"]
         label = m["filter_label"]
 
-        # Tính tỷ lệ phần trăm an toàn
+        # Compute percentages without dividing by zero.
         raw_cnt = fn["bronze_raw_total"] or 1
         l1_pass_rate = (fn["l1_passed"] / (fn["l1_passed"] + fn["l1_failed"]) * 100) if (fn["l1_passed"] + fn["l1_failed"]) > 0 else 0
         gold_pass_rate = (fn["gold_passed"] / (fn["gold_passed"] + fn["gold_failed"]) * 100) if (fn["gold_passed"] + fn["gold_failed"]) > 0 else 0
 
-        # Kiểm tra cảnh báo rủi ro
+        # Check risk alerts.
         alerts: list[str] = []
         broken_cnt = m["silver"]["states"].get("SELECTOR_BROKEN", 0)
         drift_cnt = m["silver"]["states"].get("TEMPLATE_DRIFT", 0)
@@ -370,26 +403,26 @@ class DailyReporter:
 
         alert_section = "\n".join(f"- {a}" for a in alerts) if alerts else "- 🟢 Toàn bộ crawler và hệ thống hoạt động ổn định, không phát hiện lỗi bất thường."
 
-        # Bảng Domain Bronze
+        # Bronze domain table.
         domain_rows = []
         for d in m["bronze"]["by_domain"]:
             domain_rows.append(f"| `{d['source_domain']}` | {d['count']} | {d.get('first_fetch', '')[11:19]} | {d.get('last_fetch', '')[11:19]} |")
         domain_table = "\n".join(domain_rows) if domain_rows else "| — | 0 | — | — |"
 
-        # Bảng Scraper Heartbeat
+        # Scraper heartbeat table.
         hb_rows = []
         for h in m["bronze"]["heartbeats"]:
             status_icon = "🟢" if h["status"] == "ok" else ("🟡" if h["status"] == "running" else "🔴")
             hb_rows.append(f"| `{h['scraper_name']}` | {status_icon} `{h['status']}` | {h['cycle_count']} | {h['consecutive_failures']} | {h.get('last_run_ts', '')[11:19]} | {h.get('error_snippet', '')} |")
         hb_table = "\n".join(hb_rows) if hb_rows else "| — | — | — | — | — | — |"
 
-        # Bảng User Deliverables
+        # User deliverables table.
         deliv_rows = []
         for uf in m["deliverables"]["user_files"]:
             deliv_rows.append(f"| **{uf['user']}** | `{uf['file_name']}` | {uf['row_count']} dòng | {uf['size_bytes'] / 1024:.1f} KB |")
         deliv_table = "\n".join(deliv_rows) if deliv_rows else "| — | Không có file bàn giao | 0 | 0 |"
 
-        # Bảng Models & DoD
+        # Models and DoD table.
         model_rows = []
         for l1 in m["agents"]["l1_outputs"]:
             model_rows.append(f"| L1 Matcher | `{l1['agent_provider']}` | `{l1['model_used']}` | `dod_pass={l1['dod_pass']}` | {l1['count']} |")
@@ -462,7 +495,15 @@ class DailyReporter:
         return md
 
     def save_report_markdown(self, m: dict[str, Any], out_dir: str | Path = "reports/daily") -> Path:
-        """Lưu báo cáo ra file Markdown vĩnh viễn an toàn với Staging."""
+        """Save the report as a permanent Markdown file through safe staging.
+
+        Args:
+            m: Metrics dict from collect_metrics.
+            out_dir: Directory that receives the report file.
+
+        Returns:
+            Path of the report file written.
+        """
         target_dir = Path(out_dir)
         target_dir.mkdir(parents=True, exist_ok=True)
 
@@ -478,7 +519,11 @@ class DailyReporter:
         return target_file
 
     def print_terminal_summary(self, m: dict[str, Any]) -> None:
-        """In tóm tắt trực quan ra màn hình Console."""
+        """Print a visual summary to the console.
+
+        Args:
+            m: Metrics dict from collect_metrics.
+        """
         fn = m["funnel"]
         print("\n" + "=" * 70)
         print(f"  NEWS-SCAPE MONITOR DASHBOARD — {m['filter_label']}")
@@ -490,13 +535,13 @@ class DailyReporter:
         print(f"  [5] Bàn giao User cuối       : {fn['user_delivered_rows']:>5} dòng (final.csv)")
         print("-" * 70)
 
-        # Scrapers
+        # Scrapers.
         print("  SỨC KHỎE CRAWLER SCRAPERS:")
         for hb in m["bronze"]["heartbeats"]:
             status_symbol = "OK" if hb["status"] == "ok" else hb["status"].upper()
             print(f"    - {hb['scraper_name']:<12}: status={status_symbol:<7} cyc={hb['cycle_count']:<3} cf={hb['consecutive_failures']:<2} last={hb.get('last_run_ts', '')[11:19]}")
 
-        # Deliverables
+        # Deliverables.
         print("-" * 70)
         print("  BÀN GIAO FILE NGƯỜI DÙNG (users/output/):")
         for uf in m["deliverables"]["user_files"]:

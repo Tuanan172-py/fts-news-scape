@@ -1,4 +1,4 @@
-"""Lớp Mixin cung cấp quy trình thu thập nội dung chi tiết và lưu trữ Bronze cho các scraper."""
+"""Provide a mixin that captures article details and stores Bronze files for scrapers."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ from src.crawler.backoff import SourceBackoff
 from src.crawler.raw_store import RawStore
 from src.crawler.robots import RobotsGate
 
-# Dấu hiệu nhận diện trang bị lỗi hoặc rỗng khi tải nội dung.
+# Markers that identify an error or empty page when downloading content.
 _EMPTY_MARKERS = (
     "vui lòng bật javascript", "please enable javascript",
     "checking your browser", "access denied", "captcha",
@@ -17,10 +17,10 @@ _EMPTY_MARKERS = (
 
 
 class CaptureMixin:
-    """Mixin xử lý kiểm tra tuân thủ, thu thập nội dung chi tiết và bóc tách cây DOM."""
+    """Handle compliance checks, detail capture and DOM subtree extraction for scrapers."""
 
     def _init_capture(self) -> None:
-        """Khởi tạo các thành phần RawStore, RobotsGate và SourceBackoff từ cấu hình."""
+        """Initialize RawStore, RobotsGate and SourceBackoff from the config."""
         cap_cfg = self.config.get("capture", {}) or {}
         self.raw_store = RawStore(cap_cfg.get("raw_dir"))
         self.min_body_bytes = cap_cfg.get("min_body_bytes", 2048)
@@ -34,20 +34,20 @@ class CaptureMixin:
 
     def _capture_and_extract(self, article, domain: str, referer: str,
                              selector: str) -> str | None:
-        """Tải trang chi tiết, lưu trữ tạo tác thô Bronze và bóc tách vùng HTML nội dung.
+        """Download the detail page, store the raw Bronze artifact and extract the content HTML region.
 
         Args:
-            article: Đối tượng Article cần bổ sung dữ liệu.
-            domain: Tên miền của nguồn tin.
-            referer: Header Referer gửi kèm yêu cầu.
-            selector: Bộ chọn CSS trỏ tới khối nội dung chính.
+            article: Article to enrich.
+            domain: Domain of the news source.
+            referer: Referer header sent with the request.
+            selector: CSS selector of the main content block.
 
         Returns:
-            Chuỗi HTML trang chi tiết nếu thành công hoặc None nếu thất bại.
+            Detail page HTML on success, or None on failure.
         """
         url = article.url
 
-        # robots gate (AC9) — chặn trước khi fetch
+        # robots gate (AC9): block before fetching
         if self.respect_robots and self.robots is not None \
                 and not self.robots.allowed(url):
             cap = article.metadata.setdefault("capture", {})
@@ -56,7 +56,7 @@ class CaptureMixin:
             self.errors.append(f"robots disallow: {url}")
             return None
 
-        # crawl-delay (nếu robots khai) — chỉ áp khi lớn hơn default
+        # crawl-delay (when robots declares one): applied only when larger than the default
         if self.robots is not None and hasattr(self.http, "rate_limiter"):
             cd = self.robots.crawl_delay(domain)
             if cd and cd > 0:
@@ -75,7 +75,7 @@ class CaptureMixin:
                 and hasattr(self.http, "rotate_proxy"):
             self.http.rotate_proxy()
 
-        # RawStore.save — HÀNH ĐỘNG ĐẦU TIÊN sau fetch (byte-exact, no clean)
+        # RawStore.save is the first action after the fetch (byte-exact, no cleaning).
         cap = self.raw_store.save(domain, url, article.url_title_hash, resp,
                                   fetched_at=article.fetched_at)
         article.metadata["capture"] = cap
@@ -94,13 +94,13 @@ class CaptureMixin:
         except Exception as e:  # pragma: no cover - defensive
             logger.debug("[{}] selector error {}: {}", self.name, selector, e)
         if node is not None and node.get_text(strip=True):
-            article.content_html = str(node)  # vùng con tham chiếu (primary)
+            article.content_html = str(node)  # referenced subtree (primary)
         else:
-            # D5 density fallback — CHỈ đổi content_html; raw .html đã lưu, không đụng
+            # D5 density fallback: changes only content_html; the stored raw .html is untouched.
             article.content_html = self._density_extract(html) or html
             cap.setdefault("missing", []).append("main_content_node")
 
-        # D1 validity check — feed cho phase-05 (không mutate raw artifact)
+        # D1 validity check: feeds phase-05 and does not mutate the raw artifact.
         if not self._looks_complete(html, selector):
             cap["capture_status"] = "partial"
             cap.setdefault("missing", []).append("incomplete_render")
@@ -108,14 +108,14 @@ class CaptureMixin:
 
     # -- helpers --------------------------------------------------------------
     def _looks_complete(self, html: str, selector: str) -> bool:
-        """Kiểm tra sơ bộ tính toàn vẹn của trang chi tiết dựa trên kích thước và nội dung.
+        """Run a preliminary completeness check of a detail page from its size and content.
 
         Args:
-            html: Chuỗi HTML trang chi tiết.
-            selector: Bộ chọn CSS nội dung chính.
+            html: HTML string of the detail page.
+            selector: CSS selector of the main content.
 
         Returns:
-            True nếu trang hiển thị đầy đủ và không chứa dấu hiệu lỗi.
+            True if the page rendered fully and contains no error markers.
         """
         if not html:
             return False
@@ -131,13 +131,13 @@ class CaptureMixin:
         return node is not None and bool(node.get_text(strip=True))
 
     def _density_extract(self, html: str) -> str | None:
-        """Trích xuất khối nội dung chính bằng thuật toán mật độ văn bản khi bộ chọn CSS bị lệch.
+        """Extract the main content block by text density when the CSS selector has drifted.
 
         Args:
-            html: Chuỗi mã nguồn HTML bài viết.
+            html: Article HTML source.
 
         Returns:
-            Đoạn mã HTML chứa nội dung chính hoặc None nếu trích xuất thất bại.
+            HTML fragment with the main content, or None when extraction fails.
         """
         if not html:
             return None

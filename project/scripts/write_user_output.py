@@ -1,4 +1,4 @@
-"""Xuất tệp báo cáo giao hàng cho từng người dùng."""
+"""Write the delivery report files for each user."""
 from __future__ import annotations
 
 import argparse
@@ -18,6 +18,14 @@ force_utf8_stdio()
 
 
 def main(argv: list[str]) -> int:
+    """Write per-user deliverable files, or print the output path contract.
+
+    Args:
+        argv: Command-line arguments.
+
+    Returns:
+        Exit code 0.
+    """
     ap = argparse.ArgumentParser()
     ap.add_argument("--date", help="'today' hoặc YYYY-MM-DD (mặc định: mọi ngày)")
     ap.add_argument("--days", type=int, help="N ngày gần nhất")
@@ -27,9 +35,9 @@ def main(argv: list[str]) -> int:
                     help="chỉ in hợp đồng đường dẫn rồi thoát, không đọc CSDL")
     args = ap.parse_args(argv)
 
-    # Hợp đồng đường dẫn phải có lệnh in ra. Không có nó, phía điều phối đi dò
-    # bằng cách đọc mã nguồn và liệt kê thư mục — vệt ngày 21/09 tốn sáu bước mô
-    # hình chỉ để tìm ra thư mục này nằm ở gốc kho chứ không nằm trong `project/`.
+    # The path contract needs a command that prints it; without one the orchestrator
+    # probes by reading source and listing directories (the 21/09 trace spent six model
+    # steps to find that this directory is at the repository root, not under `project/`).
     if args.where:
         print(f"output_root   : {DEFAULT_OUTPUT_ROOT}")
         print(f"deliverable   : {DEFAULT_OUTPUT_ROOT}/<user>/<YYYY-MM-DD>.xlsx")
@@ -48,7 +56,7 @@ def main(argv: list[str]) -> int:
     total = sum(counts.values())
     print(f"done: {len(counts)} user, {total} dòng final. " + ", ".join(
         f"{u}={n}" for u, n in sorted(counts.items())))
-    # In luôn đường dẫn đã ghi để không ai phải đi tìm.
+    # Print the written paths so nobody has to search for them.
     print(f"output_root: {DEFAULT_OUTPUT_ROOT}")
     for user in sorted(counts):
         print(f"  {user}: {DEFAULT_OUTPUT_ROOT / user}")

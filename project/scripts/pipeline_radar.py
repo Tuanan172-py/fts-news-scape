@@ -1,4 +1,4 @@
-"""Bộ công cụ CLI trinh sát, quan sát và kiểm soát trạng thái vận hành News-Scape."""
+"""Provide CLI subcommands that report the operating state of News-Scape."""
 from __future__ import annotations
 
 import argparse
@@ -10,7 +10,7 @@ import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-# Cấu hình UTF-8 cho Windows console
+# Force UTF-8 output on the Windows console.
 if sys.platform == "win32":
     try:
         sys.stdout.reconfigure(encoding="utf-8")
@@ -43,23 +43,23 @@ PY = '& "C:\\venvs\\news-scape\\Scripts\\python.exe"'
 
 
 def get_db_connection() -> sqlite3.Connection:
-    """Mở kết nối chỉ đọc tới đúng cơ sở dữ liệu mà bước nạp ghi vào.
+    """Open a read-only connection to the database that the ingest step writes to.
 
     Returns:
-        Kết nối SQLite ở chế độ `mode=ro`.
+        SQLite connection opened with `mode=ro`.
     """
     uri = f"file:{resolve_db_path().as_posix()}?mode=ro"
     return sqlite3.connect(uri, uri=True)
 
 
 def _local_naive(ts: str) -> datetime:
-    """Đổi chuỗi ISO có hoặc không có múi giờ thành giờ máy không kèm múi giờ.
+    """Convert an ISO string, with or without a time zone, to naive local time.
 
     Args:
-        ts: Chuỗi thời điểm dạng ISO.
+        ts: ISO timestamp string.
 
     Returns:
-        Thời điểm theo giờ máy.
+        Timestamp in machine-local time without tzinfo.
     """
     clean = ts.replace("Z", "+00:00")
     dt = datetime.fromisoformat(clean)
@@ -67,10 +67,10 @@ def _local_naive(ts: str) -> datetime:
 
 
 def latest_wave() -> dict | None:
-    """Đọc mô tả của đợt Article Lane được đóng gói gần nhất.
+    """Read the manifest of the most recently packed Article Lane wave.
 
     Returns:
-        Nội dung tệp `wave_<mã>.json` mới nhất, hoặc None khi chưa có đợt nào.
+        Content of the newest `wave_<id>.json` file, or None if no wave exists.
     """
     best = None
     for p in ARTICLE_TASK_DIR.glob("wave_*.json"):
@@ -85,18 +85,18 @@ def latest_wave() -> dict | None:
 
 
 def wave_state(conn: sqlite3.Connection, manifest: dict) -> dict:
-    """Xác định đợt đang ở nửa nào của vòng đời và lệnh kế tiếp của nó.
+    """Determine the lifecycle phase of a wave and its next command.
 
-    Bốn trạng thái theo đúng thứ tự vòng đời: còn lô chưa có đầu ra (chạy chương
-    trình điều phối), có bài gửi đi mà chưa nhận được bản ghi (vá), đủ bản ghi nhưng
-    cơ sở dữ liệu chưa đủ (hoàn tất), và đã xong.
+    The four phases, in lifecycle order: batches without output (run the
+    conductor), articles sent but with no record received (repair), records
+    complete but database coverage insufficient (finish), and done.
 
     Args:
-        conn: Kết nối SQLite chỉ đọc.
-        manifest: Mô tả đợt do bước đóng gói sinh ra.
+        conn: Read-only SQLite connection.
+        manifest: Wave manifest produced by the packing step.
 
     Returns:
-        Từ điển số đo của đợt kèm khoá `phase` và `next` (lệnh kế tiếp, rỗng khi xong).
+        Dict of wave metrics with the keys `phase` and `next` (next command, empty when done).
     """
     from scripts import article_run as ar
 
@@ -130,10 +130,10 @@ def wave_state(conn: sqlite3.Connection, manifest: dict) -> dict:
 
 
 def ops_summary() -> dict | None:
-    """Đọc trạng thái control plane từ `ops.db`, không làm hỏng radar khi chưa cài.
+    """Read the control-plane state from `ops.db` without breaking the radar when it is absent.
 
     Returns:
-        Từ điển trạng thái daemon, hoặc None khi chưa có `ops.db`.
+        Dict of daemon state, or None if `ops.db` does not exist or cannot be read.
     """
     try:
         from src.ops.breakers import Breakers
@@ -158,19 +158,20 @@ def ops_summary() -> dict | None:
                 "open_breakers": [b for b in Breakers(store, cfg["breaker"]).all()
                                   if b.state != "CLOSED"],
                 "unsent": unsent}
-    except Exception:  # noqa: BLE001 — radar không được chết vì tầng vận hành
+    except Exception:  # noqa: BLE001 — the radar must survive an operations-layer failure
         return None
 
 
 def cmd_status(args: argparse.Namespace) -> None:
-    """Truy vấn điểm chạm hiện tại của Article Lane và đề xuất đúng lệnh kế tiếp.
+    """Report the current state of the Article Lane and recommend the next command.
 
-    Article Lane là đường xử lý duy nhất. Radar không đọc và không khuyến nghị gì
-    thuộc lane L1/Gold cũ (`l1_tasks`, hàng đợi `work_items`, packet `agent_tasks/l1`),
-    vì mọi khuyến nghị ấy dẫn phía điều phối đi sai đường.
+    The Article Lane is the only processing path. The radar neither reads nor
+    recommends anything from the retired L1/Gold lane (`l1_tasks`, the
+    `work_items` queue, `agent_tasks/l1` packets), because such recommendations
+    would send the orchestrator down the wrong path.
 
     Args:
-        args: Tham số dòng lệnh đã phân tích.
+        args: Parsed command-line arguments; uses `date`.
     """
     from scripts.article_pack import ANALYZED_L1, is_thin_row, load_candidates
 
@@ -200,8 +201,8 @@ def cmd_status(args: argparse.Namespace) -> None:
                 (target_date,))
     crawled_count = cur.fetchone()[0]
 
-    # Độ phủ theo NGÀY ĐĂNG, cùng định nghĩa với `handoff.py`. Bản code-first không
-    # tính là đã phân tích.
+    # Coverage by PUBLISH DATE, using the same definition as `handoff.py`.
+    # Code-first rows do not count as analyzed.
     covered = {}
     for table, cond in (("l1_outputs", ANALYZED_L1), ("agent_outputs", "o.dod_pass = 1")):
         cur.execute(f"""
@@ -211,9 +212,10 @@ def cmd_status(args: argparse.Namespace) -> None:
         """, (target_date,))
         covered[table] = cur.fetchone()[0]
 
-    # Cùng một câu truy vấn với bước đóng gói, nên số "chờ phân tích" ở đây đúng bằng
-    # số bài mà `article_run.py --date` sẽ lấy. Bài mỏng (không đủ hai đoạn đạt độ
-    # dài trích dẫn) bị packer loại nên đếm riêng, không gộp vào chờ.
+    # Same query as the packing step, so the "pending analysis" count equals the
+    # number of articles `article_run.py --date` will pick. Thin articles (fewer
+    # than two paragraphs of citation length) are dropped by the packer and are
+    # counted separately, not as pending.
     _candidates = load_candidates(conn, date=target_date, limit=1_000_000,
                                   only_pending=True, exclude_thin=False)
     _thin = [r for r in _candidates if is_thin_row(r)]
@@ -225,12 +227,12 @@ def cmd_status(args: argparse.Namespace) -> None:
     cur.execute(f"SELECT count(1) FROM articles WHERE substr(published_at,1,10) = ? "
                 f"AND {source_deleted}", (target_date,))
     source_deleted_count = cur.fetchone()[0]
-    # Bài bị xóa thường được PHÁT HIỆN muộn hơn ngày đăng, nên kèm tổng tích lũy.
+    # Deleted articles are usually DETECTED later than the publish date, so include the cumulative total.
     cur.execute(f"SELECT count(1) FROM articles WHERE {source_deleted}")
     source_deleted_total = cur.fetchone()[0]
 
-    # Sổ lỗi derive Bronze→Silver (ADR 0007). Dead-letter là nội dung không bao giờ
-    # tới được bước phân tích hay người dùng.
+    # Failure ledger of the Bronze->Silver derive (ADR 0007). Dead-letter content
+    # never reaches analysis or users.
     try:
         cur.execute("""
             SELECT sum(CASE WHEN dead_letter=0 THEN 1 ELSE 0 END),
@@ -242,7 +244,7 @@ def cmd_status(args: argparse.Namespace) -> None:
     except sqlite3.OperationalError:
         silver_blocking = silver_dead = 0
 
-    # Độ phủ thu thập (rule 10): sitemap độc lập báo bao nhiêu bài so với kho đang có.
+    # Capture coverage (rule 10): articles reported by the independent sitemap versus the store.
     try:
         cur.execute("""
             SELECT source_domain, sum(ref_n), sum(missing_n)
@@ -252,8 +254,9 @@ def cmd_status(args: argparse.Namespace) -> None:
         coverage = [(r[0], int(r[1] or 0), int(r[2] or 0)) for r in cur.fetchall()]
         cur.execute("SELECT count(1) FROM discovered_urls WHERE state='discovered'")
         capture_pending = int(cur.fetchone()[0])
-        # Chỉ đếm dòng còn bài trong kho: `recapture` cào lại theo URL của bài, nên dòng
-        # mồ côi (bài đã bị đổi khoá hoặc xoá) không cứu được và không phải việc cần làm.
+        # Count only rows whose article is still stored: `recapture` re-scrapes by the
+        # article URL, so orphan rows (article re-keyed or deleted) cannot be recovered
+        # and are not actionable.
         cur.execute("SELECT count(1) FROM silver_failures f WHERE f.dead_letter=1 "
                     "AND f.last_error LIKE '%raw_missing%' AND EXISTS (SELECT 1 FROM "
                     "articles a WHERE a.url_title_hash = f.url_title_hash)")
@@ -261,7 +264,7 @@ def cmd_status(args: argparse.Namespace) -> None:
     except sqlite3.OperationalError:
         coverage, capture_pending, raw_lost = [], 0, 0
 
-    # Trùng lặp theo cụm câu chuyện (ADR 0016) và tín hiệu chú ý bất thường của phiên gần nhất.
+    # Duplicates by story cluster (ADR 0016) and the abnormal-attention signal of the latest session.
     try:
         cur.execute("""
             SELECT cm.role, count(1) FROM cluster_members cm
@@ -284,8 +287,8 @@ def cmd_status(args: argparse.Namespace) -> None:
     except sqlite3.OperationalError:
         dup_roles, inherited_today, attention = {}, 0, []
 
-    # Tăng vọt 404/410 tập trung ở MỘT domain hầu như luôn là site đổi cấu trúc URL
-    # hoặc selector chứ không phải tin bị gỡ thật.
+    # A 404/410 spike concentrated in ONE domain is almost always a site that changed
+    # its URL structure or selectors, not articles that were really removed.
     cur.execute(f"""
         SELECT source_domain, sum(CASE WHEN {source_deleted} THEN 1 ELSE 0 END), count(1)
         FROM articles WHERE substr(published_at,1,10) = ? GROUP BY source_domain
@@ -430,7 +433,7 @@ def cmd_status(args: argparse.Namespace) -> None:
                                  f"đổi cấu trúc URL/selector, không phải tin bị gỡ thật.",
                          f"{PY} scripts/validate_capture.py {dom.split('.')[0]}"))
 
-    # Một đợt tại một thời điểm: đợt gần nhất chưa xong thì không mở đợt mới.
+    # One wave at a time: do not open a new wave while the latest one is unfinished.
     wave_open = bool(wave and wave["next"])
     if daemon_owns_waves and (wave_open or pending_today):
         recs.append(("INFO", f"ops_daemon ({ops['level']}) đang giữ việc mở và chạy đợt; "
@@ -440,8 +443,8 @@ def cmd_status(args: argparse.Namespace) -> None:
         recs.append(("HIGH", f"Đợt {wave['wave']}: {wave['phase']}.", wave["next"]))
     elif pending_today:
         new_wave = f"W{datetime.now():%m%d%H%M}"
-        # Không truyền `--batch`: `article_pack` tự chọn cỡ lô theo số bài thật để
-        # đợt gọn trong một sóng song song. Ghim số cứng ở đây sẽ đè mất lựa chọn ấy.
+        # Do not pass `--batch`: `article_pack` picks the batch size from the real article
+        # count so the wave fits one parallel round. A hard-coded value here would override it.
         recs.append(("HIGH", f"{pending_today:,} bài đăng ngày {target_date} chờ phân tích.",
                      f"{PY} scripts/article_run.py --wave {new_wave} --date {target_date} "
                      f"--limit {pending_today}"))
@@ -476,13 +479,13 @@ def cmd_status(args: argparse.Namespace) -> None:
 
 
 def _utc_window(date: str) -> tuple[str, str]:
-    """Đổi một ngày theo đồng hồ máy thành khoảng mốc UTC để tra sổ cái.
+    """Convert a machine-local date into a UTC range for ledger queries.
 
     Args:
-        date: Ngày dạng YYYY-MM-DD theo giờ địa phương.
+        date: Local date as `YYYY-MM-DD`.
 
     Returns:
-        Cặp mốc đầu và cuối dạng ISO UTC, cùng định dạng với cột `ts` của sổ cái.
+        Pair of start and end ISO UTC timestamps, formatted like the ledger `ts` column.
     """
     start = datetime.strptime(date, "%Y-%m-%d").astimezone()
     end = start + timedelta(days=1)
@@ -491,14 +494,14 @@ def _utc_window(date: str) -> tuple[str, str]:
 
 
 def _ledger_rows(date: str | None, wave: str | None) -> list[sqlite3.Row]:
-    """Đọc các dòng sổ cái token theo ngày hoặc theo đợt.
+    """Read token ledger rows by date or by wave.
 
     Args:
-        date: Ngày cần lọc dạng YYYY-MM-DD, bỏ qua khi đã chỉ định đợt.
-        wave: Mã đợt cần lọc.
+        date: Local date filter as `YYYY-MM-DD`, ignored when a wave is given.
+        wave: Wave id filter.
 
     Returns:
-        Danh sách dòng sổ cái, rỗng khi chưa có sổ cái hoặc không dòng nào khớp.
+        Ledger rows, empty when the ledger is missing or nothing matches.
     """
     if not HARNESS_DB.exists():
         return []
@@ -508,11 +511,10 @@ def _ledger_rows(date: str | None, wave: str | None) -> list[sqlite3.Row]:
         if wave:
             sql, params = "SELECT * FROM token_ledger WHERE wave = ?", (wave,)
         else:
-            # Sổ cái ghi mốc theo UTC, còn người vận hành nghĩ theo ngày của đồng hồ
-            # máy. So thẳng `substr(ts,1,10)` với ngày máy là sai đúng bảy tiếng: mọi
-            # đợt chạy trước 07:00 giờ VN bị ghi vào ngày hôm trước theo UTC, nên
-            # radar báo "chưa có dòng nào" cho một ngày vừa chạy xong. Vì vậy đổi
-            # ngày địa phương thành một khoảng UTC rồi mới so.
+            # The ledger stores UTC timestamps while operators think in local dates.
+            # Comparing `substr(ts,1,10)` with the local date is off by seven hours:
+            # waves run before 07:00 Vietnam time fall on the previous UTC day. Convert
+            # the local date to a UTC range before comparing.
             lo, hi = _utc_window(date)
             sql, params = ("SELECT * FROM token_ledger WHERE ts >= ? AND ts < ?",
                            (lo, hi))
@@ -522,27 +524,25 @@ def _ledger_rows(date: str | None, wave: str | None) -> list[sqlite3.Row]:
     finally:
         conn.close()
 
-    # Sổ cái ghi ảnh chụp tích luỹ cho mỗi đợt, nên phải khử trước khi cộng. Dùng
-    # chung đúng một định nghĩa với `token_ledger.py` để hai công cụ không bao giờ
-    # nói hai con số khác nhau về cùng một đợt.
+    # The ledger stores cumulative snapshots per wave, so deduplicate before summing.
+    # Shares the definition in `token_ledger.py` so both tools report the same figures
+    # for a wave.
     return latest_snapshots(rows)
 
 
 def cmd_token(args: argparse.Namespace) -> None:
-    """Báo cáo token và chi phí thật của đường xử lý bài đăng.
+    """Report the measured token usage and cost of the article processing path.
 
-    Lệnh này từng nhân số bài với hai định mức chết — 450 token mỗi bài tầng L1 và
-    1.470 tầng Gold — rồi nhân tiếp với một đơn giá gõ thẳng trong mã. Cả ba con số
-    đều sai: hai định mức lệch thực tế 21 đến 41 lần, còn đơn giá thì không phân biệt
-    ba rổ token mà nhà cung cấp tính riêng. Tệ hơn cả sai số là việc nó **không biết
-    bộ nhớ đệm tồn tại**, trong khi token trúng cache rẻ hơn token mới năm mươi lần;
-    radar và sổ cái vì thế đưa ra hai con số mâu thuẫn cho cùng một đợt.
-
-    Nay mọi con số đến từ hai nguồn đo thật: sổ cái `token_ledger` cho các đợt đã
-    chốt, và checkpoint phiên DSH cho phần đang chạy. Không còn định mức nào.
+    All figures come from two measured sources: the `token_ledger` for closed
+    waves and the DSH session checkpoints for the running part. No fixed
+    per-article quota is used. Cache-hit tokens are priced separately from
+    cache-miss and output tokens.
 
     Args:
-        args: Tham số dòng lệnh đã phân tích.
+        args: Parsed command-line arguments; uses `date` and optionally `wave`.
+
+    Returns:
+        None. The report is printed to stdout.
     """
     target_date = args.date or f"{datetime.now():%Y-%m-%d}"
     wave = getattr(args, "wave", None)
@@ -581,8 +581,8 @@ def cmd_token(args: argparse.Namespace) -> None:
         print()
         print("2. PHÂN RÃ HOÁ ĐƠN THEO RỔ")
         print("-" * 96)
-        # Mỗi dòng tính theo khung giá của chính nó. Dùng khung giá lúc chạy báo cáo
-        # sẽ thổi phồng một đợt off-peak đem ra xem vào giờ cao điểm đúng gấp đôi.
+        # Price each row by its own pricing window. Using the window at report time
+        # would double the cost of an off-peak wave viewed during peak hours.
         def _table(row) -> dict:
             window = "peak" if row["peak_window"] else "off_peak"
             return pricing["models"]["deepseek-flash"][window]
@@ -611,9 +611,9 @@ def cmd_token(args: argparse.Namespace) -> None:
         print("3. BỘ NHỚ ĐỆM CÓ THẬT SỰ TRÚNG KHÔNG")
         print("-" * 96)
         pfx = cached_prefix_tokens()
-        # Đếm theo LƯỢT GỌI worker đọc từ mô tả đợt. Đếm theo số phiên là tính cả
-        # phiên Conductor — phiên ấy mang persona khác nên không đọc tiền tố của
-        # worker, và sàn sẽ đòi một khoản cache không bao giờ tồn tại.
+        # Count by worker CALLS read from the wave manifest. Counting sessions would
+        # include the Conductor session, which uses a different persona, never reads
+        # the worker prefix, and would inflate the expected cache floor.
         floor = 0
         for r in rows:
             calls = worker_calls(r["wave"]) or max(0, r["n_sessions"] - 1)
@@ -652,9 +652,8 @@ def cmd_token(args: argparse.Namespace) -> None:
         print(f"Chưa có dòng sổ cái nào cho {scope}.")
         print("Sau mỗi đợt, `article_run.py --wave <mã> --finish` sẽ ghi sổ.")
 
-    # Khi xem theo đợt, ngày của phiên phải là ngày của chính đợt ấy. Lấy hôm nay
-    # thì một đợt chạy tuần trước luôn hiện "không có phiên nào", nghe như mất dữ
-    # liệu trong khi chỉ là so nhầm ngày.
+    # When viewing a wave, the session date must be the wave's own date. Using today
+    # would show "no session" for a wave run last week, which looks like data loss.
     session_date = target_date
     if wave and rows:
         try:
@@ -684,8 +683,8 @@ def cmd_token(args: argparse.Namespace) -> None:
         thresholds = pricing.get("watch_thresholds") or {}
         amber = float(thresholds.get("context_pressure_amber", 0.25))
         red = float(thresholds.get("context_pressure_red", 0.40))
-        # Lời khuyên hành động chỉ có nghĩa cho HÔM NAY. In nó khi đang xem một
-        # ngày đã qua là hô "dừng ngay" về một phiên đóng từ tuần trước.
+        # Action advice applies to TODAY only. Printing it for a past date would
+        # urge stopping a session that closed last week.
         live = session_date == datetime.now().strftime("%Y-%m-%d")
         if not live:
             print(f"   ⓘ  ngày đã qua — áp suất ở trên là số lịch sử, không phải "
@@ -700,7 +699,11 @@ def cmd_token(args: argparse.Namespace) -> None:
 
 
 def cmd_backlog(args: argparse.Namespace) -> None:
-    """Báo cáo toàn cảnh kho dữ liệu và phân bổ bài viết tồn đọng trong hệ thống."""
+    """Report the warehouse overview and the distribution of backlog articles.
+
+    Args:
+        args: Parsed command-line arguments; unused.
+    """
     conn = get_db_connection()
     try:
         total_articles = conn.execute("SELECT COUNT(*) FROM articles").fetchone()[0]
@@ -860,7 +863,11 @@ def cmd_backlog(args: argparse.Namespace) -> None:
 
 
 def cmd_users(args: argparse.Namespace) -> None:
-    """Quan sát và phát hiện các thay đổi đăng ký người dùng mới / thiếu hụt thực thể."""
+    """Report registered users and detect subscription files missing from the manifest.
+
+    Args:
+        args: Parsed command-line arguments; unused.
+    """
     print(f"================================================================================")
     print(f" 👥  NEWS-SCAPE USER WATCHLIST & ENTITY MONITOR")
     print(f"================================================================================")
@@ -875,7 +882,7 @@ def cmd_users(args: argparse.Namespace) -> None:
     print(f"   • Đang tạm dừng (Inactive): {len(inactive_users)} ({', '.join(inactive_users) if inactive_users else 'Không có'})")
     print()
 
-    # Kiểm tra xem có file subscription excel mới nào chưa được kích hoạt không
+    # Find subscription Excel files that are not yet registered in the manifest.
     subs_dir = paths.subscriptions_dir()
     if subs_dir.exists():
         excel_files = glob.glob(str(subs_dir / "*_news.xlsx"))
@@ -898,23 +905,23 @@ def cmd_users(args: argparse.Namespace) -> None:
 
 
 def main() -> None:
-    """Điểm nhập lệnh điều phối CLI."""
+    """Parse the subcommand and dispatch it."""
     parser = argparse.ArgumentParser(description="Hệ thống Công cụ Giám sát & Quản trị Tự động News-Scape.")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    # Lệnh status
+    # Subcommand: status.
     p_status = subparsers.add_parser("status", help="Truy vấn điểm chạm hiện tại và đề xuất hành động kế tiếp.")
     p_status.add_argument("--date", help="Ngày cần quan sát (YYYY-MM-DD), mặc định là hôm nay.")
 
-    # Lệnh token
+    # Subcommand: token.
     p_token = subparsers.add_parser("token", help="Đo lường token burn và đánh giá tiết kiệm chi phí.")
     p_token.add_argument("--date", help="Ngày cần đo lường (YYYY-MM-DD), mặc định là hôm nay.")
     p_token.add_argument("--wave", help="Chỉ xem một đợt, bỏ qua bộ lọc ngày.")
 
-    # Lệnh users
+    # Subcommand: users.
     subparsers.add_parser("users", help="Quan sát và tra soát trạng thái người dùng & danh mục theo dõi.")
 
-    # Lệnh backlog
+    # Subcommand: backlog.
     subparsers.add_parser("backlog", help="Quan sát toàn cảnh kho dữ liệu và phân bổ bài viết tồn đọng.")
 
     args = parser.parse_args()

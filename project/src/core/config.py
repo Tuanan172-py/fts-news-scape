@@ -1,4 +1,4 @@
-"""Quản lý và tải cấu hình hệ thống, nguồn tin, danh sách theo dõi và thông tin bảo mật."""
+"""Load system settings, source configs, the watchlist and secrets."""
 
 from __future__ import annotations
 
@@ -52,10 +52,10 @@ def _deep_merge(base: dict, override: dict) -> dict:
 
 
 def load_settings() -> dict:
-    """Tải cấu hình hệ thống từ settings.yaml kết hợp giá trị mặc định và biến môi trường.
+    """Load system settings from settings.yaml merged with defaults and environment variables.
 
     Returns:
-        Dictionary chứa toàn bộ cấu hình hoạt động của hệ thống.
+        Dict with the full runtime configuration.
     """
     cfg = _deep_merge(_DEFAULT_SETTINGS, _load_yaml(CONFIG_DIR / "settings.yaml"))
 
@@ -74,21 +74,21 @@ def load_settings() -> dict:
 
 
 class UnsafeDatabasePathError(RuntimeError):
-    """Báo đường dẫn DB vận hành rơi vào thư mục đồng bộ đám mây hoặc kho mã."""
+    """Raised when the operational DB path falls in a cloud-synced folder or the code repository."""
 
 
 def is_synced_location(path: Path) -> bool:
-    """Cho biết đường dẫn có nằm trong OneDrive hoặc trong cây thư mục kho mã.
+    """Check whether a path lies in OneDrive or in the code repository tree.
 
-    SQLite ở chế độ WAL giữ ba tệp (`.db`, `-wal`, `-shm`). OneDrive đồng bộ chúng lệch
-    nhịp nên sinh bản xung đột theo từng máy, và một tiến trình thiếu biến môi trường
-    sẽ ghi vào bản sao cũ thay cho DB vận hành.
+    SQLite in WAL mode keeps three files (`.db`, `-wal`, `-shm`). OneDrive syncs them out
+    of step and creates per-machine conflict copies, and a process missing the environment
+    variable would write to a stale copy instead of the operational DB.
 
     Args:
-        path: Đường dẫn tuyệt đối cần kiểm.
+        path: Absolute path to check.
 
     Returns:
-        True khi đường dẫn thuộc vùng đồng bộ hoặc thuộc kho mã.
+        True if the path is in a synced area or in the code repository.
     """
     if any(part.lower().startswith("onedrive") for part in path.parts):
         return True
@@ -100,21 +100,21 @@ def is_synced_location(path: Path) -> bool:
 
 
 def resolve_db_path(settings: dict | None = None) -> Path:
-    """Phân giải đường dẫn tuyệt đối của DB vận hành và chặn vị trí không an toàn.
+    """Resolve the absolute path of the operational DB and reject unsafe locations.
 
-    Thứ tự ưu tiên: `MONOCLE_DB_PATH`, rồi `MONOCLE_DATA_DIR`, rồi `database.path` trong
-    `settings.yaml`, cuối cùng là `monocle.db` dưới `paths.data_root()`. Đường dẫn tương
-    đối tính từ thư mục `project/`, không theo cwd.
+    Priority order: `MONOCLE_DB_PATH`, then `MONOCLE_DATA_DIR`, then `database.path` in
+    `settings.yaml`, and finally `monocle.db` under `paths.data_root()`. A relative path
+    is taken from the `project/` directory, not from the cwd.
 
     Args:
-        settings: Cấu hình đã tải; None thì tự tải.
+        settings: Loaded settings; None loads them.
 
     Returns:
-        Đường dẫn tuyệt đối tới `monocle.db`.
+        Absolute path to `monocle.db`.
 
     Raises:
-        UnsafeDatabasePathError: Khi đường dẫn nằm trong OneDrive hoặc kho mã và biến
-            `MONOCLE_ALLOW_SYNCED_DB` không được đặt.
+        UnsafeDatabasePathError: If the path is in OneDrive or the code repository and
+            `MONOCLE_ALLOW_SYNCED_DB` is not set.
     """
     cfg = settings if settings is not None else load_settings()
     raw = (cfg.get("database") or {}).get("path") or str(paths.db_path())
@@ -130,17 +130,17 @@ def resolve_db_path(settings: dict | None = None) -> Path:
 
 
 def load_domain_config(name: str) -> dict:
-    """Tải cấu hình chi tiết của một nguồn tin từ thư mục config/domains/.
+    """Load the detailed config of one source from the config/domains/ directory.
 
     Args:
-        name: Tên định danh của nguồn tin.
+        name: Source name.
 
     Returns:
-        Dictionary chứa thông số cấu hình của nguồn tin.
+        Dict of the source configuration parameters.
 
     Raises:
-        FileNotFoundError: Khi không tìm thấy tệp cấu hình nguồn tin.
-        ValueError: Khi tệp cấu hình thiếu các trường thông tin bắt buộc.
+        FileNotFoundError: If the source config file is not found.
+        ValueError: If the config file lacks required keys.
     """
     path = DOMAINS_DIR / f"{name}.yaml"
     if not path.exists():
@@ -156,13 +156,13 @@ def load_domain_config(name: str) -> dict:
 
 
 def list_domains(enabled_only: bool = True) -> list[str]:
-    """Liệt kê danh sách tên định danh của tất cả các nguồn tin có cấu hình.
+    """List the names of all configured sources.
 
     Args:
-        enabled_only: Cờ lọc chỉ lấy các nguồn tin đang kích hoạt.
+        enabled_only: If True, return only enabled sources.
 
     Returns:
-        Danh sách tên định danh nguồn tin đã sắp xếp.
+        Sorted source names.
     """
     if not DOMAINS_DIR.exists():
         return []
@@ -175,13 +175,13 @@ def list_domains(enabled_only: bool = True) -> list[str]:
 
 
 def resolve_source_domain(name: str) -> str:
-    """Xác định tên miền chính thức của nguồn tin từ tên cấu hình.
+    """Resolve the official domain of a source from its config name.
 
     Args:
-        name: Tên định danh hoặc tên cấu hình của nguồn tin.
+        name: Source name or config name.
 
     Returns:
-        Chuỗi tên miền đại diện cho nguồn tin trong cơ sở dữ liệu.
+        Domain that represents the source in the database.
     """
     if not name:
         return name
@@ -204,19 +204,19 @@ def resolve_source_domain(name: str) -> str:
 
 
 def load_watchlist() -> list[str]:
-    """Tải danh sách mã cổ phiếu cần theo dõi từ watchlist.yaml.
+    """Load the watched stock tickers from watchlist.yaml.
 
     Returns:
-        Danh sách mã cổ phiếu viết hoa.
+        Uppercase tickers.
     """
     data = _load_yaml(CONFIG_DIR / "watchlist.yaml")
     return [str(t).upper() for t in data.get("tickers", [])]
 
 
 def load_secrets() -> dict:
-    """Tải thông tin bảo mật và API key từ secrets.yaml.
+    """Load secrets and API keys from secrets.yaml.
 
     Returns:
-        Dictionary chứa các khóa và bí mật cấu hình.
+        Dict of configured keys and secrets.
     """
     return _load_yaml(CONFIG_DIR / "secrets.yaml")

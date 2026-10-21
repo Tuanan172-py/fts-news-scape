@@ -1,13 +1,8 @@
-"""Sinh tệp bàn giao trạng thái giữa hai phiên DSH với chi phí 0 token.
-
-Toàn bộ trạng thái của pipeline đã nằm ở SQLite và ở các tệp packet trên đĩa, nên
-phiên điều phối không giữ thứ gì mà cơ sở dữ liệu không có. Nhờ vậy việc bàn giao
-không cần nhờ mô hình tóm tắt: script đọc thẳng cơ sở dữ liệu rồi viết ra tệp.
-
-Đây là thứ biến việc mở phiên mới thành thao tác bình thường và rẻ, thay vì một
-phương án chữa cháy khi ngữ cảnh đã phình. Mất phiên giữa chừng chỉ mất đúng lô
-đang chạy, và packet của lô đó vẫn còn trên đĩa để chạy lại.
-"""
+"""Generate the state hand-off file between two DSH sessions at zero token cost by reading SQLite and the packet files directly."""
+# All pipeline state lives in SQLite and in the packet files on disk, so the conductor
+# session holds nothing the database lacks and no model summary is needed. This makes
+# opening a new session a cheap routine step. Losing a session mid-run loses only the
+# batch in flight, whose packet stays on disk for a rerun.
 from __future__ import annotations
 
 import argparse
@@ -35,10 +30,10 @@ ARTICLE_OUT_DIR = paths.agent_outputs_dir("_article")
 
 
 def get_db_connection() -> sqlite3.Connection:
-    """Mở kết nối chỉ đọc tới đúng cơ sở dữ liệu mà bước nạp ghi vào.
+    """Open a read-only connection to the database that the ingest step writes to.
 
     Returns:
-        Kết nối SQLite tới `monocle.db`.
+        SQLite connection to `monocle.db`.
     """
     conn = sqlite3.connect(f"file:{resolve_db_path().as_posix()}?mode=ro", uri=True)
     conn.row_factory = sqlite3.Row
@@ -46,15 +41,15 @@ def get_db_connection() -> sqlite3.Connection:
 
 
 def _scalar(cur: sqlite3.Cursor, sql: str, params: tuple = ()) -> int:
-    """Chạy một truy vấn trả về một số và bọc lỗi thành 0.
+    """Run a single-number query and map errors to 0.
 
     Args:
-        cur: Con trỏ SQLite đang mở.
-        sql: Câu truy vấn trả về đúng một giá trị số.
-        params: Tham số truyền vào truy vấn.
+        cur: Open SQLite cursor.
+        sql: Query that returns exactly one numeric value.
+        params: Query parameters.
 
     Returns:
-        Giá trị số đọc được, hoặc 0 khi truy vấn lỗi hoặc rỗng.
+        The numeric value read, or 0 when the query fails or returns nothing.
     """
     try:
         row = cur.execute(sql, params).fetchone()
@@ -64,17 +59,17 @@ def _scalar(cur: sqlite3.Cursor, sql: str, params: tuple = ()) -> int:
 
 
 def wave_date(wave: str | None) -> str | None:
-    """Đọc ngày dữ liệu của một đợt từ manifest đóng gói.
+    """Read the data date of a wave from its packing manifest.
 
-    Bàn giao phải thống kê đúng ngày mà đợt đã xử lý, không phải ngày chạy lệnh.
-    Đợt chạy bù cho một ngày cũ mà lấy ngày hiện tại thì độ phủ in ra luôn bằng 0,
-    trong khi hậu kiểm của chính đợt ấy đã đạt ngưỡng.
+    The hand-off must report the day the wave processed, not the day the command runs.
+    A catch-up wave for an older day would otherwise print zero coverage even though
+    its own post-check already met the threshold.
 
     Args:
-        wave: Mã đợt, hoặc None khi không rõ đợt.
+        wave: Wave code, or None when the wave is unknown.
 
     Returns:
-        Ngày dạng YYYY-MM-DD ghi trong manifest, hoặc None khi không đọc được.
+        Date as YYYY-MM-DD recorded in the manifest, or None when unreadable.
     """
     if not wave:
         return None
@@ -93,15 +88,15 @@ def wave_date(wave: str | None) -> str | None:
 
 
 def collect_state(today: str, wave: str | None = None) -> dict:
-    """Thu thập toàn bộ trạng thái cần cho việc bàn giao.
+    """Collect all state needed for the hand-off.
 
     Args:
-        today: Ngày cần thống kê theo định dạng YYYY-MM-DD.
-        wave: Mã đợt đang xét. Có mã thì phần packet chưa chạy chỉ tính trong đợt
-            ấy; không có thì tính mọi packet trên đĩa.
+        today: Day to report on, formatted YYYY-MM-DD.
+        wave: Wave code under consideration. When given, unrun packets are counted
+            only within that wave; otherwise every packet on disk is counted.
 
     Returns:
-        Từ điển trạng thái gồm độ phủ, số bài chờ phân tích và packet chưa chạy.
+        State dict with coverage, the number of articles awaiting analysis and unrun packets.
     """
     conn = get_db_connection()
     cur = conn.cursor()
@@ -119,15 +114,14 @@ def collect_state(today: str, wave: str | None = None) -> dict:
                  "ON a.url_title_hash=o.article_id "
                  "WHERE substr(a.published_at,1,10)=? AND o.dod_pass=1", (today,)),
     }
-    # Cùng câu truy vấn với bước đóng gói, nên con số này đúng bằng số bài mà đợt kế
-    # tiếp sẽ lấy.
+    # Same query as the packing step, so this count equals the articles the next wave will take.
     state["pending_today"] = len(load_candidates(conn, date=today, limit=1_000_000,
                                                  only_pending=True))
     conn.close()
 
-    # Giới hạn theo đợt khi biết mã đợt. Packet lẻ của đợt khác nằm lại trên đĩa là
-    # chuyện thường; tính nó vào đây thì bàn giao báo "còn lô chưa chạy" cho một đợt
-    # đã xong, và chỉ sai lệnh kế tiếp cho phiên sau.
+    # Restrict to the wave when its code is known. Stray packets of other waves stay on
+    # disk routinely; counting them would report unrun batches for a finished wave and
+    # give the next session a wrong follow-up command.
     pattern = f"article_{wave}_*.task.json" if wave else "*.task.json"
     packets = sorted(glob.glob(str(ARTICLE_TASK_DIR / pattern)))
     outputs = {Path(p).name.replace(".output.json", "")
@@ -143,15 +137,15 @@ def collect_state(today: str, wave: str | None = None) -> dict:
 
 
 def render(state: dict, wave: str | None, prefix_hash: str | None) -> str:
-    """Kết xuất trạng thái thành tệp bàn giao dạng Markdown.
+    """Render the state as a Markdown hand-off file.
 
     Args:
-        state: Từ điển trạng thái do :func:`collect_state` trả về.
-        wave: Mã đợt đang dở, nếu có.
-        prefix_hash: Giá trị băm của prefix đang dùng, nếu có.
+        state: State dict returned by :func:`collect_state`.
+        wave: Code of the unfinished wave, if any.
+        prefix_hash: Hash of the prefix in use, if any.
 
     Returns:
-        Nội dung Markdown của tệp bàn giao.
+        Markdown content of the hand-off file.
     """
     ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     covered = state["l1_done_today"]
@@ -216,13 +210,13 @@ def render(state: dict, wave: str | None, prefix_hash: str | None) -> str:
 
 
 def main(argv=None) -> int:
-    """Chạy giao diện dòng lệnh sinh tệp bàn giao.
+    """Run the command line that generates the hand-off file.
 
     Args:
-        argv: Danh sách tham số dòng lệnh. Mặc định lấy từ `sys.argv`.
+        argv: Command-line arguments. Defaults to `sys.argv`.
 
     Returns:
-        Mã thoát 0.
+        Exit code, always 0.
     """
     ap = argparse.ArgumentParser(description="Sinh tệp bàn giao trạng thái 0 token")
     ap.add_argument("--wave", help="Mã đợt đang dở")

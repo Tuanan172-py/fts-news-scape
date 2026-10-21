@@ -1,4 +1,4 @@
-"""Phân loại chủ đề bài viết dựa trên tập quy tắc từ khóa và biểu thức chính quy."""
+"""Classify article topics using keyword and regular-expression rules."""
 
 import re
 
@@ -30,14 +30,14 @@ CATEGORY_RULES: dict[str, list[re.Pattern]] = {
 
 
 def classify_rule_based(title: str, body: str = "") -> list[str]:
-    """Phân loại danh mục chủ đề của bài viết dựa trên tiêu đề và nội dung.
+    """Classify the topic categories of an article from its title and body.
 
     Args:
-        title: Tiêu đề bài viết.
-        body: Nội dung văn bản của bài viết.
+        title: Article title.
+        body: Article body text; only the first 2000 characters are used.
 
     Returns:
-        Danh sách tên chuyên mục phù hợp hoặc ['uncategorized'].
+        Matching category names, or ['uncategorized'].
     """
     text = f"{title} {body[:2000]}"
     categories = []

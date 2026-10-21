@@ -1,4 +1,4 @@
-"""Đo sức khoẻ pipeline mỗi phút và phát cảnh báo theo cạnh chuyển trạng thái."""
+"""Measure pipeline health every minute and emit alerts on state transitions."""
 
 from __future__ import annotations
 
@@ -17,13 +17,13 @@ from src.ops.store import OpsStore, now_vn, parse_iso
 
 @dataclass
 class ProbeResult:
-    """Kết quả một phép đo sức khoẻ.
+    """Result of one health probe.
 
     Attributes:
-        name: Tên phép đo.
-        ok: True khi khoẻ.
-        severity: Mức cảnh báo khi không khoẻ.
-        message: Mô tả.
+        name: Probe name.
+        ok: True when healthy.
+        severity: Alert level when unhealthy.
+        message: Description.
     """
 
     name: str
@@ -33,14 +33,14 @@ class ProbeResult:
 
 
 def probe_capture(db_path: Path, cfg: dict) -> ProbeResult:
-    """Kiểm độ tươi của cào tin trong khung giờ theo dõi.
+    """Check the freshness of article capture within the monitored hours.
 
     Args:
-        db_path: Đường dẫn `monocle.db`.
-        cfg: Mục `probes` của cấu hình.
+        db_path: Path of `monocle.db`.
+        cfg: The `probes` section of the configuration.
 
     Returns:
-        ProbeResult.
+        The ProbeResult.
     """
     now = now_vn()
     h0, h1 = (cfg.get("capture_hours") or [0, 24])[:2]
@@ -64,42 +64,42 @@ def probe_capture(db_path: Path, cfg: dict) -> ProbeResult:
 
 
 def probe_db(db_probe: Callable[[], tuple[bool, str]]) -> ProbeResult:
-    """Kiểm DB vận hành còn ghi được.
+    """Check that the operations DB is still writable.
 
     Args:
-        db_probe: Hàm thử ghi, trả (đạt, lý do).
+        db_probe: Write-test function returning (passed, reason).
 
     Returns:
-        ProbeResult.
+        The ProbeResult.
     """
     ok, reason = db_probe()
     return ProbeResult("db", ok, "critical", "DB ghi được." if ok else f"DB không ghi được: {reason}")
 
 
 def probe_disk(data_dir: Path, min_free_gb: float) -> ProbeResult:
-    """Kiểm dung lượng trống của ổ dữ liệu.
+    """Check the free space of the data drive.
 
     Args:
-        data_dir: Thư mục dữ liệu.
-        min_free_gb: Ngưỡng tối thiểu.
+        data_dir: Data directory.
+        min_free_gb: Minimum free space threshold in GB.
 
     Returns:
-        ProbeResult.
+        The ProbeResult.
     """
     free = shutil.disk_usage(data_dir).free / 1e9
     return ProbeResult("disk", free >= min_free_gb, "error", f"Còn trống {free:.1f} GB.")
 
 
 def probe_dead_letter(db_path: Path, store: OpsStore, delta_alert: int) -> ProbeResult:
-    """So số Bronze dead-letter với mốc đầu ngày.
+    """Compare the Bronze dead-letter count with the start-of-day baseline.
 
     Args:
-        db_path: Đường dẫn `monocle.db`.
-        store: Store vận hành, giữ mốc đầu ngày.
-        delta_alert: Mức tăng trong ngày thì cảnh báo.
+        db_path: Path of `monocle.db`.
+        store: Operations store, which holds the start-of-day baseline.
+        delta_alert: Increase within the day that triggers an alert.
 
     Returns:
-        ProbeResult.
+        The ProbeResult.
     """
     try:
         conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True, timeout=10)
@@ -123,15 +123,15 @@ def probe_dead_letter(db_path: Path, store: OpsStore, delta_alert: int) -> Probe
 
 
 def probe_coverage(db_path: Path, red_pct: float = 2.0, days: int = 2) -> ProbeResult:
-    """Đo độ phủ thu thập so với sitemap (rule 10: thiếu quá 2% trong một ngày là đỏ).
+    """Measure capture coverage against the sitemap (rule 10: missing more than 2% in one day is red).
 
     Args:
-        db_path: Đường dẫn `monocle.db`.
-        red_pct: Ngưỡng phần trăm bài thiếu.
-        days: Số ngày gần nhất xét.
+        db_path: Path of `monocle.db`.
+        red_pct: Threshold percentage of missing articles.
+        days: Number of most recent days to examine.
 
     Returns:
-        ProbeResult; không khoẻ khi có cặp (ngày, nguồn) thiếu quá ngưỡng.
+        The ProbeResult; unhealthy when a (day, source) pair exceeds the missing threshold.
     """
     try:
         conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True, timeout=10)
@@ -155,13 +155,13 @@ def probe_coverage(db_path: Path, red_pct: float = 2.0, days: int = 2) -> ProbeR
 
 
 def probe_order(order_path: Path) -> ProbeResult:
-    """Kiểm hạn của standing order.
+    """Check the expiry of the standing order.
 
     Args:
-        order_path: Đường dẫn standing order.
+        order_path: Path of the standing order.
 
     Returns:
-        ProbeResult.
+        The ProbeResult.
     """
     order = load_order(order_path)
     if not order.exists:
@@ -172,7 +172,7 @@ def probe_order(order_path: Path) -> ProbeResult:
         return ProbeResult("order", False, "warn",
                            f"Mandate hết hạn ({order.valid_until}): daemon về L0.")
     if hours <= 72:
-        # Mandate tự gia hạn khi khoẻ; còn dưới 3 ngày nghĩa là việc gia hạn đang bị chặn.
+        # The mandate renews itself while healthy; under 3 days left means renewal is blocked.
         return ProbeResult("order", False, "warn",
                            f"Mandate {order.level} còn {hours:.0f} giờ (hạn {order.valid_until}) "
                            f"và chưa được gia hạn.")
@@ -180,10 +180,10 @@ def probe_order(order_path: Path) -> ProbeResult:
 
 
 def _onedrive_running() -> bool:
-    """Cho biết tiến trình `OneDrive.exe` có đang chạy không.
+    """Report whether the `OneDrive.exe` process is running.
 
     Returns:
-        True khi tìm thấy tiến trình.
+        True when the process is found.
     """
     import psutil
 
@@ -196,20 +196,20 @@ def _onedrive_running() -> bool:
 def probe_publish(target: Path | None, cfg: dict,
                   onedrive_running: Callable[[], bool] = _onedrive_running,
                   now: float | None = None) -> ProbeResult:
-    """Kiểm sức khoẻ thư mục xuất bản SharePoint theo ADR 0020 mục 2.6.
+    """Check the health of the SharePoint publish directory per ADR 0020 section 2.6.
 
-    Bốn điều kiện: OneDrive.exe đang chạy; đích ghi được (ghi rồi xoá `_manifest/.probe`);
-    không có tệp `*-DESKTOP-*` hay `*.partial` cũ hơn 2 giờ; `latest.json` không cũ hơn
-    `stale_hours`.
+    Four conditions: OneDrive.exe is running; the target is writable (write then delete
+    `_manifest/.probe`); no `*-DESKTOP-*` or `*.partial` file is older than 2 hours; and
+    `latest.json` is not older than `stale_hours`.
 
     Args:
-        target: Thư mục đích; None khi chưa đặt `NEWS_SCAPE_PUBLISH_DIR`.
-        cfg: Mục `publish` của cấu hình.
-        onedrive_running: Hàm kiểm tiến trình OneDrive, thay được khi kiểm thử.
-        now: Thời điểm epoch giây; None thì lấy giờ hệ thống.
+        target: Target directory; None when `NEWS_SCAPE_PUBLISH_DIR` is not set.
+        cfg: The `publish` section of the configuration.
+        onedrive_running: Function that checks the OneDrive process; replaceable in tests.
+        now: Epoch seconds; None uses the system time.
 
     Returns:
-        ProbeResult; không khoẻ khi có ít nhất một điều kiện hỏng.
+        The ProbeResult; unhealthy when at least one condition fails.
     """
     if target is None:
         return ProbeResult("publish", False, "error",
@@ -257,7 +257,7 @@ def probe_publish(target: Path | None, cfg: dict,
     return ProbeResult("publish", True, "info", "Thư mục xuất bản khoẻ.")
 
 
-# Việc người vận hành cần làm khi một phép đo bất thường, và lệnh để xem thêm.
+# Operator action when a probe is abnormal, and the command to inspect further.
 PROBE_ACTION = {
     "capture": ("bài mới không được thu thập", "kiểm morninger, thử /capture restart", "/log 15"),
     "db": ("đợt không nạp được bản ghi", "kiểm quyền ghi monocle.db và khoá DB", "/log 15"),
@@ -272,14 +272,14 @@ PROBE_ACTION = {
 
 
 def apply_edges(store: OpsStore, results: list[ProbeResult]) -> list[ProbeResult]:
-    """Phát cảnh báo khi một phép đo đổi trạng thái khoẻ ↔ không khoẻ.
+    """Emit alerts when a probe changes between healthy and unhealthy.
 
     Args:
-        store: Store vận hành.
-        results: Kết quả các phép đo.
+        store: Operations store.
+        results: Probe results.
 
     Returns:
-        Các phép đo vừa đổi trạng thái.
+        The probes that just changed state.
     """
     changed = []
     for r in results:

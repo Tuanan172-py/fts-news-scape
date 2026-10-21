@@ -1,4 +1,4 @@
-"""Di chuyển tệp giao hàng cũ từ `<gốc>/users_output` sang `<gốc>/users/output` (ADR-0026.D6)."""
+"""Move legacy delivery files from `<root>/users_output` to `<root>/users/output` (ADR-0026.D6)."""
 
 from __future__ import annotations
 
@@ -19,13 +19,13 @@ LEGACY_NAME = "users_output"
 
 @dataclass
 class MigrationReport:
-    """Kết quả di chuyển.
+    """Outcome of a migration run.
 
     Attributes:
-        moved: Số tệp đã (hoặc sẽ) chuyển.
-        identical: Số tệp đã có ở đích với nội dung giống hệt, bỏ nguồn.
-        conflicts: Đường dẫn tương đối của tệp đích đã có nhưng khác nội dung, giữ nguyên cả hai.
-        removed_dirs: Số thư mục nguồn rỗng đã dọn.
+        moved: Number of files moved (or to be moved).
+        identical: Number of files already present at the target with identical content; the source is dropped.
+        conflicts: Relative paths whose target exists with different content; both copies are kept.
+        removed_dirs: Number of empty source directories removed.
     """
 
     moved: int = 0
@@ -35,15 +35,15 @@ class MigrationReport:
 
 
 def migrate(source: Path, target: Path, apply: bool = False) -> MigrationReport:
-    """Chuyển toàn bộ tệp từ cây cũ sang cây mới, không ghi đè tệp đích khác nội dung.
+    """Move all files from the legacy tree to the new tree without overwriting differing targets.
 
     Args:
-        source: Thư mục cũ `users_output`.
-        target: Thư mục mới `users/output`.
-        apply: False chỉ đếm (chạy thử); True mới chuyển thật.
+        source: Legacy `users_output` directory.
+        target: New `users/output` directory.
+        apply: False only counts (dry run); True performs the move.
 
     Returns:
-        MigrationReport với số liệu và danh sách xung đột.
+        MigrationReport with the counts and the conflict list.
     """
     report = MigrationReport()
     if not source.is_dir():
@@ -75,13 +75,13 @@ def migrate(source: Path, target: Path, apply: bool = False) -> MigrationReport:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Chạy lệnh dòng lệnh; mặc định chạy thử, thêm `--apply` để chuyển thật.
+    """Run the command-line interface; dry run by default, `--apply` performs the move.
 
     Args:
-        argv: Tham số dòng lệnh; None dùng `sys.argv`.
+        argv: Command-line arguments; None uses `sys.argv`.
 
     Returns:
-        0 khi không có xung đột, 1 khi còn tệp xung đột cần xử lý tay.
+        0 when there are no conflicts, 1 when conflicting files need manual handling.
     """
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--apply", action="store_true", help="Chuyển thật (mặc định chỉ chạy thử).")

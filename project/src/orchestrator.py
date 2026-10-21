@@ -1,4 +1,4 @@
-"""Bộ điều phối chu trình thu thập dữ liệu tin tức qua các nguồn đã bật."""
+"""Orchestrate the news capture cycle across the enabled sources."""
 
 from __future__ import annotations
 
@@ -25,12 +25,12 @@ from src.monitor.heartbeat import Heartbeat
 from src.notifier.file_notify import FileNotifier
 from src.processor.classifier import classify_rule_based
 
-import src.scrapers  # noqa: F401 — trigger @register
+import src.scrapers  # noqa: F401 - triggers @register
 from src.scrapers import REGISTRY
 
 
 def _force_utf8_stdio() -> None:
-    """Cấu hình lại luồng xuất nhập chuẩn sang UTF-8 tránh lỗi mã hóa ký tự."""
+    """Reconfigure the standard streams to UTF-8 to avoid character encoding errors."""
     for stream in (sys.stdout, sys.stderr):
         try:
             stream.reconfigure(encoding="utf-8", errors="replace")
@@ -39,18 +39,18 @@ def _force_utf8_stdio() -> None:
 
 
 def build_scraper(cfg: dict, http: HTTPClient, dedup: DedupCache):
-    """Khởi tạo thể hiện scraper tương ứng với cấu hình tên miền.
+    """Create the scraper instance that matches a domain configuration.
 
     Args:
-        cfg: Cấu hình tên miền từ điển.
-        http: Thể hiện HTTPClient dùng chung.
-        dedup: Bộ nhớ đệm kiểm tra trùng lặp DedupCache.
+        cfg: Domain configuration dict.
+        http: Shared HTTPClient instance.
+        dedup: DedupCache used for duplicate checks.
 
     Returns:
-        Thể hiện scraper kế thừa BaseScraper.
+        A scraper instance derived from BaseScraper.
 
     Raises:
-        KeyError: Khi không tìm thấy lớp scraper tương ứng.
+        KeyError: If no matching scraper class is found.
     """
     cls = REGISTRY.get(cfg["name"]) or REGISTRY.get(f"_{cfg['method']}")
     if cls is None:
@@ -59,20 +59,20 @@ def build_scraper(cfg: dict, http: HTTPClient, dedup: DedupCache):
 
 
 class Orchestrator:
-    """Điều phối chu trình thu thập, xử lý và lưu trữ dữ liệu từ các nguồn tin.
+    """Coordinate capture, processing and storage of data from the news sources.
 
     Attributes:
-        settings: Cấu hình hệ thống chung.
-        store: Kho dữ liệu cơ sở ArticleStore.
-        writer: Luồng ghi bất đồng bộ DBWriter.
-        http: Trình khách mạng HTTPClient.
-        dedup: Bộ nhớ đệm kiểm tra trùng lặp DedupCache.
-        heartbeat: Trình theo dõi trạng thái Heartbeat.
-        notifier: Bộ thông báo tệp FileNotifier.
+        settings: Shared system settings.
+        store: ArticleStore holding the base data.
+        writer: Asynchronous DBWriter.
+        http: HTTPClient for network access.
+        dedup: DedupCache used for duplicate checks.
+        heartbeat: Heartbeat status tracker.
+        notifier: FileNotifier that writes notifications.
     """
 
     def __init__(self):
-        """Khởi tạo bộ điều phối Orchestrator."""
+        """Load settings and create the store, writer, HTTP client and helpers."""
         self.settings = load_settings()
         setup_logging(
             self.settings["logging"]["level"], self.settings["logging"]["dir"]
@@ -88,26 +88,26 @@ class Orchestrator:
         notif_dir = self.settings.get("notifications", {}).get("dir")
         self.notifier = FileNotifier(out_dir=notif_dir)
         self._stopped = False
-        self._lock_owner = lock_owner()          # Fix F: định danh giữ scheduler lock
+        self._lock_owner = lock_owner()          # identity that holds the scheduler lock
         self._owns_scheduler_lock = False
         removed = self.dedup.cleanup(max_age_days=30)
         if removed:
             logger.info("Dedup cleanup: removed {} entries >30d", removed)
 
     def run_cycle(self, names: list[str] | None = None) -> int:
-        """Thực thi một chu kỳ quét tin tuần tự qua các nguồn đã bật.
+        """Run one capture cycle sequentially across the enabled sources.
 
         Args:
-            names: Danh sách tên miền chỉ định chạy. Mặc định chạy toàn bộ nguồn được kích hoạt.
+            names: Domain names to run. Defaults to every enabled source.
 
         Returns:
-            Tổng số lượng bài viết mới được ghi nhận.
+            Total number of new articles recorded.
         """
         names = names or list_domains()
         if not names:
             logger.warning("No enabled domain configs in config/domains/")
             return 0
-        if self._owns_scheduler_lock:  # Fix F: nhịp tim giữ lock còn tươi
+        if self._owns_scheduler_lock:  # heartbeat keeps the lock fresh
             self.store.refresh_lock("scheduler", self._lock_owner)
         cycle_start = time.monotonic()
         logger.info("=== Cycle start: {} domains: {} ===", len(names), ", ".join(names))
@@ -140,9 +140,9 @@ class Orchestrator:
                 else run_with_retry(primary)
             )
             for a in result.new:
-                # Sentiment rule-based (VN lexicon) đã gỡ khỏi workflow giai đoạn này
-                # (self-lexicon giá trị thấp; sentiment "thật" do agent sinh ở lớp output).
-                # Engine giữ ở src/processor/sentiment.py để bật lại khi cần.
+                # Rule-based sentiment (Vietnamese lexicon) is not part of this workflow stage:
+                # the self-built lexicon has low value, and the real sentiment comes from the
+                # agent in the output layer. The engine stays in src/processor/sentiment.py.
                 for cat in classify_rule_based(a.title, a.content_text):
                     if cat not in a.categories and cat != "uncategorized":
                         a.categories.append(cat)
@@ -156,9 +156,9 @@ class Orchestrator:
             if results:
                 self.notifier.notify_cycle_summary(results)
         except Exception as e:
-            # notify là tiện ích — không được làm hỏng export (graceful degradation)
+            # Notification is an auxiliary utility and must not break the export (graceful degradation).
             logger.error("Notify lỗi (bỏ qua): {}: {}", type(e).__name__, e)
-        self.writer.flush()  # đảm bảo bài cycle này đã commit trước export/checkpoint
+        self.writer.flush()  # make sure this cycle's articles are committed before export and checkpoint
         self._export_csv()
         self._wal_checkpoint()
         logger.info(
@@ -169,7 +169,7 @@ class Orchestrator:
         return len(all_new)
 
     def _export_csv(self) -> None:
-        """Tự động xuất tệp CSV các bài viết trong ngày hôm nay."""
+        """Export today's articles to a CSV file."""
         exp = self.settings.get("export", {})
         if not exp.get("enabled", True):
             return
@@ -185,7 +185,7 @@ class Orchestrator:
             logger.error("CSV export lỗi (bỏ qua): {}: {}", type(e).__name__, e)
 
     def _wal_checkpoint(self) -> None:
-        """Giữ file -wal nhỏ (Windows) — chạy lúc idle cuối cycle."""
+        """Keep the -wal file small (Windows); runs when idle at the end of a cycle."""
         try:
             conn = self.store._connect()
             conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
@@ -194,7 +194,8 @@ class Orchestrator:
             logger.warning("WAL checkpoint failed: {}", e)
 
     def shutdown(self) -> None:
-        if self._stopped:  # idempotent — có thể bị gọi từ cả signal handler lẫn finally
+        """Flush the writer, release the scheduler lock and checkpoint the WAL; repeated calls are safe."""
+        if self._stopped:  # idempotent: may be called from both the signal handler and finally
             return
         self._stopped = True
         logger.info("Shutting down — flushing writer + WAL checkpoint...")
@@ -207,6 +208,7 @@ class Orchestrator:
         logger.info("Shutdown complete.")
 
     def start_scheduler(self) -> None:
+        """Take the capture and scheduler locks, then run the interval scheduler until a stop signal."""
         from apscheduler.schedulers.blocking import BlockingScheduler
         from apscheduler.triggers.interval import IntervalTrigger
 
@@ -215,7 +217,7 @@ class Orchestrator:
             logger.error("Tiến trình cào tin khác đang chạy ({}). Từ chối khởi động để "
                          "tránh double-scrape.", file_lock.holder() or "?")
             return
-        # Fix F: chỉ 1 scheduler được chạy (chống orchestrator + morninger cùng lúc).
+        # Only one scheduler may run (prevents orchestrator and morninger running together).
         if not self.store.try_acquire_lock("scheduler", self._lock_owner,
                                            SCHEDULER_LOCK_STALE_SECONDS):
             logger.error("Scheduler khác đang chạy (lock trong pipeline_state). "
@@ -229,10 +231,10 @@ class Orchestrator:
         scheduler.add_job(
             self.run_cycle,
             IntervalTrigger(minutes=interval),
-            coalesce=True,  # dồn các lần miss thành 1
-            max_instances=1,  # singleton: không chồng cycle
+            coalesce=True,  # merge missed runs into one
+            max_instances=1,  # singleton: cycles never overlap
             misfire_grace_time=300,
-            next_run_time=datetime.now(VN_TZ),  # chạy ngay lần đầu (tz-aware)
+            next_run_time=datetime.now(VN_TZ),  # run immediately the first time (tz-aware)
         )
 
         def handle_signal(signum, frame):
@@ -251,21 +253,30 @@ class Orchestrator:
 
 
 def main(argv: list[str]) -> int:
+    """Run the orchestrator once (`--once`) or start the interval scheduler.
+
+    Args:
+        argv: Command-line arguments without the program name. Positional arguments name the
+            domains to run; `--once` runs a single cycle.
+
+    Returns:
+        Process exit code: 0 on success, 1 if another scraping process holds a lock.
+    """
     _force_utf8_stdio()
     once = "--once" in argv
     names = [a for a in argv if not a.startswith("--")] or None
 
     orch = Orchestrator()
     if once:
-        # Khoá tệp chặn chắc chắn khi morninger đang chạy; khoá trong pipeline_state
-        # phụ thuộc nhịp tim nên có thể coi nhầm là đã cũ.
+        # The file lock reliably blocks while morninger runs; the lock in pipeline_state
+        # depends on a heartbeat and may be wrongly judged stale.
         file_lock = capture_lock()
         if not file_lock.acquire():
             logger.error("Tiến trình cào tin khác đang chạy ({}). Từ chối chạy --once để "
                          "tránh cào song song.", file_lock.holder() or "?")
             orch.shutdown()
             return 1
-        # Q3: Chạy độc lập nhưng phải chiếm scheduler lock để tránh cào song song với morninger
+        # Run standalone but take the scheduler lock to avoid scraping in parallel with morninger.
         if not orch.store.try_acquire_lock("scheduler", orch._lock_owner, SCHEDULER_LOCK_STALE_SECONDS):
             logger.error("Scheduler khác (morninger hoặc orchestrator) đang chạy. Từ chối chạy --once để tránh cào song song.")
             orch.shutdown()

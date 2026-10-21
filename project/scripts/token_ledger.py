@@ -1,13 +1,4 @@
-"""Ghi và báo cáo số đo token thật của runtime DSH vào sổ cái `token_ledger`.
-
-Sổ cái này thay thế hoàn toàn các hằng số ước lượng cũ. Hai vệt audit thật cho thấy
-định mức khai báo trong `registry.yaml` lệch thực tế 21 đến 41 lần, nên mọi con số
-chi phí từ nay phải đến từ đây chứ không từ phép nhân định mức.
-
-Mỗi dòng sổ cái ghi đồng thời hai thước đo và luôn nói rõ đang dùng thước nào:
-`quota_tokens` là tổng token tính vào hạn mức tài khoản, còn `billed_usd` là tiền.
-Hai thước này lệch nhau rất xa vì token trúng bộ nhớ đệm rẻ hơn token mới 50 lần.
-"""
+"""Record and report measured DSH runtime token usage in the `token_ledger` table."""
 from __future__ import annotations
 
 import argparse
@@ -37,8 +28,8 @@ HARNESS_DB = os.path.join(
     "harness.db",
 )
 
-# Mô tả đợt nằm cạnh packet; đọc từ đây để biết một đợt có bao nhiêu LƯỢT GỌI
-# worker, thay vì suy từ số phiên DSH vốn gồm cả phiên Conductor.
+# The wave descriptor sits next to the packets; it gives the number of worker CALLS
+# in a wave, which differs from the DSH session count because that includes Conductor sessions.
 TASK_DIR = str(paths.article_packets_dir())
 
 SCHEMA = """
@@ -70,19 +61,19 @@ CREATE INDEX IF NOT EXISTS idx_token_ledger_ts   ON token_ledger(ts);
 
 
 RUNNER_SOURCES = ("agy", "openrouter", "opencode-native", "auto")
-# Đơn giá agy (USD/1M token) theo bảng giá Gemini Flash Low dùng từ ADR 0011.
+# agy unit prices (USD per 1M tokens), taken from the Gemini Flash Low price table (ADR 0011).
 AGY_USD_PER_M = {"in": 0.075, "out": 0.30}
 
 
 def normalize_usage(provider: str, usage: dict | None) -> dict:
-    """Quy `usage` của từng provider về cùng một bộ cột của sổ cái.
+    """Map the `usage` block of each provider onto one common set of ledger columns.
 
     Args:
-        provider: Tên provider ghi trong meta (`agy`, `openrouter`, `opencode-native`).
-        usage: Khối `usage` trong tệp meta, có thể thiếu hoặc không chứa số.
+        provider: Provider name recorded in the meta file (`agy`, `openrouter`, `opencode-native`).
+        usage: The `usage` block of the meta file; may be missing or contain no numbers.
 
     Returns:
-        Từ điển `miss`, `hit`, `out`, `reasoning`, `usd`, `has_usage`.
+        Dict with `miss`, `hit`, `out`, `reasoning`, `usd`, `has_usage`.
     """
     u = usage if isinstance(usage, dict) else {}
     if provider == "agy" or "input_tokens" in u:
@@ -108,17 +99,17 @@ def normalize_usage(provider: str, usage: dict | None) -> dict:
 
 
 def aggregate_meta(meta_files: list[str], fallback: str | None) -> dict[str, dict]:
-    """Cộng `usage` của các tệp meta theo đúng provider ghi trong từng tệp.
+    """Sum the `usage` of meta files per the provider recorded in each file.
 
-    Một đợt có thể chạy lượt đầu bằng agy rồi vá bằng openrouter, nên gán cả đợt cho
-    một provider sẽ ghi sai nguồn chi phí.
+    A wave can run its first pass on agy and be patched with openrouter, so assigning
+    the whole wave to one provider would misattribute the cost.
 
     Args:
-        meta_files: Đường dẫn các tệp `*.meta.json` của đợt.
-        fallback: Provider dùng khi tệp meta không ghi `agent_provider`.
+        meta_files: Paths of the `*.meta.json` files of the wave.
+        fallback: Provider used when a meta file has no `agent_provider`.
 
     Returns:
-        Từ điển theo provider gồm `batches`, `items`, các cột token, `usd`, `has_usage`.
+        Dict keyed by provider with `batches`, `items`, the token columns, `usd`, `has_usage`.
     """
     totals: dict[str, dict] = {}
     for mf in meta_files:
@@ -143,22 +134,21 @@ def aggregate_meta(meta_files: list[str], fallback: str | None) -> dict[str, dic
 
 
 def latest_snapshots(rows: list) -> list:
-    """Giữ lại ảnh chụp mới nhất của mỗi đợt, bỏ các ảnh chụp cũ hơn của cùng đợt.
+    """Keep the latest snapshot of each wave and drop older snapshots of the same wave.
 
-    `append` ghi một ảnh chụp **tích luỹ** mỗi lần chạy, không phải phần tăng thêm:
-    chạy lại cho cùng một đợt khi các phiên con lần lượt kết thúc thì dòng sau chứa
-    trọn dòng trước. Đợt W2 có bốn dòng như vậy, và cộng thẳng chúng cho ra 800 bài
-    cho một đợt 200 bài.
+    `append` writes a **cumulative** snapshot on every run, not an increment: a rerun
+    for the same wave as child sessions finish yields a row that contains the previous
+    row in full. Wave W2 has four such rows, and summing them directly yields 800
+    articles for a 200-article wave.
 
-    Quy ước lấy dòng mới nhất đã có sẵn ở `estimate_wave.py`; hàm này để mọi công cụ
-    dùng chung đúng một quy ước, thay vì mỗi nơi tự cộng một kiểu rồi báo số khác nhau
-    về cùng một đợt.
+    The latest-row convention already exists in `estimate_wave.py`; this function lets
+    every tool share that single convention.
 
     Args:
-        rows: Các dòng sổ cái, đã sắp theo thứ tự ghi tăng dần.
+        rows: Ledger rows in ascending write order.
 
     Returns:
-        Danh sách dòng còn lại sau khi khử ảnh chụp cũ.
+        Rows remaining after older snapshots are removed.
     """
     latest: dict[tuple, object] = {}
     for r in rows:
@@ -167,13 +157,13 @@ def latest_snapshots(rows: list) -> list:
 
 
 def worker_calls(wave: str | None) -> int | None:
-    """Số lượt gọi worker thật của một đợt, đọc từ mô tả đợt trên đĩa.
+    """Return the real number of worker calls of a wave, read from the wave descriptor on disk.
 
     Args:
-        wave: Mã đợt.
+        wave: Wave identifier.
 
     Returns:
-        Số lượt gọi worker, hoặc None khi không có mô tả đợt.
+        Number of worker calls, or None when the wave descriptor is absent.
     """
     if not wave:
         return None
@@ -191,32 +181,33 @@ def worker_calls(wave: str | None) -> int | None:
 
 def cache_shortfall(cache_read: int, n_sessions: int, prefix_tokens: int,
                     calls: int | None = None) -> tuple[int, int]:
-    """Đối chiếu số token trúng bộ nhớ đệm thật với số tối thiểu phải trúng.
+    """Compare the measured cache-hit tokens with the minimum that must hit.
 
-    Mỗi lượt gọi worker gửi cùng một tiền tố tĩnh. Lượt đầu ghi cache, mọi lượt sau
-    phải đọc lại xấp xỉ trọn tiền tố ấy ở giá trúng cache. Sàn tối thiểu vì vậy là
-    `tiền tố × (số lượt gọi worker − 1)`; thấp hơn sàn nghĩa là tiền tố đã lệch giữa
-    các lượt, và phần lệch bị tính giá token mới, đắt hơn năm mươi lần.
+    Every worker call sends the same static prefix. The first call writes the cache and
+    each later call must read back roughly the whole prefix at the cache-hit price. The
+    minimum floor is therefore `prefix * (worker calls - 1)`; a value below the floor
+    means the prefix drifted between calls, and the drifted part is billed at the
+    uncached token price, which is about fifty times higher.
 
-    Đây là phép kiểm duy nhất phát hiện được cache trượt. Tỷ lệ trúng cache gộp cả
-    đợt **không** phát hiện được: nó vẫn cao khi các lượt lặp bước, ngay cả lúc tiền
-    tố trượt sạch.
+    This is the only check that detects cache slippage. The aggregate cache-hit ratio of
+    a wave does **not** detect it: the ratio stays high when calls repeat steps even if
+    the prefix misses entirely.
 
-    **Đếm theo lượt gọi worker, không theo số phiên.** Một đợt hai lô có tới bốn
-    phiên: phiên Conductor, lượt hâm, và hai lô. Phiên Conductor mang persona khác
-    và bộ tool khác nên nó **không** đọc tiền tố của worker; tính nó vào sàn là đòi
-    một khoản cache không bao giờ tồn tại, và cảnh báo sẽ kêu oan ở mọi đợt bình
-    thường — đúng kiểu cảnh báo tự huỷ giá trị của chính nó.
+    The count is by worker call, not by session. A two-batch wave has up to four
+    sessions: the Conductor session, the warm-up call and the two batches. The Conductor
+    session has a different persona and tool set, so it does **not** read the worker
+    prefix; counting it in the floor would demand a cache amount that never exists and
+    raise false alarms on every normal wave.
 
     Args:
-        cache_read: Số token trúng cache đo được của cả đợt.
-        n_sessions: Số phiên DSH của đợt, chỉ dùng khi không biết số lượt gọi.
-        prefix_tokens: Kích thước tiền tố tĩnh.
-        calls: Số lượt gọi worker thật. Bỏ trống thì suy từ số phiên, và khi ấy sàn
-            chỉ là ước lượng thô.
+        cache_read: Measured cache-hit tokens of the whole wave.
+        n_sessions: DSH session count of the wave, used only when the call count is unknown.
+        prefix_tokens: Size of the static prefix.
+        calls: Real number of worker calls. When omitted it is derived from the session
+            count, and the floor is then only a rough estimate.
 
     Returns:
-        Cặp gồm sàn tối thiểu và phần hụt so với sàn; hụt bằng 0 là đạt.
+        Pair of the minimum floor and the shortfall against it; a shortfall of 0 passes.
     """
     n = calls if calls else max(0, n_sessions - 1)
     expected = max(0, prefix_tokens) * max(0, n - 1)
@@ -224,13 +215,13 @@ def cache_shortfall(cache_read: int, n_sessions: int, prefix_tokens: int,
 
 
 def connect(db_path: str = HARNESS_DB) -> sqlite3.Connection:
-    """Mở kết nối sổ cái và bảo đảm lược đồ bảng đã tồn tại.
+    """Open the ledger connection and ensure the table schema exists.
 
     Args:
-        db_path: Đường dẫn tệp `harness.db`.
+        db_path: Path of the `harness.db` file.
 
     Returns:
-        Kết nối SQLite đã sẵn sàng dùng.
+        Ready-to-use SQLite connection.
     """
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
@@ -240,13 +231,13 @@ def connect(db_path: str = HARNESS_DB) -> sqlite3.Connection:
 
 
 def cmd_init(args: argparse.Namespace) -> int:
-    """Tạo bảng sổ cái nếu chưa có.
+    """Create the ledger table if it does not exist.
 
     Args:
-        args: Tham số dòng lệnh đã phân tích.
+        args: Parsed command-line arguments.
 
     Returns:
-        Mã thoát 0.
+        Exit code 0.
     """
     conn = connect(args.db)
     cols = [r["name"] for r in conn.execute("PRAGMA table_info(token_ledger)")]
@@ -256,16 +247,17 @@ def cmd_init(args: argparse.Namespace) -> int:
 
 
 def cmd_append(args: argparse.Namespace) -> int:
-    """Gộp số đo của các phiên phát sinh sau một mốc và ghi thành một dòng sổ cái.
+    """Aggregate the measurements of sessions created after a cutoff into one ledger row.
 
-    Chi phí của agent con không nằm trong số đo phiên cha vì mỗi con là một Session
-    riêng, nên hàm này quét toàn bộ phiên mới thay vì chỉ đọc phiên điều phối.
+    Child agent cost is not part of the parent session measurement because each child is
+    its own Session, so this function scans all new sessions instead of reading only the
+    coordinating session.
 
     Args:
-        args: Tham số dòng lệnh đã phân tích.
+        args: Parsed command-line arguments.
 
     Returns:
-        Mã thoát 0 khi ghi được, 2 khi không tìm thấy phiên nào trong khoảng.
+        Exit code 0 when a row is written, 2 when no session is found in the range.
     """
     since = args.since if args.since is not None else time.time() - args.window_min * 60
     workers_only = getattr(args, "workers_only", False)
@@ -295,8 +287,9 @@ def cmd_append(args: argparse.Namespace) -> int:
             print(f"⚠️  Tệp meta của đợt {args.wave} không ghi provider. Truyền --source.")
             return 2
         conn = connect(args.db)
-        # Số của runner cộng từ mọi tệp meta của đợt nên đã là ảnh chụp trọn đợt:
-        # chạy lại `--finish` thay mọi dòng runner cũ của đợt thay vì thêm dòng trùng.
+        # Runner figures are summed from every meta file of the wave, so they already form
+        # a full-wave snapshot: a rerun of `--finish` replaces all earlier runner rows of
+        # the wave instead of adding duplicates.
         conn.execute("DELETE FROM token_ledger WHERE wave IS ? AND batch_id IS ? "
                      "AND agent_id LIKE 'article-processor-%'", (args.wave, args.batch))
         single = len(totals) == 1
@@ -382,8 +375,8 @@ def cmd_append(args: argparse.Namespace) -> int:
         print(f"   ⚠️ turns_max={turns_max}: có phiên chạy quá 1 bước, soi lại persona worker")
 
     pfx = args.prefix_tokens or cached_prefix_tokens()
-    # Ở chế độ chỉ tính worker, mọi phiên còn lại đều là lượt gọi worker, nên chính
-    # số phiên là số lượt gọi khi mô tả đợt không có.
+    # In workers-only mode every remaining session is a worker call, so the session
+    # count is the call count when the wave descriptor is absent.
     calls = (args.worker_calls or worker_calls(args.wave)
              or (len(wave.sessions) if workers_only else None))
     expected_hit, shortfall = cache_shortfall(wave.cache_read, len(wave.sessions), pfx,
@@ -404,19 +397,19 @@ def cmd_append(args: argparse.Namespace) -> int:
         else:
             print(f"   ✅ bộ nhớ đệm trúng: hit {wave.cache_read:,} token so với sàn "
                   f"{expected_hit:,}")
-    # Token mỗi bài chỉ được ghi và in ra để người dùng tự đánh giá. Không có ngưỡng
-    # nào so với nó, theo bài, theo lô hay theo đợt.
+    # Tokens per article are only recorded and printed for the user to judge; no
+    # threshold applies to them per article, batch or wave.
     return 0
 
 
 def _fmt_row(r: sqlite3.Row) -> str:
-    """Định dạng một dòng sổ cái thành chuỗi hiển thị.
+    """Format one ledger row as a display string.
 
     Args:
-        r: Dòng dữ liệu đọc từ bảng sổ cái.
+        r: Row read from the ledger table.
 
     Returns:
-        Chuỗi một dòng đã canh cột.
+        Single-line string with aligned columns.
     """
     per = (r["quota_tokens"] / r["n_items"]) if r["n_items"] else 0
     reasoning = "—" if r["reasoning_tokens"] is None else f"{r['reasoning_tokens']:,}"
@@ -426,13 +419,13 @@ def _fmt_row(r: sqlite3.Row) -> str:
 
 
 def cmd_report(args: argparse.Namespace) -> int:
-    """In báo cáo sổ cái theo đợt hoặc theo ngày.
+    """Print the ledger report filtered by wave or by day.
 
     Args:
-        args: Tham số dòng lệnh đã phân tích.
+        args: Parsed command-line arguments.
 
     Returns:
-        Mã thoát 0.
+        Exit code 0.
     """
     conn = connect(args.db)
     sql = "SELECT * FROM token_ledger"
@@ -465,9 +458,9 @@ def cmd_report(args: argparse.Namespace) -> int:
     for r in rows:
         print(_fmt_row(r))
 
-    # Cộng trên ảnh chụp mới nhất của mỗi đợt. Bảng bên trên vẫn in đủ mọi dòng vì
-    # đó là sổ cái và người vận hành cần thấy nguyên trạng, nhưng phần cộng thì không
-    # được đếm một đợt nhiều lần.
+    # Totals use the latest snapshot of each wave. The table above prints every row
+    # because the operator needs the ledger as recorded, but the totals must not count
+    # a wave more than once.
     unique = latest_snapshots(list(reversed(rows)))
     tot_items = sum(r["n_items"] for r in unique)
     tot_quota = sum(r["quota_tokens"] for r in unique)
@@ -488,13 +481,13 @@ def cmd_report(args: argparse.Namespace) -> int:
 
 
 def cmd_verify(args: argparse.Namespace) -> int:
-    """Đối soát sáu luật kế toán trên dữ liệu phiên thật.
+    """Check the six accounting rules against real session data.
 
     Args:
-        args: Tham số dòng lệnh đã phân tích.
+        args: Parsed command-line arguments.
 
     Returns:
-        Mã thoát 0 khi mọi luật kiểm được đều đạt, 1 khi có luật sai.
+        Exit code 0 when every checkable rule passes, 1 when a rule fails.
     """
     from src.telemetry.dsh_usage import find_session_log, iter_sessions, message_usage
 
@@ -545,13 +538,13 @@ def cmd_verify(args: argparse.Namespace) -> int:
 
 
 def main(argv=None) -> int:
-    """Chạy giao diện dòng lệnh của sổ cái token.
+    """Run the command-line interface of the token ledger.
 
     Args:
-        argv: Danh sách tham số dòng lệnh. Mặc định lấy từ `sys.argv`.
+        argv: Command-line arguments; defaults to `sys.argv`.
 
     Returns:
-        Mã thoát của lệnh con được chọn.
+        Exit code of the selected subcommand.
     """
     ap = argparse.ArgumentParser(description="Sổ cái token đọc số thật từ runtime DSH")
     ap.add_argument("--db", default=HARNESS_DB, help="Đường dẫn harness.db")

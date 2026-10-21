@@ -1,4 +1,4 @@
-"""Trích xuất và kết xuất bài viết mẫu đại diện từ các nguồn thu thập."""
+"""Extract and render representative sample articles from the collected sources."""
 
 from __future__ import annotations
 
@@ -30,7 +30,7 @@ _SNIP = 240
 _RAW_VAL = 110
 OUT_DIR = paths.logs_dir() / "sample_articles"
 
-# Phân nhóm theo tầng nguồn tin — khớp taxonomy docs/domains/
+# Grouping by source layer; matches the docs/domains/ taxonomy.
 GROUPS = {
     "01-layer0-exchanges": {
         "title": "Layer 0 — Nguồn chính thống Sở Giao dịch",
@@ -65,15 +65,18 @@ GROUPS = {
 
 
 def _t(s, n=_SNIP) -> str:
+    """Collapse a value to a single line truncated to a maximum length."""
     s = str(s or "").strip().replace("\n", " ")
     return (s[: n] + "…") if len(s) > n else s
 
 
 def _anchor(name: str) -> str:
+    """Build a Markdown anchor slug from a domain name."""
     return name.lower().replace(" ", "-")
 
 
 def _flow_description(cfg: dict) -> list[str]:
+    """Describe the fetch flow configured for a domain as Markdown lines."""
     lines = []
     method = cfg.get("method")
     if method == "rss":
@@ -112,6 +115,7 @@ def _flow_description(cfg: dict) -> list[str]:
 
 
 def _raw_block(raw: dict) -> list[str]:
+    """Render a raw source item as a Markdown block."""
     lines = ["**[1] RAW — item thô từ nguồn:**", "", "```"]
     shown = 0
     for k, v in raw.items():
@@ -127,6 +131,7 @@ def _raw_block(raw: dict) -> list[str]:
 
 
 def _db_row_block(a) -> list[str]:
+    """Render the database row of an article as a Markdown table."""
     row = a.to_row()
     lines = ["**[6] DB ROW — bảng `articles` (INSERT OR IGNORE qua DBWriter):**", "",
              "| Cột | Giá trị |", "|-----|---------|"]
@@ -144,7 +149,7 @@ def _db_row_block(a) -> list[str]:
 
 
 def _nlp_apply(a, sentiment_engine):
-    """Đúng logic orchestrator.run_cycle: classify + sentiment (vi only)."""
+    """Apply classification and sentiment as in `orchestrator.run_cycle` (sentiment for `vi` only)."""
     for cat in classify_rule_based(a.title, a.content_text):
         if cat not in a.categories and cat != "uncategorized":
             a.categories.append(cat)
@@ -156,7 +161,7 @@ def _nlp_apply(a, sentiment_engine):
 
 
 def _full_pipeline_block(cfg, scraper, raw, a, dedup, sentiment_engine) -> list[str]:
-    """Bài minh hoạ: đầy đủ 6 giai đoạn."""
+    """Render the demonstration article through all six pipeline stages."""
     out = _raw_block(raw) + [""]
     out += ["**[2] PARSE → Article chuẩn hoá:**", "",
             f"- url: {a.url}",
@@ -196,7 +201,7 @@ def _full_pipeline_block(cfg, scraper, raw, a, dedup, sentiment_engine) -> list[
 
 
 def _compact_card(scraper, raw, a, sentiment_engine) -> list[str]:
-    """Bài phụ: thẻ gọn — vẫn chạy đủ enrich+NLP nhưng chỉ hiện kết quả chính."""
+    """Render a secondary article as a compact card; enrich and NLP still run in full."""
     try:
         scraper.enrich(a)
     except Exception:
@@ -216,6 +221,15 @@ def _compact_card(scraper, raw, a, sentiment_engine) -> list[str]:
 
 
 def dump(only: list[str] | None = None, n: int = 2) -> int:
+    """Write the sample article report set to the output directory.
+
+    Args:
+        only: Domain names to include; all domains when None.
+        n: Number of sample articles per feed (RSS) or in total (API).
+
+    Returns:
+        Exit code 0.
+    """
     setup_logging("ERROR")
     store = ArticleStore()
     dedup = DedupCache(store)
@@ -224,9 +238,9 @@ def dump(only: list[str] | None = None, n: int = 2) -> int:
 
     all_names = list_domains(enabled_only=False)
     grouped = set(d for g in GROUPS.values() for d in g["domains"])
-    ungrouped = [d for d in all_names if d not in grouped]   # domain mới chưa xếp nhóm
+    ungrouped = [d for d in all_names if d not in grouped]   # domains not yet assigned to a group
 
-    summary_rows = []      # bảng tổng quan cho README
+    summary_rows = []      # overview table for the README
     group_files: dict[str, list[str]] = {}
 
     for gkey, ginfo in GROUPS.items():
@@ -278,7 +292,7 @@ def dump(only: list[str] | None = None, n: int = 2) -> int:
             if scraper.errors:
                 body += ["⚠️ **Lỗi fetch:** " + "; ".join(scraper.errors[:5]), ""]
 
-            # chọn mẫu: RSS → n bài/feed; API → n bài đầu
+            # sampling: RSS takes n articles per feed; API takes the first n
             picked = []
             if is_rss:
                 per_feed: dict[str, int] = {}
@@ -309,7 +323,7 @@ def dump(only: list[str] | None = None, n: int = 2) -> int:
                 summary_rows.append((gkey, name, cfg.get("method"), n_feeds, len(raw_items), 0, "no-parse"))
                 continue
 
-            # Bài 1: pipeline đầy đủ; các bài sau: thẻ gọn
+            # First article: full pipeline; remaining articles: compact cards
             raw0, a0 = picked[0]
             feed_tag = f" — feed: `{raw0['_feed_name']}`" if raw0.get("_feed_name") else ""
             body += [f"### 🔬 Pipeline đầy đủ — bài minh hoạ: {a0.title}{feed_tag}", ""]
@@ -326,7 +340,7 @@ def dump(only: list[str] | None = None, n: int = 2) -> int:
                                  len(raw_items), len(picked), note.strip("/") or "—"))
         group_files[gkey] = body
 
-    # ---- README index ----
+    # README index
     readme = [
         "# Sample Articles — Index & Tổng quan",
         "",
@@ -366,7 +380,7 @@ def dump(only: list[str] | None = None, n: int = 2) -> int:
         readme += [f"| [{name}]({gkey}.md#{_anchor(name)}) | {gkey[3:]} | {method} "
                    f"| {n_feeds} | {items} | {samples} | {note} |"]
 
-    # đối chiếu DB
+    # cross-check against the DB
     try:
         conn = store._connect()
         rows = conn.execute("SELECT source_domain, COUNT(*) n FROM articles "

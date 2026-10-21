@@ -1,4 +1,4 @@
-"""Tiện ích cấu hình luồng xuất nhập chuẩn UTF-8 trên môi trường hệ điều hành Windows."""
+"""Configure UTF-8 standard streams for Windows consoles."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ import sys
 
 
 def force_utf8_stdio() -> None:
-    """Thiết lập mã hóa UTF-8 cho stdout và stderr nhằm phòng chống lỗi ký tự trên Windows."""
+    """Reconfigure stdout and stderr to UTF-8 to avoid character encoding errors on Windows."""
     for stream in (sys.stdout, sys.stderr):
         try:
             stream.reconfigure(encoding="utf-8", errors="replace")

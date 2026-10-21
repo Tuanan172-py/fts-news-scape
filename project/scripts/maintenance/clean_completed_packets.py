@@ -1,14 +1,14 @@
-"""Dọn task packet ĐÃ HOÀN TẤT, giữ nguyên packet chưa ai xử lý.
-
-Thay cho lệnh xoá trắng cũ trong `run_daily.ps1` (`Get-ChildItem -Recurse` rồi xoá mọi
-`*.task.json`), vốn quét luôn `data/agent_tasks/l1/` và có thể xoá hàng trăm packet chưa
-ai chạm tới (ADR 0008 §1, `docs/OPEN-ITEMS.md` §A0-2).
-
-Bằng chứng hoàn tất lấy từ database, không suy đoán theo tên tệp:
-  - packet L1   → `l1_outputs.dod_pass = 1` và không phải bản code-first
-  - packet Gold → `agent_outputs.dod_pass = 1`
-Packet gom lô chỉ bị xoá khi TOÀN BỘ bài bên trong đều đã hoàn tất.
+"""Delete completed task packets and keep every packet nobody has processed.
 """
+
+# Replaces the former blanket delete in `run_daily.ps1` (`Get-ChildItem -Recurse` removing
+# every `*.task.json`), which also swept `data/agent_tasks/l1/` and could delete hundreds
+# of untouched packets (ADR 0008 section 1, `docs/OPEN-ITEMS.md` A0-2).
+#
+# Completion evidence comes from the database, never from file names:
+#   - L1 packet: `l1_outputs.dod_pass = 1` and not a code-first record
+#   - Gold packet: `agent_outputs.dod_pass = 1`
+# A batched packet is deleted only when ALL articles inside it are complete.
 
 from __future__ import annotations
 
@@ -31,13 +31,13 @@ TASK_DIR = str(paths.agent_tasks_dir())
 
 
 def _article_ids(packet_path: Path) -> list[str]:
-    """Trích danh sách article_id mà một packet phụ trách.
+    """Extract the article ids a packet is responsible for.
 
     Args:
-        packet_path: Đường dẫn tệp `.task.json` (đơn lẻ hoặc gom lô).
+        packet_path: Path of the `.task.json` file (single or batched).
 
     Returns:
-        Danh sách mã bài; rỗng khi không đọc được (packet hỏng).
+        List of article ids; empty when the packet is unreadable (corrupt).
     """
     try:
         data = json.loads(packet_path.read_text(encoding="utf-8"))
@@ -54,17 +54,18 @@ def _article_ids(packet_path: Path) -> list[str]:
 
 
 def _is_done(conn, article_id: str, is_l1: bool) -> bool:
-    """Kiểm tra một bài đã hoàn tất ở tầng tương ứng chưa.
+    """Check whether an article is complete at the matching layer.
 
-    Bản code-first không tính là hoàn tất, nên packet của bài chỉ có bản ấy được giữ.
+    A code-first record does not count as complete, so the packet of an article that has
+    only that record is kept.
 
     Args:
-        conn: Kết nối SQLite.
-        article_id: Mã bài.
-        is_l1: True khi xét tầng nhận diện (`l1_outputs`), False khi xét `agent_outputs`.
+        conn: SQLite connection.
+        article_id: Article id.
+        is_l1: True to check the entity-detection layer (`l1_outputs`), False for `agent_outputs`.
 
     Returns:
-        True khi bài đã có bản ghi đạt ở tầng tương ứng.
+        True when the article has a passing record at the matching layer.
     """
     if is_l1:
         table, cond = "l1_outputs", analyzed_l1_sql()
@@ -77,6 +78,14 @@ def _is_done(conn, article_id: str, is_l1: bool) -> bool:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Delete completed task packets, or list them in dry-run mode.
+
+    Args:
+        argv: Command-line arguments; defaults to `sys.argv[1:]`.
+
+    Returns:
+        Process exit code, always 0.
+    """
     p = argparse.ArgumentParser(description=(__doc__ or "").strip().splitlines()[0])
     p.add_argument("--task-dir", default=TASK_DIR)
     p.add_argument("--db-path", default=None)
@@ -93,12 +102,12 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         for packet in sorted(root.rglob("*.task.json")):
-            # `archive/` do chính sách retention quản (Q8), không thuộc việc dọn packet.
+            # `archive/` is governed by the retention policy (Q8), not by packet cleanup.
             if "archive" in packet.parts:
                 continue
             ids = _article_ids(packet)
             if not ids:
-                # Không đọc được nội dung thì KHÔNG xoá — im lặng xoá là mất dữ liệu.
+                # Unreadable content is never deleted: a silent delete loses data.
                 unreadable += 1
                 kept += 1
                 continue

@@ -1,8 +1,4 @@
-"""Kiểm định chất lượng các trường dữ liệu của bài viết theo lược đồ schema.yaml.
-
-Cung cấp lớp DomainValidator và các cấu trúc dữ liệu thống kê để theo dõi tỷ lệ
-điền đầy (fill rate), độ khớp định dạng (pattern match) và phát hiện bất thường (anomaly).
-"""
+"""Validate article field quality against the schema.yaml definition of each domain."""
 
 from __future__ import annotations
 
@@ -22,17 +18,17 @@ DOMAINS_DIR = Path(__file__).resolve().parents[2] / "domains"
 
 @dataclass
 class FieldStats:
-    """Số liệu thống kê chất lượng dữ liệu của một trường sau kiểm định.
+    """Data quality statistics of one field after validation.
 
     Attributes:
-        field_name: Tên trường dữ liệu.
-        total: Tổng số bài viết được kiểm tra.
-        present: Số lượng bài viết có trường dữ liệu này.
-        missing: Số lượng bài viết thiếu trường dữ liệu.
-        pattern_matches: Số lượng bài viết khớp định dạng quy chuẩn.
-        pattern_fails: Số lượng bài viết không khớp định dạng.
-        avg_length: Độ dài chuỗi ký tự trung bình của trường.
-        status: Trạng thái đánh giá tổng quát ('ok', 'warn', 'fail').
+        field_name: Field name.
+        total: Total number of articles checked.
+        present: Number of articles that have the field.
+        missing: Number of articles that lack the field.
+        pattern_matches: Number of articles that match the expected pattern.
+        pattern_fails: Number of articles that do not match the pattern.
+        avg_length: Average string length of the field.
+        status: Overall status ('ok', 'warn', 'fail').
     """
 
     field_name: str
@@ -46,26 +42,26 @@ class FieldStats:
 
     @property
     def fill_rate(self) -> float:
-        """Tỷ lệ bài viết có điền dữ liệu trên tổng số bài."""
+        """Fraction of articles that have the field filled."""
         return self.present / self.total if self.total > 0 else 1.0
 
     @property
     def pattern_rate(self) -> float:
-        """Tỷ lệ dữ liệu khớp mẫu định dạng biểu thức chính quy."""
+        """Fraction of present values that match the regular-expression pattern."""
         return self.pattern_matches / self.present if self.present > 0 else 1.0
 
 
 @dataclass
 class Anomaly:
-    """Bản ghi phát hiện dấu hiệu bất thường về chất lượng dữ liệu.
+    """Record of a data quality anomaly.
 
     Attributes:
-        field: Tên trường dữ liệu có bất thường.
-        issue: Mã định danh vấn đề phát hiện.
-        current_value: Giá trị đo lường hiện tại.
-        baseline_value: Giá trị chuẩn đối chiếu (nếu có).
-        delta_pct: Tỷ lệ phần trăm sai lệch so với chuẩn.
-        severity: Mức độ nghiêm trọng ('info', 'warn', 'critical').
+        field: Field that shows the anomaly.
+        issue: Identifier of the issue found.
+        current_value: Current measured value.
+        baseline_value: Reference value, if any.
+        delta_pct: Percentage deviation from the baseline.
+        severity: Severity ('info', 'warn', 'critical').
     """
 
     field: str
@@ -78,14 +74,14 @@ class Anomaly:
 
 @dataclass
 class ValidationReport:
-    """Báo cáo tổng hợp kết quả kiểm định chất lượng dữ liệu của một tên miền.
+    """Summary report of the data quality validation of one domain.
 
     Attributes:
-        domain: Tên miền của nguồn tin tức.
-        timestamp: Thời điểm lập báo cáo kiểm định theo chuẩn ISO 8601.
-        article_count: Tổng số bài viết được kiểm định.
-        fields: Bản đồ số liệu thống kê chi tiết theo từng trường.
-        anomalies: Danh sách các điểm bất thường phát hiện được.
+        domain: Domain of the news source.
+        timestamp: ISO 8601 time the report was produced.
+        article_count: Total number of articles validated.
+        fields: Detailed statistics per field.
+        anomalies: Anomalies found.
     """
 
     domain: str
@@ -96,40 +92,49 @@ class ValidationReport:
 
     @property
     def has_anomalies(self) -> bool:
-        """Kiểm tra báo cáo có ghi nhận bất thường hay không."""
+        """Whether the report records any anomaly."""
         return len(self.anomalies) > 0
 
     @property
     def has_critical(self) -> bool:
-        """Kiểm tra báo cáo có bất thường mức độ nghiêm trọng (critical) hay không."""
+        """Whether the report records a critical anomaly."""
         return any(a.severity == "critical" for a in self.anomalies)
 
     def anomalies_summary(self) -> str:
-        """Tóm tắt ngắn gọn danh sách các điểm bất thường phát hiện được."""
+        """Summarize the anomalies found in one line.
+
+        Returns:
+            Up to the first 5 anomalies as `field:issue` joined by semicolons, or `none`.
+        """
         if not self.anomalies:
             return "none"
         return "; ".join(f"{a.field}:{a.issue}" for a in self.anomalies[:5])
 
 
 class DomainValidator:
-    """Bộ kiểm tra tính tuân thủ trường dữ liệu của bài viết so với cấu hình domain.
+    """Check article field compliance against the domain configuration.
 
     Attributes:
-        store: Đối tượng cơ sở dữ liệu để truy vấn số liệu tham chiếu lịch sử.
+        store: Database object used to query historical reference metrics.
     """
 
     def __init__(self, store=None):
+        """Initialize the validator.
+
+        Args:
+            store: Database object for historical metrics; None disables baseline lookups.
+        """
         self.store = store
         self._schemas: dict[str, dict] = {}
 
     def load_schema(self, domain: str) -> dict | None:
-        """Tải cấu hình schema.yaml cho một tên miền nguồn tin tức.
+        """Load the schema.yaml configuration of a news source domain.
 
         Args:
-            domain: Tên định danh của tên miền nguồn (ví dụ: 'cafef').
+            domain: Identifier of the source domain (for example 'cafef').
 
         Returns:
-            Từ điển cấu hình lược đồ, hoặc None nếu không tìm thấy tệp.
+            Schema config dict, or None if the file is not found.
         """
         if domain in self._schemas:
             return self._schemas[domain]
@@ -144,14 +149,14 @@ class DomainValidator:
     def validate_articles(
         self, domain: str, articles: list[Article]
     ) -> ValidationReport:
-        """Kiểm định một tập hợp bài viết so với lược đồ định nghĩa của tên miền.
+        """Validate a set of articles against the schema of the domain.
 
         Args:
-            domain: Tên miền nguồn cần kiểm định.
-            articles: Danh sách đối tượng bài viết Article.
+            domain: Source domain to validate.
+            articles: Article objects.
 
         Returns:
-            Đối tượng ValidationReport tổng hợp kết quả kiểm định.
+            ValidationReport with the validation results.
         """
         schema = self.load_schema(domain)
         if not schema:
@@ -219,7 +224,16 @@ class DomainValidator:
     def _validate_field(
         self, articles: list[Article], field_name: str, spec: dict
     ) -> FieldStats:
-        """Validate 1 field trên batch articles."""
+        """Validate one field across a batch of articles.
+
+        Args:
+            articles: Articles to check.
+            field_name: Field name, possibly dotted.
+            spec: Field specification from the schema.
+
+        Returns:
+            Statistics of the field.
+        """
         stats = FieldStats(field_name=field_name, total=len(articles))
         pattern = spec.get("pattern")
         min_length = spec.get("min_length", 0)
@@ -233,7 +247,7 @@ class DomainValidator:
             )
 
             if expected_empty:
-                # Field này kỳ vọng luôn rỗng (vd: author của CafeF)
+                # This field is expected to be always empty (for example the CafeF author).
                 if not present:
                     stats.present += 1
                 else:
@@ -262,7 +276,15 @@ class DomainValidator:
         return stats
 
     def _get_field_value(self, article: Article, field_name: str) -> Any:
-        """Lấy field value từ Article object, hỗ trợ nested (vd: metadata.image)."""
+        """Read a field value from an Article, with support for nested names (for example metadata.image).
+
+        Args:
+            article: Article object.
+            field_name: Field name, possibly dotted.
+
+        Returns:
+            Field value, or None if absent.
+        """
         if "." in field_name:
             parts = field_name.split(".")
             obj = getattr(article, parts[0], None)
@@ -275,6 +297,15 @@ class DomainValidator:
         return getattr(article, field_name, None)
 
     def _compute_status(self, stats: FieldStats, spec: dict) -> str:
+        """Compute the status of a field from its fill rate.
+
+        Args:
+            stats: Statistics of the field.
+            spec: Field specification from the schema.
+
+        Returns:
+            'ok', 'warn' or 'fail'.
+        """
         threshold = spec.get("health_threshold", 1.0)
         if stats.fill_rate >= threshold:
             return "ok"
@@ -283,7 +314,15 @@ class DomainValidator:
         return "fail"
 
     def load_baseline(self, domain: str, days: int = 7) -> dict | None:
-        """Đọc baseline field stats từ DB metrics trong N ngày qua."""
+        """Read the baseline scraper statistics from the database metrics of the last N days.
+
+        Args:
+            domain: Scraper name.
+            days: Number of days to look back.
+
+        Returns:
+            Dict with cycle count and article totals, or None if there is no store or no data.
+        """
         if not self.store:
             return None
 
@@ -322,7 +361,16 @@ class DomainValidator:
     def detect_count_anomaly(
         self, domain: str, current_new: int, alert_thresholds: dict
     ) -> list[Anomaly]:
-        """Detect article count anomaly vs baseline."""
+        """Detect an article count anomaly against the baseline.
+
+        Args:
+            domain: Scraper name.
+            current_new: Number of new articles in the current cycle.
+            alert_thresholds: Alert settings; `article_count_drop_pct` is the allowed drop.
+
+        Returns:
+            Anomalies found; empty when there is no baseline or no significant drop.
+        """
         baseline = self.load_baseline(domain)
         if not baseline:
             return []
@@ -349,7 +397,15 @@ class DomainValidator:
     def validate_raw_response(
         self, domain: str, raw_items: list[dict]
     ) -> dict[str, FieldStats]:
-        """Validate raw response structure (field presence, type)."""
+        """Validate the raw response structure (field presence).
+
+        Args:
+            domain: Source domain.
+            raw_items: Raw response items.
+
+        Returns:
+            Statistics per expected raw field; empty when the schema is missing.
+        """
         schema = self.load_schema(domain)
         if not schema:
             return {}

@@ -1,4 +1,4 @@
-"""Nạp cấu hình, đường dẫn và bí mật cho tầng vận hành tự chủ."""
+"""Load configuration, paths and secrets for the autonomous operations layer."""
 
 from __future__ import annotations
 
@@ -44,14 +44,14 @@ DEFAULTS: dict[str, Any] = {
 
 
 def _merge(base: dict, override: dict) -> dict:
-    """Trộn đệ quy hai từ điển, giá trị của `override` thắng.
+    """Merge two dicts recursively, with `override` values taking precedence.
 
     Args:
-        base: Từ điển gốc.
-        override: Từ điển ghi đè.
+        base: Base dict.
+        override: Overriding dict.
 
     Returns:
-        Từ điển mới đã trộn.
+        New merged dict.
     """
     out = copy.deepcopy(base)
     for k, v in (override or {}).items():
@@ -63,13 +63,13 @@ def _merge(base: dict, override: dict) -> dict:
 
 
 def load_config(path: Path | None = None) -> dict[str, Any]:
-    """Đọc `config/ops.yaml` và trộn với giá trị mặc định.
+    """Read `config/ops.yaml` and merge it with the defaults.
 
     Args:
-        path: Đường dẫn tệp cấu hình. Mặc định là `config/ops.yaml` của dự án.
+        path: Configuration file path. Defaults to the project `config/ops.yaml`.
 
     Returns:
-        Từ điển cấu hình đầy đủ.
+        Full configuration dict.
     """
     p = Path(path) if path else CONFIG_PATH
     data: dict[str, Any] = {}
@@ -80,19 +80,19 @@ def load_config(path: Path | None = None) -> dict[str, Any]:
 
 @dataclass(frozen=True)
 class OpsPaths:
-    """Tập đường dẫn vận hành, đều nằm ngoài OneDrive.
+    """Set of operations paths, all located outside OneDrive.
 
     Attributes:
-        data_dir: Thư mục dữ liệu vận hành.
-        ops_db: DB sự kiện, cảnh báo, breaker và trạng thái.
-        dbos_db: DB hệ thống của DBOS (checkpoint workflow).
-        log_dir: Thư mục nhật ký JSONL và log từng bước.
-        kill_switch: Tệp cờ dừng khẩn cấp.
-        pipeline_lock: Tệp khoá đơn tiến trình dùng chung với `article_tick.py`.
-        daemon_lock: Tệp khoá một thể hiện của daemon.
-        standing_order: Tệp chỉ lệnh uỷ quyền vận hành có thời hạn.
-        secrets_file: Tệp bí mật dạng KEY=VALUE.
-        harness_db: `harness.db` nhận KPI từng tác nhân (`agent_metrics`).
+        data_dir: Operations data directory.
+        ops_db: Database of events, alerts, breakers and state.
+        dbos_db: DBOS system database (workflow checkpoints).
+        log_dir: Directory of JSONL logs and per-step logs.
+        kill_switch: Emergency stop flag file.
+        pipeline_lock: Single-process lock file shared with `article_tick.py`.
+        daemon_lock: Lock file that keeps the daemon to one instance.
+        standing_order: File holding the time-limited operations mandate.
+        secrets_file: Secrets file in KEY=VALUE format.
+        harness_db: `harness.db`, which receives per-agent KPIs (`agent_metrics`).
     """
 
     data_dir: Path
@@ -108,16 +108,16 @@ class OpsPaths:
 
 
 def resolve_paths(data_dir: Path | None = None) -> OpsPaths:
-    """Dựng tập đường dẫn vận hành từ `MONOCLE_DATA_DIR` hoặc thư mục chỉ định.
+    """Build the operations paths from `MONOCLE_DATA_DIR` or a given directory.
 
     Args:
-        data_dir: Thư mục dữ liệu. Mặc định `src.core.paths.data_root()`.
+        data_dir: Data directory. Defaults to `src.core.paths.data_root()`.
 
     Returns:
-        Đối tượng OpsPaths.
+        The OpsPaths object.
 
     Raises:
-        RuntimeError: Khi thư mục dữ liệu nằm trong OneDrive hoặc SharePoint.
+        RuntimeError: If the data directory is inside OneDrive or SharePoint.
     """
     d = data_paths.check_data_root(Path(data_dir)) if data_dir else data_paths.data_root()
     return OpsPaths(
@@ -130,22 +130,22 @@ def resolve_paths(data_dir: Path | None = None) -> OpsPaths:
         daemon_lock=d / "ops_daemon.lock",
         standing_order=d / "agy_standing_order.yaml",
         secrets_file=d / "secrets" / "ops.env",
-        # Thư mục chỉ định tường minh (kiểm thử) thì KPI ghi vào đó, không đụng DB thật.
+        # An explicitly given directory (tests) receives the KPIs, leaving the real DB untouched.
         harness_db=(PROJECT_ROOT.parent / "harness.db") if data_dir is None else d / "harness.db",
     )
 
 
 def load_secrets(paths: OpsPaths) -> dict[str, str]:
-    """Đọc bí mật từ tệp `secrets/ops.env`, biến môi trường ghi đè.
+    """Read secrets from `secrets/ops.env`, with environment variables taking precedence.
 
-    Khoá được dùng: `NEWS_SCAPE_TG_TOKEN`, `NEWS_SCAPE_TG_CHAT_IDS` (phân tách bằng dấu
-    phẩy), `NEWS_SCAPE_HC_URL`.
+    Keys in use: `NEWS_SCAPE_TG_TOKEN`, `NEWS_SCAPE_TG_CHAT_IDS` (comma-separated),
+    `NEWS_SCAPE_HC_URL`.
 
     Args:
-        paths: Tập đường dẫn vận hành.
+        paths: Operations paths.
 
     Returns:
-        Từ điển bí mật, có thể rỗng.
+        Secrets dict, possibly empty.
     """
     out: dict[str, str] = {}
     if paths.secrets_file.exists():
@@ -162,12 +162,12 @@ def load_secrets(paths: OpsPaths) -> dict[str, str]:
 
 
 def write_secret(paths: OpsPaths, key: str, value: str) -> None:
-    """Ghi hoặc thay một khoá trong tệp bí mật.
+    """Write or replace one key in the secrets file.
 
     Args:
-        paths: Tập đường dẫn vận hành.
-        key: Tên khoá.
-        value: Giá trị.
+        paths: Operations paths.
+        key: Key name.
+        value: Key value.
     """
     paths.secrets_file.parent.mkdir(parents=True, exist_ok=True)
     lines: list[str] = []

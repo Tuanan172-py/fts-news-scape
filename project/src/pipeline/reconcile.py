@@ -1,4 +1,4 @@
-"""Đối chiếu độc lập kho bài với sitemap của nguồn và ghi độ phủ thu thập (rule 10)."""
+"""Reconcile the article store against source sitemaps independently and record capture coverage (rule 10)."""
 
 from __future__ import annotations
 
@@ -17,21 +17,22 @@ from src.db import registry
 VN_TZ = timezone(timedelta(hours=7))
 Fetch = Callable[[str], str | None]
 
-# Nguồn có sitemap dùng được. Nguồn không nằm trong bảng này (vietstock, vietnambiz,
-# thoibaotaichinhvietnam) chưa có kênh đối chiếu độc lập và được radar ghi rõ là "không có".
+# Sources with a usable sitemap. Sources absent here (vietstock, vietnambiz,
+# thoibaotaichinhvietnam) have no independent reconciliation channel and the radar reports
+# them explicitly as "none".
 REFERENCE_DOMAINS = ("baodautu.vn", "tinnhanhchungkhoan.vn", "cafef.vn", "vneconomy.vn")
 
 _CAFEF_WINDOW = re.compile(r"sitemaps-(\d{4})-(\d{1,2})-(\d{1,2})-(\d{1,2})\.xml$")
 
 
 def parse_urlset(xml: str) -> list[tuple[str, str]]:
-    """Trích các cặp (loc, lastmod) từ một sitemap dạng urlset hoặc sitemapindex.
+    """Extract (loc, lastmod) pairs from a urlset or sitemapindex sitemap.
 
     Args:
-        xml: Nội dung XML của sitemap.
+        xml: XML content of the sitemap.
 
     Returns:
-        Danh sách (url, lastmod); lastmod là chuỗi rỗng khi sitemap không khai báo.
+        List of (url, lastmod); lastmod is an empty string when the sitemap omits it.
     """
     try:
         root = ET.fromstring(xml)
@@ -52,20 +53,21 @@ def parse_urlset(xml: str) -> list[tuple[str, str]]:
 
 
 def _month_days(start: date, end: date) -> list[date]:
+    """Return every date from start to end inclusive."""
     return [start + timedelta(days=i) for i in range((end - start).days + 1)]
 
 
 def sitemap_urls(domain: str, start: date, end: date, fetch: Fetch) -> list[str]:
-    """Liệt kê URL sitemap bài viết của một nguồn cho khoảng ngày cần đối chiếu.
+    """List the article sitemap URLs of a source for the date range to reconcile.
 
     Args:
-        domain: Tên miền nguồn nằm trong REFERENCE_DOMAINS.
-        start: Ngày đầu của khoảng.
-        end: Ngày cuối của khoảng.
-        fetch: Hàm tải văn bản từ URL, trả None khi lỗi.
+        domain: Source domain listed in REFERENCE_DOMAINS.
+        start: First day of the range.
+        end: Last day of the range.
+        fetch: Function that downloads text from a URL, returning None on failure.
 
     Returns:
-        Danh sách URL sitemap cần tải.
+        Sitemap URLs to download.
     """
     months = sorted({(d.year, d.month) for d in _month_days(start, end)})
     if domain == "baodautu.vn":
@@ -93,26 +95,28 @@ def sitemap_urls(domain: str, start: date, end: date, fetch: Fetch) -> list[str]
 
 
 def _is_article_loc(loc: str) -> bool:
+    """Return True if the URL has a non-empty path."""
     return len(urlsplit(loc).path.strip("/")) > 0
 
 
 def _day_of(lastmod: str, today: date) -> str:
+    """Return the ISO day of lastmod, or today's ISO date when lastmod is missing."""
     return lastmod[:10] if len(lastmod) >= 10 else today.isoformat()
 
 
 def collect_reference(domain: str, start: date, end: date, fetch: Fetch,
                       today: date | None = None) -> dict[str, dict[str, str]]:
-    """Gom URL bài từ sitemap của nguồn, nhóm theo ngày.
+    """Collect article URLs from a source sitemap, grouped by day.
 
     Args:
-        domain: Tên miền nguồn.
-        start: Ngày đầu của khoảng.
-        end: Ngày cuối của khoảng.
-        fetch: Hàm tải văn bản từ URL.
-        today: Ngày dùng cho mục không có lastmod; mặc định là hôm nay theo giờ VN.
+        domain: Source domain.
+        start: First day of the range.
+        end: Last day of the range.
+        fetch: Function that downloads text from a URL.
+        today: Day used for entries without lastmod; defaults to today in VN time.
 
     Returns:
-        Ánh xạ ngày ISO sang {khoá bài: URL}; chỉ gồm ngày nằm trong khoảng.
+        Mapping of ISO day to {article key: URL}; only days inside the range.
     """
     today = today or datetime.now(VN_TZ).date()
     by_day: dict[str, dict[str, str]] = defaultdict(dict)
@@ -135,17 +139,17 @@ def collect_reference(domain: str, start: date, end: date, fetch: Fetch,
 
 def reconcile(conn, fetch: Fetch, *, domains: tuple[str, ...] = REFERENCE_DOMAINS,
               days: int = 3, today: date | None = None) -> dict[str, dict[str, dict]]:
-    """Đối chiếu kho với sitemap, ghi URL thiếu vào sổ phát hiện và cập nhật độ phủ.
+    """Reconcile the store with sitemaps, record missing URLs in the discovery ledger and update coverage.
 
     Args:
-        conn: Kết nối ghi tới DB vận hành, row_factory là sqlite3.Row hoặc tuple.
-        fetch: Hàm tải văn bản từ URL, trả None khi lỗi.
-        domains: Các nguồn cần đối chiếu.
-        days: Số ngày gần nhất cần đối chiếu, tính cả hôm nay.
-        today: Ngày hiện tại theo giờ VN; mặc định lấy từ đồng hồ.
+        conn: Write connection to the operational DB; row_factory is sqlite3.Row or tuple.
+        fetch: Function that downloads text from a URL, returning None on failure.
+        domains: Sources to reconcile.
+        days: Number of most recent days to reconcile, including today.
+        today: Current day in VN time; defaults to the clock.
 
     Returns:
-        Ánh xạ nguồn sang ngày sang {ref_n, in_db_n, missing_n}.
+        Mapping of source to day to {ref_n, in_db_n, missing_n}.
     """
     today = today or datetime.now(VN_TZ).date()
     start = today - timedelta(days=days - 1)

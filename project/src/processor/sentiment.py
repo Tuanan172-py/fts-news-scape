@@ -1,4 +1,4 @@
-"""Công cụ phân tích và chấm điểm sắc thái tin tức tài chính dựa trên bộ từ điển (Lexicon Engine)."""
+"""Score the sentiment of financial news with a lexicon-based engine."""
 
 from __future__ import annotations
 
@@ -18,6 +18,7 @@ _LABEL_NEU = "neutral"
 
 
 def _load_tsv(path: Path) -> dict[str, float]:
+    """Load a two-column term/score TSV file into a dict, skipping blank, comment and malformed lines."""
     lex: dict[str, float] = {}
     if not path.exists():
         logger.warning("Lexicon file missing: {}", path)
@@ -37,16 +38,23 @@ def _load_tsv(path: Path) -> dict[str, float]:
 
 
 class SentimentEngine:
-    """Động cơ tính toán điểm phân cực cảm xúc cho tiêu đề và nội dung bài viết.
+    """Compute sentiment polarity scores for article titles and bodies.
 
     Attributes:
-        lex: Từ điển ánh xạ từ khóa sang điểm sắc thái.
-        pos_threshold: Ngưỡng điểm xác định sắc thái tích cực.
-        neg_threshold: Ngưỡng điểm xác định sắc thái tiêu cực.
+        lex: Dict that maps keywords to sentiment scores.
+        pos_threshold: Score above which sentiment is positive.
+        neg_threshold: Score below which sentiment is negative.
     """
 
     def __init__(self, lexicon_dir: str | Path = LEXICON_DIR,
                  pos_threshold: float = 0.2, neg_threshold: float = -0.2):
+        """Load the lexicon files and set the polarity thresholds.
+
+        Args:
+            lexicon_dir: Directory that holds `vswn_polarity.tsv` and `finance_terms.tsv`.
+            pos_threshold: Score above which sentiment is positive.
+            neg_threshold: Score below which sentiment is negative.
+        """
         d = Path(lexicon_dir)
         self.lex = _load_tsv(d / "vswn_polarity.tsv")
         self.lex.update(_load_tsv(d / "finance_terms.tsv"))
@@ -55,13 +63,13 @@ class SentimentEngine:
         logger.info("SentimentEngine loaded {} lexicon entries", len(self.lex))
 
     def score_tokens(self, tokens: list[str]) -> float:
-        """Tính điểm sắc thái trung bình cho danh sách token theo thứ tự ưu tiên n-gram dài nhất.
+        """Compute the mean sentiment score of a token list, preferring the longest n-gram.
 
         Args:
-            tokens: Danh sách các từ hoặc token đã phân đoạn.
+            tokens: Segmented words or tokens.
 
         Returns:
-            Điểm số sắc thái trung bình dạng số thực.
+            Mean sentiment score as a float.
         """
         tokens = [t.lower() for t in tokens]
         scores: list[float] = []
@@ -86,14 +94,14 @@ class SentimentEngine:
         return sum(scores) / len(scores) if scores else 0.0
 
     def analyze(self, title: str, text: str = "") -> tuple[str, float]:
-        """Phân tích sắc thái của bài viết kết hợp tiêu đề và nội dung.
+        """Analyze article sentiment by combining the title and the body.
 
         Args:
-            title: Tiêu đề bài viết.
-            text: Nội dung văn bản của bài viết.
+            title: Article title.
+            text: Article body text; only the first 100 segmented tokens are scored.
 
         Returns:
-            Bộ (nhãn sắc thái, điểm số) với nhãn thuộc positive, negative hoặc neutral.
+            Tuple of (sentiment label, score) where the label is positive, negative or neutral.
         """
         title_score = self.score_tokens(seg(title))
         body_score = self.score_tokens(seg(text)[:100]) if text else 0.0

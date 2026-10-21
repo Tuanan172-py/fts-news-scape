@@ -1,4 +1,4 @@
-"""Cào bù URL đã phát hiện và phục hồi Bronze đã mất cho bài còn trong kho (rule 10)."""
+"""Backfill discovered URLs and restore lost Bronze files for articles still in the store (rule 10)."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from src.db.dedup import DedupCache
 from src.processor.classifier import classify_rule_based
 from src.scrapers import REGISTRY
 
-# Tên cấu hình scraper cho từng tên miền nguồn.
+# Scraper config name for each source domain.
 CONFIG_BY_DOMAIN = {
     "baodautu.vn": "baodautu",
     "cafef.vn": "cafef",
@@ -28,14 +28,15 @@ ScraperFactory = Callable[[str], object]
 
 
 def make_scraper_factory(http, dedup: DedupCache) -> ScraperFactory:
-    """Tạo hàm dựng scraper theo tên miền, dùng chung HTTP client và bộ nhớ đệm.
+    """Build a per-domain scraper factory that shares one HTTP client and one cache.
 
     Args:
-        http: HTTPClient dùng chung, giữ nguyên giới hạn tốc độ theo nguồn.
-        dedup: DedupCache gắn với kho cần ghi.
+        http: Shared HTTPClient; keeps the per-source rate limits unchanged.
+        dedup: DedupCache bound to the store being written.
 
     Returns:
-        Hàm nhận tên miền, trả scraper đã khởi tạo hoặc None khi không có cấu hình.
+        Function that takes a domain and returns an initialized scraper, or None when the
+        domain has no config.
     """
     cache: dict[str, object] = {}
 
@@ -61,19 +62,19 @@ def backfill_pending(store, factory: ScraperFactory, *, limit: int = 100,
                      domain: str | None = None, budget_seconds: float = 600.0,
                      max_attempts: int = 5,
                      clock: Callable[[], float] = time.monotonic) -> dict[str, int]:
-    """Cào các URL ở trạng thái discovered thành bài và ghi vào kho.
+    """Scrape URLs in the discovered state into articles and write them to the store.
 
     Args:
-        store: ArticleStore của DB vận hành.
-        factory: Hàm dựng scraper theo tên miền, từ `make_scraper_factory`.
-        limit: Số URL tối đa mỗi lượt.
-        domain: Giới hạn theo nguồn; None là mọi nguồn.
-        budget_seconds: Thời gian tối đa của lượt; hết thì dừng sạch.
-        max_attempts: Số lần thử tối đa trước khi một URL sang dead_letter.
-        clock: Hàm đo thời gian đơn điệu, thay được trong test.
+        store: ArticleStore of the operational DB.
+        factory: Per-domain scraper factory from `make_scraper_factory`.
+        limit: Maximum number of URLs per run.
+        domain: Restrict to one source; None means all sources.
+        budget_seconds: Maximum run time; the run stops cleanly once exhausted.
+        max_attempts: Maximum attempts before a URL moves to dead_letter.
+        clock: Monotonic time function, replaceable in tests.
 
     Returns:
-        Từ điển đếm: tried, captured, failed, skipped_no_scraper.
+        Counter dict with keys tried, captured, failed, skipped_no_scraper.
     """
     stats = {"tried": 0, "captured": 0, "failed": 0, "skipped_no_scraper": 0}
     conn = store._connect()
@@ -90,7 +91,7 @@ def backfill_pending(store, factory: ScraperFactory, *, limit: int = 100,
             stats["tried"] += 1
             try:
                 article = scraper.backfill_url(row["first_url"])
-            except Exception as e:  # noqa: BLE001 — một URL lỗi không được dừng cả lượt
+            except Exception as e:  # noqa: BLE001 — one failing URL must not stop the whole run
                 registry.mark_failed(conn, row["url_canonical"], f"{type(e).__name__}: {e}",
                                      max_attempts=max_attempts)
                 conn.commit()
@@ -115,19 +116,19 @@ def backfill_pending(store, factory: ScraperFactory, *, limit: int = 100,
 def recapture_lost_bronze(store, factory: ScraperFactory, *, limit: int = 100,
                           budget_seconds: float = 600.0,
                           clock: Callable[[], float] = time.monotonic) -> dict[str, int]:
-    """Cào lại raw cho bài còn trong kho nhưng đã mất tệp Bronze, rồi gỡ dead-letter Silver.
+    """Re-scrape raw content for stored articles whose Bronze file is lost, then clear the Silver dead-letter.
 
-    Dùng đúng tiêu đề và URL đã lưu để tệp Bronze mới mang cùng `url_title_hash`.
+    Uses the stored title and URL so the new Bronze file carries the same `url_title_hash`.
 
     Args:
-        store: ArticleStore của DB vận hành.
-        factory: Hàm dựng scraper theo tên miền.
-        limit: Số bài tối đa mỗi lượt.
-        budget_seconds: Thời gian tối đa của lượt.
-        clock: Hàm đo thời gian đơn điệu.
+        store: ArticleStore of the operational DB.
+        factory: Per-domain scraper factory.
+        limit: Maximum number of articles per run.
+        budget_seconds: Maximum run time.
+        clock: Monotonic time function.
 
     Returns:
-        Từ điển đếm: tried, recaptured, failed, skipped_no_scraper.
+        Counter dict with keys tried, recaptured, failed, skipped_no_scraper.
     """
     stats = {"tried": 0, "recaptured": 0, "failed": 0, "skipped_no_scraper": 0}
     conn = store._connect()
@@ -154,7 +155,7 @@ def recapture_lost_bronze(store, factory: ScraperFactory, *, limit: int = 100,
             scraper._details_fetched = 0
         try:
             scraper.enrich(art)
-        except Exception as e:  # noqa: BLE001 — một bài lỗi không được dừng cả lượt
+        except Exception as e:  # noqa: BLE001 — one failing article must not stop the whole run
             logger.warning("[recapture] {} lỗi: {}", art.url, e)
             stats["failed"] += 1
             continue

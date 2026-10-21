@@ -1,4 +1,4 @@
-"""Tiếp nhận và kiểm định kết quả phân tích chuyên sâu của agent."""
+"""Ingest and validate the deep-analysis results produced by the agent."""
 
 from __future__ import annotations
 
@@ -18,6 +18,14 @@ force_utf8_stdio()
 
 
 def _iter_paths(arg: str):
+    """Yield the output JSON files designated by a path argument.
+
+    Args:
+        arg: Path to a single output file or to a directory of `*.json` files.
+
+    Yields:
+        Each output file path, sorted by name when `arg` is a directory.
+    """
     p = Path(arg)
     if p.is_dir():
         yield from sorted(p.glob("*.json"))
@@ -26,6 +34,14 @@ def _iter_paths(arg: str):
 
 
 def main(argv: list[str]) -> int:
+    """Ingest agent-output files through the Definition-of-Done gate.
+
+    Args:
+        argv: Command-line arguments, excluding the program name.
+
+    Returns:
+        0 when every record passes, 1 when any record fails, 2 on missing arguments.
+    """
     if not argv:
         print("usage: agent_ingest.py <output.json | dir> [--no-archive] [--task-dir DIR]")
         return 2
@@ -46,7 +62,13 @@ def main(argv: list[str]) -> int:
     from src.agent.batch_handoff import unpack_batch_output
 
     def _record(res: dict) -> None:
-        """Cộng sổ 1 kết quả ingest. MỌI record đều đi qua runner.ingest_output (không bypass DoD)."""
+        """Tally one ingest result and print its status line.
+
+        Every record goes through `runner.ingest_output`, so the DoD gate is never bypassed.
+
+        Args:
+            res: Result dict returned by `runner.ingest_output`.
+        """
         nonlocal done, failed
         if res.get("dod_pass"):
             done += 1
@@ -60,11 +82,11 @@ def main(argv: list[str]) -> int:
             )
 
     for path in (p for t in args.target for p in _iter_paths(t)):
-        # unpack_batch_output đã bao cả 3 dạng: list, {outputs|results: [...]}, và object đơn lẻ.
+        # unpack_batch_output handles all three shapes: list, {outputs|results: [...]}, single object.
         unpacked_items = unpack_batch_output(path)
         if not unpacked_items:
-            # Tệp mảng rỗng hợp lệ (mọi hàng đã dồn sang lô vá mới hơn) thì bỏ
-            # qua im lặng: không có gì để nạp không phải là lỗi nạp.
+            # A valid empty-array file (all rows moved to a newer patch batch) is
+            # skipped silently: having nothing to ingest is not an ingest error.
             try:
                 empty_ok = json.loads(Path(path).read_text(encoding="utf-8")) == []
             except (OSError, ValueError):
@@ -85,8 +107,8 @@ def main(argv: list[str]) -> int:
         print(f"📦 archived: {archived_cnt}/{len(done_aids)} task packets → {task_dir}/archive/")
 
     print(f"\ningested: done={done} failed={failed}")
-    # Bản ghi bị DoD loại hoặc tệp không đọc được là lỗi nạp: trả mã khác 0 để
-    # `article_run.py --finish` dừng đợt thay vì báo hoàn tất.
+    # A record rejected by DoD or an unreadable file is an ingest error: return non-zero so
+    # `article_run.py --finish` halts the batch instead of reporting completion.
     return 1 if failed else 0
 
 

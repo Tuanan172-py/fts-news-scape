@@ -1,4 +1,4 @@
-"""Chuẩn hoá URL bài viết về khoá định danh ổn định giữa các dạng biến thể."""
+"""Normalize article URLs to a stable identity key across URL variants."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ _TRACKING_PARAMS = frozenset({
 })
 _TRACKING_PREFIXES = ("utm_",)
 
-# Mã bài do chính nguồn cấp: ổn định ngay cả khi slug đổi theo tiêu đề.
+# Article IDs issued by the source itself stay stable even when the slug changes with the title.
 _SOURCE_ID_PATTERNS = (
     ("cafef.vn", re.compile(r"-(\d{14,20})\.chn(?:$|\?)")),
     ("baodautu.vn", re.compile(r"-d(\d{3,})\.html(?:$|\?)")),
@@ -23,13 +23,13 @@ _SOURCE_ID_PATTERNS = (
 
 
 def canonical_url(url: str) -> str:
-    """Rút URL về dạng chuẩn: bỏ tham số theo dõi, fragment, `www.`, dấu `/` cuối và đưa scheme về https.
+    """Reduce a URL to canonical form without tracking parameters, fragment, `www.` or trailing `/`, using the https scheme.
 
     Args:
-        url: URL bài viết ở bất kỳ dạng nào.
+        url: Article URL in any form.
 
     Returns:
-        URL chuẩn hoá; chuỗi rỗng nếu đầu vào rỗng.
+        Canonical URL; an empty string if the input is empty.
     """
     url = (url or "").strip()
     if not url:
@@ -47,13 +47,13 @@ def canonical_url(url: str) -> str:
 
 
 def url_key(url: str) -> str:
-    """Trả khoá định danh bài: mã bài của nguồn nếu nhận ra, ngược lại URL chuẩn hoá.
+    """Return the article identity key: the source article ID if recognized, otherwise the canonical URL.
 
     Args:
-        url: URL bài viết.
+        url: Article URL.
 
     Returns:
-        Chuỗi `<domain>#<mã bài>` hoặc URL chuẩn hoá. Rỗng nếu URL rỗng.
+        String `<domain>#<article id>` or the canonical URL. Empty if the URL is empty.
     """
     canon = canonical_url(url)
     if not canon:

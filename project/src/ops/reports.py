@@ -1,4 +1,4 @@
-"""Dựng văn bản trạng thái, danh sách đợt, nhật ký, bản tin và tra cứu tác nhân cho người vận hành."""
+"""Build operator-facing text for status, wave lists, logs, digests and agent lookups."""
 
 from __future__ import annotations
 
@@ -15,28 +15,28 @@ from src.ops.store import OpsStore, now_vn, parse_iso
 
 
 def heartbeat_age_s(store: OpsStore) -> float | None:
-    """Tính số giây từ nhịp tim gần nhất của daemon.
+    """Compute the seconds since the most recent daemon heartbeat.
 
     Args:
-        store: Store vận hành.
+        store: Operations store.
 
     Returns:
-        Số giây, hoặc None khi chưa có nhịp tim.
+        Number of seconds, or None when no heartbeat exists.
     """
     ts = parse_iso(store.get_state("heartbeat_at"))
     return (now_vn() - ts).total_seconds() if ts else None
 
 
 def status_text(store: OpsStore, paths: OpsPaths, breakers: Breakers) -> str:
-    """Dựng bản trạng thái rút gọn.
+    """Build the condensed status report.
 
     Args:
-        store: Store vận hành.
-        paths: Đường dẫn vận hành.
-        breakers: Breaker theo provider.
+        store: Operations store.
+        paths: Operations paths.
+        breakers: Per-provider breakers.
 
     Returns:
-        Văn bản nhiều dòng.
+        Multi-line text.
     """
     age = heartbeat_age_s(store)
     if age is None:
@@ -83,14 +83,14 @@ def status_text(store: OpsStore, paths: OpsPaths, breakers: Breakers) -> str:
 
 
 def waves_text(store: OpsStore, limit: int = 8) -> str:
-    """Liệt kê các đợt gần nhất.
+    """List the most recent waves.
 
     Args:
-        store: Store vận hành.
-        limit: Số đợt.
+        store: Operations store.
+        limit: Number of waves.
 
     Returns:
-        Văn bản nhiều dòng.
+        Multi-line text.
     """
     rows = store.waves(limit)
     if not rows:
@@ -104,15 +104,15 @@ def waves_text(store: OpsStore, limit: int = 8) -> str:
 
 
 def log_text(store: OpsStore, limit: int = 15, wave_id: str | None = None) -> str:
-    """Liệt kê sự kiện gần nhất.
+    """List the most recent events.
 
     Args:
-        store: Store vận hành.
-        limit: Số sự kiện.
-        wave_id: Lọc theo đợt.
+        store: Operations store.
+        limit: Number of events.
+        wave_id: Filter by wave.
 
     Returns:
-        Văn bản nhiều dòng.
+        Multi-line text.
     """
     rows = store.events(limit=limit, wave_id=wave_id)
     if not rows:
@@ -122,7 +122,7 @@ def log_text(store: OpsStore, limit: int = 15, wave_id: str | None = None) -> st
 
 
 def _agent_lines(store: OpsStore, limit: int = 12) -> list[str]:
-    """Mỗi tác nhân có span trong ngày một dòng: số span, tỷ lệ thành công, token, độ trễ."""
+    """Build one line per agent that has spans today: span count, success rate, tokens, latency."""
     lat: dict[str, list[float]] = {}
     for r in sv._rows(store, "SELECT actor_id, attrs_json FROM ops_spans WHERE kind = 'agent' "
                              "AND started_at >= ?", (sv._today(),)):
@@ -141,15 +141,15 @@ def _agent_lines(store: OpsStore, limit: int = 12) -> list[str]:
 
 
 def digest_text(store: OpsStore, paths: OpsPaths, breakers: Breakers) -> str:
-    """Dựng bản tin giám sát: mandate, đợt trong ngày, từng tác nhân, điểm khác thường.
+    """Build the monitoring digest: mandate, waves of the day, each agent, anomalies.
 
     Args:
-        store: Store vận hành.
-        paths: Đường dẫn vận hành.
-        breakers: Breaker theo provider.
+        store: Operations store.
+        paths: Operations paths.
+        breakers: Per-provider breakers.
 
     Returns:
-        Văn bản bản tin.
+        Digest text.
     """
     today = now_vn().date().isoformat()
     with store.conn() as c:
@@ -189,16 +189,16 @@ def digest_text(store: OpsStore, paths: OpsPaths, breakers: Breakers) -> str:
 
 
 def map_text(store: OpsStore, cfg: dict, paths: OpsPaths, breakers: Breakers) -> str:
-    """Sơ đồ chữ trạng thái từng tác nhân (lệnh `/map`).
+    """Build the text diagram of each agent state for the `/map` command.
 
     Args:
-        store: Store vận hành.
-        cfg: Cấu hình đầy đủ.
-        paths: Đường dẫn vận hành.
-        breakers: Breaker theo provider.
+        store: Operations store.
+        cfg: Full configuration.
+        paths: Operations paths.
+        breakers: Per-provider breakers.
 
     Returns:
-        Văn bản nhiều dòng.
+        Multi-line text.
     """
     m = sv.build_map(store, cfg, paths, breakers)
     by = {n["id"]: n for n in m["nodes"]}
@@ -220,15 +220,15 @@ def map_text(store: OpsStore, cfg: dict, paths: OpsPaths, breakers: Breakers) ->
 
 
 def trace_text(store: OpsStore, wave_id: str | None = None, max_lines: int = 34) -> str:
-    """Cây vết dạng chữ của một đợt (lệnh `/trace`); bỏ trống thì lấy đợt gần nhất.
+    """Build the text trace tree of one wave for the `/trace` command; empty means the latest wave.
 
     Args:
-        store: Store vận hành.
-        wave_id: Mã đợt.
-        max_lines: Số dòng tối đa.
+        store: Operations store.
+        wave_id: Wave identifier.
+        max_lines: Maximum number of lines.
 
     Returns:
-        Văn bản nhiều dòng.
+        Multi-line text.
     """
     if not wave_id:
         latest = store.waves(1)
@@ -267,14 +267,14 @@ def trace_text(store: OpsStore, wave_id: str | None = None, max_lines: int = 34)
 
 
 def agent_text(store: OpsStore, agent_id: str) -> str:
-    """Đặc tả và KPI 7 ngày của một tác nhân (lệnh `/agent`).
+    """Describe one agent spec and its 7-day KPIs for the `/agent` command.
 
     Args:
-        store: Store vận hành.
-        agent_id: Mã tác nhân.
+        store: Operations store.
+        agent_id: Agent identifier.
 
     Returns:
-        Văn bản nhiều dòng.
+        Multi-line text.
     """
     card = sv.agent_card(store, agent_id)
     if not card:
@@ -299,13 +299,13 @@ def agent_text(store: OpsStore, agent_id: str) -> str:
 
 
 def improve_text(store: OpsStore) -> tuple[str, list[list[tuple[str, str]]]]:
-    """Hộp thư cải tiến cho Telegram: tối đa 3 đề xuất mở kèm nút quyết định.
+    """Build the Telegram improvement inbox: at most 3 open proposals with decision buttons.
 
     Args:
-        store: Store vận hành.
+        store: Operations store.
 
     Returns:
-        Cặp (văn bản, hàng nút).
+        Pair (text, button rows).
     """
     open_p = sv.proposals(store, "open", 3)
     if not open_p:

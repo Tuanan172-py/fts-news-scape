@@ -1,4 +1,4 @@
-"""Kiểm thử khớp nối chuỗi bề mặt và kiểm định đầu ra tầng L1."""
+"""Test surface-string matching and validate L1 layer output."""
 import glob
 import json
 import os
@@ -33,11 +33,26 @@ TYPE_GROUP_MAP = {
 }
 
 def get_word_spans(text: str):
-    """Return list of (word, start, end) in text."""
+    """Return the word tokens of a text with their offsets.
+
+    Args:
+        text: Text to tokenize.
+
+    Returns:
+        List of `(word, start, end)` tuples.
+    """
     return [(m.group(0), m.start(), m.end()) for m in re.finditer(r"[^\s,;:\.!?\"'“”‘’\(\)\[\]{}]+", text)]
 
 def find_exact_surface_fast(title: str, query: str) -> str | None:
-    """Find exact case-preserved substring in title matching query."""
+    """Find the case-preserved substring of a title that matches a query.
+
+    Args:
+        title: Title text to search.
+        query: Surface string to look for.
+
+    Returns:
+        The matching substring as written in the title, or None.
+    """
     if not query or not title:
         return None
     # 1. Exact match
@@ -66,6 +81,6 @@ def find_exact_surface_fast(title: str, query: str) -> str | None:
                 return slice_text
     return None
 
-# Test finding
+# Smoke test of the matcher
 t_sample = "NVIDIA nổi lên như “nhà băng” cho ngành công nghiệp AI"
 print("Test find:", find_exact_surface_fast(t_sample, "ngành công nghiệp"))

@@ -1,8 +1,4 @@
-"""Bộ phân loại thực thể ban đầu dựa trên quy tắc mã nguồn (Code-First Classifier).
-
-Thực hiện nhận diện tất định các thực thể tài chính xuất hiện trong tiêu đề
-bài viết (mã chứng khoán, ngành, tài sản, tổ chức) qua EntityRegistry trước khi chuyển giao cho Agent.
-"""
+"""Classify entities in article titles deterministically through the EntityRegistry before agent hand-off."""
 from __future__ import annotations
 
 from src.agent.entities import EntityRegistry, load_registry
@@ -18,13 +14,13 @@ _MARKET = {"INDEX", "EXCHANGE"}
 
 
 def title_of(article: dict) -> str:
-    """Trích xuất tiêu đề bài viết với cơ chế dự phòng nhiều tầng.
+    """Extract the article title with a multi-level fallback.
 
     Args:
-        article: Từ điển dữ liệu bài viết (tầng Silver hoặc gói công việc).
+        article: Article data dict (Silver layer or work package).
 
     Returns:
-        Chuỗi tiêu đề bài viết.
+        Article title string.
     """
     if article.get("title"):
         return str(article["title"]).strip()
@@ -36,14 +32,14 @@ def title_of(article: dict) -> str:
 
 
 def classify_title(title: str, reg: EntityRegistry | None = None) -> dict:
-    """Nhận diện thực thể và ngành nghề trực tiếp từ tiêu đề bài viết.
+    """Detect entities and industries directly from an article title.
 
     Args:
-        title: Chuỗi tiêu đề bài viết cần phân tích.
-        reg: Đối tượng EntityRegistry dùng để tra cứu (nếu None sẽ tải mặc định).
+        title: Article title to analyze.
+        reg: EntityRegistry used for lookup; None loads the default registry.
 
     Returns:
-        Từ điển chứa danh sách thực thể phát hiện, ngành liên quan, mức độ phù hợp và cờ needs_agent.
+        Dict with the detected entities, related industries, relevance level and the needs_agent flag.
     """
     reg = reg or load_registry()
     dets = reg.detect(title)
@@ -95,14 +91,14 @@ def classify_title(title: str, reg: EntityRegistry | None = None) -> dict:
 
 
 def classify_article(article: dict, reg: EntityRegistry | None = None) -> dict:
-    """Phân loại thực thể cho một đối tượng bài viết hoàn chỉnh.
+    """Classify entities for one complete article object.
 
     Args:
-        article: Từ điển dữ liệu bài viết tầng Silver.
-        reg: Đối tượng EntityRegistry dùng tra cứu.
+        article: Silver-layer article data dict.
+        reg: EntityRegistry used for lookup; None loads the default registry.
 
     Returns:
-        Từ điển kết quả phân loại kèm mã định danh bài viết và tên miền nguồn.
+        Classification dict with the article identifier and source domain.
     """
     reg = reg or load_registry()
     rec = classify_title(title_of(article), reg)

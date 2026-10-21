@@ -1,4 +1,4 @@
-"""Thực thi luồng làm việc tích hợp cho lớp phân phối người dùng."""
+"""Run the integrated workflow of the user delivery layer."""
 from __future__ import annotations
 
 import argparse
@@ -14,6 +14,14 @@ force_utf8_stdio()
 
 
 def main(argv: list[str]) -> int:
+    """Parse arguments and run the user workflow.
+
+    Args:
+        argv: Command-line arguments, excluding the program name.
+
+    Returns:
+        Process exit code, always 0 on completion.
+    """
     ap = argparse.ArgumentParser()
     ap.add_argument("--date", help="'today' hoặc YYYY-MM-DD")
     ap.add_argument("--days", type=int)

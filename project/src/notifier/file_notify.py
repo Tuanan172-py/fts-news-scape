@@ -1,8 +1,4 @@
-"""Thông báo dựa trên tệp nhật ký và màn hình điều khiển theo quy tắc cấu hình.
-
-Cung cấp lớp FileNotifier đối chiếu bài viết với các quy tắc thông báo
-(mã chứng khoán, tên miền nguồn, từ khóa) và ghi nhận vào tệp log nhật ký theo ngày.
-"""
+"""Match articles against configured notification rules (ticker, source domain, keyword) and write them to the console and a daily log file."""
 
 from __future__ import annotations
 
@@ -18,11 +14,12 @@ from src.core.models import VN_TZ, Article, ScrapeResult
 
 
 class FileNotifier:
-    """Bộ lọc và gửi thông báo bài viết khớp quy tắc ra tệp log hoặc stdout.
+    """Filter articles by rule and send matching notifications to a log file or stdout.
 
     Attributes:
-        out_dir: Thư mục lưu trữ các tệp nhật ký thông báo hàng ngày.
-        rules: Danh sách các quy tắc lọc và gán nhãn thông báo.
+        out_dir: Directory of the daily notification log files.
+        rules: Rules that filter and tag notifications.
+        SENTIMENT_MARKER: Marker shown in front of an article line, keyed by sentiment label.
     """
 
     def __init__(
@@ -30,6 +27,12 @@ class FileNotifier:
         config_path: str = "config/notifications.yaml",
         out_dir: str | None = None,
     ):
+        """Load the notification rules and prepare the output directory.
+
+        Args:
+            config_path: Path of the notification rules YAML; missing file means no rules.
+            out_dir: Output directory for the daily logs. Defaults to `paths.notifications_dir()`.
+        """
         self.out_dir = paths.resolve_data_path(out_dir) if out_dir else paths.notifications_dir()
         self.rules = []
         p = Path(config_path)
@@ -44,18 +47,18 @@ class FileNotifier:
                 )
 
     def _log_path(self) -> Path:
-        """Trả về đường dẫn tệp nhật ký của ngày hiện tại."""
+        """Return the log file path for the current day."""
         self.out_dir.mkdir(parents=True, exist_ok=True)
         return self.out_dir / f"{datetime.now(VN_TZ):%Y-%m-%d}.log"
 
     def _matches(self, article: Article) -> str | None:
-        """Kiểm tra bài viết có khớp với bất kỳ quy tắc thông báo nào hay không.
+        """Check whether an article matches any notification rule.
 
         Args:
-            article: Đối tượng bài viết cần đối chiếu.
+            article: Article to check.
 
         Returns:
-            Nhãn tag của quy tắc đầu tiên khớp, hoặc None nếu không khớp quy tắc nào.
+            Tag of the first matching rule, or None if no rule matches.
         """
         text = f"{article.title} {' '.join(article.symbols)}"
         haystack = text.lower()
@@ -81,26 +84,26 @@ class FileNotifier:
     SENTIMENT_MARKER = {"positive": "🟢", "negative": "🔴", "neutral": "🟡"}
 
     def format_article(self, a: Article, tag: str = "") -> str:
-        """Định dạng bài viết thành một dòng thông báo ngắn gọn.
+        """Format an article as a one-line notification.
 
         Args:
-            a: Đối tượng bài viết cần định dạng.
-            tag: Nhãn quy tắc thông báo tương ứng.
+            a: Article to format.
+            tag: Tag of the matching notification rule.
 
         Returns:
-            Chuỗi văn bản hiển thị thông tin bài viết một dòng.
+            One-line text describing the article.
         """
         marker = self.SENTIMENT_MARKER.get(a.sentiment, "🟡")
         return f"{marker} {a.title} (chi tiết ({a.url}))"
 
     def notify_articles(self, articles: list[Article]) -> int:
-        """Ghi nhận các bài viết khớp quy tắc ra màn hình và tệp nhật ký.
+        """Write the articles that match a rule to the console and the log file.
 
         Args:
-            articles: Danh sách bài viết cần lọc và thông báo.
+            articles: Articles to filter and notify.
 
         Returns:
-            Số lượng bài viết khớp quy tắc thông báo thành công.
+            Number of articles that matched a notification rule.
         """
         matched = 0
         lines = []
@@ -118,10 +121,10 @@ class FileNotifier:
         return matched
 
     def notify_cycle_summary(self, results: list[ScrapeResult]) -> None:
-        """In tóm tắt kết quả chu kỳ thu thập ra màn hình điều khiển và nhật ký logger.
+        """Print the scrape cycle summary to the console and the logger.
 
         Args:
-            results: Danh sách kết quả thu thập ScrapeResult của các nguồn tin.
+            results: ScrapeResult of each source.
         """
         parts = []
         for r in results:

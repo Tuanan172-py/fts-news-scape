@@ -1,4 +1,4 @@
-"""Chạy control plane khi máy mở: sensor, workflow đợt, heartbeat, probe, supervisor, bot."""
+"""Run the control plane while the machine is awake: sensor, wave workflow, heartbeat, probes, supervisor and bot."""
 
 from __future__ import annotations
 
@@ -24,20 +24,20 @@ from src.ops.wave_flow import WaveSpec, WaveSteps, _default_db_probe
 
 def acquire_single_instance(path, *, grace_s: float = 45, poll_s: float = 3,
                             stop_event: threading.Event | None = None):
-    """Chiếm khoá một thể hiện của daemon, chờ một khoảng ân hạn trước khi bỏ cuộc.
+    """Acquire the single-instance daemon lock, waiting a grace period before giving up.
 
-    Khi khởi động lại bằng `schtasks /End` rồi `/Run`, tiến trình con của launcher venv
-    còn giữ khoá vài giây sau khi launcher đã chết. Thoát ngay ở lần thử đầu khiến hệ
-    thống không có daemon cho tới nhịp watchdog kế tiếp.
+    After a restart through `schtasks /End` then `/Run`, the child process of the venv
+    launcher still holds the lock for a few seconds after the launcher has died. Exiting on
+    the first attempt would leave the system without a daemon until the next watchdog beat.
 
     Args:
-        path: Đường dẫn tệp khoá.
-        grace_s: Số giây chờ tối đa.
-        poll_s: Chu kỳ thử lại.
-        stop_event: Sự kiện dừng; được đặt thì bỏ cuộc ngay.
+        path: Lock file path.
+        grace_s: Maximum number of seconds to wait.
+        poll_s: Retry interval.
+        stop_event: Stop event; when set, give up immediately.
 
     Returns:
-        Đối tượng khoá đã chiếm, hoặc None khi daemon khác vẫn giữ sau ân hạn.
+        The acquired lock object, or None when another daemon still holds it after the grace period.
     """
     from src.core.proclock import SingleInstanceLock
 
@@ -57,16 +57,16 @@ def acquire_single_instance(path, *, grace_s: float = 45, poll_s: float = 3,
 
 
 def repair_cap_reason(store: OpsStore, cfg: dict, wave_id: str) -> str | None:
-    """Trả lý do từ chối chạy lại khi đợt đã vá quá trần tổng số vòng.
+    """Return the refusal reason when a wave has exceeded the total repair-round cap.
 
     Args:
-        store: Store vận hành.
-        cfg: Cấu hình đầy đủ.
-        wave_id: Mã đợt.
+        store: Operations store.
+        cfg: Full configuration.
+        wave_id: Wave identifier.
 
     Returns:
-        Chuỗi lý do, hoặc None khi còn được chạy lại. Trần tổng là hai lần `max_repair_rounds`
-        (một workflow đầu và một lần chạy lại).
+        Reason string, or None when a retry is still allowed. The total cap is twice
+        `max_repair_rounds` (one initial workflow and one retry).
     """
     cap = 2 * int(cfg["wave"]["max_repair_rounds"])
     done = int(store.get_state(f"repair_rounds:{wave_id}", "0") or 0)
@@ -77,25 +77,31 @@ def repair_cap_reason(store: OpsStore, cfg: dict, wave_id: str) -> str | None:
 
 
 class OpsDaemon:
-    """Tiến trình điều phối tất định, không tiêu token, sống liên tục.
+    """Deterministic long-running orchestration process that consumes no tokens.
 
     Attributes:
-        cfg: Cấu hình đầy đủ.
-        paths: Đường dẫn vận hành.
-        secrets: Bí mật (Telegram, healthchecks).
-        store: Store vận hành.
-        breakers: Breaker theo provider.
-        steps: Bộ bước của đợt.
-        supervisor: Giám sát tiến trình cào.
+        cfg: Full configuration.
+        paths: Operations paths.
+        secrets: Secrets (Telegram, healthchecks).
+        store: Operations store.
+        breakers: Per-provider breakers.
+        steps: Wave step set.
+        supervisor: Supervisor of the capture process.
+        monocle_db: Path of the monocle database.
+        tg: Telegram client, or None when no token is configured.
+        chat_ids: Allow-listed Telegram chat identifiers.
+        hc_url: Healthchecks ping URL, or None.
+        control_room: Running ControlRoom, or None.
+        stop_event: Event that stops all loops.
     """
 
     def __init__(self, cfg: dict, paths: OpsPaths, secrets: dict[str, str]) -> None:
-        """Dựng daemon, chưa khởi động luồng nào.
+        """Build the daemon without starting any thread.
 
         Args:
-            cfg: Cấu hình đầy đủ.
-            paths: Đường dẫn vận hành.
-            secrets: Bí mật.
+            cfg: Full configuration.
+            paths: Operations paths.
+            secrets: Secrets.
         """
         self.cfg = cfg
         self.paths = paths
@@ -123,12 +129,12 @@ class OpsDaemon:
         self._dbos_ready = False
         self._last: dict[str, float] = {}
 
-    # ── khởi động ────────────────────────────────────────────────────────────
+    # ── startup ──────────────────────────────────────────────────────────────
     def acquire_locks(self) -> bool:
-        """Chiếm khoá một thể hiện của daemon và khoá đợt dùng chung với article_tick.
+        """Acquire the single-instance daemon lock and the wave lock shared with article_tick.
 
         Returns:
-            False khi daemon khác đang chạy.
+            False when another daemon is running.
         """
         grace = float((self.cfg.get("daemon") or {}).get("lock_grace_seconds", 45))
         lock = acquire_single_instance(self.paths.daemon_lock, grace_s=grace,
@@ -148,7 +154,7 @@ class OpsDaemon:
         return True
 
     def start_dbos(self) -> None:
-        """Khởi tạo DBOS, gắn bộ bước và khôi phục workflow dang dở."""
+        """Initialize DBOS, bind the step set and recover interrupted workflows."""
         from dbos import DBOS
 
         from src.ops import dbos_flow
@@ -160,15 +166,15 @@ class OpsDaemon:
         self.reconcile(at_start=True)
 
     def reconcile(self, *, at_start: bool = False) -> None:
-        """Đánh dấu FAILED đợt đang hoạt động mà DBOS không còn chạy workflow của nó.
+        """Mark FAILED any active wave whose workflow DBOS no longer runs.
 
-        Chạy lúc khởi động và ở mỗi nhịp sensor. Workflow kết thúc mà `ops_waves` vẫn ghi
-        trạng thái đang chạy (step ném lỗi trước khi kịp chốt) sẽ chặn sensor mãi mãi
-        nếu không có lần đối chiếu này.
+        Runs at startup and on every sensor beat. A workflow that ended while `ops_waves` still
+        records a running status (a step raised before it could finalize) would block the
+        sensor forever without this reconciliation.
 
         Args:
-            at_start: True khi gọi lúc daemon vừa khởi động; khi ấy ghi thêm sự kiện
-                khôi phục cho đợt còn chạy.
+            at_start: True when called right after daemon startup; a recovery event is then
+                also recorded for a wave that is still running.
         """
         from dbos import DBOS
 
@@ -178,8 +184,8 @@ class OpsDaemon:
         status = DBOS.get_workflow_status(w["workflow_id"])
         if status is None or status.status in ("ERROR", "CANCELLED", "SUCCESS",
                                                 "MAX_RECOVERY_ATTEMPTS_EXCEEDED"):
-            # Workflow SUCCESS mà hàng đợt chưa chốt chỉ xảy ra khi st_finalize hỏng giữa
-            # chừng; coi như FAILED để người xem lại.
+            # A SUCCESS workflow whose wave row is not finalized only happens when st_finalize
+            # fails midway; treat it as FAILED so a human reviews it.
             fresh = self.store.wave(w["wave_id"])
             if fresh and fresh["status"] not in ACTIVE_WAVE_STATUSES:
                 return
@@ -200,7 +206,7 @@ class OpsDaemon:
                             f"đã xong", wave_id=w["wave_id"])
 
     def announce_start(self) -> None:
-        """Ghi sự kiện khởi động và cảnh báo khi daemon khởi động lại quá dày."""
+        """Record the startup event and alert when the daemon restarts too frequently."""
         since = iso(now_vn() - timedelta(hours=1))
         with self.store.conn() as c:
             n = c.execute("SELECT COUNT(*) FROM ops_events WHERE kind = 'daemon.started' "
@@ -219,7 +225,7 @@ class OpsDaemon:
             self.store.emit("telegram.unconfigured", "Chưa cấu hình Telegram: cảnh báo chỉ "
                             "nằm trong ops.db và console.", level="warn")
 
-    # ── vòng chính ───────────────────────────────────────────────────────────
+    # ── main loop ────────────────────────────────────────────────────────────
     def _due(self, name: str, every_s: float) -> bool:
         now = time.monotonic()
         if now - self._last.get(name, 0.0) >= every_s:
@@ -228,10 +234,10 @@ class OpsDaemon:
         return False
 
     def run_forever(self) -> int:
-        """Chạy daemon đến khi nhận tín hiệu dừng.
+        """Run the daemon until a stop signal arrives.
 
         Returns:
-            Mã thoát.
+            Exit code.
         """
         if not self.acquire_locks():
             return 3
@@ -265,7 +271,7 @@ class OpsDaemon:
         return 0
 
     def loop_once(self) -> None:
-        """Một nhịp của vòng chính; lỗi từng phần được ghi lại, không làm chết daemon."""
+        """Run one beat of the main loop; partial failures are recorded and never kill the daemon."""
         for name, every, fn in (
             ("commands", 2, self.drain_commands),
             ("heartbeat", self.cfg["heartbeat"]["interval_seconds"], self.heartbeat),
@@ -284,7 +290,7 @@ class OpsDaemon:
                                     data={"trace": traceback.format_exc()[-2000:]})
 
     def start_control_room(self) -> None:
-        """Mở Phòng điều khiển trên 127.0.0.1 nếu cấu hình bật."""
+        """Open the Control Room on 127.0.0.1 when the configuration enables it."""
         cr = self.cfg["control_room"]
         if not cr.get("enabled"):
             return
@@ -295,31 +301,32 @@ class OpsDaemon:
             self.control_room = None
 
     def mandate_tick(self) -> None:
-        """Gia hạn mandate khi sắp hết hạn và hệ thống khoẻ (D-A)."""
+        """Renew the mandate when it nears expiry and the system is healthy (D-A)."""
         mandate.maybe_renew(self.store, self.cfg, self.paths)
 
     def improve_tick(self) -> None:
-        """Quét vết và KPI để thêm đề xuất cải tiến vào hộp thư (D-E)."""
+        """Scan traces and KPIs to add improvement proposals to the inbox (D-E)."""
         improve.sync(self.store, self.cfg)
 
     def heartbeat(self) -> None:
-        """Ghi nhịp tim cục bộ và ping dead-man ngoài máy."""
+        """Record the local heartbeat and ping the off-machine dead-man check."""
         self.store.set_state("heartbeat_at", iso())
         w = self.store.active_wave()
         body = f"active={w['wave_id'] if w else '-'} capture={self.supervisor.mode}"
         notify.ping_healthcheck(self.hc_url, "", body)
 
     def supervise(self) -> None:
-        """Giữ tiến trình cào sống."""
+        """Keep the capture process alive."""
         mode = self.supervisor.tick()
         self.store.set_state("capture_mode", mode)
 
     def run_probes(self) -> None:
-        """Đo sức khoẻ và phát cảnh báo theo cạnh."""
+        """Measure health and emit alerts on state edges."""
         p = self.cfg["probes"]
         results = [probe_capture(self.monocle_db, p)]
-        # Thử ghi giành khoá ghi của monocle.db; trong lúc đợt chạy (nhất là lúc nạp DB)
-        # phép thử này vừa tranh khoá vừa báo đỏ giả. Preflight của đợt đã thử ghi rồi.
+        # The write probe contends for the monocle.db write lock; while a wave runs (especially
+        # during DB load) it both competes for the lock and raises false red alerts. The wave
+        # preflight has already tested writing.
         if not self.store.active_wave():
             results.append(probe_db(_default_db_probe))
         results += [probe_disk(self.paths.data_dir, float(self.cfg["wave"]["min_free_gb"])),
@@ -333,10 +340,11 @@ class OpsDaemon:
         apply_edges(self.store, results)
 
     def publish_tick(self) -> None:
-        """Xuất bản ngày hôm qua lên SharePoint một lần mỗi ngày, ở luồng riêng (ADR 0020).
+        """Publish yesterday to SharePoint once a day on a separate thread (ADR 0020).
 
-        Chỉ chạy khi `publish.enabled` bật, `NEWS_SCAPE_PUBLISH_DIR` có giá trị và đã qua
-        `publish.hour`. Ngày đạt `ok` thì không chạy lại; lỗi chỉ ghi sự kiện, lần sau làm tiếp.
+        Runs only when `publish.enabled` is on, `NEWS_SCAPE_PUBLISH_DIR` has a value and
+        `publish.hour` has passed. A day that reached `ok` is not run again; a failure only
+        records an event and the next beat continues.
         """
         cfg = self.cfg.get("publish") or {}
         from src.export.publisher import publish_day, publish_target
@@ -365,7 +373,7 @@ class OpsDaemon:
         threading.Thread(target=work, name="publisher", daemon=True).start()
 
     def digest_tick(self) -> None:
-        """Gửi bản tin vào các mốc giờ cấu hình, mỗi mốc một lần mỗi ngày."""
+        """Send the digest at the configured times, once per time slot per day."""
         now = now_vn()
         for t in self.cfg["digest"]["times"]:
             hh, mm = (int(x) for x in t.split(":"))
@@ -376,10 +384,10 @@ class OpsDaemon:
                 self.store.alert("digest", reports.digest_text(self.store, self.paths,
                                                                self.breakers))
 
-    # ── sensor và đợt ────────────────────────────────────────────────────────
+    # ── sensor and waves ─────────────────────────────────────────────────────
     def _sensor_loop(self) -> None:
-        # Bộ chọn bài của article_pack đọc cả nội dung bài nên mất vài giây mỗi lượt;
-        # chạy ở luồng riêng để lệnh, nhịp tim và probe không phải chờ.
+        # The article selector of article_pack reads full article content and takes a few
+        # seconds per pass; it runs on its own thread so commands, heartbeat and probes do not wait.
         interval = float(self.cfg["sensor"]["interval_seconds"])
         while not self.stop_event.is_set():
             try:
@@ -391,14 +399,14 @@ class OpsDaemon:
             self._force_wave.wait(interval)
 
     def sensor_tick(self) -> None:
-        """Đánh giá điều kiện và mở đợt mới hoặc chạy tiếp đợt chờ provider."""
+        """Evaluate conditions and open a new wave or resume a wave waiting on a provider."""
         force = self._force_wave.is_set()
         self._force_wave.clear()
         if self._dbos_ready:
             self.reconcile()
         if self.store.active_wave("auto"):
-            # Đang có đợt tự động: không mở đợt mới, nên không đọc lại cả bảng bài trên DB
-            # vận hành (bộ chọn bài nặng, và đợt đang chạy cần DB hơn).
+            # An automatic wave is active, so no new wave opens and the full article table is
+            # not re-read on the operational DB (the selector is heavy and the running wave needs the DB more).
             return
         t0 = time.monotonic()
         exclude = self.store.excluded_article_ids(
@@ -431,7 +439,7 @@ class OpsDaemon:
         level = order.effective_level()
         for w in self.store.parked_for_breaker():
             if level == "L0":
-                # Tự chạy lại cũng là tiêu token: không có standing order thì không làm.
+                # Automatic retry also spends tokens: without a standing order, do nothing.
                 break
             allowed, _ = self.breakers.allow(w["provider"] or "agy")
             if allowed:
@@ -472,18 +480,18 @@ class OpsDaemon:
 
     def open_wave(self, target_date: str, trigger: str, level: str, provider: str,
                   order_hash: str, reason: str) -> str:
-        """Ghi hàng đợt và khởi chạy workflow.
+        """Write the wave row and start the workflow.
 
         Args:
-            target_date: Ngày xuất bản cần xử lý.
-            trigger: Luật kích hoạt.
-            level: Mức tự chủ áp cho đợt.
+            target_date: Publication date to process.
+            trigger: Trigger rule.
+            level: Autonomy level applied to the wave.
             provider: Runner.
-            order_hash: Băm standing order.
-            reason: Lý do kích hoạt.
+            order_hash: Hash of the standing order.
+            reason: Trigger reason.
 
         Returns:
-            Mã đợt.
+            Wave identifier.
         """
         from src.ops import dbos_flow
 
@@ -503,12 +511,12 @@ class OpsDaemon:
         dbos_flow.start_wave(spec)
         return wave_id
 
-    # ── hành động cho lệnh ───────────────────────────────────────────────────
+    # ── command actions ──────────────────────────────────────────────────────
     def request_wave(self) -> str:
-        """Yêu cầu sensor mở đợt ngay ở nhịp kế tiếp.
+        """Ask the sensor to open a wave on the next beat.
 
         Returns:
-            Phản hồi cho người vận hành.
+            Message for the operator.
         """
         if self.store.active_wave("auto"):
             return "Đang có đợt tự động chạy; mỗi luồng tối đa một đợt."
@@ -516,13 +524,13 @@ class OpsDaemon:
         return "Đã yêu cầu mở đợt; sensor xử lý trong vài giây."
 
     def retry_wave(self, wave_id: str) -> str:
-        """Chạy lại một đợt từ bước hỏng bằng workflow mới cùng mã đợt.
+        """Re-run a wave from the failed step with a new workflow under the same wave id.
 
         Args:
-            wave_id: Mã đợt.
+            wave_id: Wave identifier.
 
         Returns:
-            Phản hồi cho người vận hành.
+            Message for the operator.
         """
         if self._wave_lock.acquire(timeout=30):
             try:
@@ -549,8 +557,8 @@ class OpsDaemon:
             return blocked
         order = load_order(self.paths.standing_order)
         attempt = int(w["attempt"] or 0) + 1
-        # Chỉ người gọi được hàm này khi standing order về L0 (sensor không tự chạy lại
-        # ở L0), nên chạy lại là một quyết định rõ ràng của người.
+        # Only a human can reach this function when the standing order is L0 (the sensor does
+        # not retry at L0), so the retry is an explicit human decision.
         level = "L1"
         spec = WaveSpec(wave_id, w["target_date"], "retry", level,
                         w["provider"] or order.provider, attempt, order.digest())
@@ -563,13 +571,13 @@ class OpsDaemon:
         return f"Đã chạy lại {wave_id} (lần {attempt})."
 
     def diagnose_async(self, wave_id: str | None) -> str:
-        """Chạy ops-sentinel ở luồng nền, trả kết quả qua outbox.
+        """Run ops-sentinel on a background thread and deliver the result through the outbox.
 
         Args:
-            wave_id: Đợt cần chẩn đoán.
+            wave_id: Wave to diagnose.
 
         Returns:
-            Phản hồi tức thì.
+            Immediate message for the operator.
         """
         if not self._diag_lock.acquire(blocking=False):
             return "Sentinel đang chẩn đoán một yêu cầu khác."
@@ -591,17 +599,17 @@ class OpsDaemon:
         return "Sentinel đang chẩn đoán; kết quả gửi sau ít phút."
 
     def capture_restart(self) -> str:
-        """Gỡ trạng thái bỏ cuộc của supervisor để thử khởi động lại morninger.
+        """Clear the supervisor give-up state so it retries starting morninger.
 
         Returns:
-            Phản hồi cho người vận hành.
+            Message for the operator.
         """
         self.supervisor.reset()
         return "Supervisor sẽ thử khởi động lại morninger ở nhịp kế tiếp."
 
-    # ── kênh người vận hành ──────────────────────────────────────────────────
+    # ── operator channel ─────────────────────────────────────────────────────
     def drain_commands(self) -> None:
-        """Xử lý lệnh do ops console đưa vào hộp thư."""
+        """Process commands the ops console placed in the inbox."""
         for row in self.store.pending_commands():
             reply = commands.execute(row["text"], self, actor=row["actor"])
             self.store.finish_command(row["id"], reply.text)
@@ -620,7 +628,7 @@ class OpsDaemon:
         while not self.stop_event.is_set():
             try:
                 updates = self.tg.get_updates(offset, timeout)
-            except Exception as exc:  # noqa: BLE001 — mạng chập chờn: nghỉ rồi thử lại
+            except Exception as exc:  # noqa: BLE001 — flaky network: pause, then retry
                 self.store.emit("telegram.poll_error", str(exc)[:200], level="debug")
                 self.stop_event.wait(15)
                 continue
@@ -633,17 +641,17 @@ class OpsDaemon:
                     self.store.emit("telegram.handle_error", str(exc)[:300], level="warn")
 
     def _authorized(self, chat: dict, sender: dict) -> bool:
-        """Chỉ nhận lệnh trong chat riêng, từ đúng người có mã nằm trong danh sách trắng.
+        """Accept commands only in a private chat from a sender whose id is on the allow-list.
 
-        Trong chat riêng, mã chat trùng mã người gửi. Nhóm bị từ chối kể cả khi mã nhóm
-        nằm trong danh sách, vì mọi thành viên nhóm đều bấm được nút.
+        In a private chat the chat id equals the sender id. Groups are rejected even when the
+        group id is on the list, because every group member can press the buttons.
 
         Args:
-            chat: Đối tượng `chat` của Telegram.
-            sender: Đối tượng `from` của Telegram.
+            chat: Telegram `chat` object.
+            sender: Telegram `from` object.
 
         Returns:
-            True khi được phép.
+            True when authorized.
         """
         chat_id = str(chat.get("id", ""))
         return (chat.get("type") == "private" and chat_id in self.chat_ids
@@ -676,14 +684,14 @@ class OpsDaemon:
 
 
 def heartbeat_is_stale(store: OpsStore, max_age_s: float = 180) -> bool:
-    """Cho biết nhịp tim daemon đã quá cũ.
+    """Report whether the daemon heartbeat is too old.
 
     Args:
-        store: Store vận hành.
-        max_age_s: Ngưỡng số giây.
+        store: Operations store.
+        max_age_s: Threshold in seconds.
 
     Returns:
-        True khi chưa có hoặc quá cũ.
+        True when no heartbeat exists or it is too old.
     """
     ts = parse_iso(store.get_state("heartbeat_at"))
     return ts is None or (now_vn() - ts).total_seconds() > max_age_s

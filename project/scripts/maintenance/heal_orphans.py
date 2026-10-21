@@ -1,4 +1,4 @@
-"""Khôi phục các bản ghi bài viết bị thiếu trong bảng articles từ các tầng phái sinh."""
+"""Restore article records missing from the articles table using derived layers."""
 from __future__ import annotations
 
 import argparse
@@ -28,6 +28,15 @@ _INNER = ("SELECT article_id FROM l1_outputs WHERE dod_pass=1"
 
 
 def _title_candidates(pkg: dict, l1_title: str | None) -> list[str]:
+    """List candidate titles for an article from its work package.
+
+    Args:
+        pkg: Work package dict.
+        l1_title: Title recorded in `l1_tasks`, if any.
+
+    Returns:
+        Candidate titles: first text line, headings, then the L1 title.
+    """
     out = []
     first = (pkg.get("cleaned_text") or "").split("\n", 1)[0].strip()
     if first:
@@ -41,7 +50,17 @@ def _title_candidates(pkg: dict, l1_title: str | None) -> list[str]:
 
 
 def _rebuild(pkg: dict, article_id: str, domain: str, l1_title: str | None) -> Article | None:
-    """Dựng lại Article; None nếu không tìm được tiêu đề khớp hash."""
+    """Rebuild an Article from a work package.
+
+    Args:
+        pkg: Work package dict.
+        article_id: Expected `url_title_hash` of the article.
+        domain: Source domain recorded in `work_items`.
+        l1_title: Title recorded in `l1_tasks`, if any.
+
+    Returns:
+        The rebuilt Article, or None if no title matches the hash.
+    """
     url = pkg.get("source_url") or ""
     title = next((t for t in _title_candidates(pkg, l1_title)
                   if sha256_hash(url, t) == article_id), None)
@@ -60,6 +79,14 @@ def _rebuild(pkg: dict, article_id: str, domain: str, l1_title: str | None) -> A
 
 
 def main(argv: list[str]) -> int:
+    """Rebuild orphaned articles from work packages and insert them.
+
+    Args:
+        argv: Command-line arguments without the program name.
+
+    Returns:
+        Process exit code, always 0.
+    """
     ap = argparse.ArgumentParser(description="Khôi phục bài mồ côi từ work-package")
     ap.add_argument("--dry-run", action="store_true", help="Chỉ đếm, không ghi")
     args = ap.parse_args(argv)

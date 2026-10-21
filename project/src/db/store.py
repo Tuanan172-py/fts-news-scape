@@ -1,4 +1,4 @@
-"""Tầng truy cập và lưu trữ dữ liệu SQLite (Schema v2, chế độ WAL)."""
+"""Provide the SQLite data access and storage layer (schema v2, WAL mode)."""
 
 from __future__ import annotations
 
@@ -19,13 +19,13 @@ from src.db import registry
 
 
 def _is_owner_alive(owner: str) -> bool:
-    """Kiểm tra tiến trình sở hữu khóa có còn hoạt động hay không.
+    """Check whether the process that owns a lock is still alive.
 
     Args:
-        owner: Chuỗi định danh tiến trình dạng hostname:pid.
+        owner: Process identity string in the form hostname:pid.
 
     Returns:
-        True nếu tiến trình còn tồn tại hoặc thuộc máy chủ khác.
+        True if the process exists or belongs to another host.
     """
     if not owner:
         return False
@@ -43,14 +43,14 @@ def _is_owner_alive(owner: str) -> bool:
 
 
 def _lock_is_stale(ts_iso: str, stale_seconds: int) -> bool:
-    """Kiểm tra mốc thời gian khóa đã hết hạn hiệu lực hay chưa.
+    """Check whether a lock timestamp has expired.
 
     Args:
-        ts_iso: Chuỗi thời gian khóa định dạng ISO.
-        stale_seconds: Thời gian hết hạn tính bằng giây.
+        ts_iso: Lock timestamp in ISO format.
+        stale_seconds: Expiry time in seconds.
 
     Returns:
-        True nếu khóa đã quá thời hạn cho phép.
+        True if the lock is older than the allowed age.
     """
     try:
         age = (datetime.now(VN_TZ) - datetime.fromisoformat(ts_iso)).total_seconds()
@@ -365,13 +365,19 @@ CREATE TABLE IF NOT EXISTS source_profile (
 
 
 class ArticleStore:
-    """Lớp quản lý tương tác và thao tác cơ sở dữ liệu SQLite tập trung.
+    """Manage all interaction with the SQLite database.
 
     Attributes:
-        db_path: Đường dẫn tệp cơ sở dữ liệu SQLite.
+        db_path: Path of the SQLite database file.
     """
 
     def __init__(self, db_path: str | Path | None = None, init_schema: bool = True):
+        """Resolve the database path and optionally create or migrate the schema.
+
+        Args:
+            db_path: Database path; a relative path is taken from `project/`. None resolves the operational DB.
+            init_schema: If True, create missing tables and apply migrations.
+        """
         if db_path is None:
             self.db_path = str(resolve_db_path())
         else:
@@ -385,13 +391,13 @@ class ArticleStore:
             self.init_schema()
 
     def _connect(self, readonly: bool = False) -> sqlite3.Connection:
-        """Khởi tạo kết nối SQLite với cấu hình WAL và timeout an toàn.
+        """Open a SQLite connection with WAL and a safe timeout.
 
         Args:
-            readonly: Cờ mở kết nối ở chế độ chỉ đọc.
+            readonly: If True, open the connection in read-only mode.
 
         Returns:
-            Đối tượng sqlite3.Connection đã sẵn sàng thực thi truy vấn.
+            A sqlite3.Connection ready to run queries.
         """
         resolved = Path(self.db_path).resolve()
         if readonly and resolved.exists():
@@ -409,15 +415,16 @@ class ArticleStore:
         return conn
 
     def _connect_ro(self) -> sqlite3.Connection:
-        """Mở connection chỉ đọc (URI mode=ro) để tránh tranh chấp lock."""
+        """Open a read-only connection (URI mode=ro) to avoid lock contention."""
         return self._connect(readonly=True)
 
     def init_schema(self) -> None:
+        """Create missing tables and indexes, apply column migrations and seed the discovery ledger."""
         conn = self._connect()
         try:
-            # _migrate TRUOC executescript: DDL co index tham chieu cot moi, chay trong khi
-            # bang cu chua co cot do se loi 'no such column'. Voi DB moi tinh, _migrate khong
-            # lam gi (bang chua ton tai) va _SCHEMA tao san du cot.
+            # Run _migrate BEFORE executescript: DDL with an index on a new column fails with
+            # 'no such column' while the old table still lacks it. On a brand-new DB _migrate
+            # does nothing (no table yet) and _SCHEMA creates every column.
             self._migrate(conn)
             conn.executescript(_SCHEMA)
             registry.backfill_from_articles(conn)
@@ -425,28 +432,40 @@ class ArticleStore:
         finally:
             conn.close()
 
-    # DDL dung CREATE TABLE IF NOT EXISTS nen KHONG bao gio nang cap duoc DB da ton tai.
-    # Moi cot them sau phai co mot buoc ALTER idempotent o day.
+    # DDL uses CREATE TABLE IF NOT EXISTS, so it can never upgrade an existing DB.
+    # Every column added later needs an idempotent ALTER step here.
     _MIGRATIONS = (
         ("l1_outputs", "l1_source", "ALTER TABLE l1_outputs ADD COLUMN l1_source TEXT NOT NULL DEFAULT 'agent'"),
     )
 
     def _migrate(self, conn: sqlite3.Connection) -> None:
-        """Them cot con thieu vao DB da ton tai. An toan khi chay lai nhieu lan."""
+        """Add missing columns to an existing DB; safe to run repeatedly."""
         for table, column, ddl in self._MIGRATIONS:
             try:
                 have = {r[1] for r in conn.execute(f'PRAGMA table_info({table})')}
             except sqlite3.Error:
-                continue                      # bang chua ton tai -> _SCHEMA da tao dung roi
+                continue                      # table absent -> _SCHEMA already creates it correctly
             if have and column not in have:
                 conn.execute(ddl)
                 conn.commit()
 
     def connect(self) -> sqlite3.Connection:
-        """Public connection (đủ pragmas). Caller tự đóng. Dùng bởi handoff.Catalog."""
+        """Open a read-write connection with all pragmas applied; used by handoff.Catalog.
+
+        Returns:
+            A sqlite3.Connection that the caller must close.
+        """
         return self._connect()
 
     def get_by_hash(self, url_title_hash: str) -> Article | None:
+        """Fetch an article by its URL-title hash.
+
+        Args:
+            url_title_hash: Hash of the article URL and title.
+
+        Returns:
+            The matching Article, or None if absent.
+        """
         conn = self._connect_ro()
         try:
             row = conn.execute(
@@ -458,6 +477,14 @@ class ArticleStore:
 
     # -- change-detection version log (phase-02) ------------------------------
     def last_version(self, url_title_hash: str) -> dict | None:
+        """Fetch the latest version record of an article.
+
+        Args:
+            url_title_hash: Hash of the article URL and title.
+
+        Returns:
+            The latest `article_versions` row as a dict, or None if absent.
+        """
         conn = self._connect_ro()
         try:
             row = conn.execute(
@@ -470,6 +497,14 @@ class ArticleStore:
             conn.close()
 
     def insert_version(self, row: dict) -> int:
+        """Insert an `article_versions` row unless the same content hash already exists.
+
+        Args:
+            row: Column values keyed by `article_versions` column name.
+
+        Returns:
+            Id of the new row, or of the existing row with the same `content_sha256`.
+        """
         cols = (
             "url_title_hash",
             "source_domain",
@@ -487,7 +522,7 @@ class ArticleStore:
         )
         conn = self._connect()
         try:
-            # Kiểm tra tránh insert trùng lặp cùng content_sha256 khi re-derive lặp lại
+            # Avoid inserting a duplicate content_sha256 when a re-derive repeats.
             existing = conn.execute(
                 "SELECT id FROM article_versions WHERE url_title_hash = ? AND content_sha256 = ? "
                 "ORDER BY id DESC LIMIT 1",
@@ -507,7 +542,14 @@ class ArticleStore:
             conn.close()
 
     def changed_since(self, watermark_iso: str = "") -> list[str]:
-        """url_title_hash có bản version state ∈ {NEW,CONTENT_CHANGED} sau watermark."""
+        """List article hashes with a version in state NEW or CONTENT_CHANGED at or after a watermark.
+
+        Args:
+            watermark_iso: ISO timestamp lower bound for `captured_at`.
+
+        Returns:
+            Distinct `url_title_hash` values.
+        """
         conn = self._connect_ro()
         try:
             rows = conn.execute(
@@ -519,9 +561,17 @@ class ArticleStore:
         finally:
             conn.close()
 
-    # -- agent output store (Vòng 3 infra) ------------------------------------
+    # -- agent output store ----------------------------------------------------
     def get_agent_output(self, article_id: str, raw_sha256: str) -> dict | None:
-        """Output đã lưu cho (article_id, raw_sha256) — idempotent replay."""
+        """Fetch the stored output for (article_id, raw_sha256) for an idempotent replay.
+
+        Args:
+            article_id: Article identifier.
+            raw_sha256: SHA-256 of the raw capture.
+
+        Returns:
+            The `agent_outputs` row as a dict, or None if absent.
+        """
         conn = self._connect_ro()
         try:
             row = conn.execute(
@@ -533,12 +583,12 @@ class ArticleStore:
             conn.close()
 
     def set_agent_dod(self, row_id: int, dod_pass: int, dod_reasons: str) -> None:
-        """Cập nhật trạng thái kiểm định Definition-of-Done cho bản ghi kết quả agent.
+        """Update the Definition-of-Done check status of an agent output record.
 
         Args:
-            row_id: Khóa chính của bản ghi trong bảng agent_outputs.
-            dod_pass: Cờ trạng thái đạt chuẩn DoD (1 là đạt, 0 là không đạt).
-            dod_reasons: Chuỗi lý do hoặc kết quả kiểm định chi tiết.
+            row_id: Primary key of the row in `agent_outputs`.
+            dod_pass: DoD status flag (1 passed, 0 failed).
+            dod_reasons: Reasons or detailed check result.
         """
         conn = self._connect()
         try:
@@ -551,7 +601,14 @@ class ArticleStore:
             conn.close()
 
     def insert_agent_output(self, row: dict) -> int:
-        """Upsert 1 output theo UNIQUE(article_id, raw_sha256). Trả row id."""
+        """Upsert one output by UNIQUE(article_id, raw_sha256).
+
+        Args:
+            row: Column values keyed by `agent_outputs` column name.
+
+        Returns:
+            Row id, or -1 if the row cannot be read back.
+        """
         cols = (
             "article_id",
             "raw_sha256",
@@ -580,9 +637,13 @@ class ArticleStore:
         finally:
             conn.close()
 
-    # -- L1 entity-recognition store (lớp 1 handoff) --------------------------
+    # -- L1 entity-recognition store (handoff layer 1) -------------------------
     def upsert_l1_task(self, row: dict) -> None:
-        """Ghi/nhật kết quả code-first cho 1 article; GIỮ nguyên status nếu đã có."""
+        """Upsert the code-first result of one article, keeping the existing status.
+
+        Args:
+            row: Column values keyed by `l1_tasks` column name.
+        """
         conn = self._connect()
         try:
             conn.execute(
@@ -603,6 +664,14 @@ class ArticleStore:
             conn.close()
 
     def get_l1_task(self, article_id: str) -> dict | None:
+        """Fetch the L1 task of an article.
+
+        Args:
+            article_id: Article identifier.
+
+        Returns:
+            The `l1_tasks` row as a dict, or None if absent.
+        """
         conn = self._connect_ro()
         try:
             r = conn.execute("SELECT * FROM l1_tasks WHERE article_id=?", (article_id,)).fetchone()
@@ -612,6 +681,14 @@ class ArticleStore:
 
     def set_l1_status(self, article_id: str, status: str, *, done_at: str | None = None,
                       error: str | None = None) -> None:
+        """Set the status of an L1 task.
+
+        Args:
+            article_id: Article identifier.
+            status: New status: pending, done or failed.
+            done_at: Completion timestamp.
+            error: Error message, if any.
+        """
         conn = self._connect()
         try:
             conn.execute(
@@ -622,7 +699,11 @@ class ArticleStore:
             conn.close()
 
     def insert_l1_output(self, row: dict) -> None:
-        """Upsert output tra soát agent L1 theo UNIQUE(article_id)."""
+        """Upsert the L1 agent review output by UNIQUE(article_id).
+
+        Args:
+            row: Column values keyed by `l1_outputs` column name; `l1_source` defaults to `agent`.
+        """
         cols = ("article_id", "output_json", "recognized", "agent_provider",
                 "model_used", "confidence", "dod_pass", "dod_reasons", "created_at",
                 "l1_source")
@@ -638,6 +719,14 @@ class ArticleStore:
             conn.close()
 
     def get_l1_output(self, article_id: str) -> dict | None:
+        """Fetch the L1 output of an article.
+
+        Args:
+            article_id: Article identifier.
+
+        Returns:
+            The `l1_outputs` row as a dict, or None if absent.
+        """
         conn = self._connect_ro()
         try:
             r = conn.execute("SELECT * FROM l1_outputs WHERE article_id=?", (article_id,)).fetchone()
@@ -646,7 +735,15 @@ class ArticleStore:
             conn.close()
 
     def insert(self, article: Article, conn: sqlite3.Connection | None = None) -> bool:
-        """Insert 1 article. True nếu row mới, False nếu đã tồn tại (URL/hash trùng)."""
+        """Insert one article.
+
+        Args:
+            article: Article to insert.
+            conn: Existing connection to use; None opens and commits its own.
+
+        Returns:
+            True if a new row was inserted, False if it already exists (duplicate URL or hash) or the insert failed.
+        """
         own = conn is None
         if own:
             conn = self._connect()
@@ -667,7 +764,15 @@ class ArticleStore:
     def insert_batch(
         self, articles: list[Article], conn: sqlite3.Connection | None = None
     ) -> int:
-        """Insert batch trong 1 transaction (BEGIN IMMEDIATE). Trả về số row mới."""
+        """Insert a batch in one transaction (BEGIN IMMEDIATE).
+
+        Args:
+            articles: Articles to insert.
+            conn: Existing connection to use; None opens its own.
+
+        Returns:
+            Number of new rows.
+        """
         if not articles:
             return 0
         own = conn is None
@@ -677,15 +782,13 @@ class ArticleStore:
             conn.execute("BEGIN IMMEDIATE")
             before = conn.total_changes
             conn.executemany(_INSERT_SQL, [a.to_row() for a in articles])
-            inserted = conn.total_changes - before      # dem TRUOC khi ghi seen_articles,
-                                                        # neu khong se dem ca row cua bang do
-            # Danh dau `seen` TRONG CUNG transaction voi articles.
-            # Truoc day base_scraper goi dedup.mark_seen() ngay LUC CAO, con dong `articles`
-            # lai duoc ghi bat dong bo sau do qua DBWriter. Bat ky gian doan nao o giua
-            # (thoat tien trinh, writer chet, queue chua xa) khien bai bi danh dau 'da thay'
-            # VINH VIEN nhung khong co dong articles -> moi chu ky sau deu bo qua, trong khi
-            # Bronze/Silver/work_items/L1/Gold van chay tiep tu ban raw da cao.
-            # Do tren monocle.db 2026-09-07: 429 bai mo coi, 429/429 co mat trong seen_articles.
+            inserted = conn.total_changes - before      # count BEFORE writing seen_articles,
+                                                        # or that table's rows would be counted too
+            # Mark `seen` in the SAME transaction as `articles`. Marking at scrape time while the
+            # `articles` row is written asynchronously by DBWriter would let any interruption in
+            # between (process exit, writer death, unflushed queue) leave an article marked seen
+            # forever without an `articles` row, so every later cycle skips it while
+            # Bronze/Silver/work_items/L1/Gold keep running from the scraped raw copy.
             conn.executemany(
                 "INSERT OR IGNORE INTO seen_articles (hash, title_norm, source_domain, seen_at) "
                 "VALUES (?, ?, ?, ?)",
@@ -700,8 +803,8 @@ class ArticleStore:
             logger.error("DB batch insert failed ({} articles): {}", len(articles), e)
             return 0
         except BaseException:
-            # KeyboardInterrupt/MemoryError...: không để transaction treo trên
-            # connection dài hạn của DBWriter
+            # KeyboardInterrupt, MemoryError and similar: do not leave a transaction open on
+            # the long-lived DBWriter connection.
             conn.rollback()
             raise
         finally:
@@ -711,6 +814,15 @@ class ArticleStore:
     def get_recent(
         self, limit: int = 20, source_domain: str | None = None
     ) -> list[Article]:
+        """Fetch the most recently fetched articles.
+
+        Args:
+            limit: Maximum number of articles.
+            source_domain: Restrict to one source domain; None means all.
+
+        Returns:
+            Articles ordered by `fetched_at`, newest first.
+        """
         conn = self._connect_ro()
         try:
             if source_domain:
@@ -728,7 +840,14 @@ class ArticleStore:
             conn.close()
 
     def count_by_domain(self, since_iso: str = "") -> dict[str, int]:
-        """Số article mỗi domain (fetched_at >= since_iso) — cho metrics/monitoring."""
+        """Count articles per domain fetched at or after a timestamp, for metrics and monitoring.
+
+        Args:
+            since_iso: ISO timestamp lower bound for `fetched_at`.
+
+        Returns:
+            Mapping of source domain to article count.
+        """
         conn = self._connect_ro()
         try:
             rows = conn.execute(
@@ -741,6 +860,11 @@ class ArticleStore:
             conn.close()
 
     def count(self) -> int:
+        """Count all stored articles.
+
+        Returns:
+            Number of rows in `articles`.
+        """
         conn = self._connect_ro()
         try:
             return conn.execute("SELECT COUNT(*) FROM articles").fetchone()[0]
@@ -749,7 +873,14 @@ class ArticleStore:
 
     # -- pipeline state (morninger watermark/checkpoint) ----------------------
     def get_state(self, key: str) -> str | None:
-        """Đọc giá trị key từ pipeline_state. None nếu chưa có."""
+        """Read a key from `pipeline_state`.
+
+        Args:
+            key: State key.
+
+        Returns:
+            The stored value, or None if absent.
+        """
         conn = self._connect_ro()
         try:
             row = conn.execute(
@@ -760,7 +891,12 @@ class ArticleStore:
             conn.close()
 
     def set_state(self, key: str, value: str) -> None:
-        """Ghi/ghi đè 1 key trong pipeline_state (upsert)."""
+        """Upsert one key in `pipeline_state`.
+
+        Args:
+            key: State key.
+            value: Value to store.
+        """
         conn = self._connect()
         try:
             conn.execute(
@@ -772,33 +908,32 @@ class ArticleStore:
         finally:
             conn.close()
 
-    # -- sổ lỗi derive Bronze→Silver (ADR 0007) --------------------------------
+    # -- Bronze-to-Silver derive failure ledger (ADR 0007) ---------------------
     @staticmethod
     def canonical_meta_key(meta_path: str) -> str:
-        """Chuẩn hoá khoá của `silver_failures` về dạng tương đối so với gốc dữ liệu.
+        """Normalize a `silver_failures` key to a path relative to the data root.
 
-        Cùng một tệp Bronze có thể được gọi bằng đường dẫn tuyệt đối hoặc tương đối,
-        dấu gạch chéo xuôi hoặc ngược, có hoặc không có tiền tố `data/` kiểu cũ. Khoá
-        không chuẩn làm dòng lỗi cũ không bao giờ được xoá hay tăng số lần thử, và
-        ghim watermark mãi.
+        One Bronze file can be named by an absolute or relative path, with forward or
+        backward slashes, with or without the legacy `data/` prefix. A non-canonical key
+        means an old failure row is never cleared or retried and pins the watermark forever.
 
         Args:
-            meta_path: Đường dẫn tệp `.meta.json`.
+            meta_path: Path of the `.meta.json` file.
 
         Returns:
-            Đường dẫn dùng dấu gạch chéo xuôi, tương đối khi tệp nằm trong gốc dữ liệu.
+            Path with forward slashes, relative when the file is inside the data root.
         """
         if Path(meta_path).is_absolute():
             return paths.to_data_relative(meta_path).replace("\\", "/")
         return paths.strip_legacy_prefix(str(meta_path))
 
     def normalize_silver_failure_keys(self) -> int:
-        """Đưa mọi khoá trong `silver_failures` về dạng chuẩn, gộp các dòng trùng.
+        """Rewrite every key in `silver_failures` to canonical form and merge duplicate rows.
 
-        Dòng trùng giữ số lần thử lớn nhất và cờ dead-letter lớn nhất.
+        Duplicate rows keep the largest attempt count and the largest dead-letter flag.
 
         Returns:
-            Số dòng đã đổi khoá hoặc đã gộp.
+            Number of rows rekeyed or merged.
         """
         conn = self._connect()
         changed = 0
@@ -833,17 +968,17 @@ class ArticleStore:
     def record_silver_failure(self, meta_path: str, fetch_ts: str, error: str,
                               max_attempts: int,
                               url_title_hash: str = "") -> int:
-        """Ghi nhận một lần derive THẤT BẠI cho tệp Bronze, tăng số lần đã thử.
+        """Record one FAILED derive of a Bronze file and increment its attempt count.
 
         Args:
-            meta_path: Đường dẫn tệp `.meta.json` (khoá chính).
-            fetch_ts: Mốc thời gian dùng để chặn watermark.
-            error: Thông điệp lỗi gần nhất.
-            max_attempts: Đủ số lần này thì chuyển dead-letter, thôi chặn watermark.
-            url_title_hash: Mã băm bài viết nếu xác định được.
+            meta_path: Path of the `.meta.json` file (primary key).
+            fetch_ts: Timestamp used to block the watermark.
+            error: Latest error message.
+            max_attempts: Once reached, the row becomes dead-letter and stops blocking the watermark.
+            url_title_hash: Article hash if known.
 
         Returns:
-            Số lần đã thử sau khi tăng.
+            Attempt count after the increment.
         """
         meta_path = self.canonical_meta_key(meta_path)
         conn = self._connect()
@@ -868,7 +1003,11 @@ class ArticleStore:
             conn.close()
 
     def clear_silver_failure(self, meta_path: str) -> None:
-        """Xoá tệp khỏi sổ lỗi khi derive thành công, tránh tích tụ rác."""
+        """Remove a file from the failure ledger after a successful derive.
+
+        Args:
+            meta_path: Path of the `.meta.json` file.
+        """
         conn = self._connect()
         try:
             conn.execute("DELETE FROM silver_failures WHERE meta_path IN (?, ?)",
@@ -878,10 +1017,10 @@ class ArticleStore:
             conn.close()
 
     def blocking_silver_failure_ts(self) -> str:
-        """Lấy `fetch_ts` nhỏ nhất trong các lỗi CHƯA dead-letter.
+        """Return the smallest `fetch_ts` among failures that are NOT yet dead-letter.
 
         Returns:
-            Mốc thời gian chặn watermark, hoặc chuỗi rỗng nếu không còn lỗi nào chặn.
+            Timestamp that blocks the watermark, or an empty string if nothing blocks.
         """
         conn = self._connect_ro()
         try:
@@ -893,10 +1032,10 @@ class ArticleStore:
             conn.close()
 
     def count_silver_failures(self) -> tuple[int, int]:
-        """Đếm số lỗi derive đang tồn.
+        """Count the outstanding derive failures.
 
         Returns:
-            Cặp (số đang chặn watermark, số đã dead-letter).
+            Pair (number blocking the watermark, number dead-lettered).
         """
         conn = self._connect_ro()
         try:
@@ -908,10 +1047,19 @@ class ArticleStore:
         finally:
             conn.close()
 
-    # -- advisory scheduler lock (Fix F: chống chạy 2 scheduler cùng lúc) -------
+    # -- advisory scheduler lock (prevents two schedulers running at once) -------
     def try_acquire_lock(self, name: str, owner: str, stale_seconds: int) -> bool:
-        """Chiếm lock qua pipeline_state (atomic BEGIN IMMEDIATE). True nếu lock trống /
-        của chính owner / đã cũ (stale) / tiến trình cũ đã chết. False nếu owner khác đang giữ lock còn tươi."""
+        """Take a lock through `pipeline_state` (atomic BEGIN IMMEDIATE).
+
+        Args:
+            name: Lock name.
+            owner: Identity of the requesting process.
+            stale_seconds: Age in seconds after which another owner's lock counts as stale.
+
+        Returns:
+            True if the lock is free, already held by this owner, stale, or its previous
+            owner died. False if another owner holds a fresh lock.
+        """
         key = f"lock:{name}"
         conn = self._connect()
         try:
@@ -936,7 +1084,15 @@ class ArticleStore:
             conn.close()
 
     def release_lock(self, name: str, owner: str) -> bool:
-        """Giải phóng lock nếu chính owner đang giữ (atomic)."""
+        """Release a lock if this owner holds it (atomic).
+
+        Args:
+            name: Lock name.
+            owner: Identity of the releasing process.
+
+        Returns:
+            True if the lock was held by this owner and released, otherwise False.
+        """
         key = f"lock:{name}"
         conn = self._connect()
         try:
@@ -957,5 +1113,10 @@ class ArticleStore:
             conn.close()
 
     def refresh_lock(self, name: str, owner: str) -> None:
-        """Nhịp tim giữ lock còn tươi (gọi mỗi cycle của chủ sở hữu lock)."""
+        """Keep a lock fresh with a heartbeat, called once per cycle by the lock owner.
+
+        Args:
+            name: Lock name.
+            owner: Identity of the lock owner.
+        """
         self.set_state(f"lock:{name}", owner)

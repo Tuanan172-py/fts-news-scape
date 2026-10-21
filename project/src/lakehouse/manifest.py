@@ -1,4 +1,4 @@
-"""Quản lý tệp kê khai toàn vẹn dữ liệu Manifest cho kiến trúc Lakehouse."""
+"""Manage the integrity manifest files of the Lakehouse architecture."""
 
 from __future__ import annotations
 
@@ -14,16 +14,16 @@ from src.lakehouse.storage import BaseStorageAdapter
 
 @dataclass
 class PartitionManifestEntry:
-    """Thông tin chi tiết của một phân vùng dữ liệu Parquet.
+    """Details of one Parquet data partition.
 
     Attributes:
-        partition_path: Đường dẫn tương đối của tệp tin phân vùng Parquet.
-        row_count: Tổng số dòng bài viết trong phân vùng.
-        size_bytes: Kích thước tệp tin tính theo byte.
-        sha256: Mã băm SHA-256 của tệp tin Parquet thành phẩm.
-        year: Năm phân vùng.
-        month: Tháng phân vùng.
-        date: Chuỗi ngày phân vùng dạng YYYYMMDD.
+        partition_path: Relative path of the Parquet partition file.
+        row_count: Total number of article rows in the partition.
+        size_bytes: File size in bytes.
+        sha256: SHA-256 hash of the resulting Parquet file.
+        year: Partition year.
+        month: Partition month.
+        date: Partition date string as YYYYMMDD.
     """
 
     partition_path: str
@@ -35,10 +35,10 @@ class PartitionManifestEntry:
     date: str
 
     def to_dict(self) -> dict[str, Any]:
-        """Chuyển đổi thực thể thành từ điển dữ liệu.
+        """Convert the entry to a data dict.
 
         Returns:
-            Từ điển chứa toàn bộ thuộc tính của phân vùng.
+            Dict with all attributes of the partition.
         """
         return asdict(self)
 
@@ -48,15 +48,15 @@ def generate_manifest_data(
     partitions: list[PartitionManifestEntry],
     engine_name: str = "DuckDB",
 ) -> dict[str, Any]:
-    """Sinh cấu trúc dữ liệu kê khai toàn vẹn theo chuẩn Lakehouse Manifest.
+    """Build the integrity manifest data structure of the Lakehouse Manifest standard.
 
     Args:
-        date_str: Ngày nghiệp vụ của tệp kê khai (YYYY-MM-DD hoặc YYYYMMDD).
-        partitions: Danh sách các phân vùng dữ liệu Parquet.
-        engine_name: Tên động cơ xử lý dữ liệu.
+        date_str: Business date of the manifest (YYYY-MM-DD or YYYYMMDD).
+        partitions: Parquet data partitions.
+        engine_name: Name of the data processing engine.
 
     Returns:
-        Từ điển dữ liệu tệp kê khai hoàn chỉnh.
+        Complete manifest data dict.
     """
     now_iso = datetime.now(timezone.utc).isoformat()
     total_records = sum(p.row_count for p in partitions)
@@ -81,15 +81,15 @@ def generate_latest_pointer_data(
     manifest_ref: str,
     partitions: list[PartitionManifestEntry],
 ) -> dict[str, Any]:
-    """Sinh dữ liệu con trỏ latest.json trỏ tới bản kê khai mới nhất.
+    """Build the latest.json pointer data that points to the newest manifest.
 
     Args:
-        date_str: Ngày nghiệp vụ của bản kê khai.
-        manifest_ref: Đường dẫn tham chiếu tới tệp kê khai theo ngày.
-        partitions: Danh sách các phân vùng dữ liệu.
+        date_str: Business date of the manifest.
+        manifest_ref: Reference path of the daily manifest file.
+        partitions: Data partitions.
 
     Returns:
-        Từ điển dữ liệu con trỏ latest.json.
+        Pointer data dict for latest.json.
     """
     now_iso = datetime.now(timezone.utc).isoformat()
     total_records = sum(p.row_count for p in partitions)
@@ -119,17 +119,17 @@ def write_manifests(
     manifest_dir: str = "_manifest",
     engine_name: str = "DuckDB",
 ) -> tuple[str, str]:
-    """Ghi tệp kê khai theo ngày và cập nhật con trỏ latest.json nguyên tử ra kho lưu trữ.
+    """Write the daily manifest and update the latest.json pointer atomically in storage.
 
     Args:
-        date_str: Chuỗi ngày nghiệp vụ (vd: '2026-10-08').
-        partitions: Danh sách các phân vùng Parquet thành phẩm.
-        storage: Adapter giao tiếp hệ thống lưu trữ.
-        manifest_dir: Thư mục chứa các tệp kê khai (mặc định '_manifest').
-        engine_name: Tên động cơ xử lý dữ liệu.
+        date_str: Business date string (for example '2026-10-08').
+        partitions: Resulting Parquet partitions.
+        storage: Storage system adapter.
+        manifest_dir: Directory that holds the manifest files.
+        engine_name: Name of the data processing engine.
 
     Returns:
-        Tuple gồm (đường dẫn tệp manifest theo ngày, đường dẫn tệp latest.json).
+        Tuple of (daily manifest path, latest.json path).
     """
     clean_date = date_str.replace("/", "-")
     manifest_rel_path = f"{manifest_dir}/{clean_date}.json"
@@ -159,17 +159,17 @@ def verify_manifest(
     manifest_path: str,
     storage: BaseStorageAdapter,
 ) -> dict[str, Any]:
-    """Kiểm chứng tính toàn vẹn của tệp manifest đối chiếu với dữ liệu thực tế.
+    """Verify the integrity of a manifest file against the actual data.
 
     Args:
-        manifest_path: Đường dẫn tệp manifest cần kiểm định (vd: '_manifest/latest.json').
-        storage: Adapter giao tiếp hệ thống lưu trữ.
+        manifest_path: Path of the manifest to verify (for example '_manifest/latest.json').
+        storage: Storage system adapter.
 
     Returns:
-        Từ điển kết quả thẩm định gồm trạng thái hợp lệ, số phân vùng và các lỗi phát hiện.
+        Result dict with the validity flag, partition count and the mismatches found.
 
     Raises:
-        FileNotFoundError: Khi tệp manifest không tồn tại.
+        FileNotFoundError: If the manifest file does not exist.
     """
     if not storage.exists(manifest_path):
         raise FileNotFoundError(f"Không tìm thấy tệp manifest tại: {manifest_path}")
@@ -180,7 +180,7 @@ def verify_manifest(
     mismatches: list[str] = []
     total_rows = 0
 
-    # Xử lý cả định dạng manifest ngày và định dạng con trỏ latest.json
+    # Handle both the daily manifest format and the latest.json pointer format.
     partitions_list = manifest_data.get("partitions") or manifest_data.get("files") or []
 
     for item in partitions_list:

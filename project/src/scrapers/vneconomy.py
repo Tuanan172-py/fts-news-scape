@@ -1,8 +1,4 @@
-"""Bộ thu thập dữ liệu báo VnEconomy (vneconomy.vn).
-
-Cung cấp lớp VnEconomyScraper thu thập danh sách bài viết từ các kênh RSS và tải
-chi tiết nội dung HTML kèm lưu trữ tầng Bronze.
-"""
+"""Scrape VnEconomy (vneconomy.vn) article lists from RSS channels and capture HTML details into Bronze."""
 
 from __future__ import annotations
 
@@ -28,17 +24,24 @@ BASE_URL = "https://vneconomy.vn"
 
 @register("vneconomy")
 class VnEconomyScraper(CaptureMixin, BaseScraper):
-    """Bộ thu thập dữ liệu báo VnEconomy kết hợp nguồn cấp RSS và tải chi tiết HTML.
+    """Scrape VnEconomy by combining RSS feeds with HTML detail downloads.
 
     Attributes:
-        feeds: Danh sách cấu hình các kênh RSS cần đọc.
-        content_selector: Bộ chọn CSS vùng nội dung chi tiết bài viết.
-        max_details: Số bài viết chi tiết tối đa cần tải trong mỗi chu kỳ.
-        watchlist: Danh mục mã cổ phiếu cần theo dõi và gán nhãn.
-        language: Mã ngôn ngữ nội dung bài viết.
+        feeds: Config of the RSS channels to read.
+        content_selector: CSS selector of the article detail content area.
+        max_details: Maximum number of article details to download per cycle.
+        watchlist: Stock tickers to watch and tag.
+        language: Language code of the article content.
     """
 
     def __init__(self, config, http, dedup):
+        """Initialize the scraper from its source config.
+
+        Args:
+            config: Source config dict.
+            http: HTTP client.
+            dedup: Deduplication cache.
+        """
         super().__init__(config, http, dedup)
         self.feeds = config.get("rss", {}).get("feeds", [])
         detail = config.get("detail", {})
@@ -50,10 +53,10 @@ class VnEconomyScraper(CaptureMixin, BaseScraper):
         self._init_capture()
 
     def fetch_list(self) -> list[dict]:
-        """Thu thập danh sách bài viết từ các kênh cấp tin RSS của VnEconomy.
+        """Collect the article list from the VnEconomy RSS channels.
 
         Returns:
-            Danh sách bài viết thô trích xuất từ các kênh RSS.
+            Raw articles extracted from the RSS channels.
         """
         self._details_fetched = 0
         items: list[dict] = []
@@ -83,13 +86,13 @@ class VnEconomyScraper(CaptureMixin, BaseScraper):
         return items
 
     def parse_item(self, raw: dict) -> Article | None:
-        """Chuyển đổi dữ liệu bài viết từ mục cấp tin RSS sang đối tượng Article.
+        """Convert article data from an RSS entry into an Article.
 
         Args:
-            raw: Dữ liệu bài viết thô từ RSS.
+            raw: Raw article data from RSS.
 
         Returns:
-            Đối tượng Article hợp lệ, hoặc None nếu thiếu URL hoặc tiêu đề.
+            Valid Article, or None when the URL or title is missing.
         """
         url = raw["link"]
         title = _clean_title(raw["title"])
@@ -110,10 +113,10 @@ class VnEconomyScraper(CaptureMixin, BaseScraper):
         )
 
     def enrich(self, article: Article) -> None:
-        """Bổ sung nội dung chi tiết bài viết qua HTML và lưu trữ capture tầng Bronze.
+        """Add article detail content from HTML and store the Bronze capture.
 
         Args:
-            article: Đối tượng Article cần bổ sung chi tiết nội dung.
+            article: Article to enrich with detail content.
         """
         if self._details_fetched >= self.max_details:
             article.content_text = article.summary

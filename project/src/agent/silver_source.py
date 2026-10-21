@@ -1,9 +1,4 @@
-"""Định vị và đọc thân bài tầng Silver cho Article Lane.
-
-Packet và gói công việc phải dùng cùng một thân bài mà trích dẫn sẽ đối chiếu vào:
-thân bài đầy đủ từ Silver, không phải đoạn trích RSS ngắn. Mọi nơi cần thân bài
-đều đi qua đây để không ai đọc lệch nguồn.
-"""
+"""Locate and read Silver-layer article bodies for the Article Lane."""
 from __future__ import annotations
 
 import json
@@ -16,19 +11,19 @@ SILVER_ROOT = paths.silver_dir()
 
 def silver_package_path(source_domain: str | None, published_at: str | None,
                          article_id: str) -> Path | None:
-    """Tìm gói Silver của bài theo bố cục kho.
+    """Find the Silver package of an article by the store layout.
 
-    Bố cục kho Silver là `<data_root>/silver/<domain>/<yyyymmdd>/<hash>.json`, ngày là
-    ngày build gói chứ không phải ngày đăng bài, nên tìm đúng ngày trước rồi quét
-    các ngày khác trong cùng domain khi trượt.
+    The Silver layout is `<data_root>/silver/<domain>/<yyyymmdd>/<hash>.json`. The date
+    is the package build date, not the publication date, so the exact date is tried
+    first and the other dates of the same domain are scanned on a miss.
 
     Args:
-        source_domain: Tên miền nguồn, ví dụ `vneconomy.vn`.
-        published_at: Mốc xuất bản, ví dụ `2026-10-05T...`.
-        article_id: Băm định danh bài (`url_title_hash`).
+        source_domain: Source domain, for example `vneconomy.vn`.
+        published_at: Publication timestamp, for example `2026-10-05T...`.
+        article_id: Article identity hash (`url_title_hash`).
 
     Returns:
-        Đường dẫn gói khi tìm thấy tệp, None khi thiếu dữ kiện hoặc không thấy.
+        Package path when the file exists, None when inputs are missing or no file is found.
     """
     try:
         if not source_domain or not article_id:
@@ -46,15 +41,15 @@ def silver_package_path(source_domain: str | None, published_at: str | None,
 
 def read_silver_text(source_domain: str | None, published_at: str | None,
                       article_id: str) -> str:
-    """Đọc trường `cleaned_text` của gói Silver.
+    """Read the `cleaned_text` field of a Silver package.
 
     Args:
-        source_domain: Tên miền nguồn.
-        published_at: Mốc xuất bản.
-        article_id: Băm định danh bài.
+        source_domain: Source domain.
+        published_at: Publication timestamp.
+        article_id: Article identity hash.
 
     Returns:
-        Thân bài đầy đủ, hoặc chuỗi rỗng khi không có gói Silver đọc được.
+        Full article body, or an empty string when no readable Silver package exists.
     """
     path = silver_package_path(source_domain, published_at, article_id)
     if path is None:

@@ -1,4 +1,4 @@
-"""Lớp cơ sở trừu tượng định nghĩa quy trình thu thập dữ liệu theo mẫu Template Method."""
+"""Define the abstract scrape workflow as a Template Method."""
 
 from __future__ import annotations
 
@@ -15,18 +15,25 @@ from src.db.dedup import DedupCache
 
 
 class BaseScraper(ABC):
-    """Lớp cơ sở trừu tượng cho các scraper trong hệ thống.
+    """Abstract base class of all scrapers.
 
     Attributes:
-        config: Cấu hình hoạt động của scraper.
-        name: Tên định danh của scraper.
-        http: Client HTTP dùng để gửi yêu cầu mạng.
-        dedup: Bộ nhớ đệm kiểm tra chống trùng lặp.
-        errors: Danh sách lỗi ghi nhận trong chu kỳ hiện tại.
-        disabled: Cờ báo trạng thái tạm dừng thu thập.
+        config: Scraper configuration.
+        name: Scraper name.
+        http: HTTP client used for network requests.
+        dedup: Cache used for duplicate checks.
+        errors: Errors recorded in the current cycle.
+        disabled: True when collection is paused.
     """
 
     def __init__(self, config: dict, http: HTTPClient, dedup: DedupCache):
+        """Initialize the scraper from its configuration and shared services.
+
+        Args:
+            config: Scraper configuration; `name` is required.
+            http: HTTP client used for network requests.
+            dedup: Cache used for duplicate checks.
+        """
         self.config = config
         self.name: str = config["name"]
         self.http = http
@@ -35,10 +42,10 @@ class BaseScraper(ABC):
         self.disabled: bool = not config.get("enabled", True)
 
     def run(self) -> ScrapeResult:
-        """Thực thi chu kỳ thu thập dữ liệu qua các bước chuẩn hóa.
+        """Run one scrape cycle through the standard steps.
 
         Returns:
-            Đối tượng ScrapeResult chứa danh sách bài viết mới và thống kê lỗi.
+            ScrapeResult with the new articles and the error statistics.
         """
         self.errors = []
         started = time.monotonic()
@@ -64,15 +71,15 @@ class BaseScraper(ABC):
             if a:
                 articles.append(a)
 
-        # Rule 10 (ADR 0013): ghi sổ phát hiện TRƯỚC mọi bước lọc, và chỉ bỏ bản sao kỹ thuật.
-        # Trùng ngữ nghĩa là việc của bước cụm hoá sau Bronze, không bao giờ loại bài ở đây.
+        # Rule 10 (ADR 0013): record discovery BEFORE any filter and drop only technical copies.
+        # Semantic duplicates belong to the clustering step after Bronze; never drop an article here.
         via = self.config.get("discovery_via", "listing")
         new = []
         seen_keys: set[str] = set()
         for a in articles:
             key, _is_new, alias_form = self.dedup.discover(a.url, a.source_domain or self.name, via)
-            # Hash đã thấy chỉ đủ để bỏ qua khi sổ phát hiện xác nhận bài đã vào kho. Bài từng bị
-            # đánh dấu đã thấy mà chưa có dòng `articles` (lọc mờ cũ) được lấy lại.
+            # A seen hash skips the article only when the discovery ledger confirms it reached the store.
+            # An article marked seen but without an `articles` row (old silent filter) is fetched again.
             if self.dedup.is_duplicate(a.url, a.title) and (not key or self.dedup.is_captured(key)):
                 continue
             if key and (key in seen_keys or (alias_form and self.dedup.is_captured(key))):
@@ -89,7 +96,7 @@ class BaseScraper(ABC):
                 logger.warning("[{}] enrich failed for {}: {}", self.name, a.url, e)
                 self.errors.append(f"enrich {a.url}: {e}")
             a.processed_at = now_vn_iso()
-            # Đánh dấu đã xem được thực hiện cùng transaction ghi bài viết vào cơ sở dữ liệu.
+            # The seen mark is written in the same transaction that stores the article.
 
         duration = time.monotonic() - started
         logger.info("[{}] cycle done: fetched={} new={} errors={} in {:.1f}s",
@@ -99,38 +106,38 @@ class BaseScraper(ABC):
 
     @abstractmethod
     def fetch_list(self) -> list[dict]:
-        """Lấy danh sách các bản ghi thô từ nguồn dữ liệu.
+        """Fetch the raw records from the data source.
 
         Returns:
-            Danh sách các bản ghi thô dạng dictionary.
+            Raw records as dicts.
         """
 
     @abstractmethod
     def parse_item(self, raw: dict) -> Article | None:
-        """Phân tích một bản ghi thô thành đối tượng Article.
+        """Parse one raw record into an Article.
 
         Args:
-            raw: Bản ghi thô thu thập từ nguồn.
+            raw: Raw record collected from the source.
 
         Returns:
-            Đối tượng Article đã phân tích hoặc None nếu bản ghi không hợp lệ.
+            The parsed Article, or None if the record is invalid.
         """
 
     def enrich(self, article: Article) -> None:
-        """Bổ sung nội dung chi tiết cho bài viết từ trang nguồn.
+        """Add detail content to an article from the source page.
 
         Args:
-            article: Đối tượng Article cần bổ sung nội dung.
+            article: Article to enrich in place.
         """
 
     def article_from_url(self, url: str) -> Article | None:
-        """Dựng Article tối thiểu từ một URL bằng cách đọc tiêu đề trang chi tiết.
+        """Build a minimal Article from a URL by reading the detail-page title.
 
         Args:
-            url: URL bài viết do sổ phát hiện hoặc kênh đối chiếu cung cấp.
+            url: Article URL supplied by the discovery ledger or a reconciliation channel.
 
         Returns:
-            Article có tiêu đề hợp lệ, hoặc None khi không tải được hay không tìm ra tiêu đề.
+            Article with a valid title, or None if the page cannot be fetched or no title is found.
         """
         host = urlsplit(url).netloc.lower().removeprefix("www.")
         html = self.http.get(url, referer=f"https://{host}/",
@@ -145,13 +152,13 @@ class BaseScraper(ABC):
                                  "backfill": True})
 
     def backfill_url(self, url: str) -> Article | None:
-        """Cào một bài theo URL qua đúng đường enrich và Bronze của scraper này.
+        """Scrape one article by URL through this scraper's own enrich and Bronze path.
 
         Args:
-            url: URL bài viết cần lấy.
+            url: Article URL to fetch.
 
         Returns:
-            Article đã bổ sung nội dung và `processed_at`, hoặc None khi không dựng được bài.
+            Article with enriched content and `processed_at`, or None if the article cannot be built.
         """
         article = self.article_from_url(url)
         if article is None:

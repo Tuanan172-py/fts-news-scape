@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""Validate the Definition-of-Done of every L1 task in batches 1 to 16 and print totals."""
 import sys
 import json
 from pathlib import Path

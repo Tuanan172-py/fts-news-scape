@@ -1,8 +1,4 @@
-"""Trợ thủ truy vấn và báo cáo độ lệch cấu trúc (Drift Report Helper).
-
-Cung cấp hàm list_drift để trích xuất danh sách các bài viết gặp lỗi
-TEMPLATE_DRIFT hoặc SELECTOR_BROKEN trong bảng article_versions.
-"""
+"""Query articles in TEMPLATE_DRIFT or SELECTOR_BROKEN state from the article_versions table for drift reporting."""
 
 from __future__ import annotations
 
@@ -10,14 +6,14 @@ _HELD_STATES = ("TEMPLATE_DRIFT", "SELECTOR_BROKEN")
 
 
 def list_drift(store, limit: int = 100) -> list[dict]:
-    """Lấy danh sách các bài viết bị lệch giao diện hoặc hỏng selector.
+    """List articles with a layout drift or a broken selector.
 
     Args:
-        store: Đối tượng ArticleStore kết nối cơ sở dữ liệu.
-        limit: Số lượng bản ghi tối đa cần lấy.
+        store: ArticleStore object connected to the database.
+        limit: Maximum number of records to fetch.
 
     Returns:
-        Danh sách từ điển chứa thông tin các bài viết gặp sự cố drift.
+        One dict per article affected by drift.
     """
     conn = store.connect()
     try:

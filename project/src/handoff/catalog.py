@@ -1,8 +1,4 @@
-"""Bộ quản lý danh mục công việc điều phối giữa pipeline và các agent.
-
-Cung cấp lớp Catalog để ghi nhận, phân phối và theo dõi trạng thái thực thi
-của các gói công việc trong bảng work_items.
-"""
+"""Manage the work catalog that coordinates the pipeline and the agents by recording, dispatching and tracking work packages in the work_items table."""
 
 from __future__ import annotations
 
@@ -16,13 +12,13 @@ _CLAIM_TIMEOUT_MIN = 120
 
 
 def _iso_minus_minutes(minutes: int) -> str:
-    """Tính mốc thời gian ISO lùi lại số phút chỉ định theo múi giờ Việt Nam.
+    """Compute an ISO timestamp the given number of minutes in the past, in Vietnam time.
 
     Args:
-        minutes: Số phút cần lùi lại từ thời điểm hiện tại.
+        minutes: Number of minutes to go back from the current time.
 
     Returns:
-        Chuỗi mốc thời gian chuẩn ISO 8601 múi giờ +07:00.
+        ISO 8601 timestamp with the +07:00 offset.
     """
     from datetime import datetime, timedelta
     from src.core.models import VN_TZ
@@ -30,31 +26,36 @@ def _iso_minus_minutes(minutes: int) -> str:
 
 
 class Catalog:
-    """Bộ điều phối trạng thái và phân phối các gói công việc (work_items).
+    """Coordinate the state and dispatch of work packages (work_items).
 
     Attributes:
-        store: Đối tượng kho lưu trữ ArticleStore kết nối cơ sở dữ liệu.
+        store: ArticleStore object connected to the database.
     """
 
     def __init__(self, store):
+        """Bind the catalog to a store.
+
+        Args:
+            store: ArticleStore object connected to the database.
+        """
         self.store = store
 
     def enqueue(self, article_id: str, raw_sha256: str, domain: str,
                 package_path: str, change_state: str, *, force_held: bool = False) -> str:
-        """Đưa gói công việc vào hàng đợi xử lý của danh mục.
+        """Put a work package into the catalog processing queue.
 
-        Thực hiện chèn an toàn (INSERT OR IGNORE) đảm bảo tính lũy kế không trùng lặp.
+        Inserts safely (INSERT OR IGNORE) so repeated calls never create duplicates.
 
         Args:
-            article_id: Mã định danh bài viết.
-            raw_sha256: Mã băm SHA-256 của nội dung thô tầng Bronze.
-            domain: Tên miền nguồn của bài viết.
-            package_path: Đường dẫn tệp tin gói công việc JSON.
-            change_state: Trạng thái thay đổi của bài viết.
-            force_held: Cờ bắt buộc chuyển trạng thái sang 'held' (tạm hoãn xử lý).
+            article_id: Article identifier.
+            raw_sha256: SHA-256 hash of the raw Bronze content.
+            domain: Source domain of the article.
+            package_path: Path of the work package JSON file.
+            change_state: Change state of the article.
+            force_held: Force the status to 'held' (processing deferred).
 
         Returns:
-            Trạng thái hiện tại của gói công việc trong cơ sở dữ liệu.
+            Current status of the work package in the database.
         """
         status = "held" if (force_held or change_state in _HELD_STATES) else "pending"
         conn = self.store.connect()
@@ -64,11 +65,11 @@ class Catalog:
                 "(article_id, raw_sha256, domain, package_path, status, change_state, enqueued_at) "
                 "VALUES (?,?,?,?,?,?,?)",
                 (article_id, raw_sha256, domain, package_path, status, change_state, now_vn_iso()))
-            # INSERT OR IGNORE một mình biến 'held' thành án chung thân: sửa xong nguyên
-            # nhân gốc (lỗi schema, selector lệch...) và derive lại thành công thì hàng cũ
-            # vẫn nằm nguyên ở 'held'. Nâng nó về 'pending' để bài được cứu.
-            # Không cần trần số lần: nhánh này chỉ chạy khi lần derive MỚI thật sự vượt
-            # validation (status tính ra là 'pending'), nên không có vòng lặp để chặn.
+            # INSERT OR IGNORE alone makes 'held' permanent: after the root cause (schema
+            # error, selector drift) is fixed and a re-derive succeeds, the old row would stay
+            # 'held'. Promote it to 'pending' so the article is recovered.
+            # No retry cap is needed: this branch runs only when a NEW derive really passed
+            # validation (status computed as 'pending'), so there is no loop to bound.
             if status == "pending":
                 conn.execute(
                     "UPDATE work_items SET status='pending', package_path=?, "
@@ -84,19 +85,22 @@ class Catalog:
             conn.close()
 
     def requeue(self, state: str, limit: int = 100, *, dry_run: bool = True) -> int:
-        """Đưa các gói công việc đang kẹt trở lại hàng đợi `pending`.
+        """Return stuck work packages to the `pending` queue.
 
-        Dành cho trạng thái `failed` (trượt DoD) — theo quyết định vận hành, nhóm này chỉ
-        được thử lại khi người vận hành chủ động yêu cầu, vì nguyên nhân thường nằm ở nội
-        dung bài chứ không phải lỗi cấu hình nhất thời.
+        Covers the `failed` state (DoD miss). By operating decision this group is retried only
+        when an operator asks for it, because the cause usually lies in the article content
+        rather than in a transient configuration error.
 
         Args:
-            state: Trạng thái nguồn cần thu hồi (`failed` hoặc `held`).
-            limit: Số hàng tối đa xử lý mỗi lượt.
-            dry_run: Chỉ đếm, không ghi.
+            state: Source state to recover (`failed` or `held`).
+            limit: Maximum number of rows to process per run.
+            dry_run: Only count, do not write.
 
         Returns:
-            Số gói công việc đã (hoặc sẽ) được đưa về `pending`.
+            Number of work packages moved (or that would be moved) to `pending`.
+
+        Raises:
+            ValueError: If `state` is neither `failed` nor `held`.
         """
         if state not in ("failed", "held"):
             raise ValueError(f"state phải là 'failed' hoặc 'held', nhận: {state!r}")
@@ -120,7 +124,11 @@ class Catalog:
         return n
 
     def count_by_status(self) -> dict[str, int]:
-        """Đếm số gói công việc theo từng trạng thái, phục vụ radar."""
+        """Count work packages per status for the radar.
+
+        Returns:
+            Mapping of status to the number of work packages.
+        """
         conn = self.store.connect()
         try:
             return {r["status"]: r["n"] for r in conn.execute(
@@ -129,13 +137,13 @@ class Catalog:
             conn.close()
 
     def reclaim_stale(self, timeout_minutes: int = _CLAIM_TIMEOUT_MIN) -> int:
-        """Thu hồi các gói công việc ở trạng thái 'claimed' quá hạn trở lại 'pending'.
+        """Return work packages stuck in 'claimed' past the deadline to 'pending'.
 
         Args:
-            timeout_minutes: Thời hạn chiếm giữ tối đa tính bằng phút trước khi thu hồi.
+            timeout_minutes: Maximum claim time in minutes before reclaiming.
 
         Returns:
-            Số lượng gói công việc đã được hoàn trả lại hàng đợi.
+            Number of work packages returned to the queue.
         """
         cutoff = _iso_minus_minutes(timeout_minutes)
         conn = self.store.connect()
@@ -152,14 +160,14 @@ class Catalog:
         return n
 
     def list_pending(self, limit: int = 50, order: str = "desc") -> list[dict]:
-        """Liệt kê danh sách các gói công việc đang chờ xử lý.
+        """List the work packages waiting for processing.
 
         Args:
-            limit: Số lượng bản ghi tối đa cần lấy.
-            order: Thứ tự sắp xếp theo thời gian ('asc' hoặc 'desc').
+            limit: Maximum number of records to fetch.
+            order: Time sort order ('asc' or 'desc').
 
         Returns:
-            Danh sách từ điển chứa thông tin các gói công việc 'pending'.
+            One dict per 'pending' work package.
         """
         conn = self.store.connect()
         try:
@@ -181,18 +189,18 @@ class Catalog:
               allowed_article_ids: set[str] | list[str] | None = None,
               date: str | None = None,
               days: int | None = None) -> dict | None:
-        """Nhận độc quyền một gói công việc đang chờ để thực thi.
+        """Claim exclusively one waiting work package for execution.
 
         Args:
-            worker_id: Mã định danh tiến trình hoặc agent nhận việc.
-            order: Thứ tự ưu tiên nhận việc ('asc' hoặc 'desc').
-            require_l1: Cờ yêu cầu bài viết phải đạt chuẩn thẩm định L1 trước đó.
-            allowed_article_ids: Tập mã bài viết được phép chọn.
-            date: Lọc theo ngày cụ thể (định dạng 'YYYY-MM-DD' hoặc 'today').
-            days: Lọc các bài viết trong khoảng số ngày gần nhất.
+            worker_id: Identifier of the process or agent that takes the work.
+            order: Claim priority order ('asc' or 'desc').
+            require_l1: Require the article to have passed L1 validation earlier.
+            allowed_article_ids: Article ids that may be selected.
+            date: Filter by a specific date ('YYYY-MM-DD' or 'today').
+            days: Filter articles within the most recent number of days.
 
         Returns:
-            Từ điển thông tin gói công việc được bàn giao, hoặc None nếu không có gói phù hợp.
+            Dict describing the handed-over work package, or None when no package matches.
         """
         self.reclaim_stale()
         conn = self.store.connect()
@@ -262,25 +270,25 @@ class Catalog:
             conn.close()
 
     def mark_done(self, item_id: int) -> None:
-        """Đánh dấu gói công việc đã hoàn thành xử lý thành công.
+        """Mark a work package as processed successfully.
 
         Args:
-            item_id: Mã định danh bản ghi công việc (khóa chính id).
+            item_id: Work item record identifier (primary key id).
         """
         self._set_status(item_id, "done", done=True)
 
     def mark_failed(self, item_id: int, error: str = "") -> None:
-        """Đánh dấu gói công việc xử lý thất bại kèm lý do lỗi.
+        """Mark a work package as failed with the error reason.
 
         Args:
-            item_id: Mã định danh bản ghi công việc.
-            error: Chuỗi thông báo lỗi chi tiết.
+            item_id: Work item record identifier.
+            error: Detailed error message.
         """
         self._set_status(item_id, "failed", error=error)
 
     def _set_status(self, item_id: int, status: str, *, done: bool = False,
                     error: str = "") -> None:
-        """Cập nhật trạng thái bản ghi công việc trong cơ sở dữ liệu."""
+        """Update the status of a work item record in the database."""
         conn = self.store.connect()
         try:
             conn.execute(
@@ -291,11 +299,11 @@ class Catalog:
             conn.close()
 
     def counts(self) -> dict[str, int]:
-        """Thống kê tổng số lượng gói công việc theo từng trạng thái.
+        """Count the total work packages per status.
 
         Returns:
-            Từ điển ánh xạ từ trạng thái ('pending', 'claimed', 'done', 'failed', 'held')
-            sang số lượng bản ghi tương ứng.
+            Mapping of status ('pending', 'claimed', 'done', 'failed', 'held') to the
+            matching record count.
         """
         conn = self.store.connect()
         try:

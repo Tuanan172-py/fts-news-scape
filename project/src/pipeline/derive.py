@@ -1,8 +1,4 @@
-"""Trình điều phối tinh chế dữ liệu tăng dần từ Bronze sang Silver và Catalog.
-
-Sử dụng cơ chế điểm mốc thời gian (watermark fetch_ts) để chỉ xử lý các
-tệp dữ liệu tầng Bronze mới phát sinh, cập nhật bài viết tầng Silver và đưa vào hàng đợi.
-"""
+"""Orchestrate incremental derivation from Bronze to Silver and the Catalog, using a `fetch_ts` watermark to process only new Bronze files."""
 
 from __future__ import annotations
 
@@ -20,22 +16,22 @@ force_utf8_stdio()
 
 WATERMARK_KEY = "silver_watermark"
 CHECKPOINT_KEY = "silver_checkpoint"
-DEFAULT_MAX_ATTEMPTS = 5      # ADR 0007 §2.2 — đủ số lần này thì chuyển dead-letter
+DEFAULT_MAX_ATTEMPTS = 5      # ADR 0007 §2.2 — after this many attempts the file moves to dead-letter
 
 
 def _prev_ts(ts: str) -> str:
-    """Trả mốc thời gian ngay TRƯỚC `ts` để watermark không nuốt mất chính tệp lỗi.
+    """Return the timestamp just BEFORE `ts` so the watermark does not swallow the failed file.
 
-    `_should_process` so sánh nghiêm ngặt `fetch_ts > watermark`, nên đặt watermark đúng
-    bằng mốc của tệp lỗi sẽ loại chính nó khỏi lần quét sau — tức tái lập đúng lỗi mất bài
-    đang được sửa.
+    `_should_process` compares strictly `fetch_ts > watermark`, so setting the watermark
+    exactly to the failed file's timestamp would exclude that file from the next scan,
+    which reproduces the article-loss defect being fixed.
 
     Args:
-        ts: Mốc ISO có offset cố định `+07:00`.
+        ts: ISO timestamp with the fixed `+07:00` offset.
 
     Returns:
-        Mốc ISO lùi 1 giây, hoặc chuỗi rỗng khi không phân tích được (quét lại toàn bộ —
-        tốn kém nhưng không bao giờ làm mất bài; giới hạn bởi ngưỡng dead-letter).
+        ISO timestamp moved back by 1 second, or an empty string when unparsable (full
+        rescan: expensive but never loses an article; bounded by the dead-letter threshold).
     """
     try:
         return (datetime.fromisoformat(ts) - timedelta(seconds=1)).isoformat(
@@ -45,13 +41,13 @@ def _prev_ts(ts: str) -> str:
 
 
 def _read_fetch_ts(meta_path: str) -> str:
-    """Đọc trường fetch_ts từ tệp tin siêu dữ liệu .meta.json.
+    """Read the fetch_ts field from a .meta.json metadata file.
 
     Args:
-        meta_path: Đường dẫn tới tệp .meta.json.
+        meta_path: Path to the .meta.json file.
 
     Returns:
-        Chuỗi thời gian thu thập bài viết, hoặc rỗng nếu tệp lỗi.
+        Article fetch timestamp string, or an empty string when the file is unreadable.
     """
     try:
         meta = json.loads(Path(meta_path).read_text(encoding="utf-8"))
@@ -61,13 +57,13 @@ def _read_fetch_ts(meta_path: str) -> str:
 
 
 def iter_meta_paths(raw_dir: str | None = None) -> list[str]:
-    """Liệt kê toàn bộ các tệp .meta.json trong thư mục lưu trữ Bronze theo thứ tự ổn định.
+    """List all .meta.json files in the Bronze storage directory in a stable order.
 
     Args:
-        raw_dir: Đường dẫn thư mục gốc chứa dữ liệu thô Bronze. Mặc định `paths.bronze_dir()`.
+        raw_dir: Root directory of the raw Bronze data. Defaults to `paths.bronze_dir()`.
 
     Returns:
-        Danh sách đường dẫn các tệp siêu dữ liệu.
+        Paths of the metadata files.
     """
     root = paths.resolve_data_path(raw_dir) if raw_dir else paths.bronze_dir()
     if not root.exists():
@@ -76,7 +72,15 @@ def iter_meta_paths(raw_dir: str | None = None) -> list[str]:
 
 
 def _should_process(fetch_ts: str, watermark: str) -> bool:
-    """Kiểm tra xem tệp tin có thỏa mãn điều kiện cần tinh chế hay không."""
+    """Check whether a file needs derivation.
+
+    Args:
+        fetch_ts: Fetch timestamp of the file.
+        watermark: Current watermark; empty means process everything.
+
+    Returns:
+        True if the file must be processed.
+    """
     if not watermark:
         return True
     if not fetch_ts:
@@ -97,23 +101,23 @@ def rederive_incremental(
     persist: bool = True,
     max_attempts: int = DEFAULT_MAX_ATTEMPTS,
 ) -> dict:
-    """Thực hiện tinh chế tăng dần các bài viết Bronze mới hơn mốc watermark.
+    """Derive incrementally the Bronze articles newer than the watermark.
 
     Args:
-        store: Đối tượng ArticleStore quản lý cơ sở dữ liệu.
-        raw_dir: Thư mục chứa dữ liệu thô Bronze.
-        silver_dir: Thư mục lưu trữ kết quả Silver.
-        package_dir: Thư mục lưu trữ gói công việc Work Package.
-        watermark: Mốc thời gian bắt đầu quét (nếu None sẽ lấy từ cơ sở dữ liệu).
-        t_content: Ngưỡng khoảng cách nội dung.
-        t_template: Ngưỡng khoảng cách cấu trúc giao diện.
-        do_enqueue: Cờ cho phép đưa bài vào hàng đợi work_items.
-        persist: Cờ cho phép lưu lại mốc watermark mới và sổ lỗi vào cơ sở dữ liệu.
-        max_attempts: Số lần derive thất bại trước khi tệp chuyển dead-letter và
-            thôi chặn watermark (ADR 0007).
+        store: ArticleStore object that manages the database.
+        raw_dir: Directory of the raw Bronze data.
+        silver_dir: Directory that stores the Silver output.
+        package_dir: Directory that stores the Work Package files.
+        watermark: Timestamp to start scanning from; None reads it from the database.
+        t_content: Content distance threshold.
+        t_template: Layout structure distance threshold.
+        do_enqueue: Allow enqueuing articles into the work_items queue.
+        persist: Allow saving the new watermark and the failure ledger to the database.
+        max_attempts: Number of failed derive attempts before the file moves to dead-letter
+            and stops blocking the watermark (ADR 0007).
 
     Returns:
-        Từ điển tổng kết số lượng xử lý, trạng thái và mốc watermark mới.
+        Dict summarizing processed counts, states and the new watermark.
     """
     if watermark is None:
         watermark = store.get_state(WATERMARK_KEY) or ""
@@ -129,8 +133,7 @@ def rederive_incremental(
 
     print(f"[derive] Quét thư mục Bronze '{raw_path_res}' (watermark={watermark or 'bắt đầu'})...", flush=True)
     all_paths = iter_meta_paths(raw_path_res)
-    # Đọc fetch_ts MỘT lần cho mỗi tệp rồi tái dùng. Trước đây mỗi tệp bị đọc/parse 3 lần
-    # mỗi chu kỳ (~22k lượt đọc/30 phút trên OneDrive).
+    # Read fetch_ts once per file and reuse it to avoid repeated reads and parses per cycle.
     ts_by_path = {p: _read_fetch_ts(p) for p in all_paths}
     to_process = [p for p in all_paths if _should_process(ts_by_path[p], watermark)]
     print(f"[derive] Quét xong {len(all_paths)} Bronze files: tìm thấy {len(to_process)} bài mới cần chuyển lên Silver.", flush=True)
@@ -153,7 +156,7 @@ def rederive_incremental(
                 t_template=t_template,
                 do_enqueue=do_enqueue,
             )
-        except Exception as e:  # noqa: BLE001 — non-fatal per bài (I5)
+        except Exception as e:  # noqa: BLE001 — non-fatal per article (I5)
             logger.error("[derive] process failed {}: {}", meta_path, e)
             failed += 1
             if persist:
@@ -162,11 +165,11 @@ def rederive_incremental(
             continue
         state = (
             res.get("state") or "raw_missing"
-        )  # raw_missing trả early-return không có state
+        )  # raw_missing returns early without a state
         by_state[state] = by_state.get(state, 0) + 1
-        # "ok" của process_meta chỉ nói package hợp lệ. Bài silver_ok=False mà package
-        # vẫn hợp lệ từng được tính là thành công, nên watermark đẩy qua và bài đó không
-        # bao giờ được derive lại (ADR 0007 §1).
+        # The "ok" flag of process_meta only reports a valid package. An article with
+        # silver_ok=False must not count as success, or the watermark would advance past it
+        # and it would never be derived again (ADR 0007 §1).
         succeeded = bool(res["ok"]) and bool(res.get("silver_ok", True))
         if succeeded:
             ok += 1
@@ -184,11 +187,11 @@ def rederive_incremental(
         if res.get("enqueue_status") == "held":
             held += 1
 
-    # Watermark là LOW-water mark: không bao giờ vượt qua một lỗi chưa dead-letter.
+    # The watermark is a low-water mark: it never passes a failure that is not yet dead-letter.
     blocking_ts = store.blocking_silver_failure_ts() if persist else ""
     candidate = max(ok_ts) if ok_ts else watermark
     if blocking_ts:
-        # Lùi về ngay TRƯỚC lỗi sớm nhất để chu kỳ sau còn chọn lại nó.
+        # Step back to just BEFORE the earliest failure so the next cycle selects it again.
         watermark_new = min(candidate, _prev_ts(blocking_ts)) if candidate else ""
     else:
         watermark_new = candidate

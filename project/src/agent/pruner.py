@@ -1,38 +1,38 @@
-"""Tinh lọc đoạn văn và loại bỏ nội dung rác cho bài viết."""
+"""Filter article paragraphs and remove junk content."""
 from __future__ import annotations
 
 import re
 
-# Loại theo NGUYÊN KHỐI đoạn văn — không bao giờ cắt tỉa bên trong đoạn được giữ lại.
+# Whole paragraphs are dropped; a retained paragraph is never trimmed internally.
 _BOILERPLATE_PATTERNS = [
-    # Teaser điều hướng cuối bài / giữa bài
+    # Navigation teasers at the end or middle of an article
     r'^(?:bài\s+liên\s+quan|tin\s+cùng\s+chuyên\s+mục|xem\s+thêm\b|đọc\s+tiếp\b|có\s+thể\s+bạn\s+quan\s+tâm|tin\s+khác\b|chuyên\s+mục\s+đặc\s+biệt)',
-    # Thông tin tòa soạn / trụ sở
+    # Editorial office and headquarters information
     r'^(?:ban\s+biên\s+tập|tổng\s+biên\s+tập|chịu\s+trách\s+nhiệm\s+nội\s+dung|địa\s+chỉ\s*:\s*tầng|trụ\s+sở\b|tòa\s+nhà\b)',
-    # Liên hệ quảng cáo / báo giá
+    # Advertising contact and rate card
     r'^(?:liên\s+hệ\s+quảng\s+cáo|liên\s+hệ\s+dữ\s+liệu|báo\s+giá\s+quảng\s+cáo|quảng\s+cáo\s*:\s*)',
-    # Hotline / email / điện thoại / fax
+    # Hotline, email, phone and fax
     r'^(?:hotline\s*:|email\s*:|điện\s+thoại\s*:|đt\s*:|máy\s+lẻ\b|fax\s*:)',
-    # Giấy phép hoạt động báo chí
+    # Press operating licence
     r'(?:giấy\s+phép\s+(?:thiết\s+lập|hoạt\s+động|xuất\s+bản)|sở\s+thông\s+tin\s+và\s+truyền\s+thông)',
-    # Bản quyền
+    # Copyright
     r'^(?:©\s*copyright|bản\s+quyền\s+thuộc\s+về|toàn\s+bộ\s+bản\s+quyền)',
-    # Tuyên bố miễn trừ trách nhiệm tài chính / khuyến cáo đầu tư
+    # Financial disclaimers and investment warnings
     r'^(?:tuyên\s+bố\s+miễn\s+trừ|khuyến\s+cáo\s+miễn\s+trừ|khuyến\s+cáo\s*:\s*báo\s+cáo\s+này|nhà\s+đầu\s+tư\s+cần\s+cân\s+nhắc|chúng\s+tôi\s+không\s+chịu\s+trách\s+nhiệm\b)',
-    # Box thông tin doanh nghiệp / hồ sơ công ty chân bài
+    # Company information box and company profile at the foot of an article
     r'^(?:thông\s+tin\s+doanh\s+nghiệp\b|hồ\s+sơ\s+doanh\s+nghiệp\b|tổng\s+quan\s+về\s+[A-Z0-9]+|tiền\s+thân\s+là\s+tập\s+đoàn\b)',
-    # Chú thích ảnh / biểu đồ tường thuật
+    # Photo and chart captions
     r'^(?:ảnh|hình\s+ảnh|đồ\s+thị|biểu\s+đồ|nguồn\s+ảnh|ảnh\s+chụp)\s*:',
-    # Widget giao diện (cỡ chữ, chia sẻ, theo dõi, in bài)
+    # UI widgets (font size, share, follow, print)
     r'^(?:chọn\s+cỡ\s+chữ|chia\s+sẻ\s+bài\s+viết|theo\s+dõi\s+chúng\s+tôi\s+trên|in\s+bài\s+viết)',
-    # Dòng chỉ gồm ký tự phân cách
+    # Lines made only of separator characters
     r'^[\s\|\:\-]+$',
 ]
 
 _COMPILED_BOILERPLATE = [re.compile(p, re.IGNORECASE) for p in _BOILERPLATE_PATTERNS]
 
-# Dòng ghi nguồn cuối bài ("Theo CafeF", "Nguồn: ...") hoặc chữ ký tác giả/phóng viên.
-# Chỉ loại khi đoạn vừa phải (<= 100 ký tự) để không nuốt nhầm đoạn nội dung thật.
+# Source credit at the end of an article (`Theo CafeF`, `Nguồn: ...`) or an author/reporter byline.
+# Applied only to short paragraphs (<= 100 characters) so real content is not dropped.
 _FOOTER_SOURCE_PATTERN = re.compile(
     r'^(?:theo\s+(?:báo\s+)?(?:hose|hnx|upcom|cafef|vietstock|vneconomy|ttxvn|reuters|bloomberg|dân\s+trí|đầu\s+tư|tiền\s+phong|chứng\s+khoán)\b|nguồn\s*:|(?:bài\s+và\s+ảnh|phóng\s+viên|biên\s+tập|tác\s+giả)\s*:).*$',
     re.IGNORECASE,
@@ -40,19 +40,19 @@ _FOOTER_SOURCE_PATTERN = re.compile(
 
 
 def is_boilerplate_paragraph(para: str) -> bool:
-    """Kiểm tra đoạn văn bản có thuộc dạng thông tin rác hoặc mẫu cố định hay không.
+    """Check whether a paragraph is junk or fixed boilerplate.
 
     Args:
-        para: Chuỗi đoạn văn cần kiểm tra.
+        para: Paragraph text to check.
 
     Returns:
-        True nếu là thông tin rác hoặc định dạng mẫu, ngược lại False.
+        True if the paragraph is junk or boilerplate, otherwise False.
     """
     stripped = para.strip()
     if not stripped:
         return True
 
-    # Ký tự lẻ / dấu phân cách sót lại
+    # Stray characters and leftover separators
     if len(stripped) <= 3 and not stripped.isalnum():
         return True
 
@@ -60,7 +60,7 @@ def is_boilerplate_paragraph(para: str) -> bool:
         if cp.search(stripped):
             return True
 
-    # Dòng nguồn / tác giả cuối bài — chỉ tính khi đoạn <= 100 ký tự
+    # Source or author line at the end of an article; counted only when <= 100 characters.
     if len(stripped) <= 100 and _FOOTER_SOURCE_PATTERN.match(stripped):
         return True
 
@@ -80,16 +80,16 @@ def clean_article_paragraphs(
     min_para_len: int = 15,
     l1_entities: list[str] | None = None,
 ) -> str:
-    """Lọc và giữ lại các đoạn văn cốt lõi của bài viết theo nguyên tắc tháp ngược.
+    """Keep the core paragraphs of an article following the inverted-pyramid principle.
 
     Args:
-        text: Nội dung văn bản thô ban đầu.
-        max_chars: Giới hạn ký tự tối đa giữ lại. Mặc định 2200.
-        min_para_len: Độ dài tối thiểu của một đoạn văn hợp lệ. Mặc định 15.
-        l1_entities: Danh sách thực thể L1 ưu tiên bảo toàn đoạn văn chứa thực thể.
+        text: Raw article text.
+        max_chars: Maximum number of characters to keep.
+        min_para_len: Minimum length of a valid paragraph.
+        l1_entities: L1 entities; paragraphs that mention them are kept with priority.
 
     Returns:
-        Văn bản đã làm sạch gồm các đoạn văn nguyên bản ngăn cách bởi hai ký tự xuống dòng.
+        Cleaned text of the original paragraphs separated by blank lines.
     """
     if not text:
         return ""
@@ -100,11 +100,11 @@ def clean_article_paragraphs(
 
     valid_paras: list[tuple[int, str]] = []
     for idx, para in enumerate(raw_paragraphs):
-        # 1. Loại nguyên khối boilerplate
+        # Drop whole boilerplate paragraphs.
         if is_boilerplate_paragraph(para):
             continue
 
-        # 2. Đoạn quá ngắn thường là caption/tag — nhưng GIỮ nếu mang số liệu thị trường
+        # Very short paragraphs are usually captions or tags; keep them if they carry market figures.
         if len(para) < min_para_len and not _FINANCIAL_KEYWORDS_RE.search(para):
             continue
 
@@ -116,7 +116,7 @@ def clean_article_paragraphs(
     selected_indices: set[int] = set()
     current_len = 0
 
-    # Chuẩn bị pattern thực thể nếu có
+    # Build entity patterns when entities are given.
     entity_patterns = []
     if l1_entities:
         for e in l1_entities:
@@ -124,12 +124,12 @@ def clean_article_paragraphs(
             if len(code) >= 2:
                 entity_patterns.append(re.compile(r'\b' + re.escape(code) + r'\b', re.IGNORECASE))
 
-    # Pass 1: Giữ tối đa 2 đoạn đầu (Sapo / Mở đầu theo Tháp ngược)
+    # Pass 1: keep up to the first 2 paragraphs (lead of the inverted pyramid).
     for idx, para in valid_paras[:2]:
         selected_indices.add(idx)
         current_len += len(para) + 2
 
-    # Pass 2: Ưu tiên các đoạn chứa mã CP / thực thể L1
+    # Pass 2: prioritize paragraphs that mention stock tickers or L1 entities.
     if entity_patterns:
         for idx, para in valid_paras[2:]:
             if any(ep.search(para) for ep in entity_patterns):
@@ -137,7 +137,7 @@ def clean_article_paragraphs(
                     selected_indices.add(idx)
                     current_len += len(para) + 2
 
-    # Pass 3: Điền các đoạn văn kế tiếp theo thứ tự gốc cho tới khi chạm trần max_chars
+    # Pass 3: fill the following paragraphs in original order until max_chars is reached.
     for idx, para in valid_paras[2:]:
         if idx in selected_indices:
             continue
@@ -145,7 +145,7 @@ def clean_article_paragraphs(
             selected_indices.add(idx)
             current_len += len(para) + 2
 
-    # Tái tạo văn bản theo đúng thứ tự xuất hiện gốc trong bài
+    # Rebuild the text in original paragraph order.
     selected_paras = [p for idx, p in valid_paras if idx in selected_indices]
     if not selected_paras:
         return text.strip()

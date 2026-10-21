@@ -1,4 +1,4 @@
-"""Cụm hoá bài trùng lặp theo câu chuyện, tất định, không xoá và không sửa bài (ADR 0016)."""
+"""Cluster duplicate articles by story deterministically, without deleting or modifying articles (ADR 0016)."""
 
 from __future__ import annotations
 
@@ -13,16 +13,16 @@ from datetime import datetime, timedelta, timezone
 
 VN_TZ = timezone(timedelta(hours=7))
 
-COPY_CONTAINMENT = 0.95       # chép lại: gần như nguyên văn, để trích dẫn kế thừa vẫn đúng
-CANDIDATE_CONTAINMENT = 0.4   # cùng sự kiện: viết lại, chồng chữ một phần
+COPY_CONTAINMENT = 0.95       # copy: nearly verbatim, so inherited citations stay correct
+CANDIDATE_CONTAINMENT = 0.4   # same event: rewritten, partial text overlap
 CANDIDATE_STRONG = 0.5
-MIN_SHINGLES_FOR_MATCH = 40   # bài quá ngắn thì containment không đáng tin
+MIN_SHINGLES_FOR_MATCH = 40   # containment is unreliable for very short articles
 TITLE_OVERLAP_MIN = 0.3
 COPY_WINDOW_H = 72.0
 CANDIDATE_WINDOW_H = 48.0
 SHINGLE_WORDS = 5
 MIN_BODY_CHARS = 200
-BOILERPLATE_DF_RATIO = 0.02   # shingle xuất hiện ở trên 2% số bài là khuôn mẫu
+BOILERPLATE_DF_RATIO = 0.02   # a shingle present in more than 2% of articles is boilerplate
 MAX_POSTING = 200
 
 _WORD = re.compile(r"\w+", re.UNICODE)
@@ -36,7 +36,25 @@ _NOT_TICKER = frozenset({
 
 @dataclass
 class Doc:
-    """Bản rút gọn của một bài dùng cho so khớp."""
+    """Condensed view of an article used for matching.
+
+    Attributes:
+        id: `url_title_hash` of the article.
+        title: Article title.
+        source: Source domain.
+        ts: Publication time as epoch seconds, or None.
+        text: Plain body text.
+        symbols: Stock symbols assigned to the article.
+        norm_title: Lowercased NFC-normalized title with collapsed whitespace.
+        series: Periodic-series key derived from the normalized title.
+        body_sha: SHA-256 of the normalized body, empty when the body is too short.
+        nums: Normalized numbers in the title and lead.
+        sig_nums: Significant numbers among `nums`.
+        tickers: Stock tickers from symbols and the title.
+        shingles: Hashes of consecutive word groups of the body.
+        raw_len: Length of the normalized body in characters.
+        extra: Free-form extra data.
+    """
 
     id: str
     title: str
@@ -60,76 +78,77 @@ def _nfc_lower(s: str) -> str:
 
 
 def normalize_number(tok: str) -> str:
-    """Bỏ dấu phân cách nghìn và thập phân để so sánh hai cách viết cùng một số.
+    """Strip thousands and decimal separators so two spellings of one number compare equal.
 
     Args:
-        tok: Chuỗi số như `10.000` hoặc `7,5`.
+        tok: Number string such as `10.000` or `7,5`.
 
     Returns:
-        Chuỗi chỉ gồm chữ số.
+        String containing digits only.
     """
     return re.sub(r"[.,]", "", tok)
 
 
 def numbers_of(text: str) -> frozenset[str]:
-    """Trích tập số (đã chuẩn hoá) xuất hiện trong văn bản.
+    """Extract the set of normalized numbers that appear in a text.
 
     Args:
-        text: Văn bản nguồn.
+        text: Source text.
 
     Returns:
-        Tập chuỗi số.
+        Set of number strings.
     """
     return frozenset(normalize_number(m) for m in _NUMBER.findall(text or ""))
 
 
 def significant_numbers(nums: frozenset[str]) -> frozenset[str]:
-    """Giữ số mang nghĩa nghiệp vụ: từ 3 chữ số trở lên và không phải năm.
+    """Keep numbers with business meaning: at least 3 digits and not a year.
 
     Args:
-        nums: Tập số đã chuẩn hoá.
+        nums: Set of normalized numbers.
 
     Returns:
-        Tập con loại bỏ ngày tháng, số thứ tự ngắn và năm 1990 đến 2100.
+        Subset that excludes dates, short ordinals and the years 1990 to 2100.
     """
     return frozenset(n for n in nums if len(n) >= 3 and not (len(n) == 4 and 1990 <= int(n) <= 2100))
 
 
 def tickers_of(title: str, symbols: frozenset[str]) -> frozenset[str]:
-    """Gộp mã CP đã gán cho bài và mã chữ hoa 3 ký tự trong tiêu đề.
+    """Merge the stock symbols assigned to an article with 3-letter uppercase codes in the title.
 
     Args:
-        title: Tiêu đề bài.
-        symbols: Mã CP do bộ cào đã gán vào cột `symbols`.
+        title: Article title.
+        symbols: Stock symbols the scraper assigned to the `symbols` column.
 
     Returns:
-        Tập mã CP. Dùng để chặn gộp nhầm, không dùng làm kết quả nhận diện.
+        Set of stock tickers. Used to block wrong merges, not as a recognition result.
     """
     found = {t for t in _UPPER3.findall(title or "") if t not in _NOT_TICKER}
     return frozenset(found | set(symbols))
 
 
 def series_key(norm_title: str) -> str:
-    """Khoá chuyên mục định kỳ: tiêu đề chuẩn hoá với mọi số thay bằng `#`.
+    """Build the periodic-series key: the normalized title with every number replaced by `#`.
 
     Args:
-        norm_title: Tiêu đề đã chuẩn hoá chữ thường.
+        norm_title: Lowercased normalized title.
 
     Returns:
-        Khoá; hai bài cùng khoá nhưng khác tiêu đề là hai kỳ khác nhau của một chuyên mục.
+        Key; two articles with the same key but different titles are different issues of one
+        series.
     """
     return _NUMBER.sub("#", norm_title)
 
 
 def shingle_set(text: str, k: int = SHINGLE_WORDS) -> frozenset[int]:
-    """Băm các cụm k từ liên tiếp của văn bản thành tập số nguyên 64 bit.
+    """Hash every run of k consecutive words of a text into a set of 64-bit integers.
 
     Args:
-        text: Văn bản nguồn.
-        k: Độ dài cụm từ.
+        text: Source text.
+        k: Number of words per group.
 
     Returns:
-        Tập băm; rỗng nếu văn bản ngắn hơn k từ.
+        Set of hashes; empty when the text has fewer than k words.
     """
     words = _WORD.findall(_nfc_lower(text))
     return frozenset(
@@ -139,18 +158,18 @@ def shingle_set(text: str, k: int = SHINGLE_WORDS) -> frozenset[int]:
 
 def make_doc(article_id: str, title: str, source: str, ts: float | None, text: str,
              symbols: frozenset[str] = frozenset()) -> Doc:
-    """Dựng Doc từ các trường thô của một bài.
+    """Build a Doc from the raw fields of an article.
 
     Args:
-        article_id: `url_title_hash` của bài.
-        title: Tiêu đề.
-        source: Tên miền nguồn.
-        ts: Thời điểm đăng dạng epoch giây, hoặc None.
-        text: Nội dung văn bản thuần.
-        symbols: Mã CP đã gán cho bài.
+        article_id: `url_title_hash` of the article.
+        title: Title.
+        source: Source domain.
+        ts: Publication time as epoch seconds, or None.
+        text: Plain body text.
+        symbols: Stock symbols assigned to the article.
 
     Returns:
-        Doc đã tính sẵn mọi đặc trưng so khớp.
+        Doc with all matching features precomputed.
     """
     norm_title = re.sub(r"\s+", " ", _nfc_lower(title)).strip()
     body = re.sub(r"\s+", " ", _nfc_lower(text)).strip()
@@ -190,10 +209,17 @@ _DATE_TOKEN = re.compile(r"\b\d{1,2}/\d{1,2}(?:/\d{2,4})?\b")
 
 
 def _same_series_other_issue(a: Doc, b: Doc) -> bool:
-    """Hai kỳ khác nhau của một chuyên mục định kỳ.
+    """Return True if the two articles are different issues of one periodic series.
 
-    Kỳ khác nhau khi cùng khuôn tiêu đề mà khác tiêu đề, hoặc khi cả hai tiêu đề đều ghi ngày
-    và hai tập ngày khác nhau (tỷ giá 30/9 so với 02/10).
+    Issues differ when the titles share a template but are not equal, or when both titles
+    carry dates and the date sets differ (exchange rate 30/9 versus 02/10).
+
+    Args:
+        a: First article.
+        b: Second article.
+
+    Returns:
+        True for different issues of the same series.
     """
     if a.norm_title == b.norm_title:
         return False
@@ -204,14 +230,14 @@ def _same_series_other_issue(a: Doc, b: Doc) -> bool:
 
 
 def title_overlap(a: Doc, b: Doc) -> float:
-    """Độ chồng từ giữa hai tiêu đề theo Jaccard trên tập từ.
+    """Compute the word overlap between two titles as Jaccard similarity over word sets.
 
     Args:
-        a: Bài thứ nhất.
-        b: Bài thứ hai.
+        a: First article.
+        b: Second article.
 
     Returns:
-        Giá trị từ 0 đến 1.
+        Value from 0 to 1.
     """
     wa, wb = set(_WORD.findall(a.norm_title)), set(_WORD.findall(b.norm_title))
     return len(wa & wb) / max(len(wa | wb), 1)
@@ -222,7 +248,7 @@ def _pick_rep(members: list[Doc]) -> Doc:
 
 
 def _pair_scores(docs: list[Doc]) -> dict[tuple[int, int], tuple[float, float, int]]:
-    """Tính containment và Jaccard cho các cặp có chung shingle không phải khuôn mẫu."""
+    """Compute containment and Jaccard for pairs that share non-boilerplate shingles."""
     df: Counter = Counter()
     for d in docs:
         df.update(d.shingles)
@@ -253,24 +279,25 @@ def _cluster_id(canonical_id: str) -> str:
 
 
 def build_clusters(docs: list[Doc]) -> list[dict]:
-    """Gom bài thành cụm câu chuyện và gán vai trò cho từng bài.
+    """Group articles into story clusters and assign a role to each article.
 
-    Vai trò: `canonical` (phân tích đầy đủ), `copy` (kế thừa kết quả của một bài trong
-    cùng thành phần chép lại), `candidate` (cùng sự kiện với một cụm khác, chờ chế độ chênh).
+    Roles: `canonical` (full analysis), `copy` (inherits the result of an article in the
+    same copy component), `candidate` (same event as another cluster, awaiting difference
+    mode).
 
     Args:
-        docs: Các bài trong cửa sổ cần cụm hoá.
+        docs: Articles in the window to cluster.
 
     Returns:
-        Danh sách dòng cho `cluster_members`, mỗi dòng có khoá article_id, cluster_id, role,
-        method, score và evidence (dict).
+        Rows for `cluster_members`; each row has the keys article_id, cluster_id, role,
+        method, score and evidence (dict).
     """
     n = len(docs)
     ids = list(range(n))
     copy_uf = _UF(ids)
-    copy_edge: dict[int, tuple[float, str]] = {}      # đỉnh -> (điểm, phương pháp) của cạnh đã gộp
+    copy_edge: dict[int, tuple[float, str]] = {}      # vertex -> (score, method) of the merged edge
 
-    # T0: cùng nội dung chính xác.
+    # T0: identical content.
     by_sha: dict[str, list[int]] = defaultdict(list)
     for i, d in enumerate(docs):
         if d.body_sha:
@@ -280,7 +307,7 @@ def build_clusters(docs: list[Doc]) -> list[dict]:
             copy_uf.union(group[0], k)
             copy_edge[k] = (1.0, "sha")
 
-    # T1 và ứng viên T2/T3 từ độ chồng shingle.
+    # T1 and the T2/T3 candidates from shingle overlap.
     cand_edges: list[tuple[int, int, float, dict]] = []
     for (i, j), (cont, jac, shared) in _pair_scores(docs).items():
         a, b = docs[i], docs[j]
@@ -306,7 +333,7 @@ def build_clusters(docs: list[Doc]) -> list[dict]:
                 "containment": round(cont, 3), "jaccard": round(jac, 3), "title_overlap": round(tj, 3),
                 "shared_tickers": sorted(shared_t), "shared_numbers": sorted(shared_n)[:6]}))
 
-    # Thành phần chép lại -> đại diện.
+    # Copy component to representative.
     comp_members: dict[int, list[int]] = defaultdict(list)
     for i in ids:
         comp_members[copy_uf.find(i)].append(i)
@@ -314,8 +341,8 @@ def build_clusters(docs: list[Doc]) -> list[dict]:
     idx_of = {d.id: i for i, d in enumerate(docs)}
     comp_of = {i: copy_uf.find(i) for i in ids}
 
-    # Cụm câu chuyện: mỗi thành phần chỉ nối vào láng giềng tốt nhất xuất hiện sớm hơn, để một
-    # chuỗi cạnh yếu không nối bắc cầu nhiều sự kiện khác nhau của cùng một mã.
+    # Story clusters: each component links only to its best earlier neighbour, so a chain of
+    # weak edges does not bridge several different events of the same ticker.
     def _order(c: int) -> tuple:
         r = rep_of_comp[c]
         return (r.ts if r.ts is not None else float("inf"), r.id)
@@ -390,14 +417,14 @@ def _symbols(raw) -> frozenset[str]:
 
 
 def load_docs(conn: sqlite3.Connection, since_day: str) -> list[Doc]:
-    """Đọc các bài có nội dung từ ngày `since_day` trở đi để cụm hoá.
+    """Load articles with content from `since_day` onward for clustering.
 
     Args:
-        conn: Kết nối tới DB vận hành.
-        since_day: Ngày ISO `YYYY-MM-DD` là mốc dưới theo thời điểm đăng hoặc thu thập.
+        conn: Connection to the operational DB.
+        since_day: ISO day `YYYY-MM-DD` used as the lower bound on publication or capture time.
 
     Returns:
-        Danh sách Doc, đã bỏ bài không có nội dung.
+        Docs, with articles lacking content excluded.
     """
     rows = conn.execute(
         "SELECT url_title_hash, title, source_domain, published_at, fetched_at, content_text, symbols "
@@ -408,15 +435,15 @@ def load_docs(conn: sqlite3.Connection, since_day: str) -> list[Doc]:
 
 
 def write_clusters(conn: sqlite3.Connection, rows: list[dict], docs: list[Doc]) -> dict[str, int]:
-    """Ghi cụm vào `cluster_members` và `story_clusters`, xoá cụm mồ côi.
+    """Write clusters to `cluster_members` and `story_clusters` and delete orphan clusters.
 
     Args:
-        conn: Kết nối ghi tới DB vận hành. Hàm commit khi xong.
-        rows: Kết quả của `build_clusters`.
-        docs: Các Doc đã dùng để dựng cụm, dùng tính số nguồn và mốc thời gian.
+        conn: Write connection to the operational DB. The function commits when done.
+        rows: Output of `build_clusters`.
+        docs: Docs used to build the clusters, used to count sources and time bounds.
 
     Returns:
-        Đếm theo vai trò và số cụm.
+        Counts per role and the number of clusters.
     """
     by_id = {d.id: d for d in docs}
     now = datetime.now(VN_TZ).isoformat(timespec="seconds")
@@ -454,15 +481,15 @@ def write_clusters(conn: sqlite3.Connection, rows: list[dict], docs: list[Doc]) 
 
 
 def run(conn: sqlite3.Connection, days: int = 3, today: datetime | None = None) -> dict[str, int]:
-    """Cụm hoá các bài của `days` ngày gần nhất và ghi kết quả.
+    """Cluster the articles of the most recent `days` days and write the result.
 
     Args:
-        conn: Kết nối ghi tới DB vận hành.
-        days: Số ngày gần nhất, tính cả hôm nay.
-        today: Thời điểm hiện tại; mặc định lấy từ đồng hồ.
+        conn: Write connection to the operational DB.
+        days: Number of most recent days, including today.
+        today: Current time; defaults to the clock.
 
     Returns:
-        Thống kê từ `write_clusters` kèm `docs`.
+        Statistics from `write_clusters` plus `docs`.
     """
     today = today or datetime.now(VN_TZ)
     since = (today - timedelta(days=days - 1)).date().isoformat()

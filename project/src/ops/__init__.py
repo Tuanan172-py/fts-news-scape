@@ -1,1 +1,1 @@
-"""Tầng vận hành tự chủ của Article Lane theo ADR 0012: chạy khi máy mở, dừng khi máy ngủ."""
+"""Provide the autonomous operations layer of the Article Lane per ADR 0012, which runs while the machine is awake and stops when it sleeps."""

@@ -1,4 +1,4 @@
-"""Kiểm toán tần suất và rủi ro nhận diện sai của các bí danh ngắn."""
+"""Audit the frequency and false-match risk of short entity aliases."""
 from __future__ import annotations
 
 import argparse
@@ -17,17 +17,37 @@ force_utf8_stdio()
 
 
 def _bare_short_keys(reg, max_len: int) -> dict[str, list[str]]:
-    """Alias index key (da fold) khong co dau cach va do dai <= max_len — nhom rui ro cao
-    nhat: 1 am tiet/1 tu, de trung nghia voi tu thong dung khac hoac danh tu rieng ghep
-    (xem docstring _context_guards.yaml)."""
+    """Select short single-word alias keys from the registry alias index.
+
+    These keys are the highest-risk group: one syllable or word that easily collides
+    with a common word or a compound proper noun (see the `_context_guards.yaml` docstring).
+
+    Args:
+        reg: Entity registry exposing the folded alias index.
+        max_len: Maximum folded key length to include.
+
+    Returns:
+        Mapping of folded alias key without spaces to its entity ids.
+    """
     return {k: v for k, v in reg._alias_index.items() if " " not in k and len(k) <= max_len}
 
 
 def _alias_shape(reg, eid: str, key: str) -> str:
-    """Dang chinh ta cua alias sinh ra khop nay — de nguoi doc uu tien: alias ASCII khong
-    dau, khong viet hoa toan phan giong het 1 tu dien thong dung nen rui ro cao nhat (kieu
-    "Trang"); alias co dau tieng Viet rui ro trung danh tu rieng ghep (kieu "Mỹ" ăn theo "Mỹ
-    Thuận"); ky hieu ASCII viet hoa (US, EU, DXY) it rui ro nhat vi da bat buoc dung hoa."""
+    """Classify the orthographic shape of the alias forms behind a match.
+
+    Plain ASCII lowercase forms are the highest risk because they equal a common
+    dictionary word (such as "Trang"). Forms with Vietnamese diacritics risk matching
+    compound proper nouns (such as "Mỹ" inside "Mỹ Thuận"). Uppercase ASCII symbols
+    (US, EU, DXY) are the lowest risk because capitalization is mandatory.
+
+    Args:
+        reg: Entity registry exposing the alias forms.
+        eid: Entity id of the match.
+        key: Folded alias key.
+
+    Returns:
+        Shape labels joined with "+", or "?" when no forms are known.
+    """
     forms = reg._alias_forms.get(key) or []
     shapes = set()
     for f in forms:
@@ -41,6 +61,14 @@ def _alias_shape(reg, eid: str, key: str) -> str:
 
 
 def main(argv: list[str]) -> int:
+    """Report entities most often matched through short single-word aliases.
+
+    Args:
+        argv: Command-line arguments without the program name.
+
+    Returns:
+        Process exit code, always 0.
+    """
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--db", default=None, help="Duong dan monocle.db (mac dinh DB van hanh)")
     ap.add_argument("--max-len", type=int, default=6, help="Do dai toi da (sau fold) cua alias 1-tu can soi")
@@ -86,7 +114,7 @@ def main(argv: list[str]) -> int:
         if cnt < args.min_hits:
             continue
         e = reg.entities[eid]
-        # tim key alias tuong ung de bao cao dang chinh ta
+        # Find the matching alias key to report its orthographic shape.
         key = next((k for k, v in bare_short.items() if eid in v), "?")
         shape = _alias_shape(reg, eid, key)
         lines.append(f"{cnt:5d}  {eid:32s} dang={shape:16s} surfaces={sorted(surfaces[eid])!r}"

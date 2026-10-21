@@ -1,4 +1,4 @@
-"""Đọc công tắc bật/tắt người dùng từ nguồn chân lý duy nhất `<gốc>/subscriptions/manifest.yaml`."""
+"""Read per-user on/off switches from the single source of truth `<root>/subscriptions/manifest.yaml`."""
 
 from __future__ import annotations
 
@@ -10,13 +10,13 @@ from src.core import paths
 
 
 def candidate_paths(input_root: str | Path | None = None) -> list[Path]:
-    """Liệt kê các vị trí manifest theo thứ tự ưu tiên.
+    """List the manifest locations in priority order.
 
     Args:
-        input_root: Thư mục đăng ký chỉ định rõ; None dùng thư mục mặc định.
+        input_root: Explicit subscription directory; None uses the default directory.
 
     Returns:
-        Danh sách đường dẫn: thư mục chỉ định, `<gốc>/subscriptions`, bố cục cũ `inputs/users`.
+        Paths: the explicit directory, `<root>/subscriptions`, then the legacy `inputs/users` layout.
     """
     out = [Path(input_root) / "manifest.yaml"] if input_root is not None else []
     out.append(paths.subscriptions_dir() / "manifest.yaml")
@@ -25,13 +25,13 @@ def candidate_paths(input_root: str | Path | None = None) -> list[Path]:
 
 
 def load_user_manifest(input_root: str | Path | None = None) -> dict:
-    """Tải manifest người dùng; vắng tên trong `users` mặc định BẬT.
+    """Load the user manifest; a name absent from `users` defaults to enabled.
 
     Args:
-        input_root: Thư mục đăng ký chỉ định rõ; None dùng thư mục mặc định.
+        input_root: Explicit subscription directory; None uses the default directory.
 
     Returns:
-        Từ điển `enabled` (công tắc tổng), `default` (cho người chưa liệt kê), `users` (tên -> bật/tắt).
+        Dict with `enabled` (master switch), `default` (for unlisted users) and `users` (name -> on/off).
     """
     for path in candidate_paths(input_root):
         if path.exists():

@@ -1,4 +1,4 @@
-"""Chuyển đổi các đường dẫn tệp tuyệt đối trong cơ sở dữ liệu sang đường dẫn tương đối."""
+"""Convert absolute file paths stored in the database to relative paths."""
 from __future__ import annotations
 
 import argparse
@@ -14,21 +14,36 @@ from src.db.store import ArticleStore
 
 force_utf8_stdio()
 
-# .../<bat ky>/project/data/agent_tasks/l1/x.json -> data/agent_tasks/l1/x.json (dang cu,
-# src.core.paths.resolve_data_path van doc duoc; migrate_data_root.py dua ve dang moi).
+# .../<any>/project/data/agent_tasks/l1/x.json -> data/agent_tasks/l1/x.json (legacy form
+# that src.core.paths.resolve_data_path can still read; migrate_data_root.py converts to the new form).
 _ABS_RE = re.compile(r"^.*[\\/]project[\\/]", re.IGNORECASE)
 
 _TARGETS = (("l1_tasks", "packet_path"), ("work_items", "package_path"))
 
 
 def _relativize(value: str) -> str | None:
-    """Trả bản tương đối, hoặc None nếu không cần đổi."""
+    """Convert an absolute stored path to its relative form.
+
+    Args:
+        value: Stored path value.
+
+    Returns:
+        The relative path, or None if no change is needed.
+    """
     if not value or not _ABS_RE.match(value):
         return None
     return _ABS_RE.sub("", value).replace("\\", "/")
 
 
 def main(argv: list[str]) -> int:
+    """Relativize absolute paths in `l1_tasks` and `work_items`.
+
+    Args:
+        argv: Command-line arguments without the program name.
+
+    Returns:
+        Process exit code, always 0.
+    """
     ap = argparse.ArgumentParser(description="Chuẩn hoá đường dẫn tuyệt đối trong monocle.db")
     ap.add_argument("--dry-run", action="store_true", help="Chỉ đếm, không ghi")
     args = ap.parse_args(argv)

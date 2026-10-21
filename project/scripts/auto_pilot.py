@@ -1,10 +1,4 @@
-"""Điều phối quy trình vận hành Gold cho News-Scape (AutoPilot Runner).
-
-Kích hoạt Subagent xử lý batch tồn đọng qua Antigravity CLI headless (`agy -p`).
-
-Theo ADR 0008, mọi đường dẫn tới việc tiêu thụ token BẮT BUỘC dừng lại xin xác nhận của
-người vận hành. Mặc định luôn là hỏi; chạy thẳng chỉ khi người dùng tự gõ `--yes`.
-"""
+"""Run the Gold pipeline by launching subagents through the headless Antigravity CLI (`agy -p`), asking the operator to confirm before any token spend (ADR 0008)."""
 
 from __future__ import annotations
 
@@ -17,7 +11,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-# Thêm đường dẫn project vào sys.path
+# Make the project root importable.
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
@@ -27,32 +21,32 @@ from src.core.stdio import force_utf8_stdio  # noqa: E402
 
 force_utf8_stdio()
 
-# Ưu tiên chính interpreter đang chạy script này; chỉ dùng đường dẫn cứng khi không
-# xác định được. Trước đây hardcode nên lệch với logic dò python của run_daily.ps1.
+# Prefer the interpreter running this script; fall back to the hard-coded path only when
+# it cannot be determined, to stay consistent with the python lookup in run_daily.ps1.
 PYTHON_EXEC = sys.executable or r"C:\venvs\news-scape\Scripts\python.exe"
 
-# Ước lượng thô: tiếng Việt UTF-8 khoảng 4 byte cho mỗi token đầu vào.
+# Rough estimate: Vietnamese UTF-8 text averages about 4 bytes per input token.
 _BYTES_PER_TOKEN = 4
 
 
 class CommandFailed(RuntimeError):
-    """Lệnh con thất bại. Tồn tại để lỗi không bị nuốt im lặng."""
+    """Signal a failed child command so the error is never swallowed silently."""
 
 
 def run_cmd(cmd: list[str], check: bool = True,
             timeout: int = 1800) -> subprocess.CompletedProcess:
-    """Thực thi lệnh con và in log trực tiếp.
+    """Run a child command and stream its output directly.
 
     Args:
-        cmd: Danh sách tham số dòng lệnh.
-        check: Ném `CommandFailed` khi mã thoát khác 0.
-        timeout: Trần thời gian chạy, tính bằng giây.
+        cmd: Command-line argument list.
+        check: Raise `CommandFailed` on a non-zero exit code.
+        timeout: Maximum run time in seconds.
 
     Returns:
-        Kết quả tiến trình con.
+        Completed child process.
 
     Raises:
-        CommandFailed: Khi lệnh lỗi và `check=True`, hoặc khi quá hạn.
+        CommandFailed: If the command fails and `check=True`, or if it times out.
     """
     print(f"\n🚀 [AutoPilot] Chạy: {' '.join(cmd)}")
     try:
@@ -71,7 +65,14 @@ def run_cmd(cmd: list[str], check: bool = True,
 
 
 def _count_tasks(batch_path: str) -> int:
-    """Đếm số bài trong một batch packet. Trả 0 khi không đọc được."""
+    """Count the articles in a batch packet.
+
+    Args:
+        batch_path: Path to the batch packet JSON file.
+
+    Returns:
+        Number of tasks, or 0 when the file cannot be read.
+    """
     try:
         data = json.loads(Path(batch_path).read_text(encoding="utf-8"))
     except (OSError, ValueError):
@@ -82,16 +83,16 @@ def _count_tasks(batch_path: str) -> int:
 
 def _confirm_activation(batches: list[str], effort: str, skip_permissions: bool,
                         assume_yes: bool) -> bool:
-    """Hiển thị chi phí dự kiến và xin xác nhận trước khi tiêu thụ token.
+    """Show the expected cost and ask for confirmation before spending tokens.
 
     Args:
-        batches: Danh sách đường dẫn batch packet sắp xử lý.
-        effort: Mức `--effort` sẽ truyền cho `agy`.
-        skip_permissions: Có bỏ qua lớp hỏi quyền của `agy` hay không.
-        assume_yes: Người vận hành đã tự gõ `--yes`.
+        batches: Paths of the batch packets about to be processed.
+        effort: Value of `--effort` that will be passed to `agy`.
+        skip_permissions: Whether the `agy` permission prompt is bypassed.
+        assume_yes: The operator explicitly passed `--yes`.
 
     Returns:
-        True nếu được phép chạy.
+        True if the run is allowed.
     """
     total_articles = sum(_count_tasks(b) for b in batches)
     total_bytes = sum(Path(b).stat().st_size for b in batches if Path(b).exists())
@@ -128,19 +129,19 @@ def _confirm_activation(batches: list[str], effort: str, skip_permissions: bool,
 def run_gold_pipeline(date: str | None = None, limit: int = 10, mini_batch: int = 5,
                       *, max_batches: int = 0, effort: str = "low",
                       skip_permissions: bool = False, assume_yes: bool = False) -> int:
-    """Xuất tác vụ Gold, xin quyền, gọi Subagent xử lý và giao hàng cho người dùng.
+    """Export Gold tasks, ask for permission, run subagents and deliver the output.
 
     Args:
-        date: Ngày xuất bản (YYYY-MM-DD hoặc today).
-        limit: Số bài Gold tối đa bốc ra.
-        mini_batch: Kích thước gom lô.
-        max_batches: Trần số batch mỗi lần chạy; 0 nghĩa là không giới hạn.
-        effort: Mức effort truyền cho `agy`.
-        skip_permissions: Bật cờ `--dangerously-skip-permissions` của `agy`.
-        assume_yes: Bỏ qua bước hỏi (người vận hành tự chịu trách nhiệm).
+        date: Publication date (YYYY-MM-DD or `today`).
+        limit: Maximum number of Gold articles to pick.
+        mini_batch: Batch grouping size.
+        max_batches: Maximum number of batches per run; 0 means unlimited.
+        effort: Effort level passed to `agy`.
+        skip_permissions: Enable the `--dangerously-skip-permissions` flag of `agy`.
+        assume_yes: Skip the confirmation prompt (the operator accepts responsibility).
 
     Returns:
-        0 khi mọi batch thành công, 1 khi có batch lỗi hoặc bị từ chối cấp quyền.
+        0 when every batch succeeds, 1 on a failed batch or a denied permission.
     """
     target_date = date or "today"
     print("=" * 78)
@@ -195,7 +196,7 @@ def run_gold_pipeline(date: str | None = None, limit: int = 10, mini_batch: int 
         except CommandFailed as e:
             failures.append(f"{b_name}: {e}")
             continue
-        # Lệnh thoát 0 vẫn chưa chắc đã sinh ra kết quả — phải kiểm tra tận nơi.
+        # Exit code 0 does not guarantee that the output was produced; check the file.
         if not out_path.exists():
             failures.append(f"{b_name}: agy thoát 0 nhưng không sinh {out_path.name}")
             print(f"❌ [AutoPilot] {failures[-1]}")
@@ -221,7 +222,14 @@ def run_gold_pipeline(date: str | None = None, limit: int = 10, mini_batch: int 
 
 
 def main(argv: list[str]) -> int:
-    """Điểm nhập lệnh CLI cho AutoPilot."""
+    """Parse the AutoPilot command line and run the Gold pipeline.
+
+    Args:
+        argv: Command-line arguments, excluding the program name.
+
+    Returns:
+        Exit code of the Gold pipeline run.
+    """
     parser = argparse.ArgumentParser(
         description="AutoPilot điều phối quy trình Gold News-Scape")
     parser.add_argument("--date", default=None, help="Ngày xuất bản (YYYY-MM-DD hoặc today)")

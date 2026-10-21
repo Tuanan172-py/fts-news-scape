@@ -1,17 +1,17 @@
-"""Xuất bản một chiều dữ liệu của một ngày đã đóng sang thư mục SharePoint (ADR 0023).
+"""Publish the data of one closed day one-way to a SharePoint folder (ADR 0023)."""
 
-Đích xuất bản là biến môi trường `NEWS_SCAPE_PUBLISH_DIR`. Không đặt thì publisher tắt
-(mức L0) và không ghi gì. Mọi tệp được dựng ở `paths.publish_staging_dir()` rồi mới chép
-sang đích theo giao thức `.<tên>.partial` → fsync → `os.replace`, không ghi đè tệp đã có.
-
-Bố cục dưới đích:
-
-- `review/monocle_review_<YYYYMMDD>.db`: bản `VACUUM INTO` của DB vận hành.
-- `parquet/<bảng>/year=YYYY/month=MM/part-<YYYYMMDD>.parquet`: `articles`, `analysis`, `mentions`.
-- `bronze/YYYY/MM/DD/<nguồn>.tar.xz`: HTML thô và `.meta.json` của ngày.
-- `users/output/<user>/<YYYY-MM-DD>.xlsx`: tệp giao hàng của ngày.
-- `_manifest/<YYYYMMDD>.json` (bản sửa sau là `<YYYYMMDD>.r<n>.json`) và `_manifest/latest.json`.
-"""
+# The publish target is the environment variable `NEWS_SCAPE_PUBLISH_DIR`. When it is
+# unset the publisher is off (level L0) and writes nothing. Every file is built in
+# `paths.publish_staging_dir()` and then copied to the target through the protocol
+# `.<name>.partial` -> fsync -> `os.replace`, never overwriting an existing file.
+#
+# Layout under the target:
+#
+# - `review/monocle_review_<YYYYMMDD>.db`: `VACUUM INTO` copy of the operational database.
+# - `parquet/<table>/year=YYYY/month=MM/part-<YYYYMMDD>.parquet`: `articles`, `analysis`, `mentions`.
+# - `bronze/YYYY/MM/DD/<source>.tar.xz`: raw HTML and `.meta.json` of the day.
+# - `users/output/<user>/<YYYY-MM-DD>.xlsx`: delivery file of the day.
+# - `_manifest/<YYYYMMDD>.json` (later revisions `<YYYYMMDD>.r<n>.json`) and `_manifest/latest.json`.
 
 from __future__ import annotations
 
@@ -38,17 +38,18 @@ DEFAULT_KEEP_REVIEW_DAYS = 7
 DEPRECATED_COLUMNS = frozenset({"materiality", "event_type", "impact_area"})
 HEAVY_COLUMNS = frozenset({"content_html"})
 
-# Bảng Parquet → (bảng DB, cột ngày). `articles` chọn theo ngày thu thập (`fetched_at`);
-# `analysis` và `mentions` chọn theo ngày nạp qua cổng DoD (`created_at`). Cả ba cột đều
-# là chuỗi ISO giờ Việt Nam, nên 10 ký tự đầu là ngày lịch địa phương.
+# Parquet table -> (DB table, date column). `articles` is selected by fetch date
+# (`fetched_at`); `analysis` and `mentions` by the date they passed the DoD gate
+# (`created_at`). All three columns are ISO strings in Vietnam time, so the first 10
+# characters are the local calendar date.
 PARQUET_TABLES: dict[str, tuple[str, str]] = {
     "articles": ("articles", "fetched_at"),
     "analysis": ("agent_outputs", "created_at"),
     "mentions": ("l1_outputs", "created_at"),
 }
 
-# Điều kiện lọc dòng thêm theo bảng DB. Bản code-first không phải kết quả phân tích nên
-# không vào bảng `mentions` (ADR 0010 D4).
+# Extra row filter per DB table. A code-first row is not an analysis result, so it does
+# not enter the `mentions` table (ADR 0010 D4).
 ROW_FILTERS: dict[str, str] = {"l1_outputs": not_code_first_sql()}
 
 _MANIFEST_RE = re.compile(r"^(\d{4}-?\d{2}-?\d{2})(?:\.r(\d+))?\.json$")
@@ -56,22 +57,22 @@ _CHUNK = 1 << 20
 
 
 class PublishConflictError(RuntimeError):
-    """Báo tệp đích đã tồn tại với nội dung khác bản dựng."""
+    """Signal that the target file already exists with content different from the built file."""
 
 
 @dataclass
 class FileOutcome:
-    """Kết quả xuất bản một tệp.
+    """Result of publishing one file.
 
     Attributes:
-        path: Đường dẫn tương đối dưới đích, dấu gạch chéo xuôi.
-        kind: Loại tệp: review, parquet, bronze, users.
-        action: planned, copied, skipped, conflict hoặc error.
-        size: Kích thước byte; None khi chưa dựng.
-        sha256: Mã băm SHA256; None khi chưa dựng.
-        rows: Số dòng với tệp dạng bảng.
-        message: Mô tả lỗi khi có.
-        members: Thành viên của gói Bronze kèm SHA256 tệp gốc.
+        path: Relative path under the target, with forward slashes.
+        kind: File kind: review, parquet, bronze, users.
+        action: planned, copied, skipped, conflict or error.
+        size: Size in bytes; None before the file is built.
+        sha256: SHA256 hash; None before the file is built.
+        rows: Row count for tabular files.
+        message: Error description, if any.
+        members: Members of a Bronze archive with the SHA256 of each source file.
     """
 
     path: str
@@ -86,16 +87,16 @@ class FileOutcome:
 
 @dataclass
 class PublishResult:
-    """Kết quả một lần xuất bản.
+    """Result of one publish run.
 
     Attributes:
-        status: ok, partial, failed hoặc disabled.
-        day: Ngày xuất bản, dạng YYYY-MM-DD.
-        message: Mô tả ngắn cho nhật ký và cảnh báo.
-        target: Thư mục đích; None khi tắt.
-        manifest: Đường dẫn tương đối của manifest ngày đã ghi.
-        files: Kết quả từng tệp.
-        pruned: Bản review cũ đã xoá.
+        status: ok, partial, failed or disabled.
+        day: Publish day as YYYY-MM-DD.
+        message: Short description for logs and warnings.
+        target: Target directory; None when disabled.
+        manifest: Relative path of the daily manifest written.
+        files: Result of each file.
+        pruned: Old review copies that were deleted.
     """
 
     status: str
@@ -107,10 +108,10 @@ class PublishResult:
     pruned: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
-        """Chuyển kết quả sang từ điển để ghi nhật ký.
+        """Convert the result to a dict for logging.
 
         Returns:
-            Từ điển các trường, không kèm danh sách thành viên Bronze.
+            Dict of the fields, without the Bronze member lists.
         """
         out = asdict(self)
         for f in out["files"]:
@@ -119,30 +120,30 @@ class PublishResult:
 
 
 def is_official_target(path: Path) -> bool:
-    """Cho biết đích nằm trong thư mục đồng bộ của site SharePoint chính thức của Khối.
+    """Report whether the target is inside the synced folder of the official SharePoint site of the Division.
 
-    Site chính thức (`sites/FRA`, đồng bộ về máy thành `FRA - Data`) chưa được duyệt làm
-    đích xuất bản; mọi lần chạy thử chỉ được ghi vào sandbox `sites/FRA_DataIngestion`.
-    Mở khoá đòi sửa mã kèm ADR, không có biến môi trường bỏ qua.
+    The official site (`sites/FRA`, synced to the machine as `FRA - Data`) is not approved
+    as a publish target; trial runs may only write to the sandbox `sites/FRA_DataIngestion`.
+    Unlocking requires a code change with an ADR; no environment variable bypasses it.
 
     Args:
-        path: Đích tuyệt đối.
+        path: Absolute target path.
 
     Returns:
-        True khi một thành phần đường dẫn trùng tên thư mục đồng bộ của site chính thức.
+        True if a path component equals the name of the synced folder of the official site.
     """
     return any(part.lower() in OFFICIAL_TARGET_MARKERS for part in path.parts)
 
 
 def publish_target(override: str | Path | None = None) -> Path | None:
-    """Phân giải thư mục đích xuất bản.
+    """Resolve the publish target directory.
 
     Args:
-        override: Đích dùng thay biến môi trường cho lần chạy này.
+        override: Target used instead of the environment variable for this run.
 
     Returns:
-        Đường dẫn tuyệt đối của đích, hoặc None khi publisher tắt hoặc đích thuộc site
-        chính thức.
+        Absolute target path, or None when the publisher is off or the target belongs to
+        the official site.
     """
     raw = str(override) if override else os.environ.get(PUBLISH_DIR_ENV, "").strip()
     if not raw:
@@ -152,13 +153,13 @@ def publish_target(override: str | Path | None = None) -> Path | None:
 
 
 def sha256_file(path: Path) -> str:
-    """Tính SHA256 của một tệp.
+    """Compute the SHA256 of a file.
 
     Args:
-        path: Tệp cần băm.
+        path: File to hash.
 
     Returns:
-        Chuỗi hex 64 ký tự.
+        64-character hex string.
     """
     h = hashlib.sha256()
     with open(path, "rb") as fh:
@@ -168,18 +169,18 @@ def sha256_file(path: Path) -> str:
 
 
 def copy_no_overwrite(src: Path, dst: Path, sha: str | None = None) -> str:
-    """Chép một tệp sang đích theo giao thức partial → fsync → replace, không ghi đè.
+    """Copy a file to the target through partial, fsync and replace, never overwriting.
 
     Args:
-        src: Tệp đã dựng xong ở staging.
-        dst: Đường dẫn cuối cùng dưới đích.
-        sha: SHA256 của `src` nếu đã tính.
+        src: File already built in staging.
+        dst: Final path under the target.
+        sha: SHA256 of `src` if already computed.
 
     Returns:
-        `copied` khi vừa chép, `skipped` khi đích đã có tệp cùng SHA256.
+        `copied` when the file was just copied, `skipped` when the target already has a file with the same SHA256.
 
     Raises:
-        PublishConflictError: Khi đích đã có tệp cùng tên nhưng khác SHA256.
+        PublishConflictError: If the target has a file of the same name with a different SHA256.
     """
     sha = sha or sha256_file(src)
     if dst.exists():
@@ -200,11 +201,11 @@ def copy_no_overwrite(src: Path, dst: Path, sha: str | None = None) -> str:
 
 
 def _write_json_replace(path: Path, data: dict[str, Any]) -> None:
-    """Ghi JSON bằng tệp tạm rồi `os.replace`, dành cho `latest.json`.
+    """Write JSON through a temp file and `os.replace`, for `latest.json`.
 
     Args:
-        path: Tệp đích.
-        data: Nội dung.
+        path: Target file.
+        data: Content.
     """
     path.parent.mkdir(parents=True, exist_ok=True)
     part = path.with_name(f".{path.name}.partial")
@@ -216,10 +217,10 @@ def _write_json_replace(path: Path, data: dict[str, Any]) -> None:
 
 
 def _now_iso() -> str:
-    """Trả về thời điểm hiện tại giờ Việt Nam dạng ISO.
+    """Return the current Vietnam time as ISO.
 
     Returns:
-        Chuỗi ISO 8601 có múi giờ.
+        ISO 8601 string with the timezone.
     """
     from src.core.models import now_vn_iso
 
@@ -227,27 +228,27 @@ def _now_iso() -> str:
 
 
 def _ymd(day: date) -> str:
-    """Định dạng ngày thành YYYYMMDD.
+    """Format a date as YYYYMMDD.
 
     Args:
-        day: Ngày cần định dạng.
+        day: Date to format.
 
     Returns:
-        Chuỗi YYYYMMDD.
+        YYYYMMDD string.
     """
     return day.strftime("%Y%m%d")
 
 
-# ── Đọc manifest đã có ở đích ────────────────────────────────────────────────
+# -- Read the manifests already at the target ----------------------------------
 
 def _day_manifests(target: Path) -> dict[str, tuple[int, Path]]:
-    """Liệt kê bản manifest mới nhất của từng ngày dưới đích.
+    """List the newest manifest of each day under the target.
 
     Args:
-        target: Thư mục đích.
+        target: Target directory.
 
     Returns:
-        Từ điển YYYYMMDD → (số bản sửa, đường dẫn).
+        Dict YYYYMMDD -> (revision number, path).
     """
     out: dict[str, tuple[int, Path]] = {}
     mdir = target / "_manifest"
@@ -265,13 +266,13 @@ def _day_manifests(target: Path) -> dict[str, tuple[int, Path]]:
 
 
 def _load_json(path: Path) -> dict[str, Any] | None:
-    """Đọc một tệp JSON, trả None khi thiếu hoặc hỏng.
+    """Read a JSON file, returning None when it is missing or corrupt.
 
     Args:
-        path: Tệp JSON.
+        path: JSON file.
 
     Returns:
-        Nội dung hoặc None.
+        Content, or None.
     """
     try:
         return json.loads(path.read_text(encoding="utf-8"))
@@ -280,16 +281,16 @@ def _load_json(path: Path) -> dict[str, Any] | None:
 
 
 def _manifest_complete(target: Path, manifest: dict[str, Any]) -> bool:
-    """Kiểm mọi tệp trong manifest còn ở đích với đúng kích thước.
+    """Check that every file in the manifest is still at the target with the right size.
 
-    Bản review có thể đã bị xoá theo chính sách giữ N bản, nên không tính vào điều kiện đủ.
+    Review copies may have been deleted by the keep-N policy, so they do not count.
 
     Args:
-        target: Thư mục đích.
-        manifest: Manifest ngày.
+        target: Target directory.
+        manifest: Daily manifest.
 
     Returns:
-        True khi đủ tệp.
+        True when all files are present.
     """
     for f in manifest.get("files", []):
         if f.get("kind") == "review":
@@ -300,20 +301,20 @@ def _manifest_complete(target: Path, manifest: dict[str, Any]) -> bool:
     return True
 
 
-# ── Dựng tệp ở staging ───────────────────────────────────────────────────────
+# -- Build files in staging ----------------------------------------------------
 
 def _plan(day: date, db: Path, include_review: bool = True,
           include_bronze: bool = True) -> list[FileOutcome]:
-    """Lập danh sách tệp sẽ xuất bản cho một ngày, không ghi gì.
+    """List the files to publish for a day without writing anything.
 
     Args:
-        day: Ngày xuất bản.
-        db: DB vận hành.
-        include_review: Có đưa bản review snapshot SQLite vào kế hoạch không.
-        include_bronze: Có đưa các gói Bronze HTML vào kế hoạch không.
+        day: Publish day.
+        db: Operational database.
+        include_review: Whether to include the SQLite review snapshot in the plan.
+        include_bronze: Whether to include the Bronze HTML archives in the plan.
 
     Returns:
-        Danh sách FileOutcome ở trạng thái planned.
+        FileOutcome entries in the planned state.
     """
     ymd = _ymd(day)
     plan: list[FileOutcome] = []
@@ -337,11 +338,11 @@ def _plan(day: date, db: Path, include_review: bool = True,
 
 
 def _build_review(db: Path, out: Path) -> None:
-    """Dựng bản review bằng `VACUUM INTO` qua kết nối chỉ đọc.
+    """Build the review copy with `VACUUM INTO` over a read-only connection.
 
     Args:
-        db: DB vận hành.
-        out: Tệp đích ở staging.
+        db: Operational database.
+        out: Target file in staging.
     """
     from src.db.snapshot import create_db_snapshot
 
@@ -351,15 +352,15 @@ def _build_review(db: Path, out: Path) -> None:
 
 
 def _build_obt_parquet(db: Path, day: date, out: Path) -> int:
-    """Xuất các bài viết của một ngày từ DB sang Parquet Một Bảng Hợp Nhất (OBT 22 cột).
+    """Export the articles of a day from the database to a One Big Table Parquet (22 columns).
 
     Args:
-        db: DB vận hành.
-        day: Ngày xuất bản.
-        out: Tệp đích ở staging.
+        db: Operational database.
+        day: Publish day.
+        out: Target file in staging.
 
     Returns:
-        Số dòng đã ghi.
+        Number of rows written.
     """
     from src.lakehouse.ingest import LAKEHOUSE_ARTICLE_SCHEMA, records_to_parquet_bytes
 
@@ -477,17 +478,20 @@ def _build_obt_parquet(db: Path, day: date, out: Path) -> int:
 
 
 def _build_parquet(db: Path, table: str, date_col: str, day: date, out: Path) -> int:
-    """Xuất các dòng của một ngày từ một bảng DB sang Parquet (hỗ trợ kiểm thử và tương thích ngược).
+    """Export the rows of a day from one database table to Parquet (kept for tests and backward compatibility).
 
     Args:
-        db: DB vận hành.
-        table: Bảng nguồn.
-        date_col: Cột ngày dùng để chọn dòng.
-        day: Ngày xuất bản.
-        out: Tệp đích ở staging.
+        db: Operational database.
+        table: Source table.
+        date_col: Date column used to select rows.
+        day: Publish day.
+        out: Target file in staging.
 
     Returns:
-        Số dòng đã ghi.
+        Number of rows written.
+
+    Raises:
+        RuntimeError: If the table does not exist in the database.
     """
     import pandas as pd
 
@@ -510,16 +514,16 @@ def _build_parquet(db: Path, table: str, date_col: str, day: date, out: Path) ->
 
 
 def _build_bronze(src_dir: Path, out: Path) -> list[dict[str, Any]]:
-    """Nén thư mục Bronze của một nguồn trong một ngày thành `.tar.xz`.
+    """Compress the Bronze directory of one source for one day into `.tar.xz`.
 
-    Thành viên sắp theo tên, chủ sở hữu đặt về 0, nên cùng đầu vào cho cùng gói.
+    Members are sorted by name and ownership is set to 0, so the same input gives the same archive.
 
     Args:
-        src_dir: Thư mục `<bronze>/<nguồn>/<YYYYMMDD>`.
-        out: Tệp đích ở staging.
+        src_dir: Directory `<bronze>/<source>/<YYYYMMDD>`.
+        out: Target file in staging.
 
     Returns:
-        Danh sách thành viên: tên trong gói, kích thước, SHA256 tệp gốc.
+        Members: name in the archive, size and SHA256 of the source file.
     """
     base = src_dir.parent.parent
     members = []
@@ -537,15 +541,15 @@ def _build_bronze(src_dir: Path, out: Path) -> list[dict[str, Any]]:
 
 
 def _build(item: FileOutcome, day: date, db: Path, stage: Path) -> None:
-    """Dựng một tệp ở staging và điền kích thước, SHA256, số dòng.
+    """Build one file in staging and fill in its size, SHA256 and row count.
 
-    Tệp đã có ở staging từ lần chạy dở trước được dùng lại, giữ SHA256 ổn định.
+    A file already in staging from an earlier interrupted run is reused, keeping the SHA256 stable.
 
     Args:
-        item: Tệp cần dựng.
-        day: Ngày xuất bản.
-        db: DB vận hành.
-        stage: Thư mục staging của ngày.
+        item: File to build.
+        day: Publish day.
+        db: Operational database.
+        stage: Staging directory of the day.
     """
     out = stage / item.path
     side = out.with_name(out.name + ".info.json")
@@ -570,16 +574,16 @@ def _build(item: FileOutcome, day: date, db: Path, stage: Path) -> None:
     item.sha256 = sha256_file(out)
 
 
-# ── Manifest và chính sách giữ bản review ────────────────────────────────────
+# -- Manifest and review retention policy --------------------------------------
 
 def _manifest_entry(item: FileOutcome) -> dict[str, Any]:
-    """Dựng mục manifest của một tệp.
+    """Build the manifest entry of a file.
 
     Args:
-        item: Tệp đã xuất bản.
+        item: File that was published.
 
     Returns:
-        Từ điển mục manifest.
+        Manifest entry dict.
     """
     e: dict[str, Any] = {"path": item.path, "kind": item.kind, "size": item.size,
                          "sha256": item.sha256}
@@ -591,16 +595,16 @@ def _manifest_entry(item: FileOutcome) -> dict[str, Any]:
 
 
 def _prune_reviews(target: Path, keep: int) -> list[str]:
-    """Xoá bản review cũ hơn N ngày gần nhất, chỉ những bản do publisher ghi.
+    """Delete review copies older than the N most recent days, only those the publisher wrote.
 
-    Một bản review chỉ bị xoá khi manifest của ngày đó liệt kê nó và SHA256 khớp.
+    A review copy is deleted only when the manifest of its day lists it and the SHA256 matches.
 
     Args:
-        target: Thư mục đích.
-        keep: Số ngày review giữ lại.
+        target: Target directory.
+        keep: Number of review days to keep.
 
     Returns:
-        Đường dẫn tương đối của các bản đã xoá.
+        Relative paths of the copies deleted.
     """
     reviews = []
     for ymd, (_, mpath) in _day_manifests(target).items():
@@ -619,16 +623,16 @@ def _prune_reviews(target: Path, keep: int) -> list[str]:
 
 def _write_day_manifest(target: Path, day: date, files: list[FileOutcome],
                         existing: tuple[int, Path] | None) -> str:
-    """Ghi manifest ngày; nội dung đổi so với bản trước thì ghi bản sửa mới.
+    """Write the daily manifest; write a new revision when the content changed from the previous one.
 
     Args:
-        target: Thư mục đích.
-        day: Ngày xuất bản.
-        files: Các tệp đã có ở đích.
-        existing: Bản manifest mới nhất của ngày nếu có.
+        target: Target directory.
+        day: Publish day.
+        files: Files already at the target.
+        existing: Newest manifest of the day, if any.
 
     Returns:
-        Đường dẫn tương đối của manifest có hiệu lực.
+        Relative path of the effective manifest.
     """
     entries = sorted((_manifest_entry(f) for f in files), key=lambda e: e["path"])
     if existing:
@@ -651,13 +655,13 @@ def _write_day_manifest(target: Path, day: date, files: list[FileOutcome],
 
 
 def _write_latest(target: Path, day: date, manifest_rel: str, pruned: list[str]) -> None:
-    """Ghi `_manifest/latest.json` sau cùng, trỏ tới ngày mới nhất đã xuất bản.
+    """Write `_manifest/latest.json` last, pointing to the newest published day.
 
     Args:
-        target: Thư mục đích.
-        day: Ngày vừa xuất bản.
-        manifest_rel: Manifest có hiệu lực của ngày vừa xuất bản.
-        pruned: Bản review vừa xoá.
+        target: Target directory.
+        day: Day just published.
+        manifest_rel: Effective manifest of the day just published.
+        pruned: Review copies just deleted.
     """
     days = _day_manifests(target)
     newest = max(days)
@@ -692,31 +696,32 @@ def _write_latest(target: Path, day: date, manifest_rel: str, pruned: list[str])
     _write_json_replace(target / "_manifest" / "latest.json", data)
 
 
-# ── Điểm vào ─────────────────────────────────────────────────────────────────
+# -- Entry points --------------------------------------------------------------
 
 def publish_day(day: date, *, dry_run: bool = False, force: bool = False,
                 target: str | Path | None = None, db_path: str | Path | None = None,
                 keep_review_days: int | None = None,
                 include_review: bool = True,
                 include_bronze: bool = True) -> PublishResult:
-    """Xuất bản dữ liệu của một ngày đã đóng sang thư mục đích.
+    """Publish the data of one closed day to the target directory.
 
-    Manifest ngày đã có và đủ tệp thì không làm lại, trừ khi `force`. Lần chạy dở trước
-    được làm tiếp nhờ tệp còn ở staging và tệp đã có ở đích cùng SHA256. Mọi lỗi được bắt
-    lại và trả về trong kết quả, không ném ra ngoài.
+    A day whose manifest exists and is complete is not redone unless `force` is set. An
+    interrupted earlier run resumes from files left in staging and files already at the
+    target with the same SHA256. Every error is caught and returned in the result and is
+    never raised.
 
     Args:
-        day: Ngày xuất bản.
-        dry_run: True thì chỉ lập kế hoạch tệp, không ghi gì.
-        force: True thì kiểm và chép lại phần thiếu dù manifest ngày đã đủ.
-        target: Đích dùng thay `NEWS_SCAPE_PUBLISH_DIR` cho lần chạy này.
-        db_path: DB vận hành; mặc định theo `resolve_db_path()`.
-        keep_review_days: Số bản review giữ lại; mặc định theo `publish.keep_review_days`.
-        include_review: Có đưa bản review snapshot SQLite vào kế hoạch không.
-        include_bronze: Có đưa các gói Bronze HTML vào kế hoạch không.
+        day: Publish day.
+        dry_run: If True, only plan the files and write nothing.
+        force: If True, check and copy the missing parts even when the daily manifest is complete.
+        target: Target used instead of `NEWS_SCAPE_PUBLISH_DIR` for this run.
+        db_path: Operational database; defaults to `resolve_db_path()`.
+        keep_review_days: Number of review copies to keep; defaults to `publish.keep_review_days`.
+        include_review: Whether to include the SQLite review snapshot in the plan.
+        include_bronze: Whether to include the Bronze HTML archives in the plan.
 
     Returns:
-        PublishResult với trạng thái ok, partial, failed hoặc disabled.
+        PublishResult with status ok, partial, failed or disabled.
     """
     tgt = publish_target(target)
     if tgt is None:
@@ -740,17 +745,17 @@ def _publish(day: date, tgt: Path, *, dry_run: bool, force: bool,
              db_path: str | Path | None, keep_review_days: int | None,
              include_review: bool = True,
              include_bronze: bool = True) -> PublishResult:
-    """Thực hiện xuất bản; lỗi được `publish_day` bắt lại.
+    """Run the publish; `publish_day` catches its errors.
 
     Args:
-        day: Ngày xuất bản.
-        tgt: Thư mục đích.
-        dry_run: Chỉ lập kế hoạch.
-        force: Bỏ qua điều kiện manifest đã đủ.
-        db_path: DB vận hành.
-        keep_review_days: Số bản review giữ lại.
-        include_review: Có đưa bản review snapshot SQLite vào kế hoạch không.
-        include_bronze: Có đưa các gói Bronze HTML vào kế hoạch không.
+        day: Publish day.
+        tgt: Target directory.
+        dry_run: Plan only.
+        force: Ignore the complete-manifest condition.
+        db_path: Operational database.
+        keep_review_days: Number of review copies to keep.
+        include_review: Whether to include the SQLite review snapshot in the plan.
+        include_bronze: Whether to include the Bronze HTML archives in the plan.
 
     Returns:
         PublishResult.
@@ -784,7 +789,7 @@ def _publish(day: date, tgt: Path, *, dry_run: bool, force: bool,
         prior = vouched.get(item.path)
         try:
             if prior and dst.is_file() and sha256_file(dst) == prior.get("sha256"):
-                # Tệp manifest đã xác nhận: giữ nguyên, không dựng lại (bản review đổi mỗi lần).
+                # The manifest already vouches for this file: keep it and do not rebuild (a review copy changes on every build).
                 item.size, item.sha256 = prior.get("size"), prior.get("sha256")
                 item.rows, item.members = prior.get("rows"), prior.get("members")
                 item.action = "skipped"
@@ -815,17 +820,17 @@ def _publish(day: date, tgt: Path, *, dry_run: bool, force: bool,
 
 
 def parse_day(text: str, today: date | None = None) -> date:
-    """Đọc tham số ngày `YYYY-MM-DD`, `today` hoặc `yesterday`.
+    """Parse a day argument `YYYY-MM-DD`, `today` or `yesterday`.
 
     Args:
-        text: Chuỗi ngày.
-        today: Ngày hôm nay theo giờ Việt Nam; None thì tự lấy.
+        text: Day string.
+        today: Today in Vietnam time; None computes it.
 
     Returns:
-        Ngày tương ứng.
+        Corresponding date.
 
     Raises:
-        ValueError: Khi chuỗi không đúng định dạng.
+        ValueError: If the string has an invalid format.
     """
     from datetime import timedelta
 

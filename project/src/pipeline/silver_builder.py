@@ -1,8 +1,4 @@
-"""Bộ tinh chế dữ liệu thô Bronze thành cấu trúc Silver chuẩn hóa.
-
-Chuyển đổi các tệp tin HTML/JSON thô tầng Bronze thành dữ liệu sạch
-(Silver) có cấu trúc, tách lọc tiêu đề, nội dung văn bản và cấu trúc DOM.
-"""
+"""Convert raw Bronze HTML/JSON files into structured Silver records with the title, clean text and DOM structure."""
 
 from __future__ import annotations
 
@@ -31,13 +27,13 @@ _JSON_HTML_FIELDS = ("content", "originalContent", "original_content",
 
 
 def _html_from_json(raw_text: str) -> str | None:
-    """Trích xuất chuỗi HTML thân bài từ dữ liệu JSON thô.
+    """Extract the article body HTML string from raw JSON data.
 
     Args:
-        raw_text: Chuỗi định dạng JSON thô thu được từ API.
+        raw_text: Raw JSON string obtained from an API.
 
     Returns:
-        Chuỗi HTML thân bài viết, hoặc None nếu không trích xuất được.
+        Article body HTML string, or None when nothing can be extracted.
     """
     try:
         data = json.loads(raw_text)
@@ -55,13 +51,20 @@ def _html_from_json(raw_text: str) -> str | None:
 
 
 def _detect_lang(text: str) -> str:
-    """Nhận diện mã ngôn ngữ ('vi', 'en', hoặc 'und') của văn bản."""
+    """Detect the language code ('vi', 'en' or 'und') of a text.
+
+    Args:
+        text: Text to inspect; only the first 2000 characters are sampled.
+
+    Returns:
+        'vi', 'en' or 'und' when undetermined.
+    """
     if not text:
         return "und"
     sample = text[:2000]
     if len(_VI_CHARS.findall(sample)) >= 5:
         return "vi"
-    # EN heuristic (bug #4a): nhiều chữ ASCII + stopword tiếng Anh
+    # English heuristic: many ASCII letters plus English stopwords.
     ascii_letters = sum(1 for c in sample if c.isascii() and c.isalpha())
     if ascii_letters >= 20 and _EN_STOPWORDS.search(sample):
         return "en"
@@ -69,8 +72,17 @@ def _detect_lang(text: str) -> str:
 
 
 def _domain_of(meta: dict) -> str:
-    """Domain lưu trữ. Ưu tiên path Bronze (đồng bộ partition), fallback source_url
-    netloc (bug #4b: đổi tên thư mục base không còn làm domain rỗng)."""
+    """Return the storage domain of an article.
+
+    Prefers the Bronze path (keeps partitions in sync) and falls back to the netloc of
+    `source_url`, so renaming the base directory does not yield an empty domain.
+
+    Args:
+        meta: Bronze metadata dict.
+
+    Returns:
+        Domain name, or an empty string when neither source yields one.
+    """
     html_path = meta.get("html_path", "")
     if html_path:
         parts = html_path.replace("\\", "/").split("/")
@@ -83,7 +95,14 @@ def _domain_of(meta: dict) -> str:
 
 
 def _parse_structure_from(soup) -> dict:
-    """Best-effort DOM structure (OPTIONAL field). BeautifulSoup only, no exec."""
+    """Extract a best-effort DOM structure (optional field) using BeautifulSoup only, with no script execution.
+
+    Args:
+        soup: Parsed BeautifulSoup document.
+
+    Returns:
+        Dict with the keys headings, paragraphs, tables and links.
+    """
     body = soup.body or soup
     headings = [{"level": int(h.name[1]), "text": h.get_text(" ", strip=True)}
                 for h in body.find_all(re.compile(r"^h[1-6]$"))
@@ -107,7 +126,16 @@ def _parse_structure_from(soup) -> dict:
 
 
 def _title_candidates(soup, structure: dict, cleaned: str) -> list[str]:
-    """Ung vien tieu de, uu tien nguon dang tin cay nhat truoc."""
+    """List title candidates, most trustworthy sources first.
+
+    Args:
+        soup: Parsed BeautifulSoup document.
+        structure: DOM structure dict from `_parse_structure_from`.
+        cleaned: Clean article text; its first line is the last candidate.
+
+    Returns:
+        Distinct candidate titles in priority order.
+    """
     out: list[str] = []
 
     def add(v):
@@ -122,7 +150,7 @@ def _title_candidates(soup, structure: dict, cleaned: str) -> list[str]:
     if soup.title:
         raw = soup.title.get_text(" ", strip=True)
         add(raw)
-        # nhieu bao gan hau to toa soan: 'Tieu de | CafeF', 'Tieu de - Vietstock'
+        # Many outlets append a publisher suffix: 'Title | CafeF', 'Title - Vietstock'.
         for sep in ("|", " - ", " – ", " — "):
             if sep in raw:
                 add(raw.rsplit(sep, 1)[0])
@@ -135,20 +163,31 @@ def _title_candidates(soup, structure: dict, cleaned: str) -> list[str]:
 
 def _resolve_title(soup, structure: dict, cleaned: str,
                    url: str, url_title_hash: str) -> tuple[str, bool]:
-    """(title, da_kiem_chung).
+    """Resolve the article title and whether it is verified.
 
-    `url_title_hash` = sha256(url + title) do scraper tinh luc cao, va no NAM SAN trong
-    meta.json. Nho vay Silver CHUNG MINH duoc ung vien nao la tieu de that thay vi doan —
-    van thuan tuy, offline, tat dinh.
+    `url_title_hash` = sha256(url + title) is computed by the scraper at capture time and is
+    stored in meta.json. Silver can therefore prove which candidate is the real title instead
+    of guessing, in a pure, offline and deterministic way.
 
-    Vi sao can: work-package truoc day khong co truong `title`, nen title_of() roi ve h1 dau
-    tien. Voi trang cong bo thong tin cua cafef, h1 la header trang HO SO DOANH NGHIEP
-    ("Ngan hang TMCP Phat trien T.P Ho Chi Minh (HOSE)") chu khong phai tieu de bai
-    ("HDB: Thong bao thay doi dia diem..."). Do tren monocle.db: 122/1.320 bai lech,
-    va bai HDB vi the MAT ca TICKER:HDB — dung tieu de that thi khop ngay bang ma.
+    Rationale: the work package had no `title` field, so title_of() fell back to the first
+    h1. On cafef disclosure pages the h1 is the COMPANY PROFILE page header
+    ("Ngan hang TMCP Phat trien T.P Ho Chi Minh (HOSE)") rather than the article title
+    ("HDB: Thong bao thay doi dia diem..."). Measured on monocle.db: 122 of 1,320 articles
+    were wrong, and the HDB article lost its TICKER:HDB match; with the real title the ticker
+    matches immediately.
 
-    Khong ung vien nao khop hash (toa soan sua tit sau khi cao) -> lay ung vien dau tien,
-    danh dau chua kiem chung de con truy vet.
+    When no candidate matches the hash (the newsroom edited the title after capture), the
+    first candidate is returned and flagged as unverified so it stays traceable.
+
+    Args:
+        soup: Parsed BeautifulSoup document.
+        structure: DOM structure dict from `_parse_structure_from`.
+        cleaned: Clean article text.
+        url: Source URL of the article.
+        url_title_hash: Hash recorded by the scraper at capture time.
+
+    Returns:
+        Tuple of the title and a flag that is True when the title matched the hash.
     """
     cands = _title_candidates(soup, structure, cleaned)
     if url and url_title_hash:
@@ -159,23 +198,23 @@ def _resolve_title(soup, structure: dict, cleaned: str,
 
 
 class SilverBuilder:
-    """Bộ chuyển đổi và tinh chế dữ liệu thô Bronze sang cấu trúc chuẩn Silver.
+    """Convert raw Bronze data into the standard Silver structure.
 
     Attributes:
-        schema_version: Phiên bản cấu trúc lược đồ Silver.
+        schema_version: Version of the Silver schema.
     """
 
     schema_version = SILVER_SCHEMA_VERSION
 
     def build(self, meta: dict, raw_bytes: bytes) -> dict:
-        """Thực hiện tinh chế dữ liệu thô và siêu dữ liệu Bronze thành bản ghi Silver.
+        """Convert raw data and Bronze metadata into a Silver record.
 
         Args:
-            meta: Từ điển chứa siêu dữ liệu tệp .meta.json của tầng Bronze.
-            raw_bytes: Chuỗi bytes nội dung tệp thô .html/.json từ tầng Bronze.
+            meta: Dict with the Bronze .meta.json metadata.
+            raw_bytes: Bytes of the raw .html/.json file from the Bronze layer.
 
         Returns:
-            Từ điển chứa dữ liệu sạch tầng Silver theo lược đồ silver-v1.
+            Dict with the clean Silver data following the silver-v1 schema.
         """
         encoding = meta.get("encoding") or "utf-8"
         try:
@@ -215,7 +254,16 @@ class SilverBuilder:
 
     @staticmethod
     def _extract_cleaned(url: str, html: str, structure: dict) -> tuple[str, str]:
-        """Chuỗi dự phòng trích xuất văn bản đảm bảo không rỗng."""
+        """Extract clean text through a fallback chain that avoids an empty result.
+
+        Args:
+            url: Source URL of the article.
+            html: Article HTML.
+            structure: DOM structure dict; its paragraphs are the last fallback.
+
+        Returns:
+            Tuple of the clean text and its quality ('high', 'medium', 'low' or 'empty').
+        """
         cleaned = (extract_content(url, html=html).get("content") or "").strip()
         quality = "high"
         if len(cleaned) < _MIN_HIGH:
@@ -232,7 +280,15 @@ class SilverBuilder:
 
 
 def _atomic_write(path: str, data: bytes) -> None:
-    """Ghi dữ liệu nguyên tử thông qua tệp tin tạm thời có cơ chế thử lại."""
+    """Write data atomically through a temporary file with retries.
+
+    Args:
+        path: Destination file path.
+        data: Bytes to write.
+
+    Raises:
+        OSError: If the temporary file cannot be moved into place after all retries.
+    """
     tmp = f"{path}.tmp"
     with open(tmp, "wb") as f:
         f.write(data)
@@ -253,14 +309,14 @@ def _atomic_write(path: str, data: bytes) -> None:
 
 
 def write_silver(silver: dict, base_dir: str | None = None) -> str:
-    """Lưu trữ đối tượng Silver ra đĩa theo cấu trúc phân vùng tên miền và ngày tháng.
+    """Write a Silver object to disk, partitioned by domain and date.
 
     Args:
-        silver: Từ điển dữ liệu Silver đã tinh chế.
-        base_dir: Thư mục gốc lưu trữ dữ liệu tầng Silver. Mặc định `paths.silver_dir()`.
+        silver: Derived Silver data dict.
+        base_dir: Root directory of the Silver layer. Defaults to `paths.silver_dir()`.
 
     Returns:
-        Đường dẫn tới tệp tin Silver JSON đã lưu.
+        Path of the saved Silver JSON file.
     """
     domain = silver.get("domain") or "unknown"
     yyyymmdd = ""

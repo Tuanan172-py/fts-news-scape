@@ -1,8 +1,4 @@
-"""Tải lại các bài viết trong danh sách theo dõi để kích hoạt phát hiện thay đổi.
-
-Cung cấp cơ chế re-fetch có kiểm soát các URL đã biết từ trước để tạo bản capture
-thứ hai tầng Bronze, từ đó cho phép bộ phát hiện thay đổi (Change Detection) so sánh.
-"""
+"""Re-fetch watchlist articles to create a second Bronze capture that change detection can compare."""
 
 from __future__ import annotations
 
@@ -18,15 +14,15 @@ from src.pipeline.run import process_meta
 
 
 def select_watchlist(store, *, limit: int = 50, domains: list[str] | None = None) -> list[dict]:
-    """Lấy danh sách các bài viết mới nhất cần kiểm tra thay đổi nội dung.
+    """Select the newest articles to check for content changes.
 
     Args:
-        store: Đối tượng ArticleStore kết nối cơ sở dữ liệu.
-        limit: Số lượng bài viết tối đa cần lấy.
-        domains: Danh sách tên miền cần lọc (tùy chọn).
+        store: ArticleStore object connected to the database.
+        limit: Maximum number of articles to select.
+        domains: Optional domain names to filter by.
 
     Returns:
-        Danh sách từ điển chứa thông tin URL, mã băm và tên miền nguồn.
+        One dict per article with its URL, hash and source domain.
     """
     conn = store.connect()
     try:
@@ -43,25 +39,25 @@ def select_watchlist(store, *, limit: int = 50, domains: list[str] | None = None
 
 
 def _meta_path_of(cap: dict) -> str:
-    """Xác định đường dẫn tệp .meta.json tương ứng từ kết quả capture."""
+    """Derive the matching .meta.json path from a capture result."""
     hp = cap.get("html_path", "")
     return hp[:-5] + ".meta.json" if hp.endswith(".html") else ""
 
 
 def refresh_row(http, raw_store: RawStore, robots: RobotsGate | None, row: dict,
                 *, timeout: int = 30, fetched_at: str | None = None) -> dict:
-    """Tải lại nội dung của một bài viết và lưu bản capture mới vào tầng Bronze.
+    """Re-fetch one article and store the new capture in the Bronze layer.
 
     Args:
-        http: Đối tượng HTTP client gửi yêu cầu tải trang.
-        raw_store: Đối tượng RawStore quản lý lưu trữ tệp thô.
-        robots: Cổng kiểm tra quyền truy cập robots.txt.
-        row: Dữ liệu bản ghi bài viết cần tải lại.
-        timeout: Thời gian chờ HTTP tối đa tính bằng giây.
-        fetched_at: Mốc thời gian thu thập bài viết theo chuẩn ISO.
+        http: HTTP client that requests the page.
+        raw_store: RawStore that manages raw file storage.
+        robots: Gate that checks robots.txt access; None disables the check.
+        row: Article record to re-fetch.
+        timeout: Maximum HTTP wait in seconds.
+        fetched_at: ISO timestamp of the capture; defaults to the current time.
 
     Returns:
-        Từ điển chứa URL, trạng thái thu thập và đường dẫn tệp siêu dữ liệu mới.
+        Dict with the URL, capture status and path of the new metadata file.
     """
     url = row["url"]
     if robots is not None and not robots.allowed(url):
@@ -86,29 +82,29 @@ def refresh_watchlist(store, http, *, limit: int = 50, domains: list[str] | None
                       timeout: int = 30, do_process: bool = True,
                       silver_dir: str | None = None,
                       package_dir: str | None = None) -> dict:
-    """Tải lại danh sách theo dõi và kích hoạt chuỗi xử lý tinh chế phát hiện thay đổi.
+    """Re-fetch the watchlist and trigger the change-detection derivation chain.
 
     Args:
-        store: Đối tượng ArticleStore quản lý cơ sở dữ liệu.
-        http: Đối tượng HTTP client gửi yêu cầu tải trang.
-        limit: Số lượng bài viết tối đa cần quét lại.
-        domains: Danh sách tên miền cần lọc.
-        respect_robots: Cờ tuân thủ quy tắc tệp robots.txt.
-        raw_dir: Thư mục chứa dữ liệu thô Bronze.
-        timeout: Thời gian chờ yêu cầu mạng tính bằng giây.
-        do_process: Cờ cho phép xử lý tiếp sang tầng Silver và phân loại.
-        silver_dir: Thư mục lưu trữ kết quả tầng Silver.
-        package_dir: Thư mục lưu trữ gói công việc bàn giao.
+        store: ArticleStore object that manages the database.
+        http: HTTP client that requests pages.
+        limit: Maximum number of articles to re-fetch.
+        domains: Domain names to filter by.
+        respect_robots: Respect robots.txt rules.
+        raw_dir: Directory of the raw Bronze data.
+        timeout: Network request timeout in seconds.
+        do_process: Continue processing into the Silver layer and classification.
+        silver_dir: Directory that stores the Silver output.
+        package_dir: Directory that stores the hand-off work packages.
 
     Returns:
-        Từ điển tóm tắt kết quả tải lại và thống kê các trạng thái phát hiện.
+        Dict summarizing the re-fetch result and the detected state counts.
     """
     raw_store = RawStore(raw_dir)
     robots = RobotsGate(http) if respect_robots else None
     rows = select_watchlist(store, limit=limit, domains=domains)
     summary = {"selected": len(rows), "refetched": 0, "skipped": 0, "states": {}}
     for row in rows:
-        # Fix B: 1 URL lỗi (HTTP/parse) KHÔNG được làm sập cả watch-list.
+        # One failing URL (HTTP or parse) must not abort the whole watchlist.
         try:
             res = refresh_row(http, raw_store, robots, row, timeout=timeout)
         except Exception as e:  # noqa: BLE001 — non-fatal per URL
@@ -125,7 +121,7 @@ def refresh_watchlist(store, http, *, limit: int = 50, domains: list[str] | None
                                    package_dir=package_dir)
                 st = out.get("state", "?")
                 summary["states"][st] = summary["states"].get(st, 0) + 1
-            except Exception as e:  # noqa: BLE001 — non-fatal per bài
+            except Exception as e:  # noqa: BLE001 — non-fatal per article
                 logger.error("refresh process fail {}: {}", res["meta_path"], e)
     logger.info("refresh done: {}", summary)
     return summary

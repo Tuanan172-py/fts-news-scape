@@ -1,4 +1,4 @@
-"""Biên dịch danh mục theo dõi của người dùng từ Excel sang cấu hình YAML."""
+"""Compile each user's watchlist from Excel into YAML configuration."""
 from __future__ import annotations
 
 import argparse
@@ -16,6 +16,14 @@ force_utf8_stdio()
 
 
 def main(argv: list[str]) -> int:
+    """Compile every user folder and print a per-user summary.
+
+    Args:
+        argv: Command-line arguments, excluding the program name.
+
+    Returns:
+        Process exit code, always 0.
+    """
     ap = argparse.ArgumentParser()
     ap.add_argument("--input-root", default=str(DEFAULT_INPUT_ROOT))
     ap.add_argument("--all", action="store_true", help="(mặc định) compile mọi user folder")

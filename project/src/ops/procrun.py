@@ -1,4 +1,4 @@
-"""Chạy một bước dưới dạng tiến trình con có deadline, đo tiến độ và kill cả cây."""
+"""Run a step as a child process with a deadline, progress tracking and whole-tree kill."""
 
 from __future__ import annotations
 
@@ -19,15 +19,15 @@ _job_handle: int | None = None
 
 
 def _daemon_job() -> int | None:
-    """Tạo (một lần) Job Object tự kill mọi tiến trình con khi daemon chết.
+    """Create once a Job Object that kills every child process when the daemon dies.
 
-    Handle của job chỉ nằm trong tiến trình daemon. Daemon thoát hoặc bị kill thì
-    Windows đóng handle, và cờ KILL_ON_JOB_CLOSE kill trọn cây `article_run` → `agy`.
-    Không có cơ chế này, lô đang chạy dở vẫn tiêu token sau khi daemon chết, rồi
-    lần khôi phục chạy lại đúng lô ấy lần nữa.
+    The job handle lives only in the daemon process. When the daemon exits or is killed,
+    Windows closes the handle and the KILL_ON_JOB_CLOSE flag kills the whole
+    `article_run` → `agy` tree. Without this mechanism, a half-finished batch keeps
+    spending tokens after the daemon dies, and the recovery then re-runs the same batch.
 
     Returns:
-        Handle của job, hoặc None khi không phải Windows hoặc tạo thất bại.
+        The job handle, or None when not on Windows or when creation fails.
     """
     global _job_handle
     if os.name != "nt":
@@ -80,21 +80,21 @@ def _daemon_job() -> int | None:
 
 
 def popen_in_daemon_job(cmd: list[str], **kwargs) -> tuple[subprocess.Popen, bool]:
-    """Khởi chạy tiến trình con đã nằm sẵn trong Job Object của daemon.
+    """Start a child process that is already inside the daemon Job Object.
 
-    Tiến trình được tạo ở trạng thái treo, gắn vào job, rồi mới chạy. Thứ tự này bắt
-    buộc: `python.exe` của venv là một launcher tự gắn mình vào job riêng có cờ
-    SILENT_BREAKAWAY_OK. Gắn job của daemon sau launcher thì job của daemon thành job
-    con của launcher, và trình thông dịch thật do launcher sinh ra thoát khỏi cả hai.
-    Gắn trước thì job của launcher lồng bên trong job của daemon, và mọi hậu duệ vẫn
-    thuộc job của daemon.
+    The process is created suspended, attached to the job, and only then resumed. This
+    order is required: the venv `python.exe` is a launcher that attaches itself to its own
+    job with the SILENT_BREAKAWAY_OK flag. Attaching the daemon job after the launcher makes
+    the daemon job a child of the launcher job, and the real interpreter spawned by the
+    launcher escapes both. Attaching first nests the launcher job inside the daemon job, and
+    every descendant still belongs to the daemon job.
 
     Args:
-        cmd: Lệnh và tham số.
-        **kwargs: Tham số chuyển cho `subprocess.Popen`.
+        cmd: Command and arguments.
+        **kwargs: Arguments passed to `subprocess.Popen`.
 
     Returns:
-        Cặp (tiến trình, đã gắn được vào job hay chưa).
+        Pair (process, whether it was attached to the job).
     """
     job = _daemon_job()
     if job is None:
@@ -118,14 +118,14 @@ def popen_in_daemon_job(cmd: list[str], **kwargs) -> tuple[subprocess.Popen, boo
 
 @dataclass
 class StepResult:
-    """Kết quả chạy một bước.
+    """Result of running one step.
 
     Attributes:
-        returncode: Mã thoát; -1 khi bị kill.
-        outcome: `ok`, `failed`, `timeout`, `stalled` hoặc `cancelled`.
-        duration_s: Thời lượng tính bằng giây.
-        tail: Các dòng cuối của nhật ký bước.
-        log_path: Đường dẫn nhật ký bước.
+        returncode: Exit code; -1 when killed.
+        outcome: `ok`, `failed`, `timeout`, `stalled` or `cancelled`.
+        duration_s: Duration in seconds.
+        tail: Last lines of the step log.
+        log_path: Path of the step log.
     """
 
     returncode: int
@@ -136,15 +136,15 @@ class StepResult:
 
     @property
     def ok(self) -> bool:
-        """True khi bước thoát 0."""
+        """Report whether the step exited with code 0."""
         return self.outcome == "ok"
 
 
 def kill_tree(pid: int) -> None:
-    """Kill một tiến trình cùng mọi tiến trình con cháu.
+    """Kill a process together with all its descendants.
 
     Args:
-        pid: Mã tiến trình gốc.
+        pid: Root process identifier.
     """
     try:
         import psutil
@@ -167,15 +167,15 @@ def kill_tree(pid: int) -> None:
 
 
 def read_tail(path: Path, lines: int = 40, *, start_offset: int = 0) -> str:
-    """Đọc các dòng cuối của một tệp nhật ký, chỉ trong phần từ `start_offset` trở đi.
+    """Read the last lines of a log file, only from `start_offset` onward.
 
     Args:
-        path: Đường dẫn tệp.
-        lines: Số dòng.
-        start_offset: Vị trí byte bắt đầu của lần chạy hiện tại trong tệp ghi nối.
+        path: File path.
+        lines: Number of lines.
+        start_offset: Byte offset where the current run starts in the appended file.
 
     Returns:
-        Văn bản các dòng cuối, rỗng khi không đọc được.
+        Text of the last lines, empty when the file cannot be read.
     """
     try:
         with open(path, "rb") as f:
@@ -193,24 +193,24 @@ def run_step(cmd: list[str], *, cwd: Path, log_path: Path, deadline_s: float,
              silence_s: float | None = None,
              stop_fn: Callable[[], bool] | None = None,
              poll_s: float = 2.0, extra_env: dict[str, str] | None = None) -> StepResult:
-    """Chạy lệnh, ghi stdout/stderr vào nhật ký và giám sát deadline, tiến độ, lệnh dừng.
+    """Run a command, write stdout/stderr to a log, and monitor the deadline, progress and stop signal.
 
-    Tiến độ được coi là có khi giá trị trả về của `progress_fn` thay đổi. Hết
-    `silence_s` giây không đổi thì bước bị coi là treo và bị kill.
+    Progress counts as made when the value returned by `progress_fn` changes. If it stays
+    unchanged for `silence_s` seconds, the step is considered hung and is killed.
 
     Args:
-        cmd: Lệnh và tham số.
-        cwd: Thư mục làm việc.
-        log_path: Tệp nhật ký (ghi nối).
-        deadline_s: Trần thời gian chạy.
-        progress_fn: Hàm đo tiến độ, gọi mỗi chu kỳ.
-        silence_s: Thời gian im lặng tối đa.
-        stop_fn: Hàm trả True khi cần huỷ bước.
-        poll_s: Chu kỳ kiểm tra.
-        extra_env: Biến môi trường thêm cho tiến trình con (ngữ cảnh ghi vết).
+        cmd: Command and arguments.
+        cwd: Working directory.
+        log_path: Log file (appended).
+        deadline_s: Maximum run time.
+        progress_fn: Progress measuring function, called every cycle.
+        silence_s: Maximum silent time.
+        stop_fn: Function that returns True when the step must be cancelled.
+        poll_s: Polling interval.
+        extra_env: Extra environment variables for the child process (tracing context).
 
     Returns:
-        StepResult.
+        The StepResult.
     """
     log_path.parent.mkdir(parents=True, exist_ok=True)
     env = os.environ.copy()
@@ -222,8 +222,8 @@ def run_step(cmd: list[str], *, cwd: Path, log_path: Path, deadline_s: float,
     with open(log_path, "a", encoding="utf-8") as log:
         log.write(f"\n===== {time.strftime('%Y-%m-%d %H:%M:%S')} $ {' '.join(cmd)}\n")
         log.flush()
-        # Nhật ký ghi nối qua các lần chạy lại; kết quả lô chỉ được đọc từ lần chạy này,
-        # nếu không dòng FATAL của lần trước bị đếm lại vào breaker.
+        # The log is appended across reruns; batch results are read only from this run,
+        # otherwise a FATAL line from a previous run would be counted again by the breaker.
         run_offset = log.buffer.tell() if hasattr(log, "buffer") else log.tell()
         proc, attached = popen_in_daemon_job(cmd, cwd=str(cwd), stdout=log,
                                              stderr=subprocess.STDOUT,
@@ -269,14 +269,14 @@ def run_step(cmd: list[str], *, cwd: Path, log_path: Path, deadline_s: float,
 
 
 def python_cmd(script: Path, *args: str) -> list[str]:
-    """Dựng lệnh gọi một script Python bằng chính interpreter đang chạy.
+    """Build the command that calls a Python script with the running interpreter.
 
     Args:
-        script: Đường dẫn script.
-        *args: Tham số.
+        script: Script path.
+        *args: Script arguments.
 
     Returns:
-        Danh sách tham số lệnh.
+        Command argument list.
     """
     exe = sys.executable
     if exe.lower().endswith("pythonw.exe"):

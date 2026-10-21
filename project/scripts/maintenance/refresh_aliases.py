@@ -1,4 +1,4 @@
-"""Cập nhật các bí danh từ cấu hình YAML vào tệp danh mục thực thể."""
+"""Apply alias updates from the YAML configuration to the entity catalog file."""
 from __future__ import annotations
 
 import argparse
@@ -16,7 +16,7 @@ force_utf8_stdio()
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 ENTITIES_JSON = paths.entities_dir() / "entities.json"
 
-# type thực thể -> khoá nhóm trong _load_all_domain_aliases()
+# Entity type -> group key in _load_all_domain_aliases().
 _TYPE_TO_GROUP = {
     "INDUSTRY_GICS1": "industries", "INDUSTRY_GICS2": "industries", "INDUSTRY_GICS3": "industries",
     "MACRO_GEO": "nations", "MACRO_THEME": "themes",
@@ -26,11 +26,19 @@ _TYPE_TO_GROUP = {
 
 
 def main(argv: list[str]) -> int:
+    """Reapply YAML aliases onto `entities.json`.
+
+    Args:
+        argv: Command-line arguments without the program name.
+
+    Returns:
+        Process exit code, always 0.
+    """
     ap = argparse.ArgumentParser(description="Áp lại alias yaml lên entities.json")
     ap.add_argument("--dry-run", action="store_true", help="Chỉ báo cáo, không ghi")
     args = ap.parse_args(argv)
 
-    # import muộn: build_entities kéo theo pandas, chỉ cần hàm nạp yaml
+    # Late import: build_entities pulls in pandas and only the YAML loader is needed.
     from scripts.build_entities import _load_all_domain_aliases
 
     groups = _load_all_domain_aliases()
@@ -45,10 +53,10 @@ def main(argv: list[str]) -> int:
         if cfg is None:
             continue
         extra = cfg.get("aliases", []) if isinstance(cfg, dict) else list(cfg)
-        # Mirror ĐÚNG build_entities:
-        #  - TICKER: giữ các alias pháp lý có sẵn, chỉ append thêm các alias trong tickers.yaml
-        #  - _industry() ghép tên ngành lên đầu
-        #  - các nhóm khác (nations/themes/assets/institutions) lấy NGUYÊN danh sách trong yaml.
+        # Mirror build_entities exactly:
+        #  - TICKER: keep the existing legal aliases and append those from tickers.yaml.
+        #  - _industry() puts the industry name first.
+        #  - Other groups (nations/themes/assets/institutions) take the YAML list unchanged.
         if e["type"] == "TICKER":
             merged = list(e.get("aliases") or [])
         elif e["type"].startswith("INDUSTRY_"):

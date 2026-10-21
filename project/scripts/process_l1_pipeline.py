@@ -1,4 +1,4 @@
-"""Tiếp hợp phân loại thực thể tầng L1 cho bộ kiểm thử hợp chuẩn."""
+"""Adapt L1 entity classification for the conformance test suite."""
 from __future__ import annotations
 
 import sys
@@ -15,13 +15,13 @@ __all__ = ["build_l1_output", "check_l1_dod"]
 
 
 def build_l1_output(task: dict) -> dict:
-    """Tạo kết quả phân loại L1 chuẩn từ tiêu đề bài viết trong gói công việc.
+    """Build a standard L1 classification result from the article title in a work package.
 
     Args:
-        task: Từ điển gói công việc L1 chứa article_id và title.
+        task: L1 work package dict containing `article_id` and `title`.
 
     Returns:
-        Từ điển kết quả thực thể tuân thủ schema l1-entity-output-v1.
+        Entity result dict conforming to the l1-entity-output-v1 schema.
     """
     rec = classify_title(task["title"])
     return build_code_first_output(rec, task["article_id"])

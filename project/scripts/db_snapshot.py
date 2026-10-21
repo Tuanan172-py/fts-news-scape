@@ -1,4 +1,4 @@
-"""Tạo bản sao chụp cơ sở dữ liệu SQLite tại thời điểm xác định."""
+"""Create a point-in-time snapshot of the SQLite database."""
 
 from __future__ import annotations
 
@@ -17,6 +17,14 @@ force_utf8_stdio()
 
 
 def main(argv: list[str]) -> int:
+    """Create a snapshot of the operational database.
+
+    Args:
+        argv: Command-line arguments, excluding the program name.
+
+    Returns:
+        0 on success, 1 when the snapshot fails.
+    """
     p = argparse.ArgumentParser(description="Tạo snapshot SQLite DB an toàn (Point-in-time)")
     p.add_argument("--src", help="Database nguồn (mặc định DB vận hành theo settings)")
     p.add_argument("--out", "-o", default=str(paths.snapshots_dir() / "monocle_review.db"),

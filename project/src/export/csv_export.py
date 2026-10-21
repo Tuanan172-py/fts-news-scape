@@ -1,4 +1,4 @@
-"""Xuất danh sách bài viết từ cơ sở dữ liệu ra tệp CSV."""
+"""Export articles from the database to a CSV file."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from src.core.models import VN_TZ
 from src.core.staging import safe_atomic_write
 
 
-# Thứ tự cột trong CSV.
+# Column order in the CSV.
 COLUMNS = [
     "fetched_at", "published_at", "source_domain", "symbols", "categories",
     "sentiment", "sentiment_score", "title", "summary", "url",
@@ -21,27 +21,34 @@ COLUMNS = [
 
 
 def _date_prefix(iso: str) -> str:
-    """Trích xuất tiền tố ngày dạng 'YYYY-MM-DD' từ chuỗi thời gian ISO."""
+    """Extract the 'YYYY-MM-DD' date prefix from an ISO timestamp.
+
+    Args:
+        iso: ISO timestamp string; None is treated as empty.
+
+    Returns:
+        First 10 characters of the timestamp.
+    """
     return (iso or "")[:10]
 
 
 def query_rows(db_path: str | None = None, *, today: bool = False,
                days: int | None = None, domains: list[str] | None = None,
                with_symbols: bool = False, limit: int | None = None) -> list:
-    """Truy vấn các dòng dữ liệu bài viết theo tiêu chí lọc chỉ định.
+    """Query article rows with the given filters.
 
     Args:
-        db_path: Đường dẫn tới tệp cơ sở dữ liệu SQLite. Mặc định DB vận hành.
-        today: Chỉ lấy các bài viết được thu thập trong ngày hôm nay.
-        days: Số ngày gần nhất cần lấy dữ liệu.
-        domains: Danh sách tên miền nguồn cần lọc.
-        with_symbols: Chỉ lấy các bài viết có gắn mã chứng khoán.
-        limit: Giới hạn số lượng bản ghi tối đa.
+        db_path: Path of the SQLite database file; None uses the operational database.
+        today: Keep only articles fetched today.
+        days: Number of most recent days to keep.
+        domains: Source domains to keep.
+        with_symbols: Keep only articles tagged with stock symbols.
+        limit: Maximum number of records.
 
     Returns:
-        Danh sách các dòng bản ghi sqlite3.Row tương ứng.
+        Matching sqlite3.Row records.
     """
-    # Mở mode read-only an toàn để không cạnh tranh lock với writer
+    # Open read-only so the query does not contend for locks with the writer.
     if db_path is None:
         from src.core.config import resolve_db_path
         db_path = str(resolve_db_path())
@@ -74,14 +81,14 @@ def query_rows(db_path: str | None = None, *, today: bool = False,
 
 
 def write_csv(rows: list, out_path: Path) -> Path:
-    """Ghi danh sách bài viết ra tệp CSV với mã hóa UTF-8 BOM.
+    """Write articles to a CSV file with UTF-8 BOM encoding.
 
     Args:
-        rows: Danh sách bản ghi dữ liệu cần ghi.
-        out_path: Đường dẫn tệp đích.
+        rows: Records to write.
+        out_path: Target file path.
 
     Returns:
-        Đường dẫn thực tế tới tệp đã lưu thành công.
+        Path of the file actually saved.
     """
     def _write(f):
         w = csv.writer(f)
@@ -100,6 +107,15 @@ def write_csv(rows: list, out_path: Path) -> Path:
 
 
 def _auto_name(today: bool, days: int | None) -> Path:
+    """Build the default output path from the date and the filter.
+
+    Args:
+        today: Whether the export is limited to today.
+        days: Number of most recent days, if any.
+
+    Returns:
+        Default CSV path in the exports directory.
+    """
     stamp = f"{datetime.now(VN_TZ):%Y%m%d}"
     suffix = "-today" if today else (f"-{days}d" if days else "")
     return paths.exports_dir() / f"articles-{stamp}{suffix}.csv"
@@ -109,20 +125,20 @@ def export(*, db_path: str | None = None, today: bool = False, days: int | None 
            domains: list[str] | None = None, with_symbols: bool = False,
            limit: int | None = None, out: str | None = None,
            verbose: bool = False) -> tuple[Path, int]:
-    """Xuất tập dữ liệu bài viết ra tệp CSV qua cơ chế ghi nguyên tử an toàn.
+    """Export the article dataset to a CSV file through a safe atomic write.
 
     Args:
-        db_path: Đường dẫn cơ sở dữ liệu SQLite. Mặc định DB vận hành.
-        today: Có chỉ lọc các bài viết trong ngày hôm nay hay không.
-        days: Số ngày gần nhất cần xuất dữ liệu.
-        domains: Danh sách tên miền nguồn muốn lọc.
-        with_symbols: Có yêu cầu bài viết phải chứa mã chứng khoán hay không.
-        limit: Giới hạn số lượng bài viết tối đa.
-        out: Đường dẫn tệp đầu ra tùy chỉnh.
-        verbose: In thông tin thống kê tóm tắt ra màn hình console.
+        db_path: SQLite database path; None uses the operational database.
+        today: Keep only articles from today.
+        days: Number of most recent days to export.
+        domains: Source domains to keep.
+        with_symbols: Require articles to carry stock symbols.
+        limit: Maximum number of articles.
+        out: Custom output file path.
+        verbose: Print a summary to the console.
 
     Returns:
-        Tuple chứa đường dẫn tệp thực tế đã lưu và số lượng bản ghi đã xuất.
+        Tuple of the path of the file saved and the number of records exported.
     """
     rows = query_rows(db_path, today=today, days=days, domains=domains,
                       with_symbols=with_symbols, limit=limit)

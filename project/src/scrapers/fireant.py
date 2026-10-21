@@ -1,4 +1,4 @@
-"""Bộ thu thập dữ liệu nguồn FireAnt qua REST API có xác thực Bearer token."""
+"""Scrape the FireAnt source through its REST API with Bearer token authentication."""
 
 from __future__ import annotations
 
@@ -16,16 +16,16 @@ from src.scrapers.capture_mixin import CaptureMixin
 
 @register("fireant")
 class FireAntScraper(CaptureMixin, BaseScraper):
-    """Lớp thu thập tin tức từ FireAnt REST API và lưu trữ Bronze dạng JSON.
+    """Scrape news from the FireAnt REST API and store Bronze captures as JSON.
 
     Attributes:
-        list_url: Đường dẫn API danh sách bài viết theo mã.
-        detail_url: Mẫu đường dẫn API chi tiết bài viết.
-        list_params: Tham số truy vấn phân trang mặc định.
-        max_details: Số lượng bài chi tiết tối đa cần lấy mỗi chu kỳ.
-        watchlist: Danh sách mã cổ phiếu theo dõi.
-        language: Ngôn ngữ chính của bài viết.
-        auth_headers: Header chứa Bearer token xác thực.
+        list_url: API URL that lists articles per ticker.
+        detail_url: URL template of the article detail API.
+        list_params: Default pagination query parameters.
+        max_details: Maximum number of article details to fetch per cycle.
+        watchlist: Stock tickers to watch.
+        language: Main language of the articles.
+        auth_headers: Header that carries the Bearer authentication token.
     """
     LIST_URL = "https://restv2.fireant.vn/posts"
     DETAIL_URL = "https://restv2.fireant.vn/posts/{post_id}"
@@ -33,6 +33,13 @@ class FireAntScraper(CaptureMixin, BaseScraper):
     SOURCE_DOMAIN = "fireant.vn"
 
     def __init__(self, config, http, dedup):
+        """Initialize the scraper from its source config and load the Bearer token.
+
+        Args:
+            config: Source config dict.
+            http: HTTP client.
+            dedup: Deduplication cache.
+        """
         super().__init__(config, http, dedup)
         api = config.get("api", {})
         self.list_url = api.get("list_url", self.LIST_URL)
@@ -55,14 +62,15 @@ class FireAntScraper(CaptureMixin, BaseScraper):
         self.auth_headers = {"Authorization": f"Bearer {token}"} if token else {}
 
     def _api_headers(self) -> dict:
+        """Return the request headers for API calls, including authentication."""
         return {**self.auth_headers, "Accept": "application/json, text/plain, */*"}
 
     def _auth_failed(self, status: int, context: str) -> None:
-        """Xử lý lỗi xác thực 401/403 bằng cách tạm ngưng scraper và ghi nhận cảnh báo.
+        """Handle a 401/403 authentication failure by disabling the scraper and recording the error.
 
         Args:
-            status: Mã trạng thái HTTP phản hồi.
-            context: Ngữ cảnh gọi API phát sinh lỗi.
+            status: HTTP status code of the response.
+            context: API call context in which the error occurred.
         """
         self.disabled = True
         msg = (f"auth failed (HTTP {status}) at {context} — token expired? "
@@ -72,10 +80,10 @@ class FireAntScraper(CaptureMixin, BaseScraper):
 
     # -- pipeline -------------------------------------------------------------
     def fetch_list(self) -> list[dict]:
-        """Thu thập danh sách bài viết thô theo danh mục mã cổ phiếu theo dõi.
+        """Collect raw articles for each watched ticker.
 
         Returns:
-            Danh sách đối tượng từ điển chứa dữ liệu bài viết chưa qua xử lý.
+            One dict of unprocessed article data per entry.
         """
         self._details_fetched = 0
         items: list[dict] = []
@@ -107,13 +115,13 @@ class FireAntScraper(CaptureMixin, BaseScraper):
         return items
 
     def parse_item(self, raw: dict) -> Article | None:
-        """Chuyển đổi dữ liệu JSON thô của bài viết thành đối tượng Article.
+        """Convert raw article JSON into an Article.
 
         Args:
-            raw: Từ điển chứa trường dữ liệu bài viết từ API FireAnt.
+            raw: Dict of article fields from the FireAnt API.
 
         Returns:
-            Đối tượng Article hợp lệ, hoặc None nếu thiếu postID hoặc tiêu đề.
+            Valid Article, or None when postID or title is missing.
         """
         post_id = raw.get("postID") or raw.get("post_id")
         title = (raw.get("title") or "").strip()
@@ -143,10 +151,10 @@ class FireAntScraper(CaptureMixin, BaseScraper):
         )
 
     def enrich(self, article: Article) -> None:
-        """Bổ sung nội dung chi tiết bài viết từ API và lưu trữ capture tầng Bronze.
+        """Add article detail content from the API and store the Bronze capture.
 
         Args:
-            article: Đối tượng Article cần bổ sung chi tiết nội dung.
+            article: Article to enrich with detail content.
         """
         if self.disabled:
             article.content_text = article.summary

@@ -1,15 +1,4 @@
-"""Đóng gói bài đăng thành packet cho worker, kèm xếp ưu tiên và dự toán chi phí.
-
-Mọi bài đều được xử lý đầy đủ cả tiêu đề lẫn nội dung; việc xếp tầng chỉ quyết định
-**thứ tự chạy**, không quyết định độ sâu. Nhờ vậy một bài bị xếp thừa vào tầng ưu
-tiên chỉ được xử lý sớm hơn chứ không tốn thêm token, nên bộ xếp hạng được phép
-thiên về nhận rộng: thà nhận nhầm còn hơn bỏ sót bài mà người dùng đang theo dõi.
-
-Packet bắt buộc ghi dạng gọn không thụt lề. Packet cũ ghi thụt lề khiến nội dung mỗi
-bài dồn thành một dòng vật lý dài quá hai nghìn ký tự, vượt ngưỡng cắt dòng của công
-cụ đọc, làm agent mất tin vào dữ liệu và tự mở vòng kiểm chứng tốn hàng trăm nghìn
-token. Đây là nguyên nhân trực tiếp của vệt Gold 154 đến 300 nghìn token.
-"""
+"""Pack articles into worker packets with priority tiering and a cost estimate."""
 from __future__ import annotations
 
 import argparse
@@ -49,11 +38,11 @@ force_utf8_stdio()
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 TASK_DIR = paths.article_packets_dir()
 
-# Ba trần dưới đây là số thật của công cụ đọc trong DSH, đọc từ README của
-# `dsh-tool-fs`: `readMaxLineLength` 2000 ký tự mỗi dòng, `readMaxBytes` 51.200 byte
-# mỗi lần gọi, `readLimit` 2000 dòng mỗi lần gọi. Packet phải được viết sao cho phía
-# điều phối đọc lại được nguyên vẹn, nếu không dữ liệu bị cắt cụt âm thầm — đúng loại
-# sự cố đã đẻ ra vòng kiểm chứng tốn hàng trăm nghìn token ở vệt Gold.
+# The three ceilings below are the real limits of the DSH read tool, taken from
+# the `dsh-tool-fs` README: `readMaxLineLength` 2000 characters per line,
+# `readMaxBytes` 51,200 bytes per call, `readLimit` 2000 lines per call. Packets
+# must be written so the orchestrator can read them back intact; otherwise data
+# is silently truncated.
 READ_MAX_LINE_CHARS = 2000
 READ_MAX_BYTES = 51_200
 READ_MAX_LINES = 2000
@@ -61,40 +50,44 @@ LINE_SAFETY_MARGIN = 100
 
 CONTEXT_WINDOW = 1_000_000
 
-# Đo ngày 2026-09-21 trên 400 bản ghi thật gần nhất của mỗi bảng:
-#   l1_outputs     trung bình   872 ký tự  ≈ 291 token, p90 370
-#   agent_outputs  trung bình 1.946 ký tự  ≈ 649 token, p90 859
-# Bản ghi hợp nhất của Article Lane mang cả hai phần nên nặng khoảng 900 token,
-# p90 khoảng 1.200. Hằng số cũ để 300 vì nó được hiệu chuẩn trên riêng tầng L1;
-# nó làm dự toán đầu ra hụt ba lần và che mất trần cắt cụt bên dưới.
+# Measured on 2026-09-21 over the 400 most recent real records of each table:
+#   l1_outputs     mean   872 chars  ~ 291 tokens, p90 370
+#   agent_outputs  mean 1,946 chars  ~ 649 tokens, p90 859
+# The merged Article Lane record carries both parts, so it weighs about 900
+# tokens, p90 about 1,200. The old constant was 300 because it was calibrated on
+# the L1 tier alone; it underestimated output by a factor of three and hid the
+# truncation ceiling below.
 DEFAULT_OUT_TOKENS_PER_ARTICLE = 900
 
-# Mốc tham chiếu đầu ra của một lượt, chỉ để ƯỚC LƯỢNG chi phí.
+# Per-call output reference, used only to ESTIMATE cost.
 #
-# 256.000 là `maxTokens` mặc định của DSH (`DEFAULT_MAX_TOKENS = 256e3` trong
-# `dsh-llm-deepseek`), nguồn: `docs/proposals/20260918-dsh-surface-verified.md`
-# §6.1–6.2. Đây là `max_tokens` của một request, KHÔNG phải cổng chặn đợt.
+# 256,000 is the DSH default `maxTokens` (`DEFAULT_MAX_TOKENS = 256e3` in
+# `dsh-llm-deepseek`), source: `docs/proposals/20260918-dsh-surface-verified.md`
+# sections 6.1-6.2. It is the `max_tokens` of one request, NOT a wave gate.
 #
-# Chạm mốc này không gây lỗi và không huỷ lượt: adapter ánh xạ `finish_reason`
-# `"length"` thành `{kind:"max-tokens"}` (`dsh-llm-deepseek`), vòng lặp agent kết
-# thúc turn bình thường (`dsh-agent-loop`), và `salvage_records` bóc được mọi bản
-# ghi hoàn chỉnh đã sinh. Phần thiếu do `--repair` đóng gói bù.
+# Reaching this value neither errors nor cancels the call: the adapter maps
+# `finish_reason` `"length"` to `{kind:"max-tokens"}` (`dsh-llm-deepseek`), the
+# agent loop ends the turn normally (`dsh-agent-loop`), and `salvage_records`
+# extracts every complete record already generated. `--repair` repacks the
+# missing part.
 #
-# Vì vậy số này chỉ dùng để in dự toán. Không nhánh mã nào được dừng, chia nhỏ hay
-# hạ số bài dựa trên nó.
+# The number is therefore used only to print the estimate. No code branch may
+# stop, split or reduce the article count based on it.
 INFO_OUTPUT_REFERENCE = 256_000
 
-# Số lô song song tối đa mà DSH chạy đồng thời trong một lượt điều phối:
-# `maxParallelSubCalls` mặc định 10 (`dsh-tools`). Vượt ngưỡng này thì các lô dôi ra
-# phải chờ hết một sóng, nên số lô mục tiêu luôn là 10.
+# Maximum parallel batches DSH runs at once in one orchestration call:
+# `maxParallelSubCalls` defaults to 10 (`dsh-tools`). Batches above this
+# threshold wait for a full wave, so the target batch count is always 10.
 MAX_PARALLEL_BATCHES = 10
 
-# Cỡ lô chuẩn cho mọi provider (ADR 0017 D5). Lô dài làm bản ghi cuối lô trôi vì được
-# sinh trong ngữ cảnh đã chứa toàn bộ bản ghi trước đó. Cỡ khác chỉ đặt qua `--batch`.
+# Standard batch size for every provider (ADR 0017 D5). Long batches make the
+# last records drift because they are generated in a context that already holds
+# all earlier records. Other sizes are set only through `--batch`.
 DEFAULT_BATCH_SIZE = 50
 
-# Tín hiệu vĩ mô khẩn: bài mang các từ này luôn vào tầng ưu tiên kể cả khi không
-# khớp mã nào trong danh sách theo dõi, vì chúng tác động toàn thị trường.
+# Urgent macro signals: an article containing these terms always enters the
+# priority tier even when it matches no watchlist code, because they affect the
+# whole market.
 _MACRO_URGENT_RE = re.compile(
     r"(?:ngân\s*hàng\s*nhà\s*nước|nhnn|lãi\s*suất|tỷ\s*giá|room\s*tín\s*dụng"
     r"|lạm\s*phát|cpi|gdp|thuế\s*quan|thuế\s*chống\s*bán\s*phá\s*giá|thuế\s*tự\s*vệ"
@@ -104,10 +97,10 @@ _MACRO_URGENT_RE = re.compile(
 
 
 def get_db_connection() -> sqlite3.Connection:
-    """Mở kết nối tới đúng cơ sở dữ liệu mà bước nạp ghi vào.
+    """Open a connection to the same database the ingest step writes to.
 
     Returns:
-        Kết nối SQLite tới `monocle.db`.
+        SQLite connection to `monocle.db`.
     """
     conn = sqlite3.connect(str(resolve_db_path()))
     conn.row_factory = sqlite3.Row
@@ -115,16 +108,17 @@ def get_db_connection() -> sqlite3.Connection:
 
 
 def watchlist_universe(reg) -> tuple[set[str], set[str]]:
-    """Dựng tập thực thể được theo dõi và tập ngành liên quan tới chúng.
+    """Build the watched entity set and the industries related to it.
 
-    Tập ngành là phần mở rộng có chủ đích cho việc nhận rộng: một bài nói về ngành
-    thép vẫn đáng ưu tiên với người đang theo dõi một mã thép, dù bài không nhắc mã.
+    The industry set is a deliberate extension for inclusive matching: an
+    article about the steel industry still deserves priority for a user who
+    watches a steel ticker, even when the article does not mention the ticker.
 
     Args:
-        reg: Thể hiện `EntityRegistry` đã nạp đăng ký người dùng.
+        reg: `EntityRegistry` instance with user subscriptions loaded.
 
     Returns:
-        Cặp gồm tập định danh thực thể được theo dõi và tập tên ngành liên quan.
+        Pair of the watched entity id set and the related industry name set.
     """
     watched: set[str] = set()
     for subs in (reg.subscriptions or {}).values():
@@ -141,16 +135,16 @@ def watchlist_universe(reg) -> tuple[set[str], set[str]]:
 
 
 def tier_of(title: str, reg, watched: set[str], industries: set[str]) -> tuple[int, str]:
-    """Xếp một bài vào tầng ưu tiên theo nguyên tắc nhận rộng.
+    """Assign an article to a priority tier using inclusive matching.
 
     Args:
-        title: Tiêu đề bài viết.
-        reg: Thể hiện `EntityRegistry`.
-        watched: Tập định danh thực thể đang được theo dõi.
-        industries: Tập tên ngành liên quan tới danh sách theo dõi.
+        title: Article title.
+        reg: `EntityRegistry` instance.
+        watched: Set of watched entity ids.
+        industries: Set of industry names related to the watchlist.
 
     Returns:
-        Cặp gồm số tầng (1 là ưu tiên cao nhất) và lý do xếp tầng.
+        Pair of the tier number (1 is highest priority) and the tiering reason.
     """
     detected = reg.detect(title or "")
     ids = {d["entity_id"] for d in detected}
@@ -172,10 +166,11 @@ def tier_of(title: str, reg, watched: set[str], industries: set[str]) -> tuple[i
     return 2, "background"
 
 
-# Điều kiện "bài đã được mô hình phân tích" trên bảng `l1_outputs` bí danh `o`. Bản
-# code-first là bản tra bảng tạm (ADR 0003), không phải phân tích: tính nó là "xong"
-# thì bộ chọn bài bỏ qua bài ấy vĩnh viễn, và bài không bao giờ có phần nội dung. Đo
-# ngày 2026-09-23: 2.915 bài ngày 10–17/09 kẹt đúng như vậy.
+# Condition "article was analyzed by the model" on table `l1_outputs` aliased
+# `o`. The code-first record is a temporary-table lookup (ADR 0003), not an
+# analysis: counting it as done makes the selector skip the article forever and
+# the article never gets a content part. Measured on 2026-09-23: 2,915 articles
+# of 10-17/09 were stuck this way.
 ANALYZED_L1 = analyzed_l1_sql("o")
 
 
@@ -183,23 +178,27 @@ def load_candidates(conn: sqlite3.Connection, *, date: str | None, limit: int,
                     only_pending: bool, exclude: set[str] | None = None,
                     with_content: bool = True,
                     exclude_thin: bool = True) -> list[sqlite3.Row]:
-    """Lấy danh sách bài cần xử lý kèm đường dẫn gói dữ liệu tầng bạc.
+    """Select articles to process together with their silver package paths.
 
     Args:
-        conn: Kết nối cơ sở dữ liệu.
-        date: Lọc theo ngày xuất bản YYYY-MM-DD, hoặc None để lấy mọi ngày.
-        limit: Số bài tối đa.
-        only_pending: Chỉ lấy bài chưa được mô hình phân tích đạt chuẩn.
-        exclude: Định danh bài phải bỏ qua (bài đang thuộc đợt khác hoặc đã hết lượt
-            thử). Lọc trong SQL, trước `LIMIT`, nên đợt vẫn đủ số bài.
-        with_content: False thì không trả cột `content_text`; bộ đếm chỉ cần định danh.
-        exclude_thin: True thì loại bài mỏng (không đủ hai đoạn đạt độ dài trích
-            dẫn — Gold trượt tất định). Lọc bằng đúng mảng đoạn văn bước đóng gói
-            sẽ gửi, nên mọi nơi gọi hàm này (radar, sensor, đóng gói) thấy cùng
-            một con số. Đọc tệp gói trên đĩa nên tốn thêm thời gian theo số bài.
+        conn: Database connection.
+        date: Publication date filter YYYY-MM-DD, or None for all dates.
+        limit: Maximum number of articles.
+        only_pending: Select only articles not yet analyzed to standard by the
+            model.
+        exclude: Article ids to skip (articles in another wave or out of
+            retries). Filtered in SQL before `LIMIT`, so the wave still gets
+            its full article count.
+        with_content: When False, the `content_text` column is not returned;
+            counters need only the ids.
+        exclude_thin: When True, drop thin articles (fewer than two paragraphs
+            long enough to cite, so Gold fails deterministically). Filtering
+            uses the same paragraph array the packing step will send, so every
+            caller (radar, sensor, packing) sees the same count. Reads package
+            files on disk, so time grows with the article count.
 
     Returns:
-        Danh sách bản ghi bài viết.
+        List of article rows.
     """
     cols = {row[1] for row in conn.execute("PRAGMA table_info(articles)").fetchall()}
     has_content = "content_text" in cols
@@ -228,8 +227,9 @@ def load_candidates(conn: sqlite3.Connection, *, date: str | None, limit: int,
         has_clusters = conn.execute(
             "SELECT 1 FROM sqlite_master WHERE type='table' AND name='cluster_members'").fetchone()
         if has_clusters:
-            # Bài chép lại chờ kế thừa kết quả của bài gốc, không tốn token (ADR 0016). Hết
-            # hạn giữ thì được trả về bộ chọn bài để không bao giờ kẹt vĩnh viễn.
+            # A copied article waits to inherit the original's result at no
+            # token cost (ADR 0016). Once the hold expires it returns to the
+            # selector so it is never stuck forever.
             sql.append("  AND NOT EXISTS (SELECT 1 FROM cluster_members cm "
                        "WHERE cm.article_id = a.url_title_hash AND cm.role = 'copy' "
                        "AND cm.decided_at >= ?)")
@@ -244,21 +244,22 @@ def load_candidates(conn: sqlite3.Connection, *, date: str | None, limit: int,
                          [(x,) for x in exclude])
         sql.append("  AND a.url_title_hash NOT IN (SELECT id FROM temp._pack_exclude)")
     sql.append("GROUP BY a.url_title_hash")
-    # Khoá phụ `url_title_hash` không để cho đẹp: nó làm thứ tự bài trở nên tất định.
-    # Bộ nhớ đệm của nhà cung cấp khớp theo tiền tố tính từ token 0, nên hai lần đóng
-    # gói cùng một tập bài phải cho ra packet giống nhau từng byte thì lần chạy lại
-    # mới trúng cache. Chỉ `published_at DESC` thì các bài trùng mốc thời gian đổi
-    # chỗ tuỳ kế hoạch truy vấn, và mọi token sau bài đầu tiên bị đổi chỗ đều trượt.
+    # The secondary key `url_title_hash` makes the article order deterministic.
+    # The provider cache matches by prefix from token 0, so two packings of the
+    # same article set must produce byte-identical packets for a rerun to hit
+    # the cache. With `published_at DESC` alone, articles with equal timestamps
+    # swap places depending on the query plan, and every token after the first
+    # swapped article misses.
     sql.append("ORDER BY a.published_at DESC, a.url_title_hash")
     if not exclude_thin:
         sql.append("LIMIT ?")
         params.append(limit)
         return list(conn.execute("\n".join(sql), params))
 
-    # Khi exclude_thin=True: gom đủ `limit` bài đạt chuẩn (không mỏng), dừng ngay
-    # khi đủ số lượng để không duyệt thừa. Tránh lỗi nghẽn: nếu LIMIT đặt trong SQL
-    # thì mẩu tin ngắn đầu danh sách chiếm trọn hạn mức, khiến bài hợp lệ phía sau
-    # không bao giờ được chạm tới và trả về rỗng.
+    # With exclude_thin=True: collect `limit` non-thin articles and stop as soon
+    # as the count is reached. This avoids a starvation bug: with LIMIT in SQL,
+    # short items at the head of the list would consume the whole quota, valid
+    # articles further down would never be reached and the result would be empty.
     rows: list[sqlite3.Row] = []
     for r in conn.execute("\n".join(sql), params):
         if not is_thin_row(r):
@@ -269,13 +270,13 @@ def load_candidates(conn: sqlite3.Connection, *, date: str | None, limit: int,
 
 
 def read_cleaned_text(package_path: str) -> str:
-    """Đọc nội dung đã chuẩn hóa từ gói dữ liệu tầng bạc.
+    """Read the normalized text from a silver package.
 
     Args:
-        package_path: Đường dẫn gói, tương đối với gốc dữ liệu hoặc tuyệt đối.
+        package_path: Package path, relative to the data root or absolute.
 
     Returns:
-        Nội dung bài viết, hoặc chuỗi rỗng khi không đọc được.
+        Article text, or an empty string when it cannot be read.
     """
     p = paths.resolve_data_path(package_path)
     try:
@@ -287,21 +288,21 @@ def read_cleaned_text(package_path: str) -> str:
 
 def resolve_body_text(*, source_domain=None, published_at=None, article_id=None,
                       package_path=None, content_text=None) -> str:
-    """Lấy thân bài đầy đủ theo cùng một thứ tự ưu tiên ở mọi nơi.
+    """Get the full article body using one priority order everywhere.
 
-    Silver đầy đủ trước, gói công việc RSS sau, nội dung trong DB cuối cùng.
-    Thứ tự này là hợp đồng ngầm của lane: packet, bộ lọc mỏng và cổng kiểm đều
-    phải thấy cùng một thân bài thì trích dẫn mới đối chiếu được.
+    Full Silver first, then the RSS work package, then the content stored in
+    the DB. This order is the lane's implicit contract: the packet, the thin
+    filter and the check gate must all see the same body for citations to match.
 
     Args:
-        source_domain: Tên miền nguồn để tìm gói Silver.
-        published_at: Mốc xuất bản để tìm gói Silver.
-        article_id: Băm định danh bài.
-        package_path: Đường dẫn gói công việc RSS dự phòng.
-        content_text: Nội dung trong DB khi không đọc được tệp nào.
+        source_domain: Source domain used to locate the Silver package.
+        published_at: Publication timestamp used to locate the Silver package.
+        article_id: Article identifier hash.
+        package_path: Fallback RSS work package path.
+        content_text: DB content used when no file can be read.
 
     Returns:
-        Thân bài, hoặc chuỗi rỗng khi không có nguồn nào đọc được.
+        Article body, or an empty string when no source is readable.
     """
     text = ""
     if article_id:
@@ -315,21 +316,22 @@ def resolve_body_text(*, source_domain=None, published_at=None, article_id=None,
 
 def row_paragraphs(row: sqlite3.Row,
                    *, max_tokens: int = DEFAULT_MAX_TOKENS_PER_ARTICLE) -> list[str]:
-    """Lấy các đoạn văn đúng như bước đóng gói sẽ gửi cho mô hình.
+    """Get the paragraphs exactly as the packing step will send them to the model.
 
-    Thân bài lấy từ gói Silver đầy đủ trước, rồi mới tới gói công việc RSS và
-    nội dung trong DB — cùng thứ tự với vòng đóng gói. Trích dẫn của mô hình chỉ
-    đối chiếu được khi packet và cổng kiểm đọc cùng một thân bài, nên packet cũ
-    đóng từ đoạn trích RSS ngắn được coi là cũ khi Silver đã có thân đầy đủ.
-    Ngân sách mặc định trùng mặc định của `--max-tokens-per-article` nên bộ lọc
-    mỏng và gói tin thấy cùng một mảng đoạn văn.
+    The body comes from the full Silver package first, then the RSS work
+    package and the DB content, in the same order as the packing loop. Model
+    citations match only when the packet and the check gate read the same body,
+    so an old packet built from a short RSS excerpt counts as stale once Silver
+    has the full body. The default budget equals the default of
+    `--max-tokens-per-article`, so the thin filter and the packer see the same
+    paragraph array.
 
     Args:
-        row: Dòng bài của `load_candidates`.
-        max_tokens: Trần token khi chắt lọc đoạn văn.
+        row: Article row from `load_candidates`.
+        max_tokens: Token ceiling when distilling paragraphs.
 
     Returns:
-        Mảng đoạn văn, rỗng khi không đọc được nội dung nào.
+        Paragraph array, empty when no content is readable.
     """
     def _col(name: str):
         try:
@@ -347,32 +349,34 @@ def row_paragraphs(row: sqlite3.Row,
 
 
 def is_thin(paragraphs: list[str]) -> bool:
-    """Bài mỏng khi không đủ hai đoạn đạt độ dài trích dẫn.
+    """Check whether an article is thin: fewer than two paragraphs long enough to cite.
 
-    Cổng Gold đòi hai trích dẫn nguyên văn, mỗi trích dẫn là một đoạn văn đạt
-    `MIN_CITATION_CHARS`. Bài mỏng qua được nhận diện thực thể nhưng trượt Gold
-    một cách tất định, nên phải loại khỏi packet thay vì đốt token.
+    The Gold gate demands two verbatim citations, each a paragraph reaching
+    `MIN_CITATION_CHARS`. A thin article passes entity recognition but fails
+    Gold deterministically, so it must be excluded from the packet instead of
+    burning tokens.
 
     Args:
-        paragraphs: Mảng đoạn văn sẽ gửi cho mô hình.
+        paragraphs: Paragraph array to be sent to the model.
 
     Returns:
-        True khi bài không bao giờ dựng được phần nội dung.
+        True when the content part can never be built for the article.
     """
     return sum(1 for p in paragraphs if len(p) >= MIN_CITATION_CHARS) < 2
 
 
 def is_thin_row(row) -> bool:
-    """True khi đọc được nội dung và xác định mỏng.
+    """Check whether the content is readable and determined to be thin.
 
-    Thiếu dữ kiện (dòng tuple không khoá, không đọc được tệp) thì trả False để
-    vòng đóng gói loại sau như cũ: fail-open, không giấu tồn đọng.
+    When facts are missing (a tuple row without keys, an unreadable file), the
+    function returns False so the packing loop excludes the article later as
+    before: fail-open, without hiding the backlog.
 
     Args:
-        row: Dòng bài của `load_candidates` (Row hoặc tuple).
+        row: Article row from `load_candidates` (Row or tuple).
 
     Returns:
-        True chỉ khi chắc chắn bài không dựng được phần nội dung.
+        True only when the content part is certain to be unbuildable.
     """
     try:
         paras = row_paragraphs(row)
@@ -382,19 +386,20 @@ def is_thin_row(row) -> bool:
 
 
 def fresh_wave_paragraphs(article_ids: set[str]) -> dict[str, list[str]]:
-    """Lấy mảng đoạn văn hiện tại của các bài trong đợt, đọc từ Silver đầy đủ.
+    """Get the current paragraph arrays of wave articles, read from full Silver.
 
-    Dùng để phát hiện packet cũ: packet đóng lúc Silver chưa có (hoặc RSS còn là
-    đoạn trích ngắn) mang ít đoạn văn hơn hẳn so với thân bài hiện tại. Bài như
-    vậy phải đóng gói lại thay vì vá quanh bản ghi cũ, vì trích dẫn cũ không đối
-    chiếu được vào thân bài mới.
+    Used to detect stale packets: a packet built when Silver did not exist yet
+    (or the RSS was still a short excerpt) carries far fewer paragraphs than
+    the current body. Such an article must be repacked instead of patched
+    around the old record, because old citations cannot be matched against the
+    new body.
 
     Args:
-        article_ids: Tập băm định danh bài cần kiểm.
+        article_ids: Set of article id hashes to check.
 
     Returns:
-        Từ điển định danh bài sang mảng đoạn văn hiện tại. Bài không đọc được
-        thân bài nào thì không có mặt trong từ điển.
+        Dict mapping article id to its current paragraph array. An article
+        whose body cannot be read is absent from the dict.
     """
     fresh: dict[str, list[str]] = {}
     ids = [a for a in article_ids if a]
@@ -429,34 +434,35 @@ def fresh_wave_paragraphs(article_ids: set[str]) -> dict[str, list[str]]:
 
 
 def suggest_batch_size(n_articles: int) -> int:
-    """Chọn số bài mỗi lô khi người vận hành không đặt `--batch`.
+    """Choose the batch size when the operator does not set `--batch`.
 
     Args:
-        n_articles: Số bài của cả đợt.
+        n_articles: Number of articles in the whole wave.
 
     Returns:
-        Cỡ lô chuẩn, bằng nhau cho mọi provider và mọi cỡ đợt.
+        Standard batch size, identical for every provider and wave size.
     """
     return DEFAULT_BATCH_SIZE
 
 
 def plan_calls(n_articles: int, *, batch_cap: int) -> list[int]:
-    """Chia một đợt thành các lượt gọi, chia đều, chỉ theo trần người vận hành đặt.
+    """Split a wave into calls of even size, bounded only by the operator's cap.
 
-    `--batch` là cổng chia duy nhất. Không có trần token nào can thiệp vào đây nữa:
-    ngữ cảnh không phải ràng buộc (một đợt trăm bài chiếm khoảng 15% cửa sổ), còn
-    trần đầu ra thì chưa đo được nên không đủ tư cách làm luật chia lô.
+    `--batch` is the only splitting gate. No token ceiling intervenes here
+    anymore: context is not a constraint (a hundred-article wave takes about 15%
+    of the window), and the output ceiling is not yet measured, so it cannot
+    serve as a batching rule.
 
-    Chia đều thay vì cắt tràn, vì các lượt chạy song song nên đợt chỉ xong khi lượt
-    dài nhất xong; một lượt lẻ rất ngắn không rút ngắn được gì, chỉ làm lệch khối
-    lượng giữa các lượt.
+    The split is even rather than overflow-based: calls run in parallel, so the
+    wave finishes only when the longest call finishes; a very short leftover
+    call shortens nothing and only skews the load between calls.
 
     Args:
-        n_articles: Số bài của cả đợt.
-        batch_cap: Trần số bài mỗi lượt do người vận hành đặt.
+        n_articles: Number of articles in the whole wave.
+        batch_cap: Maximum articles per call set by the operator.
 
     Returns:
-        Danh sách số bài của từng lượt, cộng lại đúng bằng `n_articles`.
+        Article count per call, summing exactly to `n_articles`.
     """
     if n_articles <= 0:
         return []
@@ -468,24 +474,25 @@ def plan_calls(n_articles: int, *, batch_cap: int) -> list[int]:
 
 def write_packet(batch_id: str, items: list[dict], mapping: dict,
                  out_dir: Path) -> tuple[Path, Path, dict]:
-    """Ghi packet ra đĩa ở dạng đọc lại được nguyên vẹn, kèm bảng ánh xạ chỉ số.
+    """Write the packet to disk in a form that reads back intact, with the index map.
 
-    Packet được ghi **xuống dòng theo từng phần tử** thay vì dồn một dòng. Lý do:
-    công cụ đọc cắt mỗi dòng ở 2.000 ký tự, nên một tệp JSON gọn nằm trọn trên một
-    dòng sẽ bị cắt mất gần hết. Ghi mỗi đoạn văn một dòng thì dòng dài nhất bằng đúng
-    đoạn dài nhất, mà đo trên 4.493 đoạn thật thì đoạn dài nhất chỉ 954 ký tự.
+    The packet is written with a **line break per element** instead of a single
+    line. The read tool cuts each line at 2,000 characters, so a compact JSON
+    file on one line would be almost entirely truncated. With one paragraph per
+    line, the longest line equals the longest paragraph, which measured over
+    4,493 real paragraphs is only 954 characters.
 
     Args:
-        batch_id: Mã lô.
-        items: Danh sách bài đã đóng gói.
-        mapping: Bảng ánh xạ chỉ số cục bộ sang định danh bài.
-        out_dir: Thư mục đích.
+        batch_id: Batch id.
+        items: Packed article list.
+        mapping: Mapping from local index to article id.
+        out_dir: Destination directory.
 
     Returns:
-        Bộ ba gồm đường dẫn packet, đường dẫn bảng ánh xạ và số liệu ngân sách đọc.
+        Triple of the packet path, the map path and the read budget figures.
 
     Raises:
-        ValueError: Khi packet có dòng vượt ngưỡng cắt dòng của công cụ đọc.
+        ValueError: If the packet has a line above the read tool's line cut.
     """
     out_dir.mkdir(parents=True, exist_ok=True)
     packet = {
@@ -514,8 +521,8 @@ def write_packet(batch_id: str, items: list[dict], mapping: dict,
     size = len(text.encode("utf-8"))
     budget = {
         "bytes": size,
-        # Băm của packet: bằng chứng kiểm được cho tính tất định. Đóng gói lại cùng
-        # một tập bài mà băm đổi nghĩa là lần chạy lại sẽ trượt bộ nhớ đệm.
+        # Packet hash: verifiable evidence of determinism. If repacking the same
+        # article set changes the hash, a rerun will miss the cache.
         "sha256": hashlib.sha256(text.encode("utf-8")).hexdigest()[:16],
         "lines": len(lines),
         "longest_line": longest,
@@ -526,21 +533,21 @@ def write_packet(batch_id: str, items: list[dict], mapping: dict,
 
 
 def read_windows(lines: list[str]) -> list[list[int]]:
-    """Chia tệp thành các cửa sổ dòng mà mỗi cửa sổ đọc trọn trong một lần gọi.
+    """Split the file into line windows that each read fully in one call.
 
-    Công cụ đọc chặn ở 51.200 byte và 2.000 dòng cho mỗi lần gọi, nên một packet
-    trăm bài phải đọc làm nhiều lần. Việc chia cửa sổ được tính sẵn ở đây để chương
-    trình điều phối chỉ việc lặp theo danh sách, không phải đoán ngưỡng lúc chạy.
-    Các lần đọc này nằm trong cùng một chương trình nên **không tốn thêm bước nào**
-    của mô hình.
+    The read tool caps at 51,200 bytes and 2,000 lines per call, so a
+    hundred-article packet needs several reads. The windows are precomputed
+    here so the orchestrator only iterates the list and never guesses
+    thresholds at run time. These reads run inside the same program, so they
+    cost the model **no extra step**.
 
     Args:
-        lines: Danh sách dòng của tệp packet.
+        lines: Line list of the packet file.
 
     Returns:
-        Danh sách cặp `[dòng bắt đầu tính từ 1, số dòng]`.
+        List of `[start line counted from 1, line count]` pairs.
     """
-    budget = READ_MAX_BYTES - 4096          # chừa chỗ cho khung bao và số dòng
+    budget = READ_MAX_BYTES - 4096          # reserve room for the envelope and line numbers
     windows: list[list[int]] = []
     start = 1
     used = 0
@@ -560,14 +567,14 @@ def read_windows(lines: list[str]) -> list[list[int]]:
 
 
 def histogram(values: list[int], *, buckets: int = 6) -> list[str]:
-    """Dựng biểu đồ phân bố dạng văn bản cho số token mỗi bài.
+    """Build a text distribution chart for tokens per article.
 
     Args:
-        values: Danh sách số token của từng bài.
-        buckets: Số khoảng chia.
+        values: Token count of each article.
+        buckets: Number of intervals.
 
     Returns:
-        Danh sách dòng biểu đồ.
+        List of chart lines.
     """
     if not values:
         return []
@@ -586,13 +593,13 @@ def histogram(values: list[int], *, buckets: int = 6) -> list[str]:
 
 
 def main(argv=None) -> int:
-    """Chạy giao diện dòng lệnh đóng gói bài đăng.
+    """Run the command-line interface that packs articles.
 
     Args:
-        argv: Danh sách tham số dòng lệnh. Mặc định lấy từ `sys.argv`.
+        argv: Command-line argument list. Defaults to `sys.argv`.
 
     Returns:
-        Mã thoát 0 khi đóng gói được, 2 khi không có bài nào thoả điều kiện.
+        Exit code 0 when packing succeeds, 2 when no article qualifies.
     """
     ap = argparse.ArgumentParser(description="Đóng gói bài đăng thành packet cho worker")
     ap.add_argument("--wave", default=datetime.now().strftime("%Y%m%dT%H%M"),
@@ -670,32 +677,34 @@ def main(argv=None) -> int:
         print("Có bài nhưng không đọc được nội dung nào. Kiểm lại work_packages trên đĩa.")
         return 2
 
-    # Tầng ưu tiên chạy trước; trong cùng tầng giữ nguyên thứ tự mới nhất trước.
-    # `sort` của Python ổn định và truy vấn đã sắp tất định, nên thứ tự cuối cùng chỉ
-    # phụ thuộc dữ liệu chứ không phụ thuộc lần chạy — điều kiện để lần đóng gói lại
-    # cho ra packet giống hệt và trúng bộ nhớ đệm.
+    # Priority tier runs first; within a tier the newest-first order is kept.
+    # Python's `sort` is stable and the query is already deterministic, so the
+    # final order depends only on the data and not on the run: the condition for
+    # a repack to yield an identical packet and hit the cache.
     packed.sort(key=lambda a: a["tier"])
 
-    # Tiền tố tĩnh gồm CẢ phần harness tự nối vào (AGENTS.md, section tool/SDK), chứ
-    # không chỉ phần persona dự án tự dán. Cả hai đều đứng trước packet và đều tĩnh,
-    # nên cả hai đều trúng bộ nhớ đệm; đếm thiếu phần harness làm `est_hit` hụt khoảng
-    # 4.800 token mỗi lượt và khiến số dự toán không đối chiếu được với `cacheRead`
-    # thật trong sổ cái.
+    # The static prefix includes the part the harness appends itself (AGENTS.md,
+    # tool/SDK section), not only the project persona. Both precede the packet
+    # and are static, so both hit the cache; omitting the harness part makes
+    # `est_hit` fall short by about 4,800 tokens per call and leaves the
+    # estimate unreconcilable with the real `cacheRead` in the ledger.
     pfx = cached_prefix_tokens()
 
-    # `--batch 0` để đợt tự chọn cỡ lô theo số bài thật. Người vận hành chỉ đặt số
-    # cứng khi muốn ép một cách chia cụ thể.
+    # `--batch 0` lets the wave pick the batch size from the real article count.
+    # The operator sets a fixed number only to force a specific split.
     batch_size = args.batch if args.batch > 0 else suggest_batch_size(len(packed))
     chunk_cap = max(1, batch_size)
 
-    # Chia đều thay vì cắt tràn. Cắt tràn để lại một lượt lẻ rất ngắn, mà các lượt
-    # chạy song song nên đợt chỉ xong khi lượt dài nhất xong: lượt lẻ không rút
-    # ngắn được gì, chỉ làm lệch khối lượng giữa các lượt.
+    # Split evenly instead of overflowing. Overflow leaves a very short leftover
+    # call, and since calls run in parallel the wave finishes only when the
+    # longest call finishes: the leftover shortens nothing and only skews the
+    # load between calls.
     sizes = plan_calls(len(packed), batch_cap=batch_size)
 
-    # Đợt một lô không có lượt hâm bộ nhớ đệm: không có lô thứ hai để dùng lại tiền
-    # tố, nên lượt hâm chỉ dời đúng khoản token miss ấy sang một request khác rồi
-    # tính thêm một bản ghi đầu ra. Lô duy nhất tự trả giá token mới cho tiền tố.
+    # A single-batch wave has no cache warm-up call: with no second batch to
+    # reuse the prefix, a warm-up call would only move the same miss tokens to
+    # another request and add one output record. The only batch pays the fresh
+    # token cost for the prefix itself.
     warmed = len(sizes) >= 2
 
     batches: list[dict] = []
@@ -741,9 +750,9 @@ def main(argv=None) -> int:
 
     summary = {
         "wave": args.wave,
-        # Mốc thời gian này là điểm neo để sổ cái quy kết chi phí: chỉ những phiên
-        # DSH sinh ra SAU khi đóng gói mới thuộc về đợt. Lấy mốc rộng hơn sẽ gộp
-        # nhầm cả phiên không liên quan và thổi phồng con số chi phí mỗi bài.
+        # This timestamp anchors cost attribution in the ledger: only DSH
+        # sessions created AFTER packing belong to the wave. A wider anchor would
+        # wrongly merge unrelated sessions and inflate the per-article cost.
         "created_epoch": datetime.now().timestamp(),
         "created_at": datetime.now().isoformat(timespec="seconds"),
         "articles": len(packed),
@@ -753,8 +762,9 @@ def main(argv=None) -> int:
         "prefix_tokens": pfx,
         "persona_tokens": persona_tokens(),
         "system_overhead_tokens": SYSTEM_OVERHEAD_TOKENS,
-        # Lượt hâm bộ nhớ đệm đi trước mọi lô: nó trả giá token mới cho phần tiền tố
-        # đúng một lần, đổi lại mọi lô sau đều trúng cache và không lô nào phải chờ.
+        # The cache warm-up call precedes every batch: it pays the fresh token
+        # cost for the prefix exactly once, so every later batch hits the cache
+        # and none has to wait.
         "est_warm_miss": pfx,
         "warmed": warmed,
         "per_call": chunk_cap,

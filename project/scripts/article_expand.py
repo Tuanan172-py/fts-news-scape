@@ -1,15 +1,4 @@
-"""Bung bản ghi gọn của mô hình thành hai lược đồ đầy đủ, với chi phí 0 token.
-
-Mô hình chỉ phát phần **quyết định ngữ nghĩa**: thực thể nó nhận ra, tóm tắt, luận
-điểm, hàm ý, sắc thái và **chỉ số** các đoạn dùng làm chứng cứ. Toàn bộ phần khuôn
-mẫu còn lại do script này bù: định danh bài, tiêu đề, định danh thực thể, nhóm kiểm
-mục, siêu dữ liệu, và quan trọng nhất là **trích dẫn nguyên văn lấy theo chỉ số**.
-
-Cách làm này triệt tiêu tận gốc động cơ tự kiểm chứng của mô hình. Ở vệt Gold cũ,
-mô hình phải tự chép lại chuỗi trích dẫn rồi tự đi kiểm từng chuỗi bằng mười lăm lệnh
-tìm kiếm riêng lẻ, chiếm bảy mươi mốt phần trăm tổng số bước. Khi trích dẫn được xác
-định bằng chỉ số mảng, nó đúng **do cấu trúc dữ liệu**, không còn gì để kiểm.
-"""
+"""Expand the compact model record into the two full schemas at zero token cost."""
 from __future__ import annotations
 
 import argparse
@@ -57,10 +46,10 @@ UNKNOWN_PROVENANCE = "unknown"
 
 
 def now_vn_iso() -> str:
-    """Sinh dấu thời gian hiện tại theo múi giờ Việt Nam.
+    """Build the current timestamp in the Vietnam time zone.
 
     Returns:
-        Chuỗi thời gian định dạng ISO 8601 kèm độ lệch múi giờ.
+        ISO 8601 timestamp string with the UTC offset.
     """
     return datetime.now(timezone(timedelta(hours=7))).isoformat(timespec="seconds")
 
@@ -69,23 +58,23 @@ def build_l1_output(article_id: str, title: str, resolved: list,
                     labels: dict[str, str], *,
                     agent_provider: str = UNKNOWN_PROVENANCE,
                     model_used: str = UNKNOWN_PROVENANCE) -> dict:
-    """Dựng bản ghi nhận diện thực thể theo lược đồ `l1-entity-output-v1`.
+    """Build the entity recognition record in the `l1-entity-output-v1` schema.
 
-    Lược đồ này yêu cầu mọi chuỗi nguyên văn phải nằm trong tiêu đề, nên chỉ những
-    thực thể xuất hiện ở tiêu đề mới vào đây. Thực thể mô hình bắt được trong phần
-    nội dung đi sang tệp phụ ở :func:`build_mentions`, vì chúng có giá trị cho việc
-    mở rộng danh mục nhưng không hợp lược đồ này.
+    The schema requires every verbatim string to appear in the title, so only
+    entities found in the title are included. Entities the model found in the
+    body go to the side file built by :func:`build_mentions`: they help catalog
+    expansion but do not fit this schema.
 
     Args:
-        article_id: Định danh bài viết.
-        title: Tiêu đề nguyên văn.
-        resolved: Danh sách thực thể đã tra cứu.
-        labels: Nhãn đối chiếu giữa mô hình và tầng mã.
-        agent_provider: Nhà cung cấp runtime phân tích.
-        model_used: Tên mô hình đã sử dụng.
+        article_id: Article identifier.
+        title: Verbatim title.
+        resolved: Resolved entity list.
+        labels: Reconciliation labels between the model and the code layer.
+        agent_provider: Analysis runtime provider.
+        model_used: Name of the model used.
 
     Returns:
-        Từ điển bản ghi đúng lược đồ.
+        Record dict conforming to the schema.
     """
     in_title = [e for e in resolved if e.in_title and e.surface in title]
 
@@ -135,32 +124,34 @@ def build_l1_output(article_id: str, title: str, resolved: list,
 
 
 def _is_index(value) -> bool:
-    """Kiểm giá trị là chỉ số nguyên thật, loại trừ kiểu logic.
+    """Check that a value is a true integer index, excluding booleans.
 
     Args:
-        value: Giá trị cần kiểm.
+        value: Value to check.
 
     Returns:
-        True khi là `int` và không phải `bool`.
+        True when the value is an `int` and not a `bool`.
     """
     return isinstance(value, int) and not isinstance(value, bool)
 
 
 def build_gold_output(article_id: str, record: dict, paragraphs: list[str]) -> tuple[dict | None, str]:
-    """Dựng bản ghi phân tích nội dung theo lược đồ `agent-output-v2-lean`.
+    """Build the content analysis record in the `agent-output-v2-lean` schema.
 
-    Trích dẫn được lấy **nguyên văn theo chỉ số đoạn** mà mô hình chỉ ra, nên chúng
-    luôn là chuỗi con đúng của nội dung gốc mà không cần ai đi kiểm lại. Bài chỉ có
-    một đoạn văn đạt độ dài trích dẫn thì một trích dẫn là đủ và bản ghi mang dấu
-    `citation_basis` để cổng DoD nới ngưỡng tương ứng.
+    Citations are taken verbatim by the paragraph indexes the model gives, so
+    they are always exact substrings of the source content and need no
+    re-verification. When an article has only one paragraph long enough to cite,
+    one citation suffices and the record carries a `citation_basis` marker so
+    the DoD gate relaxes the threshold accordingly.
 
     Args:
-        article_id: Định danh bài viết.
-        record: Bản ghi gọn do mô hình phát.
-        paragraphs: Mảng đoạn văn đã gửi cho mô hình trong packet.
+        article_id: Article identifier.
+        record: Compact record emitted by the model.
+        paragraphs: Paragraph array sent to the model in the packet.
 
     Returns:
-        Cặp gồm bản ghi đúng lược đồ và chuỗi lý do khi phải bỏ qua bài.
+        Pair of the schema-conforming record and a reason string when the
+        article must be skipped.
     """
     summary = (record.get("s") or "").strip()
     implication = (record.get("im") or "").strip()
@@ -188,7 +179,7 @@ def build_gold_output(article_id: str, record: dict, paragraphs: list[str]) -> t
     if len(citations) < need:
         return None, "không đủ hai đoạn trích dẫn hợp lệ" if need == 2 else "không đủ trích dẫn hợp lệ"
 
-    # Luận điểm không được chép nguyên văn trích dẫn, đây là cổng chống sao chép.
+    # Key points must not copy a citation verbatim (anti-copy gate).
     key_points = [k for k in key_points if k not in citations]
     if not key_points:
         return None, "luận điểm trùng nguyên văn trích dẫn"
@@ -209,20 +200,21 @@ def build_gold_output(article_id: str, record: dict, paragraphs: list[str]) -> t
 
 def build_mentions(article_id: str, title: str, resolved: list,
                    labels: dict[str, str]) -> dict:
-    """Ghi lại các thực thể mô hình bắt được ngoài tiêu đề.
+    """Record the entities the model found outside the title.
 
-    Lược đồ nhận diện hiện hành chỉ chấp nhận chuỗi nằm trong tiêu đề, nên nhóm này
-    chưa có chỗ chứa chính thức. Chúng vẫn được giữ vì đây là nguyên liệu để mở rộng
-    danh mục, và vì nhóm tên người sẽ chỉ có giá trị khi tích luỹ đủ nhiều.
+    The current recognition schema accepts only strings located in the title,
+    so these entities have no official place to live. They are kept because
+    they feed catalog expansion, and because the person-name group only becomes
+    useful once enough of it accumulates.
 
     Args:
-        article_id: Định danh bài viết.
-        title: Tiêu đề nguyên văn.
-        resolved: Danh sách thực thể đã tra cứu.
-        labels: Nhãn đối chiếu giữa mô hình và tầng mã.
+        article_id: Article identifier.
+        title: Verbatim title.
+        resolved: Resolved entity list.
+        labels: Reconciliation labels between the model and the code layer.
 
     Returns:
-        Từ điển tệp phụ ghi các thực thể ngoài tiêu đề.
+        Side-file dict listing the entities found outside the title.
     """
     body = [e for e in resolved if not e.in_title]
     return {
@@ -242,19 +234,22 @@ def build_mentions(article_id: str, title: str, resolved: list,
 
 
 def load_repair_ids(task_dir: Path, batch_id: str) -> set[str]:
-    """Gom định danh bài mà các lô vá cùng đợt đã cung cấp.
+    """Collect article ids that repair batches of the same wave already provided.
 
-    Một lô bị cắt cụt thì phần thiếu được đóng gói lại thành lô vá riêng có hậu tố
-    _rNN. Lô vá mang đúng những định danh bài mà lô gốc không sinh được bản ghi.
-    Đếm phần thiếu của lô gốc mà bỏ qua lô vá thì mọi đợt có vá đều báo hỏng vượt
-    ngưỡng, và --finish chặn trước cả bước nạp dù độ phủ thật đã đủ.
+    When a batch is truncated, the missing part is repacked as a separate repair
+    batch with an _rNN suffix. A repair batch carries exactly the article ids
+    for which the original batch produced no record. Counting the original
+    batch's missing part while ignoring repair batches makes every repaired wave
+    report a failure above the threshold, and --finish blocks even the ingest
+    step although the real coverage is sufficient.
 
     Args:
-        task_dir: Thư mục chứa packet và bảng ánh xạ.
-        batch_id: Mã lô gốc đang xét, chưa có hậu tố vá.
+        task_dir: Directory holding packets and mapping files.
+        batch_id: Original batch id under review, without the repair suffix.
 
     Returns:
-        Tập định danh bài đã có bản ghi nhờ các lô vá của cùng đợt.
+        Set of article ids that have records thanks to repair batches of the
+        same wave.
     """
     provided: set[str] = set()
     for map_path in sorted(glob.glob(str(task_dir / f"{batch_id}_r*.map.json"))):
@@ -270,23 +265,24 @@ def process_batch(batch_id: str, out_text: str, packet: dict, mapping: dict,
                   resolver: IntentResolver, reg, report: ResolveReport,
                   repaired_ids: set[str] | None = None,
                   default_provenance: tuple[str, str] | None = None) -> dict:
-    """Xử lý một lô đầu ra của mô hình thành các tệp kết quả.
+    """Process one model output batch into result files.
 
     Args:
-        batch_id: Mã lô.
-        out_text: Nội dung thô mô hình trả về.
-        packet: Nội dung packet đã gửi cho mô hình.
-        mapping: Bảng ánh xạ chỉ số cục bộ sang định danh bài.
-        resolver: Bộ tra cứu định danh.
-        reg: Danh mục thực thể.
-        report: Bộ đếm thống kê tra cứu.
-        repaired_ids: Định danh bài đã được lô vá của cùng đợt cung cấp. Bài nằm
-            trong tập này không tính là thiếu, vì bản ghi của nó đã có trên đĩa.
-        default_provenance: Cặp (provider, model) dùng khi lô không có tệp meta.
-            Không truyền thì lô thiếu meta bị từ chối.
+        batch_id: Batch id.
+        out_text: Raw text the model returned.
+        packet: Packet content sent to the model.
+        mapping: Mapping from local index to article id.
+        resolver: Identifier resolver.
+        reg: Entity registry.
+        report: Resolution statistics counter.
+        repaired_ids: Article ids already provided by repair batches of the
+            same wave. Articles in this set are not counted as missing because
+            their records are already on disk.
+        default_provenance: (provider, model) pair used when the batch has no
+            meta file. When omitted, a batch without meta is rejected.
 
     Returns:
-        Từ điển thống kê kết quả xử lý lô.
+        Statistics dict describing the batch processing result.
     """
     parsed = parse_and_validate(out_text, packet)
     broken = parsed.counters.get("broken", 0)
@@ -327,8 +323,8 @@ def process_batch(batch_id: str, out_text: str, packet: dict, mapping: dict,
     for idx, article_id in index_map.items():
         rec = by_index.get(idx)
         if rec is None:
-            # Bài đã có bản ghi nhờ lô vá thì không thiếu: đếm nó vào đây là lặp
-            # lại đúng khoản đã trả bằng một lượt gọi khác.
+            # An article already recorded by a repair batch is not missing;
+            # counting it here would charge the same cost twice.
             if str(article_id) not in repaired_ids:
                 missing.append(idx)
             continue
@@ -364,7 +360,8 @@ def process_batch(batch_id: str, out_text: str, packet: dict, mapping: dict,
         (MENTIONS_DIR / f"{batch_id}.mentions.json").write_text(
             json.dumps(mention_rows, ensure_ascii=False, indent=1), encoding="utf-8")
 
-    # Trần đếm hỏng là số bài lô này thật sự phải sinh, đã trừ phần lô vá gánh.
+    # The failure-count ceiling is the number of articles this batch must really
+    # produce, after subtracting the part repair batches carry.
     owned = sum(1 for a in index_map.values() if str(a) not in repaired_ids)
     total = len(index_map)
     return {
@@ -381,32 +378,36 @@ def process_batch(batch_id: str, out_text: str, packet: dict, mapping: dict,
         "gold": len(gold_rows),
         "mentions": len(mention_rows),
         "gold_skipped": gold_skipped,
-        # Hai tập dưới phục vụ cổng toàn đợt ở main: một bài có bản ghi ở bất kỳ
-        # lô nào (kể cả lô vá anh em, không chỉ con trực tiếp) là đã nhận.
+        # The next two sets serve the wave-wide gate in main: an article with a
+        # record in any batch (including sibling repair batches, not only direct
+        # children) counts as received.
         "received_ids": sorted({index_map[idx] for idx in by_index if idx in index_map}),
         "all_ids": sorted(set(index_map.values())),
-        # Mẫu số là phần lô này thật sự phải sinh, không phải toàn bộ packet.
-        # Lô vá đã trả giá cho phần nó gánh, nên tính phần ấy vào đây là tính hai lần.
+        # The denominator is the part this batch must really produce, not the
+        # whole packet. A repair batch already paid for its share, so counting
+        # that share here would count it twice.
         "parse_fail_rate": (len(missing) + broken) / owned if owned else 0.0,
     }
 
 
 def drop_superseded_expanded(results: list[dict], outputs: list[str]) -> int:
-    """Bỏ hàng bung cũ khi bài đã có bản ghi mới hơn ở lô vá khác.
+    """Drop old expanded rows when a newer record exists in another batch.
 
-    Vòng làm mới đẻ ra bản ghi thứ hai cho cùng bài (cũ từ packet trích ngắn,
-    mới từ Silver đầy đủ). Tệp bung ra đĩa theo từng lô nên bản cũ vẫn nằm đó
-    và cổng nạp sẽ loại nó vì trích dẫn không đối chiếu được vào thân mới —
-    chặn oan cả đợt dù bản mới đã đạt. Giữ đúng một hàng mỗi bài: hàng của lô
-    có đầu ra thô mới nhất. Đầu ra thô của mô hình không đụng tới nên vết kiểm
-    toán còn nguyên. Không trùng thì không đụng tới tệp nào.
+    A refresh round yields a second record for the same article (the old one
+    from a short-excerpt packet, the new one from the full Silver body).
+    Expanded files are written per batch, so the old row stays on disk and the
+    ingest gate rejects it because its citations cannot be matched against the
+    new body, blocking the whole wave although the new record passed. Exactly
+    one row per article is kept: the row from the batch with the newest raw
+    output. Raw model outputs are untouched, so the audit trail stays intact.
+    When there are no duplicates, no file is modified.
 
     Args:
-        results: Thống kê từng lô của vòng bung hiện tại.
-        outputs: Đường dẫn các tệp đầu ra thô vừa xử lý.
+        results: Per-batch statistics of the current expansion round.
+        outputs: Paths of the raw output files just processed.
 
     Returns:
-        Số hàng đã bỏ khỏi các tệp bung.
+        Number of rows removed from the expanded files.
     """
     order: dict[str, tuple[float, str]] = {}
     for out_path in outputs:
@@ -471,14 +472,15 @@ def drop_superseded_expanded(results: list[dict], outputs: list[str]) -> int:
 
 
 def main(argv=None) -> int:
-    """Chạy giao diện dòng lệnh bung bản ghi gọn.
+    """Run the command-line interface that expands compact records.
 
     Args:
-        argv: Danh sách tham số dòng lệnh. Mặc định lấy từ `sys.argv`.
+        argv: Command-line argument list. Defaults to `sys.argv`.
 
     Returns:
-        Mã thoát 0 khi đạt (chế độ đợt: tỷ lệ hỏng toàn đợt dưới ngưỡng),
-        1 khi vượt ngưỡng hỏng, 2 khi không có việc.
+        Exit code 0 on success (in wave mode, the wave-wide failure rate is
+        below the threshold), 1 when the failure threshold is exceeded, 2 when
+        there is no work.
     """
     ap = argparse.ArgumentParser(description="Bung bản ghi gọn thành hai lược đồ đầy đủ")
     ap.add_argument("source", nargs="?", default=str(IN_DIR),
@@ -495,8 +497,8 @@ def main(argv=None) -> int:
 
     src_dir = Path(args.source)
     task_dir = Path(args.task_dir)
-    # Không lọc thì mỗi lần hoàn tất lại bung mọi đợt cũ trong thư mục, và tỷ lệ hỏng
-    # "cao nhất" lấy trên cả những đợt đã đóng từ lâu.
+    # Without a filter, every completion would re-expand all old waves in the
+    # directory, and the "worst" failure rate would span long-closed waves.
     pattern = (f"{args.batch}.output.json" if args.batch
                else f"article_{args.wave}_*.output.json" if args.wave
                else "*.output.json")
@@ -534,10 +536,12 @@ def main(argv=None) -> int:
     if dropped:
         print(f"Đã bỏ {dropped} hàng bung cũ bị bản ghi mới hơn thay thế.")
 
-    # Cổng toàn đợt: một bài có bản ghi ở bất kỳ lô nào là đã nhận. Đếm thiếu
-    # theo lô cao nhất rồi chặn cả đợt là sai khi các lô vá chồng lấp thế hệ
-    # (E1): bài thiếu ở lô cha nhưng đã có ở lô vá anh em vẫn bị tính hỏng.
-    # Bảng theo lô giữ lại để soi, không dùng để chặn ở chế độ đợt.
+    # Wave-wide gate: an article with a record in any batch counts as received.
+    # Counting missing items by the worst batch and blocking the whole wave is
+    # wrong when repair batches overlap generations (E1): an article missing in
+    # the parent batch but present in a sibling repair batch would still count
+    # as failed. The per-batch table is kept for inspection and is not used to
+    # block in wave mode.
     wave_ids: set[str] = set()
     wave_got: set[str] = set()
     for r in results:

@@ -1,4 +1,4 @@
-"""Chấm độ phù hợp của một provider với bộ vàng và với mức agy đã đo (ADR 0017 D7)."""
+"""Score a provider against the gold set and the measured agy baseline (ADR 0017 D7)."""
 from __future__ import annotations
 
 import json
@@ -12,30 +12,30 @@ METRICS = ("agree_sn", "agree_ts", "tic_f1")
 
 
 def _load(path: Path) -> Any:
-    """Đọc một tệp JSON UTF-8.
+    """Read a UTF-8 JSON file.
 
     Args:
-        path: Đường dẫn tệp.
+        path: File path.
 
     Returns:
-        Đối tượng JSON đã phân tích.
+        Parsed JSON object.
     """
     return json.loads(path.read_text(encoding="utf-8"))
 
 
 def score_outputs(output_dir: Path, task_dir: Path, gold: dict[str, dict],
                   batch_ids: list[str]) -> dict[str, Any]:
-    """Chấm đầu ra thô của các lô theo bộ vàng.
+    """Score the raw output of batches against the gold set.
 
     Args:
-        output_dir: Thư mục chứa `<lô>.output.json`.
-        task_dir: Thư mục chứa `<lô>.task.json` và `<lô>.map.json`.
-        gold: Bộ vàng, khoá là `article_id`, giá trị có `sn`, `ts`, `tic`.
-        batch_ids: Mã các lô cần chấm.
+        output_dir: Directory that holds `<batch>.output.json`.
+        task_dir: Directory that holds `<batch>.task.json` and `<batch>.map.json`.
+        gold: Gold set keyed by `article_id`; values carry `sn`, `ts` and `tic`.
+        batch_ids: Identifiers of the batches to score.
 
     Returns:
-        Từ điển số đo: số bản ghi thô, số bị từ chối, id thiếu, độ khớp `sn`, `ts`,
-        F1 của tập TIC, và số bài vàng được chấm.
+        Metrics dict: raw record count, rejected count, missing ids, agreement on `sn`
+        and `ts`, F1 of the TIC set, and the number of gold articles scored.
     """
     raw = rejected = missing = 0
     hit_sn = hit_ts = scored = 0
@@ -81,18 +81,18 @@ def score_outputs(output_dir: Path, task_dir: Path, gold: dict[str, dict],
 
 def check_against_baseline(candidate: dict[str, Any], baseline: dict[str, Any],
                            margin: float = MARGIN) -> list[str]:
-    """So số đo của provider ứng viên với mức agy đã ghi.
+    """Compare candidate provider metrics with the recorded agy baseline.
 
-    Điều kiện đạt: không bản ghi bị từ chối, không thiếu id, và mỗi độ khớp không thấp
-    hơn mức agy trừ `margin`.
+    A candidate passes when no record is rejected, no id is missing, and every
+    agreement metric is at least the agy value minus `margin`.
 
     Args:
-        candidate: Số đo của provider ứng viên.
-        baseline: Số đo agy trên cùng bộ vàng.
-        margin: Biên cho phép thấp hơn agy, theo điểm phần trăm dạng thập phân.
+        candidate: Metrics of the candidate provider.
+        baseline: agy metrics on the same gold set.
+        margin: Allowed shortfall below agy, as a decimal fraction.
 
     Returns:
-        Danh sách lý do không đạt. Rỗng khi đạt.
+        Reasons for failure. Empty when the candidate passes.
     """
     reasons: list[str] = []
     if candidate["records_rejected"]:

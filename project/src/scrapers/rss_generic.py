@@ -1,4 +1,4 @@
-"""Bộ thu thập dữ liệu RSS feed chung dựa trên cấu hình khai báo (Generic RSS Scraper)."""
+"""Scrape generic RSS feeds driven by declarative configuration."""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ from src.core.tickers import tag_tickers
 from src.processor.extractor import extract_content, extract_text
 from src.scrapers import register
 
-_MIN_INLINE_CONTENT = 500  # content:encoded ngắn hơn → vẫn fetch detail
+_MIN_INLINE_CONTENT = 500  # content:encoded shorter than this still triggers a detail fetch
 
 
 _XML_DECL_ENC = re.compile(r'(<\?xml[^>]*?)\s+encoding=["\'][^"\']*["\']', re.I)
@@ -25,25 +25,25 @@ _HTML_TAG = re.compile(r"<[^>]+>")
 
 
 def _clean_title(raw: str) -> str:
-    """Làm sạch tiêu đề bằng cách loại bỏ thẻ HTML và giải mã các thực thể ký tự.
+    """Clean a title by removing HTML tags and decoding character entities.
 
     Args:
-        raw: Chuỗi tiêu đề gốc thô.
+        raw: Raw original title.
 
     Returns:
-        Chuỗi tiêu đề đã làm sạch.
+        Cleaned title.
     """
     return html.unescape(_HTML_TAG.sub("", raw)).strip()
 
 
 def _decode_feed(raw: bytes) -> str:
-    """Giải mã dữ liệu nhị phân của RSS feed và chuẩn hóa khai báo XML.
+    """Decode the binary data of an RSS feed and normalize the XML declaration.
 
     Args:
-        raw: Mảng byte dữ liệu RSS feed tải về.
+        raw: Bytes of the downloaded RSS feed.
 
     Returns:
-        Chuỗi văn bản XML của feed.
+        XML text of the feed.
     """
     if raw[:2] in (b"\xff\xfe", b"\xfe\xff"):
         text = raw.decode("utf-16")
@@ -57,13 +57,13 @@ def _decode_feed(raw: bytes) -> str:
 
 
 def _parse_raw_date(raw: str) -> str:
-    """Phân tích chuỗi ngày tháng từ feed sang mốc thời gian ISO 8601 theo giờ Việt Nam.
+    """Parse a feed date string into an ISO 8601 timestamp in Vietnam time.
 
     Args:
-        raw: Chuỗi thời gian thô từ feed.
+        raw: Raw time string from the feed.
 
     Returns:
-        Chuỗi thời gian chuẩn ISO 8601 hoặc rỗng nếu không phân tích được.
+        ISO 8601 timestamp, or an empty string when unparsable.
     """
     from email.utils import parsedate_to_datetime
 
@@ -91,13 +91,13 @@ def _parse_raw_date(raw: str) -> str:
 
 
 def _parse_entry_date(entry: dict) -> str:
-    """Trích xuất và chuẩn hóa thời gian phát hành từ đối tượng RSS entry.
+    """Extract and normalize the publication time from an RSS entry.
 
     Args:
-        entry: Bản ghi entry từ feedparser.
+        entry: Entry record from feedparser.
 
     Returns:
-        Chuỗi thời gian chuẩn ISO 8601.
+        ISO 8601 timestamp.
     """
     parsed = entry.get("published_parsed") or entry.get("updated_parsed")
     if parsed:
@@ -107,13 +107,13 @@ def _parse_entry_date(entry: dict) -> str:
 
 
 def _inline_content(entry: dict) -> str:
-    """Trích xuất nội dung toàn văn nhúng sẵn trong thẻ content:encoded của feed nếu đạt kích thước tối thiểu.
+    """Extract the full text embedded in the feed content:encoded tag when it meets the minimum size.
 
     Args:
-        entry: Bản ghi entry từ feedparser.
+        entry: Entry record from feedparser.
 
     Returns:
-        Chuỗi nội dung toàn văn hoặc rỗng.
+        Full-text content, or an empty string.
     """
     content = entry.get("content")
     if content and isinstance(content, list):
@@ -125,21 +125,28 @@ def _inline_content(entry: dict) -> str:
 
 @register("_rss")
 class RSSScraper(BaseScraper):
-    """Lớp thu thập dữ liệu tổng quát cho các nguồn tin cung cấp giao diện RSS.
+    """Scrape news sources that expose an RSS interface.
 
     Attributes:
-        feeds: Danh sách cấu hình các RSS feed.
-        extract_full: Cờ cho phép tải trang chi tiết bài viết.
-        max_details: Số lượng bài chi tiết tối đa tải trong một chu kỳ.
-        watchlist: Danh sách mã cổ phiếu theo dõi.
-        language: Ngôn ngữ chính của nguồn tin.
-        link_rewrites: Quy tắc viết lại đường dẫn liên kết nếu có lỗi cổng hoặc định dạng.
-        filter_terms: Tập từ khóa lọc bài viết quan tâm.
-        drop_unmatched: Cờ bỏ qua bài viết không khớp từ khóa lọc.
-        block_terms: Tập từ khóa chặn bài viết rác.
+        feeds: Config of the RSS feeds.
+        extract_full: Whether article detail pages are downloaded.
+        max_details: Maximum number of article details to download per cycle.
+        watchlist: Stock tickers to watch.
+        language: Main language of the news source.
+        link_rewrites: Rules that rewrite article links when the feed has port or format defects.
+        filter_terms: Keywords that select articles of interest.
+        drop_unmatched: Whether articles matching no filter keyword are dropped.
+        block_terms: Keywords that block junk articles.
     """
 
     def __init__(self, config, http, dedup):
+        """Initialize the scraper from its source config.
+
+        Args:
+            config: Source config dict.
+            http: HTTP client.
+            dedup: Deduplication cache.
+        """
         super().__init__(config, http, dedup)
         self.feeds = config.get("rss", {}).get("feeds", [])
         detail = config.get("detail", {})
@@ -157,10 +164,10 @@ class RSSScraper(BaseScraper):
         self._filtered = 0
 
     def fetch_list(self) -> list[dict]:
-        """Lấy danh sách các bản ghi entry từ tất cả các RSS feed được cấu hình.
+        """Fetch entry records from all configured RSS feeds.
 
         Returns:
-            Danh sách các dictionary chứa dữ liệu entry thô.
+            One dict of raw entry data per record.
         """
         self._details_fetched = 0
         self._filtered = 0
@@ -192,13 +199,13 @@ class RSSScraper(BaseScraper):
         return items
 
     def parse_item(self, raw: dict) -> Article | None:
-        """Chuyển đổi một bản ghi RSS thô thành đối tượng Article sau khi lọc và làm sạch.
+        """Convert a raw RSS record into an Article after filtering and cleaning.
 
         Args:
-            raw: Bản ghi dữ liệu thô của RSS entry.
+            raw: Raw data record of the RSS entry.
 
         Returns:
-            Đối tượng Article hoàn chỉnh hoặc None nếu không hợp lệ hoặc bị lọc bỏ.
+            Complete Article, or None when invalid or filtered out.
         """
         url, title = raw["link"], _clean_title(raw["title"])
         if not url or not title:
@@ -235,15 +242,15 @@ class RSSScraper(BaseScraper):
         )
 
     def enrich(self, article: Article) -> None:
-        """Bổ sung nội dung chi tiết bài viết từ thẻ inline hoặc tải trực tiếp từ trang nguồn.
+        """Add article detail content from the inline tag or by downloading the source page.
 
         Args:
-            article: Đối tượng Article cần bổ sung nội dung.
+            article: Article to enrich.
         """
         inline = article.metadata.pop("_inline_html", "")
         if inline:
             article.content_html = inline
-            # content:encoded đầy đủ trong feed — không cần fetch
+            # The feed carries full content:encoded, so no fetch is needed.
             article.content_html = inline
             article.content_text = extract_text(inline) or article.summary
             return

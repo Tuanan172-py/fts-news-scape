@@ -1,4 +1,4 @@
-"""Quản lý vùng đệm staging và thực thi ghi tệp an toàn (Atomic Safe I/O)."""
+"""Manage the staging area and perform atomic, safe file writes."""
 
 from __future__ import annotations
 
@@ -17,13 +17,13 @@ from src.core.models import VN_TZ
 
 
 def ensure_staging_dir(base_dir: str | Path | None = None) -> Path:
-    """Tạo thư mục staging nếu chưa tồn tại.
+    """Create the staging directory if it does not exist.
 
     Args:
-        base_dir: Đường dẫn thư mục staging cần tạo.
+        base_dir: Staging directory to create. Defaults to `paths.staging_dir()`.
 
     Returns:
-        Đối tượng Path của thư mục staging.
+        Path of the staging directory.
     """
     p = paths.resolve_data_path(base_dir) if base_dir else paths.staging_dir()
     p.mkdir(parents=True, exist_ok=True)
@@ -39,18 +39,22 @@ def safe_atomic_write(
     binary: bool = False,
     staging_dir: str | Path | None = None,
 ) -> tuple[Path, bool]:
-    """Ghi dữ liệu an toàn ra đĩa qua file staging + atomic replace.
+    """Write data to disk safely through a staging file and an atomic replace.
 
     Args:
-        target_path: Đường dẫn file đích cần ghi.
-        writer_fn_or_content: Nội dung (str/bytes) hoặc hàm nhận file handle để ghi (vd: json.dump, csv.writer).
-        fallback_on_lock: Nếu True và gặp PermissionError trên Windows, sinh file version mới (stem_HHMMSS.ext) thay vì raise.
-        encoding: Encoding cho text mode (mặc định utf-8).
-        binary: True nếu ghi file nhị phân.
-        staging_dir: Thư mục staging tùy chọn (mặc định cùng thư mục đích).
+        target_path: Destination file path.
+        writer_fn_or_content: Content (str/bytes) or a callable that receives the file handle and writes to it (for example json.dump or csv.writer).
+        fallback_on_lock: If True, a PermissionError on Windows writes a new versioned file (stem_HHMMSS.ext) instead of raising.
+        encoding: Encoding for text mode.
+        binary: True to write a binary file.
+        staging_dir: Optional staging directory. Defaults to the destination directory.
 
     Returns:
-        tuple[Path, bool]: (Đường dẫn file thực tế đã ghi, True nếu là fallback version do bị lock)
+        Tuple of the path actually written and a flag that is True when a fallback version was written because the file was locked.
+
+    Raises:
+        TypeError: If the content type does not match the write mode.
+        PermissionError: If the destination is locked and `fallback_on_lock` is False, or the fallback write also fails.
     """
     dst = Path(target_path).resolve()
     dst.parent.mkdir(parents=True, exist_ok=True)
@@ -78,8 +82,8 @@ def safe_atomic_write(
             else:
                 raise TypeError(f"Unsupported content type: {type(writer_fn_or_content)}")
 
-        # Kiểm tra nội dung: Nếu file đích đã tồn tại và nội dung bytes giống hệt tmp_path,
-        # bỏ qua bước os.replace để không kích hoạt Windows lock & OneDrive file-sync conflict.
+        # If the destination exists and its bytes are identical to tmp_path, skip os.replace
+        # to avoid triggering a Windows lock or a OneDrive file-sync conflict.
         if dst.exists():
             try:
                 if tmp_path.stat().st_size == dst.stat().st_size:
@@ -91,14 +95,14 @@ def safe_atomic_write(
             except Exception:
                 pass
 
-        # Cố gắng atomic swap vào file đích
+        # Try an atomic swap onto the destination file.
         try:
             os.replace(tmp_path, dst)
             return dst, False
         except PermissionError as e:
             if not fallback_on_lock:
                 raise
-            # Windows lock fallback: Tạo file backup có timestamp để không làm crash pipeline
+            # Windows lock fallback: write a timestamped copy so the pipeline does not crash.
             ts = datetime.now(VN_TZ).strftime("%H%M%S")
             fallback_dst = dst.parent / f"{dst.stem}_{ts}{dst.suffix}"
             try:
@@ -127,17 +131,17 @@ def safe_json_dump(
     fallback_on_lock: bool = True,
     staging_dir: str | Path | None = None,
 ) -> tuple[Path, bool]:
-    """Ghi dữ liệu JSON an toàn qua vùng đệm staging và thay thế nguyên tử.
+    """Write JSON data safely through the staging area with an atomic replace.
 
     Args:
-        data: Cấu trúc dữ liệu cần tuần tự hóa sang JSON.
-        target_path: Đường dẫn tệp đích cần ghi.
-        indent: Độ thụt lề định dạng JSON.
-        fallback_on_lock: Cờ cho phép lưu tệp dự phòng nếu tệp đích bị khóa trên Windows.
-        staging_dir: Đường dẫn thư mục staging tùy chọn.
+        data: Data structure to serialize to JSON.
+        target_path: Destination file path.
+        indent: JSON indentation width.
+        fallback_on_lock: If True, write a fallback file when the destination is locked on Windows.
+        staging_dir: Optional staging directory.
 
     Returns:
-        Bộ (Path, bool) gồm đường dẫn tệp thực tế và cờ báo tệp dự phòng.
+        Tuple of the path actually written and a flag that is True for a fallback file.
     """
     def _write(f):
         json.dump(data, f, ensure_ascii=False, indent=indent)
@@ -155,14 +159,14 @@ def clean_stale_staging(
     staging_dir: str | Path | None = None,
     max_age_seconds: int = 86400,
 ) -> int:
-    """Dọn dẹp các tệp tạm .tmp tồn đọng trong thư mục staging vượt quá thời gian tối đa.
+    """Delete leftover .tmp files in the staging directory that exceed the maximum age.
 
     Args:
-        staging_dir: Đường dẫn thư mục staging cần dọn dẹp. Mặc định `paths.staging_dir()`.
-        max_age_seconds: Tuổi thọ tối đa của tệp tính bằng giây trước khi xóa.
+        staging_dir: Staging directory to clean. Defaults to `paths.staging_dir()`.
+        max_age_seconds: Maximum file age in seconds before deletion.
 
     Returns:
-        Số lượng tệp tạm đã được xóa bỏ thành công.
+        Number of temporary files deleted.
     """
     p = Path(staging_dir) if staging_dir else paths.staging_dir()
     if not p.exists():

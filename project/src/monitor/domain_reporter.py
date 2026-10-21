@@ -1,8 +1,4 @@
-"""Tạo lập báo cáo sức khỏe chất lượng trường dữ liệu theo tên miền dạng Markdown.
-
-Cung cấp lớp DomainReporter để tổng hợp số liệu bài viết, tỷ lệ điền đầy
-các trường dữ liệu và ghi nhận báo cáo định kỳ ra thư mục lưu trữ.
-"""
+"""Generate per-domain Markdown reports on article counts and field fill rates."""
 
 from __future__ import annotations
 
@@ -25,24 +21,29 @@ REPORTS_DIR = paths.reports_dir() / "daily"
 
 
 class DomainReporter:
-    """Bộ tạo lập báo cáo giám sát chất lượng trường dữ liệu theo tên miền.
+    """Generate field-quality monitoring reports per domain.
 
     Attributes:
-        store: Đối tượng kho lưu trữ ArticleStore để truy vấn số liệu bài viết.
+        store: ArticleStore used to query article counts.
     """
 
     def __init__(self, store=None):
+        """Initialize the reporter.
+
+        Args:
+            store: ArticleStore used to query article counts; None disables database statistics.
+        """
         self.store = store
 
     def generate_report(self, domain: str, date_override: str = "") -> Path:
-        """Tạo báo cáo định dạng Markdown cho tên miền chỉ định và lưu ra đĩa.
+        """Generate the Markdown report of a domain and write it to disk.
 
         Args:
-            domain: Tên miền của nguồn tin tức cần lập báo cáo.
-            date_override: Chuỗi ngày cần tạo báo cáo (định dạng 'YYYY-MM-DD').
+            domain: Domain of the news source to report on.
+            date_override: Report date as 'YYYY-MM-DD'; empty uses the current date.
 
         Returns:
-            Đường dẫn Path tới tệp báo cáo Markdown đã ghi nhận thành công.
+            Path of the Markdown report file written.
         """
         today = date_override or datetime.now(VN_TZ).strftime("%Y-%m-%d")
         schema = self._load_schema(domain)
@@ -120,13 +121,29 @@ class DomainReporter:
         return report_path
 
     def _load_schema(self, domain: str) -> dict | None:
+        """Load the schema.yaml of a domain.
+
+        Args:
+            domain: Domain name.
+
+        Returns:
+            Parsed schema dict, or None if the file does not exist.
+        """
         path = DOMAINS_DIR / domain / "schema.yaml"
         if not path.exists():
             return None
         return yaml.safe_load(path.read_text(encoding="utf-8"))
 
     def _get_daily_stats(self, domain: str, date_str: str) -> dict:
-        """Get article stats for today from DB."""
+        """Return the article counts of a day from the database.
+
+        Args:
+            domain: Domain name.
+            date_str: Date as 'YYYY-MM-DD'.
+
+        Returns:
+            Dict with `total_today`, `total_db` and `sources`.
+        """
         if not self.store:
             return {"total_today": "N/A", "total_db": "N/A", "sources": []}
 
@@ -170,7 +187,14 @@ class DomainReporter:
             return {"total_today": "ERR", "total_db": "ERR", "sources": []}
 
     def _get_field_health(self, domain: str) -> list[dict]:
-        """Get field health stats from DB for the domain."""
+        """Return the field health statistics of the domain from the database.
+
+        Args:
+            domain: Domain name.
+
+        Returns:
+            One dict per field with fill rate, average length and status.
+        """
         if not self.store:
             return []
 
@@ -195,7 +219,7 @@ class DomainReporter:
 
             for field_name, field_spec in output_fields.items():
                 if "." in field_name:
-                    # Nested field (metadata.x) — check via metadata_json
+                    # Nested field (metadata.x): check through metadata_json.
                     col = "metadata_json"
                     parts = field_name.split(".")
                     presence = self._check_nested_presence(
@@ -273,7 +297,18 @@ class DomainReporter:
     def _check_nested_presence(
         self, conn, col: str, parts: list[str], source_domain: str, total: int
     ) -> int:
-        """Check if metadata JSON contains a nested key."""
+        """Count the articles whose metadata JSON contains a nested key.
+
+        Args:
+            conn: Open database connection.
+            col: Column name; unused, the metadata_json column is always read.
+            parts: Parts of the dotted field name; the last part is the key.
+            source_domain: Source domain to filter by.
+            total: Total article count of the domain; unused.
+
+        Returns:
+            Number of sampled articles (at most 1000) that contain the key.
+        """
         try:
             key = parts[-1]
             rows = conn.execute(
@@ -296,11 +331,25 @@ class DomainReporter:
             return 0
 
     def _get_recent_anomalies(self, domain: str) -> list[dict]:
-        """Read recent anomalies from log file (if any)."""
-        return []  # Placeholder — anomalies are logged via loguru, parsed on demand
+        """Return recent anomalies of the domain.
+
+        Args:
+            domain: Domain name.
+
+        Returns:
+            Anomaly dicts; currently always empty because anomalies are logged through loguru.
+        """
+        return []  # TODO(US-047): read anomalies from the log file; they are only logged through loguru today.
 
     def generate_all_reports(self, domains: list[str] | None = None) -> list[Path]:
-        """Generate reports for all (or specified) domains."""
+        """Generate reports for all domains or the given ones.
+
+        Args:
+            domains: Domains to report on; None uses every configured domain.
+
+        Returns:
+            Paths of the report files written.
+        """
         if domains is None:
             from src.core.config import list_domains as _list
 

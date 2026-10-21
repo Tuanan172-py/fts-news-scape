@@ -1,4 +1,4 @@
-"""Kiểm định chất lượng cơ chế chụp và lưu trữ artifact thô (Bronze)."""
+"""Audit the quality of the raw artifact (Bronze) capture and storage mechanism."""
 
 from __future__ import annotations
 
@@ -20,12 +20,20 @@ force_utf8_stdio()
 
 
 def _audit_source(name: str, n: int, raw_dir: str, dedup: DedupCache) -> None:
+    """Run one source and print the capture audit of its results.
+
+    Args:
+        name: Domain name of the source.
+        n: Maximum number of detail fetches for the audit.
+        raw_dir: Directory that receives the captured raw HTML.
+        dedup: Deduplication cache shared across sources.
+    """
     print(f"\n{'=' * 70}\n  NGUỒN: {name}  (giới hạn {n} bài)\n{'=' * 70}")
     cfg = load_domain_config(name)
     cfg.setdefault("capture", {})["raw_dir"] = raw_dir
     cfg["detail"] = {**cfg.get("detail", {}), "max_details_per_cycle": n}
-    # Nguồn fetch theo watchlist (cafef, fireant) → 1 request/mã. Rút còn 1 mã cho
-    # audit nhanh, khỏi bắn 30 request chỉ để kiểm 2 bài.
+    # Watchlist-driven sources (cafef, fireant) issue one request per symbol; reduce to
+    # one symbol so the audit does not send 30 requests to check 2 articles.
     if cfg.get("api", {}).get("params") or cfg.get("auth"):
         cfg["watchlist"] = ["FPT"]
 
@@ -47,7 +55,7 @@ def _audit_source(name: str, n: int, raw_dir: str, dedup: DedupCache) -> None:
         status_count[st] = status_count.get(st, 0) + 1
     print(f"capture_status: {status_count}")
 
-    # chi tiết 1 bài ok đầu tiên
+    # details of the first article with status ok
     ok = next(
         (a for a in captured if a.metadata["capture"].get("capture_status") == "ok"),
         None,
@@ -78,7 +86,7 @@ def _audit_source(name: str, n: int, raw_dir: str, dedup: DedupCache) -> None:
     )
     print(f"  missing        : {cap['missing']}")
     print(f"  content_html   : {len(sample.content_html)} chars (sub-region)")
-    # kiểm chứng meta.json trên đĩa
+    # verify the meta.json on disk
     meta_path = html_path.with_suffix("").as_posix() + ".meta.json"
     mp = Path(cap["html_path"][: -len(".html")] + ".meta.json")
     print(f"  meta.json      : exists={mp.exists()}")
@@ -88,6 +96,11 @@ def _audit_source(name: str, n: int, raw_dir: str, dedup: DedupCache) -> None:
 
 
 def main() -> int:
+    """Run the capture audit for the selected or all capture-enabled sources.
+
+    Returns:
+        Exit code 0.
+    """
     args = sys.argv[1:]
     n = 2
     if args and args[-1].isdigit():
@@ -97,7 +110,7 @@ def main() -> int:
     if args:
         sources = args
     else:
-        # mặc định: MỌI domain enabled CÓ khai capture (không hardcode tên nguồn)
+        # default: every enabled domain that declares capture (no hardcoded source names)
         sources = []
         for d in list_domains():
             if (load_domain_config(d).get("capture") or {}):
@@ -106,8 +119,8 @@ def main() -> int:
                 skipped.append(d)
     print(f"Nguồn audit: {', '.join(sources)}")
     if skipped:
-        # Bỏ qua âm thầm sẽ tạo cảm giác an toàn giả: những nguồn này đang CHẠY mà
-        # không hề lưu Bronze, tức không có gì để kiểm chứng và không có gì để khôi phục.
+        # Skipping silently would give a false sense of safety: these sources RUN without
+        # storing Bronze, so there is nothing to verify and nothing to recover.
         print(f"⚠️  BỎ QUA {len(skipped)} domain đang BẬT nhưng KHÔNG khai `capture:` "
               f"→ {', '.join(skipped)}")
         print("    Những nguồn này không lưu Bronze raw HTML: không audit được, và mất "

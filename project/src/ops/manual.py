@@ -1,4 +1,4 @@
-"""Đăng ký, khoá provider và kiểm va chạm cho đợt chạy tay của `article_run.py`."""
+"""Register manual waves of `article_run.py` and enforce provider locks and collision checks."""
 
 from __future__ import annotations
 
@@ -18,27 +18,29 @@ BENCH_ROOT = paths.data_root() / "agent_bench"
 
 
 class ManualGate:
-    """Cổng của một lần gọi `article_run.py` chạy tay.
+    """Gate for one manual invocation of `article_run.py`.
 
     Attributes:
-        store: Store vận hành, None khi lần gọi do daemon phát (đã được đăng ký).
-        wave: Mã đợt.
-        mode: backlog, bench hoặc adhoc.
-        phase: prepare, analyze, repair hoặc finish.
-        refusal: Lý do từ chối, None khi được chạy.
+        store: Operations store; None when the daemon issued the call (already registered).
+        wave: Wave identifier.
+        mode: backlog, bench or adhoc.
+        phase: prepare, analyze, repair or finish.
+        refusal: Refusal reason; None when the run is allowed.
+        runner: Runner chosen on the command line.
+        force: True when the human bypassed the collision check and provider lock.
     """
 
     def __init__(self, store: OpsStore | None, wave: str, mode: str, phase: str,
                  runner: str, force: bool) -> None:
-        """Gắn cổng vào một lần gọi.
+        """Bind the gate to one invocation.
 
         Args:
-            store: Store vận hành, hoặc None.
-            wave: Mã đợt.
-            mode: Chế độ chạy tay.
-            phase: Pha của lần gọi.
-            runner: Runner được chọn trên dòng lệnh.
-            force: True khi người bỏ qua kiểm va chạm và khoá provider.
+            store: Operations store, or None.
+            wave: Wave identifier.
+            mode: Manual run mode.
+            phase: Phase of the invocation.
+            runner: Runner chosen on the command line.
+            force: True when the human bypasses the collision check and provider lock.
         """
         self.store, self.wave, self.mode, self.phase = store, wave, mode, phase
         self.runner, self.force = runner, force
@@ -47,15 +49,15 @@ class ManualGate:
 
     @property
     def bench_dir(self) -> Path:
-        """Thư mục đầu ra riêng của đợt bench."""
+        """Return the dedicated output directory of a bench wave."""
         return BENCH_ROOT / self.wave
 
     def exclude_ids(self) -> set[str]:
-        """Liệt kê bài đang được đợt khác giữ chỗ; bench không loại bài nào.
+        """List articles reserved by another wave; bench excludes none.
 
         Returns:
-            Tập định danh bài cần loại khi đóng gói. Bài đã hết lượt thử của daemon vẫn được
-            chọn, vì chạy tay là đường chính thức để hoàn tất chúng.
+            Set of article identifiers to exclude when packing. Articles that exhausted the
+            daemon attempts are still selected, because a manual run is the official path to finish them.
         """
         if self.store is None or self.mode == "bench":
             return set()
@@ -66,12 +68,13 @@ class ManualGate:
         return held - own
 
     def finish(self, rc: int, ids: Callable[[], list[str]] | None = None) -> None:
-        """Chốt trạng thái đợt sau lần gọi.
+        """Finalize the wave status after the invocation.
 
         Args:
-            rc: Mã thoát của lần gọi.
-            ids: Hàm trả danh sách bài. Pha prepare truyền toàn bộ bài của đợt để giữ chỗ;
-                pha repair truyền bài còn thiếu để tính một vòng vá.
+            rc: Exit code of the invocation.
+            ids: Function returning the article list. The prepare phase passes every article
+                of the wave to reserve them; the repair phase passes the missing articles to
+                count one repair round.
         """
         if self.store is None:
             return
@@ -97,20 +100,21 @@ class ManualGate:
 
 def begin(wave: str, mode: str | None, phase: str, runner: str, *, force: bool = False,
           target_date: str | None = None) -> ManualGate:
-    """Kiểm va chạm và khoá provider, rồi đăng ký đợt tay vào `ops.db`.
+    """Check collisions and the provider lock, then register the manual wave in `ops.db`.
 
-    Lần gọi do daemon phát (có `OPS_TRACE_DB`) được bỏ qua vì daemon đã đăng ký.
+    An invocation issued by the daemon (with `OPS_TRACE_DB` set) is skipped because the
+    daemon has already registered it.
 
     Args:
-        wave: Mã đợt.
-        mode: backlog, bench, adhoc hoặc None (adhoc).
-        phase: prepare, analyze, repair hoặc finish.
-        runner: Runner trên dòng lệnh.
-        force: Bỏ qua kiểm va chạm và khoá provider; có ghi sự kiện.
-        target_date: Ngày bài của đợt, nếu có.
+        wave: Wave identifier.
+        mode: backlog, bench, adhoc or None (adhoc).
+        phase: prepare, analyze, repair or finish.
+        runner: Runner on the command line.
+        force: Bypass the collision check and provider lock; an event is recorded.
+        target_date: Article date of the wave, if any.
 
     Returns:
-        ManualGate; `refusal` khác None nghĩa là không được chạy.
+        The ManualGate; a non-None `refusal` means the run is not allowed.
     """
     if os.environ.get(tracing.ENV_DB):
         return ManualGate(None, wave, mode or "adhoc", phase, runner, force)

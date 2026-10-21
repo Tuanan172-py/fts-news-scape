@@ -1,4 +1,4 @@
-"""Lưu sự kiện, cảnh báo, breaker, trạng thái, đợt và lệnh vận hành trong `ops.db`."""
+"""Store operations events, alerts, breakers, state, waves and commands in `ops.db`."""
 
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ VN_TZ = timezone(timedelta(hours=7))
 LEVELS = ("debug", "info", "warn", "error", "critical")
 ACTIVE_WAVE_STATUSES = ("SENSED", "PREFLIGHT", "PREPARED", "ANALYZING", "REPAIRING",
                         "ANALYZED", "FINISHING")
-# Đợt ở các trạng thái này đã xong vòng đời; bài của chúng không còn bị giữ chỗ.
+# Waves in these statuses have finished their lifecycle; their articles are no longer reserved.
 RELEASED_WAVE_STATUSES = ("DONE", "CANCELLED")
 
 SCHEMA = """
@@ -122,34 +122,34 @@ CREATE TABLE IF NOT EXISTS ops_commands (
 
 
 def now_vn() -> datetime:
-    """Trả về thời điểm hiện tại theo giờ Việt Nam.
+    """Return the current time in Vietnam time.
 
     Returns:
-        Đối tượng datetime có múi giờ +07:00.
+        A datetime object with the +07:00 time zone.
     """
     return datetime.now(VN_TZ)
 
 
 def iso(dt: datetime | None = None) -> str:
-    """Định dạng thời điểm thành chuỗi ISO tới giây.
+    """Format a timestamp as an ISO string to the second.
 
     Args:
-        dt: Thời điểm cần định dạng. Mặc định là hiện tại.
+        dt: Timestamp to format. Defaults to the present.
 
     Returns:
-        Chuỗi ISO 8601 có múi giờ.
+        ISO 8601 string with a time zone.
     """
     return (dt or now_vn()).isoformat(timespec="seconds")
 
 
 def parse_iso(text: str | None) -> datetime | None:
-    """Đọc chuỗi ISO, gán giờ Việt Nam khi chuỗi không có múi giờ.
+    """Parse an ISO string, assigning Vietnam time when the string has no time zone.
 
     Args:
-        text: Chuỗi ISO hoặc None.
+        text: ISO string or None.
 
     Returns:
-        Đối tượng datetime có múi giờ, hoặc None khi không đọc được.
+        A timezone-aware datetime, or None when it cannot be parsed.
     """
     if not text:
         return None
@@ -161,25 +161,25 @@ def parse_iso(text: str | None) -> datetime | None:
 
 
 class OpsStore:
-    """Truy cập `ops.db` an toàn giữa nhiều luồng của daemon.
+    """Access `ops.db` safely across the multiple threads of the daemon.
 
-    Mỗi thao tác mở một kết nối ngắn với `busy_timeout`, nên luồng Telegram, luồng
-    workflow và vòng chính ghi đồng thời mà không chia sẻ đối tượng kết nối.
+    Each operation opens a short connection with `busy_timeout`, so the Telegram thread, the
+    workflow thread and the main loop write concurrently without sharing a connection object.
 
     Attributes:
-        path: Đường dẫn tệp `ops.db`.
-        log_dir: Thư mục ghi bản sao JSONL của sự kiện, hoặc None để tắt.
-        dedup_minutes: Cửa sổ gộp cảnh báo cùng khoá.
+        path: Path of the `ops.db` file.
+        log_dir: Directory for the JSONL copy of events, or None to disable.
+        dedup_minutes: Window for merging alerts with the same key.
     """
 
     def __init__(self, path: Path, *, log_dir: Path | None = None,
                  dedup_minutes: int = 30) -> None:
-        """Tạo store và bảo đảm lược đồ tồn tại.
+        """Create the store and ensure the schema exists.
 
         Args:
-            path: Đường dẫn tệp `ops.db`.
-            log_dir: Thư mục nhật ký JSONL.
-            dedup_minutes: Cửa sổ gộp cảnh báo.
+            path: Path of the `ops.db` file.
+            log_dir: JSONL log directory.
+            dedup_minutes: Alert merge window.
         """
         self.path = Path(path)
         self.log_dir = Path(log_dir) if log_dir else None
@@ -193,10 +193,10 @@ class OpsStore:
 
     @contextmanager
     def conn(self) -> Iterator[sqlite3.Connection]:
-        """Mở kết nối ngắn, commit khi thoát êm, rollback khi lỗi.
+        """Open a short connection, committing on clean exit and rolling back on error.
 
         Yields:
-            Kết nối SQLite với `row_factory` dạng Row.
+            SQLite connection whose `row_factory` is Row.
         """
         c = sqlite3.connect(str(self.path), timeout=10)
         c.row_factory = sqlite3.Row
@@ -210,23 +210,23 @@ class OpsStore:
         finally:
             c.close()
 
-    # ── sự kiện ──────────────────────────────────────────────────────────────
+    # ── events ───────────────────────────────────────────────────────────────
     def emit(self, kind: str, message: str, *, level: str = "info", actor: str = "daemon",
              wave_id: str | None = None, step: str | None = None,
              data: dict[str, Any] | None = None) -> int:
-        """Ghi một sự kiện vào `ops_events` và bản sao JSONL theo ngày.
+        """Write an event to `ops_events` and to the daily JSONL copy.
 
         Args:
-            kind: Loại sự kiện, ví dụ `wave.opened`.
-            message: Mô tả ngắn bằng tiếng Việt.
-            level: Mức độ trong LEVELS.
-            actor: Thành phần phát sinh sự kiện.
-            wave_id: Mã đợt liên quan.
-            step: Bước của đợt.
-            data: Dữ liệu kèm theo.
+            kind: Event kind, for example `wave.opened`.
+            message: Short description in Vietnamese.
+            level: Severity level in LEVELS.
+            actor: Component that raised the event.
+            wave_id: Related wave identifier.
+            step: Wave step.
+            data: Attached data.
 
         Returns:
-            Mã sự kiện vừa ghi.
+            Identifier of the event just written.
         """
         ts = iso()
         message = redact(message) or ""
@@ -253,16 +253,16 @@ class OpsStore:
 
     def events(self, *, limit: int = 30, wave_id: str | None = None,
                min_level: str | None = None, after_id: int = 0) -> list[sqlite3.Row]:
-        """Đọc sự kiện mới nhất, sắp theo thời gian tăng dần.
+        """Read the newest events, ordered by ascending time.
 
         Args:
-            limit: Số sự kiện tối đa.
-            wave_id: Lọc theo đợt.
-            min_level: Lọc từ mức độ này trở lên.
-            after_id: Chỉ lấy sự kiện có mã lớn hơn.
+            limit: Maximum number of events.
+            wave_id: Filter by wave.
+            min_level: Filter to this level and above.
+            after_id: Only events with a greater identifier.
 
         Returns:
-            Danh sách hàng sự kiện.
+            List of event rows.
         """
         where, params = ["id > ?"], [after_id]
         if wave_id:
@@ -277,19 +277,19 @@ class OpsStore:
             rows = c.execute(sql, [*params, limit]).fetchall()
         return list(reversed(rows))
 
-    # ── cảnh báo (outbox) ────────────────────────────────────────────────────
+    # ── alerts (outbox) ──────────────────────────────────────────────────────
     def alert(self, severity: str, text: str, *, dedup_key: str | None = None,
               buttons: list[list[tuple[str, str]]] | None = None) -> int | None:
-        """Đưa một cảnh báo vào outbox, gộp với cảnh báo cùng khoá trong cửa sổ.
+        """Put an alert in the outbox, merging it with an alert of the same key within the window.
 
         Args:
-            severity: Một trong `critical`, `error`, `warn`, `info`, `digest`.
-            text: Nội dung tin nhắn.
-            dedup_key: Khoá gộp. Cùng khoá trong `dedup_minutes` chỉ tăng bộ đếm.
-            buttons: Hàng nút dạng [[(nhãn, lệnh), ...], ...].
+            severity: One of `critical`, `error`, `warn`, `info`, `digest`.
+            text: Message body.
+            dedup_key: Merge key. The same key within `dedup_minutes` only increments the counter.
+            buttons: Button rows as [[(label, command), ...], ...].
 
         Returns:
-            Mã cảnh báo mới, hoặc None khi đã gộp vào cảnh báo cũ.
+            Identifier of the new alert, or None when merged into an older alert.
         """
         now = now_vn()
         text = redact(text) or ""
@@ -311,25 +311,25 @@ class OpsStore:
             return int(cur.lastrowid)
 
     def unsent_alerts(self, limit: int = 20) -> list[sqlite3.Row]:
-        """Lấy các cảnh báo chưa gửi, cũ trước.
+        """Fetch unsent alerts, oldest first.
 
         Args:
-            limit: Số cảnh báo tối đa.
+            limit: Maximum number of alerts.
 
         Returns:
-            Danh sách hàng cảnh báo.
+            List of alert rows.
         """
         with self.conn() as c:
             return c.execute("SELECT * FROM ops_alerts WHERE sent_at IS NULL "
                              "ORDER BY id LIMIT ?", (limit,)).fetchall()
 
     def mark_alert(self, alert_id: int, *, sent: bool, error: str | None = None) -> None:
-        """Ghi kết quả gửi một cảnh báo.
+        """Record the delivery result of one alert.
 
         Args:
-            alert_id: Mã cảnh báo.
-            sent: True khi đã gửi thành công.
-            error: Lỗi gửi, nếu có.
+            alert_id: Alert identifier.
+            sent: True when delivery succeeded.
+            error: Delivery error, if any.
         """
         with self.conn() as c:
             if sent:
@@ -339,27 +339,27 @@ class OpsStore:
                 c.execute("UPDATE ops_alerts SET attempts = attempts + 1, last_error = ? "
                           "WHERE id = ?", (redact(error), alert_id))
 
-    # ── trạng thái khoá/giá trị ──────────────────────────────────────────────
+    # ── key/value state ──────────────────────────────────────────────────────
     def get_state(self, key: str, default: str | None = None) -> str | None:
-        """Đọc một giá trị trạng thái.
+        """Read one state value.
 
         Args:
-            key: Khoá.
-            default: Giá trị trả về khi chưa có.
+            key: State key.
+            default: Value returned when the key is absent.
 
         Returns:
-            Chuỗi giá trị hoặc `default`.
+            The value string or `default`.
         """
         with self.conn() as c:
             row = c.execute("SELECT value FROM ops_state WHERE key = ?", (key,)).fetchone()
         return row["value"] if row else default
 
     def set_state(self, key: str, value: str | None) -> None:
-        """Ghi một giá trị trạng thái; None thì xoá khoá.
+        """Write one state value; None deletes the key.
 
         Args:
-            key: Khoá.
-            value: Giá trị chuỗi hoặc None.
+            key: State key.
+            value: Value string or None.
         """
         with self.conn() as c:
             if value is None:
@@ -369,13 +369,13 @@ class OpsStore:
                           "ON CONFLICT(key) DO UPDATE SET value = excluded.value, "
                           "updated_at = excluded.updated_at", (key, value, iso()))
 
-    # ── đợt ──────────────────────────────────────────────────────────────────
+    # ── waves ────────────────────────────────────────────────────────────────
     def upsert_wave(self, wave_id: str, **fields: Any) -> None:
-        """Tạo hoặc cập nhật hàng của một đợt.
+        """Create or update the row of one wave.
 
         Args:
-            wave_id: Mã đợt.
-            **fields: Các cột cần ghi.
+            wave_id: Wave identifier.
+            **fields: Columns to write.
         """
         fields["updated_at"] = iso()
         with self.conn() as c:
@@ -394,39 +394,39 @@ class OpsStore:
                           [wave_id, *fields.values()])
 
     def wave(self, wave_id: str) -> sqlite3.Row | None:
-        """Đọc hàng của một đợt.
+        """Read the row of one wave.
 
         Args:
-            wave_id: Mã đợt.
+            wave_id: Wave identifier.
 
         Returns:
-            Hàng đợt hoặc None.
+            The wave row or None.
         """
         with self.conn() as c:
             return c.execute("SELECT * FROM ops_waves WHERE wave_id = ?",
                              (wave_id,)).fetchone()
 
     def waves(self, limit: int = 10) -> list[sqlite3.Row]:
-        """Đọc các đợt mới nhất.
+        """Read the newest waves.
 
         Args:
-            limit: Số đợt tối đa.
+            limit: Maximum number of waves.
 
         Returns:
-            Danh sách hàng đợt, mới trước.
+            List of wave rows, newest first.
         """
         with self.conn() as c:
             return c.execute("SELECT * FROM ops_waves ORDER BY opened_at DESC LIMIT ?",
                              (limit,)).fetchall()
 
     def active_waves(self, lane: str | None = None) -> list[sqlite3.Row]:
-        """Liệt kê các đợt đang chạy, mới nhất trước.
+        """List the running waves, newest first.
 
         Args:
-            lane: Chỉ lấy đợt của luồng này (auto, backlog, bench); None lấy mọi luồng.
+            lane: Only waves of this lane (auto, backlog, bench); None takes every lane.
 
         Returns:
-            Danh sách hàng đợt đang ở trạng thái hoạt động.
+            List of wave rows in an active status.
         """
         marks = ",".join("?" * len(ACTIVE_WAVE_STATUSES))
         with self.conn() as c:
@@ -435,39 +435,39 @@ class OpsStore:
         return [r for r in rows if lane is None or lane_of(r["trigger"]) == lane]
 
     def active_wave(self, lane: str | None = None) -> sqlite3.Row | None:
-        """Trả về đợt đang chạy mới nhất, nếu có.
+        """Return the newest running wave, if any.
 
         Args:
-            lane: Chỉ xét đợt của luồng này; None xét mọi luồng.
+            lane: Only consider waves of this lane; None considers every lane.
 
         Returns:
-            Hàng đợt đang ở trạng thái hoạt động, hoặc None.
+            The wave row in an active status, or None.
         """
         rows = self.active_waves(lane)
         return rows[0] if rows else None
 
     def parked_for_breaker(self) -> list[sqlite3.Row]:
-        """Liệt kê đợt PARKED đang chờ provider hồi phục.
+        """List PARKED waves that are waiting for the provider to recover.
 
         Returns:
-            Danh sách hàng đợt, cũ trước.
+            List of wave rows, oldest first.
         """
         with self.conn() as c:
             return c.execute("SELECT * FROM ops_waves WHERE status = 'PARKED' "
                              "AND resume_on_breaker = 1 ORDER BY opened_at").fetchall()
 
-    # ── giữ chỗ bài theo đợt ─────────────────────────────────────────────────
+    # ── article reservation per wave ─────────────────────────────────────────
     def record_wave_articles(self, wave_id: str, article_ids: list[str]) -> int:
-        """Ghi tập bài của một đợt và tăng số lần thử của từng bài đúng một lần.
+        """Record the article set of a wave and increment each article attempt count exactly once.
 
-        Gọi lại cho cùng đợt (chạy lại sau crash) không tăng số lần thử lần nữa.
+        Calling again for the same wave (a rerun after a crash) does not increment the attempt count again.
 
         Args:
-            wave_id: Mã đợt.
-            article_ids: Định danh bài trong đợt.
+            wave_id: Wave identifier.
+            article_ids: Identifiers of the articles in the wave.
 
         Returns:
-            Số bài mới được ghi cho đợt.
+            Number of new articles recorded for the wave.
         """
         added = 0
         now = iso()
@@ -485,14 +485,14 @@ class OpsStore:
         return added
 
     def bump_attempts(self, article_ids: list[str], wave_id: str) -> int:
-        """Tăng số lần thử của các bài vừa được đóng gói vá, mỗi bài đúng một lần mỗi vòng.
+        """Increment the attempt count of articles just packed for repair, once per article per round.
 
         Args:
-            article_ids: Định danh bài được vá trong vòng này.
-            wave_id: Mã đợt đang vá.
+            article_ids: Identifiers of the articles repaired in this round.
+            wave_id: Identifier of the wave being repaired.
 
         Returns:
-            Số bài đã được tăng.
+            Number of articles incremented.
         """
         now = iso()
         with self.conn() as c:
@@ -505,10 +505,10 @@ class OpsStore:
         return len(article_ids)
 
     def reserved_article_ids(self) -> set[str]:
-        """Liệt kê bài đang thuộc một đợt chưa xong vòng đời (đang chạy, PARKED, FAILED).
+        """List articles that belong to a wave with an unfinished lifecycle (running, PARKED, FAILED).
 
         Returns:
-            Tập định danh bài không được đóng gói vào đợt khác.
+            Set of article identifiers that must not be packed into another wave.
         """
         marks = ",".join("?" * len(RELEASED_WAVE_STATUSES))
         with self.conn() as c:
@@ -519,13 +519,13 @@ class OpsStore:
         return {r[0] for r in rows}
 
     def exhausted_article_ids(self, max_attempts: int) -> set[str]:
-        """Liệt kê bài đã được đóng gói đủ số lần thử tối đa.
+        """List articles that have been packed the maximum number of attempts.
 
         Args:
-            max_attempts: Số lần thử tối đa của một bài.
+            max_attempts: Maximum number of attempts per article.
 
         Returns:
-            Tập định danh bài không được tự động thử lại nữa.
+            Set of article identifiers that must not be retried automatically.
         """
         with self.conn() as c:
             rows = c.execute("SELECT article_id FROM ops_article_attempts WHERE attempts >= ?",
@@ -533,26 +533,26 @@ class OpsStore:
         return {r[0] for r in rows}
 
     def excluded_article_ids(self, max_attempts: int) -> set[str]:
-        """Gộp bài đang giữ chỗ và bài đã hết lượt thử.
+        """Combine reserved articles and articles that are out of attempts.
 
         Args:
-            max_attempts: Số lần thử tối đa của một bài.
+            max_attempts: Maximum number of attempts per article.
 
         Returns:
-            Tập định danh bài mà sensor và bộ đóng gói phải bỏ qua.
+            Set of article identifiers that the sensor and the packer must skip.
         """
         return self.reserved_article_ids() | self.exhausted_article_ids(max_attempts)
 
-    # ── lệnh từ console ──────────────────────────────────────────────────────
+    # ── console commands ─────────────────────────────────────────────────────
     def enqueue_command(self, text: str, actor: str = "console") -> int:
-        """Đưa một lệnh vào hộp thư để daemon xử lý.
+        """Put a command in the inbox for the daemon to process.
 
         Args:
-            text: Lệnh dạng `/pause`.
-            actor: Nguồn lệnh.
+            text: Command such as `/pause`.
+            actor: Command source.
 
         Returns:
-            Mã lệnh.
+            Command identifier.
         """
         with self.conn() as c:
             cur = c.execute("INSERT INTO ops_commands(created_at, actor, text) VALUES (?,?,?)",
@@ -560,35 +560,35 @@ class OpsStore:
             return int(cur.lastrowid)
 
     def pending_commands(self) -> list[sqlite3.Row]:
-        """Lấy các lệnh chưa xử lý, cũ trước.
+        """Fetch unprocessed commands, oldest first.
 
         Returns:
-            Danh sách hàng lệnh.
+            List of command rows.
         """
         with self.conn() as c:
             return c.execute("SELECT * FROM ops_commands WHERE status = 'pending' "
                              "ORDER BY id").fetchall()
 
     def finish_command(self, command_id: int, result: str, status: str = "done") -> None:
-        """Ghi kết quả xử lý một lệnh.
+        """Record the processing result of one command.
 
         Args:
-            command_id: Mã lệnh.
-            result: Văn bản kết quả.
-            status: Trạng thái cuối.
+            command_id: Command identifier.
+            result: Result text.
+            status: Final status.
         """
         with self.conn() as c:
             c.execute("UPDATE ops_commands SET status = ?, result = ?, processed_at = ? "
                       "WHERE id = ?", (status, result, iso(), command_id))
 
     def command(self, command_id: int) -> sqlite3.Row | None:
-        """Đọc một lệnh theo mã.
+        """Read one command by identifier.
 
         Args:
-            command_id: Mã lệnh.
+            command_id: Command identifier.
 
         Returns:
-            Hàng lệnh hoặc None.
+            The command row or None.
         """
         with self.conn() as c:
             return c.execute("SELECT * FROM ops_commands WHERE id = ?",

@@ -1,4 +1,4 @@
-"""Cơ chế thử lại và chuyển đổi dự phòng (retry & fallback) cho chu trình thu thập."""
+"""Retry and fallback handling for scrape cycles."""
 
 from __future__ import annotations
 
@@ -11,21 +11,21 @@ from src.core.models import ScrapeResult
 
 
 class TransientError(Exception):
-    """Lỗi tạm thời cho phép kích hoạt cơ chế thử lại."""
+    """Raised for a temporary failure that permits a retry."""
 
 
 class PermanentError(Exception):
-    """Lỗi vĩnh viễn không thể khắc phục qua thử lại."""
+    """Raised for a permanent failure that retrying cannot fix."""
 
 
 def _cycle_failed(result: ScrapeResult) -> bool:
-    """Kiểm tra chu kỳ thu thập có thất bại hoàn toàn hay không.
+    """Check whether a scrape cycle failed completely.
 
     Args:
-        result: Kết quả thu thập của scraper.
+        result: Scrape result of the scraper.
 
     Returns:
-        True nếu không thu thập được bài viết nào và có lỗi phát sinh.
+        True if no article was fetched and errors occurred.
     """
     return result.fetched == 0 and bool(result.errors)
 
@@ -37,19 +37,19 @@ def _cycle_failed(result: ScrapeResult) -> bool:
 def _attempt(scraper: BaseScraper) -> ScrapeResult:
     result = scraper.run()
     if _cycle_failed(result) and not scraper.disabled:
-        # Scraper bị disable là permanent error, không thử lại.
+        # A disabled scraper is a permanent error and is not retried.
         raise TransientError(f"{scraper.name}: {result.errors[:2]}")
     return result
 
 
 def run_with_retry(scraper: BaseScraper) -> ScrapeResult:
-    """Thực thi scraper với cơ chế thử lại lũy thừa tối đa 3 lần.
+    """Run a scraper with exponential-backoff retry, at most 3 attempts.
 
     Args:
-        scraper: Đối tượng BaseScraper cần thực thi.
+        scraper: Scraper to run.
 
     Returns:
-        Đối tượng ScrapeResult chứa kết quả hoặc danh sách lỗi tích lũy.
+        ScrapeResult with the outcome or the accumulated errors.
     """
     try:
         return _attempt(scraper)
@@ -61,14 +61,14 @@ def run_with_retry(scraper: BaseScraper) -> ScrapeResult:
 
 def run_with_fallback(primary: BaseScraper,
                       fallback: BaseScraper | None = None) -> ScrapeResult:
-    """Thực thi scraper chính và tự động chuyển sang scraper dự phòng nếu thất bại.
+    """Run the primary scraper and switch to the fallback scraper if it fails.
 
     Args:
-        primary: Scraper chính được ưu tiên chạy trước.
-        fallback: Scraper dự phòng khi scraper chính gặp sự cố (tùy chọn).
+        primary: Scraper that runs first.
+        fallback: Optional scraper used when the primary one fails.
 
     Returns:
-        Đối tượng ScrapeResult cuối cùng từ scraper chính hoặc dự phòng.
+        Final ScrapeResult from the primary or the fallback scraper.
     """
     result = run_with_retry(primary)
     if not _cycle_failed(result) or fallback is None:

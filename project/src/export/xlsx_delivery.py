@@ -1,4 +1,4 @@
-"""Xuất tệp báo cáo giao hàng định dạng Excel (.xlsx) đơn sắc chuẩn."""
+"""Export the delivery report as a monochrome Excel (.xlsx) file."""
 from __future__ import annotations
 
 from datetime import date, datetime
@@ -12,15 +12,16 @@ from src.export.radar_sheet import add_radar_sheet
 
 SHEET_NAME = "Watchlist News"
 
-# Hợp đồng GIAO HÀNG: (khoá trong row dict, nhãn hiển thị, độ rộng cột, có wrap text).
-# Thứ tự theo khối: định vị → phân loại (ngắn, để quét/filter) → nguồn → văn bản dài → kỹ thuật.
+# DELIVERY contract: (key in the row dict, display label, column width, wrap text).
+# Block order: location, classification (short, for scanning and filtering), source, long text, technical.
 DELIVERY_FIELDS: list[tuple[str, str, int, bool]] = [
     ("date",             "Date",               16, False),
     ("matched_entities", "Matched Entities",   20, False),
-    # Ba cột minh bạch nguồn nhận diện, đặt ngay cạnh cột thực thể vì đó là chỗ người
-    # đọc tìm tới. `Intent — LLM` là thứ mô hình tự nhận ra từ ngữ nghĩa, `Intent — Code`
-    # là thứ từ điển cứng khớp được. Phần chỉ có ở cột đầu chính là giá trị mà mô hình
-    # mang lại: thương hiệu con, ngành suy ra từ ngữ cảnh, chủ đề vĩ mô không có từ khoá.
+    # Three columns that expose the recognition source, placed next to the entity column
+    # where readers look. `Intent — LLM` is what the model recognized from meaning,
+    # `Intent — Code` is what the hard dictionary matched. What appears only in the first
+    # column is the value the model adds: sub-brands, industries inferred from context, and
+    # macro themes without keywords.
     ("intent_llm",       "Intent — LLM",       28, True),
     ("intent_code",      "Intent — Code",      22, True),
     ("intent_source",    "Intent Source",      18, False),
@@ -59,14 +60,14 @@ _PLAIN_ALIGN = Alignment(vertical="top")
 
 
 def en_label(field: str, value) -> str:
-    """Chuyển đổi giá trị enum kỹ thuật sang nhãn tiếng Anh hiển thị.
+    """Convert a technical enum value to its English display label.
 
     Args:
-        field: Tên trường cần chuyển đổi.
-        value: Giá trị nội bộ cần tra cứu.
+        field: Field name to convert.
+        value: Internal value to look up.
 
     Returns:
-        Chuỗi nhãn hiển thị tương ứng hoặc giá trị gốc dạng chuỗi nếu không có trong ánh xạ.
+        Matching display label, or the original value as a string if it is not mapped.
     """
     m = _EN_MAPS.get(field)
     if not m:
@@ -78,13 +79,27 @@ vn_label = en_label  # Backward compatibility alias
 
 
 def _set_text(cell, value: str, *, align) -> None:
-    """Gán giá trị văn bản thuần vào ô nhằm ngăn chặn injection công thức."""
+    """Set a plain text value in a cell to prevent formula injection.
+
+    Args:
+        cell: Worksheet cell.
+        value: Text to store.
+        align: Alignment applied to the cell.
+    """
     cell.value = value
     cell.data_type = "s"
     cell.alignment = align
 
 
 def _parse_date(s: str) -> datetime | date | None:
+    """Parse a date or date-time string.
+
+    Args:
+        s: String in the form 'YYYY-MM-DD HH:MM' or 'YYYY-MM-DD'.
+
+    Returns:
+        A datetime when the time part is present, a date when only the date is present, otherwise None.
+    """
     raw = (s or "").strip()
     if len(raw) >= 16:
         try:
@@ -98,13 +113,13 @@ def _parse_date(s: str) -> datetime | date | None:
 
 
 def build_workbook(rows: list[dict]) -> Workbook:
-    """Xây dựng bảng tính Excel đơn sắc từ danh sách bài viết đã tổng hợp.
+    """Build the monochrome Excel workbook from the aggregated articles.
 
     Args:
-        rows: Danh sách từ điển dữ liệu bài viết theo các khóa DELIVERY_FIELDS.
+        rows: Article data dicts keyed by DELIVERY_FIELDS.
 
     Returns:
-        Đối tượng Workbook của openpyxl đã định dạng đầy đủ.
+        Formatted openpyxl Workbook.
     """
     wb = Workbook()
     ws = wb.active
@@ -138,7 +153,7 @@ def build_workbook(rows: list[dict]) -> Workbook:
                 continue
 
             _set_text(cell, "" if raw is None else str(raw), align=align)
-            # Link bấm được nhưng KHÔNG dùng style Hyperlink (giữ đơn sắc).
+            # Clickable link without the Hyperlink style, to stay monochrome.
             if key == "url" and str(raw or "").startswith(("http://", "https://")):
                 cell.hyperlink = str(raw)
 
@@ -149,15 +164,15 @@ def build_workbook(rows: list[dict]) -> Workbook:
 
 def write_delivery_xlsx(path: str | Path, rows: list[dict],
                         radar_rows: list[dict] | None = None) -> tuple[Path, bool]:
-    """Ghi bảng dữ liệu ra tệp Excel (.xlsx) qua cơ chế nguyên tử an toàn.
+    """Write the table to an Excel (.xlsx) file through a safe atomic write.
 
     Args:
-        path: Đường dẫn tệp đích cần ghi.
-        rows: Danh sách từ điển dữ liệu bài viết.
-        radar_rows: Dòng tín hiệu cho sheet Radar chú ý; rỗng hoặc None thì không thêm sheet.
+        path: Target file path.
+        rows: Article data dicts.
+        radar_rows: Signal rows for the attention-radar sheet; empty or None adds no sheet.
 
     Returns:
-        Tuple gồm đường dẫn tệp thực tế đã ghi và cờ báo tệp có bị rơi về snapshot khóa hay không.
+        Tuple of the path actually written and the flag that the write fell back to a snapshot because of a lock.
     """
     wb = build_workbook(rows)
     if radar_rows:

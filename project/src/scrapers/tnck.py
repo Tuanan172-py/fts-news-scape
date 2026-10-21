@@ -1,8 +1,4 @@
-"""Bộ thu thập dữ liệu báo Tin nhanh chứng khoán (tinnhanhchungkhoan.vn).
-
-Cung cấp lớp TnckScraper thu thập danh sách bài viết từ JSON API và tải chi tiết
-kèm capture tầng Bronze.
-"""
+"""Scrape Tin nhanh chung khoan (tinnhanhchungkhoan.vn) article lists from its JSON API and capture details into Bronze."""
 
 from __future__ import annotations
 
@@ -24,20 +20,21 @@ from src.scrapers.capture_mixin import CaptureMixin
 
 @register("tnck")
 class TnckScraper(CaptureMixin, BaseScraper):
-    """Bộ thu thập dữ liệu báo Tin nhanh chứng khoán qua API zone.
+    """Scrape Tin nhanh chung khoan through its zone API.
 
     Attributes:
-        BASE_URL: Địa chỉ web cơ sở của trang tin.
-        SOURCE_DOMAIN: Tên miền nguồn chuẩn hóa không chứa www.
-        API_TEMPLATE: Mẫu URL gọi API lấy danh sách bài theo zone.
-        template: Mẫu định dạng URL API sau cấu hình.
-        zones: Danh sách mã chuyên mục zone cần thu thập.
-        pages_per_cycle: Số trang cần quét trong mỗi chu kỳ.
-        headers: Các tiêu đề HTTP kèm theo yêu cầu API.
-        content_selector: Bộ chọn CSS vùng nội dung chi tiết bài viết.
-        max_details: Số bài viết chi tiết tối đa cần lấy trong một chu kỳ.
-        watchlist: Danh mục mã cổ phiếu cần theo dõi và gán nhãn.
-        language: Mã ngôn ngữ nội dung bài viết.
+        BASE_URL: Base web address of the news site.
+        SOURCE_DOMAIN: Normalized source domain without www.
+        API_TEMPLATE: URL template of the API call that lists articles per zone.
+        template: API URL template after configuration.
+        zones: Zone category ids to scrape.
+        pages_per_cycle: Number of pages to scan per cycle.
+        max_pages: Maximum number of pages per zone.
+        headers: HTTP headers sent with API requests.
+        content_selector: CSS selector of the article detail content area.
+        max_details: Maximum number of article details to fetch per cycle.
+        watchlist: Stock tickers to watch and tag.
+        language: Language code of the article content.
     """
 
     BASE_URL = "https://www.tinnhanhchungkhoan.vn"
@@ -45,6 +42,13 @@ class TnckScraper(CaptureMixin, BaseScraper):
     API_TEMPLATE = "https://api.tinnhanhchungkhoan.vn/api/morenews-zone-{zone}-{page}.html"
 
     def __init__(self, config, http, dedup):
+        """Initialize the scraper from its source config.
+
+        Args:
+            config: Source config dict.
+            http: HTTP client.
+            dedup: Deduplication cache.
+        """
         super().__init__(config, http, dedup)
         api = config.get("api", {})
         self.template = api.get("url_template", self.API_TEMPLATE)
@@ -61,10 +65,10 @@ class TnckScraper(CaptureMixin, BaseScraper):
         self._init_capture()
 
     def fetch_list(self) -> list[dict]:
-        """Thu thập danh sách bài viết từ JSON API theo các zone cấu hình.
+        """Collect the article list from the JSON API for the configured zones.
 
         Returns:
-            Danh sách bài viết thô trích xuất từ dữ liệu JSON.
+            Raw articles extracted from the JSON data.
         """
         self._details_fetched = 0
         items: list[dict] = []
@@ -91,13 +95,13 @@ class TnckScraper(CaptureMixin, BaseScraper):
         return items
 
     def parse_item(self, raw: dict) -> Article | None:
-        """Chuyển đổi từ điển dữ liệu bài viết thô sang đối tượng Article.
+        """Convert a raw article dict into an Article.
 
         Args:
-            raw: Dữ liệu bài viết thô từ API.
+            raw: Raw article data from the API.
 
         Returns:
-            Đối tượng Article hợp lệ, hoặc None nếu thiếu trường bắt buộc.
+            Valid Article, or None when a required field is missing.
         """
         title = (raw.get("title") or "").strip()
         rel_url = (raw.get("url") or "").strip()
@@ -132,10 +136,10 @@ class TnckScraper(CaptureMixin, BaseScraper):
         )
 
     def enrich(self, article: Article) -> None:
-        """Bổ sung nội dung bài viết chi tiết và lưu trữ capture tầng Bronze.
+        """Add detail content to the article and store the Bronze capture.
 
         Args:
-            article: Đối tượng Article cần bổ sung nội dung.
+            article: Article to enrich.
         """
         if self._details_fetched >= self.max_details:
             article.content_text = article.summary

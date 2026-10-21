@@ -1,4 +1,4 @@
-"""Dọn dẹp và di dời các task packet cũ còn tồn đọng tại thư mục gốc data/agent_tasks."""
+"""Move legacy task packets left in the repo-root data/agent_tasks directory into the archive."""
 from __future__ import annotations
 
 import shutil
@@ -9,7 +9,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from src.core import paths  # noqa: E402
 
-# Cấu hình UTF-8 cho Windows console
+# Configure UTF-8 for the Windows console.
 if sys.platform == "win32":
     try:
         sys.stdout.reconfigure(encoding="utf-8")
@@ -19,13 +19,13 @@ if sys.platform == "win32":
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 REPO_ROOT = PROJECT_ROOT.parent
-# Vị trí cũ ở gốc kho mã, chỉ đọc để dọn; không phải nơi ghi dữ liệu.
+# Legacy location at the repo root, read only for cleanup; not a data write location.
 SRC_TASKS_DIR = REPO_ROOT / "data" / "agent_tasks"
 ARCHIVE_DIR = paths.agent_tasks_dir() / "archive" / "legacy_root"
 
 
 def cleanup_legacy_root_tasks() -> None:
-    """Quét và di dời các task packet ở repo-root data/agent_tasks sang thư mục archive."""
+    """Move task packets from the repo-root data/agent_tasks directory to the archive directory."""
     if not SRC_TASKS_DIR.exists():
         print(f"Thư mục {SRC_TASKS_DIR} không tồn tại.")
         return

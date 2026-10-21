@@ -1,4 +1,4 @@
-"""Thực thi và điều phối các tác vụ phân tích bài đăng qua OpenRouter API."""
+"""Run and orchestrate article analysis tasks through the OpenRouter API."""
 from __future__ import annotations
 
 import concurrent.futures
@@ -39,16 +39,16 @@ DEFAULT_MAX_TOKENS = 32000
 
 @dataclass
 class OpenRouterExecutionResult:
-    """Kết quả thực thi một lô bài viết qua OpenRouter API.
+    """Result of running one article batch through the OpenRouter API.
 
     Attributes:
-        ok: Trạng thái thực thi đạt chuẩn hay không.
-        batch_id: Mã định danh của lô bài viết.
-        status: Phân loại trạng thái (OK, RETRYABLE, FATAL, TIMEOUT, PARTIAL).
-        records: Danh sách bản ghi trích xuất thành công.
-        usage: Thông tin số lượng token sử dụng.
-        latency_seconds: Thời gian thực thi tính bằng giây.
-        error_message: Thông điệp lỗi chi tiết nếu có.
+        ok: Whether the run met the requirements.
+        batch_id: Batch identifier.
+        status: Status class (OK, RETRYABLE, FATAL, TIMEOUT, PARTIAL, CACHED).
+        records: Records extracted successfully.
+        usage: Token usage information.
+        latency_seconds: Run time in seconds.
+        error_message: Detailed error message, if any.
     """
 
     ok: bool
@@ -61,14 +61,15 @@ class OpenRouterExecutionResult:
 
 
 class OpenRouterRunner:
-    """Điều phối và thực thi tác vụ phân tích nhận thức qua OpenRouter API.
+    """Orchestrate and run cognitive analysis tasks through the OpenRouter API.
 
     Attributes:
-        api_key: Khóa xác thực OpenRouter API.
-        base_url: Địa chỉ endpoint API OpenRouter.
-        model: Tên mô hình suy luận sử dụng.
-        timeout_seconds: Thời gian tối đa cho mỗi lượt gọi.
-        core_text: Toàn văn nội dung tiền tố hệ thống.
+        api_key: OpenRouter API authentication key.
+        base_url: OpenRouter API endpoint address.
+        model: Inference model name in use.
+        timeout_seconds: Maximum time for one call.
+        max_tokens: Maximum completion tokens per call.
+        core_text: Full system prefix text.
     """
 
     def __init__(
@@ -79,6 +80,18 @@ class OpenRouterRunner:
         timeout_seconds: int = DEFAULT_TIMEOUT_SECONDS,
         max_tokens: int = DEFAULT_MAX_TOKENS,
     ) -> None:
+        """Initialize the OpenRouterRunner.
+
+        Args:
+            api_key: API key; None reads OPENROUTER_API_KEY from the environment or openrouter/.env.
+            base_url: API base URL; None reads ROUTER_BASE_URL or uses the default.
+            model: Inference model name.
+            timeout_seconds: Maximum time for one call.
+            max_tokens: Maximum completion tokens per call.
+
+        Raises:
+            ValueError: If no API key is found.
+        """
         self.api_key = api_key or os.getenv("OPENROUTER_API_KEY")
         if not self.api_key and OPENROUTER_ENV.exists():
             for line in OPENROUTER_ENV.read_text(encoding="utf-8").splitlines():
@@ -111,17 +124,17 @@ class OpenRouterRunner:
         max_attempts: int = 2,
         force: bool = False,
     ) -> OpenRouterExecutionResult:
-        """Chạy một lô và ghi vết span `agent` khi có ngữ cảnh ghi vết.
+        """Run one batch and record an `agent` span when the trace context exists.
 
         Args:
-            batch_id: Mã định danh của lô bài viết.
-            task_path: Đường dẫn tệp packet đầu vào (.task.json).
-            out_dir: Thư mục lưu trữ kết quả đầu ra.
-            max_attempts: Số lần thử lại tối đa khi gặp lỗi có thể khôi phục.
-            force: Buộc chạy lại kể cả khi lô đã có kết quả đầu ra.
+            batch_id: Batch identifier.
+            task_path: Path of the input packet file (.task.json).
+            out_dir: Directory that receives the output files.
+            max_attempts: Maximum number of attempts on a recoverable error.
+            force: Rerun even if the batch already has an output.
 
         Returns:
-            Đối tượng kết quả thực thi chi tiết.
+            Detailed execution result.
         """
         from src.ops import trace as tracing
 
@@ -152,17 +165,17 @@ class OpenRouterRunner:
         max_attempts: int = 2,
         force: bool = False,
     ) -> OpenRouterExecutionResult:
-        """Gửi một lô bài viết tới OpenRouter API và lưu trữ kết quả phân tích.
+        """Send one article batch to the OpenRouter API and store the analysis result.
 
         Args:
-            batch_id: Mã định danh của lô bài viết.
-            task_path: Đường dẫn tệp packet đầu vào (.task.json).
-            out_dir: Thư mục lưu trữ kết quả đầu ra.
-            max_attempts: Số lần thử lại tối đa khi gặp lỗi có thể khôi phục.
-            force: Buộc chạy lại kể cả khi lô đã có kết quả đầu ra.
+            batch_id: Batch identifier.
+            task_path: Path of the input packet file (.task.json).
+            out_dir: Directory that receives the output files.
+            max_attempts: Maximum number of attempts on a recoverable error.
+            force: Rerun even if the batch already has an output.
 
         Returns:
-            Đối tượng kết quả thực thi chi tiết.
+            Detailed execution result.
         """
         out_file = out_dir / f"{batch_id}.output.json"
         meta_file = out_dir / f"{batch_id}.meta.json"
@@ -318,7 +331,7 @@ class OpenRouterRunner:
                 error_message=f"Không có bản ghi nào hợp lệ: {'; '.join(domain_errors[:3])}",
             )
 
-        # Ghi kết quả đầu ra
+        # Write the output.
         out_file = out_dir / f"{batch_id}.output.json"
         safe_json_dump(valid_recs, out_file)
 
@@ -359,16 +372,16 @@ class OpenRouterRunner:
         concurrency: int = 2,
         force: bool = False,
     ) -> dict[str, Any]:
-        """Chạy toàn bộ các lô bài viết trong một đợt phân tích song song.
+        """Run all article batches of a wave in parallel.
 
         Args:
-            manifest_data: Dữ liệu tệp manifest wave_<wave>.json.
-            out_dir: Thư mục lưu trữ kết quả đầu ra.
-            concurrency: Số luồng chạy song song tối đa (mặc định 2).
-            force: Buộc chạy lại kể cả khi lô đã có kết quả đầu ra.
+            manifest_data: Content of the manifest file wave_<wave>.json.
+            out_dir: Directory that receives the output files.
+            concurrency: Maximum number of parallel threads.
+            force: Rerun even if a batch already has an output.
 
         Returns:
-            Báo cáo tổng hợp kết quả của cả đợt.
+            Summary report of the whole wave.
         """
         batches = manifest_data.get("batches", [])
         wave = manifest_data.get("wave", "unknown")

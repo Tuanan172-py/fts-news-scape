@@ -1,4 +1,4 @@
-"""Định tuyến và kiểm định kết quả nhận diện thực thể tầng L1."""
+"""Route articles and validate L1 entity recognition results."""
 from __future__ import annotations
 
 import json
@@ -17,7 +17,7 @@ _CATEGORY_KEYS = (
     "industry_sector", "macro_geo", "asset_class", "institution",
 )
 
-# type entity -> nhom trong checklist `categories` cua l1-entity-output-v1.
+# Entity type -> group in the `categories` checklist of l1-entity-output-v1.
 TYPE_GROUP = {
     "TICKER": "ticker_company", "SECURITY_OTHER": "ticker_company",
     "ETF": "etf_fund", "INDEX": "index", "EXCHANGE": "exchange",
@@ -30,17 +30,17 @@ TYPE_GROUP = {
 
 
 # ---------------------------------------------------------------------------
-# Tầng 1 + định tuyến
+# Layer 1 and routing
 # ---------------------------------------------------------------------------
 def route_article(article: dict, reg: EntityRegistry | None = None) -> dict:
-    """Phân loại thực thể tầng 1 và xác định hướng định tuyến.
+    """Classify layer-1 entities and decide the route.
 
     Args:
-        article: Từ điển chứa dữ liệu bài viết.
-        reg: Sổ đăng ký thực thể EntityRegistry tùy chọn.
+        article: Article data dict.
+        reg: Optional EntityRegistry; None loads the default registry.
 
     Returns:
-        Từ điển kết quả phân loại kèm trường 'route' ('resolved' hoặc 'needs_agent').
+        Classification dict with the field 'route' ('resolved' or 'needs_agent').
     """
     reg = reg or load_registry()
     rec = classify_article(article, reg)
@@ -49,17 +49,17 @@ def route_article(article: dict, reg: EntityRegistry | None = None) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Tầng 2 — task-packet handoff (self-describing, agent-agnostic)
+# Layer 2: task-packet hand-off (self-describing, agent-agnostic)
 # ---------------------------------------------------------------------------
 def build_l1_task_packet(article: dict, code_first: dict) -> dict:
-    """Đóng gói gói công việc L1 cho agent tra soát và nhận diện bổ sung.
+    """Build the L1 task packet for an agent that audits and extends recognition.
 
     Args:
-        article: Dữ liệu bài viết cần xử lý.
-        code_first: Kết quả phân loại tự động từ tầng 1.
+        article: Article data to process.
+        code_first: Automatic classification result from layer 1.
 
     Returns:
-        Từ điển gói công việc tuân thủ cấu trúc L1 task packet.
+        Work package dict that follows the L1 task packet structure.
     """
     return {
         "packet_version": L1_TASK_VERSION,
@@ -73,7 +73,7 @@ def build_l1_task_packet(article: dict, code_first: dict) -> dict:
                 "entities": "entities/entities.json",
                 "taxonomy": "entities/taxonomy.json",
             },
-            # kết quả code-first để TRA SOÁT: xác nhận / sửa / bổ sung entity bị bỏ sót
+            # Code-first result for the agent to audit: confirm, correct or add missed entities.
             "code_first": {
                 "route": code_first.get("route"),
                 "relevance": code_first.get("relevance"),
@@ -101,47 +101,47 @@ from src.core.staging import safe_json_dump
 
 
 def write_l1_packet(packet: dict, base_dir: str | os.PathLike | None = None) -> str:
-    """Lưu gói công việc L1 vào đĩa qua cơ chế staging nguyên tử.
+    """Write an L1 task packet to disk through atomic staging.
 
     Args:
-        packet: Dữ liệu gói công việc cần ghi.
-        base_dir: Thư mục gốc lưu trữ gói công việc.
+        packet: Packet data to write.
+        base_dir: Root directory that stores the packets.
 
     Returns:
-        Đường dẫn tương đối tới tệp task packet đã ghi.
+        Data-relative path of the packet file written.
     """
     base_dir = paths.resolve_data_path(base_dir) if base_dir else paths.agent_tasks_dir() / "l1"
     os.makedirs(base_dir, exist_ok=True)
     target_path = os.path.join(base_dir, f"{packet['article_id']}.task.json")
     final_path, _ = safe_json_dump(packet, target_path, indent=2)
-    return paths.to_data_relative(final_path)      # tuong doi -> chay duoc tren ca 2 may
+    return paths.to_data_relative(final_path)      # relative path works on both machines
 
 
 
 
 # ---------------------------------------------------------------------------
-# Vat chat hoa ket qua TAT DINH thanh l1-entity-output-v1
+# Materialize the DETERMINISTIC result as l1-entity-output-v1
 # ---------------------------------------------------------------------------
 CODE_FIRST_PROVIDER = "code_first"
 CODE_FIRST_MODEL = "deterministic"
 
 
 def build_code_first_output(rec: dict, article_id: str) -> dict:
-    """Chuyển đổi kết quả phân loại tầng 1 sang schema l1-entity-output-v1.
+    """Convert a layer-1 classification result to the l1-entity-output-v1 schema.
 
     Args:
-        rec: Kết quả phân loại từ l1_classifier.
-        article_id: Định danh duy nhất của bài viết.
+        rec: Classification result from l1_classifier.
+        article_id: Unique article identifier.
 
     Returns:
-        Từ điển kết quả thực thể tuân thủ schema l1-entity-output-v1.
+        Entity result dict that follows the l1-entity-output-v1 schema.
     """
     title = rec.get("title") or ""
     ents = []
     for d in rec.get("entities") or []:
         surface = d.get("surface")
         if not surface or surface not in title:
-            continue          # khong ground duoc vao title thi bo, dung de DoD truot ca ban ghi
+            continue          # drop entities not grounded in the title so DoD does not fail the whole record
         ents.append({
             "surface": surface,
             "entity_id": d["entity_id"],
@@ -168,18 +168,18 @@ def build_code_first_output(rec: dict, article_id: str) -> dict:
     }
 
 # ---------------------------------------------------------------------------
-# DoD — gác output agent L1 (checklist machine-checkable)
+# DoD: gate for L1 agent output (machine-checkable checklist)
 # ---------------------------------------------------------------------------
 def check_l1_dod(output: dict, title: str, registry=None) -> tuple[bool, list[str]]:
-    """Kiểm tra điều kiện nghiệm thu DoD đối với kết quả nhận diện L1.
+    """Check the DoD acceptance conditions of an L1 recognition result.
 
     Args:
-        output: Dữ liệu kết quả đầu ra cần kiểm định.
-        title: Tiêu đề bài viết dùng để đối soát trích dẫn.
-        registry: Sổ đăng ký thực thể EntityRegistry tùy chọn để kiểm tra ID.
+        output: Output data to validate.
+        title: Article title used to verify citations.
+        registry: Optional EntityRegistry used to verify identifiers.
 
     Returns:
-        Tuple gồm trạng thái đạt chuẩn (True/False) và danh sách lý do vi phạm nếu có.
+        Tuple of the pass flag and the list of violation reasons, if any.
     """
 
     reasons: list[str] = []
@@ -187,13 +187,13 @@ def check_l1_dod(output: dict, title: str, registry=None) -> tuple[bool, list[st
     ok, errs = schema_validate(output, L1_OUTPUT_SCHEMA)
     if not ok:
         reasons.append(f"schema_invalid: {errs[:2]}")
-        return False, reasons  # sai schema thì các check sau vô nghĩa
+        return False, reasons  # later checks are meaningless on a wrong schema
 
     recognized = output.get("recognized")
     ents = output.get("entities") or []
     cites = output.get("citations") or []
 
-    # grounding: surface & citation ⊂ title
+    # Grounding: surface and citation must be substrings of the title.
     for i, e in enumerate(ents):
         s = (e or {}).get("surface", "")
         if not s or s not in title:
@@ -203,7 +203,7 @@ def check_l1_dod(output: dict, title: str, registry=None) -> tuple[bool, list[st
         if not span or span not in title:
             reasons.append(f"citations[{i}].source_span không phải chuỗi con của title")
 
-    # nhất quán recognized <-> entities/citations
+    # Consistency between recognized and entities/citations.
     if recognized and (len(ents) < 1 or len(cites) < 1):
         reasons.append("recognized=true nhưng thiếu entities/citations")
     if not recognized:
@@ -213,19 +213,19 @@ def check_l1_dod(output: dict, title: str, registry=None) -> tuple[bool, list[st
         if any(cats.get(k) == "done" for k in _CATEGORY_KEYS):
             reasons.append("recognized=false nhưng có category='done'")
 
-    # category 'done' phải có entity in_list thuộc nhóm đó
+    # A category marked 'done' needs an in_list entity of that group.
     cats = output.get("categories") or {}
-    # type_group -> TYPE_GROUP (module level, dung chung voi bo vat chat hoa code-first)
+    # TYPE_GROUP is module level and shared with the code-first materializer.
     done_groups = {g for g, v in cats.items() if v == "done"}
     have_groups = {TYPE_GROUP.get(e.get("type")) for e in ents if e.get("in_list")}
     for g in done_groups - have_groups:
         reasons.append(f"categories.{g}='done' nhưng không có entity in_list thuộc nhóm")
 
-    # entity_id phai co that trong registry (chan id sai dang / bia)
+    # entity_id must exist in the registry (blocks malformed or invented ids).
     if registry is None:
         try:
             registry = load_registry()
-        except Exception:                      # thieu entities.json -> bo qua check nay
+        except Exception:                      # missing entities.json: skip this check
             registry = None
     if registry is not None:
         for i, e in enumerate(ents):

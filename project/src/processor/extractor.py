@@ -1,4 +1,4 @@
-"""Bóc tách văn bản thuần và nội dung chính từ mã nguồn HTML bằng Trafilatura."""
+"""Extract plain text and main content from HTML source with Trafilatura."""
 
 from __future__ import annotations
 
@@ -15,14 +15,14 @@ _EXTRACT_KW = dict(
 
 
 def extract_content(url: str, html: str | None = None) -> dict:
-    """Trích xuất nội dung bài viết từ địa chỉ URL hoặc chuỗi HTML có sẵn.
+    """Extract article content from a URL or from supplied HTML.
 
     Args:
-        url: Địa chỉ URL bài viết.
-        html: Chuỗi HTML bài viết nếu đã tải trước.
+        url: Article URL.
+        html: Article HTML when already downloaded; None triggers a download from `url`.
 
     Returns:
-        Dictionary chứa raw_html, content và trạng thái xử lý status.
+        Dict with raw_html, content and the processing status.
     """
     result = {"raw_html": "", "content": "", "status": "ok"}
 
@@ -43,13 +43,13 @@ def extract_content(url: str, html: str | None = None) -> dict:
 
 
 def extract_text(html_fragment: str) -> str:
-    """Trích xuất văn bản sạch từ một đoạn mã HTML hoặc toàn bộ trang.
+    """Extract clean text from an HTML fragment or a full page.
 
     Args:
-        html_fragment: Đoạn mã HTML hoặc tài liệu HTML cần bóc tách.
+        html_fragment: HTML fragment or document to extract from.
 
     Returns:
-        Chuỗi văn bản thuần đã làm sạch thẻ định dạng.
+        Plain text with markup removed.
     """
     if not html_fragment:
         return ""

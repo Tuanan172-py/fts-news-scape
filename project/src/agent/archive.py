@@ -1,8 +1,4 @@
-"""Quản lý vòng đời và lưu trữ các gói tác vụ (Task Packets) sau khi nạp thành công.
-
-Cung cấp các hàm di chuyển các tệp task.json đã hoàn tất vào thư mục lưu trữ archive
-theo phân cấp ngày tháng nhằm giữ gọn hàng đợi tác vụ đang hoạt động.
-"""
+"""Move completed task packets into a date-partitioned archive directory."""
 from __future__ import annotations
 
 import shutil
@@ -16,15 +12,15 @@ from src.core.models import VN_TZ
 
 def archive_task_packet(article_id: str, task_dir: str | Path,
                         archive_date: str | None = None) -> Path | None:
-    """Di chuyển một tệp gói tác vụ task.json vào thư mục lưu trữ theo ngày.
+    """Move one task.json packet into the date-partitioned archive directory.
 
     Args:
-        article_id: Mã định danh của bài viết.
-        task_dir: Thư mục chứa các tệp tác vụ đang hoạt động.
-        archive_date: Chuỗi ngày lưu trữ định dạng 'YYYYMMDD' (nếu None lấy ngày hiện tại).
+        article_id: Article identifier.
+        task_dir: Directory that holds the active task files.
+        archive_date: Archive date as 'YYYYMMDD'; None uses the current date.
 
     Returns:
-        Đường dẫn Path tới tệp đích đã lưu trữ, hoặc None nếu tệp nguồn không tồn tại.
+        Path of the archived file, or None if the source file does not exist or the move failed.
     """
     task_dir = Path(task_dir)
     src_file = task_dir / f"{article_id}.task.json"
@@ -49,18 +45,18 @@ def archive_task_packet(article_id: str, task_dir: str | Path,
 
 def archive_completed_tasks(article_ids, task_dir: str | Path,
                             archive_date: str | None = None) -> int:
-    """Di chuyển hàng loạt các gói tác vụ đã hoàn thành sang thư mục lưu trữ.
+    """Move completed task packets in bulk into the archive directory.
 
-    Hỗ trợ di chuyển cả các tệp đơn lẻ (<aid>.task.json) và các tệp mini-batch
-    (batch_*.task.json) khi toàn bộ các bài viết cấu thành đã đạt chuẩn DoD.
+    Handles single-article files (<aid>.task.json) and mini-batch files
+    (batch_*.task.json) once every article they contain meets the DoD.
 
     Args:
-        article_ids: Danh sách các mã bài viết cần chuyển lưu trữ.
-        task_dir: Thư mục chứa các tệp tác vụ đang hoạt động.
-        archive_date: Chuỗi ngày lưu trữ định dạng 'YYYYMMDD'.
+        article_ids: Identifiers of the articles to archive.
+        task_dir: Directory that holds the active task files.
+        archive_date: Archive date as 'YYYYMMDD'; None uses the current date.
 
     Returns:
-        Số lượng gói tác vụ đã di chuyển lưu trữ thành công.
+        Number of task packets archived successfully.
     """
     cnt = 0
     task_dir = Path(task_dir)
@@ -70,12 +66,12 @@ def archive_completed_tasks(article_ids, task_dir: str | Path,
     target_dir = task_dir / "archive" / archive_date
     target_dir.mkdir(parents=True, exist_ok=True)
 
-    # 1. Di chuyển các tệp task đơn lẻ
+    # Move single-article task files.
     for aid in article_ids:
         if archive_task_packet(aid, task_dir, archive_date):
             cnt += 1
 
-    # 2. Quét và di chuyển các tệp batch packet nếu các bài viết bên trong đã xử lý xong
+    # Move batch packets whose articles are all processed.
     completed_set = set(article_ids)
     import json
     for batch_file in task_dir.glob("batch_*.task.json"):

@@ -1,4 +1,4 @@
-"""Bổ sung nội dung toàn văn và ngày xuất bản cho các bài viết bị trì hoãn bóc tách."""
+"""Backfill full text and publication dates for articles whose detail extraction was deferred."""
 
 from __future__ import annotations
 
@@ -34,28 +34,28 @@ from src.db.store import ArticleStore
 from src.pipeline.silver_builder import _html_from_json
 from src.processor.extractor import extract_text
 
-# morninger gọi script này qua subprocess với capture_output=True → stdout là pipe, mặc
-# định dùng encoding hệ thống (cp1252) và sẽ crash khi in tiếng Việt/emoji.
+# The scheduler calls this script via subprocess with capture_output=True, so stdout is a
+# pipe that defaults to the system encoding (cp1252) and crashes on Vietnamese text/emoji.
 force_utf8_stdio()
 
 
 DEFAULT_MAX_ATTEMPTS = 5
 
-# Bài đã xác nhận mất vĩnh viễn (nguồn xóa 404/410) hoặc đã thử đủ số lần cho phép —
-# không truy đuổi nữa. Thiếu bộ lọc này thì job tự động (mỗi 5 phút) sẽ fetch lại một
-# URL đã chết mãi mãi.
+# Articles confirmed gone for good (source deleted, 404/410) or retried the allowed number
+# of times are no longer pursued. Without this filter the 5-minute automated job would
+# re-fetch a dead URL forever.
 _EXCLUDE_DEAD = ("metadata_json NOT LIKE '%\"source_deleted\": true%' "
                  "AND metadata_json NOT LIKE '%\"source_deleted\":true%' "
                  "AND metadata_json NOT LIKE '%\"capture_giveup\": true%' "
                  "AND metadata_json NOT LIKE '%\"capture_giveup\":true%'")
 
-# Bài vượt `max_details_per_cycle` — chưa từng fetch trang chi tiết lần nào.
+# Articles beyond `max_details_per_cycle`: the detail page was never fetched.
 _DEFERRED_WHERE = ("((metadata_json LIKE '%\"detail_deferred\": true%' "
                    "OR metadata_json LIKE '%\"detail_deferred\":true%') "
                    f"AND {_EXCLUDE_DEAD})")
 
-# Bài ĐÃ fetch nhưng hỏng tạm thời trong lượt capture sống (timeout, 5xx, 403, body
-# rỗng). `backfilled_from_bronze` loại bài đã khôi phục xong khỏi vòng quét lại.
+# Articles fetched but transiently broken during the live capture (timeout, 5xx, 403, empty
+# body). `backfilled_from_bronze` excludes recovered articles from the rescan.
 _FAILED_WHERE = ("(metadata_json LIKE '%\"capture_status\": \"failed\"%' "
                  "AND metadata_json NOT LIKE '%backfilled_from_bronze%' "
                  f"AND {_EXCLUDE_DEAD})")
@@ -63,23 +63,31 @@ _FAILED_WHERE = ("(metadata_json LIKE '%\"capture_status\": \"failed\"%' "
 
 def _find_bronze(domain: str, url_title_hash: str,
                  raw_dir: str | None = None) -> str | None:
-    """Tìm file Bronze .html DÙNG ĐƯỢC của bài. None nếu chưa có hoặc không hợp lệ.
+    """Find the usable Bronze .html file of an article.
 
-    `RawStore.save` vẫn ghi body khi HTTP lỗi (giữ lại để soi), nên một trang 404/500
-    cũng sinh file .html. Phải soi sidecar .meta.json để loại chúng — nếu không, lượt
-    backfill sau sẽ bóc nội dung TRANG LỖI ra làm nội dung bài. Thiếu sidecar thì chấp
-    nhận (artifact cũ hoặc đặt tay).
+    `RawStore.save` still writes the body on HTTP errors (kept for inspection), so a
+    404/500 page also produces an .html file. The `.meta.json` sidecar must be checked to
+    exclude them; otherwise a later backfill would extract the error page as article
+    content. A missing sidecar is accepted (legacy or hand-placed artifact).
+
+    Args:
+        domain: Source domain directory under the Bronze root.
+        url_title_hash: Hash that names the Bronze file.
+        raw_dir: Bronze root directory; defaults to `paths.bronze_dir()`.
+
+    Returns:
+        Path of the newest usable .html file, or None if none exists or none is valid.
     """
     raw_dir = raw_dir or str(paths.bronze_dir())
     hits = sorted(glob.glob(os.path.join(raw_dir, domain, "*",
                                          f"{url_title_hash}.html")))
-    for html_path in reversed(hits):      # bản mới nhất trước
+    for html_path in reversed(hits):      # newest first
         meta_path = html_path[:-len(".html")] + ".meta.json"
         try:
             status = json.loads(
                 Path(meta_path).read_text(encoding="utf-8")).get("capture_status")
         except (OSError, ValueError):
-            return html_path              # không có/không đọc được sidecar → tin file
+            return html_path              # sidecar missing or unreadable: trust the file
         if status in ("ok", "partial"):
             return html_path
     return None
@@ -94,11 +102,19 @@ def _content_selector_for(domain_cfg_name: str) -> str:
 
 
 def _detail_endpoint(domain_cfg_name: str, row) -> tuple[str, dict]:
-    """(url_để_fetch, headers). Mặc định là `articles.url`.
+    """Resolve the URL and headers used to fetch an article detail.
 
-    Nguồn API khai `api.detail_url_template` (vd fireant `/posts/{post_id}`) thì trang
-    web chỉ là SPA — phải fetch endpoint API. Template điền từ `metadata` của bài.
-    Kèm Bearer token nếu config khai `auth.secret_key`.
+    The default URL is `articles.url`. An API source that declares
+    `api.detail_url_template` (for example fireant `/posts/{post_id}`) has a web page that
+    is only an SPA, so the API endpoint must be fetched; the template is filled from the
+    article `metadata`. A Bearer token is added when the config declares `auth.secret_key`.
+
+    Args:
+        domain_cfg_name: Domain config name.
+        row: `articles` table row.
+
+    Returns:
+        Tuple of the URL to fetch and the request headers.
     """
     url = row["url"]
     headers: dict = {}
@@ -114,7 +130,7 @@ def _detail_endpoint(domain_cfg_name: str, row) -> tuple[str, dict]:
             url = template.format(**meta)
             headers["Accept"] = "application/json, text/plain, */*"
         except (KeyError, IndexError, ValueError):
-            url = row["url"]          # thiếu field → quay về URL web, không đoán
+            url = row["url"]          # missing field: fall back to the web URL, no guessing
 
     secret_key = (cfg.get("auth", {}) or {}).get("secret_key", "")
     if secret_key:
@@ -127,11 +143,18 @@ def _detail_endpoint(domain_cfg_name: str, row) -> tuple[str, dict]:
 
 
 def _extract_from_bronze(html_path: str, selector: str) -> tuple[str, str]:
-    """(content_html, content_text) từ file Bronze. Thuần, không mạng.
+    """Extract content HTML and text from a Bronze file without network access.
 
-    Bronze của nguồn API (vd fireant) là **JSON** chứ không phải HTML → bóc trường HTML
-    ra trước, y như `SilverBuilder` làm. Không có bước này thì content_text sẽ nuốt cả
-    key JSON và dấu ngoặc.
+    Bronze files of API sources (for example fireant) are JSON rather than HTML, so the
+    HTML field is unwrapped first, as `SilverBuilder` does. Without this step
+    content_text would include JSON keys and brackets.
+
+    Args:
+        html_path: Path of the Bronze file.
+        selector: CSS selector of the article body; empty to use the whole document.
+
+    Returns:
+        Tuple of content_html and content_text; empty strings if the file is unreadable.
     """
     try:
         html = Path(html_path).read_text(encoding="utf-8", errors="replace")
@@ -142,7 +165,7 @@ def _extract_from_bronze(html_path: str, selector: str) -> tuple[str, str]:
     inner = _html_from_json(html)
     if inner is not None:
         html = inner
-        selector = ""          # đã là HTML thân bài, không cần cắt selector nữa
+        selector = ""          # already the article body HTML, no selector needed
 
     node_html = html
     if selector:
@@ -168,14 +191,21 @@ def _date_scope_for(domain_cfg_name: str) -> str:
 
 
 def recover_published_at(html_path: str, date_scope: str = "") -> str:
-    """Khôi phục published_at TỪ FILE BRONZE. Rỗng nếu không chắc — KHÔNG bịa.
+    """Recover published_at from a Bronze file, returning empty when uncertain.
 
-    Thứ tự (generic trước, config sau):
-      1. <meta property="article:published_time"> / itemprop="datePublished"
-      2. <time datetime="...">
-      3. JSON-LD "datePublished"
-      4. `date_scope_selector` trong config + text `dd/MM/yyyy HH:mm` (vd baodautu —
-         nguồn KHÔNG có metadata ngày nào cả)
+    Sources are tried in order, generic first and config-specific last:
+      1. `<meta property="article:published_time">` / `itemprop="datePublished"`
+      2. `<time datetime="...">`
+      3. JSON-LD `"datePublished"`
+      4. Config `date_scope_selector` plus text `dd/MM/yyyy HH:mm` (for example baodautu,
+         whose pages carry no date metadata at all)
+
+    Args:
+        html_path: Path of the Bronze file.
+        date_scope: CSS selector of the node holding the visible date text.
+
+    Returns:
+        ISO timestamp string, or an empty string if no date is found. Dates are never guessed.
     """
     try:
         html = Path(html_path).read_text(encoding="utf-8", errors="replace")
@@ -216,17 +246,18 @@ def recover_published_at(html_path: str, date_scope: str = "") -> str:
 
 
 def _record_attempt(conn, row, cap: dict, max_attempts: int) -> None:
-    """Ghi sổ một lần khôi phục nội dung THẤT BẠI vào `metadata_json` của bài.
+    """Record a failed content recovery attempt in the article `metadata_json`.
 
-    Không ghi sổ thì bài hỏng vĩnh viễn sẽ được chọn lại ở MỌI chu kỳ sau (job tự động
-    chạy mỗi 5 phút), vì `_INSERT_SQL` của ArticleStore là `INSERT OR IGNORE` nên row
-    đã tồn tại không bao giờ tự cập nhật — bắt buộc phải UPDATE tường minh ở đây.
+    Without this record a permanently broken article is selected again on every cycle
+    (the automated job runs every 5 minutes). `ArticleStore._INSERT_SQL` is
+    `INSERT OR IGNORE`, so an existing row is never updated automatically and an explicit
+    UPDATE is required here.
 
     Args:
-        conn: Kết nối SQLite đang mở.
-        row: Dòng bảng `articles` đang xử lý.
-        cap: Dict trạng thái capture do `RawStore.save` trả về (rỗng nếu không fetch).
-        max_attempts: Số lần thử tối đa trước khi gắn cờ bỏ cuộc.
+        conn: Open SQLite connection.
+        row: `articles` table row being processed.
+        cap: Capture status dict returned by `RawStore.save` (empty if nothing was fetched).
+        max_attempts: Maximum attempts before the give-up flag is set.
     """
     meta = json.loads(row["metadata_json"]) if row["metadata_json"] else {}
     retry = meta.setdefault("capture_retry", {})
@@ -248,31 +279,42 @@ def main(domain: str | None, limit: int, do_fetch: bool, dry_run: bool,
          dates_only: bool = False, mode: str = "deferred",
          max_attempts: int = DEFAULT_MAX_ATTEMPTS,
          retry_window_hours: int = 0, budget_seconds: int = 0) -> int:
-    """db_path/raw_dir override để test cô lập được (mặc định: settings + `paths.bronze_dir()`).
+    """Backfill content and publication dates for deferred or failed articles.
 
     Args:
-        mode: `deferred` (bài vượt cap), `failed` (bài lỗi tạm thời), `all` (cả hai).
-        max_attempts: Số lần thử tối đa trước khi gắn `capture_giveup`.
-        retry_window_hours: Chỉ truy đuổi bài có `fetched_at` trong N giờ gần đây;
-            0 = không giới hạn (giữ nguyên hành vi backfill thủ công hàng loạt).
-        budget_seconds: Trần thời gian chạy; vượt thì dừng SẠCH giữa hai bài và báo cáo
-            phần đã làm. 0 = không giới hạn. Cần vì job tự động bị morninger gọi kèm
-            timeout — hết giờ mà không tự dừng thì bị giết giữa chừng, mất báo cáo.
+        domain: Config name or host to restrict to; None for all sources.
+        limit: Maximum number of articles to process.
+        do_fetch: Allow fetching (and writing Bronze) when an article has no artifact.
+        dry_run: Count candidates without writing to the database.
+        db_path: Database path override for isolated tests; defaults to settings.
+        raw_dir: Bronze root override for isolated tests; defaults to `paths.bronze_dir()`.
+        dates_only: Only repair empty published_at for articles that already have Bronze.
+        mode: `deferred` (articles beyond the cap), `failed` (transient failures), `all` (both).
+        max_attempts: Maximum attempts before `capture_giveup` is set.
+        retry_window_hours: Only pursue articles whose `fetched_at` is within the last N
+            hours; 0 means unlimited (manual bulk backfill behavior).
+        budget_seconds: Runtime ceiling; when exceeded, stop cleanly between two articles
+            and report the work done. 0 means unlimited. Needed because the scheduler
+            calls the job with a timeout and a kill loses the report.
+
+    Returns:
+        Process exit code, always 0.
     """
     settings = load_settings()
     raw_dir = raw_dir or str(paths.bronze_dir())
     setup_logging(settings["logging"]["level"], settings["logging"]["dir"])
     store = ArticleStore(db_path or settings["database"]["path"])
 
-    # domain arg nhận CẢ tên config lẫn host (vietnambiz | vietnambiz.vn)
+    # The domain argument accepts both a config name and a host (vietnambiz | vietnambiz.vn).
     host = resolve_source_domain(domain) if domain else None
     cfg_name = domain.split(".")[0] if domain else ""
     selector = _content_selector_for(cfg_name) if cfg_name else ""
     date_scope = _date_scope_for(cfg_name) if cfg_name else ""
 
     conn = store.connect()
-    # --dates-only: sửa cột published_at rỗng cho bài ĐÃ có Bronze (không cần còn cờ
-    # detail_deferred). Cần vì lần backfill đầu đã gỡ cờ nhưng chưa điền ngày.
+    # --dates-only repairs empty published_at for articles that already have Bronze, even
+    # without the detail_deferred flag, because the first backfill cleared the flag
+    # without filling the date.
     if dates_only:
         where = "WHERE (published_at IS NULL OR published_at = '')"
     elif mode == "failed":
@@ -285,7 +327,7 @@ def main(domain: str | None, limit: int, do_fetch: bool, dry_run: bool,
     if retry_window_hours > 0 and not dates_only:
         cutoff = (datetime.now(VN_TZ)
                   - timedelta(hours=retry_window_hours)).isoformat(timespec="seconds")
-        where += " AND fetched_at >= ?"      # ISO offset cố định +07:00 → so sánh chuỗi an toàn
+        where += " AND fetched_at >= ?"      # fixed +07:00 ISO offset makes string comparison safe
         params.append(cutoff)
     if host:
         where += " AND source_domain = ?"
@@ -300,8 +342,9 @@ def main(domain: str | None, limit: int, do_fetch: bool, dry_run: bool,
                 "date-repair" if dates_only else mode,
                 len(rows), host or "ALL", selector, date_scope)
 
-    # Không dựng HTTP client/robots khi không có việc. Vẫn PHẢI in một dòng: job im lặng
-    # không phân biệt được với job đã chết, và morninger chỉ log dòng stdout cuối cùng.
+    # Skip building the HTTP client/robots when there is no work. One line is still printed:
+    # a silent job is indistinguishable from a dead one, and the scheduler logs only the
+    # last stdout line.
     if not rows:
         print(f"backfill [{mode}]: candidates=0 (không có việc)")
         conn.close()
@@ -336,9 +379,9 @@ def main(domain: str | None, limit: int, do_fetch: bool, dry_run: bool,
             if not do_fetch:
                 stats["no_bronze"] += 1
                 continue
-            # Không có Bronze → PHẢI ghi Bronze trước, không bao giờ ghi content trần.
-            # Nguồn API (vd fireant): `articles.url` là trang WEB (SPA, không có body) —
-            # phải fetch ENDPOINT API mới ra nội dung. Lấy từ api.detail_url_template.
+            # No Bronze: write Bronze first, never bare content. For API sources (for
+            # example fireant) `articles.url` is a web SPA page without a body, so the API
+            # endpoint from api.detail_url_template must be fetched.
             fetch_url, extra_headers = _detail_endpoint(dom.split(".")[0], r)
             if robots is not None and not robots.allowed(fetch_url):
                 stats["skipped_robots"] += 1
@@ -380,8 +423,8 @@ def main(domain: str | None, limit: int, do_fetch: bool, dry_run: bool,
 
         content_html, content_text = _extract_from_bronze(html_path, sel)
         if not content_text.strip():
-            # Bronze có nhưng bóc ra rỗng (selector lệch / trang chặn). Vẫn tính là một
-            # lần thử để bài hỏng vĩnh viễn không kẹt lại trong hàng đợi mãi.
+            # Bronze exists but extraction is empty (selector drift or blocked page). It still
+            # counts as an attempt so a permanently broken article does not stay queued.
             stats["empty"] += 1
             if not dry_run:
                 _record_attempt(conn, r, {}, max_attempts)
@@ -390,8 +433,9 @@ def main(domain: str | None, limit: int, do_fetch: bool, dry_run: bool,
         if dry_run:
             continue
 
-        # published_at: nguồn như baodautu chỉ có ngày ở TRANG DETAIL, mà bài deferred
-        # chưa từng qua enrich() → cột rỗng. Khôi phục TỪ BRONZE, không bịa.
+        # published_at: sources such as baodautu expose the date only on the detail page, and
+        # deferred articles never passed enrich(), so the column is empty. Recover it from
+        # Bronze without guessing.
         published = (r["published_at"] or "").strip()
         if not published:
             published = recover_published_at(html_path, dscope)
@@ -402,7 +446,7 @@ def main(domain: str | None, limit: int, do_fetch: bool, dry_run: bool,
 
         meta = json.loads(r["metadata_json"]) if r["metadata_json"] else {}
         meta.pop("detail_deferred", None)
-        meta.pop("capture_retry", None)          # khôi phục xong → xoá sổ theo dõi
+        meta.pop("capture_retry", None)          # recovery done: clear the retry tracking
         meta["backfilled_from_bronze"] = html_path.replace("\\", "/")
         conn.execute(
             "UPDATE articles SET content_html=?, content_text=?, published_at=?, "

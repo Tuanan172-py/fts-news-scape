@@ -1,4 +1,4 @@
-"""Thực thi và điều phối các tác vụ phân tích bài đăng bằng Antigravity CLI."""
+"""Run and orchestrate article analysis tasks through the Antigravity CLI."""
 from __future__ import annotations
 
 import concurrent.futures
@@ -33,18 +33,18 @@ DEFAULT_TIMEOUT_SECONDS = 600
 
 @dataclass
 class AgyExecutionResult:
-    """Kết quả thực thi một lô bài viết qua Antigravity CLI.
+    """Result of running one article batch through the Antigravity CLI.
 
     Attributes:
-        ok: Trạng thái thực thi đạt yêu cầu hay không.
-        batch_id: Mã định danh của lô bài viết.
-        status: Phân loại trạng thái (OK, FATAL, RETRYABLE, QUOTA, TIMEOUT, VIOLATION, PARTIAL, SOFT_FAIL).
-        exit_code: Mã thoát của tiến trình agy.
-        records: Danh sách bản ghi trích xuất thành công.
-        usage: Thông tin số lượng token sử dụng.
-        latency_seconds: Thời gian thực thi tính bằng giây.
-        error_message: Thông điệp lỗi chi tiết nếu có.
-        raw_ref: Đường dẫn tệp phản hồi thô khi lô SOFT_FAIL, để chẩn đoán.
+        ok: Whether the run met the requirements.
+        batch_id: Batch identifier.
+        status: Status class (OK, FATAL, RETRYABLE, QUOTA, TIMEOUT, VIOLATION, PARTIAL, SOFT_FAIL).
+        exit_code: Exit code of the agy process.
+        records: Records extracted successfully.
+        usage: Token usage information.
+        latency_seconds: Run time in seconds.
+        error_message: Detailed error message, if any.
+        raw_ref: Path of the raw response file for a SOFT_FAIL batch, for diagnosis.
     """
 
     ok: bool
@@ -62,17 +62,18 @@ RAW_DUMP_LIMIT = 256 * 1024
 
 
 def dump_raw_response(batch_id: str, stdout_text: str, stderr_text: str, raw_response: str) -> str | None:
-    """Ghi phản hồi thô của một lô thất bại ra `ops_logs/waves/<đợt>/raw/`.
+    """Write the raw response of a failed batch to `ops_logs/waves/<wave>/raw/`.
+
+    Each part is truncated at 256 KB and has secrets redacted.
 
     Args:
-        batch_id: Mã lô, dạng `article_<đợt>_NN`.
-        stdout_text: Đầu ra chuẩn của agy.
-        stderr_text: Đầu ra lỗi của agy.
-        raw_response: Nội dung sự kiện `result`.
+        batch_id: Batch id, in the form `article_<wave>_NN`.
+        stdout_text: Standard output of agy.
+        stderr_text: Standard error of agy.
+        raw_response: Content of the `result` event.
 
     Returns:
-        Đường dẫn tệp đã ghi, hoặc None khi không ghi được. Mỗi phần bị cắt ở 256 KB và
-        đã che bí mật.
+        Path of the file written, or None if writing failed.
     """
     try:
         from src.ops.config import resolve_paths
@@ -86,20 +87,20 @@ def dump_raw_response(batch_id: str, stdout_text: str, stderr_text: str, raw_res
                          for name, text in parts)
         target.write_text(body, encoding="utf-8")
         return str(target)
-    except Exception:  # noqa: BLE001 — chẩn đoán không được làm hỏng lô
+    except Exception:  # noqa: BLE001 - diagnostics must not break the batch
         return None
 
 
 def resolve_agy() -> str:
-    """Tìm đường dẫn tuyệt đối của `agy` trong mọi môi trường chạy.
+    """Find the absolute path of `agy` in any runtime environment.
 
-    PATH của người dùng có thể lưu `%LOCALAPPDATA%\\agy\\bin` ở dạng chưa bung biến. Shell
-    tương tác bung được, còn Task Scheduler thì không, nên `agy` trần báo WinError 2
-    khi chạy dưới `ops_daemon`. Thứ tự tìm: biến `AGY_BIN`, PATH hiện hành, PATH sau
-    khi bung biến môi trường, rồi các vị trí cài đặt đã biết.
+    The user PATH may store `%LOCALAPPDATA%\\agy\\bin` without expanding the variable. An
+    interactive shell expands it but Task Scheduler does not, so a bare `agy` raises
+    WinError 2 under `ops_daemon`. Search order: the `AGY_BIN` variable, the current PATH,
+    PATH after environment-variable expansion, then the known install locations.
 
     Returns:
-        Đường dẫn tới `agy`, hoặc chuỗi `agy` khi không tìm được ở đâu.
+        Path to `agy`, or the string `agy` when it is not found anywhere.
     """
     explicit = os.environ.get("AGY_BIN")
     if explicit and Path(explicit).exists():
@@ -129,22 +130,22 @@ def build_sandbox_profile(
     description: str = "Chuyên gia phân tích tin tức tài chính và trích xuất thực thể",
     instruction_guard: str | None = None,
 ) -> dict[str, Path]:
-    """Khởi tạo cấu hình hồ sơ làm việc cô lập cho Antigravity CLI.
+    """Create the isolated work profile configuration for the Antigravity CLI.
 
     Args:
-        profile_dir: Thư mục gốc chứa hồ sơ worker.
-        core_text: Toàn văn nội dung tiền tố hệ thống của agent.
-        work_dir: Thư mục làm việc rỗng của tiến trình con (nếu có).
-        agent_name: Tên custom agent ghi vào hồ sơ.
-        description: Mô tả ngắn của agent.
-        instruction_guard: Khối quy tắc nối sau thân agent; None dùng quy tắc mảng JSON.
+        profile_dir: Root directory of the worker profile.
+        core_text: Full text of the agent system prefix.
+        work_dir: Empty working directory of the child process, if any.
+        agent_name: Name of the custom agent written to the profile.
+        description: Short description of the agent.
+        instruction_guard: Rule block appended after the agent body; None uses the JSON-array rules.
 
     Returns:
-        Từ điển đường dẫn các tệp cấu hình đã khởi tạo.
+        Dict of the paths of the configuration files created.
     """
     profile_dir.mkdir(parents=True, exist_ok=True)
 
-    # 1. Agent definition toàn cục trong hồ sơ worker
+    # Global agent definition in the worker profile.
     agents_dir = profile_dir / ".gemini" / "config" / "agents"
     agents_dir.mkdir(parents=True, exist_ok=True)
     agent_path = agents_dir / f"{agent_name}.md"
@@ -169,13 +170,13 @@ def build_sandbox_profile(
     agent_content = frontmatter + (core_text or "") + instruction_guard
     agent_path.write_text(agent_content, encoding="utf-8")
 
-    # Nếu có work_dir, đồng bộ thêm vào .agents/agents của workspace con
+    # With a work_dir, also sync into .agents/agents of the child workspace.
     if work_dir is not None:
         work_agents_dir = work_dir / ".agents" / "agents"
         work_agents_dir.mkdir(parents=True, exist_ok=True)
         (work_agents_dir / f"{agent_name}.md").write_text(agent_content, encoding="utf-8")
 
-    # 2. settings.json cô lập hoàn toàn quyền hạn
+    # settings.json with all permissions removed.
     cli_dir = profile_dir / ".gemini" / "antigravity-cli"
     cli_dir.mkdir(parents=True, exist_ok=True)
     settings_path = cli_dir / "settings.json"
@@ -185,7 +186,7 @@ def build_sandbox_profile(
     }
     settings_path.write_text(json.dumps(settings_data, indent=2), encoding="utf-8")
 
-    # 3. hooks.json phòng thủ chặn đứng mọi lượt gọi công cụ
+    # Defensive hooks.json that denies every tool call.
     config_dir = profile_dir / "config"
     config_dir.mkdir(parents=True, exist_ok=True)
     hooks_path = config_dir / "hooks.json"
@@ -208,13 +209,13 @@ def build_sandbox_profile(
 
 
 class AgyRunner:
-    """Điều phối và thực thi các gói tác vụ nhận thức bằng Antigravity CLI.
+    """Orchestrate and run cognitive task packets through the Antigravity CLI.
 
     Attributes:
-        profile_root: Thư mục chứa các hồ sơ sandbox.
-        work_root: Thư mục làm việc rỗng chứa tiến trình con.
-        model: Mã mô hình được ghim.
-        timeout_seconds: Giới hạn thời gian chờ tối đa cho một lượt gọi.
+        profile_root: Directory that holds the sandbox profiles.
+        work_root: Empty working directory for the child processes.
+        model: Pinned model identifier.
+        timeout_seconds: Maximum wait time for one call.
     """
 
     def __init__(
@@ -225,13 +226,13 @@ class AgyRunner:
         model: str = DEFAULT_MODEL,
         timeout_seconds: int = DEFAULT_TIMEOUT_SECONDS,
     ):
-        """Khởi tạo AgyRunner với các cấu hình thư mục cách ly.
+        """Initialize the AgyRunner with isolated directory settings.
 
         Args:
-            profile_root: Thư mục gốc chứa các sandbox profile.
-            work_root: Thư mục làm việc rỗng ngoài kho mã.
-            model: Mã mô hình sử dụng.
-            timeout_seconds: Thời gian tối đa chờ phản hồi.
+            profile_root: Root directory of the sandbox profiles.
+            work_root: Empty working directory outside the code repository.
+            model: Model identifier to use.
+            timeout_seconds: Maximum time to wait for a response.
         """
         local_app = Path(os.environ.get("LOCALAPPDATA", Path.home() / "AppData" / "Local"))
         self.profile_root = profile_root or (local_app / "news-scape" / "agy_profiles")
@@ -251,17 +252,17 @@ class AgyRunner:
         core_text: str | None = None,
         mock_subprocess: Any | None = None,
     ) -> AgyExecutionResult:
-        """Chạy một lô và ghi vết span `agent` khi có ngữ cảnh ghi vết của daemon.
+        """Run one batch and record an `agent` span when the daemon trace context exists.
 
         Args:
-            batch_id: Mã định danh của lô.
-            task_path: Đường dẫn tệp task.json đầu vào.
-            out_dir: Thư mục ghi tệp kết quả đầu ra.
-            core_text: Nội dung quy chuẩn tiền tố hệ thống.
-            mock_subprocess: Đối tượng giả lập gọi lệnh phục vụ kiểm thử.
+            batch_id: Batch identifier.
+            task_path: Path of the input task.json file.
+            out_dir: Directory that receives the output files.
+            core_text: Canonical system prefix text.
+            mock_subprocess: Mock of the command call, for tests.
 
         Returns:
-            Đối tượng AgyExecutionResult chứa trạng thái và số đo chi tiết.
+            AgyExecutionResult with the status and detailed metrics.
         """
         from src.ops import trace as tracing
 
@@ -303,17 +304,17 @@ class AgyRunner:
         core_text: str | None = None,
         mock_subprocess: Any | None = None,
     ) -> AgyExecutionResult:
-        """Thực thi phân tích một lô bài viết và ghi kết quả ra tệp.
+        """Analyze one article batch and write the results to files.
 
         Args:
-            batch_id: Mã định danh của lô.
-            task_path: Đường dẫn tệp task.json đầu vào.
-            out_dir: Thư mục ghi tệp kết quả đầu ra.
-            core_text: Nội dung quy chuẩn tiền tố hệ thống.
-            mock_subprocess: Đối tượng giả lập gọi lệnh phục vụ kiểm thử.
+            batch_id: Batch identifier.
+            task_path: Path of the input task.json file.
+            out_dir: Directory that receives the output files.
+            core_text: Canonical system prefix text.
+            mock_subprocess: Mock of the command call, for tests.
 
         Returns:
-            Đối tượng AgyExecutionResult chứa trạng thái và số đo chi tiết.
+            AgyExecutionResult with the status and detailed metrics.
         """
         start_time = time.time()
         out_dir.mkdir(parents=True, exist_ok=True)
@@ -328,7 +329,7 @@ class AgyRunner:
                 )
             core_text = CORE_PATH.read_text(encoding="utf-8")
 
-        # 1. Đọc nội dung gói công việc đầu vào
+        # Read the input work package.
         try:
             task_content = task_path.read_text(encoding="utf-8")
             task_data = json.loads(task_content)
@@ -341,7 +342,7 @@ class AgyRunner:
                 error_message=f"Lỗi đọc tệp task.json: {exc}",
             )
 
-        # 2. Chuẩn bị thư mục làm việc rỗng và Sandboxed Worker Profile
+        # Prepare the empty working directory and the sandboxed worker profile.
         profile_dir = self.profile_root / batch_id
         work_dir = self.work_root / batch_id
         work_dir.mkdir(parents=True, exist_ok=True)
@@ -373,7 +374,7 @@ class AgyRunner:
             ensure_ascii=False,
         ) + "\n"
 
-        # 4. Thực thi subprocess (kèm tự động thử lại nếu gặp lỗi tạm thời RETRYABLE hoặc 429 QUOTA)
+        # Run the subprocess, retrying automatically on a transient RETRYABLE error or a 429 QUOTA error.
         max_attempts = 3
         for attempt in range(max_attempts):
             if mock_subprocess:
@@ -441,8 +442,8 @@ class AgyRunner:
 
         latency = time.time() - start_time
 
-        # 5. Phân tích kết quả theo Bộ Phân Loại Lỗi 9 Tầng
-        # Tầng 1: Exit code khác 0 hoặc chuỗi AGY_ERROR
+        # Analyze the result with the 9-level error classification.
+        # Level 1: non-zero exit code or the AGY_ERROR string.
         if return_code != 0 or "AGY_ERROR" in (stderr_text or ""):
             err_lower = (stderr_text or "").lower()
             if "429" in err_lower or "resource_exhausted" in err_lower or "quota" in err_lower:
@@ -479,7 +480,7 @@ class AgyRunner:
                 error_message=f"Tiến trình agy thất bại: {stderr_text[:300]}",
             )
 
-        # Tầng 2: Kiểm tra timeout âm thầm trong stderr
+        # Level 2: silent timeout reported in stderr.
         if "print timeout" in (stderr_text or "").lower():
             return AgyExecutionResult(
                 ok=False,
@@ -490,7 +491,7 @@ class AgyRunner:
                 error_message="Mô hình hết thời gian in chuỗi văn bản.",
             )
 
-        # Tầng 3, 4, 5, 6: Đọc các sự kiện NDJSON từ stdout
+        # Levels 3-6: read the NDJSON events from stdout.
         events: list[dict[str, Any]] = []
         raw_response = ""
         usage_data: dict[str, int] = {}
@@ -507,7 +508,7 @@ class AgyRunner:
                 ev_type = ev.get("type") or ev.get("event")
                 if ev_type == "init":
                     init_data = ev.get("init") or ev.get("data", {})
-                    # Kiểm tra mô hình ghim
+                    # Check the pinned model.
                     if init_data.get("model") and self.model not in init_data.get("model", ""):
                         return AgyExecutionResult(
                             ok=False,
@@ -529,7 +530,7 @@ class AgyRunner:
             except json.JSONDecodeError:
                 continue
 
-        # Tầng 7-8: bóc vỏ và kiểm hợp đồng bằng bộ kiểm dùng chung mọi provider
+        # Levels 7-8: unwrap and validate the contract with the validator shared by all providers.
         parsed = validate_response(raw_response or stdout_text, packet_items)
         json_salvage_error: Exception | None = None
         if parsed.counters.get("raw_records", 0) == 0:
@@ -538,7 +539,7 @@ class AgyRunner:
         contract_meta = result_meta(parsed)
         domain_errors = contract_meta["domain_errors"]
 
-        # Tầng 5: Kiểm tra vi phạm gọi công cụ
+        # Level 5: check for tool-call violations.
         tool_warning: str | None = None
         if tool_invoked or denied_actions:
             if valid_recs:
@@ -567,11 +568,11 @@ class AgyRunner:
         else:
             status = "OK"
 
-        # 6. Ghi an toàn tệp kết quả ra đĩa
+        # Write the result files to disk safely.
         output_file = out_dir / f"{batch_id}.output.json"
         meta_file = out_dir / f"{batch_id}.meta.json"
 
-        # Tệp output ghi dưới dạng mảng JSON thuần túy để tương thích với article_expand
+        # The output file is a plain JSON array, compatible with article_expand.
         safe_atomic_write(output_file, json.dumps(valid_recs, ensure_ascii=False, indent=1))
 
         meta_info = {
@@ -612,15 +613,15 @@ class AgyRunner:
         *,
         concurrency: int = 2,
     ) -> dict[str, Any]:
-        """Chạy toàn bộ các lô bài viết trong một đợt phân tích song song.
+        """Run all article batches of a wave in parallel.
 
         Args:
-            manifest_data: Dữ liệu tệp manifest wave_<wave>.json.
-            out_dir: Thư mục lưu trữ kết quả đầu ra.
-            concurrency: Số tiến trình chạy song song tối đa (mặc định 2).
+            manifest_data: Content of the manifest file wave_<wave>.json.
+            out_dir: Directory that receives the output files.
+            concurrency: Maximum number of parallel workers.
 
         Returns:
-            Báo cáo tổng hợp kết quả của cả đợt.
+            Summary report of the whole wave.
         """
         batches = manifest_data.get("batches", [])
         wave = manifest_data.get("wave", "unknown")

@@ -1,4 +1,4 @@
-"""Xuất báo cáo giám sát tổng hợp vận hành hệ thống theo ngày."""
+"""Export the aggregated daily monitoring report of system operations."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ import json
 import sys
 from pathlib import Path
 
-# Đảm bảo import được src
+# Make the src package importable.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.core.stdio import force_utf8_stdio
@@ -17,6 +17,14 @@ force_utf8_stdio()
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Run the daily monitor report CLI.
+
+    Args:
+        argv: Command-line arguments without the program name; defaults to `sys.argv`.
+
+    Returns:
+        Process exit code, always 0.
+    """
     parser = argparse.ArgumentParser(description="News-Scape Daily & Time-sliced Monitor Report")
     parser.add_argument("--date", default="today", help="Mốc ngày (YYYY-MM-DD, today, yesterday, all). Mặc định: today")
     parser.add_argument("--days", type=int, default=0, help="Số ngày quét lùi (ví dụ: 7 = 7 ngày gần nhất tính từ --date)")

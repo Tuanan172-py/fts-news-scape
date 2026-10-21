@@ -1,4 +1,4 @@
-"""Ghi KPI từng tác nhân của một đợt vào `agent_metrics` của harness, tính từ vết."""
+"""Record per-agent KPIs of a wave into the harness `agent_metrics` table, computed from traces."""
 
 from __future__ import annotations
 
@@ -23,14 +23,14 @@ CREATE TABLE IF NOT EXISTS agent_metrics (
 
 
 def wave_numbers(store: OpsStore, wave_id: str) -> dict:
-    """Tính các số đo của một đợt từ ops_spans.
+    """Compute the measurements of a wave from ops_spans.
 
     Args:
-        store: Store vận hành.
-        wave_id: Mã đợt.
+        store: Operations store.
+        wave_id: Wave identifier.
 
     Returns:
-        Từ điển: tổng bài, bài nhận được sau lượt đầu và cuối cùng, token từng pha.
+        Dict with the article total, articles received after the first and last passes, and tokens per phase.
     """
     with store.conn() as c:
         steps = c.execute("SELECT name, attrs_json FROM ops_spans WHERE trace_id = ? AND kind = 'step' "
@@ -59,16 +59,16 @@ def wave_numbers(store: OpsStore, wave_id: str) -> dict:
 
 
 def record_wave(paths: OpsPaths, store: OpsStore, wave_id: str, status: str) -> int:
-    """Ghi một dòng `agent_metrics` cho mỗi tác nhân tham gia đợt.
+    """Write one `agent_metrics` row for each agent that took part in the wave.
 
     Args:
-        paths: Đường dẫn vận hành (chứa `harness_db`).
-        store: Store vận hành.
-        wave_id: Mã đợt.
-        status: Trạng thái cuối của đợt.
+        paths: Operations paths (holding `harness_db`).
+        store: Operations store.
+        wave_id: Wave identifier.
+        status: Final wave status.
 
     Returns:
-        Số dòng đã ghi.
+        Number of rows written.
     """
     n = wave_numbers(store, wave_id)
     total = n["total"]

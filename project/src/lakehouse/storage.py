@@ -1,4 +1,4 @@
-"""Tầng trừu tượng hóa giao diện lưu trữ cho kiến trúc Lakehouse Data Plane."""
+"""Abstract the storage interface of the Lakehouse Data Plane architecture."""
 
 from __future__ import annotations
 
@@ -11,98 +11,101 @@ from typing import BinaryIO, Callable, Optional
 
 
 class BaseStorageAdapter(ABC):
-    """Lớp cơ sở trừu tượng cho các hệ thống lưu trữ tệp tin."""
+    """Abstract base class for file storage systems."""
 
     @abstractmethod
     def list_files(self, pattern: str) -> list[str]:
-        """Liệt kê danh sách đường dẫn tệp tin khớp với mẫu tìm kiếm.
+        """List the file paths that match a pattern.
 
         Args:
-            pattern: Chuỗi mẫu khớp đường dẫn (vd: 'dropzone/*/*/*/*.parquet').
+            pattern: Path pattern (for example 'dropzone/*/*/*/*.parquet').
 
         Returns:
-            Danh sách đường dẫn tương đối của các tệp tin tìm thấy.
+            Relative paths of the files found.
         """
 
     @abstractmethod
     def read_bytes(self, path: str) -> bytes:
-        """Đọc toàn bộ nội dung tệp tin dưới dạng chuỗi byte.
+        """Read the whole file content as bytes.
 
         Args:
-            path: Đường dẫn tương đối của tệp tin cần đọc.
+            path: Relative path of the file to read.
 
         Returns:
-            Dữ liệu byte nguyên bản của tệp tin.
+            Raw bytes of the file.
 
         Raises:
-            FileNotFoundError: Khi tệp tin không tồn tại trong kho lưu trữ.
+            FileNotFoundError: If the file does not exist in the store.
         """
 
     @abstractmethod
     def write_atomic(self, path: str, data: bytes) -> str:
-        """Ghi dữ liệu nguyên tử vào kho lưu trữ bằng cơ chế staging an toàn.
+        """Write data atomically to the store through safe staging.
 
         Args:
-            path: Đường dẫn tương đối của tệp tin đích cần ghi.
-            data: Dữ liệu byte cần ghi xuống kho lưu trữ.
+            path: Relative path of the target file.
+            data: Bytes to write to the store.
 
         Returns:
-            Đường dẫn tương đối của tệp tin thực tế đã được lưu.
+            Relative path of the file actually saved.
 
         Raises:
-            IOError: Khi thao tác ghi tệp tin thất bại.
+            IOError: If the write fails.
         """
 
     @abstractmethod
     def exists(self, path: str) -> bool:
-        """Kiểm tra sự tồn tại của tệp tin hoặc thư mục trong kho lưu trữ.
+        """Check whether a file or directory exists in the store.
 
         Args:
-            path: Đường dẫn tương đối cần kiểm tra.
+            path: Relative path to check.
 
         Returns:
-            True nếu tệp tin hoặc thư mục tồn tại, ngược lại False.
+            True if the file or directory exists, otherwise False.
         """
 
     def delete(self, path: str) -> bool:
-        """Xóa tệp tin khỏi kho lưu trữ.
+        """Delete a file from the store.
 
         Args:
-            path: Đường dẫn tương đối của tệp tin cần xóa.
+            path: Relative path of the file to delete.
 
         Returns:
-            True nếu tệp tin đã được xóa thành công, ngược lại False.
+            True if the file was deleted, otherwise False.
+
+        Raises:
+            NotImplementedError: If the adapter does not implement deletion.
         """
         raise NotImplementedError("Phương thức delete chưa được cài đặt.")
 
     def get_local_path(self, path: str) -> Optional[Path]:
-        """Lấy đường dẫn tệp tin trên hệ thống tập tin cục bộ nếu được hỗ trợ.
+        """Return the local file system path of a file when supported.
 
         Args:
-            path: Đường dẫn tương đối cần truy xuất.
+            path: Relative path to resolve.
 
         Returns:
-            Đối tượng Path nếu hỗ trợ truy cập cục bộ, ngược lại None.
+            Path object if local access is supported, otherwise None.
         """
         return None
 
 
 class LocalOneDriveStorageAdapter(BaseStorageAdapter):
-    """Adapter lưu trữ thao tác trên hệ thống tệp tin cục bộ và thư mục đồng bộ OneDrive.
+    """Storage adapter for the local file system and the OneDrive sync folder.
 
     Attributes:
-        root_dir: Đường dẫn thư mục gốc của kho dữ liệu Lakehouse.
+        root_dir: Root directory of the Lakehouse data store.
     """
 
     @staticmethod
     def _strip_extended_prefix(path: Path) -> Path:
-        """Loại bỏ tiền tố extended-path trên Windows nếu có.
+        """Remove the Windows extended-path prefix if present.
 
         Args:
-            path: Đường dẫn cần chuẩn hóa.
+            path: Path to normalize.
 
         Returns:
-            Đường dẫn Path đã loại bỏ tiền tố mở rộng.
+            Path without the extended prefix.
         """
         s = str(path)
         if s.startswith(("\\\\?\\", "//?/")):
@@ -110,26 +113,26 @@ class LocalOneDriveStorageAdapter(BaseStorageAdapter):
         return path
 
     def _to_rel_posix(self, path: Path) -> str:
-        """Chuyển đổi đường dẫn tuyệt đối sang đường dẫn tương đối chuẩn POSIX.
+        """Convert an absolute path to a POSIX-style relative path.
 
         Args:
-            path: Đường dẫn tuyệt đối cần tính tương đối.
+            path: Absolute path to make relative.
 
         Returns:
-            Chuỗi đường dẫn tương đối dạng chuẩn POSIX.
+            Relative path string in POSIX form.
         """
         norm_target = self._strip_extended_prefix(path)
         norm_root = self._strip_extended_prefix(self.root_dir)
         return norm_target.relative_to(norm_root).as_posix()
 
     def __init__(self, root_dir: str | Path) -> None:
-        """Khởi tạo adapter lưu trữ cục bộ.
+        """Initialize the local storage adapter.
 
         Args:
-            root_dir: Thư mục gốc dùng làm kho lưu trữ dữ liệu.
+            root_dir: Root directory used as the data store.
 
         Raises:
-            PermissionError: Khi thư mục gốc trỏ vào site chính thức bị cấm theo ADR-0023.
+            PermissionError: If the root directory points to the official site, which ADR-0023 forbids.
         """
         from src.export.publisher import is_official_target
 
@@ -143,31 +146,31 @@ class LocalOneDriveStorageAdapter(BaseStorageAdapter):
         self.root_dir.mkdir(parents=True, exist_ok=True)
 
     def _resolve(self, rel_path: str) -> Path:
-        """Chuyển đổi đường dẫn tương đối thành đường dẫn tuyệt đối an toàn.
+        """Convert a relative path to a safe absolute path.
 
         Args:
-            rel_path: Đường dẫn tương đối cần xử lý.
+            rel_path: Relative path to resolve.
 
         Returns:
-            Đường dẫn tuyệt đối bên trong thư mục gốc.
+            Absolute path inside the root directory.
         """
         clean_rel = rel_path.replace("\\", "/").lstrip("/")
         return self._strip_extended_prefix((self.root_dir / clean_rel).resolve())
 
     def list_files(self, pattern: str) -> list[str]:
-        """Liệt kê danh sách đường dẫn tệp tin khớp với mẫu tìm kiếm.
+        """List the file paths that match a pattern.
 
         Args:
-            pattern: Chuỗi mẫu khớp đường dẫn dạng glob.
+            pattern: Glob-style path pattern.
 
         Returns:
-            Danh sách đường dẫn tương đối dạng chuẩn POSIX của các tệp tin.
+            Relative POSIX-style paths of the files.
         """
         clean_pat = pattern.replace("\\", "/").lstrip("/")
         results: list[str] = []
         for p in self.root_dir.glob(clean_pat):
             if p.is_file():
-                # Bỏ qua các tệp tạm thời và tệp dở dang
+                # Skip temporary and incomplete files.
                 if p.name.endswith((".partial", ".tmp")):
                     continue
                 results.append(self._to_rel_posix(p))
@@ -175,16 +178,16 @@ class LocalOneDriveStorageAdapter(BaseStorageAdapter):
         return results
 
     def read_bytes(self, path: str) -> bytes:
-        """Đọc toàn bộ nội dung tệp tin dưới dạng chuỗi byte qua stream an toàn.
+        """Read the whole file content as bytes through a safe stream.
 
         Args:
-            path: Đường dẫn tương đối của tệp tin cần đọc.
+            path: Relative path of the file to read.
 
         Returns:
-            Dữ liệu byte nguyên bản của tệp tin.
+            Raw bytes of the file.
 
         Raises:
-            FileNotFoundError: Khi tệp tin không tồn tại.
+            FileNotFoundError: If the file does not exist.
         """
         target = self._resolve(path)
         if not target.exists():
@@ -193,22 +196,19 @@ class LocalOneDriveStorageAdapter(BaseStorageAdapter):
             return f.read()
 
     def write_atomic(self, path: str, data: bytes) -> str:
-        """Ghi dữ liệu nguyên tử ra đĩa qua quy trình staging, fsync và os.replace.
+        """Write data atomically to disk through staging, fsync and os.replace.
 
         Args:
-            path: Đường dẫn tương đối của tệp tin đích.
-            data: Dữ liệu byte cần ghi xuống đĩa.
+            path: Relative path of the target file.
+            data: Bytes to write to disk.
 
         Returns:
-            Đường dẫn tương đối của tệp tin đã ghi thành công.
-
-        Raises:
-            PermissionError: Khi tệp tin bị khóa độc quyền và không thể thay thế.
+            Relative path of the file written.
         """
         target = self._resolve(path)
         target.parent.mkdir(parents=True, exist_ok=True)
 
-        # Kiểm tra nội dung byte nếu file đích đã tồn tại để tránh kích hoạt sync thừa
+        # Compare the bytes when the target exists to avoid triggering a redundant sync.
         if target.exists():
             try:
                 if target.stat().st_size == len(data):
@@ -219,7 +219,7 @@ class LocalOneDriveStorageAdapter(BaseStorageAdapter):
             except Exception:
                 pass
 
-        # Bước 1: Ghi ra tệp tạm duy nhất .partial trong cùng thư mục
+        # Step 1: write to a unique .partial temp file in the same directory.
         unique_token = f"{os.getpid()}_{uuid.uuid4().hex[:8]}"
         tmp_path = target.parent / f"{target.stem}_{unique_token}{target.suffix}.partial"
 
@@ -227,14 +227,14 @@ class LocalOneDriveStorageAdapter(BaseStorageAdapter):
             with open(tmp_path, "wb") as f:
                 f.write(data)
                 f.flush()
-                # Bước 2: Bảo đảm dữ liệu được xả hoàn toàn xuống đĩa cứng
+                # Step 2: flush the data fully to disk.
                 os.fsync(f.fileno())
 
-            # Bước 3: Thay thế nguyên tử vào tệp đích
+            # Step 3: replace the target atomically.
             os.replace(tmp_path, target)
             return self._to_rel_posix(target)
         except PermissionError:
-            # Fallback lưu bản ghi snapshot nếu tệp đích bị khóa độc quyền bởi tiến trình khác
+            # Fallback: save a snapshot copy when another process holds an exclusive lock on the target.
             from datetime import datetime, timezone
             ts = datetime.now(timezone.utc).strftime("%H%M%S")
             fallback_target = target.parent / f"{target.stem}_{ts}{target.suffix}"
@@ -248,24 +248,24 @@ class LocalOneDriveStorageAdapter(BaseStorageAdapter):
                     pass
 
     def exists(self, path: str) -> bool:
-        """Kiểm tra sự tồn tại của tệp tin hoặc thư mục.
+        """Check whether a file or directory exists.
 
         Args:
-            path: Đường dẫn tương đối cần kiểm tra.
+            path: Relative path to check.
 
         Returns:
-            True nếu đường dẫn tồn tại trên đĩa, ngược lại False.
+            True if the path exists on disk, otherwise False.
         """
         return self._resolve(path).exists()
 
     def delete(self, path: str) -> bool:
-        """Xóa tệp tin khỏi thư mục gốc.
+        """Delete a file from the root directory.
 
         Args:
-            path: Đường dẫn tương đối của tệp tin cần xóa.
+            path: Relative path of the file to delete.
 
         Returns:
-            True nếu tệp tin được xóa thành công, ngược lại False.
+            True if the file was deleted, otherwise False.
         """
         target = self._resolve(path)
         if target.is_file():
@@ -274,25 +274,25 @@ class LocalOneDriveStorageAdapter(BaseStorageAdapter):
         return False
 
     def get_local_path(self, path: str) -> Optional[Path]:
-        """Lấy đường dẫn tuyệt đối trên hệ thống tập tin cục bộ.
+        """Return the absolute path on the local file system.
 
         Args:
-            path: Đường dẫn tương đối trong kho dữ liệu.
+            path: Relative path in the data store.
 
         Returns:
-            Đối tượng Path tương ứng trên máy tính.
+            Corresponding Path on the machine.
         """
         return self._resolve(path)
 
 
 class GraphApiStorageAdapter(BaseStorageAdapter):
-    """Adapter lưu trữ kết nối Microsoft Graph API cho SharePoint Sandbox.
+    """Storage adapter that connects to the Microsoft Graph API for the SharePoint Sandbox.
 
     Attributes:
-        tenant_id: Mã định danh thuê bao Azure AD.
-        client_id: Mã định danh ứng dụng Entra ID.
-        client_secret: Khóa bí mật xác thực ứng dụng.
-        drive_id: Mã định danh thư viện tài liệu SharePoint.
+        tenant_id: Azure AD tenant identifier.
+        client_id: Entra ID application identifier.
+        client_secret: Application authentication secret.
+        drive_id: SharePoint document library identifier.
     """
 
     def __init__(
@@ -302,13 +302,13 @@ class GraphApiStorageAdapter(BaseStorageAdapter):
         client_secret: str = "",
         drive_id: str = "",
     ) -> None:
-        """Khởi tạo adapter kết nối Microsoft Graph API.
+        """Initialize the Microsoft Graph API adapter.
 
         Args:
-            tenant_id: Mã định danh thuê bao Azure AD.
-            client_id: Mã định danh ứng dụng Entra ID.
-            client_secret: Khóa bí mật xác thực ứng dụng.
-            drive_id: Mã định danh thư viện tài liệu SharePoint.
+            tenant_id: Azure AD tenant identifier.
+            client_id: Entra ID application identifier.
+            client_secret: Application authentication secret.
+            drive_id: SharePoint document library identifier.
         """
         self.tenant_id = tenant_id
         self.client_id = client_id
@@ -316,53 +316,65 @@ class GraphApiStorageAdapter(BaseStorageAdapter):
         self.drive_id = drive_id
 
     def list_files(self, pattern: str) -> list[str]:
-        """Liệt kê danh sách tệp tin qua Microsoft Graph API endpoint.
+        """List files through the Microsoft Graph API endpoint.
 
         Args:
-            pattern: Chuỗi mẫu khớp đường dẫn tìm kiếm.
+            pattern: Path pattern to search.
+
+        Returns:
+            Relative paths of the files found.
 
         Raises:
-            NotImplementedError: Khi chưa được cấu hình thông tin định danh IT.
+            NotImplementedError: Always, until the IT credentials are configured.
         """
         raise NotImplementedError(
             "GraphApiStorageAdapter yêu cầu thông tin xác thực ứng dụng Azure AD từ IT."
         )
 
     def read_bytes(self, path: str) -> bytes:
-        """Tải nội dung tệp tin từ SharePoint qua Graph API.
+        """Download file content from SharePoint through the Graph API.
 
         Args:
-            path: Đường dẫn tệp tin trên SharePoint.
+            path: File path on SharePoint.
+
+        Returns:
+            Raw bytes of the file.
 
         Raises:
-            NotImplementedError: Khi chưa được cấu hình thông tin định danh IT.
+            NotImplementedError: Always, until the IT credentials are configured.
         """
         raise NotImplementedError(
             "GraphApiStorageAdapter yêu cầu thông tin xác thực ứng dụng Azure AD từ IT."
         )
 
     def write_atomic(self, path: str, data: bytes) -> str:
-        """Tải lên tệp tin lên SharePoint qua Graph API session.
+        """Upload a file to SharePoint through a Graph API session.
 
         Args:
-            path: Đường dẫn tệp tin đích trên SharePoint.
-            data: Dữ liệu byte cần tải lên.
+            path: Target file path on SharePoint.
+            data: Bytes to upload.
+
+        Returns:
+            Path of the file saved.
 
         Raises:
-            NotImplementedError: Khi chưa được cấu hình thông tin định danh IT.
+            NotImplementedError: Always, until the IT credentials are configured.
         """
         raise NotImplementedError(
             "GraphApiStorageAdapter yêu cầu thông tin xác thực ứng dụng Azure AD từ IT."
         )
 
     def exists(self, path: str) -> bool:
-        """Kiểm tra sự tồn tại của tệp tin trên SharePoint qua Graph API.
+        """Check whether a file exists on SharePoint through the Graph API.
 
         Args:
-            path: Đường dẫn tệp tin cần kiểm tra.
+            path: File path to check.
+
+        Returns:
+            True if the file exists, otherwise False.
 
         Raises:
-            NotImplementedError: Khi chưa được cấu hình thông tin định danh IT.
+            NotImplementedError: Always, until the IT credentials are configured.
         """
         raise NotImplementedError(
             "GraphApiStorageAdapter yêu cầu thông tin xác thực ứng dụng Azure AD từ IT."

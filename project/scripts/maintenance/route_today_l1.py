@@ -1,4 +1,4 @@
-"""Script chay dinh tuyen L1 va xuat mini-batches cho ngay 2026-09-15."""
+"""Route L1 tasks and export mini-batches for the day 2026-09-15."""
 from __future__ import annotations
 
 import json
@@ -20,6 +20,7 @@ from src.db.store import ArticleStore
 force_utf8_stdio()
 
 def run_route():
+    """Route unrouted articles of 2026-09-15 through L1 and pack the agent batches."""
     db_path = load_settings()["database"]["path"]
     store = ArticleStore(db_path=db_path)
     reg = load_registry()

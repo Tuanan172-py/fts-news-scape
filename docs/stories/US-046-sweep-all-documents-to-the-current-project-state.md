@@ -2,7 +2,7 @@
 id: US-046
 type: story
 title: Sweep all documents to the current project state
-status: in_progress
+status: deferred
 lane: normal
 branch: dev/us038
 created: 2026-10-21
@@ -50,3 +50,5 @@ After this story no current document contradicts the code or ADR-0026. Supersede
 ## Evidence
 
 - Stale-term grep over current docs for `users_output`, `entities/manifest.yaml`, `L2/L3`, `ADR-0020` found only the items fixed here and historical files.
+
+<!-- Parked 2026-10-21: WIP yielded to US-047 (docstring standardization) on the same worktree; resume to in_progress when US-047 closes. -->

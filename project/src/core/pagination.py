@@ -1,4 +1,4 @@
-"""Phân trang theo watermark: đọc tiếp tới khi gặp trang toàn bài đã có trong kho."""
+"""Paginate by watermark, reading on until a page contains only articles already in the store."""
 
 from __future__ import annotations
 
@@ -17,19 +17,19 @@ def paginate_until_known(
     errors: list[str] | None = None,
     label: str = "",
 ) -> list[dict]:
-    """Đọc từng trang listing cho tới khi cả trang đều đã ở trạng thái captured.
+    """Read listing pages until every item on a page is already captured.
 
     Args:
-        fetch_page: Hàm nhận số trang (từ 1), trả danh sách mục, rỗng khi hết trang, None khi lỗi.
-        key_of: Hàm trả khoá bài của một mục, dùng để tra sổ phát hiện.
-        known: Hàm nhận danh sách khoá và trả tập khoá đã captured.
-        min_pages: Số trang tối thiểu luôn đọc, kể cả khi trang đầu toàn bài đã biết.
-        max_pages: Trần an toàn số trang mỗi lượt.
-        errors: Danh sách lỗi của scraper; hàm ghi thêm khi lỗi trang hoặc chạm trần.
-        label: Nhãn nguồn hoặc chuyên mục để ghi vào thông điệp lỗi.
+        fetch_page: Callable taking a 1-based page number; returns the page items, an empty list past the last page, or None on error.
+        key_of: Callable returning the article key of an item, used to look up the discovery ledger.
+        known: Callable taking a list of keys and returning the subset already captured.
+        min_pages: Minimum number of pages always read, even if the first page holds only known articles.
+        max_pages: Safety cap on pages per run.
+        errors: Scraper error list; a page failure or hitting the cap appends a message.
+        label: Source or section label included in error messages.
 
     Returns:
-        Các mục đã đọc, theo thứ tự trang.
+        Items read, in page order.
     """
     out: list[dict] = []
     for page in range(1, max_pages + 1):

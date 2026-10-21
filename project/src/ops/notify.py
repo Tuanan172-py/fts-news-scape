@@ -1,4 +1,4 @@
-"""Gửi cảnh báo qua Telegram từ outbox và ping dead-man healthchecks."""
+"""Deliver outbox alerts through Telegram and ping the dead-man healthcheck."""
 
 from __future__ import annotations
 
@@ -17,19 +17,20 @@ TELEGRAM_LIMIT = 4000
 
 
 class TelegramClient:
-    """Client tối giản cho Telegram Bot API dùng long polling.
+    """Minimal client for the Telegram Bot API using long polling.
 
     Attributes:
-        token: Token của bot.
-        base: URL gốc của API.
+        token: Bot token.
+        base: Base URL of the API.
+        session: HTTP session used for requests.
     """
 
     def __init__(self, token: str, *, session: requests.Session | None = None) -> None:
-        """Tạo client.
+        """Create the client.
 
         Args:
-            token: Token của bot.
-            session: Phiên HTTP dùng lại, tiện cho kiểm thử.
+            token: Bot token.
+            session: Reusable HTTP session, convenient in tests.
         """
         self.token = token
         self.base = f"https://api.telegram.org/bot{token}"
@@ -39,7 +40,7 @@ class TelegramClient:
         try:
             resp = self.session.post(f"{self.base}/{method}", json=payload, timeout=timeout)
         except requests.RequestException as exc:
-            # Thông điệp lỗi của requests chứa URL, tức chứa token bot.
+            # The requests error message contains the URL, which contains the bot token.
             raise RuntimeError(f"Telegram {method}: {type(exc).__name__}: "
                                f"{redact(str(exc))}") from None
         data = resp.json()
@@ -50,16 +51,16 @@ class TelegramClient:
     def send(self, chat_id: str, text: str, *,
              buttons: list[list[tuple[str, str]]] | None = None,
              silent: bool = False) -> int:
-        """Gửi tin nhắn văn bản thuần, kèm nút bấm nếu có.
+        """Send a plain-text message, with buttons when given.
 
         Args:
-            chat_id: Mã cuộc trò chuyện.
-            text: Nội dung, cắt ở 4000 ký tự.
-            buttons: Hàng nút [[(nhãn, lệnh), ...]]; lệnh đi vào callback_data.
-            silent: Gửi không âm thanh.
+            chat_id: Chat identifier.
+            text: Message body, truncated at 4000 characters.
+            buttons: Button rows [[(label, command), ...]]; the command goes into callback_data.
+            silent: Send without notification sound.
 
         Returns:
-            Mã tin nhắn.
+            Message identifier.
         """
         payload: dict[str, Any] = {"chat_id": chat_id, "text": text[:TELEGRAM_LIMIT],
                                    "disable_notification": silent,
@@ -71,38 +72,38 @@ class TelegramClient:
         return int(self._call("sendMessage", payload)["message_id"])
 
     def get_updates(self, offset: int, timeout: int = 25) -> list[dict[str, Any]]:
-        """Lấy cập nhật mới bằng long polling.
+        """Fetch new updates by long polling.
 
         Args:
-            offset: Mã cập nhật kế tiếp cần lấy.
-            timeout: Số giây giữ kết nối.
+            offset: Identifier of the next update to fetch.
+            timeout: Seconds to hold the connection.
 
         Returns:
-            Danh sách cập nhật.
+            List of updates.
         """
         return self._call("getUpdates", {"offset": offset, "timeout": timeout,
                                          "allowed_updates": ["message", "callback_query"]},
                           timeout=timeout + 10) or []
 
     def answer_callback(self, callback_id: str, text: str = "") -> None:
-        """Xác nhận đã nhận một lượt bấm nút.
+        """Acknowledge receipt of a button press.
 
         Args:
-            callback_id: Mã callback_query.
-            text: Thông báo ngắn hiện trên máy người bấm.
+            callback_id: callback_query identifier.
+            text: Short notice shown on the device of the user who pressed.
         """
         self._call("answerCallbackQuery", {"callback_query_id": callback_id,
                                            "text": text[:200]})
 
 
 def format_alert(row: Any) -> str:
-    """Dựng nội dung tin nhắn cho một cảnh báo.
+    """Build the message text for one alert.
 
     Args:
-        row: Hàng `ops_alerts`.
+        row: `ops_alerts` row.
 
     Returns:
-        Văn bản tin nhắn.
+        Message text.
     """
     sev = row["severity"]
     text = row["text"]
@@ -115,20 +116,20 @@ def format_alert(row: Any) -> str:
 
 def drain_alerts(store: OpsStore, client: TelegramClient | None, chat_ids: list[str],
                  *, limit: int = 20, max_age_hours: float = 6) -> tuple[int, int]:
-    """Gửi các cảnh báo chưa gửi; lỗi thì giữ lại để lần sau gửi tiếp.
+    """Send unsent alerts; on failure keep them for the next attempt.
 
-    Cảnh báo cũ hơn `max_age_hours` được đánh dấu hết hạn thay vì gửi, để lần đầu nối
-    Telegram hoặc sau một đợt mất mạng dài không xả cả loạt tin đã lỗi thời.
+    An alert older than `max_age_hours` is marked expired instead of sent, so the first
+    Telegram connection or a long network outage does not flush a batch of stale messages.
 
     Args:
-        store: Store vận hành.
-        client: Client Telegram, None khi chưa cấu hình.
-        chat_ids: Danh sách mã cuộc trò chuyện nhận cảnh báo.
-        limit: Số cảnh báo tối đa mỗi lượt.
-        max_age_hours: Tuổi tối đa của cảnh báo còn được gửi.
+        store: Operations store.
+        client: Telegram client, None when not configured.
+        chat_ids: Chat identifiers that receive alerts.
+        limit: Maximum number of alerts per pass.
+        max_age_hours: Maximum age of an alert that may still be sent.
 
     Returns:
-        Cặp (số đã gửi, số lỗi).
+        Pair (number sent, number failed).
     """
     if client is None or not chat_ids:
         return 0, 0
@@ -145,7 +146,7 @@ def drain_alerts(store: OpsStore, client: TelegramClient | None, chat_ids: list[
             for chat in chat_ids:
                 client.send(chat, format_alert(row), buttons=buttons,
                             silent=row["severity"] in SILENT_SEVERITIES)
-        except Exception as exc:  # noqa: BLE001 — mạng chập chờn, giữ trong outbox
+        except Exception as exc:  # noqa: BLE001 — flaky network: keep the alert in the outbox
             store.mark_alert(row["id"], sent=False, error=str(exc)[:300])
             failed += 1
             break
@@ -156,16 +157,16 @@ def drain_alerts(store: OpsStore, client: TelegramClient | None, chat_ids: list[
 
 def ping_healthcheck(url: str | None, suffix: str = "", body: str = "",
                      *, session: requests.Session | None = None) -> bool:
-    """Ping dead-man ngoài máy; lỗi mạng không làm hỏng daemon.
+    """Ping the off-machine dead-man check; a network error does not break the daemon.
 
     Args:
-        url: URL ping của healthchecks.io (hoặc Uptime Kuma push).
-        suffix: `""`, `/start` hoặc `/fail`.
-        body: Nội dung đính kèm, cắt ở 10 KB.
-        session: Phiên HTTP dùng lại.
+        url: Ping URL of healthchecks.io (or an Uptime Kuma push).
+        suffix: `""`, `/start` or `/fail`.
+        body: Attached body, truncated at 10 KB.
+        session: Reusable HTTP session.
 
     Returns:
-        True khi ping thành công.
+        True when the ping succeeded.
     """
     if not url:
         return False

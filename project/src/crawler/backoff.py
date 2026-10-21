@@ -1,4 +1,4 @@
-"""Cơ chế giãn cách lũy thừa (exponential backoff) cấp độ nguồn tin khi gặp hiện tượng nghẽn mạng."""
+"""Apply per-source exponential backoff when a site signals throttling."""
 
 from __future__ import annotations
 
@@ -11,9 +11,10 @@ _BACKOFF_STEPS = (2.0, 4.0, 8.0, 16.0)
 
 
 class SourceBackoff:
-    """Quản lý thời gian giãn cách yêu cầu độc lập theo từng tên miền (Thread-safe)."""
+    """Track request spacing independently per domain (thread-safe)."""
 
     def __init__(self):
+        """Create an empty backoff state."""
         self._state: dict[str, dict] = {}
         self._lock = threading.Lock()
 
@@ -22,10 +23,10 @@ class SourceBackoff:
         return _BACKOFF_STEPS[idx]
 
     def before_fetch(self, domain: str) -> None:
-        """Tạm dừng luồng nếu tên miền đang trong khoảng thời gian hạ nhiệt.
+        """Pause the thread if the domain is in its cool-down period.
 
         Args:
-            domain: Tên miền chuẩn bị gửi yêu cầu.
+            domain: Domain about to receive a request.
         """
         with self._lock:
             st = self._state.get(domain)
@@ -36,11 +37,11 @@ class SourceBackoff:
             time.sleep(remaining)
 
     def observe(self, domain: str, status: int | None) -> None:
-        """Ghi nhận mã trạng thái phản hồi HTTP để cập nhật thời gian hạ nhiệt.
+        """Record an HTTP response status to update the cool-down time.
 
         Args:
-            domain: Tên miền nhận phản hồi.
-            status: Mã trạng thái HTTP nhận được.
+            domain: Domain that answered.
+            status: HTTP status code received.
         """
         with self._lock:
             st = self._state.setdefault(

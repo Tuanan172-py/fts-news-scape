@@ -1,4 +1,4 @@
-"""Kiểm tra tỷ lệ đạt chuẩn chất lượng dữ liệu các trường nội dung bài viết."""
+"""Check the quality pass rate of the article content fields."""
 
 from __future__ import annotations
 
@@ -16,6 +16,15 @@ force_utf8_stdio()
 
 
 def verify(domain: str | None, min_body: int) -> int:
+    """Compute the share of articles that have a title, a body and a date.
+
+    Args:
+        domain: Source domain to check; all domains when None.
+        min_body: Minimum body length in characters.
+
+    Returns:
+        0 when at least 95% pass, 1 when no articles exist, 2 otherwise.
+    """
     store = ArticleStore(load_settings()["database"]["path"])
     conn = store._connect()
     where = "WHERE source_domain = ?" if domain else ""

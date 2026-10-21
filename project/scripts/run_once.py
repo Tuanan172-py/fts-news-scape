@@ -1,4 +1,4 @@
-"""Thực thi một chu kỳ thu thập và chuyển đổi dữ liệu từ Bronze sang Silver."""
+"""Run one scrape cycle and derive Bronze data into Silver."""
 
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-"""Quản lý xuất bản các gói dữ liệu bài viết vào vùng nạp Dropzone phi khóa."""
+"""Publish article data batches into the lock-free Dropzone."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ import pyarrow.parquet as pq
 
 from src.lakehouse.storage import BaseStorageAdapter
 
-# Định nghĩa lược đồ Parquet chuẩn mực cho toàn bộ hệ thống Lakehouse
+# Standard Parquet schema for the whole Lakehouse system.
 LAKEHOUSE_ARTICLE_SCHEMA = pa.schema(
     [
         ("article_id", pa.string()),
@@ -44,16 +44,16 @@ LAKEHOUSE_ARTICLE_SCHEMA = pa.schema(
 
 
 def parse_date_components(date_str: str) -> tuple[str, str, str, str]:
-    """Phân tách chuỗi ngày thành năm, tháng, ngày và chuỗi nén YYYYMMDD.
+    """Split a date string into year, month, day and the compact YYYYMMDD string.
 
     Args:
-        date_str: Chuỗi ngày ở định dạng 'YYYY-MM-DD' hoặc 'YYYYMMDD'.
+        date_str: Date string as 'YYYY-MM-DD' or 'YYYYMMDD'.
 
     Returns:
-        Tuple gồm 4 phần tử: (năm, tháng, ngày, chuỗi yyyymmdd).
+        Tuple of 4 elements: (year, month, day, yyyymmdd string).
 
     Raises:
-        ValueError: Khi định dạng chuỗi ngày không hợp lệ.
+        ValueError: If the date string format is invalid.
     """
     clean = re.sub(r"[^0-9]", "", date_str.strip())
     if len(clean) < 8:
@@ -66,13 +66,13 @@ def parse_date_components(date_str: str) -> tuple[str, str, str, str]:
 
 
 def _normalize_string_list(val: Any) -> list[str]:
-    """Chuẩn hóa giá trị đầu vào thành danh sách chuỗi ký tự.
+    """Normalize an input value into a list of strings.
 
     Args:
-        val: Giá trị cần chuyển đổi (list, tuple, chuỗi JSON hoặc chuỗi ngăn cách).
+        val: Value to convert (list, tuple, JSON string or delimited string).
 
     Returns:
-        Danh sách các chuỗi ký tự đã được cắt tỉa khoảng trắng.
+        List of strings with whitespace trimmed.
     """
     if val is None:
         return []
@@ -89,7 +89,7 @@ def _normalize_string_list(val: Any) -> list[str]:
                     return [str(x).strip() for x in parsed if x is not None and str(x).strip()]
             except Exception:
                 pass
-        # Phân tách theo dòng hoặc dấu chấm phẩy, dấu phẩy
+        # Split by line, semicolon or comma.
         if "\n" in raw:
             return [line.lstrip("-*• ").strip() for line in raw.splitlines() if line.strip()]
         if ";" in raw:
@@ -106,16 +106,16 @@ def sanitize_article_record(
     batch_id: str,
     default_timestamp: str,
 ) -> dict[str, Any]:
-    """Chuẩn hóa một bản ghi bài viết khớp với lược đồ LAKEHOUSE_ARTICLE_SCHEMA.
+    """Normalize an article record to match LAKEHOUSE_ARTICLE_SCHEMA.
 
     Args:
-        record: Từ điển dữ liệu bài viết ban đầu.
-        dev_id: Mã định danh Dev hoặc Worker xuất bản.
-        batch_id: Mã định danh lô bài viết.
-        default_timestamp: Mốc thời gian mặc định dạng ISO 8601 UTC.
+        record: Original article data dict.
+        dev_id: Identifier of the Dev or Worker that publishes.
+        batch_id: Article batch identifier.
+        default_timestamp: Default ISO 8601 UTC timestamp.
 
     Returns:
-        Từ điển dữ liệu đã được làm sạch và điền đầy đủ các trường bắt buộc.
+        Cleaned dict with all required fields filled.
     """
     rec_dev = str(record.get("dev_id") or dev_id).strip()
     rec_batch = str(record.get("batch_id") or batch_id).strip()
@@ -157,16 +157,16 @@ def records_to_parquet_bytes(
     batch_id: str,
     schema: pa.Schema = LAKEHOUSE_ARTICLE_SCHEMA,
 ) -> bytes:
-    """Chuyển đổi danh sách bản ghi bài viết sang dữ liệu nhị phân Parquet nén ZSTD.
+    """Convert article records to ZSTD-compressed Parquet bytes.
 
     Args:
-        records: Danh sách từ điển dữ liệu bài viết.
-        dev_id: Mã định danh Dev hoặc Worker xuất bản.
-        batch_id: Mã định danh lô bài viết.
-        schema: Lược đồ PyArrow áp dụng cho bảng.
+        records: Article data dicts.
+        dev_id: Identifier of the Dev or Worker that publishes.
+        batch_id: Article batch identifier.
+        schema: PyArrow schema applied to the table.
 
     Returns:
-        Chuỗi byte nhị phân định dạng Parquet.
+        Parquet-format bytes.
     """
     now_iso = datetime.now(timezone.utc).isoformat()
     clean_records = [
@@ -187,24 +187,24 @@ def publish_batch(
     storage: BaseStorageAdapter,
     base_dir: str = "dropzone",
 ) -> str:
-    """Xuất bản một lô bài viết vào vùng nạp Dropzone dưới dạng tệp tin Parquet phân mảnh.
+    """Publish an article batch into the Dropzone as a fragment Parquet file.
 
-    Thực hiện quy trình tạo tên tệp duy nhất theo không gian tên riêng biệt để loại trừ
-    100% nguy cơ tranh chấp khóa tệp và xung đột đồng bộ giữa nhiều Workers.
+    Each file name is unique within a per-worker namespace, which removes file-lock
+    contention and sync conflicts between multiple Workers.
 
     Args:
-        records: Danh sách từ điển dữ liệu bài viết cần xuất bản.
-        date_str: Chuỗi ngày phân vùng (vd: '2026-10-08' hoặc '20261008').
-        dev_id: Mã định danh duy nhất của Worker/Dev xuất bản (vd: 'dev_anpt').
-        batch_id: Mã định danh lô dữ liệu (vd: 'b01').
-        storage: Adapter giao tiếp với hệ thống lưu trữ.
-        base_dir: Thư mục gốc của vùng nạp dropzone (mặc định 'dropzone').
+        records: Article data dicts to publish.
+        date_str: Partition date string (for example '2026-10-08' or '20261008').
+        dev_id: Unique identifier of the publishing Worker/Dev (for example 'dev_anpt').
+        batch_id: Data batch identifier (for example 'b01').
+        storage: Storage system adapter.
+        base_dir: Root directory of the dropzone.
 
     Returns:
-        Đường dẫn tương đối của tệp tin Parquet đã xuất bản thành công.
+        Relative path of the Parquet file that was published.
 
     Raises:
-        ValueError: Khi danh sách bản ghi rỗng hoặc thiếu thông tin định danh.
+        ValueError: If the record list is empty or the identifiers are missing.
     """
     if not records:
         raise ValueError("Danh sách bản ghi bài viết không được để rỗng.")

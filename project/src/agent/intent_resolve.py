@@ -1,14 +1,4 @@
-"""Ánh xạ thực thể do mô hình nêu tên sang định danh chuẩn trong danh mục.
-
-Ranh giới nghiệp vụ ở đây rất hẹp và cố ý: mô hình **quyết định** có thực thể nào
-trong bài, còn module này chỉ **tra cứu** thứ mô hình đã chỉ ra. Nó không tự phát
-hiện thêm, không tự suy diễn, không phủ quyết mô hình. Khi không tra được, nó ghi
-nhận là ngoài danh mục thay vì đoán bừa.
-
-Mỗi mã nhóm có một thuật toán tra riêng, và đó chính là lý do tách nhóm: mã chứng
-khoán cần khớp chính xác kèm danh sách loại trừ từ viết tắt, tên doanh nghiệp cần
-khớp tên gọi khác kèm rào cản hình thái, còn các nhóm đóng thì tra thẳng bảng.
-"""
+"""Map entities named by the model to canonical catalog identifiers."""
 from __future__ import annotations
 
 import re
@@ -16,11 +6,17 @@ from dataclasses import dataclass, field
 
 from src.agent.entities import CODE_STOPLIST, EntityRegistry, _fold
 
-# Mã nhóm mô hình phát ra, ánh xạ sang các loại thực thể được phép tra trong danh mục.
+# Business boundary: the model decides which entities an article contains; this module
+# only looks up what the model named. It does not detect extra entities, infer, or
+# overrule the model; an unresolved name is recorded as outside the catalog. Each group
+# code has its own lookup: tickers need exact match with an abbreviation stoplist,
+# company names need alias match with morphology guards, closed groups use direct tables.
+
+# Group codes emitted by the model, mapped to the entity types allowed in the catalog lookup.
 GROUP_TYPES: dict[str, tuple[str, ...]] = {
     "TIC": ("TICKER",),
     "COM": ("TICKER",),
-    "PER": (),                       # cần bảng lãnh đạo, xem ghi chú bên dưới
+    "PER": (),                       # needs a leadership table, see the note below
     "FND": ("ETF", "SECURITY_OTHER"),
     "IDX": ("INDEX",),
     "EXC": ("EXCHANGE",),
@@ -33,11 +29,11 @@ GROUP_TYPES: dict[str, tuple[str, ...]] = {
 
 VALID_GROUPS = frozenset(GROUP_TYPES)
 
-# Nhóm `PER` chưa có nguồn tra: bảng lãnh đạo ánh xạ tên người sang mã doanh nghiệp
-# chưa tồn tại. Từ nay tới khi có, mọi tên người đều rơi vào ngoài danh mục — đúng
-# thiết kế, không phải lỗi. Giá trị của nhóm này ở giai đoạn đầu là **thu thập dữ
-# liệu** để dựng chính bảng đó, nên nó được đo bằng số tên thu được chứ không bằng
-# tỷ lệ tra cứu thành công.
+# Group `PER` has no lookup source: the leadership table that maps person names to
+# company codes does not exist yet. Until it does, every person name falls outside the
+# catalog by design. The value of this group in the first phase is data collection to
+# build that table, so it is measured by the number of names collected, not by the
+# lookup success rate.
 GROUPS_WITHOUT_RESOLVER = frozenset({"PER"})
 
 _CODE_RE = re.compile(r"^[A-Z0-9]{3}$")
@@ -46,7 +42,17 @@ _DISCLOSURE_RE = re.compile(r"^([A-Z0-9]{3})\s*:")
 
 @dataclass
 class ResolvedEntity:
-    """Kết quả tra cứu một thực thể do mô hình nêu tên."""
+    """Lookup result of one entity named by the model.
+
+    Attributes:
+        surface: Verbatim string named by the model.
+        group: Group code assigned by the model.
+        entity_id: Canonical identifier, or None when not found.
+        type: Entity type, or None when not found.
+        method: Lookup method (`semantic`, `alias` or `exact_code`).
+        in_list: True when the entity exists in the catalog.
+        in_title: True when the surface string appears in the article title.
+    """
 
     surface: str
     group: str
@@ -59,52 +65,61 @@ class ResolvedEntity:
 
 @dataclass
 class ResolveReport:
-    """Thống kê tra cứu của một lô, dùng để theo dõi chất lượng theo nhóm."""
+    """Lookup statistics of one batch, used to track quality per group.
+
+    Attributes:
+        total: Lookup count per group code.
+        resolved: Successful lookup count per group code.
+    """
 
     total: dict[str, int] = field(default_factory=dict)
     resolved: dict[str, int] = field(default_factory=dict)
 
     def add(self, group: str, ok: bool) -> None:
-        """Ghi nhận một lượt tra cứu.
+        """Record one lookup.
 
         Args:
-            group: Mã nhóm thực thể.
-            ok: Tra cứu có ra định danh chuẩn hay không.
+            group: Entity group code.
+            ok: Whether the lookup produced a canonical identifier.
         """
         self.total[group] = self.total.get(group, 0) + 1
         if ok:
             self.resolved[group] = self.resolved.get(group, 0) + 1
 
     def rate(self, group: str) -> float:
-        """Tính tỷ lệ tra cứu thành công của một nhóm.
+        """Compute the lookup success rate of a group.
 
         Args:
-            group: Mã nhóm thực thể.
+            group: Entity group code.
 
         Returns:
-            Tỷ lệ từ 0 đến 1; trả về 0 khi nhóm chưa có lượt nào.
+            Rate from 0 to 1; 0 when the group has no lookups.
         """
         n = self.total.get(group, 0)
         return (self.resolved.get(group, 0) / n) if n else 0.0
 
     def summary(self) -> list[tuple[str, int, int, float]]:
-        """Kết xuất thống kê theo nhóm để in báo cáo.
+        """Export per-group statistics for the report.
 
         Returns:
-            Danh sách bộ gồm mã nhóm, số lượt tra, số lượt thành công và tỷ lệ.
+            Tuples of group code, lookup count, success count and rate.
         """
         return [(g, self.total[g], self.resolved.get(g, 0), self.rate(g))
                 for g in sorted(self.total)]
 
 
 class IntentResolver:
-    """Tra cứu định danh chuẩn cho các thực thể mô hình đã nêu tên."""
+    """Look up canonical identifiers for entities named by the model.
+
+    Attributes:
+        reg: Loaded entity registry.
+    """
 
     def __init__(self, registry: EntityRegistry):
-        """Dựng bộ tra cứu và các chỉ mục ngược cần thiết.
+        """Build the resolver and the reverse indexes it needs.
 
         Args:
-            registry: Danh mục thực thể đã nạp.
+            registry: Loaded entity registry.
         """
         self.reg = registry
         self._by_type_name: dict[str, dict[str, str]] = {}
@@ -118,14 +133,14 @@ class IntentResolver:
                     bucket.setdefault(key, eid)
 
     def _lookup(self, surface: str, types: tuple[str, ...]) -> tuple[str | None, str | None]:
-        """Tra một chuỗi trong các loại thực thể được phép, theo thứ tự ưu tiên.
+        """Look up a string in the allowed entity types in priority order.
 
         Args:
-            surface: Chuỗi nguyên văn mô hình nêu.
-            types: Các loại thực thể được phép khớp, xét theo thứ tự truyền vào.
+            surface: Verbatim string named by the model.
+            types: Entity types allowed to match, tried in the given order.
 
         Returns:
-            Cặp định danh và loại thực thể; cả hai là None khi không khớp.
+            Pair of identifier and entity type; both None when nothing matches.
         """
         key = _fold(surface)
         if not key:
@@ -137,15 +152,15 @@ class IntentResolver:
         return None, None
 
     def resolve_one(self, surface: str, group: str, *, title: str = "") -> ResolvedEntity:
-        """Tra cứu một thực thể do mô hình nêu tên.
+        """Look up one entity named by the model.
 
         Args:
-            surface: Chuỗi nguyên văn mô hình nêu.
-            group: Mã nhóm mô hình gán.
-            title: Tiêu đề bài, dùng để biết thực thể có xuất hiện ở tiêu đề không.
+            surface: Verbatim string named by the model.
+            group: Group code assigned by the model.
+            title: Article title, used to tell whether the entity appears in the title.
 
         Returns:
-            Kết quả tra cứu; `in_list` là False khi không có trong danh mục.
+            Lookup result; `in_list` is False when the entity is not in the catalog.
         """
         surface = (surface or "").strip()
         group = (group or "").strip().upper()
@@ -159,8 +174,8 @@ class IntentResolver:
 
         if group == "TIC":
             code = surface.upper()
-            # Mã ba ký tự trùng từ viết tắt thông dụng chỉ được công nhận khi bài là
-            # công bố thông tin mở đầu bằng "MÃ:", đúng quy ước đã dùng ở tầng mã.
+            # A three-character code that equals a common abbreviation is accepted only when
+            # the article is a disclosure that starts with "CODE:", the convention of the code layer.
             if _CODE_RE.match(code):
                 disclosure = _DISCLOSURE_RE.match((title or "").strip())
                 exempt = bool(disclosure and disclosure.group(1) == code)
@@ -173,7 +188,7 @@ class IntentResolver:
                     out.method = "exact_code"
                     out.in_list = True
                     return out
-            # Mô hình gán nhầm nhóm thì vẫn thử tra như tên doanh nghiệp.
+            # When the model assigned the wrong group, still try the name as a company name.
             types = ("TICKER",)
 
         eid, etype = self._lookup(surface, types)
@@ -186,15 +201,15 @@ class IntentResolver:
 
     def resolve_many(self, pairs, *, title: str = "",
                      report: ResolveReport | None = None) -> list[ResolvedEntity]:
-        """Tra cứu một danh sách thực thể và khử trùng lặp.
+        """Look up a list of entities and remove duplicates.
 
         Args:
-            pairs: Chuỗi các cặp `[chuỗi nguyên văn, mã nhóm]` do mô hình phát.
-            title: Tiêu đề bài viết.
-            report: Bộ đếm thống kê theo nhóm, nếu cần theo dõi.
+            pairs: Sequence of `[verbatim string, group code]` pairs emitted by the model.
+            title: Article title.
+            report: Optional per-group statistics counter.
 
         Returns:
-            Danh sách kết quả tra cứu đã khử trùng lặp, giữ thứ tự xuất hiện.
+            Deduplicated lookup results in order of appearance.
         """
         seen: set[tuple[str, str]] = set()
         out: list[ResolvedEntity] = []
@@ -214,18 +229,18 @@ class IntentResolver:
 
 
 def reconcile(llm: list[ResolvedEntity], code_ids: set[str]) -> dict[str, str]:
-    """Đối chiếu kết quả của mô hình với kết quả của tầng mã tất định.
+    """Reconcile model results with the deterministic code layer results.
 
-    Nhãn sinh ra ở đây là thứ cho người dùng cuối thấy phần nào do mô hình nhận ra và
-    phần nào do mã nhận ra. Nhóm `LLM_ONLY` chính là vùng giá trị riêng của mô hình:
-    thương hiệu con, ngành suy ra từ ngữ cảnh, chủ đề vĩ mô không có từ khoá cứng.
+    The labels show end users which entities the model recognized and which the code
+    recognized. `LLM_ONLY` is the value unique to the model: sub-brands, industries
+    inferred from context, and macro themes without hard keywords.
 
     Args:
-        llm: Danh sách thực thể mô hình nêu, đã tra cứu.
-        code_ids: Tập định danh mà tầng mã tất định tìm được.
+        llm: Resolved entities named by the model.
+        code_ids: Identifiers found by the deterministic code layer.
 
     Returns:
-        Từ điển ánh xạ định danh sang nhãn `BOTH`, `LLM_ONLY` hoặc `CODE_ONLY`.
+        Dict mapping identifier to the label `BOTH`, `LLM_ONLY` or `CODE_ONLY`.
     """
     llm_ids = {e.entity_id for e in llm if e.entity_id}
     labels: dict[str, str] = {}

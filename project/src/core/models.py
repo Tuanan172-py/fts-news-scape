@@ -1,4 +1,4 @@
-"""Mô hình dữ liệu lõi và định nghĩa mã băm chống trùng lặp."""
+"""Define the core data models and the dedup hash."""
 
 from __future__ import annotations
 
@@ -12,59 +12,59 @@ VN_TZ = timezone(timedelta(hours=7), name="Asia/Ho_Chi_Minh")
 
 
 def sha256_hash(url: str, title: str) -> str:
-    """Tính chuỗi mã băm SHA-256 từ URL và tiêu đề bài viết.
+    """Compute the SHA-256 hash of an article URL and title.
 
     Args:
-        url: Địa chỉ liên kết của bài viết.
-        title: Tiêu đề của bài viết.
+        url: Article URL.
+        title: Article title.
 
     Returns:
-        Chuỗi hex biểu diễn mã băm SHA-256.
+        Hex digest of the SHA-256 hash.
     """
     return hashlib.sha256(f"{url}{title}".encode("utf-8")).hexdigest()
 
 
 def normalize_title(title: str) -> str:
-    """Chuẩn hóa tiêu đề bài viết về dạng chữ thường và khoảng trắng đơn.
+    """Normalize an article title to lowercase with single spaces.
 
     Args:
-        title: Tiêu đề gốc cần xử lý.
+        title: Original title.
 
     Returns:
-        Chuỗi tiêu đề đã chuẩn hóa.
+        Normalized title.
     """
     return re.sub(r"\s+", " ", str(title).strip().lower())
 
 
 def now_vn_iso() -> str:
-    """Lấy mốc thời gian hiện tại theo múi giờ Việt Nam (UTC+7) định dạng ISO 8601.
+    """Return the current time in the Vietnam time zone (UTC+7) as an ISO 8601 string.
 
     Returns:
-        Chuỗi thời gian chuẩn ISO 8601.
+        ISO 8601 timestamp with second precision.
     """
     return datetime.now(VN_TZ).isoformat(timespec="seconds")
 
 
 @dataclass
 class Article:
-    """Đối tượng lưu trữ thông tin bài viết chuẩn hóa.
+    """Hold the normalized data of one article.
 
     Attributes:
-        url: Đường dẫn truy cập bài viết.
-        title: Tiêu đề bài viết.
-        source_domain: Tên miền của nguồn tin.
-        summary: Đoạn tóm tắt hoặc nội dung sapo.
-        content_html: Nội dung HTML nguyên bản đã bóc tách.
-        content_text: Văn bản thuần của bài viết.
-        published_at: Thời điểm phát hành định dạng ISO 8601 (+07:00).
-        author: Tên tác giả hoặc cơ quan phát hành.
-        symbols: Danh sách mã cổ phiếu liên quan.
-        categories: Danh sách chuyên mục phân loại.
-        sentiment: Nhãn sắc thái (positive, negative, neutral).
-        sentiment_score: Điểm định lượng sắc thái.
-        fetched_at: Thời điểm thu thập dữ liệu.
-        processed_at: Thời điểm hoàn tất xử lý.
-        metadata: Từ điển chứa siêu dữ liệu và trạng thái capture Bronze.
+        url: Article URL.
+        title: Article title.
+        source_domain: Domain of the news source.
+        summary: Summary or lead paragraph (`sapo`).
+        content_html: Extracted original HTML content.
+        content_text: Plain text of the article.
+        published_at: Publication time in ISO 8601 (+07:00).
+        author: Author or publishing body.
+        symbols: Related stock tickers.
+        categories: Section categories.
+        sentiment: Sentiment label (positive, negative, neutral).
+        sentiment_score: Numeric sentiment score.
+        fetched_at: Time the article was fetched.
+        processed_at: Time processing finished.
+        metadata: Metadata and Bronze capture state.
     """
 
     url: str
@@ -85,13 +85,14 @@ class Article:
 
     @property
     def url_title_hash(self) -> str:
+        """Hash of the URL and title used as the dedup key."""
         return sha256_hash(self.url, self.title)
 
     def to_row(self) -> dict:
-        """Chuyển đổi đối tượng Article thành dictionary tương thích schema bảng articles.
+        """Convert the Article to a dict matching the `articles` table schema.
 
         Returns:
-            Dictionary chứa các trường dữ liệu tương ứng với cột trong SQLite.
+            Dict of field values keyed by SQLite column name.
         """
         return {
             "url": self.url,
@@ -114,13 +115,13 @@ class Article:
 
     @classmethod
     def from_row(cls, row) -> "Article":
-        """Khôi phục đối tượng Article từ bản ghi sqlite3.Row.
+        """Rebuild an Article from a sqlite3.Row.
 
         Args:
-            row: Bản ghi dữ liệu từ cơ sở dữ liệu SQLite.
+            row: Row read from the SQLite database.
 
         Returns:
-            Đối tượng Article đã được khôi phục.
+            The restored Article.
         """
         return cls(
             url=row["url"],
@@ -143,14 +144,14 @@ class Article:
 
 @dataclass
 class ScrapeResult:
-    """Kết quả thực thi một chu kỳ thu thập dữ liệu của scraper.
+    """Hold the outcome of one scrape cycle of a scraper.
 
     Attributes:
-        scraper: Tên định danh của scraper.
-        fetched: Tổng số bài viết tìm thấy.
-        new: Danh sách các bài viết mới thu thập.
-        errors: Danh sách thông điệp lỗi phát sinh.
-        duration_s: Thời gian thực thi tính bằng giây.
+        scraper: Scraper name.
+        fetched: Total number of articles found.
+        new: Newly collected articles.
+        errors: Error messages raised during the cycle.
+        duration_s: Execution time in seconds.
     """
 
     scraper: str
@@ -161,4 +162,5 @@ class ScrapeResult:
 
     @property
     def ok(self) -> bool:
+        """Whether the cycle finished without errors."""
         return not self.errors

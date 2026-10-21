@@ -1,4 +1,4 @@
-"""Làm mới và thu thập lại danh sách bài viết theo dõi để phát hiện biến động."""
+"""Refresh and re-fetch the watch-list articles to detect changes."""
 
 from __future__ import annotations
 
@@ -20,6 +20,14 @@ import argparse
 
 
 def main(argv: list[str]) -> int:
+    """Run the watch-list refresh CLI.
+
+    Args:
+        argv: Command-line arguments without the program name.
+
+    Returns:
+        Process exit code, always 0.
+    """
     ap = argparse.ArgumentParser(description="Refresh watch-list để kích hoạt change-detection")
     ap.add_argument("limit_pos", nargs="?", type=int, default=None, help="Số lượng bài (tùy chọn)")
     ap.add_argument("domains_pos", nargs="*", default=[], help="Danh sách domain lọc")

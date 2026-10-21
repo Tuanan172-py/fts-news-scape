@@ -1,4 +1,4 @@
-"""Bổ sung ngày xuất bản còn thiếu cho các bài viết từ dữ liệu nguồn cấp RSS."""
+"""Fill missing publication dates of articles from RSS feed data."""
 
 from __future__ import annotations
 

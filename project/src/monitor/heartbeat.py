@@ -1,8 +1,4 @@
-"""Ghi nhận nhịp tim hoạt động và số liệu vận hành của các bộ thu thập dữ liệu.
-
-Cung cấp lớp Heartbeat để ghi nhận trạng thái khởi động, kết quả hoàn thành
-và số liệu đo lường định kỳ vào cơ sở dữ liệu SQLite.
-"""
+"""Record scraper heartbeats and operating metrics in the SQLite database."""
 
 from __future__ import annotations
 
@@ -13,20 +9,25 @@ from src.db.store import ArticleStore
 
 
 class Heartbeat:
-    """Bộ ghi nhận nhịp tim hoạt động (heartbeat) và các chỉ số đo lường (metrics).
+    """Record heartbeats and metrics of the scrapers.
 
     Attributes:
-        store: Đối tượng kho dữ liệu ArticleStore để lưu trữ trạng thái.
+        store: ArticleStore that persists the state.
     """
 
     def __init__(self, store: ArticleStore):
+        """Initialize the heartbeat recorder.
+
+        Args:
+            store: ArticleStore that persists the state.
+        """
         self.store = store
 
     def record_start(self, scraper_name: str) -> None:
-        """Ghi nhận thời điểm bắt đầu chu kỳ thu thập của một nguồn tin.
+        """Record the start time of a scrape cycle of a source.
 
         Args:
-            scraper_name: Tên định danh của bộ thu thập dữ liệu.
+            scraper_name: Identifier of the scraper.
         """
         conn = self.store._connect()
         try:
@@ -41,10 +42,10 @@ class Heartbeat:
             conn.close()
 
     def record_result(self, result: ScrapeResult) -> None:
-        """Ghi nhận kết quả thu thập, đếm lỗi liên tiếp và số liệu hiệu năng.
+        """Record the scrape result, consecutive failures and performance metrics.
 
         Args:
-            result: Kết quả chu kỳ thu thập chứa số bài viết, lỗi và thời gian thực thi.
+            result: Scrape cycle result with article counts, errors and run time.
         """
         failed = result.fetched == 0 and bool(result.errors)
         status = "failed" if failed else "ok"

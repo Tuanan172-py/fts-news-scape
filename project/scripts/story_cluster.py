@@ -1,4 +1,4 @@
-"""Cụm hoá bài trùng lặp theo câu chuyện và ghi kết quả kế thừa cho bài chép lại (ADR 0016)."""
+"""Cluster duplicate articles by story and record inherited results for copied articles (ADR 0016)."""
 
 from __future__ import annotations
 
@@ -17,13 +17,13 @@ force_utf8_stdio()
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Chạy cụm hoá và kế thừa, hoặc in thống kê hiện có.
+    """Run clustering and inheritance, or print the existing statistics.
 
     Args:
-        argv: Tham số dòng lệnh; mặc định lấy từ sys.argv.
+        argv: Command-line arguments; defaults to `sys.argv`.
 
     Returns:
-        Mã thoát 0.
+        Exit code 0.
     """
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("cmd", choices=["run", "status"], nargs="?", default="run")

@@ -1,8 +1,4 @@
-"""Kiểm tra sức khỏe hoạt động của các bộ thu thập dữ liệu (Health Check CLI).
-
-Cung cấp các hàm truy vấn bảng heartbeat và metrics để đánh giá trạng thái
-hoạt động (OK, STALE, CRITICAL, FAILED).
-"""
+"""Check scraper health from the heartbeat and metrics tables (OK, STALE, CRITICAL, FAILED)."""
 
 from __future__ import annotations
 
@@ -18,13 +14,13 @@ CRITICAL_CONSECUTIVE = 3
 
 
 def check(store: ArticleStore) -> tuple[list[dict], bool]:
-    """Kiểm tra sức khỏe vận hành của toàn bộ các bộ thu thập trong cơ sở dữ liệu.
+    """Check the operating health of every scraper in the database.
 
     Args:
-        store: Đối tượng ArticleStore truy vấn dữ liệu nhịp tim và số liệu.
+        store: ArticleStore used to query heartbeat and metric data.
 
     Returns:
-        Tuple gồm danh sách báo cáo chi tiết từng nguồn và cờ báo toàn bộ đều ổn định (all_ok).
+        Tuple of the per-source report list and the flag that all scrapers are healthy (all_ok).
     """
     now = datetime.now(VN_TZ)
     cutoff_24h = (now - timedelta(days=1)).isoformat(timespec="seconds")
@@ -65,7 +61,11 @@ def check(store: ArticleStore) -> tuple[list[dict], bool]:
 
 
 def main() -> int:
-    """Điểm nhập thực thi công cụ kiểm tra sức khỏe hệ thống từ dòng lệnh."""
+    """Run the command-line system health check.
+
+    Returns:
+        Process exit code: 0 when all scrapers are healthy, otherwise 1.
+    """
     settings = load_settings()
     store = ArticleStore(settings["database"]["path"], init_schema=False)
     report, all_ok = check(store)

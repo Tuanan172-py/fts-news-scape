@@ -1,4 +1,4 @@
-"""Tái cấu trúc và bóc tách dữ liệu Silver từ kho lưu trữ Bronze."""
+"""Re-derive Silver data from the Bronze archive."""
 
 from __future__ import annotations
 
@@ -21,6 +21,15 @@ RAW_DIR = paths.bronze_dir()
 
 
 def iter_meta(domain: str | None, date: str | None):
+    """Iterate over Bronze meta files, optionally filtered by domain and date.
+
+    Args:
+        domain: Source domain to restrict the scan to; None scans all domains.
+        date: Date folder to restrict the scan to; applies only together with `domain`.
+
+    Yields:
+        Path of each `*.meta.json` file found.
+    """
     root = RAW_DIR / domain if domain else RAW_DIR
     if domain and date:
         root = RAW_DIR / domain / date
@@ -30,6 +39,14 @@ def iter_meta(domain: str | None, date: str | None):
 
 
 def main(argv: list[str]) -> int:
+    """Re-process every selected Bronze meta file into Silver.
+
+    Args:
+        argv: Optional positional arguments: domain, then date.
+
+    Returns:
+        Process exit code, always 0.
+    """
     domain = argv[0] if len(argv) > 0 else None
     date = argv[1] if len(argv) > 1 else None
     db_path = load_settings()["database"]["path"]

@@ -1,4 +1,4 @@
-"""Báo cáo các bài viết phát hiện sai lệch mẫu giao diện hoặc bộ chọn."""
+"""Report articles whose layout template or selectors have drifted."""
 
 from __future__ import annotations
 
@@ -16,6 +16,14 @@ force_utf8_stdio()
 
 
 def main(argv: list[str]) -> int:
+    """Print the articles in drift or broken state.
+
+    Args:
+        argv: Optional first element is the maximum number of rows (default 100).
+
+    Returns:
+        Process exit code, always 0.
+    """
     limit = int(argv[0]) if argv else 100
     db_path = load_settings()["database"]["path"]
     store = ArticleStore(db_path=db_path)

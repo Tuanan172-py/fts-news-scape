@@ -1,49 +1,41 @@
-"""Chắt lọc đoạn văn tất định cho packet gửi mô hình.
-
-Module này thay trần cắt tỉa cơ học 2.200 ký tự cũ. Nó tồn tại vì hai lý do độc lập:
-
-**Bảo toàn trích dẫn.** Cơ chế trích dẫn theo chỉ số đoạn chỉ đúng khi mỗi phần tử
-trong mảng trả về là **chuỗi con nguyên văn** của văn bản gốc. Vì vậy quy tắc bất
-biến ở đây là chỉ được **bỏ trọn một đoạn**, tuyệt đối không cắt, không nối, không
-sửa chữ, không đổi thứ tự. Hàm :func:`distill` tự khẳng định điều này trước khi trả về.
-
-**Kiểm soát chi phí.** Khi mọi bài đều được xử lý đầy đủ cả nội dung, kích thước
-packet của từng bài quyết định trực tiếp tổng chi phí của cả hệ. Thuật toán vì thế
-phải có trần cứng và thứ tự bỏ xác định, nếu không thì con số dự toán trước mỗi đợt
-không có cơ sở và chốt tự chia lô cũng mất ý nghĩa.
-"""
+"""Distill article paragraphs deterministically for packets sent to the model."""
 from __future__ import annotations
 
 import re
 
 from src.agent.pruner import is_boilerplate_paragraph
 
-# Quy đổi ký tự sang token cho tiếng Việt. Đo trên kho bài thật của dự án.
+# Design constraints:
+# - Citation integrity: paragraph-index citations are valid only when every returned
+#   element is a verbatim substring of the source text. The only allowed operation is
+#   dropping a whole paragraph (no cutting, joining, rewording or reordering).
+#   distill() asserts this before returning.
+# - Cost control: packet size per article drives total cost, so the algorithm needs a
+#   hard ceiling and a deterministic drop order for pre-run estimates and batch sizing.
+
+# Characters-to-tokens ratio for Vietnamese, measured on the project article corpus.
 CHARS_PER_TOKEN = 3
 
-# Trần mềm cho phần nội dung của một bài, tính bằng token. **0 nghĩa là không cắt.**
+# Soft ceiling on the content of one article, in tokens. 0 means no truncation.
 #
-# Trần này từng để 900 với lý do tiết kiệm token đầu vào. Số đo 2026-09-21 trên 600
-# bài thật đã bác bỏ chính lý do ấy: sau các bộ lọc cơ học, một bài nặng trung bình
-# 1.542 token, nên một đợt trăm bài chỉ chiếm 15% cửa sổ một triệu. Đầu vào chưa
-# cache lại rẻ hơn đầu ra năm mươi lần. Đổi lại, trần 900 đã bỏ **46% nội dung**
-# trước khi mô hình kịp đọc — tức code đang quyết định mô hình được đọc gì, trái với
-# nguyên tắc nội dung do LLM xử lý.
+# A ceiling of 900 was dropped after a 2026-09-21 measurement on 600 real articles: after
+# the mechanical filters an article averages 1,542 tokens, so a batch of one hundred uses
+# only 15% of a one-million-token window, and uncached input is fifty times cheaper than
+# output. The 900 ceiling dropped 46% of the content before the model read it, so code
+# decided what the model could read, against the rule that the LLM processes content.
 #
-# Vẫn giữ tham số để dùng tay khi cần; chỉ bỏ nó khỏi đường chạy mặc định.
+# The parameter stays available for manual use and is off on the default path.
 DEFAULT_MAX_TOKENS_PER_ARTICLE = 0
 
 MIN_PARAGRAPH_CHARS = 40
 
-# Trần ký tự cho MỘT đoạn. Công cụ đọc của DSH cắt mỗi dòng ở 2.000 ký tự
-# (`readMaxLineLength`), mà packet ghi mỗi đoạn một dòng, nên đoạn dài hơn ngưỡng này
-# sẽ bị cắt cụt âm thầm. Đo trên 4.493 đoạn thật: dài nhất 954 ký tự, không đoạn nào
-# chạm trần. Đo lại trên 14.199 dòng thật ngày 21/09: đúng **một** dòng vượt ngưỡng,
-# dài nhất 2.059 ký tự — tức nó có chạm, dù hiếm.
+# Character ceiling for ONE paragraph. The DSH read tool truncates each line at 2,000
+# characters (`readMaxLineLength`) and packets write one paragraph per line, so a longer
+# paragraph is silently truncated. Measured on 14,199 real lines on 21/09: exactly one line
+# exceeded the limit (2,059 characters).
 #
-# Trước đây chạm thì bỏ nguyên đoạn. Nay **tách** đoạn tại ranh giới câu thay vì bỏ:
-# mỗi mảnh vẫn là chuỗi con nguyên văn nên bất biến nguyên văn được giữ, mà không mất
-# chữ nào. Bỏ một đoạn dài là mất đúng phần thường mang nhiều thông tin nhất.
+# A paragraph over the ceiling is split at sentence boundaries instead of dropped: each
+# piece is still a verbatim substring, so the verbatim invariant holds and no text is lost.
 MAX_PARAGRAPH_CHARS = 1600
 
 _QUANT_RE = re.compile(
@@ -64,29 +56,29 @@ _VOICE_RE = re.compile(
 
 
 def estimate_tokens(text: str) -> int:
-    """Ước lượng số token của một đoạn văn bản tiếng Việt.
+    """Estimate the token count of a Vietnamese text.
 
     Args:
-        text: Đoạn văn bản cần ước lượng.
+        text: Text to estimate.
 
     Returns:
-        Số token ước tính.
+        Estimated token count.
     """
     return len(text) // CHARS_PER_TOKEN
 
 
 def _rank(paragraph: str) -> int:
-    """Chấm hạng ưu tiên giữ lại của một đoạn văn.
+    """Rank the retention priority of a paragraph.
 
-    Hạng cao hơn được giữ trước khi chạm trần. Thứ tự này cố định nên kích thước
-    packet là hàm xác định của đầu vào.
+    A higher rank is kept first when the ceiling is reached. The order is fixed, so the
+    packet size is a deterministic function of the input.
 
     Args:
-        paragraph: Nội dung đoạn văn.
+        paragraph: Paragraph text.
 
     Returns:
-        2 khi đoạn chứa số liệu định lượng, 1 khi chứa phát ngôn hoặc sự kiện pháp lý,
-        0 cho các trường hợp còn lại.
+        2 if the paragraph has quantitative figures, 1 if it has a statement or legal
+        event, 0 otherwise.
     """
     if _QUANT_RE.search(paragraph):
         return 2
@@ -96,18 +88,18 @@ def _rank(paragraph: str) -> int:
 
 
 def split_long_paragraph(para: str, limit: int = MAX_PARAGRAPH_CHARS) -> list[str]:
-    """Tách một đoạn quá dài thành nhiều mảnh, mỗi mảnh vẫn nguyên văn.
+    """Split an overlong paragraph into pieces that stay verbatim.
 
-    Cắt ưu tiên tại ranh giới câu để mảnh còn đọc được; không tìm được ranh giới nào
-    hợp lý thì cắt đúng trần. Mọi mảnh đều là chuỗi con của đoạn gốc, nên bất biến
-    nguyên văn của cả khâu chắt lọc vẫn đứng.
+    Cuts prefer sentence boundaries so pieces remain readable; when no reasonable
+    boundary exists the cut falls at the limit. Every piece is a substring of the source
+    paragraph, so the verbatim invariant of the distillation holds.
 
     Args:
-        para: Đoạn văn cần tách.
-        limit: Trần ký tự cho mỗi mảnh.
+        para: Paragraph to split.
+        limit: Character ceiling per piece.
 
     Returns:
-        Danh sách mảnh theo đúng thứ tự gốc.
+        Pieces in original order.
     """
     out: list[str] = []
     start = 0
@@ -127,13 +119,13 @@ def split_long_paragraph(para: str, limit: int = MAX_PARAGRAPH_CHARS) -> list[st
 
 
 def split_paragraphs(text: str) -> list[str]:
-    """Tách văn bản thành các đoạn sạch, giữ nguyên văn từng đoạn.
+    """Split text into clean paragraphs, keeping each paragraph verbatim.
 
     Args:
-        text: Nội dung bài viết đã chuẩn hóa.
+        text: Normalized article text.
 
     Returns:
-        Danh sách đoạn văn theo đúng thứ tự gốc, đã loại đoạn rác và đoạn quá ngắn.
+        Paragraphs in original order, without junk and too-short paragraphs.
     """
     if not text:
         return []
@@ -152,22 +144,22 @@ def split_paragraphs(text: str) -> list[str]:
 
 
 def distill(text: str, *, max_tokens: int = DEFAULT_MAX_TOKENS_PER_ARTICLE) -> list[str]:
-    """Chọn tập con các đoạn văn giá trị cao, giữ nguyên văn và nguyên thứ tự.
+    """Select the high-value paragraph subset, verbatim and in original order.
 
-    Thuật toán cố định gồm bốn bước: luôn giữ đoạn mở đầu; xếp hạng các đoạn còn lại
-    theo tín hiệu định lượng rồi tới phát ngôn; thêm dần theo hạng cho tới khi chạm
-    trần; cuối cùng sắp lại theo thứ tự xuất hiện gốc. Khi vượt trần thì bỏ nguyên
-    đoạn hạng thấp nhất, không bao giờ cắt ngang một đoạn.
+    The fixed algorithm has four steps: always keep the opening paragraph; rank the rest
+    by quantitative signals, then statements; add them by rank until the ceiling is
+    reached; finally restore the original order. Over the ceiling, whole lowest-ranked
+    paragraphs are dropped and a paragraph is never cut.
 
     Args:
-        text: Nội dung bài viết đã chuẩn hóa.
-        max_tokens: Trần token cho phần nội dung của bài.
+        text: Normalized article text.
+        max_tokens: Token ceiling for the article content; 0 or less keeps all paragraphs.
 
     Returns:
-        Danh sách đoạn văn đã chọn, mỗi phần tử là chuỗi con nguyên văn của `text`.
+        Selected paragraphs, each a verbatim substring of `text`.
 
     Raises:
-        AssertionError: Khi một đoạn trả về không phải chuỗi con nguyên văn của đầu vào.
+        AssertionError: If a returned paragraph is not a verbatim substring of the input.
     """
     paragraphs = split_paragraphs(text)
     if not paragraphs:
@@ -178,9 +170,9 @@ def distill(text: str, *, max_tokens: int = DEFAULT_MAX_TOKENS_PER_ARTICLE) -> l
     budget = max_tokens
     chosen: set[int] = set()
 
-    # Đoạn mở đầu luôn được giữ: theo cấu trúc tháp ngược của báo chí, nó mang phần lớn
-    # nội dung sự kiện. Giữ cả khi nó một mình đã vượt trần, vì bài không có đoạn nào
-    # thì mô hình không có gì để trích dẫn.
+    # The opening paragraph is always kept: in the inverted pyramid of news writing it
+    # carries most of the event. It is kept even when it alone exceeds the ceiling, because
+    # with no paragraph the model has nothing to cite.
     chosen.add(0)
     used = estimate_tokens(paragraphs[0])
 
@@ -202,14 +194,14 @@ def distill(text: str, *, max_tokens: int = DEFAULT_MAX_TOKENS_PER_ARTICLE) -> l
 
 
 def distill_stats(text: str, *, max_tokens: int = DEFAULT_MAX_TOKENS_PER_ARTICLE) -> dict:
-    """Chắt lọc và kèm theo số liệu phục vụ dự toán và biểu đồ phân bố.
+    """Distill the text and return statistics for estimates and distribution charts.
 
     Args:
-        text: Nội dung bài viết đã chuẩn hóa.
-        max_tokens: Trần token cho phần nội dung của bài.
+        text: Normalized article text.
+        max_tokens: Token ceiling for the article content.
 
     Returns:
-        Từ điển gồm danh sách đoạn đã chọn và các số đo trước sau khi chắt lọc.
+        Dict with the selected paragraphs and the counts before and after distillation.
     """
     paragraphs = split_paragraphs(text)
     kept = distill(text, max_tokens=max_tokens)

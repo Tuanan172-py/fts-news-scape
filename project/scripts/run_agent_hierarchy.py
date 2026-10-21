@@ -1,4 +1,4 @@
-"""Điều phối thực thi chu trình đa tầng agent và kiểm định chất lượng."""
+"""Orchestrate the multi-tier agent cycle and its quality verification."""
 from __future__ import annotations
 
 import argparse
@@ -6,7 +6,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-# Add project root to path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
@@ -17,7 +16,11 @@ force_utf8_stdio()
 
 
 def get_task_counts() -> tuple[int, int]:
-    """Đếm số lượng task packets đang chờ xử lý."""
+    """Count the task packets waiting for processing.
+
+    Returns:
+        Pair of (L1 packet count, Gold packet count).
+    """
     l1_dir = paths.agent_tasks_dir() / "l1"
     gold_dir = paths.agent_tasks_dir()
 
@@ -31,7 +34,11 @@ def get_task_counts() -> tuple[int, int]:
 
 
 def get_output_counts() -> tuple[int, int]:
-    """Đếm số lượng output JSON đã được sinh ra."""
+    """Count the agent output JSON files already written.
+
+    Returns:
+        Pair of (L1 output count, Gold output count).
+    """
     l1_out = paths.agent_outputs_dir("_l1")
     gold_out = paths.agent_outputs_dir()
 
@@ -46,7 +53,20 @@ def get_output_counts() -> tuple[int, int]:
 
 def run_export(batch_size: int = 50, order: str = "desc", sync_silver: bool = True, mini_batch: int = 10,
                user: list[str] | None = None, date: str | None = None, days: int | None = None) -> bool:
-    """Chạy export task packets từ work_items và l1_route theo lô (batch)."""
+    """Export task packets from work_items and l1_route in batches.
+
+    Args:
+        batch_size: Number of tasks per exported batch.
+        order: Pick order, `desc` (newest first) or `asc` (oldest first).
+        sync_silver: Re-derive Silver from Bronze before exporting.
+        mini_batch: Articles per Gold mini-batch packet; 0 disables grouping.
+        user: User names to filter the Gold packets by.
+        date: Restrict export to one date (`YYYY-MM-DD`, `today`, `all`).
+        days: Restrict export to the last N days.
+
+    Returns:
+        True if the Gold export succeeded, False otherwise.
+    """
     if sync_silver:
         print("🔄 [Step 0] Kiểm tra và tự động đồng bộ Silver từ Bronze (rederive_incremental)...")
         res_derive = subprocess.run(
@@ -75,7 +95,7 @@ def run_export(batch_size: int = 50, order: str = "desc", sync_silver: bool = Tr
                 print("  • Silver đã đồng bộ hoàn tất.")
 
     print(f"\n🚀 [Step 1] Đang đồng bộ L1 Tasks và xuất task packets từ work_items (batch={batch_size}, order={order})...")
-    # 1. Đồng bộ l1_route
+    # 1. Sync l1_route.
     res_l1 = subprocess.run(
         [
             sys.executable,
@@ -97,7 +117,7 @@ def run_export(batch_size: int = 50, order: str = "desc", sync_silver: bool = Tr
     else:
         print(f"  • L1 Route: {res_l1.stdout.strip().splitlines()[0] if res_l1.stdout.strip() else 'done'}")
 
-    # 2. Xuất agent_export cho Gold (kèm gom lô mini-batch và lọc subscriber)
+    # 2. Run agent_export for Gold, with mini-batch grouping and subscriber filtering.
     gold_cmd = [
         sys.executable,
         str(PROJECT_ROOT / "scripts" / "agent_export.py"),
@@ -130,7 +150,7 @@ def run_export(batch_size: int = 50, order: str = "desc", sync_silver: bool = Tr
         print(f"❌ Export thất bại:\n{res_gold.stderr}", file=sys.stderr)
         return False
 
-    # 3. Hiển thị bảng tóm tắt lô task vừa xuất
+    # 3. Show the summary table of the exported batches.
     from src.agent.manifest import load_batch_manifest, print_batch_summary_table
     gold_manifest = load_batch_manifest(paths.agent_tasks_dir())
     if gold_manifest:
@@ -140,12 +160,16 @@ def run_export(batch_size: int = 50, order: str = "desc", sync_silver: bool = Tr
 
 
 def run_ingest() -> bool:
-    """Chạy L1 và Agent Ingest để nghiệm thu DoD."""
+    """Run the L1 and Agent ingest steps to verify the Definition-of-Done.
+
+    Returns:
+        True if both the L1 and Gold ingest processes exited with code 0.
+    """
     print("\n🔍 [Step 2] Đang nghiệm thu Definition-of-Done (DoD Ingest)...")
 
-    # Vat chat hoa code-first TRUOC: phan lon bai (route=resolved) khong can Agent, va neu
-    # khong co buoc nay chung nam 'pending' vinh vien, khong qua noi cong export.
-    # docs/decisions/0003-code-first-l1-delivery.md
+    # Materialize code-first results first: most articles (route=resolved) need no agent,
+    # and without this step they stay 'pending' forever because they never pass the export gate.
+    # See docs/decisions/0003-code-first-l1-delivery.md.
     res_cf = subprocess.run(
         [sys.executable, "scripts/l1_ingest.py", "--code-first"],
         capture_output=True, text=True, encoding="utf-8", cwd=str(PROJECT_ROOT),
@@ -178,7 +202,11 @@ def run_ingest() -> bool:
 
 
 def run_user_delivery() -> bool:
-    """Biên dịch và ghi deliverable cho người dùng."""
+    """Compile and write the deliverables for users.
+
+    Returns:
+        True if the write_user_output process exited with code 0.
+    """
     print("\n📦 [Step 3] Đang phân tuyến và xuất deliverable cá nhân hóa...")
     res = subprocess.run(
         [
@@ -197,6 +225,14 @@ def run_user_delivery() -> bool:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Parse arguments and run the selected orchestration steps.
+
+    Args:
+        argv: Command-line arguments; defaults to `sys.argv[1:]`.
+
+    Returns:
+        Process exit code, 1 if the export step fails, otherwise 0.
+    """
     parser = argparse.ArgumentParser(
         description="Multi-Agent Hierarchy Orchestration Runner"
     )

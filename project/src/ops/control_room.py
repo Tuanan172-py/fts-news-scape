@@ -1,4 +1,4 @@
-"""Máy chủ HTTP cục bộ của Phòng điều khiển: các đường JSON chỉ đọc và một trang tĩnh."""
+"""Serve the local HTTP server of the Control Room: read-only JSON routes and one static page."""
 
 from __future__ import annotations
 
@@ -21,10 +21,11 @@ LOCAL_HOSTS = {"127.0.0.1", "localhost"}
 
 
 class _Server(ThreadingHTTPServer):
-    """Máy chủ không cho hai tiến trình dùng chung một cổng.
+    """Server that refuses to share a port between two processes.
 
-    Trên Windows `SO_REUSEADDR` cho phép bind trùng cổng đang nghe, khác với Linux; tắt nó
-    thì tiến trình thứ hai nhận lỗi và Phòng điều khiển bỏ qua thay vì tranh cổng.
+    On Windows `SO_REUSEADDR` allows binding a port that is already listening, unlike Linux;
+    disabling it makes the second process fail, so the Control Room skips startup instead of
+    competing for the port.
     """
 
     allow_reuse_address = False
@@ -32,31 +33,32 @@ class _Server(ThreadingHTTPServer):
 
 
 class ControlRoom:
-    """Phục vụ Phòng điều khiển trên `127.0.0.1`, đọc từ `ops.db`.
+    """Serve the Control Room on `127.0.0.1`, reading from `ops.db`.
 
-    Chỉ nhận yêu cầu có header Host là địa chỉ cục bộ (chống DNS rebinding). Thao tác
-    ghi duy nhất là quyết định đề xuất cải tiến, và cần mã thông hành do trang tự nhúng.
+    Accepts only requests whose Host header is a local address (DNS rebinding defense). The
+    only write operation is deciding an improvement proposal, and it needs a token that the
+    page embeds itself.
 
     Attributes:
-        store: Store vận hành.
-        cfg: Cấu hình đầy đủ.
-        paths: Đường dẫn vận hành.
-        breakers: Breaker theo provider.
-        port: Cổng đang nghe sau khi `start`.
-        token: Mã thông hành của lần chạy này.
+        store: Operations store.
+        cfg: Full configuration.
+        paths: Operations paths.
+        breakers: Per-provider breakers.
+        port: Listening port after `start`.
+        token: Access token of this run.
     """
 
     def __init__(self, store: OpsStore, cfg: dict, paths: OpsPaths, breakers: Breakers, *,
                  port: int | None = None, harness: Callable | None = None) -> None:
-        """Dựng máy chủ, chưa lắng nghe.
+        """Build the server without listening yet.
 
         Args:
-            store: Store vận hành.
-            cfg: Cấu hình đầy đủ.
-            paths: Đường dẫn vận hành.
-            breakers: Breaker theo provider.
-            port: Cổng; None lấy từ cấu hình, 0 để hệ điều hành chọn (kiểm thử).
-            harness: Hàm gọi harness CLI, thay được trong kiểm thử.
+            store: Operations store.
+            cfg: Full configuration.
+            paths: Operations paths.
+            breakers: Per-provider breakers.
+            port: Port; None reads it from the configuration, 0 lets the OS choose (tests).
+            harness: Function that calls the harness CLI; replaceable in tests.
         """
         self.store, self.cfg, self.paths, self.breakers = store, cfg, paths, breakers
         self.port = cfg["control_room"]["port"] if port is None else port
@@ -65,17 +67,24 @@ class ControlRoom:
         self._server: ThreadingHTTPServer | None = None
         self._thread: threading.Thread | None = None
 
-    # ── điều khiển vòng đời ──────────────────────────────────────────────────
+    # ── lifecycle ────────────────────────────────────────────────────────────
     def start(self) -> bool:
-        """Mở cổng và chạy máy chủ ở luồng nền.
+        """Open the port and run the server on a background thread.
 
         Returns:
-            False khi cổng đã bị chiếm; daemon vẫn chạy bình thường.
+            False when the port is already taken; the daemon keeps running normally.
         """
         app = self
 
         class Handler(BaseHTTPRequestHandler):
-            def log_message(self, *_a) -> None:  # không ghi log từng yêu cầu
+            """Request handler bound to the enclosing ControlRoom."""
+
+            def log_message(self, *_a) -> None:  # per-request logging is disabled
+                """Suppress per-request logging.
+
+                Args:
+                    *_a: Ignored format string and arguments.
+                """
                 return
 
             def _host_ok(self) -> bool:
@@ -96,17 +105,19 @@ class ControlRoom:
                            "application/json; charset=utf-8")
 
             def do_GET(self) -> None:  # noqa: N802
+                """Handle a GET request."""
                 if not self._host_ok():
                     return self._json(403, {"error": "host không hợp lệ"})
                 try:
                     code, payload, ctype = app.route_get(urlparse(self.path))
-                except Exception as exc:  # noqa: BLE001 — lỗi một đường không làm sập máy chủ
+                except Exception as exc:  # noqa: BLE001 — one failing route must not crash the server
                     return self._json(500, {"error": str(exc)[:200]})
                 if ctype == "json":
                     return self._json(code, payload)
                 self._send(code, payload, ctype)
 
             def do_POST(self) -> None:  # noqa: N802
+                """Handle a POST request."""
                 if not self._host_ok():
                     return self._json(403, {"error": "host không hợp lệ"})
                 if self.headers.get("X-CR-Token") != app.token:
@@ -130,21 +141,21 @@ class ControlRoom:
         return True
 
     def stop(self) -> None:
-        """Dừng máy chủ."""
+        """Stop the server."""
         if self._server:
             self._server.shutdown()
             self._server.server_close()
             self._server = None
 
-    # ── định tuyến ───────────────────────────────────────────────────────────
+    # ── routing ──────────────────────────────────────────────────────────────
     def route_get(self, url) -> tuple[int, object, str]:
-        """Xử lý một yêu cầu GET.
+        """Handle one GET request.
 
         Args:
-            url: Kết quả `urlparse` của đường dẫn.
+            url: `urlparse` result of the request path.
 
         Returns:
-            Bộ ba (mã HTTP, nội dung, kiểu); kiểu `json` nghĩa là nội dung là đối tượng.
+            Triple (HTTP code, body, type); type `json` means the body is an object.
         """
         path, q = url.path.rstrip("/") or "/", parse_qs(url.query)
         if path == "/":
@@ -181,13 +192,13 @@ class ControlRoom:
         return 404, {"error": "không có đường dẫn này"}, "json"
 
     def route_post(self, url) -> tuple[int, object]:
-        """Xử lý một yêu cầu POST (chỉ quyết định đề xuất cải tiến).
+        """Handle one POST request (only improvement proposal decisions).
 
         Args:
-            url: Kết quả `urlparse` của đường dẫn.
+            url: `urlparse` result of the request path.
 
         Returns:
-            Cặp (mã HTTP, nội dung).
+            Pair (HTTP code, body).
         """
         parts = url.path.strip("/").split("/")
         if len(parts) == 4 and parts[:2] == ["api", "improvements"] and parts[2].isdigit():

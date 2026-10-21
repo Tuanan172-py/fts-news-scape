@@ -1,4 +1,4 @@
-"""Hiển thị bảng điều khiển vận hành trực tiếp trong terminal, mở bằng phím tắt."""
+"""Display a live operations console in the terminal, opened by a hotkey."""
 
 from __future__ import annotations
 
@@ -27,16 +27,16 @@ READ_ONLY = {"/status", "/waves", "/log", "/help"}
 
 
 def render(store: OpsStore, paths, breakers: Breakers, n_events: int) -> str:
-    """Dựng toàn màn hình: trạng thái, đợt gần nhất, dòng sự kiện.
+    """Render the full screen: status, latest waves and event lines.
 
     Args:
-        store: Store vận hành.
-        paths: Đường dẫn vận hành.
-        breakers: Breaker theo provider.
-        n_events: Số sự kiện hiển thị.
+        store: Operations store.
+        paths: Operations paths.
+        breakers: Per-provider circuit breakers.
+        n_events: Number of events to display.
 
     Returns:
-        Văn bản có mã màu ANSI.
+        Text containing ANSI color codes.
     """
     out = [f"\x1b[1m NEWS-SCAPE OPS · {time.strftime('%H:%M:%S')}  "
            f"(Ctrl+C: gõ lệnh · q: thoát)\x1b[0m", "─" * 100,
@@ -51,16 +51,16 @@ def render(store: OpsStore, paths, breakers: Breakers, n_events: int) -> str:
 
 
 def run_command(store: OpsStore, paths, breakers: Breakers, text: str) -> str:
-    """Chạy lệnh chỉ đọc tại chỗ, đưa lệnh còn lại vào hộp thư cho daemon.
+    """Run read-only commands in place and queue the others for the daemon.
 
     Args:
-        store: Store vận hành.
-        paths: Đường dẫn vận hành.
-        breakers: Breaker theo provider.
-        text: Lệnh người dùng gõ.
+        store: Operations store.
+        paths: Operations paths.
+        breakers: Per-provider circuit breakers.
+        text: Command typed by the user.
 
     Returns:
-        Kết quả hiển thị.
+        Result text to display.
     """
     text = text.strip()
     if not text.startswith("/"):
@@ -88,13 +88,13 @@ def run_command(store: OpsStore, paths, breakers: Breakers, text: str) -> str:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Chạy bảng điều khiển trực tiếp.
+    """Run the live console.
 
     Args:
-        argv: Tham số dòng lệnh.
+        argv: Command-line arguments without the program name.
 
     Returns:
-        Mã thoát.
+        Process exit code.
     """
     ap = argparse.ArgumentParser(description="Bảng điều khiển vận hành News-Scape")
     ap.add_argument("--events", type=int, default=25, help="Số sự kiện hiển thị")
@@ -102,7 +102,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--tail", action="store_true", help="Chỉ in sự kiện mới, không vẽ lại màn hình")
     args = ap.parse_args(argv)
     if os.name == "nt":
-        os.system("")  # bật xử lý mã ANSI của conhost
+        os.system("")  # Enable ANSI escape processing in conhost.
     cfg, paths = load_config(), resolve_paths()
     store = OpsStore(paths.ops_db)
     breakers = Breakers(store, cfg["breaker"])

@@ -1,8 +1,4 @@
-"""Bộ thu thập và xử lý báo cáo định kỳ kinh tế - xã hội của Tổng cục Thống kê (NSO).
-
-Driver xử lý chuyên biệt cho các báo cáo định kỳ theo tháng, quý, năm; bóc tách kỳ
-báo cáo từ tiêu đề, lưu trữ nội dung HTML và tải tệp đính kèm nhị phân (.xlsx, .docx, .pdf).
-"""
+"""Capture NSO (General Statistics Office) periodic socio-economic reports by parsing the period from titles, storing HTML and downloading binary attachments (.xlsx, .docx, .pdf)."""
 
 from __future__ import annotations
 
@@ -38,20 +34,21 @@ _QUARTER_ROMAN = {"i": 1, "ii": 2, "iii": 3, "iv": 4}
 
 
 def _strip_accents(text: str) -> str:
-    """Loại bỏ dấu tiếng Việt khỏi chuỗi văn bản."""
+    """Remove Vietnamese diacritics from a string."""
     return "".join(c for c in unicodedata.normalize("NFD", text)
                    if unicodedata.category(c) != "Mn")
 
 
 def parse_period(title: str) -> tuple[str, str] | None:
-    """Phân tích tiêu đề báo cáo tiếng Việt để xác định loại báo cáo và kỳ thời gian.
+    """Parse a Vietnamese report title to determine the report type and time period.
 
     Args:
-        title: Tiêu đề bài viết thông báo báo cáo.
+        title: Title of the post announcing the report.
 
     Returns:
-        Tuple gồm loại báo cáo ('monthly', 'quarterly', 'annual') và kỳ báo cáo (ví dụ: '2026-08', '2026-Q2'),
-        hoặc None nếu không nhận diện chắc chắn được kỳ.
+        Tuple of the report type ('monthly', 'quarterly', 'annual') and the period (for
+        example '2026-08', '2026-Q2'), or None when the period cannot be identified with
+        certainty.
     """
     if not title:
         return None
@@ -88,14 +85,14 @@ def parse_period(title: str) -> tuple[str, str] | None:
 
 
 def extract_attachments(html: str, page_url: str) -> list[dict]:
-    """Trích xuất danh sách liên kết tệp đính kèm (.xlsx, .docx, .pdf) từ mã nguồn HTML.
+    """Extract attachment links (.xlsx, .docx, .pdf) from HTML source.
 
     Args:
-        html: Mã nguồn HTML chi tiết bài viết.
-        page_url: Đường dẫn URL trang bài viết gốc.
+        html: HTML source of the article detail page.
+        page_url: URL of the original article page.
 
     Returns:
-        Danh sách đối tượng từ điển chứa URL, tên tệp và nhãn của tệp đính kèm.
+        One dict per attachment with its URL, file name and label.
     """
     out: list[dict] = []
     seen: set[str] = set()
@@ -110,7 +107,7 @@ def extract_attachments(html: str, page_url: str) -> list[dict]:
             continue
         absolute = urljoin(page_url, href)
         path = urlparse(absolute).path
-        # chỉ hạ chữ để SO KHỚP đuôi — tên file giữ nguyên case gốc cho Bronze
+        # Lowercase only to match the extension; the file name keeps its original case for Bronze.
         if not path.lower().endswith(_ATTACH_EXT):
             continue
         if absolute in seen:
@@ -123,18 +120,44 @@ def extract_attachments(html: str, page_url: str) -> list[dict]:
 
 
 def _safe_key(period: str, filename: str) -> str:
-    """`save_binary` tự gắn đuôi theo Content-Type → bỏ đuôi ở đây, tránh `.xlsx.xlsx`."""
+    """Build the storage key without a file extension.
+
+    `save_binary` appends the extension from the Content-Type, so the extension is dropped
+    here to avoid `.xlsx.xlsx`.
+    """
     stem = filename.rsplit(".", 1)[0] if "." in filename else filename
     stem = re.sub(r"[^A-Za-z0-9._-]+", "-", stem).strip("-")[:80]
     return f"{period}__{stem}"
 
 
 class PeriodicReportSource:
-    """Driver báo cáo định kỳ NSO. Không raise ra ngoài — lỗi gom vào self.errors."""
+    """Drive the capture of NSO periodic reports; errors are collected in `errors` and never raised.
+
+    Attributes:
+        http: HTTP client used for all requests.
+        store: Store that provides the operational DB connection.
+        raw_store: RawStore that writes the Bronze report files.
+        tag: WordPress tag id of the socio-economic reports.
+        timeout: Per-request timeout in seconds.
+        fetch_attachments: Whether binary attachments are downloaded.
+        robots: RobotsGate, or None when robots.txt is not respected.
+        errors: Error messages collected during the last run.
+    """
 
     def __init__(self, http, store, *, raw_dir: str | None = None,
                  tag: int = KTXH_TAG, respect_robots: bool = True,
                  timeout: int = 30, fetch_attachments: bool = True):
+        """Initialize the report source.
+
+        Args:
+            http: HTTP client used for all requests.
+            store: Store that provides the operational DB connection.
+            raw_dir: Directory for raw report files; defaults to `paths.raw_reports_dir()`.
+            tag: WordPress tag id of the socio-economic reports.
+            respect_robots: Check robots.txt before each request.
+            timeout: Per-request timeout in seconds.
+            fetch_attachments: Download binary attachments.
+        """
         self.http = http
         self.store = store
         self.raw_store = RawStore(raw_dir or paths.raw_reports_dir())
@@ -147,7 +170,16 @@ class PeriodicReportSource:
     # -- 1. DISCOVER ---------------------------------------------------------
     def discover(self, *, after: str = "", per_page: int = 20,
                  pages: int = 1) -> list[dict]:
-        """Danh sách post theo tag KTXH. `after` = ISO date để sync tăng dần."""
+        """List posts under the KTXH tag.
+
+        Args:
+            after: ISO date for incremental sync; empty fetches without a lower bound.
+            per_page: Number of posts per API page.
+            pages: Maximum number of API pages to fetch.
+
+        Returns:
+            Raw post dicts from the WordPress API.
+        """
         found: list[dict] = []
         for page in range(1, pages + 1):
             params = {"tags": self.tag, "per_page": per_page, "page": page,
@@ -178,8 +210,16 @@ class PeriodicReportSource:
     # -- 2/3. IDENTIFY + DEDUP ----------------------------------------------
     @staticmethod
     def identify(post: dict) -> tuple[str, str] | None:
+        """Identify the report type and period of a post from its title.
+
+        Args:
+            post: Post dict from the WordPress API.
+
+        Returns:
+            Tuple of report type and period, or None when the period cannot be parsed.
+        """
         title = ((post.get("title") or {}).get("rendered") or "").strip()
-        # WordPress trả HTML entity trong title (&#8211;) → unescape trước khi parse
+        # WordPress returns HTML entities in the title (&#8211;), so unescape before parsing.
         try:
             title = BeautifulSoup(title, "lxml").get_text(" ", strip=True)
         except Exception:  # pragma: no cover - defensive
@@ -252,7 +292,18 @@ class PeriodicReportSource:
     # -- orchestration -------------------------------------------------------
     def run(self, *, after: str = "", per_page: int = 20, pages: int = 1,
             limit: int = 0) -> dict:
-        """Discover → identify → dedup → capture. Trả summary dict."""
+        """Run discover, identify, dedup and capture in order.
+
+        Args:
+            after: ISO date for incremental sync.
+            per_page: Number of posts per API page.
+            pages: Maximum number of API pages to fetch.
+            limit: Maximum number of posts to process; 0 means no limit.
+
+        Returns:
+            Counter dict with keys discovered, captured, revised, skipped_unchanged,
+            held_unparsed, failed, attachments.
+        """
         self.errors = []
         summary = {"discovered": 0, "captured": 0, "revised": 0,
                    "skipped_unchanged": 0, "held_unparsed": 0, "failed": 0,
@@ -265,7 +316,7 @@ class PeriodicReportSource:
         for post in posts:
             ident = self.identify(post)
             if ident is None:
-                # KHÔNG đoán bừa kỳ báo cáo — held + cảnh báo để người xem lại
+                # Never guess the report period: hold the post and warn for manual review.
                 title = ((post.get("title") or {}).get("rendered") or "")[:120]
                 summary["held_unparsed"] += 1
                 self.errors.append(f"cannot parse period from title: {title!r}")

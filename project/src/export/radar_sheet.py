@@ -1,4 +1,4 @@
-"""Dựng sheet Radar chú ý cho tệp giao hàng từ bảng signal_daily theo watchlist người dùng."""
+"""Build the attention-radar sheet of the delivery file from the signal_daily table and the user watchlist."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ SHEET_NAME = "Radar chú ý"
 LOOKBACK_DAYS = 6
 MAX_ROWS = 300
 
-# (khoá trong signal_daily, nhãn hiển thị, độ rộng cột, định dạng số)
+# (key in signal_daily, display label, column width, number format)
 RADAR_FIELDS: list[tuple[str, str, int, str | None]] = [
     ("trade_date", "Phiên", 12, None),
     ("entity_id", "Thực thể", 26, None),
@@ -34,6 +34,14 @@ RADAR_FIELDS: list[tuple[str, str, int, str | None]] = [
 
 
 def _next_session(d: date) -> date:
+    """Return the next weekday after a date.
+
+    Args:
+        d: Reference date.
+
+    Returns:
+        Next date that falls on Monday to Friday.
+    """
     nxt = d + timedelta(days=1)
     while nxt.weekday() >= 5:
         nxt += timedelta(days=1)
@@ -41,17 +49,17 @@ def _next_session(d: date) -> date:
 
 
 def radar_rows(conn: sqlite3.Connection, entity_ids: set[str], day: str) -> list[dict]:
-    """Đọc các dòng tín hiệu của những thực thể người dùng theo dõi quanh ngày giao hàng.
+    """Read the signal rows of the entities a user watches around the delivery date.
 
-    Bảng thiếu hoặc không có dòng thì trả danh sách rỗng và sheet bị bỏ.
+    A missing table or no rows returns an empty list and the sheet is skipped.
 
     Args:
-        conn: Kết nối chỉ đọc tới DB vận hành.
-        entity_ids: Tập entity_id trong đăng ký của người dùng.
-        day: Ngày giao hàng ISO `YYYY-MM-DD`.
+        conn: Read-only connection to the operational database.
+        entity_ids: Entity ids in the subscription of the user.
+        day: Delivery date as ISO `YYYY-MM-DD`.
 
     Returns:
-        Tối đa 300 dòng, mới nhất trước, trong cùng phiên thì chú ý bất thường cao trước.
+        At most 300 rows, newest first, and within a session the highest abnormal attention first.
     """
     if not entity_ids:
         return []
@@ -79,11 +87,11 @@ def radar_rows(conn: sqlite3.Connection, entity_ids: set[str], day: str) -> list
 
 
 def add_radar_sheet(wb: Workbook, rows: list[dict]) -> None:
-    """Thêm sheet Radar chú ý vào workbook; không làm gì khi không có dòng.
+    """Add the attention-radar sheet to the workbook; do nothing when there are no rows.
 
     Args:
-        wb: Workbook giao hàng đã có sheet chính.
-        rows: Kết quả của `radar_rows`.
+        wb: Delivery workbook that already has the main sheet.
+        rows: Result of `radar_rows`.
     """
     if not rows:
         return

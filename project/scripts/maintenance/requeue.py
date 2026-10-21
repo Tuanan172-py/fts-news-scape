@@ -1,15 +1,15 @@
-"""Đưa gói công việc đang kẹt trở lại hàng đợi `pending`.
-
-Bốn trạng thái từng là ngõ cụt không có đường quay lại (`docs/OPEN-ITEMS.md` §A0-4):
-`work_items` ở `failed`/`held`/`claimed` và `l1_tasks` ở `failed`. Sửa xong nguyên nhân gốc
-cũng không cứu được bài cũ, phải can thiệp SQL tay.
-
-Phân công theo quyết định vận hành 2026-09-17:
-  - `held` (work_items)  : TỰ ĐỘNG khi derive lại thành công — không cần script này.
-  - `claimed`            : TỰ ĐỘNG qua job `reclaim_stale` trong morninger.
-  - `failed`             : THEO LỆNH — nguyên nhân thường nằm ở nội dung bài, không nên
-                           thử lại vô tội vạ. Đó là việc của script này.
+"""Return stuck work packages to the `pending` queue.
 """
+
+# Four states used to be dead ends with no way back (`docs/OPEN-ITEMS.md` A0-4):
+# `work_items` in `failed`/`held`/`claimed` and `l1_tasks` in `failed`. Fixing the root
+# cause did not rescue old articles; manual SQL was required.
+#
+# Responsibility split from the 2026-09-17 operating decision:
+#   - `held` (work_items): automatic after a successful re-derive; this script is not needed.
+#   - `claimed`: automatic through the scheduler `reclaim_stale` job.
+#   - `failed`: on demand only. The cause usually lies in the article content, so blind
+#     retries are wrong. This script handles that case.
 
 from __future__ import annotations
 
@@ -28,7 +28,16 @@ force_utf8_stdio()
 
 
 def _requeue_l1(store, limit: int, dry_run: bool) -> int:
-    """Đưa `l1_tasks` trượt DoD về `pending` để vòng sau tra soát lại."""
+    """Reset `l1_tasks` that failed the DoD to `pending` for the next review pass.
+
+    Args:
+        store: Article store that provides the database connection.
+        limit: Maximum number of tasks to requeue.
+        dry_run: Count the candidates without updating.
+
+    Returns:
+        Number of tasks found (dry run) or updated.
+    """
     conn = store.connect()
     try:
         ids = [r["id"] for r in conn.execute(
@@ -46,6 +55,14 @@ def _requeue_l1(store, limit: int, dry_run: bool) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Requeue stuck work items and L1 tasks.
+
+    Args:
+        argv: Command-line arguments; defaults to `sys.argv[1:]`.
+
+    Returns:
+        Process exit code, always 0.
+    """
     p = argparse.ArgumentParser(description=(__doc__ or "").strip().splitlines()[0])
     p.add_argument("--layer", choices=["gold", "l1", "all"], default="all",
                    help="gold: work_items · l1: l1_tasks · all: cả hai")

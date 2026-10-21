@@ -1,1 +1,1 @@
-"""Gói giám sát vận hành, sức khỏe hệ thống và báo cáo độ lệch dữ liệu."""
+"""Monitor operations, system health and data drift reporting."""

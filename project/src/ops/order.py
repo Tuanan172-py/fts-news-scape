@@ -1,4 +1,4 @@
-"""Đọc, ghi và áp standing order quyết định mức tự chủ của daemon."""
+"""Read, write and apply the standing order that decides the autonomy level of the daemon."""
 
 from __future__ import annotations
 
@@ -7,9 +7,10 @@ from dataclasses import dataclass
 from datetime import date, timedelta
 from pathlib import Path
 
-# L0: dừng/khoá, chỉ đo và báo. L1: mandate có trần bài mỗi đợt, đủ điều kiện thì mở đợt
-# và chạy trọn tới nạp DB, không hỏi từng đợt (ADR-0012 D5 đã sửa bởi ADR-0026.D4).
-# Mức khác L0/L1 không hợp lệ: tệp lệnh ghi mức lạ được đọc thành L0 (an toàn).
+# L0: stopped or locked, measure and report only. L1: mandate with a per-wave article cap;
+# when conditions are met it opens a wave and runs it through DB load without asking per wave
+# (ADR-0012 D5 as amended by ADR-0026.D4).
+# Any level other than L0/L1 is invalid: an order file with an unknown level is read as L0 (safe).
 LEVELS = ("L0", "L1")
 DEFAULT_MAX_LIMIT = 100
 MAX_LIMIT_CEILING = 500
@@ -19,16 +20,16 @@ PROVIDERS = ("agy", "openrouter")
 
 @dataclass
 class StandingOrder:
-    """Chỉ lệnh uỷ quyền vận hành có thời hạn do người vận hành tạo.
+    """Time-limited operations delegation created by the operator.
 
     Attributes:
-        level: Mức tự chủ ghi trong lệnh.
-        valid_until: Ngày hết hạn (YYYY-MM-DD).
-        provider: Provider chính.
-        failover: Chính sách chuyển provider.
-        max_limit: Trần số bài mỗi đợt mà mandate L1 cho phép.
-        created_by: Nguồn tạo hoặc sửa lệnh gần nhất.
-        exists: False khi tệp chưa tồn tại.
+        level: Autonomy level recorded in the order.
+        valid_until: Expiry date (YYYY-MM-DD).
+        provider: Primary provider.
+        failover: Provider failover policy.
+        max_limit: Per-wave article cap allowed by the L1 mandate.
+        created_by: Source that last created or modified the order.
+        exists: False when the file does not exist.
     """
 
     level: str = "L0"
@@ -40,13 +41,13 @@ class StandingOrder:
     exists: bool = False
 
     def effective_level(self, today: date | None = None) -> str:
-        """Tính mức tự chủ có hiệu lực; lệnh thiếu hoặc hết hạn thì về L0.
+        """Compute the effective autonomy level; a missing or expired order falls back to L0.
 
         Args:
-            today: Ngày đánh giá. Mặc định là hôm nay.
+            today: Evaluation date. Defaults to today.
 
         Returns:
-            Mức tự chủ có hiệu lực.
+            Effective autonomy level.
         """
         if not self.exists or self.level not in LEVELS:
             return "L0"
@@ -55,13 +56,13 @@ class StandingOrder:
         return self.level
 
     def expired(self, today: date | None = None) -> bool:
-        """Cho biết lệnh đã hết hạn chưa.
+        """Report whether the order has expired.
 
         Args:
-            today: Ngày đánh giá.
+            today: Evaluation date.
 
         Returns:
-            True khi không có ngày hạn hợp lệ hoặc đã qua ngày hạn.
+            True when there is no valid expiry date or the expiry date has passed.
         """
         try:
             until = date.fromisoformat(self.valid_until)
@@ -70,13 +71,13 @@ class StandingOrder:
         return (today or date.today()) > until
 
     def hours_left(self, today: date | None = None) -> float:
-        """Tính số giờ còn lại tới hết ngày hạn.
+        """Compute the hours remaining until the end of the expiry day.
 
         Args:
-            today: Ngày đánh giá.
+            today: Evaluation date.
 
         Returns:
-            Số giờ còn lại, âm khi đã hết hạn.
+            Hours remaining, negative when expired.
         """
         try:
             until = date.fromisoformat(self.valid_until)
@@ -85,23 +86,23 @@ class StandingOrder:
         return ((until - (today or date.today())).days + 1) * 24.0
 
     def digest(self) -> str:
-        """Băm nội dung lệnh để ghi vào mỗi đợt.
+        """Hash the order content to record on each wave.
 
         Returns:
-            12 ký tự đầu của SHA-256.
+            First 12 characters of the SHA-256 digest.
         """
         raw = f"{self.level}|{self.valid_until}|{self.provider}|{self.failover}|{self.max_limit}"
         return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:12]
 
 
 def load_order(path: Path) -> StandingOrder:
-    """Đọc standing order dạng `khoá: giá trị`.
+    """Read a standing order in `key: value` form.
 
     Args:
-        path: Đường dẫn tệp.
+        path: File path.
 
     Returns:
-        StandingOrder; `exists=False` khi tệp chưa có.
+        The StandingOrder; `exists=False` when the file is absent.
     """
     if not path.exists():
         return StandingOrder()
@@ -131,11 +132,11 @@ def load_order(path: Path) -> StandingOrder:
 
 
 def save_order(path: Path, order: StandingOrder) -> None:
-    """Ghi standing order ra tệp, giữ định dạng mà `article_tick.py` đọc được.
+    """Write the standing order to a file, keeping the format that `article_tick.py` can read.
 
     Args:
-        path: Đường dẫn tệp.
-        order: Nội dung lệnh.
+        path: File path.
+        order: Order content.
     """
     path.parent.mkdir(parents=True, exist_ok=True)
     text = (
@@ -154,15 +155,15 @@ def save_order(path: Path, order: StandingOrder) -> None:
 
 
 def extend(order: StandingOrder, days: int, max_days: int) -> StandingOrder:
-    """Gia hạn lệnh tính từ hôm nay, không vượt `max_days`.
+    """Extend the order from today, not beyond `max_days`.
 
     Args:
-        order: Lệnh hiện tại.
-        days: Số ngày gia hạn.
-        max_days: Trần số ngày.
+        order: Current order.
+        days: Number of days to extend.
+        max_days: Day cap.
 
     Returns:
-        Lệnh đã gia hạn.
+        The extended order.
     """
     days = max(1, min(int(days), int(max_days)))
     order.valid_until = (date.today() + timedelta(days=days)).isoformat()
@@ -171,13 +172,13 @@ def extend(order: StandingOrder, days: int, max_days: int) -> StandingOrder:
 
 
 def demote(level: str) -> str:
-    """Hạ một bậc tự chủ.
+    """Lower the autonomy level by one step.
 
     Args:
-        level: Mức hiện tại.
+        level: Current level.
 
     Returns:
-        Mức thấp hơn một bậc, tối thiểu L0.
+        The level one step lower, at minimum L0.
     """
     i = LEVELS.index(level) if level in LEVELS else 0
     return LEVELS[max(0, i - 1)]

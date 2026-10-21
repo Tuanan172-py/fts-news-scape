@@ -1,4 +1,4 @@
-"""Dựng lại các bảng tín hiệu insight phái sinh từ kết quả mô hình trong DB vận hành."""
+"""Rebuild the derived insight signal tables from model results in the operational DB."""
 
 from __future__ import annotations
 
@@ -18,13 +18,13 @@ force_utf8_stdio()
 
 
 def summarize(result: dict[str, list[dict]]) -> list[str]:
-    """Tóm tắt số dòng từng bảng và tỷ lệ NULL của từng chỉ số.
+    """Summarize row counts per table and the NULL ratio of each metric.
 
     Args:
-        result: Kết quả của `build_all`.
+        result: Result of `build_all`.
 
     Returns:
-        Danh sách dòng văn bản để in.
+        Text lines to print.
     """
     daily = result["signal_daily"]
     lines = [f"signal_daily : {len(daily):,} dòng",
@@ -46,13 +46,13 @@ def summarize(result: dict[str, list[dict]]) -> list[str]:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Chạy dựng bảng tín hiệu và in tóm tắt.
+    """Run the signal table build and print a summary.
 
     Args:
-        argv: Tham số dòng lệnh; mặc định lấy từ sys.argv.
+        argv: Command-line arguments; defaults to `sys.argv`.
 
     Returns:
-        Mã thoát 0.
+        Exit code 0.
     """
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--days", type=int, default=30, help="số ngày của cửa sổ dựng lại")

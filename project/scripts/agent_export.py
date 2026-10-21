@@ -1,4 +1,4 @@
-"""Xuất các gói công việc cho agent phân tích chuyên sâu."""
+"""Export work packages for the deep-analysis agent."""
 
 from __future__ import annotations
 
@@ -17,7 +17,15 @@ force_utf8_stdio()
 
 
 def main(argv: list[str]) -> int:
-    ap = argparse.ArgumentParser(description="Xuất task-packet cho agent NGOÀI")
+    """Export pending articles as task packets for the external agent.
+
+    Args:
+        argv: Command-line arguments, excluding the program name.
+
+    Returns:
+        Process exit code, always 0.
+    """
+    ap =argparse.ArgumentParser(description="Xuất task-packet cho agent NGOÀI")
     ap.add_argument("limit_pos", nargs="?", type=int, help="Số lượng việc cần xuất (tùy chọn)")
     ap.add_argument("--batch-size", "-b", type=int, default=None, help="Kích thước block/lô việc cần xuất (mặc định 50)")
     ap.add_argument("--limit", "-n", type=int, help="Tối đa N việc")
@@ -48,7 +56,7 @@ def main(argv: list[str]) -> int:
     else:
         limit = 50
 
-    # Xử lý tham số user (hỗ trợ phân tách dấu phẩy hoặc lặp cờ)
+    # Accept the user filter as a repeated flag or as a comma-separated list.
     user_filter = None
     if args.user:
         user_filter = []
