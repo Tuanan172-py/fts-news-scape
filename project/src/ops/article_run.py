@@ -11,17 +11,16 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.agent.article_contract import not_code_first_sql_for  # noqa: E402
-from src.agent.prefix import prefix_hash              # noqa: E402
-from src.core import paths                             # noqa: E402
-from src.core.stdio import force_utf8_stdio            # noqa: E402
-from src.db.preflight import probe_write, resolve_db_path  # noqa: E402
-from src.core import pipeline_spec      # noqa: E402
-from src.telemetry import trace as tracing      # noqa: E402
-from src.core.paths import PROJECT_ROOT  # noqa: E402
-from src.db.connect import open_ro  # noqa: E402
+from src.agent.article_contract import not_code_first_sql_for
+from src.agent.prefix import prefix_hash
+from src.core import paths
+from src.core.stdio import force_utf8_stdio
+from src.db.preflight import probe_write, resolve_db_path
+from src.core import pipeline_spec
+from src.telemetry import trace as tracing
+from src.core.paths import PROJECT_ROOT
+from src.db.connect import open_ro
 
 force_utf8_stdio()
 
@@ -339,7 +338,7 @@ def cmd_repair(args: argparse.Namespace) -> int:
         Exit code 0 when there is something to repair or nothing is missing, 2 when no
         output exists yet.
     """
-    from scripts.article_pack import fresh_wave_paragraphs, write_packet
+    from src.article_lane.pack import fresh_wave_paragraphs, write_packet
     from src.agent.article_contract import MIN_CITATION_CHARS
 
     def _eligible(paras: list) -> int:
@@ -1170,6 +1169,3 @@ def _dispatch(args: argparse.Namespace) -> int:
 
     return cmd_finish(args) if args.finish else cmd_prepare(args)
 
-
-if __name__ == "__main__":
-    raise SystemExit(main())

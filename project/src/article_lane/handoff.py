@@ -8,19 +8,16 @@ from __future__ import annotations
 import argparse
 import glob
 import json
-import os
 import sqlite3
-import sys
 from datetime import datetime
 from pathlib import Path
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from scripts.article_pack import ANALYZED_L1, load_candidates  # noqa: E402
-from src.core import paths                             # noqa: E402
-from src.core.stdio import force_utf8_stdio          # noqa: E402
-from src.db.preflight import resolve_db_path         # noqa: E402
-from src.db.connect import open_ro  # noqa: E402
+from src.article_lane.pack import ANALYZED_L1, load_candidates
+from src.core import paths
+from src.core.stdio import force_utf8_stdio
+from src.db.preflight import resolve_db_path
+from src.db.connect import open_ro
 
 force_utf8_stdio()
 
@@ -251,6 +248,3 @@ def main(argv=None) -> int:
           f"lô chưa chạy: {len(state['packets_pending'])}")
     return 0
 
-
-if __name__ == "__main__":
-    raise SystemExit(main())

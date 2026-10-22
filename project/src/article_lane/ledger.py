@@ -6,21 +6,19 @@ import glob
 import json
 import os
 import sqlite3
-import sys
 import time
 from datetime import datetime, timezone
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.agent.prefix import cached_prefix_tokens    # noqa: E402
-from src.core import paths                           # noqa: E402
-from src.core.stdio import force_utf8_stdio          # noqa: E402
-from src.telemetry.dsh_usage import (                # noqa: E402
+from src.agent.prefix import cached_prefix_tokens
+from src.core import paths
+from src.core.stdio import force_utf8_stdio
+from src.telemetry.dsh_usage import (
     is_peak,
     load_pricing,
     wave_usage,
 )
-from src.db.connect import open_rw  # noqa: E402
+from src.db.connect import open_rw
 
 force_utf8_stdio()
 
@@ -591,6 +589,3 @@ def main(argv=None) -> int:
     return {"init": cmd_init, "append": cmd_append,
             "report": cmd_report, "verify": cmd_verify}[args.cmd](args)
 
-
-if __name__ == "__main__":
-    raise SystemExit(main())

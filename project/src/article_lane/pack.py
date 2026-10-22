@@ -5,34 +5,31 @@ import argparse
 import hashlib
 import json
 import math
-import os
 import re
 import sqlite3
-import sys
 from datetime import datetime
 from pathlib import Path
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.agent.distill import (                      # noqa: E402
+from src.agent.distill import (
     DEFAULT_MAX_TOKENS_PER_ARTICLE,
     distill_stats,
     estimate_tokens,
 )
-from src.agent.article_contract import MIN_CITATION_CHARS, analyzed_l1_sql  # noqa: E402
-from src.agent.silver_source import read_silver_text  # noqa: E402
-from src.agent.entities import load_registry          # noqa: E402
-from src.agent.prefix import (                        # noqa: E402
+from src.agent.article_contract import MIN_CITATION_CHARS, analyzed_l1_sql
+from src.agent.silver_source import read_silver_text
+from src.agent.entities import load_registry
+from src.agent.prefix import (
     SYSTEM_OVERHEAD_TOKENS,
     cached_prefix_tokens,
     persona_tokens,
 )
-from src.core import paths                             # noqa: E402
-from src.core.stdio import force_utf8_stdio           # noqa: E402
-from src.db.preflight import resolve_db_path          # noqa: E402
-from src.pipeline.cluster_job import refresh as refresh_clusters  # noqa: E402
-from src.pipeline.inherit import hold_cutoff          # noqa: E402
-from src.db.connect import open_ro, open_rw  # noqa: E402
+from src.core import paths
+from src.core.stdio import force_utf8_stdio
+from src.db.preflight import resolve_db_path
+from src.pipeline.cluster_job import refresh as refresh_clusters
+from src.pipeline.inherit import hold_cutoff
+from src.db.connect import open_ro, open_rw
 
 force_utf8_stdio()
 
@@ -836,6 +833,3 @@ def main(argv=None) -> int:
     print("=" * 84)
     return 0
 
-
-if __name__ == "__main__":
-    raise SystemExit(main())

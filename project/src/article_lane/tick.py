@@ -11,7 +11,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.agent.article_contract import analyzed_l1_sql
 from src.core import paths
@@ -433,6 +432,3 @@ def main(argv: list[str] | None = None) -> int:
 
     return run_tick(args)
 
-
-if __name__ == "__main__":
-    raise SystemExit(main(sys.argv[1:]))

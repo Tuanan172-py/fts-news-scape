@@ -12,7 +12,6 @@ import unicodedata
 from collections import Counter
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 try:
     import pandas as pd
@@ -22,6 +21,7 @@ except ImportError:
 from src.agent.entities import GENERIC_ALIAS_STOPLIST, _fold
 from src.core import paths
 from src.core.stdio import force_utf8_stdio
+from src.core.paths import PROJECT_ROOT, REPO_ROOT
 force_utf8_stdio()
 
 
@@ -33,12 +33,12 @@ force_utf8_stdio()
 _POSSIBLE_DATA_ROOTS = [
     *([Path(os.environ["FRA_DATA_ROOT"])] if os.environ.get("FRA_DATA_ROOT") else []),
     Path.home() / "OneDrive - fpts.com.vn" / "FRA - Data",
-    Path(__file__).resolve().parents[2] / "FRA - Data",
+    REPO_ROOT / "FRA - Data",
 ]
 DEFAULT_DATA_ROOT = next((p for p in _POSSIBLE_DATA_ROOTS if p.exists()), _POSSIBLE_DATA_ROOTS[0])
 DEFAULT_OUT = paths.entities_dir()
-ALIASES_DIR = Path(__file__).resolve().parents[1] / "config" / "entities" / "aliases"
-USERS_DIR = Path(__file__).resolve().parents[1] / "config" / "entities" / "users"
+ALIASES_DIR = PROJECT_ROOT / "config" / "entities" / "aliases"
+USERS_DIR = PROJECT_ROOT / "config" / "entities" / "users"
 
 SCHEMA_VERSION = "1.2.0"
 
@@ -844,6 +844,3 @@ def main(argv=None) -> int:
     print(f"\nOutput -> {args.out}")
     return 0
 
-
-if __name__ == "__main__":
-    raise SystemExit(main())

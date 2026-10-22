@@ -8,7 +8,6 @@ import os
 import sqlite3
 import sys
 from datetime import datetime, timedelta, timezone
-from pathlib import Path
 
 # Force UTF-8 output on the Windows console.
 if sys.platform == "win32":
@@ -18,23 +17,22 @@ if sys.platform == "win32":
     except Exception:
         pass
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from scripts.token_ledger import (                         # noqa: E402
+from src.article_lane.ledger import (
     latest_snapshots,
     worker_calls,
 )
-from src.agent.prefix import cached_prefix_tokens          # noqa: E402
-from src.core import paths                                 # noqa: E402
-from src.core.user_manifest import load_user_manifest      # noqa: E402
-from src.db.preflight import probe_write, resolve_db_path  # noqa: E402
-from src.telemetry.dsh_usage import (                      # noqa: E402
+from src.agent.prefix import cached_prefix_tokens
+from src.core import paths
+from src.core.user_manifest import load_user_manifest
+from src.db.preflight import probe_write, resolve_db_path
+from src.telemetry.dsh_usage import (
     billed_usd,
     is_peak,
     iter_sessions,
     load_pricing,
 )
-from src.db.connect import open_ro  # noqa: E402
+from src.db.connect import open_ro
 
 ARTICLE_TASK_DIR = paths.article_packets_dir()
 USER_OUTPUT_DIR = paths.users_output_dir()
@@ -97,7 +95,7 @@ def wave_state(conn: sqlite3.Connection, manifest: dict) -> dict:
     Returns:
         Dict of wave metrics with the keys `phase` and `next` (next command, empty when done).
     """
-    from scripts import article_run as ar
+    from src.ops import article_run as ar
 
     wave = manifest["wave"]
     have, missing = ar.pending_batches(wave)
@@ -172,7 +170,7 @@ def cmd_status(args: argparse.Namespace) -> None:
     Args:
         args: Parsed command-line arguments; uses `date`.
     """
-    from scripts.article_pack import ANALYZED_L1, is_thin_row, load_candidates
+    from src.article_lane.pack import ANALYZED_L1, is_thin_row, load_candidates
 
     target_date = args.date or f"{datetime.now():%Y-%m-%d}"
     print("=" * 80)
@@ -731,7 +729,7 @@ def cmd_backlog(args: argparse.Namespace) -> None:
         ).fetchall()
         work_items = {r[0]: r[1] for r in work_items_raw}
 
-        from scripts.article_pack import watchlist_universe, tier_of
+        from src.article_lane.pack import watchlist_universe, tier_of
         from src.agent.entities import load_registry
 
         reg = load_registry()
@@ -932,8 +930,4 @@ def main() -> None:
         cmd_users(args)
     elif args.command == "backlog":
         cmd_backlog(args)
-
-
-if __name__ == "__main__":
-    main()
 

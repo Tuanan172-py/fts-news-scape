@@ -4,22 +4,19 @@ from __future__ import annotations
 import argparse
 import glob
 import json
-import os
-import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.agent.entities import load_registry           # noqa: E402
-from src.core import paths                             # noqa: E402
-from src.agent.intent_resolve import (                 # noqa: E402
+from src.agent.entities import load_registry
+from src.core import paths
+from src.agent.intent_resolve import (
     GROUPS_WITHOUT_RESOLVER,
     IntentResolver,
     ResolveReport,
     reconcile,
 )
-from src.agent.article_contract import (               # noqa: E402,F401
+from src.agent.article_contract import (  # noqa: F401
     MIN_CITATION_CHARS,
     SENTIMENT_MAP,
     TIME_MAP,
@@ -27,8 +24,8 @@ from src.agent.article_contract import (               # noqa: E402,F401
     salvage_records,
     unwrap_tool_envelope,
 )
-from src.agent.l1_router import TYPE_GROUP             # noqa: E402
-from src.core.stdio import force_utf8_stdio            # noqa: E402
+from src.agent.l1_router import TYPE_GROUP
+from src.core.stdio import force_utf8_stdio
 
 force_utf8_stdio()
 
@@ -602,6 +599,3 @@ def main(argv=None) -> int:
     print("Bước tiếp: `l1_ingest.py data/agent_outputs_l1` rồi `agent_ingest.py data/agent_outputs`")
     return 1 if gate > args.fail_threshold else 0
 
-
-if __name__ == "__main__":
-    raise SystemExit(main())
