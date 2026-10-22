@@ -5,7 +5,7 @@ import json
 from datetime import datetime
 from pathlib import Path
 
-from scripts.article_tick import (
+from src.article_lane.tick import (
     PipelineLock,
     check_kill_switch,
     evaluate_trigger,

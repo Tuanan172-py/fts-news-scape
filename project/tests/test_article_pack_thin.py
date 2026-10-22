@@ -13,8 +13,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from scripts import article_pack  # noqa: E402
-from scripts import article_expand  # noqa: E402
+from src.article_lane import pack as article_pack  # noqa: E402
+from src.article_lane import expand as article_expand  # noqa: E402
 from src.agent import article_contract  # noqa: E402
 
 LONG_A = "Đoạn văn thứ nhất đủ dài để làm trích dẫn nguyên văn."

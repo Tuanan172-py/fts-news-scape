@@ -122,7 +122,7 @@ def test_code_first_row_on_copy_does_not_block_inheritance(world):
 
 # -- bộ chọn bài ---------------------------------------------------------------
 def test_pack_holds_copy_then_releases_after_expiry(world, monkeypatch):
-    from scripts import article_pack
+    from src.article_lane import pack as article_pack
     st, src, cpy = world
     conn = st._connect()
     conn.execute("UPDATE cluster_members SET decided_at=? WHERE article_id=?",

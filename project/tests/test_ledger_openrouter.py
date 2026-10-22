@@ -14,7 +14,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from scripts import token_ledger  # noqa: E402
+from src.article_lane import ledger as token_ledger  # noqa: E402
 
 SCHEMA = """CREATE TABLE token_ledger (
     ts TEXT, wave TEXT, batch_id TEXT, agent_id TEXT, n_items INTEGER,

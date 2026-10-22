@@ -18,7 +18,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from scripts.article_expand import (          # noqa: E402
+from src.article_lane.expand import (          # noqa: E402
     build_gold_output,
     build_l1_output,
     salvage_records,
@@ -398,7 +398,7 @@ def test_khong_dong_nao_vuot_tran_cat_dong():
     """
     import json as _json
 
-    from scripts.article_pack import READ_MAX_LINE_CHARS
+    from src.article_lane.pack import READ_MAX_LINE_CHARS
 
     items = [{"i": i, "t": f"Tiêu đề bài {i}", "p": distill(SAMPLE)} for i in range(50)]
     text = _json.dumps({"d": "2026-09-18", "n": len(items), "a": items},
@@ -408,7 +408,7 @@ def test_khong_dong_nao_vuot_tran_cat_dong():
 
 def test_cua_so_doc_khong_vuot_tran_byte():
     """Mỗi cửa sổ đọc phải nằm gọn trong một lần gọi của công cụ đọc."""
-    from scripts.article_pack import READ_MAX_BYTES, READ_MAX_LINES, read_windows
+    from src.article_lane.pack import READ_MAX_BYTES, READ_MAX_LINES, read_windows
 
     lines = ["x" * 900] * 500
     windows = read_windows(lines)
@@ -428,7 +428,7 @@ def test_boc_duoc_lop_vo_ket_qua_cong_cu():
     """
     import json as _json
 
-    from scripts.article_expand import salvage_records
+    from src.article_lane.expand import salvage_records
 
     inner = _json.dumps([{"i": 0, "e": [], "s": "x"}, {"i": 1, "e": [], "s": "y"}],
                         ensure_ascii=False)
@@ -444,7 +444,7 @@ def test_dau_ra_tran_khong_co_lop_vo_van_boc_duoc():
     """Bóc lớp vỏ không được làm hỏng đường đầu ra trần vốn đang chạy đúng."""
     import json as _json
 
-    from scripts.article_expand import salvage_records
+    from src.article_lane.expand import salvage_records
 
     plain = _json.dumps([{"i": 0, "e": [], "s": "x"}], ensure_ascii=False)
     records, broken = salvage_records(plain)
@@ -457,7 +457,7 @@ def test_batch_la_cong_chia_duy_nhat():
     Trần ngữ cảnh chưa bao giờ chạm, còn trần đầu ra thì chưa đo được nên không đủ
     tư cách làm luật chia lô. Một đợt trăm bài phải ra đúng MỘT lượt gọi.
     """
-    from scripts.article_pack import plan_calls
+    from src.article_lane.pack import plan_calls
 
     assert plan_calls(100, batch_cap=100) == [100]
     assert plan_calls(250, batch_cap=250) == [250]
@@ -466,7 +466,7 @@ def test_batch_la_cong_chia_duy_nhat():
 
 def test_cac_luot_duoc_chia_deu():
     """Khi đợt lớn hơn trần người vận hành đặt thì các lượt phải đều nhau."""
-    from scripts.article_pack import plan_calls
+    from src.article_lane.pack import plan_calls
 
     sizes = plan_calls(250, batch_cap=100)
     assert sum(sizes) == 250
@@ -509,7 +509,7 @@ def test_phat_hien_dung_nhung_bai_con_thieu(tmp_path, monkeypatch):
     """Lô trả về thiếu bài phải lộ ra đúng những chỉ số chưa có bản ghi."""
     import json as _json
 
-    from scripts import article_run
+    from src.ops import article_run
 
     monkeypatch.setattr(article_run, "TASK_DIR", tmp_path)
     monkeypatch.setattr(article_run, "OUT_DIR", tmp_path)
@@ -538,7 +538,7 @@ def test_dong_goi_bu_chi_lay_phan_thieu(tmp_path, monkeypatch, capsys):
     import argparse
     import json as _json
 
-    from scripts import article_run
+    from src.ops import article_run
 
     monkeypatch.setattr(article_run, "TASK_DIR", tmp_path)
     monkeypatch.setattr(article_run, "OUT_DIR", tmp_path)
@@ -575,7 +575,7 @@ def test_va_hai_the_he_khong_de_packet_chong_lap(tmp_path, monkeypatch):
     import argparse
     import json as _json
 
-    from scripts import article_run
+    from src.ops import article_run
 
     monkeypatch.setattr(article_run, "TASK_DIR", tmp_path)
     monkeypatch.setattr(article_run, "OUT_DIR", tmp_path)
@@ -624,7 +624,7 @@ def test_cong_expand_dung_ty_le_toan_dot(tmp_path, monkeypatch):
     """Bài thiếu ở một lô nhưng có ở lô vá anh em không được tính hỏng (E1)."""
     import json as _json
 
-    from scripts import article_expand
+    from src.article_lane import expand as article_expand
 
     monkeypatch.setattr(article_expand, "L1_OUT_DIR", tmp_path / "l1")
     monkeypatch.setattr(article_expand, "GOLD_OUT_DIR", tmp_path / "gold")
@@ -666,7 +666,7 @@ def test_khong_thieu_bai_thi_khong_sinh_goi_bu(tmp_path, monkeypatch):
     import argparse
     import json as _json
 
-    from scripts import article_run
+    from src.ops import article_run
 
     monkeypatch.setattr(article_run, "TASK_DIR", tmp_path)
     monkeypatch.setattr(article_run, "OUT_DIR", tmp_path)
@@ -693,7 +693,7 @@ def test_chuong_trinh_dieu_phoi_la_javascript_hop_le():
     import subprocess
     import tempfile
 
-    from scripts.article_run import conductor_program
+    from src.ops.article_run import conductor_program
 
     manifest = {"wave": "T", "articles": 1, "batches": [
         {"batch_id": "b1", "path": "p.json", "n": 1, "windows": [[1, 10]]}]}
@@ -713,7 +713,7 @@ def test_chuong_trinh_dieu_phoi_la_javascript_hop_le():
 
 def test_chuong_trinh_dieu_phoi_khong_tra_noi_dung_ve_ngu_canh():
     """Chương trình chỉ được trả về con số; trả nội dung lô là làm phình ngữ cảnh cha."""
-    from scripts.article_run import conductor_program
+    from src.ops.article_run import conductor_program
 
     manifest = {"wave": "T", "articles": 1, "batches": [
         {"batch_id": "b1", "path": "p.json", "n": 1, "windows": [[1, 10]]}]}
@@ -767,7 +767,7 @@ def test_tien_to_tinh_gom_ca_phan_harness_noi_them():
 
 def test_dong_goi_lai_cung_mot_tap_bai_cho_ra_packet_giong_het(tmp_path):
     """Packet phải tất định: lần chạy lại chỉ trúng cache khi giống hệt lần trước."""
-    from scripts.article_pack import write_packet
+    from src.article_lane.pack import write_packet
 
     items = [{"i": 0, "t": "Hòa Phát báo lãi", "p": ["Đoạn một.", "Đoạn hai."]},
              {"i": 1, "t": "VND: báo cáo quản trị", "p": ["Đoạn ba."]}]
@@ -779,7 +779,7 @@ def test_dong_goi_lai_cung_mot_tap_bai_cho_ra_packet_giong_het(tmp_path):
 
 def test_chuong_trinh_dieu_phoi_ham_cache_truoc_roi_tha_moi_lo():
     """Lượt hâm cache phải đi trước, và không lô nào bị bắt chạy một mình nữa."""
-    from scripts.article_run import conductor_program
+    from src.ops.article_run import conductor_program
 
     manifest = {"wave": "T", "articles": 2, "batches": [
         {"batch_id": "b1", "path": "p1.json", "n": 1, "windows": [[1, 10]]},
@@ -795,7 +795,7 @@ def test_chuong_trinh_dieu_phoi_ham_cache_truoc_roi_tha_moi_lo():
 
 def test_phat_hien_bo_nho_dem_truot_bang_san_toi_thieu():
     """Hụt so với sàn `tiền tố × (số lượt gọi − 1)` là tín hiệu cache trượt."""
-    from scripts.token_ledger import cache_shortfall
+    from src.article_lane.ledger import cache_shortfall
 
     # Đợt hai lô có ba lượt gọi worker: một lượt hâm và hai lô.
     assert cache_shortfall(100_000, 4, 11_143, calls=3) == (22_286, 0)
@@ -810,7 +810,7 @@ def test_san_cache_khong_tinh_phien_dieu_phoi_thanh_worker():
     `11.143 × 3`, trong khi chỉ có hai lô thật sự đọc lại tiền tố. Cảnh báo vì thế
     kêu oan ở mọi đợt bình thường — mà một cảnh báo luôn kêu thì không còn là tín hiệu.
     """
-    from scripts.token_ledger import cache_shortfall
+    from src.article_lane.ledger import cache_shortfall
 
     hit_hoan_hao = 2 * 11_143          # hai lô, mỗi lô đọc lại trọn tiền tố
     _floor, thieu = cache_shortfall(hit_hoan_hao, 4, 11_143, calls=3)
@@ -825,7 +825,7 @@ def test_doc_so_luot_goi_worker_tu_mo_ta_dot(tmp_path, monkeypatch):
     """Số lượt gọi lấy từ mô tả đợt: số lô cộng lượt hâm nếu có."""
     import json as _json
 
-    from scripts import token_ledger
+    from src.article_lane import ledger as token_ledger
 
     monkeypatch.setattr(token_ledger, "TASK_DIR", str(tmp_path))
     (tmp_path / "wave_A.json").write_text(
@@ -847,7 +847,7 @@ def test_ngay_cua_so_cai_la_gio_UTC_phai_doi_ve_gio_may():
     """
     from datetime import datetime, timedelta
 
-    from scripts.pipeline_radar import _utc_window
+    from src.ops.radar import _utc_window
 
     lo, hi = _utc_window("2026-09-18")
     lo_dt, hi_dt = datetime.fromisoformat(lo), datetime.fromisoformat(hi)
@@ -861,8 +861,8 @@ def test_radar_khong_cong_don_cac_anh_chup_tich_luy_cua_cung_mot_dot(tmp_path,
     """Sổ cái ghi ảnh chụp tích luỹ; cộng thẳng chúng là đếm trùng nhiều lần."""
     import sqlite3 as _sq
 
-    from scripts import pipeline_radar
-    from scripts.token_ledger import SCHEMA
+    from src.ops import radar as pipeline_radar
+    from src.article_lane.ledger import SCHEMA
 
     db = tmp_path / "harness.db"
     conn = _sq.connect(db)
@@ -884,7 +884,7 @@ def test_radar_khong_cong_don_cac_anh_chup_tich_luy_cua_cung_mot_dot(tmp_path,
 
 def test_dot_mot_lo_khong_ham_bo_nho_dem():
     """Một lô thì không có ai dùng lại tiền tố, nên lượt hâm chỉ là tốn thêm."""
-    from scripts.article_run import conductor_program
+    from src.ops.article_run import conductor_program
 
     manifest = {"wave": "T", "articles": 1, "batches": [
         {"batch_id": "b1", "path": "p1.json", "n": 1, "windows": [[1, 10]]}]}
@@ -893,7 +893,7 @@ def test_dot_mot_lo_khong_ham_bo_nho_dem():
 
 def test_khu_anh_chup_cu_cua_cung_mot_dot():
     """Sổ cái ghi ảnh chụp tích luỹ; phần cộng phải giữ đúng ảnh chụp cuối cùng."""
-    from scripts.token_ledger import latest_snapshots
+    from src.article_lane.ledger import latest_snapshots
 
     rows = [{"wave": "W1", "batch_id": None, "agent_id": "a", "n_items": 100},
             {"wave": "W2", "batch_id": None, "agent_id": "a", "n_items": 200},
@@ -908,7 +908,7 @@ def test_chua_lo_nao_chay_thi_khong_bao_la_khong_can_va(tmp_path, monkeypatch):
     import argparse
     import json as _json
 
-    from scripts import article_run
+    from src.ops import article_run
 
     monkeypatch.setattr(article_run, "TASK_DIR", tmp_path)
     monkeypatch.setattr(article_run, "OUT_DIR", tmp_path)
@@ -943,7 +943,7 @@ def test_silver_package_path_dung_bo_cuc_kho(tmp_path, monkeypatch):
 
 def test_row_paragraphs_uu_tien_silver_truoc_rss(tmp_path, monkeypatch):
     """Đoạn văn đóng gói lấy từ Silver đầy đủ trước đoạn trích RSS ngắn."""
-    from scripts import article_pack
+    from src.article_lane import pack as article_pack
     from src.agent import silver_source
 
     monkeypatch.setattr(silver_source, "SILVER_ROOT", tmp_path)
@@ -967,7 +967,7 @@ def test_drop_superseded_chi_giu_ban_ghi_moi_nhat(tmp_path, monkeypatch):
     """Hàng bung cũ bị loại khi cùng bài đã có bản ghi ở lô mới hơn."""
     import os
 
-    import scripts.article_expand as expander
+    import src.article_lane.expand as expander
 
     l1_dir = tmp_path / "l1"
     gold_dir = tmp_path / "gold"

@@ -15,7 +15,7 @@ from src.ops.wave_flow import WaveOps
 
 PROJECT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT / "scripts"))
-import article_run  # noqa: E402
+from src.ops import article_run  # noqa: E402
 
 REGISTRY = yaml.safe_load((PROJECT.parent / ".agents" / "registry.yaml").read_text(encoding="utf-8"))
 AGENT_IDS = {a["id"] for a in REGISTRY["agents"]}

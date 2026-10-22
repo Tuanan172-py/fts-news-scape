@@ -93,7 +93,7 @@ def test_tracing_failure_never_breaks_caller(tmp_path):
 
 # ── Chạy tay không ghi gì (điều kiện nghiệm thu P0) ──────────────────────────
 def test_manual_article_run_helper_writes_nothing(tmp_path, monkeypatch):
-    from scripts import article_run as ar
+    from src.ops import article_run as ar
 
     for k in (tracing.ENV_DB, tracing.ENV_WAVE, tracing.ENV_PARENT):
         monkeypatch.delenv(k, raising=False)
@@ -104,7 +104,7 @@ def test_manual_article_run_helper_writes_nothing(tmp_path, monkeypatch):
 
 
 def test_article_run_helper_records_script_span_under_daemon_parent(env, monkeypatch, tmp_path):
-    from scripts import article_run as ar
+    from src.ops import article_run as ar
 
     _, paths, _ = env
     monkeypatch.setenv(tracing.ENV_DB, str(paths.ops_db))

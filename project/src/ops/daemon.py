@@ -142,7 +142,7 @@ class OpsDaemon:
         if lock is None:
             return False
         self._locks.append(lock)
-        from scripts.article_tick import PipelineLock
+        from src.article_lane.tick import PipelineLock
 
         plock = PipelineLock(self.paths.pipeline_lock)
         while not plock.acquire():

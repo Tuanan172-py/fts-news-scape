@@ -433,7 +433,7 @@ def test_provider_failure_does_not_start_cooldown(env):
 
 
 def test_repair_round_bumps_attempts_and_counts_rounds(env, monkeypatch):
-    from scripts import article_run as ar
+    from src.ops import article_run as ar
 
     cfg, paths, store = env
     monkeypatch.setattr(ar, "wave_article_ids", lambda w: ["a", "b", "c"])

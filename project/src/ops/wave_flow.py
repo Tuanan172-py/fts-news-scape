@@ -216,7 +216,7 @@ class WaveSteps:
         return len(files), max(mtimes) if mtimes else 0.0
 
     def _coverage(self, wave_id: str) -> tuple[int, int]:
-        from scripts import article_run as ar
+        from src.ops import article_run as ar
 
         total = len(ar.wave_article_ids(wave_id))
         received = len(ar.wave_received_ids(wave_id))
@@ -224,7 +224,7 @@ class WaveSteps:
 
     def _count_repair_round(self, wave_id: str) -> None:
         """Record one repair round in the durable counters of the wave and of each missing article."""
-        from scripts import article_run as ar
+        from src.ops import article_run as ar
 
         missing = sorted(set(ar.wave_article_ids(wave_id)) - set(ar.wave_received_ids(wave_id)))
         self.store.bump_attempts(missing, wave_id)
@@ -673,7 +673,7 @@ def l1_full_gold_short(wave_id: str) -> bool:
         DB read error, since without data the previous behavior is kept).
     """
     try:
-        from scripts import article_run as ar
+        from src.ops import article_run as ar
         from src.db.preflight import resolve_db_path
 
         ids = ar.wave_article_ids(wave_id)

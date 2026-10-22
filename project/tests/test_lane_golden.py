@@ -9,7 +9,9 @@ from pathlib import Path
 
 import pytest
 
-from scripts import article_expand, article_pack, article_run
+from src.article_lane import expand as article_expand
+from src.article_lane import pack as article_pack
+from src.ops import article_run
 from src.agent.entities import load_registry
 from src.agent.intent_resolve import IntentResolver, ResolveReport
 from src.core import paths

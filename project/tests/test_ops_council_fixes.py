@@ -66,7 +66,7 @@ def _candidate_db(path: Path) -> None:
 
 
 def test_b2_load_candidates_excludes_before_limit_on_read_only_connection(tmp_path):
-    from scripts.article_pack import load_candidates
+    from src.article_lane.pack import load_candidates
 
     db = tmp_path / "m.db"
     _candidate_db(db)
@@ -222,7 +222,7 @@ def test_b6_finish_runs_without_stop_hook(env, tmp_path):
 
 
 def test_b6_agy_ledger_rerun_replaces_row(tmp_path, monkeypatch):
-    import scripts.token_ledger as tl
+    import src.article_lane.ledger as tl
 
     out_dir = tmp_path / "agent_outputs_article"
     out_dir.mkdir(parents=True)

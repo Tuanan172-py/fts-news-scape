@@ -86,7 +86,7 @@ def read_pending(db_path: Path, lookback_days: int, *, now: datetime | None = No
     Returns:
         The SensorReading.
     """
-    from scripts.article_pack import load_candidates
+    from src.article_lane.pack import load_candidates
 
     reading = SensorReading()
     conn = open_ro(db_path, timeout=10)

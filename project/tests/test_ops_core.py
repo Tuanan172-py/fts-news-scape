@@ -187,7 +187,7 @@ def test_order_max_limit_round_trip(tmp_path):
 
 
 def test_order_file_stays_readable_by_article_tick(tmp_path, monkeypatch):
-    import scripts.article_tick as tick
+    import src.article_lane.tick as tick
 
     p = tmp_path / "order.yaml"
     save_order(p, extend(StandingOrder(level="L1"), 3, 7))

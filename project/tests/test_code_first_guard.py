@@ -73,7 +73,7 @@ def test_insight_signals_skip_code_first(world):
 
 
 def test_selector_keeps_code_first_article_pending(world):
-    from scripts.article_pack import load_candidates
+    from src.article_lane.pack import load_candidates
 
     conn = world.connect()
     conn.execute("UPDATE articles SET content_text = ?", ("x" * 200,))
@@ -87,7 +87,7 @@ def test_selector_keeps_code_first_article_pending(world):
 
 
 def test_wave_coverage_ignores_code_first(world):
-    from scripts.article_run import coverage_of
+    from src.ops.article_run import coverage_of
 
     conn = world.connect()
     try:
@@ -112,7 +112,7 @@ def test_claim_require_l1_skips_code_first(world):
 def test_tick_counts_code_first_as_pending(world, tmp_path):
     from pathlib import Path
 
-    from scripts.article_tick import count_pending_articles
+    from src.article_lane.tick import count_pending_articles
 
     conn = world.connect()
     for aid in (REAL, CF):

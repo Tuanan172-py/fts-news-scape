@@ -19,8 +19,10 @@ DOC_GLOBS = ("docs/GLOSSARY.md", "docs/templates/*.md", "project/docs/operations
 ADR_GLOB = "docs/decisions/*.md"
 ADR_MIN_LINT = 14        # blacklist and emoji rules apply from this ADR on
 ADR_MIN_STRUCTURE = 15   # mandatory structure applies from this ADR on
-PY_GLOBS = ("project/src/ops/*.py", "project/scripts/ops_daemon.py", "project/scripts/ops_console.py")
-HTML_GLOBS = ("project/src/ops/web/*.html",)
+PY_GLOBS = ("project/src/ops/**/*.py", "project/scripts/ops_daemon.py", "project/scripts/ops_console.py")
+HTML_GLOBS = ("project/src/ops/**/web/*.html",)
+# Lane CLIs moved under src/ops by ADR-0027 print terminal output, outside the operator presentation standard.
+PY_EXCLUDE = {"article_run.py", "radar.py"}
 
 # Rule 06 §2: banned-phrase list. Word boundaries are computed on Unicode characters.
 BLACKLIST = ("nhìn chung", "thông thường", "nói chung", "về cơ bản", "đáng chú ý",
@@ -340,6 +342,8 @@ def lint_repo(root: Path = REPO_ROOT) -> list[Finding]:
                              check_length=int(m.group(1)) >= ADR_MIN_STRUCTURE)
     for pattern in PY_GLOBS:
         for f in sorted(root.glob(pattern)):
+            if f.name in PY_EXCLUDE or "__pycache__" in f.parts:
+                continue
             out += lint_python(f.relative_to(root).as_posix(), f.read_text(encoding="utf-8"))
     for pattern in HTML_GLOBS:
         for f in sorted(root.glob(pattern)):

@@ -12,15 +12,7 @@ PLUMBING_HOMES = {"src/core/paths.py"}
 DB_HOMES_PREFIX = "src/db/"
 
 # Remaining violations at the time each rule was introduced. Remove entries as code moves.
-ALLOW_SCRIPTS_IMPORT: set[str] = {
-    'scripts/article_run.py',
-    'scripts/handoff.py',
-    'scripts/maintenance/refresh_aliases.py',
-    'scripts/pipeline_radar.py',
-    'src/ops/daemon.py',
-    'src/ops/sensor.py',
-    'src/ops/wave_flow.py',
-}
+ALLOW_SCRIPTS_IMPORT: set[str] = set()
 ALLOW_SRC_SYS_PATH: set[str] = {
     'src/morninger.py',
 }
