@@ -2,7 +2,7 @@
 id: US-047
 type: story
 title: Standardize docstrings to English Google style
-status: in_progress
+status: implemented
 branch: dev/us038
 lane: normal
 created: 2026-10-21
@@ -12,7 +12,7 @@ authors: [agent]
 adr: []
 plan: []
 evidence: []
-verify: "python -m pytest tests/test_cli_entrypoints.py -q"
+verify: "cd project && python -m pytest tests/test_cli_entrypoints.py -q"
 summary: Every public module, class and function in project/src and project/scripts carries an English Google-style docstring, enforced by an AST linter and a phrase scanner.
 ---
 
