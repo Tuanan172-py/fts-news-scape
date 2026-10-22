@@ -28,20 +28,13 @@ ALLOW_SQLITE_CONNECT: set[str] = set()
 ALLOW_PROJECT_ROOT: set[str] = set()
 ALLOW_PACKAGE_EDGES: set[tuple[str, str]] = {
     ('agent', 'handoff'),
-    ('agent', 'ops'),
     ('core', 'crawler'),
     ('core', 'db'),
     ('crawler', 'core'),
     ('db', 'core'),
-    ('export', 'agent'),
     ('export', 'lakehouse'),
-    ('export', 'ops'),
-    ('export', 'users'),
     ('handoff', 'agent'),
     ('lakehouse', 'export'),
-    ('ops', 'agent'),
-    ('ops', 'export'),
-    ('users', 'agent'),
 }
 
 

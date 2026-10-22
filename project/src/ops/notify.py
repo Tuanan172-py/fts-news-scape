@@ -9,7 +9,7 @@ from typing import Any
 import requests
 
 from src.ops.present import LEVEL_LABEL
-from src.ops.redact import redact
+from src.core.redact import redact
 from src.ops.store import OpsStore, iso, now_vn
 
 SILENT_SEVERITIES = {"warn", "info", "digest"}

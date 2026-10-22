@@ -13,7 +13,7 @@ from urllib.parse import parse_qs, urlparse
 from src.ops import improve, present
 from src.ops import supervision as sv
 from src.ops.breakers import Breakers
-from src.ops.config import OpsPaths
+from src.core.ops_config import OpsPaths
 from src.ops.store import OpsStore
 
 WEB_DIR = Path(__file__).resolve().parent / "web"

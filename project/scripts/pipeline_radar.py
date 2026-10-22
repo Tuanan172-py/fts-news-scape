@@ -136,7 +136,7 @@ def ops_summary() -> dict | None:
     """
     try:
         from src.ops.breakers import Breakers
-        from src.ops.config import load_config, resolve_paths
+        from src.core.ops_config import load_config, resolve_paths
         from src.ops.order import load_order
         from src.ops.reports import heartbeat_age_s
         from src.ops.store import OpsStore

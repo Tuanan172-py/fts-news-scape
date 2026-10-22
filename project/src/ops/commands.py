@@ -8,7 +8,7 @@ from typing import Protocol
 
 from src.ops import reports
 from src.ops.breakers import Breakers
-from src.ops.config import OpsPaths
+from src.core.ops_config import OpsPaths
 from src.ops.order import FAILOVER_VALUES, LEVELS, MAX_LIMIT_CEILING, PROVIDERS, extend, load_order, save_order
 from src.ops.present import fmt_date
 from src.ops.store import OpsStore

@@ -765,7 +765,7 @@ def _publish(day: date, tgt: Path, *, dry_run: bool, force: bool,
         db_path = resolve_db_path()
     db = Path(db_path)
     if keep_review_days is None:
-        from src.ops.config import load_config
+        from src.core.ops_config import load_config
         keep_review_days = int((load_config().get("publish") or {}).get(
             "keep_review_days", DEFAULT_KEEP_REVIEW_DAYS))
     iso_day = day.isoformat()

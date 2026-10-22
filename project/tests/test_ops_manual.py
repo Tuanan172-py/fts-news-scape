@@ -7,8 +7,8 @@ import os
 import pytest
 
 from src.ops import manual as _manual
-from src.ops import trace as tracing
-from src.ops.config import resolve_paths
+from src.telemetry import trace as tracing
+from src.core.ops_config import resolve_paths
 from src.ops.store import OpsStore
 
 TRACE_KEYS = (tracing.ENV_DB, tracing.ENV_WAVE, tracing.ENV_PARENT)

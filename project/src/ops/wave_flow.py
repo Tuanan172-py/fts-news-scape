@@ -14,13 +14,13 @@ from typing import Any, Callable, Protocol
 from src.core import paths
 from src.ops import breakers as br
 from src.ops import metrics as wave_metrics
-from src.ops import trace as tracing
-from src.ops.config import PROJECT_ROOT, OpsPaths
+from src.telemetry import trace as tracing
+from src.core.ops_config import PROJECT_ROOT, OpsPaths
 from src.ops.order import demote, load_order, save_order
 from src.ops.present import FAILURE_CLASS, WAVE_STATUS, alert_card, fmt_datetime, label
 from src.ops.procrun import StepResult, python_cmd, run_step
 from src.ops.store import OpsStore, iso, now_vn
-from src.ops.trace import Tracer
+from src.telemetry.trace import Tracer
 from src.db.connect import open_ro
 
 SCRIPTS = PROJECT_ROOT / "scripts"

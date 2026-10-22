@@ -76,8 +76,8 @@ def dump_raw_response(batch_id: str, stdout_text: str, stderr_text: str, raw_res
         Path of the file written, or None if writing failed.
     """
     try:
-        from src.ops.config import resolve_paths
-        from src.ops.redact import redact
+        from src.core.ops_config import resolve_paths
+        from src.core.redact import redact
 
         wave = os.environ.get("OPS_TRACE_WAVE") or batch_id.split("_")[1]
         target = resolve_paths().log_dir / "waves" / wave / "raw" / f"{batch_id}.txt"
@@ -264,7 +264,7 @@ class AgyRunner:
         Returns:
             AgyExecutionResult with the status and detailed metrics.
         """
-        from src.ops import trace as tracing
+        from src.telemetry import trace as tracing
 
         parent = os.environ.get(tracing.ENV_PARENT)
         with tracing.span(f"lô {batch_id}", "agent", "article-processor",

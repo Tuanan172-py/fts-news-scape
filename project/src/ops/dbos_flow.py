@@ -7,7 +7,7 @@ from typing import Any
 
 from dbos import DBOS, SetWorkflowID
 
-from src.ops.config import OpsPaths
+from src.core.ops_config import OpsPaths
 from src.ops.wave_flow import DirectOps, WaveSpec, WaveSteps, drive_wave
 
 # Pinned application version: DBOS recovers only workflows of the same version, and the

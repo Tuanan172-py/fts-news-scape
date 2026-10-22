@@ -52,7 +52,7 @@ def test_tu_choi_goc_trong_onedrive(root, monkeypatch):
 
 def test_ops_resolve_paths_dung_chung_goc(tmp_path, monkeypatch):
     """`ops.config.resolve_paths` lấy gốc từ `data_root()` và giữ chốt chặn OneDrive."""
-    from src.ops.config import resolve_paths
+    from src.core.ops_config import resolve_paths
 
     monkeypatch.setenv("MONOCLE_DATA_DIR", str(tmp_path))
     assert resolve_paths().ops_db == tmp_path / "ops.db"

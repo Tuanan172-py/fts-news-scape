@@ -12,7 +12,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any, Iterator
 
-from src.ops import pipeline_spec
+from src.core import pipeline_spec
 from src.db.connect import open_rw
 
 ENV_DB = "OPS_TRACE_DB"

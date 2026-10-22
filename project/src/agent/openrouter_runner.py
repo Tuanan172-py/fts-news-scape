@@ -136,7 +136,7 @@ class OpenRouterRunner:
         Returns:
             Detailed execution result.
         """
-        from src.ops import trace as tracing
+        from src.telemetry import trace as tracing
 
         parent = os.environ.get(tracing.ENV_PARENT)
         with tracing.span(f"lô {batch_id}", "agent", "article-processor",

@@ -11,8 +11,8 @@ from pathlib import Path
 from typing import Any, Iterator
 
 from src.ops.lanes import lane_of
-from src.ops.redact import redact, redact_data
-from src.ops.trace import SPAN_SCHEMA
+from src.core.redact import redact, redact_data
+from src.telemetry.trace import SPAN_SCHEMA
 from src.db.connect import open_rw
 
 VN_TZ = timezone(timedelta(hours=7))

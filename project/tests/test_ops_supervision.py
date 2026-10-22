@@ -12,11 +12,11 @@ import pytest
 from src.ops import commands, improve, mandate, reports
 from src.ops import supervision as sv
 from src.ops.breakers import Breakers
-from src.ops.config import load_config, resolve_paths
+from src.core.ops_config import load_config, resolve_paths
 from src.ops.control_room import ControlRoom
 from src.ops.order import StandingOrder, extend, load_order, save_order
 from src.ops.store import OpsStore, iso, now_vn
-from src.ops.trace import Tracer
+from src.telemetry.trace import Tracer
 
 
 @pytest.fixture

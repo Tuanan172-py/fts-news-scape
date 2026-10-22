@@ -9,7 +9,7 @@ from collections import deque
 from pathlib import Path
 from typing import Callable
 
-from src.ops.config import PROJECT_ROOT
+from src.core.ops_config import PROJECT_ROOT
 from src.ops.present import alert_card
 from src.ops.procrun import CREATE_NO_WINDOW
 from src.ops.store import OpsStore

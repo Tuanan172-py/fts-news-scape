@@ -18,7 +18,8 @@ from src.agent.prefix import prefix_hash              # noqa: E402
 from src.core import paths                             # noqa: E402
 from src.core.stdio import force_utf8_stdio            # noqa: E402
 from src.db.preflight import probe_write, resolve_db_path  # noqa: E402
-from src.ops import pipeline_spec, trace as tracing      # noqa: E402
+from src.core import pipeline_spec      # noqa: E402
+from src.telemetry import trace as tracing      # noqa: E402
 from src.core.paths import PROJECT_ROOT  # noqa: E402
 from src.db.connect import open_ro  # noqa: E402
 

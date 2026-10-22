@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 
 from src.ops import supervision as sv
-from src.ops.config import OpsPaths
+from src.core.ops_config import OpsPaths
 from src.ops.order import extend, load_order, save_order
 from src.ops.present import alert_card
 from src.ops.store import OpsStore, iso, now_vn

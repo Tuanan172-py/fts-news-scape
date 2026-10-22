@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 from functools import lru_cache
-from pathlib import Path
 
 import yaml
 
-PIPELINE_PATH = Path(__file__).resolve().parents[3] / ".agents" / "pipeline.yaml"
+from src.core.paths import REPO_ROOT
+
+PIPELINE_PATH = REPO_ROOT / ".agents" / "pipeline.yaml"
 _REQUIRED = ("main_chain", "finish_steps", "script_actors", "wave_ops")
 
 

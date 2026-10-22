@@ -10,11 +10,11 @@ from types import SimpleNamespace
 
 import pytest
 
-from src.ops import trace as tracing
-from src.ops.config import load_config, resolve_paths
+from src.telemetry import trace as tracing
+from src.core.ops_config import load_config, resolve_paths
 from src.ops.procrun import StepResult
 from src.ops.store import OpsStore
-from src.ops.trace import Tracer
+from src.telemetry.trace import Tracer
 from src.ops.wave_flow import DirectOps, WaveSpec, WaveSteps, drive_wave
 
 

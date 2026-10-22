@@ -10,9 +10,9 @@ from pathlib import Path
 from typing import Any
 
 from src.ops.breakers import Breakers
-from src.ops.config import OpsPaths
+from src.core.ops_config import OpsPaths
 from src.ops.order import load_order
-from src.ops import pipeline_spec
+from src.core import pipeline_spec
 from src.ops.present import (BREAKER_STATE, FAILURE_CLASS, WAVE_STATUS, label, success_rate)
 from src.ops.store import OpsStore, now_vn, parse_iso
 

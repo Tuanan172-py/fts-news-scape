@@ -7,8 +7,8 @@ from pathlib import Path
 from typing import Callable
 
 from src.core import paths
-from src.ops import trace as tracing
-from src.ops.config import resolve_paths
+from src.telemetry import trace as tracing
+from src.core.ops_config import resolve_paths
 from src.ops.lanes import lane_of
 from src.ops.store import ACTIVE_WAVE_STATUSES, OpsStore
 

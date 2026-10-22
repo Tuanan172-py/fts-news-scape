@@ -8,7 +8,9 @@ from pathlib import Path
 
 import yaml
 
-from src.ops import pipeline_spec, supervision, trace
+from src.ops import supervision
+from src.core import pipeline_spec
+from src.telemetry import trace
 from src.ops.wave_flow import WaveOps
 
 PROJECT = Path(__file__).resolve().parents[1]

@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from datetime import datetime, timedelta, timezone
 
-from src.ops.config import OpsPaths
+from src.core.ops_config import OpsPaths
 from src.ops.store import OpsStore
 from src.db.connect import open_rw
 

@@ -12,7 +12,7 @@ _PROJECT_DIR = str(Path(__file__).resolve().parents[1])
 if _PROJECT_DIR not in sys.path:
     sys.path.insert(0, _PROJECT_DIR)
 
-from src.ops.config import load_config, load_secrets, resolve_paths, write_secret  # noqa: E402
+from src.core.ops_config import load_config, load_secrets, resolve_paths, write_secret  # noqa: E402
 
 
 def _redirect_if_windowless(log_dir: Path) -> None:

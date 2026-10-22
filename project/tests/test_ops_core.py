@@ -8,7 +8,7 @@ import pytest
 
 from src.ops import breakers as br
 from src.ops import commands
-from src.ops.config import load_config, resolve_paths
+from src.core.ops_config import load_config, resolve_paths
 from src.ops.notify import drain_alerts
 from src.ops.order import StandingOrder, demote, extend, load_order, save_order
 from src.ops.probes import ProbeResult, apply_edges

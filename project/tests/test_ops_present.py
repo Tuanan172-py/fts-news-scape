@@ -140,7 +140,7 @@ def test_labels_endpoint_serves_the_same_tables(tmp_path):
     import http.client
 
     from src.ops.breakers import Breakers
-    from src.ops.config import load_config, resolve_paths
+    from src.core.ops_config import load_config, resolve_paths
     from src.ops.control_room import ControlRoom
     from src.ops.store import OpsStore
 

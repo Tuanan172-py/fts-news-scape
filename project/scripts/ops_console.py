@@ -14,7 +14,7 @@ if _PROJECT_DIR not in sys.path:
 
 from src.core.stdio import force_utf8_stdio  # noqa: E402
 from src.ops.breakers import Breakers  # noqa: E402
-from src.ops.config import load_config, resolve_paths  # noqa: E402
+from src.core.ops_config import load_config, resolve_paths  # noqa: E402
 from src.ops.reports import log_text, status_text, waves_text  # noqa: E402
 from src.ops.store import OpsStore  # noqa: E402
 

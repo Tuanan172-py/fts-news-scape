@@ -158,7 +158,7 @@ class OpencodeRunner:
         Returns:
             OpencodeExecutionResult with the result and detailed metrics.
         """
-        from src.ops import trace as tracing
+        from src.telemetry import trace as tracing
 
         parent = os.environ.get(tracing.ENV_PARENT)
         with tracing.span(f"lô {batch_id}", "agent", "article-processor",

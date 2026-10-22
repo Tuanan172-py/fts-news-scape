@@ -12,7 +12,7 @@ from typing import Callable
 
 from src.ops.breakers import Breakers
 from src.ops.procrun import CREATE_NO_WINDOW, read_tail
-from src.ops.redact import redact
+from src.core.redact import redact
 from src.ops.store import OpsStore
 
 SENTINEL_TIMEOUT_S = 240

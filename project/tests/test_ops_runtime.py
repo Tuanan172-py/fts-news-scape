@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 from src.ops import breakers as br
-from src.ops.config import load_config, resolve_paths
+from src.core.ops_config import load_config, resolve_paths
 from src.ops.order import StandingOrder, extend, load_order, save_order
 from src.ops.procrun import StepResult, run_step
 from src.ops.sentinel import diagnose, parse_diagnosis
@@ -349,7 +349,7 @@ DBOS_SCRIPT = r"""
 import sys, json
 from pathlib import Path
 sys.path.insert(0, {root!r})
-from src.ops.config import load_config, resolve_paths
+from src.core.ops_config import load_config, resolve_paths
 from src.ops.store import OpsStore
 from src.ops.wave_flow import WaveSpec, WaveSteps
 from src.ops import dbos_flow

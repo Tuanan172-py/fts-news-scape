@@ -14,10 +14,10 @@ import pytest
 import requests
 
 from src.ops import commands
-from src.ops.config import load_config, resolve_paths
+from src.core.ops_config import load_config, resolve_paths
 from src.ops.notify import TelegramClient
 from src.ops.procrun import StepResult
-from src.ops.redact import redact
+from src.core.redact import redact
 from src.ops.store import OpsStore, iso, now_vn
 from src.ops.wave_flow import WaveSpec, WaveSteps
 

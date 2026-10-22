@@ -11,7 +11,7 @@ from datetime import timedelta
 
 from src.ops import commands, improve, mandate, notify, reports
 from src.ops.breakers import Breakers
-from src.ops.config import OpsPaths
+from src.core.ops_config import OpsPaths
 from src.ops.order import PROVIDERS, load_order
 from src.ops.present import alert_card
 from src.ops.probes import (apply_edges, probe_capture, probe_coverage, probe_db, probe_dead_letter,

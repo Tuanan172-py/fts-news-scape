@@ -6,7 +6,7 @@ import json
 
 from src.ops import supervision as sv
 from src.ops.breakers import Breakers
-from src.ops.config import OpsPaths
+from src.core.ops_config import OpsPaths
 from src.ops.order import load_order
 from src.ops.present import (BREAKER_STATE, CAPTURE_MODE, FAILURE_CLASS, NODE_STATE,
                              SPAN_STATUS, TRIGGER, WAVE_STATUS, clip_lines, fmt_date, fmt_datetime,
