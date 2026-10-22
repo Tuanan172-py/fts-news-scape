@@ -1,0 +1,876 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bản đồ vận hành news-scape</title>
+<style>
+:root{
+  color-scheme: light;
+  --paper:#ffffff; --ink:#111111; --ink-2:#3a3a3a; --ink-3:#6b6b6b; --rule:#c9c9c9; --rule-2:#e6e6e6; --tint:#f4f4f2; --link:#1f3a5f;
+  --f-text:"Source Serif 4","Source Serif Pro",Cambria,"Times New Roman","Noto Serif",serif; /* Georgia is skipped: it lacks stacked Vietnamese diacritics */
+  --f-note:"Source Sans 3","Source Sans Pro","Segoe UI",Arial,sans-serif;
+  --f-mono:"Source Code Pro",Consolas,"Courier New",monospace;
+  --text-w:680px;
+}
+*{box-sizing:border-box}
+html{background:var(--paper)}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-text);font-size:17px;line-height:1.62;margin:0;font-variant-numeric:lining-nums}
+a{color:var(--link)}
+button{font:inherit;color:inherit}
+code,.mono{font-family:var(--f-mono);font-size:.86em;overflow-wrap:anywhere}
+.page{max-width:calc(var(--text-w) + 40px);margin:0 auto;padding:40px 20px 96px}
+.col{max-width:var(--text-w)}
+p{margin:0 0 .9em;text-align:justify;text-justify:inter-word}
+@media (max-width:640px){p{text-align:left}}
+h2{font-size:22px;font-weight:700;margin:2.4em 0 .6em;scroll-margin-top:56px;text-wrap:balance}
+h3{font-size:18px;font-weight:600;font-style:italic;margin:1.6em 0 .5em}
+.wide{width:min(1240px,calc(100vw - 40px));position:relative;left:50%;transform:translateX(-50%)}
+.tblw{width:min(1040px,calc(100vw - 40px));position:relative;left:50%;transform:translateX(-50%)}
+
+/* toolbar */
+.toolbar{position:sticky;top:0;z-index:10;background:var(--paper);border-bottom:1px solid var(--rule-2);font-family:var(--f-note);font-size:13px}
+.toolbar .in{max-width:1240px;margin:0 auto;padding:7px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.toolbar nav{display:flex;gap:14px;flex-wrap:wrap}
+.toolbar nav a{color:var(--ink-2);text-decoration:none}
+.toolbar nav a:hover{color:var(--ink);text-decoration:underline}
+#sizebtn{margin-left:auto}
+.tog,#printbtn,#sizebtn{font-family:var(--f-note);font-size:13px;background:var(--paper);color:var(--ink);border:1px solid var(--ink);padding:3px 10px;cursor:pointer;border-radius:0}
+.tog[aria-pressed="true"],#sizebtn[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.tog:focus-visible,#printbtn:focus-visible,#sizebtn:focus-visible,.node:focus-visible,.stepbtn:focus-visible,.lnk:focus-visible{outline:2px solid var(--link);outline-offset:2px}
+.togs{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
+
+/* title block */
+.series{font-family:var(--f-note);font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);border-bottom:1px solid var(--ink);padding-bottom:8px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.title{font-size:clamp(26px,3.4vw,34px);line-height:1.22;font-weight:700;margin:28px 0 14px;text-wrap:balance}
+.authors{font-size:16px;margin:0 0 4px;text-align:left}
+.affil{font-family:var(--f-note);font-size:14px;color:var(--ink-2);margin:0;text-align:left}
+.dates{font-family:var(--f-note);font-size:13px;color:var(--ink-3);margin:10px 0 0;text-align:left}
+.abstract{margin:34px 0 0;padding:18px 0 4px;border-top:1px solid var(--rule)}
+.abstract h4{font-family:var(--f-note);font-size:13px;letter-spacing:.08em;text-transform:uppercase;margin:0 0 8px;color:var(--ink-2)}
+.abstract p{font-size:15.5px;line-height:1.6}
+.kw{font-size:15px;margin:8px 0 0;text-align:left}
+
+/* tables: booktabs */
+.tbl{overflow-x:auto;margin:1.6em 0 1.8em}
+table{border-collapse:collapse;width:100%;font-family:var(--f-note);font-size:14px;font-variant-numeric:tabular-nums}
+caption{caption-side:top;text-align:left;font-size:14px;color:var(--ink-2);padding-bottom:8px;line-height:1.45}
+caption .lab,figcaption .lab{font-weight:600;color:var(--ink)}
+thead th{border-top:1.5px solid var(--ink);border-bottom:.75px solid var(--ink);font-weight:600;text-align:left;padding:6px 10px;vertical-align:bottom}
+tbody td{padding:5px 10px;vertical-align:top;border:none}
+tbody tr:last-child td{border-bottom:1.5px solid var(--ink)}
+td.r,th.r{text-align:right}
+td code{overflow-wrap:normal}
+.tnote{display:block;font-family:var(--f-note);font-size:12.5px;color:var(--ink-3);margin-top:6px;text-align:left}
+
+/* figures */
+figure{margin:1.8em 0 2em}
+figcaption{font-family:var(--f-note);font-size:14px;line-height:1.5;color:var(--ink-2);margin-top:8px;border-top:1px solid var(--rule-2);padding-top:8px}
+figcaption .note{display:block;font-size:12.5px;color:var(--ink-3);margin-top:4px}
+#legend{display:flex;flex-wrap:wrap;gap:4px 18px;margin-top:6px}
+#legend span{display:inline-flex;align-items:center;gap:6px}
+.mapbox{overflow:auto;border:1px solid var(--rule);background:var(--paper)}
+.mapbox svg{display:block;width:100%;min-width:1180px;height:auto}
+.mapbox.actual svg{width:1710px;min-width:0}
+
+/* map */
+.band-line{stroke:var(--ink-3);stroke-width:1}
+.lc{font-family:var(--f-note);color:var(--ink);height:100%;display:flex;flex-direction:column;gap:3px;padding:10px 4px 6px 2px}
+.lc .code{font-family:var(--f-mono);font-weight:600;font-size:22px;line-height:1}
+.lc .nm{font-weight:700;font-size:13px;line-height:1.25}
+.lc .q{font-size:11.5px;color:var(--ink-3);line-height:1.35;font-style:italic}
+.lc .cad{margin-top:auto;font-size:10.5px;color:var(--ink-3);line-height:1.3}
+.node{cursor:pointer;outline:none}
+.node .box{fill:var(--paper);stroke:var(--ink);stroke-width:1.2}
+.node .tint{fill:var(--ink);opacity:.05;stroke:none}
+.node.k-agent .box{stroke-width:2.6}
+.node.k-ext .box2{fill:none;stroke:var(--ink);stroke-width:.7;opacity:.6}
+.node.k-ext .box{stroke:var(--ink-2)}
+.node.k-doc .box,.node.k-store .box{stroke:var(--ink-2)}
+.node:hover .box,.node.cur .box{stroke-width:2.6}
+.nb{font-family:var(--f-note);color:var(--ink);padding:7px 9px;height:100%;overflow:hidden;display:flex;flex-direction:column;gap:2px}
+.nb .nk{font-family:var(--f-mono);font-size:9.5px;letter-spacing:.04em;color:var(--ink-3);font-weight:600}
+.nb .nt{font-weight:700;font-size:13px;line-height:1.22}
+.nb .ns{font-size:11px;line-height:1.32;color:var(--ink-2)}
+.k-gate .nt::before{content:"";display:inline-block;width:7px;height:7px;transform:rotate(45deg) translateY(-2px);border:1.5px solid var(--ink);margin-right:7px}
+.nb.small{flex-direction:row;align-items:baseline;gap:8px;flex-wrap:wrap;padding:6px 9px}
+.nb.small .nt{font-size:12.5px}
+.nb.small .ns{font-size:11px}
+.store-tables{font-family:var(--f-mono);font-size:10.5px;line-height:1.55;color:var(--ink-2);margin-top:4px}
+.edge path.ln{fill:none;stroke-width:1.4;stroke-linejoin:round}
+.edge.t-d path.ln{stroke:var(--ink)}
+.edge.t-c path.ln{stroke:var(--ink-2);stroke-dasharray:7 4}
+.edge.t-r path.ln{stroke:var(--ink-3);stroke-dasharray:2 4;stroke-linecap:round}
+.edge.t-g path.ln{stroke:var(--ink-2);stroke-dasharray:7 3 1.5 3}
+.elab{font-family:var(--f-note);font-size:10.5px;fill:var(--ink-2);paint-order:stroke;stroke:var(--paper);stroke-width:4px;stroke-linejoin:round}
+.edge.on path.ln{stroke-width:2.4}
+.edge.on .elab{fill:var(--ink);font-weight:600}
+svg.focus .node:not(.on){opacity:.22}
+svg.focus .edge:not(.on){opacity:.08}
+svg.focus .bandlab{opacity:.5}
+.node,.edge{transition:opacity .15s}
+.badge circle{fill:var(--ink)}
+.badge text{fill:var(--paper);font-family:var(--f-mono);font-size:11px;font-weight:600;text-anchor:middle;dominant-baseline:central}
+.badge.cur circle{fill:var(--paper);stroke:var(--ink);stroke-width:2}
+.badge.cur text{fill:var(--ink)}
+
+/* drawer */
+#drawer[hidden]{display:none}
+#drawer{position:fixed;top:calc(52px + env(safe-area-inset-top,0px));right:max(16px,env(safe-area-inset-right,0px));bottom:16px;width:min(400px,calc(100vw - 32px));background:var(--paper);border:1px solid var(--ink);z-index:20;display:flex;flex-direction:column;overflow:hidden;font-family:var(--f-note)}
+#drawer header{display:flex;align-items:flex-start;gap:10px;padding:14px 16px 10px;border-bottom:1px solid var(--rule)}
+#drawer h2{font-family:var(--f-text);font-size:18px;line-height:1.25;margin:2px 0 0;font-weight:700}
+#drawer .x{margin-left:auto;border:1px solid var(--ink);background:var(--paper);width:30px;height:30px;cursor:pointer;flex:none;font-size:15px;line-height:1;border-radius:0}
+#drawer .body{padding:12px 16px 20px;overflow:auto;display:grid;gap:14px;align-content:start;font-size:13.5px;line-height:1.5}
+#drawer h3{font-family:var(--f-note);font-style:normal;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin:0 0 4px;font-weight:600}
+#drawer p{margin:0;text-align:left}
+.lchip{display:inline-block;font-family:var(--f-note);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);border-bottom:1px solid var(--ink-3)}
+ul.plain{list-style:none;padding:0;margin:0;display:grid;gap:3px}
+.io{display:grid;grid-template-columns:auto 1fr;gap:4px 10px}
+.io b{font-size:11px;color:var(--ink-3);font-weight:600;padding-top:2px}
+.adrs{display:flex;flex-wrap:wrap;gap:4px 10px}
+.adr{font-family:var(--f-mono);font-size:12px}
+.adr.sup{text-decoration:line-through;color:var(--ink-3)}
+.lnks{display:flex;flex-wrap:wrap;gap:4px 12px}
+.lnk{border:0;border-bottom:1px solid var(--ink-3);background:none;padding:0;cursor:pointer;font-size:13px;color:var(--link)}
+ol.steps{margin:0;padding:0;list-style:none;display:grid;gap:2px}
+.stepbtn{display:grid;grid-template-columns:24px 1fr;gap:8px;text-align:left;width:100%;border:0;background:none;padding:6px 4px;cursor:pointer}
+.stepbtn:hover{background:var(--tint)}
+.stepbtn .n{font-family:var(--f-mono);font-weight:600;font-size:11px;width:20px;height:20px;border-radius:50%;background:var(--ink);color:var(--paper);display:grid;place-items:center}
+.stepbtn .st{font-weight:600;display:block}
+.stepbtn .sd{display:block;color:var(--ink-2)}
+#drawer .note{border-left:2px solid var(--ink);padding:4px 10px;background:var(--tint)}
+
+/* detail diagrams (Mermaid takes ink, grey and white only) */
+.dpane{margin:0}
+.dpane .plot{overflow-x:auto;border:1px solid var(--rule);padding:14px 16px;background:var(--paper)}
+.dpane pre.mermaid{margin:0;text-align:center;font-family:var(--f-note)}
+.dpane p,.dpane .nodeLabel p,.dpane .edgeLabel p{text-align:center;margin:0}
+.dpane svg{display:inline-block}
+.dpane:not(.on){position:absolute;left:-10000px;top:0;width:1100px;visibility:hidden;pointer-events:none}
+
+.dpane .node rect,.dpane .node polygon,.dpane .node circle,.dpane .node ellipse,.dpane .node path,
+.dpane .actor,.dpane .statediagram-state rect{fill:var(--paper)!important;stroke:var(--ink)!important;stroke-width:1.2px!important}
+.dpane .cluster rect,.dpane .cluster polygon{fill:var(--tint)!important;stroke:var(--ink-3)!important}
+.dpane .cluster-label .nodeLabel,.dpane .cluster-label span{color:var(--ink-2)!important;font-weight:600}
+.dpane .nodeLabel,.dpane .label,.dpane .label span,.dpane .label div,.dpane .edgeLabel,.dpane .edgeLabel span,.dpane .edgeLabel p,
+.dpane text,.dpane tspan,.dpane .messageText,.dpane .noteText,.dpane .labelText,.dpane .loopText{color:var(--ink)!important;fill:var(--ink)!important}
+.dpane .edgeLabel,.dpane .edgeLabel rect,.dpane .edgeLabel p,.dpane .labelBkg{background-color:var(--paper)!important;fill:var(--paper)!important;opacity:1}
+.dpane .edgeLabel span{background:transparent!important}
+.dpane .flowchart-link,.dpane .edgePath .path,.dpane .transition,.dpane .messageLine0,.dpane .messageLine1,.dpane .actor-line{stroke:var(--ink-2)!important}
+.dpane marker path,.dpane .arrowheadPath{fill:var(--ink-2)!important;stroke:var(--ink-2)!important}
+.dpane marker circle,.dpane .sequenceNumber circle{fill:var(--ink)!important;stroke:var(--ink)!important}
+.dpane .sequenceNumber{fill:var(--paper)!important;stroke:none!important}
+.dpane .note,.dpane .noteRect,.dpane .labelBox{fill:var(--tint)!important;stroke:var(--ink-3)!important}
+.dpane .loopLine{stroke:var(--ink-3)!important}
+
+hr.end{border:none;border-top:1px solid var(--ink);margin:3em 0 1em}
+.refs p{text-indent:-1.6em;padding-left:1.6em;text-align:left;font-size:15px;margin-bottom:.4em}
+@media (prefers-reduced-motion:reduce){.node,.edge{transition:none}*{scroll-behavior:auto!important}}
+@media print{
+  body{font-size:11pt}
+  .toolbar,.togs,#sizebtn,#drawer,.noprint{display:none!important}
+  .page{max-width:none;padding:0}
+  .wide,.tblw{width:auto;left:0;transform:none}
+  .mapbox{overflow:visible;border:0}
+  .mapbox svg,.mapbox.actual svg{width:100%;min-width:0}
+  h2{break-after:avoid}
+  figure,.tbl{break-inside:avoid}
+  .dpane,.dpane:not(.on){position:static;visibility:visible;width:auto;pointer-events:auto;margin-bottom:12px;break-inside:avoid}
+  @page{size:A4 landscape;margin:12mm}
+}
+</style>
+</head>
+<body>
+
+<div class="toolbar"><div class="in">
+  <nav aria-label="Mục lục">
+    <a href="#tt">Tóm tắt</a><a href="#s1">1 Cách đọc</a><a href="#s2">2 Bản đồ</a><a href="#s3">3 Sáu lớp</a><a href="#s4">4 Kho dữ liệu</a><a href="#s5">5 Bất biến</a><a href="#s6">6 Quyết định</a><a href="#s7">7 Việc còn mở</a><a href="#s8">8 Sơ đồ chi tiết</a><a href="#tl">Tài liệu liên quan</a>
+  </nav>
+  <button id="printbtn" type="button" onclick="window.print()">In hoặc lưu PDF</button>
+</div></div>
+
+<div class="page">
+<header>
+  <div class="series"><span>Tài liệu vận hành NS-OPS-01 · Phiên bản 1.0</span><span>news-scape · FPTS Research</span></div>
+  <h1 class="title">Bản đồ vận hành hệ thống news-scape: từ nguồn tin đến chuyên viên</h1>
+  <p class="authors">Nhóm phát triển news-scape</p>
+  <p class="affil">Dự án news-scape, nhánh dev/us038, trạng thái sau ADR-0026</p>
+  <p class="dates">Hoàn thành ngày 22/10/2026 · Phạm vi: luồng xử lý, vận hành và quản trị thay đổi</p>
+
+  <section class="abstract col" id="tt">
+    <h4>Tóm tắt</h4>
+    <p>news-scape thu thập tin từ 8 nguồn tài chính Việt Nam, chuẩn hoá thành bản ghi Silver, phân tích từng bài bằng mô hình ngôn ngữ và giao kết quả cho 5 chuyên viên bằng tệp Excel hằng ngày. Tài liệu này mô tả toàn bộ quy trình đó trên một trang gồm sáu lớp từ L0 đến L5, các kho dữ liệu, 15 bất biến và 26 quyết định kiến trúc. Dữ liệu chảy một chiều từ Bronze sang Silver, qua Article Lane rồi ra Lakehouse, và mỗi ranh giới có hợp đồng JSON Schema cùng cổng kiểm tra. Một wave xử lý 100 bài chia thành hai batch 50 bài, và chỉ hoàn tất khi độ phủ đạt từ 90% ở cả hai bảng kết quả. Sau đợt thống nhất theo ADR-0026, hệ thống có hai mức tự chủ (L0 và L1), một đường xuất bản duy nhất (publish.py gọi publish_day()), một manifest người dùng và một cây thư mục users/output. Lakehouse hiện chứa 32.981 bài trong 283 phân vùng ngày, từ 01/10/2025 đến 19/10/2026. Còn 5 việc mở, trong đó một việc chờ người vận hành chuyển 607 tệp Excel sang cây thư mục mới.</p>
+    <p class="kw"><b>Từ khóa:</b> news-scape; Article Lane; medallion; Lakehouse; wave; ADR-0026; vận hành tự động.</p>
+  </section>
+</header>
+
+<div class="col">
+<h2 id="s1">1 Cách đọc tài liệu</h2>
+<p>Hình 1 đặt toàn bộ hệ thống lên một mặt phẳng. Đọc từ trên xuống là đi từ bộ điều khiển đến người nhận kết quả; đọc từ trái sang phải là đi theo dòng dữ liệu. Bấm vào một khối để xem vai trò, tệp mã, dữ liệu đọc và ghi, cùng các ADR chi phối khối đó. Mỗi nút trên Hình 1 làm nổi các khối của một luồng và đánh số thứ tự các bước. Phím Esc bỏ chọn.</p>
+<p>Các bảng từ Bảng 2 đến Bảng 6 tóm tắt hợp đồng giữa các lớp, kho dữ liệu, bất biến, quyết định và việc còn mở. Mục 8 chứa 16 sơ đồ trình tự và trạng thái. Bản in A4 ngang hiển thị toàn bộ nội dung. Khi tài liệu này mâu thuẫn với <code>project/docs/design/00-end-to-end-architecture.md</code>, tài liệu design 00 được ưu tiên.</p>
+
+<div class="tbl"><table>
+  <caption><span class="lab">Bảng 1.</span> Thông tin hệ thống tại ngày 22/10/2026.</caption>
+  <thead><tr><th>Chỉ tiêu</th><th>Giá trị</th></tr></thead>
+  <tbody>
+    <tr><td>Nguồn tin đang bật</td><td>8 trên 24 nguồn đã cấu hình</td></tr>
+    <tr><td>Lakehouse</td><td>32.981 bài, 283 phân vùng ngày, đến 19/10/2026</td></tr>
+    <tr><td>Chuyên viên nhận tin</td><td>5 người</td></tr>
+    <tr><td>Cơ sở dữ liệu vận hành</td><td>4 (monocle.db, ops.db, ops_dbos.db, harness.db)</td></tr>
+    <tr><td>Tri thức dự án</td><td>26 ADR, 48 story, 25 FACT</td></tr>
+    <tr><td>Mức tự chủ</td><td>L0 và L1</td></tr>
+  </tbody>
+</table>
+<span class="tnote">Nguồn: docs/SESSION-LATEST.md (số liệu Lakehouse ngày 20/10/2026), docs/INDEX.md, config/domains.</span></div>
+</div>
+
+<h2 id="s2" class="col">2 Bản đồ hệ thống</h2>
+<div class="col"><p>Hình 1 là bản đồ tương tác. Chọn một luồng bên dưới để xem đường đi của một bài báo, của một wave, của cơ chế thu thập trọn vẹn, của việc xuất bản hoặc của một thay đổi mã.</p></div>
+<div class="wide">
+  <div class="togs" id="flowchips"><button class="tog" id="sizebtn" type="button" aria-pressed="false">Kích thước thật</button></div>
+  <figure>
+    <div class="mapbox" id="mapbox">
+      <svg id="map" viewBox="0 0 1710 1250" role="img" aria-label="Sơ đồ vận hành news-scape gồm sáu lớp"></svg>
+    </div>
+    <figcaption><span class="lab">Hình 1.</span> Bản đồ sáu lớp của news-scape và các luồng giữa chúng.
+      <span class="note">Ghi chú: các dải ngang là lớp L0 đến L5; phía trên là phần ứng dụng, phía dưới là harness. Hình chữ nhật là tiến trình, hình có dấu thoi là cổng kiểm tra, khung đậm là agent mô hình, hình trụ là kho dữ liệu, hình gập góc là tài liệu hoặc tệp, hình bo tròn là hệ ngoài hoặc con người.</span>
+      <span class="note"><span id="legend"></span></span></figcaption>
+  </figure>
+</div>
+
+<div class="col"><h2 id="s3">3 Sáu lớp và hợp đồng giữa chúng</h2>
+<p>Mỗi lớp trả lời một câu hỏi và chỉ nói chuyện với lớp kế bên qua một hợp đồng có kiểm tra (Bảng 2). Muốn sửa kiến trúc, sửa ở ranh giới này.</p></div>
+<div class="tblw tbl"><table>
+  <caption><span class="lab">Bảng 2.</span> Sáu lớp, đầu vào, đầu ra và cổng chặn.</caption>
+  <thead><tr><th>Lớp</th><th>Trả lời câu hỏi</th><th>Đầu vào</th><th>Đầu ra (hợp đồng)</th><th>Nhịp chạy</th><th>Cổng chặn</th></tr></thead>
+  <tbody id="layertbl"></tbody>
+</table></div>
+
+<div class="col"><h2 id="s4">4 Kho dữ liệu</h2>
+<p>Bảng 3 liệt kê nơi dữ liệu nằm, ai ghi và ai đọc. Dữ liệu ghi nằm ngoài repo và ngoài OneDrive; đường dẫn <code>C:\data\news-scape</code> là mặc định của biến <code>MONOCLE_DATA_DIR</code>.</p></div>
+<div class="tblw tbl"><table>
+  <caption><span class="lab">Bảng 3.</span> Kho dữ liệu, người ghi và người đọc.</caption>
+  <thead><tr><th>Kho</th><th>Vị trí</th><th>Nội dung chính</th><th>Ghi bởi</th><th>Đọc bởi</th></tr></thead>
+  <tbody id="storetbl"></tbody>
+</table></div>
+
+<div class="col"><h2 id="s5">5 Bất biến kiến trúc</h2>
+<p>Bảng 4 nêu những điều mã nguồn và quy trình không được vi phạm. Một đề xuất chạm vào một dòng của bảng này là thay đổi ở mức kiến trúc và cần ADR mới.</p></div>
+<div class="tblw tbl"><table>
+  <caption><span class="lab">Bảng 4.</span> Các bất biến kiến trúc.</caption>
+  <thead><tr><th class="r">Số</th><th>Bất biến</th><th>Nội dung</th><th>Căn cứ</th></tr></thead>
+  <tbody id="invtbl"></tbody>
+</table></div>
+
+<div class="col"><h2 id="s6">6 Quyết định kiến trúc</h2>
+<p>Bảng 5 xếp 26 ADR theo lớp mà chúng chi phối. ADR đã bị thay thế hoặc bác bỏ vẫn được giữ để truy vết; ADR-0023 thay thế ADR-0020, và ADR-0026 sửa ADR-0012 về mức tự chủ.</p></div>
+<div class="tblw tbl"><table>
+  <caption><span class="lab">Bảng 5.</span> Sổ quyết định kiến trúc.</caption>
+  <thead><tr><th>Mã</th><th>Lớp</th><th>Quyết định</th><th>Trạng thái</th></tr></thead>
+  <tbody id="adrtbl"></tbody>
+</table></div>
+
+<div class="col"><h2 id="s7">7 Việc còn mở</h2>
+<p>Các lệch cũ giữa tài liệu và mã (lane cũ, hai đường xuất bản, hai manifest, hai cây Excel, mức L2 và L3) đã được xử lý theo ADR-0026. Bảng 6 liệt kê những điểm còn lại.</p></div>
+<div class="tblw tbl"><table>
+  <caption><span class="lab">Bảng 6.</span> Việc còn mở sau đợt thống nhất.</caption>
+  <thead><tr><th class="r">Số</th><th>Mức</th><th>Việc</th><th>Nội dung</th></tr></thead>
+  <tbody id="opentbl"></tbody>
+</table></div>
+
+<div class="col"><h2 id="s8">8 Sơ đồ chi tiết</h2>
+<p>Các Hình 2 đến Hình 17 vẽ cùng logic với Hình 1 theo trình tự hoặc trạng thái. Chọn một hình bên dưới; mỗi lần hiển thị một hình. Nguồn của từng hình là tệp <code>.mmd</code> cùng thư mục với tài liệu này.</p></div>
+<div class="wide">
+  <div class="togs" id="dtabs" role="tablist">@@DETAIL_TABS@@</div>
+  <div>@@DETAIL_PANES@@</div>
+</div>
+
+<div class="col">
+<h2 id="tl">Tài liệu liên quan</h2>
+<div class="refs">
+  <p><code>project/docs/design/00-end-to-end-architecture.md</code>: kiến trúc end-to-end bằng văn bản; được ưu tiên khi mâu thuẫn.</p>
+  <p><code>docs/decisions/0026-canonical-publish-path-runner-order-l0-l1-levels.md</code>: đường xuất bản, thứ hạng runner, mức L0 và L1, manifest, cây users/output.</p>
+  <p><code>docs/OPEN-ITEMS.md</code>: danh sách việc tồn đọng.</p>
+  <p><code>project/docs/diagrams/README.md</code>: cách sửa và dựng lại tài liệu này bằng <code>scripts/docs/build_diagrams.py</code>.</p>
+</div>
+<hr class="end">
+<p class="tnote">Tài liệu tự chứa, không gọi mạng. Dựng từ <code>map.template.html</code> và các tệp <code>*.mmd</code> bằng <code>project/scripts/docs/build_diagrams.py</code>.</p>
+</div>
+</div>
+
+<aside id="drawer" hidden aria-live="polite">
+  <header><div id="dhead"></div><button class="x" id="dclose" type="button" aria-label="Đóng">×</button></header>
+  <div class="body" id="dbody"></div>
+</aside>
+
+<script>
+(function(){
+const LAYERS={
+  ctl:{code:"L0",nm:"Điều khiển và vận hành",q:"Ai khởi động, khi nào, dừng khi nào?",cad:"liên tục, sensor mỗi 120 giây",y:20,h:176},
+  cap:{code:"L1",nm:"Thu thập (Bronze)",q:"Đã lấy đủ mọi bài nguồn có chưa?",cad:"mỗi chu kỳ 10 phút",y:216,h:204},
+  sil:{code:"L2",nm:"Chuẩn hoá (Silver)",q:"Bài đã sạch chưa, có gì thay đổi?",cad:"mỗi 30 phút, tái dựng được",y:440,h:164},
+  lane:{code:"L3",nm:"Phân tích (Article Lane)",q:"Bài nói gì, về mã nào?",cad:"theo wave, 100 bài, batch 50",y:624,h:226},
+  del:{code:"L4",nm:"Phân phối (Lakehouse)",q:"Ai nhận, đọc ở đâu?",cad:"sau mỗi wave, publish sau 01:00",y:870,h:170},
+  gov:{code:"L5",nm:"Harness (quản trị thay đổi)",q:"Thay đổi có được kiểm soát?",cad:"mỗi phiên làm việc của agent",y:1060,h:180}
+};
+const LKEYS=["ctl","cap","sil","lane","del","gov"];
+const LCOLOR={ctl:"var(--ink)",cap:"var(--ink)",sil:"var(--ink)",lane:"var(--ink)",del:"var(--ink)",gov:"var(--ink)",ref:"var(--ink-3)"};
+
+const ADR={
+ "0001":["Harness-first cho cộng tác với agent","ok"],
+ "0002":["Lớp bền vững: SQLite + CLI Python","ok"],
+ "0003":["Kết quả L1 code-first ghi l1_outputs","sup"],
+ "0004":["Cổng giá trị cho tầng Gold","sup"],
+ "0005":["Xuất Gold theo người đăng ký, guard hình thái L1","ok"],
+ "0006":["Registry mạng agent, DAG, sổ KPI","ok"],
+ "0007":["Watermark Silver và bảng silver_failures","ok"],
+ "0008":["Bật Gold có người duyệt, trần token","sup"],
+ "0009":["DeepSeek Harness (DSH) làm runtime điều phối","ok"],
+ "0010":["Cho nghỉ hưu lane L1/Gold; Article Lane là đường duy nhất","ok"],
+ "0011":["Runner agy và conductor chạy không giao diện","ok"],
+ "0012":["Daemon vận hành tự động (DBOS, Telegram); mức tự chủ sửa bởi 0026","ok"],
+ "0013":["Thu thập trọn vẹn, xử lý sau","ok"],
+ "0014":["Giám sát đa agent: ops_spans, control room","ok"],
+ "0015":["Miễn dedup mờ cho tiêu đề CBTT","rej"],
+ "0016":["Cụm tin, thừa kế kết quả, tín hiệu","ok"],
+ "0017":["Một hợp đồng đầu ra cho mọi provider","ok"],
+ "0018":["Silver body cho lane; 1 trích dẫn cho bài 1 đoạn","ok"],
+ "0019":["Loại bài mỏng khỏi packet","ok"],
+ "0020":["SharePoint data plane, xuất bản một chiều","sup"],
+ "0021":["Khung tri thức agent-first, độc lập mô hình","ok"],
+ "0022":["WIP = 1 story mỗi worktree","ok"],
+ "0023":["Lakehouse phân vùng kiểu CQRS trên SharePoint","ok"],
+ "0024":["Mã nguồn gốc cục bộ, workspace lai","ok"],
+ "0025":["Plugin hợp nhất để tiêu thụ Lakehouse","ok"],
+ "0026":["Đường xuất bản chuẩn, thứ hạng runner, chỉ L0/L1, manifest và users/output","ok"]
+};
+const ADRBY={ctl:["0009","0011","0012","0014","0026","0008"],cap:["0013","0015"],sil:["0007","0016"],lane:["0010","0017","0018","0019","0005","0003","0004"],del:["0023","0025","0026","0020"],gov:["0001","0002","0006","0021","0022","0024"]};
+
+/* Nodes: x,y,w,h in viewBox units. kind: proc | gate | store | doc | ext | agent */
+const W=176;
+const N=[
+ // L0
+ {id:"sched",L:"ctl",k:"ext",x:150,y:50,w:W,h:110,t:"Task Scheduler",s:"Khởi động daemon lúc đăng nhập và mỗi 5 phút; tác vụ watchdog kéo daemon dậy khi nó chết.",
+  role:"Windows khởi động daemon vận hành. Tác vụ watchdog kéo daemon dậy nếu nó chết. Đây là điểm khởi đầu của mọi hoạt động không người trực.",
+  files:["project/scripts/ops_install.ps1"],adr:["0012"]},
+ {id:"daemon",L:"ctl",k:"proc",x:350,y:50,w:W,h:110,t:"ops_daemon",s:"Sensor mỗi 120 giây mở wave khi có từ 100 bài chờ, bài cũ nhất quá 90 phút, hoặc đến khung flush.",
+  role:"Bộ não vận hành tự động. Mỗi lúc chỉ một wave (100 bài, batch 50). Nhịp tim 60s, ping healthchecks.io, bản tin 08:00 và 18:00, publish_tick sau 01:00. CaptureSupervisor bên trong giữ morninger sống (tối đa 5 lần khởi động lại trong 30 phút). Chỉ có hai mức tự chủ: L0 (dừng, chỉ đo) và L1 (mandate kèm trần số bài mỗi wave, /level L1 <số bài>, 1 đến 500). /level L2 và L3 bị từ chối; mức lạ trong tệp lệnh đọc là L0 (ADR-0026).",
+  files:["project/scripts/ops_daemon.py","project/src/ops/daemon.py","project/src/ops/sensor.py","project/src/ops/supervisor.py","project/src/ops/order.py","project/src/ops/commands.py","project/config/ops.yaml"],
+  io:{w:["ops.db: ops_waves, ops_events, ops_state"]},adr:["0012","0014","0026"],
+  note:"Khi daemon chạy ở L1, không ai được mở wave tay song song; manual.begin sẽ từ chối."},
+ {id:"wave",L:"ctl",k:"proc",x:550,y:50,w:376,h:110,t:"wave_flow (workflow DBOS)",s:"Workflow DBOS: preflight, prepare, analyze, repair tối đa 2 vòng, kiểm tra độ phủ 90% (không đạt thì PARKED), finish, giao xlsx.",
+  role:"Một wave là một workflow bền vững: mỗi bước được checkpoint vào ops_dbos.db nên máy tắt giữa chừng vẫn chạy tiếp được. Mỗi bước gọi article_run.py với runner agy; số bài mỗi wave là min(wave.limit, max_limit của mandate).",
+  files:["project/src/ops/wave_flow.py","project/src/ops/dbos_flow.py","project/src/ops/pipeline_spec.py"],
+  io:{w:["ops_dbos.db: checkpoint từng bước","ops.db: ops_wave_articles, ops_article_attempts"]},adr:["0012","0011"]},
+ {id:"watch",L:"ctl",k:"proc",x:950,y:50,w:W,h:110,t:"Giám sát",s:"Telegram, control room cổng 8787, ops_console và pipeline_radar.",
+  role:"Mắt của người vận hành. pipeline_radar chỉ đọc và in đúng một lệnh tiếp theo (quy tắc zero-probe: không tự đào CSDL để lấy bối cảnh). Control room là trang web cục bộ 127.0.0.1:8787.",
+  files:["project/scripts/pipeline_radar.py","project/src/ops/control_room.py","project/scripts/ops_console.py"],
+  io:{r:["monocle.db","ops.db","harness.db: token_ledger"]},adr:["0014"]},
+ {id:"probes",L:"ctl",k:"gate",x:1150,y:50,w:W,h:110,t:"Breakers và Probes",s:"Ngắt mạch theo provider (AUTH, QUOTA, NETWORK, EMPTY); dò độ tươi, quyền ghi DB, đĩa và độ phủ.",
+  role:"Breaker ngắt từng provider LLM khi lỗi lặp lại (QUOTA nghỉ 300 phút; NETWORK/TIMEOUT sau 3 lần; EMPTY sau 2 lần). Probe kiểm tra độ tươi capture, quyền ghi DB, dung lượng đĩa, dead-letter, độ phủ và lịch publish.",
+  files:["project/src/ops/breakers.py","project/src/ops/probes.py"],io:{w:["ops.db: provider_breakers, ops_alerts"]},adr:["0012"]},
+ {id:"opsdb",L:"ref",k:"store",x:1510,y:42,w:180,h:126,t:"ops.db và ops_dbos.db",s:"Waves, alerts, breakers, spans, commands và checkpoint DBOS.",
+  role:"Trạng thái vận hành, tách khỏi dữ liệu nghiệp vụ. ops_dbos.db giữ checkpoint workflow để wave sống sót qua sự cố.",
+  files:["C:\\data\\news-scape\\ops.db","project/src/ops/store.py"],adr:["0012","0014"]},
+
+ // L1
+ {id:"src",L:"cap",k:"ext",x:150,y:240,w:W,h:164,t:"8 nguồn đang bật",s:"cafef (API, RSS), fireant (REST), tnck (API), baodautu (HTML), vietstock, vneconomy, vietnambiz, thoibaotaichinhvietnam (RSS).",
+  role:"Nguồn tin tài chính. Cấu hình mỗi nguồn là một tệp YAML; thêm nguồn là thêm một module scraper và một YAML, không sửa lõi. 16 nguồn khác đã cấu hình nhưng đang tắt.",
+  files:["project/config/domains/*.yaml","project/src/scrapers/"],adr:["0013"]},
+ {id:"morn",L:"cap",k:"proc",x:350,y:240,w:W,h:100,t:"morninger",s:"APScheduler: capture mỗi 10 phút, derive mỗi 30 phút, drift lúc 06:00, reclaim mỗi 30 phút.",
+  role:"Tiến trình nền duy nhất cho thu thập và chuẩn hoá. Khoá capture.lock cộng khoá trong pipeline_state chống chạy trùng. Chạy tay: --once capture|derive|drift; run_once.py chạy một chu kỳ.",
+  files:["project/src/morninger.py","project/config/settings.yaml","project/scripts/run_once.py"],io:{w:["monocle.db: pipeline_state (khoá)"]},adr:["0007","0013"]},
+ {id:"scr",L:"cap",k:"proc",x:550,y:240,w:W,h:100,t:"Orchestrator và Scrapers",s:"BaseScraper và CaptureMixin; tuân thủ robots, backoff, 3 giây mỗi domain.",
+  role:"Duyệt từng nguồn đang bật: đọc danh mục theo watermark (dừng khi cả trang đã có, tối đa 8 trang), phân tích mục, rồi tải trang chi tiết. Lỗi gom vào errors, không làm sập chu kỳ.",
+  files:["project/src/orchestrator.py","project/src/core/base_scraper.py","project/src/scrapers/capture_mixin.py","project/src/core/pagination.py","project/src/crawler/http_client.py"],adr:["0013"]},
+ {id:"ledger",L:"cap",k:"gate",x:750,y:240,w:W,h:100,t:"Sổ khám phá URL",s:"Ghi trước mọi bộ lọc. Trạng thái cuối: captured, alias, gone, dead_letter.",
+  role:"Mọi URL phát hiện được đều để lại vết. Không có trạng thái “bị bỏ”. Đây là cơ sở để chứng minh không sót bài.",
+  files:["project/src/db/registry.py"],io:{w:["monocle.db: discovered_urls, url_aliases"]},adr:["0013"]},
+ {id:"bronze",L:"cap",k:"proc",x:950,y:240,w:W,h:100,t:"RawStore (Bronze)",s:"Lưu byte nguyên bản và .meta.json kèm SHA-256; ghi một lần, nguyên tử.",
+  role:"Lưu trang gốc trước mọi xử lý, ghi một lần không bao giờ sửa (ghi tmp rồi os.replace). Lần tải lại thất bại không ghi đè bản tốt. Mọi lớp sau là hàm thuần của Bronze nên sửa parser không cần tải lại.",
+  files:["project/src/crawler/raw_store.py","project/docs/design/06-raw-html-capture.md"],io:{w:["raw_html/<domain>/<YYYYMMDD>/<hash>.html + .meta.json"]},adr:["0013"]},
+ {id:"writer",L:"cap",k:"proc",x:1150,y:240,w:W,h:100,t:"DBWriter",s:"Một luồng ghi duy nhất, mỗi bài một giao dịch.",
+  role:"Mọi ghi vào bảng articles đi qua một luồng duy nhất để tránh SQLITE_BUSY. Sau đó xuất CSV và checkpoint WAL.",
+  files:["project/src/db/writer.py","project/src/db/store.py","project/src/db/dedup.py"],io:{w:["monocle.db: articles, seen_articles, discovered_urls"]},adr:["0013"]},
+ {id:"recon",L:"cap",k:"gate",x:550,y:352,w:376,h:52,small:true,t:"Đối soát sitemap và backfill",s:"Sitemap lệch quá 2% mỗi ngày là ĐỎ; tải bù bài hoãn.",
+  role:"So sitemap với sổ khám phá (cafef, tnck, baodautu, vneconomy) và bổ sung URL thiếu. backfill_deferred tải bù bài bị hoãn (tối đa 5 lần trong 24 giờ). recapture_lost_bronze khôi phục tệp gốc bị mất.",
+  files:["project/src/pipeline/reconcile.py","project/scripts/capture_reconcile.py","project/src/pipeline/backfill.py","project/scripts/maintenance/backfill_deferred.py"],
+  io:{w:["monocle.db: capture_coverage, discovered_urls"]},adr:["0013"]},
+ {id:"fs",L:"ref",k:"store",x:1510,y:232,w:180,h:172,t:"C:\\data\\news-scape",s:"raw_html, silver, work_packages, agent_tasks, agent_outputs, users/output, publish_staging.",
+  role:"Gốc dữ liệu ghi (MONOCLE_DATA_DIR), nằm ngoài repo và ngoài OneDrive. paths.py từ chối mọi đường dẫn chứa “onedrive” hoặc “sharepoint”.",
+  files:["project/src/core/paths.py"],adr:["0024","0026"]},
+
+ // L2
+ {id:"cfg",L:"ref",k:"doc",x:150,y:470,w:W,h:104,t:"Cấu hình và thực thể",s:"domains/*.yaml, manifest người dùng, watchlist tier 1, 2, 3 và aliases.",
+  role:"Nguồn sự thật cho nguồn tin, người nhận và danh mục thực thể. Bật/tắt người dùng chỉ ở subscriptions/manifest.yaml (bản sống ở gốc dữ liệu, bản gieo mẫu trong users/); người vắng mặt mặc định bật (ADR-0026). Tier 1: 742 mã; tier 2: 351 mã (chỉ khớp mã trong tin công bố); tier 3: 891 mã lưu trữ. Catalog entities.json (1,5 MB) được dựng bằng build_entities.py; không nạp nguyên tệp vào ngữ cảnh agent.",
+  files:["project/config/domains/","users/subscriptions/manifest.yaml","project/src/core/user_manifest.py","project/config/entities/users/*.yaml","project/config/entities/aliases/*.yaml","project/config/watchlist.yaml"]},
+ {id:"derive",L:"sil",k:"proc",x:350,y:470,w:W,h:104,t:"rederive_incremental",s:"Quét meta.json mới theo watermark; lỗi vào silver_failures, dead-letter sau 5 lần.",
+  role:"Watermark không bao giờ vượt qua một lỗi chưa giải quyết. Bảo trì toàn bộ (sau khi đổi schema hoặc parser) dùng rederive_from_bronze.py.",
+  files:["project/src/pipeline/derive.py","project/src/pipeline/run.py","project/scripts/rederive_from_bronze.py"],io:{w:["monocle.db: pipeline_state, silver_failures"]},adr:["0007"]},
+ {id:"silver",L:"sil",k:"proc",x:550,y:470,w:W,h:104,t:"SilverBuilder",s:"silver-v1: mỗi thẻ p là một đoạn; trafilatura có dự phòng; chất lượng high, medium, low.",
+  role:"Chuẩn hoá DOM thành tiêu đề, đoạn, bảng, liên kết. Loại rác (bài liên quan, quảng cáo, menu) để packet chỉ chứa đoạn nội dung.",
+  files:["project/src/pipeline/silver_builder.py","project/src/processor/extractor.py"],io:{w:["silver/<domain>/<yyyymmdd>/<id>.json"]},adr:["0018"]},
+ {id:"change",L:"sil",k:"proc",x:750,y:470,w:W,h:104,t:"change_detect",s:"SimHash64 và chữ ký DOM; 5 trạng thái từ NEW đến SELECTOR_BROKEN.",
+  role:"Ghi lịch sử phiên bản và phát hiện nguồn đổi giao diện. SimHash ở đây dùng cho phiên bản và drift, không dùng để khử trùng lặp.",
+  files:["project/src/pipeline/change_detect.py","project/src/pipeline/drift.py"],io:{w:["monocle.db: article_versions"]},adr:["0007"]},
+ {id:"wp",L:"sil",k:"gate",x:950,y:470,w:W,h:104,t:"Cổng WorkPackage",s:"work-package-v1 hợp lệ vào work_items ở trạng thái pending; gói sai hoặc drift bị held.",
+  role:"Ranh giới producer ↔ agent. Gói trỏ tới raw_sha256, không nhúng byte. Enqueue idempotent, claim nguyên tử.",
+  files:["project/src/handoff/work_package.py","project/src/handoff/contract_validator.py","project/src/handoff/catalog.py"],io:{w:["monocle.db: work_items","work_packages/"]},adr:["0007"]},
+ {id:"cluster",L:"sil",k:"proc",x:1150,y:470,w:W,h:104,t:"Cụm tin, thừa kế, tín hiệu",s:"Bản sao từ 0,95 thừa kế kết quả mà không gọi LLM; tạo signal_daily và entity_links.",
+  role:"Tất định, không xoá bài. Bản sao chép nguyên (sha hoặc containment ≥0,95 cùng số liệu và mã) thừa kế kết quả của bài gốc với l1_source='inherited'. Bài viết lại hoặc cùng sự kiện vẫn được phân tích đầy đủ. Trùng lặp vẫn được đếm vì tần suất đưa tin là tín hiệu.",
+  files:["project/src/pipeline/story_cluster.py","project/src/pipeline/inherit.py","project/src/analytics/signals.py"],
+  io:{w:["monocle.db: story_clusters, cluster_members, signal_daily, entity_links, source_profile"]},adr:["0016"]},
+ {id:"registry",L:"ref",k:"doc",x:1510,y:470,w:180,h:104,t:".agents/ mạng agent",s:"Registry, pipeline DAG, 13 rule, 28 skill và preset DSH.",
+  role:"Nguồn sự thật cho mạng agent: ai tồn tại (operator 0 token, cognitive, conductor), ranh giới vào/ra, DoD, KPI và DAG điều phối. pipeline_spec.py đọc ops_spec từ đây; test chặn lệch.",
+  files:[".agents/registry.yaml",".agents/pipeline.yaml",".agents/rules/",".agents/skills/",".agents/dsh/presets/news-scape-conductor/"],adr:["0006"]},
+
+ // L3
+ {id:"run",L:"lane",k:"proc",x:150,y:654,w:W,h:176,t:"article_run.py",s:"Bộ lái wave: prepare, analyze, --repair, --finish. manual.begin khoá một wave mỗi lane. Runtime DSH cần qua cổng preflight 14 mục.",
+  role:"Điểm vào duy nhất của Article Lane cho cả daemon và người vận hành. --where trả lời đường dẫn, cwd và quyền ghi DB (0 token). Với runtime DSH, 14 mục preflight phải XANH hết trước khi chạy wave.",
+  files:["project/scripts/article_run.py","project/src/ops/manual.py",".agents/rules/09-dsh-preflight-gate.md"],adr:["0010","0011","0009"],
+  note:"Không còn gọi l1_route.py, agent_export.py hay requeue.py: lane L1/Gold đã nghỉ hưu (ADR-0010)."},
+ {id:"pack",L:"lane",k:"proc",x:350,y:654,w:W,h:104,t:"article_pack",s:"Chọn bài chưa phân tích; tier chỉ quyết định thứ tự, không quyết định độ sâu; bỏ bài mỏng.",
+  role:"Tier 1: thực thể watchlist trong tiêu đề, ngành GICS liên quan hoặc macro khẩn. Tier 2: còn lại. Mọi bài đều được xử lý đủ. Bản sao đang giữ 48 giờ và bài mỏng bị loại. Chia batch đều, mặc định 50.",
+  files:["project/scripts/article_pack.py","project/scripts/build_article_prefix.py"],io:{r:["monocle.db: articles, l1_outputs, work_items"]},adr:["0019","0016"]},
+ {id:"packet",L:"lane",k:"doc",x:550,y:654,w:W,h:104,t:"Packets và conductor.ts",s:"task.json, map.json, wave.json; toàn văn từng đoạn, tối đa 1.900 ký tự mỗi dòng.",
+  role:"Packet mang mọi đoạn nguyên văn (không chưng cất). wave_<code>.conductor.ts đọc mọi packet, hâm cache, chạy mọi batch song song trong một lần run_code và chỉ trả về con số.",
+  files:["C:\\data\\news-scape\\agent_tasks\\article\\"],adr:["0018"]},
+ {id:"llm",L:"lane",k:"agent",x:750,y:654,w:W,h:104,t:"article-processor",s:"Hạng 1 agy, hạng 2 opencode run, hạng 3 OpenRouter; DSH làm conductor. Một lượt mỗi batch, không dùng tool.",
+  role:"Agent nhận thức duy nhất đang hoạt động. Mỗi lượt đọc trọn bài và làm hai việc: nhận diện thực thể (mã, công ty, sàn, ngành, chỉ số, macro) và phân tích nội dung (tóm tắt, luận điểm, hàm ý thị trường, sentiment, time_sensitivity, trích dẫn bằng chỉ số đoạn). Temperature 0, seed cố định. Thứ hạng runner (ADR-0026): agy, rồi opencode run, rồi OpenRouter; Claude không bao giờ là runtime thay thế.",
+  files:["project/schemas/article-compact-v2.schema.json","project/src/agent/article_contract.py","project/src/agent/agy_runner.py","project/src/agent/opencode_runner.py","project/src/agent/openrouter_runner.py"],adr:["0017","0011","0009","0026"],
+  note:"Không script nào được giả lập trí tuệ của agent: không regex hay heuristic sinh kết quả nhận diện hoặc phân tích."},
+ {id:"expand",L:"lane",k:"proc",x:950,y:654,w:W,h:104,t:"article_expand",s:"Validate; matcher đối chiếu BOTH, LLM_ONLY, CODE_ONLY; dựng trích dẫn nguyên văn.",
+  role:"Mở bản ghi gọn thành hai schema. Matcher danh mục (Capitalized Suffix Guard, Prefix Guard) chỉ đối chiếu, không thay thế kết quả mô hình. Trích dẫn được dựng lại từ chỉ số đoạn nên luôn nguyên văn. Thoát 1 nếu hơn 10% wave lỗi.",
+  files:["project/scripts/article_expand.py","project/src/agent/entities.py"],io:{w:["agent_outputs_l1/","agent_outputs/","article_mentions/"]},adr:["0017","0005"]},
+ {id:"ingest",L:"lane",k:"gate",x:1150,y:654,w:W,h:104,t:"Cổng DoD ingest",s:"l1_ingest ghi l1_outputs, agent_ingest ghi agent_outputs; chỉ nhận tệp của wave này.",
+  role:"Kiểm quyền ghi DB trước khi tốn token. Mỗi bản ghi phải qua schema và Definition of Done mới được ghi. Kết quả code_first không bao giờ được tính là đã phân tích.",
+  files:["project/scripts/l1_ingest.py","project/scripts/agent_ingest.py","project/src/agent/dod.py"],io:{w:["monocle.db: l1_outputs, agent_outputs"]},adr:["0017","0010"]},
+ {id:"repair",L:"lane",k:"proc",x:750,y:772,w:W,h:58,small:true,t:"--repair",s:"Đóng gói lại phần thiếu.",
+  role:"Batch trả thiếu bài được đóng gói lại đúng phần thiếu. --batch là cách duy nhất để chia batch; không có trần token nào cắt batch.",
+  files:["project/scripts/article_run.py"],adr:["0017"]},
+ {id:"verify",L:"lane",k:"gate",x:950,y:772,w:376,h:58,small:true,t:"Kiểm tra độ phủ, token_ledger, handoff",s:"Đạt mới in dòng HOÀN TẤT và thoát với mã 0.",
+  role:"Cổng thật của một wave là kỹ thuật: DB ghi được, ingest không lỗi, độ phủ wave ≥90% ở cả l1_outputs và agent_outputs. Token chỉ được ghi sổ, không bao giờ là cổng chặn.",
+  files:["project/scripts/token_ledger.py","project/scripts/handoff.py"],io:{w:["harness.db: token_ledger","HANDOFF-latest.md"]},adr:["0017"]},
+ {id:"contracts",L:"ref",k:"doc",x:1510,y:654,w:180,h:176,t:"Hợp đồng dữ liệu",s:"silver-v1, work-package-v1, article-compact-v2, l1-entity-output-v1, agent-output-v2-lean.",
+  role:"Ranh giới giữa các lớp là JSON Schema. Mọi provider dùng một hợp đồng đầu ra và một validator. Provider mới phải qua golden set; agy là chuẩn đối chứng.",
+  files:["project/schemas/",".agents/rules/11-hop-dong-dau-ra-thong-nhat.md","project/scripts/provider_conformance.py"],adr:["0017"]},
+
+ // L4
+ {id:"deliver",L:"del",k:"proc",x:350,y:900,w:W,h:110,t:"write_user_output",s:"Định tuyến theo watchlist từng người, lọc nhiễu macro, checkpoint chống gửi trùng.",
+  role:"Chỉ giao bài đã có kết quả L1 do mô hình phân tích; kết quả Gold là tuỳ chọn (GOLD hoặc L1_ONLY). Chỉ tham chiếu người dùng bật trong manifest.",
+  files:["project/scripts/write_user_output.py","project/src/export/user_output.py","project/src/export/xlsx_delivery.py"],io:{r:["monocle.db: l1_outputs, agent_outputs, articles"]}},
+ {id:"xlsx",L:"del",k:"doc",x:550,y:900,w:W,h:110,t:"Excel giao hàng",s:"users/output/<người>/<ngày>.xlsx, sheet Radar và CSV _master.",
+  role:"Thành phẩm cho chuyên viên. Cây giống hệt cục bộ và trên SharePoint: <gốc dữ liệu>/users/output/<người>/<ngày>.xlsx (ADR-0026). Cây cũ users_output được chuyển bằng migrate_users_output.py.",
+  files:["project/scripts/maintenance/migrate_users_output.py","project/src/export/xlsx_delivery.py"]},
+ {id:"publish",L:"del",k:"proc",x:750,y:900,w:W,h:110,t:"publisher.publish_day",s:"Một chiều, chỉ ngày đã đóng; staging, .partial rồi thay thế; từ chối site FRA chính thức.",
+  role:"Chạy mỗi ngày sau 01:00 qua publish_tick, hoặc tay với publish.py --from/--to (backfill 1 năm của US-038). Dựng bảng OBT 22 cột từ monocle.db. Đây là đường xuất bản chuẩn duy nhất (ADR-0026). lakehouse_cli.py chỉ kiểm toán (verify) và nhận dữ liệu ngoại vi qua dropzone, không xuất bản.",
+  files:["project/scripts/publish.py","project/src/export/publisher.py","project/scripts/lakehouse_cli.py","project/src/lakehouse/"],io:{r:["monocle.db"],w:["SharePoint sandbox"]},adr:["0023","0026"],
+  note:"Ghi vào sites/FRA (FRA - Data) bị chặn trong mã cho tới khi có quyết định mới."},
+ {id:"sp",L:"del",k:"store",x:950,y:892,w:W,h:126,t:"SharePoint sandbox",s:"FRA_DataIngestion: parquet OBT, _manifest, review 7 ngày, bronze tar, xlsx.",
+  role:"Data plane dùng chung, chỉ đọc với người dùng. 32.981 bài, 283 phân vùng Parquet nén ZSTD, từ 01/10/2025 tới 19/10/2026. _manifest/latest.json có SHA-256 để kiểm toàn vẹn.",
+  files:["parquet/articles/year=/month=/part-<ngày>.parquet","_manifest/latest.json","review/monocle_review_<ngày>.db","users/output/"],adr:["0023"]},
+ {id:"plugin",L:"del",k:"proc",x:1150,y:900,w:W,h:110,t:"fpts-market-intel",s:"12 skill phân tích và các lens DuckDB: ticker, buzz, pulse, theme, brief.",
+  role:"Plugin cho AGY/Gemini. lakehouse_client.py dựng view DuckDB trong bộ nhớ (raw_articles, articles, article_entities) trên Parquet. Quét toàn bộ 32.981 bài trong khoảng 0,5 giây.",
+  files:["plugins/fpts-market-intel/plugin.json","plugins/fpts-market-intel/tools/lakehouse_client.py","plugins/fpts-market-intel/skills/"],adr:["0025"]},
+ {id:"analysts",L:"ref",k:"ext",x:1510,y:900,w:180,h:110,t:"Chuyên viên phân tích",s:"5 người bật trong manifest; đọc Excel và hỏi plugin.",
+  role:"Người dùng cuối. Danh sách tra bằng pipeline_radar.py users; không chép danh sách vào tài liệu.",
+  files:["users/subscriptions/manifest.yaml","project/scripts/pipeline_radar.py"]},
+
+ // L5
+ {id:"agents",L:"gov",k:"doc",x:150,y:1090,w:W,h:110,t:"AGENTS.md",s:"Điểm vào duy nhất cho mọi agent; ba tier TINY, NORMAL, HIGH-RISK; WIP=1 mỗi worktree.",
+  role:"Mọi công cụ và mô hình (Claude, Codex, agy, opencode, OpenRouter) đọc tệp này trước. CLAUDE.md chỉ trỏ tới đây. Ngôn ngữ harness là tiếng Anh.",
+  files:["AGENTS.md","CLAUDE.md","docs/SESSION-LATEST.md"],adr:["0021","0022"]},
+ {id:"intake",L:"gov",k:"gate",x:350,y:1090,w:W,h:110,t:"Intake và cổng rủi ro",s:"9 cờ rủi ro quyết định lane; hard gate dừng việc, yêu cầu ADR và chờ người duyệt.",
+  role:"0–1 cờ: tiny hoặc normal; 2–3: normal; từ 4 hoặc chạm hard gate (schema DB, hợp đồng dữ liệu, token API, lõi harness): high-risk, trạng thái blocked tới khi có ADR được duyệt.",
+  files:["docs/FEATURE_INTAKE.md","docs/CONTEXT_RULES.md"],adr:["0001"]},
+ {id:"know",L:"gov",k:"doc",x:550,y:1090,w:W,h:110,t:"Kho tri thức",s:"26 ADR, 48 story, 25 FACT; INDEX.md sinh tự động.",
+  role:"Bộ nhớ dự án nằm trong repo, không nằm trong bộ nhớ riêng của công cụ. Mỗi bất biến có đúng một tài liệu định nghĩa; nơi khác chỉ trích id.",
+  files:["docs/INDEX.md","docs/knowledge/README.md","docs/knowledge/schema.yaml","docs/decisions/","docs/stories/","docs/knowledge/facts/"],adr:["0021"]},
+ {id:"cli",L:"gov",k:"proc",x:750,y:1090,w:W,h:110,t:"harness_cli.py",s:"doc new, lint, index, sync, audit, propose, session close.",
+  role:"Cấp id (không chọn tay), kiểm lint K00–K13, chấm entropy, đề xuất cải tiến. session close ghi nhận kết quả verify, push và ma sát vào trace mà không chặn phiên; chỉ verify đạt mới cấp proof và đặt story implemented (--strict mới dừng khi verify hỏng). Tệp mới phải git add trước vì lệnh chỉ commit tệp đã theo dõi.",
+  files:["scripts/harness_cli.py","scripts/knowledge.py","scripts/schema/"],io:{w:["harness.db"]},adr:["0002","0021"]},
+ {id:"hook",L:"gov",k:"gate",x:950,y:1090,w:W,h:110,t:"pre-commit",s:"git verify (cú pháp, tệp cấm) và doc lint --staged; lỗi chặn commit.",
+  role:"Hook duy nhất, cài trong gitdir dùng chung. File cấm: bản xung đột OneDrive, .db/-wal/-shm, .xlsx ngoài docs/.",
+  files:["scripts/git_hooks/pre-commit"],adr:["0021"]},
+ {id:"git",L:"gov",k:"ext",x:1150,y:1090,w:W,h:110,t:"Git, 2 remote",s:"Hai remote: fpa (Research-FPA) và origin; Conventional Commits, tối đa 72 ký tự.",
+  role:"Mỗi phiên kết thúc với cây sạch, HEAD có trace và đã đẩy lên cả hai remote. Cảnh báo PR khi nhánh đi trước fpa/main từ 10 commit.",
+  files:["scripts/harness_cli.py git template","scripts/harness_cli.py session close --push"],adr:["0024"]},
+ {id:"hdb",L:"ref",k:"store",x:1510,y:1082,w:180,h:126,t:"harness.db",s:"story, intake, trace, backlog, decision, token_ledger.",
+  role:"Lớp bền vững của harness, tách khỏi monocle.db. Nằm ở gốc repo, WAL.",
+  files:["harness.db","scripts/schema/001-init.sql … 004-git-tracking.sql"],adr:["0002"]},
+
+ // trục
+ {id:"monocle",L:"ref",k:"store",x:1360,y:232,w:120,h:598,t:"monocle.db",
+  tables:["articles","seen_articles","discovered_urls","capture_coverage","pipeline_state","article_versions","silver_failures","work_items","story_clusters","signal_daily","l1_outputs","agent_outputs"],
+  role:"CSDL nghiệp vụ trung tâm (SQLite WAL), nằm ngoài repo. Schema định nghĩa trong store.py, bổ sung cột qua _MIGRATIONS. Mọi lớp L1–L4 đọc hoặc ghi vào đây.",
+  files:["C:\\data\\news-scape\\monocle.db","project/src/db/store.py","project/docs/operations/monocle-db-handbook.md"]}
+];
+const NM={};N.forEach(n=>NM[n.id]=n);
+(function number(){const c={};N.forEach(n=>{if(n.L==="ref")return;c[n.L]=(c[n.L]||0)+1;n.code=LAYERS[n.L].code+"-"+String(c[n.L]).padStart(2,"0")})})();
+
+/* Edges: f/t node ids, fs/ts sides (l r t b), fo/to offsets, via points, type d data, c control, r read, g governance */
+const E=[
+ {f:"sched",fs:"r",t:"daemon",ts:"l",y:"c",lb:"khởi chạy"},
+ {f:"daemon",fs:"r",t:"wave",ts:"l",y:"c",lb:"mở wave"},
+ {f:"wave",fs:"r",t:"watch",ts:"l",y:"d",lb:"trạng thái"},
+ {f:"probes",fs:"l",t:"watch",ts:"r",y:"d",lb:"cảnh báo",fo:12,to:12},
+ {f:"probes",fs:"r",t:"opsdb",ts:"l",y:"d",lb:"ghi sự kiện"},
+ {f:"daemon",fs:"b",t:"morn",ts:"t",y:"c",lb:"giữ sống",lx:446,ly:206,la:"start"},
+ {f:"wave",fs:"b",fo:-150,t:"run",ts:"l",to:-42,y:"c",via:[[588,206],[138,206],[138,700]],lb:"gọi article_run.py",lx:146,ly:560,la:"start",rot:true},
+ {f:"morn",fs:"r",t:"scr",ts:"l",y:"c",lb:"10'"},
+ {f:"src",fs:"r",fo:48,t:"recon",ts:"l",to:-8,y:"d",lb:"HTTP, RSS, API, sitemap",lx:432,ly:363},
+ {f:"src",fs:"r",fo:48,t:"scr",ts:"l",to:28,y:"d",via:[[538,370],[538,318]]},
+ {f:"scr",fs:"r",t:"ledger",ts:"l",y:"d",lb:"discover"},
+ {f:"ledger",fs:"r",t:"bronze",ts:"l",y:"d",lb:"tải"},
+ {f:"bronze",fs:"r",t:"writer",ts:"l",y:"d",lb:"trích"},
+ {f:"writer",fs:"r",t:"monocle",ts:"l",y:"d",fo:0,toAbs:290},
+ {f:"bronze",fs:"t",t:"fs",ts:"t",y:"d",via:[[1038,224],[1600,224]],lb:"raw_html, WORM",lx:1250,ly:220},
+ {f:"recon",fs:"t",fo:100,t:"ledger",ts:"b",y:"d"},
+ {f:"morn",fs:"b",t:"recon",ts:"l",to:14,y:"c",via:[[438,392]]},
+ {f:"morn",fs:"b",fo:-40,t:"derive",ts:"t",to:-40,y:"c",lb:"30'",lx:404,ly:452,la:"start"},
+ {f:"cfg",fs:"t",t:"src",ts:"b",y:"g"},
+ {f:"bronze",fs:"b",fo:-38,t:"silver",ts:"t",y:"d",via:[[1000,430],[638,430]],lb:"meta.json + raw (hàm thuần)",lx:820,ly:426},
+ {f:"derive",fs:"r",t:"silver",ts:"l",y:"d"},
+ {f:"silver",fs:"r",t:"change",ts:"l",y:"d"},
+ {f:"change",fs:"r",t:"wp",ts:"l",y:"d"},
+ {f:"wp",fs:"b",t:"monocle",ts:"l",y:"d",via:[[1038,614]],toAbs:614,lb:"work_items",lx:1200,ly:610},
+ {f:"cluster",fs:"r",t:"monocle",ts:"l",y:"d",toAbs:522},
+ {f:"cfg",fs:"b",t:"pack",ts:"t",y:"g",via:[[238,614],[438,614]],lb:"thực thể và watchlist",lx:246,ly:636,la:"start"},
+ {f:"wp",fs:"b",fo:-40,t:"pack",ts:"t",to:40,y:"r",via:[[998,598],[478,598]],lb:"bài chưa phân tích",lx:740,ly:594},
+ {f:"run",fs:"r",fo:-36,t:"pack",ts:"l",y:"c",lb:"prepare"},
+ {f:"pack",fs:"r",t:"packet",ts:"l",y:"d"},
+ {f:"packet",fs:"r",t:"llm",ts:"l",y:"d"},
+ {f:"llm",fs:"r",t:"expand",ts:"l",y:"d",lb:"compact-v2"},
+ {f:"expand",fs:"r",t:"ingest",ts:"l",y:"d"},
+ {f:"ingest",fs:"r",t:"monocle",ts:"l",y:"d",toAbs:706},
+ {f:"llm",fs:"b",t:"repair",ts:"t",y:"c"},
+ {f:"repair",fs:"l",t:"packet",ts:"b",y:"d",via:[[638,801]],lb:"_rNN",lx:660,ly:797,la:"start"},
+ {f:"ingest",fs:"b",t:"verify",ts:"t",to:100,y:"c"},
+ {f:"verify",fs:"r",t:"hdb",ts:"t",y:"d",via:[[1342,801],[1342,1048],[1600,1048]],lb:"token_ledger",lx:1420,ly:1044},
+ {f:"monocle",fs:"b",t:"deliver",ts:"t",y:"r",via:[[1420,860],[438,860]],lb:"đọc kết quả đã qua DoD",lx:1100,ly:856},
+ {f:"monocle",fp:[838,860],t:"publish",ts:"t",y:"r"},
+ {f:"deliver",fs:"r",t:"xlsx",ts:"l",y:"d"},
+ {f:"xlsx",fs:"r",t:"publish",ts:"l",y:"d"},
+ {f:"publish",fs:"r",t:"sp",ts:"l",y:"d",lb:"01:00"},
+ {f:"sp",fs:"r",t:"plugin",ts:"l",y:"r",lb:"DuckDB"},
+ {f:"plugin",fs:"r",t:"analysts",ts:"l",y:"d",lb:"trả lời phân tích",lx:1418,ly:951},
+ {f:"sp",fs:"b",t:"analysts",ts:"b",y:"d",via:[[1038,1032],[1600,1032]],lb:"Excel qua OneDrive",lx:1250,ly:1028},
+ {f:"agents",fs:"r",t:"intake",ts:"l",y:"g"},
+ {f:"intake",fs:"r",t:"know",ts:"l",y:"g",lb:"US và ADR"},
+ {f:"know",fs:"r",t:"cli",ts:"l",y:"g",lb:"lint"},
+ {f:"cli",fs:"r",t:"hook",ts:"l",y:"g",lb:"commit"},
+ {f:"hook",fs:"r",t:"git",ts:"l",y:"g",lb:"push"},
+ {f:"cli",fs:"b",t:"hdb",ts:"b",y:"g",via:[[838,1224],[1600,1224]],lb:"trace và story",lx:1250,ly:1220}
+];
+const REFS={
+ contracts:["silver","wp","llm","expand","ingest"],registry:["llm","run","wave","daemon"],
+ fs:["bronze","silver","wp","packet","xlsx","publish"],cfg:["scr","expand","deliver"],
+ know:["registry"],agents:["registry"],monocle:["pack","watch","publish","deliver","cluster","derive","ledger","recon","morn"],
+ opsdb:["daemon","wave","watch"],hdb:["watch"]
+};
+
+/* Flows */
+const FLOWS=[
+ {id:"main",nm:"Dòng dữ liệu chính",d:"Một bài báo đi từ trang nguồn tới tay chuyên viên.",steps:[
+  ["src","Nguồn công bố bài qua API, RSS hoặc trang danh mục."],
+  ["scr","Scraper đọc danh mục theo watermark rồi tải trang chi tiết."],
+  ["ledger","URL được ghi vào sổ khám phá trước mọi bộ lọc."],
+  ["bronze","Trang gốc lưu byte nguyên bản kèm SHA-256, không bao giờ sửa."],
+  ["writer","DBWriter ghi bài vào monocle.db trong một giao dịch."],
+  ["derive","Mỗi 30 phút derive dựng lại Silver từ Bronze theo watermark."],
+  ["silver","Tách đoạn <p>, loại rác, chấm chất lượng trích xuất."],
+  ["change","So SimHash và DOM: bài mới, đổi nội dung hay nguồn đổi giao diện."],
+  ["wp","Gói hợp lệ vào hàng đợi work_items; gói lỗi bị giữ lại."],
+  ["pack","Chọn bài chưa phân tích, xếp theo tier, chia batch 50."],
+  ["packet","Ghi packet toàn văn và chương trình conductor."],
+  ["llm","Mô hình đọc trọn bài, trả thực thể, tóm tắt, hàm ý, sentiment, chỉ số đoạn trích dẫn."],
+  ["expand","Validate, đối chiếu với matcher, dựng trích dẫn nguyên văn."],
+  ["ingest","Chỉ bản ghi qua DoD mới vào l1_outputs và agent_outputs."],
+  ["verify","Wave chỉ hoàn tất khi phủ ≥90% ở cả hai lớp."],
+  ["deliver","Định tuyến theo watchlist từng người."],
+  ["xlsx","Ghi Excel cho từng chuyên viên."],
+  ["publish","Sau 01:00, xuất ngày đã đóng sang SharePoint."],
+  ["sp","Parquet OBT 22 cột, manifest và Excel nằm trên sandbox."],
+  ["plugin","Plugin truy vấn Parquet bằng DuckDB."],
+  ["analysts","Chuyên viên đọc Excel và hỏi plugin."]]},
+ {id:"wave",nm:"Vòng đời một wave",d:"Cách daemon tự mở, chạy và đóng một đợt phân tích 100 bài.",steps:[
+  ["daemon","Sensor thấy ≥100 bài chờ, hoặc bài cũ >90 phút, hoặc tới khung flush."],
+  ["probes","Preflight: breaker của provider, đĩa, quyền ghi DB, prefix."],
+  ["wave","DBOS mở workflow; mỗi bước được checkpoint."],
+  ["run","Gọi article_run.py với runner agy."],
+  ["pack","prepare: chọn 100 bài, chia 2 batch."],
+  ["packet","Ghi packet và chương trình conductor."],
+  ["llm","analyze: các batch chạy song song, mỗi batch đúng một lượt."],
+  ["repair","Tối đa 2 vòng repair cho phần thiếu."],
+  ["expand","finish: mở bản ghi và đối chiếu thực thể."],
+  ["ingest","Nạp qua cổng DoD."],
+  ["verify","Phủ ≥90% thì hoàn tất; không đạt thì PARKED."],
+  ["deliver","Giao xlsx (best-effort)."]]},
+ {id:"capture",nm:"Thu thập trọn vẹn",d:"Cơ chế bảo đảm không sót bài (ADR-0013).",steps:[
+  ["morn","morninger chạy capture mỗi 10 phút."],
+  ["src","Mọi nguồn đang bật được duyệt."],
+  ["scr","Đọc danh mục tới khi gặp trang đã có hết, không dừng cứng ở trang 1."],
+  ["ledger","Mọi URL có vết trước khi lọc; không có trạng thái “bị bỏ”."],
+  ["recon","Đối soát sitemap; lệch >2%/ngày là ĐỎ. Tải bù bài hoãn."],
+  ["bronze","Ghi trang gốc trước mọi xử lý."],
+  ["fs","Bronze nằm ngoài repo, ngoài OneDrive."],
+  ["writer","Ghi bài và đánh dấu captured cùng một giao dịch."],
+  ["monocle","Trùng lặp vẫn được giữ và đếm, vì tần suất đưa tin là tín hiệu."]]},
+ {id:"publish",nm:"Xuất bản và tiêu thụ",d:"Kết quả rời máy vận hành và tới người dùng như thế nào.",steps:[
+  ["monocle","Kết quả đã qua DoD nằm trong monocle.db."],
+  ["deliver","Định tuyến theo watchlist, lọc nhiễu."],
+  ["xlsx","Excel từng người dưới users/output."],
+  ["publish","Xuất một chiều, ngày đã đóng, ghi nguyên tử."],
+  ["sp","Sandbox FRA_DataIngestion: Parquet, manifest SHA-256, review DB 7 ngày."],
+  ["plugin","fpts-market-intel dựng view DuckDB trên Parquet."],
+  ["analysts","Chuyên viên dùng 12 skill phân tích."]]},
+ {id:"harness",nm:"Vòng thay đổi (harness)",d:"Một thay đổi mã hoặc tài liệu đi từ yêu cầu tới commit như thế nào.",steps:[
+  ["agents","Đọc AGENTS.md, SESSION-LATEST.md, INDEX.md."],
+  ["intake","Phân tầng yêu cầu; high-risk dừng ở hard gate chờ ADR được duyệt."],
+  ["know","doc new cấp id story hoặc ADR; tri thức mới thành FACT."],
+  ["cli","Chạy verify và ghi trace; verify hỏng được ghi lại, không chặn phiên."],
+  ["hook","pre-commit chặn file cấm và tài liệu sai hợp đồng."],
+  ["git","Commit Conventional, đẩy lên fpa và origin."],
+  ["hdb","Story, trace, commit được ghi vào harness.db."]]}
+];
+
+/* ---------- render ---------- */
+const svg=document.getElementById("map");const NS="http://www.w3.org/2000/svg";const XH="http://www.w3.org/1999/xhtml";
+function el(tag,attrs,parent){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function fo(parent,x,y,w,h,html){const f=el("foreignObject",{x,y,width:w,height:h},parent);const d=document.createElementNS(XH,"div");d.setAttribute("xmlns",XH);d.style.height="100%";d.innerHTML=html;f.appendChild(d);return f}
+
+const defs=el("defs",{},svg);
+[["d","var(--ink)"],["c","var(--ink-2)"],["r","var(--ink-3)"],["g","var(--ink-2)"]].forEach(([k,c])=>{
+  const m=el("marker",{id:"ar-"+k,viewBox:"0 0 10 10",refX:"9",refY:"5",markerWidth:"7",markerHeight:"7",orient:"auto-start-reverse"},defs);
+  el("path",{d:"M0,0 L10,5 L0,10 z",style:"fill:"+c},m);
+});
+const gB=el("g",{},svg);
+LKEYS.forEach((k,bi)=>{const L=LAYERS[k];const c=LCOLOR[k];
+  el("rect",{x:8,y:L.y,width:1694,height:L.h,class:"band-bg",style:"fill:"+(bi%2?"var(--paper)":"var(--tint)")},gB);
+  el("line",{x1:8,x2:1702,y1:L.y,y2:L.y,class:"band-line"},gB);
+  const g=el("g",{class:"bandlab"},gB);
+  fo(g,18,L.y+4,112,L.h-8,`<div class="lc" style="--c:${c}"><div class="code">${L.code}</div><div class="nm">${esc(L.nm)}</div><div class="q">${esc(L.q)}</div><div class="cad">${esc(L.cad)}</div></div>`);
+});
+function anchor(n,side,off){off=off||0;
+  if(side==="l")return[n.x,n.y+n.h/2+off];
+  if(side==="r")return[n.x+n.w,n.y+n.h/2+off];
+  if(side==="t")return[n.x+n.w/2+off,n.y];
+  return[n.x+n.w/2+off,n.y+n.h];
+}
+function roundPath(p,r){let d="M"+p[0][0]+","+p[0][1];
+  for(let i=1;i<p.length-1;i++){const [x0,y0]=p[i-1],[x1,y1]=p[i],[x2,y2]=p[i+1];
+    const l1=Math.hypot(x1-x0,y1-y0),l2=Math.hypot(x2-x1,y2-y1);const rr=Math.min(r,l1/2,l2/2);
+    const ax=x1-(x1-x0)/l1*rr,ay=y1-(y1-y0)/l1*rr,bx=x1+(x2-x1)/l2*rr,by=y1+(y2-y1)/l2*rr;
+    d+=" L"+ax+","+ay+" Q"+x1+","+y1+" "+bx+","+by;}
+  const z=p[p.length-1];return d+" L"+z[0]+","+z[1];
+}
+const gE=el("g",{},svg);
+E.forEach((e,i)=>{
+  const a=NM[e.f],b=NM[e.t];
+  let s=e.fp?e.fp:anchor(a,e.fs,e.fo);
+  let t=anchor(b,e.ts,e.to);
+  if(e.toAbs!=null){t=[b.x,e.toAbs]}
+  const pts=[s].concat(e.via||[]).concat([t]);
+  const g=el("g",{class:"edge t-"+e.y,"data-i":i},gE);
+  el("path",{class:"ln",d:roundPath(pts,9),"marker-end":"url(#ar-"+e.y+")"},g);
+  if(e.lb){
+    let lx=e.lx,ly=e.ly,anc=e.la||"middle";
+    if(lx==null){let best=0,bi=0;for(let j=0;j<pts.length-1;j++){const L=Math.hypot(pts[j+1][0]-pts[j][0],pts[j+1][1]-pts[j][1]);if(L>best){best=L;bi=j}}
+      const p0=pts[bi],p1=pts[bi+1];lx=(p0[0]+p1[0])/2;ly=(p0[1]+p1[1])/2;
+      if(p0[1]===p1[1]){ly-=5}else{lx+=6;anc="start"}}
+    const tx=el("text",{x:lx,y:ly,"text-anchor":anc,class:"elab"},g);
+    if(e.rot){tx.setAttribute("transform","rotate(-90 "+lx+" "+ly+")");tx.setAttribute("text-anchor","middle");tx.setAttribute("y",ly-3)}
+    tx.textContent=e.lb;
+  }
+  e.g=g;
+});
+
+const gN=el("g",{},svg);
+N.forEach(n=>{
+  const c=LCOLOR[n.L];
+  const g=el("g",{class:"node k-"+n.k,"data-id":n.id,tabindex:"0",role:"button","aria-label":n.t,style:"--c:"+c},gN);
+  let top=0;
+  if(n.k==="store"){const ry=9,x=n.x,y=n.y,w=n.w,h=n.h;
+    el("path",{class:"box",d:`M${x},${y+ry} a${w/2},${ry} 0 0 0 ${w},0 v${h-2*ry} a${w/2},${ry} 0 0 1 ${-w},0 Z M${x},${y+ry} a${w/2},${ry} 0 0 1 ${w},0`},g);
+    el("path",{class:"tint",d:`M${x},${y+ry} a${w/2},${ry} 0 0 0 ${w},0 v${h-2*ry} a${w/2},${ry} 0 0 1 ${-w},0 Z`},g);
+    top=2*ry-2;
+  }else if(n.k==="doc"){const x=n.x,y=n.y,w=n.w,h=n.h,c2=13;
+    el("path",{class:"box",d:`M${x+5},${y} H${x+w-c2} L${x+w},${y+c2} V${y+h-5} Q${x+w},${y+h} ${x+w-5},${y+h} H${x+5} Q${x},${y+h} ${x},${y+h-5} V${y+5} Q${x},${y} ${x+5},${y} Z M${x+w-c2},${y} V${y+c2} H${x+w}`},g);
+  }else if(n.k==="ext"){
+    el("rect",{class:"box",x:n.x,y:n.y,width:n.w,height:n.h,rx:16},g);
+    el("rect",{class:"box2",x:n.x+3.5,y:n.y+3.5,width:n.w-7,height:n.h-7,rx:13},g);
+  }else{
+    el("rect",{class:"box",x:n.x,y:n.y,width:n.w,height:n.h,rx:6},g);
+    if(n.k==="agent")el("rect",{class:"tint",x:n.x,y:n.y,width:n.w,height:n.h,rx:6},g);
+  }
+  let html;
+  if(n.small){html=`<div class="nb small"><span class="nt">${esc(n.t)}</span><span class="ns">${esc(n.s)}</span></div>`}
+  else if(n.tables){html=`<div class="nb"><div class="nk">KHO TRUNG TÂM</div><div class="nt">${esc(n.t)}</div><div class="ns">SQLite WAL</div><div class="store-tables">${n.tables.map(t=>`<div>${t}</div>`).join("")}</div></div>`}
+  else{const k=(n.code?n.code:"THAM CHIẾU")+(n.k==="agent"?" LLM":"");html=`<div class="nb"><div class="nk">${k}</div><div class="nt">${esc(n.t)}</div><div class="ns">${esc(n.s)}</div></div>`}
+  fo(g,n.x+2,n.y+top+1,n.w-4,n.h-top-2,html);
+  n.g=g;
+});
+const gBadge=el("g",{},svg);
+
+/* ---------- interaction ---------- */
+const state={sel:null,flow:null,hover:null,cur:null};
+function neighbors(id){const s=new Set([id]);const es=new Set();
+  E.forEach((e,i)=>{if(e.f===id||e.t===id){s.add(e.f);s.add(e.t);es.add(i)}});
+  (REFS[id]||[]).forEach(x=>s.add(x));
+  for(const k in REFS){if(REFS[k].includes(id))s.add(k)}
+  return{s,es};}
+function apply(){
+  let nodes=null,edges=null;
+  const focusId=state.hover||state.sel;
+  if(state.flow){const F=FLOWS.find(f=>f.id===state.flow);nodes=new Set(F.steps.map(s=>s[0]));edges=new Set();
+    E.forEach((e,i)=>{if(nodes.has(e.f)&&nodes.has(e.t))edges.add(i)});
+    if(state.hover){const nb=neighbors(state.hover);nb.s.forEach(x=>nodes.add(x));nb.es.forEach(x=>edges.add(x))}
+  }else if(focusId){const nb=neighbors(focusId);nodes=nb.s;edges=nb.es}
+  svg.classList.toggle("focus",!!nodes);
+  N.forEach(n=>{n.g.classList.toggle("on",!!nodes&&nodes.has(n.id));n.g.classList.toggle("cur",state.cur===n.id||(!state.flow&&state.sel===n.id))});
+  E.forEach((e,i)=>e.g.classList.toggle("on",!!edges&&edges.has(i)));
+  gBadge.innerHTML="";
+  if(state.flow){const F=FLOWS.find(f=>f.id===state.flow);
+    F.steps.forEach((s,i)=>{const n=NM[s[0]];const g=el("g",{class:"badge"+(state.cur===s[0]?" cur":"")},gBadge);
+      const cx=n.x+n.w-4,cy=n.y+(n.k==="store"?14:4);el("circle",{cx,cy,r:11},g);const t=el("text",{x:cx,y:cy},g);t.textContent=i+1;});
+  }
+}
+function adrChips(list){return `<div class="adrs">${list.map(a=>{const d=ADR[a];return `<span class="adr${d&&d[1]!=="ok"?" sup":""}" title="${esc(d?d[0]:"")}">ADR-${a}</span>`}).join("")}</div>`}
+const drawer=document.getElementById("drawer"),dhead=document.getElementById("dhead"),dbody=document.getElementById("dbody");
+function layerChip(L){const c=LCOLOR[L];const nm=L==="ref"?"Tham chiếu chung":LAYERS[L].code+" "+LAYERS[L].nm;return `<span class="lchip" style="--c:${c}">${esc(nm)}</span>`}
+function showNode(id){const n=NM[id];
+  dhead.innerHTML=`${layerChip(n.L)}<h2>${esc(n.t)}</h2>`;
+  let h=`<div><h3>Vai trò</h3><p>${esc(n.role||n.s||"")}</p></div>`;
+  if(n.tables)h+=`<div><h3>Bảng chính</h3><p class="mono">${n.tables.join(", ")}</p></div>`;
+  if(n.files&&n.files.length)h+=`<div><h3>Tệp và đường dẫn</h3><ul class="plain">${n.files.map(f=>`<li class="mono">${esc(f)}</li>`).join("")}</ul></div>`;
+  if(n.io&&(n.io.r||n.io.w)){h+=`<div><h3>Dữ liệu</h3><div class="io">${n.io.r?`<b>ĐỌC</b><span>${n.io.r.map(esc).join("<br>")}</span>`:""}${n.io.w?`<b>GHI</b><span>${n.io.w.map(esc).join("<br>")}</span>`:""}</div></div>`}
+  const ins=[],outs=[];E.forEach(e=>{if(e.t===id&&e.f!==id)ins.push(e.f);if(e.f===id&&e.t!==id)outs.push(e.t)});
+  const rel=new Set(REFS[id]||[]);for(const k in REFS){if(REFS[k].includes(id))rel.add(k)}
+  const btns=a=>[...new Set(a)].map(x=>`<button class="lnk" data-go="${x}">${esc(NM[x].t)}</button>`).join("");
+  if(ins.length)h+=`<div><h3>Nhận từ</h3><div class="lnks">${btns(ins)}</div></div>`;
+  if(outs.length)h+=`<div><h3>Chuyển tới</h3><div class="lnks">${btns(outs)}</div></div>`;
+  if(rel.size)h+=`<div><h3>Liên quan</h3><div class="lnks">${btns([...rel])}</div></div>`;
+  if(n.adr&&n.adr.length)h+=`<div><h3>Quyết định chi phối</h3>${adrChips(n.adr)}</div>`;
+  if(n.note)h+=`<p class="note">${esc(n.note)}</p>`;
+  dbody.innerHTML=h;drawer.hidden=false;
+}
+function showFlow(fid){const F=FLOWS.find(f=>f.id===fid);
+  dhead.innerHTML=`<span class="lchip">Luồng</span><h2>${esc(F.nm)}</h2>`;
+  dbody.innerHTML=`<p>${esc(F.d)}</p><ol class="steps">${F.steps.map((s,i)=>`<li><button class="stepbtn" data-step="${s[0]}"><span class="n">${i+1}</span><span><span class="st">${esc(NM[s[0]].t)}</span><span class="sd">${esc(s[1])}</span></span></button></li>`).join("")}</ol>`;
+  drawer.hidden=false;
+}
+function selectNode(id){state.sel=id;state.cur=state.flow?id:null;apply();showNode(id)}
+function clearAll(){state.sel=null;state.flow=null;state.cur=null;state.hover=null;drawer.hidden=true;syncChips();apply()}
+N.forEach(n=>{
+  n.g.addEventListener("mouseenter",()=>{state.hover=n.id;apply()});
+  n.g.addEventListener("mouseleave",()=>{state.hover=null;apply()});
+  n.g.addEventListener("click",ev=>{ev.stopPropagation();if(state.flow){state.cur=n.id;apply();showNode(n.id)}else selectNode(n.id)});
+  n.g.addEventListener("keydown",ev=>{if(ev.key==="Enter"||ev.key===" "){ev.preventDefault();n.g.dispatchEvent(new MouseEvent("click"))}});
+});
+svg.addEventListener("click",()=>{if(state.sel||state.flow)clearAll()});
+dbody.addEventListener("click",ev=>{const b=ev.target.closest("[data-go],[data-step]");if(!b)return;
+  if(b.dataset.step){state.cur=b.dataset.step;apply();}else{const id=b.dataset.go;if(state.flow){state.cur=id;apply();showNode(id)}else selectNode(id)}});
+document.getElementById("dclose").addEventListener("click",clearAll);
+document.addEventListener("keydown",ev=>{if(ev.key==="Escape")clearAll()});
+
+
+const fc=document.getElementById("flowchips");
+FLOWS.forEach(F=>{const b=document.createElement("button");b.className="tog chip";b.type="button";b.dataset.flow=F.id;b.setAttribute("aria-pressed","false");
+  b.textContent=F.nm;
+  b.addEventListener("click",()=>{if(state.flow===F.id){clearAll();return}state.flow=F.id;state.sel=null;state.cur=null;syncChips();apply();showFlow(F.id)});fc.appendChild(b)});
+fc.appendChild(document.getElementById("sizebtn"));
+function syncChips(){fc.querySelectorAll(".chip").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.flow===state.flow)))}
+const sizebtn=document.getElementById("sizebtn"),mapbox=document.getElementById("mapbox");
+sizebtn.addEventListener("click",()=>{const on=!mapbox.classList.contains("actual");mapbox.classList.toggle("actual",on);sizebtn.setAttribute("aria-pressed",String(on))});
+
+/* legend samples inside the figure note */
+const sw=(inner)=>`<svg width="38" height="12" viewBox="0 0 38 12" aria-hidden="true">${inner}</svg>`;
+document.getElementById("legend").innerHTML=[
+ [sw(`<line x1="1" y1="6" x2="37" y2="6" stroke="#111" stroke-width="1.6"/>`),"dòng dữ liệu"],
+ [sw(`<line x1="1" y1="6" x2="37" y2="6" stroke="#3a3a3a" stroke-width="1.6" stroke-dasharray="7 4"/>`),"điều khiển, kích hoạt"],
+ [sw(`<line x1="1" y1="6" x2="37" y2="6" stroke="#6b6b6b" stroke-width="1.6" stroke-dasharray="2 4" stroke-linecap="round"/>`),"đọc"],
+ [sw(`<line x1="1" y1="6" x2="37" y2="6" stroke="#3a3a3a" stroke-width="1.6" stroke-dasharray="7 3 1.5 3"/>`),"quản trị, cấu hình"]
+].map(([s,t])=>`<span>${s} ${esc(t)}</span>`).join("");
+
+/* tables (booktabs) */
+const td=(c,cls)=>`<td${cls?` class="${cls}"`:""}>${c}</td>`;
+const LT=[
+ ["ctl","Ai khởi động, khi nào, dừng khi nào?","Hàng đợi bài chờ, sức khoẻ provider","Wave mở và đóng; ops.db, ops_dbos.db","sensor 120 giây, nhịp tim 60 giây","Breaker theo provider; preflight; mỗi lúc một wave"],
+ ["cap","Đã lấy đủ mọi bài chưa?","8 nguồn (API, RSS, HTML)","Bronze raw_html và meta.json; bảng articles","10 phút","Sổ khám phá ghi trước khi lọc; sitemap lệch quá 2% là ĐỎ"],
+ ["sil","Bài sạch chưa, có gì đổi?","Bronze (hàm thuần, tái dựng được)","silver-v1, work-package-v1, work_items","30 phút","Schema gate: sai thì held; watermark không vượt lỗi"],
+ ["lane","Bài nói gì, về mã nào?","work_items chưa phân tích, catalog thực thể","article-compact-v2, l1-entity-output-v1, agent-output-v2-lean","theo wave (100 bài)","DoD từng bản ghi; độ phủ wave từ 90% ở cả hai lớp"],
+ ["del","Ai nhận, đọc ở đâu?","l1_outputs và agent_outputs đã qua DoD","xlsx từng người; Parquet OBT 22 cột và manifest","sau wave; 01:00 hằng ngày","Chỉ ngày đã đóng; chỉ sandbox; ghi nguyên tử"],
+ ["gov","Thay đổi có được kiểm soát?","Yêu cầu của người, ma sát vận hành","Story, ADR, FACT, trace, commit","mỗi phiên","Hard gate cần người duyệt; pre-commit lint; WIP=1"]
+];
+document.getElementById("layertbl").innerHTML=LT.map(r=>{const L=LAYERS[r[0]];return `<tr>${td(`<b>${L.code}</b> ${esc(L.nm)}`)}${r.slice(1).map(c=>td(esc(c))).join("")}</tr>`}).join("");
+
+const INV=[
+ ["Bronze là WORM","Trang gốc ghi byte nguyên bản một lần, không bao giờ sửa; sha256(file) bằng content_sha256.","0013"],
+ ["Mọi tầng dưới Bronze tái dựng được","Silver, phiên bản và gói là hàm thuần của Bronze, nên sửa parser không cần tải lại nguồn.","0007"],
+ ["Thu thập trọn vẹn, xử lý sau","Lớp crawl không lọc theo độ giống, chuyên mục hay độ liên quan. Mọi URL có vết.","0013"],
+ ["Trùng lặp là dữ liệu","Bài trùng không bị xoá. Bản sao có thể bỏ qua LLM nhưng vẫn được đếm.","0016"],
+ ["Article Lane là đường xử lý duy nhất","Lane L1/Gold đã nghỉ hưu; không gọi l1_route, agent_export, requeue.","0010"],
+ ["Không script nào giả lập trí tuệ agent","Regex và heuristic chỉ đối chiếu, không sinh kết quả. Kết quả code_first không được tính là đã phân tích.","0017"],
+ ["Một hợp đồng cho mọi provider","Mọi runtime LLM qua cùng schema và validator; provider mới phải qua golden set.","0017"],
+ ["Token chỉ ghi sổ","Không trần token nào dừng wave, giảm số bài hay cắt batch.","0017"],
+ ["Cổng của wave là kỹ thuật","DB ghi được, ingest không lỗi, độ phủ từ 90% ở hai lớp.","0017"],
+ ["Xuất bản một chiều, chỉ sandbox","Không ghi vào site FRA chính thức; dữ liệu ghi nằm ngoài OneDrive.","0023"],
+ ["Một đường xuất bản chuẩn","scripts/publish.py gọi publish_day() là đường duy nhất; lakehouse_cli chỉ verify và nhận dropzone.","0026"],
+ ["Chỉ hai mức tự chủ","L0 dừng và đo; L1 là mandate có trần số bài. Không có L2 hay L3, và /level L2, /level L3 bị từ chối.","0026"],
+ ["Một nguồn sự thật cho người nhận","subscriptions/manifest.yaml bật tắt người dùng; một cây users/output cho cả cục bộ và SharePoint.","0026"],
+ ["WIP = 1 mỗi worktree","Mỗi worktree có tối đa một story in_progress, khai báo nhánh.","0022"],
+ ["Bộ nhớ dự án nằm trong repo","FACT, ADR và story ở docs/; bộ nhớ riêng của công cụ chỉ là bản nháp.","0021"]
+];
+document.getElementById("invtbl").innerHTML=INV.map(([b,s,a],i)=>`<tr>${td(String(i+1),"r")}${td(`<b>${esc(b)}</b>`)}${td(esc(s))}${td(`ADR-${a}`,"mono")}</tr>`).join("");
+
+const ST=[
+ ["monocle.db","C:\\data\\news-scape\\","articles, discovered_urls, article_versions, work_items, l1_outputs, agent_outputs, story_clusters, signal_daily","DBWriter, registry, reconcile, derive, cluster_job, l1_ingest, agent_ingest","article_pack, write_user_output, publisher, pipeline_radar"],
+ ["ops.db, ops_dbos.db","C:\\data\\news-scape\\","waves, alerts, breakers, spans, commands; checkpoint DBOS","ops_daemon, wave_flow, manual.begin","control room, ops_console, radar"],
+ ["harness.db","gốc repo","story, intake, trace, backlog, decision, token_ledger","harness_cli, token_ledger.py","audit, propose, radar token"],
+ ["Hệ tệp dữ liệu","C:\\data\\news-scape\\","raw_html, silver, work_packages, agent_tasks, agent_outputs, users/output","RawStore, SilverBuilder, article_pack, article_expand, write_user_output","derive, runtime LLM, publisher"],
+ ["SharePoint sandbox","FRA_DataIngestion, news-data","parquet/articles, _manifest, review, bronze, users/output","publisher.publish_day","fpts-market-intel, chuyên viên"]
+];
+document.getElementById("storetbl").innerHTML=ST.map(r=>`<tr>${td(`<b>${esc(r[0])}</b>`)}${td(`<code>${esc(r[1])}</code>`)}${td(esc(r[2]))}${td(esc(r[3]))}${td(esc(r[4]))}</tr>`).join("");
+
+const LNM={ctl:"L0",cap:"L1",sil:"L2",lane:"L3",del:"L4",gov:"L5"};
+const ADRL={};LKEYS.forEach(k=>ADRBY[k].forEach(a=>{ADRL[a]=LNM[k]}));
+const ADRST={ok:"hiệu lực",sup:"đã bị thay thế",rej:"bị bác bỏ"};
+document.getElementById("adrtbl").innerHTML=Object.keys(ADR).sort().map(a=>{const d=ADR[a];return `<tr>${td(`ADR-${a}`,"mono")}${td(ADRL[a]||"")}${td(esc(d[0]))}${td(ADRST[d[1]])}</tr>`}).join("");
+
+const DR=[
+ ["Chờ người vận hành","Chuyển cây Excel cũ sang users/output","Chạy migrate_users_output.py --apply khi daemon dừng. Chạy thử báo 607 tệp và 0 xung đột. Nếu bỏ qua, checkpoint chống gửi trùng không thấy tệp cũ và có thể giao lại."],
+ ["Cần chốt","opencode chưa thuộc daemon","Runner đã có mã (article_run.py --runner opencode) nhưng PROVIDERS trong order.py còn agy và openrouter, và chưa có đợt chạy thật. Cần chốt có thêm vào daemon hay không."],
+ ["Cần chốt","Bộ vàng chưa có nhãn","ADR-0017 yêu cầu provider mới qua golden set. Bộ này chưa gán nhãn, nên thứ hạng runner là ưu tiên vận hành, chưa phải điểm đo."],
+ ["Theo dõi","WIP=1 chỉ bị bắt khi lint hoặc audit","Không có hook riêng chặn hai story in_progress; lint K13 và audit phát hiện sau."],
+ ["Theo dõi","Thiết kế 09, 10, 12, 17 là lịch sử","Các tài liệu này mô tả lane L1/Gold đã nghỉ hưu và có banner đầu trang. Khi mâu thuẫn, design 00 được ưu tiên."]
+];
+document.getElementById("opentbl").innerHTML=DR.map(([s,t,d],i)=>`<tr>${td(String(i+1),"r")}${td(s)}${td(`<b>${esc(t)}</b>`)}${td(esc(d))}</tr>`).join("");
+
+apply();
+})();
+</script>
+
+<script>@@MERMAID@@</script>
+<script>
+(function(){
+  function init(){
+    mermaid.initialize({startOnLoad:false,securityLevel:"strict",theme:"base",
+      themeVariables:{fontFamily:"Segoe UI, Arial, sans-serif",fontSize:"15px"},
+      flowchart:{htmlLabels:true,useMaxWidth:false,curve:"basis"},sequence:{useMaxWidth:false}});
+  }
+  function show(id){
+    document.querySelectorAll(".dpane").forEach(function(p){p.classList.toggle("on",p.dataset.d===id)});
+    document.querySelectorAll("#dtabs .tog").forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.d===id))});
+  }
+  window.addEventListener("load",function(){
+    init();
+    var tabs=document.querySelectorAll("#dtabs .tog");
+    tabs.forEach(function(b){b.addEventListener("click",function(){show(b.dataset.d)})});
+    if(tabs.length)show(tabs[0].dataset.d);
+    mermaid.run({querySelector:"pre.mermaid"});
+  });
+})();
+</script>
+</body>
+</html>

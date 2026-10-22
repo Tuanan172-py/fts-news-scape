@@ -1,0 +1,20 @@
+%% title: Dòng dữ liệu chính từ nguồn tới chuyên viên
+%% desc: Một bài báo đi qua bảy chặng; mỗi chặng là một lớp.
+flowchart LR
+  subgraph S1["L1 Thu thập"]
+    A1["Nguồn tin"] --> A2["Scraper"] --> A3[("discovered_urls")] --> A4[("Bronze")] --> A5[("monocle.db")]
+  end
+  subgraph S2["L2 Silver"]
+    B1["rederive 30 phút"] --> B2["Silver"] --> B3["change_detect"] --> B4[("work_items")]
+  end
+  subgraph S3["L3 Article Lane"]
+    C1["pack, batch 50"] --> C2[["article-processor"]] --> C3["expand"] --> C4["DoD"] --> C5["phủ ≥90%"]
+  end
+  subgraph S4["L4 Giao hàng"]
+    D1["định tuyến watchlist"] --> D2[("xlsx từng người")] --> D3["publish_day sau 01:00"] --> D4[("Parquet SharePoint")] --> D5(["Chuyên viên"])
+  end
+  A5 -.-> B1
+  B4 --> C1
+  C5 -->|"đạt"| D1
+  classDef gate fill:#ffffff,stroke:#111111,stroke-dasharray:4 3
+  class C4,C5 gate

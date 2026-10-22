@@ -1,0 +1,18 @@
+%% title: Xuất bản và tiêu thụ (đường chuẩn duy nhất)
+%% desc: publish.py gọi publish_day, một chiều, chỉ sandbox.
+sequenceDiagram
+  autonumber
+  participant DM as ops_daemon publish_tick
+  participant PB as publish.py
+  participant PD as publisher.publish_day
+  participant SP as SharePoint FRA_DataIngestion
+  participant LC as lakehouse_cli verify
+  participant AN as Chuyên viên (plugin)
+  DM->>PB: sau 01:00, ngày hôm qua
+  PB->>PD: publish_day(ngày đã đóng)
+  PD->>PD: từ chối site FRA chính thức
+  PD->>SP: staging, .partial, thay thế, không ghi đè
+  PD->>SP: _manifest/ngày.json và latest.json
+  LC->>SP: kiểm toán SHA-256 của manifest
+  AN->>SP: DuckDB đọc parquet/articles
+  Note over PD,SP: Backfill lịch sử dùng publish.py --from và --to (US-038)

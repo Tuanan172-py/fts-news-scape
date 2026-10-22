@@ -1,0 +1,11 @@
+%% title: Mức tự chủ L0 và L1
+%% desc: Chỉ hai mức; L2 và L3 bị từ chối (ADR-0026.D4).
+flowchart LR
+  L0["L0<br/>dừng và khoá, chỉ đo và báo"]
+  L1["L1<br/>mandate có trần số bài mỗi wave<br/>tự gia hạn khi hệ thống khoẻ"]
+  L0 -->|"/level L1 n, bấm Xác nhận<br/>n từ 1 đến 500"| L1
+  L1 -->|"/level L0, /stop,<br/>hết hạn hoặc hệ thống không khoẻ"| L0
+  RF["/level L2 hoặc /level L3<br/>bị từ chối, giữ nguyên mức hiện tại<br/>Vui lòng dùng /level L1 số bài"]
+  RL["Mức lạ trong tệp lệnh đọc là L0<br/>Khi daemon ở L1, không mở wave tay song song"]
+  classDef no fill:#ffffff,stroke:#111111,stroke-dasharray:1 3,stroke-width:2px
+  class RF no

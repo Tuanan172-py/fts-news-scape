@@ -53,6 +53,7 @@ Bộ tài liệu chuyên sâu cho hệ thu thập tin tức thị trường ch�
 
 ## Tài liệu nền (có sẵn)
 - [architecture.md](architecture.md) — kiến trúc + TDR (bản gốc Phase 1)
+- [diagrams/README.md](diagrams/README.md) — sơ đồ vận hành toàn hệ (Mermaid, mở `diagrams/index.html` offline)
 - [decisions.md](decisions.md) — technical decision records
 - [runbook.md](runbook.md) — quy trình vận hành
 - [skills/](skills/) — quirk chi tiết per-source (cafef, tnck, fireant, rss-sources)

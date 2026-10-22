@@ -1,0 +1,19 @@
+%% title: Thu thập trọn vẹn và đối soát (ADR-0013)
+%% desc: Cơ chế bảo đảm không sót bài.
+sequenceDiagram
+  autonumber
+  participant MO as morninger
+  participant SC as scraper
+  participant LG as discovered_urls
+  participant RS as RawStore
+  participant DB as monocle.db
+  participant RC as reconcile
+  MO->>SC: capture mỗi 10 phút, mọi nguồn đang bật
+  SC->>SC: đọc danh mục đến khi gặp trang đã có hết
+  SC->>LG: ghi mọi URL trước khi lọc
+  SC->>RS: lưu trang gốc, byte-exact, SHA-256
+  SC->>DB: ghi bài và đánh dấu captured trong một giao dịch
+  Note over LG,DB: Không có trạng thái bị bỏ. Trùng lặp vẫn được giữ và đếm.
+  MO->>RC: đối soát sitemap tối đa mỗi 30 phút
+  RC-->>MO: lệch >2% một ngày là ĐỎ
+  RC->>SC: tải bù bài hoãn, khôi phục Bronze mất

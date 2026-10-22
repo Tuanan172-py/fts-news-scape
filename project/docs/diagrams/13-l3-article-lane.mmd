@@ -1,0 +1,19 @@
+%% title: L3 Article Lane (đường phân tích duy nhất)
+%% desc: Một wave từ article_run tới verify, gồm repair và finish.
+flowchart TB
+  A["article_run.py<br/>manual.begin khoá một wave mỗi lane"] --> B["prepare<br/>build_article_prefix --check, article_pack"]
+  B --> C[("packets task.json, map.json,<br/>wave.json, conductor.ts")]
+  C --> D[["article-processor<br/>agy, opencode run, OpenRouter, DSH agent_article"]]
+  D --> E["agent_outputs_article/*.output.json"]
+  E -->|"thiếu"| R["--repair<br/>đóng gói lại phần thiếu, tối đa 2 vòng"] --> D
+  E --> F["--finish: article_expand<br/>validate và matcher đối chiếu"]
+  F --> G["DoD ingest<br/>l1_ingest, agent_ingest"]
+  G --> H["verify: phủ ≥90%<br/>cả l1_outputs và agent_outputs"]
+  H -->|"đạt"| I["token_ledger vào harness.db"] --> J["handoff<br/>HANDOFF-latest.md"]
+  H -->|"không"| P["PARKED, chạy lại bằng một lệnh"]
+  classDef ok fill:#ffffff,stroke:#111111,stroke-width:3px
+  classDef bad fill:#ffffff,stroke:#111111,stroke-dasharray:1 3,stroke-width:2px
+  class J ok
+  class P bad
+  classDef gate fill:#ffffff,stroke:#111111,stroke-dasharray:4 3
+  class G,H gate

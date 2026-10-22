@@ -1,0 +1,18 @@
+%% title: L0 Điều khiển và vận hành
+%% desc: Daemon, sensor, wave_flow, breaker, probe và các lệnh Telegram.
+flowchart LR
+  TS["Task Scheduler<br/>news-scape-ops, mỗi 5 phút"] --> DM["ops_daemon run"]
+  WD["news-scape-ops-watchdog"] -->|"kéo daemon dậy"| DM
+  DM --> SE["sensor 120s"]
+  DM --> HB["nhịp tim 60s"]
+  DM --> BT["bản tin 08:00 và 18:00"]
+  DM --> PT["publish_tick sau 01:00"]
+  DM --> CS["CaptureSupervisor<br/>giữ morninger sống, tối đa 5 lần trong 30 phút"]
+  DM --> CR["control room<br/>127.0.0.1:8787"]
+  SE -->|"T1 ≥100 bài chờ<br/>T2 bài cũ nhất >90 phút<br/>T3 khung flush"| WF["wave_flow DBOS<br/>checkpoint từng bước"]
+  PR["probes: độ tươi, ghi DB, đĩa,<br/>dead-letter, độ phủ"] --> SE
+  BK["breakers: AUTH, QUOTA 300 phút,<br/>NETWORK sau 3 lần, EMPTY sau 2"] --> WF
+  TG["Telegram"] <--> DM
+  ORD[("agy_standing_order.yaml<br/>L0 hoặc L1 kèm max_limit")] --> SE
+  OPS[("ops.db, ops_dbos.db")] <--> DM
+  WF -->|"article_run.py"| AR["Article Lane"]

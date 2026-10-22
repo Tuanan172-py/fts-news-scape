@@ -1,0 +1,42 @@
+%% title: Sáu lớp và kho dữ liệu (C4 mức 2)
+%% desc: Các container chính L0 đến L5 và kho dữ liệu dùng chung.
+flowchart TB
+  subgraph L0["L0 Điều khiển"]
+    DM["ops_daemon<br/>sensor 120s"]
+    WF["wave_flow DBOS"]
+  end
+  subgraph L1["L1 Thu thập Bronze"]
+    MO["morninger<br/>capture 10 phút"]
+  end
+  subgraph L2["L2 Silver"]
+    SB["rederive, SilverBuilder,<br/>change_detect, story_cluster"]
+  end
+  subgraph L3["L3 Article Lane"]
+    AR["article_run<br/>prepare, analyze, repair, finish"]
+    AP["article-processor<br/>runner LLM"]
+  end
+  subgraph L4["L4 Lakehouse và giao hàng"]
+    WU["write_user_output"]
+    PB["publish.py<br/>publish_day"]
+  end
+  subgraph L5["L5 Harness"]
+    HC["harness_cli, harness.db,<br/>docs/knowledge, pre-commit"]
+  end
+  DB[("monocle.db")]
+  FS[("Bronze, Silver, packets<br/>DATA_ROOT")]
+  OPS[("ops.db, ops_dbos.db")]
+  XL[("DATA_ROOT/users/output")]
+  SP[("SharePoint sandbox")]
+
+  DM --> WF --> AR
+  DM -->|"giữ sống"| MO
+  MO --> FS
+  MO --> DB
+  FS --> SB --> DB
+  DB --> AR --> AP --> AR
+  AR -->|"ingest qua DoD"| DB
+  DB --> WU --> XL
+  XL --> PB
+  DB --> PB --> SP
+  DM --> OPS
+  HC -.->|"theo dõi thay đổi mã và tài liệu"| DM
