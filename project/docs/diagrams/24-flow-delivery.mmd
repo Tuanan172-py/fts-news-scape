@@ -1,0 +1,15 @@
+%% title: Giao Excel theo người và cây users/output
+%% desc: Định tuyến, checkpoint chống gửi trùng và bước di chuyển cây cũ.
+flowchart TB
+  DB[("monocle.db")] --> R["định tuyến theo watchlist<br/>lọc nhiễu macro"]
+  MF[("DATA_ROOT/subscriptions/manifest.yaml")] -->|"load_user_manifest, vắng mặt = bật"| R
+  WL[("config/entities/users/*.yaml")] --> R
+  R --> CK["checkpoint<br/>đã giao ngày này?"]
+  CK -->|"rồi"| SK["bỏ qua"]
+  CK -->|"chưa"| XL[("DATA_ROOT/users/output/user/YYYY-MM-DD.xlsx")]
+  OLD[("DATA_ROOT/users_output (cây cũ)")] -.->|"migrate_users_output.py --apply<br/>chạy khi daemon dừng"| XL
+  XL --> PB["publish_day"]
+  classDef pending fill:#ffffff,stroke:#111111,stroke-dasharray:4 3
+  class OLD pending
+  classDef gate fill:#ffffff,stroke:#111111,stroke-dasharray:4 3
+  class CK gate

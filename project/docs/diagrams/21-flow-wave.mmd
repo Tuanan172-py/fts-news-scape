@@ -1,0 +1,29 @@
+%% title: Vòng đời một wave do daemon mở
+%% desc: Từ sensor tới giao Excel, gồm preflight, repair và verify.
+sequenceDiagram
+  autonumber
+  participant SE as sensor
+  participant WF as wave_flow (DBOS)
+  participant AR as article_run.py
+  participant RN as runner (agy)
+  participant DB as monocle.db
+  participant DL as write_user_output
+  SE->>WF: T1, T2 hoặc T3 thoả, có mandate L1
+  WF->>WF: preflight: breaker, đĩa, quyền ghi DB, prefix
+  WF->>AR: prepare (min của wave.limit và max_limit)
+  AR->>AR: chọn bài, chia batch 50, ghi packet
+  AR->>RN: analyze, các batch chạy song song
+  RN-->>AR: article-compact-v2 cho từng batch
+  loop tối đa 2 vòng
+    AR->>RN: repair phần thiếu
+    RN-->>AR: bản ghi bổ sung
+  end
+  AR->>AR: finish: expand, validate, matcher
+  AR->>DB: ingest qua DoD
+  AR->>AR: verify phủ ≥90% hai lớp
+  alt đạt
+    WF->>DL: giao xlsx (best-effort)
+    WF-->>SE: DONE
+  else không đạt
+    WF-->>SE: PARKED, chờ rerun
+  end

@@ -1,0 +1,22 @@
+%% title: Ngữ cảnh hệ thống (C4 mức 1)
+%% desc: Ai và hệ thống ngoài nào tương tác với news-scape.
+flowchart LR
+  OP(["Người vận hành"])
+  AN(["Chuyên viên nhận tin<br/>AnPT, PhoHG, ThanhTD, VyPTT, UyenNNT"])
+  SRC["8 nguồn tin<br/>cafef, fireant, tnck, baodautu,<br/>vietstock, vneconomy, vietnambiz, tbtc"]
+  SYS["news-scape<br/>thu thập, phân tích, giao tin"]
+  LLM["Runner LLM<br/>1 agy, 2 opencode run, 3 OpenRouter<br/>DSH là conductor tương tác"]
+  SP[("SharePoint sandbox<br/>FRA_DataIngestion")]
+  TG["Telegram<br/>bản tin và lệnh"]
+  GH["Git remote<br/>fpa và origin"]
+
+  SRC -->|"HTML, RSS, API"| SYS
+  SYS <-->|"batch bài, kết quả JSON"| LLM
+  SYS -->|"publish_day, một chiều"| SP
+  SYS -->|"Excel theo người"| AN
+  AN -->|"hỏi bằng plugin fpts-market-intel"| SP
+  OP -->|"/level, /run, /cancel"| TG
+  TG <-->|"cảnh báo, xác nhận"| SYS
+  OP -->|"harness_cli, session close"| GH
+  classDef ext fill:#f4f4f2,stroke:#6b6b6b
+  class SRC,LLM,SP,TG,GH ext

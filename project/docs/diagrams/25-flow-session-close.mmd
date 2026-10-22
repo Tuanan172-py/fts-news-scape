@@ -1,0 +1,18 @@
+%% title: Đóng phiên harness (ghi nhận, không chặn)
+%% desc: session close ghi verify, push và friction vào trace; chỉ verify đạt mới cấp proof.
+flowchart TB
+  S["session close --story ID --push"] --> V["chạy lệnh verify của story"]
+  V --> VR["verify đạt?"]
+  VR -->|"đạt"| OK["story = implemented<br/>unit_proof = 1"]
+  VR -->|"hỏng"| FAIL["ghi hỏng vào trace<br/>story giữ nguyên trạng thái"]
+  FAIL --> STR["có --strict?"]
+  STR -->|"có"| AB["dừng"]
+  STR -->|"không"| CM
+  OK --> CM["commit tệp đã theo dõi<br/>tệp mới phải git add trước"]
+  CM --> PU["push fpa và origin"]
+  PU --> TR[("harness.db trace<br/>outcome = completed hoặc partial")]
+  TR --> SL["SESSION-LATEST.md"]
+  classDef warn fill:#ffffff,stroke:#111111,stroke-dasharray:4 3
+  class FAIL,CM warn
+  classDef gate fill:#ffffff,stroke:#111111,stroke-dasharray:4 3
+  class STR,VR gate

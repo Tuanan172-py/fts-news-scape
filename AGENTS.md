@@ -33,7 +33,7 @@ Read these before inventing context; do not create a new knowledge folder.
 1. `.agents/skills/*`: operational and governance skills (`pipeline-radar`, `dsh-conductor` under `.agents/dsh/presets/news-scape-conductor/skills/`, `watchlist-curator`, `token-auditor`, `dod-gatekeeper`, `multi-agent-orchestrator-governance`, `l1-entity-matcher`). Draft specialist agents: `entity-curator`, `adversarial-dod-verifier`, `daily-brief-synthesizer`, `harness-auditor`. The skills `gold-financial-analyst` and `news-scape-agent-operations` describe the retired L1/Gold lane (ADR-0010) and are reference only.
 2. `project/docs/skills/*`: per-source scraper knowledge (cafef, fireant, rss-sources, tnck).
 3. `project/docs/{design,dev,domains,operations}/`: architecture, how-tos, source taxonomy, operations.
-4. `project/docs/charter.md` and `project/docs/architecture.md`: goals, phases, TDRs.
+4. `project/docs/charter.md` and `project/docs/architecture.md`: goals, phases, TDRs. Workflow diagrams live in `project/docs/diagrams/*.mmd` (open `index.html` offline); change a process by editing the `.mmd`, then run `python scripts/docs/build_diagrams.py` from `project/`.
 5. `okf/`: cross-cutting operational knowledge.
 
 ## 4. Build and run (the product lives in `project/`)

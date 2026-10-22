@@ -4,6 +4,7 @@ Cập nhật: 2026-10-21 · **Bản đồ cấp cao duy nhất** của toàn h�
 Phản ánh trạng thái hiện hành sau ADR-0010 (Article Lane là đường xử lý duy nhất), ADR-0023 (Lakehouse CQRS)
 và ADR-0026 (chuẩn hoá runner, đường xuất bản, mức tự chủ, SSOT người dùng, cây `users/output`).
 Đi sâu từng phần: bảng liên kết ở §12.
+> **Sơ đồ đọc offline:** [`../diagrams/index.html`](../diagrams/index.html) (nguồn `.mmd` trong [`../diagrams/`](../diagrams/README.md)). Sửa quy trình thì sửa `.mmd` rồi chạy `scripts/docs/build_diagrams.py`.
 > Lane L1/Gold hai tầng cũ (`l1_route` → `agent_l1` → `agent_export` → `agent_gold`) đã nghỉ hưu (ADR-0010).
 > Các tài liệu design 09, 10, 12, 17 mô tả lane đó là lịch sử; khi mâu thuẫn, tài liệu này thắng.
 

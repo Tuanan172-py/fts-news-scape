@@ -1,0 +1,12 @@
+%% title: L4 Giao hàng và Lakehouse
+%% desc: Excel theo người, publish_day một chiều và việc tiêu thụ bằng DuckDB.
+flowchart LR
+  DB[("monocle.db")] --> WU["write_user_output.py<br/>định tuyến theo watchlist"]
+  MF[("subscriptions/manifest.yaml<br/>bật tắt người dùng")] --> WU
+  WU --> XL[("DATA_ROOT/users/output/user/ngày.xlsx")]
+  DB --> PD["publish.py"] --> PUB["publisher.publish_day()<br/>đường xuất bản chuẩn duy nhất"]
+  XL --> PUB
+  PUB --> SP[("SharePoint sandbox<br/>parquet OBT 22 cột, _manifest,<br/>review 7 ngày, bronze, users/output")]
+  SP --> PL["fpts-market-intel<br/>DuckDB, 12 skill"] --> AN(["Chuyên viên"])
+  LC["lakehouse_cli.py<br/>chỉ verify và dropzone"] -.->|"kiểm toán SHA-256"| SP
+  PUB -.->|"từ chối site FRA chính thức"| X["Chỉ ghi FRA_DataIngestion"]
