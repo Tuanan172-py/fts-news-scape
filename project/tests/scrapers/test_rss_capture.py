@@ -52,7 +52,6 @@ def _config(**over):
         "detail": {"content_selector": "div.vnbcbc-body",
                    "max_details_per_cycle": 30},
         "watchlist": ["VIX", "FPT", "VNM"],
-        "fuzzy_dedup": False,   # fixture có 3 bài khác nhau; tắt cho tiền định
     }
     cfg.update(over)
     return cfg

@@ -52,7 +52,6 @@ def _config(**over):
         "detail": {"content_selector": "div.article__body",
                    "max_details_per_cycle": 40},
         "watchlist": ["HPG", "FPT", "VNM"],
-        "fuzzy_dedup": False,
     }
     cfg.update(over)
     return cfg

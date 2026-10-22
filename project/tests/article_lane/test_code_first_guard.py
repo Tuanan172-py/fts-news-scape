@@ -125,21 +125,20 @@ def test_tick_counts_code_first_as_pending(world, tmp_path):
 
 
 def test_published_mentions_skip_code_first(world, tmp_path):
+    """The live One Big Table export carries no entity from a code-first record."""
     pd = pytest.importorskip("pandas")
     pytest.importorskip("pyarrow")
     from pathlib import Path
 
-    from src.export.publisher import _build_parquet
+    from src.export.publisher import _build_obt_parquet
 
-    conn = world.connect()
-    conn.execute("UPDATE l1_outputs SET created_at = ?", (f"{DATE}T10:00:00+07:00",))
-    conn.commit()
-    conn.close()
-    out = tmp_path / "m.parquet"
-    n = _build_parquet(Path(world.db_path), "l1_outputs", "created_at",
-                       date.fromisoformat(DATE), out)
-    assert n == 1
-    assert list(pd.read_parquet(out)["article_id"]) == [REAL]
+    out = tmp_path / "obt.parquet"
+    n = _build_obt_parquet(Path(world.db_path), date.fromisoformat(DATE), out)
+    assert n == 2
+    rows = pd.read_parquet(out).set_index("article_id")
+    assert list(rows.loc[REAL, "entities"]) == ["TICKER:HPG [TICKER]"]
+    assert list(rows.loc[CF, "entities"]) == []
+    assert rows.loc[CF, "intent_source"] != CODE_FIRST_SOURCE
 
 
 def test_seed_really_wrote_code_first(world):

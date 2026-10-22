@@ -43,7 +43,7 @@ def main(argv: list[str]) -> int:
     Returns:
         0 on ok or disabled, 2 on partial, 1 on failed.
     """
-    ap = argparse.ArgumentParser(description="Xuất bản một chiều lên SharePoint (ADR 0020).")
+    ap = argparse.ArgumentParser(description="Xuất bản một chiều lên SharePoint sandbox (ADR 0026.D1, ADR 0023).")
     ap.add_argument("--date", default="yesterday", help="YYYY-MM-DD hoặc yesterday (mặc định)")
     ap.add_argument("--from-date", help="Ngày bắt đầu backfill (YYYY-MM-DD)")
     ap.add_argument("--to-date", help="Ngày kết thúc backfill (YYYY-MM-DD, mặc định yesterday)")

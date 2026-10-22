@@ -96,7 +96,6 @@ def _config(token="real-token-abc", watchlist=None):
         "watchlist": watchlist or ["VIC"],
         "_secrets": {"fireant_token": token},
         "capture": {"raw_dir": "data/raw_html", "min_body_bytes": 512},
-        "fuzzy_dedup": False,
     }
 
 

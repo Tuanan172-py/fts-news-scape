@@ -106,8 +106,7 @@ def orch(tmp_path, monkeypatch):
         "export": {"enabled": True, "dir": str(tmp_path / "exports")},  # cô lập CSV
     })
     configs = {
-        "okdomain": {"name": "okdomain", "method": "api", "enabled": True,
-                     "fuzzy_dedup": False},
+        "okdomain": {"name": "okdomain", "method": "api", "enabled": True},
         "boomdomain": {"name": "boomdomain", "method": "api", "enabled": True},
         "offdomain": {"name": "offdomain", "method": "api", "enabled": False},
     }

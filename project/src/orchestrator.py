@@ -140,9 +140,8 @@ class Orchestrator:
                 else run_with_retry(primary)
             )
             for a in result.new:
-                # Rule-based sentiment (Vietnamese lexicon) is not part of this workflow stage:
-                # the self-built lexicon has low value, and the real sentiment comes from the
-                # agent in the output layer. The engine stays in src/processor/sentiment.py.
+                # Sentiment is not computed here: the article-processor agent sets it in the
+                # output layer. Only rule-based categories are attached at capture time.
                 for cat in classify_rule_based(a.title, a.content_text):
                     if cat not in a.categories and cat != "uncategorized":
                         a.categories.append(cat)

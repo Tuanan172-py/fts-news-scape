@@ -1082,8 +1082,8 @@ def main(argv=None) -> int:
     ap.add_argument("--min-coverage", type=float, default=MIN_COVERAGE,
                     help="Tỷ lệ bài tối thiểu của đợt phải vào DB ở mỗi lớp")
     ap.add_argument("--runner", choices=["dsh", "agy", "openrouter", "opencode"], default="dsh",
-                    help="Runner nhận thức: 'dsh' (DeepSeek Flash), 'agy' (Gemini 3.8 Flash Low), "
-                         "'openrouter' (stealth/space-bunny-alpha), hoặc 'opencode' (opencode/deepseek-v4.1-flash-free)")
+                    help="Runner nhận thức: 'dsh' (conductor DSH), 'agy', 'openrouter' hoặc 'opencode'; "
+                         "model mặc định là DEFAULT_MODEL của từng runner trong src/agent/runners/")
     ap.add_argument("--exclude-file",
                     help="Tệp định danh bài không được đóng gói (ops_daemon giữ chỗ)")
     ap.add_argument("--analyze", action="store_true",

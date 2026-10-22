@@ -54,7 +54,6 @@ def _config(**over):
                    "category_meta": "article:section",
                    "max_details_per_cycle": 40},
         "watchlist": ["FPT", "VNM"],
-        "fuzzy_dedup": False,
     }
     cfg.update(over)
     return cfg

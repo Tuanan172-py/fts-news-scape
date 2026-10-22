@@ -8,7 +8,7 @@ tới thư mục dữ liệu vận hành hoặc `harness.db` của kho.
 Danh mục thực thể thu nhỏ `tests/fixtures/entities_min.json` được chép vào thư mục tạm
 đó, nên mọi test dùng `load_registry()` chạy được trên bản clone sạch.
 
-Không chdir toàn cục: vài module (notifier, sentiment) tải config theo đường dẫn tương
+Không chdir toàn cục: module notifier tải config theo đường dẫn tương
 đối; capture tests tự cô lập `raw_dir` qua fixture `env` của chúng (monkeypatch.chdir).
 """
 

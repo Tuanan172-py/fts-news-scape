@@ -5,8 +5,8 @@ Quét okf/catalog/**/*.md, đọc frontmatter `sources[].resource` + `sources_la
 so ngày thay đổi gần nhất của mỗi file nguồn (git commit-time, fallback fs-mtime) với
 `sources_last_checked`. File OKF stale nếu nguồn đổi SAU last-checked.
 
-Usage (chạy bằng project venv có PyYAML):
-    "project/.venv/Scripts/python.exe" okf/tools/okf_check.py outdated [--all] [--json] [--no-git]
+Usage (chạy bằng venv C:/venvs/news-scape có PyYAML):
+    "C:/venvs/news-scape/Scripts/python.exe" okf/tools/okf_check.py outdated [--all] [--json] [--no-git]
 
 Exit code: 0 = mọi OKF up-to-date · 1 = có file stale · 2 = lỗi cấu hình.
 Dùng làm pre-commit/CI gate ở GĐ2.
@@ -25,8 +25,8 @@ try:
     import yaml
 except ModuleNotFoundError:
     sys.stderr.write(
-        "[okf-check] Thiếu PyYAML. Chạy bằng project venv:\n"
-        '  "project/.venv/Scripts/python.exe" okf/tools/okf_check.py outdated\n'
+        "[okf-check] Thiếu PyYAML. Chạy bằng venv C:/venvs/news-scape:\n"
+        '  "C:/venvs/news-scape/Scripts/python.exe" okf/tools/okf_check.py outdated\n'
     )
     sys.exit(2)
 

@@ -58,7 +58,6 @@ def _config(**over):
                    "author_selector": "a.author",
                    "max_details_per_cycle": 30},
         "watchlist": ["HPG", "FPT", "VNM"],
-        "fuzzy_dedup": False,
     }
     cfg.update(over)
     return cfg

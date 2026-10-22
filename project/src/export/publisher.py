@@ -8,7 +8,8 @@
 # Layout under the target:
 #
 # - `review/monocle_review_<YYYYMMDD>.db`: `VACUUM INTO` copy of the operational database.
-# - `parquet/<table>/year=YYYY/month=MM/part-<YYYYMMDD>.parquet`: `articles`, `analysis`, `mentions`.
+# - `parquet/articles/year=YYYY/month=MM/part-<YYYYMMDD>.parquet`: One Big Table of the day's
+#   articles joined with their analysis and entity records (`LAKEHOUSE_ARTICLE_SCHEMA`).
 # - `bronze/YYYY/MM/DD/<source>.tar.xz`: raw HTML and `.meta.json` of the day.
 # - `users/output/<user>/<YYYY-MM-DD>.xlsx`: delivery file of the day.
 # - `_manifest/<YYYYMMDD>.json` (later revisions `<YYYYMMDD>.r<n>.json`) and `_manifest/latest.json`.
@@ -35,22 +36,6 @@ PUBLISH_DIR_ENV = "NEWS_SCAPE_PUBLISH_DIR"
 OFFICIAL_TARGET_MARKERS = frozenset({"fra - data"})
 MANIFEST_SCHEMA = "news-scape-publish-manifest/1"
 DEFAULT_KEEP_REVIEW_DAYS = 7
-DEPRECATED_COLUMNS = frozenset({"materiality", "event_type", "impact_area"})
-HEAVY_COLUMNS = frozenset({"content_html"})
-
-# Parquet table -> (DB table, date column). `articles` is selected by fetch date
-# (`fetched_at`); `analysis` and `mentions` by the date they passed the DoD gate
-# (`created_at`). All three columns are ISO strings in Vietnam time, so the first 10
-# characters are the local calendar date.
-PARQUET_TABLES: dict[str, tuple[str, str]] = {
-    "articles": ("articles", "fetched_at"),
-    "analysis": ("agent_outputs", "created_at"),
-    "mentions": ("l1_outputs", "created_at"),
-}
-
-# Extra row filter per DB table. A code-first row is not an analysis result, so it does
-# not enter the `mentions` table (ADR 0010 D4).
-ROW_FILTERS: dict[str, str] = {"l1_outputs": not_code_first_sql()}
 
 _MANIFEST_RE = re.compile(r"^(\d{4}-?\d{2}-?\d{2})(?:\.r(\d+))?\.json$")
 _CHUNK = 1 << 20
@@ -383,6 +368,7 @@ def _build_obt_parquet(db: Path, day: date, out: Path) -> int:
     )
     LEFT JOIN l1_outputs l1 ON l1.id = (
         SELECT MAX(id) FROM l1_outputs WHERE article_id = a.article_id AND dod_pass = 1
+            AND """ + not_code_first_sql() + """
     )
     ORDER BY a.published_at DESC
     """
@@ -475,42 +461,6 @@ def _build_obt_parquet(db: Path, day: date, out: Path) -> int:
     )
     out.write_bytes(parquet_bytes)
     return len(records)
-
-
-def _build_parquet(db: Path, table: str, date_col: str, day: date, out: Path) -> int:
-    """Export the rows of a day from one database table to Parquet (kept for tests and backward compatibility).
-
-    Args:
-        db: Operational database.
-        table: Source table.
-        date_col: Date column used to select rows.
-        day: Publish day.
-        out: Target file in staging.
-
-    Returns:
-        Number of rows written.
-
-    Raises:
-        RuntimeError: If the table does not exist in the database.
-    """
-    import pandas as pd
-
-    conn = open_ro(db, timeout=30)
-    try:
-        cols = [r[1] for r in conn.execute(f"PRAGMA table_info({table})")]
-        keep = [c for c in cols if c not in HEAVY_COLUMNS and c not in DEPRECATED_COLUMNS]
-        if not keep:
-            raise RuntimeError(f"Bảng {table} không có trong DB.")
-        extra = f" AND {ROW_FILTERS[table]}" if table in ROW_FILTERS else ""
-        sql = (f"SELECT {', '.join(keep)} FROM {table} "
-               f"WHERE substr({date_col}, 1, 10) = ?{extra} ORDER BY rowid")
-        frame = pd.read_sql_query(sql, conn, params=(day.isoformat(),))
-    finally:
-        conn.close()
-
-    out.parent.mkdir(parents=True, exist_ok=True)
-    frame.to_parquet(out, engine="pyarrow", index=False)
-    return len(frame)
 
 
 def _build_bronze(src_dir: Path, out: Path) -> list[dict[str, Any]]:

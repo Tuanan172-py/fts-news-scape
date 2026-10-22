@@ -163,8 +163,9 @@ def cmd_status(args: argparse.Namespace) -> None:
     """Report the current state of the Article Lane and recommend the next command.
 
     The Article Lane is the only processing path. The radar neither reads nor
-    recommends anything from the retired L1/Gold lane (`l1_tasks`, the
-    `work_items` queue, `agent_tasks/l1` packets), because such recommendations
+    recommends anything from the retired L1/Gold lane (`l1_tasks`, the claim and
+    export queue over `work_items`, `agent_tasks/l1` packets); the Article Lane reads
+    `work_items` only to select candidates. Such recommendations
     would send the orchestrator down the wrong path.
 
     Args:
