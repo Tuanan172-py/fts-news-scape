@@ -38,7 +38,7 @@ Cập nhật: 2026-07-26 · 112 test, chạy `pytest -q`. Nguồn: `tests/`.
 
 ```powershell
 .venv\Scripts\python.exe -m pytest -q                       # tất cả
-.venv\Scripts\python.exe -m pytest tests/test_fireant.py -v # 1 file
+.venv\Scripts\python.exe -m pytest tests/scrapers/test_fireant.py -v # 1 file
 .venv\Scripts\python.exe -m pytest -k "dedup" -q            # theo keyword
 ```
 

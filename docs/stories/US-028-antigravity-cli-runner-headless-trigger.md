@@ -10,8 +10,8 @@ lang: en
 authors: [unknown]
 adr: [ADR-0011]
 plan: []
-evidence: [commit:dd1e709, commit:a068c59, path:project/src/agent/agy_runner.py, path:project/scripts/article_tick.py, test:project/tests/test_agy_runner.py, test:project/tests/test_article_tick.py]
-verify: "pytest project/tests/test_agy_runner.py project/tests/test_article_tick.py"
+evidence: [commit:dd1e709, commit:a068c59, path:project/src/agent/agy_runner.py, path:project/scripts/article_tick.py, test:project/tests/agent/test_agy_runner.py, test:project/tests/article_lane/test_article_tick.py]
+verify: "pytest project/tests/agent/test_agy_runner.py project/tests/article_lane/test_article_tick.py"
 reconstructed: 2026-10-06
 summary: The Article Lane can run waves through the Antigravity CLI as a single-turn, zero-tool sandboxed runner, selected with article_run --runner agy and triggered headlessly by article_tick.
 ---
@@ -42,7 +42,7 @@ summary: The Article Lane can run waves through the Antigravity CLI as a single-
 
 | Tier | Command or check | Result |
 |---|---|---|
-| Unit | `pytest project/tests/test_agy_runner.py project/tests/test_article_tick.py` | pass (harness.db `unit_proof=1`) |
+| Unit | `pytest project/tests/agent/test_agy_runner.py project/tests/article_lane/test_article_tick.py` | pass (harness.db `unit_proof=1`) |
 | Integration | none recorded | harness.db `integration_proof=0` |
 | Platform | `article_tick --status` | verified; AST check passed |
 

@@ -21,8 +21,8 @@ evidence:
   - path:project/src/ops/mandate.py
   - path:project/src/ops/improve.py
   - path:project/config/ops.yaml
-  - test:project/tests/test_ops_trace.py
-  - test:project/tests/test_ops_supervision.py
+  - test:project/tests/ops/test_ops_trace.py
+  - test:project/tests/ops/test_ops_supervision.py
   - metric:agent_metrics table had zero rows before this ADR, 2026-10-01
   - operator:approved 2026-10-01 ("đồng ý thực thi toàn bộ quy trình, với các mục quyết định cần chốt đồng ý định hướng đề xuất"), decisions D-A to D-E
 original: "commit:579163c"

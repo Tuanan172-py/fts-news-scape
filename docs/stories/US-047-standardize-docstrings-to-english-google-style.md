@@ -12,7 +12,7 @@ authors: [agent]
 adr: []
 plan: []
 evidence: []
-verify: "cd project && python -m pytest tests/test_cli_entrypoints.py -q"
+verify: "cd project && python -m pytest tests/repo/test_cli_entrypoints.py -q"
 summary: Every public module, class and function in project/src and project/scripts carries an English Google-style docstring, enforced by an AST linter and a phrase scanner.
 ---
 

@@ -10,7 +10,7 @@ lang: en
 authors: [An Pham Thanh]
 adr: [ADR-0010]
 related: [US-012, US-013, US-015]
-evidence: ["commit:0f1a65c", "path:project/src/morninger.py", "path:project/scripts/maintenance/backfill_deferred.py", "test:project/tests/test_backfill_deferred.py", "test:project/tests/test_raw_store.py", "metric:395 tests passed, 0 failed"]
+evidence: ["commit:0f1a65c", "path:project/src/morninger.py", "path:project/scripts/maintenance/backfill_deferred.py", "test:project/tests/core/test_backfill_deferred.py", "test:project/tests/crawler/test_raw_store.py", "metric:395 tests passed, 0 failed"]
 verify: "cd project; C:/venvs/news-scape/Scripts/python.exe -m pytest tests/ -q"
 original: "commit:0f1a65c"
 reconstructed: 2026-10-06
@@ -71,10 +71,10 @@ C:/venvs/news-scape/Scripts/python.exe -m pytest tests/ -q
 395 passed, 550 warnings in 135.10s (0:02:15)
 ```
 
-- Targeted subset during development: `pytest tests/test_raw_store.py tests/test_morninger.py tests/test_cafef_capture.py tests/test_backfill_deferred.py tests/test_cafef.py -q` gave 45 passed in 18.40s.
+- Targeted subset during development: `pytest tests/crawler/test_raw_store.py tests/pipeline/test_morninger.py tests/scrapers/test_cafef_capture.py tests/core/test_backfill_deferred.py tests/scrapers/test_cafef.py -q` gave 45 passed in 18.40s.
 - Harness delta: backlog #6, the normal-lane context budget (at most 15 files) was too tight for a full-pipeline audit. This trace scored only `score_context=0.6` despite being complete and honest.
 - Harness delta: backlog #7, the internal `project/.venv` was broken (pointing to Python 3.14 of an old Windows profile), against `AGENTS.md` §3.
 - Trace #45: two Explore subagents in parallel, three gaps found, `morninger.py` confirmed as the real production scheduler (not `orchestrator.start_scheduler`, locked by Fix F).
 - The trace confirmed the 8 enabled domains have Bronze raw capture and asked the user two decisions (capture interval, deferred drain cadence). It changed 6 product files and 4 test files; 23 files read.
 - Files changed: `project/config/settings.yaml`, `project/src/crawler/raw_store.py`, `project/src/scrapers/capture_mixin.py`, `project/scripts/maintenance/backfill_deferred.py`, `project/src/morninger.py`, `project/scripts/pipeline_radar.py`.
-- Test files changed: `project/tests/test_raw_store.py`, `test_cafef_capture.py`, `test_backfill_deferred.py`, `test_morninger.py`.
+- Test files changed: `project/tests/crawler/test_raw_store.py`, `test_cafef_capture.py`, `test_backfill_deferred.py`, `test_morninger.py`.

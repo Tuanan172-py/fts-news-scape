@@ -175,7 +175,7 @@ python scripts/diagnose_sources.py vietstock
 3. Sửa `src/scrapers/rss_generic.py` nếu parse logic thay đổi
 4. Cập nhật fixture trong `tests/fixtures/` và `domains/vietstock/fixtures/`
 5. Chạy `python scripts/domain_check.py vietstock` để verify
-6. Chạy `python -m pytest tests/test_rss_scraper.py -v` để verify regression
+6. Chạy `python -m pytest tests/scrapers/test_rss_scraper.py -v` để verify regression
 
 ## 9. Mở rộng trong tương lai
 
@@ -188,5 +188,5 @@ python scripts/diagnose_sources.py vietstock
 - Changelog: `domains/vietstock/changelog.md`
 - Scraper code: `src/scrapers/rss_generic.py`
 - Config: `config/domains/vietstock.yaml`
-- Tests: `tests/test_rss_scraper.py`
+- Tests: `tests/scrapers/test_rss_scraper.py`
 - Fixture: `tests/fixtures/vietstock_feed.xml`

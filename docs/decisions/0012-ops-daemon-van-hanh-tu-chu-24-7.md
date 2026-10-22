@@ -20,8 +20,8 @@ evidence:
   - path:project/docs/operations/ops-daemon.md
   - path:project/src/ops/dbos_flow.py
   - path:project/scripts/ops_install.ps1
-  - test:project/tests/test_ops_council_fixes.py
-  - test:project/tests/test_ops_core.py
+  - test:project/tests/ops/test_ops_council_fixes.py
+  - test:project/tests/ops/test_ops_core.py
   - metric:sensor pass 1.3 s by hand versus 40-396 s under Task Scheduler priority 7; 6.2 s with backlog after priority 4, 2026-10-01
   - metric:first real daemon wave W10011351 DONE, 100 of 100 articles, 2026-10-01
   - operator:approved 2026-10-01 ("đồng ý thực thi toàn bộ kế hoạch")
@@ -127,7 +127,7 @@ The amendment history at the end of this section overrides D1 (24/7 scope), D5 (
 - Two defects that appeared only under Task Scheduler:
   - Priority. Tasks default to priority 7 (low CPU and I/O priority), inherited by every child. A sensor pass took 1.3 s by hand but 40 to 396 s inside the task. `ops_install.ps1` now sets `-Priority 4`; a pass with backlog then took 6.2 s.
   - agy path. The user PATH stores `%LOCALAPPDATA%\agy\bin` unexpanded, so bare `agy` raised WinError 2 (wave W10011351, 0 tokens). `agy_runner.resolve_agy()` searches `AGY_BIN`, PATH, expanded PATH, then the install location.
-- Evidence: `tests/test_ops_council_fixes.py` (tests named B2 to B7, R2, D9, D10).
+- Evidence: `tests/ops/test_ops_council_fixes.py` (tests named B2 to B7, R2, D9, D10).
 
 **2026-10-01, ADR-0014.** The 7-day standing order of D5 is replaced by a 30-day mandate that renews itself under health conditions (ADR-0014.D4).
 
@@ -165,7 +165,7 @@ The amendment history at the end of this section overrides D1 (24/7 scope), D5 (
 
 ## Follow-up
 
-- [x] Council fixes B2 to B7 and R2 with regression tests (`tests/test_ops_council_fixes.py`).
+- [x] Council fixes B2 to B7 and R2 with regression tests (`tests/ops/test_ops_council_fixes.py`).
 - [x] First real wave through the daemon, W10011351, DONE with 100 of 100 articles.
 - [ ] Operator grants L1 again once stability conditions hold (`docs/OPEN-ITEMS.md` OPS-1, OPS-3).
 - [ ] Per-user xlsx delivery as its own story (council D11).

@@ -74,5 +74,5 @@ Lane: normal
 Reason: touches scraper config + weak proof
 Docs: project/docs/skills/cafef.md, project/docs/dev/03-adding-a-source.md
 Story: docs/stories/US-0xx-....md
-Validation: python -m pytest tests/test_cafef.py
+Validation: python -m pytest tests/scrapers/test_cafef.py
 ```

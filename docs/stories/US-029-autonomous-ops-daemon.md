@@ -10,8 +10,8 @@ lang: en
 authors: [unknown]
 adr: [ADR-0012, ADR-0014]
 plan: []
-evidence: [commit:579163c, commit:4e461cd, commit:2497137, commit:a2233b1, commit:2d47285, path:plans/20261001-1100-autonomous-ops-24x7/plan.md, path:project/scripts/ops_daemon.py, test:project/tests/test_ops_council_fixes.py, test:project/tests/test_ops_restart_lock.py, wave:W10011351]
-verify: "python -m pytest tests/test_ops_core.py tests/test_ops_runtime.py tests/test_ops_council_fixes.py"
+evidence: [commit:579163c, commit:4e461cd, commit:2497137, commit:a2233b1, commit:2d47285, path:plans/20261001-1100-autonomous-ops-24x7/plan.md, path:project/scripts/ops_daemon.py, test:project/tests/ops/test_ops_council_fixes.py, test:project/tests/ops/test_ops_restart_lock.py, wave:W10011351]
+verify: "python -m pytest tests/ops/test_ops_core.py tests/ops/test_ops_runtime.py tests/ops/test_ops_council_fixes.py"
 reconstructed: 2026-10-06
 summary: The Article Lane runs unattended while the machine is on, through ops_daemon with a 100-article sensor, provider breakers, Telegram oversight and a heartbeat; wave W10011351 completed 100 of 100 through it.
 ---
@@ -44,7 +44,7 @@ summary: The Article Lane runs unattended while the machine is on, through ops_d
 
 | Tier | Command or check | Result |
 |---|---|---|
-| Unit | `python -m pytest tests/test_ops_core.py tests/test_ops_runtime.py tests/test_ops_council_fixes.py` | pass; full suite 611 passed |
+| Unit | `python -m pytest tests/ops/test_ops_core.py tests/ops/test_ops_runtime.py tests/ops/test_ops_council_fixes.py` | pass; full suite 611 passed |
 | Integration | watchdog chaos test and `ops_daemon once` on the operational DB | pass (traces 91 and 95) |
 | Platform | real wave W10011351 through the daemon under Task Scheduler | DONE, 100 of 100 |
 

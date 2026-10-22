@@ -143,7 +143,7 @@ ops_loop:
 
 # ─────────────── Khối máy đọc cho mã vận hành (src/core/pipeline_spec.py) ───────────────
 # Thứ tự và tên ở đây là nguồn duy nhất. Điều kiện rẽ nhánh (độ phủ, breaker, vá) ở lại trong
-# mã tất định. tests/test_pipeline_spec.py chặn lệch giữa khối này, registry và mã.
+# mã tất định. tests/ops/test_pipeline_spec.py chặn lệch giữa khối này, registry và mã.
 ops_spec:
   main_chain: [scraper-orchestrator, article-packer, article-processor, article-expander,
                l1-ingest-gate, gold-ingest-gate, token-ledger, delivery-writer]

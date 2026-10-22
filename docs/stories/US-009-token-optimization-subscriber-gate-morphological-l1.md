@@ -10,8 +10,8 @@ lang: en
 authors: [An Pham Thanh]
 adr: [ADR-0005, ADR-0010]
 related: [US-007, US-008]
-evidence: ["commit:d119a8f", "path:project/src/agent/entities.py", "path:project/src/handoff/catalog.py", "test:project/tests/test_entities.py", "metric:37/37 targeted tests passed", "metric:947 of 1505 L1 articles selected, 37.1 percent Gold tokens saved"]
-verify: "pytest tests/test_entities.py tests/test_pruner_and_batch.py tests/test_l1_router.py tests/test_user_output.py -v"
+evidence: ["commit:d119a8f", "path:project/src/agent/entities.py", "path:project/src/handoff/catalog.py", "test:project/tests/agent/test_entities.py", "metric:37/37 targeted tests passed", "metric:947 of 1505 L1 articles selected, 37.1 percent Gold tokens saved"]
+verify: "pytest tests/agent/test_entities.py tests/agent/test_pruner_and_batch.py tests/agent/test_l1_router.py tests/export/test_user_output.py -v"
 original: "commit:d119a8f"
 reconstructed: 2026-10-06
 summary: Subscriber-gated Gold export, a morphological guard for Vietnamese compound names, a 3-pass pruner and missed-only L1 routing cut token waste; the gate and lane were retired by ADR-0010.
@@ -54,7 +54,7 @@ summary: Subscriber-gated Gold export, a morphological guard for Vietnamese comp
 
 | Tier | Command or check | Result |
 |---|---|---|
-| Unit | `pytest tests/test_entities.py tests/test_pruner_and_batch.py tests/test_l1_router.py tests/test_user_output.py -v` | passed, 37/37 |
+| Unit | `pytest tests/agent/test_entities.py tests/agent/test_pruner_and_batch.py tests/agent/test_l1_router.py tests/export/test_user_output.py -v` | passed, 37/37 |
 | Integration | entity matcher run over 7,656 articles in `monocle.db` | `MACRO_GEO:MY` false positives down to 0; 300 real US macro articles kept |
 | Platform | subscriber funnel on live data | 947 of 1,505 L1 articles selected; 558 dropped; 37.1% Gold tokens saved |
 

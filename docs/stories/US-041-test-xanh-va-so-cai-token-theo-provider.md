@@ -27,5 +27,5 @@ Bộ test toàn phần chạy xanh không phụ thuộc ngày chạy. Sổ cái 
 ## Validation
 | Tier | Command | Status | Evidence |
 |---|---|---|---|
-| Unit | `python -m pytest tests/test_inherit.py tests/test_ledger_openrouter.py -q` | pass | 2026-10-08 |
+| Unit | `python -m pytest tests/pipeline/test_inherit.py tests/article_lane/test_ledger_openrouter.py -q` | pass | 2026-10-08 |
 | Full | `python -m pytest tests/ -q` | pass | 892 passed, 0 failed (mốc trước: 888 passed, 1 failed) |

@@ -18,9 +18,9 @@ evidence:
   - path:project/src/export/publisher.py
   - path:project/src/core/user_manifest.py
   - path:project/scripts/maintenance/migrate_users_output.py
-  - test:project/tests/test_ops_core.py
-  - test:project/tests/test_user_manifest.py
-  - test:project/tests/test_migrate_users_output.py
+  - test:project/tests/ops/test_ops_core.py
+  - test:project/tests/core/test_user_manifest.py
+  - test:project/tests/core/test_migrate_users_output.py
 summary: "Fixes six ambiguities found when mapping the architecture. One production publish path, ranked LLM runners without Claude, autonomy levels L0 and L1 only, one user manifest, one users/output tree for local and SharePoint, and harness tracking that never gates."
 summary_vi: "Chốt sáu điểm lệch: một đường xuất bản chuẩn, thứ hạng runner (không có Claude), chỉ còn L0/L1, một manifest người dùng, một cây users/output, harness chỉ theo dõi không chặn."
 ---

@@ -15,7 +15,7 @@ evidence:
   - path:docs/decisions/0026-canonical-publish-path-runner-order-l0-l1-levels.md
   - path:docs/knowledge/facts/llm-runtimes-are-interchangeable.md
   - path:docs/OPEN-ITEMS.md
-verify: "cd project && python -m pytest tests/test_ops_core.py tests/test_publisher.py tests/test_opencode_runner.py -q"
+verify: "cd project && python -m pytest tests/ops/test_ops_core.py tests/export/test_publisher.py tests/agent/test_opencode_runner.py -q"
 summary: Every current document (ADRs, facts, glossary, open items, design, AGENTS.md) states the same runner order, levels, publish path, manifest and output tree as the code.
 ---
 

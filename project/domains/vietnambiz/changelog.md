@@ -47,7 +47,7 @@ Audit (`reports/01-plan-audit-report.md` §A2) chứng minh điều đó **SAI**
 timezone**. Vô hại hiện tại vì `_parse_entry_date` đọc `pubDate` của RSS trước —
 nhưng **đừng** "tối ưu" bằng cách chuyển sang meta tag.
 
-**Test**: `tests/test_rss_capture.py` — 10 case, pass.
+**Test**: `tests/scrapers/test_rss_capture.py` — 10 case, pass.
 Fixtures: `tests/fixtures/vietnambiz_capture_feed.xml` (3 item, giữ nguyên khai báo utf-16),
 `tests/fixtures/vietnambiz_detail_page.html` (bài thật, 112.472 bytes).
 

@@ -39,7 +39,7 @@ The system must provide a lock-free dropzone ingestion protocol on the SharePoin
 | Tier        | Command or check                                                                               | Result     |
 | ----------- | ---------------------------------------------------------------------------------------------- | ---------- |
 | Unit        | `pytest project/tests/ -k "lakehouse and not concurrency and not perf"`                      | 18/18 PASS |
-| Integration | `pytest project/tests/test_lakehouse_concurrency.py project/tests/test_lakehouse_perf.py -q` | 7/7 PASS   |
+| Integration | `pytest project/tests/lakehouse/test_lakehouse_concurrency.py project/tests/lakehouse/test_lakehouse_perf.py -q` | 7/7 PASS   |
 | Platform    | `python project/scripts/lakehouse_cli.py --help` & E2E CLI pipeline                          | PASS       |
 
 ## Evidence

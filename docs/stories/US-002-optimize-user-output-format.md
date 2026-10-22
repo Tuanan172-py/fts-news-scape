@@ -10,8 +10,8 @@ lang: en
 authors: [An Pham Thanh]
 adr: []
 related: [US-008]
-evidence: ["commit:4e1d02e", "commit:8f13c70", "path:project/src/export/user_output.py", "test:project/tests/test_user_output.py", "metric:13/13 tests passed in 3.57s", "metric:60 rows generated for AnPT"]
-verify: "cd project; python -m pytest tests/test_user_output.py tests/test_user_workflow.py -v"
+evidence: ["commit:4e1d02e", "commit:8f13c70", "path:project/src/export/user_output.py", "test:project/tests/export/test_user_output.py", "metric:13/13 tests passed in 3.57s", "metric:60 rows generated for AnPT"]
+verify: "cd project; python -m pytest tests/export/test_user_output.py tests/test_user_workflow.py -v"
 original: "commit:8f13c70"
 summary: User CSV output put business columns first, formatted key points as bullets and kept audit files in a master folder; the column contract and paths later changed.
 ---
@@ -31,12 +31,12 @@ summary: User CSV output put business columns first, formatted key points as bul
 - [x] `FINAL_COLUMNS` in `user_output.py` uses the new column order.
 - [x] `_final_row()` formats `key_points` as bullet points with newlines.
 - [x] `UserOutputWriter.write()` writes only `final.csv` in user folders; audit files remain in `_master/`.
-- [x] Unit tests in `tests/test_user_output.py` pass and verify the new column structure and folder contents.
+- [x] Unit tests in `tests/export/test_user_output.py` pass and verify the new column structure and folder contents.
 - [x] Design document `project/docs/design/13-per-user-output-workflow.md` is updated.
 
 ## Design Notes
 
-- Smallest real slice: modify `src/export/user_output.py` and update assertions in `tests/test_user_output.py`.
+- Smallest real slice: modify `src/export/user_output.py` and update assertions in `tests/export/test_user_output.py`.
 - Intake: lane `normal`, because the story touches the output CSV format (user deliverable contract) and existing tested behavior.
 - Changed (2026-09-07): the `final.csv` column contract changed. `materiality_score` was hidden (CORE/DETAIL model) and `gold_status` was added. The export gate moved from "both layers" to L1-only (US-008).
 - Changed (2026-09-08): the nested path `users/output/<name>/<YYYY-MM-DD>/final.csv` was wrong against shipped code.
@@ -47,7 +47,7 @@ summary: User CSV output put business columns first, formatted key points as bul
 
 | Tier | Command or check | Result |
 |---|---|---|
-| Unit | `cd project; python -m pytest tests/test_user_output.py tests/test_user_workflow.py tests/test_compile_users.py tests/test_user_checkpoint.py -v` | passed, 13/13 in 3.57s |
+| Unit | `cd project; python -m pytest tests/export/test_user_output.py tests/test_user_workflow.py tests/users/test_compile_users.py tests/export/test_user_checkpoint.py -v` | passed, 13/13 in 3.57s |
 | Integration | `cd project; python scripts/write_user_output.py --date all` | passed, 60 rows for AnPT, clean `final.csv` plus `_master` audit files |
 | Platform | none | not run |
 
@@ -62,4 +62,4 @@ date,matched_entities,title,summary,key_points,implication,impact_area,materiali
 ```
 
 - Harness delta: `TEST_MATRIX.md` row US-002 marked `implemented`; `SESSION-LATEST.md` overwritten.
-- Files changed: `project/src/export/user_output.py`, `project/tests/test_user_output.py`, `project/docs/design/13-per-user-output-workflow.md`, `docs/TEST_MATRIX.md`, `docs/SESSION-LATEST.md`.
+- Files changed: `project/src/export/user_output.py`, `project/tests/export/test_user_output.py`, `project/docs/design/13-per-user-output-workflow.md`, `docs/TEST_MATRIX.md`, `docs/SESSION-LATEST.md`.

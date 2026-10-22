@@ -21,8 +21,8 @@ evidence:
   - path:project/src/agent/conformance.py
   - path:project/scripts/provider_conformance.py
   - path:project/config/ops.yaml
-  - test:project/tests/test_article_contract.py
-  - test:project/tests/test_conformance.py
+  - test:project/tests/article_lane/test_article_contract.py
+  - test:project/tests/agent/test_conformance.py
   - metric:audit of 467 output files across agy, openrouter, opencode and DSH, 2026-10-05
   - metric:missing ids 623 (43 of 124 batches) agy, 299 (33 of 79 batches) openrouter
   - metric:2988 entity pairs unresolvable in legacy DSH waves

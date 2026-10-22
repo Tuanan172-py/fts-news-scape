@@ -19,7 +19,7 @@ không backoff, không `.meta.json`, và **thiếu `metadata["language"]`**.
 - `config/domains/tnck.yaml`: `enabled: true`, zone **1 → 9**, `pages_per_cycle: 2 → 1`,
   thêm `content_selector` / `capture` / `compliance` / `base_url`, sửa lại `pitfalls`.
 - `domains/tnck/{schema.yaml,README.md,changelog.md}` mới.
-- `tests/test_tnck.py` viết lại — 13 case.
+- `tests/scrapers/test_tnck.py` viết lại — 13 case.
 
 **Sửa bẫy `.vn`-suffix (ảnh hưởng toàn repo)**
 `scripts/domain_check.py:152` và `src/monitor/domain_reporter.py:126,170` dùng

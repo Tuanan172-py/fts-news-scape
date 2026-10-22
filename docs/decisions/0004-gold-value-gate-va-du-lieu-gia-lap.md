@@ -16,7 +16,7 @@ evidence:
   - commit:bb47e44
   - path:project/src/agent/dod.py
   - path:project/schemas/task-lifecycle-v1.yaml
-  - path:project/tests/test_no_agent_emulation.py
+  - path:project/tests/repo/test_no_agent_emulation.py
   - path:project/scripts/verify_gold_quality.py
   - path:project/schemas/agent-instructions-v1.md
   - metric:monocle.db read-only 2026-09-08, 1,274 of 1,274 agent_outputs dod_pass=1, 3 distinct implication texts, 1,117 (87.7%) one template
@@ -81,7 +81,7 @@ summary_vi: Xoá script giả lập phân tích Gold, thêm hai predicate DoD va
 | `implication_specific` | `len(implication.text) ≥ 40`; not a substring of `cleaned_text`; does not match `thresholds.boilerplate_implications` |
 
 - D2 remains deterministic validation. It only rejects and never generates content, so it does not breach §6.C. Thresholds and the blocklist live in `schemas/task-lifecycle-v1.yaml`, editable without code changes.
-- D3 (part C, done). `tests/test_no_agent_emulation.py` locks three invariants:
+- D3 (part C, done). `tests/repo/test_no_agent_emulation.py` locks three invariants:
   1. Only `src/db/store.py` may write SQL touching `agent_outputs` or `l1_outputs`.
   2. Only `runner.py` and `l1_runner.py` may call `insert_*_output`, so every record is scored by DoD.
   3. `repair_truncated_outputs.py` MUST stay deleted.
@@ -114,7 +114,7 @@ summary_vi: Xoá script giả lập phân tích Gold, thêm hai predicate DoD va
 ### Current status (2026-10-06)
 
 - Superseded by ADR-0010 (commit bb47e44), which retired the Gold tier; the Article Lane is the only lane.
-- D1 and D3: still enforced; `project/tests/test_no_agent_emulation.py` keeps its three tests.
+- D1 and D3: still enforced; `project/tests/repo/test_no_agent_emulation.py` keeps its three tests.
 - D2: `value_added` and `implication_specific` still run in `check_dod`, which the Article Lane ingest gate calls (ADR-0010.D3).
 - D4: executed once on 2026-09-09 on the operator machine, before 3b6003b; its effect persists in today's operational DB `C:/data/news-scape/monocle.db`.
 - That machine already used this DB via `MONOCLE_DB_PATH` since 2026-09-08 (commit 4738f66); commit 39c9898 only pinned the path in `settings.yaml`.

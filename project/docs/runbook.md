@@ -126,7 +126,7 @@ python scripts/verify_quality.py <host>               # kỳ vọng >= 95%
 - `--dry-run` để xem trước, không ghi gì.
 - ⚠️ `scripts/enrich_deferred.py` **đã bị XOÁ 2026-09-07**: nó ghi `content_text` mà **không**
   tạo Bronze artifact → vi phạm Bronze-first. Đừng thêm lại (có test canh:
-  `tests/test_backfill_deferred.py::test_enrich_deferred_is_gone`).
+  `tests/core/test_backfill_deferred.py::test_enrich_deferred_is_gone`).
 
 ## Thêm domain mới (~30 phút)
 

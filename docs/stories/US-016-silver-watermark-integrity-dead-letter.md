@@ -10,7 +10,7 @@ lang: en
 authors: [unknown]
 adr: [ADR-0007]
 plan: []
-evidence: [commit:0f1a65c, path:plans/20260917-1420-pipeline-integrity-remediation/plan.md, path:project/src/pipeline/derive.py, test:project/tests/test_silver_watermark_integrity.py, metric:418 tests passed]
+evidence: [commit:0f1a65c, path:plans/20260917-1420-pipeline-integrity-remediation/plan.md, path:project/src/pipeline/derive.py, test:project/tests/pipeline/test_silver_watermark_integrity.py, metric:418 tests passed]
 verify: "cd project; C:/venvs/news-scape/Scripts/python.exe -m pytest tests/ -q"
 reconstructed: 2026-10-06
 summary: No Bronze article leaves Silver without a trace; the watermark never passes an unresolved failure, and failures after five attempts move to a dead-letter table shown on the radar.

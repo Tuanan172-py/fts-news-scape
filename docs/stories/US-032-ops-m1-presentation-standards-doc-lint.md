@@ -21,10 +21,10 @@ evidence:
   - path:docs/templates/proposal.md
   - path:docs/templates/runbook.md
   - path:project/docs/operations/ops-daemon-reference.md
-  - test:project/tests/test_ops_present.py
-  - test:project/tests/test_doc_lint.py
+  - test:project/tests/ops/test_ops_present.py
+  - test:project/tests/repo/test_doc_lint.py
   - metric:M1 S-01 to S-06, 704 tests passed, doc_lint 0 violations, 2026-10-01 (harness.db)
-verify: "python -m pytest project/tests/test_ops_present.py project/tests/test_doc_lint.py -q"
+verify: "python -m pytest project/tests/ops/test_ops_present.py project/tests/repo/test_doc_lint.py -q"
 reconstructed: 2026-10-06
 summary: Every operator-facing product (documents, ADRs, runbooks, Telegram messages, control room) follows one presentation standard and one glossary, checked by a zero-token doc lint inside pytest.
 ---
@@ -63,4 +63,4 @@ Every product the operator reads, including documents, ADRs, runbooks, Telegram 
 
 - Commit dd492ed: stored as the story commit in `harness.db`. Its content is the FPA toolkit strategy plan, supervision changes and the split of the ops-daemon runbook into a reference page.
 - Commit 579163c (commit labelled US-031): `doc_lint.py`, `present.py`, `test_ops_present.py`, the glossary rewrite and the three templates.
-- Commit 0340f64 (commit labelled US-036): `project/tests/test_doc_lint.py` as present in this repository history.
+- Commit 0340f64 (commit labelled US-036): `project/tests/repo/test_doc_lint.py` as present in this repository history.

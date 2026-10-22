@@ -17,11 +17,11 @@ evidence:
   - path:project/src/agent/conformance.py
   - path:project/scripts/provider_conformance.py
   - path:.agents/rules/11-hop-dong-dau-ra-thong-nhat.md
-  - test:project/tests/test_article_contract.py
-  - test:project/tests/test_conformance.py
-  - metric:pytest project/tests/test_article_contract.py 17 of 17 passed, 2026-10-05 (harness.db)
+  - test:project/tests/article_lane/test_article_contract.py
+  - test:project/tests/agent/test_conformance.py
+  - metric:pytest project/tests/article_lane/test_article_contract.py 17 of 17 passed, 2026-10-05 (harness.db)
   - metric:800 tests passed excluding test_cli_entrypoints, 2 failures out of scope, 2026-10-05
-verify: "python -m pytest project/tests/test_article_contract.py -q"
+verify: "python -m pytest project/tests/article_lane/test_article_contract.py -q"
 original: "commit:a7e9db8"
 reconstructed: 2026-10-06
 summary: Every provider (agy, OpenRouter, opencode, DSH) returns the compact record through one schema and one validation function; deviations are rejected into repair instead of being silently corrected.
@@ -56,8 +56,8 @@ Every provider (agy, OpenRouter, opencode, DSH) returns the compact record throu
 
 | Tier | Command or check | Result |
 |---|---|---|
-| Unit | `python -m pytest project/tests/test_article_contract.py -q` | 17 of 17 passed (harness.db, 2026-10-05) |
-| Integration | `python -m pytest tests --ignore=tests/test_cli_entrypoints.py` from `project/` | 800 passed; 2 failures outside scope |
+| Unit | `python -m pytest project/tests/article_lane/test_article_contract.py -q` | 17 of 17 passed (harness.db, 2026-10-05) |
+| Integration | `python -m pytest tests --ignore=tests/repo/test_cli_entrypoints.py` from `project/` | 800 passed; 2 failures outside scope |
 | Platform | golden set through `provider_conformance.py` | pending |
 
 ## Evidence

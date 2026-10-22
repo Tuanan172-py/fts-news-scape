@@ -93,7 +93,7 @@ Nhằm loại bỏ hoàn toàn tình trạng OneDrive tự động tạo các c�
      cp1252, **reader thread chết lặng lẽ** và `proc.stdout` trả về `None` — mã gọi
      `proc.stdout.strip()` sẽ ném `AttributeError` mà không lộ nguyên nhân thật.
    - **Phòng thủ bắt buộc**: luôn viết `(proc.stdout or "")` thay vì `proc.stdout` trực tiếp.
-   - **Cưỡng chế**: `project/tests/test_cli_entrypoints.py` chạy `--help` của mọi script automation
+   - **Cưỡng chế**: `project/tests/repo/test_cli_entrypoints.py` chạy `--help` của mọi script automation
      qua `subprocess` với `capture_output=True` — tái hiện đúng điều kiện pipe nên bắt được cả hai
      phía. Thêm script vào danh sách `AUTOMATION_CLIS` khi đưa script mới vào đường tự động.
 

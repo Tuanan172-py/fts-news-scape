@@ -17,7 +17,7 @@ evidence:
   - path:project/src/pipeline/derive.py
   - path:project/src/db/store.py
   - path:project/scripts/pipeline_radar.py
-  - test:project/tests/test_silver_watermark_integrity.py
+  - test:project/tests/pipeline/test_silver_watermark_integrity.py
   - metric:7203 articles captured versus 424 past the delivery gate, end-to-end review 2026-09-17
   - metric:7402 Bronze files times 3 reads per cycle on OneDrive, 2026-09-17
 original: "commit:0f1a65c"

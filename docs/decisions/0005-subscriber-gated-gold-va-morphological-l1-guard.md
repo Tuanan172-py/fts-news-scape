@@ -99,4 +99,4 @@ Costs accepted:
 ## Follow-up
 
 - [ ] Verify the 60% to 70% token saving estimate against a ledger. Obsolete for D2 to D4 since ADR-0010.
-- [ ] Keep the D1 guards covered by `project/tests/test_entities.py` while the catalog matcher remains in use.
+- [ ] Keep the D1 guards covered by `project/tests/agent/test_entities.py` while the catalog matcher remains in use.

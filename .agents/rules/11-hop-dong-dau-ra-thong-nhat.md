@@ -10,7 +10,7 @@ Hợp đồng bảo đảm hình dạng đầu ra, không bảo đảm nội dun
 
 ## 2. Luật cứng
 
-1. **Một nguồn chân lý.** `project/schemas/article-compact-v2.schema.json` định nghĩa record gọn `{i,e,s,k,im,sn,ts,c}`. Hằng số đọc qua `project/src/agent/contract/article_contract.py`. Prefix, bộ kiểm và bộ bung không chép tay danh sách trường, enum hay nhóm thực thể. Test `tests/test_article_contract.py` chặn lệch.
+1. **Một nguồn chân lý.** `project/schemas/article-compact-v2.schema.json` định nghĩa record gọn `{i,e,s,k,im,sn,ts,c}`. Hằng số đọc qua `project/src/agent/contract/article_contract.py`. Prefix, bộ kiểm và bộ bung không chép tay danh sách trường, enum hay nhóm thực thể. Test `tests/article_lane/test_article_contract.py` chặn lệch.
 2. **Một hàm kiểm.** Mọi runner, adapter và bộ bung gọi `article_contract.parse_and_validate` hoặc `validate_record`. Cấm viết validator, bộ phân tích JSON hay bảng đổi nhóm riêng trong runner.
 3. **Cấm mặc định ngữ nghĩa.** Không gán `neutral` cho `sn` sai, không gán `this_week` cho `ts` sai, không tự điền `c`, không đệm `im`, không nhận khoá đồng nghĩa, không tách `k` kiểu chuỗi. Record sai bị từ chối kèm mã lỗi và đi vào `--repair`.
 4. **Chuẩn hoá cơ học có đếm.** Chỉ được bóc vỏ truyền tải (envelope, rào mã, lời dẫn, cứu từng đối tượng khi cắt cụt) và đưa về dạng chuẩn (bỏ `e` và `c` trùng, sắp `c` tăng dần, sắp `e` theo nhóm rồi chuỗi). Mọi phép chuẩn hoá ghi bộ đếm vào meta.
@@ -38,7 +38,7 @@ Hợp đồng bảo đảm hình dạng đầu ra, không bảo đảm nội dun
 ## 4. Lệnh thực thi
 
 ```powershell
-python -m pytest tests/test_article_contract.py tests/test_openrouter_runner.py tests/test_conformance.py -q
+python -m pytest tests/article_lane/test_article_contract.py tests/agent/test_openrouter_runner.py tests/agent/test_conformance.py -q
 python scripts/build_article_prefix.py --check        # prefix khớp catalog và persona trong preset
 python scripts/provider_conformance.py baseline --gold <vàng.json> --batches <lô,lô>   # ghi mức agy
 python scripts/provider_conformance.py check    --gold <vàng.json> --batches <lô,lô>   # so provider khác với agy

@@ -9,8 +9,8 @@ updated: 2026-10-06
 lang: en
 authors: [An Pham Thanh]
 adr: [ADR-0010]
-evidence: ["commit:193bfaf", "test:project/tests/test_handoff.py", "metric:251/251 tests passed including test_catalog_newest_first_order"]
-verify: "pytest tests/test_handoff.py"
+evidence: ["commit:193bfaf", "test:project/tests/handoff/test_handoff.py", "metric:251/251 tests passed including test_catalog_newest_first_order"]
+verify: "pytest tests/handoff/test_handoff.py"
 original: "commit:193bfaf"
 reconstructed: 2026-10-06
 summary: L1 and Gold task export claimed the newest articles first in bounded batches and skipped finished L1 articles; the L1/Gold lane was retired by ADR-0010.
@@ -45,7 +45,7 @@ summary: L1 and Gold task export claimed the newest articles first in bounded ba
 
 | Tier | Command or check | Result |
 |---|---|---|
-| Unit | `pytest tests/test_handoff.py` | passed; full suite 251/251 including `test_catalog_newest_first_order` |
+| Unit | `pytest tests/handoff/test_handoff.py` | passed; full suite 251/251 including `test_catalog_newest_first_order` |
 | Integration | CLI arguments of `agent_export`, `l1_route`, `run_agent_hierarchy` with `--batch-size` and `order=desc` | passed |
 | Platform | none | not run |
 

@@ -12,7 +12,7 @@ authors: [operator, agent]
 adr: [ADR-0025]
 plan: []
 evidence: []
-verify: "C:\\venvs\\news-scape\\Scripts\\python.exe -m pytest project/tests/test_plugin_lakehouse_client.py project/tests/test_plugin_manifest.py -q -p no:cacheprovider"
+verify: "C:\\venvs\\news-scape\\Scripts\\python.exe -m pytest project/tests/repo/test_plugin_lakehouse_client.py project/tests/repo/test_plugin_manifest.py -q -p no:cacheprovider"
 summary: Analysts on the Fundamental, Market/Technical, Macro and Morning desks get twelve plugin skills backed by zero-token DuckDB lenses that filter by entity, group duplicate articles into stories and compare against baselines.
 ---
 
@@ -44,7 +44,7 @@ The `fpts-market-intel` plugin must cover the research desk's everyday news EDA 
 
 | Tier | Command or check | Result |
 |---|---|---|
-| Unit | `pytest project/tests/test_plugin_lakehouse_client.py project/tests/test_plugin_manifest.py -q` | 23/23 PASS |
+| Unit | `pytest project/tests/repo/test_plugin_lakehouse_client.py project/tests/repo/test_plugin_manifest.py -q` | 23/23 PASS |
 | Integration | `pytest project/tests -q` | 953 PASS, 3 FAIL outside plugin scope (`test_code_first_guard` publisher import, `test_daily_reporter`, `test_ops_council_fixes`) |
 | Platform | Every lens CLI run against the sandbox `FRA_DataIngestion - news-data` | PASS (JSON output) |
 

@@ -34,7 +34,7 @@ summary_vi: "Logic nghiệp vụ nằm trong project/src theo bốn tầng; proj
 - **ADR-0027.D2 (Stable CLI paths):** Existing `project/scripts/*.py` paths stay. A script parses arguments and calls functions in `src`; it holds no reusable logic.
 - **ADR-0027.D3 (Forbidden edges):** No `scripts → scripts` import and no `src → scripts` import.
 - **ADR-0027.D4 (Plumbing):** The project root, data root and DB path are computed only in `src/core/paths.py`. New code adds no `sys.path.insert` outside thin CLI bootstraps and calls `sqlite3.connect` only inside `src/db` and `src/core/paths.py`.
-- **ADR-0027.D5 (Enforcement):** `project/tests/test_architecture.py` checks D3 and D4 with `ast`. Its allowlist records the remaining violations and may only shrink.
+- **ADR-0027.D5 (Enforcement):** `project/tests/repo/test_architecture.py` checks D3 and D4 with `ast`. Its allowlist records the remaining violations and may only shrink.
 - **ADR-0027.D6 (Dead code):** Code unreachable from the live entry points is deleted, not archived in the tree; git history keeps it.
 
 ## Alternatives

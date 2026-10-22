@@ -32,11 +32,11 @@ Mỗi prompt / phiên tương tác của Agent BẮT BUỘC phải ghi lại m�
   ],
   "files_read": [
     "project/src/export/user_output.py",
-    "project/tests/test_user_output.py"
+    "project/tests/export/test_user_output.py"
   ],
   "files_changed": [
     "project/src/export/user_output.py",
-    "project/tests/test_user_output.py",
+    "project/tests/export/test_user_output.py",
     "docs/stories/US-002-optimize-user-output-format.md"
   ],
   "outcome": "completed",

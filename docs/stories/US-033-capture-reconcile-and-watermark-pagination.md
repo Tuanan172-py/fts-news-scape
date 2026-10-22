@@ -20,11 +20,11 @@ evidence:
   - path:project/scripts/capture_reconcile.py
   - path:.agents/rules/10-thu-thap-tron-ven.md
   - path:docs/proposals/20261001-dedup-architecture.md
-  - test:project/tests/test_capture_registry.py
-  - test:project/tests/test_capture_reconcile.py
-  - test:project/tests/test_capture_backfill.py
+  - test:project/tests/core/test_capture_registry.py
+  - test:project/tests/pipeline/test_capture_reconcile.py
+  - test:project/tests/pipeline/test_capture_backfill.py
   - metric:87 tests passed for the combined capture and clustering verify command, 2026-10-02 (harness.db)
-verify: "python -m pytest project/tests/test_capture_registry.py project/tests/test_capture_reconcile.py project/tests/test_capture_backfill.py -q -p no:cacheprovider"
+verify: "python -m pytest project/tests/core/test_capture_registry.py project/tests/pipeline/test_capture_reconcile.py project/tests/pipeline/test_capture_backfill.py -q -p no:cacheprovider"
 reconstructed: 2026-10-06
 summary: Crawlers record every discovered URL in a discovery ledger before any filter, paginate by watermark until a page holds only known articles, and a daily sitemap reconciliation backfills missing articles.
 ---

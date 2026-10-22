@@ -10,7 +10,7 @@ lang: en
 authors: [An Pham Thanh]
 adr: [ADR-0010]
 related: [US-011, US-012]
-evidence: ["commit:0f1a65c", "path:project/schemas/work-package-v1.schema.json", "test:project/tests/test_cli_entrypoints.py", "metric:413 tests passed (from 403, plus 10 CLI subprocess tests)", "metric:backfill fetched=14 failed=1 deleted_at_source=1 budget_stopped=1"]
+evidence: ["commit:0f1a65c", "path:project/schemas/work-package-v1.schema.json", "test:project/tests/repo/test_cli_entrypoints.py", "metric:413 tests passed (from 403, plus 10 CLI subprocess tests)", "metric:backfill fetched=14 failed=1 deleted_at_source=1 budget_stopped=1"]
 verify: "cd project; C:/venvs/news-scape/Scripts/python.exe -m pytest tests/ -q"
 original: "commit:0f1a65c"
 summary: Every automation CLI entry point is tested through subprocess, the work-package schema accepts deleted_at_source, backfill has a time budget and capture has measured headroom.
@@ -32,7 +32,7 @@ summary: Every automation CLI entry point is tested through subprocess, the work
 - [x] `morninger` passes `encoding="utf-8"` to both subprocess calls and guards against `stdout=None`.
 - [x] `capture_interval_minutes: 10`, about 40% headroom over a job round of about 7 minutes.
 - [x] `deferred_backfill_limit` falls from 200 to 60; the subprocess timeout is budget plus 60s.
-- [x] `tests/test_cli_entrypoints.py` has 10 tests covering 9 automation scripts.
+- [x] `tests/repo/test_cli_entrypoints.py` has 10 tests covering 9 automation scripts.
 - [x] The radar shows both today's count and the cumulative total for articles deleted at source.
 
 ## Design Notes
@@ -60,7 +60,7 @@ summary: Every automation CLI entry point is tested through subprocess, the work
 ### Root cause: a systemic blind spot
 
 - 52 scripts have a `__main__` block, and 0 tests used `subprocess`. Bugs 3, 4 and 7 sat entirely in that blind spot.
-- `project/tests/test_cli_entrypoints.py` closes it: it runs `--help` of 9 automation scripts through subprocess with `capture_output=True`, reproducing the pipe and encoding conditions of `morninger`.
+- `project/tests/repo/test_cli_entrypoints.py` closes it: it runs `--help` of 9 automation scripts through subprocess with `capture_output=True`, reproducing the pipe and encoding conditions of `morninger`.
 - The test caught bug 7 within its first few minutes.
 
 ## Verification

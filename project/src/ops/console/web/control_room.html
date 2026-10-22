@@ -130,7 +130,7 @@ const sel = { wave: null, agent: null, open: new Set(), confirm: null };
 let timer = null, lastTab = null, lastHtml = null;
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-// FMT:BEGIN (khớp từng ký tự với src/ops/present.py; tests/test_ops_present.py kiểm bằng Node)
+// FMT:BEGIN (khớp từng ký tự với src/ops/console/present.py; tests/ops/test_ops_present.py kiểm bằng Node)
 const fmtInt = n => (n == null || isNaN(n)) ? "–" : String(Math.floor(n + 0.5)).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 const fmtPct = r => (r == null) ? "–" : Math.floor(r * 100 + 0.5) + "%";
 const fmtDuration = s => {

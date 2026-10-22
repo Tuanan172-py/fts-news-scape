@@ -14,8 +14,8 @@ supersedes: [ADR-0020]
 evidence:
   - path:project/src/lakehouse/
   - path:project/scripts/lakehouse_cli.py
-  - path:project/tests/test_lakehouse_concurrency.py
-  - path:project/tests/test_lakehouse_perf.py
+  - path:project/tests/lakehouse/test_lakehouse_concurrency.py
+  - path:project/tests/lakehouse/test_lakehouse_perf.py
   - commit:966ba42
   - metric:DuckDB vectorized dedup 115ms for 1300 records
 summary: Establishes CQRS Partitioned Lakehouse on SharePoint news-data sandbox with lock-free dropzone, DuckDB deduplication, and strictly isolates official FRA - Data site.

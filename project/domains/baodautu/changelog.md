@@ -36,7 +36,7 @@ baodautu không có cả RSS lẫn API, nhưng là nguồn số 1 về giải ng
 **Thêm mới**
 - `src/scrapers/baodautu.py` — `BaodautuScraper(CaptureMixin, BaseScraper)` + `_parse_detail_date`.
 - `config/domains/baodautu.yaml` — viết lại hoàn toàn, 6 chuyên mục.
-- `tests/test_baodautu.py` — 14 case + 2 fixture thật.
+- `tests/scrapers/test_baodautu.py` — 14 case + 2 fixture thật.
 - `tests/_fakes.py` — thêm `listing_html` / `listing_match` / `listing_calls` cho FakeHTTP.
 - `domains/baodautu/{schema.yaml,README.md,changelog.md}`.
 

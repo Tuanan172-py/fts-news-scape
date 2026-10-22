@@ -10,7 +10,7 @@ lang: en
 authors: [unknown]
 adr: [ADR-0010]
 plan: []
-evidence: [commit:77e166f, path:project/src/db/preflight.py, path:project/scripts/article_run.py, test:project/tests/test_article_lane_hardening.py, wave:W365, metric:514 tests passed]
+evidence: [commit:77e166f, path:project/src/db/preflight.py, path:project/scripts/article_run.py, test:project/tests/ops/test_article_lane_hardening.py, wave:W365, metric:514 tests passed]
 verify: "python -m pytest tests/ -q"
 reconstructed: 2026-10-06
 summary: The radar recommends only Article Lane commands, article_run --finish fails loudly on ingest errors or missing articles, readPacket reads object lines, and --where reports the DB path and write access.

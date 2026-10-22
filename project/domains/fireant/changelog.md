@@ -10,7 +10,7 @@
   trường HTML (`_html_from_json`) trước khi trích — nếu không, `cleaned_text` sẽ nuốt
   cả key/dấu ngoặc JSON.
 - Tạo `domains/fireant/{schema.yaml,changelog.md,README.md}`.
-- `tests/test_fireant.py`: 6 → **11 case** (thêm Bronze byte-exact, Silver bóc JSON,
+- `tests/scrapers/test_fireant.py`: 6 → **11 case** (thêm Bronze byte-exact, Silver bóc JSON,
   camelCase regression, 401 không ghi Bronze, content rỗng → partial).
 
 **Hai bug thật đã sửa (tồn tại từ trước)**

@@ -9,8 +9,8 @@ updated: 2026-10-06
 lang: en
 authors: [An Pham Thanh]
 adr: [ADR-0010]
-evidence: ["commit:193bfaf", "path:project/src/agent/pruner.py", "path:project/src/agent/batch_handoff.py", "test:project/tests/test_pruner_and_batch.py", "metric:6/6 tests passed, 263 suite passed", "metric:task packet size 182 KB to 6-8 KB"]
-verify: "cd project; python -m pytest tests/test_pruner_and_batch.py"
+evidence: ["commit:193bfaf", "path:project/src/agent/pruner.py", "path:project/src/agent/batch_handoff.py", "test:project/tests/agent/test_pruner_and_batch.py", "metric:6/6 tests passed, 263 suite passed", "metric:task packet size 182 KB to 6-8 KB"]
+verify: "cd project; python -m pytest tests/agent/test_pruner_and_batch.py"
 original: "commit:193bfaf"
 summary: Gold task packets shrank by 96 percent through link and image removal and verbatim paragraph pruning, and mini-batches cut subagent tool calls by 90 percent; retired by ADR-0010.
 ---
@@ -31,7 +31,7 @@ summary: Gold task packets shrank by 96 percent through link and image removal a
 - [x] `src/agent/batch_handoff.py` groups 5 to 10 articles into `batch_XX.task.json`, and `unpack_batch_output()` unpacks batch outputs for ingest.
 - [x] `src/agent/runner.py` fills `input.l1_entities` from `l1_outputs`.
 - [x] `--mini-batch` exists in `agent_export.py` and `run_agent_hierarchy.py`.
-- [x] `tests/test_pruner_and_batch.py` passes (6 tests).
+- [x] `tests/agent/test_pruner_and_batch.py` passes (6 tests).
 
 ## Design Notes
 
@@ -50,7 +50,7 @@ summary: Gold task packets shrank by 96 percent through link and image removal a
 
 | Tier | Command or check | Result |
 |---|---|---|
-| Unit | `cd project; python -m pytest tests/test_pruner_and_batch.py` | passed, 6/6 in 0.48s |
+| Unit | `cd project; python -m pytest tests/agent/test_pruner_and_batch.py` | passed, 6/6 in 0.48s |
 | Integration | full project suite | 263 passed, 0 failed |
 | Platform | packet size benchmark | packet size down 96%; a 5-article batch packet is about 25 KB |
 

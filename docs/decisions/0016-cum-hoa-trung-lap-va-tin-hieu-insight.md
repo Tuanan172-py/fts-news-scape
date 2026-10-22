@@ -21,9 +21,9 @@ evidence:
   - path:project/src/pipeline/inherit.py
   - path:project/scripts/signal_build.py
   - path:project/scripts/article_pack.py
-  - test:project/tests/test_story_cluster.py
-  - test:project/tests/test_inherit.py
-  - test:project/tests/test_signal_build.py
+  - test:project/tests/pipeline/test_story_cluster.py
+  - test:project/tests/pipeline/test_inherit.py
+  - test:project/tests/export/test_signal_build.py
   - metric:1314 articles in 3 days, 9 near-verbatim copies, 33 same-event articles (operational DB, 2026-10-01)
   - metric:8 article pairs with different titles and identical bodies (operational DB, 2026-10-01)
   - metric:transitive merge on shared ticker joined 10 distinct PNJ events into one cluster

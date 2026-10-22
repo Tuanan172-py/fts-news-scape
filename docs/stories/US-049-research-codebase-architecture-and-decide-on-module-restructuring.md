@@ -44,7 +44,7 @@ summary: The operator gets a measured assessment of the codebase layout, its dea
 | Tier | Command or check | Result |
 |---|---|---|
 | Unit | `python scripts/harness_cli.py doc lint` | pass, 0 findings |
-| Integration | baseline `pytest tests --ignore=tests/test_cli_entrypoints.py` in `project/` at `ec4e7fe` | 951 passed, 1 failed (`test_ops_council_fixes.py::test_b2_sensor_does_not_count_reserved_articles`, pre-existing, sensor returns 0 for a fixed 2026-10-01 fixture) |
+| Integration | baseline `pytest tests --ignore=tests/repo/test_cli_entrypoints.py` in `project/` at `ec4e7fe` | 951 passed, 1 failed (`test_ops_council_fixes.py::test_b2_sensor_does_not_count_reserved_articles`, pre-existing, sensor returns 0 for a fixed 2026-10-01 fixture) |
 | Platform | none, no runtime change | n/a |
 
 ## Evidence

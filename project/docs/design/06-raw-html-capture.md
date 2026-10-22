@@ -218,8 +218,8 @@ detail:
 
 ## 8. Kiểm thử
 
-Chạy (venv có deps): `pytest -q tests/test_raw_store.py tests/test_cafef_capture.py
-tests/test_vietstock.py tests/test_robots.py tests/test_backoff.py tests/test_looks_complete.py`
+Chạy (venv có deps): `pytest -q tests/crawler/test_raw_store.py tests/scrapers/test_cafef_capture.py
+tests/scrapers/test_vietstock.py tests/crawler/test_robots.py tests/crawler/test_backoff.py tests/scrapers/test_looks_complete.py`
 
 - `test_raw_store.py` — byte-exact, sha256, `images[]` (lazy `data-src`/`srcset`/figcaption,
   **artifact không mutate**), header subset, nhánh None/4xx.

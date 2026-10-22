@@ -13,12 +13,12 @@ adr: [ADR-0010]
 plan: []
 evidence:
   - "commit:072eb8f"
-  - "test:project/tests/test_code_first_guard.py"
+  - "test:project/tests/article_lane/test_code_first_guard.py"
   - "metric:l1_outputs code_first rows = 3069, all dod_pass=1, created 2026-09-09..2026-09-17"
   - "metric:2570 distinct code_first articles found in the Watchlist sheet of 490 of 580 user xlsx files"
   - "metric:3059 code_first rows in 156 _master/*_L1.csv files"
   - "operator:2026-10-06 confirmed code_first reaching delivery is a bug"
-verify: "python -m pytest tests/test_code_first_guard.py -q"
+verify: "python -m pytest tests/article_lane/test_code_first_guard.py -q"
 summary: Code-first L1 rows never reach delivery, insight signals, selectors, counts, packet cleanup or Parquet exports.
 ---
 
@@ -54,7 +54,7 @@ summary: Code-first L1 rows never reach delivery, insight signals, selectors, co
 
 | Tier | Command or check | Result |
 |---|---|---|
-| Unit | `python -m pytest tests/test_code_first_guard.py -q` | pass, 12 tests |
+| Unit | `python -m pytest tests/article_lane/test_code_first_guard.py -q` | pass, 12 tests |
 | Integration | pytest over 17 test files for the touched modules (full suite not run: it writes the operational DB) | 235 pass, 1 fail pre-existing on base `e4abeb4` (`test_inherit.py::test_refresh_end_to_end_clusters_then_inherits`) |
 | Platform | read-only `sqlite3` on `C:\data\news-scape\monocle.db` (`mode=ro`) | 3069 code-first rows measured |
 

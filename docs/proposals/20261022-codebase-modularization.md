@@ -80,7 +80,7 @@ summary_vi: Có nên module hoá lại codebase không? Có, theo hướng dời
 ### F6. The 2026-09-24 audit plan was only partly executed
 
 - Done: test isolation in `tests/conftest.py` (sets `MONOCLE_DATA_DIR` and `MONOCLE_DB_PATH` before any import), ADR-0015, the canonical tree (ADR-0024).
-- Not done: retired-lane removal (S2), `paths.py` as the single source (S4), `tests/test_architecture.py` and `src/article_lane/` (S5), the module-boundary rule.
+- Not done: retired-lane removal (S2), `paths.py` as the single source (S4), `tests/repo/test_architecture.py` and `src/article_lane/` (S5), the module-boundary rule.
 - Since then US-038 added `opencode_runner`, `run_backlog_opencode` and the ops daemon modules, so the counts above supersede the old ones.
 
 ### F7. CLI paths are a public contract
@@ -110,7 +110,7 @@ Option B. It fixes what makes the code hard to follow (logic in scripts, inverte
 | L2 | `src/crawler`, `src/scrapers`, `src/processor`, `src/pipeline`, `src/agent/runners/` (agy, opencode, openrouter), `src/agent/contract/`, new `src/article_lane/` (select, pack, expand, finish, ledger, radar `decide()`), `src/export`, `src/lakehouse`, `src/ops/` split into `daemon/`, `wave/`, `supervision/`, `console/` | L0, L1, other L2 without cycles |
 | L3 | `project/scripts/*.py`: parse arguments, call one `src` function; paths unchanged | L0-L2 |
 
-Rules, enforced by `project/tests/test_architecture.py` with an allowlist frozen at today's state that may only shrink: no `scripts → scripts`, no `src → scripts`, no new `sys.path.insert`, no `sqlite3.connect` outside `src/db`, no package cycle. `project/tests/` mirrors `src/` in subfolders.
+Rules, enforced by `project/tests/repo/test_architecture.py` with an allowlist frozen at today's state that may only shrink: no `scripts → scripts`, no `src → scripts`, no new `sys.path.insert`, no `sqlite3.connect` outside `src/db`, no package cycle. `project/tests/` mirrors `src/` in subfolders.
 
 ### Rollout: five stories, each in its own worktree branched from `dev/us038`
 

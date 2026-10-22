@@ -18,8 +18,8 @@ evidence:
   - path:docs/proposals/20261001-dedup-architecture.md
   - path:docs/proposals/20261001-insight-analytics.md
   - path:project/scripts/capture_reconcile.py
-  - test:project/tests/test_capture_registry.py
-  - test:project/tests/test_capture_reconcile.py
+  - test:project/tests/core/test_capture_registry.py
+  - test:project/tests/pipeline/test_capture_reconcile.py
   - metric:439 articles dropped by title similarity in 3 days, 202 (46%) wrongly, operational DB read-only 2026-10-01
   - metric:baodautu store held about 50% of sitemap articles 2026-09-20 to 2026-10-01; 2026-09-30 sitemap 101 versus store 57
   - metric:1,461 Bronze files in Silver dead-letter, 2026-10-01

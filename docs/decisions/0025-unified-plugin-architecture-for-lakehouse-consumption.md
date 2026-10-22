@@ -14,7 +14,7 @@ related: [ADR-0020, ADR-0023]
 evidence:
   - path:project/src/lakehouse/
   - path:project/src/export/publisher.py
-  - path:project/tests/test_lakehouse_perf.py
+  - path:project/tests/lakehouse/test_lakehouse_perf.py
   - commit:23f760e
   - metric:DuckDB vectorized scan 2905 articles in 0.42s
 summary: Establishes the Unified Plugin packaging architecture (fpts-market-intel) for local Lakehouse data consumption across Antigravity (AGY) and Gemini CLI/IDE ecosystems, replacing fragmented standalone skills with a single-bundle distribution, zero-config path auto-discovery, and shared DuckDB vectorized tooling.

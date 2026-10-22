@@ -12,7 +12,7 @@ Kế hoạch: `plans/20260907-0834-market-sources-expansion/phase-02-tbtc-new-so
 - `config/domains/thoibaotaichinhvietnam.yaml` — `method: rss_capture`, chạy trên
   `RssCaptureScraper` của phase-01.
 - `domains/thoibaotaichinhvietnam/{schema.yaml,README.md,changelog.md}`.
-- `tests/test_thoibaotaichinhvietnam.py` — 7 case + 2 fixture thật.
+- `tests/scrapers/test_thoibaotaichinhvietnam.py` — 7 case + 2 fixture thật.
 - Tên config = `thoibaotaichinhvietnam` (khớp host stem) để né bẫy `.vn`-suffix
   ở `scripts/domain_check.py:152`.
 

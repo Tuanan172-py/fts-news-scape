@@ -22,11 +22,11 @@ evidence:
   - path:project/src/export/radar_sheet.py
   - path:docs/proposals/20261001-dedup-architecture.md
   - path:docs/proposals/20261001-insight-analytics.md
-  - test:project/tests/test_story_cluster.py
-  - test:project/tests/test_inherit.py
-  - test:project/tests/test_signal_build.py
-  - metric:pytest project/tests/test_story_cluster.py 14 of 14 passed, 2026-10-05 (harness.db)
-verify: "python -m pytest project/tests/test_story_cluster.py project/tests/test_inherit.py project/tests/test_signal_build.py -q -p no:cacheprovider"
+  - test:project/tests/pipeline/test_story_cluster.py
+  - test:project/tests/pipeline/test_inherit.py
+  - test:project/tests/export/test_signal_build.py
+  - metric:pytest project/tests/pipeline/test_story_cluster.py 14 of 14 passed, 2026-10-05 (harness.db)
+verify: "python -m pytest project/tests/pipeline/test_story_cluster.py project/tests/pipeline/test_inherit.py project/tests/export/test_signal_build.py -q -p no:cacheprovider"
 reconstructed: 2026-10-06
 summary: Duplicate articles are clustered by story without deletion; exact or 0.95-containment copies skip the model and inherit the canonical result, and derived signal tables measure coverage frequency and breadth.
 ---
@@ -59,7 +59,7 @@ Duplicate articles are grouped into story clusters and never deleted. A near-ver
 
 | Tier | Command or check | Result |
 |---|---|---|
-| Unit | `python -m pytest project/tests/test_story_cluster.py -q` | 14 of 14 passed (harness.db, 2026-10-05) |
+| Unit | `python -m pytest project/tests/pipeline/test_story_cluster.py -q` | 14 of 14 passed (harness.db, 2026-10-05) |
 | Integration | combined capture and clustering verify run | 87 passed (harness.db row US-033, 2026-10-02) |
 | Platform | morninger runs clustering and signals after derive | deployed; no measured wave recorded here |
 

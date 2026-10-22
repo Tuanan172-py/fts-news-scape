@@ -10,7 +10,7 @@ lang: en
 authors: [claude-opus-5-5]
 adr: []
 evidence:
-  - "path: project/tests/test_cli_entrypoints.py"
+  - "path: project/tests/repo/test_cli_entrypoints.py"
   - "path: plans/20260924-1627-codebase-audit-cleanup-modularization"
 summary: The full pytest run writes DDL to the operational DB through test_cli_entrypoints.py, and simulated wave output once landed in it, so tests and simulations MUST use a temporary DB.
 ---
@@ -19,7 +19,7 @@ summary: The full pytest run writes DDL to the operational DB through test_cli_e
 
 ## Fact
 
-- `project/tests/test_cli_entrypoints.py` runs `backfill_deferred --dry-run` without passing a DB.
+- `project/tests/repo/test_cli_entrypoints.py` runs `backfill_deferred --dry-run` without passing a DB.
 - That writes DDL and WAL to `C:\data\news-scape\monocle.db`. Found in the 2026-09-24 audit; the test still passes no DB on 2026-10-06.
 - On 2026-09-18 simulated wave output was loaded into the operational DB by mistake.
 - It was cleaned; the backup is `C:/data/news-scape/monocle.db.bak-20260918T172336`.
@@ -32,5 +32,5 @@ summary: The full pytest run writes DDL to the operational DB through test_cli_e
 ## How to Apply
 
 - MUST NOT ask an agent to run the full `pytest tests/` until S0 of the audit plan is done.
-- Run `pytest tests --ignore=tests/test_cli_entrypoints.py` instead.
+- Run `pytest tests --ignore=tests/repo/test_cli_entrypoints.py` instead.
 - To test a chain end to end, point it at a temporary DB, never the real one.

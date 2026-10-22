@@ -142,7 +142,7 @@ users/output/_master/<YYYY-MM-DD>.csv         _master/<date>_L1.csv   _master/<d
 |---|---|
 | `src/agent/archive.py`, `manifest.py`, `batch_handoff.py` | exact bytecode match (function names, parameters, defaults, constants) |
 | `src/agent/pruner.py` | match except one blank docstring line |
-| `tests/test_pruner_and_batch.py`, `test_batch_manifest.py` | rebuilt from pytest-rewritten `.pyc`; behavior-equivalent, not original |
+| `tests/agent/test_pruner_and_batch.py`, `test_batch_manifest.py` | rebuilt from pytest-rewritten `.pyc`; behavior-equivalent, not original |
 | `scripts/l1_backlog.py` | rewritten from scratch (lost after creation, before commit) |
 
 - Lost for good (markdown has no `.pyc`): `docs/stories/US-004-newest-first-batch-processing.md`, `US-006-task-batch-manifest-and-archive.md`, `US-007-gold-task-payload-optimization.md`, `project/daily_log.txt`, `project/data/reports/daily/tnck-2026-09-07.md`.

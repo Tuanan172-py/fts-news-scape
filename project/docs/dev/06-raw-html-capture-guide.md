@@ -299,5 +299,5 @@ Chứng minh toàn bộ AC trên site thật.
 `test_looks_complete,test_cafef_capture,test_vietstock}.py`, `tests/fixtures/vietstock_detail_page.html`,
 `data/raw_html/.gitignore`, 2 docs (`design/06`, `dev/06-guide`).
 **Sửa:** `src/scrapers/{cafef,__init__}.py`, `src/crawler/http_client.py`, `src/core/models.py`
-(docstring), `config/domains/{cafef,vietstock}.yaml`, `requirements.txt`, `tests/test_cafef.py`.
+(docstring), `config/domains/{cafef,vietstock}.yaml`, `requirements.txt`, `tests/scrapers/test_cafef.py`.
 **Kế hoạch gốc:** `plans/20260813-0736-raw-html-capture-vietstock-cafef/`.

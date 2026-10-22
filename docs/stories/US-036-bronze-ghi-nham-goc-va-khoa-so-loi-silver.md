@@ -17,14 +17,14 @@ evidence:
   - path:project/src/crawler/raw_store.py
   - path:project/src/db/store.py
   - path:project/src/pipeline/derive.py
-  - test:project/tests/test_raw_store.py
-  - test:project/tests/test_silver_failure_keys.py
-  - test:project/tests/test_paths_anchored.py
+  - test:project/tests/crawler/test_raw_store.py
+  - test:project/tests/core/test_silver_failure_keys.py
+  - test:project/tests/export/test_paths_anchored.py
   - metric:2,750 Bronze files moved from the repo-root data folder; 1,607 same-name conflicts kept aside, 2026-10-05
   - metric:1,365 silver_failures rows merged to 850 after key normalisation, 2026-10-05
   - metric:64 targeted tests passed, 2026-10-05
   - operator:approved copying raw_html instead of re-crawling, 2026-10-05
-verify: "python -m pytest project/tests/test_raw_store.py project/tests/test_silver_failure_keys.py project/tests/test_paths_anchored.py -q"
+verify: "python -m pytest project/tests/crawler/test_raw_store.py project/tests/core/test_silver_failure_keys.py project/tests/export/test_paths_anchored.py -q"
 original: "commit:0340f64"
 reconstructed: 2026-10-06
 summary: Captured articles are never reported lost because Bronze and other data products always resolve under project/data, a failed capture never overwrites a good one, and stale Silver failure rows no longer pin the watermark.
@@ -63,7 +63,7 @@ A captured article is never treated as lost. Bronze and every data product land 
 | Tier | Command or check | Result |
 |---|---|---|
 | Unit | raw store, failure keys, anchored paths, watermark, backfill, concurrency, notify and morninger tests | 64 passed, 2026-10-05 |
-| Integration | `python -m pytest tests --ignore=tests/test_cli_entrypoints.py` from `project/` | not run; blocked in session |
+| Integration | `python -m pytest tests --ignore=tests/repo/test_cli_entrypoints.py` from `project/` | not run; blocked in session |
 | Platform | `pipeline_radar.py status` after a derive cycle | 849 rows, 108 blocking at 15:12 on 2026-10-05; 2 true dead-letters reported on 2026-10-06 |
 
 ## Evidence

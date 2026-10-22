@@ -15,7 +15,7 @@ evidence:
   - path:project/docs/design/00-end-to-end-architecture.md
   - path:project/src/core/user_manifest.py
   - path:project/scripts/maintenance/migrate_users_output.py
-verify: "cd project && python -m pytest tests/test_ops_core.py tests/test_user_manifest.py tests/test_migrate_users_output.py tests/test_publisher.py tests/test_entities.py tests/test_harness_cli.py -q"
+verify: "cd project && python -m pytest tests/ops/test_ops_core.py tests/core/test_user_manifest.py tests/core/test_migrate_users_output.py tests/export/test_publisher.py tests/agent/test_entities.py tests/test_harness_cli.py -q"
 summary: Brings docs, harness and code to one state - Article Lane docs, non-gating session close, one publish path, L0/L1 only, one user manifest, one users/output tree.
 ---
 

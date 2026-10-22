@@ -22,13 +22,13 @@ evidence:
   - path:project/src/ops/lanes.py
   - path:project/scripts/article_pack.py
   - path:project/src/agent/silver_source.py
-  - test:project/tests/test_ops_manual.py
-  - test:project/tests/test_article_pack_thin.py
-  - test:project/tests/test_wave_thin_demote.py
-  - test:project/tests/test_ledger_openrouter.py
+  - test:project/tests/ops/test_ops_manual.py
+  - test:project/tests/article_lane/test_article_pack_thin.py
+  - test:project/tests/ops/test_wave_thin_demote.py
+  - test:project/tests/article_lane/test_ledger_openrouter.py
   - metric:audit findings F1 to F10 over waves W10051042, W10051050 and W10051122, 2026-10-05
   - operator:keep manual runs, lock provider per wave, copy raw_html instead of re-crawling, 2026-10-05
-verify: "python -m pytest project/tests/test_ops_manual.py project/tests/test_article_pack_thin.py project/tests/test_wave_thin_demote.py -q"
+verify: "python -m pytest project/tests/ops/test_ops_manual.py project/tests/article_lane/test_article_pack_thin.py project/tests/ops/test_wave_thin_demote.py -q"
 reconstructed: 2026-10-06
 summary: Self-running waves cannot drift after the 2026-10-05 audit; provider is locked per wave, repair rounds are capped, failed waves cool down, manual runs are registered, thin articles leave packets, and data leaves git.
 ---

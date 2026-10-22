@@ -10,7 +10,7 @@ lang: en
 authors: [An Pham Thanh]
 adr: []
 related: [US-011]
-evidence: ["commit:0f1a65c", "path:project/scripts/maintenance/backfill_deferred.py", "test:project/tests/test_backfill_deferred.py", "metric:403 tests passed (from 395, plus 8)"]
+evidence: ["commit:0f1a65c", "path:project/scripts/maintenance/backfill_deferred.py", "test:project/tests/core/test_backfill_deferred.py", "metric:403 tests passed (from 395, plus 8)"]
 verify: "cd project; C:/venvs/news-scape/Scripts/python.exe -m pytest tests/ -q"
 original: "commit:0f1a65c"
 summary: Every article without full content is retried with a recorded, bounded attempt count; 404/410 and exhausted articles leave the queue, ending the infinite refetch loop US-011 introduced.

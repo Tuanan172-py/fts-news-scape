@@ -22,6 +22,8 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
+# Shared helpers `_fakes` and `_userkit` live next to this file; tests sit in subfolders.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 _TEST_DATA_DIR = Path(tempfile.mkdtemp(prefix="news-scape-test-"))
 os.environ["MONOCLE_DATA_DIR"] = str(_TEST_DATA_DIR)

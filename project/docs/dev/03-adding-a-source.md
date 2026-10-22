@@ -110,7 +110,7 @@ làm body **dự phòng** khi capture thất bại. Đừng "tối ưu" bằng c
 - [ ] Test: capture_status `ok`, byte-exact `read_text() == fixture`, selector không sinh
       `missing[main_content_node]`, cap `max_details`, feed chết bị cô lập.
 
-Mẫu đầy đủ: `config/domains/vietnambiz.yaml` + `tests/test_rss_capture.py` +
+Mẫu đầy đủ: `config/domains/vietnambiz.yaml` + `tests/scrapers/test_rss_capture.py` +
 `domains/vietnambiz/`.
 
 ## 3. Thêm scraper API (có code)
@@ -172,8 +172,8 @@ detail:
 
 ## 5. Viết test
 
-Mỗi scraper cần test với `FakeHTTP` (không gọi mạng thật). Xem mẫu `tests/test_fireant.py`,
-`tests/test_cafef.py`. Bắt buộc phủ: happy path, thiếu field, lỗi HTTP, self-disable (nếu có),
+Mỗi scraper cần test với `FakeHTTP` (không gọi mạng thật). Xem mẫu `tests/scrapers/test_fireant.py`,
+`tests/scrapers/test_cafef.py`. Bắt buộc phủ: happy path, thiếu field, lỗi HTTP, self-disable (nếu có),
 date parsing. **Không dùng mock giả để pass build** — test phải phản ánh hành vi thật.
 Chi tiết: [04-testing.md](04-testing.md).
 

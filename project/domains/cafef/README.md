@@ -173,7 +173,7 @@ python scripts/diagnose_sources.py cafef
 3. Sửa `src/scrapers/cafef.py` nếu parse logic thay đổi
 4. Cập nhật fixture trong `tests/fixtures/` và `domains/cafef/fixtures/`
 5. Chạy `python scripts/domain_check.py cafef` để verify
-6. Chạy `python -m pytest tests/test_cafef.py -v` để verify regression
+6. Chạy `python -m pytest tests/scrapers/test_cafef.py -v` để verify regression
 
 ## 10. Liên kết
 
@@ -181,5 +181,5 @@ python scripts/diagnose_sources.py cafef
 - Changelog: `domains/cafef/changelog.md`
 - Scraper code: `src/scrapers/cafef.py`
 - Config: `config/domains/cafef.yaml`
-- Tests: `tests/test_cafef.py`
+- Tests: `tests/scrapers/test_cafef.py`
 - Fixtures: `tests/fixtures/cafef_list_response.json`, `tests/fixtures/cafef_detail_page.html`

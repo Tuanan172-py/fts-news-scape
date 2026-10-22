@@ -321,7 +321,7 @@ Chỉ ghi output từ dữ liệu đã ingest sẵn: `python scripts/write_user_
 | `scripts/make_user_template.py` | sinh template / seed xlsx |
 | `scripts/write_user_output.py` | CLI ghi output |
 | `scripts/run_user_workflow.py` | CLI orchestrator end-to-end |
-| `tests/test_compile_users.py`, `test_user_output.py`, `test_user_checkpoint.py`, `test_user_workflow.py` | 13 test |
+| `tests/users/test_compile_users.py`, `test_user_output.py`, `test_user_checkpoint.py`, `test_user_workflow.py` | 13 test |
 
 Tái dùng: `src/agent/entities.py` (select/subscribers_for), `l1_runner.py`, `runner.py`,
 `db/store.py` (l1_outputs/agent_outputs), `export/csv_export.py` (utf-8-sig).

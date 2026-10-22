@@ -10,7 +10,7 @@ lang: en
 authors: [unknown]
 adr: [ADR-0010]
 plan: []
-evidence: [commit:0f1a65c, path:project/scripts/maintenance/requeue.py, path:project/src/morninger.py, test:project/tests/test_state_requeue_paths.py]
+evidence: [commit:0f1a65c, path:project/scripts/maintenance/requeue.py, path:project/src/morninger.py, test:project/tests/handoff/test_state_requeue_paths.py]
 verify: "cd project; C:/venvs/news-scape/Scripts/python.exe -m pytest tests/ -q"
 reconstructed: 2026-10-06
 summary: Every stuck queue state got a controlled path back to pending, so fixing a root cause also rescued old articles; the manual requeue script was later barred by ADR-0010.
@@ -43,7 +43,7 @@ summary: Every stuck queue state got a controlled path back to pending, so fixin
 
 | Tier | Command or check | Result |
 |---|---|---|
-| Unit | `python -m pytest tests/test_state_requeue_paths.py -q` | 3 passed (harness.db evidence) |
+| Unit | `python -m pytest tests/handoff/test_state_requeue_paths.py -q` | 3 passed (harness.db evidence) |
 | Integration | dry-run default of `requeue.py` | verified safe (harness.db evidence) |
 | Platform | morninger `reclaim_stale` job and radar dead-end display | active (harness.db evidence) |
 

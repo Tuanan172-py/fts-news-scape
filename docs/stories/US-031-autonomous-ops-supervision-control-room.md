@@ -20,10 +20,10 @@ evidence:
   - path:project/src/ops/mandate.py
   - path:project/src/ops/improve.py
   - path:project/scripts/ops_daemon.py
-  - test:project/tests/test_ops_trace.py
-  - test:project/tests/test_ops_supervision.py
+  - test:project/tests/ops/test_ops_trace.py
+  - test:project/tests/ops/test_ops_supervision.py
   - metric:647 tests passed, control room screenshot on real data, 2026-10-01 (harness.db)
-verify: "python -m pytest project/tests/test_ops_trace.py project/tests/test_ops_supervision.py project/tests/test_ops_core.py project/tests/test_ops_runtime.py project/tests/test_ops_council_fixes.py -q"
+verify: "python -m pytest project/tests/ops/test_ops_trace.py project/tests/ops/test_ops_supervision.py project/tests/ops/test_ops_core.py project/tests/ops/test_ops_runtime.py project/tests/ops/test_ops_council_fixes.py -q"
 reconstructed: 2026-10-06
 summary: The operator supervises the autonomous ops daemon instead of approving each wave; ops_spans traces, a local control room, Telegram exception reports and a self-renewing mandate show every agent, script and wave.
 ---

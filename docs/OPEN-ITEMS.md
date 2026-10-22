@@ -87,7 +87,7 @@ unner.py, l1_runner.py.
 
 Trạng thái:
 - Daemon `news-scape-ops` và watchdog `news-scape-ops-watchdog` đã cài, priority 4. Daemon đang ở **L0**: chỉ đo và báo, không tự tiêu token.
-- B2–B7 của hội đồng đã sửa, mỗi mục có test (`tests/test_ops_council_fixes.py`).
+- B2–B7 của hội đồng đã sửa, mỗi mục có test (`tests/ops/test_ops_council_fixes.py`).
 - Đợt thật đầu tiên qua daemon (W10011351) DONE: 100/100 bài, nạp DB qua cổng `--finish`.
 
 Người vận hành làm, theo thứ tự (runbook `project/docs/operations/ops-daemon.md` §1):
@@ -98,7 +98,7 @@ Người vận hành làm, theo thứ tự (runbook `project/docs/operations/ops
 4. **Ngoài phạm vi (task riêng của người vận hành):** khoảng 10,9 nghìn bài tồn đọng ngoài `lookback_days`. Giao hàng xlsx cấu hình theo người dùng (D11) cũng là story riêng.
 5. **ops-sentinel:** draft. Chấm 10 lần chẩn đoán thật để chuyển active (rule 07).
 6. **`max_tokens` của OpenRouter:** đã nâng 24000 → 32000 (CON-1 mục 11), vẫn là một trần; cần đo `PARTIAL`.
-7. **[ĐÓNG 2026-10-06] Khởi động lại daemon thoát oan:** sau `schtasks /End` + `/Run`, tiến trình con cũ còn giữ `ops_daemon.lock` vài giây nên bản mới thoát mã 3. Sửa: `acquire_single_instance` chờ ân hạn `daemon.lock_grace_seconds` (45 s). Test `tests/test_ops_restart_lock.py`, kiểm thật trên task.
+7. **[ĐÓNG 2026-10-06] Khởi động lại daemon thoát oan:** sau `schtasks /End` + `/Run`, tiến trình con cũ còn giữ `ops_daemon.lock` vài giây nên bản mới thoát mã 3. Sửa: `acquire_single_instance` chờ ân hạn `daemon.lock_grace_seconds` (45 s). Test `tests/ops/test_ops_restart_lock.py`, kiểm thật trên task.
 
 ---
 

@@ -10,7 +10,7 @@ lang: en
 authors: [unknown]
 adr: [ADR-0010]
 plan: []
-evidence: [commit:c6c2a56, path:project/scripts/pipeline_radar.py, test:project/tests/test_cli_entrypoints.py, "metric:167/318 articles published today had L1 (52.5%)"]
+evidence: [commit:c6c2a56, path:project/scripts/pipeline_radar.py, test:project/tests/repo/test_cli_entrypoints.py, "metric:167/318 articles published today had L1 (52.5%)"]
 verify: "historical: no verify command recorded"
 reconstructed: 2026-10-06
 summary: The radar printed how many articles published today had a passing L1 output, how many waited for an agent and how many were unrouted; US-025 later rewrote the radar for the Article Lane.

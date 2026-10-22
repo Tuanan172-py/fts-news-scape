@@ -10,8 +10,8 @@ lang: en
 authors: [An Pham Thanh]
 adr: []
 related: [US-011]
-evidence: ["commit:0f1a65c", "path:project/scripts/pipeline_radar.py", "test:project/tests/test_orchestrator.py", "metric:7 passed in test_orchestrator.py, 403 suite passed"]
-verify: "cd project; C:/venvs/news-scape/Scripts/python.exe -m pytest tests/test_orchestrator.py -q"
+evidence: ["commit:0f1a65c", "path:project/scripts/pipeline_radar.py", "test:project/tests/scrapers/test_orchestrator.py", "metric:7 passed in test_orchestrator.py, 403 suite passed"]
+verify: "cd project; C:/venvs/news-scape/Scripts/python.exe -m pytest tests/scrapers/test_orchestrator.py -q"
 original: "commit:0f1a65c"
 summary: A test blocks enabling any domain that does not store Bronze, and the radar flags a per-domain 404 spike as a suspected URL structure change.
 ---
@@ -46,7 +46,7 @@ summary: A test blocks enabling any domain that does not store Bronze, and the r
 
 | Tier | Command or check | Result |
 |---|---|---|
-| Unit | `cd project; C:/venvs/news-scape/Scripts/python.exe -m pytest tests/test_orchestrator.py -q` | passed, 7; full suite 403 |
+| Unit | `cd project; C:/venvs/news-scape/Scripts/python.exe -m pytest tests/scrapers/test_orchestrator.py -q` | passed, 7; full suite 403 |
 | Integration | radar needs the real DB; checked by a manual run | not recorded |
 | Platform | none | not run |
 
@@ -55,7 +55,7 @@ summary: A test blocks enabling any domain that does not store Bronze, and the r
 - Real RED/GREEN proof: `enabled: true` was set temporarily on `project/config/domains/znews.yaml` (`method: rss`).
 
 ```
-FAILED tests/test_orchestrator.py::test_enabled_domains_must_capture_bronze
+FAILED tests/scrapers/test_orchestrator.py::test_enabled_domains_must_capture_bronze
 AssertionError: Domain đang bật nhưng KHÔNG lưu Bronze: znews (method=rss).
 Xem checklist project/docs/dev/03-adding-a-source.md §2b trước khi bật ...
 ```
