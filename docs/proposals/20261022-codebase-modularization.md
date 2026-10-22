@@ -2,13 +2,13 @@
 id: PRP-20261022-codebase-modularization
 type: proposal
 title: "Codebase modularization: assess options and target structure"
-status: draft
+status: decided
 lane: high-risk
 created: 2026-10-22
 updated: 2026-10-22
 lang: en
 authors: [claude-opus-5-5]
-adr: []
+adr: [ADR-0027]
 story: [US-049]
 plan: []
 related: [ADR-0010, ADR-0024, ADR-0026, FACT-tests-must-not-write-operational-db]
@@ -126,4 +126,4 @@ Rules, enforced by `project/tests/test_architecture.py` with an allowlist frozen
 
 ## Outcome
 
-<!-- Filled when status leaves draft: operator decision, date, linked ids. Append-only. -->
+- 2026-10-22 operator: option B approved, to be executed through S5; deletion lists of F4 groups 2 and 3 approved; branch push approved. Decision recorded in ADR-0027; work tracked in US-049, phases S1-S5 on branch `dev/us049-codebase-modularization`.

@@ -1,0 +1,30 @@
+{
+ "all_ids": [
+  "art-a",
+  "art-b"
+ ],
+ "batch_id": "G1",
+ "broken": 0,
+ "counters": {
+  "broken": 0,
+  "envelope": 0,
+  "fence": 0,
+  "prose_prefix": 0,
+  "raw_records": 2
+ },
+ "expected": 2,
+ "gold": 2,
+ "gold_skipped": [],
+ "invalid": {},
+ "l1": 2,
+ "mentions": 1,
+ "missing": [],
+ "owned": 2,
+ "parse_fail_rate": 0.0,
+ "received_ids": [
+  "art-a",
+  "art-b"
+ ],
+ "records": 2,
+ "repaired": 0
+}

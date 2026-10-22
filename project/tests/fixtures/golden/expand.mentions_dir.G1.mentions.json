@@ -1,0 +1,20 @@
+[
+ {
+  "article_id": "art-a",
+  "title": "Hòa Phát báo lãi quý 3 tăng 25%",
+  "created_at": "<TS>",
+  "mentions": [
+   {
+    "surface": "HPG",
+    "group": "TIC",
+    "entity_id": "TICKER:HPG",
+    "type": "TICKER",
+    "in_list": true,
+    "source": "body"
+   }
+  ],
+  "intent_source": {
+   "TICKER:HPG": "BOTH"
+  }
+ }
+]

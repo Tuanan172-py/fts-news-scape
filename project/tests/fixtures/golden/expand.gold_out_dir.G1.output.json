@@ -1,0 +1,32 @@
+[
+ {
+  "article_id": "art-a",
+  "summary": "Hòa Phát báo lãi quý 3 tăng 25% nhờ sản lượng thép.",
+  "key_points": [
+   "Lợi nhuận tăng 25%",
+   "Biên gộp mở rộng"
+  ],
+  "implication": "Kết quả vượt kỳ vọng củng cố định giá cổ phiếu thép trong ngắn hạn tới quý sau.",
+  "sentiment": "positive",
+  "time_sensitivity": "today",
+  "citations": [
+   "Tập đoàn Hòa Phát công bố lợi nhuận sau thuế quý 3 đạt 3.200 tỷ đồng, tăng 25% so với cùng kỳ.",
+   "Sản lượng thép cuộn cán nóng HRC tăng 32%, biên lợi nhuận gộp mở rộng lên 14,1%."
+  ]
+ },
+ {
+  "article_id": "art-b",
+  "summary": "VNDirect công bố báo cáo quản trị định kỳ.",
+  "key_points": [
+   "Báo cáo quản trị định kỳ",
+   "Không có số liệu mới"
+  ],
+  "implication": "Thông tin định kỳ, ít tác động tới giá cổ phiếu ngành chứng khoán trong tuần.",
+  "sentiment": "neutral",
+  "time_sensitivity": "archive",
+  "citations": [
+   "Công ty chứng khoán VNDirect công bố báo cáo quản trị sáu tháng đầu năm theo quy định."
+  ],
+  "citation_basis": "single-paragraph"
+ }
+]

@@ -2,14 +2,14 @@
 id: US-049
 type: story
 title: Research codebase architecture and decide on module restructuring
-status: blocked
+status: in_progress
 lane: high-risk
 created: 2026-10-22
 updated: 2026-10-22
 lang: en
 authors: [claude-opus-5-5]
 branch: dev/us049-codebase-modularization
-adr: []
+adr: [ADR-0027]
 plan: []
 related: [PRP-20261022-codebase-modularization, ADR-0010, ADR-0024]
 evidence:
