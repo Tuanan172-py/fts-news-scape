@@ -16,7 +16,7 @@ sources:
   - id: db-store
     resource: project/src/db/store.py
     title: DDL scraper_heartbeat / scraper_metrics
-sources_last_checked: 2026-09-07
+sources_last_checked: 2026-10-22
 ---
 
 # Definition

@@ -1,3 +1,5 @@
+> Lưu trữ 2026-10-22 (US-050): xây trên `db_status.py`/`dbq.py` đã xoá và các bảng lane L1/Gold, thay bằng `python scripts/pipeline_radar.py status` (AGENTS.md §9) và [runbook ops_daemon](../../operations/ops-daemon.md).
+
 # Vận hành — Query DB kiểm tra nhanh trạng thái scrape/pipeline
 
 Cập nhật: 2026-08-18 · Mục tiêu: kiểm tra sức khoẻ hệ thống bằng DB, không cần đọc log.

@@ -1,3 +1,5 @@
+> Tài liệu lịch sử (US-050, 2026-10-22): bàn giao của đợt W365 ngày 21/09, chạy trên cây OneDrive đã ngừng (ADR-0024) và đường dẫn `project/data/` cũ. Không làm theo; quy trình hiện hành: [`RUNBOOK-article-lane.md`](RUNBOOK-article-lane.md).
+
 # ĐỢT W365 — Bàn giao sang phiên khác
 
 |  |  |

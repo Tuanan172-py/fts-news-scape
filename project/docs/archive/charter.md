@@ -1,3 +1,5 @@
+> Lưu trữ 2026-10-22 (US-050): charter gốc 2026-07 dựa trên Hermes cron, ClickHouse, Telegram và lệnh chưa từng tồn tại (`src/run_collection.py`, `scripts/deploy_crons.sh`), thay bằng [design/00-end-to-end-architecture](../design/00-end-to-end-architecture.md) và [architecture.md](../architecture.md).
+
 # Web Monocle — Project Charter
 
 ## 1. Tổng quan dự án

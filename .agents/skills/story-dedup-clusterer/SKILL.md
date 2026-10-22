@@ -5,6 +5,8 @@ description: Xác nhận và gộp cụm các bài báo trùng một sự kiện
 
 # Story Dedup & Clustering Skill
 
+> **Đã gỡ (2026-10-02, ADR 0016, `registry.yaml` status `retired`).** Cụm hoá trùng lặp là việc tất định của operator `story-clusterer` (`scripts/story_cluster.py`); bài viết lại vẫn được phân tích đầy đủ. Không dùng skill này trong runtime; chỉ giữ làm lịch sử.
+
 > **Mục đích:** Xác nhận cụm bài trùng sự kiện đa nguồn do Operator tiền nhóm bằng SimHash, chọn một bài canonical cho mỗi cụm và gom danh sách nguồn để tầng Gold chỉ phân tích một lần.
 
 ## 1. Đầu vào

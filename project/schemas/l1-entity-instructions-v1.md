@@ -1,3 +1,5 @@
+> Lưu trữ 2026-10-22 (US-050): system prompt của agent L1 trong lane đã ngừng (ADR-0010). Agent `article-processor` hiện hành theo `project/schemas/article-compact-v2.schema.json` và `.agents/rules/11-hop-dong-dau-ra-thong-nhat.md`; schema `l1-entity-output-v1` vẫn là đầu ra của bước nạp.
+
 # L1 Entity-Recognition Instructions v1 — system prompt cho agent handoff
 
 Trạng thái: SPEC/GUIDELINE (không kèm LLM). Đây là **system prompt + checklist** cho

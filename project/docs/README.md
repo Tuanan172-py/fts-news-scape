@@ -1,67 +1,58 @@
-# Tài liệu Web Monocle
+# Tài liệu sản phẩm news-scape
 
-Bộ tài liệu chuyên sâu cho hệ thu thập tin tức thị trường chứng khoán VN. Cập nhật 2026-07-26
-(Phase 1 + 2 hoàn thành, 23 domain, 112 test).
+Mục lục tài liệu hiện hành của `project/`. Cập nhật 2026-10-22 (US-050). Lối vào cho agent là `AGENTS.md` ở gốc kho; quyết định kiến trúc nằm ở `docs/decisions/` (mục lục `docs/INDEX.md`).
 
 ## Đọc theo đối tượng
 
-| Bạn là… | Bắt đầu ở |
+| Bạn là | Bắt đầu ở |
 |---|---|
-| Mới, cần bức tranh lớn | [design/01-system-overview.md](design/01-system-overview.md) |
-| Kiến trúc sư / tech lead | thư mục [design/](design/) + [decisions.md](decisions.md) |
-| Dev sắp sửa code | [dev/01-codebase-guide.md](dev/01-codebase-guide.md) |
+| Mới, cần bức tranh lớn | [design/00-end-to-end-architecture.md](design/00-end-to-end-architecture.md), sơ đồ [diagrams/index.html](diagrams/index.html) |
+| Dev sắp sửa code | [dev/01-codebase-guide.md](dev/01-codebase-guide.md), luật ranh giới module `.agents/rules/12-module-boundaries.md` (ADR-0027) |
 | Muốn thêm nguồn tin | [dev/03-adding-a-source.md](dev/03-adding-a-source.md) |
-| Làm việc trên 2 máy (dev + vận hành) | [dev/07-two-machine-workflow.md](dev/07-two-machine-workflow.md) |
-| Vận hành / trực hệ thống | [operations/deployment.md](operations/deployment.md) + [operations/troubleshooting.md](operations/troubleshooting.md) |
-| Tìm hiểu 1 domain cụ thể | [domains/README.md](domains/README.md) |
+| Vận hành hằng ngày | [operations/ops-daemon.md](operations/ops-daemon.md), runbook Article Lane `.agents/dsh/RUNBOOK-article-lane.md` |
+| Xử lý sự cố | [operations/troubleshooting.md](operations/troubleshooting.md) |
+| Tìm hiểu một nguồn tin | [domains/README.md](domains/README.md), [skills/](skills/) |
 
-## Cấu trúc
+## design/ — Thiết kế
 
-### 🎯 design/ — Thiết kế (vì sao & luồng)
-- [01-system-overview.md](design/01-system-overview.md) — tổng quan, triết lý, sơ đồ khối
-- [02-execution-flow.md](design/02-execution-flow.md) — luồng thực thi từng bước (file:line)
-- [03-source-strategy.md](design/03-source-strategy.md) — chiến lược nguồn, xử encoding/date/dedup/filter
-- [04-sentiment-classification.md](design/04-sentiment-classification.md) — sentiment & phân loại rule-based
-- [05-notification-coverage.md](design/05-notification-coverage.md) — notify: phủ toàn thị trường (sources/has_symbol/keyword), 98% coverage
-- [13-per-user-output-workflow.md](design/13-per-user-output-workflow.md) — quy trình end-to-end lớp NGƯỜI DÙNG: input Excel → compile → L1/agent → CSV output per user
+- [00-end-to-end-architecture.md](design/00-end-to-end-architecture.md): kiến trúc 6 lớp, Article Lane, module sau ADR-0027.
+- [02-execution-flow.md](design/02-execution-flow.md): luồng thực thi capture Bronze.
+- [03-source-strategy.md](design/03-source-strategy.md): chiến lược tiếp cận và xử lý nguồn.
+- [05-notification-coverage.md](design/05-notification-coverage.md): phạm vi thông báo.
+- [06-raw-html-capture.md](design/06-raw-html-capture.md): lưu HTML gốc (Bronze).
+- [07-storage-layers-and-change-detection.md](design/07-storage-layers-and-change-detection.md): các lớp lưu trữ và phát hiện thay đổi.
+- [08-handoff-contract-catalog.md](design/08-handoff-contract-catalog.md): hợp đồng work package và catalog.
+- [12-bronze-to-silver-rules.md](design/12-bronze-to-silver-rules.md): quy tắc Bronze sang Silver.
+- [14-entity-system-and-mapping.md](design/14-entity-system-and-mapping.md): hệ thực thể và ánh xạ watchlist.
 
-### 🔧 dev/ — Cho lập trình viên (code chạy thế nào)
-- [01-codebase-guide.md](dev/01-codebase-guide.md) — cây thư mục, tầng, registry, HTTP client
-- [02-data-model-and-db.md](dev/02-data-model-and-db.md) — Article, schema SQLite, DBWriter, dedup
-- [03-adding-a-source.md](dev/03-adding-a-source.md) — thêm nguồn RSS/API (có checklist)
-- [04-testing.md](dev/04-testing.md) — bản đồ 112 test, FakeHTTP, fixtures
-- [05-known-issues.md](dev/05-known-issues.md) — vấn đề đã biết & nợ kỹ thuật
-- [06-raw-html-capture-guide.md](dev/06-raw-html-capture-guide.md) — hướng dẫn capture Bronze byte-exact
-- [07-two-machine-workflow.md](dev/07-two-machine-workflow.md) — quy trình 2 máy: dev qua GitHub + vận hành trên OneDrive
-- [08-git-codebase-governance-guide.md](dev/08-git-codebase-governance-guide.md) — phương thức vận hành Git & quản trị codebase tiêu chuẩn sau khi tích hợp Harness
+## dev/ — Cho lập trình viên
 
-### 🌐 domains/ — Chi tiết từng nguồn
-- [README.md](domains/README.md) — ma trận 23 domain + watchlist + settings
-- [api-scrapers.md](domains/api-scrapers.md) — cafef, fireant, tnck, vndirect
-- [exchange-layer0.md](domains/exchange-layer0.md) — hose, hnx (sàn chính thống)
-- [vn-rss.md](domains/vn-rss.md) — 11 báo VN
-- [intl-rss.md](domains/intl-rss.md) — 5 báo tài chính quốc tế
+- [01-codebase-guide.md](dev/01-codebase-guide.md): cây `src/`, CLI mỏng trong `scripts/`, test theo gói.
+- [02-data-model-and-db.md](dev/02-data-model-and-db.md): mô hình dữ liệu và SQLite.
+- [03-adding-a-source.md](dev/03-adding-a-source.md): thêm nguồn tin, có checklist.
+- [04-testing.md](dev/04-testing.md): bố cục `tests/<gói>/`, cách chạy test.
+- [05-known-issues.md](dev/05-known-issues.md): vấn đề đã biết.
+- [06-raw-html-capture-guide.md](dev/06-raw-html-capture-guide.md): phát triển capture Bronze.
+- [08-git-codebase-governance-guide.md](dev/08-git-codebase-governance-guide.md): git và quản trị codebase.
 
-### 🚀 operations/ — Triển khai & sự cố
-- [end-to-end-operations-playbook.md](operations/end-to-end-operations-playbook.md) — cẩm nang vận hành quy trình trọn gói End-to-End từ Bronze/Silver -> L1 -> Gold v2-lean -> Excel Deliverables
-- [daily-runbook-per-user.md](operations/daily-runbook-per-user.md) — runbook chi tiết chạy chuỗi per-user hàng ngày
-- [deployment.md](operations/deployment.md) — cài, chạy, monitor, backup
-- [troubleshooting.md](operations/troubleshooting.md) — triệu chứng → xử lý
-- [db-health-queries.md](operations/db-health-queries.md) — query DB kiểm tra nhanh trạng thái scrape (dashboard `scripts/db_status.py` + SQL thô)
-- [agent-prompting-guide.md](operations/agent-prompting-guide.md) — prompt mồi + context agent cần đọc + tiêu chí nghiệm thu (DoD) + vòng lặp tới khi hoàn thành
-- [monocle-db-handbook.md](operations/monocle-db-handbook.md) — sổ tay vận hành DB hàng ngày: schema, cookbook query theo tình huống, sự cố, backup/bảo trì (`scripts/dbq.py`)
+## operations/ — Vận hành
 
-## Tài liệu nền (có sẵn)
-- [architecture.md](architecture.md) — kiến trúc + TDR (bản gốc Phase 1)
-- [diagrams/README.md](diagrams/README.md) — sơ đồ vận hành toàn hệ (Mermaid, mở `diagrams/index.html` offline)
-- [decisions.md](decisions.md) — technical decision records
-- [runbook.md](runbook.md) — quy trình vận hành
-- [skills/](skills/) — quirk chi tiết per-source (cafef, tnck, fireant, rss-sources)
-- [phase1-report.md](phase1-report.md), [rss-reference.md](rss-reference.md)
+- [ops-daemon.md](operations/ops-daemon.md) và [ops-daemon-reference.md](operations/ops-daemon-reference.md): vận hành tự chủ L0/L1 (ADR-0012, ADR-0026).
+- [publisher.md](operations/publisher.md): xuất bản lên SharePoint sandbox (ADR-0026.D1).
+- [deployment.md](operations/deployment.md): cài đặt và chạy nền.
+- [troubleshooting.md](operations/troubleshooting.md): triệu chứng và cách xử lý.
+- [user-venv-guide.md](operations/user-venv-guide.md): chạy script bằng `C:\venvs\news-scape`.
+- [runbook.md](runbook.md): quy trình capture và Silver.
 
-## Trạng thái nhanh
-- 23 domain: 22 enabled + 1 disabled (baodautu). vi=17, en=6.
-- DB: SQLite WAL 1 file `data/monocle.db` (~550MB).
-- Sentiment: rule-based VN (lexicon 316 term); EN → neutral.
-- Test: 112 passing.
-- **Lưu ý vận hành:** chỉ chạy 1 scheduler (xem known-issues §1.1).
+## Nguồn tin và tham chiếu
+
+- [domains/](domains/README.md): ma trận nguồn, API, RSS, HTML, sàn.
+- [skills/](skills/): đặc thù từng nguồn (cafef, fireant, tnck, rss-sources).
+- [reference/](reference/README.md): artifact capture có chú thích.
+- [entities.md](entities.md), [rss-reference.md](rss-reference.md), [architecture.md](architecture.md) (TDR gốc Phase 1).
+- [diagrams/](diagrams/README.md): sơ đồ vận hành (Mermaid, mở `index.html` offline).
+
+## Lưu trữ
+
+- [archive/](archive/): tài liệu của lane L1/Gold đã ngừng (ADR-0010), công cụ đã xoá ở US-049 và quy trình hai máy trên OneDrive (ADR-0024). Mỗi tệp có dòng đầu chỉ tới tài liệu thay thế.
+- [others/](others/): báo cáo và ghi chép lịch sử.

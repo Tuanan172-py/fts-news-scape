@@ -1,7 +1,7 @@
 ---
 type: Reference
 title: Cấu trúc Mã nguồn (Codebase Guide)
-description: Bản đồ 74 module Python trong project/src — 12 package, vai trò từng file và điểm vào.
+description: Bản đồ 143 file Python trong project/src sau ADR-0027 — 17 package, CLI mỏng, vai trò từng gói và điểm vào.
 resource: project/src/
 tags: [codebase, reference, development, architecture]
 status: stable
@@ -20,116 +20,123 @@ sources:
   - id: registry
     resource: project/src/scrapers/__init__.py
     title: Scraper REGISTRY
-sources_last_checked: 2026-09-07
+  - id: adr-0027
+    resource: docs/decisions/0027-module-boundaries-thin-clis.md
+    title: Ranh giới module, CLI mỏng
+sources_last_checked: 2026-10-22
 ---
 
-`project/src/` gồm **12 package, 74 file `.py`** (kể cả `__init__.py` và 2 module gốc `orchestrator.py`, `morninger.py`). Nguyên tắc: thêm domain mới không cần sửa
-core; thêm tầng mới không cần sửa scraper.
+`project/src/` gồm **17 package + 2 module gốc (`orchestrator.py`, `morninger.py`), 143 file
+`.py`** (kể cả `__init__.py`). Ranh giới module theo ADR-0027: logic nằm trong `src/`,
+`project/scripts/*.py` chỉ là **CLI mỏng** giữ nguyên đường dẫn (lệnh `python scripts/<tên>.py`
+không đổi); mọi kết nối SQLite ngoài nội bộ `src/db` đi qua `src/db/connect.py`.[^adr-0027]
+
+Nguyên tắc: thêm domain mới không cần sửa core; thêm tầng mới không cần sửa scraper.
 
 # Điểm vào
 
 | Lệnh | Module | Việc |
 |---|---|---|
-| `python -m src.morninger` | `morninger.py` | **PROD** — 3 job: capture 15′, re-derive 30′, drift sáng |
-| `python -m src.orchestrator` | `orchestrator.py` | chỉ Vòng 1 (standalone/fallback) |
+| `python -m src.morninger` | `morninger.py` | capture + re-derive + drift + reclaim |
+| `python -m src.orchestrator` | `orchestrator.py` | chỉ Vòng 1 (standalone) |
 | `python -m src.monitor.health` | `monitor/health.py` | health check |
+| `scripts/ops_daemon.py run` | `ops/runtime/daemon.py` | control plane không người trực (ADR-0012) |
+| `scripts/article_run.py` | `ops/wave/article_run.py` | một đợt Article Lane |
+| `scripts/pipeline_radar.py` | `ops/console/radar.py` | radar chỉ đọc |
+| `scripts/publish.py` | `export/publisher.py` (`publish_day`) | publish lên SharePoint sandbox (ADR-0026.D1) |
 
-# `src/core/` — nền tảng (10 file)
+# CLI mỏng → module
+
+| Script | Module |
+|---|---|
+| `article_pack.py` · `article_expand.py` · `token_ledger.py` · `article_tick.py` · `handoff.py` | `src/article_lane/{pack,expand,ledger,tick,handoff}.py` |
+| `article_run.py` | `src/ops/wave/article_run.py` |
+| `pipeline_radar.py` | `src/ops/console/radar.py` |
+| `build_entities.py` | `src/agent/catalog/catalog_build.py` |
+
+# `src/core/` — nền tảng (18 file)
 
 | File | Vai trò |
 |---|---|
+| `paths.py` | **mọi** đường dẫn dữ liệu từ `data_root()` (`MONOCLE_DATA_DIR`, mặc định `C:\data\news-scape`); `PROJECT_ROOT`, `REPO_ROOT`, `harness_db_path()` |
+| `config.py` | loader `settings.yaml`, `domains/*.yaml`, `watchlist.yaml`, `secrets.yaml`; `resolve_db_path`, `resolve_source_domain` |
+| `ops_config.py` | cấu hình, đường dẫn, secrets của tầng vận hành |
+| `pipeline_spec.py` | đọc khối `ops_spec` của `.agents/pipeline.yaml` |
+| `redact.py` | che secrets trước khi ghi log/sự kiện/prompt |
 | `base_scraper.py` | `BaseScraper` template method: `fetch_list` → `parse_item` → dedup → `enrich` |
-| `config.py` | loader `settings.yaml`, `domains/*.yaml`, `watchlist.yaml`, `secrets.yaml` |
 | `models.py` | `Article`, `ScrapeResult`, `sha256_hash()`, `now_vn_iso()`, `VN_TZ` |
-| `logging.py` | Loguru — 1 sink file xoay vòng + stderr |
-| `retry.py` | `run_with_retry` / `run_with_fallback` (primary fail → fallback) |
-| `staging.py` | Safe I/O — chống Windows file lock, `safe_atomic_write`, `safe_json_dump` |
-| `proclock.py` | advisory lock scheduler (`host:pid`, stale 2400s) |
-| `stdio.py` | ép stdout/stderr UTF-8 trên Windows |
-| `tickers.py` | gắn mã CK 3 ký tự in hoa theo watchlist |
+| `proclock.py` | `capture.lock` (file lock một tiến trình) + advisory lock scheduler (stale 2400s) |
+| `user_manifest.py` | công tắc bật/tắt người dùng từ `<DATA_ROOT>/subscriptions/manifest.yaml` |
+| `logging.py` · `retry.py` · `staging.py` · `stdio.py` · `tickers.py` · `urlnorm.py` · `htmltitle.py` · `pagination.py` | log, retry/fallback, ghi nguyên tử, UTF-8 console, gắn mã CK, chuẩn hoá URL, tiêu đề, phân trang theo watermark |
 
-# `src/crawler/` — tầng HTTP & Bronze (4 file)
+# `src/crawler/` (4) · `src/scrapers/` (11) · `src/processor/` (2)
 
-`http_client.py` (session dùng chung, rate limit per-domain, UA rotation, truststore) ·
-`raw_store.py` (**Bronze WORM**, atomic tmp→replace, meta 14 khoá) · `robots.py` (RobotsGate
-trước khi fetch chi tiết) · `backoff.py` (`SourceBackoff` cool-down cấp source).
+`http_client.py` (rate limit per-domain, UA rotation, truststore) · `raw_store.py` (**Bronze
+WORM**, atomic tmp→replace) · `robots.py` · `backoff.py`.
 
-# `src/scrapers/` — 11 file (9 scraper + mixin + registry)
+Scraper: `rss_capture.py` (RSS + Bronze — cách thêm nguồn 0 dòng code), `rss_generic.py` (RSS
+thuần, không Bronze), `capture_mixin.py`, `cafef.py`, `tnck.py`, `baodautu.py`, `vietstock.py`,
+`vneconomy.py`, `fireant.py`, `vndirect.py`. Đăng ký bằng `@register("<name>")` vào
+`REGISTRY`.[^registry]
 
-| File | Domain | Phương thức |
+`processor/`: `extractor.py` (trafilatura) · `classifier.py` (`classify_rule_based`). Engine
+sentiment rule-based đã xoá.
+
+# `src/db/` — lưu trữ (7 file)
+
+`store.py` (`ArticleStore`: DDL `_SCHEMA`, pragmas WAL, state + advisory lock) · `connect.py`
+(`open_ro`, `open_rw`) · `writer.py` (`DBWriter` single-writer) · `dedup.py` · `registry.py` (sổ
+phát hiện URL, ADR 0013) · `snapshot.py` (bản chụp không chặn ghi) · `preflight.py` (đường dẫn
+DB + thử ghi trước khi tiêu token).
+
+# `src/pipeline/` — Vòng 2 (12 file)
+
+`silver_builder.py` · `change_detect.py` · `run.py` · `derive.py` (tăng dần theo watermark) ·
+`drift.py` · `refresh.py` · `backfill.py` · `reconcile.py` (đối chiếu sitemap, độ phủ) ·
+`story_cluster.py` · `cluster_job.py` · `inherit.py` (cụm câu chuyện, ADR 0016).
+
+# `src/handoff/` (4) — work-package + hàng đợi
+
+`work_package.py` · `contract_validator.py` (JSON Schema) · `catalog.py` (`Catalog` —
+enqueue/claim/mark, exactly-once).
+
+# `src/agent/` — hợp đồng, catalog thực thể, runner (24 file)
+
+| Gói | File | Vai trò |
 |---|---|---|
-| `rss_capture.py` | generic | RSS list + Bronze capture ⇒ **cách thêm nguồn 0 dòng code** |
-| `rss_generic.py` | generic | RSS thuần, **không** Bronze ⇒ các domain dùng nó đang tắt |
-| `capture_mixin.py` | — | logic capture dùng chung (DRY) |
-| `cafef.py` | cafef.vn | JSON API nội bộ theo watchlist |
-| `tnck.py` | tinnhanhchungkhoan.vn | zone JSON API, 9 zone |
-| `baodautu.py` | baodautu.vn | HTML listing (RSS hỏng vĩnh viễn) |
-| `vietstock.py`, `vneconomy.py` | tương ứng | RSS + capture |
-| `fireant.py`, `vndirect.py` | tương ứng | REST API (đang tắt) |
+| `runners/` | `agy_runner`, `opencode_runner`, `openrouter_runner` | gọi runtime LLM cho từng lô (ADR-0026.D3) |
+| `contract/` | `article_contract`, `dod`, `l1_router`, `conformance` | hợp đồng đầu ra, cổng DoD, chấm provider (ADR 0017) |
+| `ingest/` | `runner`, `l1_runner`, `batch_handoff` | nạp bản ghi qua cổng DoD |
+| `catalog/` | `entities`, `intent_resolve`, `l1_classifier`, `catalog_build` | `EntityRegistry`, ánh xạ tên → `entity_id`, khớp tất định, dựng catalog |
+| `packet/` | `distill`, `pruner`, `prefix`, `silver_source` | chắt lọc đoạn, tiền tố tĩnh, đọc Silver |
 
-Đăng ký bằng decorator `@register("<name>")` vào `REGISTRY`; import ở cuối
-`scrapers/__init__.py` để trigger.[^registry]
+# `src/article_lane/` (6) · `src/telemetry/` (3)
 
-# `src/db/` — lưu trữ (4 file)
+`pack.py` · `expand.py` · `ledger.py` (`token_ledger` ở `harness.db`) · `tick.py` · `handoff.py`.
+`telemetry/`: `dsh_usage.py` (số đo token thật của DSH) · `trace.py` (span của đợt vào `ops_spans`).
 
-`store.py` (`ArticleStore`: DDL 10 bảng, pragmas WAL, state + advisory lock) ·
-`writer.py` (`DBWriter` single-writer) · `dedup.py` (`DedupCache` 2 lớp) ·
-`snapshot.py` (bản chụp point-in-time không chặn ghi).
+# `src/ops/` — vận hành tự chủ (28 file)
 
-# `src/pipeline/` — Vòng 2 (9 file)
-
-`silver_builder.py` · `change_detect.py` · `run.py` (`process_meta` — 1 artifact qua cả chuỗi) ·
-`derive.py` (tăng dần theo watermark) · `drift.py` · `refresh.py` (re-fetch kích hoạt
-change-detect) · `user_workflow.py` (orchestrator lớp người dùng) ·
-`periodic_reports.py` (**ngoài** vòng 2 — driver báo cáo định kỳ NSO, xem
-[pipeline](../pipelines/periodic_reports.md)).
-
-`silver_builder.py` có nhánh JSON generic: Content-Type là JSON ⇒ `_html_from_json()` rút HTML
-từ các trường `content` / `originalContent` / `body_html`… nên Bronze JSON (fireant) ra Silver được.
-
-# API nền tảng thêm 2026-09-07
-
-| Hàm | File | Vì sao tồn tại |
-|---|---|---|
-| `resolve_source_domain(name)` | `src/core/config.py` | Nguồn sự thật cho host của domain: dotted → `domains/<name>/schema.yaml` khoá `domain:` → netloc `base_url` → legacy `<name>.vn`. Sửa bẫy cũ `tnck` → `tnck.vn` (không khớp gì trong DB ⇒ báo cáo 0 bài) |
-| `RawStore.save_binary(...)` | `src/crawler/raw_store.py` | Lưu file nhị phân (`.xlsx`/`.docx`/`.pdf`) WORM; meta ghi `.binmeta.json` để `derive` không quét trúng |
-| `scripts/maintenance/backfill_deferred.py` | scripts | Thay `enrich_deferred.py` (đã xoá — nó fetch lại từ mạng, **mù Bronze**). Đọc Bronze đã có, kể cả Bronze JSON; `--dates-only` vá `published_at` thiếu |
-
-# `src/handoff/` — ranh giới producer↔agent (4 file)
-
-`work_package.py` (`WorkPackageBuilder` + `write_package`) · `contract_validator.py` (validate
-instance vs JSON Schema) · `catalog.py` (`Catalog` — enqueue/claim/mark, exactly-once).
-
-# `src/agent/` — Vòng 3, **không LLM** (12 file)
-
-| File | Vai trò |
+| Gói | Nội dung |
 |---|---|
-| `runner.py` | `AgentRunner` — export task Lớp 2, ingest + DoD |
-| `l1_runner.py` | `L1Runner` — mirror cho Lớp 1 |
-| `l1_router.py` | quy trình 2 tầng code-first → handoff, `check_l1_dod` |
-| `l1_classifier.py` | bước code-first deterministic (khớp mã + alias trong tiêu đề) |
-| `packet.py` | dựng task packet self-describing (input + output_contract + constraints) |
-| `pruner.py` | lọc đoạn văn sạch — giảm ~96% payload, giữ nguyên văn cho citation |
-| `batch_handoff.py` | gom 5–10 bài vào `batch_XX.task.json` |
-| `manifest.py` | manifest lô + hiển thị tiến độ trên terminal |
-| `archive.py` | dọn/lưu trữ packet sau khi ingest thành công |
-| `dod.py` | `verify_preconditions` + `check_dod` (4 predicate) |
-| `entities.py` | `EntityRegistry` — detect / subscribers_for / resolve_subscription |
+| `wave/` | `wave_flow`, `dbos_flow`, `article_run`, `manual`, `lanes`, `procrun`, `metrics` |
+| `runtime/` | `daemon`, `sensor`, `probes`, `breakers`, `mandate`, `order`, `supervisor`, `sentinel`, `notify` |
+| `console/` | `control_room` (+ `web/control_room.html`), `commands`, `present`, `reports`, `supervision`, `radar`, `improve` |
+| `store.py` | sự kiện, cảnh báo, breaker, đợt, lệnh trong `ops.db` |
 
-# `src/export/` (5 file) · `src/users/` (2 file)
+# `src/export/` (8) · `src/lakehouse/` (5) · `src/analytics/` (2) · `src/users/` (2)
 
-`csv_export.py` (utf-8-sig) · `silver_manifest.py` · `user_output.py` (`UserOutputWriter` — gate,
-route, noise filter, ghi CSV) · `checkpoint.py` (resume theo `article_id`) ·
-`users/compile.py` (input người dùng → yaml + manifest).
+`user_output.py` (gate, route, noise filter) · `xlsx_delivery.py` (file giao `.xlsx`) ·
+`radar_sheet.py` · `checkpoint.py` · `csv_export.py` · `silver_manifest.py` · `publisher.py`
+(`publish_day`, ADR 0023/0026). `lakehouse/`: thư viện dropzone + consolidator DuckDB
+(`lakehouse_cli.py` chỉ verify + dropzone). `analytics/signals.py` dựng `signal_daily`,
+`entity_links`, `source_profile`. `users/compile.py` biên dịch danh mục người dùng.
 
-# `src/monitor/` (6 file) · `src/notifier/` (2) · `src/processor/` (4)
+# `src/monitor/` (3) · `src/notifier/` (2)
 
-`daily_reporter.py` (analytics toàn hệ) · `domain_reporter.py` (báo cáo Markdown theo domain) ·
-`domain_validator.py` (validate field theo schema domain) · `health.py` · `heartbeat.py` ·
-`file_notify.py` · `extractor.py` (trafilatura) · `classifier.py` (**đang chạy**) ·
-`sentiment.py`, `segment.py` (⚠️ **LEGACY / cold backup**, đã gỡ khỏi workflow).
+`health.py` · `heartbeat.py` · `notifier/file_notify.py`.
 
-# Dependency injection
+# Dependency injection (orchestrator)
 
 ```
 Orchestrator.__init__():
@@ -143,8 +150,6 @@ Orchestrator.__init__():
 build_scraper(cfg, http, dedup)   # scraper dùng chung HTTPClient + DedupCache
 ```
 
-⚠️ `SentimentEngine` **không còn** được inject vào orchestrator.
-
 # Liên quan
 
 - [Kiến trúc Hệ thống](architecture.md) · [Agent Contracts](agent_contracts.md)
@@ -154,3 +159,4 @@ build_scraper(cfg, http, dedup)   # scraper dùng chung HTTPClient + DedupCache
 [^orchestrator]: [Orchestrator](project/src/orchestrator.py)
 [^morninger]: [Morninger](project/src/morninger.py)
 [^registry]: [Scraper registry](project/src/scrapers/__init__.py)
+[^adr-0027]: [ADR-0027](docs/decisions/0027-module-boundaries-thin-clis.md)

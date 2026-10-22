@@ -17,7 +17,7 @@ sources:
   - id: cafef
     resource: project/src/scrapers/cafef.py
     title: CafeF — query theo từng mã watchlist
-sources_last_checked: 2026-09-07
+sources_last_checked: 2026-10-22
 ---
 
 `config/watchlist.yaml` liệt kê 30 mã blue-chip dưới khoá `tickers`.[^watchlist]
@@ -42,7 +42,7 @@ MSN GAS PLX POW GVR SAB VJC VRE BCM DGC
 ⚠️ Watchlist **không** phải bộ lọc thu thập: hệ thống vẫn thu mọi tin của nguồn đã bật, kể cả
 tin không có mã nào. Việc lọc "tin nào tới người dùng nào" do
 [Entity Registry](entity_registry.md) + [User Subscriptions](user_subscriptions.md) đảm nhiệm ở
-tầng Gold, phạm vi rộng hơn watchlist rất nhiều (2.152 thực thể).
+bước [User Output](../pipelines/user_output.md), phạm vi rộng hơn watchlist rất nhiều (2.152 thực thể).
 
 Cập nhật danh sách: `python scripts/refresh_watchlist.py` cũng dùng file này để chọn URL re-fetch
 kích hoạt change-detection.

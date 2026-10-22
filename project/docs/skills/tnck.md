@@ -11,7 +11,7 @@ Verified live: **2026-09-07** (cập nhật lớn — xem phase-03).
 > API zone là route DUY NHẤT — đừng probe lại.
 >
 > ⚠️ **`source_domain` = NON-WWW `tinnhanhchungkhoan.vn`**, khác tên config `tnck`.
-> Dùng `resolve_source_domain()`; `verify_quality.py` nhận **HOST**, `domain_check.py` nhận **tên config**.
+> Dùng `resolve_source_domain()`; công cụ nào lọc theo `source_domain` phải nhận **HOST**, không phải tên config.
 
 | Thành phần | Chi tiết |
 |-----------|---------|

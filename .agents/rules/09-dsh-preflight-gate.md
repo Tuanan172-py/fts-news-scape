@@ -53,7 +53,7 @@ Chạy **toàn bộ** trong **một** lệnh `run_code`. Không tách bước �
 
 | # | Hạng mục | Cách kiểm | ĐẠT khi |
 |:-:|---|---|---|
-| A1 | Junction preset sống | `(Get-Item "$env:USERPROFILE\.dsh\.agent-presets\news-scape-conductor").Target` | Trỏ đúng `.agents\dsh\presets\news-scape-conductor` |
+| A1 | Root preset trong patch profile `web` | `Select-String -Path "$env:USERPROFILE\.dsh\profiles\web\cordis.patch.yml" -SimpleMatch "agents\dsh\presets"` | Row `agent-presets` có `path: 'C:\src\news-scraper\.agents\dsh\presets'` (không dùng junction, xem `.agents/dsh/README.md` mục Wiring) |
 | A2 | Preset mặc định đúng | `settings.yaml` → `agent-presets.default` | `news-scape-conductor` |
 | A3 | **Preset nạp lại sau lần sửa cuối** | So `StartTime` tiến trình cổng 3080 với `LastWriteTime` của `agent.cordis.yml` | **StartTime > mtime preset** |
 | A4 | Phiên đúng preset | Tập tool trực tiếp chỉ có `run_code`; SDK có `pwsh`, `read`, `write`, `agent_article` | Đủ cả hai vế |
@@ -91,7 +91,7 @@ Persona lệch prefix là **lỗi duy nhất không có triệu chứng nào ngo
 
 ### 5.1 Conductor TỰ LÀM được
 
-Đọc/ghi trong repo · ghi vào `%USERPROFILE%\.dsh\` · đọc `settings.yaml` · chạy mọi script dự án qua `pwsh` · kiểm junction · sửa `agent.cordis.yml`, `preset.yml`, tài liệu.
+Đọc/ghi trong repo · ghi vào `%USERPROFILE%\.dsh\` · đọc `settings.yaml` · chạy mọi script dự án qua `pwsh` · kiểm patch profile `web` · sửa `agent.cordis.yml`, `preset.yml`, tài liệu.
 
 **Ranh giới thật:** Conductor không bị chặn bởi *quyền ghi*. Nó bị chặn bởi **vòng đời tiến trình** — nó là khách bên trong host, không phải chủ của host.
 
@@ -117,8 +117,8 @@ Persona lệch prefix là **lỗi duy nhất không có triệu chứng nào ngo
    - **Lấy PID bằng `netstat -ano | Select-String ":3080"`, không bằng `Get-NetTCPConnection`.**
    - `Get-CimInstance Win32_Process` cũng bị chặn (`Access denied`) — đừng dùng nó để đọc `CommandLine`.
 
-2. **Kiểm junction mất là chuyện thường** sau khi di chuyển OneDrive, đổi máy, hoặc clone mới.
-   - Sửa: `cmd /c mklink /J` theo `RUNBOOK-article-lane.md` §0.
+2. **Root preset lệch là chuyện thường** sau khi đổi máy, clone mới hoặc dời cây mã (ADR-0024).
+   - Sửa: chép `.agents/dsh/patch/web.cordis.patch.yml` vào `%DSH_HOME%\profiles\web\cordis.patch.yml` khi host đã dừng, theo `.agents/dsh/README.md` mục Wiring. Junction trong `.dsh\.agent-presets` bị bộ quét preset bỏ qua, không dùng.
 
 ---
 
@@ -130,7 +130,7 @@ Persona lệch prefix là **lỗi duy nhất không có triệu chứng nào ngo
        ▼
 [Bước 1] Chạy trọn 14 hạng mục trong MỘT run_code (0 token)
        │
-       ├── ĐỎ ở A1/A2 ──► Conductor sửa được (junction/settings.yaml)
+       ├── ĐỎ ở A1/A2 ──► Conductor sửa được (patch profile/settings.yaml)
        │                  └─► hiệu lực chỉ sau RESTART
        ├── ĐỎ ở A3 ────► 🔴 DỪNG. Người vận hành PHẢI restart host.
        │                  Không có đường vòng. Báo rõ hai mốc thời gian.

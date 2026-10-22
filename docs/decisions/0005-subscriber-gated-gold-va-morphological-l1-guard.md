@@ -14,8 +14,8 @@ evidence:
   - commit:d119a8f
   - commit:bb47e44
   - commit:eeccd9f
-  - path:project/src/agent/entities.py
-  - path:project/src/agent/pruner.py
+  - path:project/src/agent/catalog/entities.py
+  - path:project/src/agent/packet/pruner.py
   - path:project/config/entities/aliases/_context_guards.yaml
   - path:docs/stories/US-009-token-optimization-subscriber-gate-morphological-l1.md
   - metric:483 of 1,274 Gold articles (~38%) had no active subscriber, monocle.db 2026-09-11

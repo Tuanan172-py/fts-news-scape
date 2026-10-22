@@ -14,64 +14,71 @@ sources:
   - id: config-loader
     resource: project/src/core/config.py
     title: Config loaders
-sources_last_checked: 2026-09-07
+sources_last_checked: 2026-10-22
 ---
 
-`config/settings.yaml` chứa cấu hình toàn cục, load bởi `src/core/config.py::load_settings()`
+`project/config/settings.yaml` chứa cấu hình toàn cục, load bởi `src/core/config.py::load_settings()`
 khi [Morninger](../pipelines/morninger.md) hoặc orchestrator khởi động.[^config-loader]
 
-# Nội dung thực tế
+# Nội dung (rút gọn, bỏ chú thích)
 
 ```yaml
 database:
-  path: data/monocle.db
+  path: C:/data/news-scape/monocle.db   # MONOCLE_DB_PATH / MONOCLE_DATA_DIR ghi đè
 
 logging:
-  level: INFO
-  dir: logs
+  level: INFO               # thư mục log: <MONOCLE_DATA_DIR>/logs
 
 scheduler:
-  interval_minutes: 15     # chu kỳ capture
+  interval_minutes: 15      # orchestrator standalone
 
 http:
-  rate_limit: 3.0          # giây giữa 2 request cùng domain
+  rate_limit: 3.0           # giây giữa 2 request cùng domain
   timeout: 30
   max_retries: 3
 
 export:
-  enabled: true            # tự xuất CSV 'hôm nay' cuối mỗi cycle
-  dir: data/exports        # data/exports/articles-YYYY-MM-DD.csv (ghi đè mỗi cycle)
+  enabled: true             # <MONOCLE_DATA_DIR>/exports/articles-YYYY-MM-DD.csv, ghi đè mỗi cycle
 
 morninger:
-  capture_interval_minutes: 15   # nhịp capture Bronze (job 1)
-  rederive_interval_minutes: 30  # nhịp re-derive Silver tăng dần (job 2)
-  drift_hour: 6                  # giờ chạy drift report mỗi sáng (job 3)
+  capture_interval_minutes: 10
+  rederive_interval_minutes: 30
+  deferred_backfill_limit: 60
+  deferred_budget_seconds: 90
+  deferred_max_attempts: 5
+  deferred_retry_window_hours: 24
+  drift_hour: 6
   drift_minute: 0
   drift_limit: 100
 ```
 
-⚠️ File **không** khai báo `database.wal` / `busy_timeout`, cũng không có `logging.rotation`,
-`scheduler.coalesce`, `http.backoff_factor`, `user_agent_rotation`, `export.csv_path`. Các giá
-trị đó là **hằng số trong code**:
+Đường dẫn dữ liệu (log, export, notifications…) **không** khai trong file này: chúng do
+`src/core/paths.py` suy từ `MONOCLE_DATA_DIR` (mặc định `C:\data\news-scape`). `database.path`
+trong OneDrive hoặc trong kho mã bị `resolve_db_path` từ chối.
+
+Các giá trị sau là **hằng số trong code**, không có khoá YAML:
 
 | Hành vi | Nơi quy định |
 |---|---|
-| WAL, `busy_timeout=5000`, `synchronous=NORMAL` | `store._connect()` |
+| WAL, `busy_timeout=30000`, `synchronous=NORMAL` | `store._connect()` |
 | Log rotation 50 MB, giữ 14 ngày | `src/core/logging.py` |
-| `coalesce=True`, `max_instances=1`, misfire 300s | `orchestrator.start_scheduler()` |
-| Xoay User-Agent, backoff | `src/crawler/http_client.py` |
-| Stale lock scheduler 2400s | `src/core/proclock.py` |
+| `coalesce=True`, `max_instances=1`, misfire 300s | `morninger.build_scheduler()` / orchestrator |
+| Xoay User-Agent, backoff | `src/crawler/http_client.py`, `src/crawler/backoff.py` |
+| Stale lock scheduler 2400s, `capture.lock` | `src/core/proclock.py` |
+| `reclaim_interval_minutes` (mặc định 30) | `morninger.build_scheduler()` |
 
 # Các khối
 
 | Khối | Ảnh hưởng tới |
 |---|---|
 | `database` | [Web Monocle DB](../datasets/web_monocle_db.md) |
-| `logging` | Loguru sink (`logs/`) |
-| `scheduler` | [Capture Orchestrator](../pipelines/ingestion_scheduler.md) |
+| `logging` | Loguru sink `<DATA_ROOT>/logs/monocle.log` |
+| `scheduler` | [Capture Orchestrator](../pipelines/ingestion_scheduler.md) chạy standalone |
 | `http` | HTTPClient — rate limit / timeout / retry |
 | `export` | CSV `articles-YYYY-MM-DD.csv` cuối mỗi cycle |
-| `morninger` | 3 job của [Morninger](../pipelines/morninger.md) |
+| `morninger` | job của [Morninger](../pipelines/morninger.md), gồm bù bài deferred sau capture |
+
+Cấu hình tầng vận hành tự chủ nằm riêng ở `project/config/ops.yaml` (`src/core/ops_config.py`).
 
 # Liên quan
 

@@ -14,7 +14,7 @@ Cơ quan ngôn luận của **Bộ Tài chính**. Nguồn mạnh nhất (đã x�
 | **Scraper class** | `RssCaptureScraper` — **0 dòng code riêng**, chỉ 1 file YAML |
 | **Config name** | `thoibaotaichinhvietnam` (khớp host stem — né bẫy `.vn`-suffix) |
 | **Schema contract** | `domains/thoibaotaichinhvietnam/schema.yaml` |
-| **Bronze** | `data/raw_html/thoibaotaichinhvietnam.vn/<yyyymmdd>/` |
+| **Bronze** | `<DATA_ROOT>/raw_html/thoibaotaichinhvietnam.vn/<yyyymmdd>/` |
 | **Volume** | ~50 bài/ngày (25 item/feed trải ~11 giờ) |
 | **Trạng thái** | enabled 2026-09-07 (nguồn mới) |
 
@@ -73,15 +73,13 @@ Disallow: /ajax/ /sp/ /services/ /utilities/ /apiservice@/ /apicenter@/ /widgets
 
 ## 6. Vai trò trong hệ thống
 
-NSO (`nso.gov.vn`) **KHÔNG còn bị chặn** — chẩn đoán TCP reset ban đầu ở phase-05 chỉ là
-chập chờn; G1 chạy lại 2026-09-07 đạt **12/12 PASS**, đã build driver riêng
-(`src/pipeline/periodic_reports.py`, design 16). TBTC vẫn giữ vai trò **proxy bổ sung** cho số
+Driver báo cáo định kỳ NSO (`nso.gov.vn`) đã gỡ ở US-049 (đặc tả lưu trữ:
+`project/docs/archive/design/16-periodic-report-scraper.md`). TBTC là nguồn có trong hệ cho số
 liệu KTXH / giải ngân đầu tư công — đăng lại báo cáo trong vài giờ, transport ổn định, ngày sạch.
 
 ## 7. Bảo trì
 
-- `python scripts/verify_quality.py thoibaotaichinhvietnam.vn` (dùng **host**).
-- `python scripts/domain_check.py --report thoibaotaichinhvietnam`.
+- `python scripts/validate_capture.py thoibaotaichinhvietnam 2` · `python -m src.morninger --once drift`.
 - Nếu feed nhiễu (có cả xã hội/đời sống): bật `filter.any`/`filter.none` **ngay trong YAML**
   — kế thừa từ `RSSScraper`, 0 dòng code.
 - Kiểm tra định kỳ watch point `tbtc-w3`: nếu upstream sửa feed chuyên mục cho đúng thì

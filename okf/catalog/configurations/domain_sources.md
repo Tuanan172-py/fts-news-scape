@@ -20,7 +20,7 @@ sources:
   - id: adding-source
     resource: project/docs/dev/03-adding-a-source.md
     title: Adding a source
-sources_last_checked: 2026-09-07
+sources_last_checked: 2026-10-22
 ---
 
 Mỗi nguồn tin = 1 file YAML trong `config/domains/`. `list_domains()` chỉ trả về domain có
@@ -33,7 +33,7 @@ Mỗi nguồn tin = 1 file YAML trong `config/domains/`. `list_domains()` chỉ 
 > còn lại **cố ý tắt** — bật lại cần research từng trang + scraper có capture, không phải đổi
 > `enabled: true`.
 
-## Đang chạy (7)
+## Đang chạy (8)
 
 | Domain | `method` | Ghi chú |
 |---|---|---|
@@ -44,12 +44,13 @@ Mỗi nguồn tin = 1 file YAML trong `config/domains/`. `list_domains()` chỉ 
 | thoibaotaichinhvietnam | `rss_capture` | 1 feed; chuyên mục thật lấy từ `meta article:section` |
 | tnck | `tnck` | zone JSON API + capture, 9 zone; `source_domain` = `tinnhanhchungkhoan.vn` ≠ tên config |
 | baodautu | `baodautu` | **HTML listing** + capture (RSS hỏng vĩnh viễn), 6 chuyên mục |
+| fireant | `fireant` | REST API + Bronze capture JSON; cần `fireant_token` trong [secrets.yaml](secrets.md) |
 
-## Đang tắt (17)
+## Đang tắt (16)
 
 - **VN, `method: rss`**: vnexpress, tuoitre, thanhnien, znews, cafebiz, vietnamplus, dantri,
   vietnamnet, hose, hnx
-- **VN, `method: api`**: fireant (cần Bearer token), vndirect
+- **VN, `method: api`**: vndirect
 - **Quốc tế (`language: en`, `method: rss`)**: cnbc, marketwatch, fed, oilprice, yahoofinance
 
 # Cấu trúc 1 file
@@ -70,8 +71,7 @@ detail:
   content_selector: "div.vnbcbc-body"   # BẮT BUỘC với rss_capture
   max_details_per_cycle: 30
 capture:
-  raw_dir: "data/raw_html"
-  min_body_bytes: 2048
+  min_body_bytes: 2048        # Bronze ghi vào <DATA_ROOT>/raw_html (paths.bronze_dir())
 compliance:
   respect_robots: true
   proxy_rotation: false

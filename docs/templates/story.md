@@ -11,14 +11,15 @@ authors: [{{author}}]
 adr: []
 plan: []
 evidence: []
-verify: "python -m pytest tests/<file>.py -q"
+verify: "cd project && python -m pytest tests/<package>/test_<module>.py -q"
 summary: One sentence stating the user-visible outcome this story delivers.
 ---
 
 # {{id}} — {{title}}
 
 <!--
-Contract: docs/knowledge/README.md. WIP=1: at most one story with status in_progress.
+Contract: docs/knowledge/README.md. WIP=1 per worktree (ADR-0022): at most one story with status
+in_progress per branch, and an in_progress story MUST declare `branch:`.
 Status vocabulary: planned, in_progress, blocked, deferred, implemented, changed, retired.
 `verify` is the single command that proves the story; harness_cli story complete runs it.
 -->
@@ -34,13 +35,13 @@ Status vocabulary: planned, in_progress, blocked, deferred, implemented, changed
 
 ## Design Notes
 
-<!-- Approach, touched modules, constraints from ADRs and rules (cite ids). -->
+<!-- Approach, touched modules, constraints from ADRs and rules (cite ids). Code placement: RULE-12 (ADR-0027). -->
 
 ## Verification
 
 | Tier | Command or check | Result |
 |---|---|---|
-| Unit | <!-- pytest path --> | <!-- pass/fail, count --> |
+| Unit | <!-- pytest path, tests/<package>/ (RULE-12.R7) --> | <!-- pass/fail, count --> |
 | Integration | | |
 | Platform | | |
 

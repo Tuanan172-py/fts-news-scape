@@ -1,6 +1,6 @@
 # Dev — Thêm một nguồn tin mới
 
-Cập nhật: 2026-07-26 · Đối tượng: dev muốn bổ sung domain.
+Cập nhật: 2026-10-22 · Đối tượng: dev muốn bổ sung domain. Lệnh chạy với cwd = `project/`, venv `C:\venvs\news-scape`.
 
 ## 1. Quyết định phương thức
 
@@ -27,7 +27,7 @@ method: rss               # → RSSScraper
 enabled: true
 rate_limit: 3.0
 timeout: 30
-language: vi              # vi | en (en → sentiment ép neutral)
+language: vi              # vi | en
 
 rss:
   feeds:
@@ -74,8 +74,7 @@ detail:
   content_selector: "div.article-body"   # ⚠️ BẮT BUỘC — xem cảnh báo bên dưới
   max_details_per_cycle: 30
 capture:
-  raw_dir: "data/raw_html"
-  min_body_bytes: 2048
+  min_body_bytes: 2048       # Bronze ghi vào <DATA_ROOT>/raw_html (paths.bronze_dir())
 compliance:
   respect_robots: true
   proxy_rotation: false
@@ -165,7 +164,7 @@ detail:
 - **Không raise** — mọi lỗi `self.errors.append(str)`, để pipeline chạy tiếp.
 - **Tôn trọng rate limit** — luôn qua `self.http`, không tự `requests`.
 - **Ngày ISO +07:00** — parse về giờ VN (`VN_TZ`).
-- **`metadata["language"]`** — set `vi`/`en` để gate sentiment đúng.
+- **`metadata["language"]`** — set `vi`/`en` (Silver và agent dùng).
 - **Cap `max_details`** trong `enrich` — tránh cycle vô hạn.
 - **Secret** đọc từ `config["_secrets"]`/`load_secrets()`, **không hard-code**, không log giá trị.
 - **Self-disable** nếu auth hỏng (theo mẫu FireAnt 401/403) để không hammer API.
@@ -182,10 +181,10 @@ Chi tiết: [04-testing.md](04-testing.md).
 - [ ] Feed/endpoint verify sống, ghi quirk vào YAML comment.
 - [ ] `--once <name>` chạy sạch, có bài vào DB.
 - [ ] Ngày đúng giờ VN, symbols gắn đúng, language đúng.
-- [ ] Test mới xanh, `pytest -q` toàn bộ xanh.
-- [ ] **Bronze artifact**: `data/raw_html/<host>/<yyyymmdd>/<hash>.html` tồn tại,
+- [ ] Test mới trong `tests/scrapers/` xanh; `python -m pytest tests/ -q` xanh (xem [04-testing.md](04-testing.md)).
+- [ ] **Bronze artifact**: `<DATA_ROOT>/raw_html/<host>/<yyyymmdd>/<hash>.html` tồn tại,
       `sha256sum` khớp `content_sha256` trong `.meta.json`, `capture_status: "ok"`.
-- [ ] **Silver derive**: `scripts/run_once.py <name>` → `data/silver/<host>/…json`,
+- [ ] **Silver derive**: `python scripts/run_once.py <name>` → `<DATA_ROOT>/silver/<host>/…json`,
       `cleaned_text` không rỗng.
 - [ ] **`domains/<name>/schema.yaml`** (BẮT BUỘC) — phải có key `domain: <host>` ở top level;
       đây là nguồn sự thật để tooling monitor resolve host. Kèm `README.md` + `changelog.md`.
@@ -194,6 +193,6 @@ Chi tiết: [04-testing.md](04-testing.md).
       [../domains/vn-rss.md](../domains/vn-rss.md) hoặc `api-scrapers.md` / `html-scrapers.md`,
       [../skills/rss-sources.md](../skills/rss-sources.md),
       `README.md` gốc (số đếm nguồn).
-- [ ] `scripts/verify_quality.py <host>` ≥95% — lưu ý dùng **host** (`vietnambiz.vn`),
-      không phải tên config (`vietnambiz`).
-- [ ] `scripts/report_drift.py` không sinh `SELECTOR_BROKEN` mới.
+- [ ] `python scripts/validate_capture.py <name> [N]` — audit capture thật: `capture_status`, sha256 khớp bytes, `images[]`.
+- [ ] `python -m src.morninger --once drift` không liệt kê `SELECTOR_BROKEN` mới cho nguồn này.
+- [ ] `python scripts/pipeline_radar.py status` không báo nguồn mới thiếu tươi.

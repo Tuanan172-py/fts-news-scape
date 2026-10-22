@@ -16,7 +16,7 @@ evidence:
   - commit:0340f64
   - commit:737d8ce
   - path:project/scripts/article_pack.py
-  - path:project/src/agent/article_contract.py
+  - path:project/src/agent/contract/article_contract.py
   - path:project/scripts/pipeline_radar.py
   - test:project/tests/article_lane/test_article_pack_thin.py
   - metric:202 of 700 articles in 3 Article Lane waves had packet paragraphs totalling 102-494 characters and all failed the Gold gate (session 2026-10-05)

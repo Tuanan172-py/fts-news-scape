@@ -3,7 +3,7 @@
 Cập nhật: 2026-08-13 · Trạng thái: **ĐÃ TRIỂN KHAI + validate LIVE** · Đối tượng: dev/vận hành.
 
 Tài liệu chuyên sâu về cơ chế thu thập **toàn bộ raw HTML nguyên bản** của từng bài
-đăng CafeF/Vietstock, phục vụ pipeline xử lý (NLP/sentiment) phía sau. Đọc kèm:
+đăng CafeF/Vietstock, phục vụ Silver và Article Lane phía sau ([00](00-end-to-end-architecture.md)). Đọc kèm:
 [03-source-strategy](03-source-strategy.md), [dev/03-adding-a-source](../dev/03-adding-a-source.md),
 kế hoạch gốc `plans/20260813-0736-raw-html-capture-vietstock-cafef/`.
 
@@ -48,7 +48,7 @@ Tận dụng pipeline template-method sẵn có (`BaseScraper.run()`:
                  │ 3. SourceBackoff.before_fetch (pause nếu đang 429/503)  │
                  │ 4. resp = HTTPClient.get_response(url)  (status+headers)│
                  │ 5. SourceBackoff.observe(status) [+ rotate_proxy nếu on]│
-                 │ 6. ★ RawStore.save(resp) ── ghi .html byte-exact ─────► data/raw_html/…
+                 │ 6. ★ RawStore.save(resp) ── ghi .html byte-exact ─────► <DATA_ROOT>/raw_html/…
                  │        + .meta.json (status, headers, sha, images[], …) │
                  │        → article.metadata["capture"]                     │
                  │ 7. content_html = select_one(selector)  (vùng con)      │
@@ -79,9 +79,10 @@ khác (`images[]`, `content_html`, density) đọc từ bản sao — artifact b
 
 ## 3. RawStore — lưu trữ artifact
 
-`RawStore(base_dir="data/raw_html").save(domain, url, hash, response, *, fetched_at, …) -> capture: dict`
+`RawStore(base_dir=None).save(domain, url, hash, response, *, fetched_at, …) -> capture: dict`
 
-- **Layout:** `data/raw_html/<domain>/<yyyymmdd>/<url_title_hash>.html` + `.meta.json`.
+- **Layout:** `<DATA_ROOT>/raw_html/<domain>/<yyyymmdd>/<url_title_hash>.html` + `.meta.json`
+  (`paths.bronze_dir()`; `base_dir` tương đối được neo vào data root, không theo cwd).
   `hash` = SHA-256(url+title) sẵn có trên `Article` → ổn định, chống trùng, dedup tự nhiên
   khi 1 bài bị quét lại (ghi đè atomic).
 - **Byte-exact:** ghi `response.content` (bytes) qua `_write_atomic` (ghi `.tmp` → `os.replace`).
@@ -103,7 +104,7 @@ khác (`images[]`, `content_html`, density) đọc từ bản sao — artifact b
   "url_title_hash": "26b0ebed…6616",
   "fetch_ts": "2026-08-13T15:33:xx+07:00",
   "render_method": "requests",
-  "html_path": "data/raw_html/cafef.vn/20260813/<hash>.html",
+  "html_path": "raw_html/cafef.vn/20260813/<hash>.html",
   "http_status": 200,
   "content_sha256": "…",
   "content_length_bytes": 112196,
@@ -176,7 +177,6 @@ qua `HTTPClient.get` (đi chung rate limit). Đặt trong scraper-base, **opt-in
 ```yaml
 # config/domains/cafef.yaml (tương tự vietstock.yaml)
 capture:
-  raw_dir: "data/raw_html"     # RawStore base
   min_body_bytes: 2048         # ngưỡng _looks_complete
 compliance:
   respect_robots: true         # RobotsGate gate
@@ -190,7 +190,7 @@ detail:
 
 - **Vietstock** đổi `method: rss → vietstock` (dùng `VietstockScraper` chuyên dụng thay
   generic RSS). Đăng ký ở `src/scrapers/__init__.py`.
-- **Retention (Q2):** `data/raw_html/` giữ toàn bộ, `.gitignore` (không commit). Rà soát
+- **Retention (Q2):** `<DATA_ROOT>/raw_html/` giữ toàn bộ, nằm ngoài repo (ADR-0024). Rà soát
   rotation nếu đĩa phình (~110-390 KB/bài).
 
 ---
@@ -230,7 +230,7 @@ tests/scrapers/test_vietstock.py tests/crawler/test_robots.py tests/crawler/test
 - `test_looks_complete.py` — D1 true/false + `_density_extract` graceful khi thiếu lib.
 - Fakes dùng chung: `tests/_fakes.py` (`FakeResponse`/`FakeHTTP.get_response`).
   Capture tests chdir tmp trong fixture `env` (cô lập raw writes), **không** chdir toàn cục
-  (tránh vỡ notifier/sentiment load config theo path tương đối).
+  (tránh vỡ notifier load config theo path tương đối).
 
 ---
 

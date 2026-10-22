@@ -1,3 +1,5 @@
+> Lưu trữ 2026-10-22 (US-050): chu kỳ per-user dựa trên `run_daily.ps1`, `l1_route.py`, `agent_export.py` đã xoá (ADR-0010), thay bằng [runbook ops_daemon](../../operations/ops-daemon.md) và [RUNBOOK Article Lane](../../../../.agents/dsh/RUNBOOK-article-lane.md).
+
 # Runbook vận hành từng bước — chu kỳ per-user (input → <date>.xlsx)
 
 Cập nhật: 2026-09-14 · Đối tượng: người vận hành chạy tay/bán tự động chuỗi agent per-user.

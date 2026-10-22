@@ -4,6 +4,8 @@ description: Quy trình điều phối chuẩn hóa cho Agent và Subagents tron
 ---
 # News-Scape Agent Operations Skill
 
+> **Chỉ tham khảo lịch sử (ADR 0010, AGENTS.md §3).** Skill này mô tả lane L1/Gold đã ngừng; lệnh, cờ và đường dẫn bên dưới không còn đúng. Không làm theo. Vận hành hiện hành: `.agents/dsh/RUNBOOK-article-lane.md` và skill `dsh-conductor`.
+
 > **Mục đích:** Quy trình vận hành chuỗi Agent thống nhất (`agent_article`) từ khâu quét dữ liệu thô, phân tầng ưu tiên (Priority-Queue), đóng gói Mega-Batch 100 bài, kích hoạt Subagent Single-turn Zero-Tool, đối soát Intent độc lập (Dual-Track), mở rộng citations bằng index và bàn giao báo cáo người dùng sớm.
 
 ---

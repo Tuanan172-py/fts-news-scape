@@ -33,14 +33,15 @@ Read these before inventing context; do not create a new knowledge folder.
 1. `.agents/skills/*`: operational and governance skills (`pipeline-radar`, `dsh-conductor` under `.agents/dsh/presets/news-scape-conductor/skills/`, `watchlist-curator`, `token-auditor`, `dod-gatekeeper`, `multi-agent-orchestrator-governance`, `l1-entity-matcher`). Draft specialist agents: `entity-curator`, `adversarial-dod-verifier`, `daily-brief-synthesizer`, `harness-auditor`. The skills `gold-financial-analyst` and `news-scape-agent-operations` describe the retired L1/Gold lane (ADR-0010) and are reference only.
 2. `project/docs/skills/*`: per-source scraper knowledge (cafef, fireant, rss-sources, tnck).
 3. `project/docs/{design,dev,domains,operations}/`: architecture, how-tos, source taxonomy, operations.
-4. `project/docs/charter.md` and `project/docs/architecture.md`: goals, phases, TDRs. Workflow diagrams live in `project/docs/diagrams/*.mmd` (open `index.html` offline); change a process by editing the `.mmd`, then run `python scripts/docs/build_diagrams.py` from `project/`.
+4. `project/docs/design/00-end-to-end-architecture.md` (six-layer map) and `project/docs/architecture.md` (TDRs). Workflow diagrams live in `project/docs/diagrams/*.mmd` (open `index.html` offline); change a process by editing the `.mmd`, then run `python scripts/docs/build_diagrams.py` from `project/`.
 5. `okf/`: cross-cutting operational knowledge.
+6. Code layout: RULE-12 (`.agents/rules/12-module-boundaries.md`), decision ADR-0027. Logic lives in `project/src/<package>/`; `project/scripts/*.py` are thin CLIs at stable paths.
 
 ## 4. Build and run (the product lives in `project/`)
 
 The Python environment lives outside OneDrive at `C:\venvs\news-scape`. Never create a local `.venv`.
 
-Cây mã vận hành nằm ở `C:\src\news-scraper`, ngoài OneDrive (ADR 0020). Dữ liệu ghi nằm dưới `MONOCLE_DATA_DIR` (mặc định `C:\data\news-scape`), đường dẫn do `project/src/core/paths.py` quyết định. Dữ liệu dùng chung xuất bản một chiều lên SharePoint qua `scripts/publish.py`, **chỉ vào sandbox `sites/FRA_DataIngestion/Shared Documents/AnPT`**. Cấm ghi vào site chính thức `sites/FRA` (`FRA - Data`) cho tới khi có quyết định mới (ADR 0020 §0); publisher từ chối đích này. Thư mục `FRA_DataIngestion - news-scape` trên OneDrive là bản cũ, không chạy mã từ đó.
+The canonical working tree is `C:\src\news-scraper`, outside OneDrive (ADR-0024). Written data lives under `MONOCLE_DATA_DIR` (default `C:\data\news-scape`), and `project/src/core/paths.py` decides every path. Shared data is published one way to SharePoint through `scripts/publish.py`, **only into the sandbox `sites/FRA_DataIngestion/Shared Documents/AnPT`** (ADR-0026.D1). Writing to the official site `sites/FRA` (`FRA - Data`) is forbidden until a new decision (ADR-0023.D1); the publisher refuses that target. The OneDrive folder `FRA_DataIngestion - news-scape` is a deprecated copy; never run code from it.
 
 ```powershell
 & "C:\venvs\news-scape\Scripts\Activate.ps1"      # once per terminal
@@ -49,7 +50,7 @@ Cây mã vận hành nằm ở `C:\src\news-scraper`, ngoài OneDrive (ADR 0020)
 cd project
 python -m src.morninger            # daytime pipeline (capture + re-derive Silver + drift)
 python scripts/run_once.py         # one cycle
-python -m pytest tests/ -v         # tests (read docs/INDEX.md facts on pytest and the real DB first)
+python -m pytest tests/ -v         # tests; tests/conftest.py isolates them on a temp data root
 python -m src.monitor.health       # health check
 
 python scripts/pipeline_radar.py status                  # touchpoints and exactly one next command
@@ -64,7 +65,7 @@ python scripts/ops_console.py                            # text console (Ctrl+Al
 python scripts/ops_daemon.py open                        # multi-agent supervision room (ADR-0014)
 ```
 
-Unattended operation belongs to `ops_daemon` (Task Scheduler `news-scape-ops`); runbook `project/docs/operations/ops-daemon.md`. While the daemon runs at level L1 or higher, do not open a manual wave in parallel.
+Unattended operation belongs to `ops_daemon` (Task Scheduler `news-scape-ops`); runbook `project/docs/operations/ops-daemon.md`. While the daemon runs at level L1, do not open a manual wave in parallel.
 
 Every `scripts/...` command runs with cwd = `project/`. The operational DB is `C:\data\news-scape\monocle.db`, outside the repository. The DSH `workspace-write` sandbox cannot reach outside the repository, so `--finish` and `write_user_output.py` run with `danger-full-access`. Wave preparation and model runs do not need it.
 
@@ -104,7 +105,7 @@ python scripts/harness_cli.py doc sync              # derive story/decision rows
 
 ## 7. Architecture boundaries and invariants
 
-- The Article Lane is the only processing path (ADR-0010). The two-tier L1/Gold lane (`l1_route` to `agent_l1` to `agent_export` to `agent_gold`) is retired: not in presets, scheduler, radar or pipeline. Never call `l1_route.py`, `l1_ingest.py --code-first`, `agent_export.py` or `requeue.py`.
+- The Article Lane is the only processing path (ADR-0010). The two-tier L1/Gold lane (`l1_route` to `agent_l1` to `agent_export` to `agent_gold`) is retired: not in presets, scheduler, radar or pipeline. Its tools (`l1_route.py`, `agent_export.py`, `requeue.py`) are deleted; `l1_ingest.py` remains only as an ingest step of `article_run.py --finish` and has no `--code-first` flag.
 - Capture everything, process later (ADR-0013, rule 10). Every article a source has is fetched. The crawl layer filters nothing by similarity, section or relevance and never stops hard at page 1. Every discovered URL leaves a trace in the discovery ledger. Dedup, cleaning and prioritization happen after Bronze and never delete articles. Duplicates keep every source and timestamp because coverage frequency is a signal.
 
 - Decided operating contracts (ADR-0026): the only production publish path is `scripts/publish.py` to `src.export.publisher.publish_day()`; `scripts/lakehouse_cli.py` only verifies and receives the external dropzone. LLM runners rank `agy`, then `opencode run`, then OpenRouter; Claude is never a replacement runtime. Autonomy has two levels only, L0 (stop) and L1 (mandate with a per-wave article cap, `/level L1 <n>`). Excel delivery lives at `<DATA_ROOT>/users/output/<user>/<date>.xlsx`, the same tree as SharePoint.
@@ -114,9 +115,9 @@ python scripts/harness_cli.py doc sync              # derive story/decision rows
 1. Deterministic scripts (0 token):
    - Bronze: crawl and store immutable originals (`raw_html` + `.meta.json`) for audit and SHA256 reconciliation.
    - Silver: normalize the DOM, SimHash, split content into paragraphs (`<p>`).
-   - Wave packing (`article_run.py` to `article_pack.py`): select articles not yet analysed by a model, rank priority tiers, write packets to `data/agent_tasks/article/`, generate `wave_<code>.conductor.ts`.
+   - Wave packing (`article_run.py`, logic in `src/ops/wave/article_run.py` and `src/article_lane/pack.py`): select articles not yet analysed by a model, rank priority tiers, write packets to `<DATA_ROOT>/agent_tasks/article/`, generate `wave_<code>.conductor.ts`.
    - Wave finish (`article_run.py --finish`): expand compact records into both schemas, ingest through the DoD gate (`l1_ingest.py`, `agent_ingest.py`, only this wave's files), post-check coverage, write the token ledger, produce the handoff.
-   - Delivery: route by watchlist, export `users/output/<user>/<date>.xlsx`.
+   - Delivery: route by watchlist, export `<DATA_ROOT>/users/output/<user>/<date>.xlsx`.
 2. Agent `article-processor` (on a ranked LLM runner: `agy`, then `opencode run`, then `openrouter`, plus DSH `agent_article` as the interactive conductor; Claude is never a replacement runtime, see FACT-llm-runtimes-are-interchangeable and ADR-0026.D3; no tools, exactly one step per batch) processes one whole article per pass, covering both business layers:
    - Entity recognition from title and body: tickers, companies, exchanges, sectors, indices, macro, output `l1-entity-output-v1`.
    - Content analysis: summary, arguments, market implication, `sentiment`, `time_sensitivity`, citations by paragraph index, output `agent-output-v2-lean`.
@@ -137,7 +138,7 @@ python scripts/harness_cli.py doc sync              # derive story/decision rows
 ### 7.3 No script emulation of agent intelligence
 
 - Never write a script that replaces the agent. No regex or heuristic produces recognition or analysis results.
-- Semantics, entity extraction, summaries, implications and citations belong to `article-processor`, called through `tools.agent_article` in the conductor program. Every provider and model passes one output contract and one validator (ADR-0017, rule 11). A new provider must pass the golden set; agy is the benchmark; `claude` is not yet in the lane. ADR-0009 D6 (every model is `deepseek-flash`) no longer holds.
+- Semantics, entity extraction, summaries, implications and citations belong to `article-processor`, called through `tools.agent_article` in the conductor program. Every provider and model passes one output contract and one validator (ADR-0017, rule 11). A new provider must pass the golden set; agy is the benchmark; Claude is never a lane runtime (ADR-0026.D3). ADR-0009 D6 (every model is `deepseek-flash`) no longer holds.
 - Zero-hallucination user manifest: delivery reports reference only users enabled in `<DATA_ROOT>/subscriptions/manifest.yaml` (ADR-0026.D5). Look them up with `pipeline_radar.py users`; never copy the list into documents.
 
 ## 8. Code quality and docstrings
@@ -148,6 +149,7 @@ Detail: `.agents/rules/06-code-and-docstring-standards.md`.
 - No filler, no first person, no rhetorical questions, no emoji, no temporary tags (`[LEGACY]`, temporary TODO).
 - Docstrings and comments state inputs, behaviour, outputs and non-obvious logic only. No debugging diary or history in source.
 - Every code change passes `ast.parse` and the unit tests (`pytest tests/`).
+- Module layout and import boundaries: RULE-12 (ADR-0027), checked by `tests/repo/test_architecture.py`.
 
 ## 9. Zero-probe context and continuous learning
 

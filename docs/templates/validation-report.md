@@ -1,4 +1,4 @@
-# Validation Report — <scope / US-XXX>
+# Validation Report — <scope / US-NNN>
 
 - **Date:** YYYY-MM-DD
 - **Scope:** <what was validated>
@@ -6,7 +6,7 @@
 ## Commands Run
 ```powershell
 cd project
-# python -m pytest tests/...        (reference config PATHS only — never paste secret/token values)
+# python -m pytest tests/<package>/...   (reference config PATHS only — never paste secret/token values)
 ```
 
 ## Results

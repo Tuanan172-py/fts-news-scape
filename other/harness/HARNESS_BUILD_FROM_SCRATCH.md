@@ -1,3 +1,5 @@
+> Reference copy of the external Sen13 harness guide, cited by ADR-0001 and ADR-0002. Paths and commands (`scripts/bin/harness-cli.exe`, `docs/HARNESS_RUNBOOK.md`, `docs/templates/decision.md`) belong to that framework, not to this repository. The news-scape harness CLI is `scripts/harness_cli.py` (AGENTS.md §6); governed documents follow `docs/knowledge/README.md`.
+
 # Building a Custom Harness From Scratch — Step-by-Step Design & Execution Guide (EN)
 
 > Purpose of this document: a guide to **building a brand-new harness by hand** for a

@@ -1,3 +1,5 @@
+> Lưu trữ 2026-10-22 (US-050): tài liệu đo tuyến L1 code-first đã gỡ theo ADR-0010 (`l1_route.py`, `--code-first`, `requeue.py` đều đã xoá); giữ tại chỗ vì thân ADR-0010 đã đóng băng có liên kết tới, thay bằng [project/docs/design/00-end-to-end-architecture.md](../project/docs/design/00-end-to-end-architecture.md) §6.
+
 # CODE-FIRST LANDSCAPE — bối cảnh trước khi phát triển lớp nhận diện tất định
 
 - **Lập ngày:** 2026-09-21

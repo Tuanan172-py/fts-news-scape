@@ -1,34 +1,34 @@
-# TRACE_SPEC.md — Đặc tả Cấu trúc Trace & Bằng chứng Thực thi (H2)
+# TRACE_SPEC.md — Trace Structure and Execution Evidence (H2)
 
-Tài liệu này chuẩn hóa định dạng nhật ký thực thi (Trace) của Agent để đảm bảo tính **Observability (Quan sát được)**, phục vụ công tác đối soát, benchmark và tự cải tiến (H3–H5).
+This document standardises the agent execution trace for **observability**: reconciliation, benchmarking and self-improvement (H3–H5).
 
 ---
 
-## 1. Ba Cấp độ Trace (Per-Prompt Trace Tiers)
+## 1. Three trace tiers (per prompt)
 
-Mỗi prompt / phiên tương tác của Agent BẮT BUỘC phải ghi lại một bản ghi trace vào CSDL `harness.db` theo cấp độ tương ứng:
+Every prompt or session **MUST** record one trace row in `harness.db` at the tier of its lane:
 
-| Cấp độ Trace | Áp dụng cho Lane | Các trường bắt buộc | Mục tiêu & Bản chất tác vụ |
+| Trace tier | Lane | Required fields | Purpose |
 |:---|:---:|:---|:---|
-| **Tier 1: Minimal** | `tiny` | `task_summary`, `outcome`, `files_read` hoặc `files_changed` | Ghi nhận nhanh các phiên hỏi đáp, tra cứu kiến trúc, chẩn đoán lỗi, hoặc patch 1-2 dòng. |
-| **Tier 2: Standard** | `normal` | `task_summary`, `story_id`, `actions_taken`, `files_read`, `files_changed`, `outcome`, `friction` | Đầy đủ cho các tính năng mới, refactor module, đo lường ngữ cảnh và bằng chứng kiểm thử. |
-| **Tier 3: Detailed** | `high-risk` | Toàn bộ trường Standard + `intake_id`, `score_context`, `score_trace`, `error_msg`, `intervention` | Phục vụ kiểm toán an toàn kiến trúc nghiêm ngặt (Hard Gate, ADR, Schema). |
+| **Tier 1: Minimal** | `tiny` | `task_summary`, `outcome`, `files_read` or `files_changed` | Quick record of Q&A, architecture lookups, diagnostics or 1-2 line patches. |
+| **Tier 2: Standard** | `normal` | `task_summary`, `story_id`, `actions_taken`, `files_read`, `files_changed`, `outcome`, `friction` | New features, module refactors, context measurement and test evidence. |
+| **Tier 3: Detailed** | `high-risk` | All Standard fields + `intake_id`, `score_context`, `score_trace`, `error_msg`, `intervention` | Strict audit of architecture safety (hard gate, ADR, schema). |
 
 
 ---
 
-## 2. Định nghĩa các trường trong Trace (`trace` table)
+## 2. Trace fields (`trace` table)
 
 ```json
 {
   "story_id": "US-002",
   "intake_id": 1,
-  "task_summary": "Tối ưu hóa cấu trúc cột CSV đầu ra cho từng user",
+  "task_summary": "Optimize the per-user output column layout",
   "actions_taken": [
-    "Khảo sát mã nguồn user_output.py",
-    "Chỉnh sửa thứ tự cột FINAL_COLUMNS",
-    "Cập nhật test case trong test_user_output.py",
-    "Chạy kiểm thử pytest 13/13 passed"
+    "Read user_output.py",
+    "Reorder FINAL_COLUMNS",
+    "Update the test case in test_user_output.py",
+    "Run pytest 13/13 passed"
   ],
   "files_read": [
     "project/src/export/user_output.py",
@@ -49,23 +49,23 @@ Mỗi prompt / phiên tương tác của Agent BẮT BUỘC phải ghi lại m�
 
 ---
 
-## 3. Công thức Chấm điểm Trace (`score-trace` & `score-context`)
+## 3. Trace scoring (`calculate_score_trace`, `calculate_score_context` in `scripts/harness_cli.py`)
 
-1. **`score_trace` (0.0 đến 1.0):**
-   * $+0.25$ nếu `task_summary` rõ ràng $\ge 10$ ký tự.
-   * $+0.25$ nếu `actions_taken` liệt kê $\ge 1$ bước thực thi.
-   * $+0.25$ nếu có thông tin `files_read` hoặc `files_changed`.
-   * $+0.25$ nếu `outcome` thuộc tập chuẩn (`completed`, `blocked`, `failed`, `partial`).
-2. **`score_context` (0.0 đến 1.0):**
-   * Đạt $1.0$ nếu số lượng file đọc nằm trong ngân sách cho phép của Lane (Tiny $\le 5$, Normal $\le 15$, High-risk $\le 30$).
-   * Giảm $0.05$ cho mỗi file đọc vượt định mức (tối thiểu $0.2$).
-   * **`files_read` chỉ gồm tệp vào thẳng context của agent điều phối.** Tệp do Explore
-     subagent đọc hộ không kê vào đây (xem `CONTEXT_RULES.md` §1) — chúng không chiếm
-     context window của agent điều phối, và ủy thác là hành vi được khuyến khích.
+1. **`score_trace` (0.0 to 1.0):**
+   * $+0.25$ when `task_summary` has at least 10 characters.
+   * $+0.25$ when `actions_taken` lists at least one step.
+   * $+0.25$ when `files_read` or `files_changed` is present.
+   * $+0.25$ when `outcome` is one of `completed`, `blocked`, `failed`, `partial`.
+2. **`score_context` (0.0 to 1.0):**
+   * $1.0$ when the number of files read is within the lane budget (Tiny $\le 5$, Normal $\le 15$, High-risk $\le 30$).
+   * Minus $0.05$ per file over budget (floor $0.2$).
+   * **`files_read` lists only files that enter the orchestrating agent's context directly.** Files an
+     Explore subagent reads are not listed (see `CONTEXT_RULES.md` §1): they do not occupy the
+     orchestrator's context window, and delegation is encouraged.
 
 ---
 
-## 4. Lệnh Ghi Trace qua CLI
+## 4. Recording a trace with the CLI
 
 ```powershell
 python scripts/harness_cli.py trace `
@@ -76,3 +76,5 @@ python scripts/harness_cli.py trace `
   --files-read '["project/src/export/user_output.py"]' `
   --files-changed '["project/src/export/user_output.py"]'
 ```
+
+`session close` records the trace itself as part of atomic closure (AGENTS.md §12).

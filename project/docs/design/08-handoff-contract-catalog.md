@@ -1,6 +1,6 @@
 # Design 08 — Handoff Contract + Catalog (producer↔agent boundary)
 
-Cập nhật: 2026-08-14 · Trạng thái: ĐÃ TRIỂN KHAI (producer) · Kèm: [07](07-storage-layers-and-change-detection.md), [09](09-agent-io-contract.md).
+Cập nhật: 2026-10-22 · Trạng thái: ĐÃ TRIỂN KHAI (producer) · Kèm: [00](00-end-to-end-architecture.md), [07](07-storage-layers-and-change-detection.md).
 
 **Đây là ranh giới** để BẤT KỲ agent provider nào bắt tay xử lý từ raw. Producer sinh work-package +
 đẩy vào catalog; consumer (agent) claim → done/failed. Phase-03.
@@ -14,7 +14,7 @@ Cập nhật: 2026-08-14 · Trạng thái: ĐÃ TRIỂN KHAI (producer) · Kèm:
  provenance{fetch_ts, render_method, scraper_version, silver_schema_version}}
 ```
 Required: schema_version, article_id, source_url, domain, raw_html_path, raw_sha256, cleaned_text,
-capture_status, change_state. Ghi tại `data/work_packages/<domain>/<yyyymmdd>/<hash>.json` (atomic).
+capture_status, change_state. Ghi tại `<DATA_ROOT>/work_packages/<domain>/<yyyymmdd>/<hash>.json` (atomic).
 Provider-agnostic: pure JSON, không field vendor.
 
 ## 2. Catalog = `work_items` (SQLite, exactly-once)
@@ -33,11 +33,11 @@ work_items(id, article_id, raw_sha256, domain, package_path,
 ## 3. Exactly-once & incremental
 - **Idempotency key** = (article_id, raw_sha256). Re-đọc cùng package không xử lý 2 lần.
 - **Watermark**: `store.changed_since(iso)` → chỉ NEW/CONTENT_CHANGED thành pending; UNCHANGED bỏ qua.
-- **Integrity**: agent (spec) BẮT BUỘC verify raw_sha256 trước khi xử lý (guardrail, doc 10).
+- **Integrity**: consumer verify raw_sha256 trước khi xử lý.
 
 ## 4. Contract validator (dùng chung — DRY)
-`src/handoff/contract_validator.py` (jsonschema, no exec). 1 validator, N schema (work-package-v1,
-agent-output-v1, silver-v1). CLI: `python -m src.handoff.contract_validator <file.json> <schema-name>`.
+`src/handoff/contract_validator.py` (jsonschema, no exec). 1 validator, N schema (`KNOWN_SCHEMAS`: work-package-v1,
+silver-v1, l1-entity-output-v1, agent-output-v2-lean, agent-output-v1). CLI: `python -m src.handoff.contract_validator <file.json> <schema-name>`.
 Dùng ở producer gate (phase-06) NGAY khi build package: fail → held; và tái dùng cho agent output khi land.
 
 ## 5. Luồng
@@ -46,12 +46,15 @@ Silver + meta + article_versions.state
    → WorkPackageBuilder.build() → package.json (atomic, trỏ raw)
    → contract_validator(work-package-v1)  →PASS→ catalog.enqueue(pending)
                                            →FAIL→ catalog.enqueue(force_held) + log
-consumer (agent bất kỳ):
+consumer (API Catalog):
    list_pending → claim(worker) → verify raw_sha256 → process → mark_done | mark_failed
 ```
-Entry code: `src/pipeline/run.process_meta` (offline, idempotent). Scripts: `rederive_from_bronze.py`,
-`report_drift.py`, `validate_e2e.py`.
+Article Lane không gọi `claim`: `article_pack` chọn bài trực tiếp, bước `agent_ingest` của `article_run.py --finish`
+đánh `mark_done` khi bản ghi qua DoD (`src/agent/ingest/runner.py`). Job `reclaim` của morninger trả `claimed` kẹt về `pending`.
+Entry code: `src/pipeline/run.process_meta` (offline, idempotent). Script bảo trì: `scripts/rederive_from_bronze.py`.
+Đường chạy thường xuyên: morninger job `re-derive` (`src/pipeline/derive.py::rederive_incremental`). Trong Article Lane,
+`scripts/article_pack.py` đọc Silver/work-package để đóng gói wave ([00 §6](00-end-to-end-architecture.md)).
 
 ## Versioning
 Additive/optional only; bump `schema_version`; giữ đọc được bản cũ (BACKWARD_TRANSITIVE). Xem
-[11](11-e2e-standardization-governance.md) + `schemas/CHANGELOG.md`.
+`schemas/CHANGELOG.md`.

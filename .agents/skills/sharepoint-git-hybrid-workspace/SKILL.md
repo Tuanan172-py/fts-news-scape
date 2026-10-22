@@ -8,6 +8,8 @@ description: >-
 
 # SharePoint & Git Hybrid Workspace Skill
 
+> **Phạm vi với news-scape (ADR-0024):** phát triển trên thư mục đồng bộ OneDrive/SharePoint đã ngừng. Cây mã chuẩn là `C:\src\news-scraper`, venv `C:\venvs\news-scape`, dữ liệu `C:\data\news-scape`; thư mục `FRA_DataIngestion - news-scape` trên OneDrive là bản cũ. Skill này chỉ còn là quy chuẩn chung khi một dự án buộc phải nằm trong thư mục đồng bộ.
+
 > **Mục đích:** Cung cấp quy chuẩn, runbook và bộ công cụ tự động để thiết lập hoặc di chuyển bất kỳ dự án nào nằm trên thư mục đồng bộ **SharePoint / OneDrive**, vừa đảm bảo **User/Team quản lý file trực quan trên Cloud**, vừa đảm bảo **mã nguồn được quản lý hoàn hảo bằng Git** không bị sync phá hỏng.
 
 ---

@@ -1,6 +1,8 @@
+> Lưu trữ 2026-10-22 (US-050): phân cấp đa đặc vụ L1/Gold đã nghỉ hưu (ADR-0010), thay bằng [00-end-to-end-architecture §6](../../design/00-end-to-end-architecture.md).
+
 # Design 15 — Antigravity 2.0 Multi-Agent Hierarchy Orchestration
 
-Cập nhật: 2026-08-24 · Trạng thái: **ARCHIVED REFERENCE** (Lane L1/Gold cũ; đã thay thế bằng Article Lane duy nhất theo ADR 0010) · Kèm: [09](09-agent-io-contract.md), [10](10-agent-orchestration-governance.md), [13](13-per-user-output-workflow.md), [14](14-entity-system-and-mapping.md).
+Cập nhật: 2026-08-24 · Trạng thái: **ARCHIVED REFERENCE** (Lane L1/Gold cũ; đã thay thế bằng Article Lane duy nhất theo ADR 0010) · Kèm: [09](09-agent-io-contract.md), [10](10-agent-orchestration-governance.md), [13](13-per-user-output-workflow.md), [14](../../design/14-entity-system-and-mapping.md).
 
 > [!NOTE]
 > **Trạng thái Kế thừa (Reference Only — ADR 0010):**

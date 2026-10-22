@@ -31,7 +31,7 @@ Tài liệu, sơ đồ, báo cáo BẮT BUỘC ghi rõ `class`. TUYỆT ĐỐI K
 Thiếu bất kỳ bước nào → agent giữ `status: draft`, không được đưa vào đường giao hàng chính.
 
 ## 5. Vòng đo lường & tự cải tiến (khớp rule 04)
-- Sau mỗi đợt cognitive agent chạy, operator ingest tương ứng BẮT BUỘC ghi 1 dòng KPI:
+- Sau mỗi đợt cognitive agent chạy BẮT BUỘC có 1 dòng KPI. Đợt do `ops_daemon` chạy tự ghi (`project/src/ops/wave/metrics.py`); đợt tay ghi bằng:
   `python scripts/harness_cli.py metric --agent <id> --items N --dod-pass N --dod-total N [--tokens N] [--fp N]`.
 - `harness_cli.py propose` đọc `agent_metrics` để gắn cờ agent `dod_pass_rate < 95%` hoặc `fp_flags > 0`. Đề xuất nâng lane `high-risk` phải được RCA và đưa vào backlog/ADR nếu tái diễn.
 

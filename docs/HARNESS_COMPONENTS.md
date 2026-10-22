@@ -1,30 +1,30 @@
-# HARNESS_COMPONENTS.md — 11 Trách nhiệm Runtime của Harness (H2)
+# HARNESS_COMPONENTS.md — Eleven Runtime Responsibilities of the Harness (H2)
 
-Tài liệu này xác định **11 trách nhiệm cốt lõi** mà hệ thống Harness phải đảm bảo trong suốt vòng đời tương tác giữa Con người và Agent.
+This document names the **eleven core responsibilities** the harness guarantees across the human-agent interaction lifecycle.
 
 ---
 
-## Danh mục 11 Trách nhiệm Runtime
+## The eleven runtime responsibilities
 
-| # | Trách nhiệm | Vai trò & Ý nghĩa | Triển khai trong News-Scape |
+| # | Responsibility | Role | Implementation in News-Scape |
 |:---|:---|:---|:---|
-| **1** | **Task Specification** | Định nghĩa công việc máy đọc được, phân loại rủi ro rõ ràng. | `FEATURE_INTAKE.md` + bảng `intake`, `story`. |
-| **2** | **Context Boundary** | Giới hạn tài liệu và mã nguồn nạp vào context, tránh tràn token. | `CONTEXT_RULES.md` + ngân sách token theo lane. |
-| **3** | **Tool Access** | Quản lý công cụ agent được phép gọi và cơ chế suy giảm (degrade). | `TOOL_REGISTRY.md` + bảng `tool`. |
-| **4** | **Memory & State** | Lưu trữ bền vững điều đã xảy ra qua các phiên làm việc. | CSDL SQLite `harness.db` (bảng `story`, `trace`, `backlog`). |
-| **5** | **Task State** | Quản lý trạng thái và thứ tự công việc, chống double-claim. | Cột `story.status`, kỷ luật `WIP = 1`. |
-| **6** | **Observability** | Đo lường và giám sát toàn bộ hành vi, files read/changed. | Bảng `trace` + lệnh `score-trace`, `query matrix`. |
-| **7** | **Failure Attribution** | Bắt lỗi và ma sát phát sinh để phân tích nguyên nhân gốc. | Bảng `intervention`, `backlog` (friction reservoir). |
-| **8** | **Verification Gate** | Ràng buộc kiểm thử trước khi kết luận hoàn thành ("No proof = not done"). | Cột `unit/integ/e2e/platform_proof` + lệnh `story complete`. |
-| **9** | **Permissions Gate** | Kiểm soát quyền hạn: Phân tách Read-only vs Mutation; Hard Gates. | `AGENTS.md` (Rule 0) + `FEATURE_INTAKE.md` (Hard Gates). |
-| **10**| **Entropy Audit** | Tự động phát hiện độ trôi dạt (drift) của quy trình và tài liệu. | Lệnh `python scripts/harness_cli.py audit`. |
-| **11**| **Intervention & Propose** | Tự đề xuất cải tiến quy trình dựa trên dữ liệu ma sát tích lũy. | Lệnh `python scripts/harness_cli.py propose`. |
+| **1** | **Task Specification** | Machine-readable work with an explicit risk class. | `FEATURE_INTAKE.md` + `intake`, `story` tables; story files from `doc new`. |
+| **2** | **Context Boundary** | Bounds the documents and code loaded into context. | `CONTEXT_RULES.md` + per-lane budgets; `docs/INDEX.md` as the entry point. |
+| **3** | **Tool Access** | Which tools an agent may call and how they degrade. | `TOOL_REGISTRY.md`. |
+| **4** | **Memory & State** | Durable record of what happened across sessions. | `harness.db` (`story`, `trace`, `backlog`) and `docs/knowledge/facts/FACT-*.md`. |
+| **5** | **Task State** | Status and order of work, no double claim. | `status` in story frontmatter, WIP=1 per worktree (ADR-0022), checked by `doc lint`. |
+| **6** | **Observability** | Measures behaviour, files read and changed. | `trace` table with `score_trace` and `score_context`; `query matrix`. |
+| **7** | **Failure Attribution** | Captures errors and friction for root-cause analysis. | `intervention` and `backlog` tables (friction reservoir). |
+| **8** | **Verification Gate** | Proof before a story counts as done ("No proof = not done"). | `unit/integ/e2e/platform_proof` columns + `story complete --run-verify`, `session close`. |
+| **9** | **Permissions Gate** | Read-only versus mutation, hard gates. | `AGENTS.md` §0 + `FEATURE_INTAKE.md` hard gates. |
+| **10**| **Entropy Audit** | Detects drift of process and documents. | `python scripts/harness_cli.py audit` (`HARNESS_AUDIT.md`). |
+| **11**| **Intervention & Propose** | Proposes process improvements from accumulated friction. | `python scripts/harness_cli.py propose` (`IMPROVEMENT_PROTOCOL.md`). |
 
 ---
 
-## Lăng kính Thiết kế (Self-Check Lens)
+## Self-check lens
 
-Mỗi khi bổ sung quy trình hoặc công cụ mới, Agent tự đối soát:
-* Tính năng mới có vi phạm ranh giới **Context Boundary** không?
-* Thay đổi có đi kèm **Verification Gate** cơ học không?
-* Trạng thái mới có được ghi vào **Durable Storage** không?
+When adding a process or tool, the agent checks:
+* Does the change break the **Context Boundary**?
+* Does it come with a mechanical **Verification Gate**?
+* Is the new state written to **durable storage**?

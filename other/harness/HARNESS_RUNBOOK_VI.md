@@ -1,3 +1,5 @@
+> Bản sao tham chiếu của hướng dẫn harness Sen13 bên ngoài, được ADR-0001 và ADR-0002 viện dẫn. Đường dẫn và lệnh (`scripts/bin/harness-cli.exe`, `docs/HARNESS_RUNBOOK_VI.md`, `docs/templates/decision.md`) thuộc framework đó, không thuộc kho này. CLI harness của news-scape là `scripts/harness_cli.py` (AGENTS.md §6); tài liệu quản trị theo `docs/knowledge/README.md`.
+
 # Harness Runbook (VI) — Cách tự thực hiện quy trình
 
 Tài liệu tự-chạy (self-execution) cho quy trình **Harness** của Sen13. Đây là bản

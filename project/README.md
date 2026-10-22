@@ -1,33 +1,39 @@
 # Web Monocle 🕵️
 
-Hệ thống thu thập tin tức chứng khoán Việt Nam đa nguồn — RSS, reverse API, HTML scraping.
-Phục vụ phòng phân tích: nhiều nguồn, dedup, raw HTML bảo toàn.
+Hệ thống thu thập và phân tích tin tức chứng khoán Việt Nam đa nguồn — RSS, reverse API, HTML scraping.
+Phục vụ phòng phân tích: nhiều nguồn, dedup, raw HTML bảo toàn, mỗi người dùng nhận một tệp xlsx mỗi ngày.
 
-**Standalone** — single machine, SQLite duy nhất, không phụ thuộc dịch vụ ngoài.
+**Một máy, SQLite** — DB vận hành `C:\data\news-scape\monocle.db` (ngoài kho mã, ngoài OneDrive).
 
 ## Kiến trúc
 
 ```
-Scheduler (APScheduler, 15 phút/cycle)
+Capture (morninger: APScheduler, capture 10' + re-derive 30' + drift sáng)
    └─→ BaseScraper subclasses (per domain, config-driven)
-          RSS │ REST API │ HTML  →  parse → dedup (SHA-256) → enrich
-   └─→ DBWriter (single-writer thread) → SQLite WAL (data/monocle.db)
-   └─→ Notify: log file + stdout
+          RSS │ REST API │ HTML  →  Bronze (raw HTML byte-exact) → parse → dedup (SHA-256)
+   └─→ DBWriter (single-writer thread) → SQLite WAL (C:\data\news-scape\monocle.db)
+   └─→ Silver (re-derive tăng dần theo watermark)
+Article Lane (ADR-0010, đường xử lý duy nhất)
+   └─→ article_run.py: đóng gói → runner LLM (agy, opencode, OpenRouter) → --finish: nạp DB qua cổng DoD
+Giao hàng → C:\data\news-scape\users\output\<user>\<YYYY-MM-DD>.xlsx
+Xuất bản → scripts/publish.py → SharePoint sandbox (một chiều)
+Vận hành không người trông → ops_daemon (Task Scheduler news-scape-ops)
 ```
 
-Chi tiết: [`docs/architecture.md`](docs/architecture.md). Yêu cầu đầy đủ: [`docs/system-prompt.md`](docs/system-prompt.md).
+Chi tiết: [`docs/architecture.md`](docs/architecture.md).
 
 ## Quick Start
 
-```bash
-# 1. Cài dependencies (Python 3.10+)
-python -m venv .venv
-.venv\Scripts\pip install -r requirements.txt    # Windows
+```powershell
+# 1. Venv ngoài OneDrive (không tạo .venv cục bộ)
+python -m venv C:\venvs\news-scape
+C:\venvs\news-scape\Scripts\pip install -r requirements.txt
+& "C:\venvs\news-scape\Scripts\Activate.ps1"      # mỗi terminal; mọi lệnh dưới chạy trong project/
 
 # 2. (Tuỳ chọn) secrets cho FireAnt — thiếu token thì scraper tự disable, không crash
 copy config\secrets.yaml.example config\secrets.yaml   # rồi điền token (docs/skills/fireant.md)
 
-# 3. Chạy pipeline ban ngày liên tục (capture 15' + re-derive Silver 30' + drift sáng)
+# 3. Chạy pipeline ban ngày liên tục (capture 10' + re-derive Silver 30' + drift sáng)
 python -m src.morninger
 
 # Hoặc 1 cycle rồi thoát
@@ -39,46 +45,58 @@ python -m src.morninger --once capture   # 1 cycle capture Bronze
 python -m src.morninger --once derive    # 1 lần re-derive Silver tăng dần
 python -m src.morninger --once drift     # 1 lần drift report
 
-# 4. Health check + quality gate
+# 4. Health check + điểm chạm pipeline
 python -m src.monitor.health
+python scripts/pipeline_radar.py status
 
-# 5. Tests
-python -m pytest tests/ -v
+# 5. Tests (đọc docs/knowledge/facts/tests-must-not-write-operational-db.md trước)
+python -m pytest tests/<package>/ -q
 ```
 
-Ops chi tiết: [`docs/runbook.md`](docs/runbook.md)
+Vận hành:
+- Lớp capture: [`docs/runbook.md`](docs/runbook.md)
+- Vận hành tự chủ và đợt Article Lane: [`docs/operations/ops-daemon.md`](docs/operations/ops-daemon.md), [`docs/operations/ops-daemon-reference.md`](docs/operations/ops-daemon-reference.md)
+- Xuất bản SharePoint: [`docs/operations/publisher.md`](docs/operations/publisher.md)
 
 ## Cấu trúc thư mục
 
 ```
-web-monocle/
+project/
 ├── config/
-│   ├── settings.yaml          # DB path, logging, scheduler, http defaults
+│   ├── settings.yaml          # DB path, logging, scheduler, morninger, http defaults
+│   ├── ops.yaml               # tham số ops_daemon (sensor, wave, mandate, publish)
 │   ├── watchlist.yaml         # Mã cổ phiếu theo dõi
 │   ├── notifications.yaml     # Rule notify (file-based)
 │   ├── secrets.yaml.example   # Template secrets (secrets.yaml gitignored)
-│   └── domains/               # 23 per-domain configs (4 enabled — xem "Nguồn tin")
+│   ├── entities/              # alias thực thể (aliases/, brand_aliases.yaml)
+│   └── domains/               # 24 per-domain configs (8 enabled — xem "Nguồn tin")
 ├── src/
-│   ├── orchestrator.py        # entry chính: python -m src.orchestrator [--once]
+│   ├── orchestrator.py        # capture: python -m src.orchestrator [--once]
 │   ├── morninger.py           # pipeline ban ngày: capture + re-derive Silver + drift (APScheduler)
-│   ├── pipeline/              # derive.py (incremental Silver), silver_builder, change_detect, run
-│   ├── core/                  # models, base_scraper, config, logging, retry, tickers
+│   ├── scrapers/              # per-domain scrapers + registry (@register)
 │   ├── crawler/               # http_client (rate limit 3s/domain, retry, UA)
-│   ├── processor/             # extractor (trafilatura), classifier, sentiment, segment
-│   ├── db/                    # store (SQLite WAL), writer (single-writer), dedup 2 lớp
+│   ├── pipeline/              # derive (incremental Silver), silver_builder, change_detect, drift, story_cluster
+│   ├── processor/             # extractor (trafilatura), classifier
+│   ├── article_lane/          # pack, expand, ledger, tick, handoff của Article Lane
+│   ├── agent/                 # runners, contract (DoD), ingest, catalog, packet
+│   ├── ops/                   # wave/, runtime/ (daemon, sensor, probes), console/ (control room, radar)
+│   ├── export/                # user_output (xlsx), publisher, csv_export, silver_manifest
+│   ├── core/                  # models, base_scraper, config, paths, logging, retry, tickers
+│   ├── db/                    # store (SQLite WAL), writer (single-writer), dedup 2 lớp, connect, snapshot
 │   ├── monitor/               # heartbeat + health check CLI
 │   ├── notifier/              # file-based notify
-│   └── scrapers/              # per-domain scrapers + registry (@register)
-├── scripts/                   # run_once, verify_quality, refresh_watchlist, watch_24h
-│   └── maintenance/           # backfill_deferred (Bronze-first), repair_dates, ...
-├── tests/                     # 79 tests + fixtures thật (captured live)
-├── docs/                      # architecture, runbook, skills/ per-domain
-│   └── skills/                # cafef.md, tnck.md, fireant.md, rss-sources.md
-├── plans/                     # implementation plans
-├── thamkhao/                  # research assets (API reverse-engineering) — không xoá
-├── data/                      # SQLite DB + lexicon + notifications (DB gitignored)
-└── logs/                      # monocle.log rotation 50MB (gitignored)
+│   └── analytics/ handoff/ lakehouse/ telemetry/ users/
+├── scripts/                   # CLI mỏng: run_once, article_run, ops_daemon, publish, pipeline_radar, ...
+│   └── maintenance/           # backfill_deferred (Bronze-first), migrate_users_output, refresh_aliases, ...
+├── schemas/                   # hợp đồng JSON (article-compact-v2, ...)
+├── assets/prefix/             # prefix cho runner LLM
+├── tests/                     # tests/<package>/test_*.py, tests/repo/ (kiểm toàn kho), fixtures thật
+├── docs/                      # architecture, runbook, operations/, skills/ per-domain
+├── domains/                   # hồ sơ từng nguồn (README, schema, changelog)
+└── thamkhao/                  # research assets (API reverse-engineering) — không xoá
 ```
+
+Dữ liệu vận hành (Bronze, Silver, DB, log, đầu ra) nằm dưới `MONOCLE_DATA_DIR` (mặc định `C:\data\news-scape`), không trong `project/data/`.
 
 ## Thêm domain mới (mục tiêu ~30 phút)
 
@@ -99,24 +117,24 @@ class MyDomainScraper(BaseScraper):
     def enrich(self, article) -> None: ...    # optional: fetch trang chi tiết
 ```
 
-3. Viết test (happy path + 1 edge case) trong `tests/`
+3. Viết test (happy path + 1 edge case) trong `tests/scrapers/`
 4. `python scripts/run_once.py myndomain`
 
-Không cần sửa orchestrator/core.
+Không cần sửa orchestrator/core. Chi tiết: [`docs/dev/03-adding-a-source.md`](docs/dev/03-adding-a-source.md).
 
 ## Nguyên tắc dữ liệu
 
-- **Raw HTML bảo toàn** — `content_html` giữ nguyên bản, `content_text` là bản sạch
+- **Raw HTML bảo toàn** — Bronze byte-exact, `content_text` là bản sạch
 - **Dedup bắt buộc** — SHA-256(url+title), bảng `seen_articles` cùng DB
 - **Rate limit ≥3s/domain**, timeout ≤30s, retry 3 lần với backoff
 - **Graceful degradation** — scraper lỗi không crash pipeline; lỗi gom vào `ScrapeResult.errors`
 - **Graceful shutdown** — SIGINT/SIGTERM → DBWriter flush queue, không corrupt DB
 
-## Nguồn tin — 24 config, **8 enabled** (cập nhật 2026-09-07)
+## Nguồn tin — 24 config, **8 enabled**
 
 > **Enabled ≡ có Bronze capture.** Hệ thống là Bronze-first: mỗi bài phải có raw HTML byte-exact
-> (`RawStore.save` trước mọi parse). `method: rss` generic **không** lưu Bronze, nên 19 domain còn
-> lại **cố ý tắt** từ 2026-08-03 — bật lại cần research riêng từng trang + scraper có capture,
+> (`RawStore.save` trước mọi parse). `method: rss` generic **không** lưu Bronze, nên các domain còn
+> lại **cố ý tắt** — bật lại cần research riêng từng trang + scraper có capture,
 > không phải đổi `enabled: true`.
 
 **Đang chạy (8):**
@@ -136,21 +154,8 @@ Không cần sửa orchestrator/core.
 znews, cafebiz, vietnamplus, dantri, vietnamnet (VN) · cnbc, marketwatch, fed, oilprice,
 yahoofinance (quốc tế, `language: en`).
 
-**Ngoài danh sách domain:** **NSO / Cục Thống kê** — báo cáo KTXH định kỳ (tháng/quý/năm).
-Driver riêng `fetch_periodic_reports.py` và `src/pipeline/periodic_reports.py` đã gỡ ở US-049 (ADR-0027.D6) vì không có lịch chạy nào gọi tới; bảng `periodic_reports` trong DB giữ nguyên. Thiết kế cũ: [`docs/design/16-periodic-report-scraper.md`](docs/design/16-periodic-report-scraper.md).
+**NSO / Cục Thống kê** (báo cáo định kỳ) không có driver chạy; bảng `periodic_reports` trong DB giữ nguyên.
 
-Kế hoạch mở rộng: [`plans/20260907-0834-market-sources-expansion/plan.md`](plans/20260907-0834-market-sources-expansion/plan.md)
+Kế hoạch mở rộng: [`plans/20260907-0834-market-sources-expansion/plan.md`](../plans/20260907-0834-market-sources-expansion/plan.md)
 
-Chi tiết feed + pitfalls: [`docs/skills/rss-sources.md`](docs/skills/rss-sources.md). Sentiment rule-based (lexicon VN) **đã gỡ khỏi workflow giai đoạn này** — sentiment "thật" do agent sinh ở lớp output; engine cũ `src/processor/sentiment.py` đã gỡ ở US-049, lấy lại từ lịch sử git nếu cần.
-
-## Trạng thái Phase 1
-
-| Sprint | Nội dung | Trạng thái |
-|--------|----------|-----------|
-| 1 | Foundation (BaseScraper, SQLite WAL, logging) + CafeF | ✅ |
-| 2 | TNCK, FireAnt API scrapers | ✅ |
-| 3 | Sentiment rule-based VN, fuzzy dedup, retry, monitoring, notify | ✅ |
-| 4 | RSS layer: Vietstock, VnExpress, Báo Đầu tư, VnEconomy | ✅ |
-| 5 | Orchestrator APScheduler + hardening | ✅ |
-
-Plan chi tiết: `plans/20260724-0859-scraping-expansion-phase1/plan.md`
+Chi tiết feed + pitfalls: [`docs/skills/rss-sources.md`](docs/skills/rss-sources.md). Sentiment không tính ở lớp capture; agent sinh ở lớp output.

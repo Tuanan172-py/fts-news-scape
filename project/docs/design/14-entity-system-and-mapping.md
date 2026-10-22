@@ -26,7 +26,7 @@ Hệ thống Entity là trái tim định tuyến của nền tảng `news-scape
 
 ---
 
-## 3. Quản lý Từ điển Alias Đa Miền (`config/entities/aliases/`)
+## 3. Quản lý Từ điển Alias Đa Miền (`project/config/entities/aliases/`)
 Alias được tách nhỏ theo miền dữ liệu để bảo trì độc lập:
 - `tickers.yaml`: Alias thương hiệu doanh nghiệp (FPT, Hòa Phát, Vingroup...).
 - `industries.yaml`: Alias ngành nghề (Quỹ đầu tư, Venture capital, Luyện kim, Ngân hàng...).
@@ -34,10 +34,14 @@ Alias được tách nhỏ theo miền dữ liệu để bảo trì độc lập
 - `themes.yaml`: Alias vĩ mô (Lãi suất điều hành, CPI, Tỷ giá USD/VND, Đầu tư công...).
 - `assets.yaml`: Alias tài sản (TPDN, Vàng miếng SJC, Dầu Brent, Crypto...).
 - `institutions.yaml`: Alias cơ quan (SBV, Cục Dự trữ Liên bang, World Bank...).
+- `macro_geo.yaml`: Alias địa chính trị vĩ mô.
+- `_context_guards.yaml`: ràng buộc ngữ cảnh chống false positive.
 
 ---
 
-## 4. Cơ Chế Nhận Diện & Matcher Động (`src/agent/entities.py`)
+## 4. Cơ Chế Nhận Diện & Matcher Động (`src/agent/catalog/entities.py`)
+
+Trong Article Lane, matcher chỉ đối chiếu kết quả thực thể của mô hình (`BOTH` / `LLM_ONLY` / `CODE_ONLY`, bước `article_expand`), không thay thế kết quả đó ([00 §6](00-end-to-end-architecture.md)).
 
 ### 4.1. Whitelist Từ Ngắn Được Bảo Vệ (`PROTECTED_SHORT_WORDS`)
 Thay vì loại bỏ toàn bộ các từ ngắn `<4` ký tự gây mất các từ khóa vĩ mô cốt lõi, matcher sử dụng danh sách bảo vệ:
@@ -63,19 +67,19 @@ Một alias có thể ánh xạ tới nhiều ID (ví dụ cùng từ khóa *"Qu
 ## 5. Quy Trình Người Dùng & Phân Phối Tin (User Workflow & Output Gate)
 
 ```
-[Master Excel: data/entities/entities.xlsx]
+[Master Excel: <DATA_ROOT>/entities/entities.xlsx]  (scripts/build_entities.py → src/agent/catalog/catalog_build.py)
           │ (Tra cứu mã)
           ▼
-[User Input Excel: users/subscriptions/<Name>_news.xlsx]
-          │ (Chạy compile.py)
+[User Input: <DATA_ROOT>/subscriptions/<Name>_news.xlsx|csv]  (bật/tắt: <DATA_ROOT>/subscriptions/manifest.yaml)
+          │ (scripts/compile_users.py → src/users/compile.py)
           ▼
-[User Config: config/entities/users/<Name>.yaml] (Active IDs)
+[User Config: project/config/entities/users/<Name>.yaml] (Active IDs)
           │
-          │ ◄─── [Tin tức Silver + L1 Matched Entities]
+          │ ◄─── [l1_outputs + agent_outputs của Article Lane]
           ▼
-[Noise Filter Gate: user_output.py]
-  - Macro/Asset diện rộng: Cần title mention HOẶC alias nằm trong title (tuyệt đối không đọc trường Gold/materiality)
+[Noise Filter Gate: scripts/write_user_output.py → src/export/user_output.py]
+  - Macro/Asset diện rộng: Cần title mention HOẶC alias nằm trong title
           │
           ▼
-[User Excel Output: users/output/<Name>/news_YYYYMMDD.xlsx]
+[User Excel Output: <DATA_ROOT>/users/output/<Name>/<YYYY-MM-DD>.xlsx]
 ```

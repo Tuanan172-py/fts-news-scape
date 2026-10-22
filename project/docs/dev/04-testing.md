@@ -1,46 +1,73 @@
 # Dev — Kiểm thử
 
-Cập nhật: 2026-07-26 · 112 test, chạy `pytest -q`. Nguồn: `tests/`.
+Cập nhật: 2026-10-22 · 97 file `test_*.py` (~840 hàm `test_`, chưa tính parametrize) dưới `project/tests/`.
+Bố cục theo RULE-12.R7 ([`.agents/rules/12-module-boundaries.md`](../../../.agents/rules/12-module-boundaries.md)).
 
 ## 1. Nguyên tắc
 
-- **Không mạng thật** trong unit test — dùng `FakeHTTP` bơm bytes/JSON cố định.
+- **Không mạng thật** trong unit test — dùng `FakeHTTP` / `FakeResponse` (`tests/_fakes.py`) bơm bytes/JSON cố định.
 - **Không mock giả để pass build** — test phải phản ánh hành vi thật của code.
-- **Fixture thật** cho feed khó: `tests/fixtures/*.rss` (dantri BOM, vietnambiz utf-16-mislabel)
-  được capture từ nguồn sống, dùng để khoá regression encoding.
-- DB test dùng `tmp_path` (SQLite tạm), không đụng `data/monocle.db`.
+- **Fixture thật** cho feed/trang khó: `tests/fixtures/*` (vd `dantri_bom.rss`, `vietnambiz_utf16.rss`, `*_detail_page.html`)
+  capture từ nguồn sống để khoá regression. Golden của Article Lane: `tests/fixtures/golden/`.
+- **Không đụng dữ liệu vận hành.** `tests/conftest.py`, trước khi import module test nào:
+  - đặt `MONOCLE_DATA_DIR` và `MONOCLE_DB_PATH` vào một thư mục tạm (`news-scape-test-*`), bỏ `MONOCLE_ALLOW_SYNCED_DB`
+    và `NEWS_SCAPE_SUBSCRIPTIONS_DIR`; script con gọi qua subprocess thừa kế các biến này;
+  - chép `tests/fixtures/entities_min.json` vào `<tmp>/entities/entities.json` cho `load_registry()`;
+  - bọc `sqlite3.connect`: mở DB dưới `C:\data\news-scape` hoặc `harness.db` của kho thì test thất bại ngay.
+- DB test dùng `tmp_path` hoặc thư mục tạm trên; không bao giờ `C:\data\news-scape\monocle.db`.
 
-## 2. Bản đồ test
+## 2. Bố cục
 
-| File | Phủ |
-|---|---|
-| `test_base_scraper.py` | template run(): thứ tự fetch→parse→dedup→enrich, gom errors, disabled |
-| `test_rss_scraper.py` | RSSScraper cơ bản: parse feed, symbols, categories |
-| `test_rss_features.py` | `_decode_feed` (utf-16/BOM/mislabel), `_parse_raw_date`, filter any/none, language |
-| `test_cafef.py` | cafef: 2-step, Type=1, `/Date(ms)/` parse, content_selector |
-| `test_tnck.py` | tnck: zone/page, epoch giây, phrase-ignore, relative URL |
-| `test_vndirect.py` | vndirect: 1-step inline content, aggregator, cap 20 |
-| `test_fireant.py` | fireant: happy path, thiếu/placeholder token, strip "Bearer ", self-disable 401/403 |
-| `test_sentiment.py` | lexicon load, n-gram longest-first, negation, ngưỡng pos/neg |
-| `test_store.py` | schema, INSERT OR IGNORE dedup, to_row/from_row |
-| `test_dedup.py` | hash exact, mark_seen, normalize_title giữ dấu |
-| `test_capture_registry.py` | url_key theo từng nguồn, sổ phát hiện, bí danh, không loại bài theo độ giống |
-| `test_capture_reconcile.py` | phân trang theo watermark, đối chiếu sitemap, trích tiêu đề trang |
-| `test_capture_backfill.py` | cào bù URL, ngân sách thời gian, phục hồi Bronze đã mất |
-| `test_story_cluster.py` | cụm hoá: bản chép, bản viết lại, chuyên mục định kỳ, văn mẫu, chuỗi cùng mã |
-| `test_inherit.py` | kế thừa kết quả, không ghi đè kết quả thật, bộ chọn bài giữ bài chép |
-| `test_signal_build.py` | bảng tín hiệu insight, phiên giao dịch, cụm và sentiment |
-| `test_tickers.py` | tag_tickers gắn mã từ watchlist |
-| `test_orchestrator.py` | run_cycle: classify+sentiment áp đúng chỗ, EN→neutral |
-| `test_monitor_notify.py` | heartbeat/metrics ghi đúng bảng; format notify |
+```
+project/tests/
+├── conftest.py          # cô lập dữ liệu + sys.path (project root và thư mục tests)
+├── _fakes.py            # FakeHTTP, FakeResponse dùng chung
+├── _userkit.py          # helper dựng người dùng/subscription cho test
+├── fixtures/            # feed, trang chi tiết, JSON API, entities_min.json, golden/
+└── <package>/test_*.py  # soi gương src/<package>/
+```
+
+| Thư mục | Số file | Phủ |
+|---|---|---|
+| `agent/` | 15 | runners (agy, opencode, openrouter), conformance, DoD, entities/matcher, l1_classifier, l1_router, l1_runner, pruner, ingest CLI |
+| `article_lane/` | 7 | contract, lane, pack thin, tick, code-first guard, ledger, `test_lane_golden.py` |
+| `core/` | 9 | base_scraper, paths, capture registry, DB path + capture lock, tickers, user manifest, migrate_users_output, backfill_deferred |
+| `crawler/` | 3 | raw_store, robots, backoff |
+| `db/` | 2 | store, dedup |
+| `export/` | 6 | user_output, checkpoint, publisher, signal_build, đường dẫn neo, I/O song song |
+| `handoff/` | 2 | handoff, đường dẫn state |
+| `lakehouse/` | 6 | storage, manifest, dedup, concurrency, perf, adversarial |
+| `monitor/` | 1 | heartbeat/metrics, notify |
+| `ops/` | 11 | ops core/runtime/manual/present/supervision/trace, restart lock, pipeline_spec, wave thin-demote, hardening |
+| `orchestrator/` | 1 | functional + hygiene |
+| `pipeline/` | 9 | change_detect, story_cluster, inherit, morninger, capture reconcile/backfill, silver watermark |
+| `processor/` | 1 | classifier, extractor |
+| `repo/` | 8 | `test_architecture.py` (RULE-12), `test_cli_entrypoints.py`, `test_doc_lint.py`, `test_diagrams.py`, lakehouse CLI, plugin, no-agent-emulation |
+| `scrapers/` | 15 | từng scraper (cafef, tnck, fireant, vietstock, vneconomy, baodautu, vndirect, thoibaotaichinhvietnam, rss_*), orchestrator, looks_complete |
+| `users/` | 1 | compile_users |
+
+Đếm lại: `Get-ChildItem project/tests -Recurse -Filter test_*.py | Measure-Object`.
 
 ## 3. Chạy
 
+Venv chuẩn `C:\venvs\news-scape` (ADR-0024), cwd = `project/`:
+
 ```powershell
-.venv\Scripts\python.exe -m pytest -q                       # tất cả
-.venv\Scripts\python.exe -m pytest tests/scrapers/test_fireant.py -v # 1 file
-.venv\Scripts\python.exe -m pytest -k "dedup" -q            # theo keyword
+cd project
+C:\venvs\news-scape\Scripts\python.exe -m pytest tests/ -q                                  # tất cả
+C:\venvs\news-scape\Scripts\python.exe -m pytest tests/ -q --ignore=tests/repo/test_cli_entrypoints.py   # agent chạy bản này (§3.1)
+C:\venvs\news-scape\Scripts\python.exe -m pytest tests/scrapers/test_fireant.py -v          # 1 file
+C:\venvs\news-scape\Scripts\python.exe -m pytest tests/ -k "dedup" -q                       # theo keyword
+C:\venvs\news-scape\Scripts\python.exe -m pytest tests/repo/test_architecture.py -q         # ranh giới module (RULE-12)
+C:\venvs\news-scape\Scripts\python.exe -m pytest tests/article_lane/test_lane_golden.py -q  # packet/conductor/expand không đổi
 ```
+
+### 3.1 `tests/repo/test_cli_entrypoints.py`
+
+File này chạy `--help` của mọi CLI và một lượt `scripts/maintenance/backfill_deferred.py --mode all --limit 3 --dry-run`
+qua subprocess, không truyền DB. Subprocess thừa kế `MONOCLE_DB_PATH` tạm từ `conftest.py`, nên theo code hiện tại
+lượt dry-run mở DB trong thư mục tạm. FACT [`tests-must-not-write-operational-db`](../../../docs/knowledge/facts/tests-must-not-write-operational-db.md)
+(verified 2026-10-06) vẫn yêu cầu agent bỏ file này khi chạy cả bộ; giữ `--ignore` cho tới khi FACT được xác minh lại.
 
 ## 4. Mẫu FakeHTTP
 
@@ -50,16 +77,17 @@ class FakeHTTP:
     def get_bytes(self, url, **kw): return self.xml.encode("utf-8")
     def get(self, url, **kw): return "<html>…</html>"
 ```
-API scraper dùng `FakeResp`/`FakeHTTP` trả `.json()` + `.status_code` để test self-disable
+API scraper dùng `FakeResponse`/`FakeHTTP` trả `.json()` + `.status_code` để test self-disable
 (vd FireAnt `list_status=401` → assert `scraper.disabled` và không gọi tiếp watchlist còn lại).
 
-## 5. Thêm test khi thêm nguồn
+## 5. Thêm test
 
-Tối thiểu: happy path (1 item → 1 Article đúng field), thiếu field → None, lỗi HTTP → errors
-không rỗng nhưng không crash, date parsing đúng giờ VN. Nếu có auth: token thiếu/hết hạn →
-disabled. Nếu encoding lạ: thêm fixture thật vào `tests/fixtures/`.
+- Test mới vào `tests/<package>/` khớp package trong `src/`; kiểm tra toàn kho vào `tests/repo/` (RULE-12.R7).
+- Khi thêm nguồn, tối thiểu: happy path (1 item → 1 Article đúng field), thiếu field → None, lỗi HTTP → errors
+  không rỗng nhưng không crash, date parsing đúng giờ VN, raw Bronze byte-exact. Có auth: token thiếu/hết hạn → disabled.
+  Encoding lạ: thêm fixture thật vào `tests/fixtures/`.
+- Script mới: khai trong `SCRIPT_INVENTORY` (`tests/repo/test_architecture.py`), nếu không test kiến trúc thất bại.
 
 ## 6. Câu hỏi mở
 
-- Chưa có fixture cố định cho hose (JSON-feed qua feedparser) → chỉ verify thủ công 2026-07-25.
-  Nên thêm để khoá regression. Xem [05-known-issues.md](05-known-issues.md).
+- Chưa có fixture cố định cho hose (JSON-feed qua feedparser, nguồn đang tắt). Xem [05-known-issues.md](05-known-issues.md).

@@ -1,117 +1,102 @@
 ---
 type: Python Pipeline
-title: Agent Handoff (Vòng 3 — Gold 2 lớp)
-description: Hạ tầng giao việc cho agent ngoài — export packet, ingest output, validate schema + chấm DoD. Không nhúng LLM.
-resource: project/src/agent/runner.py
-tags: [pipeline, agent, handoff, dod, gold]
+title: Agent Ingest & cổng DoD (nửa hoàn tất của Article Lane)
+description: Nạp bản ghi mô hình vào DB qua hai cổng Definition-of-Done thuần code — l1_ingest.py (l1-entity-output-v1) và agent_ingest.py (agent-output-v2-lean / v1) — do article_run.py --finish gọi.
+resource: project/src/agent/ingest/runner.py
+tags: [pipeline, agent, ingest, dod, article-lane]
 status: stable
 generated:
   at: 2026-09-07T00:00:00Z
 sources:
   - id: runner
-    resource: project/src/agent/runner.py
-    title: AgentRunner — Lớp 2
+    resource: project/src/agent/ingest/runner.py
+    title: AgentRunner.ingest_output — cổng DoD nội dung
   - id: l1-runner
-    resource: project/src/agent/l1_runner.py
-    title: L1Runner — Lớp 1
+    resource: project/src/agent/ingest/l1_runner.py
+    title: L1Runner.ingest_output — cổng DoD nhận diện thực thể
   - id: dod
-    resource: project/src/agent/dod.py
-    title: Definition-of-Done + preconditions
-  - id: packet
-    resource: project/src/agent/packet.py
-    title: Task packet + pruner
-  - id: orchestration-design
-    resource: project/docs/design/15-antigravity-multi-agent-orchestration.md
-    title: Multi-agent hierarchy orchestration
-sources_last_checked: 2026-09-07
+    resource: project/src/agent/contract/dod.py
+    title: verify_preconditions + check_dod (6 tiêu chí)
+  - id: l1-router
+    resource: project/src/agent/contract/l1_router.py
+    title: check_l1_dod
+  - id: run
+    resource: project/src/ops/wave/article_run.py
+    title: Bước ingest của --finish
+  - id: adr-0010
+    resource: docs/decisions/0010-ngung-lane-l1-gold-article-lane-duy-nhat.md
+    title: Article Lane là đường duy nhất
+sources_last_checked: 2026-10-22
 ---
 
-> **Trạng thái từ 2026-09-18:** đây không còn là đường mặc định. Đường chạy hằng ngày nay là
-> [Article Lane](article_lane.md) — gộp L1 và Gold thành **một** lượt gọi cho trọn lô. Hai row
-> `agent_l1` / `agent_gold` và toàn bộ mô tả dưới đây được giữ nguyên để **quay lui** trong ít
-> nhất một chu kỳ vận hành đầy đủ. Điều kiện quay lui định lượng: tỷ lệ đạt cổng nghiệm thu
-> dưới 95% **hoặc** tỷ lệ hỏng trên 10%, kéo dài hai đợt liên tiếp.
+Đây là **nửa nghiệm thu** của [Article Lane](article_lane.md), không phải một đường xử lý riêng.
+Đường hai lớp L1/Gold cũ (`l1_route.py`, `agent_export.py`, `run_agent_hierarchy.py`,
+`run_user_workflow.py`, `run_daily.ps1`) đã khai tử và bị xoá theo ADR-0010.[^adr-0010]
 
-**Vòng 3** là *hạ tầng* handoff, không phải bộ não. Codebase = **producer** (đóng gói việc,
-nghiệm thu kết quả); agent ngoài = **consumer** (provider bất kỳ do người dùng điều khiển).
-Ranh giới giữa hai bên là 2 JSON Schema + Definition-of-Done. **Không có lời gọi LLM nào trong
-repo.**[^orchestration-design]
+Hai lệnh ingest còn lại vì chúng là cổng duy nhất để bản ghi của mô hình vào DB:
 
-# Hai lớp nghiệp vụ
+| Lệnh | Schema vào | Cổng | Bảng |
+|---|---|---|---|
+| `scripts/l1_ingest.py <file...>` | `l1-entity-output-v1` | `check_l1_dod` | [l1_outputs](../tables/l1_outputs.md) (+ [l1_tasks](../tables/l1_tasks.md)) |
+| `scripts/agent_ingest.py <file...>` | `agent-output-v2-lean` (hoặc `agent-output-v1`) | `verify_preconditions` + `check_dod` | [agent_outputs](../tables/agent_outputs.md) (+ [work_items](../tables/work_items.md)) |
 
-| Lớp | Việc | Packet vào | Output ra | Bảng |
-|---|---|---|---|---|
-| **L1 — Entity Recognition** | nhận diện mã CP, doanh nghiệp, ngành, chỉ số, sàn từ **tiêu đề** | `data/agent_tasks/l1/*.task.json` | `l1-entity-output-v1` | [l1_tasks](../tables/l1_tasks.md), [l1_outputs](../tables/l1_outputs.md) |
-| **L2 — Content Processing (Gold)** | tóm tắt, hàm ý thị trường, materiality, sentiment, citations từ **toàn văn** | `data/agent_tasks/*.task.json` | `agent-output-v1` | [work_items](../tables/work_items.md), [agent_outputs](../tables/agent_outputs.md) |
+`article_run.py --wave W --finish` gọi cả hai, **chỉ** trên các tệp
+`article_<W>_*.output.json` của đợt đó (trong `<DATA_ROOT>/agent_outputs_l1/` và
+`<DATA_ROOT>/agent_outputs/`), sau bước bung bản ghi. Ingest lỗi ⇒ đợt dừng ngay.[^run]
 
-L1 chạy **2 tầng**: code-first deterministic trước (khớp mã + alias), chỉ tiêu đề không khớp mới
-cần agent. Kết quả L1 được nhúng ngược vào packet L2 (`input.l1_entities`) để agent Gold có sẵn
-ngữ cảnh mã CP.[^packet]
+# Bản ghi của Article Lane không có hàng đợi cũ
 
-# Chu trình 4 giai đoạn
- 
-```
-1. EXPORT   scripts/l1_route.py --review missed            → packet L1 (chỉ xuất bài needs_agent)
-            scripts/agent_export.py --subscriber-only       → claim work_items (gated theo users/subscriptions/) → packet Gold
-2. AGENT    [agent NGOÀI đọc *.task.json, nộp *.json]
-              L1   → data/agent_outputs_l1/
-              Gold → data/agent_outputs/
-3. INGEST   scripts/l1_ingest.py <dir>     → validate + check_l1_dod → l1_outputs
-            scripts/agent_ingest.py <dir>  → validate + check_dod    → agent_outputs
-              PASS → work_items.done   |   FAIL → failed + dod_reasons (self-healing)
-4. DELIVER  scripts/run_user_workflow.py  → users/output/<user>/<date>.xlsx
-```
+Article Lane chọn bài từ `articles` + `work_items` mà không đi qua định tuyến L1 cũ, nên:
 
-Chuỗi gộp: `scripts/run_agent_hierarchy.py`.
+- `L1Runner` tự ghi một hàng `l1_tasks` (`route = 'article_lane'`) khi bài chưa có, lấy tiêu đề
+  từ bảng `articles` chứ không từ bản ghi mô hình — cổng vẫn đối chiếu với nguồn.[^l1-runner]
+- `AgentRunner` tự đăng ký `work_items` + work-package khi thiếu, với `cleaned_text` đọc từ
+  Silver.[^runner]
 
-# Preconditions (trước khi giao)
+# Preconditions
 
-`verify_preconditions()` chặn việc không đủ điều kiện:[^dod]
-- `change_state ∈ {SELECTOR_BROKEN, TEMPLATE_DRIFT}` ⇒ **held**.
-- Toàn vẹn raw: file `raw_html_path` phải tồn tại và `sha256(file) == raw_sha256` (chống inject).
+`verify_preconditions()` chặn trước khi chấm:[^dod]
+- `change_state ∈ {SELECTOR_BROKEN, TEMPLATE_DRIFT}` ⇒ không đạt.
+- Toàn vẹn raw khi work-package trỏ Bronze: `sha256(raw_html_path) == raw_sha256`.
 
-# Definition-of-Done — Lớp 2
+# Definition-of-Done — nội dung
 
-4 predicate thuần code, đọc ngưỡng từ `schemas/task-lifecycle-v1.yaml`:[^dod]
+Sáu tiêu chí thuần code, ngưỡng đọc từ `schemas/task-lifecycle-v1.yaml`:[^dod]
 
-1. `schema_valid` — khớp `agent-output-v1`.
-2. `grounded` — ≥ **2** citations, mỗi `source_span` là chuỗi con **nguyên văn** của
-   `cleaned_text` và dài ≥ **20** ký tự.
-3. `quality_ok` — `extraction_quality ∈ {high, medium}`.
-4. `auditable` — `processing_metadata` đủ `agent_provider`, `model_used`, `timestamp`.
+1. `schema_valid` — khớp `agent-output-v2-lean` hoặc `agent-output-v1`.
+2. `grounded` — ≥ `min_citations` (2; bài một đoạn có `citation_basis = single-paragraph` chỉ
+   cần 1), mỗi trích dẫn là chuỗi con nguyên văn của `cleaned_text`, dài ≥ 20 ký tự.
+3. `quality_ok` — `extraction_quality ∈ {high, medium}` (chỉ schema v1).
+4. `auditable` — `processing_metadata` đủ `agent_provider`, `model_used`, `timestamp` (chỉ v1;
+   v2-lean do hệ điền).
+5. `value_added` — tóm tắt không chép nguyên văn bài; `key_points` không chép trích dẫn.
+6. `implication_specific` — hàm ý ≥ `min_implication_len`, không chép bài, không là câu mẫu.
 
-`confidence` **không** phải gate ở cả hai lớp (bỏ 2026-08-18 — self-reported, calibration kém).
+Đạt ⇒ `work_items.done`; trượt ⇒ `failed` + `dod_reasons`. `confidence` **không** phải cổng.
 
-DoD Lớp 1: schema + grounding bằng chứng ⊂ tiêu đề + checklist.
+# Definition-of-Done — nhận diện thực thể
 
-# Tối ưu payload & Token Burn (US-009)
+`check_l1_dod`: schema `l1-entity-output-v1` hợp lệ; mọi `surface` và `source_span` là chuỗi con
+của **tiêu đề**; `recognized` nhất quán với `entities`/`citations`; nhóm `categories` đánh `done`
+phải có entity `in_list` thuộc nhóm đó.[^l1-router]
 
-- **Subscriber-Gated Export** (`src/handoff/catalog.py` & `src/agent/runner.py`):
-  Lọc giao việc Gold dựa trên danh mục theo dõi thực tế (`users/subscriptions/`). Bỏ qua các bài viết
-  không có user nào đăng ký mã liên quan (tiết kiệm ~37.1% tổng số bài gọi Gold agent).
-- **Dynamic 3-Pass Semantic Pruner** (`src/agent/pruner.py`):
-  Giới hạn trần `max_chars = 2200` (giảm 45% token BPE). Lọc 3 tầng: (1) Sapo/Lead $\rightarrow$ (2) Đoạn văn chứa `l1_entities` và số liệu tài chính $\rightarrow$ (3) Lấp đầy theo trật tự văn bản gốc.
-  **Bảo toàn nguyên văn**: giữ nguyên tuyệt đối text trong từng đoạn `<p>` để không làm gãy citation grounding $\ge 20$ ký tự.
-- **Batch handoff** (`src/agent/batch_handoff.py`) — gom 5–10 bài vào `batch_XX.task.json`, giảm
-  ~90% số tool call I/O của subagent. `manifest.py` dựng manifest lô, `archive.py` dọn packet sau
-  khi ingest xong.
+Bản ghi `code_first` là tạm: bản ghi của mô hình được ghi đè lên nó, không bao giờ ngược lại
+(ADR-0003).[^l1-runner]
 
-# Guardrail I/O
+# Idempotency
 
-Subagent chỉ được **đọc** `data/agent_tasks/` và chỉ **ghi** `data/agent_outputs*/` — quy định ở
-`.agents/rules/`. Producer không bao giờ nhận nội dung agent ngoài luồng ingest có validate.
+Ingest lại cùng bài đã đạt DoD trả *cached*, không ghi đôi (`UNIQUE(article_id, raw_sha256)` ở
+`agent_outputs`, `UNIQUE(article_id)` ở `l1_outputs`).
 
 # Quan hệ
 
-- Đầu vào: [Silver & Work Packages](../datasets/silver_work_packages.md)
+- Đầu vào: bản ghi do bước expand của [Article Lane](article_lane.md) sinh
 - Đầu ra: [User Output](user_output.md)
+- Chỉ số: [DoD Pass Rate](../metrics/dod_pass_rate.md)
 
-# Metrics
-
-- [DoD Pass Rate](../metrics/dod_pass_rate.md)
-
-[^runner]: [AgentRunner](project/src/agent/runner.py)
-[^l1-runner]: [L1Runner](project/src/agent/l1_runner.py)
-[^dod]: [DoD](project/src/agent/dod.py)
-[^packet]: [Task packet](project/src/agent/packet.py)
-[^orchestration-design]: [Multi-agent hierarchy](project/docs/design/15-antigravity-multi-agent-orchestration.md)
+[^runner]: [AgentRunner](project/src/agent/ingest/runner.py)
+[^l1-runner]: [L1Runner](project/src/agent/ingest/l1_runner.py)
+[^dod]: [DoD](project/src/agent/contract/dod.py)
+[^l1-router]: [check_l1_dod](project/src/agent/contract/l1_router.py)
+[^run]: [article_run.py](project/src/ops/wave/article_run.py)
+[^adr-0010]: [ADR-0010](docs/decisions/0010-ngung-lane-l1-gold-article-lane-duy-nhat.md)

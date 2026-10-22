@@ -18,7 +18,7 @@ evidence:
   - path:plans/20261001-1100-autonomous-ops-24x7/plan.md
   - path:docs/proposals/20261001-ops-council.md
   - path:project/docs/operations/ops-daemon.md
-  - path:project/src/ops/dbos_flow.py
+  - path:project/src/ops/wave/dbos_flow.py
   - path:project/scripts/ops_install.ps1
   - test:project/tests/ops/test_ops_council_fixes.py
   - test:project/tests/ops/test_ops_core.py

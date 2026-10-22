@@ -1,3 +1,5 @@
+> Lưu trữ 2026-10-22 (US-050): tóm tắt charter gốc 2026-07 (Hermes, ClickHouse, cron 15 phút), thay bằng [design/00-end-to-end-architecture](../design/00-end-to-end-architecture.md) và [architecture.md](../architecture.md).
+
 # Project Charter — Tóm tắt điều hành
 
 ## 1. Vấn đề

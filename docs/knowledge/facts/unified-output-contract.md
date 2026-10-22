@@ -4,19 +4,20 @@ type: fact
 title: Unified Article Lane output contract
 status: active
 created: 2026-10-05
-updated: 2026-10-06
-verified: 2026-10-05
+updated: 2026-10-22
+verified: 2026-10-22
 lang: en
 authors: [claude-opus-5-5]
 adr: [ADR-0017]
 story: [US-034]
 evidence:
   - "path: project/schemas/article-compact-v2.schema.json"
-  - "path: project/src/agent/article_contract.py"
+  - "path: project/src/agent/contract/article_contract.py"
+  - "operator: 2026-10-21 Claude is never a replacement runtime (ADR-0026.D3)"
   - "path: .agents/rules/11-hop-dong-dau-ra-thong-nhat.md"
   - "commit: a7e9db8"
   - "operator: 2026-10-05 c holds 2 to 4 indexes, batch 50, agy is the gold-set baseline, claude not in the lane"
-summary: The compact record schema article-compact-v2 is the only output contract, validated only by parse_and_validate; agy is the gold-set baseline and claude is not in the lane.
+summary: The compact record schema article-compact-v2 is the only output contract, validated only by parse_and_validate; agy is the gold-set baseline and Claude is never a lane runtime.
 ---
 
 # FACT-unified-output-contract — Unified Article Lane output contract
@@ -24,10 +25,10 @@ summary: The compact record schema article-compact-v2 is the only output contrac
 ## Fact
 
 - ADR-0017 was accepted on 2026-10-05 with story US-034.
-- The compact record `{i,e,s,k,im,sn,ts,c}` is defined in `project/schemas/article-compact-v2.schema.json` and read through `src/agent/article_contract.py`.
+- The compact record `{i,e,s,k,im,sn,ts,c}` is defined in `project/schemas/article-compact-v2.schema.json` and read through `project/src/agent/contract/article_contract.py`.
 - Every runner uses `parse_and_validate`; a separate validator is forbidden. Rule 11 is the invariant.
 - Operator choices: `c` holds 2 to 4 indexes, the standard batch is 50, and agy is the provider that sets the gold-set baseline.
-- The provisional threshold is the agy score minus 5 points. `claude` is not yet in the lane.
+- The provisional threshold is the agy score minus 5 points. Claude is never a lane runtime (ADR-0026.D3).
 
 ## Why
 

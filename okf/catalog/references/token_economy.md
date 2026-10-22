@@ -15,10 +15,10 @@ sources:
     resource: project/src/telemetry/dsh_usage.py
     title: Đọc số đo thật từ runtime DSH, sáu luật kế toán
   - id: ledger
-    resource: project/scripts/token_ledger.py
+    resource: project/src/article_lane/ledger.py
     title: Sổ cái token và sàn bộ nhớ đệm
   - id: prefix
-    resource: project/src/agent/prefix.py
+    resource: project/src/agent/packet/prefix.py
     title: Kích thước tiền tố tĩnh
   - id: estimate
     resource: project/scripts/estimate_wave.py
@@ -29,8 +29,12 @@ sources:
   - id: plan
     resource: plans/20260918-1651-article-lane-unified/plan.md
     title: Thiết kế, số đo và mục §17 về bộ nhớ đệm
-sources_last_checked: 2026-09-21
+sources_last_checked: 2026-10-22
 ---
+
+Phạm vi: mô hình chi phí và số đo dưới đây là của runner **DSH** (`deepseek-flash`, bảng giá
+`token_pricing.yaml`). Với `--runner agy|opencode|openrouter`, sổ cái đọc số dùng và provider
+từ meta của từng lô.[^ledger]
 
 Mọi con số chi phí của hệ phải đến từ **số đo thật của runtime**, không từ định mức nhân tay.
 Hai định mức cũ khai trong `registry.yaml` — 450 token mỗi bài tầng L1, 1.470 tầng Gold — lệch

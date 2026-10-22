@@ -1,3 +1,5 @@
+> Lưu trữ 2026-10-22 (US-050): hạ tầng `agent_export` → `agent_ingest` của lane L1/Gold đã nghỉ hưu (ADR-0010), thay bằng [00-end-to-end-architecture §6](../../design/00-end-to-end-architecture.md).
+
 # Design 12 — Agent Infrastructure (Vòng 3, AGENT-AGNOSTIC, không LLM)
 
 Cập nhật: 2026-08-17 · Trạng thái: ĐÃ TRIỂN KHAI (hạ tầng) · KHÔNG nhúng LLM.
@@ -6,7 +8,7 @@ tự viết prompt dựa trên spec/guideline/ràng buộc đã dựng". Liên k
 [10](10-agent-orchestration-governance.md), [11](11-e2e-standardization-governance.md).
 
 > [!NOTE]
-> **Trạng thái Kế thừa (lane L1/Gold):** tài liệu này mô tả hạ tầng `agent_export` → agent → `agent_ingest` của lane đã nghỉ hưu (ADR-0010, 2026-09-23). Đường xử lý hiện hành là Article Lane: xem [00-end-to-end-architecture](00-end-to-end-architecture.md) §6. Khi mâu thuẫn, tài liệu 00 thắng.
+> **Trạng thái Kế thừa (lane L1/Gold):** tài liệu này mô tả hạ tầng `agent_export` → agent → `agent_ingest` của lane đã nghỉ hưu (ADR-0010, 2026-09-23). Đường xử lý hiện hành là Article Lane: xem [00-end-to-end-architecture](../../design/00-end-to-end-architecture.md) §6. Khi mâu thuẫn, tài liệu 00 thắng.
 
 ## 1. Ý tưởng
 Producer KHÔNG gọi model. Chỉ cung cấp **khung cắm** để agent của người dùng (prompt tự viết,

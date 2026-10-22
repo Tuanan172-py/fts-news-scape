@@ -15,8 +15,8 @@ Cổng DoD tất định (operator) đã kiểm schema và exact-substring citat
 
 Đọc một mẫu (sample) các cặp:
 
-- Output Gold: `data/agent_outputs/*.output.json`, gồm 7 trường v2-lean: `article_id`, `summary`, `key_points`, `implication`, `sentiment`, `time_sensitivity`, `citations`.
-- Task gốc: `data/agent_tasks/*.task.json`, chứa `cleaned_text` làm nguồn chân lý.
+- Output Gold: `<DATA_ROOT>/agent_outputs/article_<đợt>_*.output.json` (bộ bung của Article Lane dựng), gồm 7 trường v2-lean: `article_id`, `summary`, `key_points`, `implication`, `sentiment`, `time_sensitivity`, `citations`.
+- Task gốc: packet `<DATA_ROOT>/agent_tasks/article/article_<đợt>_NN.task.json` cùng bảng `.map.json`, chứa các đoạn nguyên văn của bài làm nguồn chân lý.
 
 Ghép cặp theo `article_id`. Đọc bằng `view_file`. CẤM discovery tools.
 
@@ -90,13 +90,15 @@ python scripts/harness_cli.py backlog add --title <tiêu đề> --pain <mô tả
   status: draft
 ```
 
-Khai báo stage `gold_qa` (optional, chạy sau `gold_ingest`) trong `.agents/pipeline.yaml`:
+Stage `gold_qa` (optional, chạy sau `article_expand`) đã khai trong `.agents/pipeline.yaml`:
 
 ```yaml
-- stage: gold_qa
+- id: gold_qa
   agent: adversarial-dod-verifier
+  class: cognitive
+  needs: [article_expand]
   optional: true
-  after: gold_ingest
+  gate: dod-gatekeeper#verifier
 ```
 
 KPI theo dõi: `semantic_defect_catch_rate`.

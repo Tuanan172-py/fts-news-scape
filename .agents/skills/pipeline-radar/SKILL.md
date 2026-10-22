@@ -12,8 +12,8 @@ Article Lane (`scripts/article_run.py`) là **đường xử lý duy nhất** t�
 
 ## 1. Bất biến
 
-1. **Một nguồn chân lý, chỉ đọc.** Radar đọc đúng DB mà bước nạp ghi vào (`src/db/preflight.resolve_db_path()`: biến môi trường `MONOCLE_DB_PATH`, rồi `settings.yaml`) qua kết nối `mode=ro`, cộng với tệp mô tả đợt `data/agent_tasks/article/wave_<mã>.json`.
-2. **Không suy đoán.** Mọi con số lấy từ DB hoặc từ tệp đợt. "Chờ phân tích" dùng **cùng câu truy vấn** với bước đóng gói (`article_pack.load_candidates`), nên đúng bằng số bài mà đợt kế tiếp sẽ lấy. Bản code-first (`l1_source = 'code_first'`) không tính là đã phân tích (ADR 0010).
+1. **Một nguồn chân lý, chỉ đọc.** Radar đọc đúng DB mà bước nạp ghi vào (`src/db/preflight.resolve_db_path()`: biến môi trường `MONOCLE_DB_PATH`, rồi `MONOCLE_DATA_DIR`, rồi `settings.yaml`; mặc định `C:\data\news-scape\monocle.db`) qua kết nối `mode=ro`, cộng với tệp mô tả đợt `<DATA_ROOT>/agent_tasks/article/wave_<mã>.json`. Logic radar nằm ở `src/ops/console/radar.py`; `scripts/pipeline_radar.py` chỉ là CLI mỏng.
+2. **Không suy đoán.** Mọi con số lấy từ DB hoặc từ tệp đợt. "Chờ phân tích" dùng **cùng câu truy vấn** với bước đóng gói (`load_candidates` trong `src/article_lane/pack.py`), nên đúng bằng số bài mà đợt kế tiếp sẽ lấy. Bản code-first (`l1_source = 'code_first'`) không tính là đã phân tích (ADR 0010).
 3. **Mỗi khuyến nghị là một lệnh chạy được ngay**, kèm mức ưu tiên `HIGH`/`MEDIUM`/`INFO`. Mọi lệnh chạy với cwd = `project/`.
 4. **Một đợt tại một thời điểm.** Đợt gần nhất chưa xong thì radar chỉ lệnh của đợt đó, không đề nghị mở đợt mới.
 5. **Token không phải cổng.** Radar không so token với ngưỡng nào và không khuyến nghị gì dựa trên token.

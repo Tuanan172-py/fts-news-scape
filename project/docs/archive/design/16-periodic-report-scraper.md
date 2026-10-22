@@ -1,9 +1,11 @@
+> Lưu trữ 2026-10-22 (US-050): scraper báo cáo định kỳ NSO (`src/pipeline/periodic_reports.py`, `fetch_periodic_reports.py`) đã xoá, thay bằng [00-end-to-end-architecture §4](../../design/00-end-to-end-architecture.md).
+
 # Design 16 — PeriodicReportScraper (NSO / Cục Thống kê)
 
 Cập nhật: 2026-09-07 · Trạng thái: **ĐÃ TRIỂN KHAI v1 + validate LIVE** (owner duyệt G2 2026-09-07).
-Đọc kèm: [06-raw-html-capture](06-raw-html-capture.md) ·
-[07-storage-layers](07-storage-layers-and-change-detection.md) ·
-[03-source-strategy](03-source-strategy.md) ·
+Đọc kèm: [06-raw-html-capture](../../design/06-raw-html-capture.md) ·
+[07-storage-layers](../../design/07-storage-layers-and-change-detection.md) ·
+[03-source-strategy](../../design/03-source-strategy.md) ·
 `plans/20260907-0834-market-sources-expansion/phase-05-nso-gated-deferred.md`
 
 ---

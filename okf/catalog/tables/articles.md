@@ -2,7 +2,7 @@
 type: SQLite Table
 title: articles
 description: Bảng trung tâm lưu bài viết đã capture + chuẩn hoá; hạt độ = 1 bài / url.
-resource: "project/data/monocle.db (table: articles)"
+resource: "<DATA_ROOT>/monocle.db (table: articles)"
 tags: [news, stock-market, bronze, articles]
 status: stable
 generated:
@@ -17,7 +17,7 @@ sources:
   - id: data-model
     resource: project/docs/dev/02-data-model-and-db.md
     title: Data Model & DB Design
-sources_last_checked: 2026-09-07
+sources_last_checked: 2026-10-22
 ---
 
 Bảng `articles` lưu mỗi bài viết thu được ở **Vòng 1 — Capture**. Hạt độ: 1 hàng = 1 bài,
@@ -33,9 +33,9 @@ Nguyên tắc "không vứt dữ liệu": `content_html` giữ bản HTML đã b
 [Bronze raw store](../datasets/bronze_raw_html.md) — `articles` là chỉ mục tra cứu, không phải
 nguồn provenance.
 
-> Từ 2026-09: `sentiment` / `sentiment_score` do engine rule-based sinh **đã gỡ khỏi workflow**
-> (xem [Sentiment Pipeline](../pipelines/sentiment_pipeline.md) — trạng thái legacy). Sentiment
-> "thật" dùng cho deliverable nằm ở [agent_outputs](agent_outputs.md), không ở cột này.
+> Cột `sentiment` / `sentiment_score` chỉ còn giá trị lịch sử: engine rule-based từng ghi chúng
+> đã xoá. Sentiment dùng cho deliverable do mô hình sinh và nằm ở
+> [agent_outputs](agent_outputs.md), không ở cột này.
 
 # Schema
 

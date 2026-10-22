@@ -1,6 +1,6 @@
 # AGENT_NETWORK_DESIGN — Thiết kế Mạng lưới Agent Đặc nhiệm Tự quản trị
 
-> Trạng thái: **DRAFT — chờ duyệt** (chưa hiện thực hóa code). Người soạn: khảo sát toàn bộ `.agents/`, `harness.db`, `scripts/`, `project/src/` ngày 2026-09-15.
+> Trạng thái: **đã hiện thực** theo ADR 0006 — Spine 1 `registry.yaml`, Spine 2 `pipeline.yaml`, Spine 3 bảng `agent_metrics` (`harness_cli.py metric`, `query agent-metrics`, `propose`). Khảo sát gốc ngày 2026-09-15; từ 2026-09-23 Article Lane là đường xử lý duy nhất (ADR 0010), lane L1/Gold hai tầng đã ngừng.
 > Mục tiêu: Xác lập kiến trúc để agents đặc nhiệm sinh sôi, tự điều phối pipeline, và tiến hóa cùng dự án — dưới sự kiểm soát tất định và ngân sách token.
 
 ---
@@ -16,13 +16,13 @@
 
 ## 1. Phân loại lại 3 lớp tác nhân (Taxonomy — sửa lỗi lẫn lộn thuật ngữ)
 
-Hiện `multi-agent-orchestrator-governance` gọi 5 "agent" nhưng chỉ 2 là agent LLM thật. Chuẩn hóa 3 lớp:
+Chuẩn hóa 3 lớp (danh sách đầy đủ ở `registry.yaml`):
 
 | Lớp                      | Định nghĩa                            | Đặc trưng                                                      | Thành viên hiện tại                                                                                                         |
 | :------------------------ | :--------------------------------------- | :---------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------ |
-| **Operator**        | Script Python tất định, 0 token       | Vào/ra cố định, idempotent, không suy luận                  | `pipeline_radar`, `l1_route`, `l1_ingest`, `agent_export`, `agent_ingest`, `pruner`, `dod`, `write_user_output` |
-| **Cognitive Agent** | Subagent LLM gọi qua`invoke_subagent` | Có phí token, xử lý ngữ nghĩa, ràng buộc 2-I/O + grounded | `l1-entity-matcher`, `gold-financial-analyst`                                                                               |
-| **Conductor**       | Bộ điều phối đọc pipeline manifest | Quyết định stage kế tiếp, chính sách wave, cổng           | Phiên Master Orchestrator (người + agent chính)                                                                             |
+| **Operator**        | Script Python tất định, 0 token       | Vào/ra cố định, idempotent, không suy luận                  | `pipeline_radar`, `article_pack`, `article_expand`, `l1_ingest`, `agent_ingest`, `token_ledger`, `story_cluster`, `capture_reconcile`, `write_user_output` |
+| **Cognitive Agent** | Subagent LLM gọi qua`invoke_subagent` | Có phí token, xử lý ngữ nghĩa, ràng buộc 2-I/O + grounded | `article-processor` (một bài một lượt, cả nhận diện lẫn phân tích); các agent đặc nhiệm `draft` trong registry           |
+| **Conductor**       | Bộ điều phối đọc pipeline manifest | Quyết định stage kế tiếp, chính sách wave, cổng           | `master-orchestrator`: `ops_daemon` khi chạy không giám sát, phiên DSH `agent_article` khi tương tác                     |
 
 Nguyên tắc: tài liệu, sơ đồ, registry BẮT BUỘC ghi rõ `class` của mỗi tác nhân. Cấm gọi Operator là "Agent".
 
@@ -32,8 +32,8 @@ Nguyên tắc: tài liệu, sơ đồ, registry BẮT BUỘC ghi rõ `class` c�
 
 ### Điểm mạnh giữ nguyên
 
-- Ranh giới 0-token infra vs LLM realm (AGENTS.md §6) — nền tài chính bền vững.
-- Guardrails trưởng thành: 2-I/O, grounded citations ≥ 20 ký tự, subscriber-gating, morphological guards tiếng Việt (`entity-system-invariants.md`).
+- Ranh giới 0-token infra vs LLM realm (AGENTS.md §7.1) — nền tài chính bền vững.
+- Guardrails trưởng thành: 2-I/O, trích dẫn nguyên văn dựng từ chỉ số đoạn, morphological guards tiếng Việt (`entity-system-invariants.md`).
 - Harness bền vững H5-ready: `harness.db` (story/intake/trace/decision/backlog), `harness_cli.py` có `audit`/`propose`.
 
 ### Khoảng trống cần lấp (định hướng thiết kế nhắm vào đây)
@@ -44,7 +44,7 @@ Nguyên tắc: tài liệu, sơ đồ, registry BẮT BUỘC ghi rõ `class` c�
 | G2  | Không có Agent Registry máy-đọc-được        | Thêm agent là việc ad-hoc, entropy tăng              | Spine 1            |
 | G3  | Điều phối ngầm định trong văn xuôi SKILL    | Không kiểm toán được, phụ thuộc trí nhớ        | Spine 2            |
 | G4  | Không có KPI per-agent bền vững                 | Vòng tự cải tiến thiếu dữ liệu                    | Spine 3            |
-| G5  | Trùng lặp bất biến (rule 05 ↔ AGENTS.md §6)   | Sửa 1 chỗ quên chỗ khác, drift                      | Spine 1 (DRY link) |
+| G5  | Trùng lặp bất biến (rule 05 ↔ AGENTS.md §7)   | Sửa 1 chỗ quên chỗ khác, drift                      | Spine 1 (DRY link) |
 
 ---
 
@@ -58,43 +58,43 @@ Schema mỗi entry:
 
 ```yaml
 agents:
-  - id: l1-entity-matcher
+  - id: article-processor
     class: cognitive            # operator | cognitive | conductor
-    status: active              # active | draft | deprecated
+    status: active              # active | draft | deprecated | retired
     model: flash
     skill: .agents/skills/l1-entity-matcher/SKILL.md
     io_boundary:
-      read:  ["data/agent_tasks/l1/*.task.json"]
-      write: ["data/agent_outputs_l1/*.output.json"]
-    tools_allowed: [view_file, write_to_file]     # cấm discovery tools
+      read:  []                 # worker không có tool; packet nằm trong prompt
+      write: []                 # kết quả trả trong thông điệp cuối
+    tools_allowed: []
     dod_contract: dod-gatekeeper#l1
-    cost_budget: { tokens_per_item: 450, wave_batch: 25, concurrency: 3 }
-    kpis: [dod_pass_rate, tokens_per_item, false_positive_rate]
-    owner_rules: ["01-subagent-guardrails", "entity-system-invariants"]
+    output_schema: [article-compact-v2]
+    cost_budget: { tokens_per_item: null, source: "harness.db token_ledger" }
+    kpis: [turns_per_batch, parse_fail_rate, resolve_rate, dod_pass_rate]
+    owner_rules: ["01-subagent-guardrails", "05-gold-agent-and-payload-invariants"]
 ```
 
 Lợi ích: thêm agent = 1 entry + 1 skill + 1 ADR; kiểm toán tự động ranh giới I/O; sinh sơ đồ topology từ dữ liệu.
 
 ### Spine 2 — Pipeline DAG Manifest: `.agents/pipeline.yaml`
 
-Biến 5-phase văn xuôi (`news-scape-agent-operations §1`) thành DAG khai báo. Conductor/`pipeline_radar` đọc DAG để suy ra stage kế tiếp thay vì con người ghi nhớ runbook.
+Biến runbook văn xuôi thành DAG khai báo. Conductor/`pipeline_radar` đọc DAG để suy ra stage kế tiếp thay vì con người ghi nhớ runbook. Khối `ops_spec` của tệp được mã vận hành đọc trực tiếp (`project/src/core/pipeline_spec.py`).
 
 ```yaml
 stages:
-  - id: scrape        ; agent: orchestrator          ; class: operator
-  - id: l1_route      ; agent: l1_route              ; class: operator ; needs: [scrape]
-  - id: l1_match      ; agent: l1-entity-matcher     ; class: cognitive
-                        needs: [l1_route] ; wave: {batch: 25, concurrency: 3} ; gate: dod#l1
-  - id: l1_ingest     ; agent: l1_ingest             ; class: operator ; needs: [l1_match]
-  - id: gold_export   ; agent: agent_export          ; class: operator
-                        needs: [l1_ingest] ; filter: subscriber_gated
-  - id: gold_analyze  ; agent: gold-financial-analyst; class: cognitive
-                        needs: [gold_export] ; wave: {batch: 5, concurrency: 2} ; gate: dod#gold
-  - id: gold_ingest   ; agent: agent_ingest          ; class: operator ; needs: [gold_analyze]
-  - id: deliver       ; agent: write_user_output     ; class: operator ; needs: [gold_ingest]
+  - id: scrape            ; agent: scraper-orchestrator ; class: operator
+  - id: capture_reconcile ; agent: capture-reconciler   ; class: operator ; needs: [scrape]
+  - id: story_cluster     ; agent: story-clusterer      ; class: operator ; needs: [scrape]
+  - id: article_pack      ; agent: article-packer       ; class: operator
+                            needs: [scrape, story_cluster] ; gate: "DB ghi được + prefix khớp"
+  - id: article_analyze   ; agent: article-processor    ; class: cognitive
+                            needs: [article_pack] ; wave: {batch: 100}   # một run_code cho cả đợt
+  - id: article_expand    ; agent: article-expander     ; class: operator
+                            needs: [article_analyze] ; gate: "độ phủ đợt >= 90% ở cả hai lớp"
+  - id: deliver           ; agent: delivery-writer      ; class: operator ; needs: [article_expand]
 ```
 
-Lợi ích: chính sách wave chống 429 nằm trong dữ liệu; `pipeline_radar` gợi ý lệnh chính xác theo DAG; thêm agent mới chỉ là chèn 1 stage.
+Lợi ích: chính sách wave nằm trong dữ liệu; `pipeline_radar` gợi ý lệnh chính xác theo DAG; thêm agent mới chỉ là chèn 1 stage.
 
 ### Spine 3 — Per-Agent KPI Ledger: bảng `agent_metrics` trong `harness.db`
 
@@ -114,7 +114,7 @@ CREATE TABLE agent_metrics (
 );
 ```
 
-Lợi ích: hiện thực hóa vòng RCA trong `multi-agent-orchestrator-governance §3` thành dữ liệu. Ví dụ đề xuất tự sinh: *"gold-financial-analyst: dod_pass_rate 100% → 88% trong 7 ngày, fp_flags tăng ở key_points → siết điều khoản Value-Added trong SKILL."*
+Lợi ích: hiện thực hóa vòng RCA trong `multi-agent-orchestrator-governance §3` thành dữ liệu. Ví dụ đề xuất tự sinh: *"article-processor: dod_pass_rate 100% → 88% trong 7 ngày, fp_flags tăng ở key_points → siết điều khoản Value-Added trong persona."* Đợt do `ops_daemon` chạy tự ghi `agent_metrics` (`project/src/ops/wave/metrics.py`); đợt tay ghi bằng `harness_cli.py metric`.
 
 ---
 
@@ -124,8 +124,8 @@ Chỉ triển khai sau khi có tối thiểu Spine 1 + Spine 2.
 
 | # | Agent                              | Class         | Vấn đề giải quyết                                                                                   | Rủi ro / Tier                                                |
 | :- | :--------------------------------- | :------------ | :------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------ |
-| 1 | **Story-Dedup / Clustering** | hybrid        | Cùng 1 sự kiện trên nhiều nguồn → phân tích 1 lần, gán N nguồn. Tiết kiệm token đáng kể | Silver đã có SimHash; thêm tie-breaker cognitive. Tier 2  |
-| 2 | **Materiality Triage**       | cognitive rẻ | Lọc bài đáng đưa Gold*sâu hơn* subscriber-gate                                                 | Giảm burn Gold thêm một bậc. Tier 2                       |
+| 1 | **Story-Dedup / Clustering** | operator      | Cùng 1 sự kiện trên nhiều nguồn → bài `copy` kế thừa kết quả bài gốc                             | Đã làm tất định bằng `story-clusterer` (ADR 0016); agent cognitive đã gỡ |
+| 2 | **Materiality Triage**       | —             | —                                                                                                        | Đã gỡ 2026-09-24: `materiality`/`event_type`/`impact_area` không còn là trường đầu ra |
 | 3 | **Entity/Watchlist Curator** | cognitive     | `unlisted_candidates` → đề xuất bổ sung catalog kèm bằng chứng                                 | Nuôi tăng trưởng từ điển. Chạm catalog = Tier 3 (ADR) |
 | 4 | **Adversarial DoD Verifier** | cognitive     | Kiểm định ngữ nghĩa (chất lượng implication, hallucination) trên mẫu                           | Feeds Spine 3. Tier 2                                         |
 | 5 | **Daily Brief Synthesizer**  | cognitive     | Tổng hợp cuối ngày theo watchlist từng user                                                         | Deliverable bậc cao. Tier 2                                  |
@@ -158,7 +158,7 @@ Mọi agent mới đi qua đủ 5 bước bất biến:
 
 ## 7. Ranh giới không làm (Anti-scope)
 
-- Không tự động hóa `invoke_subagent` bằng code nếu nền Antigravity không expose API ổn định — giữ thao tác nền tảng, chỉ khai báo hóa phần điều phối quanh nó.
+- Runner LLM xếp hạng `agy`, rồi `opencode run`, rồi OpenRouter; Claude không bao giờ là runtime thay thế (ADR-0026.D3). Không viết thêm runner ngoài thứ hạng này.
 - Không thêm agent LLM cho việc script tất định giải quyết được (giữ Axiom 1).
 - Không phá vỡ `harness.db` nghiệp vụ tách biệt `monocle.db`; `agent_metrics` nằm ở `harness.db`.
 - Không xóa rule/skill hiện có khi refactor DRY — chỉ thay nội dung trùng bằng link về registry, giữ lịch sử.

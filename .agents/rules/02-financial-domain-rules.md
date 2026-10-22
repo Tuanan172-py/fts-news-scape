@@ -35,7 +35,7 @@ Chọn đúng 1 trong 3 mã: `pos`, `neg`, `neu` (tương ứng `positive`, `neg
 ## 4. Phụ lục Kế thừa — Thang điểm `materiality_score` (Archived Specification)
 
 > [!IMPORTANT]
-> **TRẠNG THÁI: ĐÃ NGỪNG ÁP DỤNG TRONG RUNTIME HIỆN HÀNH (ADR 0010 & AGENTS.md §6A).**
+> **TRẠNG THÁI: ĐÃ NGỪNG ÁP DỤNG TRONG RUNTIME HIỆN HÀNH (ADR 0010 & AGENTS.md §7.1).**
 > - Runtime Article Lane (`v2-lean`) và User Output (`.xlsx`) **KHÔNG** sử dụng trường này để tối ưu token và thời gian phản hồi.
 > - Agent **CẤM** sinh trường `materiality` hoặc `materiality_score` trong kết quả phân tích.
 > - Bảng dưới đây chỉ lưu trữ phục vụ tra cứu lịch sử và cơ sở dữ liệu nếu có quyết định tái kích hoạt sau này qua quy trình ADR Cấp 3.

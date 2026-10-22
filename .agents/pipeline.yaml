@@ -115,7 +115,7 @@ governance_loop:
     optional: true
     trigger: "cuối phiên / sau mỗi đợt"
     reads: ["harness.db (trace + backlog + agent_metrics + token_ledger)", "mã nguồn (chỉ đọc)"]
-    produces: "docs/proposals/harness_improvement_<date>.md"
+    produces: "docs/proposals/<YYYYMMDD>-<slug>.md (harness_cli doc new --type proposal)"
     cli_readonly: '& "C:\venvs\news-scape\Scripts\python.exe" scripts/harness_cli.py propose'
 
 # ─────────────── Vòng vận hành tự chủ khi máy mở (ADR 0012) ───────────────

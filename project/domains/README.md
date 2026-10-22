@@ -36,37 +36,28 @@ domains/
 
 ## Công cụ đi kèm
 
-| Công cụ | Vị trí | Chức năng |
-|---------|--------|-----------|
-| `domain_validator` | `src/monitor/domain_validator.py` | Validate field-level, detect anomaly vs baseline |
-| `domain_reporter` | `src/monitor/domain_reporter.py` | Sinh báo cáo hằng ngày |
-| `domain_check` | `scripts/domain_check.py` | CLI tool: validate, report, raw-check |
+Bộ `domain_validator` / `domain_reporter` / `domain_check.py` / `diagnose_sources.py` đã gỡ ở US-049.
+Công cụ hiện hành (cwd = `project/`):
+
+| Công cụ | Chức năng |
+|---------|-----------|
+| `python scripts/pipeline_radar.py status` | Trạng thái capture/wave và đúng một lệnh tiếp theo (đọc trước tiên, AGENTS.md §9) |
+| `python -m src.monitor.health` | `scraper_heartbeat`: trạng thái từng scraper, lỗi liên tiếp, exit code |
+| `python scripts/validate_capture.py [<domain>] [N]` | Audit capture thật: `capture_status`, sha256 khớp bytes, `images[]` |
+| `python scripts/capture_reconcile.py status` | Độ lệch so với sitemap theo ngày (exit 1 khi vượt ngưỡng) |
+| `python -m src.morninger --once drift` | Liệt kê bài `TEMPLATE_DRIFT` / `SELECTOR_BROKEN` |
+
+`schema.yaml` mỗi domain còn được đọc khi phân giải host: `resolve_source_domain()` (`src/core/config.py`) lấy key `domain`.
 
 ## Quy trình làm việc
-
-### Hằng ngày
-
-```bash
-# Kiểm tra nhanh tất cả domain
-python scripts/domain_check.py
-
-# Tạo báo cáo chi tiết
-python scripts/domain_check.py --report
-```
-
-Report được lưu vào `data/reports/daily/{domain}-{date}.md`.
 
 ### Khi nghi ngờ upstream thay đổi
 
 ```bash
-# Kiểm tra raw response (không cần cycle)
-python scripts/domain_check.py cafef --raw-check
-
-# Validate articles hiện có trong DB
-python scripts/domain_check.py vietstock
-
-# Chạy diagnostic chuyên sâu
-python scripts/diagnose_sources.py cafef
+python scripts/pipeline_radar.py status          # nguồn nào thiếu tươi
+python -m src.monitor.health                     # scraper nào lỗi liên tiếp
+python -m src.morninger --once drift             # bài nào lệch template / hỏng selector
+python scripts/validate_capture.py cafef 2       # fetch thật 2 bài, kiểm Bronze
 ```
 
 ### Khi xác nhận thay đổi
@@ -75,13 +66,13 @@ python scripts/diagnose_sources.py cafef
 2. Ghi `domains/<domain>/changelog.md`
 3. Cập nhật `domains/<domain>/README.md` nếu cần
 4. Sửa scraper code (`src/scrapers/`)
-5. Cập nhật fixture samples
-6. Chạy `domain_check` để verify
-7. Chạy test suite để regression test
+5. Cập nhật fixture samples (`tests/fixtures/`, `domains/<domain>/fixtures/`)
+6. Chạy `validate_capture.py <domain>` để verify
+7. Chạy test của scraper (`python -m pytest tests/scrapers/ -q`) để regression test
 
 ## Ngưỡng cảnh báo
 
-Định nghĩa trong `schema.yaml` mỗi domain. Mặc định:
+Khai trong `schema.yaml` mỗi domain làm tài liệu tham chiếu; không công cụ hiện hành nào tự đọc các ngưỡng này. Mặc định:
 
 | Ngưỡng | Giá trị | Ý nghĩa |
 |--------|---------|---------|

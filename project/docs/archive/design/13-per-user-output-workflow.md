@@ -1,7 +1,9 @@
+> Lưu trữ 2026-10-22 (US-050): quy trình người dùng cũ (CSV, `l1_route`, `agent_export`, `run_user_workflow`) đã xoá, thay bằng [00-end-to-end-architecture §7](../../design/00-end-to-end-architecture.md).
+
 # Thiết kế — Quy trình end-to-end lớp NGƯỜI DÙNG (input → output)
 
 Cập nhật: 2026-09-08 · Đối tượng: dev/vận hành muốn chạy từ input user tới khi có file giao hàng.
-Tham chiếu chéo: [00-end-to-end-architecture](00-end-to-end-architecture.md),
+Tham chiếu chéo: [00-end-to-end-architecture](../../design/00-end-to-end-architecture.md),
 [09-agent-io-contract](09-agent-io-contract.md), [10-agent-orchestration-governance](10-agent-orchestration-governance.md).
 
 ---
@@ -117,8 +119,8 @@ Kết quả: `EntityRegistry.subscriptions[<name>] = {entity_id…}`; `subscribe
 ## 6. STAGE 2 — Scrape/Process (đã có, chạy riêng)
 
 Cron/pipeline hiện tại: `scrape → bronze(raw_html) → silver → work_packages`. Chi tiết xem
-[02-execution-flow](02-execution-flow.md), [07-storage-layers-and-change-detection](07-storage-layers-and-change-detection.md),
-[08-handoff-contract-catalog](08-handoff-contract-catalog.md). Đây là phần `--skip-scrape` (mặc định)
+[02-execution-flow](../../design/02-execution-flow.md), [07-storage-layers-and-change-detection](../../design/07-storage-layers-and-change-detection.md),
+[08-handoff-contract-catalog](../../design/08-handoff-contract-catalog.md). Đây là phần `--skip-scrape` (mặc định)
 của user-workflow — giả định đã sinh `work_items` trong DB.
 
 ---
@@ -155,7 +157,7 @@ của user-workflow — giả định đã sinh `work_items` trong DB.
 > copy nguyên văn thì phép thử hiển nhiên đúng: **1.274/1.274** bản ghi `agent_outputs`
 > đều `dod_pass=1` trong khi 100% có `key_points` copy y hệt `source_span` và 100%
 > `implication` là 1 trong 3 câu template. Xem
-> [ADR 0004](../../../docs/decisions/0004-gold-value-gate-va-du-lieu-gia-lap.md).
+> [ADR 0004](../../../../docs/decisions/0004-gold-value-gate-va-du-lieu-gia-lap.md).
 > Kiểm định định kỳ: `python scripts/verify_gold_quality.py`.
 
 **Giới hạn phạm vi (tiết kiệm):** chỉ nên export article có entity ∈ `union_subscription(registry, enabled)`

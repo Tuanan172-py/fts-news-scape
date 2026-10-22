@@ -1,8 +1,8 @@
 # Tham chiếu — ops_daemon
 
 - **Loại tài liệu:** tham chiếu (reference).
-- **Cập nhật:** 2026-10-01
-- **Quyết định liên quan:** ADR 0012, ADR 0014
+- **Cập nhật:** 2026-10-22
+- **Quyết định liên quan:** ADR 0012, ADR 0014, ADR 0026
 
 Cách cài đặt và xử lý cảnh báo nằm ở [runbook](ops-daemon.md). Tài liệu này chỉ liệt kê sự kiện và tham số.
 
@@ -14,7 +14,8 @@ Cách cài đặt và xử lý cảnh báo nằm ở [runbook](ops-daemon.md). T
 | L1 | Khi đủ điều kiện thì mở đợt và chạy trọn: kiểm tra trước, đóng gói, phân tích, vá, nạp DB qua cổng `--finish` | Xử lý cảnh báo, soát mẫu chất lượng |
 
 - Không có nút duyệt từng đợt. Cổng kỹ thuật của `--finish` quyết định việc nạp DB (ADR 0008).
-- Giao hàng không thuộc vòng đời đợt. DB là nguồn sự thật, việc giao hàng là quy trình riêng.
+- DB là nguồn sự thật. Sau DONE, bước `deliver` xuất xlsx giao hàng của ngày đợt (best-effort); lỗi giao hàng không lật DONE mà báo `wave.deliver_failed`.
+- `/level L1 <số bài>` đặt trần số bài mỗi đợt (1 đến 500). Không có L2 hay L3; mức lạ đọc thành L0.
 - Hai lần đợt lỗi liên tiếp thì L1 tự về L0 và báo mức khẩn.
 - Lệnh nâng quyền (`/level L1`, `/order extend`, `/provider`, `/failover auto`) cần bấm xác nhận lần hai.
 
@@ -75,18 +76,20 @@ Chạy tay là đường chính thức để dọn bài tồn đọng và so sá
 
 | Chế độ | Dùng khi | Giữ chỗ bài | Nạp DB | Đầu ra |
 |---|---|---|---|---|
-| `backlog` | Dọn bài ngoài phạm vi tự động | Có | Có, bằng `--finish` | `data/agent_outputs_article/` |
-| `bench` | Thử provider hoặc model khác trên cùng tập bài | Không | Không, `--finish` bị từ chối | `data/agent_bench/<đợt>/` |
-| `adhoc` | Việc tay khác (mặc định) | Có | Có | `data/agent_outputs_article/` |
+| `backlog` | Dọn bài ngoài phạm vi tự động | Có | Có, bằng `--finish` | `C:\data\news-scape\agent_outputs_article\` |
+| `bench` | Thử provider hoặc model khác trên cùng tập bài | Không | Không, `--finish` bị từ chối | `C:\data\news-scape\agent_bench\<đợt>\` |
+| `adhoc` | Việc tay khác (mặc định) | Có | Có | `C:\data\news-scape\agent_outputs_article\` |
 
 Lệnh mẫu, chạy với thư mục hiện tại là `project/`:
 
 ```powershell
-python scripts/article_run.py --wave W<mã> --date 2026-09-20 --limit 100 --batch 50 --mode backlog --runner openrouter
-python scripts/article_run.py --wave W<mã> --runner openrouter --analyze --mode backlog
-python scripts/article_run.py --wave W<mã> --repair --runner openrouter
+python scripts/article_run.py --wave W<mã> --date 2026-09-20 --limit 100 --batch 50 --mode backlog --runner agy
+python scripts/article_run.py --wave W<mã> --runner agy --analyze --mode backlog
+python scripts/article_run.py --wave W<mã> --repair --runner agy
 python scripts/article_run.py --wave W<mã> --finish
 ```
+
+Thứ tự runner (ADR 0026): `agy` trước, rồi `opencode` (`--runner opencode`), rồi `openrouter`. Claude không bao giờ là runtime thay thế. Mặc định của `--runner` là `dsh` (DSH `agent_article`, người điều phối tương tác).
 
 Quy tắc:
 
@@ -98,7 +101,7 @@ Quy tắc:
 
 ## 8. Phân luồng
 
-Mỗi đợt thuộc đúng một luồng, xác định bởi luật mở đợt trong cột `trigger` (mã `src/ops/lanes.py`). Mỗi luồng chỉ có tối đa một đợt đang chạy. Các luồng chạy song song và không chặn nhau.
+Mỗi đợt thuộc đúng một luồng, xác định bởi luật mở đợt trong cột `trigger` (mã `src/ops/wave/lanes.py`). Mỗi luồng chỉ có tối đa một đợt đang chạy. Các luồng chạy song song và không chặn nhau.
 
 | Luồng | Ai mở | Luật mở đợt | Provider | Phạm vi bài | Nạp DB |
 |---|---|---|---|---|---|

@@ -1,12 +1,14 @@
 # Domain Skill: RSS Sources
 
 Generic `RSSScraper` (`src/scrapers/rss_generic.py`) — domain RSS mới = 1 YAML, zero code.
-Feeds verified live: 2026-07-24 (Phase 1) + 2026-07-25 (Phase 2).
+Feeds verified live: 2026-07-24 (Phase 1) + 2026-07-25 (Phase 2); trạng thái bật cập nhật 2026-10-22.
+Đang bật (theo `config/domains/*.yaml`): vietstock, vneconomy (scraper riêng, danh sách từ RSS), vietnambiz,
+thoibaotaichinhvietnam (`method: rss_capture`). Các domain `method: rss` còn lại đang tắt.
 
 ## Schema mở rộng (Phase 2)
 
 ```yaml
-language: vi              # default "vi"; "en" → orchestrator skip sentiment VN (neutral/0.0)
+language: vi              # default "vi"; "en" cho nguồn quốc tế
 filter:                   # optional — keyword include-filter cho feed noise cao
   any: ["chứng khoán", "cổ phiếu"]   # case-insensitive substring trên title+summary
   drop_unmatched: true    # default true khi có filter
@@ -40,7 +42,7 @@ filter:                   # optional — keyword include-filter cho feed noise c
 | **cafebiz.vn** | `/rss/home.rss` | 61 items (superset các zone) |
 | **vietnamplus.vn** | `/rss/kinhte.rss` | 50 items, dùng bản www. (không en.) |
 
-## Nguồn quốc tế (language: en — sentiment skip, classifier chỉ gán feed name)
+## Nguồn quốc tế (language: en, đều đang tắt)
 
 | Nguồn | Feed | Ghi chú |
 |-------|------|---------|
@@ -66,13 +68,14 @@ Stockbiz (endpoint chết), Lao Động (anti-bot JS), Saigon Times/feed (empty)
 ## Thêm nguồn RSS mới
 
 ```yaml
-# config/domains/<name>.yaml
+# config/domains/<name>.yaml — nguồn mới dùng rss_capture để có Bronze
 name: <name>
-method: rss
+method: rss_capture
 rss:
   feeds:
     - {url: "https://...", name: "Tên hiển thị"}
 detail: {extract_full: true, max_details_per_cycle: 30}
 ```
 
-Không cần code — `RSSScraper` generic nhận mọi domain `method: rss`.
+Không cần code — `RssCaptureScraper` (kế thừa `RSSScraper`) nhận mọi domain `method: rss_capture`; cần thêm
+`detail.content_selector`, block `capture`, `compliance`. Chi tiết: [../dev/03-adding-a-source.md](../dev/03-adding-a-source.md) §2b.

@@ -2,7 +2,7 @@
 type: SQLite Table
 title: article_versions
 description: Log append-only mỗi lần capture 1 URL — fingerprint nội dung/DOM + trạng thái change-detection.
-resource: "project/data/monocle.db (table: article_versions)"
+resource: "<DATA_ROOT>/monocle.db (table: article_versions)"
 tags: [change-detection, silver, versioning, append-only]
 status: stable
 generated:
@@ -17,7 +17,7 @@ sources:
   - id: storage-design
     resource: project/docs/design/07-storage-layers-and-change-detection.md
     title: Storage layers & change detection
-sources_last_checked: 2026-09-07
+sources_last_checked: 2026-10-22
 ---
 
 Bảng `article_versions` là **nhật ký phiên bản** của tầng Silver: mỗi lần một URL được capture

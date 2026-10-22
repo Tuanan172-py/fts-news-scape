@@ -1,3 +1,5 @@
+> Lưu trữ 2026-10-22 (US-050): driver báo cáo định kỳ NSO (`src/pipeline/periodic_reports.py`, `scripts/fetch_periodic_reports.py`, `run_periodic_reports.ps1`) đã xoá, thay bằng [Tables › periodic_reports](../../../catalog/tables/periodic_reports.md) (bảng còn trong DDL, không còn mã ghi).
+
 ---
 type: Pipeline
 title: Periodic Reports (NSO)
@@ -79,9 +81,9 @@ Kết luận research ban đầu ("NSO bị chặn network, TCP RST") **đã b�
 
 # Liên quan
 
-- Bảng [periodic_reports](../tables/periodic_reports.md)
+- Bảng [periodic_reports](../../../catalog/tables/periodic_reports.md)
 - Dataset [Bronze Periodic Reports](../datasets/bronze_periodic_reports.md)
-- Playbook [Runbook](../playbooks/runbook.md) — mục "Báo cáo định kỳ NSO"
+- Playbook [Runbook](../../../catalog/playbooks/runbook.md) — mục "Báo cáo định kỳ NSO"
 
 [^driver]: [PeriodicReportSource](project/src/pipeline/periodic_reports.py)
 [^cli]: [CLI thu báo cáo định kỳ](project/scripts/fetch_periodic_reports.py)

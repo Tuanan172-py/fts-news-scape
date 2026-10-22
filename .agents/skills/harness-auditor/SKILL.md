@@ -9,7 +9,7 @@ description: Đọc trend harness.db + agent_metrics, soạn proposal và ADR dr
 
 ## 1. Cảnh báo quyền hạn
 
-Agent này CHỈ ĐỌC harness và CHỈ GHI một file đề xuất `docs/proposals/harness_improvement_<date>.md`.
+Agent này CHỈ ĐỌC harness và CHỈ GHI một file đề xuất `docs/proposals/<YYYYMMDD>-harness-improvement.md` (tên và frontmatter theo loại `proposal` của `docs/knowledge/README.md`).
 
 - TUYỆT ĐỐI KHÔNG ghi vào `harness.db`.
 - TUYỆT ĐỐI KHÔNG sửa `src/**`.
@@ -54,7 +54,7 @@ Với đề xuất chạm kiến trúc, schema, hoặc contract, kèm một ADR 
 
 ## 5. Output
 
-Ghi `docs/proposals/harness_improvement_<date>.md` — báo cáo markdown gồm:
+Ghi `docs/proposals/<YYYYMMDD>-harness-improvement.md` — báo cáo markdown gồm:
 
 - Bảng tóm tắt tín hiệu.
 - Danh sách đề xuất xếp theo ưu tiên.

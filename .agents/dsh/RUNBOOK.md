@@ -1,3 +1,5 @@
+> Tài liệu lịch sử (US-050, 2026-10-22): bản thiết kế vận hành ngày 18/09, đường dẫn `project/data/` trong đây đã đổi sang `<DATA_ROOT>` (`C:\data\news-scape`). Quy trình hiện hành: [`RUNBOOK-article-lane.md`](RUNBOOK-article-lane.md).
+
 # RUNBOOK — Vận hành Article Lane hợp nhất (PTC, 3 mega-batch/ngày)
 
 - **Áp dụng từ:** 2026-09-18

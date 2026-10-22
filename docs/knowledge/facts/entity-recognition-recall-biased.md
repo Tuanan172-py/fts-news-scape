@@ -4,8 +4,8 @@ type: fact
 title: Entity recognition is recall-biased
 status: active
 created: 2026-09-18
-updated: 2026-10-06
-verified: 2026-09-18
+updated: 2026-10-22
+verified: 2026-10-22
 lang: en
 authors: [claude-opus-5-5]
 adr: [ADR-0010]
@@ -32,7 +32,7 @@ summary: The operator prefers over-recognition to missed entities, so watchlist 
 
 - A missed entity removes an article from a user's delivery; an extra entity costs only a little review.
 - The design plan was `plans/20260918-1651-article-lane-unified/plan.md`; parts of it, such as compact JSON and handoff thresholds, were later corrected.
-- AGENTS.md section 6B restates the full-depth rule; the recall bias itself is recorded only in the plan, so the status stays active.
+- AGENTS.md section 7.2 restates the full-depth rule; the recall bias itself is recorded only in the plan, so the status stays active.
 
 ## How to Apply
 

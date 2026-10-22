@@ -2,21 +2,21 @@
 
 - **Loại tài liệu:** hướng dẫn thao tác (how-to).
 - **Đối tượng:** người vận hành.
-- **Cập nhật:** 2026-10-06
-- **Quyết định liên quan:** ADR 0020
+- **Cập nhật:** 2026-10-22
+- **Quyết định liên quan:** ADR 0023, ADR 0026
 
-Lý do thiết kế nằm ở [ADR 0020](../../../docs/decisions/0020-data-plane-sharepoint-co-che-xuat-ban.md).
+Lý do thiết kế nằm ở [ADR 0023](../../../docs/decisions/0023-cqrs-partitioned-lakehouse-sharepoint.md) (thay ADR 0020) và [ADR 0026](../../../docs/decisions/0026-canonical-publish-path-runner-order-l0-l1-levels.md) D1.
 
 ## 1. Mục đích
 
-Xuất bản một chiều dữ liệu của ngày đã đóng sang một thư mục SharePoint đồng bộ về máy. Hiện chỉ được dùng sandbox `sites/FRA_DataIngestion/Shared Documents/AnPT` (ADR 0020 §0). Site chính thức `sites/FRA` (`FRA - Data`) bị cấm, và publisher từ chối đích đó. Chuyên viên và fpa-toolkit đọc ở thư mục xuất bản, không đọc tầng ghi.
+Xuất bản một chiều dữ liệu của ngày đã đóng sang một thư mục SharePoint đồng bộ về máy. Đường xuất bản duy nhất là `scripts/publish.py` gọi `src.export.publisher.publish_day()` (ADR 0026 D1); `scripts/lakehouse_cli.py` chỉ dùng để `verify` và làm cổng dropzone, không xuất bản. Chỉ được dùng sandbox `sites/FRA_DataIngestion/Shared Documents/AnPT` (ADR 0023 D2). Site chính thức `sites/FRA` (`FRA - Data`) bị cấm, và publisher từ chối đích đó. Chuyên viên và fpa-toolkit đọc ở thư mục xuất bản, không đọc tầng ghi.
 
 Mỗi ngày gồm năm loại tệp:
 
 | Đường dẫn dưới đích | Nội dung |
 |---|---|
 | `review/monocle_review_<YYYYMMDD>.db` | bản `VACUUM INTO` của DB vận hành, giữ 7 bản gần nhất |
-| `parquet/<bảng>/year=YYYY/month=MM/part-<YYYYMMDD>.parquet` | `articles`, `analysis`, `mentions` của ngày |
+| `parquet/articles/year=YYYY/month=MM/part-<YYYYMMDD>.parquet` | một bảng gộp (One Big Table) bài và phân tích của ngày |
 | `bronze/YYYY/MM/DD/<nguồn>.tar.xz` | HTML thô và `.meta.json` của ngày |
 | `users/output/<user>/<YYYY-MM-DD>.xlsx` | tệp giao hàng của ngày |
 | `_manifest/<YYYYMMDD>.json`, `_manifest/latest.json` | danh sách tệp, kích thước, SHA256, số dòng |
@@ -47,6 +47,8 @@ Lệnh tay:
 python scripts/publish.py --date 2026-10-04            # một ngày cụ thể
 python scripts/publish.py --date yesterday --force     # kiểm và chép lại phần thiếu
 python scripts/publish.py --target D:\thu-nghiem\news  # đích khác cho lần chạy này
+python scripts/publish.py --from-date 2026-10-01 --to-date 2026-10-04   # backfill nhiều ngày
+python scripts/publish.py --date yesterday --skip-review --skip-bronze  # bỏ bản review và Bronze
 ```
 
 Mã thoát: 0 khi `ok` hoặc `disabled`, 2 khi `partial`, 1 khi `failed`.
@@ -75,6 +77,6 @@ Dữ liệu ở tầng ghi không đổi khi tắt publisher.
 
 ## 6. Tham chiếu
 
-- Mã: `src/export/publisher.py`, `scripts/publish.py`, `probe_publish` trong `src/ops/probes.py`.
+- Mã: `src/export/publisher.py`, `scripts/publish.py`, `probe_publish` trong `src/ops/runtime/probes.py`.
 - Cấu hình: khối `publish` trong `config/ops.yaml`.
 - Vận hành daemon: [ops-daemon.md](ops-daemon.md).

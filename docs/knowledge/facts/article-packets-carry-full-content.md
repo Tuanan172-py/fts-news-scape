@@ -4,13 +4,14 @@ type: fact
 title: Article packets carry full content
 status: active
 created: 2026-09-21
-updated: 2026-10-06
-verified: 2026-10-06
+updated: 2026-10-22
+verified: 2026-10-22
 lang: en
 authors: [claude-opus-5-5]
 adr: []
 evidence:
-  - "path: project/src/agent/distill.py"
+  - "path: project/src/agent/packet/distill.py"
+  - "path: project/src/article_lane/pack.py"
 summary: DEFAULT_MAX_TOKENS_PER_ARTICLE is 0 (no cut) since 2026-09-21 because the old 900-token cap dropped 46% of content before the model read it.
 ---
 
@@ -18,7 +19,7 @@ summary: DEFAULT_MAX_TOKENS_PER_ARTICLE is 0 (no cut) since 2026-09-21 because t
 
 ## Fact
 
-- `DEFAULT_MAX_TOKENS_PER_ARTICLE` in `project/src/agent/distill.py` is 0, meaning no cut, since 2026-09-21.
+- `DEFAULT_MAX_TOKENS_PER_ARTICLE` in `project/src/agent/packet/distill.py` is 0, meaning no cut, since 2026-09-21.
 - The previous value of 900 dropped 46% of content before the model read it.
 - Measured on 600 articles: 1,542 tokens after mechanical filtering became 838 tokens actually sent, and 81% of articles were cut.
 - With full content a 100-article wave uses 154K input tokens, 25% of the window.
@@ -33,5 +34,5 @@ summary: DEFAULT_MAX_TOKENS_PER_ARTICLE is 0 (no cut) since 2026-09-21 because t
 ## How to Apply
 
 - Keep the default at 0.
-- `--max-tokens-per-article` still exists for manual use only.
+- `--max-tokens-per-article` (`project/src/article_lane/pack.py`) still exists for manual use only.
 - Line-length safety comes from paragraph splitting, see FACT-dsh-read-tool-line-limits.

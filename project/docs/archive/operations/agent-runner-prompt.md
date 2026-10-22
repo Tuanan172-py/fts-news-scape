@@ -1,3 +1,5 @@
+> Lưu trữ 2026-10-22 (US-050): phiếu giao việc cho lane L1/Gold và `run_daily.ps1` đã xoá (ADR-0010), thay bằng [RUNBOOK Article Lane](../../../../.agents/dsh/RUNBOOK-article-lane.md).
+
 # Hanoff cho AGENT CÓ quyền thực thi với file FILE (tự đọc packet, tự ghi output)
 
 Cập nhật: 2026-08-20 · Trạng thái: **ARCHIVED REFERENCE** · Đối tượng: agent có tool đọc/ghi file cục bộ (Claude Code, Cursor, MCP filesystem…).

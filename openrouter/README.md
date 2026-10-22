@@ -1,5 +1,7 @@
 # OpenRouter & 9Router Gateway Integration
 
+> **Thí nghiệm độc lập, không phải đường sản xuất.** Article Lane gọi OpenRouter qua `project/src/agent/runners/openrouter_runner.py` (`python scripts/article_run.py --wave <mã> --runner openrouter --analyze`, cwd `project/`), là runner hạng 3 sau `agy` và `opencode` (ADR-0026.D3), cùng hợp đồng `article-compact-v2` (rule 11). Mã trong thư mục này vẫn dùng trường `materiality_score` đã ngừng ở mọi lớp; không đưa kết quả của nó vào DB.
+
 Thư mục chứa toàn bộ cấu hình, script kiểm tra và chốt kiểm định dữ liệu phục vụ tích hợp OpenRouter (đặc biệt là các model Stealth như `stealth/space-bunny-alpha`) và Google Gemini AI Studio thông qua trạm điều phối trung gian **9Router**.
 
 ---
@@ -90,9 +92,9 @@ Tùy chọn kiểm tra với model khác:
 
 ---
 
-### Bước 5: Tích Hợp Vào Đường Tự Động Hóa (Bảo Vệ Hệ Thống)
+### Bước 5: Gọi Có Kiểm Định Schema Trong Thí Nghiệm
 
-Khi nhân rộng quy mô xử lý hàng loạt tin tức / tài liệu, luôn gọi qua hàm có kiểm định schema trong `openrouter/client.py`:
+Trong phạm vi thí nghiệm của thư mục này, gọi qua hàm có kiểm định schema trong `openrouter/client.py`. Xử lý hàng loạt cho sản phẩm đi qua `article_run.py --runner openrouter`, không qua hàm này:
 
 ```python
 from openrouter.client import request_structured_completion
@@ -104,7 +106,7 @@ result = request_structured_completion(
 )
 
 if result is not None:
-    # Vượt qua kiểm định schema, an toàn để nạp Database hoặc ghi file
+    # Vượt qua kiểm định schema của thí nghiệm (không nạp DB sản phẩm)
     print(result.summary)
     print(result.sentiment)
     print(result.materiality_score)

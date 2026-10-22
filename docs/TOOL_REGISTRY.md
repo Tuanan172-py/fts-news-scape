@@ -1,24 +1,24 @@
-# TOOL_REGISTRY.md — Danh mục Công cụ & Bậc thang Suy giảm (H4)
+# TOOL_REGISTRY.md — Tool Manifest and Degrade Ladder (H4)
 
-Tài liệu này quản lý danh sách các công cụ thực thi trong hệ thống News-Scape, các điều kiện tiên quyết và cơ chế **Suy giảm An toàn (Degrade-Don't-Fail)** khi thiếu công cụ.
+This document lists the execution tools of News-Scape, their health checks and the **degrade-don't-fail** fallback when a tool is missing. Python commands use the venv `C:\venvs\news-scape` (ADR-0024).
 
 ---
 
-## 1. Danh mục Công cụ Lõi (Core Tools Manifest)
+## 1. Core tools manifest
 
-| Tool ID | Tên công cụ | Mục đích | Lệnh kiểm tra tình trạng | Fallback khi thiếu (Degrade Ladder) |
+| Tool ID | Tool | Purpose | Health check | Fallback (degrade ladder) |
 |:---|:---|:---|:---|:---|
-| `python` | Python Runtime (3.10+) | Chạy core pipelines, scripts, CLI | `python --version` | **Hard Stop** (Bắt buộc phải có). |
-| `pytest` | Pytest Framework | Chạy bộ kiểm thử tự động Unit/Integ | `python -m pytest --version` | Chạy thủ công qua `python -m unittest`. |
-| `sqlite3` | SQLite Engine (WAL mode) | Lưu trữ monocle.db & harness.db | `python -c "import sqlite3; print(sqlite3.sqlite_version)"` | **Hard Stop** (Bắt buộc cho Durable layer). |
-| `trafilatura` | Web Content Extractor | Bóc tách bài viết cào từ web | `python -c "import trafilatura"` | Fallback sang Regex / BeautifulSoup thô. |
-| `rapidfuzz` | String Similarity Matcher | Khử trùng lặp tiêu đề tin tức | `python -c "import rapidfuzz"` | Fallback sang so sánh chuỗi chính xác (exact match). |
-| `git` | Git Version Control | Quản lý phiên bản mã nguồn, working tree | `git --version` | **Hard Stop** (Bắt buộc cho quản trị codebase). |
-| `audit_codebase` | Codebase & Git Auditor | Kiểm tra AST, xung đột OneDrive, vệ sinh Git | `python project/scripts/maintenance/audit_codebase.py` | Fallback sang `python scripts/harness_cli.py audit`. |
+| `python` | Python runtime (venv `C:\venvs\news-scape`) | Pipelines, scripts, CLIs | `python --version` | **Hard stop** (required). |
+| `pytest` | Pytest | Unit and integration tests | `python -m pytest --version` | Run by hand with `python -m unittest`. |
+| `sqlite3` | SQLite engine (WAL mode) | `monocle.db` and `harness.db` | `python -c "import sqlite3; print(sqlite3.sqlite_version)"` | **Hard stop** (required by the durable layer). |
+| `trafilatura` | Web content extractor | Article extraction (`src/processor/extractor.py`) | `python -c "import trafilatura"` | Falls back to BeautifulSoup `get_text` (`extract_text`). |
+| `rapidfuzz` | String similarity matcher | Listed in `project/requirements.txt`; no module in `project/src` imports it (near-duplicate detection uses SimHash, `src/pipeline/run.py`) | `python -c "import rapidfuzz"` | None needed. |
+| `git` | Git | Version control, working tree | `git --version` | **Hard stop** (required by codebase governance). |
+| `audit_codebase` | Codebase and git auditor | AST, OneDrive conflicts, git hygiene | `python project/scripts/maintenance/audit_codebase.py` | Fall back to `python scripts/harness_cli.py audit` without `--codebase`. |
 
 ---
 
-## 2. Nguyên tắc Suy giảm An toàn (Degrade-Don't-Fail)
+## 2. Degrade-don't-fail principles
 
-1. Khi một công cụ không thiết yếu bị thiếu hoặc lỗi, hệ thống ghi log cảnh báo và hạ cấp sang phương án dự phòng (fallback), **tuyệt đối không để crash toàn bộ luồng pipeline**.
-2. Mọi sự cố suy giảm công cụ phải được ghi nhận vào bảng `intervention` hoặc `backlog` để xử lý sau.
+1. When a non-essential tool is missing or fails, the system logs a warning and degrades to the fallback; it **MUST NOT** crash the whole pipeline.
+2. Every tool degradation is recorded in the `intervention` or `backlog` table for follow-up.

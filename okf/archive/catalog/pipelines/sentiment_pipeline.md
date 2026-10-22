@@ -1,3 +1,5 @@
+> Lưu trữ 2026-10-22 (US-050): engine sentiment rule-based (`src/processor/sentiment.py`, `segment.py`) đã xoá; sentiment nay do mô hình sinh trong Article Lane, thay bằng [Metrics › Sentiment Distribution](../../../catalog/metrics/sentiment_distribution.md).
+
 ---
 type: Python Pipeline
 title: Sentiment Analysis Pipeline
@@ -24,7 +26,7 @@ sources_last_checked: 2026-09-07
 > `src/processor/sentiment.py` và `segment.py` được đánh dấu *LEGACY / COLD BACKUP* ngay trong
 > docstring: engine vẫn nằm trong repo để bật lại khi cần, nhưng `Orchestrator.run_cycle` **không
 > gọi nữa**. Sentiment dùng cho deliverable do agent Lớp 2 sinh — xem
-> [agent_outputs](../tables/agent_outputs.md). Cột `articles.sentiment` / `sentiment_score` chỉ
+> [agent_outputs](../../../catalog/tables/agent_outputs.md). Cột `articles.sentiment` / `sentiment_score` chỉ
 > còn giá trị lịch sử.
 >
 > **Vẫn đang chạy:** bước classify (`classify_rule_based` trong `src/processor/classifier.py`) —
@@ -118,8 +120,8 @@ Một article có thể có nhiều category. Mặc định: `["uncategorized"]`
 - **Classify** (còn chạy): [Capture Orchestrator](ingestion_scheduler.md) gọi mỗi cycle → ghi
   `articles.categories`.
 - **Sentiment** (đã gỡ): trước đây ghi `articles.sentiment` / `sentiment_score`. Nay thay bằng
-  [Agent Handoff](agent_handoff.md) → [agent_outputs](../tables/agent_outputs.md) →
-  cột `sentiment` trong [User Deliverables](../datasets/user_deliverables.md).
+  [Agent Handoff](agent_handoff.md) → [agent_outputs](../../../catalog/tables/agent_outputs.md) →
+  cột `sentiment` trong [User Deliverables](../../../catalog/datasets/user_deliverables.md).
 - Muốn bật lại: gọi `SentimentEngine` trong `run_cycle` và khôi phục lexicon
   `data/lexicon/*.tsv`.
 

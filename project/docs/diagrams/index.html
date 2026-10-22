@@ -790,7 +790,7 @@ const N=[
  {id:"monocle",L:"ref",k:"store",x:1360,y:232,w:120,h:598,t:"monocle.db",
   tables:["articles","seen_articles","discovered_urls","capture_coverage","pipeline_state","article_versions","silver_failures","work_items","story_clusters","signal_daily","l1_outputs","agent_outputs"],
   role:"CSDL nghiệp vụ trung tâm (SQLite WAL), nằm ngoài repo. Schema định nghĩa trong store.py, bổ sung cột qua _MIGRATIONS. Mọi lớp L1–L4 đọc hoặc ghi vào đây.",
-  files:["C:\\data\\news-scape\\monocle.db","project/src/db/store.py","project/docs/operations/monocle-db-handbook.md"]}
+  files:["C:\\data\\news-scape\\monocle.db","project/src/db/store.py","project/docs/dev/02-data-model-and-db.md"]}
 ];
 const NM={};N.forEach(n=>NM[n.id]=n);
 (function number(){const c={};N.forEach(n=>{if(n.L==="ref")return;c[n.L]=(c[n.L]||0)+1;n.code=LAYERS[n.L].code+"-"+String(c[n.L]).padStart(2,"0")})})();

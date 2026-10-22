@@ -1,13 +1,15 @@
 # Design 12 — Quy tắc chuyển hoá Bronze → Silver
 
-Cập nhật: 2026-08-17 · Trạng thái: RULES (chuẩn hoá đối chiếu code hiện tại) · Đọc kèm:
+Cập nhật: 2026-10-22 · Trạng thái: RULES (chuẩn hoá đối chiếu code; bảng GAP §12 lập 2026-08-17) · Đọc kèm:
 [06-raw-html-capture](06-raw-html-capture.md), [07-storage-layers](07-storage-layers-and-change-detection.md),
 [08-handoff](08-handoff-contract-catalog.md).
 
 Tài liệu định nghĩa **đầy đủ quy tắc/quy chế logic** để biến 1 bản ghi Bronze (raw byte-exact)
 thành 1 bản ghi Silver (clean base). Bám sát code thực tế: `src/pipeline/silver_builder.py`,
 `src/processor/extractor.py`, `schemas/silver-v1.schema.json`. Mục cuối liệt kê chênh lệch giữa
-code hiện tại vs quy tắc mong muốn (GAP) + câu hỏi mở.
+code hiện tại vs quy tắc mong muốn (GAP) + câu hỏi mở. Tham chiếu code theo tên hàm (số dòng cũ đã bỏ vì lệch sau
+US-047); hàm chính: `SilverBuilder.build`, `SilverBuilder._extract_cleaned`, `_parse_structure_from`, `_detect_lang`,
+`_domain_of`, `_atomic_write`, `write_silver`.
 
 ---
 
@@ -15,7 +17,7 @@ code hiện tại vs quy tắc mong muốn (GAP) + câu hỏi mở.
 | | BRONZE | SILVER |
 |---|--------|--------|
 | Bản chất | raw HTML byte-exact + meta capture | JSON chuẩn hoá 1-bài, sạch |
-| Nơi | `data/raw_html/<domain>/<yyyymmdd>/<hash>.html` + `.meta.json` | `data/silver/<domain>/<yyyymmdd>/<hash>.json` |
+| Nơi | `<DATA_ROOT>/raw_html/<domain>/<yyyymmdd>/<hash>.html` + `.meta.json` | `<DATA_ROOT>/silver/<domain>/<yyyymmdd>/<hash>.json` |
 | Bất biến | **WORM** — không bao giờ sửa | derived — xoá/tái tạo tự do |
 | Nguồn sự thật | ✅ source of truth | ❌ dẫn xuất, phải re-derive được |
 | Ai dùng | change-detection, re-derive | agent (work-package), change-detection |
@@ -29,13 +31,13 @@ code hiện tại vs quy tắc mong muốn (GAP) + câu hỏi mở.
 
 | # | Quy tắc | Vì sao | Kiểm chứng |
 |---|---------|--------|-----------|
-| I1 | **PURE** — `build(meta, raw_bytes)` chỉ nhận dict + bytes; KHÔNG network, KHÔNG đọc DB, KHÔNG đọc clock | tái lập được, test offline | `silver_builder.py:60` |
+| I1 | **PURE** — `build(meta, raw_bytes)` chỉ nhận dict + bytes; KHÔNG network, KHÔNG đọc DB, KHÔNG đọc clock | tái lập được, test offline | `SilverBuilder.build` |
 | I2 | **DETERMINISTIC** — cùng (meta, raw) → cùng Silver, byte-for-byte | re-derive không tạo diff giả | dùng `meta.fetch_ts`, KHÔNG `datetime.now()` |
-| I3 | **RE-DERIVABLE** — sửa parser / bump schema chỉ cần chạy lại `rederive_from_bronze.py`, KHÔNG re-scrape | Bronze = source of truth | `built_at = meta.fetch_ts` `:91` |
-| I4 | **KHÔNG copy byte thô** — Silver TRỎ về Bronze qua `built_from_raw_path` + `content_sha256`, không nhúng HTML gốc | tránh phình, 1 nguồn sự thật | `:92`, `:86` |
-| I5 | **NON-FATAL / BEST-EFFORT** — lỗi 1 bài không được làm hỏng lô; field optional lỗi → rỗng, không throw | pipeline lô lớn phải bền | decode fallback `:63-66` |
-| I6 | **ATOMIC WRITE** — ghi `.tmp` rồi `os.replace` | không để file Silver dở dang | `_atomic_write` `:96` |
-| I7 | **PARTITION MIRROR BRONZE** — Silver lặp đúng partition `<domain>/<yyyymmdd>/` của Bronze | re-extract song song theo domain/ngày | `write_silver` `:103` |
+| I3 | **RE-DERIVABLE** — sửa parser / bump schema chỉ cần chạy lại `rederive_from_bronze.py`, KHÔNG re-scrape | Bronze = source of truth | `built_at = meta.fetch_ts` |
+| I4 | **KHÔNG copy byte thô** — Silver TRỎ về Bronze qua `built_from_raw_path` + `content_sha256`, không nhúng HTML gốc | tránh phình, 1 nguồn sự thật | `SilverBuilder.build` |
+| I5 | **NON-FATAL / BEST-EFFORT** — lỗi 1 bài không được làm hỏng lô; field optional lỗi → rỗng, không throw | pipeline lô lớn phải bền | decode fallback |
+| I6 | **ATOMIC WRITE** — ghi `.tmp` rồi `os.replace` | không để file Silver dở dang | `_atomic_write` |
+| I7 | **PARTITION MIRROR BRONZE** — Silver lặp đúng partition `<domain>/<yyyymmdd>/` của Bronze | re-extract song song theo domain/ngày | `write_silver` |
 
 > Ràng buộc: mọi quy tắc bên dưới PHẢI giữ I1–I2. Nếu 1 quy tắc cần dữ liệu ngoài (vd whitelist
 > selector theo domain) → nạp qua tham số/config truyền vào, KHÔNG đọc mạng/DB trong `build`.
@@ -77,17 +79,19 @@ Quy ước: **`cleaned_text` = hard** (không có ⇒ Silver vô dụng cho agen
 
 | Silver field | Nguồn | Quy tắc chuyển | Ref code |
 |--------------|-------|----------------|----------|
-| `silver_schema_version` | hằng | = `"1.0"`; bump khi đổi logic bóc tách (§11) | `:19,58` |
-| `article_id` | `meta.url_title_hash` | copy thẳng; nếu rỗng → **FAIL gate** (không có danh tính) | `:83` |
-| `source_url` | `meta.source_url` | copy thẳng (giữ query string nguyên bản, KHÔNG strip utm ở Silver) | `:68,84` |
-| `domain` | `meta.html_path` | parse segment sau `raw_html/`; fallback `"unknown"` | `:73-80` |
-| `content_sha256` | `meta.content_sha256` | copy thẳng (khoá provenance, KHÔNG tự tính lại) | `:86` |
-| `cleaned_text` | raw bytes | decode → trafilatura → fallback (§6) | `:69-70` |
-| `structure` | raw bytes | BeautifulSoup parse (§7) | `:88` |
-| `images` | `meta.images` | pass-through (§8 — CẦN lọc) | `:89` |
-| `language` | `cleaned_text` | heuristic ký tự VN (§9) | `:90` |
-| `built_at` | `meta.fetch_ts` | copy thẳng — **KHÔNG dùng now()** (I2) | `:91` |
-| `built_from_raw_path` | `meta.html_path` | copy thẳng (con trỏ ngược Bronze) | `:92` |
+| `silver_schema_version` | hằng | = `"1.0"`; bump khi đổi logic bóc tách (§11) | `SILVER_SCHEMA_VERSION` |
+| `article_id` | `meta.url_title_hash` | copy thẳng; nếu rỗng → **FAIL gate** (không có danh tính) | `SilverBuilder.build` |
+| `source_url` | `meta.source_url` | copy thẳng (giữ query string nguyên bản, KHÔNG strip utm ở Silver) | `SilverBuilder.build` |
+| `domain` | `meta.html_path` | parse segment sau `raw_html/`; fallback `"unknown"` | `_domain_of` |
+| `content_sha256` | `meta.content_sha256` | copy thẳng (khoá provenance, KHÔNG tự tính lại) | `SilverBuilder.build` |
+| `title`, `title_verified` | raw bytes + structure | chọn tiêu đề từ DOM/structure, đối chiếu `url_title_hash` | `_resolve_title` |
+| `cleaned_text` | raw bytes | decode → trafilatura → fallback (§6) | `SilverBuilder._extract_cleaned` |
+| `extraction_quality` | chuỗi fallback | `high`/`medium`/`low`/`empty` theo bước bóc thành công | `SilverBuilder._extract_cleaned` |
+| `structure` | raw bytes | BeautifulSoup parse (§7) | `_parse_structure_from` |
+| `images` | `meta.images` | pass-through (§8 — CẦN lọc) | `SilverBuilder.build` |
+| `language` | `cleaned_text` | heuristic ký tự VN (§9) | `_detect_lang` |
+| `built_at` | `meta.fetch_ts` | copy thẳng — **KHÔNG dùng now()** (I2) | `SilverBuilder.build` |
+| `built_from_raw_path` | `meta.html_path` | copy thẳng (con trỏ ngược Bronze) | `SilverBuilder.build` |
 
 ---
 
@@ -95,8 +99,8 @@ Quy ước: **`cleaned_text` = hard** (không có ⇒ Silver vô dụng cho agen
 
 | # | Quy tắc | Hiện trạng |
 |---|---------|-----------|
-| N1 | **Decode**: dùng `meta.encoding`; lỗi `LookupError/TypeError` → `utf-8`; luôn `errors="replace"` (không throw) | ✅ `:62-66` |
-| N2 | **Whitespace**: text field dùng `get_text(" ", strip=True)` — gộp khoảng trắng, trim đầu/cuối | ✅ `_parse_structure` |
+| N1 | **Decode**: dùng `meta.encoding`; lỗi `LookupError/TypeError` → `utf-8`; luôn `errors="replace"` (không throw) | ✅ |
+| N2 | **Whitespace**: text field dùng `get_text(" ", strip=True)` — gộp khoảng trắng, trim đầu/cuối | ✅ `_parse_structure_from` |
 | N3 | **Unicode NFC**: chuẩn hoá `unicodedata.normalize("NFC", …)` cho `cleaned_text` + text structure | ❌ GAP (§12 G1) |
 | N4 | **Loại control char** (`\x00-\x08`, `\x0b\x0c`, `\x0e-\x1f`) khỏi text | ❌ GAP |
 | N5 | **Chuẩn hoá xuống dòng**: `\r\n`/`\r` → `\n`; gộp ≥3 `\n` → 2 | ❌ GAP (trafilatura xử lý phần lớn) |
@@ -109,9 +113,9 @@ Quy ước: **`cleaned_text` = hard** (không có ⇒ Silver vô dụng cho agen
 ## 6. QUY TẮC BÓC `cleaned_text` (trường HARD)
 
 Chuỗi fallback (dừng ở bước đầu ra text khác rỗng):
-1. `trafilatura.extract(html, output_format=txt, include_tables=True, include_images=False, include_links=False, include_comments=False)` — bóc body chính, bỏ nav/ad/comment. (`extractor.py:13-19`)
-2. Fragment fail → wrap `<html><body>…</body></html>` rồi extract lại. (`extractor.py:56-58`)
-3. Cuối cùng → `BeautifulSoup(...).get_text(" ", strip=True)` (thô nhưng không rỗng). (`extractor.py:60-61`)
+1. `trafilatura.extract(html, output_format=txt, include_tables=True, include_images=False, include_links=False, include_comments=False)` — bóc body chính, bỏ nav/ad/comment. (`extractor.py`)
+2. Fragment fail → wrap `<html><body>…</body></html>` rồi extract lại. (`extractor.py`)
+3. Cuối cùng → `BeautifulSoup(...).get_text(" ", strip=True)` (thô nhưng không rỗng). (`extractor.py`)
 
 Quy tắc:
 - C1: `cleaned_text` **phải phản ánh THÂN BÀI**, không lẫn menu/footer (trafilatura đảm nhận — xác nhận sample sạch).
@@ -122,7 +126,7 @@ Quy tắc:
 
 ## 7. QUY TẮC `structure` (best-effort DOM)
 
-Hiện `_parse_structure` (`:32-54`) lấy **toàn bộ** `h1-h6 / p / table / a[href]` trong `<body>` → **kéo cả boilerplate**
+Hiện `_parse_structure_from` () lấy **toàn bộ** `h1-h6 / p / table / a[href]` trong `<body>` → **kéo cả boilerplate**
 (menu điều hướng, "CÙNG CHUYÊN MỤC", bài liên quan, địa chỉ toà soạn, copyright — thấy rõ trong sample cafef).
 
 Quy tắc mong muốn:
@@ -141,7 +145,7 @@ Quy tắc mong muốn:
 
 ## 8. QUY TẮC `images`
 
-Hiện copy nguyên `meta.images` (`:89`) → gồm ảnh cover, ảnh thân bài, **ảnh thumbnail bài-liên-quan** + logo VCCorp (thấy trong sample).
+Hiện copy nguyên `meta.images` () → gồm ảnh cover, ảnh thân bài, **ảnh thumbnail bài-liên-quan** + logo VCCorp (thấy trong sample).
 
 Quy tắc mong muốn:
 - IMG1: giữ trường `{resolved_url, alt, title, caption}`; bỏ `outer_tag` thô (chỉ cần khi debug).
@@ -155,7 +159,7 @@ Quy tắc mong muốn:
 
 ## 9. QUY TẮC `language`
 
-- L1: heuristic hiện tại — đếm ký tự đặc trưng VN trong 2000 ký tự đầu `cleaned_text`; ≥5 ⇒ `"vi"`, else `"und"`. (`:25-29`)
+- L1: heuristic hiện tại — đếm ký tự đặc trưng VN trong 2000 ký tự đầu `cleaned_text`; ≥5 ⇒ `"vi"`, else `"und"`. ()
 - L2: OPTIONAL — không chặn gate; `und` hợp lệ.
 - L3 (mở): nếu cần đa ngôn ngữ (en/zh…) → nâng lên lib `langdetect`/`fasttext`. Hiện KISS đủ (nguồn chủ yếu tiếng Việt).
 
@@ -165,8 +169,8 @@ Quy tắc mong muốn:
 
 - P1: `built_at = meta.fetch_ts` (I2). Cấm `now()`.
 - P2: `built_from_raw_path = meta.html_path` — con trỏ ngược 1-1 tới Bronze.
-- P3: partition ghi = `data/silver/<domain>/<yyyymmdd>/<article_id>.json`; `yyyymmdd` lấy từ segment áp chót của `built_from_raw_path`; fallback `unknown-date`. (`write_silver:103-114`)
-- P4: ghi atomic (`.tmp`→`os.replace`), UTF-8, `ensure_ascii=False`, `indent=2`. (`:114`)
+- P3: partition ghi = `<DATA_ROOT>/silver/<domain>/<yyyymmdd>/<article_id>.json`; `yyyymmdd` lấy từ segment áp chót của `built_from_raw_path`; fallback `unknown-date`. (`write_silver`)
+- P4: ghi atomic (`.tmp`→`os.replace`), UTF-8, `ensure_ascii=False`, `indent=2`. ()
 - P5: **idempotent** — re-derive cùng Bronze GHI ĐÈ đúng path, nội dung không đổi (I2 đảm bảo).
 
 ---

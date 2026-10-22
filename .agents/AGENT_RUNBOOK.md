@@ -2,9 +2,9 @@
 
 > Runbook vận hành: **chạy thế nào mỗi ngày**. Bổ trợ cho [`AGENT_NETWORK_DESIGN.md`](AGENT_NETWORK_DESIGN.md) (cái gì/tại sao).
 > Nguồn chân lý tác nhân: [`registry.yaml`](registry.yaml) · DAG điều phối: [`pipeline.yaml`](pipeline.yaml) · Quy tắc: [`rules/07`](rules/07-agent-registry-governance.md), [`rules/08`](rules/08-context-and-zero-probe-guardrails.md).
-> Thư viện lệnh chi tiết + prompt handoff Subagent: skill [`news-scape-agent-operations`](skills/news-scape-agent-operations/SKILL.md). Runbook này KHÔNG lặp lại các lệnh đó, chỉ chỉ dẫn thứ tự và điểm chèn.
+> Lệnh chi tiết của một đợt: [`dsh/RUNBOOK-article-lane.md`](dsh/RUNBOOK-article-lane.md) và skill `dsh-conductor`. Vận hành không giám sát: `project/docs/operations/ops-daemon.md`. Runbook này KHÔNG lặp lại các lệnh đó, chỉ chỉ dẫn thứ tự và điểm chèn.
 
-Mọi lệnh chạy với venv cách ly: `& "C:\venvs\news-scape\Scripts\python.exe"`, `Cwd = project/`.
+Mọi lệnh chạy với venv cách ly: `& "C:\venvs\news-scape\Scripts\python.exe"`. Lệnh `scripts/...` của sản phẩm chạy với `Cwd = project/`; lệnh `scripts/harness_cli.py` chạy từ gốc kho.
 
 ---
 
@@ -24,11 +24,13 @@ Mọi lệnh chạy với venv cách ly: `& "C:\venvs\news-scape\Scripts\python.
 | Stage           | Agent (`class`)                 | Trạng thái | Lệnh / Kích hoạt                                                                  |       Cổng DoD       |      Ghi metric      |
 | :-------------- | :-------------------------------- | :----------: | :----------------------------------------------------------------------------------- | :-------------------: | :------------------: |
 | scrape          | scraper-orchestrator (op)         |    active    | `scripts/run_once.py`                                                              |          —          |          —          |
+| capture_reconcile | capture-reconciler (op)        |    active    | `scripts/capture_reconcile.py run --limit 100 --budget 600`                        | thiếu so với sitemap ≤ 2% |    —    |
+| story_cluster   | story-clusterer (op)              |    active    | `scripts/story_cluster.py run --days 3`                                            |          —          |          —          |
 | article_pack    | article-packer (op)               |    active    | `scripts/article_run.py --wave <mã> --date <ngày> --limit <n>`                   | preflight DB + prefix |          —          |
 | article_analyze | **article-processor** (cog) |    active    | `tools.agent_article` trong MỘT `run_code` — trọn `wave_<mã>.conductor.ts` |          —          | ⭐ article-processor |
 | article_expand  | article-expander (op)             |    active    | `scripts/article_run.py --wave <mã> --finish`                                     |    hai lớp ≥ 90%    | ⭐ article-processor |
+| signal_build    | signal-builder (op)               |    active    | `scripts/signal_build.py --days 30`                                                |          —          |          —          |
 | deliver         | delivery-writer (op)              |    active    | `scripts/write_user_output.py --date <ngày\|today>`                                |          —          |          —          |
-| story_dedup     | story-dedup-clusterer (cog)       |    draft    | theo nhu cầu, sau expand                                                            |     `dod#dedup`     |          ⭐          |
 | gold_qa         | adversarial-dod-verifier (cog)    |    draft    | QA theo mẫu sau ingest                                                              |   `dod#verifier`   |          ⭐          |
 | daily_brief     | daily-brief-synthesizer (cog)     |    draft    | cuối ngày                                                                          |     `dod#brief`     |          ⭐          |
 
@@ -53,7 +55,7 @@ Vòng quản trị (ngoài đường giao hàng): **harness-auditor** (cog, draf
 
 ### B. Chạy chuỗi vận hành (theo DAG §1)
 
-Gửi câu lệnh mồi hằng ngày (xem `news-scape-agent-operations §2 Bước 0`), Conductor chạy: **L1** (route → match → ingest) rồi **Gold** (export → analyze → ingest → deliver). Mỗi cognitive stage chờ nghiệm thu đợt hiện tại mới sang đợt kế (Controlled Wave).
+Khi `ops_daemon` sống ở mức L1 thì chỉ daemon mở đợt (ADR 0012); không mở đợt tay song song. Đợt tay theo [`dsh/RUNBOOK-article-lane.md`](dsh/RUNBOOK-article-lane.md): `article_run.py --wave <mã> ...` (đóng gói) → một lệnh `run_code` chạy `wave_<mã>.conductor.ts` → `article_run.py --wave <mã> --finish` (bung, nạp qua cổng DoD, hậu kiểm, sổ cái, bàn giao) → `write_user_output.py`. Một đợt tại một thời điểm: đợt trước chưa xong thì không mở đợt mới.
 
 ### C. Đóng phiên (rule 04 Closure + rule 08 handoff)
 
@@ -69,13 +71,11 @@ Ghi đè `docs/SESSION-LATEST.md` và xuất Bảng Harness Closure (rule 04 §3
 
 ## 3. Ghi KPI Ledger sau mỗi ingest (thói quen cốt lõi)
 
-Sau khi `l1_ingest` / `agent_ingest` báo kết quả DoD, ghi ledger để nuôi vòng tự cải tiến:
+Đợt do `ops_daemon` chạy tự ghi `agent_metrics` khi kết thúc (`src/ops/wave/metrics.py`). Đợt tay: sau khi `article_run.py --wave <mã> --finish` báo kết quả DoD, ghi một dòng để nuôi vòng tự cải tiến:
 
 ```powershell
-# Ví dụ sau L1 (85 bài, 85 pass):
-scripts/harness_cli.py metric --agent l1-entity-matcher --items 85 --dod-pass 85 --dod-total 85 --tokens 12250
-# Ví dụ sau Gold (10 bài, 9 pass, 1 bài lệch value-added):
-scripts/harness_cli.py metric --agent gold-financial-analyst --items 10 --dod-pass 9 --dod-total 10 --tokens 14700 --fp 1
+# Ví dụ đợt tay W01 (100 bài, 97 đạt DoD, 1 cờ nghi false-positive):
+scripts/harness_cli.py metric --agent article-processor --wave W01 --items 100 --dod-pass 97 --dod-total 100 --fp 1
 ```
 
 Xem xu hướng bất kỳ lúc nào:
@@ -106,7 +106,7 @@ Lần đầu dùng một agent `draft`, đi qua checklist 5 bước ([`rules/07 
 | Việc                                  | Agent                   | Lệnh / Đầu ra                                                                                                                         |
 | :------------------------------------- | :---------------------- | :--------------------------------------------------------------------------------------------------------------------------------------- |
 | Dọn & mở rộng từ điển thực thể | entity-curator (Tier-3) | Đọc`unlisted_candidates` → `data/proposals/entity_catalog_delta.json` → **người duyệt** → ADR trước khi nạp catalog |
-| Soát sức khỏe harness & đề xuất  | harness-auditor         | `harness_cli.py propose`/`audit` (read-only) → `docs/proposals/harness_improvement_<date>.md`                                     |
+| Soát sức khỏe harness & đề xuất  | harness-auditor         | `harness_cli.py propose`/`audit` (read-only) → `docs/proposals/<YYYYMMDD>-harness-improvement.md`                                     |
 
 ---
 
@@ -114,11 +114,11 @@ Lần đầu dùng một agent `draft`, đi qua checklist 5 bước ([`rules/07 
 
 | Triệu chứng                                          | Trỏ về                                                                                                                                     |
 | :----------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------- |
-| Subagent lỗi`RESOURCE_EXHAUSTED` (429)              | Giảm concurrency, chia wave nhỏ hơn —[`multi-agent-orchestrator-governance §4.3`](skills/multi-agent-orchestrator-governance/SKILL.md) |
+| Provider báo `RESOURCE_EXHAUSTED` (429)             | `ops_daemon`: breaker provider tự ngắt (`src/ops/runtime/breakers.py`); đợt tay: chờ hết hạn mức rồi `article_run.py --wave <mã> --repair` cho phần thiếu. Không chia nhỏ lô |
 | DoD Ingest từ chối (schema/citations/key_points)     | [`rules/01`](rules/01-subagent-guardrails.md), [`rules/05`](rules/05-gold-agent-and-payload-invariants.md)                                 |
 | Lỗi ghi file / OneDrive lock / conflict`<HOSTNAME>` | [`rules/03`](rules/03-io-concurrency-guardrails.md)                                                                                         |
 | Muốn dò trạng thái nhưng bị cấm probe           | Chỉ dùng`pipeline_radar.py status` — [`rules/08`](rules/08-context-and-zero-probe-guardrails.md)                                       |
-| Mojibake tiếng Việt trong output                     | `encoding="utf-8"`, `ensure_ascii=False` — [`news-scape-agent-operations §4`](skills/news-scape-agent-operations/SKILL.md)            |
+| Mojibake tiếng Việt trong output                     | Đọc/ghi với `encoding="utf-8"`, JSON với `ensure_ascii=False`                                                                              |
 
 ---
 
@@ -129,4 +129,4 @@ Lần đầu dùng một agent `draft`, đi qua checklist 5 bước ([`rules/07 
 - Thiết kế & lý do: [`AGENT_NETWORK_DESIGN.md`](AGENT_NETWORK_DESIGN.md)
 - Quy tắc tăng trưởng: [`rules/07`](rules/07-agent-registry-governance.md) · Ngữ cảnh & Radar-First: [`rules/08`](rules/08-context-and-zero-probe-guardrails.md)
 - Vòng đời harness & Closure: [`rules/04`](rules/04-harness-durable-invariants.md)
-- Thư viện lệnh + prompt handoff: [`news-scape-agent-operations`](skills/news-scape-agent-operations/SKILL.md)
+- Lệnh một đợt: [`dsh/RUNBOOK-article-lane.md`](dsh/RUNBOOK-article-lane.md) · lưu đồ: [`dsh/WORKFLOW-article-lane.md`](dsh/WORKFLOW-article-lane.md)

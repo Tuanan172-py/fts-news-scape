@@ -1,12 +1,13 @@
 # Kiến trúc End-to-End — news-scape (6 lớp, Article Lane)
 
-Cập nhật: 2026-10-21 · **Bản đồ cấp cao duy nhất** của toàn hệ thống, từ nguồn tin tới chuyên viên.
-Phản ánh trạng thái hiện hành sau ADR-0010 (Article Lane là đường xử lý duy nhất), ADR-0023 (Lakehouse CQRS)
-và ADR-0026 (chuẩn hoá runner, đường xuất bản, mức tự chủ, SSOT người dùng, cây `users/output`).
+Cập nhật: 2026-10-22 · **Bản đồ cấp cao duy nhất** của toàn hệ thống, từ nguồn tin tới chuyên viên.
+Phản ánh trạng thái hiện hành sau ADR-0010 (Article Lane là đường xử lý duy nhất), ADR-0023 (Lakehouse CQRS),
+ADR-0026 (chuẩn hoá runner, đường xuất bản, mức tự chủ, SSOT người dùng, cây `users/output`)
+và ADR-0027 (ranh giới module: `project/scripts/*.py` là CLI mỏng, logic nằm trong `src/<package>/`, RULE-12).
 Đi sâu từng phần: bảng liên kết ở §12.
 > **Sơ đồ đọc offline:** [`../diagrams/index.html`](../diagrams/index.html) (nguồn `.mmd` trong [`../diagrams/`](../diagrams/README.md)). Sửa quy trình thì sửa `.mmd` rồi chạy `scripts/docs/build_diagrams.py`.
 > Lane L1/Gold hai tầng cũ (`l1_route` → `agent_l1` → `agent_export` → `agent_gold`) đã nghỉ hưu (ADR-0010).
-> Các tài liệu design 09, 10, 12, 17 mô tả lane đó là lịch sử; khi mâu thuẫn, tài liệu này thắng.
+> Đặc tả đã nghỉ hưu (design 01, 04, 09, 10, 11, 12-agent-infrastructure, 13, 15, 16, 17) đã chuyển vào [`../archive/design/`](../archive/design/); khi mâu thuẫn, tài liệu này thắng.
 
 ---
 
@@ -76,14 +77,14 @@ Trục dữ liệu là `monocle.db` (SQLite WAL, ngoài repo). Mọi lớp L1–
 
 | Thành phần | Vai trò | Đường dẫn |
 |-----------|---------|-----------|
-| `ops_daemon` | Sensor 120s, nhịp tim 60s, bản tin 08:00 và 18:00, `publish_tick` sau 01:00, Telegram, control room `127.0.0.1:8787` | `src/ops/daemon.py`, `scripts/ops_daemon.py` |
-| `sensor` | Mở wave khi T1: ≥100 bài chờ; T2: bài cũ nhất >90' (06–22h); T3: khung flush | `src/ops/sensor.py` |
-| `wave_flow` | Workflow DBOS: checkpoint từng bước, sống sót qua sự cố | `src/ops/wave_flow.py`, `src/ops/dbos_flow.py` |
-| `CaptureSupervisor` | Giữ `python -m src.morninger` sống (tối đa 5 lần khởi động lại trong 30') | `src/ops/supervisor.py` |
-| `breakers`, `probes` | Ngắt mạch theo provider (AUTH, QUOTA 300', NETWORK/TIMEOUT sau 3 lần, EMPTY sau 2); dò độ tươi, ghi DB, đĩa, dead-letter, độ phủ | `src/ops/breakers.py`, `src/ops/probes.py` |
-| `pipeline_radar` | Chỉ đọc, in đúng một lệnh tiếp theo (zero-probe) | `scripts/pipeline_radar.py` |
+| `ops_daemon` | Sensor 120s, nhịp tim 60s, bản tin 08:00 và 18:00, `publish_tick` sau 01:00, Telegram, control room `127.0.0.1:8787` | `src/ops/runtime/daemon.py`, `scripts/ops_daemon.py` |
+| `sensor` | Mở wave khi T1: ≥100 bài chờ; T2: bài cũ nhất >90' (06–22h); T3: khung flush | `src/ops/runtime/sensor.py` |
+| `wave_flow` | Workflow DBOS: checkpoint từng bước, sống sót qua sự cố | `src/ops/wave/wave_flow.py`, `src/ops/wave/dbos_flow.py` |
+| `CaptureSupervisor` | Giữ `python -m src.morninger` sống (tối đa 5 lần khởi động lại trong 30') | `src/ops/runtime/supervisor.py` |
+| `breakers`, `probes` | Ngắt mạch theo provider (AUTH, QUOTA 300', NETWORK/TIMEOUT sau 3 lần, EMPTY sau 2); dò độ tươi, ghi DB, đĩa, dead-letter, độ phủ | `src/ops/runtime/breakers.py`, `src/ops/runtime/probes.py` |
+| `pipeline_radar` | Chỉ đọc, in đúng một lệnh tiếp theo (zero-probe) | `scripts/pipeline_radar.py` → `src/ops/console/radar.py` |
 
-**Mức tự chủ chỉ có hai (ADR-0026 sửa ADR-0012 D5):** `L0` = dừng/khoá, chỉ đo và báo; `L1` = mandate có hạn kèm trần số bài, đủ điều kiện thì mở wave và chạy trọn tới nạp DB. Không còn L2/L3. Khi daemon ở L1, không ai mở wave tay song song (`src/ops/manual.py::begin`).
+**Mức tự chủ chỉ có hai (ADR-0026 sửa ADR-0012 D5):** `L0` = dừng/khoá, chỉ đo và báo; `L1` = mandate có hạn kèm trần số bài, đủ điều kiện thì mở wave và chạy trọn tới nạp DB. Không còn L2/L3. Khi daemon ở L1, không ai mở wave tay song song (`src/ops/wave/manual.py::begin`).
 
 Trạng thái vận hành nằm ở `ops.db` và `ops_dbos.db`, tách khỏi dữ liệu nghiệp vụ.
 
@@ -145,7 +146,7 @@ flowchart LR
 
 ## 6. L3 — Article Lane (phân tích)
 
-Một wave = một lần `run_code` (DSH) hoặc một lượt runner. Điểm vào duy nhất cho daemon lẫn người vận hành: `scripts/article_run.py`.
+Một wave = một lần `run_code` (DSH) hoặc một lượt runner. Điểm vào duy nhất cho daemon lẫn người vận hành: `scripts/article_run.py` (CLI mỏng, logic ở `src/ops/wave/article_run.py`; `--runner` mặc định `dsh`, daemon dùng `agy` theo `config/ops.yaml`).
 
 ```mermaid
 flowchart TB
@@ -163,27 +164,27 @@ flowchart TB
 
 | Bước | Script | Việc |
 |------|--------|------|
-| prepare | `scripts/article_run.py`, `scripts/article_pack.py` | Chọn bài chưa phân tích (code_first không tính, thin bị loại, bản sao giữ 48h); tier 1 (watchlist, ngành liên quan, macro khẩn) đứng trước, tier chỉ quyết định thứ tự không quyết định độ sâu; chia batch (mặc định 50) |
+| prepare | `scripts/article_run.py`, `scripts/article_pack.py` (`src/article_lane/pack.py`) | Chọn bài chưa phân tích (code_first không tính, thin bị loại, bản sao giữ 48h); tier 1 (watchlist, ngành liên quan, macro khẩn) đứng trước, tier chỉ quyết định thứ tự không quyết định độ sâu; chia batch (mặc định 50) |
 | packets | `article_pack.py` | `article_<wave>_NN.task.json` `{d,n,a:[{i,t,p}]}`, mọi đoạn nguyên văn, ≤1.900 ký tự/dòng; `wave_<wave>.conductor.ts` |
 | analyze | runner (§6.1) | Một lượt mỗi batch, không tool, temperature 0, seed cố định; trả `article-compact-v2` |
 | repair | `article_run.py --repair` | Đóng gói lại đúng phần thiếu; `--batch` là cách duy nhất chia batch |
-| expand | `scripts/article_expand.py` | Validate; đối chiếu thực thể bằng matcher (`BOTH` / `LLM_ONLY` / `CODE_ONLY`); dựng lại trích dẫn nguyên văn từ chỉ số đoạn; thoát 1 nếu >10% wave lỗi |
-| ingest | `scripts/l1_ingest.py`, `scripts/agent_ingest.py` | Kiểm quyền ghi DB trước khi tốn token; DoD từng bản ghi; chỉ file của wave này |
+| expand | `scripts/article_expand.py` (`src/article_lane/expand.py`) | Validate; đối chiếu thực thể bằng matcher (`BOTH` / `LLM_ONLY` / `CODE_ONLY`); dựng lại trích dẫn nguyên văn từ chỉ số đoạn; thoát 1 nếu >10% wave lỗi |
+| ingest | `scripts/l1_ingest.py`, `scripts/agent_ingest.py` (`src/agent/ingest/`) | Kiểm quyền ghi DB trước khi tốn token; DoD từng bản ghi; chỉ file của wave này |
 | verify | `article_run.py` | Phủ ≥90% ở cả `l1_outputs` (code_first loại) và `agent_outputs`; đạt mới in dòng HOÀN TẤT, exit 0 |
-| ledger, handoff | `scripts/token_ledger.py`, `scripts/handoff.py` | Ghi token (chỉ worker); `HANDOFF-latest.md` |
+| ledger, handoff | `scripts/token_ledger.py`, `scripts/handoff.py` (`src/article_lane/ledger.py`, `src/article_lane/handoff.py`) | Ghi token (chỉ worker); `HANDOFF-latest.md` |
 
-**Matcher danh mục** (`src/agent/entities.py`, `Capitalized Suffix Guard`, `Prefix Guard`) chỉ đối chiếu, không thay thế kết quả mô hình.
+**Matcher danh mục** (`src/agent/catalog/entities.py`, `Capitalized Suffix Guard`, `Prefix Guard`) chỉ đối chiếu, không thay thế kết quả mô hình.
 
 ### 6.1 Thứ hạng runtime LLM (ADR-0026)
 
 | Hạng | Runtime | Ghi chú |
 |------|---------|---------|
-| 1 | **agy runner** (`src/agent/agy_runner.py`) | Mặc định của daemon (`config/ops.yaml`); chuẩn đối chứng golden set |
-| 2 | **`opencode run`** (`src/agent/opencode_runner.py`; `--runner opencode`; batch tay qua `scripts/opencode_native_run.py`, dọn tồn đọng qua `scripts/run_backlog_opencode.py`) | Chưa thuộc `PROVIDERS` của daemon (`src/ops/order.py` còn `agy`, `openrouter`) |
-| 3 | **OpenRouter API** (`src/agent/openrouter_runner.py`) | Dự phòng; `--runner openrouter` |
+| 1 | **agy runner** (`src/agent/runners/agy_runner.py`) | Mặc định của daemon (`config/ops.yaml`); chuẩn đối chứng golden set |
+| 2 | **`opencode run`** (`src/agent/runners/opencode_runner.py`; `article_run.py --runner opencode`; dọn tồn đọng qua `scripts/run_backlog_opencode.py`; ADR-0028) | Chưa thuộc `PROVIDERS` của daemon (`src/ops/runtime/order.py` còn `agy`, `openrouter`) |
+| 3 | **OpenRouter API** (`src/agent/runners/openrouter_runner.py`) | Dự phòng; `--runner openrouter` |
 | — | DSH `agent_article` | Đường conductor tương tác (`run_code`); cần cổng preflight 14 mục (rule 09) |
 
-**Claude không bao giờ là runtime thay thế** của lane. Mọi runtime qua `src/agent/article_contract.py` và một validator; provider mới phải qua golden set (ADR-0017; bộ này chưa gán nhãn).
+**Claude không bao giờ là runtime thay thế** của lane. Mọi runtime qua `src/agent/contract/article_contract.py` và một validator; provider mới phải qua golden set (ADR-0017; bộ này chưa gán nhãn).
 
 ### 6.2 Hợp đồng dữ liệu
 
@@ -212,12 +213,12 @@ flowchart LR
 
 - **Giao hàng:** `scripts/write_user_output.py` → `src/export/user_output.py`. Chỉ giao bài đã có kết quả L1 do mô hình phân tích (code_first không tính); Gold là tuỳ chọn (`GOLD` hoặc `L1_ONLY`). Định tuyến theo watchlist, lọc nhiễu macro, checkpoint chống gửi trùng.
 - **Cây Excel:** `<DATA_ROOT>/users/output/<user>/<YYYY-MM-DD>.xlsx`, giống hệt cục bộ và trên SharePoint (ADR-0026). `paths.users_output_dir()` trả về `<gốc>/users/output`.
-- **ĐƯỜNG XUẤT BẢN CHUẨN DUY NHẤT:** `scripts/publish.py` → `src.export.publisher.publish_day()`. Chỉ ngày đã đóng; staging → `.partial` → thay thế, không ghi đè; từ chối site `FRA` chính thức, chỉ sandbox `FRA_DataIngestion` (ADR-0023). Chạy hằng ngày qua `publish_tick` sau 01:00; backfill lịch sử bằng `publish.py --from/--to` (US-038).
+- **ĐƯỜNG XUẤT BẢN CHUẨN DUY NHẤT:** `scripts/publish.py` → `src.export.publisher.publish_day()`. Chỉ ngày đã đóng; staging → `.partial` → thay thế, không ghi đè; từ chối site `FRA` chính thức, chỉ sandbox `FRA_DataIngestion` (ADR-0023). Chạy hằng ngày qua `publish_tick` sau 01:00; backfill lịch sử bằng `publish.py --from-date <ngày> --to-date <ngày>`.
 - **`scripts/lakehouse_cli.py` chỉ là công cụ phụ trợ:** kiểm toán (`verify` manifest SHA-256) và cổng tiếp nhận dữ liệu ngoại vi (dropzone, `ingest`/`consolidate`). Không phải đường xuất bản chính thức.
 - **Bố cục trên đích:** `parquet/articles/year=/month=/part-<ngày>.parquet` (OBT 22 cột, ZSTD), `_manifest/<ngày>.json` + `latest.json`, `review/monocle_review_<ngày>.db` (7 ngày), `bronze/YYYY/MM/DD/<nguồn>.tar.xz`, `users/output/`.
 - **Tiêu thụ:** plugin `plugins/fpts-market-intel` (ADR-0025) dựng view DuckDB trong bộ nhớ trên Parquet, 12 skill phân tích.
 
-**Người dùng nhận tin — SSOT duy nhất (ADR-0026):** `<DATA_ROOT>/subscriptions/manifest.yaml` quyết định bật/tắt người dùng; bản gieo mẫu trong repo `users/subscriptions/manifest.yaml`. `project/config/entities/manifest.yaml` đã khai tử. Watchlist đã biên dịch từng người nằm ở `project/config/entities/users/*.yaml`. Tra danh sách bằng `pipeline_radar.py users`; không chép vào tài liệu.
+**Người dùng nhận tin — SSOT duy nhất (ADR-0026):** `<DATA_ROOT>/subscriptions/manifest.yaml` quyết định bật/tắt người dùng; bản gieo mẫu trong repo `users/subscriptions/manifest.yaml`. Watchlist đã biên dịch từng người nằm ở `project/config/entities/users/*.yaml`. Tra danh sách bằng `pipeline_radar.py users`; không chép vào tài liệu.
 
 ---
 
@@ -270,7 +271,7 @@ Vòng thay đổi: đọc `AGENTS.md` → intake → story/ADR → proof → tra
 | 08:00, 18:00 | bản tin sức khoẻ | `ops_daemon` |
 | sau 01:00 | `publish_tick` → `publish_day(hôm qua)` | `ops_daemon` |
 
-Lệnh tay chính: `python -m src.morninger --once capture|derive|drift`, `scripts/run_once.py`, `scripts/article_run.py --wave <code> ...`, `scripts/publish.py --from <ngày> --to <ngày>`, `scripts/pipeline_radar.py status`.
+Lệnh tay chính: `python -m src.morninger --once capture|derive|drift`, `scripts/run_once.py`, `scripts/article_run.py --wave <code> ...`, `scripts/publish.py --from-date <ngày> --to-date <ngày>`, `scripts/pipeline_radar.py status`.
 
 ---
 
@@ -280,7 +281,7 @@ Lệnh tay chính: `python -m src.morninger --once capture|derive|drift`, `scrip
 2. Silver, version, package là hàm thuần của Bronze (không dùng `now()`), re-derive cho kết quả giống hệt.
 3. Mọi URL phát hiện đều vào sổ khám phá trước mọi bộ lọc; không có trạng thái “bị bỏ”.
 4. Trùng lặp là dữ liệu: có thể bỏ qua LLM, không xoá, vẫn được đếm.
-5. Article Lane là đường xử lý duy nhất; không gọi `l1_route.py`, `agent_export.py`, `requeue.py`, `l1_ingest.py --code-first`.
+5. Article Lane là đường xử lý duy nhất; `l1_ingest.py` và `agent_ingest.py` chỉ chạy như bước nạp của `article_run.py --finish`.
 6. Không script nào giả lập trí tuệ agent; `code_first` không bao giờ được tính là đã phân tích.
 7. Mọi runtime qua một hợp đồng và một validator; Claude không phải runtime thay thế.
 8. Token chỉ ghi sổ; không trần token nào dừng wave hoặc cắt batch.
@@ -300,17 +301,20 @@ Lệnh tay chính: `python -m src.morninger --once capture|derive|drift`, `scrip
 | L0 | 0009, 0011, 0012 (mức tự chủ: sửa bởi 0026), 0014 |
 | L1 | 0013 (0015 bị bác bỏ) |
 | L2 | 0007, 0016 |
-| L3 | 0010, 0017, 0018, 0019, 0005 |
+| L3 | 0010, 0017, 0018, 0019, 0005, 0028 (bỏ script batch opencode tay, sửa 0026) |
 | L4 | 0023 (thay thế 0020), 0025, 0026 |
-| L5 | 0001, 0002, 0006, 0021, 0022, 0024 |
+| L5 | 0001, 0002, 0006, 0021, 0022, 0024, 0027 (ranh giới module, RULE-12) |
 
 | Tài liệu | Nội dung |
 |----------|----------|
+| [02 — execution flow](02-execution-flow.md) | Một chu kỳ capture của orchestrator |
+| [03 — source strategy](03-source-strategy.md) | Phương thức theo nguồn, encoding, ngày, lọc |
+| [05 — notification](05-notification-coverage.md) | Luật notify file |
 | [06 — raw capture](06-raw-html-capture.md) | Bronze, meta 14 khoá |
 | [07 — storage + change-detect](07-storage-layers-and-change-detection.md) | Medallion, 5 trạng thái |
 | [08 — handoff + catalog](08-handoff-contract-catalog.md) | work-package, exactly-once |
+| [12 — Bronze → Silver](12-bronze-to-silver-rules.md) | Quy tắc dựng Silver |
 | [14 — entity system](14-entity-system-and-mapping.md) | Danh mục thực thể, matcher |
-| [13 — per-user output](13-per-user-output-workflow.md) | Đăng ký và giao hàng theo người |
-| `docs/decisions/0010-…`, `0017-…`, `0023-…` | Quyết định gốc |
+| `docs/decisions/0010-…`, `0017-…`, `0023-…`, `0026-…`, `0027-…` | Quyết định gốc |
 
-Tài liệu 09, 10, 12, 17 là đặc tả lịch sử của lane L1/Gold; đọc kèm banner đầu trang.
+Đặc tả đã nghỉ hưu (lane L1/Gold, sentiment rule-based, báo cáo định kỳ, quy trình người dùng CSV) nằm trong [`../archive/design/`](../archive/design/).

@@ -41,6 +41,6 @@ công + dễ vỡ. hnx thì detail HTML tĩnh hơn nên vẫn `extract_full: tru
 
 ## Ghi chú
 
-- Cả hai `language: vi` → có chấm sentiment VN.
+- Cả hai `language: vi`, đều đang tắt (`enabled: false`).
 - Đây là kết quả timebox nghiên cứu Layer 0 (Phase 2 phase-04). CTCK (công ty chứng khoán) khác
   phần lớn không có feed công khai ổn định → chưa đưa vào (xem probe report).

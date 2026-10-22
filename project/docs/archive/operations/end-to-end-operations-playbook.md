@@ -1,3 +1,5 @@
+> Lưu trữ 2026-10-22 (US-050): quy trình L1 code-first → Gold đã ngừng (ADR-0010), thay bằng [RUNBOOK Article Lane](../../../../.agents/dsh/RUNBOOK-article-lane.md) và [runbook ops_daemon](../../operations/ops-daemon.md).
+
 # Hướng Dẫn Vận Hành Quy Trình End-to-End (Operations Playbook)
 
 > **Dành cho:** Người vận hành hệ thống, Chuyên viên dữ liệu (Users) và Quản trị viên (Dev/Ops).  

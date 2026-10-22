@@ -1,7 +1,7 @@
 ---
 type: Python Pipeline
-title: Morninger — entrypoint prod
-description: Tiến trình duy nhất chạy ban ngày, 3 job APScheduler — capture 15′, re-derive Silver 30′, drift report mỗi sáng.
+title: Morninger — tiến trình capture + Silver
+description: Tiến trình thường trú với 4 job APScheduler — capture (10′), re-derive Silver (30′), drift report mỗi sáng, reclaim — được ops_daemon giữ sống.
 resource: project/src/morninger.py
 tags: [pipeline, scheduler, prod, entrypoint]
 status: stable
@@ -13,72 +13,72 @@ sources:
     title: Morninger scheduler
   - id: proclock
     resource: project/src/core/proclock.py
-    title: Advisory scheduler lock
+    title: capture.lock + advisory scheduler lock
   - id: settings
     resource: project/config/settings.yaml
     title: settings.morninger
-  - id: e2e-design
-    resource: project/docs/design/00-end-to-end-architecture.md
-    title: End-to-end architecture
-sources_last_checked: 2026-09-07
+  - id: supervisor
+    resource: project/src/ops/runtime/supervisor.py
+    title: Supervisor giữ morninger sống
+sources_last_checked: 2026-10-22
 ---
 
-**Prod = 1 entrypoint duy nhất: `python -m src.morninger`.** Một tiến trình, 3 job nội bộ —
-không cần lên lịch riêng cho từng bước.[^e2e-design]
+**Capture + Silver = 1 tiến trình thường trú: `python -m src.morninger`.** Một tiến trình, bốn
+job APScheduler nội bộ — không cần lên lịch riêng cho từng bước.[^morninger]
 
-# 3 job
+# 4 job
 
-| Job | Chu kỳ | Hàm gọi | Vòng |
+| Job | Chu kỳ (`settings.yaml`) | Việc | Vòng |
 |---|---|---|---|
-| `capture` | 15′ | [`Orchestrator.run_cycle`](ingestion_scheduler.md) | 1 |
-| `re-derive` | 30′ | [`rederive_incremental`](silver_derive.md) | 2 |
-| `drift report` | cron mỗi sáng (mặc định 06:00) | `pipeline.drift.list_drift` | giám sát |
+| `capture` | `capture_interval_minutes` (hiện 10′) | [`Orchestrator.run_cycle`](ingestion_scheduler.md), nối tiếp đối chiếu sitemap + bù URL thiếu (ADR 0013) và `backfill_deferred` có trần thời gian | 1 |
+| `derive` | `rederive_interval_minutes` (30′) | [`rederive_incremental`](silver_derive.md), rồi gom cụm câu chuyện + tín hiệu (ADR 0016) | 2 |
+| `drift` | cron `drift_hour:drift_minute` (06:00) | `pipeline.drift.list_drift` | giám sát |
+| `reclaim` | `reclaim_interval_minutes` (mặc định 30′) | trả work-package bị treo về hàng đợi | 2 |
 
-Cấu hình ở [settings.yaml](../configurations/settings.md) khối `morninger`:
-`capture_interval_minutes`, `rederive_interval_minutes`, `drift_hour`, `drift_minute`,
-`drift_limit`.
+Cấu hình ở [settings.yaml](../configurations/settings.md) khối `morninger`.[^settings]
 
 # Checkpoint Silver
 
 Sau mỗi lần re-derive, nếu **không còn** Bronze artifact nào chưa xử lý (backlog = 0), morninger
-ghi `silver_checkpoint` vào [pipeline_state](../tables/pipeline_state.md) — nghĩa là "danh sách
-tin cấp Silver đã cập nhật đầy đủ tới thời điểm này".[^morninger]
+ghi `silver_checkpoint` vào [pipeline_state](../tables/pipeline_state.md).[^morninger]
 
 # Chống chạy trùng
 
-Chiếm advisory lock `lock:scheduler` (value `host:pid`) khi khởi động; job `capture` refresh lock
-mỗi cycle. Stale = **2400 giây (40′)** — lớn hơn chu kỳ 15′ để lock không bị cướp giữa hai
-nhịp.[^proclock] Tiến trình khác không chiếm được ⇒ log ERROR và thoát, không chạy song song.
+Hai lớp khoá:[^proclock]
 
-# CLI
+1. **File lock `capture.lock`** cạnh DB vận hành (`SingleInstanceLock`), dùng chung cho mọi
+   tiến trình cào (`morninger`, `run_once.py`, `orchestrator`). Không có trạng thái stale: hệ
+   điều hành nhả khoá khi tiến trình chết.
+2. **Advisory lock `lock:scheduler`** trong `pipeline_state` (value `host:pid`, stale 2400 giây).
+
+Không chiếm được khoá ⇒ log ERROR và thoát, không cào song song.
+
+# Ai giữ morninger sống
+
+Vận hành không người trực: `ops_daemon` (Task Scheduler `news-scape-ops` +
+`news-scape-ops-watchdog`, ADR-0012) chạy `Supervisor` khởi động lại `python -m src.morninger`
+khi tiến trình chết, có backoff và trần số lần; vượt trần thì báo đỏ và dừng thử. Lệnh
+`/capture restart` (Telegram hoặc console) xoá trạng thái bỏ cuộc.[^supervisor]
+
+# CLI (chạy từ `project/`)
 
 ```powershell
-.venv\Scripts\python.exe -m src.morninger                  # scheduler liên tục (PROD)
-.venv\Scripts\python.exe -m src.morninger --once capture   # 1 cycle capture rồi thoát
-.venv\Scripts\python.exe -m src.morninger --once derive    # 1 lần re-derive tăng dần
-.venv\Scripts\python.exe -m src.morninger --once drift     # 1 lần drift report
+C:\venvs\news-scape\Scripts\python.exe -m src.morninger                  # scheduler liên tục
+C:\venvs\news-scape\Scripts\python.exe -m src.morninger --once capture   # 1 cycle capture rồi thoát
+C:\venvs\news-scape\Scripts\python.exe -m src.morninger --once derive    # 1 lần re-derive tăng dần
+C:\venvs\news-scape\Scripts\python.exe -m src.morninger --once drift     # 1 lần drift report
 ```
-
-Trên Windows dùng Task Scheduler gọi `scripts/run_daily.ps1`.
-
-> **Đối chiếu thực tế 2026-09-17:** không có Task Scheduler entry nào gọi `run_daily.ps1`. Thực tế
-> đang chạy là một tiến trình `python -m src.morninger` thường trú (khởi động tay), cộng task
-> `news_cron` gọi `scripts/run_once.py` lúc 16:00 hằng ngày. `news_cron` **vừa thừa vừa va chạm**:
-> morninger đã bao trọn capture + derive, còn nhánh `--once` của `orchestrator.main` không chiếm
-> scheduler lock nên cào song song với morninger. Xem `docs/OPEN-ITEMS.md` mục A0-5.
->
-> Lệnh `.venv\Scripts\python.exe` ở khối trên cũng đã lỗi thời — `.venv` nội bộ bị cấm theo
-> AGENTS.md §3, dùng `C:\venvs\news-scape\Scripts\python.exe`.
 
 # Việc KHÔNG thuộc morninger
 
-Morninger chỉ lo Vòng 1 + Vòng 2. Chuỗi agent (Vòng 3) và output người dùng chạy riêng theo lô:
-[Agent Handoff](agent_handoff.md) → [User Output](user_output.md).
+Morninger chỉ lo Vòng 1 + Vòng 2. Phân tích bài chạy theo đợt qua
+[Article Lane](article_lane.md) (do `ops_daemon` mở đợt hoặc chạy tay), rồi
+[User Output](user_output.md).
 
 Bảo trì chạy tay: `scripts/rederive_from_bronze.py` (full-scan sau khi bump schema/sửa parser),
-`scripts/refresh_watchlist.py` (kích hoạt change-detection), `scripts/report_drift.py`.
+`scripts/refresh_watchlist.py` (kích hoạt change-detection).
 
 [^morninger]: [morninger.py](project/src/morninger.py)
 [^proclock]: [proclock.py](project/src/core/proclock.py)
 [^settings]: [settings.yaml](project/config/settings.yaml)
-[^e2e-design]: [End-to-end architecture](project/docs/design/00-end-to-end-architecture.md)
+[^supervisor]: [supervisor.py](project/src/ops/runtime/supervisor.py)

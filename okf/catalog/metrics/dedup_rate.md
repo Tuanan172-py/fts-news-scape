@@ -9,11 +9,11 @@ generated:
 sources:
   - id: dedup
     resource: project/src/db/dedup.py
-    title: DedupCache — 2 lớp
+    title: DedupCache — exact hash
   - id: db-store
     resource: project/src/db/store.py
     title: DDL scraper_metrics / seen_articles
-sources_last_checked: 2026-09-07
+sources_last_checked: 2026-10-22
 ---
 
 # Definition

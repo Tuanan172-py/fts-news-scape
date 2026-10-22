@@ -6,7 +6,7 @@ status: blocked
 lane: high-risk
 branch: dev/us038
 created: 2026-10-21
-updated: 2026-10-21
+updated: 2026-10-22
 lang: en
 authors: [operator, claude]
 adr: [ADR-0026]
@@ -15,7 +15,7 @@ evidence:
   - path:project/docs/design/00-end-to-end-architecture.md
   - path:project/src/core/user_manifest.py
   - path:project/scripts/maintenance/migrate_users_output.py
-verify: "cd project && python -m pytest tests/ops/test_ops_core.py tests/core/test_user_manifest.py tests/core/test_migrate_users_output.py tests/export/test_publisher.py tests/agent/test_entities.py tests/test_harness_cli.py -q"
+verify: "cd project && python -m pytest tests/ops/test_ops_core.py tests/core/test_user_manifest.py tests/core/test_migrate_users_output.py tests/export/test_publisher.py tests/agent/test_entities.py -q && cd .. && python -m pytest tests/test_harness_cli.py -q"
 summary: Brings docs, harness and code to one state - Article Lane docs, non-gating session close, one publish path, L0/L1 only, one user manifest, one users/output tree.
 ---
 
@@ -38,8 +38,8 @@ After this story the architecture map, the documents and the code describe one s
 ## Design Notes
 
 - Decisions: ADR-0026 (amends ADR-0012 D5). ADR-0023 supersedes ADR-0020.
-- Shared loader `src/core/user_manifest.py` serves `agent/entities.py`, `users/compile.py` and `pipeline_radar.py`.
-- Wave cap: `wave_flow` uses `min(cfg.wave.limit, order.max_limit)`.
+- Shared loader `src/core/user_manifest.py` serves `agent/catalog/entities.py`, `users/compile.py` and `ops/console/radar.py` (behind `scripts/pipeline_radar.py`).
+- Wave cap: `src/ops/wave/wave_flow.py` uses `min(cfg.wave.limit, order.max_limit)`.
 - The old config manifest held no ticker data, so no `ticker_directory.yaml` was needed.
 
 ## Verification

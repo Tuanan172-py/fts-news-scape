@@ -2,8 +2,8 @@
 
 - **Loại tài liệu:** hướng dẫn thao tác (how-to).
 - **Đối tượng:** người vận hành.
-- **Cập nhật:** 2026-10-01
-- **Quyết định liên quan:** ADR 0012, ADR 0014
+- **Cập nhật:** 2026-10-22
+- **Quyết định liên quan:** ADR 0012, ADR 0014, ADR 0026
 
 Lý do thiết kế nằm ở các ADR. Danh sách lệnh, tệp và tham số nằm ở [tài liệu tham chiếu](ops-daemon-reference.md).
 
@@ -27,10 +27,10 @@ Cài `ops_daemon`, cấp mandate và xử lý cảnh báo hằng ngày, để đ
 | 4 | `powershell -ExecutionPolicy Bypass -File scripts\ops_install.ps1 -Register -Start` | Hai task `news-scape-ops` và `news-scape-ops-watchdog` ở trạng thái Running hoặc Ready |
 | 5 | `python scripts/ops_daemon.py status` | Dòng đầu ghi "Daemon: sống" |
 | 6 | `python scripts/ops_daemon.py open` | Phòng điều khiển mở trên trình duyệt, chip tổng thể là Khoẻ hoặc Cần xem |
-| 7 | Gõ `/level L1` trên Telegram, rồi bấm **Xác nhận** | `/mandate` báo L1 và hạn 30 ngày |
+| 7 | Gõ `/level L1 <số bài>` trên Telegram (trần số bài mỗi đợt, 1 đến 500), rồi bấm **Xác nhận** | `/mandate` báo L1 và hạn 30 ngày |
 
 Sau bước 7, máy mở và đủ điều kiện thì daemon tự mở và chạy trọn đợt. Bạn không phải bấm gì từng đợt.
-Mỗi đợt DONE tự xuất xlsx giao hàng cho ngày của đợt (`write_user_output.py --date`);
+Mỗi đợt DONE tự xuất xlsx giao hàng cho ngày của đợt (`write_user_output.py --date`) vào `C:\data\news-scape\users\output\<user>\<YYYY-MM-DD>.xlsx`;
 lỗi giao hàng không lật DONE, daemon báo `wave.deliver_failed` và lệnh bù tay.
 
 ## 4. Xử lý sự cố
@@ -64,5 +64,6 @@ Sửa `config/ops.yaml` hoặc mã trong `src/ops` thì khởi động lại dae
 ## 6. Tham chiếu
 
 - [Tài liệu tham chiếu ops_daemon](ops-daemon-reference.md): mức tự chủ, điều kiện gia hạn, màn hình, tệp và nhật ký, cấu hình.
-- ADR 0012: lý do thiết kế control plane. ADR 0014: giám sát multi-agent và mandate.
+- ADR 0012: lý do thiết kế control plane. ADR 0014: giám sát multi-agent và mandate. ADR 0026: chỉ hai mức L0 và L1, thứ tự runner, một đường xuất bản.
+- Xuất bản lên SharePoint: [publisher.md](publisher.md).
 - Bảng thuật ngữ: [GLOSSARY](../../../docs/GLOSSARY.md).

@@ -1,3 +1,5 @@
+> Lưu trữ 2026-10-22 (US-050): bản trùng cũ (khoá `fireant.bearer_token` sai, 23 domain), thay bằng [Configurations › Secrets](../../../catalog/configurations/secrets.md).
+
 ---
 type: Configuration
 title: Secrets Configuration

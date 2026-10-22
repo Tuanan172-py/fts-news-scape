@@ -1,12 +1,11 @@
 # OPEN-ITEMS — việc tồn đọng của tuyến L1 → giao hàng người dùng
 
-- **Cập nhật:** 2026-10-21 (US-045 / ADR-0026); nội dung các mục bên dưới giữ nguyên mốc ngày ghi trong từng mục.
+- **Cập nhật:** 2026-10-22 (US-050); các mục từ REPO-1 trở xuống là lịch sử, giữ nguyên mốc ngày ghi trong từng mục.
 - **Việc chờ người vận hành (US-049):** merge nhánh `dev/us049-codebase-modularization` vào `dev/us038` khi radar không có đợt dở và daemon ở L0 (`/level L0`), rồi khởi động lại task `news-scape-ops` để daemon nạp cấu trúc gói mới (ADR-0027). Đường dẫn `scripts/*.py` không đổi.
-- **Việc chờ người vận hành (US-045):** dừng daemon, chạy `python scripts/maintenance/migrate_users_output.py --apply` (chạy thử đã báo 607 tệp, 0 xung đột), rồi bật lại.
-- **Việc còn lệch sau bản đồ kiến trúc (US-048):** bộ vàng ADR-0017 chưa gán nhãn nên chưa chấm được provider; `opencode` chưa thuộc `PROVIDERS` của daemon; WIP=1 chỉ bị bắt bởi lint K13 và audit, chưa có hook riêng.
+- **Việc chờ người vận hành (US-045):** dừng daemon, chạy `python scripts/maintenance/migrate_users_output.py --apply` từ `project/` (chạy thử đã báo 607 tệp, 0 xung đột) để chuyển cây cũ `users_output/` sang `<DATA_ROOT>/users/output/` (ADR-0026.D6), rồi bật lại.
+- **Việc còn lệch sau bản đồ kiến trúc (US-048):** bộ vàng ADR-0017 chưa gán nhãn nên chưa chấm được provider; `opencode` chưa thuộc `PROVIDERS` của daemon (`PROVIDERS = ("agy", "openrouter")` ở `project/src/ops/runtime/order.py`); WIP=1 chỉ được kiểm bởi `doc lint` mã K13 (pre-commit chạy `doc lint --staged`) và `audit`, chưa có hook riêng.
 - **Bối cảnh:** rà soát vì sao mapping từ L1 sang danh mục người dùng ghi nhận rất ít số liệu.
-- **Số đo tham chiếu:** trên **bản sao** `project/data/monocle.db` (7.219 articles, chụp 2026-09-07).
-  Chưa có thay đổi nào được áp lên DB vận hành.
+- **Số đo tham chiếu (lịch sử, mục A0 trở xuống):** trên một **bản sao** DB chụp 2026-09-07 (7.219 articles), không phải DB vận hành `C:\data\news-scape\monocle.db`.
 - Đóng một mục: chuyển sang §D kèm **Kết quả đo thực tế**, đừng xoá.
 
 ---
@@ -42,11 +41,11 @@ Người vận hành làm hoặc quyết định:
 1. **[ĐÓNG 2026-10-06 — người vận hành] DSH không còn dùng.** Runner hiện hành là `agy` và opencode (Muse Spark 1.3). Không cần restart host DSH. Nếu sau này dùng lại DSH thì restart host trước (prefix `b7cd7e93820adc5e`, rule 09).
 2. **[PENDING theo yêu cầu người vận hành 2026-10-06, chưa nghiệm thu] Gán nhãn bộ vàng 30 bài** (`sn`, `ts`, tập TIC) rồi chạy `provider_conformance.py baseline` với đầu ra của agy. Chưa có bộ vàng thì chưa chấm được provider khác. Ngưỡng tạm: mức agy trừ 5 điểm phần trăm.
 3. **[ĐÓNG 2026-10-08, US-041] Sổ cái token gắn nguồn theo meta.** Mỗi tệp meta tính cho đúng `agent_provider` của nó, nên đợt pha agy và openrouter ghi hai dòng. Token cache vào `hit_tokens`. opencode được nhận nhưng meta của nó không ghi số token, nên dòng có ghi chú `usage=không ghi`. `--finish` mặc định `--source auto`. Còn mở: adapter opencode cần ghi `usage` thật.
-4. **[ĐÃ CÓ MÃ, CHỜ NGHIỆM THU] `--runner opencode`.** `src/agent/opencode_runner.py` và `article_run.py --runner opencode` (cùng `scripts/run_backlog_opencode.py`) đã có trong cây làm việc, dùng bộ kiểm chung `article_contract`. Chưa commit, chưa có đợt thật, daemon chưa dùng (`PROVIDERS` còn `agy`, `openrouter`). Hạng 2 trong thứ tự runner (ADR-0026.D3).
+4. **[ĐÃ CÓ MÃ, CHỜ NGHIỆM THU] `--runner opencode`.** `src/agent/runners/opencode_runner.py` và `article_run.py --runner opencode` (cùng `scripts/run_backlog_opencode.py`) đã có trong cây làm việc, dùng bộ kiểm chung `article_contract`. Chưa commit, chưa có đợt thật, daemon chưa dùng (`PROVIDERS` còn `agy`, `openrouter`). Hạng 2 trong thứ tự runner (ADR-0026.D3).
 5. **Giảm tỷ lệ bị từ chối ở giai đoạn đầu.** Đo trước khi siết: agy 5,5% `c` ngắn và 1,8% `k` ngắn, openrouter 9,3% `k` dài. Đo lại bằng kịch bản audit sau vài đợt, và điều chỉnh prefix nếu một loại lỗi vượt vài phần trăm.
 6. **Xung đột với ADR 0016 P3.** Trường `same_event_as` mà ADR 0016 dự kiến thêm sẽ bị schema đóng (`additionalProperties: false`) từ chối. Đổi hợp đồng phải sửa schema trước.
 7. **Đợt DSH cũ** (W09241605, W09241723, W365, W1, W2) dùng lược đồ thực thể khác và không tái mở rộng được dưới resolver hiện tại.
-8. **Hằng số v1 còn sót** ở `src/agent/packet.py`, `batch_handoff.py`, `dod.py`.
+8. **Hằng số v1 còn sót** chỉ còn ở `src/agent/contract/dod.py` (nhánh kiểm `agent-output-v1`); `packet.py` đã xoá và `batch_handoff.py` chỉ còn hàm bóc đầu ra (US-049).
 9. **Chưa có đợt chạy thật dưới cổng mới.** Phát lại đợt `W10051050` (sinh bằng prefix cũ) cho 38/100 bản ghi bị từ chối, 32 bài do `c` có 5 hoặc 6 chỉ số. Prefix mới đã nói rõ 2 đến 4, nhưng tỷ lệ từ chối mới chưa đo. Chạy một đợt agy 50 bài trước khi nâng daemon lên L1.
 10. **Đường vá đã sửa** để dùng cùng bộ kiểm với bộ bung (`pending_batches`, `wave_received_ids`). Trước đó bản ghi sai vẫn được tính là đã nhận nên không bao giờ được vá. Đợt `W10051050` và `W10051042` đang `Lỗi` từ 04/10 (độ phủ dưới 90%, tỷ lệ hỏng vượt ngưỡng); chạy `--repair` thay vì `--finish`.
 11. **`max_tokens` của OpenRouter** nâng từ 24000 lên 32000 để giảm cắt cụt. Cần đo xem lô 50 bài có còn bị `PARTIAL` do trần đầu ra không.
@@ -81,7 +80,7 @@ unner.py, l1_runner.py.
 6. **I3 đối chiếu với giá:** cần nguồn OHLCV và xác minh điều khoản sử dụng. Cho tới khi có, các chỉ số trong `signal_daily` chỉ được gọi là mức độ chú ý và giọng điệu báo chí, không phải tín hiệu giao dịch.
 7. **Diễn giải `ama_z`:** nền thưa kết hợp sàn độ lệch chuẩn 0,5 làm z phình lớn với mã ít được nhắc (đo được z từ 17 đến 27). Radar chỉ hiện mã có ít nhất 3 bài và 2 nguồn. Độ phủ phân tích mới khoảng 21 đến 34%, nên cần đọc kèm `coverage_pct`.
 8. **Giao hàng chưa gộp dòng theo cụm.** Bài chép vẫn xuất thành dòng riêng với kết quả kế thừa. Gộp dòng đổi cấu trúc tệp giao hàng nên cần quyết định riêng.
-9. **`test_cli_entrypoints.py` vẫn ghi DDL vào DB vận hành** (tồn đọng từ 24/09). Bộ test được chạy với `--ignore` cho tệp này.
+9. **[ĐÓNG 2026-10-22, kiểm lại mã] `test_cli_entrypoints.py` vẫn ghi DDL vào DB vận hành** (tồn đọng từ 24/09). `project/tests/conftest.py` đặt `MONOCLE_DATA_DIR` và `MONOCLE_DB_PATH` vào thư mục tạm trước mọi import, subprocess của test kế thừa biến này, và một chốt chặn trên `sqlite3.connect` đánh hỏng test chạm `C:\data\news-scape`. Không cần `--ignore` nữa.
 
 ---
 
@@ -119,7 +118,7 @@ Việc kỹ thuật còn treo (chưa làm trong US-031):
 | Việc | Ghi chú |
 |---|---|
 | Nghiệm thu P0 bằng đợt thật qua daemon | Chưa có đợt nào chạy sau khi bật vết. Đợt đầu tiên ở L1 hoặc `/run` sẽ cho cây vết đầy đủ; các đợt cũ hiện hiển thị "chưa có span" |
-| Span cho runner OpenRouter và opencode (`opencode_runner.py`) | Chỉ `AgyRunner` được đo. Đợt chạy bằng runner khác không có cây vết cấp lô |
+| [ĐÓNG 2026-10-22, kiểm lại mã] Span cho runner OpenRouter và opencode (`opencode_runner.py`) | Chỉ `AgyRunner` được đo. Đợt chạy bằng runner khác không có cây vết cấp lô. Nay `project/src/agent/runners/opencode_runner.py` và `openrouter_runner.py` đều ghi span `agent` cho mỗi lô |
 | `harness-auditor` lên active | Cần 10 lần chẩn đoán đúng theo rule 07. Hiện đề xuất do operator tất định `improvement-proposer` sinh |
 | Truy cập Phòng điều khiển từ xa (D-B) | Cần CNTT cho đường hầm có xác thực; Telegram `/map`, `/trace` thay tạm |
 | Thử Arize Phoenix qua OpenTelemetry (D-C) | Span đã giữ trường tương thích; cần một spike nhỏ |

@@ -13,18 +13,17 @@ Nhằm chấm dứt tình trạng agent chạy hàng loạt lệnh shell rác ch
 
 1. **CẤM TUYỆT ĐỐI Câu Lệnh Thăm Dò Ad-hoc (No Ad-hoc Probing Scripts)**:
    - Nghiêm cấm chạy các lệnh one-liner kiểu `python -c "import sqlite3; conn = ...; print(conn.execute(...))"` chỉ để đếm số bài viết, kiểm tra trạng thái bài viết hoặc dò tìm cấu trúc bảng.
-   - Nghiêm cấm chạy các vòng lặp python ad-hoc chỉ để đếm file trong `data/silver` hay `data/work_packages`.
+   - Nghiêm cấm chạy các vòng lặp python ad-hoc chỉ để đếm file trong `<DATA_ROOT>/silver` hay `<DATA_ROOT>/work_packages` (`C:\data\news-scape`).
 2. **Kính Ngắm Trinh Sát Duy Nhất (Single Observability Lens)**:
    - Mọi ca vận hành BẮT BUỘC chỉ dùng **1 lệnh duy nhất** để lấy toàn bộ bức tranh ngữ cảnh:
      ```powershell
      & "C:\venvs\news-scape\Scripts\python.exe" project/scripts/pipeline_radar.py status
      ```
    - Lệnh này đã tích hợp sẵn toàn bộ logic kiểm tra:
-     - Số bài cào trong ngày từ CSDL.
-     - Số bài L1 unrouted chưa qua bộ lọc.
-     - Số bài L1 resolved đang chờ nạp Code-First.
-     - Số tác vụ Gold đang chờ xử lý.
-     - Độ tươi cào tin (Liveness) & cảnh báo khoảng trống đêm (Overnight gap).
+     - Số bài cào trong ngày từ CSDL và độ tươi cào tin (Liveness).
+     - Quyền ghi DB.
+     - Trạng thái đợt Article Lane gần nhất theo vòng đời.
+     - Số bài chờ mô hình phân tích, bức tranh kho dữ liệu và phân bổ tồn đọng.
      - **Chỉ rõ chính xác 1 câu lệnh chuẩn** cần thực thi tiếp theo.
 3. **Tuân Thủ Chỉ Dẫn Của Radar (Follow Radar Recommendation)**:
    - Agent không được tự ý phát minh ra các chuỗi lệnh khác nếu Radar đã chỉ rõ câu lệnh hành động tiếp theo.
@@ -39,10 +38,10 @@ Tuân thủ nghiêm ngặt [`docs/CONTEXT_RULES.md`](../../docs/CONTEXT_RULES.md
    - Khi bắt đầu một phiên làm việc mới, Agent CHỈ ĐƯỢC đọc tối đa 3 tài liệu:
      1. `AGENTS.md` (Authority Gate & Rules).
      2. `docs/SESSION-LATEST.md` (Bối cảnh bàn giao phiên trước, đọc trong 1 màn hình).
-     3. Tệp Skill chuyên trách tương ứng trong `.agents/skills/` (`pipeline-radar`, `news-scape-agent-operations`, `l1-entity-matcher`, hoặc `gold-financial-analyst`).
+     3. Tệp Skill chuyên trách tương ứng trong `.agents/skills/` (`pipeline-radar`, `dsh-conductor`, `l1-entity-matcher`, hoặc `ops-supervision`).
 2. **Danh Mục Tệp CẤM ĐỌC Trực Tiếp (Blacklisted Discovery Files)**:
-   - **CẤM đọc `project/data/entities/entities.json` (1.5 MB)**: Bảng tra cứu thực thể 10 miền đã được tóm tắt sẵn trong `l1-entity-matcher/SKILL.md`. Việc đọc tệp 1.5 MB làm cháy context window và làm suy giảm độ chính xác của LLM.
-   - **CẤM đọc trực tiếp toàn bộ thư mục `data/silver/` hay `data/bronze/`**: Trừ khi nhiệm vụ cụ thể yêu cầu sửa bộ bóc tách scraper.
+   - **CẤM đọc `<DATA_ROOT>/entities/entities.json` (1.5 MB)**: Bảng tra cứu thực thể 10 miền đã được tóm tắt sẵn trong `l1-entity-matcher/SKILL.md`. Việc đọc tệp 1.5 MB làm cháy context window và làm suy giảm độ chính xác của LLM.
+   - **CẤM đọc trực tiếp toàn bộ thư mục `<DATA_ROOT>/silver/` hay `<DATA_ROOT>/raw_html/`**: Trừ khi nhiệm vụ cụ thể yêu cầu sửa bộ bóc tách scraper.
 3. **Quy Tắc Dừng Khi Khớp Trực Tiếp (Direct Match Stop Heuristic)**:
    - Khi `grep_search` hoặc `view_file` đã tìm thấy đúng hàm/dòng code mục tiêu, Agent BẮT BUỘC dừng việc đọc thêm các file xung quanh.
 4. **CẤM TUYỆT ĐỐI Hành Vi Đọc Lại File Vừa Ghi (No Read-Back Loops)**:

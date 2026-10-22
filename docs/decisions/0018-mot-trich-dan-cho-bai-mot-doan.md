@@ -18,10 +18,10 @@ evidence:
   - commit:737d8ce
   - wave:W10051122
   - path:project/scripts/article_pack.py
-  - path:project/src/agent/silver_source.py
-  - path:project/src/agent/runner.py
+  - path:project/src/agent/packet/silver_source.py
+  - path:project/src/agent/ingest/runner.py
   - path:project/scripts/article_expand.py
-  - path:project/src/agent/dod.py
+  - path:project/src/agent/contract/dod.py
   - path:docs/OPEN-ITEMS.md
   - metric:W10051122 before fix 499/500 records, L1 500/500, content 360/500, about 140 one-paragraph packets
   - metric:W10051122 after fix L1 500/500, content 500/500, OpenRouter free tier at 0 USD, 2026-10-05 15:30

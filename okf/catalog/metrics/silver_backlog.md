@@ -13,10 +13,10 @@ sources:
   - id: catalog
     resource: project/src/handoff/catalog.py
     title: Catalog.counts
-  - id: daily-reporter
-    resource: project/src/monitor/daily_reporter.py
-    title: Đọc silver_watermark / silver_checkpoint
-sources_last_checked: 2026-09-07
+  - id: radar
+    resource: project/src/ops/console/radar.py
+    title: pipeline_radar status / backlog
+sources_last_checked: 2026-10-22
 ---
 
 # Definition
@@ -26,7 +26,7 @@ Ba loại tồn đọng, mỗi loại chỉ ra một chỗ nghẽn khác nhau:
 | Backlog | Nghĩa | Nghẽn ở |
 |---|---|---|
 | **Bronze chưa re-derive** | số `.meta.json` có `fetch_ts` > `silver_watermark` | Vòng 2 chạy chậm hơn Vòng 1 |
-| **`work_items.pending`** | việc đã sẵn sàng, chưa agent nào nhận | Vòng 3 chưa chạy đủ nhịp |
+| **`work_items.pending`** | bài sẵn sàng, chưa có bản ghi đạt DoD | Article Lane chưa chạy đủ đợt |
 | **`work_items.held`** | bài bị chặn bởi precondition | selector / template hỏng — cần người |
 
 # Computation
@@ -63,15 +63,15 @@ FROM work_items WHERE status = 'held'
 GROUP BY domain, change_state ORDER BY n DESC;
 ```
 
-Nhanh hơn: `python scripts/db_status.py`.
+Nhanh hơn, chỉ đọc: `python scripts/pipeline_radar.py status` (bài chờ phân tích + lệnh kế tiếp) hoặc `python scripts/article_run.py --where`.
 
 # Target & Alert
 
 | Chỉ số | Target | Cảnh báo |
 |---|---|---|
 | Backlog Bronze | ≈ 0 sau mỗi nhịp re-derive 30′ | tăng liên tục qua 3 nhịp |
-| `pending` | giảm về ~0 sau mỗi lô agent | tích luỹ nhiều ngày |
-| `claimed` quá 6 giờ | 0 | > 0 ⇒ agent chết giữa chừng |
+| `pending` | giảm về ~0 sau mỗi đợt Article Lane | tích luỹ nhiều ngày |
+| `claimed` quá 6 giờ | 0 | > 0 ⇒ job `reclaim` của morninger không chạy |
 | `held` | ổn định, không tăng | tăng đột biến ở 1 domain ⇒ trang đổi giao diện |
 
 `held` tăng vọt là tín hiệu **hành động**: sửa `detail.content_selector` trong

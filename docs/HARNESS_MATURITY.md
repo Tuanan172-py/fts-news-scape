@@ -1,22 +1,22 @@
-# HARNESS_MATURITY.md — Thang đo Độ Trưởng Thành của Harness (H0 – H5)
+# HARNESS_MATURITY.md — Harness Maturity Ladder (H0 – H5)
 
-Tài liệu này xác lập tiêu chí định lượng để đánh giá mức độ hoàn thiện và năng lực tự vận hành của hệ thống Harness.
+This document sets the criteria for the maturity and self-operation capability of the harness.
 
 ---
 
-## Bảng Phân cấp Trưởng thành
+## Maturity levels
 
-| Cấp độ | Tên gọi | Bản chất & Đặc trưng | Tiêu chí đạt được (Exit Criteria) |
+| Level | Name | Nature | Exit criteria |
 |:---|:---|:---|:---|
-| **H0** | **Bare** | Prompt vào $\rightarrow$ Patch ra. Không có harness hay quy tắc nào. | Điểm xuất phát ban đầu. |
-| **H1** | **Scaffolding** | Bộ quy tắc tĩnh bằng Markdown, template, phân làn rủi ro. Không có CSDL. | Đã có `AGENTS.md`, `HARNESS.md`, `FEATURE_INTAKE.md`, `TEST_MATRIX.md`, `SESSION-LATEST.md`. |
-| **H2** | **Durable** | Có CSDL SQLite + CLI mỏng ghi nhận state bền vững (intake, story, decision, trace, backlog). | Đã có `harness.db`, `harness_cli.py`, `CONTEXT_RULES.md`, `TRACE_SPEC.md`. |
-| **H3** | **Active Observability** | Chấm điểm trace, context budget compliance, gom nhóm friction theo component. | Có lệnh `score-trace`, `score-context`, phân tích friction theo component. |
-| **H4** | **Auto-Verification** | Công cụ kiểm thử tự động, chặn story hoàn thành nếu chưa chạy verify command thực tế. | Đã có `TOOL_REGISTRY.md`, lệnh `story complete --run-verify` có cổng chặn. |
-| **H5** | **Self-Improvement** | Tự động quét kiểm toán entropy và đề xuất cải tiến có bằng chứng cho con người duyệt. | Đã có `HARNESS_AUDIT.md`, `IMPROVEMENT_PROTOCOL.md`, lệnh `audit` và `propose`. |
+| **H0** | **Bare** | Prompt in $\rightarrow$ patch out. No harness, no rules. | Starting point. |
+| **H1** | **Scaffolding** | Static Markdown rules, templates, risk lanes. No database. | `AGENTS.md`, `HARNESS.md`, `FEATURE_INTAKE.md`, `TEST_MATRIX.md`, `SESSION-LATEST.md` exist. |
+| **H2** | **Durable** | SQLite + thin CLI recording durable state (intake, story, decision, trace, backlog). | `harness.db`, `scripts/harness_cli.py`, `CONTEXT_RULES.md`, `TRACE_SPEC.md` exist. |
+| **H3** | **Active Observability** | Trace scoring, context budget compliance, friction grouped by component. | `trace` computes `score_trace` and `score_context`; `propose` groups friction by component. |
+| **H4** | **Auto-Verification** | Verification runs the real command before a story completes. | `TOOL_REGISTRY.md`; `story complete --run-verify` and `session close` run the verify command. |
+| **H5** | **Self-Improvement** | Automatic entropy audit and evidence-based proposals for human approval. | `HARNESS_AUDIT.md`, `IMPROVEMENT_PROTOCOL.md`, `audit` and `propose` commands. |
 
 ---
 
-## Trạng thái Hiện tại của Hệ thống
+## Current state
 
-* **Cấp độ đã triển khai:** **H5 Ready** (Đầy đủ CSDL Durable, CLI Tooling, Tracing & Scoring, Cổng Verification, và Giao thức Tự cải tiến).
+* **Level reached:** **H5** (durable database, CLI tooling, tracing and scoring, verification gate, self-improvement protocol, knowledge contract ADR-0021). Tracking records state and does not gate work (ADR-0026.D2).

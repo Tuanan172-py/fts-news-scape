@@ -2,15 +2,18 @@
 type: Configuration
 title: Entity Registry
 description: Ontology 10 miền + từ điển alias đa miền — trái tim nhận diện và định tuyến tin của hệ thống.
-resource: project/data/entities/entities.json
+resource: "<DATA_ROOT>/entities/entities.json"
 tags: [config, entities, ontology, alias, routing]
 status: stable
 generated:
   at: 2026-09-07T00:00:00Z
 sources:
   - id: entities
-    resource: project/src/agent/entities.py
+    resource: project/src/agent/catalog/entities.py
     title: EntityRegistry — detect / subscribers_for / resolve_subscription
+  - id: catalog-build
+    resource: project/src/agent/catalog/catalog_build.py
+    title: Dựng catalog (scripts/build_entities.py)
   - id: entity-design
     resource: project/docs/design/14-entity-system-and-mapping.md
     title: Entity system & mapping
@@ -20,13 +23,13 @@ sources:
   - id: aliases-tickers
     resource: project/config/entities/aliases/tickers.yaml
     title: Alias thương hiệu doanh nghiệp
-sources_last_checked: 2026-09-07
+sources_last_checked: 2026-10-22
 ---
 
 Entity Registry là **trái tim định tuyến**: nhận diện đối tượng tài chính trong tin, rồi ánh xạ
 ngược ra người dùng nào cần nhận tin đó.[^entity-design]
 
-# Quy mô (data/entities/stats.json, schema 1.1.0)
+# Quy mô (`<DATA_ROOT>/entities/stats.json`, số đo 2026-09-07)
 
 **2.152 thực thể** — TICKER 1.983 · ETF 28 · SECURITY_OTHER 11 · INDEX 6 · EXCHANGE 3 ·
 INDUSTRY_GICS1/2/3 11/28/51 · MACRO_GEO 8 · MACRO_THEME 9 · ASSET_CLASS 7 · INSTITUTION 7.
@@ -52,20 +55,22 @@ Liên kết đa tầng: nhận ra `HPG` ⇒ tự động gắn ngành `THEP`.
 # Bố cục file
 
 ```
-project/data/entities/entities.json      # registry sinh ra (nguồn EntityRegistry đọc)
-project/data/entities/entities.xlsx      # master catalog người dùng tra mã
-project/data/entities/{taxonomy,stats}.json
-project/config/entities/aliases/*.yaml   # 7 file alias theo miền
+<DATA_ROOT>/entities/entities.json       # registry sinh ra (nguồn EntityRegistry đọc)
+<DATA_ROOT>/entities/entities.xlsx       # master catalog người dùng tra mã
+<DATA_ROOT>/entities/{taxonomy,stats}.json
+project/config/entities/aliases/*.yaml   # 7 file alias theo miền + _context_guards.yaml
 project/config/entities/brand_aliases.yaml
 subscriptions/manifest.yaml (dưới gốc dữ liệu)  # công tắc bật/tắt người dùng
 project/config/entities/users/<name>.yaml  # AUTO-GENERATED — xem User Subscriptions
 ```
 
-Sinh lại registry: `python scripts/build_entities.py` — chạy khi dữ liệu gốc đổi.
+Sinh lại registry: `python scripts/build_entities.py` (CLI mỏng của
+`src/agent/catalog/catalog_build.py`) — chạy khi dữ liệu gốc đổi. Sinh lại xong phải chạy
+`scripts/build_article_prefix.py --check`: prefix tĩnh của Article Lane sinh từ `entities.json`.
 
 # Chống false positive
 
-Ba cơ chế trong `src/agent/entities.py`:[^entities]
+Ba cơ chế trong `src/agent/catalog/entities.py`:[^entities]
 
 1. **`CODE_STOPLIST`** — mã 3 ký tự trùng từ viết tắt tài chính (`GDP`, `CPI`, `FED`, `USD`,
    `CEO`, `ETF`, `IPO`…) **không** auto-match theo code.
@@ -83,7 +88,7 @@ Mã CK khớp theo **CODE in hoa, nguyên token**; ngành khớp theo **CODE GIC
 
 | Hàm | Dùng ở |
 |---|---|
-| `registry.detect(title)` | code-first Lớp 1 ([l1_tasks](../tables/l1_tasks.md)) |
+| `registry.detect(title)` | khớp tất định trong tiêu đề (`l1_classifier`) |
 | `registry.get(entity_id)` | đổi id → code hiển thị |
 | `registry.subscribers_for(ids)` | định tuyến tin → người dùng |
 | `registry.resolve_subscription(user)` | tập entity người dùng đăng ký |
@@ -94,10 +99,10 @@ hiệu lực ngay.
 
 # Liên quan
 
-- [User Subscriptions](user_subscriptions.md) · [Agent Handoff](../pipelines/agent_handoff.md)
+- [User Subscriptions](user_subscriptions.md) · [Article Lane](../pipelines/article_lane.md)
 - [User Output Workflow](../pipelines/user_output.md) · [watchlist.yaml](watchlist.md)
 
-[^entities]: [entities.py](project/src/agent/entities.py)
+[^entities]: [entities.py](project/src/agent/catalog/entities.py)
 [^entity-design]: [Entity system & mapping](project/docs/design/14-entity-system-and-mapping.md)
 [^entities-doc]: [Entities reference](project/docs/entities.md)
 [^aliases-tickers]: [tickers.yaml](project/config/entities/aliases/tickers.yaml)

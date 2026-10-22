@@ -17,8 +17,8 @@ evidence:
   - path:docs/stories/US-034-hop-dong-dau-ra-article-lane-thong-nhat.md
   - path:.agents/rules/11-hop-dong-dau-ra-thong-nhat.md
   - path:project/schemas/article-compact-v2.schema.json
-  - path:project/src/agent/article_contract.py
-  - path:project/src/agent/conformance.py
+  - path:project/src/agent/contract/article_contract.py
+  - path:project/src/agent/contract/conformance.py
   - path:project/scripts/provider_conformance.py
   - path:project/config/ops.yaml
   - test:project/tests/article_lane/test_article_contract.py

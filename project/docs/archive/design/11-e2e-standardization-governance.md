@@ -1,3 +1,5 @@
+> Lưu trữ 2026-10-22 (US-050): bản đồ master cũ dựa trên spec agent-output-v1 và script đã xoá (`report_drift.py`, `validate_e2e.py`), thay bằng [00-end-to-end-architecture](../../design/00-end-to-end-architecture.md).
+
 # Design 11 — End-to-End Standardization Governance (MASTER)
 
 Cập nhật: 2026-08-14 · Trạng thái: ĐÃ TRIỂN KHAI (producer) + SPEC (agent) · **Điểm vào duy nhất** cho toàn quy trình.

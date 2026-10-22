@@ -66,7 +66,7 @@ route **duy nhất** — đừng probe lại.
 - **`phrase` param bị server IGNORE** → tag ticker client-side.
 - **`source_domain` = NON-WWW** `tinnhanhchungkhoan.vn`; `article.url` giữ host `www.`
   (đổi URL = đổi `url_title_hash` = đổi định danh bài).
-  → `verify_quality.py tinnhanhchungkhoan.vn` (HOST), `domain_check.py --report tnck` (tên config).
+  → công cụ lọc theo `source_domain` phải nhận HOST `tinnhanhchungkhoan.vn`, không phải tên config `tnck`.
 - **robots:** www Disallow `/api/`, nhưng `api.tinnhanhchungkhoan.vn` là **host khác**
   (robots riêng, rỗng). Bài `/<slug>-post<NNN>.html` được phép. Không khai Crawl-delay.
 - **Detail:** server-rendered, body `div.article__body.cms-body`.
@@ -79,8 +79,8 @@ route **duy nhất** — đừng probe lại.
   tất cả; có thì thành `q=newsGroup:...`.
 - **Quirk:**
   - Public JSON, **không auth** (web dstock thì Cloudflare 403, API thì không).
-  - **AGGREGATOR:** `newsSource` = báo gốc, `newsUrl` = link gốc → tin trùng nguồn khác chỉ khử ở
-    **fuzzy dedup cross-domain**.
+  - **AGGREGATOR:** `newsSource` = báo gốc, `newsUrl` = link gốc → tin trùng nguồn khác được gom ở
+    cụm tin sau Bronze (`src/pipeline/story_cluster.py`, ADR-0016); không còn fuzzy dedup ở capture.
   - **1-step:** full content nhúng sẵn trong list (`newsContent`). `enrich`: nếu `content_text ≥ 200`
     ký tự → dùng luôn; else fetch bài gốc qua trafilatura (cap 20; đếm cả attempt fail).
   - published = `{date}T{time}+07:00`; symbols từ `tagCodes` split comma upper.

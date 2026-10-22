@@ -1,3 +1,5 @@
+> Lưu trữ 2026-10-22 (US-050): chu kỳ hai lớp L1/Gold (`run_daily.ps1`, `l1_route.py`, `agent_export.py`, `run_agent_hierarchy.py`, `auto_pilot.py`) đã khai tử theo ADR-0010, thay bằng [Pipelines › Article Lane](../../../catalog/pipelines/article_lane.md) và [Playbooks › Runbook](../../../catalog/playbooks/runbook.md).
+
 ---
 type: Playbook
 title: Daily Agent Run — chu kỳ per-user
@@ -23,7 +25,7 @@ sources:
 sources_last_checked: 2026-09-07
 ---
 
-Chuỗi này **tách khỏi** [Morninger](../pipelines/morninger.md): capture/Silver chạy liên tục,
+Chuỗi này **tách khỏi** [Morninger](../../../catalog/pipelines/morninger.md): capture/Silver chạy liên tục,
 còn Vòng 3 chạy **theo lô** (vài lần/ngày hoặc 1 lần cuối ngày). Idempotent nên chạy trùng vô
 hại.[^daily-runbook]
 
@@ -118,7 +120,7 @@ Xem `users/output/<user>/<date>.csv` và bản audit `users/output/_master/<date
 | Nhiều `dod_pass=0` | đọc `dod_reasons`; thường là citation < 20 ký tự hoặc không nguyên văn ⇒ gửi lại cho agent sửa (self-healing) |
 | Không có bài nào cho người dùng | kiểm tra file đăng ký tồn tại, manifest bật, và log `orphan` |
 | `--date today` ra 0 dòng | chạy `-Days 30` / `--date all` |
-| Việc kẹt `claimed` | agent chết giữa chừng — xem truy vấn trong [work_items](../tables/work_items.md) |
+| Việc kẹt `claimed` | agent chết giữa chừng — xem truy vấn trong [work_items](../../../catalog/tables/work_items.md) |
 
 # Trạng thái tự động hoá
 

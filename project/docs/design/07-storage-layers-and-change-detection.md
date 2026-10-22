@@ -1,16 +1,17 @@
 # Design 07 — Storage Layers (Medallion) + Change-Detection
 
-Cập nhật: 2026-08-14 · Trạng thái: ĐÃ TRIỂN KHAI (producer) · Đọc kèm:
-[06-raw-html-capture](06-raw-html-capture.md), [08-handoff](08-handoff-contract-catalog.md), [11-governance](11-e2e-standardization-governance.md).
+Cập nhật: 2026-10-22 · Trạng thái: ĐÃ TRIỂN KHAI (producer) · Đọc kèm: [00](00-end-to-end-architecture.md),
+[06-raw-html-capture](06-raw-html-capture.md), [08-handoff](08-handoff-contract-catalog.md).
 
 Tài liệu hoá tầng lưu trữ khoa học + cơ chế log khi HTML đổi (phase-01/02).
 
 ## 1. Medallion layers
 | Layer | Nơi | Bản chất | Bất biến? |
 |-------|-----|----------|-----------|
-| **BRONZE** | `data/raw_html/<domain>/<yyyymmdd>/<hash>.html` + `.meta.json` | raw byte-exact (đã có, doc 06) | **WORM** — không bao giờ sửa |
-| **SILVER** | `data/silver/<domain>/<yyyymmdd>/<hash>.json` | clean base chuẩn hoá cho agent | derived, re-generate được |
-| GOLD | — | (agent output = gold) | hoãn (YAGNI) |
+| **BRONZE** | `<DATA_ROOT>/raw_html/<domain>/<yyyymmdd>/<hash>.html` + `.meta.json` | raw byte-exact (đã có, doc 06) | **WORM** — không bao giờ sửa |
+| **SILVER** | `<DATA_ROOT>/silver/<domain>/<yyyymmdd>/<hash>.json` | clean base chuẩn hoá cho agent | derived, re-generate được |
+| Kết quả phân tích | bảng `l1_outputs`, `agent_outputs` trong `monocle.db` | đầu ra Article Lane qua DoD | chỉ thêm |
+| Lakehouse | SharePoint `parquet/articles/**` | OBT do `publish_day` dựng | một chiều |
 
 `hash` = `url_title_hash` = SHA-256(url+title) = **article identity** (nhất quán mọi layer).
 `content_sha256` = SHA-256(raw bytes) = **provenance/change key**.
@@ -48,7 +49,7 @@ Mỗi (re)capture → 1 hàng append-only trong `article_versions` (không sửa
 **Baseline (quyết định owner 2026-08-14):** FRESH từ bây giờ — bản đầu = NEW, đối chiếu từ lần kế.
 Không backfill lịch sử.
 
-**Reconcile:** `scripts/report_drift.py` liệt kê TEMPLATE_DRIFT/SELECTOR_BROKEN → producer sửa selector
+**Reconcile:** job `drift report` của morninger (06:00, `src/pipeline/drift.py::list_drift`; chạy tay `python -m src.morninger --once drift`) liệt kê TEMPLATE_DRIFT/SELECTOR_BROKEN → producer sửa selector
 → `rederive_from_bronze.py`. Agent (spec) treats broken/drift packages = **held** (không xử lý).
 
 `article_versions` cols: `id, url_title_hash, source_domain, captured_at, content_sha256, simhash64,

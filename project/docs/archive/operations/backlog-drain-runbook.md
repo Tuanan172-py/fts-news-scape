@@ -1,3 +1,5 @@
+> Lưu trữ 2026-10-22 (US-050): rút backlog lane L1/Gold bằng `l1_backlog.py`/`l1_route.py`/`agent_export.py` đã xoá (ADR-0010), thay bằng chạy tay `article_run.py --mode backlog` trong [tham chiếu ops_daemon §7](../../operations/ops-daemon-reference.md).
+
 # Runbook — Rút backlog tồn đọng (L1 & Gold)
 
 Cập nhật: 2026-09-07 · Đối tượng: người vận hành + agent L1/Gold.

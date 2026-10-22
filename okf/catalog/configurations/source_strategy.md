@@ -20,7 +20,7 @@ sources:
   - id: readme
     resource: project/README.md
     title: Project README — bảng nguồn tin
-sources_last_checked: 2026-09-07
+sources_last_checked: 2026-10-22
 ---
 
 # Nguyên tắc số 1 — Bronze-first
@@ -29,7 +29,7 @@ Một domain chỉ được `enabled` khi scraper của nó **lưu được raw 
 [Bronze](../datasets/bronze_raw_html.md). Lý do: mọi tầng dưới là hàm thuần của Bronze; không có
 raw thì không re-derive được, không có `raw_sha256` để agent verify, không change-detection.
 
-Hệ quả: `method: rss` generic (`RssGenericScraper`) **không** lưu Bronze ⇒ 17 domain dùng nó bị
+Hệ quả: `method: rss` generic (`RssGenericScraper`) **không** lưu Bronze ⇒ các domain dùng nó bị
 tắt từ 2026-08-03. Bật lại = viết/đổi sang scraper có capture, **không phải** đổi `enabled`.
 
 # Thứ tự ưu tiên phương thức (TDR-001)
@@ -45,7 +45,7 @@ tắt từ 2026-08-03. Bật lại = viết/đổi sang scraper có capture, **k
 
 # Phân nhóm 24 domain
 
-## Nhóm A — VN có capture (7, đang chạy)
+## Nhóm A — VN có capture (8, đang chạy)
 
 | Domain | `method` | Đặc điểm |
 |---|---|---|
@@ -56,12 +56,13 @@ tắt từ 2026-08-03. Bật lại = viết/đổi sang scraper có capture, **k
 | thoibaotaichinhvietnam.vn | `rss_capture` | 1 feed thật; RSS chuyên mục của họ là ảo |
 | tinnhanhchungkhoan.vn | `tnck` | zone JSON API, 9 zone, không có RSS |
 | baodautu.vn | `baodautu` | HTML listing, 6 chuyên mục |
+| fireant.vn | `fireant` | REST API + capture JSON, cần token |
 
-## Nhóm B — VN chưa có capture (12, tắt)
+## Nhóm B — VN chưa có capture (11, tắt)
 
 vnexpress, tuoitre, thanhnien, znews, cafebiz, vietnamplus, dantri, vietnamnet (báo tổng hợp,
-chỉ subscribe chuyên mục kinh tế) · hose, hnx (sàn — hnx từng lỗi cert chain) · fireant (cần
-Bearer token) · vndirect (aggregator).
+chỉ subscribe chuyên mục kinh tế) · hose, hnx (sàn — hnx từng lỗi cert chain) · vndirect
+(aggregator).
 
 ## Nhóm C — Quốc tế (5, tắt)
 

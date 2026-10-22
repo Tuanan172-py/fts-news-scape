@@ -15,11 +15,13 @@ version: 1
 updated: "2026-10-01"
 schema_note: "Thêm agent = 1 entry ở đây + 1 skill + 1 stage pipeline.yaml + 1 story + KPI (rule 07)."
 
-# Model policy (ADR 0009 / quyết định D6, 2026-09-17): MỌI cognitive agent route về
-# flash (DeepSeek-V41-Flash). Cấm model cao hơn vì quản lý chi phí token.
-# Bốn agent từng khai `pro` (entity-curator, adversarial-dod-verifier,
-# daily-brief-synthesizer, harness-auditor) đã hạ về flash. materiality-triage
-# đã ngừng (2026-09-24): materiality/event_type không còn là trường đầu ra. entity-curator vẫn giữ status draft + activation_gate Tier-3.
+# Model policy: ADR 0009 D6 ("mọi model = deepseek-flash") không còn áp dụng cho mọi runner.
+# Runner LLM của Article Lane xếp hạng agy, rồi opencode run, rồi OpenRouter; Claude không
+# bao giờ là runtime thay thế; DSH agent_article là conductor tương tác (ADR-0026.D3).
+# `model: flash` dưới đây là nhãn hạng model rẻ, không ghim một nhà cung cấp.
+# Đường dẫn dữ liệu `<DATA_ROOT>/...` = MONOCLE_DATA_DIR, mặc định C:\data\news-scape
+# (project/src/core/paths.py). materiality/event_type/impact_area đã ngừng ở mọi lớp.
+# entity-curator vẫn giữ status draft + activation_gate Tier-3.
 
 agents:
 
@@ -47,7 +49,7 @@ agents:
     cli: 'scripts/run_once.py  |  python -m src.morninger'
     io_boundary:
       read:  ["config/domains/*", "web sources"]
-      write: ["data/monocle.db (articles)", "data/exports/articles-<date>.csv"]
+      write: ["<DATA_ROOT>/monocle.db (articles)", "<DATA_ROOT>/exports/articles-<date>.csv"]
     responsibility: "Bronze scrape + Silver normalize + dedup + CSV export theo cycle."
     cost_budget: { tokens_per_item: 0 }
     owner_rules: ["03-io-concurrency-guardrails"]
@@ -72,8 +74,8 @@ agents:
     entrypoint: "project/scripts/l1_ingest.py"
     cli: 'scripts/article_run.py --wave <wave> --finish   # gọi l1_ingest với đúng tệp article_<wave>_* của đợt'
     io_boundary:
-      read:  ["data/agent_outputs_l1/article_<wave>_*.output.json"]
-      write: ["data/monocle.db (l1_outputs, l1_tasks route=article_lane)"]
+      read:  ["<DATA_ROOT>/agent_outputs_l1/article_<wave>_*.output.json"]
+      write: ["<DATA_ROOT>/monocle.db (l1_outputs, l1_tasks route=article_lane)"]
     responsibility: >-
       Cổng nghiệm thu DoD phần nhận diện của Article Lane, ghi l1_outputs. Chỉ được
       article_run --finish gọi với tệp của đúng đợt. Nhánh --code-first thuộc lane đã ngừng.
@@ -103,8 +105,8 @@ agents:
     entrypoint: "project/scripts/agent_ingest.py"
     cli: 'scripts/article_run.py --wave <wave> --finish   # gọi agent_ingest với đúng tệp article_<wave>_* của đợt'
     io_boundary:
-      read:  ["data/agent_outputs/article_<wave>_*.output.json"]
-      write: ["data/monocle.db (agent_outputs)"]
+      read:  ["<DATA_ROOT>/agent_outputs/article_<wave>_*.output.json"]
+      write: ["<DATA_ROOT>/monocle.db (agent_outputs)"]
     responsibility: >-
       Cổng nghiệm thu DoD phần phân tích nội dung của Article Lane (v2-lean: citations
       nguyên văn, chống copy key_points). Chỉ được article_run --finish gọi với tệp của đúng đợt.
@@ -116,10 +118,10 @@ agents:
     class: operator
     status: active
     entrypoint: "project/scripts/write_user_output.py"
-    cli: 'scripts/write_user_output.py --date <date|all>'
+    cli: 'scripts/write_user_output.py --date <YYYY-MM-DD|today>   # bỏ --date = mọi ngày'
     io_boundary:
-      read:  ["data/monocle.db (l1_outputs + agent_outputs)", "subscriptions/manifest.yaml"]
-      write: ["users/output/<user>/<date>.xlsx"]
+      read:  ["<DATA_ROOT>/monocle.db (l1_outputs + agent_outputs)", "<DATA_ROOT>/subscriptions/manifest.yaml"]
+      write: ["<DATA_ROOT>/users/output/<user>/<date>.xlsx"]
     responsibility: "Phân tuyến theo Watchlist, xuất Excel đơn sắc; Idempotency Skip Guard chống ghi thừa."
     cost_budget: { tokens_per_item: 0 }
     owner_rules: ["03-io-concurrency-guardrails"]
@@ -131,9 +133,9 @@ agents:
     entrypoint: "project/scripts/article_pack.py"
     cli: 'scripts/article_run.py --wave <wave> --today   # gọi article_pack bên trong'
     io_boundary:
-      read:  ["data/monocle.db (articles + work_items)", "data/work_packages/**",
-              "data/prefix/ARTICLE_SYSTEM_CORE.meta.json", "config/entities/**"]
-      write: ["data/agent_tasks/article/*.task.json", "*.map.json", "wave_*.json",
+      read:  ["<DATA_ROOT>/monocle.db (articles + work_items)", "<DATA_ROOT>/work_packages/**",
+              "project/assets/prefix/ARTICLE_SYSTEM_CORE.meta.json", "<DATA_ROOT>/entities/**"]
+      write: ["<DATA_ROOT>/agent_tasks/article/*.task.json", "*.map.json", "wave_*.json",
               "wave_*.conductor.ts"]
     responsibility: >-
       Xếp tầng ưu tiên theo hướng nhận rộng, chắt lọc đoạn tất định giữ nguyên văn,
@@ -144,7 +146,7 @@ agents:
       - "không dòng nào của packet vượt trần cắt dòng của công cụ đọc"
       - "--batch là cách chia lô duy nhất; không trần token hay trần ngữ cảnh nào chia lô hộ"
       - "chỉ chọn bài chưa được mô hình phân tích; bản code-first không tính (ADR 0010)"
-      - "chỉ đọc DB và ghi tệp trong kho, nên chạy được dưới workspace-write; chốt quyền ghi nằm ở --finish"
+      - "chỉ đọc DB và ghi tệp packet, không ghi DB; chốt quyền ghi DB nằm ở --finish"
     owner_rules: ["05-gold-agent-and-payload-invariants"]
 
   - id: capture-reconciler
@@ -153,8 +155,8 @@ agents:
     entrypoint: "project/scripts/capture_reconcile.py"
     cli: 'scripts/capture_reconcile.py run --limit 40 --budget 120   # morninger gọi sau capture'
     io_boundary:
-      read:  ["sitemap của nguồn (HTTP)", "data/monocle.db (articles, discovered_urls, silver_failures)"]
-      write: ["data/monocle.db (discovered_urls, url_aliases, capture_coverage, articles)", "data/raw_html/**"]
+      read:  ["sitemap của nguồn (HTTP)", "<DATA_ROOT>/monocle.db (articles, discovered_urls, silver_failures)"]
+      write: ["<DATA_ROOT>/monocle.db (discovered_urls, url_aliases, capture_coverage, articles)", "<DATA_ROOT>/raw_html/**"]
     responsibility: >-
       Đối chiếu kho với sitemap độc lập, ghi URL thiếu vào sổ phát hiện, cào bù theo URL
       và phục hồi Bronze đã mất cho bài còn trong kho (rule 10, ADR 0013).
@@ -171,8 +173,8 @@ agents:
     entrypoint: "project/scripts/story_cluster.py"
     cli: 'scripts/story_cluster.py run --days 3   # morninger gọi sau derive; article_pack gọi trước khi chọn bài'
     io_boundary:
-      read:  ["data/monocle.db (articles, l1_outputs, agent_outputs, article_versions)"]
-      write: ["data/monocle.db (story_clusters, cluster_members, l1_outputs và agent_outputs với l1_source=inherited)"]
+      read:  ["<DATA_ROOT>/monocle.db (articles, l1_outputs, agent_outputs, article_versions)"]
+      write: ["<DATA_ROOT>/monocle.db (story_clusters, cluster_members, l1_outputs và agent_outputs với l1_source=inherited)"]
     responsibility: >-
       Gom bài thành cụm câu chuyện, gán vai trò canonical, copy, candidate và ghi kết quả
       kế thừa cho bài chép lại. Không xoá và không sửa bài (ADR 0016).
@@ -189,8 +191,8 @@ agents:
     entrypoint: "project/scripts/signal_build.py"
     cli: 'scripts/signal_build.py --days 30   # morninger gọi sau cụm hoá, giãn 30 phút'
     io_boundary:
-      read:  ["data/monocle.db (articles, l1_outputs, agent_outputs, cluster_members)"]
-      write: ["data/monocle.db (signal_daily, entity_links, source_profile)"]
+      read:  ["<DATA_ROOT>/monocle.db (articles, l1_outputs, agent_outputs, cluster_members)"]
+      write: ["<DATA_ROOT>/monocle.db (signal_daily, entity_links, source_profile)"]
     responsibility: >-
       Dựng lại bảng tín hiệu insight phái sinh: chú ý bất thường, sentiment hiệu chỉnh,
       liên kết thực thể và hồ sơ nguồn. Chỉ tổng hợp số học trên kết quả mô hình đã có.
@@ -206,9 +208,9 @@ agents:
     entrypoint: "project/scripts/article_expand.py"
     cli: 'scripts/article_run.py --wave <wave> --finish   # gọi article_expand bên trong'
     io_boundary:
-      read:  ["data/agent_outputs_article/article_<wave>_*.output.json", "data/agent_tasks/article/**"]
-      write: ["data/agent_outputs_l1/*.output.json", "data/agent_outputs/*.output.json",
-              "data/article_mentions/*.mentions.json"]
+      read:  ["<DATA_ROOT>/agent_outputs_article/article_<wave>_*.output.json", "<DATA_ROOT>/agent_tasks/article/**"]
+      write: ["<DATA_ROOT>/agent_outputs_l1/*.output.json", "<DATA_ROOT>/agent_outputs/*.output.json",
+              "<DATA_ROOT>/article_mentions/*.mentions.json"]
     responsibility: >-
       Cứu từng bản ghi khi đầu ra hỏng một phần, dựng trích dẫn nguyên văn từ chỉ số
       đoạn, tra định danh theo nhóm, đối chiếu hai nguồn nhận diện và bung ra hai lược đồ.
@@ -241,7 +243,7 @@ agents:
     entrypoint: "project/scripts/pipeline_radar.py"
     cli: 'scripts/pipeline_radar.py status|users|token|backlog [--date <date>]'
     io_boundary:
-      read:  ["data/monocle.db (mode=ro)", "data/agent_tasks/article/**", "data/agent_outputs_article/**"]
+      read:  ["<DATA_ROOT>/monocle.db (mode=ro)", "<DATA_ROOT>/agent_tasks/article/**", "<DATA_ROOT>/agent_outputs_article/**"]
       write: ["stdout (gợi ý lệnh copy-paste)"]
     responsibility: >-
       Trinh sát điểm chạm Article Lane: độ tươi cào tin, quyền ghi DB, trạng thái đợt gần nhất
@@ -365,7 +367,7 @@ agents:
     skill: .agents/skills/entity-curator/SKILL.md
     stage_role: catalog-growth
     io_boundary:
-      read:  ["data/monocle.db (unlisted_candidates)", "project/data/entities/entities.json"]
+      read:  ["<DATA_ROOT>/monocle.db (unlisted_candidates)", "<DATA_ROOT>/entities/entities.json"]
       write: ["data/proposals/entity_catalog_delta.json"]   # đề xuất, KHÔNG ghi trực tiếp catalog
     tools_allowed: [view_file, write_to_file]
     dod_contract: dod-gatekeeper#curator
@@ -400,8 +402,8 @@ agents:
     skill: .agents/skills/daily-brief-synthesizer/SKILL.md
     stage_role: post-delivery
     io_boundary:
-      read:  ["data/monocle.db (agent_outputs + l1_outputs)", "subscriptions/manifest.yaml"]
-      write: ["users/output/<user>/brief-<date>.md"]
+      read:  ["<DATA_ROOT>/monocle.db (agent_outputs + l1_outputs)", "<DATA_ROOT>/subscriptions/manifest.yaml"]
+      write: ["<DATA_ROOT>/users/output/<user>/brief-<date>.md"]
     tools_allowed: [view_file, write_to_file]
     dod_contract: dod-gatekeeper#brief
     cost_budget: { tokens_per_item: 2000, wave_batch: 1, concurrency: 1 }
@@ -418,7 +420,7 @@ agents:
     stage_role: governance-loop
     io_boundary:
       read:  ["harness.db (trace + backlog + agent_metrics)", "docs/HARNESS_AUDIT.md"]
-      write: ["docs/proposals/harness_improvement_<date>.md"]
+      write: ["docs/proposals/<YYYYMMDD>-harness-improvement.md"]
     tools_allowed: [view_file, write_to_file, run_command]   # chạy harness_cli propose (read-only)
     dod_contract: dod-gatekeeper#harness
     cost_budget: { tokens_per_item: 3000, wave_batch: 1, concurrency: 1 }
@@ -471,8 +473,8 @@ agents:
 # Các skill hỗ trợ vận hành/quản trị, được agent tham chiếu khi cần, không chạy như 1 stage.
 governance_skills:
   - dod-gatekeeper: "Định nghĩa các dod_contract#* (l1, gold, ...). Neo kiểm định độc lập."
-  - token-auditor: "Đo token burn, hiệu quả subscriber-gating; ánh xạ pipeline_radar token."
+  - token-auditor: "Đo token burn theo sổ cái token_ledger; ánh xạ pipeline_radar token."
   - watchlist-curator: "Quản trị Watchlist người dùng, phân tầng Ticker 3 Tiers, sync manifest."
   - git-codebase-governance: "Tra soát Git, vệ sinh codebase, audit AST/conflict."
   - sharepoint-git-hybrid-workspace: "Cách ly .git/.venv/.db khỏi vùng đồng bộ OneDrive."
-  - news-scape-agent-operations: "Runbook 5-phase end-to-end (mô tả vận hành, canonical = pipeline.yaml)."
+  - news-scape-agent-operations: "Chỉ tham khảo lịch sử: runbook lane L1/Gold đã ngừng (ADR 0010). Vận hành hiện hành: .agents/dsh/RUNBOOK-article-lane.md."

@@ -89,7 +89,7 @@ Toàn bộ 22.676 bài tồn đọng được phân thành 2 nhóm ưu tiên đ�
    - **Trách nhiệm:**
      - Thực thi quy trình khép kín cho đúng 1 mã đợt được giao (`wave_id`): Đóng gói $\rightarrow$ Gọi Worker nhận thức $\rightarrow$ Kiểm định DoD $\rightarrow$ Nạp SQLite $\rightarrow$ Xuất bản Deliverables.
      - Tự động kích hoạt vòng sửa chữa (`--repair`) nếu phát hiện bài thiếu hoặc hỏng schema.
-     - Đảm bảo tính toàn vẹn của giao dịch DB (`--finish --force`).
+     - Đảm bảo tính toàn vẹn của giao dịch DB: đợt chỉ xong khi `--finish` thoát 0 và in ✅.
    - **Quy tắc bất biến:** Tuân thủ WIP = 1 per Worktree; không được tự ý sửa đổi schema hay bypass cổng kiểm định DoD.
 
 ---
@@ -117,7 +117,7 @@ Tuyệt đối không chạy script ad-hoc để thăm dò SQLite. Sử dụng c
 ## 5. Chiến Lược Điều Phối Cuốn Chiếu 4 Pha (Rolling Waves Roadmap)
 
 ### Dự toán Chi phí & Thời gian:
-- **Mô hình định tuyến:** Gemini 3.8 Flash qua runner `agy` (chi phí thực nghiệm: ~$0,23 / 1.000 bài).
+- **Mô hình định tuyến:** runner `agy` (Gemini 3.8 Flash) là chính, rồi `opencode`, rồi `openrouter` (ADR-0026.D3); chi phí đọc từ sổ cái `token_ledger`.
 - **Tổng ngân sách:** ~$5,22 USD cho toàn bộ 22.676 bài tồn đọng.
 - **Thời gian xử lý:** ~8-10 phút / đợt 500 bài; tổng thời gian ~6-7 giờ chia thành ~46 waves.
 
@@ -138,10 +138,10 @@ Tuyệt đối không chạy script ad-hoc để thăm dò SQLite. Sử dụng c
   & "C:\venvs\news-scape\Scripts\python.exe" project/scripts/article_run.py --wave W_OCT15 --repair --runner agy --concurrency 1
 
   # Bước 4: Nghiệm thu DoD và nạp kho CSDL SQLite
-  & "C:\venvs\news-scape\Scripts\python.exe" project/scripts/article_run.py --wave W_OCT15 --finish --force
+  & "C:\venvs\news-scape\Scripts\python.exe" project/scripts/article_run.py --wave W_OCT15 --finish
 
   # Bước 5: Xuất bản và phân phối báo cáo Excel giao hàng
-  & "C:\venvs\news-scape\Scripts\python.exe" project/scripts/write_user_output.py --date 2026-10-15 --force
+  & "C:\venvs\news-scape\Scripts\python.exe" project/scripts/write_user_output.py --date 2026-10-15
   ```
 
 #### Pha 2: Dữ Liệu Trung Hạn (Tháng 09 & 08/2026 — 11.928 bài)
@@ -150,8 +150,8 @@ Gom đợt 500 bài/lô theo cơ chế ưu tiên Tier 1 (Watchlist & Vĩ mô kh�
   ```powershell
   & "C:\venvs\news-scape\Scripts\python.exe" project/scripts/article_run.py --wave W_SEP_B01 --limit 500 --runner agy
   & "C:\venvs\news-scape\Scripts\python.exe" project/scripts/article_run.py --wave W_SEP_B01 --runner agy --analyze --concurrency 1
-  & "C:\venvs\news-scape\Scripts\python.exe" project/scripts/article_run.py --wave W_SEP_B01 --finish --force
-  & "C:\venvs\news-scape\Scripts\python.exe" project/scripts/write_user_output.py --force
+  & "C:\venvs\news-scape\Scripts\python.exe" project/scripts/article_run.py --wave W_SEP_B01 --finish
+  & "C:\venvs\news-scape\Scripts\python.exe" project/scripts/write_user_output.py          # bỏ --date = mọi ngày
   ```
 
 #### Pha 3: Nhóm Khuyết Ngày Đăng (5.370 bài) & Lịch Sử Cũ (< 08/2026 — 1.971 bài)
@@ -169,5 +169,5 @@ Cụm hóa câu chuyện (`story_cluster.py`) và cập nhật bảng tín hiệ
    - **Bắt buộc:** Luôn có điều kiện bảo vệ `WHERE a.published_at IS NOT NULL AND a.published_at != '' AND ...`.
 2. **Quy tắc Single-Turn Zero-Tool cho Subagent:**
    - Worker nhận thức KHÔNG được cấp công cụ truy cập đĩa hay công cụ tìm kiếm. Trả kết quả JSON trực tiếp trong final turn.
-3. **Bảo toàn File Lock & Anti-Fork OneDrive:**
-   - Khi chạy `write_user_output.py` và `article_run.py --finish`, luôn thêm cờ `--force` để kích hoạt Staging an toàn và kiểm tra SHA-256 tránh sinh file xung đột.
+3. **Không dùng `--force` mặc định:**
+   - Staging an toàn và kiểm SHA-256 luôn chạy, không cần cờ. `article_run.py --force` bỏ qua kiểm va chạm với đợt `ops_daemon` và khoá provider; `write_user_output.py --force` ghi đè mọi tệp giao hàng. Chỉ dùng khi có lý do cụ thể.

@@ -13,10 +13,10 @@ sources:
   - id: orchestrator
     resource: project/src/orchestrator.py
     title: Vòng ghi articles
-  - id: daily-reporter
-    resource: project/src/monitor/daily_reporter.py
-    title: Analytics engine — báo cáo ngày
-sources_last_checked: 2026-09-07
+  - id: radar
+    resource: project/src/ops/console/radar.py
+    title: pipeline_radar backlog
+sources_last_checked: 2026-10-22
 ---
 
 # Definition
@@ -39,11 +39,11 @@ GROUP BY day, source_domain
 ORDER BY day DESC, article_count DESC;
 ```
 
-Báo cáo dựng sẵn: `python scripts/monitor_daily.py --date today --save-md`.
+Toàn cảnh theo ngày dựng sẵn: `python scripts/pipeline_radar.py backlog` (chỉ đọc).
 
 # Target
 
-- **7 domain đang bật:** vài trăm bài/ngày (mỗi feed ~30 item, nhiều feed/domain).
+- **8 domain đang bật:** vài trăm bài/ngày (mỗi feed ~30 item, nhiều feed/domain).
 - Bất kỳ domain đang bật nào **= 0 bài trong 24h** ⇒ bất thường.
 
 # Alert

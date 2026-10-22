@@ -15,7 +15,7 @@ Mạnh về **điều tra doanh nghiệp, tranh chấp cổ đông, pháp lý ch
 | **Endpoint** | `GET https://api.tinnhanhchungkhoan.vn/api/morenews-zone-{zone}-{page}.html` |
 | **Zones** | 9: `[1, 4, 6, 11, 21, 26, 29, 33, 39]` |
 | **Volume** | 9 × 40 = **360 item/cycle** (phần lớn trùng, dedup lọc) |
-| **Bronze** | `data/raw_html/tinnhanhchungkhoan.vn/<yyyymmdd>/` |
+| **Bronze** | `<DATA_ROOT>/raw_html/tinnhanhchungkhoan.vn/<yyyymmdd>/` |
 | **Trạng thái** | enabled 2026-09-07 (tắt 2026-08-03) |
 
 ## 2. ⚠️ KHÔNG CÓ RSS — đừng đi tìm
@@ -67,14 +67,12 @@ Bảng đầy đủ: [`schema.yaml`](schema.yaml) → `zones.map`.
 - Kiểm tra trước khi chốt: DB **không có row TNCK nào** → không rủi ro đứt dedup.
 
 **Hệ quả vận hành:**
-```bash
-python scripts/verify_quality.py tinnhanhchungkhoan.vn   # HOST, không phải "tnck"
-python scripts/domain_check.py --report tnck              # tên config
-```
+Truy vấn hay công cụ lọc theo `source_domain` dùng HOST `tinnhanhchungkhoan.vn`, không phải `tnck`;
+`python scripts/rederive_from_bronze.py tinnhanhchungkhoan.vn` (thư mục Bronze theo host).
 
 ## 5. Bẫy `.vn`-suffix — đã sửa trong phase này
 
-`scripts/domain_check.py` và `src/monitor/domain_reporter.py` từng làm
+`scripts/domain_check.py` và `src/monitor/domain_reporter.py` (cả hai đã gỡ ở US-049) từng làm
 `f"{dom}.vn" if "." not in dom else dom` → `tnck` → **`tnck.vn`**, không khớp gì trong DB
 → report "0 articles" và anomaly giả.
 

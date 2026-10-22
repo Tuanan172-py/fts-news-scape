@@ -2,7 +2,7 @@
 type: File Dataset
 title: Bronze Raw Store
 description: Kho raw HTML byte-exact (WORM) + sidecar .meta.json — nguồn provenance bất biến của toàn hệ.
-resource: project/data/raw_html/
+resource: "<DATA_ROOT>/raw_html/"
 tags: [bronze, worm, provenance, raw-html]
 status: stable
 generated:
@@ -20,7 +20,7 @@ sources:
   - id: capture-guide
     resource: project/docs/dev/06-raw-html-capture-guide.md
     title: Raw HTML capture guide
-sources_last_checked: 2026-09-07
+sources_last_checked: 2026-10-22
 ---
 
 Bronze là **tầng đáy** của kiến trúc medallion: mỗi bài được lưu nguyên vẹn bytes phản hồi HTTP
@@ -33,8 +33,8 @@ Bronze ⇒ sửa parser hay bump schema chỉ cần re-derive, **không phải r
 # Bố cục trên đĩa
 
 ```
-data/raw_html/<domain>/<YYYYMMDD>/<url_title_hash>.html        # bytes nguyên bản
-data/raw_html/<domain>/<YYYYMMDD>/<url_title_hash>.meta.json   # sidecar mô tả
+<DATA_ROOT>/raw_html/<domain>/<YYYYMMDD>/<url_title_hash>.html        # bytes nguyên bản
+<DATA_ROOT>/raw_html/<domain>/<YYYYMMDD>/<url_title_hash>.meta.json   # sidecar mô tả
 ```
 
 Ghi nguyên tử: viết `<path>.tmp` rồi `os.replace()` — không bao giờ có file nửa vời.[^raw-store]

@@ -16,7 +16,7 @@ giải ngân đầu tư công, dự án FDI, quy hoạch hạ tầng, chính sá
 | **Scraper class** | `BaodautuScraper` (`src/scrapers/baodautu.py`), registry key `baodautu` |
 | **Chuyên mục** | 6 (d2, d1, d6, d3, d5, d41) |
 | **Volume** | ~50 bài/ngày (sitemap: 348 url cho 7 ngày) |
-| **Bronze** | `data/raw_html/baodautu.vn/<yyyymmdd>/` |
+| **Bronze** | `<DATA_ROOT>/raw_html/baodautu.vn/<yyyymmdd>/` |
 | **Trạng thái** | enabled 2026-09-07 (disabled 2026-07-24 vì RSS hỏng) |
 
 ## 2. 🔴 RSS hỏng vĩnh viễn — đừng chờ, đừng probe lại
@@ -148,5 +148,5 @@ Chỉ mở **sub-phase 04b** nếu tỉ lệ parse ngày < 98% hoặc miss rate 
   drift duy nhất. Mọi selector nằm trong YAML → template đổi thì sửa config, không sửa code.
 - Listing trả 0 item → scraper ghi error `"listing 0 items (template drift?)"` **rõ ràng**,
   không im lặng.
-- `python scripts/verify_quality.py baodautu.vn` · `python scripts/domain_check.py --report baodautu`
+- `python scripts/validate_capture.py baodautu 2` · `python -m src.morninger --once drift`
 - Sửa selector → `python scripts/rederive_from_bronze.py baodautu.vn` (không cần re-scrape).

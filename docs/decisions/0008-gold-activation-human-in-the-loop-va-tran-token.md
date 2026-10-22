@@ -17,7 +17,7 @@ evidence:
   - commit:46f617f
   - path:plans/20260917-1420-pipeline-integrity-remediation/phase-02-destructive-automation.md
   - path:plans/20260918-1651-article-lane-unified/plan.md
-  - path:project/scripts/auto_pilot.py
+  - "commit:ec4e7fe (deleted:project/scripts/auto_pilot.py)"
   - test:project/tests/test_destructive_automation_guards.py
   - metric:pre-run token estimate deviated 21 to 90 times from measured cost, article-lane plan 2026-09-18
   - metric:about 0.31 USD per 1,000 articles per day at off-peak pricing, article-lane plan 2026-09-18

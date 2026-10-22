@@ -42,7 +42,7 @@ Phòng điều khiển chỉ nghe `127.0.0.1`. Cổng đặt trong `config/ops.y
 
 - Đề xuất cải tiến tự sinh không bao giờ tự thi hành. **Mở story** tạo intake và story `US-IMP-nnn` ở trạng thái `planned`. **Hoãn** và **Bác** ẩn đề xuất 30 ngày.
 - Mandate tự gia hạn khi hệ thống khoẻ. Điều kiện nằm ở [tài liệu tham chiếu](../../../project/docs/operations/ops-daemon-reference.md). Không đủ điều kiện thì dừng gia hạn và báo lý do.
-- Mandate đã hết hạn hoặc chưa cấp không bao giờ tự cấp lại. Người cấp bằng `/level L1`.
+- Mandate đã hết hạn hoặc chưa cấp không bao giờ tự cấp lại. Người cấp bằng `/level L1 <số bài>` (trần số bài mỗi đợt, ADR-0026.D4).
 - `/stop` luôn thu hồi được.
 
 ## Khi thất bại

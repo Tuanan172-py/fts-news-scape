@@ -4,14 +4,14 @@ type: fact
 title: Tokens are recorded, never gated
 status: active
 created: 2026-09-23
-updated: 2026-10-06
-verified: 2026-09-23
+updated: 2026-10-22
+verified: 2026-10-22
 lang: en
 authors: [claude-opus-5-5]
 adr: [ADR-0010]
 evidence:
   - "path: AGENTS.md"
-  - "path: project/scripts/token_ledger.py"
+  - "path: project/src/article_lane/ledger.py"
   - "commit: feb710c"
   - "operator: 2026-09-23 tokens are a record for the user to judge, never a limit or warning"
 summary: Tokens are a recorded number for the operator to judge; no limit or warning threshold per article, batch or wave is allowed.
@@ -28,7 +28,7 @@ summary: Tokens are a recorded number for the operator to judge; no limit or war
 ## Why
 
 - The operator said this directly on 2026-09-23 after an agent added `tokens_per_article_warn: 3500` and a "tokens per article over X, alert" table.
-- The setting was removed in US-026 and recorded in ADR-0010 section 2.5 and AGENTS.md section 6B.
+- The setting was removed in US-026 and recorded in ADR-0010 section 2.5 and AGENTS.md section 7.2.
 
 ## How to Apply
 

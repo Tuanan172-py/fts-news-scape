@@ -9,18 +9,18 @@ generated:
   at: 2026-09-21T00:00:00Z
 sources:
   - id: ledger
-    resource: project/scripts/token_ledger.py
+    resource: project/src/article_lane/ledger.py
     title: DDL, append, report, verify, cache_shortfall
   - id: usage
     resource: project/src/telemetry/dsh_usage.py
     title: Gộp số đo phiên cha và phiên con thành một đợt
   - id: run
-    resource: project/scripts/article_run.py
+    resource: project/src/ops/wave/article_run.py
     title: Gọi ghi sổ ở nửa hoàn tất
   - id: radar
-    resource: project/scripts/pipeline_radar.py
+    resource: project/src/ops/console/radar.py
     title: Báo cáo token đọc từ sổ cái
-sources_last_checked: 2026-09-21
+sources_last_checked: 2026-10-22
 ---
 
 Bảng này sống ở **`harness.db` tại gốc kho**, không ở `monocle.db`: nó đo *quá trình làm việc*

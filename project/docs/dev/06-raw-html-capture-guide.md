@@ -1,6 +1,6 @@
 # Dev Guide 06 — RAW HTML Capture: Quy trình phát triển end-to-end
 
-Cập nhật: 2026-08-14 · Trạng thái: ĐÃ TRIỂN KHAI + validate LIVE
+Cập nhật: 2026-10-22 · Trạng thái: ĐÃ TRIỂN KHAI + validate LIVE
 Tài liệu tự chứa: bối cảnh → phương pháp → từng bước dev → walkthrough code → luồng E2E → kiểm thử → vận hành.
 Đọc kèm bản thiết kế cô đọng: [../design/06-raw-html-capture.md](../design/06-raw-html-capture.md).
 
@@ -217,7 +217,7 @@ orchestrator --once cafef/vietstock
        └► scraper.run():  fetch_list → parse_item → dedup → enrich(★capture) → mark_seen
             └► enrich: robots→backoff→get_response→RawStore.save→content_html→looks_complete→extract_text
   DBWriter ⇦ ScrapeResult.new  (metadata_json chứa capture{...})
-  Đĩa      ⇦ data/raw_html/<domain>/<yyyymmdd>/<hash>.html + .meta.json
+  Đĩa      ⇦ <DATA_ROOT>/raw_html/<domain>/<yyyymmdd>/<hash>.html + .meta.json
 ```
 
 ### D.2 Vòng đời một bài
@@ -271,8 +271,8 @@ Chứng minh toàn bộ AC trên site thật.
 - **Chạy:** `python scripts/run_once.py cafef vietstock` (hoặc `python -m src.orchestrator --once <name>`).
 - **Audit E2E:** `python scripts/validate_capture.py [cafef|vietstock] [N]` (Windows: đặt
   `PYTHONUTF8=1` để in tiếng Việt qua stdout redirect).
-- **Config:** block `capture{raw_dir,min_body_bytes}` + `compliance{respect_robots,proxy_rotation,proxies}`.
-- **Artifact:** `data/raw_html/` (gitignored, giữ toàn bộ — Q2). Rà soát rotation nếu đĩa phình.
+- **Config:** block `capture{min_body_bytes}` + `compliance{respect_robots,proxy_rotation,proxies}`.
+- **Artifact:** `<DATA_ROOT>/raw_html/` (`paths.bronze_dir()`, ngoài repo, giữ toàn bộ — Q2). Rà soát rotation nếu đĩa phình.
 - **Backfill bài hoãn (Bronze-first, 3 bước):**
   `scripts/refresh_watchlist.py <n> <host>` (kéo Bronze, bỏ qua dedup) →
   `python -m src.morninger --once derive` (Bronze → Silver) →
@@ -289,15 +289,15 @@ Chứng minh toàn bộ AC trên site thật.
 2. **Backfill job riêng cho capture** — chưa tự động hoá (Q1).
 3. **Tải file ảnh** — `images[]` đã lưu URL/định danh (đủ AC5); download là bước downstream.
 4. **`_EMPTY_MARKERS`** heuristic — mở rộng khi gặp cơ chế chặn thực tế.
-5. **Repo là thư mục OneDrive** — có drift ngoài phiên (vd `orchestrator._force_utf8_stdio`).
+5. **Repo từng nằm trong OneDrive** (tới ADR-0024) — có drift ngoài phiên (vd `orchestrator._force_utf8_stdio`). Cây chuẩn nay là `C:\src\news-scraper`.
 
 ---
 
 ## Phần H — BẢN ĐỒ FILE
 **Mới:** `src/crawler/{raw_store,robots,backoff}.py`, `src/scrapers/{capture_mixin,vietstock}.py`,
-`scripts/validate_capture.py`, `tests/{_fakes,conftest,test_raw_store,test_robots,test_backoff,`
-`test_looks_complete,test_cafef_capture,test_vietstock}.py`, `tests/fixtures/vietstock_detail_page.html`,
-`data/raw_html/.gitignore`, 2 docs (`design/06`, `dev/06-guide`).
+`scripts/validate_capture.py`, `tests/{_fakes,conftest}.py`, `tests/crawler/{test_raw_store,test_robots,test_backoff}.py`,
+`tests/scrapers/{test_looks_complete,test_cafef_capture,test_vietstock}.py`, `tests/fixtures/vietstock_detail_page.html`,
+2 docs (`design/06`, `dev/06-guide`). (Bố cục test theo thư mục package từ US-049.)
 **Sửa:** `src/scrapers/{cafef,__init__}.py`, `src/crawler/http_client.py`, `src/core/models.py`
 (docstring), `config/domains/{cafef,vietstock}.yaml`, `requirements.txt`, `tests/scrapers/test_cafef.py`.
 **Kế hoạch gốc:** `plans/20260813-0736-raw-html-capture-vietstock-cafef/`.

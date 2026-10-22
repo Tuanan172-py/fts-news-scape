@@ -21,14 +21,15 @@ description: Quy trình điều phối mạng lưới Agent đa tầng (Master, 
                        │      MASTER ORCHESTRATOR      │
                        │  (Điều phối vòng đời End-to-End)
                        └──────────────┬────────────────┘
+       Không giám sát: ops_daemon (ADR 0012) · Tương tác: phiên DSH agent_article
                                       │
      ┌──────────────────┬─────────────┼───────────────┬──────────────────┐
      ▼                  ▼             ▼               ▼                  ▼
 ┌──────────────┐ ┌──────────────┐ ┌───────────────┐ ┌──────────────┐ ┌──────────────┐
-│ QUERY RADAR  │ │ WATCHLIST    │ │ TOKEN AUDITOR │ │ DOD INGEST   │ │ SUBAGENTS    │
-│    AGENT     │ │   MONITOR    │ │     AGENT     │ │  GATEKEEPER  │ │  L1 & GOLD   │
-│ (Soi pipeline│ │ (Bảo vệ user,│ │ (Đo hạn mức,  │ │ (Soát schema,│ │ (Bóc tách L1,│
-│  & điểm chạm)│ │  thực thể mới)│ │  chống burn) │ │  grounding)  │ │  suy luận v2)│
+│ QUERY RADAR  │ │ WATCHLIST    │ │ TOKEN AUDITOR │ │ DOD INGEST   │ │ ARTICLE      │
+│    AGENT     │ │   MONITOR    │ │     AGENT     │ │  GATEKEEPER  │ │  PROCESSOR   │
+│ (Soi pipeline│ │ (Bảo vệ user,│ │ (Đọc sổ cái,  │ │ (Soát schema,│ │ (1 bài/lượt, │
+│  & điểm chạm)│ │  thực thể mới)│ │  cache)      │ │  grounding)  │ │  hai lớp)    │
 └──────────────┘ └──────────────┘ └───────────────┘ └──────────────┘ └──────────────┘
 ```
 
@@ -38,10 +39,10 @@ description: Quy trình điều phối mạng lưới Agent đa tầng (Master, 
 
 ### 1. `Query Radar Agent` — Điểm Chạm Vận Hành & Hướng Dẫn Hành Động
 
-- **Nhiệm vụ**: Khi Dev hoặc Agent bắt đầu phiên mà chưa rõ hệ thống đang ở bước nào (cào xong chưa, L1 xong chưa, bài Gold đang nghẽn ở đâu), Radar Agent sẽ truy vấn SQLite `monocle.db` và các thư mục task/output để chỉ ra chính xác:
-  - Điểm chạm hiện tại của dữ liệu.
-  - Số lượng bài cào về, bài đã qua L1, bài đã qua Gold.
-  - Số batch/task đang tồn đọng trên đĩa.
+- **Nhiệm vụ**: Khi Dev hoặc Agent bắt đầu phiên mà chưa rõ hệ thống đang ở bước nào (cào xong chưa, đợt Article Lane gần nhất ở nửa nào, DB có ghi được không), Radar đọc `monocle.db` (chỉ đọc) và tệp mô tả đợt để chỉ ra chính xác:
+  - Điểm chạm hiện tại của dữ liệu và trạng thái `ops_daemon`.
+  - Số bài cào về, số bài đã được mô hình phân tích, số bài chờ phân tích.
+  - Trạng thái đợt gần nhất theo vòng đời (chạy mô hình, `--repair`, `--finish`, giao hàng).
   - **Đề xuất hành động tiếp theo** dạng lệnh PowerShell sẵn sàng copy-paste.
 - **Công cụ chuẩn**:
   ```powershell
@@ -51,19 +52,19 @@ description: Quy trình điều phối mạng lưới Agent đa tầng (Master, 
 ### 2. `Watchlist & Entity Monitor Agent` — Quan Sát Người Dùng
 
 - **Nhiệm vụ**:
-  - Quét thư mục `users/subscriptions/*.xlsx` để phát hiện ngay khi có người dùng mới thêm file đăng ký mà chưa được kích hoạt trong `subscriptions/manifest.yaml`.
-  - Giám sát các thực thể lạ (`unlisted_candidates`) do Subagents nhận diện để đề xuất Dev cập nhật từ điển catalog `data/entities/entities.json`.
+  - Quét `<DATA_ROOT>/subscriptions/` để phát hiện ngay khi có người dùng mới thêm file đăng ký mà chưa được kích hoạt trong `<DATA_ROOT>/subscriptions/manifest.yaml`.
+  - Giám sát các thực thể lạ (`unlisted_candidates`) do mô hình nhận diện để đề xuất Dev cập nhật catalog `<DATA_ROOT>/entities/entities.json` (qua `entity-curator`, Tier 3).
 - **Công cụ chuẩn**:
   ```powershell
   & "C:\venvs\news-scape\Scripts\python.exe" scripts/pipeline_radar.py users
   ```
 
-### 3. `Token Auditor Agent` — Giám Sát Ngân Sách & Chống Burn Token
+### 3. `Token Auditor Agent` — Đọc Số Token Thật
 
 - **Nhiệm vụ**:
-  - Đo lường chính xác số token tiêu thụ thực tế của từng ngày theo benchmark thực nghiệm (L1: ~450 tokens/bài, Gold v2-lean: ~1.470 tokens/bài).
-  - Đánh giá hiệu quả của phễu lọc **Subscriber-Gating** (thường tiết kiệm >90% token vô ích).
-  - Cảnh báo Dev khi chi phí hoặc số lượng bài phân tích tăng đột biến.
+  - Đọc token và USD thật từ sổ cái `token_ledger` trong `harness.db`, không nhân định mức.
+  - Theo dõi sàn bộ nhớ đệm và sai số dự toán (`estimate_wave.py`).
+  - Token là số ghi nhận, không phải cổng: không trần, không ngưỡng cảnh báo, không đề nghị giảm số bài (AGENTS.md §7.2).
 - **Công cụ chuẩn**:
   ```powershell
   & "C:\venvs\news-scape\Scripts\python.exe" scripts/pipeline_radar.py token [--date YYYY-MM-DD]
@@ -74,20 +75,19 @@ description: Quy trình điều phối mạng lưới Agent đa tầng (Master, 
 - **Nhiệm vụ**:
   - Nghiệm thu tự động Definition-of-Done trên 100% output của Subagents trước khi nạp DB.
   - Kiểm tra 3 rào cản bất biến:
-    1. Schema v2-lean: Cấu trúc phẳng 7 trường cốt lõi.
-    2. Grounded Citations: Chuỗi con nguyên văn (exact substring) $\ge 20$ ký tự.
+    1. Schema: record `article-compact-v2` (rule 11), bung thành `l1-entity-output-v1` và `agent-output-v2-lean`.
+    2. Grounded Citations: dựng từ chỉ số đoạn, mỗi đoạn $\ge 20$ ký tự, nên nguyên văn do cấu trúc.
     3. Value-Added: Luận điểm `key_points` phải được diễn giải độc lập, tuyệt đối không copy nguyên văn chuỗi citations.
-  - Tự động di chuyển task packets đạt chuẩn sang `data/agent_tasks/archive/<YYYYMMDD>/`.
-- **Công cụ chuẩn**:
+  - Cổng của đợt: nạp không lỗi và độ phủ của đợt $\ge 90\%$ ở cả hai lớp.
+- **Công cụ chuẩn** (cwd `project/`; `--finish` gọi `l1_ingest.py` và `agent_ingest.py` với đúng tệp của đợt, không gọi tay):
   ```powershell
-  & "C:\venvs\news-scape\Scripts\python.exe" scripts/l1_ingest.py data/agent_outputs_l1
-  & "C:\venvs\news-scape\Scripts\python.exe" scripts/agent_ingest.py data/agent_outputs
+  & "C:\venvs\news-scape\Scripts\python.exe" scripts/article_run.py --wave <đợt> --finish
   ```
 
 ### 5. `Delivery & Formatting Agent` — Xuất Bản Deliverable Đơn Sắc
 
 - **Nhiệm vụ**:
-  - Tổng hợp dữ liệu Gold v2-lean và L1 vào các file Excel người dùng `users/output/<user>/<date>.xlsx`.
+  - Tổng hợp kết quả hai lớp vào các file Excel người dùng `<DATA_ROOT>/users/output/<user>/<date>.xlsx` (ADR-0026.D6).
   - Bảo đảm định dạng đơn sắc chuyên nghiệp, wrap text, độ rộng cột tối ưu.
 - **Công cụ chuẩn**:
   ```powershell
@@ -125,7 +125,7 @@ Mạng lưới Agent áp dụng cơ chế tự hoàn thiện khép kín dựa tr
 Developer chỉ cần gửi câu lệnh mồi chuẩn hóa cho Agent:
 
 ```text
-Bắt đầu phiên ngày {YYYY-MM-DD}: Hãy dùng Radar kiểm tra điểm chạm pipeline, sau đó thực thi trọn vẹn chuỗi L1 (vật chất hóa Code-First trước để tiết kiệm token, phần còn lại gom mini-batches cho Subagents Flash xử lý có kiểm soát). Báo cáo tỷ lệ DoD và tổng lượng token tiêu thụ sau khi hoàn tất.
+Bắt đầu phiên ngày {YYYY-MM-DD}: chạy radar, rồi làm đúng lệnh radar in ra cho tới khi radar báo INFO. Báo cáo độ phủ lấy từ bảng hậu kiểm của đợt, token lấy từ sổ cái (--workers-only).
 ```
 
 ### B. Các Lệnh Thực Thi Cơ Học Tương Ứng:
@@ -134,7 +134,7 @@ Bắt đầu phiên ngày {YYYY-MM-DD}: Hãy dùng Radar kiểm tra điểm ch�
    ```powershell
    & "C:\venvs\news-scape\Scripts\python.exe" scripts/pipeline_radar.py status
    ```
-2. **Thực hiện hành động đề xuất**: Chạy lệnh được `pipeline_radar.py` gợi ý ở mục 3 (L1 Code-First $\rightarrow$ Subagents $\rightarrow$ Ingest).
+2. **Thực hiện hành động đề xuất**: Chạy đúng lệnh `pipeline_radar.py` gợi ý (chuẩn bị đợt $\rightarrow$ một `run_code` $\rightarrow$ `--finish`). Khi `ops_daemon` sống ở mức L1 thì không mở đợt tay song song.
 3. **Kiểm tra ngân sách token**:
    ```powershell
    & "C:\venvs\news-scape\Scripts\python.exe" scripts/pipeline_radar.py token

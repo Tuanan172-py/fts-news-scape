@@ -2,7 +2,7 @@
 type: SQLite Table
 title: work_items
 description: Hàng đợi handoff producer↔agent — exactly-once, claim nguyên tử, 5 trạng thái vòng đời.
-resource: "project/data/monocle.db (table: work_items)"
+resource: "<DATA_ROOT>/monocle.db (table: work_items)"
 tags: [handoff, queue, agent, exactly-once]
 status: stable
 generated:
@@ -17,12 +17,14 @@ sources:
   - id: handoff-design
     resource: project/docs/design/08-handoff-contract-catalog.md
     title: Handoff contract & catalog
-sources_last_checked: 2026-09-07
+sources_last_checked: 2026-10-22
 ---
 
-`work_items` là **ranh giới producer ↔ consumer**: codebase (producer) enqueue việc, agent ngoài
-(consumer) claim và trả kết quả. Đây là bảng duy nhất trong hệ có trạng thái *mutable* mà cả hai
-phía cùng chạm tới.[^handoff-design]
+`work_items` là hàng đợi work-package giữa Silver và [Article Lane](../pipelines/article_lane.md):
+[Silver Derive](../pipelines/silver_derive.md) enqueue, Article Lane chọn bài `pending` để đóng
+gói, và `agent_ingest.py` đánh `done`/`failed` sau cổng DoD. Bài Article Lane chưa có hàng thì
+`AgentRunner` tự đăng ký. Job `reclaim` của morninger trả hàng `claimed` quá hạn về
+`pending`.[^handoff-design]
 
 **Exactly-once** đảm bảo bằng 2 cơ chế:[^catalog]
 
@@ -56,7 +58,7 @@ PASS schema `work-package-v1` (`force_held=True`).[^catalog] Không có state m�
 | `article_id` | TEXT NOT NULL | = `articles.url_title_hash` |
 | `raw_sha256` | TEXT NOT NULL | SHA-256 bản raw Bronze (khoá provenance) |
 | `domain` | TEXT | Tên miền nguồn |
-| `package_path` | TEXT | Đường dẫn work-package JSON (`data/work_packages/**`) |
+| `package_path` | TEXT | Đường dẫn work-package JSON (`<DATA_ROOT>/work_packages/**`) |
 | `status` | TEXT NOT NULL DEFAULT pending | Xem bảng vòng đời |
 | `claimed_by` | TEXT | Định danh worker đã nhận |
 | `claimed_at` | TEXT | Thời điểm claim |

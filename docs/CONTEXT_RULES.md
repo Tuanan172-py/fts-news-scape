@@ -1,58 +1,58 @@
 # CONTEXT_RULES.md — Bounded Context & Token Budget Matrix (H2)
 
-Tài liệu này định nghĩa phạm vi đọc tài liệu/mã nguồn của Agent theo từng **Giai đoạn (Phase)** và **Làn rủi ro (Risk Lane)** nhằm đảm bảo agent chỉ đọc đúng, đọc đủ, tránh làm tràn Context Window và kiểm soát ngân sách token.
+This document defines what an agent reads, per **phase** and **risk lane**, so that it reads the right files and only those, keeps the context window bounded and controls the token budget.
 
 ---
 
-## 1. Ngân sách Token theo Làn Rủi ro (Token Budgets)
+## 1. Token budgets per risk lane
 
-| Làn Rủi ro | Ngân sách Context ước tính | Giới hạn số tệp đọc tối đa | Chiến lược dừng (Stop heuristic) |
+| Risk lane | Estimated context budget | Maximum files read | Stop heuristic |
 |:---|:---:|:---:|:---|
-| **`tiny`** | $\le 2.000$ tokens | 3 – 5 files | Dừng ngay khi xác định được dòng code cần patch và lệnh test. |
-| **`normal`** | $\le 5.000$ tokens | 10 – 15 files | Dừng khi hoàn thành Story Packet và hiểu rõ module liên quan. |
-| **`high-risk`** | $\le 10.000$ tokens | 20 – 30 files | Dừng khi thu thập đủ dữ liệu để viết ADR và xác định Hard Gate. |
+| **`tiny`** | $\le 2,000$ tokens | 3 – 5 files | Stop as soon as the line to patch and the test command are known. |
+| **`normal`** | $\le 5,000$ tokens | 10 – 15 files | Stop when the story packet is complete and the module involved is understood. |
+| **`high-risk`** | $\le 10,000$ tokens | 20 – 30 files | Stop when there is enough evidence to write the ADR and name the hard gate. |
 
-> **Phạm vi áp dụng của trần số tệp (bổ sung 2026-09-17, US-014).** Trần trên đếm **tệp đi
-> thẳng vào context window của agent điều phối**. Tệp do **Explore subagent đọc hộ KHÔNG
-> tính vào trần này** — chúng nằm trong context riêng của subagent và chỉ trở về dưới dạng
-> bản báo cáo đã cô đọng. Ghi riêng số đó vào trace nếu cần đối soát.
+The file ceilings match `calculate_score_context` in `scripts/harness_cli.py` (tiny 5, normal 15, high-risk 30).
+
+> **Scope of the file ceiling (added 2026-09-17, US-014).** The ceiling counts **files that enter
+> the orchestrating agent's context window directly**. Files an Explore subagent reads on its
+> behalf do **not** count: they stay in the subagent's own context and come back only as a
+> condensed report. Record that number separately in the trace when it matters.
 >
-> Lý do: mục đích khai báo của ngân sách là *kiểm soát context window*; ủy thác khảo sát cho
-> subagent chính là cách đạt mục đích đó. Đếm gộp sẽ **phạt đúng hành vi mà quy tắc khuyến
-> khích**, tạo động cơ ngược là đọc thẳng mọi thứ inline để giữ điểm đẹp. Ca US-011 là bằng
-> chứng: trace ghi vết đầy đủ và trung thực nhưng chỉ đạt `score_context = 0.6` vì gộp cả tệp
-> của 2 Explore subagent.
+> Reason: the budget exists to *control the context window*, and delegating exploration to a
+> subagent achieves exactly that. Counting both would **penalise the behaviour the rule
+> encourages** and reward reading everything inline. US-011 is the evidence: its trace was
+> complete and honest but scored `score_context = 0.6` because it counted the files of two
+> Explore subagents.
 
 ---
 
-## 2. Ma trận Ngữ cảnh (Phase × Lane Matrix)
+## 2. Context matrix (phase x lane)
 
-Quy tắc: **MUST** (Bắt buộc đọc) · **SHOULD** (Khuyến khích đọc nếu chưa rõ) · **SKIP** (Tuyệt đối không đọc).
+Rule: **MUST** (read) · **SHOULD** (read if still unclear) · **SKIP** (do not read).
 
-| Giai đoạn (Phase) | Tiny Lane | Normal Lane | High-Risk Lane |
+| Phase | Tiny lane | Normal lane | High-risk lane |
 |:---|:---|:---|:---|
-| **1. Intake & Classify** | **MUST:** `AGENTS.md`, `FEATURE_INTAKE.md`<br/>**SKIP:** Story packets cũ, DB source code | **MUST:** `AGENTS.md`, `FEATURE_INTAKE.md`<br/>**SHOULD:** `HARNESS.md`<br/>**SKIP:** Implementation details sâu | **MUST:** `AGENTS.md`, `FEATURE_INTAKE.md`, `docs/decisions/`<br/>**SHOULD:** `project/docs/design/` |
-| **2. Context & Planning** | **MUST:** Tệp code mục tiêu cần sửa<br/>**SKIP:** Toàn bộ docs kiến trúc tổng quát | **MUST:** OKF docs liên quan (`project/docs/skills/`), tệp tests<br/>**SKIP:** Các module không liên quan | **MUST:** OKF + `project/docs/design/`, Schema definitions, ADRs liên quan |
-| **3. Implementation** | **MUST:** Tệp code đích<br/>**SKIP:** Mọi tài liệu policy | **MUST:** Tệp module đích + unit test tương ứng<br/>**SKIP:** Toàn bộ docs/ | **MUST:** Core models, data contracts, migrations |
-| **4. Validation & Proof** | **MUST:** Tệp test liên quan<br/>**SKIP:** Mọi tài liệu khác | **MUST:** Test suite liên quan, `TEST_MATRIX.md` | **MUST:** Toàn bộ tầng Unit + Integration + Platform test runner |
-| **5. Trace & Handoff** | **MUST:** `SESSION-LATEST.md` | **MUST:** `SESSION-LATEST.md`, `docs/stories/US-XXX.md` | **MUST:** `SESSION-LATEST.md`, ADR, Story packet |
+| **1. Intake & Classify** | **MUST:** `AGENTS.md`, `FEATURE_INTAKE.md`<br/>**SKIP:** old story packets, DB source code | **MUST:** `AGENTS.md`, `FEATURE_INTAKE.md`<br/>**SHOULD:** `HARNESS.md`<br/>**SKIP:** deep implementation details | **MUST:** `AGENTS.md`, `FEATURE_INTAKE.md`, `docs/decisions/`<br/>**SHOULD:** `project/docs/design/` |
+| **2. Context & Planning** | **MUST:** the target code file<br/>**SKIP:** general architecture docs | **MUST:** related OKF docs (`project/docs/skills/`), test files, RULE-12 for where code belongs<br/>**SKIP:** unrelated modules | **MUST:** OKF + `project/docs/design/`, schema definitions, related ADRs |
+| **3. Implementation** | **MUST:** the target code file<br/>**SKIP:** every policy document | **MUST:** the target module + its unit test<br/>**SKIP:** all of `docs/` | **MUST:** core models, data contracts, migrations |
+| **4. Validation & Proof** | **MUST:** the related test file<br/>**SKIP:** every other document | **MUST:** the related test suite, `TEST_MATRIX.md` | **MUST:** the full unit + integration + platform test layers |
+| **5. Trace & Handoff** | **MUST:** `SESSION-LATEST.md` | **MUST:** `SESSION-LATEST.md`, `docs/stories/US-NNN-<slug>.md` | **MUST:** `SESSION-LATEST.md`, ADR, story packet |
 
 ---
 
-## 3. Quy tắc Dừng Truy xuất (Retrieval Stopping Rules)
+## 3. Retrieval stopping rules
 
-1. **Rule of Direct Match:** Nếu công cụ tìm kiếm (`grep_search`, `find_by_name`) đã chỉ ra chính xác vị trí lỗi hoặc hàm cần can thiệp, agent **không được tiếp tục mở thêm** các file tham khảo xung quanh.
-2. **No Full-Repo Dumps:** Tuyệt đối không đọc toàn bộ thư mục hoặc dump hàng loạt file `.md` vào prompt khi chưa có lý do cụ thể.
-3. **Progressive Disclosure:** Luôn đọc tệp tóm tắt trước; chỉ mở tài liệu con trong `references/` hoặc `scripts/` khi bước thực thi yêu cầu.
+1. **Rule of direct match:** when a search tool has located the exact defect or function to change, the agent **MUST NOT** open further reference files around it.
+2. **No full-repo dumps:** never read a whole folder or paste many `.md` files into the prompt without a concrete reason. Use `docs/INDEX.md` to find governed documents.
+3. **Progressive disclosure:** read the summary first; open child documents under `references/` or `scripts/` only when an execution step needs them.
 
 ---
 
-## 4. Bất Biến "Radar-First, Zero-Probe" & Huấn Luyện Liên Tục
+## 4. Radar-first, zero-probe and continuous learning
 
-1. **Zero-Probe Invariant:**
-   - CẤM chạy các lệnh shell python one-liner `-c "import sqlite3..."` để thăm dò CSDL hoặc đếm file ad-hoc.
-   - BẮT BUỘC dùng `python project/scripts/pipeline_radar.py status` để lấy ngữ cảnh vận hành và nhận câu lệnh khuyến nghị tiếp theo.
-2. **Triệt tiêu File Lớn:**
-   - CẤM đọc trực tiếp các file từ điển runtime khổng lồ (`entities.json` 1.5 MB). Mọi ánh xạ chuẩn đã được tóm tắt trong Skill chuyên trách.
-3. **Continuous In-Context Training Loop:**
-   - Sau mỗi ca thực thi, mọi ma sát và tối ưu hóa mới phải được chưng cất thành Rule/Skill và cập nhật vào `SESSION-LATEST.md`.
+The defining rule is `.agents/rules/08-context-and-zero-probe-guardrails.md` (AGENTS.md §9). In short:
+
+1. **Zero-probe:** ad-hoc Python one-liners (`-c "import sqlite3..."`) that probe the DB or count files are forbidden. Run `python project/scripts/pipeline_radar.py status` for operating context and the next command; path, cwd and DB-write questions go to `python project/scripts/article_run.py --where`.
+2. **No huge files:** never read runtime dictionaries such as `entities.json` (1.5 MB) directly. The owning skill summarises the mappings.
+3. **Continuous learning:** after each run, every friction or optimisation found becomes a `FACT-*` document, a rule or a skill update, and the handoff goes into `SESSION-LATEST.md`.

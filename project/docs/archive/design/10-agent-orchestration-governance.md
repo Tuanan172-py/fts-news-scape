@@ -1,3 +1,5 @@
+> Lưu trữ 2026-10-22 (US-050): mô hình điều phối đa vai trò của lane L1/Gold đã nghỉ hưu (ADR-0010), thay bằng [00-end-to-end-architecture §6](../../design/00-end-to-end-architecture.md).
+
 # Design 10 — Agent Orchestration & Governance [SPEC]
 
 Cập nhật: 2026-08-14 · Trạng thái: **SPEC-ONLY** (docs + state machine; không code/LLM) · Kèm: [09](09-agent-io-contract.md), machine-readable: `schemas/task-lifecycle-v1.yaml`.

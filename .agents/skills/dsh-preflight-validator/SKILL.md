@@ -40,7 +40,7 @@ Chính repo đã ghi cơ chế: `.agents/dsh/README.md:32` — *"Dừng host `ds
 | **Ghi vào `%USERPROFILE%\.dsh\`** | Probe tạo + xoá `_conductor_probe.tmp` thành công |
 | Đọc `~\.dsh\settings.yaml` | Đọc được, 16 dòng |
 | Chạy mọi script dự án qua `pwsh` | `health`, `radar token`, `--check-prefix`, `--where` |
-| Kiểm junction preset | `(Get-Item $p).Target` |
+| Kiểm root preset trong patch profile `web` | `Select-String -Path $pp -SimpleMatch "agents\dsh\presets"` |
 | Kiểm tiến trình + cổng | `Get-CimInstance`, `Get-NetTCPConnection` |
 | Sửa `agent.cordis.yml`, `preset.yml`, tài liệu | trong repo |
 | Chạy `article_run.py --wave <mã> --repair` | Sinh chương trình chạy bù cho đúng phần thiếu, 0 token. Lane L1/Gold cũ đã ngừng (ADR 0010): không gọi `requeue.py`, `l1_route.py`, `l1_ingest.py --code-first` |
@@ -57,7 +57,7 @@ Chính repo đã ghi cơ chế: `.agents/dsh/README.md:32` — *"Dừng host `ds
 | 4 | **Đổi permission preset của phiên** | `permission.defaultPreset` là cấu hình giao diện. |
 | 5 | **Duyệt/từ chối prompt** | Approval có thể đang tắt ⇒ bị từ chối tự động. |
 | 6 | **Nâng cấp DSH** (`npx`) | Ghi đè chính checkout đang chạy. |
-| 7 | **Đổi junction** | Cần quyền; và chỉ có hiệu lực từ lần mount sau. |
+| 7 | **Đổi patch profile `web`** | Sửa khi host đang chạy phá tool catalog; chỉ có hiệu lực từ lần mount sau. |
 | 8 | **Bật `dev:web` (Vite watcher)** | Cần tiến trình nền sống ngoài phiên. |
 
 **Hệ quả của #8:** nếu không có tiến trình vite nào đang chạy thì **HMR client-plugin KHÔNG hoạt động**. Đừng trông vào tự-reload cho bất kỳ thay đổi nào.
@@ -72,7 +72,7 @@ Chạy **toàn bộ** trong **một** lệnh `run_code`. Không tách bước �
 
 | # | Hạng mục | Cách kiểm | ĐẠT khi |
 |:-:|---|---|---|
-| A1 | Junction preset sống | `(Get-Item "$env:USERPROFILE\.dsh\.agent-presets\news-scape-conductor").Target` | Trỏ đúng `.agents\dsh\presets\news-scape-conductor` trong repo |
+| A1 | Root preset trong patch profile `web` | `Select-String -Path "$env:USERPROFILE\.dsh\profiles\web\cordis.patch.yml" -SimpleMatch "agents\dsh\presets"` | Row `agent-presets` có `path: 'C:\src\news-scraper\.agents\dsh\presets'` (không dùng junction, xem `.agents/dsh/README.md` mục Wiring) |
 | A2 | Preset mặc định đúng | `settings.yaml` → `agent-presets.default` | `news-scape-conductor` |
 | A3 | **Preset đã nạp lại sau lần sửa cuối** | So `(Get-Process -Id <pid3080>).StartTime` với `LastWriteTime` của `agent.cordis.yml` | **StartTime > mtime preset** |
 | A4 | Phiên đúng preset | Tập tool trực tiếp chỉ có `run_code`; SDK có `pwsh`, `read`, `write`, `agent_article` | Đủ cả hai vế |
@@ -118,7 +118,7 @@ Chạy **toàn bộ** trong **một** lệnh `run_code`. Không tách bước �
        │
        ├── Có mục ĐỎ ở nhóm A (A1–A4)?
        │        │
-       │        ├── A1/A2 sai  ──► Conductor sửa được (junction/settings.yaml)
+       │        ├── A1/A2 sai  ──► Conductor sửa được (patch profile/settings.yaml)
        │        │                 └─► nhưng hiệu lực chỉ sau RESTART
        │        ├── A3 sai     ──► 🔴 DỪNG. Người vận hành PHẢI restart host.
        │        │                 Không có đường vòng. Báo rõ 2 mốc thời gian.
@@ -172,8 +172,8 @@ const res = {};
 
 // A1 + A2 + C1 + C2 — định danh và hợp đồng runtime
 res.identity = await sh('identity', [
-  '$j = "$env:USERPROFILE\\.dsh\\.agent-presets\\news-scape-conductor"',
-  'if (Test-Path $j) { "junction -> " + (Get-Item $j).Target } else { "JUNCTION MISSING" }',
+  '$pp = "$env:USERPROFILE\\.dsh\\profiles\\web\\cordis.patch.yml"',
+  'if (Test-Path $pp) { "patch roots -> " + ((Select-String -Path $pp -SimpleMatch "agents\\dsh\\presets" | ForEach-Object { $_.Line.Trim() }) -join " | ") } else { "PATCH PROFILE MISSING" }',
   '"--- settings ---"',
   'Get-Content "$env:USERPROFILE\\.dsh\\settings.yaml" | Select-String "default:|reasoningEffort|defaultPreset"'
 ].join('; '));
@@ -258,7 +258,7 @@ $p = (Get-NetTCPConnection -LocalPort 3080 -State Listen).OwningProcess
 |---|---|---|
 | Mọi thứ xanh nhưng hoá đơn sai | Preset mới hơn tiến trình (A3 ĐỎ) | Restart host |
 | `agent_article` không có trong SDK | Phiên sai preset (A4) | Mở lại phiên đúng preset. Đây là nguyên nhân gốc vệt 845K ngày 17/09 |
-| Junction mất | Đổi máy / di chuyển OneDrive / clone mới | `mklink /J` theo `RUNBOOK-article-lane.md` |
+| Root preset lệch hoặc thiếu (A1) | Đổi máy / clone mới / dời cây mã | Chép `.agents/dsh/patch/web.cordis.patch.yml` vào profile `web` khi host đã dừng, theo `.agents/dsh/README.md` mục Wiring |
 | Sửa `settings.yaml` không có tác dụng | Khoá YAML sai bị bỏ qua im lặng | Khẳng định tập tool hiệu lực + `sdkSchemas` ở runtime, **không tin YAML** |
 | Client-plugin không tự reload | Không có Vite `dev:web` | Bật watcher, hoặc refresh thủ công |
 | **C4 báo có watcher nhưng thực ra không có** | Regex `vite\|dev:web` bắt nhầm tiến trình `dsh-subprocess-local` của chính Conductor | Đã vá ở §5.1: loại trừ `dsh-subprocess-local`, `@deepseek-ai.dsh`, `dsh-code-runtime` |
@@ -274,7 +274,7 @@ $p = (Get-NetTCPConnection -LocalPort 3080 -State Listen).OwningProcess
 - `.agents/dsh/RUNBOOK.md` §0 (preflight 3 việc) · §5 (hai chốt tự động) · §7 (sự cố) · §8 (bất biến)
 - `.agents/dsh/RUNBOOK-article-lane.md` §0 (chuẩn bị một lần)
 - `.agents/dsh/DSH-VIEC-THU-CONG.md` — việc chỉ làm được bằng tay
-- `.agents/dsh/README.md:32,42` — cảnh báo live-reload khi host đang chạy
+- `.agents/dsh/README.md` mục Wiring — nạp preset qua patch profile, cảnh báo live-reload khi host đang chạy
 - `plans/20260918-1651-article-lane-unified/plan.md` §3, §8
 
 > **Cảnh báo về tài liệu:** `DSH-VIEC-THU-CONG.md` mục 2 và 7 viện dẫn `.dsh/settings.yaml` khai `ptc` và `high`. Kiểm ngày 21/09 cho thấy **cả hai đều sai** — tệp không tồn tại trong repo, còn `%USERPROFILE%\.dsh\settings.yaml` khai `news-scape-conductor` và `off`. Đừng tin tài liệu, tin lệnh kiểm.

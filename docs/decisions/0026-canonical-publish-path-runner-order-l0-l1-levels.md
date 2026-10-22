@@ -12,9 +12,10 @@ approvers: [operator 2026-10-21]
 story: [US-045]
 supersedes: []
 amends: [ADR-0012]
+amended_by: [ADR-0028]
 related: [ADR-0010, ADR-0017, ADR-0020, ADR-0023, ADR-0025]
 evidence:
-  - path:project/src/ops/order.py
+  - path:project/src/ops/runtime/order.py
   - path:project/src/export/publisher.py
   - path:project/src/core/user_manifest.py
   - path:project/scripts/maintenance/migrate_users_output.py

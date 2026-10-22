@@ -15,8 +15,8 @@ và quy trình bảo trì. Nguồn ĐẦU TIÊN chạy trên `method: rss_captur
 | **Scraper class** | `RssCaptureScraper` (`src/scrapers/rss_capture.py`), registry key `_rss_capture` |
 | **Schema contract** | `domains/vietnambiz/schema.yaml` |
 | **Config** | `config/domains/vietnambiz.yaml` |
-| **Bronze** | `data/raw_html/vietnambiz.vn/<yyyymmdd>/<hash>.{html,meta.json}` |
-| **Silver** | `data/silver/vietnambiz.vn/<yyyymmdd>/<hash>.json` |
+| **Bronze** | `<DATA_ROOT>/raw_html/vietnambiz.vn/<yyyymmdd>/<hash>.{html,meta.json}` |
+| **Silver** | `<DATA_ROOT>/silver/vietnambiz.vn/<yyyymmdd>/<hash>.json` |
 | **Trạng thái** | enabled 2026-09-07 (trước đó disabled từ 2026-08-03) |
 
 ## 2. Cơ chế lấy dữ liệu
@@ -92,9 +92,8 @@ permissive hôm nay không có nghĩa là permissive mãi mãi (`RobotsGate` cac
 ## 7. Bảo trì
 
 - Watch point số 1: **`div.vnbcbc-body`**. Đổi class → `capture_status: partial` hàng loạt.
-  Theo dõi bằng `scripts/report_drift.py` và tỉ lệ `missing[incomplete_render]`.
-- Kiểm tra: `python scripts/verify_quality.py vietnambiz.vn` (dùng **host**, không phải `vietnambiz`).
-- Field health: `python scripts/domain_check.py report vietnambiz`.
+  Theo dõi bằng `python -m src.morninger --once drift` và tỉ lệ `missing[incomplete_render]`.
+- Kiểm tra: `python scripts/validate_capture.py vietnambiz 2` (tên config); thư mục Bronze/Silver theo **host** `vietnambiz.vn`.
 - Sửa selector → **không cần re-scrape**: `python scripts/rederive_from_bronze.py vietnambiz.vn`.
 
 ## 8. Liên quan

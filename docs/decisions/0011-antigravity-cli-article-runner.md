@@ -17,7 +17,7 @@ evidence:
   - commit:8ec12f8
   - path:docs/proposals/20260923-agy-automation-council.md
   - path:docs/proposals/20260923-agy-automation-council/spike2-RESULTS.md
-  - path:project/src/agent/agy_runner.py
+  - path:project/src/agent/runners/agy_runner.py
   - path:project/scripts/article_tick.py
   - test:project/tests/agent/test_agy_runner.py
   - test:project/tests/article_lane/test_article_tick.py

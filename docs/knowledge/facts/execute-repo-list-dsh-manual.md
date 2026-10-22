@@ -4,7 +4,7 @@ type: fact
 title: Execute repo work, list DSH manual steps
 status: active
 created: 2026-09-21
-updated: 2026-10-06
+updated: 2026-10-22
 verified: 2026-09-21
 lang: en
 authors: [claude-opus-5-5]
@@ -25,7 +25,7 @@ summary: When the operator approves a plan, the agent executes every repo change
 - It then writes a list of everything the operator must do by hand in DSH.
 - It does not ask again per item and does not stop midway for confirmation.
 - The list lives in `.agents/dsh/DSH-VIEC-THU-CONG.md` (created 2026-09-21 with 10 items, 4 mandatory).
-- Its first item is copying `project/data/prefix/ARTICLE_SYSTEM_CORE.md` into the `persona` of row `tool-subagent-article`.
+- Its first item is copying the prefix (now `project/assets/prefix/ARTICLE_SYSTEM_CORE.md`) into the `persona` of row `tool-subagent-article`.
 - `build_article_prefix.py --check` checks file against catalog and persona against file; `--check-preset` confirms right after pasting.
 
 ## Why

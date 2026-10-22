@@ -1,5 +1,11 @@
 # OKF Changelog
 
+## 2026-10-22 (US-050: đồng bộ với Article Lane duy nhất và ADR-0027)
+- **Archive** (`okf/archive/catalog/`, giữ sub-path): `playbooks/daily_agent_run.md` (đường L1/Gold khai tử, ADR-0010), `pipelines/periodic_reports.md` + `datasets/bronze_periodic_reports.md` (driver NSO đã xoá), `pipelines/sentiment_pipeline.md` (engine rule-based đã xoá), `configurations/monocle_config.md` (bản trùng cũ của `secrets.md`)
+- **Rewrite**: `pipelines/agent_handoff.md` thành "Agent Ingest & cổng DoD" — nửa hoàn tất của Article Lane, DoD 6 tiêu chí; `pipelines/user_output.md`, `datasets/user_deliverables.md` theo deliverable `.xlsx` dưới `<DATA_ROOT>/users/output/` (ADR-0026.D6); `pipelines/morninger.md` (4 job, `capture.lock`, `ops_daemon` giữ sống); `playbooks/{deployment,runbook}.md` (venv `C:\venvs\news-scape`, `ops_install.ps1`, radar trước); `references/codebase.md` theo cây sau ADR-0027; `references/agent_contracts.md` (article-compact-v2, agent-output-v2-lean); `datasets/web_monocle_db.md` (20 bảng, `busy_timeout=30000`, `resolve_db_path`)
+- **Fix**: mọi `sources[].resource` trỏ module đã chuyển (`src/agent/{contract,ingest,catalog,packet}/`, `src/article_lane/`, `src/ops/wave/`, `src/ops/console/`); `resource` của bảng dùng `<DATA_ROOT>/monocle.db`; `l1_tasks` ghi rõ legacy; `l1_outputs` thêm cột `l1_source`; `periodic_reports` ghi rõ không còn mã ghi; 8 domain đang bật (thêm fireant); bỏ lệnh tới script đã xoá
+- **Total**: 50 → 45 concepts trong `catalog/`
+
 ## 2026-09-21 (Article Lane + kinh tế token)
 - **New**: `pipelines/article_lane.md` — đường mặc định Vòng 3: gộp L1 + Gold thành MỘT lượt gọi cho trọn lô trên harness DSH; bốn bất biến, hợp đồng packet/bản ghi, prefix tĩnh, giới hạn thật đã đo
 - **New**: `references/token_economy.md` — ba rổ token, sáu luật kế toán, hai thước đo, cache đáng bao nhiêu (1,4% ở lô 100 bài nhưng cắt 62% hoá đơn W2), xếp hạng đòn bẩy

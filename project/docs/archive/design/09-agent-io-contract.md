@@ -1,6 +1,8 @@
+> Lưu trữ 2026-10-22 (US-050): hợp đồng `agent-output-v1` của lane L1/Gold đã nghỉ hưu (ADR-0010), thay bằng [00-end-to-end-architecture §6.2](../../design/00-end-to-end-architecture.md).
+
 # Design 09 — Agent I/O Contract + Output Field Taxonomy [SPEC]
 
-Cập nhật: 2026-08-14 · Trạng thái: **SPEC-ONLY** (chưa có agent/LLM code) · Kèm: [08](08-handoff-contract-catalog.md), [10](10-agent-orchestration-governance.md).
+Cập nhật: 2026-08-14 · Trạng thái: **SPEC-ONLY** (chưa có agent/LLM code) · Kèm: [08](../../design/08-handoff-contract-catalog.md), [10](10-agent-orchestration-governance.md).
 
 > [!NOTE]
 > **Trạng thái Kế thừa (Historical Specification — agent-output-v1):**

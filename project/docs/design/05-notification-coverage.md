@@ -1,7 +1,7 @@
 # Thiết kế — Notify: phủ TOÀN thị trường, không bỏ sót
 
-Cập nhật: 2026-07-26 · Đối tượng: người vận hành muốn hiểu "bài nào được đẩy vào
-`data/notifications/*.log` và vì sao". Code: `src/notifier/file_notify.py` `_matches()`;
+Cập nhật: 2026-10-22 · Đối tượng: người vận hành muốn hiểu "bài nào được đẩy vào
+`<DATA_ROOT>/notifications/YYYY-MM-DD.log` và vì sao" (`paths.notifications_dir()`). Code: `src/notifier/file_notify.py` `_matches()`;
 cấu hình: `config/notifications.yaml`.
 
 > Phân biệt với [03-source-strategy.md §4](03-source-strategy.md): filter **tầng scraper**
@@ -20,10 +20,11 @@ sung nhau**, không dựa 1 kiểu match.
 
 ## 2. Ba cách tiếp cận trong 1 engine (`_matches`)
 
-Mỗi rule hỗ trợ 3 kiểu điều kiện (OR trong 1 rule), quét theo thứ tự:
+Mỗi rule hỗ trợ 4 kiểu điều kiện (OR trong 1 rule), quét theo thứ tự:
 
 | Điều kiện | Ý nghĩa | Giải quyết |
 |---|---|---|
+| `tickers: [mã...]` | khớp nguyên token, phân biệt hoa/thường (tránh VIC⊄Vicem) | watchlist blue-chip |
 | `sources: [domain...]` | khớp nếu `article.source_domain` thuộc list | nguồn 100% tài chính, và **nguồn EN** (tiêu đề tiếng Anh → keyword VN vô dụng) |
 | `has_symbol: true` | khớp nếu bài gắn **bất kỳ mã CK** nào | tin của mã **ngoài watchlist** (HND, BSR, SAS…) — không sót mã nào |
 | `match.any: [kw...]` | substring trên `title + symbols` (lowercase) | tin kinh tế từ báo tổng hợp không gắn mã |
@@ -32,7 +33,7 @@ Rule **khớp đầu tiên thắng** → xếp từ cụ thể (watchlist) đế
 
 ## 3. Bốn tầng rule (`config/notifications.yaml`)
 
-1. **`watchlist`** — 30 blue-chip (keyword) → highlight riêng, ưu tiên cao nhất.
+1. **`watchlist`** — 30 blue-chip (`tickers`, khớp nguyên token) → highlight riêng, ưu tiên cao nhất.
 2. **`symbol`** — `has_symbol: true` → mọi bài có mã, kể cả ngoài watchlist.
 3. **`finance`** — `sources` ghi TẤT từ:
    - Tài chính VN chuyên biệt: cafef, fireant, vietstock, tnck, vneconomy, vndirect, vietnambiz
@@ -50,7 +51,7 @@ Rule **khớp đầu tiên thắng** → xếp từ cụ thể (watchlist) đế
 tài chính thuần) → ghi tất là an toàn. Riêng cafebiz lấy `home.rss` = superset trộn giải
 trí/đời sống → cần keyword lọc.
 
-## 4. Độ phủ đo trên DB thật (2787 bài, 2026-07-26)
+## 4. Độ phủ đo trên DB thật (2787 bài, 2026-07-26, khi còn 23 nguồn bật)
 
 | Phiên bản filter | Giữ |
 |---|---|

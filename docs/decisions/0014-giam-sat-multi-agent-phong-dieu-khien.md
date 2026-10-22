@@ -16,10 +16,10 @@ evidence:
   - commit:579163c
   - commit:0340f64
   - path:plans/20261001-1500-supervisor-control-room/plan.md
-  - path:project/src/ops/trace.py
-  - path:project/src/ops/control_room.py
-  - path:project/src/ops/mandate.py
-  - path:project/src/ops/improve.py
+  - path:project/src/telemetry/trace.py
+  - path:project/src/ops/console/control_room.py
+  - path:project/src/ops/runtime/mandate.py
+  - path:project/src/ops/console/improve.py
   - path:project/config/ops.yaml
   - test:project/tests/ops/test_ops_trace.py
   - test:project/tests/ops/test_ops_supervision.py

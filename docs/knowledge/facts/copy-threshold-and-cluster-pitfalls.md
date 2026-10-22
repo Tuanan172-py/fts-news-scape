@@ -4,8 +4,8 @@ type: fact
 title: Copy threshold and clustering pitfalls
 status: active
 created: 2026-10-02
-updated: 2026-10-06
-verified: 2026-10-02
+updated: 2026-10-22
+verified: 2026-10-22
 lang: en
 authors: [claude-opus-5-5]
 adr: [ADR-0013, ADR-0016]
@@ -14,6 +14,7 @@ evidence:
   - "path: project/scripts/capture_reconcile.py"
   - "path: project/scripts/signal_build.py"
   - "path: project/src/core/urlnorm.py"
+  - "path: project/src/pipeline/story_cluster.py"
   - "commit: bfbd5e6"
   - "commit: fb9b1c2"
 summary: Only exact duplicates or containment of at least 0.95 with the same figures and tickers become copy and inherit results; measured clustering pitfalls need best-neighbor joins and a 40-shingle floor.
@@ -26,10 +27,10 @@ summary: Only exact duplicates or containment of at least 0.95 with the same fig
 - Deployed in US-033: `discovered_urls` and `url_aliases` keyed by source article id via `src/core/urlnorm.py`.
 - Also deployed: `capture_reconcile.py` (reconcile, backfill, recapture, status), `story_cluster.py` with `inherit.py` and `cluster_job.refresh`, `signal_build.py` and the attention radar sheet.
 - Morninger runs catch-up capture after capture, then clustering and signals after derive.
-- Label `copy` only for exact duplicates or containment of at least 0.95 with the same figures and tickers. Inherited results carry the original's verbatim citations.
+- Label `copy` only for exact duplicates or containment of at least 0.95 (`COPY_CONTAINMENT` in `project/src/pipeline/story_cluster.py`) with the same figures and tickers. Inherited results carry the original's verbatim citations.
 - A 0.8 rewrite is a `candidate` and still gets full analysis.
 - Pitfall: transitive merging by ticker chained 10 PNJ events into one cluster. Fix: join the best neighbor only, never union everything.
-- Pitfall: boilerplate-only articles give a false containment of 1.0. Require at least 40 shingles.
+- Pitfall: boilerplate-only articles give a false containment of 1.0. Require at least 40 shingles (`MIN_SHINGLES_FOR_MATCH`).
 - Pitfall: dated recurring columns MUST NOT merge; forbid merging when the two titles carry different dates.
 - `ama_z` inflates because of the 0.5 standard deviation floor. Always read it with article count, source count and `coverage_pct`.
 

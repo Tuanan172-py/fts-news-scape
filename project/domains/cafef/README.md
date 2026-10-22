@@ -90,7 +90,6 @@ Regex: `r"/Date\((\d+)(?:[+-]\d{4})?\)/"` — lấy epoch ms, convert về VN_TZ
 | `Image` | `metadata["image"]` | URL string |
 | `NewsType` | `metadata["news_type"]` | int |
 | *classifier* | `categories` | Post-scrape rule-based |
-| *sentiment* | `sentiment` | Post-scrape lexicon VN |
 
 ### Các field KHÔNG có từ CafeF
 
@@ -156,14 +155,15 @@ Fallback chain cho content_text:
 ### Khi nghi ngờ upstream thay đổi
 
 ```bash
-# Kiểm tra nhanh raw response
-python scripts/domain_check.py cafef --raw-check
+# Trạng thái nguồn và scraper (đọc trước tiên)
+python scripts/pipeline_radar.py status
+python -m src.monitor.health
 
-# Chạy validate toàn bộ
-python scripts/domain_check.py cafef --report
+# Fetch thật N bài, kiểm Bronze (capture_status, sha256, images[])
+python scripts/validate_capture.py cafef 2
 
-# Chạy diagnostic chuyên sâu
-python scripts/diagnose_sources.py cafef
+# Bài lệch template / hỏng selector
+python -m src.morninger --once drift
 ```
 
 ### Khi xác nhận thay đổi
@@ -172,7 +172,7 @@ python scripts/diagnose_sources.py cafef
 2. Cập nhật `domains/cafef/changelog.md` (ghi ngày + mô tả)
 3. Sửa `src/scrapers/cafef.py` nếu parse logic thay đổi
 4. Cập nhật fixture trong `tests/fixtures/` và `domains/cafef/fixtures/`
-5. Chạy `python scripts/domain_check.py cafef` để verify
+5. Chạy `python scripts/validate_capture.py cafef` để verify
 6. Chạy `python -m pytest tests/scrapers/test_cafef.py -v` để verify regression
 
 ## 10. Liên kết

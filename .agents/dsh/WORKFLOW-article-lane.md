@@ -69,7 +69,7 @@ flowchart TB
   end
 
   subgraph L3["GIAO HANG - 0 token"]
-    DEL["write_user_output.py --date today"] --> USR[/"thu muc users/output o GOC KHO"/]
+    DEL["write_user_output.py --date today"] --> USR[/"DATA_ROOT/users/output/user/ngay.xlsx"/]
   end
 
   CHK ==> RUN1
@@ -302,7 +302,7 @@ Hai luật hai chiều, và cả hai đều từng bị vi phạm:
 
 | Lệnh | Sinh ra | Đọc vào |
 | --- | --- | --- |
-| `build_article_prefix.py` | `data/prefix/ARTICLE_SYSTEM_CORE.md` + `.meta.json` | `entities.json`, `taxonomy.json` |
+| `build_article_prefix.py` | `project/assets/prefix/ARTICLE_SYSTEM_CORE.md` + `.meta.json` | `entities.json`, `taxonomy.json` |
 | `build_article_prefix.py --check` | — | tệp prefix + `persona` trong preset |
 | `article_run.py --wave W` | `article_W_NN.task.json`, `.map.json`, `wave_W.json`, `wave_W.conductor.ts` | `monocle.db`, gói tầng bạc |
 | *chương trình điều phối* | `agent_outputs_article/*.output.json` | packet trên đĩa |
@@ -310,7 +310,7 @@ Hai luật hai chiều, và cả hai đều từng bị vi phạm:
 | `article_run.py --wave W --finish` | bản ghi trong `monocle.db`, dòng `token_ledger`, `HANDOFF-*.md` | đầu ra của lô, checkpoint phiên DSH |
 | `pipeline_radar.py token --wave W` | — | `harness.db` + checkpoint phiên |
 | `estimate_wave.py --wave W` | — | manifest + `harness.db` |
-| `write_user_output.py --date today` | `users/output/...` ở **gốc kho** | `monocle.db` |
+| `write_user_output.py --date today` | `<DATA_ROOT>/users/output/<user>/<ngày>.xlsx` | `monocle.db` |
 
 ---
 

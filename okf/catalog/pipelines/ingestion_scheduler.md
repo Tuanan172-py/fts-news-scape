@@ -20,7 +20,7 @@ sources:
   - id: execution-flow
     resource: project/docs/design/02-execution-flow.md
     title: Execution Flow
-sources_last_checked: 2026-09-07
+sources_last_checked: 2026-10-22
 ---
 
 `src/orchestrator.py` là **Vòng 1 — Capture** trong kiến trúc 3 vòng: lấy tin mới và ghi bản raw
@@ -48,32 +48,32 @@ run_cycle(names)
        heartbeat.record_result
   ├─ notifier.notify_articles + notify_cycle_summary   (lỗi ở đây không làm hỏng cycle)
   ├─ writer.flush()                                    (commit trước khi export)
-  ├─ _export_csv()   → data/exports/articles-YYYY-MM-DD.csv (ghi đè mỗi cycle)
+  ├─ _export_csv()   → <DATA_ROOT>/exports/articles-YYYY-MM-DD.csv (ghi đè mỗi cycle)
   └─ _wal_checkpoint()  → PRAGMA wal_checkpoint(TRUNCATE)
 ```
 
-⚠️ **Sentiment rule-based đã gỡ khỏi cycle** (2026-09): chỉ còn `classify_rule_based`. Sentiment
-dùng cho deliverable do agent sinh ở [agent_outputs](../tables/agent_outputs.md). Engine cũ giữ
-lại ở [Sentiment Pipeline](sentiment_pipeline.md) dạng cold backup.
+Cycle không tính sentiment: chỉ có `classify_rule_based` gắn `categories`. Sentiment của
+deliverable do mô hình sinh trong [Article Lane](article_lane.md) và nằm ở
+[agent_outputs](../tables/agent_outputs.md); engine rule-based cũ đã xoá.
 
 # CLI
 
 ```powershell
-.venv\Scripts\python.exe -m src.orchestrator             # scheduler liên tục
-.venv\Scripts\python.exe -m src.orchestrator --once      # 1 cycle rồi thoát
-.venv\Scripts\python.exe -m src.orchestrator --once cafef tnck
-.venv\Scripts\python.exe scripts\run_once.py [domain...]  # tương đương --once
+C:\venvs\news-scape\Scripts\python.exe -m src.orchestrator             # scheduler liên tục
+C:\venvs\news-scape\Scripts\python.exe -m src.orchestrator --once      # 1 cycle rồi thoát
+C:\venvs\news-scape\Scripts\python.exe -m src.orchestrator --once cafef tnck
+C:\venvs\news-scape\Scripts\python.exe scripts\run_once.py [domain...]  # tương đương --once
 ```
 
 # Bất biến & ràng buộc
 
 | Ràng buộc | Giá trị | Nguồn |
 |---|---|---|
-| Chu kỳ | 15 phút, `coalesce=True`, `max_instances=1`, misfire 300s | [settings.yaml](../configurations/settings.md) |
+| Chu kỳ | standalone: `scheduler.interval_minutes` (15′); dưới morninger: `morninger.capture_interval_minutes` (10′); `coalesce=True`, `max_instances=1`, misfire 300s | [settings.yaml](../configurations/settings.md) |
 | Rate limit | ≥3 giây / domain | `http.rate_limit` |
 | Timeout | 30 giây | `http.timeout` |
 | Retry | 3 lần + fallback method | `src/core/retry.py` |
-| Đơn tiến trình | advisory lock `lock:scheduler`, stale 40′ | [pipeline_state](../tables/pipeline_state.md) |
+| Đơn tiến trình | file lock `capture.lock` cạnh DB (cả `--once` lẫn scheduler) + advisory lock `lock:scheduler`, stale 40′ | `src/core/proclock.py`, [pipeline_state](../tables/pipeline_state.md) |
 
 **Graceful degradation** — 1 domain lỗi không làm hỏng domain khác; lỗi notify/export không làm
 hỏng cycle. **Graceful shutdown** — SIGINT/SIGTERM ⇒ flush [DBWriter](db_writer.md), WAL

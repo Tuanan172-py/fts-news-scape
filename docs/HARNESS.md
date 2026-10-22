@@ -7,48 +7,49 @@ Maturity **H5**: durable layer (`harness.db`, `scripts/harness_cli.py`), scoring
 
 | Layer | Storage | Role |
 |-------|---------|------|
-| **Policy** | `docs/*.md` (this dir) | *How to work*. Stable. |
-| **Durable** | *(H2+, not built)* SQLite | *What happened*. At H1 = story files + SESSION-LATEST + inline trace notes. |
+| **Policy** | `docs/*.md` (this dir), `docs/knowledge/README.md`, `.agents/rules/*.md` | *How to work*. Stable. |
+| **Durable** | `harness.db` (SQLite), written by `scripts/harness_cli.py` | *What happened*: intake, story, decision, trace, backlog, metric rows. Story and ADR files stay the source; `doc sync` derives their rows. |
 
 A single request produces up to two outputs: a **product delta** (code/config/docs in `project/`) and a **harness delta** (a backlog/decision/doc that makes next time easier).
 
-## 2. Request-Class Loops & Per-Prompt Lifecycle
+## 2. Request-class loops and per-prompt lifecycle
 
-Mọi prompt/yêu cầu đều đi qua 3 bước cốt lõi: **Classify (3 Tiers) → Execute & Proof → Harness Closure**.
+Every prompt goes through three core steps: **Classify (3 tiers) → Execute & Proof → Harness Closure**.
 
 ```
-1. Classify   Phân loại vào 1 trong 3 cấp độ: Tiny / Normal / High-Risk. Ghi nhận intake qua harness_cli.
-2. Context    Đọc tài liệu theo ma trận docs/CONTEXT_RULES.md (ngân sách token tương ứng với Lane).
-3. Execute    - Tiny: Trả lời hoặc patch code trực tiếp.
-              - Normal: WIP=1, lập docs/stories/US-XXX.md, code và chạy unit/integ test.
-              - High-Risk: Dừng tại Hard Gate, lập ADR docs/decisions/, xin phê duyệt của người dùng.
-4. Proof      Chạy lệnh test cơ học và kiểm chứng.
-5. Trace      Ghi nhận bản ghi trace (Minimal / Standard / Detailed) vào harness.db qua harness_cli trace.
-6. Closure    BẮT BUỘC xuất Bảng Nghiệm thu Đóng phiên (Harness Closure Table).
+1. Classify   Put the request into one of three tiers: Tiny / Normal / High-Risk. Record the intake with harness_cli intake.
+2. Context    Read documents per the docs/CONTEXT_RULES.md matrix (token budget per lane).
+3. Execute    - Tiny: answer or patch directly.
+              - Normal: WIP=1, create docs/stories/US-NNN-<slug>.md with harness_cli doc new, code and run unit/integration tests.
+              - High-Risk: stop at the hard gate, write an ADR in docs/decisions/, ask the user for approval.
+4. Proof      Run the mechanical test command and check the result.
+5. Trace      Record a trace (Minimal / Standard / Detailed) in harness.db with harness_cli trace.
+6. Closure    Print the Harness Closure Table (mandatory).
 ```
 
-## 3. WIP = 1 per worktree (Interrupt Discipline)
+## 3. WIP = 1 per worktree (interrupt discipline)
 
 At most **one** story `in_progress` per git worktree, declared by its `branch` (ADR-0022). Other worktrees run in parallel with equal authority. On interruption inside a worktree:
 1. Do NOT abandon the current story silently.
 2. Set it `blocked` or `deferred` with a one-line reason (and `Depends On:` if applicable).
-3. Create/parks the new story, finish it, then resume the old one (read its notes first).
+3. Create or park the new story, finish it, then resume the old one (read its notes first).
 
 ## 4. Step 6 — Mandatory Harness Closure Protocol
 
-Ở cuối **MỖI CÂU TRẢ LỜI / PHIÊN THỰC THI**, Agent bắt buộc xuất bảng định tuyến lưu vết:
+At the end of **every answer or execution session** the agent prints the closure table. `harness_cli.py session close` prints it with these rows:
 
 ```markdown
-### 📋 Harness Closure Protocol
+### Harness Closure Protocol
 
 | File / Component | Updated? | Reason & Evidence |
 |:---|:---:|:---|
-| `harness.db` *(Trace & Intake)* | **Yes** | Ghi nhận Trace #ID (Lane: `Tiny/Normal/High-Risk`, Score: 1.0). |
-| `docs/stories/US-XXX.md` | **Yes / No** | [Lý do cụ thể: Tạo mới / Cập nhật / Không cần (tác vụ Tiny)] |
-| `docs/TEST_MATRIX.md` | **Yes / No** | [Lý do cụ thể: Chạy X tests passed / Chưa có test mới] |
-| `docs/decisions/NNNN-*.md` | **Yes / No** | [Lý do cụ thể: Lập ADR do đổi kiến trúc / Không chạm Hard Gate] |
-| `docs/SESSION-LATEST.md` | **Yes / No** | [Lý do cụ thể: Cập nhật trạng thái handoff / Không đổi] |
-| `docs/HARNESS_BACKLOG.md` | **Yes / No** | [Lý do cụ thể: Ghi nhận ma sát / Không phát sinh ma sát] |
+| `harness.db` *(Trace & Intake)* | **Yes** | Trace #ID (Lane: `tiny/normal/high-risk`, Outcome: completed). |
+| `docs/stories/US-NNN-<slug>.md` | **Yes / No** | Created / updated / not needed (Tiny task). |
+| `docs/TEST_MATRIX.md` | **Yes / No** | X tests passed / no new test. |
+| `docs/decisions/NNNN-*.md` | **Yes / No** | ADR written for an architecture change / no hard gate touched. |
+| `docs/SESSION-LATEST.md` | **Yes / No** | Handoff state updated / unchanged. |
+| `docs/HARNESS_BACKLOG.md` | **Yes / No** | Friction recorded / no friction. |
+| `Git Codebase Status` | **Clean / Dirty** | Commit and branch, `clean_for_closure`. |
 ```
 
 ## 5. Proof Rule
@@ -57,19 +58,18 @@ Status enum + proof tiers live in [TEST_MATRIX.md](TEST_MATRIX.md). A story reac
 
 ## 6. Decisions (High-Risk)
 
-When changing architecture / a public data contract / a hard-gate area → record an ADR: a file in [decisions/](decisions/). A trace note does NOT replace an ADR.
+When changing architecture / a public data contract / a hard-gate area → record an ADR with `python scripts/harness_cli.py doc new --type adr --title "..."`; files live in [decisions/](decisions/). A trace note does NOT replace an ADR. Accepted ADR bodies are frozen (K-R8).
 
 ## 7. Definition of Done
 
 **Done criteria:**
-1. Tác vụ hoàn thành đúng yêu cầu, có bằng chứng thực nghiệm rõ ràng.
-2. Trace bền vững đã được nạp vào `harness.db` (`score_trace` $\ge 0.75$, `score_context` $\ge 0.8$).
-3. Bảng **Harness Closure Protocol** được xuất đầy đủ ở cuối phản hồi.
+1. The task meets the request and has clear empirical evidence.
+2. A durable trace is recorded in `harness.db` (`score_trace` $\ge 0.75$, `score_context` $\ge 0.8$).
+3. The **Harness Closure Protocol** table is printed in full at the end of the response.
 
+## 8. Growth rule
 
-## 8. Growth rule + climb-to-H2 signal
-
-The harness grows from friction. Climb to H2 (SQLite + CLI, per `harness/HARNESS_BUILD_FROM_SCRATCH.md` Stage C) ONLY when markdown hurts: (a) can't query status across many stories; (b) the TEST_MATRIX hand table is stale/error-prone; (c) the trail is lost between sessions; (d) backlog needs predicted-vs-actual. Do not build H2 pre-emptively.
+The harness grows from friction. Add durable tooling only when a recorded friction shows that a document or table hurts: (a) status cannot be queried across stories; (b) a hand table goes stale; (c) the trail is lost between sessions; (d) backlog needs predicted-vs-actual. Record the friction first (`harness_cli.py backlog add`), then propose the change (`harness_cli.py propose`).
 
 ## 9. What an agent may / must ask
 

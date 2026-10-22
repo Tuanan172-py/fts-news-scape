@@ -14,10 +14,10 @@ evidence:
   - commit:8f13c70
   - commit:3b6003b
   - commit:bb47e44
-  - path:project/src/agent/dod.py
+  - path:project/src/agent/contract/dod.py
   - path:project/schemas/task-lifecycle-v1.yaml
   - path:project/tests/repo/test_no_agent_emulation.py
-  - path:project/scripts/verify_gold_quality.py
+  - "commit:ec4e7fe (deleted:project/scripts/verify_gold_quality.py)"
   - path:project/schemas/agent-instructions-v1.md
   - metric:monocle.db read-only 2026-09-08, 1,274 of 1,274 agent_outputs dod_pass=1, 3 distinct implication texts, 1,117 (87.7%) one template
   - operator:option D1 approved 2026-09-09, recorded in docs/OPEN-ITEMS.md item A2 at commit 3b6003b

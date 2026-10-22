@@ -1,8 +1,6 @@
 # Hướng dẫn Chạy Scripts & Quản lý Môi trường Venv Cục bộ (User Guide)
 
-> Lưu ý 2026-10-06: `verify_gold_quality.py --apply` thuộc lane Gold đã ngừng (ADR-0010). Lệnh đã chạy trên DB vận hành ngày 2026-09-09; không chạy lại. Xem `docs/knowledge/facts/adr-0004-d4-applied-to-operational-db.md`.
-
-> **Dành cho Người dùng & Vận hành viên:** Hướng dẫn các câu lệnh chuẩn để chạy pipeline, kiểm thử và xử lý dữ liệu với môi trường Python cách ly ngoài OneDrive tại `C:\venvs\news-scape`.
+> **Dành cho Người dùng & Vận hành viên:** Hướng dẫn các câu lệnh chuẩn để chạy pipeline, kiểm thử và xử lý dữ liệu với môi trường Python cách ly ngoài OneDrive tại `C:\venvs\news-scape`. Không tạo `.venv` cục bộ.
 
 ---
 
@@ -12,8 +10,11 @@
 | :--- | :--- |
 | **Đường dẫn Venv** | `C:\venvs\news-scape` |
 | **Python Binary** | `C:\venvs\news-scape\Scripts\python.exe` |
-| **Database Chính** | `C:\data\news-scape\monocle.db` (biến môi trường `MONOCLE_DB_PATH`) |
+| **Thư mục dữ liệu** | `C:\data\news-scape` (biến môi trường `MONOCLE_DATA_DIR`) |
+| **Database Chính** | `C:\data\news-scape\monocle.db` (ghi đè bằng `MONOCLE_DB_PATH`) |
 | **Working Tree** | `C:\src\news-scraper` |
+
+Mọi lệnh `scripts/...` chạy với thư mục hiện tại là `project/`.
 
 ---
 
@@ -31,56 +32,51 @@
 Khi thấy tiền tố `(news-scape)` xuất hiện ở đầu dòng lệnh, bạn có thể gõ ngắn gọn:
 ```powershell
 cd project
+python scripts/pipeline_radar.py status
 python scripts/run_once.py
-python scripts/verify_gold_quality.py --apply
-pytest tests/ -v
 ```
 
 ### Cách 2: Gọi Trực tiếp Đường dẫn Tuyệt đối (Không cần activate)
-Phù hợp khi chạy một lệnh đơn lẻ hoặc paste vào Task Scheduler:
+Phù hợp khi chạy một lệnh đơn lẻ:
 ```powershell
-# Chạy từ thư mục gốc
-C:\venvs\news-scape\Scripts\python project/scripts/run_once.py
-
-# Chạy kiểm thử chất lượng Gold
-C:\venvs\news-scape\Scripts\python project/scripts/verify_gold_quality.py
-
-# Áp dụng hạ cờ vào database
-C:\venvs\news-scape\Scripts\python project/scripts/verify_gold_quality.py --apply
+cd project
+& "C:\venvs\news-scape\Scripts\python.exe" scripts/pipeline_radar.py status
+& "C:\venvs\news-scape\Scripts\python.exe" scripts/article_run.py --where
 ```
 
 ### Cách 3: Tự động Kích hoạt trong VS Code / Cursor
 1. Nhấn tổ hợp phím `Ctrl + Shift + P`.
 2. Gõ `Python: Select Interpreter` $\rightarrow$ Nhập hoặc chọn: `C:\venvs\news-scape\Scripts\python.exe`.
-3. Từ lúc này, mọi tab Terminal mở trong VS Code sẽ **tự động kích hoạt** môi trường này. Bạn chỉ cần gõ:
-```powershell
-python scripts/run_once.py
-```
+3. Từ lúc này, mọi tab Terminal mở trong VS Code sẽ **tự động kích hoạt** môi trường này.
 
 ---
 
 ## 3. Các Lệnh Pipeline Thường dùng Hàng ngày
 
+Vận hành hằng ngày do `ops_daemon` đảm nhận ([ops-daemon.md](ops-daemon.md)). Các lệnh tay, chạy trong `project/` sau khi kích hoạt venv:
+
 ```powershell
-# 1. Chạy 1 chu kỳ cào tin & đồng bộ Silver
-C:\venvs\news-scape\Scripts\python project/scripts/run_once.py
+# 1. Xem điểm chạm và đúng một lệnh kế tiếp (đọc-only, chạy đầu tiên)
+python scripts/pipeline_radar.py status
 
-# 2. Kiểm kê tồn đọng L1 & Gold
-C:\venvs\news-scape\Scripts\python project/scripts/l1_backlog.py
+# 2. Trạng thái daemon: mức, đợt, breaker
+python scripts/ops_daemon.py status
 
-# 3. Gom lô bài viết chuyển giao cho Subagent
-C:\venvs\news-scape\Scripts\python project/scripts/l1_route.py --review missed --mini-batch 25
-C:\venvs\news-scape\Scripts\python project/scripts/agent_export.py --all
+# 3. Chạy 1 chu kỳ cào tin & đồng bộ Silver
+python scripts/run_once.py
 
-# 4. Giao hàng cho người dùng (Xuất file final.csv)
-C:\venvs\news-scape\Scripts\python project/scripts/compile_users.py --all
-C:\venvs\news-scape\Scripts\python project/scripts/run_user_workflow.py --date today
+# 4. Đợt Article Lane tay (chỉ khi daemon không chạy đợt; xem ops-daemon-reference.md §7)
+python scripts/article_run.py --wave <mã> --date <YYYY-MM-DD> --limit <n> --batch 100
+python scripts/article_run.py --wave <mã> --finish
 
-# 5. Xuất snapshot database an toàn lên SharePoint để review
-C:\venvs\news-scape\Scripts\python scripts/db_snapshot.py
+# 5. Giao hàng cho người dùng: C:\data\news-scape\users\output\<user>\<YYYY-MM-DD>.xlsx
+python scripts/write_user_output.py --date today
 
-# 6. Chạy bộ kiểm thử tự động
-C:\venvs\news-scape\Scripts\python -m pytest project/tests/ -q
+# 6. Xuất bản ngày hôm qua lên SharePoint sandbox (xem publisher.md)
+python scripts/publish.py --date yesterday --dry-run
+
+# 7. Chạy kiểm thử của một package (đọc trước docs/knowledge/facts/tests-must-not-write-operational-db.md)
+python -m pytest tests/<package>/ -q
 ```
 
 ---
@@ -89,9 +85,7 @@ C:\venvs\news-scape\Scripts\python -m pytest project/tests/ -q
 
 Khi cần cài thêm gói thư viện mới:
 ```powershell
-# Cài đặt gói vào venv cục bộ
+# Cài đặt gói vào venv
 C:\venvs\news-scape\Scripts\pip install <package_name>
-
-# Cập nhật danh sách vào requirements.txt để đồng bộ cho các máy khác
-C:\venvs\news-scape\Scripts\pip freeze > project/requirements.txt
 ```
+Rồi thêm tay một dòng `<package_name>>=<phiên bản>` vào `project/requirements.txt` (file có chú thích theo từng dòng; không ghi đè bằng `pip freeze`).

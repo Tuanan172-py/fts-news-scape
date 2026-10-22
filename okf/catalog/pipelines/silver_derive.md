@@ -23,10 +23,11 @@ sources:
   - id: storage-design
     resource: project/docs/design/07-storage-layers-and-change-detection.md
     title: Storage layers & change detection
-sources_last_checked: 2026-09-07
+sources_last_checked: 2026-10-22
 ---
 
-**Vòng 2 — Standardize**: biến raw Bronze thành "clean base" và đóng gói thành việc cho agent.
+**Vòng 2 — Standardize**: biến raw Bronze thành "clean base" và đóng gói thành work-package
+cho [Article Lane](article_lane.md).
 Toàn bộ là **hàm thuần của Bronze** — xoá Silver rồi chạy lại cho kết quả giống hệt (không dùng
 `now()`; `built_at` lấy từ `fetch_ts`).[^silver-builder]
 
@@ -45,7 +46,9 @@ meta.json + raw.html
 ```
 
 Hai **hard gate** (`silver-v1`, `work-package-v1`) và hai **held state**
-(`SELECTOR_BROKEN`, `TEMPLATE_DRIFT`) là toàn bộ lý do một bài không tới tay agent.[^storage-design]
+(`SELECTOR_BROKEN`, `TEMPLATE_DRIFT`) là toàn bộ lý do một bài không vào hàng đợi.[^storage-design]
+Artifact derive lỗi được ghi vào `silver_failures`; watermark không vượt qua hàng còn
+`dead_letter = 0` (ADR 0007).
 
 # Chế độ tăng dần (prod)
 
@@ -64,7 +67,7 @@ Gọi bởi [Morninger](morninger.md) job `re-derive` mỗi 30′.
 # Chế độ full-scan (bảo trì)
 
 ```powershell
-.venv\Scripts\python.exe scripts\rederive_from_bronze.py [domain] [YYYYMMDD]
+C:\venvs\news-scape\Scripts\python.exe scripts\rederive_from_bronze.py [domain] [YYYYMMDD]
 ```
 
 Dùng **sau khi** bump schema hoặc sửa parser — quét lại toàn bộ Bronze, bỏ qua watermark. Đây là
@@ -76,7 +79,7 @@ Change-detection cần ≥2 lần capture cùng URL, mà chu kỳ thường ch�
 capture thứ hai:
 
 ```powershell
-.venv\Scripts\python.exe scripts\refresh_watchlist.py [limit] [domain]
+C:\venvs\news-scape\Scripts\python.exe scripts\refresh_watchlist.py [limit] [domain]
 ```
 
 # Quan hệ
@@ -84,7 +87,7 @@ capture thứ hai:
 - Đọc [Bronze raw store](../datasets/bronze_raw_html.md)
 - Ghi [Silver & Work Packages](../datasets/silver_work_packages.md),
   [article_versions](../tables/article_versions.md), [work_items](../tables/work_items.md)
-- Tiếp nối bởi [Agent Handoff](agent_handoff.md)
+- Tiếp nối bởi [Article Lane](article_lane.md)
 
 # Metrics
 

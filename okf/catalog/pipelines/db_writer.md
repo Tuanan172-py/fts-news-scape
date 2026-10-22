@@ -17,7 +17,7 @@ sources:
   - id: orchestrator
     resource: project/src/orchestrator.py
     title: Orchestrator — enqueue/flush/stop
-sources_last_checked: 2026-09-07
+sources_last_checked: 2026-10-22
 ---
 
 `DBWriter` là **daemon thread duy nhất** ghi bảng [articles](../tables/articles.md). Scraper

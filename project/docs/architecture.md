@@ -1,6 +1,6 @@
 # Architecture & Technical Decisions
 
-Cập nhật: 2026-10-21 (nền tảng Phase 1: SQLite-only, standalone).
+Cập nhật: 2026-10-22 (nền tảng Phase 1: SQLite-only, standalone).
 
 > 📍 File này mô tả **ingestion Phase-1** (scrape → dedup → SQLite). Toàn cảnh
 > end-to-end 6 lớp (điều khiển → Bronze → Silver → Article Lane → Lakehouse → harness) xem
@@ -33,8 +33,8 @@ Cập nhật: 2026-10-21 (nền tảng Phase 1: SQLite-only, standalone).
             └────────┬─────────┘
                      ▼
             ┌──────────────────┐
-            │   DEDUP          │  Lớp 1: SHA-256(url+title) — bảng seen_articles
-            │                  │  Lớp 2: fuzzy title cross-domain (Phase 4)
+            │   DEDUP          │  sổ discovered_urls trước mọi lọc; SHA-256(url+title) — bảng seen_articles
+            │                  │  (không lọc mờ theo tiêu đề, ADR-0013)
             └────────┬─────────┘
                      ▼
             ┌──────────────────┐
@@ -54,11 +54,11 @@ Cập nhật: 2026-10-21 (nền tảng Phase 1: SQLite-only, standalone).
 | `src/core/models.py`         | `Article` (schema v2, raw HTML + text), `ScrapeResult`, `sha256_hash`                                                          |
 | `src/core/base_scraper.py`   | `BaseScraper` ABC — template method `run()`: fetch → parse → dedup → enrich. Lỗi gom vào `errors`, không crash pipeline |
 | `src/core/config.py`         | Config-driven:`config/domains/<name>.yaml` per domain, settings/watchlist/secrets                                                  |
-| `src/core/logging.py`        | loguru:`logs/monocle.log` rotation 50MB, retention 14d                                                                             |
+| `src/core/logging.py`        | loguru:`<DATA_ROOT>/logs/monocle.log` rotation 50MB, retention 14d                                                                 |
 | `src/crawler/http_client.py` | Rate limit 3s/domain, retry 429/5xx, UA rotation, get/get_json/post_json                                                             |
-| `src/db/store.py`            | SQLite WAL (`journal_mode=WAL, busy_timeout=5000, synchronous=NORMAL`), UNIQUE url + url_title_hash                                |
+| `src/db/store.py`            | SQLite WAL (`journal_mode=WAL, busy_timeout=30000, synchronous=NORMAL`), UNIQUE url + url_title_hash                                |
 | `src/db/writer.py`           | DBWriter — single-writer thread, graceful shutdown (flush queue)                                                                    |
-| `src/db/dedup.py`            | Bảng`seen_articles` cùng DB (migrate từ JSON cũ)                                                                               |
+| `src/db/dedup.py`            | Bảng`seen_articles` + sổ khám phá (`discover`, `src/db/registry.py`) cùng DB                                                   |
 | `src/scrapers/`              | Registry`@register("name")` — thêm domain = 1 module + 1 yaml, không sửa core                                                  |
 
 ## Technical Decision Records
@@ -66,17 +66,19 @@ Cập nhật: 2026-10-21 (nền tảng Phase 1: SQLite-only, standalone).
 ### TDR-001: RSS làm primary method
 
 RSS > reverse API > HTML (spec §8). RSS coverage rộng, setup nhanh, ít vỡ.
-API cho nguồn không có RSS đủ sâu (CafeF symbol-based, TNCK, FireAnt).
+API cho nguồn không có RSS đủ sâu (CafeF symbol-based, TNCK, FireAnt). Ngoại lệ HTML listing: baodautu.
+Từ 2026-09-07 mọi nguồn bật đều ghi Bronze ([design/03-source-strategy.md](design/03-source-strategy.md)).
 
 ### TDR-002: trafilatura cho article extraction
 
 newspaper3k abandoned. trafilatura v2 maintained, hỗ trợ tiếng Việt tốt.
 Extractor trả cả raw HTML lẫn text — không throw away data.
 
-### TDR-003: Dedup 2 lớp
+### TDR-003: Dedup 2 lớp (lớp 2 đã gỡ)
 
-Lớp 1: SHA-256(url+title) exact — bảng `seen_articles`.
-Lớp 2: fuzzy title match cross-domain (rapidfuzz, Phase 4).
+Lớp 1: SHA-256(url+title) exact — bảng `seen_articles`; còn hiệu lực.
+Lớp 2 (fuzzy title cross-domain, rapidfuzz) đã gỡ theo ADR-0013 vì loại nhầm bài; trùng nội dung được
+cụm hoá sau Bronze (`src/pipeline/story_cluster.py`, ADR-0016), không xoá bài.
 
 ### TDR-004: SQLite-only, WAL, single-writer (2026-07-24)
 

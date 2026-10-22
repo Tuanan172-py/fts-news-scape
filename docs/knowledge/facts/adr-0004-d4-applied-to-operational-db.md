@@ -4,7 +4,7 @@ type: fact
 title: ADR-0004 D4 flag applied to the operational DB
 status: active
 created: 2026-10-06
-updated: 2026-10-06
+updated: 2026-10-22
 verified: 2026-10-06
 lang: en
 authors: [claude-opus-5-5]
@@ -14,7 +14,7 @@ evidence:
   - commit:31d539d
   - commit:4738f66
   - commit:39c9898
-  - path:project/scripts/verify_gold_quality.py
+  - "commit:ec4e7fe (deleted:project/scripts/verify_gold_quality.py)"
   - path:C:/data/news-scape/archive/20261005-cleanup/db-backups/monocle_backup_260909_pre_a2.db
   - path:C:/data/news-scape/archive/20261005-cleanup/db-backups/monocle_backup_pre_adr0007_260917.db
   - metric:pre-A2 backup, agent_outputs 1,274 rows, 1,274 dod_pass=1, dod_reasons all empty
@@ -38,11 +38,11 @@ summary: The verify_gold_quality.py --apply step of ADR-0004 D4 ran on 2026-09-0
 ## Why
 
 - The project ran on two machines from 2026-09-08 (commit 4738f66). The dev machine held a DB copy that never received the flag.
-- `project/docs/operations/pipeline-backlog.html` measured that dev copy and reported `dod_pass=1`, which looks like a contradiction.
+- `project/docs/archive/operations/pipeline-backlog.html` measured that dev copy and reported `dod_pass=1`, which looks like a contradiction.
 - An agent trusting A3 or that page could rerun `--apply` or "restore" flags on the wrong file.
 
 ## How to Apply
 
 - Treat ADR-0004 D4 as applied on the DB lineage now at `C:/data/news-scape/monocle.db`.
-- MUST NOT rerun `verify_gold_quality.py --apply` to fix a doc mismatch. Check the operational DB read-only first.
+- `verify_gold_quality.py` is deleted (recoverable with `git show ec4e7fe:project/scripts/verify_gold_quality.py`). MUST NOT restore and rerun it to fix a doc mismatch. Check the operational DB read-only first.
 - When a doc reports DB state, it MUST name the DB file it measured, because dev copies and backups differ.

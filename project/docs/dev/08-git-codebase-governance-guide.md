@@ -1,5 +1,7 @@
 # Hướng Dẫn Phương Thức Vận Hành Git & Quản Trị Codebase (08-Guide)
 
+Cập nhật: 2026-10-22.
+
 Tài liệu này quy định phương thức làm việc chuẩn, các bước thao tác bắt buộc và cơ chế kiểm soát chất lượng tự động sau khi tích hợp quy trình quản trị Git và Codebase vào khung Harness.
 
 ---
@@ -80,8 +82,10 @@ Lệnh này quét đồng thời 7 tiêu chí:
 Kết quả trả về danh mục chi tiết từng tệp vi phạm và cảnh báo từ cấm thuộc Rule 06.
 
 #### Kênh C: Chạy Toàn Bộ Unit Test Suite
+Chạy từ `project/` (cách chạy và lưu ý `tests/repo/test_cli_entrypoints.py`: [04-testing.md](04-testing.md)):
 ```powershell
-& "C:\venvs\news-scape\Scripts\python.exe" -m pytest project/tests/ -q
+cd project
+& "C:\venvs\news-scape\Scripts\python.exe" -m pytest tests/ -q
 ```
 Yêu cầu bắt buộc: 100% các ca kiểm thử chính thức phải đạt trạng thái PASS.
 
@@ -106,8 +110,9 @@ Yêu cầu bắt buộc: 100% các ca kiểm thử chính thức phải đạt t
 
 ### Bước 5: Đẩy Mã Nguồn & Nghiệm Thu Đóng Phiên (Harness Closure)
 
-1. **Đẩy mã nguồn lên remote repository**:
+1. **Đẩy mã nguồn lên hai remote `fpa` và `origin`**:
    ```powershell
+   git push fpa <tên-nhánh>
    git push origin <tên-nhánh>
    ```
 2. **Lập Bảng Nghiệm Thu Đóng Phiên (Harness Closure Protocol)**:
@@ -125,16 +130,7 @@ Yêu cầu bắt buộc: 100% các ca kiểm thử chính thức phải đạt t
 ### Sự cố 1: Phát Hiện Tệp Xung Đột Đồng Bộ OneDrive (`-HOSTNAME`)
 
 - **Dấu hiệu**: Lệnh `audit --codebase` báo lỗi tại mục `OneDrive Conflict Files` hoặc thư mục xuất hiện tệp có đuôi `-DESKTOP-*`, `-FPA-*`.
-- **Biện pháp xử lý chuẩn**:
-  1. Chạy chế độ kiểm tra trước (Dry-run):
-     ```powershell
-     & "C:\venvs\news-scape\Scripts\python.exe" project/scripts/maintenance/clean_onedrive_conflicts.py
-     ```
-  2. Thực thi xử lý promote và dọn dẹp an toàn:
-     ```powershell
-     & "C:\venvs\news-scape\Scripts\python.exe" project/scripts/maintenance/clean_onedrive_conflicts.py --apply
-     ```
-  Script tự động đối chiếu thời gian sửa đổi và SHA-256; bản mới hơn sẽ được thăng hạng thành tệp chính thức và bản thừa sẽ được xóa bỏ an toàn.
+- **Biện pháp xử lý chuẩn**: Cây làm việc chuẩn là `C:/src/news-scraper` ngoài OneDrive (ADR-0024), nên tệp conflict chỉ xuất hiện khi có người sửa trong cây OneDrive cũ. So từng cặp bằng `git diff --no-index <tệp> <tệp-HOSTNAME>`, giữ bản đúng, xoá bản thừa bằng tay. Script dọn tự động cũ đã gỡ.
 
 ### Sự cố 2: Lỗi Cú Pháp AST Khi Quét Codebase
 
@@ -168,6 +164,6 @@ Yêu cầu bắt buộc: 100% các ca kiểm thử chính thức phải đạt t
 - [ ] Không có hơn 1 Story ở trạng thái `in_progress` trong `harness.db`.
 - [ ] Toàn bộ tệp Python biên dịch thành công qua `ast.parse()`.
 - [ ] Lệnh `python scripts/harness_cli.py audit --codebase` đạt `health_score >= 0.85` hoặc không có lỗi nghiêm trọng.
-- [ ] Bộ kiểm thử `pytest project/tests/` đạt 100% PASS.
-- [ ] Không commit tệp nhị phân dữ liệu lớn hoặc tệp môi trường `.venv` vào Git.
+- [ ] Bộ kiểm thử `python -m pytest tests/ -q` (cwd `project/`) đạt 100% PASS.
+- [ ] Không commit tệp nhị phân dữ liệu lớn hoặc venv vào Git (venv chuẩn `C:/venvs/news-scape`, ngoài repo).
 - [ ] Báo cáo nghiệm thu có Bảng Đóng Phiên đầy đủ thông tin.

@@ -4,14 +4,14 @@ type: fact
 title: LLM owns all semantic work
 status: active
 created: 2026-09-18
-updated: 2026-10-06
-verified: 2026-09-18
+updated: 2026-10-22
+verified: 2026-10-22
 lang: en
 authors: [claude-opus-5-5]
 adr: [ADR-0010]
 evidence:
   - "path: AGENTS.md"
-  - "path: project/scripts/article_pack.py"
+  - "path: project/src/article_lane/pack.py"
   - "operator: 2026-09-18 LLM content processing is the key of the project; code must not replace it"
 summary: The LLM alone recognizes entities and summarizes; code only does mechanical work such as catalog lookup, packing, schema expansion and token measurement.
 ---
@@ -34,4 +34,4 @@ summary: The LLM alone recognizes entities and summarizes; code only does mechan
 
 - When proposing token savings, offer only levers such as retrieval, expanders, caching and output compaction.
 - Route every decision that carries meaning through the LLM.
-- Deterministic matchers MAY check model output but MUST NOT count as analysis; `ANALYZED_L1` in `project/scripts/article_pack.py` excludes `l1_source = 'code_first'`.
+- Deterministic matchers MAY check model output but MUST NOT count as analysis; `ANALYZED_L1` in `project/src/article_lane/pack.py` excludes `l1_source = 'code_first'`.

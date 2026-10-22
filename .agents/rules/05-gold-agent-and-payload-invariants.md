@@ -14,7 +14,7 @@ Hệ thống phân chia ranh giới tuyệt đối thành 2 vùng:
 - **Silver**: Chuẩn hóa, bóc tách cấu trúc DOM, phát hiện biến đổi (SimHash/Change Detection) và tách mảng đoạn văn bản `p[]`.
 - **Priority Sorter & Packaging**: Quét nhận diện thực thể Code-First (`{code_entities}`), chấm điểm ưu tiên, đóng gói Mega-Batch (100 bài/batch) dưới dạng **Compact JSON** (`json.dumps(..., separators=(',', ':'))`).
 - **Expander & Reconciliation**: Ánh xạ đối soát Intent chéo (`BOTH`, `LLM_ONLY`, `CODE_ONLY`), bù đắp citations nguyên văn từ chỉ số đoạn `c: [0, 2]`, kiểm tra DoD Schema, nạp database SQLite (`monocle.db`).
-- **Delivery First**: Phân tuyến và xuất file Excel giao hàng sớm cho User ngay sau Batch 1 (`users/output/<user>/<date>.xlsx`).
+- **Delivery First**: Phân tuyến và xuất file Excel giao hàng sớm cho User ngay sau Batch 1 (`<DATA_ROOT>/users/output/<user>/<date>.xlsx`).
 
 ### B. Vùng Trí Tuệ Thống Nhất (Unified Cognitive Agent — `agent_article`):
 - Không còn phân biệt L1 vs GOLD; một Agent duy nhất đảm nhận trọn vẹn cả hai lớp nghiệp vụ trong **1 lượt duy nhất (Single-turn, Zero-tool)**:
@@ -32,7 +32,7 @@ Nhằm tối ưu tốc độ, triệt tiêu 100% rác DOM và ngăn chặn bùng
    - Bảo đảm không có bất kỳ dòng vật lý nào dài quá 2.000 ký tự làm kích hoạt lỗi cắt dòng (line truncation) của parser, triệt tiêu nguyên nhân gốc khiến Agent tự mở vòng lặp Grep.
 2. **Bảo Toàn Văn Bản Trọn Vẹn & Tách Đoạn Kỹ Thuật (Full-Fidelity Paragraphs & Anti-Line-Truncation)**:
    - **Đọc trọn nội dung**: Packet mang toàn bộ đoạn văn nguyên văn của bài báo (`DEFAULT_MAX_TOKENS_PER_ARTICLE = 0`). Tuyệt đối không dùng regex hay heuristic để lọc bỏ các đoạn thân bài; toàn bộ việc phân tích ngữ nghĩa là thẩm quyền của mô hình.
-   - **Tách đoạn kỹ thuật**: Đối với các đoạn dài vượt trần an toàn của công cụ đọc (`MAX_PARAGRAPH_CHARS = 1800`), hệ thống tách thành các mảnh con tại ranh giới câu (`split_long_paragraph`), bảo toàn 100% chữ nguyên văn và chống tràn dòng parser.
+   - **Tách đoạn kỹ thuật**: Đối với các đoạn dài vượt trần an toàn của công cụ đọc (`MAX_PARAGRAPH_CHARS = 1600` trong `src/agent/packet/distill.py`), hệ thống tách thành các mảnh con tại ranh giới câu (`split_long_paragraph`), bảo toàn 100% chữ nguyên văn và chống tràn dòng parser.
 3. **Citations bằng Chỉ Số Đoạn (`c: [0, 2]`)**:
    - Agent chỉ phát ra số thứ tự của các đoạn văn bản chứa chứng cứ.
    - Script Expander bên ngoài (0 token) tự động trích xuất chuỗi con nguyên văn từ `p0`, `p2` $\rightarrow$ Bảo đảm 100% vượt qua cổng DoD mà tiết kiệm hàng chục nghìn output token.
@@ -44,7 +44,7 @@ Nhằm tối ưu tốc độ, triệt tiêu 100% rác DOM và ngăn chặn bùng
 Cố định quy chuẩn **100 bài / batch**:
 
 1. **TIER 1 — Delivery First (Batch 1, 100 bài)**:
-   - Bài khớp Ticker/Alias nằm trong Watchlist active (`manifest.yaml`, e.g., user `AnPT`) hoặc biến động vĩ mô khẩn (NHNN, lãi suất điều hành, tỷ giá, GDP, CPI, thuế tự vệ).
+   - Bài khớp Ticker/Alias nằm trong Watchlist active (`<DATA_ROOT>/subscriptions/manifest.yaml`, e.g., user `AnPT`) hoặc biến động vĩ mô khẩn (NHNN, lãi suất điều hành, tỷ giá, GDP, CPI, thuế tự vệ).
    - **Quy trình**: Đóng gói ngay vào **Batch 1** $\rightarrow$ LLM chạy $\rightarrow$ Expander đối soát $\rightarrow$ **Kích hoạt ngay `write_user_output.py` để xuất bản file Excel giao cho người dùng trước trong 2–3 phút**.
 2. **TIER 2 & 3 — Background Queue (Batch 2..N, 100 bài/batch)**:
    - Cổ phiếu VN30 ngoài watchlist, báo cáo tài chính quý/năm, công bố thông tin hành chính, tin cổ đông nhỏ, tin thị trường chung.
@@ -61,7 +61,7 @@ Cố định quy chuẩn **100 bài / batch**:
    - `BOTH`: Cả Code và LLM cùng tìm thấy (Độ tin cậy cao nhất).
    - `LLM_ONLY`: LLM phát hiện ngữ nghĩa sâu mà Code không có từ khóa (Đưa vào `unlisted_candidates` để mở rộng catalog).
    - `CODE_ONLY`: Khớp từ khóa máy móc.
-3. **Minh bạch hóa trên Deliverable Excel (`users/output/<user>/<date>.xlsx`)**:
+3. **Minh bạch hóa trên Deliverable Excel (`<DATA_ROOT>/users/output/<user>/<date>.xlsx`)**:
    - Bổ sung 2 cột riêng biệt `intent_llm` và `intent_code` kèm cột phân loại nguồn gốc `intent_source`.
 
 ---
@@ -72,18 +72,9 @@ Cố định quy chuẩn **100 bài / batch**:
 
 ---
 
-## 6. Chính Sách Định Tuyến OpenRouter Thử Nghiệm (OpenRouter Zero-Cost Testing Invariants)
+## 6. OpenRouter trong thứ hạng runner (ADR-0026.D3, ADR-0017)
 
-Trong giai đoạn thử nghiệm độc lập API OpenRouter (chưa tích hợp đa provider vào cùng workflow):
-
-1. **Cặp Đôi Mô Hình Thuần OpenRouter $0 (Pure OpenRouter Dual-Model)**:
-   - **Tầng 1 (Primary — $0)**: `stealth/space-bunny-alpha` (Ưu tiên số 1 cho bóc tách thực thể sâu, tóm tắt và phân tích hàm ý thị trường; tận dụng context 1M và chi phí $0).
-   - **Tầng 2 (Fallback — $0)**: `openrouter/free` (Chốt chặn tự động điều hướng sang cụm server 550B rảnh rỗi như Nemotron 550B khi Stealth bảo trì hoặc nghẽn tải, triệt tiêu 100% lỗi HTTP 429 upstream).
-   - *Phạm vi giai đoạn hiện tại*: Tuyệt đối không tích hợp hay gọi chéo các provider trả phí khác (DeepSeek, OpenAI); chỉ đánh giá và khai thác độc lập năng lực của OpenRouter API.
-
-2. **Quy Chuẩn Tham Số Chống Cắt Cụt JSON (Anti-Truncation Contract)**:
-   - **BẮT BUỘC `max_tokens >= 1000`** (khuyến nghị `1200`): Thực nghiệm chứng minh các mô hình phân tích sâu viết tiếng Việt chi tiết; nếu đặt `max_tokens <= 600` sẽ bị cắt cụt JSON giữa chừng gây hỏng pipeline.
-   - **BẮT BUỘC `temperature = 0.1`**: Đảm bảo tính tất định cao nhất, triệt tiêu ảo giác (hallucination).
-   - **Bảo Vệ Schema Tại Cổng**: Luôn áp dụng hàm bóc tách regex làm sạch Markdown codeblock và kiểm định đúng cấu trúc compact `v2-lean` gồm 8 trường (`i`, `e`, `s`, `k`, `im`, `sn`, `ts`, `c`) trước khi chuyển tiếp cho Expander; tuyệt đối không yêu cầu hay kiểm định các trường đã ngừng áp dụng (`materiality_score`, `event_type`, `impact_area`).
-
-
+1. **Thứ hạng**: runner LLM của Article Lane xếp `agy` (chính), rồi `opencode run` (`--runner opencode`), rồi OpenRouter API (`--runner openrouter`, `src/agent/runners/openrouter_runner.py`). Claude không bao giờ là runtime thay thế.
+2. **Cùng một hợp đồng cho mọi provider**: mọi runner nhận cùng prefix, cùng packet và phải trả bản ghi `article-compact-v2` gồm 8 trường (`i`, `e`, `s`, `k`, `im`, `sn`, `ts`, `c`), theo `project/schemas/article-compact-v2.schema.json`. Tham số lấy mẫu dùng chung `SAMPLING` trong `src/agent/contract/article_contract.py`; không đặt tham số riêng cho từng provider.
+3. **Model và trần đầu ra mặc định**: đọc ở `DEFAULT_MODEL` và `DEFAULT_MAX_TOKENS` của `openrouter_runner.py`, không chép con số vào tài liệu.
+4. **Bảo vệ schema tại cổng**: bóc rào Markdown codeblock và kiểm cấu trúc compact trước khi chuyển cho Expander; tuyệt đối không yêu cầu hay kiểm định các trường đã ngừng áp dụng (`materiality_score`, `event_type`, `impact_area`).

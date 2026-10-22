@@ -14,7 +14,7 @@ Nền tảng dữ liệu/cộng đồng chứng khoán. Tin **đã gắn sẵn m
 | **Scraper** | `FireAntScraper` (`src/scrapers/fireant.py`), registry key `fireant` |
 | **Auth** | `config/secrets.yaml` → `fireant_token` (JWT, exp 2036) |
 | **Volume** | 30 mã × 20 = **600 item/cycle** (phần lớn trùng → dedup) |
-| **Bronze** | `data/raw_html/fireant.vn/<yyyymmdd>/<hash>.html` — **nội dung là JSON** |
+| **Bronze** | `<DATA_ROOT>/raw_html/fireant.vn/<yyyymmdd>/<hash>.html` — **nội dung là JSON** |
 | **Trạng thái** | enabled 2026-09-07 |
 
 ## 2. ⚠️ Bronze là JSON, không phải HTML
@@ -53,7 +53,7 @@ Authorization: Bearer <token>
 - Thiếu token / còn `PASTE_...` → scraper **tự disable**, không gọi API.
 - 401/403 → **self-disable ngay trong cycle** (không hammer API) + ERROR log.
   **Không ghi Bronze** cho response lỗi auth — nó không phải nội dung bài.
-- Cập nhật token: sửa tay `config/secrets.yaml` (xem `docs/skills/fireant.md`).
+- Cập nhật token: sửa tay `config/secrets.yaml` (xem `project/docs/skills/fireant.md`).
 
 ## 5. ⚠️ TUÂN THỦ — cần owner xác nhận
 
@@ -85,7 +85,7 @@ Nếu không → đặt lại `enabled: false`. Watch point `fa-w5` theo dõi ro
 
 ## 6. Bảo trì
 
-- `python scripts/verify_quality.py fireant.vn` · `python scripts/domain_check.py --report fireant`
+- `python -m src.monitor.health` (trạng thái, lỗi liên tiếp trong `scraper_heartbeat`) · `python scripts/pipeline_radar.py status`
 - 600 item/cycle nghe nhiều nhưng phần lớn bị dedup chặn; chi phí thật ở
   `max_details_per_cycle: 30`.
 - `symbols` lấy từ `taggedSymbols` của API (đã gắn sẵn) → health threshold cao (0.8),

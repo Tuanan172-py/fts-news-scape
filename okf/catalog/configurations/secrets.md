@@ -17,7 +17,7 @@ sources:
   - id: fireant
     resource: project/src/scrapers/fireant.py
     title: FireAnt scraper — Bearer token
-sources_last_checked: 2026-09-07
+sources_last_checked: 2026-10-22
 ---
 
 `config/secrets.yaml` giữ token của API ngoài. File nằm trong `.gitignore`; chỉ template
@@ -45,9 +45,9 @@ không crash; cập nhật thủ công.[^fireant]
 
 # Bối cảnh hiện tại
 
-`fireant` đang **disabled** trong [domain configs](domain_sources.md) (thuộc nhóm chưa có Bronze
-capture), nên thiếu `secrets.yaml` **không** chặn vận hành hằng ngày. File chỉ cần thiết khi bật
-lại FireAnt.
+`fireant` đang **enabled** trong [domain configs](domain_sources.md) (REST API + Bronze capture
+JSON). Thiếu `secrets.yaml` hoặc token hết hạn chỉ làm scraper FireAnt tự tắt, các domain khác
+vẫn chạy.
 
 # Liên quan
 

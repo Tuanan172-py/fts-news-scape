@@ -1,8 +1,8 @@
 ---
 type: SQLite Table
 title: seen_articles
-description: Cache khử trùng lặp lớp 1 — hash SHA-256(url+title) đã đi qua pipeline.
-resource: "project/data/monocle.db (table: seen_articles)"
+description: Cache khử trùng lặp — hash SHA-256(url+title) đã đi qua pipeline, tra trực tiếp trong SQLite.
+resource: "<DATA_ROOT>/monocle.db (table: seen_articles)"
 tags: [deduplication, sqlite, internal]
 status: stable
 generated:
@@ -10,34 +10,35 @@ generated:
 sources:
   - id: dedup
     resource: project/src/db/dedup.py
-    title: DedupCache — 2-layer dedup
+    title: DedupCache — exact hash + sổ phát hiện URL
   - id: db-store
     resource: project/src/db/store.py
     title: ArticleStore schema DDL
   - id: data-model
     resource: project/docs/dev/02-data-model-and-db.md
     title: Data Model & DB Design
-sources_last_checked: 2026-09-07
+sources_last_checked: 2026-10-22
 ---
 
-Bảng `seen_articles` là **lớp 1** của cơ chế dedup. Mỗi bài đi qua pipeline sinh 1 hash
+Bảng `seen_articles` là lớp dedup **exact** của capture. Mỗi bài đi qua pipeline sinh 1 hash
 SHA-256(`url` + `title`); hash đã có ⇒ bỏ qua, không fetch trang chi tiết, không ghi
 [articles](articles.md).[^dedup]
 
-Dedup 2 lớp:[^dedup]
-1. **Lớp 1 (exact)** — `seen_articles.hash` + UNIQUE `articles.url_title_hash`.
-2. **Lớp 2 (fuzzy)** — so tiêu đề đã normalize (`title_norm`) bằng `rapidfuzz`, bật qua
-   config domain `fuzzy_dedup: true`; bắt trường hợp cùng bài nhưng URL khác (tracking params).
+Cơ chế:[^dedup]
+1. **Exact** — `DedupCache.is_duplicate()` tra `seen_articles.hash` bằng một `SELECT` trên SQLite;
+   `articles.url_title_hash` UNIQUE là chốt cuối.
+2. **Định danh URL** — `DedupCache.discover()` ghi sổ phát hiện `discovered_urls` / `url_aliases`
+   (ADR 0013) trước mọi bước lọc; biến thể URL quy về cùng `url_canonical` (`src/core/urlnorm.py`).
 
-`DedupCache` nạp toàn bộ hash vào memory đầu chu kỳ để tra cứu O(1), ghi ngược lại DB trong
-cùng SQLite (WAL-safe) — không còn file JSON như bản cũ.[^dedup]
+Không có lớp so tiêu đề mờ: `title_norm` được lưu nhưng không dùng để loại trùng. File
+`dedup_cache.json` cũ chỉ còn được đọc một lần để chuyển vào bảng.
 
 # Schema
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
 | `hash` | TEXT | PRIMARY KEY | SHA-256(`url` + `title`) |
-| `title_norm` | TEXT | | Tiêu đề đã normalize (lowercase, bỏ dấu) — đầu vào fuzzy |
+| `title_norm` | TEXT | | Tiêu đề đã normalize (`normalize_title`) |
 | `source_domain` | TEXT | | Tên miền nguồn |
 | `seen_at` | REAL | | Epoch seconds thời điểm đánh dấu |
 

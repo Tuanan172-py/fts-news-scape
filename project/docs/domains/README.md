@@ -1,6 +1,6 @@
 # Domains — Ma trận nguồn tin
 
-Cập nhật: **2026-09-07** · 24 domain, **8 enabled / 16 disabled**. Mỗi domain = 1 file
+Cập nhật: **2026-10-22** · 24 domain, **8 enabled / 16 disabled** (đếm lại `config/domains/*.yaml`). Mỗi domain = 1 file
 `config/domains/<name>.yaml`.
 
 > ⚠️ **Đọc kỹ cột Enabled — bảng này từng sai suốt 2026-08→09** (ghi "22 enabled" trong khi thực
@@ -22,7 +22,7 @@ Cập nhật: **2026-09-07** · 24 domain, **8 enabled / 16 disabled**. Mỗi do
 | 1 | cafef | API | vi | ✅ | REST + capture | – | `Type=1` bắt buộc; `/Date(ms+tz)/`; theo watchlist |
 | 2 | **fireant** | API | vi | ✅ | **REST + capture JSON** | – | Bearer token; **Bronze là JSON** (web là SPA); field camelCase `postID`/`postSource`; permalink `/dashboard/content/{id}`. ⚠️ robots chặn ClaudeBot/GPTBot + `ai-train=no` — xem `domains/fireant/README.md` |
 | 3 | tnck | API | vi | ✅ | **REST + capture** | – | **KHÔNG có RSS**; 9 zone; `date` epoch giây **NUMBER**; `phrase` bị ignore; `source_domain` NON-WWW ≠ tên config |
-| 4 | vndirect | API | vi | ❌ | REST | – | no-auth; **aggregator** → fuzzy dedup |
+| 4 | vndirect | API | vi | ❌ | REST | – | no-auth; **aggregator** → trùng nội dung gom ở cụm tin (ADR-0016) |
 | 5 | hose | Layer0 | vi | ❌ | RSS/JSON | – | React SPA → summary-only; api.hsx.vn |
 | 6 | hnx | Layer0 | vi | ❌ | RSS | – | link port `:7978` → link_rewrites; BOM |
 | 7 | vietstock | VN RSS | vi | ✅ | RSS + capture | – | Internal API unreachable → RSS primary |
@@ -56,10 +56,10 @@ Filter: vietnamnet (any), cnbc (any), yahoofinance (none).
 - [vn-rss.md](vn-rss.md) — báo VN qua RSS (gồm vietnambiz `rss_capture`)
 - [html-scrapers.md](html-scrapers.md) — baodautu (HTML listing — không có RSS/API)
 
-**Ngoài ma trận:** **NSO / Cục Thống kê** (báo cáo KTXH định kỳ) KHÔNG phải domain — nó là
-driver riêng `src/pipeline/periodic_reports.py`, dedup theo `(report_type, period)`.
-Xem [../design/16-periodic-report-scraper.md](../design/16-periodic-report-scraper.md).
 - [intl-rss.md](intl-rss.md) — 5 báo tài chính quốc tế
+
+**Ngoài ma trận:** driver báo cáo định kỳ NSO đã gỡ ở US-049 (đặc tả lưu trữ:
+[../archive/design/16-periodic-report-scraper.md](../archive/design/16-periodic-report-scraper.md)).
 
 ## Watchlist (30 mã, `config/watchlist.yaml`)
 
@@ -74,9 +74,10 @@ lượng** (GAS PLX POW GVR) · **công nghệ** (FPT). Dùng cho cafef/fireant 
 
 | Key | Giá trị |
 |---|---|
-| database.path | `data/monocle.db` |
-| scheduler.interval_minutes | **15** |
+| database.path | `C:/data/news-scape/monocle.db` (`MONOCLE_DB_PATH` / `MONOCLE_DATA_DIR` ghi đè) |
+| scheduler.interval_minutes | **15** (chỉ `python -m src.orchestrator`) |
+| morninger.capture_interval_minutes | **10** (entry prod `python -m src.morninger`) |
 | http.rate_limit | **3.0** giây/domain |
 | http.timeout | 30 |
 | http.max_retries | 3 |
-| logging.level / dir | INFO / `logs` |
+| logging.level / dir | INFO / `<DATA_ROOT>/logs` (`paths.logs_dir()`) |

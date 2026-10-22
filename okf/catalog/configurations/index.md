@@ -8,7 +8,7 @@
 
 ## Nguồn tin
 
-- [Domain Sources](domain_sources.md) — 24 file YAML, 7 đang bật (Bronze-first)
+- [Domain Sources](domain_sources.md) — 24 file YAML, 8 đang bật (Bronze-first)
 - [Source Strategy](source_strategy.md) — nguyên tắc chọn & ưu tiên phương thức thu thập
 - [Watchlist](watchlist.md) — 30 mã blue-chip cho query API + tag ticker
 - [Notifications](notifications.md) — 4 rule lọc tin ra log ngày

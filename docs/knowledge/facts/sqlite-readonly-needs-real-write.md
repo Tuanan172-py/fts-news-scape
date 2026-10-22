@@ -4,13 +4,14 @@ type: fact
 title: SQLite read-only detection needs a real write
 status: active
 created: 2026-09-23
-updated: 2026-10-06
-verified: 2026-09-23
+updated: 2026-10-22
+verified: 2026-10-22
 lang: en
 authors: [claude-opus-5-5]
 adr: []
 evidence:
   - "path: project/scripts/article_run.py"
+  - "path: project/src/db/preflight.py"
   - "wave: W365"
 summary: BEGIN IMMEDIATE succeeds on a read-only SQLite file, so a write probe MUST perform a real write such as CREATE TABLE and then ROLLBACK.
 ---
@@ -30,5 +31,5 @@ summary: BEGIN IMMEDIATE succeeds on a read-only SQLite file, so a write probe M
 
 ## How to Apply
 
-- Any DB-writable check, such as `article_run.py --where`, MUST perform a real write and roll it back.
+- Any DB-writable check, such as `article_run.py --where`, MUST perform a real write and roll it back. `probe_write` in `project/src/db/preflight.py` does `CREATE TABLE __preflight_probe` then `ROLLBACK`.
 - Run Python one-liners through the Bash tool, not PowerShell 5.1.

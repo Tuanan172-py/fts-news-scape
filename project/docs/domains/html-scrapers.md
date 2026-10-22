@@ -82,7 +82,7 @@ python -m src.morninger --once derive
 python scripts/maintenance/backfill_deferred.py baodautu.vn --limit 600
 python scripts/maintenance/backfill_deferred.py baodautu.vn --dates-only --limit 600
 ```
-Kết quả thực tế 2026-09-07: `verify_quality` **27.5% → 99.1% PASS**.
+Kết quả thực tế 2026-09-07: tỷ lệ bài đạt chất lượng **27.5% → 99.1%** (đo bằng `verify_quality.py`, công cụ đã gỡ ở US-049).
 
 ### Sitemap backstop (chưa dùng)
 

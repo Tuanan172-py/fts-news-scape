@@ -4,8 +4,8 @@ type: fact
 title: A prohibition needs a zero-token command
 status: active
 created: 2026-09-21
-updated: 2026-10-06
-verified: 2026-09-21
+updated: 2026-10-22
+verified: 2026-10-22
 lang: en
 authors: [claude-opus-5-5]
 adr: []
@@ -20,7 +20,7 @@ summary: Forbidding agents to probe for something only works when a zero-token c
 ## Fact
 
 - Rule 08 section 4 forbids contract archaeology by agents.
-- Yet the 2026-09-21 trace spent six model steps finding that `users/output` lives at the repo root, not in `project/`.
+- Yet the 2026-09-21 trace spent six model steps finding that `users/output` then lived at the repo root, not in `project/`. Today it is `<DATA_ROOT>/users/output/` (ADR-0026.D6).
 - The steps were: reading source, grepping three files, trying a wrong path and two recursive listings.
 - The fix was `scripts/write_user_output.py --where`; the normal run also prints the folder it wrote.
 

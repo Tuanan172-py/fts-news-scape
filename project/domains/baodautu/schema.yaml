@@ -183,7 +183,7 @@ watch_points:
     risk: url_change
     severity: high
     description: "Id chuyên mục đổi khi site tái cấu trúc → 404 từng chuyên mục."
-    check: "diagnose_sources.py baodautu — 6 chuyên mục đều có item"
+    check: "pipeline_radar.py status và python -m src.monitor.health — 6 chuyên mục đều có item"
 
   - id: bdt-w6
     field: RSS resurrection

@@ -4,8 +4,8 @@ type: fact
 title: Capture everything, deduplicate later
 status: active
 created: 2026-10-01
-updated: 2026-10-06
-verified: 2026-10-01
+updated: 2026-10-22
+verified: 2026-10-22
 lang: en
 authors: [claude-opus-5-5]
 adr: [ADR-0013]

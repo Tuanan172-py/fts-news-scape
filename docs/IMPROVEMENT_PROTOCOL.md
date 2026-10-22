@@ -1,25 +1,25 @@
-# IMPROVEMENT_PROTOCOL.md — Giao thức Tự Cải tiến Khép kín (H5)
+# IMPROVEMENT_PROTOCOL.md — Closed-Loop Self-Improvement Protocol (H5)
 
-Tài liệu này định nghĩa quy trình **Máy tự đề xuất cải tiến — Người duyệt 1 thao tác — Đo lường kết quả thực tế** (Self-Improvement Loop).
+This document defines the loop **the machine proposes an improvement, a human approves it in one action, the actual outcome is measured**.
 
 ---
 
-## 1. Sơ đồ Vòng lặp Tự Cải tiến (Closed Loop)
+## 1. The closed loop
 
 ```mermaid
 flowchart TD
-    A["Ghi nhận Ma sát (Friction) & Lỗi<br/>(Bảng backlog & intervention)"] --> B["Gom nhóm theo Component<br/>(Lệnh: harness_cli propose)"]
-    B --> C["Sinh Đề xuất Tối ưu (Proposal)<br/>(Kèm bằng chứng & rủi ro)"]
-    C --> D{"Con người Duyệt (1-Key Approval)"}
-    D -- "Từ chối" --> E["Đóng Backlog / Dismiss"]
-    D -- "Chấp thuận" --> F["Tạo Story Cải tiến (US-XXX)"]
-    F --> G["Triển khai & Đo lường Kết quả Thực tế<br/>(Outcome Observation)"]
+    A["Record friction and errors<br/>(backlog and intervention tables)"] --> B["Group by component<br/>(harness_cli propose)"]
+    B --> C["Generate a proposal<br/>(with evidence and risk)"]
+    C --> D{"Human review (one-key approval)"}
+    D -- "Reject" --> E["Close backlog item / dismiss"]
+    D -- "Approve" --> F["Create improvement story (US-NNN)"]
+    F --> G["Implement and measure the actual outcome"]
 ```
 
 ---
 
-## 2. Nguyên tắc Bất biến
+## 2. Invariants
 
-1. **Tuyệt đối không Auto-Apply:** Mọi đề xuất thay đổi chính sách, schema hoặc workflow của Harness **bắt buộc phải có sự phê duyệt của con người**. Máy không được phép tự động sửa code hoặc rule của chính mình mà không có kiểm soát.
-2. **Đề xuất dựa trên Bằng chứng Thực nghiệm (Evidence-Based):** Một đề xuất chỉ được sinh ra khi có ít nhất $\ge 2$ bản ghi ma sát hoặc lỗi thực tế cùng chỉ về một component trong bảng `backlog`.
-3. **Đo lường Kết quả Thực tế (Outcome Loop):** Sau khi giải quyết đề xuất, Agent phải ghi lại kết quả đo lường thực tế (`outcome`) vào bản ghi backlog để đánh giá hiệu quả.
+1. **Never auto-apply:** every change to harness policy, schema or workflow **MUST** have human approval. The machine MUST NOT change its own code or rules without that control.
+2. **Evidence-based proposals:** `propose` lists every component with open friction in the `backlog` table, with its count. Open an improvement story only when at least $2$ real friction or error records point at the same component.
+3. **Outcome loop:** after resolving a proposal, the agent records the measured `outcome` on the backlog item (`harness_cli.py backlog close`) so the effect can be judged.

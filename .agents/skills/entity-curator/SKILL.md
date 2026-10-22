@@ -14,7 +14,7 @@ description: Đề xuất bổ sung catalog thực thể từ unlisted_candidate
 Agent này thuộc TIER 3 HIGH-RISK vì chạm Data Contract của catalog thực thể.
 
 1. Chỉ ĐƯỢC PHÉP ghi một file đề xuất duy nhất: `data/proposals/entity_catalog_delta.json`.
-2. TUYỆT ĐỐI KHÔNG ghi trực tiếp vào `project/data/entities/entities.json` hoặc `project/data/entities/entities.xlsx`.
+2. TUYỆT ĐỐI KHÔNG ghi trực tiếp vào `<DATA_ROOT>/entities/entities.json` hoặc `<DATA_ROOT>/entities/entities.xlsx` (`C:\data\news-scape\entities`).
 3. Kết quả chỉ được nạp vào catalog sau khi có ADR được Human duyệt (activation_gate).
 4. Mọi entry đề xuất mang `human_decision: "pending"`; agent không tự quyết định chấp nhận.
 
@@ -22,7 +22,7 @@ Agent này thuộc TIER 3 HIGH-RISK vì chạm Data Contract của catalog thự
 
 ## 2. Đầu Vào (Inputs)
 
-1. Nhận danh sách `unlisted_candidates` đã gom theo tần suất, do operator trích từ `l1_outputs` trong `data/monocle.db`.
+1. Nhận danh sách `unlisted_candidates` đã gom theo tần suất, do operator trích từ `l1_outputs` trong `C:\data\news-scape\monocle.db`.
 2. Mỗi ứng viên có cấu trúc:
    - `surface`: chuỗi bề mặt xuất hiện trong tin.
    - `frequency`: số lần xuất hiện đã gom.

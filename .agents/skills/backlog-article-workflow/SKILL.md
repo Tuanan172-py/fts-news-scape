@@ -60,12 +60,12 @@ Tính đến ngày **16/10/2026**, toàn hệ thống có **31.704 bài viết**
        │
 [BƯỚC 4: HOÀN TẤT NẠP CSDL SQLITE (INGEST MONOCLE.DB)]
        │
-       ├─ Cú pháp: article_run.py --wave W<mã_đợt> --finish --force
+       ├─ Cú pháp: article_run.py --wave W<mã_đợt> --finish
        └─ Tự động: Bung schema đầy đủ -> l1_ingest -> agent_ingest -> ghi sổ cái token
        │
 [BƯỚC 5: XUẤT BẢN FILE GIAO HÀNG EXCEL (DELIVERABLES)]
        │
-       └─ Cú pháp: write_user_output.py --force (hoặc --date YYYY-MM-DD)
+       └─ Cú pháp: write_user_output.py --date YYYY-MM-DD (hoặc --days N)
 ```
 
 ---
@@ -81,8 +81,8 @@ Cách xử lý gọn gàng nhất theo từng ngày giao dịch:
 # Ví dụ: Xử lý bài của ngày 2026-10-15 (601 bài)
 & "C:\venvs\news-scape\Scripts\python.exe" project/scripts/article_run.py --wave W_OCT15 --date 2026-10-15 --runner agy
 & "C:\venvs\news-scape\Scripts\python.exe" project/scripts/article_run.py --wave W_OCT15 --runner agy --analyze --concurrency 1
-& "C:\venvs\news-scape\Scripts\python.exe" project/scripts/article_run.py --wave W_OCT15 --finish --force
-& "C:\venvs\news-scape\Scripts\python.exe" project/scripts/write_user_output.py --date 2026-10-15 --force
+& "C:\venvs\news-scape\Scripts\python.exe" project/scripts/article_run.py --wave W_OCT15 --finish
+& "C:\venvs\news-scape\Scripts\python.exe" project/scripts/write_user_output.py --date 2026-10-15
 ```
 
 ### Kịch Bản B: Xử Lý Lô Lớn Gom Nhiều Ngày (500 bài / wave)
@@ -97,8 +97,8 @@ Cách xử lý gọn gàng nhất theo từng ngày giao dịch:
 & "C:\venvs\news-scape\Scripts\python.exe" project/scripts/article_run.py --wave W_BACKLOG500 --repair --runner agy --concurrency 1
 
 # Bước 3: Nạp CSDL & Giao hàng
-& "C:\venvs\news-scape\Scripts\python.exe" project/scripts/article_run.py --wave W_BACKLOG500 --finish --force
-& "C:\venvs\news-scape\Scripts\python.exe" project/scripts/write_user_output.py --force
+& "C:\venvs\news-scape\Scripts\python.exe" project/scripts/article_run.py --wave W_BACKLOG500 --finish
+& "C:\venvs\news-scape\Scripts\python.exe" project/scripts/write_user_output.py          # bỏ --date = mọi ngày
 ```
 
 ---
@@ -109,6 +109,7 @@ Cách xử lý gọn gàng nhất theo từng ngày giao dịch:
    - Trong SQLite, nếu cột `published_at = ''`, câu lệnh `WHERE substr(published_at,1,10) >= '2026-10-09'` có thể bị ảnh hưởng bởi collation hoặc logic null/empty.
    - **Bắt buộc:** Luôn bổ sung điều kiện `WHERE published_at IS NOT NULL AND published_at != '' AND ...`.
 2. **Quy tắc Single-Turn Zero-Tool:**
-   - Conductor chỉ kích hoạt LLM qua runner `agy` (Gemini Flash). Không cấp quyền tương tác file hay vòng lặp tool cho Worker con.
-3. **Bảo toàn File Lock trên Windows/OneDrive:**
-   - Luôn sử dụng `--force` khi hoàn tất để đảm bảo `DBWriter` và Staging ghi đè an toàn khi đối soát.
+   - Runner xếp hạng `agy` (chính), rồi `opencode` (`--runner opencode`), rồi `openrouter`; Claude không bao giờ là runtime thay thế (ADR-0026.D3). Không cấp quyền tương tác file hay vòng lặp tool cho Worker con.
+3. **Không dùng `--force` mặc định:**
+   - `article_run.py --force` bỏ qua kiểm va chạm với đợt `ops_daemon` đang chạy và khoá provider; chỉ dùng khi đã chắc daemon không giữ đợt nào (`ops_daemon.py status`). Khi daemon sống ở mức L1 thì không mở đợt tay song song.
+   - `write_user_output.py --force` ghi đè mọi tệp giao hàng kể cả khi không có bài mới; Idempotency Skip Guard (rule 03 §5.2) mặc định đã ghi đúng phần thay đổi.

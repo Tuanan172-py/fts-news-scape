@@ -3,7 +3,7 @@
 - **Loại tài liệu:** tham chiếu (reference, theo Diátaxis).
 - **Phạm vi:** toàn bộ tài liệu, giao diện và tin nhắn của dự án News-Scape.
 - **Nguyên tắc:** một khái niệm một tên. Tài liệu mới dùng tên chuẩn ở cột đầu; tên cũ chỉ còn trong lịch sử ADR và tên tệp.
-- **Cập nhật:** 2026-10-01.
+- **Cập nhật:** 2026-10-22.
 
 ## 1. Khung vận hành (harness)
 
@@ -43,7 +43,7 @@
 | **Cấp tự chủ** | L0 chỉ đo và báo. L1 tự mở đợt và chạy trọn tới nạp DB, kèm trần số bài mỗi đợt (`/level L1 <số bài>`, 1 đến 500). Chỉ có hai cấp này (ADR-0012 sửa bởi ADR-0026). |
 | **Breaker** | Bộ ngắt mạch theo provider: chặn gọi provider sau chuỗi lỗi đăng nhập, hạn mức, mạng, treo hoặc trả rỗng. |
 | **Sentinel** | `ops-sentinel`: agent chẩn đoán sự cố, chỉ đề xuất một lệnh trong danh sách trắng. Người bấm thì daemon mới thi hành. |
-| **Provider** | Nơi chạy mô hình: `agy` (mặc định), `openrouter`. |
+| **Provider** | Nơi chạy mô hình, theo thứ hạng: `agy`, rồi `opencode run`, rồi `openrouter`. Claude không bao giờ là runtime thay thế (ADR-0026.D3). |
 | **Hold (giữ)** | Cờ do người đặt để tạm dừng riêng một tác nhân. *Kế hoạch, chưa có.* |
 | **Zero-Tool** | Bất biến của agent: không gọi công cụ nào. Lượt gọi công cụ bị hook từ chối được đếm là vi phạm. |
 
@@ -52,8 +52,8 @@
 | Thuật ngữ | Nghĩa |
 |---|---|
 | **Article Lane** | Đường xử lý duy nhất từ bài báo tới bản ghi phân tích (ADR 0010). Một agent xử lý trọn một bài trong một lượt. |
-| **Đợt** | Một lần chạy Article Lane trên tối đa 100 bài. Mã `W` cộng tháng, ngày, giờ, phút lúc mở (`W10011434` là 01/10 lúc 14:34). Trong mã nguồn là `wave`. |
-| **Lô** | Phần của một đợt gửi cho agy trong một tiến trình, tối đa 50 bài (`--batch`). Trong mã nguồn là `batch`. |
+| **Đợt** | Một lần chạy Article Lane, mặc định 100 bài (`--limit`); ở cấp L1 trần do `/level L1 <n>` đặt. Mã `W` cộng tháng, ngày, giờ, phút lúc mở (`W10011434` là 01/10 lúc 14:34). Trong mã nguồn là `wave`. |
+| **Lô** | Phần của một đợt gửi cho runner trong một tiến trình, cỡ do `--batch` đặt (0 là tự chọn). Trong mã nguồn là `batch`. |
 | **Packet** | Tệp `.task.json` của một lô, mang `i` (chỉ số), `t` (tiêu đề), `p` (các đoạn văn sạch). |
 | **Bản đồ lô** | Tệp `.map.json` đi cùng packet: ánh xạ chỉ số cục bộ sang mã bài, kèm tầng ưu tiên và lý do. Ở lại trên máy, không gửi cho mô hình. |
 | **Bản ghi gọn** | Kết quả mô hình trả về cho một bài: thực thể, tóm tắt, luận điểm, hàm ý, sắc thái, chỉ số đoạn chứng cứ. |
@@ -89,13 +89,13 @@
 | Thuật ngữ | Nghĩa |
 |---|---|
 | **Bronze** | HTML thô đã cào, bất biến, đúng từng byte. `content_sha256` là bằng chứng không đổi. |
-| **Silver** | Nền sạch, dựng lại được thuần từ Bronze (`project/data/silver/*`). Phân tích lại không cần cào lại. |
-| **L1** | Lớp nhận diện thực thể từ tiêu đề, lưu ở bảng `l1_outputs`. |
+| **Silver** | Nền sạch, dựng lại được thuần từ Bronze (`<DATA_ROOT>/silver/`, đường dẫn do `project/src/core/paths.py` quyết định). Phân tích lại không cần cào lại. |
+| **L1** | Lớp nhận diện thực thể từ tiêu đề và thân bài (lược đồ `l1-entity-output-v1`), lưu ở bảng `l1_outputs`. Do Article Lane tạo. |
 | **Gold** | Lớp phân tích nội dung (tóm tắt, luận điểm, hàm ý, trích dẫn), lưu ở bảng `agent_outputs`. Do Article Lane tạo. |
 | **Dedup** | Phát hiện bài trùng hai tầng: SHA-256 của URL và tiêu đề, cộng so khớp mờ. Bảng `seen_articles`. |
 | **Nguồn tin** | Một trang tin (cafef.vn, vietstock.vn, ...), cấu hình ở `project/config/domains/*.yaml`. |
-| **Từ điển sắc thái** | Danh sách từ sắc thái tiếng Việt theo luật; bài tiếng Anh mặc định trung tính. |
-| **Hợp đồng bàn giao** | Ranh giới JSON giữa bên sản xuất và agent (`project/docs/design/08`, `09`). |
+| **Sắc thái (`sentiment`)** | Trường do `article-processor` trả về trong bản ghi phân tích. Bộ chấm sắc thái theo từ điển đã gỡ (`src/processor/sentiment.py` bị xoá). |
+| **Hợp đồng bàn giao** | Ranh giới JSON giữa bên sản xuất và agent (`project/docs/design/08`; hợp đồng đầu ra Article Lane ở `project/docs/design/00-end-to-end-architecture.md` §6.2). |
 
 ## 6. Một khái niệm, một tên
 

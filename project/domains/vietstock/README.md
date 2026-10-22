@@ -158,24 +158,25 @@ Không dùng CSS selector (trafilatura auto-detect main content).
 ### Khi nghi ngờ upstream thay đổi
 
 ```bash
-# Kiểm tra nhanh raw response
-python scripts/domain_check.py vietstock --raw-check
+# Trạng thái nguồn và scraper (đọc trước tiên)
+python scripts/pipeline_radar.py status
+python -m src.monitor.health
 
-# Chạy validate toàn bộ
-python scripts/domain_check.py vietstock --report
+# Fetch thật N bài, kiểm Bronze (capture_status, sha256, images[])
+python scripts/validate_capture.py vietstock 2
 
-# Chạy diagnostic chuyên sâu
-python scripts/diagnose_sources.py vietstock
+# Bài lệch template / hỏng selector
+python -m src.morninger --once drift
 ```
 
 ### Khi xác nhận thay đổi
 
 1. Cập nhật `domains/vietstock/schema.yaml` (feed URLs, fields mới)
 2. Cập nhật `domains/vietstock/changelog.md` (ghi ngày + mô tả)
-3. Sửa `src/scrapers/rss_generic.py` nếu parse logic thay đổi
+3. Sửa `src/scrapers/vietstock.py` (danh sách RSS qua `rss_generic.py`) nếu parse logic thay đổi
 4. Cập nhật fixture trong `tests/fixtures/` và `domains/vietstock/fixtures/`
-5. Chạy `python scripts/domain_check.py vietstock` để verify
-6. Chạy `python -m pytest tests/scrapers/test_rss_scraper.py -v` để verify regression
+5. Chạy `python scripts/validate_capture.py vietstock` để verify
+6. Chạy `python -m pytest tests/scrapers/test_vietstock.py tests/scrapers/test_rss_scraper.py -v` để verify regression
 
 ## 9. Mở rộng trong tương lai
 

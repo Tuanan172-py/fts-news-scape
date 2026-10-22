@@ -1,9 +1,11 @@
+> Lưu trữ 2026-10-22 (US-050): chỉ dẫn cho `agent-output-v1` của lane đã ngừng (ADR-0010). Hợp đồng hiện hành: `project/schemas/article-compact-v2.schema.json` và `agent-output-v2-lean`.
+
 # Agent Instructions v1 — bản chỉ dẫn chuẩn (người dùng viết prompt từ đây)
 
 Cập nhật: 2026-08-17 · Trạng thái: **ARCHIVED SPEC (agent-output-v1)**. Đây là **ràng buộc +
 định hướng** để BẠN tự soạn prompt cho agent bất kỳ provider. Runtime chỉ validate output,
-không quy định cách bạn prompt. Liên kết: [09](../docs/design/09-agent-io-contract.md),
-[10](../docs/design/10-agent-orchestration-governance.md), [12](../docs/design/12-agent-infrastructure.md).
+không quy định cách bạn prompt. Liên kết: [09](../docs/archive/design/09-agent-io-contract.md),
+[10](../docs/archive/design/10-agent-orchestration-governance.md), [12](../docs/archive/design/12-agent-infrastructure.md).
 
 > [!NOTE]
 > **Tài liệu Kế thừa (Reference Only — Hợp đồng v1):**

@@ -15,9 +15,9 @@ description: Chuyên viên kiểm định chất lượng độc lập, kiểm t
    - **Tầng Gold (`agent-output-v2-lean`)**: Bắt buộc chuẩn phẳng 7 trường cốt lõi (`article_id`, `summary`, `key_points`, `implication`, `sentiment`, `time_sensitivity`, `citations`). Không chấp nhận các trường thừa cũ (`affected_parties`, `impact_area`, `materiality.score`).
    - **Tầng L1 (`l1-entity-output-v1`)**: Bắt buộc đủ `article_id`, `recognized`, `entities`, `categories`, `citations`, `processing_metadata`.
 2. **Ràng Buộc Căn Cứ Thực Tế (Grounded Citations)**:
-   - Tối thiểu 2 trích dẫn citations / bài.
-   - Mỗi `source_span` BẮT BUỘC là **chuỗi con nguyên văn (exact substring)** lấy trực tiếp từ `cleaned_text`.
-   - Độ dài mỗi đoạn trích dẫn phải đạt **$\ge 20$ ký tự**. Tuyệt đối không chấp nhận câu trích dẫn bị cắt xén làm thay đổi ngữ cảnh.
+   - Mô hình trả 2 đến 4 chỉ số đoạn `c` (1 chỉ số khi bài chỉ có một đoạn đủ dài), theo rule 11.
+   - Bộ bung dựng `source_span` từ chỉ số đoạn, nên trích dẫn là **chuỗi con nguyên văn** do cấu trúc; cổng vẫn kiểm lại.
+   - Mỗi đoạn được trỏ tới phải đạt **$\ge 20$ ký tự**.
 3. **Rào Cản Giá Trị Mới & Chống Trùng Lặp (Value-Added Invariant)**:
    - `summary`: Phải là tóm tắt trừu tượng (abstractive), không được copy nguyên văn bài báo.
    - `key_points`: Phải là các gạch đầu dòng diễn giải bằng lời văn phân tích tài chính riêng của Agent, **TUYỆT ĐỐI KHÔNG copy nguyên văn chuỗi citations**.
@@ -25,46 +25,42 @@ description: Chuyên viên kiểm định chất lượng độc lập, kiểm t
 
 ---
 
-## 2. Quy Trình Vận Hành & Tự Động Lưu Trữ (Gatekeeper Workflow)
+## 2. Quy Trình Vận Hành (Gatekeeper Workflow)
 
 ```
-[Nhận Kết Quả Từ Subagents] (data/agent_outputs/*.output.json)
+[Bản ghi article-compact-v2 của đợt] (<DATA_ROOT>/agent_outputs_article/article_<đợt>_*.output.json)
        │
        ▼
-[Bước 1: Chạy Kiểm Tra Định Lượng Cơ Học] (dod.py / agent_ingest.py)
-  ├── Soát Schema: Cú pháp JSON, cấu trúc trường, kiểu dữ liệu
-  ├── Soát Grounding: Exact substring matching trên cleaned_text (span in cleaned_text)
-  ├── Soát Value-Added: Kiểm tra _norm(kp) in citations_spans
-  └── Phân loại: Bài PASS vs Bài FAIL
+[article_run.py --wave <đợt> --finish]
+  ├── expand: article_expand.py dựng l1-entity-output-v1 + agent-output-v2-lean
+  ├── ingest: l1_ingest.py + agent_ingest.py, chỉ tệp của đợt; chấm DoD bằng src/agent/contract/dod.py
+  │     ├── Soát Schema: cú pháp JSON, cấu trúc trường, kiểu dữ liệu
+  │     ├── Soát Grounding: trích dẫn là chuỗi con nguyên văn của bài
+  │     └── Soát Value-Added: key_points không chép citations
+  ├── verify: độ phủ của đợt >= 90% ở cả hai lớp
+  └── ledger, handoff
        │
-       ├─► Nếu PASS 100%:
-       │     1. Ghi nhận dữ liệu vào bảng agent_outputs / l1_outputs trong SQLite
-       │     2. Tự động di dời task packets sang data/agent_tasks/archive/<YYYYMMDD>/
-       │     3. Xóa tệp task packet gốc để giải phóng hàng đợi
-       │
-       └─► Nếu CÓ BÀI FAIL:
-             1. Ghi nhận lý do fail chi tiết (ví dụ: 'citation not grounded', 'copy citations')
-             2. Kích hoạt VÒNG LẶP TỰ HỌC (Learning Loop)
+       ├─► Đạt: ghi agent_outputs / l1_outputs (dod_pass=1), in ✅ và thoát 0
+       └─► Không đạt: in ❌ kèm đúng lệnh chạy lại (--only ...) hoặc --repair cho phần thiếu
 ```
 
 ---
 
 ## 3. Vòng Lặp Tự Học & Cải Tiến Liên Tục (Continuous Learning Loop)
 
-Khi Gatekeeper phát hiện lỗi của Subagent, Agent không chỉ từ chối bài viết mà còn thực hiện hành động sửa đổi tri thức hệ thống:
+Khi cổng phát hiện lỗi lặp lại của mô hình, không sửa ngầm bản ghi (rule 11 §2.3): bản ghi sai bị từ chối và đi vào `--repair`. Sửa tri thức hệ thống thay vì sửa dữ liệu:
 
 ```
-[Phát hiện vi phạm] 
-       │  (Ví dụ: Subagent cắt bớt từ đầu câu trong trích dẫn)
-       ▼
-[1. Sửa nhanh bản ghi cục bộ] (Fix exact substring để nạp DB ngay)
+[Phát hiện vi phạm lặp lại]
        │
        ▼
-[2. Tự động cập nhật System Prompt trong Skill]
-       │  (Cập nhật news-scape-agent-operations với lưu ý nhấn mạnh)
+[1. Sửa nguồn prefix] (schema/catalog → scripts/build_article_prefix.py → dán persona, --check-preset)
+       │
+       ▼
+[2. Ghi KPI và ma sát] (harness_cli.py metric --fp N; harness_cli.py backlog add)
+       │
        ▼
 [3. Ghi vết vào SESSION-LATEST.md]
-       │  (Lưu bài học để các phiên tiếp theo không bị lặp lại)
 ```
 
 ---
@@ -72,9 +68,7 @@ Khi Gatekeeper phát hiện lỗi của Subagent, Agent không chỉ từ chối
 ## 4. Bộ Công Cụ Cơ Học Thực Thi (Execution Tooling)
 
 ```powershell
-# 1. Kiểm định và Ingest kết quả L1:
-& "C:\venvs\news-scape\Scripts\python.exe" scripts/l1_ingest.py data/agent_outputs_l1
-
-# 2. Kiểm định và Ingest kết quả Gold v2-lean:
-& "C:\venvs\news-scape\Scripts\python.exe" scripts/agent_ingest.py data/agent_outputs
+# cwd = project/. Không gọi l1_ingest.py / agent_ingest.py tay: --finish gọi chúng với đúng tệp của đợt.
+& "C:\venvs\news-scape\Scripts\python.exe" scripts/article_run.py --wave <đợt> --finish
+& "C:\venvs\news-scape\Scripts\python.exe" scripts/article_run.py --wave <đợt> --finish --only ingest,verify,ledger,handoff
 ```

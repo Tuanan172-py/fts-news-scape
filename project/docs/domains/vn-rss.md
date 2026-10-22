@@ -38,11 +38,10 @@ Enabled trong nhóm này: **vietstock**, **vneconomy** (scraper riêng, có capt
   phát, fed), `drop_unmatched: true`.
 - **Quirk:** kinh-doanh quá rộng → filter **bắt buộc**. Nếu vẫn nhiễu sau 24h: bỏ feed kinh-doanh.
 
-### baodautu — `baodautu.yaml` (**DISABLED**)
+### baodautu — không còn trong nhóm RSS
 
-- **3 feeds:** `/chung-khoan.rss`, `/dau-tu-tai-chinh.rss`, `/ngan-hang--bao-hiem.rss`.
-- **Quirk:** `enabled: false` — feed XML hợp lệ nhưng **0 `<item>`** (dormant, verify nhiều
-  UA/client). Có **4 dòng trống trước `<?xml`** (RSSScraper đã lstrip). Bật lại khi feed hồi.
+RSS hỏng vĩnh viễn ở server (re-verified 2026-09-07). Từ 2026-09-07 nguồn bật bằng scraper HTML listing riêng
+(`method: baodautu`): xem [html-scrapers.md](html-scrapers.md).
 
 ## Nguồn "cắm là chạy" (quirk encoding nhẹ, RSSScraper tự xử)
 

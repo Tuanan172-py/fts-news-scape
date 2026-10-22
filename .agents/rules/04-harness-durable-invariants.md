@@ -63,5 +63,5 @@ Lệnh này tự động kiểm tra verify gate, cập nhật story sang `implem
 ```
 
 ## 5. Quản trị CSDL Phân lập
-- CSDL `harness.db` là CSDL vận hành nội bộ của Harness, phân tách hoàn toàn với CSDL nghiệp vụ `data/monocle.db`.
+- CSDL `harness.db` là CSDL vận hành nội bộ của Harness, phân tách hoàn toàn với CSDL nghiệp vụ `C:\data\news-scape\monocle.db` (`MONOCLE_DATA_DIR`).
 - Mọi thao tác ghi nhận trạng thái của Agent phải đi qua `scripts/harness_cli.py`.

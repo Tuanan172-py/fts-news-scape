@@ -8,9 +8,9 @@ description: Nhận diện thực thể tài chính đa tầng từ tiêu đề 
 > **Mục đích:** Hướng dẫn Subagent Flash nhận diện nhanh và chính xác 100% các thực thể trong tiêu đề bài viết dựa trên Ontology 10 Miền và xuất JSON chuẩn Definition-of-Done (DoD).
 
 ## 1. Nguồn Dữ Liệu & Input Task
-- **Task Packet**: `data/agent_tasks/l1/*.task.json`.
-- **Trường cần phân tích**: `input.title` (kết hợp tra soát `input.code_first` nếu có).
-- **Từ điển Master Catalog**: `project/data/entities/entities.json` và `project/data/entities/taxonomy.json`.
+- **Phạm vi hiện hành**: skill này là tri thức nhận diện của `article-processor` (Article Lane, ADR 0010). Worker không có tool: packet `<DATA_ROOT>/agent_tasks/article/article_<đợt>_NN.task.json` nằm sẵn trong prompt, và mô hình phát thực thể dưới dạng cặp `[chuỗi, mã nhóm]` trong trường `e` của record `article-compact-v2` (rule 11).
+- **Bộ bung** `article_expand.py` (0 token) tra định danh và dựng `l1-entity-output-v1` ở §4; mô hình không tự ghi tệp.
+- **Từ điển Master Catalog**: `<DATA_ROOT>/entities/entities.json` và `taxonomy.json` (`C:\data\news-scape\entities`). Worker không đọc tệp này (rule 08).
 
 ---
 
@@ -64,7 +64,7 @@ description: Nhận diện thực thể tài chính đa tầng từ tiêu đề 
 
 ## 4. Quy Chuẩn Output JSON (`l1-entity-output-v1`)
 
-Ghi kết quả vào `data/agent_outputs_l1/<article_id>.json`:
+Lược đồ do bộ bung dựng và ghi vào `<DATA_ROOT>/agent_outputs_l1/` (tham chiếu để hiểu cổng DoD `dod-gatekeeper#l1`):
 
 ```json
 {
@@ -110,31 +110,9 @@ Ghi kết quả vào `data/agent_outputs_l1/<article_id>.json`:
 
 ---
 
-## 5. Chế độ Gom Lô Siêu Tốc (Consolidated Batch Mode)
+## 5. Chế độ gom lô của lane L1 (đã ngừng)
 
-Packet L1 chỉ mang **tiêu đề**, không mang `cleaned_text`, nên gom lô được **25 bài/file** (Gold chỉ 5–10).
-
-Khi nhận file task dạng gom lô `data/agent_tasks/l1/l1_batch_XX.task.json`:
-
-1. **Một lần đọc duy nhất**: Gọi `view_file` đọc toàn bộ `l1_batch_XX.task.json`.
-2. **Tra soát theo `code_first`**: Mỗi task trong `tasks[]` đã có sẵn kết quả khớp bằng code
-   (`code_first.entity_ids`, `code_first.industries`, `code_first.relevance`). Nhiệm vụ là
-   **XÁC NHẬN / SỬA / BỔ SUNG**, không nhận diện lại từ đầu:
-   - `entity_ids` đúng → giữ, `method: "exact_code"` hoặc `"alias"`.
-   - Code bắt nhầm (vd "quyết định" → `Quỹ`) → **BỎ**.
-   - Code bỏ sót (đặc biệt tên thương hiệu, chủ đề vĩ mô, loại tài sản) → **THÊM**, `method: "semantic"`.
-3. **Một lần ghi duy nhất**: Ghi kết quả cả lô vào
-   `data/agent_outputs_l1/l1_batch_XX.output.json` dưới dạng **mảng JSON** các object
-   `l1-entity-output-v1` (đúng schema ở §4):
-
-```json
-[
-  { "l1_output_version": "1.0", "article_id": "<article_id_1>", "title": "...", "recognized": true, "entities": [], "categories": {}, "citations": [], "processing_metadata": {} },
-  { "l1_output_version": "1.0", "article_id": "<article_id_2>", "...": "..." }
-]
-```
-
-> 25 bài/lô ⇒ giảm ~96% số lần gọi công cụ I/O so với xử lý từng file lẻ.
+Chế độ gom 25 bài/tệp `l1_batch_XX`, đọc bằng `view_file` và ghi bằng `write_to_file` thuộc lane L1/Gold đã ngừng (ADR 0010). Article Lane chia lô bằng `--batch` của `article_run.py` và worker không có tool. Các bẫy DoD dưới đây vẫn đúng cho lược đồ mà bộ bung dựng.
 
 ### Bẫy làm hỏng DoD (đọc kỹ trước khi ghi)
 
@@ -166,8 +144,5 @@ Subagent sử dụng bảng này để gán trực tiếp `entity_id` và `in_li
 
 ### Nạp kết quả
 
-```bash
-python scripts/l1_ingest.py data/agent_outputs_l1
-```
-`l1_ingest.py` tự giải nén mảng JSON gom lô, chấm DoD từng bài, ghi `l1_outputs` và chuyển `l1_tasks.status` → `done`/`failed`, rồi archive packet đã xong.
+Không gọi `l1_ingest.py` tay. `article_run.py --wave <mã> --finish` (cwd `project/`) gọi nó với đúng tệp `article_<mã>_*` của đợt, chấm DoD từng bài và ghi `l1_outputs`.
 

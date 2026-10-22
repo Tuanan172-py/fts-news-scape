@@ -4,7 +4,7 @@ Luồng xử lý, xếp theo 3 vòng của [kiến trúc end-to-end](../referenc
 
 ## Điều phối
 
-- [Morninger](morninger.md) — **entrypoint prod**, 1 tiến trình / 3 job (capture 15′, re-derive 30′, drift sáng)
+- [Morninger](morninger.md) — tiến trình capture + Silver thường trú, 4 job (capture 10′, re-derive 30′, drift sáng, reclaim), được `ops_daemon` giữ sống
 
 ## Vòng 1 — Capture (Bronze)
 
@@ -15,17 +15,10 @@ Luồng xử lý, xếp theo 3 vòng của [kiến trúc end-to-end](../referenc
 
 - [Silver Derive](silver_derive.md) — Bronze → Silver → change-detection → work-package → catalog
 
-## Vòng 3 — Agent handoff (Gold)
+## Vòng 3 — Article Lane
 
-- [Article Lane](article_lane.md) — **đường mặc định từ 2026-09-18**: gộp L1 + Gold thành MỘT lượt gọi cho trọn lô, chạy trên harness DSH
-- [Agent Handoff](agent_handoff.md) — đường 2 lớp, giữ để **quay lui**; export/ingest packet, cổng DoD
-- [User Output Workflow](user_output.md) — gate 2 lớp, định tuyến entity, ghi CSV người dùng
+- [Article Lane](article_lane.md) — **đường xử lý duy nhất** (ADR-0010): nhận diện thực thể + nội dung trong MỘT lượt gọi cho trọn lô
+- [Agent Ingest & cổng DoD](agent_handoff.md) — nửa hoàn tất: `l1_ingest.py` + `agent_ingest.py`, cổng DoD thuần code
+- [User Output Workflow](user_output.md) — gate DoD, định tuyến entity, ghi `.xlsx` cho từng người dùng
 
-## Ngoài chu kỳ (opt-in, tần suất thấp)
-
-- [Periodic Reports (NSO)](periodic_reports.md) — báo cáo KTXH định kỳ + file số liệu gốc; **không** chạy trong cycle 15′, dedup theo kỳ chứ không theo URL
-
-## Legacy
-
-- [Sentiment Pipeline](sentiment_pipeline.md) — ⚠️ *deprecated*: sentiment rule-based đã gỡ khỏi
-  workflow; chỉ bước classify còn chạy
+Đã lưu trữ: báo cáo định kỳ NSO và engine sentiment rule-based (mã đã xoá) — xem `okf/archive/catalog/pipelines/`.

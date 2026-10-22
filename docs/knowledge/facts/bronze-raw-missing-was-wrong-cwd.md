@@ -4,8 +4,8 @@ type: fact
 title: Bronze raw_missing was a wrong cwd
 status: active
 created: 2026-10-05
-updated: 2026-10-08
-verified: 2026-10-05
+updated: 2026-10-22
+verified: 2026-10-22
 lang: en
 authors: [claude-opus-5-5]
 adr: []
@@ -26,7 +26,7 @@ summary: The raw_missing articles of 2026-09-28 to 2026-10-02 were Bronze files 
 - They were merged into `project/data/raw_html` on 2026-10-05.
 - 1,607 files with the same name and different content are kept in `C:\data\news-scape\recovered\root_raw_html_conflicts_20261005`.
 - The DB was backed up first to `C:\data\news-scape\monocle.db.bak-20261005-pre-bronze-merge`.
-- `RawStore` now resolves data paths through the project root (US-036; paths later routed through `core.paths`).
+- `RawStore` now resolves its root through `src.core.paths` (`paths.bronze_dir()` under `MONOCLE_DATA_DIR`), never through the cwd (US-036, later ADR-0024 data root).
 
 ## Why
 

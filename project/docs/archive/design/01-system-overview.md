@@ -1,3 +1,5 @@
+> Lưu trữ 2026-10-22 (US-050): tổng quan hệ thống thời kỳ không LLM, sentiment rule-based (đã xoá), thay bằng [00-end-to-end-architecture](../../design/00-end-to-end-architecture.md).
+
 # Thiết kế — Tổng quan hệ thống
 
 Cập nhật: 2026-07-26 · Đối tượng: kiến trúc sư, tech lead, người mới cần bức tranh lớn.
@@ -63,7 +65,7 @@ tuỳ chọn `enrich()`. Khác biệt chỉ nằm ở cách lấy dữ liệu:
 
 - **RSS** (`_rss`) — feed XML, dùng chung 1 class cho 18 domain. Khác biệt = YAML.
 - **REST API** (`cafef`, `tnck`, `vndirect`, `fireant`) — mỗi nguồn 1 module vì response
-  schema + quirk riêng (xem [domains/api-scrapers.md](../domains/api-scrapers.md)).
+  schema + quirk riêng (xem [domains/api-scrapers.md](../../domains/api-scrapers.md)).
 - **Official exchange** (`hose`, `hnx`) — vẫn qua `RSSScraper` nhưng là Layer 0 (công bố
   chính thống), cấu hình summary-only vì trang chi tiết là SPA.
 
@@ -80,7 +82,7 @@ biết tên scraper cụ thể — nó `build_scraper(cfg)` từ field `method` 
 6. `writer.enqueue()` → DBWriter batch `INSERT OR IGNORE` vào SQLite.
 7. Notifier khớp rule → ghi `data/notifications/YYYY-MM-DD.log` + stdout.
 
-Chi tiết từng bước: [02-execution-flow.md](02-execution-flow.md).
+Chi tiết từng bước: [02-execution-flow.md](../../design/02-execution-flow.md).
 
 ## 6. Ranh giới hệ thống
 

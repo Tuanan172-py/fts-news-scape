@@ -1,7 +1,7 @@
 # docs/reference — Bản annotated (CHÚ THÍCH) cho artifact capture
 
 > ⚠️ Đây là **bản SAO có chú thích để tra cứu**, KHÔNG phải file dữ liệu thật.
-> File thật (`data/raw_html/**`) phải giữ bất biến — xem lý do bên dưới.
+> File thật (`<DATA_ROOT>/raw_html/**`) phải giữ bất biến — xem lý do bên dưới.
 
 | File | Chú thích cho | Cú pháp comment |
 |------|---------------|-----------------|
@@ -14,7 +14,7 @@
    đã lưu → mọi kiểm tra toàn vẹn báo raw bị giả mạo; guardrail agent verify hash sẽ **từ chối bài**.
    Ngoài ra HTML không có comment `//` (chỉ `<!-- -->`).
 2. **`.meta.json` = JSON chuẩn.** JSON không cho `//`; `json.loads()` trong `process_meta()`
-   (`src/pipeline/run.py:41`) sẽ ném `JSONDecodeError` → sập Vòng 2 ngay bài đầu.
+   (`src/pipeline/run.py`) sẽ ném `JSONDecodeError` → sập Vòng 2 ngay bài đầu.
 
 → Muốn "đọc file có chú thích": mở 2 file annotated trong thư mục này. Nguồn sinh trường:
 `src/crawler/raw_store.py` (`RawStore.save`, dict `cap`).

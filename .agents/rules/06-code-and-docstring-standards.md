@@ -76,7 +76,8 @@ A script that feeds `__doc__` to `argparse` keeps a first docstring line that is
 2. Every touched Python file passes `ast.parse()`. For a docs-only refactor, the AST of each file with docstrings stripped is identical before and after.
 3. Docstring gate (run from the repo root):
    ```powershell
-   $s = "<skill_path>\scripts"
+   # External skill `codebase-docstring-refactoring`, not in this repository. Operator machine path:
+   $s = "C:\Users\anpt\Documents\report_writing_skills\05_Style_Docstrings_and_Writing_Standards\codebase-docstring-refactoring\scripts"
    python $s\ast_docstring_linter.py project\src --min-coverage 100
    python $s\scan_code_phrases.py project\src --dict .agents\rules\banned_phrases.json
    ```

@@ -17,7 +17,7 @@ sources:
   - id: notification-design
     resource: project/docs/design/05-notification-coverage.md
     title: Notification Coverage Design
-sources_last_checked: 2026-09-07
+sources_last_checked: 2026-10-22
 ---
 
 `config/notifications.yaml` định nghĩa **danh sách `rules`**; `FileNotifier` duyệt tuần tự và
@@ -60,14 +60,12 @@ cơ quan quản lý & chính sách · vĩ mô trong nước · ngành kinh tế 
 Không có file `.txt` theo tier. FileNotifier ghi **1 file log/ngày**:
 
 ```
-data/notifications/YYYY-MM-DD.log
+<DATA_ROOT>/notifications/YYYY-MM-DD.log
 ```
 
 Mỗi bài khớp = 1 dòng (kèm tag), đồng thời in ra stdout. Metadata đầy đủ đã có trong DB — log
 chỉ để đọc lướt. Cuối cycle ghi thêm dòng tổng kết (`notify_cycle_summary`).
 
-⚠️ Bản mô tả cũ nói tới cấu trúc `notifications.enabled / tiers / prefix` và file
-`WATCHLIST_*.txt` — **không tồn tại** trong code lẫn config hiện tại.
 
 ⚠️ Notify là tiện ích *best-effort*: lỗi ở bước này bị bắt và bỏ qua, không làm hỏng cycle.
 Lớp phân phối thật tới người dùng là [User Output](../pipelines/user_output.md).

@@ -1,10 +1,12 @@
+> Lưu trữ 2026-10-22 (US-050): workflow Medallion có tầng L1 code-first/Gold đã nghỉ hưu (ADR-0010), thay bằng [00-end-to-end-architecture](../../design/00-end-to-end-architecture.md) và [12-bronze-to-silver-rules](../../design/12-bronze-to-silver-rules.md).
+
 # Thiết kế — Kiến trúc Quy trình Medallion: Bronze, Silver, Gold
 
 Cập nhật: 2026-09-17 · Tác giả: Antigravity 2.0 · Trạng thái: ACTIVE.
 Tài liệu hóa chi tiết workflow 3 tầng Medallion theo định dạng trực quan (ASCII execution flow) từ cào dữ liệu gốc đến phân tích chuyên sâu và giao hàng.
 
 > [!NOTE]
-> **Trạng thái Kế thừa (tầng Gold):** phần L1 Code-First (`l1_route.py`) và Gold Financial Analyst bên dưới mô tả lane đã nghỉ hưu (ADR-0010). Đường xử lý hiện hành là Article Lane: xem [00-end-to-end-architecture](00-end-to-end-architecture.md) §6. Khi mâu thuẫn, tài liệu 00 thắng.
+> **Trạng thái Kế thừa (tầng Gold):** phần L1 Code-First (`l1_route.py`) và Gold Financial Analyst bên dưới mô tả lane đã nghỉ hưu (ADR-0010). Đường xử lý hiện hành là Article Lane: xem [00-end-to-end-architecture](../../design/00-end-to-end-architecture.md) §6. Khi mâu thuẫn, tài liệu 00 thắng.
 
 ---
 

@@ -1,17 +1,20 @@
 # Operations — Triển khai & vận hành
 
-Cập nhật: 2026-07-26 · Môi trường tham chiếu: Windows 11, Python 3.14, venv `.venv`.
+Cập nhật: 2026-10-22 · Môi trường tham chiếu: Windows 11, Python 3.13, venv `C:\venvs\news-scape` (ngoài OneDrive, không tạo `.venv`).
+
+Cây mã: `C:\src\news-scraper`. Dữ liệu ghi: `MONOCLE_DATA_DIR` (mặc định `C:\data\news-scape`), đường dẫn do `src/core/paths.py` quyết định. Mọi lệnh dưới đây chạy với thư mục hiện tại là `project/`.
 
 ## 1. Cài đặt
 
 ```powershell
 # Tạo venv + cài phụ thuộc
-python -m venv .venv
-.venv\Scripts\python.exe -m pip install -r requirements.txt
+python -m venv C:\venvs\news-scape
+C:\venvs\news-scape\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
-Phụ thuộc chính: `feedparser`, `requests`, `urllib3`, `truststore`, `trafilatura`,
-`beautifulsoup4`+`lxml`, `rapidfuzz`, `pyvi`, `APScheduler`, `loguru`, `pyyaml`.
+Phụ thuộc chính: `feedparser`, `requests`, `truststore`, `trafilatura`, `readability-lxml`,
+`beautifulsoup4`+`lxml`, `rapidfuzz`, `pyvi`, `APScheduler`, `dbos`, `loguru`, `pyyaml`,
+`jsonschema`, `openpyxl`, `pandas`+`pyarrow`. Danh sách đầy đủ: `requirements.txt`.
 
 ## 2. Cấu hình bắt buộc trước khi chạy
 
@@ -22,71 +25,71 @@ Phụ thuộc chính: `feedparser`, `requests`, `urllib3`, `truststore`, `trafil
 
    Sửa `fireant_token: "<token>"`. File này **gitignored** — không commit. Lấy token:
    [../skills/fireant.md](../skills/fireant.md). (Dán kèm hay không kèm "Bearer " đều được — code tự cắt.)
-2. Kiểm tra `config/settings.yaml` (interval 15 phút, rate 3s) và `config/watchlist.yaml` (30 mã).
+2. Kiểm tra `config/settings.yaml` (DB `C:/data/news-scape/monocle.db`, capture 10 phút, re-derive 30 phút, rate 3s) và `config/watchlist.yaml` (30 mã).
 
 ## 3. Chạy
 
+Vận hành không người trông dùng `ops_daemon` (Task Scheduler `news-scape-ops`): daemon tự giữ `morninger` sống và mở đợt Article Lane. Cài đặt: [ops-daemon.md](ops-daemon.md).
+
+Chạy tay (dev, thử nghiệm):
+
 ```powershell
-# Pipeline ban ngày liên tục (production) — capture + re-derive Silver + drift trong 1 scheduler
-.venv\Scripts\python.exe -m src.morninger
+# Pipeline ban ngày liên tục — capture + re-derive Silver + drift trong 1 scheduler
+C:\venvs\news-scape\Scripts\python.exe -m src.morninger
 
 # Scheduler chỉ capture (15 phút) — nếu không cần downstream tự động
-.venv\Scripts\python.exe -m src.orchestrator
+C:\venvs\news-scape\Scripts\python.exe -m src.orchestrator
 
 # 1 cycle mọi domain rồi thoát (test/cron ngoài)
-.venv\Scripts\python.exe -m src.orchestrator --once
+C:\venvs\news-scape\Scripts\python.exe -m src.orchestrator --once
 
 # 1 cycle vài domain
-.venv\Scripts\python.exe -m src.orchestrator --once cafef fireant tnck
+C:\venvs\news-scape\Scripts\python.exe -m src.orchestrator --once cafef fireant tnck
 ```
 
-⚠️ **Chỉ chạy MỘT scheduler.** Hai tiến trình scheduler → gấp đôi lưu lượng, nguy cơ chặn IP
-(xem [troubleshooting.md](troubleshooting.md)).
+⚠️ **Chỉ chạy MỘT scheduler.** Scheduler thứ hai bị khoá tiến trình từ chối. Khi daemon đã cài,
+không khởi động thêm `morninger` bằng tay (xem [troubleshooting.md](troubleshooting.md)).
 
 ## 4. Theo dõi sức khoẻ
 
 ```powershell
 # Trạng thái scraper + exit code (0 = OK, 1 = có vấn đề)
-.venv\Scripts\python.exe -m src.monitor.health
+C:\venvs\news-scape\Scripts\python.exe -m src.monitor.health
+
+# Điểm chạm của pipeline và đúng một lệnh kế tiếp (đọc-only)
+C:\venvs\news-scape\Scripts\python.exe scripts/pipeline_radar.py status
 ```
 
 Ngưỡng: `consecutive_failures ≥ 3` → CRITICAL; `status=failed` → FAILED; last_run > 30 phút →
 STALE. Dữ liệu từ bảng `scraper_heartbeat` + `scraper_metrics`.
 
-Log: `logs/monocle.log` (loguru, rotate 50MB, giữ 14 ngày).
-Thông báo tin: `data/notifications/YYYY-MM-DD.log` (giờ VN) + stdout. **1 dòng/bài**, format
-tối giản `<emoji> <title> (chi tiết (<url>))` (emoji sentiment 🟢🔴🟡; giờ/tag/symbols/nguồn
-tra trong DB). Chỉ ghi tin khớp rule trong `config/notifications.yaml` — thiết kế
-**phủ toàn thị trường** (sources + has_symbol + keyword, ~98% coverage, chỉ loại lá cải cafebiz).
+Log: `C:\data\news-scape\logs\monocle.log` (loguru, rotate 50MB, giữ 14 ngày).
+Thông báo tin: `C:\data\news-scape\notifications\YYYY-MM-DD.log` (giờ VN) + stdout. **1 dòng/bài**.
+Chỉ ghi tin khớp rule trong `config/notifications.yaml` (sources + has_symbol + keyword).
 Chi tiết: [../design/05-notification-coverage.md](../design/05-notification-coverage.md).
-Grep được: `grep HPG`, `grep 🔴`.
 
 ## 5. Xem dữ liệu
 
-- **CSV (Excel-friendly):** `python scripts/export_csv.py` → `data/exports/articles-YYYYMMDD.csv`
-  (utf-8-sig, mở Excel không lỗi font). Lọc: `--today`, `--days 3`, `--domain cafef fireant`,
-  `--with-symbols`, `--limit N`, `--out <path>`. Bỏ cột HTML/text thô, giữ cột review
-  (fetched_at, published_at, nguồn, mã, categories, sentiment, score, title, summary, url).
-- **SQLite CLI:** `sqlite3 data/monocle.db` rồi chạy SQL (mẫu ở [../dev/02-data-model-and-db.md](../dev/02-data-model-and-db.md) §6).
-- **DB Browser for SQLite:** mở `data/monocle.db`. ⚠️ Mở **read-only** hoặc đóng orchestrator trước
-  khi ghi, tránh tranh WAL. Sau khi orchestrator ghi, file `-wal`/`-shm` xuất hiện là bình thường.
+- **CSV (Excel-friendly):** orchestrator tự xuất bài hôm nay cuối mỗi cycle ra
+  `C:\data\news-scape\exports\articles-YYYY-MM-DD.csv` (khối `export` trong `config/settings.yaml`).
+- **SQLite CLI:** `sqlite3 -readonly C:\data\news-scape\monocle.db`, hoặc mở bằng **DB Browser for SQLite** ở chế độ read-only
+  (mẫu SQL ở [../dev/02-data-model-and-db.md](../dev/02-data-model-and-db.md)). Không ghi khi morninger đang chạy; file `-wal`/`-shm` là bình thường.
 
 ## 6. Chạy nền / như dịch vụ
 
-- **Đơn giản (dev):** chạy trong terminal/`Start-Process`, dừng bằng Ctrl+C (SIGINT → graceful
-  shutdown, flush DBWriter).
-- **Bền hơn:** Task Scheduler (Windows) hoặc NSSM để chạy `-m src.morninger` (pipeline đầy đủ)
-  hoặc `-m src.orchestrator` như service; đảm bảo **chỉ 1 instance** (không đặt cả scheduler mode
-  lẫn cron `--once`).
-- **Cron ngoài:** nếu muốn điều phối bằng cron/Task Scheduler thay APScheduler → dùng `--once`
-  mỗi lần chạy, KHÔNG chạy scheduler mode song song.
+- **Chuẩn:** `powershell -ExecutionPolicy Bypass -File scripts\ops_install.ps1 -Register -Start`
+  đăng ký `news-scape-ops` và `news-scape-ops-watchdog`. Daemon sinh `morninger` và ghi đầu ra vào
+  `C:\data\news-scape\ops_logs\capture.log`. Không tạo thêm task riêng cho `morninger`.
+- **Dev:** chạy trong terminal, dừng bằng Ctrl+C (SIGINT → graceful shutdown, flush DBWriter).
+- **Cron ngoài:** dùng `--once` mỗi lần chạy, KHÔNG chạy song song với scheduler mode.
 
 ## 7. Backup
 
-- DB 1 file → backup = copy `data/monocle.db` (nên `PRAGMA wal_checkpoint` hoặc đóng orchestrator
-  trước để gộp WAL). Orchestrator tự `wal_checkpoint(TRUNCATE)` cuối mỗi cycle.
-- Lexicon `data/lexicon/*.tsv` + `config/` nằm trong git (trừ secrets).
+- DB 1 file → backup = copy `C:\data\news-scape\monocle.db` khi không có tiến trình ghi (hoặc dùng
+  sqlite backup API). Orchestrator tự `wal_checkpoint(TRUNCATE)` cuối mỗi cycle.
+- `config/` nằm trong git (trừ `secrets.yaml`).
+- Dữ liệu dùng chung xuất bản một chiều lên SharePoint sandbox: [publisher.md](publisher.md).
 
 ## 8. Câu hỏi mở
 
-- Chưa có script prune/rotation cho DB (đang ~550MB). Xem [../dev/05-known-issues.md](../dev/05-known-issues.md) §1.2.
+- Chưa có script prune/rotation cho DB. Xem [../dev/05-known-issues.md](../dev/05-known-issues.md) §1.2.

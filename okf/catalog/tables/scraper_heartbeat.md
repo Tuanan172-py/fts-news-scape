@@ -2,7 +2,7 @@
 type: SQLite Table
 title: scraper_heartbeat
 description: Trạng thái chạy hiện tại của từng scraper — last run, status, số lần fail liên tiếp.
-resource: "project/data/monocle.db (table: scraper_heartbeat)"
+resource: "<DATA_ROOT>/monocle.db (table: scraper_heartbeat)"
 tags: [monitoring, heartbeat, scraper]
 status: stable
 generated:
@@ -17,7 +17,7 @@ sources:
   - id: health
     resource: project/src/monitor/health.py
     title: Health check CLI
-sources_last_checked: 2026-09-07
+sources_last_checked: 2026-10-22
 ---
 
 Bảng `scraper_heartbeat` giữ **1 hàng / scraper** (upsert theo `scraper_name`), cập nhật mỗi

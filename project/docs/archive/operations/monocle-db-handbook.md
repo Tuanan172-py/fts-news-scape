@@ -1,3 +1,5 @@
+> Lưu trữ 2026-10-22 (US-050): xây trên `db_status.py`/`dbq.py` đã xoá và cổng L1/Gold đã ngừng (ADR-0010), thay bằng `python scripts/pipeline_radar.py status` (AGENTS.md §9) và [runbook ops_daemon](../../operations/ops-daemon.md).
+
 # Sổ tay vận hành `monocle.db` — cho dev monitor hàng ngày
 
 Cập nhật: 2026-08-19 · DB: `data/monocle.db` (SQLite, WAL). Đọc-only trừ mục §7.

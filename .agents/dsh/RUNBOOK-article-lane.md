@@ -14,12 +14,7 @@
 
 ## 0. Chuẩn bị một lần
 
-**Bước 1 — nối preset vào DSH** (nếu chưa làm):
-
-```powershell
-cmd /c mklink /J "$env:USERPROFILE\.dsh\.agent-presets\news-scape-conductor" ^
-  "C:\src\news-scraper\.agents\dsh\presets\news-scape-conductor"
-```
+**Bước 1 — nối preset vào DSH** (nếu chưa làm): nạp qua root cấu hình bằng patch profile `web`, không dùng junction (bộ quét preset bỏ qua junction im lặng trên Windows). Cách làm: [`README.md` mục Wiring](README.md#wiring-preset-vào-dsh).
 
 **Bước 2 — sinh prefix và dán vào preset:**
 
@@ -28,7 +23,7 @@ cd project
 & "C:\venvs\news-scape\Scripts\python.exe" scripts/build_article_prefix.py
 ```
 
-Mở tệp vừa sinh tại `project/data/prefix/ARTICLE_SYSTEM_CORE.md`, chép **trọn nội dung** vào trường `persona` của row `tool-subagent-article` trong `agent.cordis.yml`.
+Mở tệp vừa sinh tại `project/assets/prefix/ARTICLE_SYSTEM_CORE.md`, chép **trọn nội dung** vào trường `persona` của row `tool-subagent-article` trong `agent.cordis.yml`.
 
 Dán xong thì xác nhận ngay, đừng tin mắt:
 
@@ -79,7 +74,7 @@ Sổ cái vẫn theo dõi `output_tokens` mỗi lượt. Nếu con số ấy đ�
 
 ### 1.2 Chạy mô hình — trong phiên DSH
 
-Mở tệp `project/data/agent_tasks/article/wave_W01.conductor.ts` và dán **trọn nội dung** vào **một** lệnh `run_code`.
+Mở tệp `<DATA_ROOT>/agent_tasks/article/wave_W01.conductor.ts` (mặc định `C:\data\news-scape`; `article_run.py --where` in đường dẫn thật) và dán **trọn nội dung** vào **một** lệnh `run_code`.
 
 Đừng tách thành nhiều bước. Toàn bộ chi phí của phiên điều phối tỉ lệ với số bước chứ không tỉ lệ với số bài; tách một chương trình thành năm bước là nhân chi phí lên nhiều lần mà không được gì.
 
@@ -133,7 +128,7 @@ Lệnh này in luôn thư mục đã ghi. Cần biết đường dẫn mà chưa
 & "C:\venvs\news-scape\Scripts\python.exe" scripts/write_user_output.py --where
 ```
 
-Script nằm trong `project/scripts/` như mọi script khác, chạy với cwd = `project/`. Chỉ **thư mục đầu ra** `users/output/` là nằm ở gốc kho. Đừng đi dò bằng cách đọc mã nguồn hay liệt kê thư mục.
+Script nằm trong `project/scripts/` như mọi script khác, chạy với cwd = `project/`. Tệp giao hàng nằm ngoài kho mã, ở `<DATA_ROOT>/users/output/<user>/<ngày>.xlsx` (ADR-0026.D6). Đừng đi dò bằng cách đọc mã nguồn hay liệt kê thư mục.
 
 ### 1.6 Hợp đồng đường dẫn và quyền ghi — một lệnh, 0 token
 
@@ -184,7 +179,7 @@ Các dấu hiệu kỹ thuật cần xử lý ngay:
 
 ## 3. Bàn giao và đóng phiên
 
-Tệp bàn giao mới nhất luôn ở `project/data/state/HANDOFF-latest.md`. Nó được sinh từ cơ sở dữ liệu với chi phí bằng không, nên không cần nhờ mô hình tóm tắt gì.
+Tệp bàn giao mới nhất luôn ở `<DATA_ROOT>/state/HANDOFF-latest.md`. Nó được sinh từ cơ sở dữ liệu với chi phí bằng không, nên không cần nhờ mô hình tóm tắt gì.
 
 Phiên mới chỉ cần đọc tệp đó rồi chạy tiếp. Mất phiên giữa chừng chỉ mất đúng lô đang chạy, và packet của lô đó vẫn còn trên đĩa.
 
@@ -202,8 +197,8 @@ Phiên mới chỉ cần đọc tệp đó rồi chạy tiếp. Mất phiên gi�
 | Persona báo lệch prefix | Dán thiếu, dán thừa, hoặc trình soạn thảo tự thụt lề lại khối YAML | Dán lại trọn nội dung tệp prefix, rồi `--check-preset` để xác nhận. Đây là lỗi duy nhất không có triệu chứng nào ngoài hoá đơn |
 | Sổ cái báo con số vô lý | Dòng sổ cái ghi không có `--workers-only` nên gộp cả phiên điều phối | `--finish` đã tự truyền cờ này từ 23/09. Dòng cũ hơn thì đọc với dè dặt |
 | `DB không ghi được … readonly` | Sandbox workspace-write chặn ghi ra `C:\data\news-scape`; không cấu hình nào mở rộng được | Chạy lại đúng lệnh khung ❌ in ra, với `danger-full-access`. Kiểm bằng `article_run.py --where` |
-| Chương trình điều phối trả `stopped` | Đọc packet hỏng; chưa lượt gọi mô hình nào chạy | Báo nguyên văn `failed[].why`. Không sửa tay tệp `.ts`: lỗi phải vá ở `conductor_program()` trong `article_run.py` |
-| Bài có bản ghi mà nhận diện bị loại `no l1_task` | Bài đi thẳng từ Article Lane chưa từng qua định tuyến L1 | Đã vá 23/09: `L1Runner` tự ghi dòng `l1_tasks` với `route=article_lane`. Còn gặp thì bài không tồn tại trong `articles` |
+| Chương trình điều phối trả `stopped` | Đọc packet hỏng; chưa lượt gọi mô hình nào chạy | Báo nguyên văn `failed[].why`. Không sửa tay tệp `.ts`: lỗi phải vá ở `conductor_program()` trong `src/ops/wave/article_run.py` |
+| Bài có bản ghi mà nhận diện bị loại `no l1_task` | Bài đi thẳng từ Article Lane chưa từng qua định tuyến L1 | Đã vá 23/09: `L1Runner` (`src/agent/ingest/l1_runner.py`) tự ghi dòng `l1_tasks` với `route=article_lane`. Còn gặp thì bài không tồn tại trong `articles` |
 
 ---
 
@@ -217,6 +212,6 @@ Việc dọn dẹp đã làm ngày 23/09 (ADR 0010):
 - Gỡ job `l1_route` + `l1_ingest --code-first` 15 phút khỏi `morninger`. **Tiến trình `morninger` đang chạy phải khởi động lại** thì mới dừng job này.
 - Bộ chọn bài không còn coi bản code-first là đã phân tích. 2.915 bài ngày 10–17/09 từng kẹt vì điều này nay quay lại hàng chờ, xem được bằng `radar status --date <ngày>`.
 - `--finish` chỉ bung và nạp tệp `article_<mã>_*` của đúng đợt. Dòng `ingested: done/failed` giờ là số của đợt.
-- Tệp tồn đã chuyển (không xoá) sang `data/archive/legacy-lane-20260923/`, kèm `MANIFEST.json` ghi cách hoàn tác: 411 packet `agent_tasks/l1/`, 11 tệp `l1_batch_*`, 21 tệp `batch_*` và manifest Gold cũ.
+- Tệp tồn đã chuyển (không xoá) sang `<DATA_ROOT>/archive/l1-gold-lane/legacy-lane-20260923/`, kèm `MANIFEST.json` ghi cách hoàn tác: 411 packet `agent_tasks/l1/`, 11 tệp `l1_batch_*`, 21 tệp `batch_*` và manifest Gold cũ.
 
 Các dòng `l1_tasks` cũ trong DB được giữ làm lịch sử. Radar và bàn giao không đọc bảng này.

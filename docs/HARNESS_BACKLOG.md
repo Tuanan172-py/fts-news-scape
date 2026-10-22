@@ -1,19 +1,19 @@
-# HARNESS_BACKLOG.md — Friction reservoir (news-scape, H1)
+# HARNESS_BACKLOG.md — Friction reservoir (news-scape)
 
-The harness grows from friction. When something is hard / repeats / is ambiguous / lacks a rule → add a row here (don't silently change the process). Moves to a DB `backlog` table at H2.
+The harness grows from friction. When something is hard / repeats / is ambiguous / lacks a rule → record it with `python scripts/harness_cli.py backlog add` (don't silently change the process).
 
 **Risk** = a lane (`tiny` / `normal` / `high-risk`), not `low`.
 
 | # | Title | Discovered while | Current pain | Suggested improvement | Risk | Status |
 |---|-------|------------------|--------------|-----------------------|------|--------|
-| 1 | Status not queryable across stories | Building TEST_MATRIX by hand | Proof/status live in a hand-edited markdown table + scattered story files; no single query for "what's in_progress / unproven". Stale-prone. | H2: SQLite `story`/`trace` + `harness-cli query matrix`. Primary climb-to-H2 signal. | normal | open |
-| 2 | WIP=1 has no enforcement | Writing the WIP=1 rule | Honor-system only; nothing stops two `in_progress` stories or a stray branch. | H2 candidate: git pre-commit hook checking a single `in_progress` marker. | tiny | open |
-| 3 | SESSION-LATEST is live-state in markdown | Wiring step-9 handoff | A hand-edited state file drifts if not overwritten every session; accepted small debt at H1. | H2: fold into durable `trace.next_action`; keep the file as a generated view. | tiny | open |
-| 6 | Ngân sách context Normal-lane quá chật cho tác vụ audit | Ghi trace US-011 | `score_context` đếm cả tệp do Explore subagent đọc hộ → phạt đúng hành vi ủy thác mà quy tắc khuyến khích. | Làm rõ phạm vi: trần chỉ áp cho tệp vào thẳng context agent điều phối. | normal | **resolved** (US-014) |
-| 7 | `project/.venv` nội bộ hỏng | Chạy pytest cho US-011 | Trỏ Python 3.14 của hồ sơ Windows cũ đã đổi tên; trái AGENTS.md §3 (cấm `.venv` nội bộ). | Xoá thư mục — **cần xác nhận vì là thao tác phá huỷ**. | tiny | open |
-| 8 | `harness_cli intake`: argparse 9 loại, DB CHECK 6 loại | Ghi intake cho US-015 | `qa_inquiry`/`diagnostic`/`exploration` hợp lệ theo FEATURE_INTAKE.md §1 nhưng luôn bị CHECK constraint từ chối. | Mở rộng CHECK cho đủ 9 loại (khớp tài liệu), hoặc thu hẹp argparse còn 6. | tiny | open |
+| 1 | Status not queryable across stories | Building TEST_MATRIX by hand | Proof/status lived in a hand-edited markdown table + scattered story files. | H2: SQLite `story`/`trace` + `harness-cli query matrix`. | normal | **resolved**: `python scripts/harness_cli.py query matrix` |
+| 2 | WIP=1 has no enforcement | Writing the WIP=1 rule | Honor-system only; nothing stopped two `in_progress` stories. | Lint check on a single `in_progress` per branch. | tiny | **resolved**: `doc lint` code K13 and `audit` check 2 (`wip_by_branch` in `scripts/knowledge.py`, ADR-0022) |
+| 3 | SESSION-LATEST is live-state in markdown | Wiring step-9 handoff | A hand-edited state file drifts if not overwritten every session. | Fold into durable `trace.next_action`; keep the file as a generated view. | tiny | open |
+| 6 | Normal-lane context budget too tight for audit work | Recording the US-011 trace | `score_context` counted files read by Explore subagents, penalising the delegation the rule encourages. | Scope the ceiling to files that enter the orchestrator's context directly. | normal | **resolved** (US-014) |
+| 7 | Broken local `project/.venv` | Running pytest for US-011 | Pointed at the Python 3.14 of a renamed Windows profile; violated the no-local-`.venv` rule. | Delete the folder (destructive, needs confirmation). | tiny | **obsolete**: no `project/.venv` exists in `C:\src\news-scraper`; the venv is `C:\venvs\news-scape` (ADR-0024) |
+| 8 | `harness_cli intake`: argparse 9 types, DB CHECK 6 types | Recording intake for US-015 | `qa_inquiry`/`diagnostic`/`exploration` were valid per FEATURE_INTAKE.md §1 but rejected by the CHECK constraint. | Widen CHECK to all 9 types. | tiny | **resolved**: `scripts/schema/003-intake-types.sql` |
 
-> **Nguồn chân lý từ H2 trở đi là bảng `backlog` trong `harness.db`** (`harness_cli.py backlog add/close`).
-> Bảng markdown này là bản chụp để đọc nhanh; mục #4, #5 nằm trong DB, chưa chép sang đây.
+> **From H2 on, the source of truth is the `backlog` table in `harness.db`** (`harness_cli.py backlog add/close`).
+> This markdown table is a quick-read snapshot; items #4 and #5 live only in the DB.
 
 <!-- On close: add "Outcome:" with the actual measured result. -->

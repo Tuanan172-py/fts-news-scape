@@ -1,83 +1,84 @@
-# GIT_COMMIT_STANDARD.md — Chuẩn Mực Commit Trong Ngành & Quy Tắc Tiết Lộ Lũy Tiến
+# GIT_COMMIT_STANDARD.md — Commit Standard and Progressive Disclosure
 
-Mục đích: Tài liệu tham chiếu độc lập định nghĩa chuẩn mực commit mã nguồn (dựa trên Conventional Commits 1.0.0 và Semantic Versioning) áp dụng cho toàn bộ dự án News-Scape trong khung quản trị Harness.
+Purpose: a standalone reference that defines the commit standard (Conventional Commits 1.0.0 and Semantic Versioning) for the whole News-Scape project under the harness.
 
 > [!NOTE]
-> **Nguyên tắc Tiết lộ Lũy tiến (Progressive Disclosure):**
-> Tài liệu này là tệp tham chiếu tĩnh (Tầng 2). Lập trình viên và Agent không cần đọc lại tệp này trong các ca làm việc thường nhật. Tầng công cụ CLI (`harness_cli.py story complete --commit` hoặc `harness_cli.py git template`) chịu trách nhiệm tự động sinh cú pháp chuẩn với chi phí 0 token. Chỉ mở tệp này khi cần đào sâu, giải quyết tranh luận hoặc soạn thảo Release Notes.
+> **Progressive disclosure:**
+> This file is a static tier-2 reference. Developers and agents do not reread it in daily work. The CLI (`harness_cli.py git template`, `harness_cli.py story complete --commit`, `harness_cli.py session close`) generates compliant messages at zero token cost. Open this file only to resolve a dispute or to write release notes.
 
 ---
 
-## 1. Cấu Trúc Thông Điệp Commit Chuẩn (Conventional Commits 1.0.0)
+## 1. Message structure (Conventional Commits 1.0.0)
 
-Mỗi commit gồm tối đa 3 khối, cách nhau bởi một dòng trống:
+A commit has up to three blocks separated by a blank line:
 
 ```text
-<type>(<scope>): <subject> (US-XXX)
+<type>(<scope>): <subject> (US-NNN)
 
-[body: giải thích bối cảnh, TẠI SAO phải thay đổi, các đánh đổi kỹ thuật]
+[body: context, WHY the change is needed, technical trade-offs]
 
-[footer: breaking changes, liên kết ADR hoặc Issue tham chiếu]
+[footer: breaking changes, ADR or issue references]
 ```
 
-### A. Dòng Tiêu Đề (Header Line) — Bắt Buộc
-- **Độ dài tối đa**: 72 ký tự (lý tưởng: 50–60 ký tự).
-- **Quy cách**: Chữ thường toàn bộ cho `<type>` và `<scope>`. Chữ cái đầu của `<subject>` viết thường, **tuyệt đối không có dấu chấm `.` ở cuối dòng**.
-- **Mã Harness**: Bắt buộc mang mã `(US-XXX)` ở cuối dòng tiêu đề đối với mọi commit thuộc Story Normal/High-Risk.
+### A. Header line (required)
+- **Maximum length**: 72 characters (ideal 50–60).
+- **Format**: lowercase `<type>` and `<scope>`. The first letter of `<subject>` is lowercase, and the line **never ends with a period**.
+- **Harness id**: every commit of a Normal or High-Risk story carries `(US-NNN)` at the end of the header.
 
-### B. Thân Commit (Body) — Tùy Chọn Nhưng Khuyến Nghị Cho Thay Đổi Lớn
-- Trả lời trực tiếp câu hỏi: **TẠI SAO** (Why) lại có thay đổi này và tác động kiến trúc ra sao. Không diễn giải lại việc file nào được sửa vì `git diff` đã thể hiện điều đó.
-- Xuống dòng ở độ dài khoảng 72–80 ký tự.
+### B. Body (optional, recommended for large changes)
+- Answer **why** the change exists and how it affects the architecture. Do not list changed files; `git diff` shows them.
+- Wrap at about 72–80 characters.
 
-### C. Chân Commit (Footer) — Cho Thay Đổi Phá Vỡ Hoặc Quyết Định
-- Đánh dấu thay đổi phá vỡ: `BREAKING CHANGE: <mô tả chi tiết cách di chuyển/ảnh hưởng>`
-- Tham chiếu quyết định: `Refs: ADR-NNNN`
+### C. Footer (breaking changes and decisions)
+- Breaking change: `BREAKING CHANGE: <migration or impact>`
+- Decision reference: `Refs: ADR-NNNN`
 
 ---
 
-## 2. Ma Trận Phân Định Ranh Giới (Commit Type Taxonomy)
+## 2. Commit type taxonomy
 
-| Mã Loại | Tên Nghiệp Vụ | Tiêu Chuẩn Thực Tế | Ví Dụ Điển Hình |
+| Type | Meaning | Criterion | Example |
 | :--- | :--- | :--- | :--- |
-| **`feat`** | Tính năng mới | Thêm một năng lực nghiệp vụ mới mà người dùng hoặc consumer có thể sử dụng được. | `feat(export): add intent columns to deliverable Excel (US-002)` |
-| **`fix`** | Sửa lỗi sai lệch | Khắc phục một khiếm khuyết khiến hành vi thực tế chạy sai so với đặc tả đã cam kết. | `fix(article_pack): check content_text column existence (US-025)` |
-| **`refactor`** | Tái cấu trúc | Sắp xếp lại mã nguồn nội bộ mà **không đổi hành vi bên ngoài** (không thêm tính năng, không sửa bug). | `refactor(l1_router): extract regex patterns to compile time constant (US-010)` |
-| **`perf`** | Tối ưu hiệu năng | Nâng cao tốc độ thực thi, giảm tiêu thụ RAM, token LLM hoặc I/O mà giữ nguyên 100% logic. | `perf(tokenizer): use morphological compact array for tokens (US-009)` |
-| **`docs`** | Tài liệu | Chỉ sửa đổi tài liệu Markdown, docstrings, quy tắc, hướng dẫn sử dụng. | `docs(governance): add ADR 0010 Article Lane unified architecture (US-027)` |
-| **`test`** | Kiểm thử | Thêm mới, cập nhật hoặc sửa đổi bộ kiểm thử đơn vị, integration tests, fixtures. | `test(harness_cli): add test cases for git lifecycle and clean status (US-030)` |
-| **`chore`** | Bảo trì & Hạ tầng | Cập nhật cấu hình phụ trợ, file ignore, migration CSDL nội bộ, dọn dẹp vệ sinh tệp. | `chore(hygiene): clean dangling worktree and update .gitignore` |
+| **`feat`** | New feature | Adds a capability a user or consumer can use. | `feat(export): add intent columns to deliverable Excel (US-002)` |
+| **`fix`** | Bug fix | Fixes behaviour that deviates from the agreed specification. | `fix(article_pack): check content_text column existence (US-025)` |
+| **`refactor`** | Restructuring | Reorganises code **without changing external behaviour**. | `refactor(l1_router): extract regex patterns to compile time constant (US-010)` |
+| **`perf`** | Performance | Improves speed, memory, LLM tokens or I/O with identical logic. | `perf(tokenizer): use morphological compact array for tokens (US-009)` |
+| **`docs`** | Documentation | Changes only Markdown, docstrings, rules or guides. | `docs(governance): add ADR 0010 Article Lane unified architecture (US-027)` |
+| **`test`** | Tests | Adds or changes unit tests, integration tests or fixtures. | `test(harness_cli): add test cases for git lifecycle and clean status (US-030)` |
+| **`chore`** | Maintenance | Tooling config, ignore files, internal migrations, file hygiene. | `chore(hygiene): clean dangling worktree and update .gitignore` |
 
 ---
 
-## 3. Quy Chuẩn Ngữ Văn (Grammar & Style Rules)
+## 3. Grammar and style rules
 
-1. **Thể mệnh lệnh trực diện (Imperative Mood)**:
-   - Viết như một mệnh lệnh hành động trực tiếp.
-   - **Đúng**: `add`, `fix`, `refactor`, `remove`, `update`, `optimize`.
-   - **Sai**: `added`, `fixes`, `fixing`, `refactored`, `improving`.
-2. **Không dùng từ mơ hồ, sáo ngữ**:
-   - Tránh: `update various files`, `fix minor bug`, `wip`, `clean code`.
-   - Phải ghi rõ thực thể hoặc module bị tác động: `fix(dedup): prevent false-positive url merge on trailing slash`.
-3. **Phạm vi (Scope) chuẩn của News-Scape**:
-   - `core`: Module hạ tầng dùng chung (`src/core/`, staging, stdio).
-   - `bronze`: Tầng cào tin và lưu trữ thô.
-   - `silver`: Tầng bóc tách DOM và chuẩn hóa văn bản.
-   - `gold` / `article-lane`: Tầng phân tích ngữ nghĩa LLM và trích dẫn.
-   - `export` / `delivery`: Tầng phân phối dữ liệu người dùng (`.xlsx`).
-   - `harness`: Khung quản trị, CLI, tracking, kiểm thử.
-   - `governance`: Rules, ADRs, chính sách hệ thống.
+1. **Imperative mood**:
+   - Write the subject as a direct command.
+   - **Right**: `add`, `fix`, `refactor`, `remove`, `update`, `optimize`.
+   - **Wrong**: `added`, `fixes`, `fixing`, `refactored`, `improving`.
+2. **No vague wording**:
+   - Avoid: `update various files`, `fix minor bug`, `wip`, `clean code`.
+   - Name the entity or module affected: `fix(dedup): prevent false-positive url merge on trailing slash`.
+3. **Standard News-Scape scopes**:
+   - `core`: shared infrastructure (`src/core/`, staging, stdio).
+   - `bronze`: capture and raw storage.
+   - `silver`: DOM extraction and text normalisation.
+   - `article-lane`: LLM analysis and citations (`src/article_lane/`, `src/agent/`).
+   - `ops`: wave flow, daemon and console (`src/ops/`).
+   - `export` / `delivery`: user delivery (`.xlsx`) and publish.
+   - `harness`: governance CLI, tracking, tests.
+   - `governance`: rules, ADRs, system policies.
 
 ---
 
-## 4. Công Cụ Hỗ Trợ 0-Token Trong Harness CLI
+## 4. Zero-token tools in the harness CLI
 
-Để sinh nhanh mẫu commit chuẩn mà không tốn token LLM, sử dụng lệnh tích hợp sẵn:
+Generate a compliant message without spending LLM tokens:
 
 ```powershell
 & "C:\venvs\news-scape\Scripts\python.exe" scripts/harness_cli.py git template --type feat --scope core --story US-030 --title "integrate git lifecycle"
 ```
 
-Khi nghiệm thu Story qua Harness, cờ `--commit` sẽ tự động tuân thủ 100% chuẩn mực này:
+When a story is completed through the harness, `--commit` applies this standard:
 ```powershell
-& "C:\venvs\news-scape\Scripts\python.exe" scripts/harness_cli.py story complete --id US-XXX --run-verify --commit
+& "C:\venvs\news-scape\Scripts\python.exe" scripts/harness_cli.py story complete --id US-NNN --run-verify --commit
 ```

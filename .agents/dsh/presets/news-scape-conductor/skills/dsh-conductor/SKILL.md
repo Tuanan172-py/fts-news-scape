@@ -60,11 +60,11 @@ Lệnh này kiểm prefix, đóng gói packet, in dự toán và **sinh sẵn ch
 
 ### Bước 2 — một lệnh chạy mô hình
 
-Đọc tệp `project/data/agent_tasks/article/wave_<mã>.conductor.ts` rồi chạy **trọn nội dung** trong **một** lệnh `run_code`.
+Đọc tệp `<DATA_ROOT>/agent_tasks/article/wave_<mã>.conductor.ts` (mặc định `C:\data\news-scape`; `article_run.py --where` in đường dẫn thật) rồi chạy **trọn nội dung** trong **một** lệnh `run_code`.
 
 Chương trình đó đã tự lo: đọc trọn **mọi** packet trước, hâm bộ nhớ đệm bằng một lượt tí hon, chạy mọi lô song song, ghi kết quả thẳng ra đĩa, và chỉ trả về vài con số.
 
-Kết quả có khoá `stopped` nghĩa là đọc packet hỏng và **chưa lượt gọi mô hình nào chạy**. Trường `failed[].why` nói rõ công cụ đọc trả về kiểu gì. Báo nguyên văn lỗi đó; **đừng tự sửa tệp `.ts`**. Chương trình là mã sinh ra, lỗi của nó phải vá ở `article_run.py` để không lặp lại ở đợt sau.
+Kết quả có khoá `stopped` nghĩa là đọc packet hỏng và **chưa lượt gọi mô hình nào chạy**. Trường `failed[].why` nói rõ công cụ đọc trả về kiểu gì. Báo nguyên văn lỗi đó; **đừng tự sửa tệp `.ts`**. Chương trình là mã sinh ra, lỗi của nó phải vá ở `conductor_program()` trong `src/ops/wave/article_run.py` để không lặp lại ở đợt sau.
 
 **Đừng tách nó ra.** Đừng đọc packet ở một bước rồi gọi agent ở bước khác. Đừng in nội dung packet hay đầu ra của lô.
 
@@ -110,7 +110,7 @@ const r = await tools.pwsh({
 return r.stdout.text;
 ```
 
-Script nằm ở `project/scripts/` như mọi script khác. Chỉ **thư mục đầu ra** `users/output/` là nằm ở gốc kho.
+Script nằm ở `project/scripts/` như mọi script khác. Tệp giao hàng nằm ngoài kho mã, ở `<DATA_ROOT>/users/output/<user>/<ngày>.xlsx` (ADR-0026.D6).
 
 ---
 
@@ -147,7 +147,7 @@ Sổ cái chỉ tính **phiên worker được tạo sau mốc đóng gói** (`-
 
 ## Lane cũ đã ngừng
 
-Article Lane là đường xử lý duy nhất (ADR 0010). Không gọi `l1_route.py`, `l1_ingest.py --code-first` hay `requeue.py`, kể cả khi thấy chúng trong tài liệu cũ. Row `agent_l1`/`agent_gold` đã gỡ khỏi preset. Tệp tồn của lane cũ nằm ở `data/archive/legacy-lane-20260923/`, không phải việc của đợt.
+Article Lane là đường xử lý duy nhất (ADR 0010). Không gọi `l1_route.py`, `l1_ingest.py --code-first` hay `requeue.py`, kể cả khi thấy chúng trong tài liệu cũ. Row `agent_l1`/`agent_gold` đã gỡ khỏi preset. Tệp tồn của lane cũ không phải việc của đợt.
 
 ---
 

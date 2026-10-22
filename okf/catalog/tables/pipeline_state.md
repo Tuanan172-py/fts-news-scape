@@ -2,7 +2,7 @@
 type: SQLite Table
 title: pipeline_state
 description: Key/value bền vững qua restart — watermark re-derive, checkpoint Silver, advisory lock scheduler.
-resource: "project/data/monocle.db (table: pipeline_state)"
+resource: "<DATA_ROOT>/monocle.db (table: pipeline_state)"
 tags: [state, watermark, lock, morninger]
 status: stable
 generated:
@@ -20,7 +20,7 @@ sources:
   - id: morninger
     resource: project/src/morninger.py
     title: Morninger 3-job scheduler
-sources_last_checked: 2026-09-07
+sources_last_checked: 2026-10-22
 ---
 
 `pipeline_state` là bảng key/value nhỏ giữ **trạng thái điều phối** sống sót qua restart. Không
@@ -43,7 +43,7 @@ nếu **một trong các điều kiện**:[^db-store]
 - owner cũ cùng host nhưng PID đã chết (`os.kill(pid, 0)` lỗi);
 - bản ghi lock quá cũ (`updated_at` vượt `stale_seconds`).
 
-`SCHEDULER_LOCK_STALE_SECONDS = 2400` (40 phút) — **phải lớn hơn** chu kỳ capture 15′ để lock
+`SCHEDULER_LOCK_STALE_SECONDS = 2400` (40 phút) — **phải lớn hơn** chu kỳ capture (10′) để lock
 không bị cướp giữa hai nhịp; chủ sở hữu refresh lock mỗi cycle.[^proclock]
 
 # Schema

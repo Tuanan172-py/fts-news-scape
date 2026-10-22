@@ -1,3 +1,5 @@
+> Lưu trữ 2026-10-22 (US-050): quy trình hai máy qua OneDrive đã bị ADR-0024 thay (cây chuẩn `C:/src/news-scraper`, venv `C:/venvs/news-scape`, git ngoài OneDrive), thay bằng [08-git-codebase-governance-guide](../../dev/08-git-codebase-governance-guide.md) và `docs/decisions/0024-canonical-local-codebase-and-hybrid-workspace.md`.
+
 # 07 — Quy trình 2 máy: máy dev qua GitHub + máy vận hành trên OneDrive
 
 Chốt 2026-09-08, sau khi hợp nhất `e4d281a`. Thay thế mọi thoả thuận miệng trước đó.

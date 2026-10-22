@@ -1,6 +1,6 @@
 # Entity System & User Mapping Invariants
 
-## 1. Master Catalog Invariants (`project/data/entities/entities.xlsx`)
+## 1. Master Catalog Invariants (`<DATA_ROOT>/entities/entities.xlsx`, built by `scripts/build_entities.py` via `src/agent/catalog/catalog_build.py`)
 - **Discrete Multi-sheet Architecture:** Always maintain distinct sheets:
   - `_Huong_dan`: Guide on how users pick `code` values for subscription.
   - `_Index`: Statistics and summary table across all entity types.
@@ -35,8 +35,8 @@
 - **Multi-ID Preservation:** `_alias_index` must always map an alias string to a `list[entity_id]` to preserve hierarchical industry mappings (e.g., GICS2 & GICS3 both receiving matches).
 
 ## 3. User Input & Pipeline Invariants (`project/src/users/compile.py`, `project/src/export/user_output.py`)
-- **User Subscription Contract:** Users subscribe by picking `code` values from `entities.xlsx` and entering them in `users/input/<Name>/entities.xlsx`.
+- **User Subscription Contract:** Users subscribe by picking `code` values from `entities.xlsx` and entering them in their input folder under `<DATA_ROOT>/inputs/users/<Name>/` (`src/users/compile.py`).
 - **Valid Subscription Columns:** `tickers`, `etfs`, `indices`, `exchanges`, `industries`, `nations`, `themes`, `macro` (alias), `assets`, `institutions`, `entities`.
 - **Graceful Validation:** Unknown codes must be isolated into `_unknown.txt` without crashing the compile pipeline.
 - **Noise Filtering:** Broad macro/asset entities (`MACRO_GEO`, `MACRO_THEME`, `ASSET_CLASS`) only route to users if an alias is present in the title. The filter MUST NOT read any Gold field — the export gate is L1-only, so a not-yet-scored article would always be treated as score 0 and the relaxed gate would only half work.
-- **Export Gate:** `final.csv` requires `l1_outputs.dod_pass=1` ONLY (routing needs L1 entities). `agent_outputs.dod_pass=1` is optional enrichment; when absent the Gold columns are empty strings and `gold_status=L1_ONLY`.
+- **Export Gate:** the delivery file `<DATA_ROOT>/users/output/<user>/<date>.xlsx` requires `l1_outputs.dod_pass=1` ONLY (routing needs L1 entities). `agent_outputs.dod_pass=1` is optional enrichment; when absent the Gold columns are empty strings and `gold_status=L1_ONLY`.

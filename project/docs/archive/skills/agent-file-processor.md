@@ -1,3 +1,5 @@
+> Lưu trữ 2026-10-22 (US-050): skill xử lý hai hàng đợi packet L1/Gold và `scripts/agent_process_packets.py` đã nghỉ hưu (ADR-0010), thay bằng [design/00-end-to-end-architecture §6](../../design/00-end-to-end-architecture.md) (agent `article-processor`).
+
 # Skill: VN Stock News Packet Processor (`agent-file-processor`)
 
 > [!NOTE]

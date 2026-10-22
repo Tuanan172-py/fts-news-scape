@@ -1,3 +1,5 @@
+> Lưu trữ 2026-10-22 (US-050): engine sentiment rule-based `src/processor/sentiment.py`/`segment.py` đã xoá; sentiment do agent `article-processor` sinh, thay bằng [00-end-to-end-architecture §6](../../design/00-end-to-end-architecture.md).
+
 # Thiết kế — Sentiment & phân loại (rule-based)
 
 Cập nhật: 2026-07-26 · Đối tượng: người muốn hiểu/điều chỉnh cách chấm cảm xúc & gán nhãn.

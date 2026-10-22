@@ -1,26 +1,28 @@
 ---
 type: SQLite Table
 title: periodic_reports
-description: Sổ đăng ký báo cáo định kỳ của cơ quan thống kê (NSO) — dedup theo (report_type, period), KHÔNG theo URL.
-resource: "project/data/monocle.db (table: periodic_reports)"
-tags: [nso, periodic, bronze, statistics, out-of-cycle]
+description: Bảng legacy — sổ đăng ký báo cáo định kỳ NSO, dedup theo (report_type, period). Còn trong DDL nhưng driver ghi bảng đã xoá.
+resource: "<DATA_ROOT>/monocle.db (table: periodic_reports)"
+tags: [nso, periodic, bronze, statistics, legacy]
 status: stable
 generated:
   at: 2026-09-08T00:00:00Z
 sources:
-  - id: driver
-    resource: project/src/pipeline/periodic_reports.py
-    title: PeriodicReportSource — discover / identify / capture / upsert
   - id: db-store
     resource: project/src/db/store.py
     title: ArticleStore schema DDL
   - id: design-16
-    resource: project/docs/design/16-periodic-report-scraper.md
+    resource: project/docs/archive/design/16-periodic-report-scraper.md
     title: Thiết kế scraper báo cáo định kỳ
-sources_last_checked: 2026-09-08
+sources_last_checked: 2026-10-22
 ---
 
-`periodic_reports` là bảng **duy nhất** nằm ngoài vòng đời bài báo. Nó ghi các báo cáo định kỳ
+> **Legacy.** Driver thu báo cáo (`src/pipeline/periodic_reports.py`,
+> `scripts/fetch_periodic_reports.py`, `run_periodic_reports.ps1`) đã xoá; không còn mã nào ghi
+> bảng này. Bảng vẫn được `ArticleStore._SCHEMA` tạo nên các hàng đã thu trước đây còn đọc được.
+> Mã cũ khôi phục được bằng `git show ec4e7fe:project/src/pipeline/periodic_reports.py`.
+
+`periodic_reports` là bảng nằm ngoài vòng đời bài báo. Nó ghi các báo cáo định kỳ
 do Cục Thống kê (`nso.gov.vn`) công bố — ví dụ "Báo cáo tình hình kinh tế – xã hội tháng 8/2026" —
 cùng các file số liệu gốc `.xlsx`/`.docx` đính kèm.[^design-16]
 
@@ -28,7 +30,7 @@ cùng các file số liệu gốc `.xlsx`/`.docx` đính kèm.[^design-16]
 **bản hiệu đính** (revision), và mang file nhị phân. Định danh nghiệp vụ là
 `(source, report_type, period)` chứ không phải URL — NSO đăng lại cùng một kỳ ở nhiều slug, và
 **slug không đáng tin** (đã gặp bản `…-2025-2` mang sai năm). Vì vậy kỳ được parse từ **title**,
-không bao giờ từ slug.[^driver]
+không bao giờ từ slug.
 
 # Dedup và hiệu đính
 
@@ -50,7 +52,7 @@ không bao giờ từ slug.[^driver]
 | `remote_id` | TEXT | WordPress post id |
 | `published_at` | TEXT | ISO +07:00 |
 | `modified_at` | TEXT | ISO +07:00 — đổi = bản hiệu đính |
-| `html_path` | TEXT | Bronze HTML trong `data/raw_reports/**` |
+| `html_path` | TEXT | Bronze HTML trong `<DATA_ROOT>/raw_reports/**` |
 | `attachments_json` | TEXT | `[{url, path, sha256, bytes, content_type}]` |
 | `capture_status` | TEXT | trạng thái capture |
 | `revision` | INTEGER DEFAULT 1 | tăng khi `modified_at` đổi |
@@ -63,7 +65,7 @@ không bao giờ từ slug.[^driver]
 
 Ràng buộc thiết kế, **không được phá**:[^design-16]
 
-- Bronze ở root riêng `data/raw_reports/` — `derive` không quét tới, nên không sinh Silver/
+- Bronze ở root riêng `<DATA_ROOT>/raw_reports/` — `derive` không quét tới, nên không sinh Silver/
   work-package/work_item mồ côi.
 - Attachment nhị phân dùng hậu tố meta `.binmeta.json`, **khác** `.meta.json` của trang HTML, để
   `rglob("*.meta.json")` của derive không khớp trúng.
@@ -105,14 +107,11 @@ ORDER BY period DESC LIMIT 12;
 Không join với `articles`. Đây là nhánh dữ liệu độc lập — liên kết duy nhất tới phần còn lại của
 hệ là **ngữ nghĩa** (số liệu KTXH được các domain tin tức trích dẫn lại).
 
-# Pipeline liên quan
+# Tài liệu lưu trữ
 
-- Sinh bởi [Periodic Reports](../pipelines/periodic_reports.md) — **ngoài** chu kỳ 15 phút
+Pipeline và kho Bronze của báo cáo định kỳ đã lưu trữ ở
+`okf/archive/catalog/pipelines/periodic_reports.md` và
+`okf/archive/catalog/datasets/bronze_periodic_reports.md`.
 
-# Dataset liên quan
-
-- [Bronze Periodic Reports](../datasets/bronze_periodic_reports.md) — `data/raw_reports/**`
-
-[^driver]: [PeriodicReportSource](project/src/pipeline/periodic_reports.py)
 [^db-store]: [ArticleStore schema DDL](project/src/db/store.py)
-[^design-16]: [Thiết kế scraper báo cáo định kỳ](project/docs/design/16-periodic-report-scraper.md)
+[^design-16]: [Thiết kế scraper báo cáo định kỳ](project/docs/archive/design/16-periodic-report-scraper.md)

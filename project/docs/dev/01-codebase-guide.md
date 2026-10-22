@@ -1,104 +1,126 @@
 # Dev — Hướng dẫn codebase
 
-Cập nhật: 2026-07-26 · Đối tượng: dev mới, cần nắm cây thư mục + cách code chạy để sửa/mở rộng.
+Cập nhật: 2026-10-22 · Đối tượng: dev mới, cần nắm cây thư mục + cách code chạy để sửa/mở rộng.
+Bức tranh toàn hệ: [../design/00-end-to-end-architecture.md](../design/00-end-to-end-architecture.md).
+Ranh giới module: ADR-0027 ([`docs/decisions/0027-module-boundaries-thin-clis.md`](../../../docs/decisions/0027-module-boundaries-thin-clis.md))
+và RULE-12 ([`.agents/rules/12-module-boundaries.md`](../../../.agents/rules/12-module-boundaries.md)).
 
-## 1. Cây thư mục
+## 1. Ba vùng của `project/`
+
+| Vùng | Vai trò | Quy tắc |
+|---|---|---|
+| `src/<package>/` | Toàn bộ logic nghiệp vụ, chia theo tầng | `src/core` (L0) và `src/db` (L1) không import package nghiệp vụ; không vòng import giữa package (RULE-12.R1) |
+| `scripts/*.py` | CLI mỏng: parse tham số rồi gọi một hàm trong `src` | Đường dẫn ổn định, không đổi tên (Task Scheduler, `.agents/pipeline.yaml`, conductor gọi tới); không `scripts → scripts`, không `src → scripts` (R2–R4); script mới phải khai trong `SCRIPT_INVENTORY` (`tests/repo/test_architecture.py`, R6) |
+| `tests/<package>/` | Test soi gương `src`; kiểm tra toàn kho ở `tests/repo/` | R7 — xem [04-testing.md](04-testing.md) |
+
+Đường gốc lấy từ `src.core.paths` (`PROJECT_ROOT`, `REPO_ROOT`, `harness_db_path()`, `data_root()` theo `MONOCLE_DATA_DIR`,
+mặc định `C:\data\news-scape`). Kết nối SQLite ngoài nội bộ `src/db` đi qua `src.db.connect.open_ro` / `open_rw` (R5).
+
+## 2. Cây `src/`
 
 ```
 src/
-├── orchestrator.py       # điểm vào: scheduler | --once; run_cycle; áp classify+sentiment
-├── core/
-│   ├── base_scraper.py   # BaseScraper ABC — template run(): fetch→parse→dedup→enrich
-│   ├── config.py         # load_settings/domain_config/watchlist/secrets; list_domains
-│   ├── models.py         # Article, ScrapeResult, sha256_hash, now_vn_iso, VN_TZ
-│   ├── tickers.py        # tag_tickers() — gắn mã CK client-side
-│   ├── retry.py          # run_with_retry / run_with_fallback
-│   └── logging.py        # loguru setup (logs/monocle.log, rotate 50MB, giữ 14 ngày)
-├── crawler/
-│   └── http_client.py    # HTTPClient dùng chung: rate limit 3s/domain, retry, UA rotation
-├── scrapers/
-│   ├── __init__.py       # REGISTRY + @register + build_scraper
-│   ├── rss_generic.py    # RSSScraper (_rss) — 18 domain dùng chung
-│   ├── cafef.py tnck.py vndirect.py fireant.py   # API scraper riêng
-├── processor/
-│   ├── classifier.py     # classify_rule_based (regex 4 nhóm)
-│   ├── sentiment.py      # SentimentEngine (lexicon TSV, n-gram, negation)
-│   ├── segment.py        # seg() — pyvi tokenize, fallback whitespace
-│   └── extractor.py      # extract_text / extract_content (trafilatura)
-├── db/
-│   ├── store.py          # ArticleStore — schema, PRAGMA WAL, insert_batch
-│   ├── writer.py         # DBWriter — single-writer thread, batch
-│   └── dedup.py          # DedupCache — seen_articles, hash + fuzzy
-├── monitor/
-│   ├── heartbeat.py      # ghi scraper_heartbeat + scraper_metrics
-│   └── health.py         # CLI đọc trạng thái, exit code
-└── notifier/
-    └── file_notify.py    # FileNotifier — format + ghi data/notifications/*.log
-
-config/domains/*.yaml     # 23 domain (1 file/nguồn)
-config/{settings,watchlist,notifications}.yaml + secrets.yaml (gitignored)
-data/lexicon/*.tsv        # lexicon sentiment · data/labeled/ bộ kiểm định
-tests/                    # pytest, 112 test
+├── orchestrator.py        # Orchestrator.run_cycle: chạy scraper các nguồn bật, gắn chuyên mục, enqueue, CSV, WAL checkpoint
+├── morninger.py           # entry prod của capture: job capture 10', re-derive 30', drift 06:00, reclaim 30'
+├── core/                  # L0: models, config (settings/domain/watchlist), paths, base_scraper, retry, logging,
+│                          #     tickers, urlnorm, proclock, staging, stdio, user_manifest, htmltitle, pagination,
+│                          #     pipeline_spec, redact, ops_config
+├── db/                    # L1: store (ArticleStore), writer (DBWriter), dedup (DedupCache), registry (sổ khám phá URL),
+│                          #     connect (open_ro/open_rw), preflight, snapshot
+├── crawler/               # http_client, raw_store (Bronze WORM), robots, backoff
+├── scrapers/              # REGISTRY + @register; rss_generic, rss_capture, capture_mixin, cafef, tnck, fireant,
+│                          #     vietstock, vneconomy, baodautu, vndirect
+├── processor/             # classifier (chuyên mục theo luật), extractor (trafilatura)
+├── pipeline/              # Silver: silver_builder, derive, run, change_detect, drift, refresh, reconcile, backfill,
+│                          #     story_cluster, cluster_job, inherit
+├── handoff/               # work_package, catalog (work_items), contract_validator
+├── article_lane/          # pack, expand, tick, ledger, handoff — logic của Article Lane
+├── agent/
+│   ├── runners/           # agy_runner, opencode_runner, openrouter_runner
+│   ├── contract/          # article_contract, dod, l1_router, conformance
+│   ├── ingest/            # runner (AgentRunner), l1_runner, batch_handoff — bước nạp qua DoD
+│   ├── catalog/           # entities (matcher), intent_resolve, l1_classifier, catalog_build
+│   └── packet/            # distill, pruner, prefix, silver_source
+├── ops/
+│   ├── store.py           # ops.db
+│   ├── wave/              # wave_flow, dbos_flow, article_run, manual, lanes, procrun, metrics
+│   ├── runtime/           # daemon, sensor, probes, breakers, mandate, order, supervisor, sentinel, notify
+│   └── console/           # control_room (+ web/), commands, present, reports, supervision, radar, improve
+├── export/                # user_output, xlsx_delivery, checkpoint, publisher, radar_sheet, silver_manifest, csv_export
+├── lakehouse/             # storage, manifest, ingest, consolidator
+├── analytics/             # signals (signal_daily, entity_links, source_profile)
+├── monitor/               # heartbeat, health
+├── notifier/              # file_notify
+├── telemetry/             # trace, dsh_usage
+└── users/                 # compile (subscription → config/entities/users/*.yaml)
 ```
 
-## 2. Ba tầng
+## 3. CLI mỏng ở `scripts/` và module phía sau
+
+| Script | Logic |
+|---|---|
+| `article_run.py` | `src/ops/wave/article_run.py` |
+| `article_pack.py`, `article_expand.py`, `article_tick.py`, `token_ledger.py`, `handoff.py` | `src/article_lane/{pack,expand,tick,ledger,handoff}.py` |
+| `l1_ingest.py`, `agent_ingest.py` | `src/agent/ingest/` (bước nạp của `article_run.py --finish`) |
+| `pipeline_radar.py` | `src/ops/console/radar.py` |
+| `build_entities.py` | `src/agent/catalog/catalog_build.py` |
+| `ops_daemon.py`, `ops_console.py` | `src/ops/runtime/daemon.py::OpsDaemon`, `src/ops/console/reports.py` |
+| `publish.py` | `src/export/publisher.py::publish_day` |
+| `write_user_output.py` | `src/export/user_output.py` |
+| `compile_users.py` | `src/users/compile.py` |
+| `run_once.py` | `src/orchestrator.py::main(["--once", ...])` rồi `src/pipeline/derive.py::rederive_incremental` |
+
+Danh sách đầy đủ kèm nơi gọi: `SCRIPT_INVENTORY` trong `tests/repo/test_architecture.py`.
+
+## 4. Luồng capture (ba tầng)
 
 ```
-orchestrator ──build_scraper──► BaseScraper.run() ──► ScrapeResult
-     │                               │  dùng: http_client, dedup, extractor
-     ├─ classify_rule_based ─────────┘
-     ├─ sentiment.analyze
-     ├─ writer.enqueue ──► DBWriter thread ──► store.insert_batch ──► SQLite
-     ├─ heartbeat.record_* ──► SQLite (ghi thẳng, không qua writer)
-     └─ notifier.notify_* ──► file + stdout
+morninger ─► orchestrator.run_cycle ─build_scraper─► BaseScraper.run() ─► ScrapeResult
+     │              │                                     │  dùng: http_client, dedup, raw_store, extractor
+     │              ├─ classify_rule_based ───────────────┘
+     │              ├─ writer.enqueue ──► DBWriter thread ──► store.insert_batch ──► monocle.db
+     │              ├─ heartbeat.record_* ──► monocle.db
+     │              └─ notifier.notify_* ──► <DATA_ROOT>/notifications + stdout
+     └─ backfill_deferred → capture_reconcile → (30') rederive_incremental → story_cluster/signals
 ```
 
-Nguyên tắc phụ thuộc: **scraper không biết DB/sentiment/notify**. Nó chỉ nhận `http`+`dedup`,
-trả `ScrapeResult`. Mọi hậu xử lý nằm ở orchestrator. Điều này giúp test scraper bằng
-`FakeHTTP` mà không cần DB thật.
+Nguyên tắc phụ thuộc: **scraper không biết DB/notify**. Nó chỉ nhận `http` + `dedup`, ghi Bronze qua `RawStore`,
+trả `ScrapeResult`. Không có sentiment ở capture: sentiment do agent `article-processor` sinh trong Article Lane.
+Test scraper bằng `FakeHTTP` (`tests/_fakes.py`), không cần DB thật.
 
-## 3. Registry — thêm scraper không sửa core
+## 5. Registry — thêm scraper không sửa core
 
-`scrapers/__init__.py`:
+`src/scrapers/__init__.py` giữ `REGISTRY` và decorator `register(name)`; cuối file import các module scraper để kích hoạt
+`@register`. `build_scraper(cfg)` (`src/orchestrator.py`) tra `REGISTRY[cfg["name"]]`, không có thì `REGISTRY["_" + cfg["method"]]`
+(vd `method: rss` → `_rss`, `method: rss_capture` → `_rss_capture`).
 
-```python
-REGISTRY: dict[str, type[BaseScraper]] = {}
-def register(name):
-    def deco(cls): REGISTRY[name] = cls; return cls
-    return deco
-# cuối file (tránh circular import):
-from src.scrapers import cafef, fireant, rss_generic, tnck, vndirect
-```
+## 6. HTTP client — hợp đồng dùng chung (`src/crawler/http_client.py`)
 
-`build_scraper(cfg)` tra `REGISTRY[cfg["method"]]`. RSS domain dùng `method: rss` → key `_rss`.
-
-## 4. HTTP client — hợp đồng dùng chung (`crawler/http_client.py`)
-
-- **Rate limit** per-domain (bucket riêng, thread-safe), mặc định 3.0s; reserve slot trước khi
-  sleep để concurrency đúng (`:46-55`).
-- **Retry** urllib3: total=3, backoff 1.5 (→1.5/3/6s), status `429,500,502,503,504`, methods
-  `GET/HEAD/POST`.
+- **Rate limit** per-domain, mặc định `http.rate_limit` = 3.0s (`config/settings.yaml`).
+- **Retry** urllib3: total=`max_retries` (3), `backoff_factor=1.5`, status `429,500,502,503,504`.
 - **UA rotation**: random 1 trong 5 UA/request. **Không** tự khai `Accept-Encoding` (tránh brotli rác).
 - **truststore**: dùng OS cert store (hnx.vn chain thiếu intermediate).
-- Methods: `get`(text) · `get_bytes`(raw, cho feed) · `get_json` · `post_json` · `get_response`(raw
-  Response, cho FireAnt cần đọc status 401). Lỗi request → trả `None` (không raise) trừ `get_response`.
+- Methods: `get` (text) · `get_bytes` (raw, cho feed) · `get_json` · `post_json` · `get_response` (raw Response, đọc status).
 
-## 5. Điểm quan trọng khi đọc code
+## 7. Điểm quan trọng khi đọc code
 
-- **Không bao giờ raise ra pipeline**: lỗi thành string trong `errors[]`. Đọc `base_scraper.py:40-77`.
-- **`disabled`**: chỉ FireAnt dùng (self-disable khi 401/403). Các scraper khác không có.
-- **Cap chi tiết** `max_details_per_cycle` khác nhau: RSS/cafef/tnck/fireant=30, vndirect=20.
-- **now/tz**: luôn dùng `now_vn_iso()` + `VN_TZ` (`models.py:15,23`), không `datetime.now()` trần.
-- **Hash dedup**: `sha256_hash(url, title)` = SHA-256 của chuỗi nối `url+title` (không separator).
+- **Không bao giờ raise ra pipeline**: lỗi scraper thành string trong `errors[]` (`BaseScraper.run`).
+- **Cap chi tiết** `max_details_per_cycle`: mặc định 30, tnck 40, vndirect 20; YAML ghi đè. Vượt cap → `detail_deferred`, morninger bù.
+- **now/tz**: luôn dùng `now_vn_iso()` + `VN_TZ` (`src/core/models.py`), không `datetime.now()` trần.
+- **Hash**: `sha256_hash(url, title)` = SHA-256 của chuỗi nối `url+title` = `url_title_hash`, định danh bài xuyên mọi tầng.
+- **Không script nào giả lập agent** (AGENTS.md §7.3); `code_first` không bao giờ tính là đã phân tích.
 
-## 6. Chạy nhanh
+## 8. Chạy nhanh
+
+Venv chuẩn `C:\venvs\news-scape` (ADR-0024), cwd = `project/`:
 
 ```powershell
-.venv\Scripts\python.exe -m src.orchestrator --once cafef   # 1 domain, 1 cycle
-.venv\Scripts\python.exe -m src.orchestrator --once         # tất cả, 1 cycle
-.venv\Scripts\python.exe -m src.orchestrator                # scheduler 15 phút
-.venv\Scripts\python.exe -m src.monitor.health              # trạng thái + exit code
-.venv\Scripts\python.exe -m pytest -q                       # 112 test
+C:\venvs\news-scape\Scripts\python.exe scripts\pipeline_radar.py status     # trạng thái + một lệnh tiếp theo (đọc trước tiên)
+C:\venvs\news-scape\Scripts\python.exe scripts\article_run.py --where      # wave đang ở đâu (chỉ đọc)
+C:\venvs\news-scape\Scripts\python.exe -m src.morninger --once capture     # một lượt capture
+C:\venvs\news-scape\Scripts\python.exe -m src.orchestrator --once cafef    # 1 domain, 1 cycle
+C:\venvs\news-scape\Scripts\python.exe -m src.monitor.health               # trạng thái + exit code
+C:\venvs\news-scape\Scripts\python.exe -m pytest tests/ -q                 # test, xem 04-testing.md
 ```
 
-Chi tiết vận hành: [../operations/deployment.md](../operations/deployment.md).
+Chi tiết vận hành: [../operations/deployment.md](../operations/deployment.md), [../runbook.md](../runbook.md).

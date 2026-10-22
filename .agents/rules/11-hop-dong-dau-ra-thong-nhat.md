@@ -14,10 +14,10 @@ Hợp đồng bảo đảm hình dạng đầu ra, không bảo đảm nội dun
 2. **Một hàm kiểm.** Mọi runner, adapter và bộ bung gọi `article_contract.parse_and_validate` hoặc `validate_record`. Cấm viết validator, bộ phân tích JSON hay bảng đổi nhóm riêng trong runner.
 3. **Cấm mặc định ngữ nghĩa.** Không gán `neutral` cho `sn` sai, không gán `this_week` cho `ts` sai, không tự điền `c`, không đệm `im`, không nhận khoá đồng nghĩa, không tách `k` kiểu chuỗi. Record sai bị từ chối kèm mã lỗi và đi vào `--repair`.
 4. **Chuẩn hoá cơ học có đếm.** Chỉ được bóc vỏ truyền tải (envelope, rào mã, lời dẫn, cứu từng đối tượng khi cắt cụt) và đưa về dạng chuẩn (bỏ `e` và `c` trùng, sắp `c` tăng dần, sắp `e` theo nhóm rồi chuỗi). Mọi phép chuẩn hoá ghi bộ đếm vào meta.
-5. **Một khung đầu vào.** Tin nhắn người dùng là nguyên văn tệp `.task.json` qua `build_user_message`. Không thêm tiêu đề, không đóng gói lại. Prefix hệ thống là `data/prefix/ARTICLE_SYSTEM_CORE.md`.
+5. **Một khung đầu vào.** Tin nhắn người dùng là nguyên văn tệp `.task.json` qua `build_user_message`. Không thêm tiêu đề, không đóng gói lại. Prefix hệ thống là `project/assets/prefix/ARTICLE_SYSTEM_CORE.md`.
 6. **Tham số chuẩn.** `SAMPLING` trong `article_contract.py`: `temperature 0`, seed cố định. Provider không hỗ trợ thì ghi `unsupported` vào meta, không tự đổi giá trị.
 7. **Meta bắt buộc.** Mỗi lô có tệp meta với `agent_provider`, `model_used`, `sampling`, `contract_version`, bộ đếm vỏ và `domain_errors`. Lô thiếu meta bị `article_expand.py` từ chối, trừ khi `article_run.py` khai provenance cho runner `dsh`.
-8. **Một vòng đời.** `pack` → `run` → `parse_and_validate` → `repair` → `expand` → `--finish`. Provider mới hoặc agent kiểu khác nối vào `append_records` hoặc runner, không có đường riêng. `claude` chưa thuộc lane.
+8. **Một vòng đời.** `pack` → `run` → `parse_and_validate` → `repair` → `expand` → `--finish`. Provider mới hoặc agent kiểu khác nối vào `append_records` hoặc runner, không có đường riêng. `claude` không bao giờ là runtime thay thế (ADR-0026.D3).
 9. **Cỡ lô chuẩn 50** (`DEFAULT_BATCH_SIZE`). Cỡ khác chỉ đặt qua `--batch`, có ghi chú lý do.
 10. **Provider mới qua bộ vàng.** Chấm bằng `provider_conformance.py`. Chuẩn đo là agy.
 

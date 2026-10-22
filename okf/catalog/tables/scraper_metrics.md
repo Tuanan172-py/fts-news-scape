@@ -2,7 +2,7 @@
 type: SQLite Table
 title: scraper_metrics
 description: Log append-only mỗi chu kỳ thu thập — bài fetch được, bài mới, lỗi, thời lượng.
-resource: "project/data/monocle.db (table: scraper_metrics)"
+resource: "<DATA_ROOT>/monocle.db (table: scraper_metrics)"
 tags: [metrics, monitoring, scraper]
 status: stable
 generated:
@@ -17,7 +17,7 @@ sources:
   - id: orchestrator
     resource: project/src/orchestrator.py
     title: Orchestrator run_cycle
-sources_last_checked: 2026-09-07
+sources_last_checked: 2026-10-22
 ---
 
 Bảng `scraper_metrics` ghi **1 hàng / (scraper × chu kỳ)** sau khi mỗi scraper kết thúc

@@ -1,15 +1,16 @@
 # okf/tools — OKF tooling (local-first, Python)
 
-Track OKF độc lập. Không GCP, không Node. Chạy bằng project venv (có PyYAML).
+Track OKF độc lập. Không GCP, không Node. Chạy bằng venv chuẩn `C:/venvs/news-scape` (có PyYAML;
+không dùng `.venv` trong repo, ADR-0024). Script chỉ đọc, không ghi file nào.
 
 ## `okf_check.py` — phát hiện KB lạc hậu / lỗi frontmatter
 
-```bash
-# Windows / PowerShell (path có dấu cách → luôn quote)
-"project/.venv/Scripts/python.exe" okf/tools/okf_check.py outdated          # chỉ stale/warn/parse-error
-"project/.venv/Scripts/python.exe" okf/tools/okf_check.py outdated --all     # in mọi file
-"project/.venv/Scripts/python.exe" okf/tools/okf_check.py outdated --json    # xuất JSON (CI)
-"project/.venv/Scripts/python.exe" okf/tools/okf_check.py outdated --no-git  # fs-mtime thay git commit-time
+```powershell
+# PowerShell
+& "C:/venvs/news-scape/Scripts/python.exe" okf/tools/okf_check.py outdated          # chỉ stale/warn/parse-error
+& "C:/venvs/news-scape/Scripts/python.exe" okf/tools/okf_check.py outdated --all     # in mọi file
+& "C:/venvs/news-scape/Scripts/python.exe" okf/tools/okf_check.py outdated --json    # xuất JSON (CI)
+& "C:/venvs/news-scape/Scripts/python.exe" okf/tools/okf_check.py outdated --no-git  # fs-mtime thay git commit-time
 ```
 
 ### Cơ chế

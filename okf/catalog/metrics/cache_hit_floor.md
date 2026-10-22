@@ -8,18 +8,18 @@ generated:
   at: 2026-09-21T00:00:00Z
 sources:
   - id: ledger
-    resource: project/scripts/token_ledger.py
+    resource: project/src/article_lane/ledger.py
     title: cache_shortfall, worker_calls
   - id: prefix
-    resource: project/src/agent/prefix.py
+    resource: project/src/agent/packet/prefix.py
     title: cached_prefix_tokens, compare_persona
   - id: radar
-    resource: project/scripts/pipeline_radar.py
+    resource: project/src/ops/console/radar.py
     title: Mục 3 của báo cáo token
   - id: pricing
     resource: project/config/token_pricing.yaml
     title: Chênh lệch giá hai rổ đầu vào
-sources_last_checked: 2026-09-21
+sources_last_checked: 2026-10-22
 ---
 
 # Định nghĩa

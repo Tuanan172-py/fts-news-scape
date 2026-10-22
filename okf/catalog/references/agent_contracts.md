@@ -1,7 +1,7 @@
 ---
 type: Reference
 title: Agent Contracts & DoD
-description: 5 hợp đồng JSON Schema ở ranh giới producer↔agent, các predicate Definition-of-Done và guardrail I/O.
+description: Hợp đồng JSON Schema ở ranh giới producer↔mô hình (article-compact-v2, l1-entity-output-v1, agent-output-v2-lean), sáu predicate Definition-of-Done và guardrail.
 resource: project/schemas/
 tags: [contract, schema, dod, agent, governance]
 status: stable
@@ -9,43 +9,45 @@ generated:
   at: 2026-09-07T00:00:00Z
 sources:
   - id: dod
-    resource: project/src/agent/dod.py
+    resource: project/src/agent/contract/dod.py
     title: check_dod + verify_preconditions
+  - id: l1-router
+    resource: project/src/agent/contract/l1_router.py
+    title: check_l1_dod
+  - id: article-contract
+    resource: project/src/agent/contract/article_contract.py
+    title: Hợp đồng bản ghi gọn dùng chung mọi provider
   - id: validator
     resource: project/src/handoff/contract_validator.py
     title: contract_validator
   - id: lifecycle
     resource: project/schemas/task-lifecycle-v1.yaml
     title: Task lifecycle + thresholds
-  - id: agent-io
-    resource: project/docs/design/09-agent-io-contract.md
-    title: Agent I/O contract
-  - id: governance
-    resource: project/docs/design/10-agent-orchestration-governance.md
-    title: Agent orchestration governance
-sources_last_checked: 2026-09-07
+sources_last_checked: 2026-10-22
 ---
 
-Ranh giới producer ↔ agent được định nghĩa **hoàn toàn bằng hợp đồng**, không bằng code chung.
-Nhờ vậy agent có thể là bất kỳ provider nào; repo không chứa lời gọi LLM.[^agent-io]
+Ranh giới producer ↔ mô hình được định nghĩa **bằng hợp đồng**, không bằng code chung. Mô hình
+có thể chạy trên runner bất kỳ (DSH, agy, opencode, OpenRouter); code chỉ đóng gói, bung bản
+ghi và nghiệm thu, không quyết định thực thể hay tóm tắt.
 
-# 5 hợp đồng trong `project/schemas/`
+# Hợp đồng trong `project/schemas/`
 
 | File | Vai trò | Ai tạo |
 |---|---|---|
 | `silver-v1.schema.json` | clean base sau chuẩn hoá | producer |
-| `work-package-v1.schema.json` | INPUT giao agent (trỏ raw, không inline) | producer |
-| `agent-output-v1.schema.json` | OUTPUT Lớp 2 v1 legacy (tóm tắt/hàm ý/citations; `materiality` đã ngừng) | agent |
-| `l1-entity-output-v1.schema.json` | OUTPUT Lớp 1 (thực thể trong tiêu đề) | agent |
+| `work-package-v1.schema.json` | INPUT đã chuẩn hoá cho một bài (trỏ raw, không inline) | producer |
+| `article-compact-v2.schema.json` | bản ghi **gọn** mô hình trả cho cả lô trong Article Lane | mô hình |
+| `l1-entity-output-v1.schema.json` | bản ghi nhận diện thực thể (bung từ bản gọn) | expand |
+| `agent-output-v2-lean.schema.json` | bản ghi nội dung hiện hành (bung từ bản gọn) | expand |
+| `agent-output-v1.schema.json` | bản ghi nội dung cũ, DoD vẫn đọc được | — |
 | `task-lifecycle-v1.yaml` | vòng đời task + **ngưỡng DoD** | spec |
 
-Kèm 2 file hướng dẫn viết prompt: `agent-instructions-v1.md`, `l1-entity-instructions-v1.md`, và
-`schemas/samples/` để đối chiếu. `CHANGELOG.md` ghi lịch sử bump.
+Kèm `agent-instructions-v1.md`, `l1-entity-instructions-v1.md`, `samples/`; `CHANGELOG.md` ghi
+lịch sử bump. `contract_validator.validate(instance, schema_name)` là điểm kiểm schema duy
+nhất.[^validator] Hằng số và hàm mở bao của bản ghi gọn dùng chung mọi provider nằm ở
+`src/agent/contract/article_contract.py`.[^article-contract]
 
-`contract_validator.validate(instance, schema_name)` là điểm kiểm duy nhất — dùng lại cho cả
-hard-gate Silver/package lẫn predicate `schema_valid` của DoD.[^validator]
-
-# Preconditions — trước khi giao việc
+# Preconditions
 
 ```
 verify_preconditions(work_package, check_integrity=True)
@@ -54,66 +56,48 @@ verify_preconditions(work_package, check_integrity=True)
   ③ sha256(file) == raw_sha256        ← chống inject / lệch bản
 ```
 
-Không đạt ⇒ `work_items.status = held`, agent không bao giờ thấy việc đó.[^dod]
+Không đạt ⇒ bản ghi nội dung bị loại, `work_items.status = failed`.[^dod]
 
-# Definition-of-Done — Lớp 2 (`agent-output-v1`)
+# Definition-of-Done — nội dung
 
 | # | Predicate | Điều kiện |
 |---|---|---|
-| 1 | `schema_valid` | khớp `agent-output-v1` |
-| 2 | `grounded` | ≥ `min_citations` (**2**) citations; mỗi `source_span` là chuỗi con nguyên văn của `cleaned_text`, dài ≥ **20** ký tự |
-| 3 | `quality_ok` | `extraction_quality ∈ {high, medium}` |
-| 4 | `auditable` | `processing_metadata` đủ `agent_provider`, `model_used`, `timestamp` |
+| 1 | `schema_valid` | khớp `agent-output-v2-lean` hoặc `agent-output-v1` |
+| 2 | `grounded` | ≥ `min_citations` (**2**; bài một đoạn có `citation_basis = single-paragraph` cần 1); mỗi trích dẫn là chuỗi con nguyên văn của `cleaned_text`, dài ≥ **20** ký tự |
+| 3 | `quality_ok` | `extraction_quality ∈ {high, medium}` — chỉ v1 |
+| 4 | `auditable` | `processing_metadata` đủ `agent_provider`, `model_used`, `timestamp` — chỉ v1 |
+| 5 | `value_added` | tóm tắt không chép nguyên văn bài; `key_points` không chép trích dẫn |
+| 6 | `implication_specific` | hàm ý ≥ `min_implication_len` (40), không chép bài, không là câu mẫu |
 
-Ngưỡng đọc từ `task-lifecycle-v1.yaml`; thiếu file/PyYAML ⇒ fallback hằng số khớp spec.[^lifecycle]
+Ngưỡng đọc từ `task-lifecycle-v1.yaml`; thiếu file ⇒ fallback hằng số.[^lifecycle]
+`_MIN_SPAN_LEN = 20` chặn "groundedness giả": span quá ngắn là chuỗi con của gần như mọi bài.
 
-`_MIN_SPAN_LEN = 20` tồn tại để chặn "groundedness giả": span quá ngắn (`"."`, `"VN"`) là chuỗi
-con của gần như mọi bài.
+**`confidence` KHÔNG phải gate** (bỏ 2026-08-18): mô hình tự khai, calibration kém.
 
-**`confidence` KHÔNG phải gate** (bỏ 2026-08-18 ở cả 2 lớp): agent tự khai, calibration kém. Vẫn
-lưu cột để audit, nhưng không xuất ra CSV người dùng.
+# Definition-of-Done — nhận diện thực thể
 
-# Definition-of-Done — Lớp 1 (`l1-entity-output-v1`)
+Schema `l1-entity-output-v1` hợp lệ + mọi `surface`/`source_span` ⊂ **tiêu đề** + `recognized`
+nhất quán + nhóm `categories` đánh `done` phải có entity `in_list` thuộc nhóm.[^l1-router]
 
-schema hợp lệ + bằng chứng bề mặt ⊂ **tiêu đề** + checklist packet đầy đủ.
+# Trường bắt buộc của `agent-output-v2-lean`
 
-# Trường bắt buộc trong output Lớp 2
+`article_id`, `summary`, `key_points`, `implication`, `sentiment`, `time_sensitivity`,
+`citations`. Các trường `materiality`, `event_type`, `impact_area` đã bỏ ở mọi tầng; chúng chỉ
+còn trong schema v1 cũ.
 
-`output_schema_version`, `article_id`, `summary` (`abstractive` + `key_points`), `implication`
-(`text` + `impact_area`), `materiality` (`score` 0.1–1.0 + `time_sensitivity`), `citations` (≥2),
-`processing_metadata`. Tuỳ chọn: `sentiment.polarity`, `event_type`.
+# Guardrail
 
-# Task packet — cấu trúc self-describing
-
-```
-packet_version, work_item_id, article_id, raw_sha256
-input:            payload đã prune (+ l1_entities nếu có)
-output_contract:  schema_name, schema_path, required[], thinking_order[]
-constraints:      min_citations, min_citation_len, citations_must_be_substring_of,
-                  extraction_quality_in, processing_metadata_required, preconditions[]
-instructions_ref: schemas/agent-instructions-v1.md
-```
-
-Agent không cần biết nội bộ codebase — mọi thứ cần thiết nằm trong packet.
-
-# Guardrail I/O
-
-Subagent chỉ **đọc** `data/agent_tasks/` và chỉ **ghi** `data/agent_outputs/`,
-`data/agent_outputs_l1/` (quy định ở `.agents/rules/`). Mọi nội dung agent chỉ vào hệ thống qua
-đường ingest có validate + DoD; fail ⇒ `dod_reasons` quay lại agent để tự sửa (self-healing).[^governance]
-
-# Ép schema theo provider
-
-OpenAI `response_format json_schema` · Anthropic tool `input_schema` · Gemini `responseSchema` ·
-local/MCP → validate cùng schema. Runtime không quy định provider.[^agent-io]
+Mô hình **không** đọc tệp, ghi tệp, tra catalog hay tự chấm DoD (bất biến của
+[Article Lane](../pipelines/article_lane.md)). Mọi bản ghi chỉ vào DB qua `l1_ingest.py` /
+`agent_ingest.py` có validate + DoD.
 
 # Liên quan
 
-- [Agent Handoff](../pipelines/agent_handoff.md) · [agent_outputs](../tables/agent_outputs.md) ·
+- [Agent Ingest & cổng DoD](../pipelines/agent_handoff.md) · [agent_outputs](../tables/agent_outputs.md) ·
   [l1_outputs](../tables/l1_outputs.md) · [Silver & Work Packages](../datasets/silver_work_packages.md)
 
-[^dod]: [dod.py](project/src/agent/dod.py)
+[^dod]: [dod.py](project/src/agent/contract/dod.py)
+[^l1-router]: [l1_router.py](project/src/agent/contract/l1_router.py)
+[^article-contract]: [article_contract.py](project/src/agent/contract/article_contract.py)
 [^validator]: [contract_validator.py](project/src/handoff/contract_validator.py)
 [^lifecycle]: [task-lifecycle-v1.yaml](project/schemas/task-lifecycle-v1.yaml)
-[^agent-io]: [Agent I/O contract](project/docs/design/09-agent-io-contract.md)
-[^governance]: [Agent orchestration governance](project/docs/design/10-agent-orchestration-governance.md)

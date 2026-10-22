@@ -1,6 +1,6 @@
 ---
 name: token-auditor
-description: Chuyên viên kiểm toán ngân sách LLM, đo lường lượng token burn thực tế, tối ưu cắt tỉa payload và cảnh báo vượt hạn mức (Human-in-the-loop).
+description: Chuyên viên kiểm toán chi phí LLM, đọc sổ cái token thật, đối soát dự toán và theo dõi bộ nhớ đệm; token chỉ ghi nhận, không phải cổng.
 ---
 
 # Token Auditor & Payload Pruner Agent Skill
@@ -24,82 +24,42 @@ description: Chuyên viên kiểm toán ngân sách LLM, đo lường lượng t
    - Ba rổ rời rạc: đầu vào **trúng** bộ nhớ đệm, đầu vào **trượt** bộ nhớ đệm, và đầu ra. Đơn giá chênh nhau tới 200 lần nên cộng gộp là sai.
    - Hai thước: `quota_tokens` là tổng token tính vào hạn mức tài khoản, `billed_usd` là tiền. Chúng lệch nhau rất xa. **Mọi báo cáo phải nói rõ đang dùng thước nào.**
    - Giá nằm ở `project/config/token_pricing.yaml`, không hardcode ở đâu khác.
-2. **Bất Biến Phễu Lọc Subscriber-Gating (ADR 0005)**:
-   - Chỉ xuất task phân tích Gold cho các bài viết có thực thể nằm trong Watchlist của người dùng đang active.
-   - Các bài không có người đăng ký BẮT BUỘC lưu trữ ở trạng thái `L1_ONLY` trong database.
-   - Tỷ lệ cắt giảm token vô ích kỳ vọng: **$\ge 85\% - 91\%$**.
-3. **Quy Chuẩn Cắt Tỉa Payload Tinh Gọn (Dynamic 3-Pass Pruner)**:
-   - **Zero-Waste Task Packet**: Tuyệt đối loại bỏ `structure.links` (hàng ngàn link menu/footer), `structure.headings` và `images`. Dung lượng 1 packet $< 10$ KB.
-   - **Dynamic 3-Pass Semantic Pruning (2.200 Chars Max)**: Trần ký tự bài viết tối đa 2.200 chars. Cắt tỉa theo nguyên khối đoạn văn `<p>` (giữ 2 đoạn Sapo $\rightarrow$ đoạn chứa Ticker L1 $\rightarrow$ số liệu tài chính), tuyệt đối không cắt vụn câu chữ để bảo toàn Grounded Citations.
-4. **Kiến Trúc Phễu Lọc 4 Tầng & Quy Chuẩn Kích Thước Batch**:
-   - **Tầng 1 (Code-First Title Matcher)**: 0 token, giải quyết ~60% bài cào.
-   - **Tầng 2 (L1 Mini-Batch Waves)**: Cố định 25 bài/batch, 2–3 batches/đợt (~25.000 tokens/đợt).
-   - **Tầng 3 (Subscriber-Gating)**: Lọc qua Watchlist, loại bỏ 85%–91% bài vô bổ.
-   - **Tầng 4 (Gold Pruned Mini-Batches)**: Cố định 5 bài/batch, Dynamic 3-Pass Pruning <= 2.200 chars.
-5. **Chiến Lược 3 Waves Cho Tầng Gold**:
-   - Wave 1: Nhóm Cổ phiếu trọng tâm (VIC, VHM, HPG, FPT, TCB, MBB...) (10–15 bài).
-   - Wave 2: Vĩ mô & Ngành kinh tế (Tỷ giá, Lãi suất, Bất động sản...) (15–20 bài).
-   - Wave 3: Hoàn tất backlog còn lại trước 16:30.
-6. **Hạn Mức An Toàn (Safety Token Cap)**:
-   - ~~Tốc độ sinh: <= 100.000 tokens/phút.~~ **GỠ 2026-09-18.** Con số này vô nguồn. Nhà cung cấp **không có giới hạn theo phút**; giới hạn duy nhất là số lời gọi đồng thời, ở mức 2.500 cho model đang dùng, cao hơn nhu cầu của hệ này ba bậc độ lớn.
-   - ~~Trần ngân sách ngày: <= 350.000 tokens.~~ **GỠ 2026-09-18.** Trần này được đặt khi mới chỉ phân tích sâu khoảng một phần mười số bài. Nay mọi bài đều được xử lý đầy đủ nên mức tiêu thụ hợp lý là khoảng 375.000 token cho 307 bài và 1,22 triệu cho 1.000 bài. Giữ trần cũ chỉ tạo báo động giả.
-   - **Van xả khi khối lượng vượt ngân sách**, theo thứ tự từ nhẹ tới nặng: siết trần token mỗi bài trong khâu chắt lọc, rồi dời nhóm nền sang khung giá thấp điểm, cuối cùng mới giảm kích thước lô. Không hạ độ sâu xử lý.
+3. **Token là số ghi nhận, không phải cổng (ADR 0010, AGENTS.md §7.2)**:
+   - Không có trần, ngưỡng cảnh báo hay hạn mức token theo bài, lô, đợt hay ngày. Không dừng đợt, không giảm số bài, không chia nhỏ lô vì token.
+   - Packet mang trọn nội dung bài (trần chắt lọc đã tắt, `DEFAULT_MAX_TOKENS_PER_ARTICLE = 0`); chỉ bỏ link, ảnh, menu. Subscriber-gating, phễu L1/Gold bốn tầng và trần 2.200 ký tự thuộc lane đã ngừng.
+   - Chia lô chỉ bằng `--batch` của `article_run.py`; lô trả thiếu bài thì `--repair` vá đúng phần thiếu.
+4. **Đòn bẩy chi phí thật**:
+   - Giữ tiền tố cache: persona trong preset phải khớp prefix từng byte (`build_article_prefix.py --check`); sổ cái báo **bộ nhớ đệm TRƯỢT** khi `hit` thấp hơn sàn `tiền tố × (số lượt − 1)`.
+   - Xếp đợt lớn vào giờ thấp điểm (`.agents/dsh/DSH-VIEC-THU-CONG.md` mục 9).
 
 ---
 
-## 2. Quy Trình Vận Hành & Đo Lường (Auditing Workflow)
+## 2. Quy Trình Đo Lường (Auditing Workflow)
 
 ```
-[Mỗi Chu Kỳ Vận Hành Hoặc Cuối Ngày]
+[Sau mỗi đợt hoặc cuối ngày]
        │
        ▼
-[Bước 1: Tính Toán Token Burn Thực Tế]
-  ├── Đếm số bài L1 chạy qua Subagents vs Code-First (0 token)
-  ├── Đếm số bài Gold chạy qua Subagents Flash
-  └── Tính toán tổng lượng token tiêu thụ và chi phí USD tương ứng
+[Bước 1: Đọc số thật] token_ledger.py report · pipeline_radar.py token --wave <đợt>
        │
        ▼
-[Bước 2: Đo Lường Hiệu Quả Bộ Lọc Gating]
-  ├── Tỷ lệ chọn lọc Gold = (Số bài Gold / Tổng bài L1) * 100%
-  └── Tỷ lệ token tiết kiệm = 100% - Tỷ lệ chọn lọc Gold
+[Bước 2: Đối soát] token_ledger.py verify (sáu luật kế toán) · estimate_wave.py --wave <đợt> (sai số dự toán)
        │
        ▼
-[Bước 3: Cảnh Báo Bất Thường (Cost & Token Drift Alert)]
-  ├── Nếu tỷ lệ chọn lọc Gold > 25% -> Kiểm tra xem Watchlist có chứa từ khóa quá rộng không
-  └── Nếu dung lượng task packet > 20 KB -> Kiểm tra bộ lọc pruner.py có bị bypass không
+[Bước 3: Dấu hiệu kỹ thuật] turns_max > 1 · reasoning > 0 · cache TRƯỢT · output_tokens đứng ở một mức
 ```
+
+Báo cáo chép nguyên con số của sổ cái, nói rõ đang dùng thước `quota_tokens` hay `billed_usd`, và không nhận xét con số là "cao" hay "vượt".
 
 ---
 
 ## 3. Bộ Công Cụ Cơ Học Thực Thi (Execution Tooling)
 
 ```powershell
-# 1. Đo lường mức tiêu thụ token và tỷ lệ tiết kiệm hôm nay:
-& "C:\venvs\news-scape\Scripts\python.exe" scripts/pipeline_radar.py token
-
-# 2. Đo lường cho một ngày cụ thể:
-& "C:\venvs\news-scape\Scripts\python.exe" scripts/pipeline_radar.py token --date YYYY-MM-DD
-```
-
----
-
-## 4. Báo Cáo Đo Lường Mẫu (Canonical Token Report)
-
-```text
-================================================================================
- 🪙  NEWS-SCAPE TOKEN METRICS & BUDGET AUDITOR — [2026-09-14]
-================================================================================
-1. THỰC NGHIỆM TIÊU THỤ TOKEN (TIÊU CHUẨN FLASH / LEAN SCHEMA):
-   • Tầng L1 (Subagents) : 408 bài × ~450 tokens = ~183,600 tokens
-   • Tầng L1 (Code-First): 356 bài (TIẾT KIỆM 100%) = ~160,200 tokens tiết kiệm
-   • Tầng Gold (Subagents): 64 bài × ~1470 tokens = ~94,080 tokens
-   ────────────────────────────────────────────────────────────────────────
-   🔥 TỔNG TOKEN TIÊU THỤ THỰC TẾ  : ~277,680 tokens (~0.278M tokens)
-   💡 TỔNG TOKEN ĐÃ TIẾT KIỆM ĐƯỢC : ~1,189,200 tokens
-
-2. ĐÁNH GIÁ HIỆU QUẢ SUBSCRIBER-GATING & CLEAN SCHEMA:
-   • Tỷ lệ chọn lọc Gold qua Watchlist : 8.4% (64/764 bài)
-   • Tỷ lệ cắt giảm Token vô ích       : 91.6% chi phí tránh lãng phí
-   • Chi phí ước tính (Google Flash)    : ~$0.0417 USD (Cực kỳ tối ưu)
-================================================================================
+# cwd = project/
+& "C:\venvs\news-scape\Scripts\python.exe" scripts/pipeline_radar.py token                     # hôm nay
+& "C:\venvs\news-scape\Scripts\python.exe" scripts/pipeline_radar.py token --date YYYY-MM-DD   # một ngày
+& "C:\venvs\news-scape\Scripts\python.exe" scripts/pipeline_radar.py token --wave <đợt>        # một đợt
+& "C:\venvs\news-scape\Scripts\python.exe" scripts/token_ledger.py report --date today
+& "C:\venvs\news-scape\Scripts\python.exe" scripts/estimate_wave.py --wave <đợt>
 ```

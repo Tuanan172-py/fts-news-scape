@@ -1,3 +1,5 @@
+> Lưu trữ 2026-10-22 (US-050): driver báo cáo định kỳ NSO đã xoá nên kho `raw_reports/` không còn được ghi, thay bằng [Tables › periodic_reports](../../../catalog/tables/periodic_reports.md).
+
 ---
 type: Dataset
 title: Bronze Periodic Reports
@@ -62,7 +64,7 @@ python -c "import zipfile,glob; print(all(zipfile.is_zipfile(f) for f in glob.gl
 
 # Liên quan
 
-- Bảng [periodic_reports](../tables/periodic_reports.md) — sổ đăng ký, dedup theo kỳ
+- Bảng [periodic_reports](../../../catalog/tables/periodic_reports.md) — sổ đăng ký, dedup theo kỳ
 - Pipeline [Periodic Reports](../pipelines/periodic_reports.md) — ngoài chu kỳ 15 phút
 - [Bronze Raw Store](bronze_raw_html.md) — kho Bronze của bài báo (tách biệt)
 

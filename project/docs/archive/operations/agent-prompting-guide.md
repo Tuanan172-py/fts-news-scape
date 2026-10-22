@@ -1,3 +1,5 @@
+> Lưu trữ 2026-10-22 (US-050): hướng dẫn prompt cho lane L1/Gold đã ngừng (ADR-0010), thay bằng [RUNBOOK Article Lane](../../../../.agents/dsh/RUNBOOK-article-lane.md) và hợp đồng `project/schemas/article-compact-v2.schema.json` (ADR-0017).
+
 # Vận hành — Hướng dẫn PROMPT & nghiệm thu lớp AGENT
 
 Cập nhật: 2026-08-19 · Trạng thái: **ARCHIVED REFERENCE** · Đối tượng: người điều khiển agent (provider bất kỳ) xử lý 2 handoff:

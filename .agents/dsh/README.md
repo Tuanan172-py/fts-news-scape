@@ -7,21 +7,24 @@
 
 | Đường dẫn | Vai trò |
 |---|---|
-| `presets/news-scape-conductor/` | Preset conductor: persona, PTC, `agent_article`, skill. Row `agent_l1`/`agent_gold` còn trong tệp nhưng lane ấy đã ngừng từ 23/09 |
+| `presets/news-scape-conductor/` | Preset conductor: persona, PTC, `agent_article`, skill. Row `agent_l1`/`agent_gold` đã gỡ ngày 23/09 (ADR 0010) |
 | `presets/news-scape-conductor/skills/dsh-conductor/` | Skill điều phối (nạp qua `customSkillDirs` của preset) |
 | `patch/web.cordis.patch.yml` | Bản nguồn patch profile (dùng khi khởi động host sạch; xem §Wiring) |
 | `RUNBOOK-article-lane.md` | **Quy trình vận hành hiện hành** — Article Lane |
 | `RUNBOOK.md` | Bản thiết kế vận hành Article Lane ngày 18/09, giữ làm lịch sử |
+| `DSH-VIEC-THU-CONG.md` | Việc chỉ làm được bằng tay trong runtime DSH |
+| `WORKFLOW-article-lane.md` | Sáu lưu đồ vận hành một đợt |
+| `DSH-WAVE-W365-HANDOFF.md` | Bàn giao đợt W365 ngày 21/09, giữ làm lịch sử |
 
 ## Quyết định đã chốt (2026-09-17)
 
 | # | Nội dung |
 |:-:|---|
 | D1 | Option A — cognitive agent là subagent in-process (`provider: spawn`) |
-| D2 | Đường mặc định dùng DSH; bỏ `agy.exe` khỏi mặc định, giữ làm option (chưa thực thi) |
+| D2 | Đường mặc định dùng DSH; bỏ `agy.exe` khỏi mặc định, giữ làm option (chưa thực thi). **Đã thay bởi ADR-0026.D3**: runner xếp hạng `agy`, rồi `opencode run`, rồi OpenRouter; DSH `agent_article` là conductor tương tác |
 | D4 | H1–H2 wiring nhẹ; H3–H4 đóng gói bundle local `@news-scape/dsh-harness` |
 | D5 | H1 read-only trên DB vận hành; DSH điều phối toàn workflow 17/09 |
-| D6 | **Mọi model = `deepseek-flash` (DeepSeek-V41-Flash)**; cấm `deepseek-v4-pro` |
+| D6 | **Mọi model = `deepseek-flash` (DeepSeek-V41-Flash)**; cấm `deepseek-v4-pro`. **Không còn áp dụng cho mọi runner** (ADR-0026.D3); row `agent_article` của preset DSH vẫn dùng `deepseek-flash` |
 
 Neo: ADR `0009` · ADR `0008` (cổng + trần token) · `plans/20260917-1538-dsh-harness-integration/plan.md`
 
@@ -52,7 +55,7 @@ Worker `agent_article` chạy trả lời thẳng trong một bước, không g�
 
 | Hạng mục | Trạng thái |
 |---|---|
-| Preset + skill + junction + D6 registry | ✅ |
+| Preset + skill + patch profile `web` | ✅ |
 | H1/H2 Platform proof | ⏳ chờ phiên GUI |
 | H3 bundle + hard gate + generator | ⏸️ hoãn |
 | H4 governance | ⏸️ hoãn |

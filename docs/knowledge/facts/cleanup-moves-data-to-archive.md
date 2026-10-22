@@ -4,11 +4,11 @@ type: fact
 title: Cleanup moves data to archive, never deletes
 status: active
 created: 2026-09-24
-updated: 2026-10-06
+updated: 2026-10-22
 verified: 2026-10-05
 lang: en
 authors: [claude-opus-5-5]
-adr: [ADR-0020, ADR-0023]
+adr: [ADR-0020, ADR-0023, ADR-0024]
 evidence:
   - "path: docs/decisions/0020-data-plane-sharepoint-co-che-xuat-ban.md"
   - "path: plans/20260924-1627-codebase-audit-cleanup-modularization"
@@ -27,7 +27,7 @@ summary: Data that looks like junk can be the only Bronze copy, so cleanup MUST 
 - `Research-FPA/news-scraper` is the private organization repo (remote `fpa`). Local branch `import/clean-20261005` is the clean history snapshot.
 - Old history holds analyst subscription xlsx files, so it MUST NOT be pushed. The operator pushes, because agent sessions lack push rights on the organization repo.
 - `FRA - Data` is the teamsite `fptscomvn.sharepoint.com/sites/FRA/Data`, attached by OneDrive shortcut with cloud-only Files On-Demand.
-- The repo folder itself is the teamsite `sites/FRA_DataIngestion`. ADR-0020 (superseded by ADR-0023) described one-way, append-only publishing with a manifest; ADR-0023 CQRS lakehouse is current.
+- The old repo folder was the OneDrive teamsite folder `FRA_DataIngestion - news-scape`; it is deprecated and the canonical tree is `C:\src\news-scraper` outside OneDrive (ADR-0024). ADR-0020 (superseded by ADR-0023) described one-way, append-only publishing with a manifest; the ADR-0023 CQRS lakehouse is current.
 
 ## Why
 

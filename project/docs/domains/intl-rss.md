@@ -1,7 +1,6 @@
 # Domains — Báo tài chính quốc tế (RSS, language: en)
 
-Cập nhật: 2026-07-26 · 5 nguồn `language: en` → orchestrator **ép sentiment neutral/0.0** (lexicon
-VN không áp tiếng Anh). Verify 2026-07-25.
+Cập nhật: 2026-10-22 · 5 nguồn `language: en`, **cả 5 đang tắt** (`enabled: false`). Feed verify 2026-07-25.
 
 ## cnbc — `cnbc.yaml` (**có filter**)
 - **2 feeds:** `search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=20910258`
@@ -38,7 +37,6 @@ VN không áp tiếng Anh). Verify 2026-07-25.
 
 ## Chung cho nhóm quốc tế
 
-- `language: en` → **không** chấm sentiment VN (ép neutral). Nếu sau này muốn sentiment EN thật →
-  cần engine riêng (ngoài phạm vi hiện tại).
+- Bật lại nguồn nào cũng phải chuyển sang scraper có Bronze capture ([README.md](README.md)); `method: rss` không lưu Bronze.
 - Phần lớn summary-only (paywall/consent) → dựa vào title + summary làm tín hiệu.
 - fed + oilprice là 2 nguồn full-text (cap thấp = 10) vì nội dung ngắn, giá trị cao.

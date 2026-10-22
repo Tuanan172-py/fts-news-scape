@@ -1,30 +1,30 @@
 ---
 type: Python Pipeline
 title: Article Lane (Vòng 3 — một lượt gọi cho trọn lô)
-description: Đường xử lý bài đăng hợp nhất L1 + Gold thành MỘT lượt gọi mô hình cho cả lô, chạy trên harness DSH. Thay đường 2 lớp cũ ở đường mặc định.
-resource: project/scripts/article_run.py
+description: Đường xử lý bài đăng duy nhất (ADR-0010) — nhận diện thực thể + xử lý nội dung trong MỘT lượt gọi mô hình cho cả lô, qua runner DSH, agy, opencode hoặc OpenRouter.
+resource: project/src/ops/wave/article_run.py
 tags: [pipeline, agent, article-lane, dsh, token-economy, cache]
 status: stable
 generated:
   at: 2026-09-21T00:00:00Z
 sources:
   - id: run
-    resource: project/scripts/article_run.py
+    resource: project/src/ops/wave/article_run.py
     title: Gộp cả đợt vào một lệnh, sinh chương trình điều phối
   - id: pack
-    resource: project/scripts/article_pack.py
+    resource: project/src/article_lane/pack.py
     title: Đóng gói packet, xếp tầng ưu tiên, dự toán chi phí
   - id: expand
-    resource: project/scripts/article_expand.py
+    resource: project/src/article_lane/expand.py
     title: Bung bản ghi, cứu từng item hỏng, tra cứu định danh
   - id: prefix-build
     resource: project/scripts/build_article_prefix.py
     title: Sinh prefix tĩnh từ catalog, kiểm hai vế
   - id: prefix-mod
-    resource: project/src/agent/prefix.py
+    resource: project/src/agent/packet/prefix.py
     title: Kích thước và tính toàn vẹn của tiền tố
   - id: distill
-    resource: project/src/agent/distill.py
+    resource: project/src/agent/packet/distill.py
     title: Chắt lọc đoạn tất định, bảo toàn nguyên văn
   - id: runbook
     resource: .agents/dsh/RUNBOOK-article-lane.md
@@ -35,12 +35,27 @@ sources:
   - id: plan
     resource: plans/20260918-1651-article-lane-unified/plan.md
     title: Thiết kế và số đo
-sources_last_checked: 2026-09-21
+  - id: adr-0010
+    resource: docs/decisions/0010-ngung-lane-l1-gold-article-lane-duy-nhat.md
+    title: Article Lane là đường duy nhất
+sources_last_checked: 2026-10-22
 ---
 
 **Article Lane** gộp hai lớp nghiệp vụ cũ — nhận diện thực thể (L1) và xử lý nội dung (Gold) —
-vào **một lượt gọi mô hình cho trọn một lô bài**. Nó là đường mặc định từ 2026-09-18;
-[Agent Handoff](agent_handoff.md) hai lớp vẫn gọi được nhưng chỉ để quay lui.[^plan]
+vào **một lượt gọi mô hình cho trọn một lô bài**. Từ ADR-0010 đây là **đường xử lý duy nhất**;
+đường hai lớp L1/Gold cũ đã khai tử và mã của nó đã xoá. Hai lệnh ingest còn lại là nửa nghiệm
+thu của chính đường này: [Agent Ingest & cổng DoD](agent_handoff.md).[^plan]
+
+Mã nằm ở `src/article_lane/` (`pack`, `expand`, `ledger`, `tick`, `handoff`) và
+`src/ops/wave/article_run.py`; `scripts/article_*.py` chỉ là CLI mỏng (ADR-0027).
+
+# Runner
+
+`article_run.py --runner dsh|agy|opencode|openrouter` (mặc định `dsh`: DSH `agent_article` là
+conductor tương tác, dán chương trình điều phối vào một lệnh `run_code`). Với
+`agy`/`opencode`/`openrouter`, `--analyze` gọi runner trực tiếp cho từng lô. Thứ tự ưu tiên khi
+vận hành: `agy`, rồi `opencode`, rồi OpenRouter; Claude không bao giờ là runtime thay thế
+(ADR-0026.D3). Vận hành không người trực do `ops_daemon` mở đợt (ADR-0012).[^run]
 
 Lý do gộp không phải để gọn mã mà là kinh tế: chi phí của phiên điều phối tỉ lệ với **số
 bước**, không tỉ lệ với số bài. Hai vệt audit thật cho thấy 19 bước cho 25 tiêu đề tốn ~845.000
@@ -61,7 +76,8 @@ cắt số bước từ 19 xuống 1 giảm ~93%.[^plan]
 | Chuẩn bị | `article_run.py --wave W --limit N --batch B`[^run] | **0 token** | kiểm prefix hai vế, chắt lọc, xếp tầng, đóng gói packet, dự toán, sinh chương trình điều phối |
 | Chạy mô hình | dán `wave_W.conductor.ts` vào **một** lệnh `run_code` | 1 bước điều phối | hâm bộ nhớ đệm nếu từ 2 lô, chạy mọi lô song song, ghi kết quả ra đĩa |
 | Vá, nếu thiếu | `article_run.py --wave W --repair`[^run] | **0 token** | đối chiếu bản ghi nhận được với bài đã gửi, đóng gói lại **đúng phần thiếu** |
-| Hoàn tất | `article_run.py --wave W --finish`[^run] | **0 token** | bung bản ghi, tra cứu định danh, nạp DB, ghi sổ cái, sinh bàn giao |
+| Hoàn tất | `article_run.py --wave W --finish`[^run] | **0 token** | bung bản ghi, tra cứu định danh, nạp DB qua `l1_ingest.py` + `agent_ingest.py`, kiểm độ phủ, ghi sổ cái, sinh bàn giao |
+| Tra trạng thái | `article_run.py --where` | **0 token** | chỉ đọc, không ghi |
 
 Lưu đồ đầy đủ sáu sơ đồ: [`WORKFLOW-article-lane.md`](../../../.agents/dsh/WORKFLOW-article-lane.md).[^workflow]
 

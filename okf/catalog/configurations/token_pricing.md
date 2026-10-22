@@ -15,9 +15,9 @@ sources:
     resource: project/src/telemetry/dsh_usage.py
     title: load_pricing, is_peak, billed_usd
   - id: pack
-    resource: project/scripts/article_pack.py
+    resource: project/src/article_lane/pack.py
     title: Chốt tự động est_ctx_peak
-sources_last_checked: 2026-09-21
+sources_last_checked: 2026-10-22
 ---
 
 Tệp này là **nguồn giá duy nhất**. DSH không lưu bất kỳ dữ liệu giá nào (đã xác minh mã nguồn),

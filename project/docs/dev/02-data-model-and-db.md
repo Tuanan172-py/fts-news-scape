@@ -1,8 +1,10 @@
 # Dev — Data model & tầng SQLite
 
-Cập nhật: 2026-07-26 · Nguồn: `src/db/store.py`, `writer.py`, `dedup.py`, `core/models.py`.
+Cập nhật: 2026-10-22 · Nguồn: `src/db/store.py`, `src/db/writer.py`, `src/db/dedup.py`, `src/core/models.py`.
+DB vận hành: `<DATA_ROOT>/monocle.db` (mặc định `C:\data\news-scape\monocle.db`, `paths.db_path()`; `MONOCLE_DB_PATH` ghi đè).
+Tham chiếu theo tên hàm, không theo số dòng.
 
-## 1. `Article` (dataclass, `models.py:28-96`)
+## 1. `Article` (dataclass, `src/core/models.py`)
 
 | Field | Kiểu | Ghi chú |
 |---|---|---|
@@ -16,23 +18,23 @@ Cập nhật: 2026-07-26 · Nguồn: `src/db/store.py`, `writer.py`, `dedup.py`,
 | author | str | |
 | symbols | list[str] | mã CK (join `,` khi lưu) |
 | categories | list[str] | nhãn + tên feed |
-| sentiment | str | positive/negative/neutral |
+| sentiment | str | positive/negative/neutral; capture không điền (sentiment phân tích nằm ở `agent_outputs`) |
 | sentiment_score | float\|None | |
 | fetched_at | str | mặc định `now_vn_iso()` lúc tạo |
-| processed_at | str | đặt sau enrich (`base_scraper.py:76`) |
-| metadata | dict | có `language` (gate sentiment), `feed_name`, `detail_deferred`… → `metadata_json` |
+| processed_at | str | đặt sau enrich (`BaseScraper.run`) |
+| metadata | dict | có `language`, `feed_name`, `detail_deferred`… → `metadata_json` |
 
-- `url_title_hash` (property) = `sha256_hash(url, title)` = `sha256(f"{url}{title}")` hex (`models.py:18-20,52-54`).
+- `url_title_hash` (property) = `sha256_hash(url, title)` = `sha256(f"{url}{title}")` hex.
 - `to_row()`/`from_row()` map ↔ cột SQLite; metadata `json.dumps(ensure_ascii=False)`.
 - `ScrapeResult(scraper, fetched, new, errors, duration_s)`; `.ok = not errors`.
 
-## 2. Schema SQLite (`store.py:28-74`)
+## 2. Schema SQLite (`src/db/store.py`)
 
 Không có bảng version; "v2" chỉ là chú thích. Dùng `CREATE TABLE IF NOT EXISTS` idempotent
 (`init_schema()` → `executescript`). Migration thật duy nhất = dedup JSON→SQLite (mục 5).
 
 ### `articles`
-Cột (theo `_COLUMNS`, `store.py:17-21`): url, url_title_hash, title, summary, content_html,
+Cột (theo `_COLUMNS`): url, url_title_hash, title, summary, content_html,
 content_text, published_at, author, source_domain, symbols, categories, sentiment,
 sentiment_score, fetched_at, processed_at, metadata_json. Cộng `id INTEGER PK AUTOINCREMENT`.
 - **UNIQUE**: `url`, `url_title_hash`.
@@ -51,16 +53,26 @@ consecutive_failures INT, cycle_count INT`.
 `ts, scraper_name, articles_fetched, articles_new, errors, duration_ms`. Index
 `idx_metrics_scraper(scraper_name, ts)`.
 
-### PRAGMA (mọi connection, `store.py:91-95`)
-`journal_mode=WAL`, `busy_timeout=5000`, `synchronous=NORMAL`, `row_factory=Row`,
-`connect(timeout=5.0, check_same_thread=False)`.
+### Bảng khác trong `monocle.db`
+- Silver/handoff: `article_versions`, `work_items`, `silver_failures`, `pipeline_state` (watermark, khoá scheduler).
+- Kết quả Article Lane: `l1_outputs`, `agent_outputs` (qua DoD); `l1_tasks` là bảng của lane L1 cũ, còn trong DDL.
+- Sổ khám phá: `discovered_urls`, `url_aliases`, `capture_coverage`.
+- Cụm tin và tín hiệu: `story_clusters`, `cluster_members`, `signal_daily`, `entity_links`, `source_profile`.
+- `periodic_reports`: bảng còn trong DDL, driver đã gỡ.
+
+Trạng thái vận hành nằm ở `ops.db` (`src/ops/store.py`: `ops_*`, `provider_breakers`), token ở `harness.db`
+(`token_ledger`, `src/article_lane/ledger.py`).
+
+### PRAGMA (mọi connection, `ArticleStore._connect`)
+`journal_mode=WAL`, `busy_timeout=30000`, `synchronous=NORMAL`,
+`connect(timeout=30.0, check_same_thread=False)`.
 
 ## 3. DBWriter — single-writer (`writer.py`)
 
 - 1 thread daemon `db-writer`, connection **riêng của thread**.
 - Scraper/orchestrator chỉ `enqueue()`; không ai khác ghi bảng `articles`.
 - Batch: gom tối đa `batch_size=50`, chờ item đầu blocking `flush_interval=2.0s`.
-- `insert_batch` (`store.py:123-148`): `BEGIN IMMEDIATE` → `executemany(INSERT OR IGNORE)` →
+- `insert_batch`: `BEGIN IMMEDIATE` → `executemany(INSERT OR IGNORE)` →
   commit; trả delta `total_changes` (số row thật mới). `sqlite3.Error` → rollback trả 0;
   `BaseException` → rollback rồi re-raise (không treo transaction).
 - Shutdown `stop(timeout=30)`: set `_stop`, tự xả hết queue rồi join → **flush graceful**, idempotent.
@@ -82,21 +94,21 @@ tránh `SQLITE_BUSY` và đơn giản hơn multi-writer coordination (TDR-004). 
   bài. Biến thể URL nằm ở `url_aliases`. `DedupCache.discover` và `store.insert_batch` cập nhật sổ.
 - `cleanup(max_age_days=30)` xoá seen cũ (gọi lúc khởi tạo orchestrator).
 
-## 5. Migration JSON→SQLite (`dedup.py:37-53`)
+## 5. Migration JSON→SQLite (`DedupCache._migrate_legacy_json`)
 
-Nếu còn `data/dedup_cache.json` (schema cũ): đọc `{hash: ts}` → `INSERT OR IGNORE` với
+Nếu còn `<DATA_ROOT>/dedup_cache.json` (schema cũ): đọc `{hash: ts}` → `INSERT OR IGNORE` với
 `title_norm=''`, `source='legacy'`, rồi **xoá file**. Lỗi → warn, bỏ qua. Chạy 1 lần, idempotent.
 
 ## 6. Truy vấn nhanh (SQLite CLI / DB Browser)
 
 ```sql
 -- 20 bài mới nhất
-SELECT fetched_at, sentiment, source_domain, title FROM articles
+SELECT fetched_at, source_domain, title FROM articles
 ORDER BY id DESC LIMIT 20;
 
--- Đếm theo nguồn + sentiment
-SELECT source_domain, sentiment, COUNT(*) FROM articles
-GROUP BY source_domain, sentiment ORDER BY source_domain;
+-- Đếm theo nguồn
+SELECT source_domain, COUNT(*) FROM articles
+GROUP BY source_domain ORDER BY source_domain;
 
 -- Tin về 1 mã
 SELECT published_at, title FROM articles WHERE symbols LIKE '%HPG%'
@@ -105,9 +117,10 @@ ORDER BY published_at DESC;
 -- Sức khoẻ scraper
 SELECT scraper_name, status, last_run_ts, consecutive_failures FROM scraper_heartbeat;
 ```
-⚠️ Mở DB Browser ở chế độ read-only hoặc đóng orchestrator trước khi ghi, tránh tranh WAL.
+⚠️ Trạng thái vận hành đọc bằng `python scripts/pipeline_radar.py status` trước (AGENTS.md §9). Truy vấn tay chỉ
+chạy read-only (`src.db.connect.open_ro`) hoặc trên bản snapshot (`src/db/snapshot.py`); không mở DB vận hành để ghi.
 
 ## 7. Câu hỏi mở
 
 - Chưa có retention/rotation cho bảng `articles` và `scraper_metrics` (append-only) → DB phình
-  theo thời gian (hiện `monocle.db` ~550MB). Xem [05-known-issues.md](05-known-issues.md).
+  theo thời gian (`monocle.db` ~550MB khi đo 2026-07-26). Xem [05-known-issues.md](05-known-issues.md).

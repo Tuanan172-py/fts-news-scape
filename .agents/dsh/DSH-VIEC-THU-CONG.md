@@ -20,7 +20,7 @@ Mỗi mục ghi rõ **bắt buộc** hay **tuỳ chọn**, và hậu quả nếu
 ```powershell
 cd project
 & "C:\venvs\news-scape\Scripts\python.exe" scripts/build_article_prefix.py
-# chép trọn project/data/prefix/ARTICLE_SYSTEM_CORE.md vào `persona`
+# chép trọn project/assets/prefix/ARTICLE_SYSTEM_CORE.md vào `persona`
 # của row `tool-subagent-article` trong .agents/dsh/presets/news-scape-conductor/agent.cordis.yml
 & "C:\venvs\news-scape\Scripts\python.exe" scripts/build_article_prefix.py --check-preset
 ```

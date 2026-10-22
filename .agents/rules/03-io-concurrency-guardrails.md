@@ -13,12 +13,12 @@ Quy tắc bất biến cho mọi thao tác I/O (File & Database) trong hệ th�
 - **Windows File Lock Fallback**: Khi gặp `PermissionError` (do User đang mở file trong Excel/DB Browser), hệ thống phải tự động fallback sang file snapshot version (`stem_HHMMSS.ext`) và ghi warning log, không bao giờ để crash luồng thực thi chính.
 
 ## 2. Nguyên tắc Truy cập Database SQLite (.db)
-- **Single-Writer Pattern**: Mọi thao tác ghi dữ liệu hàng loạt vào `data/monocle.db` bắt buộc phải đi qua `DBWriter` (queue thread) trong transaction `BEGIN IMMEDIATE`.
+- **Single-Writer Pattern**: Mọi thao tác ghi dữ liệu hàng loạt vào DB vận hành (`C:\data\news-scape\monocle.db`, đường dẫn do `project/src/core/paths.py` quyết định) bắt buộc phải đi qua `DBWriter` (queue thread) trong transaction `BEGIN IMMEDIATE`.
 - **Read-Only Connections cho Reader**:
-  - Mọi truy vấn đọc (query, export, check trạng thái, metrics) BẮT BUỘC dùng `ArticleStore._connect_ro()` hoặc URI `file:<path>?mode=ro`.
+  - Mọi truy vấn đọc (query, export, check trạng thái, metrics) BẮT BUỘC dùng `src.db.connect.open_ro()`, `ArticleStore._connect_ro()` hoặc URI `file:<path>?mode=ro`.
   - Giữ `PRAGMA busy_timeout = 30000` (30s) trên mọi connection để chống timeout lock giả.
 - **Tách biệt Môi trường Phân tích của User**:
-  - Khi User hoặc công cụ BI (DB Browser for SQLite, DBeaver) cần đọc/soi database, BẮT BUỘC sử dụng snapshot `data/monocle_review.db` (tạo qua `src/db/snapshot.py` / `scripts/db_snapshot.py`) để không mở transaction treo trên file DB chính.
+  - Khi User hoặc công cụ BI (DB Browser for SQLite, DBeaver) cần đọc/soi database, BẮT BUỘC sử dụng snapshot `<DATA_ROOT>/snapshots/monocle_review.db` (tạo bằng `create_db_snapshot()` trong `src/db/snapshot.py`; script `db_snapshot.py` đã gỡ) để không mở transaction treo trên file DB chính.
 
 ## 3. Cách ly Môi trường OneDrive & SharePoint (Hybrid Workspace Invariants)
 
@@ -47,7 +47,7 @@ Quy tắc bất biến cho mọi thao tác I/O (File & Database) trong hệ th�
 Nhằm đảm bảo sự nhất quán và không gọi nhầm môi trường Python của hệ thống hay venv cũ:
 
 - **Nguyên tắc cho Agents (Khi chạy tool `run_command`)**:
-  - TUYỆT ĐỐI KHÔNG dùng tiền tố `.venv\Scripts\...` (đã bị xóa khỏi OneDrive).
+  - TUYỆT ĐỐI KHÔNG dùng tiền tố `.venv\Scripts\...`; venv chuẩn nằm ở `C:\venvs\news-scape` (ADR-0024).
   - BẮT BUỘC sử dụng đường dẫn tuyệt đối: `& "C:\venvs\news-scape\Scripts\python.exe" <script_path>` hoặc kích hoạt venv trước khi chạy.
   - Khi chạy các script pipeline trong `project/scripts/`:
     - Nếu `Cwd` là thư mục gốc: gọi `& "C:\venvs\news-scape\Scripts\python.exe" project/scripts/<script>.py`.
@@ -68,7 +68,7 @@ Nhằm loại bỏ hoàn toàn tình trạng OneDrive tự động tạo các c�
    - Nếu nội dung nhị phân giống hệt: HỦY file `.tmp` và trả về thành công mà không chạm vào file đích, triệt tiêu sự kiện File System Watcher kích hoạt sync thừa.
 
 2. **Smart Idempotency Skip Guard (Tầng Giao hàng Deliverable)**:
-   - Mọi hàm ghi deliverable cho người dùng (`user_output.py`, periodic reports) BẮT BUỘC phải kiểm tra checkpoint:
+   - Mọi hàm ghi deliverable cho người dùng (`src/export/user_output.py`) BẮT BUỘC phải kiểm tra checkpoint:
      ```python
      if not force and file_path.exists() and not new and not upgraded:
          counts[user] = counts.get(user, 0) + len(finals)
