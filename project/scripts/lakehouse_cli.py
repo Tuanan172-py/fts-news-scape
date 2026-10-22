@@ -11,9 +11,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 # Add the project directory to sys.path so the source modules can be imported.
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
+_PROJECT_DIR = str(Path(__file__).resolve().parents[1])
+if _PROJECT_DIR not in sys.path:
+    sys.path.insert(0, _PROJECT_DIR)
 
 from src.core.stdio import force_utf8_stdio
 force_utf8_stdio()
@@ -22,6 +22,7 @@ from src.lakehouse.consolidator import consolidate_dropzone
 from src.lakehouse.ingest import publish_batch
 from src.lakehouse.manifest import verify_manifest
 from src.lakehouse.storage import LocalOneDriveStorageAdapter
+from src.core.paths import PROJECT_ROOT
 
 
 def resolve_storage_root(root_arg: str | None) -> Path:

@@ -20,13 +20,11 @@ from src.telemetry.dsh_usage import (                # noqa: E402
     load_pricing,
     wave_usage,
 )
+from src.db.connect import open_rw  # noqa: E402
 
 force_utf8_stdio()
 
-HARNESS_DB = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
-    "harness.db",
-)
+HARNESS_DB = str(paths.harness_db_path())
 
 # The wave descriptor sits next to the packets; it gives the number of worker CALLS
 # in a wave, which differs from the DSH session count because that includes Conductor sessions.
@@ -223,8 +221,7 @@ def connect(db_path: str = HARNESS_DB) -> sqlite3.Connection:
     Returns:
         Ready-to-use SQLite connection.
     """
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row
+    conn = open_rw(db_path, row_factory=True)
     conn.executescript(SCHEMA)
     conn.commit()
     return conn

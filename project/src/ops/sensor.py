@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 from src.ops.store import VN_TZ, now_vn, parse_iso
+from src.db.connect import open_ro
 
 
 @dataclass
@@ -88,7 +89,7 @@ def read_pending(db_path: Path, lookback_days: int, *, now: datetime | None = No
     from scripts.article_pack import load_candidates
 
     reading = SensorReading()
-    conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True, timeout=10)
+    conn = open_ro(db_path, timeout=10)
     conn.row_factory = sqlite3.Row
     try:
         oldest: datetime | None = None

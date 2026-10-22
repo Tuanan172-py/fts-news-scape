@@ -17,12 +17,12 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from src.core import paths                             # noqa: E402
 from src.core.stdio import force_utf8_stdio            # noqa: E402
 from src.telemetry.dsh_usage import billed_usd, is_peak, load_pricing   # noqa: E402
+from src.db.connect import open_rw  # noqa: E402
 
 force_utf8_stdio()
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
 TASK_DIR = paths.article_packets_dir()
-HARNESS_DB = PROJECT_ROOT.parent / "harness.db"
+HARNESS_DB = paths.harness_db_path()
 
 
 def load_manifest(wave: str | None) -> dict | None:
@@ -56,7 +56,7 @@ def actual_from_ledger(wave: str) -> dict | None:
     """
     if not HARNESS_DB.exists():
         return None
-    conn = sqlite3.connect(str(HARNESS_DB))
+    conn = open_rw(HARNESS_DB)
     conn.row_factory = sqlite3.Row
     try:
         row = conn.execute(

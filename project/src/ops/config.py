@@ -11,8 +11,8 @@ from typing import Any
 import yaml
 
 from src.core import paths as data_paths
+from src.core.paths import PROJECT_ROOT
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
 CONFIG_PATH = PROJECT_ROOT / "config" / "ops.yaml"
 
 DEFAULTS: dict[str, Any] = {

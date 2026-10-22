@@ -13,6 +13,7 @@ from typing import Callable
 from src.ops.order import load_order
 from src.ops.present import alert_card
 from src.ops.store import OpsStore, now_vn, parse_iso
+from src.db.connect import open_ro
 
 
 @dataclass
@@ -45,7 +46,7 @@ def probe_capture(db_path: Path, cfg: dict) -> ProbeResult:
     now = now_vn()
     h0, h1 = (cfg.get("capture_hours") or [0, 24])[:2]
     try:
-        conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True, timeout=10)
+        conn = open_ro(db_path, timeout=10)
         try:
             row = conn.execute("SELECT MAX(fetched_at) FROM articles").fetchone()
         finally:
@@ -102,7 +103,7 @@ def probe_dead_letter(db_path: Path, store: OpsStore, delta_alert: int) -> Probe
         The ProbeResult.
     """
     try:
-        conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True, timeout=10)
+        conn = open_ro(db_path, timeout=10)
         try:
             n = conn.execute("SELECT COUNT(*) FROM silver_failures WHERE dead_letter = 1"
                              ).fetchone()[0]
@@ -134,7 +135,7 @@ def probe_coverage(db_path: Path, red_pct: float = 2.0, days: int = 2) -> ProbeR
         The ProbeResult; unhealthy when a (day, source) pair exceeds the missing threshold.
     """
     try:
-        conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True, timeout=10)
+        conn = open_ro(db_path, timeout=10)
         try:
             rows = conn.execute(
                 "SELECT source_domain, SUM(ref_n), SUM(missing_n) FROM capture_coverage "

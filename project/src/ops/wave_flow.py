@@ -21,6 +21,7 @@ from src.ops.present import FAILURE_CLASS, WAVE_STATUS, alert_card, fmt_datetime
 from src.ops.procrun import StepResult, python_cmd, run_step
 from src.ops.store import OpsStore, iso, now_vn
 from src.ops.trace import Tracer
+from src.db.connect import open_ro
 
 SCRIPTS = PROJECT_ROOT / "scripts"
 TASK_DIR = paths.article_packets_dir()
@@ -672,16 +673,13 @@ def l1_full_gold_short(wave_id: str) -> bool:
         DB read error, since without data the previous behavior is kept).
     """
     try:
-        import sqlite3
-
         from scripts import article_run as ar
         from src.db.preflight import resolve_db_path
 
         ids = ar.wave_article_ids(wave_id)
         if not ids:
             return False
-        conn = sqlite3.connect(f"file:{resolve_db_path().as_posix()}?mode=ro",
-                               uri=True, timeout=10)
+        conn = open_ro(resolve_db_path(), timeout=10)
         try:
             cov = ar.coverage_of(conn, ids)
         finally:

@@ -11,6 +11,7 @@ from pathlib import Path
 
 from src.core.models import VN_TZ
 from src.core.staging import safe_atomic_write
+from src.db.connect import open_ro, open_rw
 
 
 # Column order in the CSV.
@@ -54,11 +55,9 @@ def query_rows(db_path: str | None = None, *, today: bool = False,
         db_path = str(resolve_db_path())
     resolved_db = Path(db_path).resolve()
     if resolved_db.exists():
-        uri_path = f"file:{resolved_db.as_posix()}?mode=ro"
-        con = sqlite3.connect(uri_path, uri=True, timeout=30.0)
+        con = open_ro(resolved_db, timeout=30.0, row_factory=True)
     else:
-        con = sqlite3.connect(db_path, timeout=30.0)
-    con.row_factory = sqlite3.Row
+        con = open_rw(db_path, timeout=30.0, row_factory=True)
     rows = list(con.execute(
         "SELECT * FROM articles ORDER BY fetched_at DESC, id DESC"))
     con.close()

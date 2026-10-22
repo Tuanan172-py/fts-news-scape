@@ -11,18 +11,17 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
+_PROJECT_DIR = str(Path(__file__).resolve().parents[1])
+if _PROJECT_DIR not in sys.path:
+    sys.path.insert(0, _PROJECT_DIR)
 
-from src.core.paths import article_packets_dir
+from src.core.paths import PROJECT_ROOT, article_packets_dir
 from src.core.staging import safe_json_dump
 from src.core.stdio import force_utf8_stdio
 
 force_utf8_stdio()
 
 PYTHON = sys.executable
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS_DIR = PROJECT_ROOT / "scripts"
 ARTICLE_RUN = SCRIPTS_DIR / "article_run.py"
 WRITE_OUTPUT = SCRIPTS_DIR / "write_user_output.py"

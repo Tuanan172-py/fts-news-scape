@@ -24,10 +24,10 @@ from src.agent.article_contract import (
 from src.core import paths
 from src.core.staging import safe_json_dump
 from src.core.stdio import force_utf8_stdio
+from src.core.paths import PROJECT_ROOT
 
 force_utf8_stdio()
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
 CORE_PATH = PROJECT_ROOT / "assets" / "prefix" / "ARTICLE_SYSTEM_CORE.md"
 OPENROUTER_ENV = PROJECT_ROOT.parent / "openrouter" / ".env"
 DEFAULT_MODEL = "nvidia/nemotron-3.5-lightning:free"

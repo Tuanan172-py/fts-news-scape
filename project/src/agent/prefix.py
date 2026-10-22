@@ -7,6 +7,8 @@ from pathlib import Path
 
 import yaml
 
+from src.core.paths import PROJECT_ROOT, REPO_ROOT
+
 # The generator, packer, ledger and radar share the definitions below:
 #   persona_tokens: the part the project generates and pastes into the preset.
 #   SYSTEM_OVERHEAD_TOKENS: the part the harness always adds around the persona. It is
@@ -14,8 +16,6 @@ import yaml
 # Invariant: the `persona` in the preset must equal the generated prefix file byte for
 # byte. A single whitespace difference makes every following token miss the cache with
 # no visible signal, and the bill grows about 50 times on the part that should be cheap.
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-REPO_ROOT = PROJECT_ROOT.parent
 
 PREFIX_DIR = PROJECT_ROOT / "assets" / "prefix"
 PREFIX_PATH = PREFIX_DIR / "ARTICLE_SYSTEM_CORE.md"

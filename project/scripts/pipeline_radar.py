@@ -18,8 +18,7 @@ if sys.platform == "win32":
     except Exception:
         pass
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(PROJECT_ROOT))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from scripts.token_ledger import (                         # noqa: E402
     latest_snapshots,
@@ -35,10 +34,11 @@ from src.telemetry.dsh_usage import (                      # noqa: E402
     iter_sessions,
     load_pricing,
 )
+from src.db.connect import open_ro  # noqa: E402
 
 ARTICLE_TASK_DIR = paths.article_packets_dir()
 USER_OUTPUT_DIR = paths.users_output_dir()
-HARNESS_DB = PROJECT_ROOT.parent / "harness.db"
+HARNESS_DB = paths.harness_db_path()
 PY = '& "C:\\venvs\\news-scape\\Scripts\\python.exe"'
 
 
@@ -48,8 +48,7 @@ def get_db_connection() -> sqlite3.Connection:
     Returns:
         SQLite connection opened with `mode=ro`.
     """
-    uri = f"file:{resolve_db_path().as_posix()}?mode=ro"
-    return sqlite3.connect(uri, uri=True)
+    return open_ro(resolve_db_path())
 
 
 def _local_naive(ts: str) -> datetime:
@@ -505,7 +504,7 @@ def _ledger_rows(date: str | None, wave: str | None) -> list[sqlite3.Row]:
     """
     if not HARNESS_DB.exists():
         return []
-    conn = sqlite3.connect(f"file:{HARNESS_DB.as_posix()}?mode=ro", uri=True)
+    conn = open_ro(HARNESS_DB)
     conn.row_factory = sqlite3.Row
     try:
         if wave:

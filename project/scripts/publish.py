@@ -9,6 +9,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.core.stdio import force_utf8_stdio                         # noqa: E402
 from src.export.publisher import PUBLISH_DIR_ENV, parse_day, publish_day  # noqa: E402
+from src.db.connect import open_ro  # noqa: E402
 
 force_utf8_stdio()
 
@@ -57,7 +58,6 @@ def main(argv: list[str]) -> int:
     args = ap.parse_args(argv)
 
     if args.from_date:
-        import sqlite3
         from src.core.config import resolve_db_path
 
         try:
@@ -68,7 +68,7 @@ def main(argv: list[str]) -> int:
             return 1
 
         db = Path(resolve_db_path())
-        conn = sqlite3.connect(f"file:{db.as_posix()}?mode=ro", uri=True)
+        conn = open_ro(db)
         try:
             cur_rows = conn.execute(
                 "SELECT DISTINCT substr(coalesce(nullif(published_at,''), fetched_at), 1, 10) as d "

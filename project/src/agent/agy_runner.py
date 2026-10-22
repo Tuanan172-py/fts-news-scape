@@ -23,10 +23,10 @@ from src.agent.prefix import prefix_hash
 from src.core import paths
 from src.core.staging import safe_atomic_write, safe_json_dump
 from src.core.stdio import force_utf8_stdio
+from src.core.paths import PROJECT_ROOT
 
 force_utf8_stdio()
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
 CORE_PATH = PROJECT_ROOT / "assets" / "prefix" / "ARTICLE_SYSTEM_CORE.md"
 DEFAULT_MODEL = "gemini-3.8-flash-low"
 DEFAULT_TIMEOUT_SECONDS = 600

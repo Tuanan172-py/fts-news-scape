@@ -13,6 +13,7 @@ from typing import Any, Iterator
 from src.ops.lanes import lane_of
 from src.ops.redact import redact, redact_data
 from src.ops.trace import SPAN_SCHEMA
+from src.db.connect import open_rw
 
 VN_TZ = timezone(timedelta(hours=7))
 
@@ -198,9 +199,7 @@ class OpsStore:
         Yields:
             SQLite connection whose `row_factory` is Row.
         """
-        c = sqlite3.connect(str(self.path), timeout=10)
-        c.row_factory = sqlite3.Row
-        c.execute("PRAGMA busy_timeout=10000")
+        c = open_rw(self.path, timeout=10, row_factory=True, busy_timeout_ms=10000)
         try:
             yield c
             c.commit()

@@ -6,9 +6,8 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from src.core.config import load_settings
+from src.core.paths import REPO_ROOT
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-REPO_ROOT = PROJECT_ROOT.parent
 
 
 def resolve_db_path() -> Path:

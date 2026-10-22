@@ -8,9 +8,8 @@ import yaml
 
 from src.core import paths
 from src.core.user_manifest import load_user_manifest
+from src.core.paths import PROJECT_ROOT
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-REPO_ROOT = PROJECT_ROOT.parent
 DEFAULT_SUBSCRIPTIONS_ROOT = paths.subscriptions_dir()
 # The legacy `users/input` layout is copied to `<root>/inputs/users` during the data migration.
 LEGACY_INPUT_ROOT = paths.inputs_dir() / "users"

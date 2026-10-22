@@ -32,10 +32,10 @@ from src.core.stdio import force_utf8_stdio           # noqa: E402
 from src.db.preflight import resolve_db_path          # noqa: E402
 from src.pipeline.cluster_job import refresh as refresh_clusters  # noqa: E402
 from src.pipeline.inherit import hold_cutoff          # noqa: E402
+from src.db.connect import open_ro, open_rw  # noqa: E402
 
 force_utf8_stdio()
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
 TASK_DIR = paths.article_packets_dir()
 
 # The three ceilings below are the real limits of the DSH read tool, taken from
@@ -102,9 +102,7 @@ def get_db_connection() -> sqlite3.Connection:
     Returns:
         SQLite connection to `monocle.db`.
     """
-    conn = sqlite3.connect(str(resolve_db_path()))
-    conn.row_factory = sqlite3.Row
-    return conn
+    return open_rw(resolve_db_path(), row_factory=True)
 
 
 def watchlist_universe(reg) -> tuple[set[str], set[str]]:
@@ -406,7 +404,7 @@ def fresh_wave_paragraphs(article_ids: set[str]) -> dict[str, list[str]]:
     if not ids:
         return fresh
     try:
-        conn = sqlite3.connect(f"file:{resolve_db_path()}?mode=ro", uri=True)
+        conn = open_ro(resolve_db_path())
     except (sqlite3.Error, TypeError, ValueError):
         return fresh
     try:

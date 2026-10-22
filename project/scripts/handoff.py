@@ -20,10 +20,10 @@ from scripts.article_pack import ANALYZED_L1, load_candidates  # noqa: E402
 from src.core import paths                             # noqa: E402
 from src.core.stdio import force_utf8_stdio          # noqa: E402
 from src.db.preflight import resolve_db_path         # noqa: E402
+from src.db.connect import open_ro  # noqa: E402
 
 force_utf8_stdio()
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
 STATE_DIR = paths.state_dir()
 ARTICLE_TASK_DIR = paths.article_packets_dir()
 ARTICLE_OUT_DIR = paths.agent_outputs_dir("_article")
@@ -35,7 +35,7 @@ def get_db_connection() -> sqlite3.Connection:
     Returns:
         SQLite connection to `monocle.db`.
     """
-    conn = sqlite3.connect(f"file:{resolve_db_path().as_posix()}?mode=ro", uri=True)
+    conn = open_ro(resolve_db_path())
     conn.row_factory = sqlite3.Row
     return conn
 

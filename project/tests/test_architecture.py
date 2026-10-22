@@ -24,49 +24,8 @@ ALLOW_SCRIPTS_IMPORT: set[str] = {
 ALLOW_SRC_SYS_PATH: set[str] = {
     'src/morninger.py',
 }
-ALLOW_SQLITE_CONNECT: set[str] = {
-    'scripts/article_pack.py',
-    'scripts/article_run.py',
-    'scripts/article_tick.py',
-    'scripts/estimate_wave.py',
-    'scripts/handoff.py',
-    'scripts/pipeline_radar.py',
-    'scripts/publish.py',
-    'scripts/token_ledger.py',
-    'src/export/csv_export.py',
-    'src/export/publisher.py',
-    'src/ops/metrics.py',
-    'src/ops/probes.py',
-    'src/ops/sensor.py',
-    'src/ops/store.py',
-    'src/ops/trace.py',
-    'src/ops/wave_flow.py',
-}
-ALLOW_PROJECT_ROOT: set[str] = {
-    'scripts/article_expand.py',
-    'scripts/article_pack.py',
-    'scripts/article_run.py',
-    'scripts/article_tick.py',
-    'scripts/build_article_prefix.py',
-    'scripts/estimate_wave.py',
-    'scripts/handoff.py',
-    'scripts/lakehouse_cli.py',
-    'scripts/maintenance/refresh_aliases.py',
-    'scripts/ops_console.py',
-    'scripts/ops_daemon.py',
-    'scripts/pipeline_radar.py',
-    'scripts/provider_conformance.py',
-    'scripts/run_backlog_opencode.py',
-    'src/agent/agy_runner.py',
-    'src/agent/entities.py',
-    'src/agent/opencode_runner.py',
-    'src/agent/openrouter_runner.py',
-    'src/agent/prefix.py',
-    'src/core/config.py',
-    'src/db/preflight.py',
-    'src/ops/config.py',
-    'src/users/compile.py',
-}
+ALLOW_SQLITE_CONNECT: set[str] = set()
+ALLOW_PROJECT_ROOT: set[str] = set()
 ALLOW_PACKAGE_EDGES: set[tuple[str, str]] = {
     ('agent', 'handoff'),
     ('agent', 'ops'),

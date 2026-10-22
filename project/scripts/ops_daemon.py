@@ -8,9 +8,9 @@ import sys
 import time
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
+_PROJECT_DIR = str(Path(__file__).resolve().parents[1])
+if _PROJECT_DIR not in sys.path:
+    sys.path.insert(0, _PROJECT_DIR)
 
 from src.ops.config import load_config, load_secrets, resolve_paths, write_secret  # noqa: E402
 

@@ -19,11 +19,11 @@ from src.core import paths                             # noqa: E402
 from src.core.stdio import force_utf8_stdio            # noqa: E402
 from src.db.preflight import probe_write, resolve_db_path  # noqa: E402
 from src.ops import pipeline_spec, trace as tracing      # noqa: E402
+from src.core.paths import PROJECT_ROOT  # noqa: E402
+from src.db.connect import open_ro  # noqa: E402
 
 force_utf8_stdio()
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-REPO_ROOT = PROJECT_ROOT.parent
 SCRIPTS = PROJECT_ROOT / "scripts"
 TASK_DIR = paths.article_packets_dir()
 OUT_DIR = paths.agent_outputs_dir("_article")
@@ -373,9 +373,7 @@ def cmd_repair(args: argparse.Namespace) -> int:
     # packet is stale: their record passed the gate and counts toward wave coverage.
     passing: set[str] = set()
     try:
-        import sqlite3 as _sqlite3
-
-        _conn = _sqlite3.connect(f"file:{resolve_db_path()}?mode=ro", uri=True)
+        _conn = open_ro(resolve_db_path())
         try:
             for _row in _conn.execute(
                     "SELECT article_id, MAX(dod_pass) FROM agent_outputs GROUP BY article_id"):
@@ -964,7 +962,6 @@ def verify_wave(wave: str, *, min_coverage: float) -> int:
         Exit code 0 when both layers reach the threshold, 1 when below, 2 when there is
         no mapping table.
     """
-    import sqlite3
 
     ids = wave_article_ids(wave)
     print(f"\n▶ hậu kiểm đợt {wave}")
@@ -972,7 +969,7 @@ def verify_wave(wave: str, *, min_coverage: float) -> int:
         print(f"   ⚠️  Không có bảng ánh xạ nào của đợt {wave}; không có gì để đối chiếu.")
         return 2
     db = resolve_db_path()
-    conn = sqlite3.connect(f"file:{db.as_posix()}?mode=ro", uri=True)
+    conn = open_ro(db)
     try:
         cov = coverage_of(conn, ids)
     finally:

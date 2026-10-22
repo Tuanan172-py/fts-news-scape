@@ -32,7 +32,6 @@ from src.core.stdio import force_utf8_stdio            # noqa: E402
 
 force_utf8_stdio()
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
 TASK_DIR = paths.article_packets_dir()
 IN_DIR = paths.agent_outputs_dir("_article")
 L1_OUT_DIR = paths.agent_outputs_dir("_l1")

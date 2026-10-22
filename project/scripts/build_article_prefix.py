@@ -32,10 +32,10 @@ from src.agent.prefix import (                       # noqa: E402
 )
 from src.core import paths                             # noqa: E402
 from src.core.stdio import force_utf8_stdio          # noqa: E402
+from src.core.paths import PROJECT_ROOT  # noqa: E402
 
 force_utf8_stdio()
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
 ENTITIES_JSON = paths.entities_dir() / "entities.json"
 TAXONOMY_JSON = paths.entities_dir() / "taxonomy.json"
 OUT_DIR = PROJECT_ROOT / "assets" / "prefix"

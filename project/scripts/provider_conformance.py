@@ -15,7 +15,6 @@ from src.core.stdio import force_utf8_stdio                                     
 
 force_utf8_stdio()
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
 TASK_DIR = paths.article_packets_dir()
 OUT_DIR = paths.agent_outputs_dir("_article")
 BASELINE_PATH = paths.data_root() / "conformance" / "baseline_agy.json"

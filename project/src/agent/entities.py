@@ -5,7 +5,6 @@ import json
 import re
 import unicodedata
 from functools import lru_cache
-from pathlib import Path
 
 import yaml
 
@@ -13,8 +12,8 @@ from loguru import logger as _LOG
 
 from src.core import paths
 from src.core.user_manifest import load_user_manifest
+from src.core.paths import PROJECT_ROOT
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
 ENTITIES_JSON = paths.entities_dir() / "entities.json"
 USERS_DIR = PROJECT_ROOT / "config" / "entities" / "users"
 CONTEXT_GUARDS_YAML = PROJECT_ROOT / "config" / "entities" / "aliases" / "_context_guards.yaml"

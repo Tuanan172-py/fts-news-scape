@@ -21,7 +21,6 @@ import os
 import re
 import shutil
 import socket
-import sqlite3
 import tarfile
 from dataclasses import asdict, dataclass, field
 from datetime import date, datetime
@@ -30,6 +29,7 @@ from typing import Any
 
 from src.agent.article_contract import not_code_first_sql
 from src.core import paths
+from src.db.connect import open_ro
 
 PUBLISH_DIR_ENV = "NEWS_SCAPE_PUBLISH_DIR"
 OFFICIAL_TARGET_MARKERS = frozenset({"fra - data"})
@@ -365,7 +365,7 @@ def _build_obt_parquet(db: Path, day: date, out: Path) -> int:
     from src.lakehouse.ingest import LAKEHOUSE_ARTICLE_SCHEMA, records_to_parquet_bytes
 
     day_str = day.isoformat()
-    conn = sqlite3.connect(f"file:{db.as_posix()}?mode=ro", uri=True, timeout=30)
+    conn = open_ro(db, timeout=30)
     query = """
     WITH day_articles AS (
         SELECT url_title_hash AS article_id, title, url, source_domain,
@@ -495,7 +495,7 @@ def _build_parquet(db: Path, table: str, date_col: str, day: date, out: Path) ->
     """
     import pandas as pd
 
-    conn = sqlite3.connect(f"file:{db.as_posix()}?mode=ro", uri=True, timeout=30)
+    conn = open_ro(db, timeout=30)
     try:
         cols = [r[1] for r in conn.execute(f"PRAGMA table_info({table})")]
         keep = [c for c in cols if c not in HEAVY_COLUMNS and c not in DEPRECATED_COLUMNS]

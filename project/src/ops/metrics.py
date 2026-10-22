@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import json
-import sqlite3
 from datetime import datetime, timedelta, timezone
 
 from src.ops.config import OpsPaths
 from src.ops.store import OpsStore
+from src.db.connect import open_rw
 
 VN_TZ = timezone(timedelta(hours=7))
 
@@ -84,7 +84,7 @@ def record_wave(paths: OpsPaths, store: OpsStore, wave_id: str, status: str) -> 
         ("article-expander", total, final if status == "DONE" else 0, total, None),
     ]
     paths.harness_db.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(str(paths.harness_db), timeout=10)
+    conn = open_rw(paths.harness_db, timeout=10)
     try:
         conn.executescript(_SCHEMA)
         conn.execute("DELETE FROM agent_metrics WHERE wave = ?", (wave_id,))

@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any, Iterator
 
 from src.ops import pipeline_spec
+from src.db.connect import open_rw
 
 ENV_DB = "OPS_TRACE_DB"
 ENV_WAVE = "OPS_TRACE_WAVE"
@@ -83,9 +84,7 @@ def registry_info(actor_id: str | None) -> tuple[str | None, str | None]:
 
 
 def _connect(path: str | Path) -> sqlite3.Connection:
-    conn = sqlite3.connect(str(path), timeout=5)
-    conn.execute("PRAGMA busy_timeout=5000")
-    return conn
+    return open_rw(path, timeout=5, busy_timeout_ms=5000)
 
 
 class Tracer:

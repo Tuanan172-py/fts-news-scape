@@ -4,7 +4,6 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import sqlite3
 import subprocess
 import sys
 import time
@@ -18,10 +17,11 @@ from src.agent.article_contract import analyzed_l1_sql
 from src.core import paths
 from src.core.stdio import force_utf8_stdio
 from src.db.preflight import resolve_db_path
+from src.core.paths import PROJECT_ROOT
+from src.db.connect import open_ro
 
 force_utf8_stdio()
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS_DIR = PROJECT_ROOT / "scripts"
 PYTHON_EXE = sys.executable
 
@@ -187,7 +187,7 @@ def count_pending_articles(db_path: Path) -> int:
         "  )"
     )
 
-    conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+    conn = open_ro(db_path)
     try:
         cur = conn.cursor()
         cur.execute(sql)

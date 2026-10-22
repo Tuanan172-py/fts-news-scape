@@ -9,6 +9,10 @@ DATA_DIR_ENV = "MONOCLE_DATA_DIR"
 SUBSCRIPTIONS_DIR_ENV = "NEWS_SCAPE_SUBSCRIPTIONS_DIR"
 DEFAULT_DATA_ROOT = Path(r"C:\data\news-scape")
 
+# Code-tree roots: `project/` and the repository that holds it (ADR-0027.D4).
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = PROJECT_ROOT.parent
+
 # Prefixes of legacy relative paths, from when data lived under `project/data`.
 _LEGACY_PREFIXES = ("project/data/", "data/")
 
@@ -36,6 +40,15 @@ def check_data_root(root: Path) -> Path:
             f"Đặt {DATA_DIR_ENV} về ổ cục bộ, mặc định {DEFAULT_DATA_ROOT}."
         )
     return root
+
+
+def harness_db_path() -> Path:
+    """Return the harness database at the repository root.
+
+    Returns:
+        Path of `harness.db`.
+    """
+    return REPO_ROOT / "harness.db"
 
 
 def data_root() -> Path:

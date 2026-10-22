@@ -8,13 +8,12 @@ from pathlib import Path
 import yaml
 
 from src.core import paths
+from src.core.paths import PROJECT_ROOT, REPO_ROOT
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 CONFIG_DIR = PROJECT_ROOT / "config"
 DOMAINS_DIR = CONFIG_DIR / "domains"
 
-REPO_ROOT = PROJECT_ROOT.parent
 
 OPERATIONAL_DB_PATH = paths.DEFAULT_DATA_ROOT / "monocle.db"
 ALLOW_SYNCED_DB_ENV = "MONOCLE_ALLOW_SYNCED_DB"

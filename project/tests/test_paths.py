@@ -180,3 +180,18 @@ def _seed_db(db: Path) -> None:
                  (json.dumps([{"url": "u", "path": "data/raw_reports/nso.gov.vn/1/r.xlsx"}]),))
     conn.commit()
     conn.close()
+
+
+@pytest.mark.parametrize("where", ["project", "repo", "elsewhere"])
+def test_code_roots_do_not_depend_on_cwd(where, tmp_path):
+    """`PROJECT_ROOT`, `REPO_ROOT` and `harness_db_path()` resolve the same from any working directory."""
+    import os
+    import subprocess
+    import sys
+
+    cwd = {"project": PROJECT_ROOT, "repo": PROJECT_ROOT.parent, "elsewhere": tmp_path}[where]
+    code = ("from src.core import paths; "
+            "print(paths.PROJECT_ROOT); print(paths.REPO_ROOT); print(paths.harness_db_path())")
+    out = subprocess.run([sys.executable, "-c", code], cwd=cwd, capture_output=True, text=True,
+                         env={**os.environ, "PYTHONPATH": str(PROJECT_ROOT)}, check=True).stdout.split("\n")
+    assert out[:3] == [str(PROJECT_ROOT), str(PROJECT_ROOT.parent), str(PROJECT_ROOT.parent / "harness.db")]

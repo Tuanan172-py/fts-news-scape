@@ -13,7 +13,6 @@ from src.core.stdio import force_utf8_stdio
 
 force_utf8_stdio()
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
 ENTITIES_JSON = paths.entities_dir() / "entities.json"
 
 # Entity type -> group key in _load_all_domain_aliases().
