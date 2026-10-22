@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import json
 
-from src.agent import openrouter_runner as orr
-from src.agent.article_contract import SAMPLING
+from src.agent.runners import openrouter_runner as orr
+from src.agent.contract.article_contract import SAMPLING
 
 PARAS = ["VN-Index tăng hơn 15 điểm trong phiên.", "Dòng tiền lan tỏa sang nhóm bluechip."]
 GOOD = {"i": 0, "e": [["VN-Index", "IDX"]], "s": "Chỉ số tăng mạnh.",

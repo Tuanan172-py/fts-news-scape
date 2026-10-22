@@ -8,7 +8,7 @@ from datetime import date
 import _userkit as k
 import pytest
 
-from src.agent.article_contract import (
+from src.agent.contract.article_contract import (
     CODE_FIRST_SOURCE,
     analyzed_l1_sql,
     not_code_first_sql,
@@ -87,7 +87,7 @@ def test_selector_keeps_code_first_article_pending(world):
 
 
 def test_wave_coverage_ignores_code_first(world):
-    from src.ops.article_run import coverage_of
+    from src.ops.wave.article_run import coverage_of
 
     conn = world.connect()
     try:

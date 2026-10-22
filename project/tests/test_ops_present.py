@@ -10,14 +10,14 @@ from pathlib import Path
 
 import pytest
 
-from src.ops import breakers as br
-from src.ops import present
-from src.ops.present import (alert_card, clip_lines, fmt_date, fmt_datetime, fmt_duration,
+from src.ops.runtime import breakers as br
+from src.ops.console import present
+from src.ops.console.present import (alert_card, clip_lines, fmt_date, fmt_datetime, fmt_duration,
                              fmt_int, fmt_pct, fmt_time, label, success_rate)
 from src.ops.store import ACTIVE_WAVE_STATUSES
-from src.ops.supervisor import CaptureSupervisor  # noqa: F401  (đảm bảo mô-đun nạp được)
+from src.ops.runtime.supervisor import CaptureSupervisor  # noqa: F401  (đảm bảo mô-đun nạp được)
 
-HTML = Path(__file__).resolve().parents[1] / "src" / "ops" / "web" / "control_room.html"
+HTML = Path(__file__).resolve().parents[1] / "src" / "ops" / "console" / "web" / "control_room.html"
 
 
 @pytest.mark.parametrize("value,expected", [
@@ -139,9 +139,9 @@ console.log(JSON.stringify({
 def test_labels_endpoint_serves_the_same_tables(tmp_path):
     import http.client
 
-    from src.ops.breakers import Breakers
+    from src.ops.runtime.breakers import Breakers
     from src.core.ops_config import load_config, resolve_paths
-    from src.ops.control_room import ControlRoom
+    from src.ops.console.control_room import ControlRoom
     from src.ops.store import OpsStore
 
     cfg = load_config()

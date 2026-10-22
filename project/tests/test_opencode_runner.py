@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from src.agent import opencode_runner as ocr
+from src.agent.runners import opencode_runner as ocr
 
 PARAS = ["VN-Index tăng hơn 15 điểm trong phiên.", "Dòng tiền lan tỏa sang nhóm bluechip."]
 GOOD = {

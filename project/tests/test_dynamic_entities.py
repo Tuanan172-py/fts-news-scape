@@ -12,8 +12,8 @@ from pathlib import Path
 
 import pytest
 
-from src.agent.entities import EntityRegistry, load_registry
-from src.agent.l1_classifier import classify_title
+from src.agent.catalog.entities import EntityRegistry, load_registry
+from src.agent.catalog.l1_classifier import classify_title
 from src.users.compile import compile_user, write_user_xlsx
 
 

@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from src.agent.agy_runner import (
+from src.agent.runners.agy_runner import (
     AgyRunner,
     build_sandbox_profile,
     has_vietnamese_diacritics,

@@ -8,7 +8,7 @@ import textwrap
 import time
 from pathlib import Path
 
-from src.ops.daemon import acquire_single_instance
+from src.ops.runtime.daemon import acquire_single_instance
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 

@@ -302,7 +302,7 @@ def compile_all(input_root: str | Path | None = None, registry=None,
         Compile result per user.
     """
     if registry is None:
-        from src.agent.entities import load_registry
+        from src.agent.catalog.entities import load_registry
         registry = load_registry()
         
     if input_root is None:
@@ -340,7 +340,7 @@ def compile_all(input_root: str | Path | None = None, registry=None,
                     break
 
     try:
-        from src.agent.entities import load_registry
+        from src.agent.catalog.entities import load_registry
         load_registry.cache_clear()
     except Exception:
         pass

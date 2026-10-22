@@ -38,7 +38,7 @@ def main(argv: list[str]) -> int:
     args = ap.parse_args(argv)
 
     # Late import: build_entities pulls in pandas and only the YAML loader is needed.
-    from src.agent.catalog_build import _load_all_domain_aliases
+    from src.agent.catalog.catalog_build import _load_all_domain_aliases
 
     groups = _load_all_domain_aliases()
     doc = json.loads(ENTITIES_JSON.read_text(encoding="utf-8"))

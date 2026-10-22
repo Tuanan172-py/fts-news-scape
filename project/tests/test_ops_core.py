@@ -6,13 +6,13 @@ from datetime import date, datetime, timedelta
 
 import pytest
 
-from src.ops import breakers as br
-from src.ops import commands
+from src.ops.runtime import breakers as br
+from src.ops.console import commands
 from src.core.ops_config import load_config, resolve_paths
-from src.ops.notify import drain_alerts
-from src.ops.order import StandingOrder, demote, extend, load_order, save_order
-from src.ops.probes import ProbeResult, apply_edges
-from src.ops.sensor import SensorReading, decide, in_windows
+from src.ops.runtime.notify import drain_alerts
+from src.ops.runtime.order import StandingOrder, demote, extend, load_order, save_order
+from src.ops.runtime.probes import ProbeResult, apply_edges
+from src.ops.runtime.sensor import SensorReading, decide, in_windows
 from src.ops.store import VN_TZ, OpsStore, iso
 
 
@@ -349,8 +349,8 @@ def test_order_extend_from_l0_starts_l1(env):
 def _deliver_steps(env, ok=True):
     from pathlib import Path as _P
 
-    from src.ops.procrun import StepResult
-    from src.ops.wave_flow import WaveSteps
+    from src.ops.wave.procrun import StepResult
+    from src.ops.wave.wave_flow import WaveSteps
 
     cfg, paths, store = env
     calls = []
@@ -365,7 +365,7 @@ def _deliver_steps(env, ok=True):
 
 
 def test_finalize_done_runs_deliver_per_date(env):
-    from src.ops.wave_flow import WaveSpec
+    from src.ops.wave.wave_flow import WaveSpec
 
     steps, calls = _deliver_steps(env, ok=True)
     spec = WaveSpec(wave_id="WD1", target_date="2026-10-02", trigger="T1", level="L1")
@@ -377,7 +377,7 @@ def test_finalize_done_runs_deliver_per_date(env):
 
 
 def test_finalize_done_deliver_failure_keeps_done(env):
-    from src.ops.wave_flow import WaveSpec
+    from src.ops.wave.wave_flow import WaveSpec
 
     steps, _ = _deliver_steps(env, ok=False)
     spec = WaveSpec(wave_id="WD2", target_date="2026-10-02", trigger="T1", level="L1")
@@ -388,7 +388,7 @@ def test_finalize_done_deliver_failure_keeps_done(env):
 
 
 def test_finalize_not_done_skips_deliver(env):
-    from src.ops.wave_flow import WaveSpec
+    from src.ops.wave.wave_flow import WaveSpec
 
     steps, calls = _deliver_steps(env, ok=True)
     spec = WaveSpec(wave_id="WD3", target_date="2026-10-02", trigger="T1", level="L1")
@@ -421,7 +421,7 @@ def test_path_like_command_is_rejected_and_not_audited_as_command(env):
 def test_probe_coverage_flags_gap_and_passes_when_complete(tmp_path):
     import sqlite3
 
-    from src.ops.probes import probe_coverage
+    from src.ops.runtime.probes import probe_coverage
     from src.ops.store import now_vn
 
     db = tmp_path / "m.db"

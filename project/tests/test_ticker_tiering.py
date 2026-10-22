@@ -1,6 +1,6 @@
 """Kiểm thử tính năng phân tầng TICKER và cơ chế chặn false positive Tier 2."""
 
-from src.agent.entities import EntityRegistry
+from src.agent.catalog.entities import EntityRegistry
 
 
 def test_ticker_tiering_detection():

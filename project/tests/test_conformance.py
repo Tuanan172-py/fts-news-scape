@@ -10,7 +10,7 @@ PROJECT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT / "scripts"))
 
 import provider_conformance  # noqa: E402
-from src.agent.conformance import check_against_baseline, score_outputs  # noqa: E402
+from src.agent.contract.conformance import check_against_baseline, score_outputs  # noqa: E402
 
 PARA = "Đoạn văn đủ dài để làm chứng cứ trích dẫn trong bài."
 IM = "Hàm ý thị trường đủ dài để vượt qua ngưỡng bốn mươi ký tự."

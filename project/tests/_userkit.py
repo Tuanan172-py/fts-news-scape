@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import json
 
-from src.agent.entities import EntityRegistry
+from src.agent.catalog.entities import EntityRegistry
 from src.db.store import ArticleStore
 
 ENTITIES = [

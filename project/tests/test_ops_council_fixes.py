@@ -13,13 +13,13 @@ from pathlib import Path
 import pytest
 import requests
 
-from src.ops import commands
+from src.ops.console import commands
 from src.core.ops_config import load_config, resolve_paths
-from src.ops.notify import TelegramClient
-from src.ops.procrun import StepResult
+from src.ops.runtime.notify import TelegramClient
+from src.ops.wave.procrun import StepResult
 from src.core.redact import redact
 from src.ops.store import OpsStore, iso, now_vn
-from src.ops.wave_flow import WaveSpec, WaveSteps
+from src.ops.wave.wave_flow import WaveSpec, WaveSteps
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 FAKE_TOKEN = "123456789:AAH" + "x" * 32
@@ -80,7 +80,7 @@ def test_b2_load_candidates_excludes_before_limit_on_read_only_connection(tmp_pa
 
 
 def test_b2_sensor_does_not_count_reserved_articles(tmp_path):
-    from src.ops.sensor import read_pending
+    from src.ops.runtime.sensor import read_pending
 
     db = tmp_path / "m.db"
     _candidate_db(db)
@@ -97,7 +97,7 @@ def test_b3_children_die_when_daemon_process_dies(tmp_path):
     owner = textwrap.dedent(f"""
         import os, subprocess, sys, time
         sys.path.insert(0, {str(PROJECT_ROOT)!r})
-        from src.ops.procrun import popen_in_daemon_job
+        from src.ops.wave.procrun import popen_in_daemon_job
         code = ("import os, subprocess, sys, time;"
                 "p = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(120)']);"
                 "open({pid_posix!r}, 'w').write(str(p.pid)); time.sleep(120)")
@@ -244,7 +244,7 @@ def test_b6_agy_ledger_rerun_replaces_row(tmp_path, monkeypatch):
 def test_b7_reconcile_marks_lost_workflow_failed(env, monkeypatch):
     import dbos
 
-    from src.ops.daemon import OpsDaemon
+    from src.ops.runtime.daemon import OpsDaemon
 
     _, _, store = env
     store.upsert_wave("W5", status="ANALYZING", workflow_id="wave-W5")
@@ -261,7 +261,7 @@ def test_b7_reconcile_marks_lost_workflow_failed(env, monkeypatch):
 
 # ── D1' / R2: chỉ chat riêng của đúng người ──────────────────────────────────
 def test_r2_telegram_accepts_only_private_chat_from_whitelisted_sender():
-    from src.ops.daemon import OpsDaemon
+    from src.ops.runtime.daemon import OpsDaemon
 
     fake = type("D", (), {"chat_ids": ["42"]})()
     ok = OpsDaemon._authorized
@@ -279,7 +279,7 @@ def test_r2_elevating_commands_need_confirmation(env):
 
     ctl = Ctl()
     ctl.cfg, ctl.paths, ctl.store = cfg, paths, store
-    from src.ops.breakers import Breakers
+    from src.ops.runtime.breakers import Breakers
 
     ctl.breakers = Breakers(store, cfg["breaker"])
     for cmd in ("/level L1", "/provider openrouter", "/failover auto", "/order extend 7"):
@@ -287,7 +287,7 @@ def test_r2_elevating_commands_need_confirmation(env):
         assert r.buttons and r.buttons[0][0][1] == f"{cmd} confirm", cmd
     assert not commands.execute("/level L0", ctl).buttons
     commands.execute("/provider openrouter confirm", ctl)
-    from src.ops.order import load_order
+    from src.ops.runtime.order import load_order
 
     assert load_order(paths.standing_order).provider == "openrouter"
 
@@ -328,7 +328,7 @@ def test_d9_watchdog_alerts_once_after_two_stale_checks(tmp_path, monkeypatch):
 
 # ── Đợt thật đầu tiên: Task Scheduler không bung %LOCALAPPDATA% trong PATH ───
 def test_resolve_agy_expands_unexpanded_path_entries(tmp_path, monkeypatch):
-    from src.agent.agy_runner import resolve_agy
+    from src.agent.runners.agy_runner import resolve_agy
 
     bin_dir = tmp_path / "Local" / "agy" / "bin"
     bin_dir.mkdir(parents=True)

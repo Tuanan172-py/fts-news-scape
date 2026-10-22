@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any
 
 
-from src.agent.article_contract import analyzed_l1_sql
+from src.agent.contract.article_contract import analyzed_l1_sql
 from src.core import paths
 from src.core.stdio import force_utf8_stdio
 from src.db.preflight import resolve_db_path

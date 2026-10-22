@@ -13,8 +13,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.core.ops_config import load_config  # noqa: E402
-from src.ops import wave_flow  # noqa: E402
-from src.ops.wave_flow import drive_wave  # noqa: E402
+from src.ops.wave import wave_flow  # noqa: E402
+from src.ops.wave.wave_flow import drive_wave  # noqa: E402
 
 
 class _FakeOps:

@@ -34,7 +34,7 @@ agents:
       Điều phối vòng đời end-to-end: đọc pipeline.yaml suy ra stage kế tiếp, áp chính sách
       wave chống 429, gọi cognitive agents qua invoke_subagent, chạy operators, ghi harness trace.
     implementation: >-
-      Chạy không giám sát bằng `project/src/ops/daemon.py` (ADR 0012, 0014): Python tất định, 0 token,
+      Chạy không giám sát bằng `project/src/ops/runtime/daemon.py` (ADR 0012, 0014): Python tất định, 0 token,
       workflow DBOS bền, breaker provider, heartbeat, vết `ops_spans`, Phòng điều khiển và Telegram
       giám sát. Người vận hành chỉ giám sát và cải tiến. Phiên DSH/agy tương tác vẫn theo skill trên.
     owner_rules: ["04-harness-durable-invariants"]
@@ -437,7 +437,7 @@ agents:
       read:  ["ops.db (40 sự kiện gần nhất, breaker, hàng đợt)", "ops_logs/waves/<đợt>/*.log (30 dòng cuối)"]
       write: ["ops_events (sentinel.diagnosis) + ops_alerts (đề xuất kèm nút)"]
     tools_allowed: []                # một lượt, không tool; hook PreToolUse từ chối mọi lượt gọi
-    dod_contract: "lệnh đề xuất thuộc danh sách trắng src/ops/sentinel.py::WHITELIST, ngoài danh sách thì ép về none"
+    dod_contract: "lệnh đề xuất thuộc danh sách trắng src/ops/runtime/sentinel.py::WHITELIST, ngoài danh sách thì ép về none"
     cost_budget: { tokens_per_item: 6000, wave_batch: 1, concurrency: 1 }
     kpis: [suggestion_accept_rate, suggestion_correct_rate]
     intent: "Chẩn đoán sự cố vận hành và đề xuất đúng một lệnh; người bấm nút thì daemon mới thi hành."
@@ -448,7 +448,7 @@ agents:
   - id: improvement-proposer
     class: operator
     status: active
-    entrypoint: "project/src/ops/improve.py"
+    entrypoint: "project/src/ops/console/improve.py"
     skill: .agents/skills/ops-supervision/SKILL.md
     stage_role: ops-loop
     io_boundary:

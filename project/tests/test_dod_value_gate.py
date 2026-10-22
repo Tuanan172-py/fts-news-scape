@@ -9,7 +9,7 @@ from __future__ import annotations
 import hashlib
 import json
 
-from src.agent.dod import check_dod
+from src.agent.contract.dod import check_dod
 
 CLEANED = (
     "Hòa Phát báo lãi quý 2 đạt 3.200 tỷ đồng, tăng 18% so với cùng kỳ.\n"
@@ -102,7 +102,7 @@ def test_implication_copied_from_source_fails(tmp_path):
 
 def test_thresholds_are_configurable_without_code_change():
     """Ngưỡng + blocklist đọc từ schemas/task-lifecycle-v1.yaml (sửa spec, không sửa code)."""
-    from src.agent.dod import load_thresholds
+    from src.agent.contract.dod import load_thresholds
 
     t = load_thresholds()
     assert t["min_implication_len"] >= 40

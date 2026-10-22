@@ -10,7 +10,7 @@ from collections import Counter, defaultdict
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
 
-from src.agent.article_contract import analyzed_l1_sql
+from src.agent.contract.article_contract import analyzed_l1_sql
 
 VN_TZ = timezone(timedelta(hours=7))
 

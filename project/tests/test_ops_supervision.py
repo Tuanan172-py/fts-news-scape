@@ -9,12 +9,15 @@ from types import SimpleNamespace
 
 import pytest
 
-from src.ops import commands, improve, mandate, reports
-from src.ops import supervision as sv
-from src.ops.breakers import Breakers
+from src.ops.console import commands
+from src.ops.console import improve
+from src.ops.runtime import mandate
+from src.ops.console import reports
+from src.ops.console import supervision as sv
+from src.ops.runtime.breakers import Breakers
 from src.core.ops_config import load_config, resolve_paths
-from src.ops.control_room import ControlRoom
-from src.ops.order import StandingOrder, extend, load_order, save_order
+from src.ops.console.control_room import ControlRoom
+from src.ops.runtime.order import StandingOrder, extend, load_order, save_order
 from src.ops.store import OpsStore, iso, now_vn
 from src.telemetry.trace import Tracer
 
@@ -376,7 +379,7 @@ def test_telegram_improve_buttons_and_decision_are_audited(env):
 
 
 def test_wave_done_pushes_no_alert_unless_configured(env, tmp_path):
-    from src.ops.wave_flow import WaveSpec, WaveSteps
+    from src.ops.wave.wave_flow import WaveSpec, WaveSteps
 
     cfg, paths, store, _ = env
     spec = WaveSpec("W1", "2026-10-01", "T1", "L1")

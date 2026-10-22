@@ -197,7 +197,7 @@ Phiên mới chỉ cần đọc tệp đó rồi chạy tiếp. Mất phiên gi�
 | `SubagentDepthError` ngay lần gọi đầu | `maxDepth: 0` cấm delegation hoàn toàn, không phải chặn đệ quy | Đặt `maxDepth: 1` |
 | Con gọi được các tool khác | Phiên đang chạy sai preset | Đóng phiên, mở lại đúng preset. Không sửa prompt để chữa |
 | Đầu ra của lô hỏng nhiều | Persona trôi hoặc trần token đầu ra quá thấp | `article_expand` đã cứu từng bản ghi; chạy lại đúng lô hỏng. Vượt 10% thì lệnh tự dừng đợt |
-| `article_pack` báo dòng quá dài | Có đoạn văn vượt trần cắt dòng của công cụ đọc | Hạ `MAX_PARAGRAPH_CHARS` trong `src/agent/distill.py` rồi đóng gói lại |
+| `article_pack` báo dòng quá dài | Có đoạn văn vượt trần cắt dòng của công cụ đọc | Hạ `MAX_PARAGRAPH_CHARS` trong `src/agent/packet/distill.py` rồi đóng gói lại |
 | Prefix báo lệch danh mục | Danh mục thực thể đã đổi | Sinh lại prefix và dán lại vào persona. Bỏ qua là vỡ bộ nhớ đệm |
 | Persona báo lệch prefix | Dán thiếu, dán thừa, hoặc trình soạn thảo tự thụt lề lại khối YAML | Dán lại trọn nội dung tệp prefix, rồi `--check-preset` để xác nhận. Đây là lỗi duy nhất không có triệu chứng nào ngoài hoá đơn |
 | Sổ cái báo con số vô lý | Dòng sổ cái ghi không có `--workers-only` nên gộp cả phiên điều phối | `--finish` đã tự truyền cờ này từ 23/09. Dòng cũ hơn thì đọc với dè dặt |

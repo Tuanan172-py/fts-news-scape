@@ -6,7 +6,7 @@ import json
 import sqlite3
 from datetime import datetime, timedelta, timezone
 
-from src.agent.article_contract import analyzed_l1_sql
+from src.agent.contract.article_contract import analyzed_l1_sql
 
 VN_TZ = timezone(timedelta(hours=7))
 INHERITED = "inherited"

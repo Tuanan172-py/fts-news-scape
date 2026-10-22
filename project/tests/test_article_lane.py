@@ -23,20 +23,20 @@ from src.article_lane.expand import (          # noqa: E402
     build_l1_output,
     salvage_records,
 )
-from src.agent.distill import (               # noqa: E402
+from src.agent.packet.distill import (               # noqa: E402
     MAX_PARAGRAPH_CHARS,
     distill,
     estimate_tokens,
     split_paragraphs,
 )
-from src.agent.entities import load_registry  # noqa: E402
-from src.agent.intent_resolve import (        # noqa: E402
+from src.agent.catalog.entities import load_registry  # noqa: E402
+from src.agent.catalog.intent_resolve import (        # noqa: E402
     IntentResolver,
     ResolveReport,
     reconcile,
 )
-from src.agent.l1_router import check_l1_dod  # noqa: E402
-from src.agent.dod import check_dod  # noqa: E402
+from src.agent.contract.l1_router import check_l1_dod  # noqa: E402
+from src.agent.contract.dod import check_dod  # noqa: E402
 
 SAMPLE = "\n".join([
     "Tập đoàn Hòa Phát công bố lợi nhuận sau thuế quý 3 đạt 3.200 tỷ đồng, tăng 25% so với cùng kỳ năm trước.",
@@ -476,7 +476,7 @@ def test_cac_luot_duoc_chia_deu():
 
 def test_tran_chat_loc_mac_dinh_da_tat():
     """Mặc định mô hình phải đọc trọn bài, không bị code cắt bớt trước."""
-    from src.agent.distill import (DEFAULT_MAX_TOKENS_PER_ARTICLE, distill,
+    from src.agent.packet.distill import (DEFAULT_MAX_TOKENS_PER_ARTICLE, distill,
                                    split_paragraphs)
 
     assert DEFAULT_MAX_TOKENS_PER_ARTICLE == 0
@@ -491,7 +491,7 @@ def test_doan_qua_dai_bi_tach_chu_khong_bi_bo():
     Vứt nguyên đoạn dài là mất đúng phần thường mang nhiều thông tin nhất; tách tại
     ranh giới câu giữ được cả nội dung lẫn bất biến nguyên văn.
     """
-    from src.agent.distill import (MAX_PARAGRAPH_CHARS, split_long_paragraph,
+    from src.agent.packet.distill import (MAX_PARAGRAPH_CHARS, split_long_paragraph,
                                    split_paragraphs)
 
     long_para = "Câu có độ dài vừa phải để ghép lại thành đoạn rất dài. " * 60
@@ -509,7 +509,7 @@ def test_phat_hien_dung_nhung_bai_con_thieu(tmp_path, monkeypatch):
     """Lô trả về thiếu bài phải lộ ra đúng những chỉ số chưa có bản ghi."""
     import json as _json
 
-    from src.ops import article_run
+    from src.ops.wave import article_run
 
     monkeypatch.setattr(article_run, "TASK_DIR", tmp_path)
     monkeypatch.setattr(article_run, "OUT_DIR", tmp_path)
@@ -538,7 +538,7 @@ def test_dong_goi_bu_chi_lay_phan_thieu(tmp_path, monkeypatch, capsys):
     import argparse
     import json as _json
 
-    from src.ops import article_run
+    from src.ops.wave import article_run
 
     monkeypatch.setattr(article_run, "TASK_DIR", tmp_path)
     monkeypatch.setattr(article_run, "OUT_DIR", tmp_path)
@@ -575,7 +575,7 @@ def test_va_hai_the_he_khong_de_packet_chong_lap(tmp_path, monkeypatch):
     import argparse
     import json as _json
 
-    from src.ops import article_run
+    from src.ops.wave import article_run
 
     monkeypatch.setattr(article_run, "TASK_DIR", tmp_path)
     monkeypatch.setattr(article_run, "OUT_DIR", tmp_path)
@@ -666,7 +666,7 @@ def test_khong_thieu_bai_thi_khong_sinh_goi_bu(tmp_path, monkeypatch):
     import argparse
     import json as _json
 
-    from src.ops import article_run
+    from src.ops.wave import article_run
 
     monkeypatch.setattr(article_run, "TASK_DIR", tmp_path)
     monkeypatch.setattr(article_run, "OUT_DIR", tmp_path)
@@ -693,7 +693,7 @@ def test_chuong_trinh_dieu_phoi_la_javascript_hop_le():
     import subprocess
     import tempfile
 
-    from src.ops.article_run import conductor_program
+    from src.ops.wave.article_run import conductor_program
 
     manifest = {"wave": "T", "articles": 1, "batches": [
         {"batch_id": "b1", "path": "p.json", "n": 1, "windows": [[1, 10]]}]}
@@ -713,7 +713,7 @@ def test_chuong_trinh_dieu_phoi_la_javascript_hop_le():
 
 def test_chuong_trinh_dieu_phoi_khong_tra_noi_dung_ve_ngu_canh():
     """Chương trình chỉ được trả về con số; trả nội dung lô là làm phình ngữ cảnh cha."""
-    from src.ops.article_run import conductor_program
+    from src.ops.wave.article_run import conductor_program
 
     manifest = {"wave": "T", "articles": 1, "batches": [
         {"batch_id": "b1", "path": "p.json", "n": 1, "windows": [[1, 10]]}]}
@@ -733,7 +733,7 @@ def test_chuong_trinh_dieu_phoi_khong_tra_noi_dung_ve_ngu_canh():
 # --------------------------------------------------------------------------
 def test_persona_trong_preset_giong_het_prefix_tren_dia():
     """Persona dán tay trong preset phải khớp từng byte với tệp prefix đã sinh."""
-    from src.agent.prefix import PREFIX_PATH, compare_persona
+    from src.agent.packet.prefix import PREFIX_PATH, compare_persona
 
     if not PREFIX_PATH.exists():
         pytest.skip("chưa sinh prefix trên máy này")
@@ -743,7 +743,7 @@ def test_persona_trong_preset_giong_het_prefix_tren_dia():
 
 def test_persona_lech_mot_dong_bi_bat():
     """Thêm đúng một dòng vào prefix là chế độ kiểm phải báo lệch."""
-    from src.agent.prefix import PREFIX_PATH, compare_persona
+    from src.agent.packet.prefix import PREFIX_PATH, compare_persona
 
     if not PREFIX_PATH.exists():
         pytest.skip("chưa sinh prefix trên máy này")
@@ -755,7 +755,7 @@ def test_persona_lech_mot_dong_bi_bat():
 
 def test_tien_to_tinh_gom_ca_phan_harness_noi_them():
     """Dự toán phải đếm cả AGENTS.md và section tool, không chỉ phần persona."""
-    from src.agent.prefix import (
+    from src.agent.packet.prefix import (
         SYSTEM_OVERHEAD_TOKENS,
         cached_prefix_tokens,
         persona_tokens,
@@ -779,7 +779,7 @@ def test_dong_goi_lai_cung_mot_tap_bai_cho_ra_packet_giong_het(tmp_path):
 
 def test_chuong_trinh_dieu_phoi_ham_cache_truoc_roi_tha_moi_lo():
     """Lượt hâm cache phải đi trước, và không lô nào bị bắt chạy một mình nữa."""
-    from src.ops.article_run import conductor_program
+    from src.ops.wave.article_run import conductor_program
 
     manifest = {"wave": "T", "articles": 2, "batches": [
         {"batch_id": "b1", "path": "p1.json", "n": 1, "windows": [[1, 10]]},
@@ -847,7 +847,7 @@ def test_ngay_cua_so_cai_la_gio_UTC_phai_doi_ve_gio_may():
     """
     from datetime import datetime, timedelta
 
-    from src.ops.radar import _utc_window
+    from src.ops.console.radar import _utc_window
 
     lo, hi = _utc_window("2026-09-18")
     lo_dt, hi_dt = datetime.fromisoformat(lo), datetime.fromisoformat(hi)
@@ -861,7 +861,7 @@ def test_radar_khong_cong_don_cac_anh_chup_tich_luy_cua_cung_mot_dot(tmp_path,
     """Sổ cái ghi ảnh chụp tích luỹ; cộng thẳng chúng là đếm trùng nhiều lần."""
     import sqlite3 as _sq
 
-    from src.ops import radar as pipeline_radar
+    from src.ops.console import radar as pipeline_radar
     from src.article_lane.ledger import SCHEMA
 
     db = tmp_path / "harness.db"
@@ -884,7 +884,7 @@ def test_radar_khong_cong_don_cac_anh_chup_tich_luy_cua_cung_mot_dot(tmp_path,
 
 def test_dot_mot_lo_khong_ham_bo_nho_dem():
     """Một lô thì không có ai dùng lại tiền tố, nên lượt hâm chỉ là tốn thêm."""
-    from src.ops.article_run import conductor_program
+    from src.ops.wave.article_run import conductor_program
 
     manifest = {"wave": "T", "articles": 1, "batches": [
         {"batch_id": "b1", "path": "p1.json", "n": 1, "windows": [[1, 10]]}]}
@@ -908,7 +908,7 @@ def test_chua_lo_nao_chay_thi_khong_bao_la_khong_can_va(tmp_path, monkeypatch):
     import argparse
     import json as _json
 
-    from src.ops import article_run
+    from src.ops.wave import article_run
 
     monkeypatch.setattr(article_run, "TASK_DIR", tmp_path)
     monkeypatch.setattr(article_run, "OUT_DIR", tmp_path)
@@ -927,7 +927,7 @@ def test_chua_lo_nao_chay_thi_khong_bao_la_khong_can_va(tmp_path, monkeypatch):
 
 def test_silver_package_path_dung_bo_cuc_kho(tmp_path, monkeypatch):
     """Đường dẫn Silver dựng đúng bố cục domain/ngày/băm."""
-    from src.agent import silver_source
+    from src.agent.packet import silver_source
 
     monkeypatch.setattr(silver_source, "SILVER_ROOT", tmp_path)
     aid = "a" * 64
@@ -944,7 +944,7 @@ def test_silver_package_path_dung_bo_cuc_kho(tmp_path, monkeypatch):
 def test_row_paragraphs_uu_tien_silver_truoc_rss(tmp_path, monkeypatch):
     """Đoạn văn đóng gói lấy từ Silver đầy đủ trước đoạn trích RSS ngắn."""
     from src.article_lane import pack as article_pack
-    from src.agent import silver_source
+    from src.agent.packet import silver_source
 
     monkeypatch.setattr(silver_source, "SILVER_ROOT", tmp_path)
     aid = "c" * 64

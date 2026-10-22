@@ -27,7 +27,7 @@ from datetime import date, datetime
 from pathlib import Path
 from typing import Any
 
-from src.agent.article_contract import not_code_first_sql
+from src.agent.contract.article_contract import not_code_first_sql
 from src.core import paths
 from src.db.connect import open_ro
 

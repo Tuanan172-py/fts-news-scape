@@ -10,8 +10,8 @@ from pathlib import Path
 
 from loguru import logger
 
-from src.agent.article_contract import analyzed_l1_sql
-from src.agent.entities import _fold
+from src.agent.contract.article_contract import analyzed_l1_sql
+from src.agent.catalog.entities import _fold
 from src.core.models import VN_TZ
 from src.core.staging import safe_atomic_write
 from src.export import checkpoint as ckpt

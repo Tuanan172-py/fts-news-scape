@@ -5,7 +5,7 @@ description: Trực ban vận hành nhận thức của ops_daemon. Đọc tríc
 
 # ops-sentinel
 
-Agent cognitive dạng **draft** (registry), chạy qua runner `agy` một lượt, không tool, trong hồ sơ cô lập `%LOCALAPPDATA%\news-scape\agy_profiles\ops-sentinel`. Mã: `project/src/ops/sentinel.py`. Quyết định: ADR 0012.
+Agent cognitive dạng **draft** (registry), chạy qua runner `agy` một lượt, không tool, trong hồ sơ cô lập `%LOCALAPPDATA%\news-scape\agy_profiles\ops-sentinel`. Mã: `project/src/ops/runtime/sentinel.py`. Quyết định: ADR 0012.
 
 ## Khi nào được gọi
 

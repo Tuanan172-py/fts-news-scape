@@ -201,7 +201,7 @@ def test_multiple_gold_rows_picks_latest(tmp_path):
 
 def test_matched_entities_deduped(tmp_path):
     """Nhiều entity_id ánh xạ cùng 1 code → chỉ hiện MỘT lần (bug 22% dòng, sửa 2026-09-08)."""
-    from src.agent.entities import EntityRegistry
+    from src.agent.catalog.entities import EntityRegistry
 
     store = k.make_store(tmp_path)
     alt = {"entity_id": "TICKER:HPG_ALT", "type": "TICKER", "code": "HPG",

@@ -15,7 +15,7 @@ import pytest
 from src.core.models import Article
 from src.db.store import ArticleStore
 from src.export import publisher as pub
-from src.ops.probes import probe_publish
+from src.ops.runtime.probes import probe_publish
 
 DAY = date(2026, 10, 4)
 

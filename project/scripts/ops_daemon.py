@@ -42,7 +42,7 @@ def cmd_run(_args: argparse.Namespace) -> int:
     """
     cfg, paths = load_config(), resolve_paths()
     _redirect_if_windowless(paths.log_dir)
-    from src.ops.daemon import OpsDaemon
+    from src.ops.runtime.daemon import OpsDaemon
 
     daemon = OpsDaemon(cfg, paths, load_secrets(paths))
 
@@ -68,11 +68,11 @@ def cmd_once(_args: argparse.Namespace) -> int:
         Exit code 0.
     """
     from src.core.config import resolve_db_path
-    from src.ops.probes import (probe_capture, probe_db, probe_dead_letter, probe_disk,
+    from src.ops.runtime.probes import (probe_capture, probe_db, probe_dead_letter, probe_disk,
                                 probe_order)
-    from src.ops.sensor import decide, read_pending
+    from src.ops.runtime.sensor import decide, read_pending
     from src.ops.store import OpsStore
-    from src.ops.wave_flow import _default_db_probe
+    from src.ops.wave.wave_flow import _default_db_probe
 
     cfg, paths = load_config(), resolve_paths()
     db = resolve_db_path()
@@ -112,8 +112,8 @@ def cmd_status(_args: argparse.Namespace) -> int:
     Returns:
         Exit code 0.
     """
-    from src.ops.breakers import Breakers
-    from src.ops.reports import status_text, waves_text
+    from src.ops.runtime.breakers import Breakers
+    from src.ops.console.reports import status_text, waves_text
     from src.ops.store import OpsStore
 
     cfg, paths = load_config(), resolve_paths()
@@ -155,7 +155,7 @@ def cmd_order(args: argparse.Namespace) -> int:
     Returns:
         Exit code 0.
     """
-    from src.ops.order import extend, load_order, save_order
+    from src.ops.runtime.order import extend, load_order, save_order
 
     cfg, paths = load_config(), resolve_paths()
     order = load_order(paths.standing_order)
@@ -184,7 +184,7 @@ def cmd_telegram(args: argparse.Namespace) -> int:
     Returns:
         Exit code 0 when the test message was sent, 2 when no unique private chat is available.
     """
-    from src.ops.notify import TelegramClient
+    from src.ops.runtime.notify import TelegramClient
 
     paths = resolve_paths()
     if args.token:
@@ -226,7 +226,7 @@ def cmd_healthcheck(args: argparse.Namespace) -> int:
     Returns:
         Exit code 0 when the ping succeeded, 1 otherwise.
     """
-    from src.ops.notify import ping_healthcheck
+    from src.ops.runtime.notify import ping_healthcheck
 
     paths = resolve_paths()
     write_secret(paths, "NEWS_SCAPE_HC_URL", args.url)
@@ -249,8 +249,8 @@ def cmd_watchdog(_args: argparse.Namespace) -> int:
     Returns:
         Exit code 0.
     """
-    from src.ops.notify import TelegramClient, ping_healthcheck
-    from src.ops.present import alert_card
+    from src.ops.runtime.notify import TelegramClient, ping_healthcheck
+    from src.ops.console.present import alert_card
     from src.ops.store import OpsStore, iso, now_vn, parse_iso
 
     cfg, paths = load_config(), resolve_paths()
@@ -302,7 +302,7 @@ def cmd_send(args: argparse.Namespace) -> int:
 
     paths = resolve_paths()
     store = OpsStore(paths.ops_db)
-    from src.ops.commands import normalize_command
+    from src.ops.console.commands import normalize_command
 
     cid = store.enqueue_command(normalize_command(" ".join(args.text)), actor="cli")
     for _ in range(30):

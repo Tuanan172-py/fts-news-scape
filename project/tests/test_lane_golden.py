@@ -11,9 +11,9 @@ import pytest
 
 from src.article_lane import expand as article_expand
 from src.article_lane import pack as article_pack
-from src.ops import article_run
-from src.agent.entities import load_registry
-from src.agent.intent_resolve import IntentResolver, ResolveReport
+from src.ops.wave import article_run
+from src.agent.catalog.entities import load_registry
+from src.agent.catalog.intent_resolve import IntentResolver, ResolveReport
 from src.core import paths
 
 GOLDEN_DIR = Path(__file__).resolve().parent / "fixtures" / "golden"

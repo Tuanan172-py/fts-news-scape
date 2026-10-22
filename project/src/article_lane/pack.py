@@ -11,15 +11,15 @@ from datetime import datetime
 from pathlib import Path
 
 
-from src.agent.distill import (
+from src.agent.packet.distill import (
     DEFAULT_MAX_TOKENS_PER_ARTICLE,
     distill_stats,
     estimate_tokens,
 )
-from src.agent.article_contract import MIN_CITATION_CHARS, analyzed_l1_sql
-from src.agent.silver_source import read_silver_text
-from src.agent.entities import load_registry
-from src.agent.prefix import (
+from src.agent.contract.article_contract import MIN_CITATION_CHARS, analyzed_l1_sql
+from src.agent.packet.silver_source import read_silver_text
+from src.agent.catalog.entities import load_registry
+from src.agent.packet.prefix import (
     SYSTEM_OVERHEAD_TOKENS,
     cached_prefix_tokens,
     persona_tokens,
@@ -504,7 +504,7 @@ def write_packet(batch_id: str, items: list[dict], mapping: dict,
         raise ValueError(
             f"packet {batch_id} có dòng dài {longest} ký tự, vượt ngưỡng an toàn {limit}. "
             "Công cụ đọc sẽ cắt cụt dòng này và phía điều phối nhận dữ liệu thiếu. "
-            "Hạ MAX_PARAGRAPH_CHARS trong src/agent/distill.py rồi đóng gói lại."
+            "Hạ MAX_PARAGRAPH_CHARS trong src/agent/packet/distill.py rồi đóng gói lại."
         )
 
     packet_path = out_dir / f"{batch_id}.task.json"

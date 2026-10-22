@@ -85,7 +85,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--limit", type=int, default=250, help="Số bài tối đa trong mỗi đợt (mặc định 250 bài = 5 lô con)")
     ap.add_argument("--concurrency", type=int, default=2, help="Số lô chạy song song trong mỗi đợt (mặc định 2)")
     ap.add_argument("--runner", default="opencode", choices=["opencode", "agy", "openrouter"], help="Runner nhận thức")
-    ap.add_argument("--min-coverage", type=float, default=0.20, help="Độ phủ tối thiểu để nạp CSDL cuốn chiếu (mặc định 0.20 = 20%)")
+    ap.add_argument("--min-coverage", type=float, default=0.20, help="Độ phủ tối thiểu để nạp CSDL cuốn chiếu (mặc định 0.20 = 20%%)")
     ap.add_argument("--cooldown", type=int, default=10, help="Thời gian nghỉ (giây) giữa các đợt (mặc định 10)")
     ap.add_argument("--max-runtime-hours", type=float, default=6.0, help="Trần thời gian tự dừng (giờ, mặc định 6.0)")
     ap.add_argument("--dry-run", action="store_true", help="Chỉ đóng gói, không gọi phân tích và nạp CSDL")

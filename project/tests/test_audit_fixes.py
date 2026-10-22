@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from _fakes import FakeHTTP
 
-from src.agent.dod import check_dod
+from src.agent.contract.dod import check_dod
 from src.crawler.raw_store import RawStore
 from src.db.store import ArticleStore
 from src.pipeline.change_detect import classify, dom_path_sig

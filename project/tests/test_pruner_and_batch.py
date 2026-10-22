@@ -6,9 +6,9 @@ from __future__ import annotations
 import hashlib
 import json
 
-from src.agent.batch_handoff import unpack_batch_output
-from src.agent.pruner import is_boilerplate_paragraph
-from src.agent.runner import AgentRunner
+from src.agent.ingest.batch_handoff import unpack_batch_output
+from src.agent.packet.pruner import is_boilerplate_paragraph
+from src.agent.ingest.runner import AgentRunner
 from src.db.store import ArticleStore
 
 def test_boilerplate_detection():

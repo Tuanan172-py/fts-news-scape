@@ -10,7 +10,7 @@ import time
 from datetime import datetime, timezone
 
 
-from src.agent.prefix import cached_prefix_tokens
+from src.agent.packet.prefix import cached_prefix_tokens
 from src.core import paths
 from src.core.stdio import force_utf8_stdio
 from src.telemetry.dsh_usage import (

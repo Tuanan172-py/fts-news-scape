@@ -9,14 +9,14 @@ from pathlib import Path
 
 import pytest
 
-from src.ops import breakers as br
+from src.ops.runtime import breakers as br
 from src.core.ops_config import load_config, resolve_paths
-from src.ops.order import StandingOrder, extend, load_order, save_order
-from src.ops.procrun import StepResult, run_step
-from src.ops.sentinel import diagnose, parse_diagnosis
+from src.ops.runtime.order import StandingOrder, extend, load_order, save_order
+from src.ops.wave.procrun import StepResult, run_step
+from src.ops.runtime.sentinel import diagnose, parse_diagnosis
 from src.ops.store import OpsStore
-from src.ops.supervisor import CaptureSupervisor
-from src.ops.wave_flow import (DirectOps, WaveSpec, WaveSteps, drive_wave,
+from src.ops.runtime.supervisor import CaptureSupervisor
+from src.ops.wave.wave_flow import (DirectOps, WaveSpec, WaveSteps, drive_wave,
                                parse_batch_lines)
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -351,18 +351,18 @@ from pathlib import Path
 sys.path.insert(0, {root!r})
 from src.core.ops_config import load_config, resolve_paths
 from src.ops.store import OpsStore
-from src.ops.wave_flow import WaveSpec, WaveSteps
-from src.ops import dbos_flow
+from src.ops.wave.wave_flow import WaveSpec, WaveSteps
+from src.ops.wave import dbos_flow
 from dbos import DBOS
 
 class Steps(WaveSteps):
     def preflight(self, spec): return True, "", False
     def prepare(self, spec): return 3
     def analyze(self, spec, round_no):
-        from src.ops.wave_flow import AnalyzeOutcome
+        from src.ops.wave.wave_flow import AnalyzeOutcome
         return AnalyzeOutcome("analyze", "ok", 3, 3, "OK")
     def finish(self, spec):
-        from src.ops.procrun import StepResult
+        from src.ops.wave.procrun import StepResult
         return StepResult(0, "ok", 0.1, "ok", Path("x"))
 
 cfg = load_config()
@@ -411,7 +411,7 @@ def test_dbos_workflow_runs_through_and_b7_step_error_fails_wave(tmp_path):
 def test_failed_wave_sets_cooldown_and_done_does_not(env):
     from datetime import timedelta
 
-    from src.ops.sensor import cooldown_active
+    from src.ops.runtime.sensor import cooldown_active
     from src.ops.store import now_vn
 
     cfg, paths, store = env
@@ -433,7 +433,7 @@ def test_provider_failure_does_not_start_cooldown(env):
 
 
 def test_repair_round_bumps_attempts_and_counts_rounds(env, monkeypatch):
-    from src.ops import article_run as ar
+    from src.ops.wave import article_run as ar
 
     cfg, paths, store = env
     monkeypatch.setattr(ar, "wave_article_ids", lambda w: ["a", "b", "c"])
@@ -447,7 +447,7 @@ def test_repair_round_bumps_attempts_and_counts_rounds(env, monkeypatch):
 
 
 def test_retry_refused_after_repair_cap(env):
-    from src.ops.daemon import repair_cap_reason
+    from src.ops.runtime.daemon import repair_cap_reason
 
     cfg, paths, store = env
     assert repair_cap_reason(store, cfg, "W1") is None

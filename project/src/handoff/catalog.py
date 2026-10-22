@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from loguru import logger
 
-from src.agent.article_contract import analyzed_l1_sql
+from src.agent.contract.article_contract import analyzed_l1_sql
 from src.core.models import now_vn_iso
 
 _HELD_STATES = {"SELECTOR_BROKEN", "TEMPLATE_DRIFT"}

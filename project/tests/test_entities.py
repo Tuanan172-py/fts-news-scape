@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.agent.entities import EntityRegistry, _user_enabled
+from src.agent.catalog.entities import EntityRegistry, _user_enabled
 
 ENTITIES = [
     {"entity_id": "TICKER:HPG", "type": "TICKER", "code": "HPG",

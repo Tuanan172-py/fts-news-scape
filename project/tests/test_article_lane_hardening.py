@@ -62,7 +62,7 @@ def _manifest(n_batches: int) -> dict:
 
 def test_doc_packet_dang_doi_tuong_lines_cua_cong_cu_doc():
     """Công cụ đọc trả {lines:[{number,text}]}; đợt W365 chết vì template chỉ hiểu chuỗi."""
-    from src.ops.article_run import conductor_program
+    from src.ops.wave.article_run import conductor_program
 
     out = _run_program(conductor_program(_manifest(1), concurrency=1),
                        '{ path: "p", offset: 1, lines: [{ number: 1, text: "{\\"a\\":1}" }],'
@@ -73,7 +73,7 @@ def test_doc_packet_dang_doi_tuong_lines_cua_cong_cu_doc():
 
 def test_doc_packet_hong_thi_dung_truoc_khi_goi_mo_hinh():
     """Đọc hỏng phải dừng khi chưa tiêu token nào, kể cả lượt hâm cache."""
-    from src.ops.article_run import conductor_program
+    from src.ops.wave.article_run import conductor_program
 
     out = _run_program(conductor_program(_manifest(2), concurrency=2), "{ weird: 1 }")
     assert out["calls"]["agent"] == 0, "không được gọi mô hình, kể cả lượt hâm"
@@ -95,7 +95,7 @@ def _finish_args(**kw) -> argparse.Namespace:
 @pytest.fixture
 def finish_env(tmp_path, monkeypatch):
     """Dựng môi trường nửa hoàn tất với lệnh con và DB giả."""
-    from src.ops import article_run
+    from src.ops.wave import article_run
     from src.db.preflight import WriteProbe
 
     for attr in ("TASK_DIR", "OUT_DIR", "L1_OUT_DIR", "GOLD_OUT_DIR"):
@@ -207,7 +207,7 @@ def test_chi_nap_tep_cua_dung_dot(finish_env):
 
 def test_ten_buoc_sai_bi_tu_choi():
     """Tên bước gõ sai phải bị từ chối, còn thứ tự bước luôn theo vòng đời."""
-    from src.ops.article_run import parse_steps
+    from src.ops.wave.article_run import parse_steps
 
     with pytest.raises(SystemExit):
         parse_steps("ingest,nap")
@@ -216,7 +216,7 @@ def test_ten_buoc_sai_bi_tu_choi():
 
 def test_hau_kiem_dem_theo_tap_bai_cua_dot(tmp_path, monkeypatch):
     """Hậu kiểm đếm đúng bài của đợt, không dùng số cộng dồn của cả thư mục."""
-    from src.ops import article_run
+    from src.ops.wave import article_run
 
     monkeypatch.setattr(article_run, "TASK_DIR", tmp_path)
     (tmp_path / "article_W_01.map.json").write_text(
@@ -238,7 +238,7 @@ def test_hau_kiem_dem_theo_tap_bai_cua_dot(tmp_path, monkeypatch):
 
 def test_va_lai_khong_dong_goi_bai_da_co_trong_lo_va(tmp_path, monkeypatch):
     """Chạy lại `--repair` sau một lần vá thành công không được đẻ lô vá thứ hai."""
-    from src.ops import article_run
+    from src.ops.wave import article_run
 
     monkeypatch.setattr(article_run, "TASK_DIR", tmp_path)
     monkeypatch.setattr(article_run, "OUT_DIR", tmp_path)
@@ -338,8 +338,8 @@ def test_radar_khong_con_khuyen_nghi_lane_cu():
 def test_radar_chon_dung_lenh_theo_vong_doi_dot(monkeypatch, have, missing, received,
                                                 l1, gold, expect):
     """Mỗi trạng thái của đợt phải dẫn tới đúng một lệnh kế tiếp."""
-    from src.ops import article_run
-    from src.ops import radar as pipeline_radar
+    from src.ops.wave import article_run
+    from src.ops.console import radar as pipeline_radar
 
     ids = [f"id{i}" for i in range(10)]
     monkeypatch.setattr(article_run, "pending_batches", lambda w: (have, missing))
@@ -389,7 +389,7 @@ def test_nap_nhan_dien_cho_bai_article_lane_chua_co_l1_task(monkeypatch):
     """Bài đi thẳng từ Article Lane không còn bị loại với lý do "no l1_task"."""
     from types import SimpleNamespace
 
-    from src.agent import l1_runner
+    from src.agent.ingest import l1_runner
 
     seen_titles = []
     monkeypatch.setattr(l1_runner, "check_l1_dod",
@@ -406,7 +406,7 @@ def test_nap_nhan_dien_cho_bai_article_lane_chua_co_l1_task(monkeypatch):
 
 def test_bai_khong_ton_tai_van_bi_loai(monkeypatch):
     """Định danh không có trong `articles` vẫn bị loại, không tự sinh dòng rác."""
-    from src.agent import l1_runner
+    from src.agent.ingest import l1_runner
 
     runner = l1_runner.L1Runner(_FakeStore(None), registry=object())
     res = runner.ingest_output({"article_id": "khong_co"})
@@ -442,7 +442,7 @@ def test_chuan_bi_dot_khong_bi_chan_khi_phien_khong_ghi_duoc_db(monkeypatch, cap
     """Dưới workspace-write DB luôn không ghi được; chặn ở đây là chặn mọi đợt trên DSH."""
     from types import SimpleNamespace
 
-    from src.ops import article_run
+    from src.ops.wave import article_run
     from src.db.preflight import WriteProbe
 
     monkeypatch.setattr(article_run, "check_prefix", lambda: True)

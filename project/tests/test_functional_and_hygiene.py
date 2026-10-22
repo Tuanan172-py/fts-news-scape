@@ -17,7 +17,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import pytest
 
-from src.agent.l1_runner import L1Runner
+from src.agent.ingest.l1_runner import L1Runner
 from src.core.models import Article, now_vn_iso
 from src.db.store import ArticleStore
 from src.export.user_output import UserOutputWriter

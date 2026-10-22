@@ -9,7 +9,7 @@ from pathlib import Path
 PROJECT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT / "scripts"))
 
-from src.agent import article_contract as ac  # noqa: E402
+from src.agent.contract import article_contract as ac  # noqa: E402
 from src.article_lane import expand as article_expand  # noqa: E402
 import build_article_prefix  # noqa: E402
 
@@ -145,7 +145,7 @@ def test_mat_dau_tieng_viet_bi_tu_choi():
 def test_analyze_tu_choi_runner_khong_ho_tro(tmp_path, monkeypatch):
     import argparse
 
-    from src.ops import article_run
+    from src.ops.wave import article_run
 
     monkeypatch.setattr(article_run, "TASK_DIR", tmp_path)
     (tmp_path / "wave_W.json").write_text("{}", encoding="utf-8")

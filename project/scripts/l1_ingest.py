@@ -7,7 +7,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from src.agent.l1_runner import L1Runner
+from src.agent.ingest.l1_runner import L1Runner
 from src.core import paths
 from src.core.config import load_settings
 from src.core.stdio import force_utf8_stdio
@@ -56,7 +56,7 @@ def main(argv: list[str]) -> int:
     if not args.target:
         ap.error("thiếu <target>")
     done = failed = 0
-    from src.agent.batch_handoff import unpack_batch_output
+    from src.agent.ingest.batch_handoff import unpack_batch_output
 
     for path in (p for t in args.target for p in _iter_paths(t)):
         # unpack_batch_output handles all three shapes: array, {outputs|results: [...]}, single object.

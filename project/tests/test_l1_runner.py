@@ -5,8 +5,8 @@ from __future__ import annotations
 
 import pytest
 
-from src.agent.entities import EntityRegistry
-from src.agent.l1_runner import L1Runner
+from src.agent.catalog.entities import EntityRegistry
+from src.agent.ingest.l1_runner import L1Runner
 from src.db.store import ArticleStore
 
 ENTITIES = [

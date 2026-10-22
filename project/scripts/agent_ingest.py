@@ -8,7 +8,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from src.agent.runner import AgentRunner
+from src.agent.ingest.runner import AgentRunner
 from src.core import paths
 from src.core.config import load_settings
 from src.core.stdio import force_utf8_stdio
@@ -57,7 +57,7 @@ def main(argv: list[str]) -> int:
     db_path = load_settings()["database"]["path"]
     runner = AgentRunner(ArticleStore(db_path=db_path), task_dir=args.task_dir)
     done = failed = 0
-    from src.agent.batch_handoff import unpack_batch_output
+    from src.agent.ingest.batch_handoff import unpack_batch_output
 
     def _record(res: dict) -> None:
         """Tally one ingest result and print its status line.

@@ -7,8 +7,8 @@ from __future__ import annotations
 import hashlib
 import json
 
-from src.agent.dod import check_dod, verify_preconditions
-from src.agent.runner import AgentRunner
+from src.agent.contract.dod import check_dod, verify_preconditions
+from src.agent.ingest.runner import AgentRunner
 from src.db.store import ArticleStore
 from src.handoff.catalog import Catalog
 

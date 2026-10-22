@@ -8,7 +8,7 @@ là sản phẩm của regex nhưng mang nhãn LLM, và tất cả đều `dod_p
 
 Test này khoá 2 bất biến để lỗi đó không quay lại im lặng:
   1. Chỉ `src/db/store.py` được viết SQL chạm `agent_outputs` / `l1_outputs`.
-  2. Chỉ runner (`src/agent/runner.py`, `src/agent/l1_runner.py`) được gọi `insert_*_output`,
+  2. Chỉ runner (`src/agent/ingest/runner.py`, `src/agent/ingest/l1_runner.py`) được gọi `insert_*_output`,
      tức mọi bản ghi đều đi qua `check_dod` / `check_l1_dod`.
 
 Vi phạm hợp lệ (nếu có) phải sửa danh sách miễn trừ Ở ĐÂY, kèm lý do — không sửa lén.
@@ -23,7 +23,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 # Chỉ những file này được phép. Thêm tên vào đây là một quyết định có chủ đích, không phải
 # thao tác dọn lỗi test.
 SQL_WRITERS = {"src/db/store.py"}
-INSERT_CALLERS = {"src/db/store.py", "src/agent/runner.py", "src/agent/l1_runner.py"}
+INSERT_CALLERS = {"src/db/store.py", "src/agent/ingest/runner.py", "src/agent/ingest/l1_runner.py"}
 
 EXEMPT: set[str] = set()
 

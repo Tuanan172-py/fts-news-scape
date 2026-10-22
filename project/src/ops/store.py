@@ -10,7 +10,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Iterator
 
-from src.ops.lanes import lane_of
+from src.ops.wave.lanes import lane_of
 from src.core.redact import redact, redact_data
 from src.telemetry.trace import SPAN_SCHEMA
 from src.db.connect import open_rw

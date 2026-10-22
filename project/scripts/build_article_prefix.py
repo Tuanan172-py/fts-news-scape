@@ -25,7 +25,7 @@ from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.agent.prefix import (                       # noqa: E402
+from src.agent.packet.prefix import (                       # noqa: E402
     PRESET_PATH,
     compare_persona,
     digest,

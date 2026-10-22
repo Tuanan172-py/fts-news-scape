@@ -6,8 +6,8 @@ from __future__ import annotations
 
 import pytest
 
-from src.agent.entities import EntityRegistry
-from src.agent.l1_classifier import classify_article, classify_title, title_of
+from src.agent.catalog.entities import EntityRegistry
+from src.agent.catalog.l1_classifier import classify_article, classify_title, title_of
 
 ENTITIES = [
     {"entity_id": "TICKER:HPG", "type": "TICKER", "code": "HPG",

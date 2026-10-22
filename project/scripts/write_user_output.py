@@ -7,7 +7,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from src.agent.entities import load_registry           # noqa: E402
+from src.agent.catalog.entities import load_registry           # noqa: E402
 from src.core.config import load_settings              # noqa: E402
 from src.core.stdio import force_utf8_stdio            # noqa: E402
 from src.db.store import ArticleStore                  # noqa: E402

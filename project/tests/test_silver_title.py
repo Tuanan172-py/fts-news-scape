@@ -15,8 +15,8 @@ from __future__ import annotations
 
 import pytest
 
-from src.agent.entities import EntityRegistry
-from src.agent.l1_classifier import title_of
+from src.agent.catalog.entities import EntityRegistry
+from src.agent.catalog.l1_classifier import title_of
 from src.core.models import sha256_hash
 from src.handoff.work_package import WorkPackageBuilder
 from src.pipeline.silver_builder import SilverBuilder

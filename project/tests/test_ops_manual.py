@@ -6,7 +6,7 @@ import os
 
 import pytest
 
-from src.ops import manual as _manual
+from src.ops.wave import manual as _manual
 from src.telemetry import trace as tracing
 from src.core.ops_config import resolve_paths
 from src.ops.store import OpsStore
@@ -137,7 +137,7 @@ def test_daemon_launched_call_is_not_gated(store, monkeypatch):
 
 
 def test_openrouter_run_batch_writes_agent_span(store, tmp_path, monkeypatch):
-    from src.agent.openrouter_runner import OpenRouterExecutionResult, OpenRouterRunner
+    from src.agent.runners.openrouter_runner import OpenRouterExecutionResult, OpenRouterRunner
 
     gate = manual.begin("WS", "adhoc", "analyze", "openrouter")
     assert gate.refusal is None

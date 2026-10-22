@@ -15,7 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.article_lane import pack as article_pack  # noqa: E402
 from src.article_lane import expand as article_expand  # noqa: E402
-from src.agent import article_contract  # noqa: E402
+from src.agent.contract import article_contract  # noqa: E402
 
 LONG_A = "Đoạn văn thứ nhất đủ dài để làm trích dẫn nguyên văn."
 LONG_B = "Đoạn văn thứ hai đủ dài để làm trích dẫn nguyên văn."

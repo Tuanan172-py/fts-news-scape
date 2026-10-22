@@ -13,9 +13,9 @@ if _PROJECT_DIR not in sys.path:
     sys.path.insert(0, _PROJECT_DIR)
 
 from src.core.stdio import force_utf8_stdio  # noqa: E402
-from src.ops.breakers import Breakers  # noqa: E402
+from src.ops.runtime.breakers import Breakers  # noqa: E402
 from src.core.ops_config import load_config, resolve_paths  # noqa: E402
-from src.ops.reports import log_text, status_text, waves_text  # noqa: E402
+from src.ops.console.reports import log_text, status_text, waves_text  # noqa: E402
 from src.ops.store import OpsStore  # noqa: E402
 
 force_utf8_stdio()
@@ -76,7 +76,7 @@ def run_command(store: OpsStore, paths, breakers: Breakers, text: str) -> str:
         wave = next((p for p in parts[1:] if p.upper().startswith("W")), None)
         return log_text(store, n, wave)
     if head == "/help":
-        from src.ops.commands import HELP
+        from src.ops.console.commands import HELP
         return HELP
     cid = store.enqueue_command(text, actor="console")
     for _ in range(20):

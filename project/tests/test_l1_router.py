@@ -4,7 +4,7 @@ Registry dựng tay; DoD dùng schema thật l1-entity-output-v1 (contract_valid
 """
 from __future__ import annotations
 
-from src.agent.l1_router import check_l1_dod
+from src.agent.contract.l1_router import check_l1_dod
 
 def _valid_output(title):
     return {

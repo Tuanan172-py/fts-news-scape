@@ -12,10 +12,10 @@ import pytest
 
 from src.telemetry import trace as tracing
 from src.core.ops_config import load_config, resolve_paths
-from src.ops.procrun import StepResult
+from src.ops.wave.procrun import StepResult
 from src.ops.store import OpsStore
 from src.telemetry.trace import Tracer
-from src.ops.wave_flow import DirectOps, WaveSpec, WaveSteps, drive_wave
+from src.ops.wave.wave_flow import DirectOps, WaveSpec, WaveSteps, drive_wave
 
 
 @pytest.fixture
@@ -93,7 +93,7 @@ def test_tracing_failure_never_breaks_caller(tmp_path):
 
 # ── Chạy tay không ghi gì (điều kiện nghiệm thu P0) ──────────────────────────
 def test_manual_article_run_helper_writes_nothing(tmp_path, monkeypatch):
-    from src.ops import article_run as ar
+    from src.ops.wave import article_run as ar
 
     for k in (tracing.ENV_DB, tracing.ENV_WAVE, tracing.ENV_PARENT):
         monkeypatch.delenv(k, raising=False)
@@ -104,7 +104,7 @@ def test_manual_article_run_helper_writes_nothing(tmp_path, monkeypatch):
 
 
 def test_article_run_helper_records_script_span_under_daemon_parent(env, monkeypatch, tmp_path):
-    from src.ops import article_run as ar
+    from src.ops.wave import article_run as ar
 
     _, paths, _ = env
     monkeypatch.setenv(tracing.ENV_DB, str(paths.ops_db))
@@ -127,7 +127,7 @@ def _agy_stdout(records, usage):
 
 
 def test_agy_batch_records_agent_span_with_tool_flags(env, monkeypatch, tmp_path):
-    from src.agent.agy_runner import AgyRunner
+    from src.agent.runners.agy_runner import AgyRunner
 
     _, paths, _ = env
     monkeypatch.setenv(tracing.ENV_DB, str(paths.ops_db))
@@ -223,7 +223,7 @@ def test_full_wave_builds_trace_tree_and_writes_metrics(env, tmp_path, monkeypat
 
 
 def test_metrics_numbers_from_spans(env):
-    from src.ops.metrics import wave_numbers
+    from src.ops.wave.metrics import wave_numbers
 
     _, paths, store = env
     tr = Tracer(paths.ops_db, "W2")

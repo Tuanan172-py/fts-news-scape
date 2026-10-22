@@ -8,15 +8,15 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 
-from src.agent.entities import load_registry
+from src.agent.catalog.entities import load_registry
 from src.core import paths
-from src.agent.intent_resolve import (
+from src.agent.catalog.intent_resolve import (
     GROUPS_WITHOUT_RESOLVER,
     IntentResolver,
     ResolveReport,
     reconcile,
 )
-from src.agent.article_contract import (  # noqa: F401
+from src.agent.contract.article_contract import (  # noqa: F401
     MIN_CITATION_CHARS,
     SENTIMENT_MAP,
     TIME_MAP,
@@ -24,7 +24,7 @@ from src.agent.article_contract import (  # noqa: F401
     salvage_records,
     unwrap_tool_envelope,
 )
-from src.agent.l1_router import TYPE_GROUP
+from src.agent.contract.l1_router import TYPE_GROUP
 from src.core.stdio import force_utf8_stdio
 
 force_utf8_stdio()

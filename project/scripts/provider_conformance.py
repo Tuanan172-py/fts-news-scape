@@ -9,7 +9,7 @@ from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.agent.conformance import MARGIN, check_against_baseline, score_outputs  # noqa: E402
+from src.agent.contract.conformance import MARGIN, check_against_baseline, score_outputs  # noqa: E402
 from src.core import paths                             # noqa: E402
 from src.core.stdio import force_utf8_stdio                                      # noqa: E402
 

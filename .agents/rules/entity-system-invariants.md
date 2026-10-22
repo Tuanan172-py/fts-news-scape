@@ -15,7 +15,7 @@
 - Every entity must have a unique `entity_id` (e.g. `TICKER:HPG`, `IND_GICS2:QUY`, `MACRO_GEO:MY`, `ASSET_CLASS:TRAI_PHIEU`).
 - Code must be normalized uppercase without diacritics.
 
-## 2. Matcher & Short-words Invariants (`project/src/agent/entities.py`)
+## 2. Matcher & Short-words Invariants (`project/src/agent/catalog/entities.py`)
 - **No Crude Length Filtering:** Do NOT use blunt length filters `len(alias) >= 4` that skip critical financial terms like "Quỹ", "Mỹ", "Fed", "Vàng", "Dầu", "CPI", "GDP".
 - **Whitelist Protected Short Words:** Short words with domain importance MUST be whitelisted in `PROTECTED_SHORT_WORDS`.
 - **Word Boundary Regex:** All alias matching MUST use Word Boundary Regex `\b<alias>\b` on diacritics-folded text (`_fold()`) to eliminate false positives (e.g., "quyết định" must NOT match "quy", "mỹ thuật" must NOT match "mỹ").

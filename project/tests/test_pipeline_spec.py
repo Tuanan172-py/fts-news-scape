@@ -8,14 +8,14 @@ from pathlib import Path
 
 import yaml
 
-from src.ops import supervision
+from src.ops.console import supervision
 from src.core import pipeline_spec
 from src.telemetry import trace
-from src.ops.wave_flow import WaveOps
+from src.ops.wave.wave_flow import WaveOps
 
 PROJECT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT / "scripts"))
-from src.ops import article_run  # noqa: E402
+from src.ops.wave import article_run  # noqa: E402
 
 REGISTRY = yaml.safe_load((PROJECT.parent / ".agents" / "registry.yaml").read_text(encoding="utf-8"))
 AGENT_IDS = {a["id"] for a in REGISTRY["agents"]}
