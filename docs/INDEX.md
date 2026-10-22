@@ -33,6 +33,7 @@ any governed document; open a body only when its summary is relevant.
 | [ADR-0024](decisions/0024-canonical-local-codebase-and-hybrid-workspace.md) | accepted | Canonical Local Codebase Standardization and Hybrid Workspace Governance | Establishes C:/src/news-scraper as the sole canonical worktree, isolates git database and virtual environment outside OneDrive, and deprecates development on cloud-synced folders. |
 | [ADR-0025](decisions/0025-unified-plugin-architecture-for-lakehouse-consumption.md) | accepted | Unified Plugin Architecture for Lakehouse Consumption on AGY and Gemini | Establishes the Unified Plugin packaging architecture (fpts-market-intel) for local Lakehouse data consumption across Antigravity (AGY) and Gemini CLI/IDE ecosystems, replacing fragmented standalone skills with a single-bundle distribution, zero-config path auto-discovery, and shared DuckDB vectorized tooling. |
 | [ADR-0026](decisions/0026-canonical-publish-path-runner-order-l0-l1-levels.md) | accepted | Canonical publish path, runner order, L0/L1 levels, user manifest SSOT, users/output tree | Fixes six ambiguities found when mapping the architecture. One production publish path, ranked LLM runners without Claude, autonomy levels L0 and L1 only, one user manifest, one users/output tree for local and SharePoint, and harness tracking that never gates. |
+| [ADR-0027](decisions/0027-module-boundaries-thin-clis.md) | accepted | Module boundaries: logic in src, thin CLIs at stable paths | Business logic lives in project/src in four layers; project/scripts holds thin CLIs whose paths never change; an ast test enforces no scripts-to-scripts, no src-to-scripts, no new sys.path hacks and no sqlite3.connect outside src/db. |
 
 ## story
 
@@ -84,7 +85,8 @@ any governed document; open a body only when its summary is relevant.
 | [US-045](stories/US-045-unify-architecture-state-lane-docs-harness-tracking-publish.md) | blocked | Unify architecture state: lane docs, harness tracking, publish path, L0/L1, manifest SSOT, users/output | Brings docs, harness and code to one state - Article Lane docs, non-gating session close, one publish path, L0/L1 only, one user manifest, one users/output tree. |
 | [US-046](stories/US-046-sweep-all-documents-to-the-current-project-state.md) | in_progress | Sweep all documents to the current project state | Every current document (ADRs, facts, glossary, open items, design, AGENTS.md) states the same runner order, levels, publish path, manifest and output tree as the code. |
 | [US-047](stories/US-047-standardize-docstrings-to-english-google-style.md) | implemented | Standardize docstrings to English Google style | Every public module, class and function in project/src and project/scripts carries an English Google-style docstring, enforced by an AST linter and a phrase scanner. |
-| [US-049](stories/US-049-research-codebase-architecture-and-decide-on-module-restructuring.md) | blocked | Research codebase architecture and decide on module restructuring | The operator gets a measured assessment of the codebase layout, its dead code and five gated restructuring stories, and decides before any operating code moves. |
+| [US-048](stories/US-048-local-offline-workflow-diagrams-as-mermaid-sources.md) | implemented | Local offline workflow diagrams as Mermaid sources | The whole operating workflow opens offline as one self-contained HTML page with an interactive six-layer map and per-flow diagrams, replacing the Claude-only artifact. |
+| [US-049](stories/US-049-research-codebase-architecture-and-decide-on-module-restructuring.md) | implemented | Research codebase architecture and decide on module restructuring | Lane logic moved from flat scripts into layered src packages behind unchanged CLI paths, dead code removed, and an ast test with shrink-only allowlists now blocks new boundary violations. |
 
 ## proposal
 
@@ -100,7 +102,7 @@ any governed document; open a body only when its summary is relevant.
 | [PRP-20261001-insight-analytics](proposals/20261001-insight-analytics.md) | decided | Insight analytics from news data | Which insights can be derived from existing news data? Build deterministic derived signal tables (attention, stale reprints, adjusted sentiment, topics, links, timing), and validate them against prices before calling them trading signals. |
 | [PRP-20261001-ops-council](proposals/20261001-ops-council.md) | decided | Review council for autonomous 24/7 operations with human in the loop | Should the uncommitted ops daemon run Article Lane waves autonomously? Council kept the direction, raised seven blockers B1-B7, removed the per-wave approval gate; operator accepted, ADR-0012 and ADR-0014 followed. |
 | [PRP-20261005-audit-dieu-phoi-agent](proposals/20261005-audit-dieu-phoi-agent.md) | decided | Orchestration audit of agents acting outside the workflow | Asks whether agents ran outside the workflow or against instructions; finds daemon and article-processor compliant, with violations from manual waves and three mechanism gaps, fixed in order under US-037. |
-| [PRP-20261022-codebase-modularization](proposals/20261022-codebase-modularization.md) | draft | Codebase modularization: assess options and target structure | Should the codebase be restructured into modules, and how? Yes, but by moving logic inward behind stable CLI paths (option B), not by a full package rewrite; the 2026-09-24 audit plan is refreshed and split into five gated stories. |
+| [PRP-20261022-codebase-modularization](proposals/20261022-codebase-modularization.md) | decided | Codebase modularization: assess options and target structure | Should the codebase be restructured into modules, and how? Yes, but by moving logic inward behind stable CLI paths (option B), not by a full package rewrite; the 2026-09-24 audit plan is refreshed and split into five gated stories. |
 
 ## plan
 
@@ -137,6 +139,12 @@ any governed document; open a body only when its summary is relevant.
 | [FACT-tests-must-not-write-operational-db](knowledge/facts/tests-must-not-write-operational-db.md) | active | Tests must not write the operational DB | The full pytest run writes DDL to the operational DB through test_cli_entrypoints.py, and simulated wave output once landed in it, so tests and simulations MUST use a temporary DB. |
 | [FACT-tokens-recorded-not-gated](knowledge/facts/tokens-recorded-not-gated.md) | active | Tokens are recorded, never gated | Tokens are a recorded number for the operator to judge; no limit or warning threshold per article, batch or wave is allowed. |
 | [FACT-unified-output-contract](knowledge/facts/unified-output-contract.md) | active | Unified Article Lane output contract | The compact record schema article-compact-v2 is the only output contract, validated only by parse_and_validate; agy is the gold-set baseline and claude is not in the lane. |
+
+## rule
+
+| ID | Status | Title | Summary |
+|---|---|---|---|
+| [RULE-12](../.agents/rules/12-module-boundaries.md) | active | Module boundaries | Business logic lives in project/src by layer, project/scripts holds thin CLIs at stable paths, and an ast test blocks new boundary violations. |
 
 ## run
 

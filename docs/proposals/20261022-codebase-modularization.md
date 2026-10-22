@@ -128,3 +128,4 @@ Rules, enforced by `project/tests/repo/test_architecture.py` with an allowlist f
 ## Outcome
 
 - 2026-10-22 operator: option B approved, to be executed through S5; deletion lists of F4 groups 2 and 3 approved; branch push approved. Decision recorded in ADR-0027; work tracked in US-049, phases S1-S5 on branch `dev/us049-codebase-modularization`.
+- 2026-10-22 result: S1-S5 done in one branch, one story (sequential phases instead of five worktrees, since each phase builds on the previous one). `project/scripts` went from 78 files and 14,922 LOC to 37 files and 4,451 LOC; test suite unchanged at 898 passed. Merge into `dev/us038` waits for a quiet window (`docs/OPEN-ITEMS.md`).

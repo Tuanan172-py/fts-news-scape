@@ -56,5 +56,6 @@ summary_vi: "Logic nghiệp vụ nằm trong project/src theo bốn tầng; proj
 
 ## Follow-up
 
-- [ ] Stories S1-S5 of PRP-20261022-codebase-modularization.
-- [ ] Rule `.agents/rules/12-module-boundaries.md` citing this ADR.
+- [x] Phases S1-S5 of PRP-20261022-codebase-modularization, delivered in US-049.
+- [x] RULE-12 (`.agents/rules/12-module-boundaries.md`) cites this ADR.
+- [ ] Remove the remaining allowlisted cycles (`core ↔ db`, `core ↔ crawler`, `agent ↔ handoff`, `export ↔ lakehouse`) and the `sys.path` edit in `src/morninger.py`.

@@ -43,6 +43,7 @@ SCRIPT_INVENTORY: dict[str, str] = {
     "scripts/compile_users.py": "operator subscription compile",
     "scripts/ctx_probe.py": "article_run context probe",
     "scripts/doc_lint.py": "test_doc_lint presentation lint",
+    "scripts/docs/build_diagrams.py": "AGENTS.md §3 offline diagram build",
     "scripts/estimate_wave.py": "token_ledger wave estimate",
     "scripts/handoff.py": "article_run --finish handoff step",
     "scripts/inspect_catalog.py": "operator catalog lookup",

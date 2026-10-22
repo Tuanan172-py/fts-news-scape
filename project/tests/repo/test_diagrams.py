@@ -9,7 +9,7 @@ import pytest
 
 from scripts.docs.build_diagrams import build, read_diagram
 
-PROJECT = Path(__file__).resolve().parent.parent
+PROJECT = Path(__file__).resolve().parents[2]
 REPO = PROJECT.parent
 DIAGRAMS = PROJECT / "docs" / "diagrams"
 MMD = sorted(DIAGRAMS.glob("*.mmd"))

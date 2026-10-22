@@ -1,5 +1,7 @@
 # Bàn giao Phiên Vận Hành (Session Handoff)
 
+> **Phiên US-049 (2026-10-22, nhánh `dev/us049-codebase-modularization`, worktree `C:/src/news-scraper-us049`):** module hoá theo ADR-0027 xong S1-S5. Logic lane đã vào `src/article_lane`, `src/ops/{wave,runtime,console}`, `src/agent/{runners,contract,ingest,catalog,packet}`; `project/scripts` còn 37 CLI mỏng, đường dẫn giữ nguyên; xoá 58 tệp mã chết; test xếp theo gói. **Việc tiếp:** merge vào `dev/us038` khi daemon ở L0 và không có đợt dở, rồi khởi động lại `news-scape-ops` (xem `docs/OPEN-ITEMS.md`). Kiểm ranh giới: `cd project; python -m pytest tests/repo/test_architecture.py -q`.
+
 **Thời điểm:** 2026-10-22 13:42  
 **Nhiệm vụ:** Khởi động lại ops_daemon (pipeline quy trình hàng ngày), giải phóng đợt kẹt, cào bù sitemap và đưa hệ thống về trạng thái tự vận hành 24/7 (ADR 0012).
 

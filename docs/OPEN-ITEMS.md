@@ -1,6 +1,7 @@
 # OPEN-ITEMS — việc tồn đọng của tuyến L1 → giao hàng người dùng
 
 - **Cập nhật:** 2026-10-21 (US-045 / ADR-0026); nội dung các mục bên dưới giữ nguyên mốc ngày ghi trong từng mục.
+- **Việc chờ người vận hành (US-049):** merge nhánh `dev/us049-codebase-modularization` vào `dev/us038` khi radar không có đợt dở và daemon ở L0 (`/level L0`), rồi khởi động lại task `news-scape-ops` để daemon nạp cấu trúc gói mới (ADR-0027). Đường dẫn `scripts/*.py` không đổi.
 - **Việc chờ người vận hành (US-045):** dừng daemon, chạy `python scripts/maintenance/migrate_users_output.py --apply` (chạy thử đã báo 607 tệp, 0 xung đột), rồi bật lại.
 - **Việc còn lệch sau bản đồ kiến trúc (US-048):** bộ vàng ADR-0017 chưa gán nhãn nên chưa chấm được provider; `opencode` chưa thuộc `PROVIDERS` của daemon; WIP=1 chỉ bị bắt bởi lint K13 và audit, chưa có hook riêng.
 - **Bối cảnh:** rà soát vì sao mapping từ L1 sang danh mục người dùng ghi nhận rất ít số liệu.

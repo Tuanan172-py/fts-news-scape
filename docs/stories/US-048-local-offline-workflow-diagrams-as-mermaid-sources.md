@@ -13,8 +13,8 @@ plan: []
 evidence:
   - path:project/docs/diagrams/README.md
   - path:project/scripts/docs/build_diagrams.py
-  - test:project/tests/test_diagrams.py
-verify: "cd project && python -m pytest tests/test_diagrams.py -q"
+  - test:project/tests/repo/test_diagrams.py
+verify: "cd project && python -m pytest tests/repo/test_diagrams.py -q"
 summary: The whole operating workflow opens offline as one self-contained HTML page with an interactive six-layer map and per-flow diagrams, replacing the Claude-only artifact.
 ---
 
@@ -30,7 +30,7 @@ The whole operating workflow of the project MUST be readable in one place on the
 - [x] The interactive map (six layers, five flow modes, detail drawer) and six numbered tables reflect ADR-0026. Tables cover the system, layers, stores, invariants, ADR ledger and open items. ADR-0026 means L0/L1 only, one publish path, runner order, one manifest and `users/output`.
 - [x] Presentation follows the operator's report standards (`report_writing_skills`: STANDARD S2, S3, S4, S7 and the banned-phrase lists): monochrome palette, no emoji or decorative symbols, no hype phrases, no pill labels; `test_map_text_follows_report_standards` enforces it.
 - [x] 16 detail diagrams render in Edge headless with no syntax error; the page shows one at a time.
-- [x] `tests/test_diagrams.py` checks diagram kind, file names in labels and in map nodes, and that `index.html` is current.
+- [x] `tests/repo/test_diagrams.py` checks diagram kind, file names in labels and in map nodes, and that `index.html` is current.
 - [x] design 00, `project/docs/README.md`, `AGENTS.md` and OPEN-ITEMS point to the diagrams.
 - [x] Operator reviewed the working-paper version and confirmed the layout (2026-10-22).
 
@@ -46,7 +46,7 @@ The whole operating workflow of the project MUST be readable in one place on the
 
 | Tier | Command or check | Result |
 |---|---|---|
-| Unit | `pytest tests/test_diagrams.py` | 36 passed |
+| Unit | `pytest tests/repo/test_diagrams.py` | 36 passed |
 | Platform | Edge headless `--dump-dom` and screenshots | 16 Mermaid svg, 0 errors; map, drawer and all 5 flow modes work; print produces 36 A4 landscape pages (layout not inspected visually) |
 
 ## Evidence
