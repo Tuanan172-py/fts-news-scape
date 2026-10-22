@@ -57,7 +57,7 @@ def _run(tmp_path, monkeypatch, target):
     sha = _seed_work_item(tmp_path, store)
     monkeypatch.setattr(agent_ingest, "load_settings",
                         lambda: {"database": {"path": str(db)}})
-    rc = agent_ingest.main([str(target), "--task-dir", str(tmp_path / "tasks"), "--no-archive"])
+    rc = agent_ingest.main([str(target), "--task-dir", str(tmp_path / "tasks")])
     return rc, store, sha
 
 

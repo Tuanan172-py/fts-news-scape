@@ -18,18 +18,14 @@ import pytest
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
-# Script được automation gọi (morninger · run_daily.ps1 · auto_pilot.py · news_cron · radar).
+# Script được automation gọi (morninger · ops_daemon · article_run --finish · radar).
 # Hỏng ở đây nghĩa là hỏng sản xuất một cách âm thầm.
 AUTOMATION_CLIS = [
     "scripts/maintenance/backfill_deferred.py",
-    "scripts/l1_route.py",
     "scripts/l1_ingest.py",
-    "scripts/agent_export.py",
     "scripts/agent_ingest.py",
     "scripts/compile_users.py",
     "scripts/write_user_output.py",
-    "scripts/monitor_daily.py",
-    "scripts/fetch_periodic_reports.py",
     "scripts/pipeline_radar.py",
     "scripts/article_run.py",
     "scripts/article_tick.py",

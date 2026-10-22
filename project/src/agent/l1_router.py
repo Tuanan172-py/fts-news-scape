@@ -1,16 +1,9 @@
-"""Route articles and validate L1 entity recognition results."""
+"""Validate L1 entity recognition records against the l1-entity-output-v1 contract."""
 from __future__ import annotations
 
-import json
-import os
-
-from src.agent.entities import EntityRegistry, load_registry
-from src.agent.l1_classifier import classify_article, title_of
+from src.agent.entities import load_registry
 from src.handoff.contract_validator import validate as schema_validate
-from src.core import paths
-from src.core.models import now_vn_iso
 
-L1_TASK_VERSION = "1.0"
 L1_OUTPUT_SCHEMA = "l1-entity-output-v1"
 _CATEGORY_KEYS = (
     "ticker_company", "etf_fund", "index", "exchange",
@@ -30,146 +23,11 @@ TYPE_GROUP = {
 
 
 # ---------------------------------------------------------------------------
-# Layer 1 and routing
-# ---------------------------------------------------------------------------
-def route_article(article: dict, reg: EntityRegistry | None = None) -> dict:
-    """Classify layer-1 entities and decide the route.
-
-    Args:
-        article: Article data dict.
-        reg: Optional EntityRegistry; None loads the default registry.
-
-    Returns:
-        Classification dict with the field 'route' ('resolved' or 'needs_agent').
-    """
-    reg = reg or load_registry()
-    rec = classify_article(article, reg)
-    rec["route"] = "needs_agent" if rec["needs_agent"] else "resolved"
-    return rec
-
-
-# ---------------------------------------------------------------------------
-# Layer 2: task-packet hand-off (self-describing, agent-agnostic)
-# ---------------------------------------------------------------------------
-def build_l1_task_packet(article: dict, code_first: dict) -> dict:
-    """Build the L1 task packet for an agent that audits and extends recognition.
-
-    Args:
-        article: Article data to process.
-        code_first: Automatic classification result from layer 1.
-
-    Returns:
-        Work package dict that follows the L1 task packet structure.
-    """
-    return {
-        "packet_version": L1_TASK_VERSION,
-        "layer": "L1_ENTITY_RECOGNITION",
-        "task": "recognize_and_audit",
-        "article_id": article.get("article_id"),
-        "domain": article.get("domain"),
-        "input": {
-            "title": title_of(article),
-            "entity_catalog_ref": {
-                "entities": "entities/entities.json",
-                "taxonomy": "entities/taxonomy.json",
-            },
-            # Code-first result for the agent to audit: confirm, correct or add missed entities.
-            "code_first": {
-                "route": code_first.get("route"),
-                "relevance": code_first.get("relevance"),
-                "entities": code_first.get("entities", []),
-                "entity_ids": code_first.get("entity_ids", []),
-                "industries": code_first.get("industries", []),
-            },
-        },
-        "output_contract": {
-            "schema_name": L1_OUTPUT_SCHEMA,
-            "schema_path": f"schemas/{L1_OUTPUT_SCHEMA}.schema.json",
-            "checklist_categories": list(_CATEGORY_KEYS),
-        },
-        "constraints": {
-            "surface_must_be_substring_of": "input.title",
-            "citation_must_be_substring_of": "input.title",
-            "recognized_true_requires": ["entities>=1", "citations>=1"],
-            "audit_duty": "xác nhận entity code-first, sửa nếu sai, bổ sung nếu thiếu",
-        },
-        "instructions_ref": "schemas/l1-entity-instructions-v1.md",
-    }
-
-
-from src.core.staging import safe_json_dump
-
-
-def write_l1_packet(packet: dict, base_dir: str | os.PathLike | None = None) -> str:
-    """Write an L1 task packet to disk through atomic staging.
-
-    Args:
-        packet: Packet data to write.
-        base_dir: Root directory that stores the packets.
-
-    Returns:
-        Data-relative path of the packet file written.
-    """
-    base_dir = paths.resolve_data_path(base_dir) if base_dir else paths.agent_tasks_dir() / "l1"
-    os.makedirs(base_dir, exist_ok=True)
-    target_path = os.path.join(base_dir, f"{packet['article_id']}.task.json")
-    final_path, _ = safe_json_dump(packet, target_path, indent=2)
-    return paths.to_data_relative(final_path)      # relative path works on both machines
-
-
-
-
-# ---------------------------------------------------------------------------
-# Materialize the DETERMINISTIC result as l1-entity-output-v1
+# Provenance markers of deterministic (code-first) records
 # ---------------------------------------------------------------------------
 CODE_FIRST_PROVIDER = "code_first"
-CODE_FIRST_MODEL = "deterministic"
 
 
-def build_code_first_output(rec: dict, article_id: str) -> dict:
-    """Convert a layer-1 classification result to the l1-entity-output-v1 schema.
-
-    Args:
-        rec: Classification result from l1_classifier.
-        article_id: Unique article identifier.
-
-    Returns:
-        Entity result dict that follows the l1-entity-output-v1 schema.
-    """
-    title = rec.get("title") or ""
-    ents = []
-    for d in rec.get("entities") or []:
-        surface = d.get("surface")
-        if not surface or surface not in title:
-            continue          # drop entities not grounded in the title so DoD does not fail the whole record
-        ents.append({
-            "surface": surface,
-            "entity_id": d["entity_id"],
-            "type": d["type"],
-            "method": "exact_code" if d.get("via") == "code" else "alias",
-            "in_list": True,
-        })
-    groups = {TYPE_GROUP.get(e["type"]) for e in ents}
-    recognized = bool(ents)
-    return {
-        "l1_output_version": "1.0",
-        "article_id": article_id,
-        "title": title,
-        "recognized": recognized,
-        "entities": ents,
-        "categories": {k: ("done" if k in groups else "none") for k in _CATEGORY_KEYS},
-        "unlisted_candidates": [],
-        "citations": [{"source_span": ents[0]["surface"]}] if recognized else [],
-        "processing_metadata": {
-            "agent_provider": CODE_FIRST_PROVIDER,
-            "model_used": CODE_FIRST_MODEL,
-            "timestamp": now_vn_iso(),
-        },
-    }
-
-# ---------------------------------------------------------------------------
-# DoD: gate for L1 agent output (machine-checkable checklist)
-# ---------------------------------------------------------------------------
 def check_l1_dod(output: dict, title: str, registry=None) -> tuple[bool, list[str]]:
     """Check the DoD acceptance conditions of an L1 recognition result.
 

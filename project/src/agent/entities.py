@@ -323,7 +323,6 @@ class EntityRegistry:
                     continue
 
             # EXCHANGE is in the list so a code such as HNX in a title resolves to EXCHANGE:*
-            # (consistent with process_l1_pipeline.py).
             for etype in ("TICKER", "ETF", "SECURITY_OTHER", "INDEX", "EXCHANGE",
                           "MACRO_GEO", "MACRO_THEME", "ASSET_CLASS", "INSTITUTION"):
                 eid = f"{etype}:{code}"

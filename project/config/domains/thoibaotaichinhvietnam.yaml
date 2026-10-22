@@ -1,4 +1,4 @@
-name: thoibaotaichinhvietnam   # KHỚP host stem — tránh bẫy .vn-suffix của domain_check.py:152
+name: thoibaotaichinhvietnam   # KHỚP host stem để tránh bẫy hậu tố .vn khi so tên miền
 enabled: true                  # NEW SOURCE 2026-09-07 (Thời báo Tài chính VN — cơ quan của Bộ Tài chính)
 method: rss_capture            # RSS list + Bronze full raw HTML capture
 rate_limit: 3.0

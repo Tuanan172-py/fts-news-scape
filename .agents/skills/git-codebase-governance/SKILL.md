@@ -222,14 +222,7 @@ Mọi commit bắt buộc tuân thủ phân tầng 3 Tiers của Harness:
 - **Hiện tượng**: Thư mục xuất hiện hàng loạt tệp có đuôi `-DESKTOP-*` hoặc `-FPA-*`.
 - **Biện pháp xử lý chuẩn**:
   1. Tuyệt đối không xóa mù quáng bằng lệnh regex đơn giản.
-  2. Chạy công cụ bảo trì tích hợp sẵn trong dự án:
-     ```powershell
-     # Quét kiểm tra trước
-     & "C:\venvs\news-scape\Scripts\python.exe" project/scripts/maintenance/clean_onedrive_conflicts.py
-
-     # Áp dụng xử lý promote và dọn dẹp an toàn
-     & "C:\venvs\news-scape\Scripts\python.exe" project/scripts/maintenance/clean_onedrive_conflicts.py --apply
-     ```
+  2. Công cụ `clean_onedrive_conflicts.py` đã gỡ ở US-049 (ADR-0027.D6) vì phát triển đã rời OneDrive (ADR-0024). Khi cần, lấy lại từ lịch sử git: `git show ec4e7fe:project/scripts/maintenance/clean_onedrive_conflicts.py`.
 
 ### Tình huống 3: Nhánh Cục Bộ Bị Lệch Hướng (Diverged Branches)
 

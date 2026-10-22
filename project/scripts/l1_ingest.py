@@ -33,7 +33,7 @@ def _iter_paths(arg: str):
 
 
 def main(argv: list[str]) -> int:
-    """Ingest L1 agent-output files, or drain the code-first queue.
+    """Ingest L1 agent-output files through the L1 DoD gate.
 
     Args:
         argv: Command-line arguments, excluding the program name.
@@ -44,31 +44,18 @@ def main(argv: list[str]) -> int:
 
     import argparse
     ap = argparse.ArgumentParser(description="Nạp output tra soát của agent L1")
-    ap.add_argument("target", nargs="*",
+    ap.add_argument("target", nargs="+",
                     help="một hoặc nhiều output.json, hoặc thư mục chứa outputs")
     ap.add_argument("--task-dir", default=None,
                     help=f"Thư mục task packets L1 (mặc định: {paths.agent_tasks_dir() / 'l1'})")
-    ap.add_argument("--no-archive", action="store_true", help="Không tự động archive task packet khi DoD pass")
-    ap.add_argument("--code-first", action="store_true",
-                    help="Vật chất hoá l1_tasks route=resolved (tra danh mục tất định) → l1_outputs")
-    ap.add_argument("--limit", type=int, default=None, help="Giới hạn số task khi --code-first")
-    ap.add_argument("--dry-run", action="store_true", help="Chỉ đếm, không ghi DB")
     args = ap.parse_args(argv)
 
     db_path = load_settings()["database"]["path"]
     runner = L1Runner(ArticleStore(db_path=db_path), task_dir=args.task_dir)
 
-    if args.code_first:
-        stat = runner.drain_code_first(limit=args.limit, dry_run=args.dry_run)
-        tag = "DRY-RUN " if args.dry_run else ""
-        print(f"{tag}code-first: quét={stat['scanned']} ghi={stat['written']} "
-              f"dod_fail={stat['dod_fail']} trả-lại-agent={stat['rerouted']}")
-        return 0
-
     if not args.target:
-        ap.error("thiếu <target>, hoặc dùng --code-first")
+        ap.error("thiếu <target>")
     done = failed = 0
-    done_aids: list[str] = []
     from src.agent.batch_handoff import unpack_batch_output
 
     for path in (p for t in args.target for p in _iter_paths(t)):
@@ -92,31 +79,10 @@ def main(argv: list[str]) -> int:
             res = runner.ingest_output(item)
             if res.get("dod_pass"):
                 done += 1
-                if res.get("article_id"):
-                    done_aids.append(res["article_id"])
                 print(f"DONE   {res.get('article_id')}")
             else:
                 failed += 1
                 print(f"FAILED {res.get('article_id')}: {res.get('reasons') or res.get('reason')}")
-
-    if done_aids and not args.no_archive:
-        from src.agent.archive import archive_completed_tasks
-        task_dir = args.task_dir or (paths.agent_tasks_dir() / "l1")
-        archived_cnt = archive_completed_tasks(done_aids, task_dir)
-        print(f"📦 archived: {archived_cnt}/{len(done_aids)} L1 task packets → {task_dir}/archive/")
-
-        # Remove completed batch files automatically when every task in the batch has passed.
-        task_dir_path = Path(task_dir)
-        done_set = set(done_aids)
-        for b_file in task_dir_path.glob("l1_batch_*.task.json"):
-            try:
-                b_data = json.loads(b_file.read_text(encoding="utf-8"))
-                b_tasks = b_data.get("tasks", [])
-                if b_tasks and all(t.get("article_id") in done_set or runner.store.get_l1_output(t.get("article_id")) for t in b_tasks):
-                    b_file.unlink()
-                    print(f"🧹 Tu dong don file batch task hoan tat: {b_file.name}")
-            except (OSError, json.JSONDecodeError) as e:
-                print(f"⚠️ Khong the doc hoac don file batch {b_file.name}: {e}", file=sys.stderr)
 
     print(f"\ningested: done={done} failed={failed}")
     # A record rejected by DoD or an unreadable file is an ingest error: return non-zero so

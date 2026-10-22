@@ -69,6 +69,7 @@ summary_vi: Có nên module hoá lại codebase không? Có, theo hướng dời
 | Duplicates | `.agents/skills/git-codebase-governance/scripts/audit_codebase.py` (diverged copy), `project/scripts/doc_lint.py` (superseded by `harness_cli doc lint`) | Delete |
 
 - `scripts/knowledge.py` shows as unreachable only because `harness_cli.py` imports it by `sys.path`; it is live.
+- Execution check (S2): `project/scripts/doc_lint.py` is live through `test_doc_lint.py` and stays. `migrate_users_output.py` stays because the US-045 migration has not run (607 files remain in `users_output`).
 
 ### F5. Retired code is still wired into the live `--finish` path
 

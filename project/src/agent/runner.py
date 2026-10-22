@@ -1,4 +1,4 @@
-"""Orchestrate export and ingest of in-depth agent analysis tasks."""
+"""Ingest in-depth agent analysis results through the DoD gate."""
 
 from __future__ import annotations
 
@@ -8,16 +8,14 @@ from pathlib import Path
 
 from loguru import logger
 
-from src.agent.article_contract import analyzed_l1_sql
 from src.agent.dod import check_dod, verify_preconditions
-from src.agent.packet import build_task_packet, write_packet
 from src.core import paths
 from src.core.models import now_vn_iso
 from src.handoff.catalog import Catalog
 
 
 class AgentRunner:
-    """Export work packages to agents and ingest their analysis results.
+    """Ingest agent analysis results against their work packages.
 
     Attributes:
         store: Database store.
@@ -153,164 +151,6 @@ class AgentRunner:
             return dict(row) if row else None
         finally:
             conn.close()
-
-    # -- export (producer -> agent) --------------------------------------------
-    def export_tasks(self, limit: int = 20, *, worker_id: str = "exporter",
-                     order: str = "desc", require_l1: bool = True,
-                     subscriber_only: bool = True,
-                     user: str | list[str] | None = None,
-                     date: str | None = None,
-                     days: int | None = None,
-                     dry_run: bool = False) -> list[dict]:
-        """Claim pending work items and export them as JSON work packages.
-
-        Args:
-            limit: Maximum number of tasks to export.
-            worker_id: Identifier of the worker that claims the items.
-            order: Time ordering ('desc' or 'asc').
-            require_l1: Accept only articles that passed L1 validation.
-            subscriber_only: Accept only articles relevant to the watchlists of users.
-            user: User name or list of user names to filter by.
-            date: Filter by publication date ('YYYY-MM-DD', 'today', 'all').
-            days: Limit to the most recent number of days from now.
-            dry_run: Count and list only, without claiming items.
-
-        Returns:
-            One info dict per task exported.
-        """
-
-        allowed_aids: set[str] | None = None
-        if subscriber_only or user:
-            try:
-                from src.agent.entities import load_registry
-                reg = load_registry()
-                target_subs: set[str] = set()
-
-                if user:
-                    user_list = [user] if isinstance(user, str) else list(user)
-                    for u in user_list:
-                        u_clean = u.strip()
-                        if u_clean in reg.subscriptions:
-                            target_subs.update(reg.subscriptions[u_clean])
-                        else:
-                            logger.warning("[agent] Không tìm thấy đăng ký cho user: {}", u_clean)
-                else:
-                    for user_subs in reg.subscriptions.values():
-                        target_subs.update(user_subs)
-
-                conn = self.store.connect()
-                try:
-                    rows = conn.execute(f"SELECT article_id, output_json FROM l1_outputs WHERE {analyzed_l1_sql()}").fetchall()
-                    allowed_aids = set()
-                    for r in rows:
-                        out_json = r["output_json"]
-                        if not out_json:
-                            continue
-                        try:
-                            data = json.loads(out_json)
-                            eids = [e["entity_id"] for e in data.get("entities", []) if e.get("entity_id")]
-                            if any(eid in target_subs for eid in eids):
-                                allowed_aids.add(r["article_id"])
-                        except Exception:
-                            pass
-                finally:
-                    conn.close()
-                filter_label = f"User({user})" if user else "Active Subscribers"
-                logger.info("[agent] {} filter: {}/{} bài L1 phù hợp",
-                            filter_label, len(allowed_aids), len(rows))
-            except Exception as e:
-                logger.warning("[agent] Không thể nạp subscriptions, bỏ qua subscriber filter: {}", e)
-                allowed_aids = None
-
-        out: list[dict] = []
-        if dry_run:
-            # Count and list only; do not change the status to 'claimed'.
-            conn = self.store.connect()
-            try:
-                order_clause = "ORDER BY enqueued_at DESC, id DESC" if order.lower() == "desc" else "ORDER BY enqueued_at ASC, id ASC"
-                l1_clause = f" AND EXISTS (SELECT 1 FROM l1_outputs l1 WHERE l1.article_id = work_items.article_id AND {analyzed_l1_sql('l1')})" if require_l1 else ""
-                if allowed_aids is not None:
-                    if not allowed_aids:
-                        return []
-                    conn.execute("CREATE TEMP TABLE IF NOT EXISTS _allowed_aids (aid TEXT PRIMARY KEY)")
-                    conn.execute("DELETE FROM _allowed_aids")
-                    conn.executemany("INSERT OR IGNORE INTO _allowed_aids VALUES (?)", [(aid,) for aid in allowed_aids])
-                    allowed_clause = " AND EXISTS (SELECT 1 FROM _allowed_aids aa WHERE aa.aid = work_items.article_id)"
-                else:
-                    allowed_clause = ""
-                date_clause = ""
-                params: list = []
-                if date and date != "all":
-                    from datetime import datetime
-                    from src.core.models import VN_TZ
-                    d_target = f"{datetime.now(VN_TZ):%Y-%m-%d}" if date == "today" else date
-                    date_clause = " AND EXISTS (SELECT 1 FROM articles a WHERE a.url_title_hash = work_items.article_id AND substr(COALESCE(NULLIF(a.published_at, ''), a.fetched_at, work_items.enqueued_at), 1, 10) = ?)"
-                    params.append(d_target)
-                elif days and days > 0:
-                    from datetime import datetime, timedelta
-                    from src.core.models import VN_TZ
-                    cutoff = f"{datetime.now(VN_TZ) - timedelta(days=days):%Y-%m-%d}"
-                    date_clause = " AND EXISTS (SELECT 1 FROM articles a WHERE a.url_title_hash = work_items.article_id AND substr(COALESCE(NULLIF(a.published_at, ''), a.fetched_at, work_items.enqueued_at), 1, 10) >= ?)"
-                    params.append(cutoff)
-                params.append(limit)
-                q = f"SELECT * FROM work_items WHERE status='pending'{l1_clause}{allowed_clause}{date_clause} {order_clause} LIMIT ?"
-                rows = conn.execute(q, params).fetchall()
-                for r in rows:
-                    out.append({"article_id": r["article_id"], "work_item_id": r["id"], "dry_run": True})
-                logger.info("[agent] [DRY-RUN] tìm thấy {} bài pending phù hợp", len(out))
-                return out
-            finally:
-                conn.close()
-
-        for _ in range(limit):
-            item = self.catalog.claim(
-                worker_id, order=order, require_l1=require_l1, allowed_article_ids=allowed_aids,
-                date=date, days=days,
-            )
-            if item is None:
-                break
-
-            try:
-                wp = self._load_work_package(item["package_path"])
-            except (OSError, json.JSONDecodeError) as e:
-                logger.error("[agent] load package fail {}: {}", item["package_path"], e)
-                self.catalog.mark_failed(item["id"], f"package_unreadable: {e}")
-                continue
-            # Embed the extracted L1 entities in the packet (rule 05 §2.5, L1-Assisted Chaining).
-            # l1-entity-output-v1 uses the key `entity_id`, not `code`.
-            l1_entities = None
-            if hasattr(self.store, "get_l1_output"):
-                l1_rec = self.store.get_l1_output(item["article_id"])
-                if l1_rec and l1_rec.get("output_json"):
-                    try:
-                        l1_out = json.loads(l1_rec["output_json"])
-                        l1_entities = [e["entity_id"] for e in l1_out.get("entities", [])
-                                       if e.get("in_list") and e.get("entity_id")]
-                    except Exception:
-                        pass
-            if not l1_entities and hasattr(self.store, "get_l1_task"):
-                l1_task = self.store.get_l1_task(item["article_id"])
-                if l1_task and l1_task.get("code_first_json"):
-                    try:
-                        cf = json.loads(l1_task["code_first_json"])
-                        l1_entities = cf.get("entity_ids", [])
-                    except Exception:
-                        pass
-
-            packet = build_task_packet(wp, work_item_id=item["id"], l1_entities=l1_entities)
-            path = write_packet(packet, base_dir=self.task_dir)
-            out.append({
-                "article_id": item["article_id"],
-                "work_item_id": item["id"],
-                "path": path,
-                "title": wp.get("title", ""),
-                "domain": wp.get("domain", ""),
-                "enqueued_at": item.get("enqueued_at", ""),
-                "input": packet.get("input", wp),
-                "l1_entities": l1_entities,
-            })
-        logger.info("[agent] exported {} task-packets → {}", len(out), self.task_dir)
-        return out
 
     # -- ingest (agent -> producer) --------------------------------------------
     def ingest_output(self, output: dict | str) -> dict:

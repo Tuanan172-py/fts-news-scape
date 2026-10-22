@@ -43,7 +43,7 @@ def main(argv: list[str]) -> int:
         0 when every record passes, 1 when any record fails, 2 on missing arguments.
     """
     if not argv:
-        print("usage: agent_ingest.py <output.json | dir> [--no-archive] [--task-dir DIR]")
+        print("usage: agent_ingest.py <output.json | dir> [--task-dir DIR]")
         return 2
 
     import argparse
@@ -52,13 +52,11 @@ def main(argv: list[str]) -> int:
                     help="một hoặc nhiều output.json, hoặc thư mục chứa outputs")
     ap.add_argument("--task-dir", default=None,
                     help=f"Thư mục task packets (mặc định: {paths.agent_tasks_dir()})")
-    ap.add_argument("--no-archive", action="store_true", help="Không tự động archive task packet khi DoD pass")
     args = ap.parse_args(argv)
 
     db_path = load_settings()["database"]["path"]
     runner = AgentRunner(ArticleStore(db_path=db_path), task_dir=args.task_dir)
     done = failed = 0
-    done_aids: list[str] = []
     from src.agent.batch_handoff import unpack_batch_output
 
     def _record(res: dict) -> None:
@@ -72,8 +70,6 @@ def main(argv: list[str]) -> int:
         nonlocal done, failed
         if res.get("dod_pass"):
             done += 1
-            if res.get("article_id"):
-                done_aids.append(res["article_id"])
             print(f"DONE   {res['article_id']}")
         else:
             failed += 1
@@ -99,12 +95,6 @@ def main(argv: list[str]) -> int:
             continue
         for item in unpacked_items:
             _record(runner.ingest_output(item))
-
-    if done_aids and not args.no_archive:
-        from src.agent.archive import archive_completed_tasks
-        task_dir = args.task_dir or paths.agent_tasks_dir()
-        archived_cnt = archive_completed_tasks(done_aids, task_dir)
-        print(f"📦 archived: {archived_cnt}/{len(done_aids)} task packets → {task_dir}/archive/")
 
     print(f"\ningested: done={done} failed={failed}")
     # A record rejected by DoD or an unreadable file is an ingest error: return non-zero so

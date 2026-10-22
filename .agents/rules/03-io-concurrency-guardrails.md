@@ -101,6 +101,6 @@ Nhằm loại bỏ hoàn toàn tình trạng OneDrive tự động tạo các c�
    - Trong môi trường OneDrive/SharePoint, khi xảy ra xung đột đồng bộ, OneDrive thường giữ nguyên tên file gốc cho bản trên đám mây (thường là bản cũ), và đổi tên bản sửa đổi MỚI NHẤT của người dùng cục bộ thành `<file>-<HOSTNAME>.<ext>`.
    - **CẤM tuyệt đối xóa mù quáng bản `<HOSTNAME>`**: Khi xử lý xung đột, BẮT BUỘC phải so sánh thời gian sửa đổi (`st_mtime`) và mã băm SHA-256.
    - Nếu bản `<HOSTNAME>` mới hơn: BẮT BUỘC **PROMOTE** (sao chép ghi đè bản `<HOSTNAME>` thành file chính thức, sau đó mới xóa file có hậu tố) để không làm mất các chỉnh sửa của người dùng.
-   - **Dọn dẹp & Hợp nhất Tự động**: Sử dụng công cụ chuẩn `project/scripts/maintenance/clean_onedrive_conflicts.py` (đã tích hợp sẵn logic so sánh SHA256 và tự động Promote khi conflict mới hơn).
+   - **Dọn dẹp & Hợp nhất**: Công cụ `clean_onedrive_conflicts.py` đã gỡ ở US-049 (ADR-0027.D6) vì phát triển đã rời OneDrive (ADR-0024). Khi cần, lấy lại từ lịch sử git: `git show ec4e7fe:project/scripts/maintenance/clean_onedrive_conflicts.py`.
 
 

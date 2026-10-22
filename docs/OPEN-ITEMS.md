@@ -117,7 +117,7 @@ Việc kỹ thuật còn treo (chưa làm trong US-031):
 | Việc | Ghi chú |
 |---|---|
 | Nghiệm thu P0 bằng đợt thật qua daemon | Chưa có đợt nào chạy sau khi bật vết. Đợt đầu tiên ở L1 hoặc `/run` sẽ cho cây vết đầy đủ; các đợt cũ hiện hiển thị "chưa có span" |
-| Span cho runner OpenRouter và opencode (`opencode_native_run.py`, `opencode_runner.py`) | Chỉ `AgyRunner` được đo. Đợt chạy bằng runner khác không có cây vết cấp lô |
+| Span cho runner OpenRouter và opencode (`opencode_runner.py`) | Chỉ `AgyRunner` được đo. Đợt chạy bằng runner khác không có cây vết cấp lô |
 | `harness-auditor` lên active | Cần 10 lần chẩn đoán đúng theo rule 07. Hiện đề xuất do operator tất định `improvement-proposer` sinh |
 | Truy cập Phòng điều khiển từ xa (D-B) | Cần CNTT cho đường hầm có xác thực; Telegram `/map`, `/trace` thay tạm |
 | Thử Arize Phoenix qua OpenTelemetry (D-C) | Span đã giữ trường tương thích; cần một spike nhỏ |

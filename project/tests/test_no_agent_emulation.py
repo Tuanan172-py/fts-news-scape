@@ -25,9 +25,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 SQL_WRITERS = {"src/db/store.py"}
 INSERT_CALLERS = {"src/db/store.py", "src/agent/runner.py", "src/agent/l1_runner.py"}
 
-# `dbq.py` là CLI truy vấn tuỳ ý của con người, đã có cổng `--allow-write` và chỉ chạy thủ công
-# → không phải đường ghi tự động của pipeline.
-EXEMPT = {"scripts/dbq.py"}
+EXEMPT: set[str] = set()
 
 _SQL_WRITE = re.compile(
     r"(insert\s+into|update|delete\s+from)\s+(agent_outputs|l1_outputs)\b", re.I)
@@ -68,5 +66,4 @@ def test_emulation_script_stays_deleted():
     gone = PROJECT_ROOT / "scripts" / "maintenance" / "repair_truncated_outputs.py"
     assert not gone.exists(), (
         "repair_truncated_outputs.py đã bị xoá vì tự sinh nội dung Gold bằng regex và giả "
-        "provenance. Cần sửa dữ liệu cũ thì dùng scripts/verify_gold_quality.py (report/rescore), "
-        "không phục hồi script này.")
+        "provenance. Không phục hồi script này.")

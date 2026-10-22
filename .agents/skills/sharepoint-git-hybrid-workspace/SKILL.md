@@ -180,14 +180,7 @@ OneDrive không thể merge nội dung file nhị phân (Excel `.xlsx`, SQLite `
 ### 7.2 Biện pháp Ngăn ngừa Kỹ thuật
 1. **Idempotent Export**: Luôn áp dụng cơ chế bỏ qua file cũ nếu không có dữ liệu mới hoặc không có bản ghi nâng cấp (`new == 0` và `upgraded == 0`).
 2. **Byte-level Check (Staging)**: Kiểm tra kích thước và mã băm SHA-256 trước khi swap file tạm vào file đích.
-3. **Chạy script bảo trì dọn dẹp an toàn**:
-   ```powershell
-   # Quét kiểm tra trước (Dry-run):
-   & "C:\venvs\news-scape\Scripts\python.exe" scripts/maintenance/clean_onedrive_conflicts.py
-
-   # Thực thi xóa bản sao thừa:
-   & "C:\venvs\news-scape\Scripts\python.exe" scripts/maintenance/clean_onedrive_conflicts.py --apply
-   ```
+3. **Dọn bản sao thừa**: Công cụ `clean_onedrive_conflicts.py` đã gỡ ở US-049 (ADR-0027.D6) vì phát triển đã rời OneDrive (ADR-0024). Khi cần, lấy lại từ lịch sử git: `git show ec4e7fe:project/scripts/maintenance/clean_onedrive_conflicts.py`.
 
 ### 7.3 Lưu ý Tránh Lỗi Lệnh Console trên Windows
 - Không chạy lệnh PowerShell lồng nhau dạng: `powershell -Command "Get-ChildItem | Where { $_.Name ... }"` (chuỗi nháy kép làm mất biến `$_`).
@@ -199,4 +192,3 @@ Khi OneDrive fork file thành `<tên_gốc>-<TÊN_MÁY>.<ext>`, file mang tên m
 - Luôn kiểm tra `st_mtime` và SHA-256:
   - Nếu bản `<TÊN_MÁY>` mới hơn: **Ghi đè bản `<TÊN_MÁY>` thành file gốc chính thức** (`shutil.copy2`), sau đó mới xóa file có hậu tố.
   - Nếu giống hệt hoặc cũ hơn: Xóa bản sao thừa an toàn.
-  - Script `clean_onedrive_conflicts.py` đã tự động hóa 100% quy trình này.

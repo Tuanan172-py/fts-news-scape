@@ -262,7 +262,7 @@ $p = (Get-NetTCPConnection -LocalPort 3080 -State Listen).OwningProcess
 | Sửa `settings.yaml` không có tác dụng | Khoá YAML sai bị bỏ qua im lặng | Khẳng định tập tool hiệu lực + `sdkSchemas` ở runtime, **không tin YAML** |
 | Client-plugin không tự reload | Không có Vite `dev:web` | Bật watcher, hoặc refresh thủ công |
 | **C4 báo có watcher nhưng thực ra không có** | Regex `vite\|dev:web` bắt nhầm tiến trình `dsh-subprocess-local` của chính Conductor | Đã vá ở §5.1: loại trừ `dsh-subprocess-local`, `@deepseek-ai.dsh`, `dsh-code-runtime` |
-| `health` exit 1 | Profile scraper cũ còn sót trong DB | `maintenance/clean_onedrive_conflicts.py` |
+| `health` exit 1 | Profile scraper cũ còn sót trong DB | Đọc dòng lỗi của `python -m src.monitor.health` rồi sửa cấu hình domain tương ứng |
 | **A3 báo "NO SERVER ON 3080" nhưng host vẫn chạy** | `Get-NetTCPConnection` bị sandbox chặn quyền nên trả rỗng — **không phải server chết** | Lấy PID bằng `netstat -ano \| Select-String ":3080" \| Select-String "LISTENING"` rồi tách cột cuối. Đã vá ở §5.1 |
 | `Get-CimInstance Win32_Process` báo `Access denied` | Cmdlet bị sandbox chặn | Đừng dùng nó để đọc `CommandLine`; kiểm tiến trình bằng `Get-Process` + `StartTime` |
 | **Sửa `SKILL.md` xong, phân vân có phải restart** | Skill đọc **live** từ đĩa mỗi lần gọi, không nạp lúc mount | Phép thử: sửa tệp sau khi host đã chạy, rồi gọi lại skill. Thấy nội dung mới ⇒ không cần restart. Chỉ `agent.cordis.yml`, `preset.yml`, `~/.dsh/settings.yaml` mới nạp lúc mount |

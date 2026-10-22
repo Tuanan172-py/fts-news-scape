@@ -109,33 +109,6 @@ def test_claim_require_l1_skips_code_first(world):
     assert got is not None and got["article_id"] == REAL
 
 
-def test_daily_report_l1_counts_skip_code_first(world, tmp_path):
-    from src.monitor.daily_reporter import DailyReporter
-
-    rep = DailyReporter(db_path=world.db_path, users_output_dir=tmp_path / "none")
-    m = rep.collect_metrics("all")
-    assert sum(r["count"] for r in m["agents"]["l1_outputs"] if r["dod_pass"] == 1) == 1
-
-
-def test_packet_cleaner_keeps_code_first_packet(world):
-    from scripts.maintenance.clean_completed_packets import _is_done
-
-    conn = world.connect()
-    try:
-        assert _is_done(conn, REAL, True) is True
-        assert _is_done(conn, CF, True) is False
-    finally:
-        conn.close()
-
-
-def test_backlog_counts_skip_code_first(world):
-    from scripts.l1_backlog import collect
-
-    m = collect(world)
-    assert m["delivered_gold"] == 1
-    assert m["t1_gold_ready"] == 1
-
-
 def test_tick_counts_code_first_as_pending(world, tmp_path):
     from pathlib import Path
 

@@ -17,7 +17,6 @@ ALLOW_SCRIPTS_IMPORT: set[str] = {
     'scripts/handoff.py',
     'scripts/maintenance/refresh_aliases.py',
     'scripts/pipeline_radar.py',
-    'scripts/run_validation.py',
     'src/ops/daemon.py',
     'src/ops/sensor.py',
     'src/ops/wave_flow.py',
@@ -29,21 +28,13 @@ ALLOW_SQLITE_CONNECT: set[str] = {
     'scripts/article_pack.py',
     'scripts/article_run.py',
     'scripts/article_tick.py',
-    'scripts/db_status.py',
-    'scripts/dbq.py',
     'scripts/estimate_wave.py',
     'scripts/handoff.py',
-    'scripts/maintenance/audit_alias_false_positives.py',
-    'scripts/maintenance/backfill_missing_traces.py',
-    'scripts/maintenance/clean_yahoo_lifestyle.py',
-    'scripts/maintenance/migrate_data_root.py',
-    'scripts/opencode_native_run.py',
     'scripts/pipeline_radar.py',
     'scripts/publish.py',
     'scripts/token_ledger.py',
     'src/export/csv_export.py',
     'src/export/publisher.py',
-    'src/monitor/daily_reporter.py',
     'src/ops/metrics.py',
     'src/ops/probes.py',
     'src/ops/sensor.py',
@@ -56,23 +47,16 @@ ALLOW_PROJECT_ROOT: set[str] = {
     'scripts/article_pack.py',
     'scripts/article_run.py',
     'scripts/article_tick.py',
-    'scripts/auto_pilot.py',
     'scripts/build_article_prefix.py',
     'scripts/estimate_wave.py',
     'scripts/handoff.py',
     'scripts/lakehouse_cli.py',
-    'scripts/maintenance/cleanup_legacy_tasks.py',
     'scripts/maintenance/refresh_aliases.py',
-    'scripts/opencode_native_run.py',
     'scripts/ops_console.py',
     'scripts/ops_daemon.py',
     'scripts/pipeline_radar.py',
-    'scripts/process_l1_pipeline.py',
     'scripts/provider_conformance.py',
-    'scripts/run_agent_hierarchy.py',
     'scripts/run_backlog_opencode.py',
-    'scripts/run_validation.py',
-    'scripts/test_surface.py',
     'src/agent/agy_runner.py',
     'src/agent/entities.py',
     'src/agent/opencode_runner.py',
@@ -99,6 +83,47 @@ ALLOW_PACKAGE_EDGES: set[tuple[str, str]] = {
     ('ops', 'agent'),
     ('ops', 'export'),
     ('users', 'agent'),
+}
+
+
+# Every CLI under project/scripts with its caller. A new script needs an entry here (ADR-0027.D6).
+SCRIPT_INVENTORY: dict[str, str] = {
+    "scripts/agent_ingest.py": "article_run --finish ingest step",
+    "scripts/article_expand.py": "article_run --finish expand step",
+    "scripts/article_pack.py": "article_run wave preparation",
+    "scripts/article_run.py": "pipeline.yaml wave lifecycle, ops wave_flow",
+    "scripts/article_tick.py": "ops daemon tick and pipeline lock",
+    "scripts/build_article_prefix.py": "article_run prefix check, operator rebuild",
+    "scripts/build_entities.py": "operator catalog rebuild",
+    "scripts/capture_reconcile.py": "pipeline.yaml sitemap reconcile",
+    "scripts/compile_users.py": "operator subscription compile",
+    "scripts/ctx_probe.py": "article_run context probe",
+    "scripts/doc_lint.py": "test_doc_lint presentation lint",
+    "scripts/estimate_wave.py": "token_ledger wave estimate",
+    "scripts/handoff.py": "article_run --finish handoff step",
+    "scripts/inspect_catalog.py": "operator catalog lookup",
+    "scripts/l1_ingest.py": "article_run --finish ingest step",
+    "scripts/lakehouse_cli.py": "ADR-0026 dropzone verify",
+    "scripts/maintenance/audit_codebase.py": "harness_cli audit --codebase",
+    "scripts/maintenance/backfill_deferred.py": "morninger backfill job",
+    "scripts/maintenance/migrate_users_output.py": "US-045 pending operator migration",
+    "scripts/maintenance/refresh_aliases.py": "operator alias refresh",
+    "scripts/ops_console.py": "ops_install.ps1 console shortcut",
+    "scripts/ops_daemon.py": "Task Scheduler news-scape-ops",
+    "scripts/ops_install.ps1": "operator Task Scheduler install",
+    "scripts/pipeline_radar.py": "AGENTS.md radar entry point",
+    "scripts/provider_conformance.py": "ADR-0017 golden set gate",
+    "scripts/publish.py": "ADR-0026 publish path",
+    "scripts/rederive_from_bronze.py": "operator Silver re-derive",
+    "scripts/refresh_watchlist.py": "pipeline_radar watchlist refresh",
+    "scripts/run_backlog_opencode.ps1": "operator opencode backlog driver",
+    "scripts/run_backlog_opencode.py": "operator opencode backlog driver",
+    "scripts/run_once.py": "pipeline.yaml capture cycle",
+    "scripts/signal_build.py": "pipeline.yaml insight signals",
+    "scripts/story_cluster.py": "pipeline.yaml story clustering",
+    "scripts/token_ledger.py": "article_run --finish ledger step",
+    "scripts/validate_capture.py": "pipeline_radar capture validation",
+    "scripts/write_user_output.py": "pipeline.yaml delivery, ops wave_flow",
 }
 
 
@@ -317,3 +342,9 @@ def test_project_root_only_in_paths():
 
 def test_no_package_cycles():
     _check(cyclic_edges(package_edges()), ALLOW_PACKAGE_EDGES, "ADR-0027.D1 cycles")
+
+
+def test_every_script_has_a_declared_caller():
+    found = {_rel(p) for p in SCRIPTS.rglob("*") if p.is_file() and p.suffix in (".py", ".ps1")
+             and "__pycache__" not in p.parts}
+    _check(found, set(SCRIPT_INVENTORY), "ADR-0027.D6 script inventory")

@@ -18,7 +18,6 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 # Tệp được phép giữ chuỗi đường dẫn `data/...` hoặc phép ghép `/ "data"`, kèm lý do.
 SCAN_EXCEPTIONS = {
     "src/core/paths.py": "định nghĩa tiền tố kiểu cũ để resolve_data_path bỏ đi",
-    "scripts/maintenance/cleanup_legacy_tasks.py": "đọc thư mục cũ ở gốc kho mã để dọn, không ghi",
 }
 
 
@@ -180,57 +179,4 @@ def _seed_db(db: Path) -> None:
                  "'2026-08', 't', 'u', 'data/raw_reports/nso.gov.vn/1/r.html', ?)",
                  (json.dumps([{"url": "u", "path": "data/raw_reports/nso.gov.vn/1/r.xlsx"}]),))
     conn.commit()
-    conn.close()
-
-
-def test_migrate_dry_run_khong_ghi(tmp_path, monkeypatch):
-    """Dry-run đếm đúng số dòng cần đổi và không đụng dữ liệu."""
-    from scripts.maintenance import migrate_data_root as mig
-
-    monkeypatch.setenv("MONOCLE_DATA_DIR", str(tmp_path / "root"))
-    db = tmp_path / "m.db"
-    _seed_db(db)
-    before = db.read_bytes()
-    counts = mig.migrate(db)
-    assert counts["work_items.package_path"] == 2
-    assert counts["silver_failures.meta_path"] == 1
-    assert counts["periodic_reports.html_path"] == 1
-    assert counts["periodic_reports.attachments_json"] == 1
-    assert db.read_bytes() == before
-
-
-def test_migrate_apply_viet_lai_va_gop_trung(tmp_path, monkeypatch):
-    """Apply viết lại về dạng mới, gộp khoá trùng của silver_failures, chạy lại không đổi gì."""
-    from scripts.maintenance import migrate_data_root as mig
-
-    monkeypatch.setenv("MONOCLE_DATA_DIR", str(tmp_path / "root"))
-    db = tmp_path / "m.db"
-    _seed_db(db)
-    mig.migrate(db, apply=True)
-    conn = sqlite3.connect(str(db))
-    pkgs = sorted(r[0] for r in conn.execute("SELECT package_path FROM work_items"))
-    assert pkgs == ["work_packages/a/b/1.json", "work_packages/a/b/2.json",
-                    "work_packages/a/b/3.json"]
-    fails = conn.execute("SELECT meta_path, attempts, dead_letter FROM silver_failures").fetchall()
-    assert fails == [("raw_html/a/1/x.meta.json", 3, 1)]
-    html, att = conn.execute("SELECT html_path, attachments_json FROM periodic_reports").fetchone()
-    assert html == "raw_reports/nso.gov.vn/1/r.html"
-    assert json.loads(att)[0]["path"] == "raw_reports/nso.gov.vn/1/r.xlsx"
-    conn.close()
-    assert sum(mig.migrate(db).values()) == 0
-
-
-def test_migrate_cli_mac_dinh_la_dry_run(tmp_path, monkeypatch, capsys):
-    """Lệnh không cờ chỉ in số đếm."""
-    from scripts.maintenance import migrate_data_root as mig
-
-    monkeypatch.setenv("MONOCLE_DATA_DIR", str(tmp_path / "root"))
-    db = tmp_path / "m.db"
-    _seed_db(db)
-    assert mig.main(["--db", str(db)]) == 0
-    out = capsys.readouterr().out
-    assert "dry-run" in out and "work_items.package_path" in out
-    conn = sqlite3.connect(str(db))
-    assert conn.execute("SELECT count(*) FROM work_items WHERE package_path LIKE 'data/%'"
-                        ).fetchone()[0] == 1
     conn.close()

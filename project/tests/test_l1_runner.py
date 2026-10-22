@@ -1,6 +1,5 @@
 """
-Test L1Runner end-to-end với DB tạm: route_and_export → l1_tasks + packet;
-ingest_output (đạt/không đạt DoD) → l1_outputs + status done/failed; idempotent.
+Test L1Runner với DB tạm: ingest_output (đạt/không đạt DoD) → l1_outputs + status done/failed; idempotent.
 """
 from __future__ import annotations
 
@@ -24,11 +23,6 @@ def runner(tmp_path):
     return L1Runner(store, reg, task_dir=str(tmp_path / "l1"))
 
 
-def _art(aid, title):
-    return {"article_id": aid, "domain": "cafef.vn",
-            "structure": {"headings": [{"level": 1, "text": title}]}}
-
-
 def _output(aid, title, ok=True):
     o = {
         "l1_output_version": "1.0", "article_id": aid, "title": title,
@@ -46,22 +40,15 @@ def _output(aid, title, ok=True):
     return o
 
 
-def test_route_export_writes_task_and_packet(runner, tmp_path):
-    rec = runner.route_and_export(_art("a1", "Hòa Phát báo lãi quý 2 tăng mạnh"), review="all")
-    assert rec["route"] == "resolved"
-    task = runner.store.get_l1_task("a1")
-    assert task and task["status"] == "pending" and task["packet_path"]
-    assert (tmp_path / "l1" / "a1.task.json").exists()
-
-
-def test_review_missed_skips_resolved_packet(runner):
-    rec = runner.route_and_export(_art("a2", "Hòa Phát báo lãi"), review="missed")
-    assert rec["route"] == "resolved" and rec["packet_path"] is None
+def _task(runner, aid, title):
+    runner.store.upsert_l1_task({"article_id": aid, "domain": "cafef.vn", "title": title,
+                                 "code_first_json": None, "route": "article_lane",
+                                 "packet_path": None, "enqueued_at": "2026-10-22T09:00:00+07:00"})
 
 
 def test_ingest_pass_marks_done(runner):
     title = "Hòa Phát báo lãi quý 2 tăng mạnh"
-    runner.route_and_export(_art("a3", title), review="all")
+    _task(runner, "a3", title)
     res = runner.ingest_output(_output("a3", title, ok=True))
     assert res["dod_pass"] is True
     assert runner.store.get_l1_task("a3")["status"] == "done"
@@ -70,7 +57,7 @@ def test_ingest_pass_marks_done(runner):
 
 def test_ingest_fail_marks_failed(runner):
     title = "Hòa Phát báo lãi quý 2 tăng mạnh"
-    runner.route_and_export(_art("a4", title), review="all")
+    _task(runner, "a4", title)
     res = runner.ingest_output(_output("a4", title, ok=False))
     assert res["dod_pass"] is False
     assert runner.store.get_l1_task("a4")["status"] == "failed"
@@ -78,7 +65,7 @@ def test_ingest_fail_marks_failed(runner):
 
 def test_ingest_idempotent_replay(runner):
     title = "Hòa Phát báo lãi quý 2 tăng mạnh"
-    runner.route_and_export(_art("a5", title), review="all")
+    _task(runner, "a5", title)
     runner.ingest_output(_output("a5", title, ok=True))
     again = runner.ingest_output(_output("a5", title, ok=True))
     assert again.get("cached") is True and again["dod_pass"] is True

@@ -14,7 +14,7 @@ Ranh giới quyền hạn bất biến cho MỌI Subagent trong hệ thống New
 - **KHÔNG** sửa đổi database SQLite (`data/monocle.db`, `harness.db`).
 - **KHÔNG** chỉnh sửa mã nguồn hệ thống (`src/**`, `scripts/**`).
 - **KHÔNG** chỉnh sửa hoặc xóa các file task packets đầu vào (`data/agent_tasks/**`).
-- **KHÔNG** tự ý chạy các script ingest (`l1_ingest.py`, `agent_ingest.py`, `run_user_workflow.py`). Đây là thẩm quyền độc quyền của Master Orchestrator.
+- **KHÔNG** tự ý chạy các script ingest (`l1_ingest.py`, `agent_ingest.py`). Đây là thẩm quyền độc quyền của Master Orchestrator.
 
 ## 3. Ràng Buộc Grounding Bằng Index Đoạn (Citations by Paragraph Index)
 - **Chỉ số mảng đoạn `c: [0, 2]`**: Subagent CHỈ trả về số thứ tự của các đoạn văn bản làm căn cứ chứng minh (`c: [0, 2]`), TUYỆT ĐỐI KHÔNG tự chép lại chuỗi ký tự dài vào output để tránh lãng phí token và tránh trượt exact substring.

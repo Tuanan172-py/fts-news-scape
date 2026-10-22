@@ -41,7 +41,6 @@ python -m src.morninger --once drift     # 1 lần drift report
 
 # 4. Health check + quality gate
 python -m src.monitor.health
-python scripts/verify_quality.py cafef.vn
 
 # 5. Tests
 python -m pytest tests/ -v
@@ -138,13 +137,11 @@ znews, cafebiz, vietnamplus, dantri, vietnamnet (VN) · cnbc, marketwatch, fed, 
 yahoofinance (quốc tế, `language: en`).
 
 **Ngoài danh sách domain:** **NSO / Cục Thống kê** — báo cáo KTXH định kỳ (tháng/quý/năm).
-Không phải domain: driver riêng `src/pipeline/periodic_reports.py`, dedup theo
-`(report_type, period)`, Bronze gồm HTML **+ file .xlsx/.docx** đính kèm.
-Chạy: `python scripts/fetch_periodic_reports.py`. Xem [`docs/design/16-periodic-report-scraper.md`](docs/design/16-periodic-report-scraper.md).
+Driver riêng `fetch_periodic_reports.py` và `src/pipeline/periodic_reports.py` đã gỡ ở US-049 (ADR-0027.D6) vì không có lịch chạy nào gọi tới; bảng `periodic_reports` trong DB giữ nguyên. Thiết kế cũ: [`docs/design/16-periodic-report-scraper.md`](docs/design/16-periodic-report-scraper.md).
 
 Kế hoạch mở rộng: [`plans/20260907-0834-market-sources-expansion/plan.md`](plans/20260907-0834-market-sources-expansion/plan.md)
 
-Chi tiết feed + pitfalls: [`docs/skills/rss-sources.md`](docs/skills/rss-sources.md). Sentiment rule-based (lexicon VN) **đã gỡ khỏi workflow giai đoạn này** — sentiment "thật" do agent sinh ở lớp output; engine giữ tại `src/processor/sentiment.py` để bật lại khi cần.
+Chi tiết feed + pitfalls: [`docs/skills/rss-sources.md`](docs/skills/rss-sources.md). Sentiment rule-based (lexicon VN) **đã gỡ khỏi workflow giai đoạn này** — sentiment "thật" do agent sinh ở lớp output; engine cũ `src/processor/sentiment.py` đã gỡ ở US-049, lấy lại từ lịch sử git nếu cần.
 
 ## Trạng thái Phase 1
 
@@ -154,6 +151,6 @@ Chi tiết feed + pitfalls: [`docs/skills/rss-sources.md`](docs/skills/rss-sourc
 | 2 | TNCK, FireAnt API scrapers | ✅ |
 | 3 | Sentiment rule-based VN, fuzzy dedup, retry, monitoring, notify | ✅ |
 | 4 | RSS layer: Vietstock, VnExpress, Báo Đầu tư, VnEconomy | ✅ |
-| 5 | Orchestrator APScheduler + hardening | ✅ (24h test: chạy `scripts/watch_24h.py` song song orchestrator) |
+| 5 | Orchestrator APScheduler + hardening | ✅ |
 
 Plan chi tiết: `plans/20260724-0859-scraping-expansion-phase1/plan.md`
