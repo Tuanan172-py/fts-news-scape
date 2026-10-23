@@ -1,5 +1,5 @@
-%% title: Xuất bản và tiêu thụ (đường chuẩn duy nhất)
-%% desc: publish.py gọi publish_day, một chiều, chỉ sandbox.
+%% title: Publishing and consumption (the only canonical path)
+%% desc: publish.py calls publish_day, one way and sandbox only.
 sequenceDiagram
   autonumber
   participant DM as ops_daemon publish_tick
@@ -7,12 +7,12 @@ sequenceDiagram
   participant PD as publisher.publish_day
   participant SP as SharePoint FRA_DataIngestion
   participant LC as lakehouse_cli verify
-  participant AN as Chuyên viên (plugin)
-  DM->>PB: sau 01:00, ngày hôm qua
-  PB->>PD: publish_day(ngày đã đóng)
-  PD->>PD: từ chối site FRA chính thức
-  PD->>SP: staging, .partial, thay thế, không ghi đè
-  PD->>SP: _manifest/ngày.json và latest.json
-  LC->>SP: kiểm toán SHA-256 của manifest
-  AN->>SP: DuckDB đọc parquet/articles
-  Note over PD,SP: Backfill lịch sử dùng publish.py --from và --to (US-038)
+  participant AN as Analyst (plugin)
+  DM->>PB: after 01:00, for yesterday
+  PB->>PD: publish_day(closed day)
+  PD->>PD: refuse the official FRA site
+  PD->>SP: write to staging, then .partial, then replace without overwriting
+  PD->>SP: _manifest/date.json and latest.json
+  LC->>SP: audit the SHA-256 hashes in the manifest
+  AN->>SP: DuckDB reads parquet/articles
+  Note over PD,SP: Historical backfill uses publish.py --from and --to (US-038)

@@ -1,5 +1,5 @@
-%% title: Vòng đời một wave do daemon mở
-%% desc: Từ sensor tới giao Excel, gồm preflight, repair và verify.
+%% title: Life of a wave opened by the daemon
+%% desc: From the sensor to Excel delivery, including preflight, repair and verify.
 sequenceDiagram
   autonumber
   participant SE as sensor
@@ -8,22 +8,22 @@ sequenceDiagram
   participant RN as runner (agy)
   participant DB as monocle.db
   participant DL as write_user_output
-  SE->>WF: T1, T2 hoặc T3 thoả, có mandate L1
-  WF->>WF: preflight: breaker, đĩa, quyền ghi DB, prefix
-  WF->>AR: prepare (min của wave.limit và max_limit)
-  AR->>AR: chọn bài, chia batch 50, ghi packet
-  AR->>RN: analyze, các batch chạy song song
-  RN-->>AR: article-compact-v2 cho từng batch
-  loop tối đa 2 vòng
-    AR->>RN: repair phần thiếu
-    RN-->>AR: bản ghi bổ sung
+  SE->>WF: trigger T1, T2 or T3 is met and an L1 mandate exists
+  WF->>WF: preflight: breaker, disk, DB write access, prefix
+  WF->>AR: prepare (the smaller of wave.limit and max_limit)
+  AR->>AR: select articles, split into batches of 50, write packets
+  AR->>RN: analyze, batches run in parallel
+  RN-->>AR: article-compact-v2 for each batch
+  loop at most 2 rounds
+    AR->>RN: repair the missing part
+    RN-->>AR: additional records
   end
   AR->>AR: finish: expand, validate, matcher
-  AR->>DB: ingest qua DoD
-  AR->>AR: verify phủ ≥90% hai lớp
-  alt đạt
-    WF->>DL: giao xlsx (best-effort)
+  AR->>DB: ingest through DoD
+  AR->>AR: verify coverage of at least 90% in both layers
+  alt pass
+    WF->>DL: deliver xlsx (best effort)
     WF-->>SE: DONE
-  else không đạt
-    WF-->>SE: PARKED, chờ rerun
+  else fail
+    WF-->>SE: PARKED, waiting for a rerun
   end

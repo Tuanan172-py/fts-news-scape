@@ -1,18 +1,18 @@
-%% title: L0 Điều khiển và vận hành
-%% desc: Daemon, sensor, wave_flow, breaker, probe và các lệnh Telegram.
+%% title: L0 Control and operations
+%% desc: The daemon, sensor, wave_flow, breakers, probes and Telegram commands.
 flowchart LR
-  TS["Task Scheduler<br/>news-scape-ops, mỗi 5 phút"] --> DM["ops_daemon run"]
-  WD["news-scape-ops-watchdog"] -->|"kéo daemon dậy"| DM
-  DM --> SE["sensor 120s"]
-  DM --> HB["nhịp tim 60s"]
-  DM --> BT["bản tin 08:00 và 18:00"]
-  DM --> PT["publish_tick sau 01:00"]
-  DM --> CS["CaptureSupervisor<br/>giữ morninger sống, tối đa 5 lần trong 30 phút"]
+  TS["Task Scheduler<br/>news-scape-ops, every 5 minutes"] --> DM["ops_daemon run"]
+  WD["news-scape-ops-watchdog"] -->|"restarts the daemon"| DM
+  DM --> SE["sensor every 2 minutes"]
+  DM --> HB["heartbeat every 60 s"]
+  DM --> BT["digest at 08:00 and 18:00"]
+  DM --> PT["publish_tick after 01:00"]
+  DM --> CS["CaptureSupervisor<br/>keeps morninger alive, at most 5 restarts in 30 minutes"]
   DM --> CR["control room<br/>127.0.0.1:8787"]
-  SE -->|"T1 ≥100 bài chờ<br/>T2 bài cũ nhất >90 phút<br/>T3 khung flush"| WF["wave_flow DBOS<br/>checkpoint từng bước"]
-  PR["probes: độ tươi, ghi DB, đĩa,<br/>dead-letter, độ phủ"] --> SE
-  BK["breakers: AUTH, QUOTA 300 phút,<br/>NETWORK sau 3 lần, EMPTY sau 2"] --> WF
+  SE -->|"T1: 100 or more articles waiting<br/>T2: oldest article over 90 minutes<br/>T3: flush window"| WF["wave_flow DBOS<br/>checkpoint at every step"]
+  PR["probes: freshness, DB writes, disk,<br/>dead letters, coverage"] --> SE
+  BK["breakers: AUTH, QUOTA for 300 minutes,<br/>NETWORK after 3 failures, EMPTY after 2"] --> WF
   TG["Telegram"] <--> DM
-  ORD[("agy_standing_order.yaml<br/>L0 hoặc L1 kèm max_limit")] --> SE
+  ORD[("agy_standing_order.yaml<br/>L0 or L1 with max_limit")] --> SE
   OPS[("ops.db, ops_dbos.db")] <--> DM
   WF -->|"article_run.py"| AR["Article Lane"]

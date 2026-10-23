@@ -28,6 +28,7 @@ The whole operating workflow of the project MUST be readable in one place on the
 
 - [x] `project/docs/diagrams/index.html` is one file generated from `map.template.html`, the `*.mmd` sources and a pinned Mermaid; it has no external URL and no external font.
 - [x] The interactive map (six layers, five flow modes, detail drawer) and six numbered tables reflect ADR-0026. Tables cover the system, layers, stores, invariants, ADR ledger and open items. ADR-0026 means L0/L1 only, one publish path, runner order, one manifest and `users/output`.
+- [x] All document text is English: complete, direct sentences with no clipped fragments; `test_diagram_text_is_english` and `test_map_text_follows_report_standards` enforce it.
 - [x] Presentation follows the operator's report standards (`report_writing_skills`: STANDARD S2, S3, S4, S7 and the banned-phrase lists): monochrome palette, no emoji or decorative symbols, no hype phrases, no pill labels; `test_map_text_follows_report_standards` enforces it.
 - [x] 16 detail diagrams render in Edge headless with no syntax error; the page shows one at a time.
 - [x] `tests/test_diagrams.py` checks diagram kind, file names in labels and in map nodes, and that `index.html` is current.
@@ -40,13 +41,14 @@ The whole operating workflow of the project MUST be readable in one place on the
 - The map keeps its own tables; design 00 stays the text source of truth and wins on conflict.
 - Mermaid 11.4.1 is vendored (2.5 MB, MIT) and inlined, so a single copied file works anywhere. Its colours come from the page palette through CSS (ink, grey, white); status is shown by line style, not colour.
 - Serif stack skips Georgia because it lacks stacked Vietnamese diacritics (observed in Edge); Cambria and Times New Roman are used instead.
+- The text was first written in Vietnamese; the operator judged the translated wording fragmentary, so the whole document was rewritten in English. A semicolon in a Mermaid sequence message breaks the figure, so a test guards it.
 - The first version used colour-coded layers and pill buttons; the operator judged it still looked machine-made, so it was rebuilt on the working-paper standard.
 
 ## Verification
 
 | Tier | Command or check | Result |
 |---|---|---|
-| Unit | `pytest tests/test_diagrams.py` | 36 passed |
+| Unit | `pytest tests/test_diagrams.py` | 55 passed |
 | Platform | Edge headless `--dump-dom` and screenshots | 16 Mermaid svg, 0 errors; map, drawer and all 5 flow modes work; print produces 36 A4 landscape pages (layout not inspected visually) |
 
 ## Evidence

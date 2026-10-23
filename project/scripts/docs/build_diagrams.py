@@ -15,7 +15,7 @@ from src.core.stdio import force_utf8_stdio
 DIAGRAMS_DIR = Path(__file__).resolve().parent.parent.parent / "docs" / "diagrams"
 TEMPLATE = "map.template.html"
 MERMAID = Path("vendor") / "mermaid.min.js"
-FIRST_FIGURE = 2  # Hình 1 là bản đồ tương tác trong map.template.html
+FIRST_FIGURE = 2  # Figure 1 is the interactive map in map.template.html
 _META = re.compile(r"^%%\s*(title|desc):\s*(.+)$")
 
 
@@ -53,12 +53,12 @@ def build(diagrams_dir: Path = DIAGRAMS_DIR) -> str:
     items = [read_diagram(p) for p in sorted(diagrams_dir.glob("*.mmd"))]
     tabs = "".join(
         f'<button class="tog" type="button" role="tab" data-d="{d["id"]}" aria-pressed="false">'
-        f'Hình {i}. {html.escape(d["title"])}</button>' for i, d in enumerate(items, start=FIRST_FIGURE))
+        f'Figure {i}. {html.escape(d["title"])}</button>' for i, d in enumerate(items, start=FIRST_FIGURE))
     panes = "\n".join(
         f'<figure class="dpane" data-d="{d["id"]}" role="tabpanel"><div class="plot">'
         f'<pre class="mermaid">{html.escape(d["code"])}</pre></div>'
-        f'<figcaption><span class="lab">Hình {i}.</span> {html.escape(d["title"])}.'
-        f'<span class="note">Ghi chú: {html.escape(d["desc"])} Nguồn: <code>{html.escape(d["id"])}.mmd</code>.</span></figcaption></figure>'
+        f'<figcaption><span class="lab">Figure {i}.</span> {html.escape(d["title"])}.'
+        f'<span class="note">Note: {html.escape(d["desc"])} Source: <code>{html.escape(d["id"])}.mmd</code>.</span></figcaption></figure>'
         for i, d in enumerate(items, start=FIRST_FIGURE))
     mermaid_js = (diagrams_dir / MERMAID).read_text(encoding="utf-8")
     return (page.replace("@@DETAIL_TABS@@", tabs)

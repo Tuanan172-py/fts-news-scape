@@ -55,7 +55,7 @@ def _candidate_db(path: Path) -> None:
         CREATE TABLE work_items (article_id TEXT, package_path TEXT);
         CREATE TABLE l1_outputs (article_id TEXT, dod_pass INTEGER, l1_source TEXT);
     """)
-    body = "x" * 200
+    body = "x" * 100 + "\n\n" + "y" * 100
     for i in range(5):
         conn.execute("INSERT INTO articles VALUES (?,?,?,?,?,?)",
                      (f"a{i}", f"t{i}", "2026-10-01T08:00:00", "d", body,

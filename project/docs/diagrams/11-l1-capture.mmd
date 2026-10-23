@@ -1,17 +1,17 @@
-%% title: L1 Thu thập trọn vẹn (Bronze)
-%% desc: Một chu kỳ capture từ trang danh mục tới Bronze và bài trong DB.
+%% title: L1 Complete capture (Bronze)
+%% desc: One capture cycle, from the category page to Bronze and the article row in the database.
 flowchart LR
-  T["APScheduler tick 10 phút"] --> RC["Orchestrator.run_cycle"] --> SC["scraper theo nguồn"]
-  SC --> PG["fetch_list<br/>watermark, tối đa 8 trang"]
-  PG --> LD[("discovered_urls<br/>ghi TRƯỚC mọi bộ lọc")]
-  LD --> EX["seen_articles<br/>trùng kỹ thuật?"]
+  T["APScheduler tick every 10 minutes"] --> RC["Orchestrator.run_cycle"] --> SC["scraper for each source"]
+  SC --> PG["fetch_list<br/>watermark, at most 8 pages"]
+  PG --> LD[("discovered_urls<br/>written BEFORE any filter")]
+  LD --> EX["seen_articles<br/>technical duplicate?"]
   EX -->|"alias"| AL[("url_aliases")]
-  EX -->|"mới"| CAP["CaptureMixin<br/>robots, backoff, fetch"]
-  CAP --> RS[("RawStore.save<br/>byte-exact, SHA-256")]
-  RS --> ART[("articles trong monocle.db")]
-  ART --> CSV["CSV và WAL checkpoint"]
-  RC --> RE["capture_reconcile<br/>sitemap lệch >2% một ngày là ĐỎ"]
-  RE --> BF["backfill_deferred<br/>tải bù bài hoãn"]
+  EX -->|"new"| CAP["CaptureMixin<br/>robots, backoff, fetch"]
+  CAP --> RS[("RawStore.save<br/>exact bytes, SHA-256")]
+  RS --> ART[("articles in monocle.db")]
+  ART --> CSV["CSV and WAL checkpoint"]
+  RC --> RE["capture_reconcile<br/>a sitemap gap above 2% in one day is RED"]
+  RE --> BF["backfill_deferred<br/>fetch deferred articles again"]
   classDef store fill:#e9e9e9,stroke:#111111
   class LD,AL,RS,ART store
   classDef gate fill:#ffffff,stroke:#111111,stroke-dasharray:4 3

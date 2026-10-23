@@ -1,14 +1,14 @@
-%% title: L2 Chuẩn hoá Silver và cụm tin
-%% desc: Từ meta.json tới work_items, kèm change-detection và story cluster.
+%% title: L2 Silver normalization and story clusters
+%% desc: From meta.json to work_items, with change detection and story clustering.
 flowchart LR
-  M["meta.json và raw"] --> SB["SilverBuilder.build"] --> SQ["silver-v1 hợp lệ?"]
-  SQ -->|"không"| H1[("held, silver_failures")]
-  SQ -->|"có"| FP["SimHash64 và DOM signature"] --> CD["change_detect<br/>NEW, UNCHANGED, CONTENT_CHANGED,<br/>TEMPLATE_DRIFT, SELECTOR_BROKEN"]
-  CD --> VER[("article_versions<br/>chỉ thêm")]
-  VER --> PK["WorkPackageBuilder"] --> PQ["work-package-v1 hợp lệ?"]
-  PQ -->|"không hoặc drift"| H2[("held")]
-  PQ -->|"có"| WI[("work_items = pending")]
-  VER --> SCL["story_cluster<br/>bản sao nguyên văn thừa kế kết quả, giữ 48h"]
+  M["meta.json and raw"] --> SB["SilverBuilder.build"] --> SQ["Valid silver-v1?"]
+  SQ -->|"no"| H1[("held, silver_failures")]
+  SQ -->|"yes"| FP["SimHash64 and DOM signature"] --> CD["change_detect<br/>NEW, UNCHANGED, CONTENT_CHANGED,<br/>TEMPLATE_DRIFT, SELECTOR_BROKEN"]
+  CD --> VER[("article_versions<br/>append only")]
+  VER --> PK["WorkPackageBuilder"] --> PQ["Valid work-package-v1?"]
+  PQ -->|"no or drift"| H2[("held")]
+  PQ -->|"yes"| WI[("work_items = pending")]
+  VER --> SCL["story_cluster<br/>verbatim copies inherit the result, held 48 hours"]
   SCL --> SG["analytics/signals<br/>signal_daily, entity_links"]
   WI -->|"claimed, done, failed"| NXT["Article Lane"]
   classDef held fill:#ffffff,stroke:#111111,stroke-dasharray:4 3

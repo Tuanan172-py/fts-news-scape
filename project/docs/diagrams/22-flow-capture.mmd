@@ -1,5 +1,5 @@
-%% title: Thu thập trọn vẹn và đối soát (ADR-0013)
-%% desc: Cơ chế bảo đảm không sót bài.
+%% title: Complete capture and reconciliation (ADR-0013)
+%% desc: The mechanism that guarantees no article is missed.
 sequenceDiagram
   autonumber
   participant MO as morninger
@@ -8,12 +8,12 @@ sequenceDiagram
   participant RS as RawStore
   participant DB as monocle.db
   participant RC as reconcile
-  MO->>SC: capture mỗi 10 phút, mọi nguồn đang bật
-  SC->>SC: đọc danh mục đến khi gặp trang đã có hết
-  SC->>LG: ghi mọi URL trước khi lọc
-  SC->>RS: lưu trang gốc, byte-exact, SHA-256
-  SC->>DB: ghi bài và đánh dấu captured trong một giao dịch
-  Note over LG,DB: Không có trạng thái bị bỏ. Trùng lặp vẫn được giữ và đếm.
-  MO->>RC: đối soát sitemap tối đa mỗi 30 phút
-  RC-->>MO: lệch >2% một ngày là ĐỎ
-  RC->>SC: tải bù bài hoãn, khôi phục Bronze mất
+  MO->>SC: capture every 10 minutes, every active source
+  SC->>SC: read the category list until a page is already fully known
+  SC->>LG: record every URL before filtering
+  SC->>RS: store the original page, exact bytes, SHA-256
+  SC->>DB: write the article and mark it captured in one transaction
+  Note over LG,DB: There is no dropped state. Duplicates are kept and counted.
+  MO->>RC: reconcile sitemaps, at most every 30 minutes
+  RC-->>MO: a gap above 2% in one day is RED
+  RC->>SC: fetch deferred articles again and restore lost Bronze files

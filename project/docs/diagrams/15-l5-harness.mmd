@@ -1,16 +1,15 @@
-%% title: L5 Harness (phần agent chạm vào)
-%% desc: Vòng thay đổi từ AGENTS.md tới git; theo dõi trạng thái, không chặn việc.
+%% title: L5 Harness (what agents touch)
+%% desc: The change cycle from AGENTS.md to git; it records state and does not block work.
 flowchart LR
   AG["AGENTS.md<br/>SESSION-LATEST, INDEX"] --> IN["intake<br/>tiny, normal, high-risk"]
-  IN -->|"high-risk"| GATE["ADR đã duyệt?"]
-  GATE -->|"chưa"| STOP["dừng ở hard gate"]
-  GATE -->|"rồi"| ST
-  IN -->|"tiny hoặc normal"| ST["doc new<br/>story, ADR, FACT"]
-  ST --> WORK["sửa mã và tài liệu<br/>WIP=1 mỗi worktree"]
-  WORK --> SC["session close<br/>verify, trace, ghi nhận"]
+  IN -->|"high-risk"| GATE["ADR approved?"]
+  GATE -->|"not yet"| STOP["stop at the hard gate"]
+  GATE -->|"yes"| ST
+  IN -->|"tiny or normal"| ST["doc new<br/>story, ADR, FACT"]
+  ST --> WORK["edit code and documents<br/>WIP=1 per worktree"]
+  WORK --> SC["session close<br/>verify, trace, record"]
   SC --> HK["pre-commit<br/>git verify, doc lint --staged"]
-  HK --> GIT["commit, push fpa và origin"]
+  HK --> GIT["commit, push to fpa and origin"]
   SC --> HDB[("harness.db<br/>story, trace, backlog")]
   classDef gate fill:#ffffff,stroke:#111111,stroke-dasharray:4 3
   class GATE,HK gate
-

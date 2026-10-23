@@ -1,13 +1,13 @@
-%% title: Giao Excel theo người và cây users/output
-%% desc: Định tuyến, checkpoint chống gửi trùng và bước di chuyển cây cũ.
+%% title: Excel delivery per person and the users/output tree
+%% desc: Routing, the checkpoint against duplicate delivery, and the move from the old tree.
 flowchart TB
-  DB[("monocle.db")] --> R["định tuyến theo watchlist<br/>lọc nhiễu macro"]
-  MF[("DATA_ROOT/subscriptions/manifest.yaml")] -->|"load_user_manifest, vắng mặt = bật"| R
+  DB[("monocle.db")] --> R["route by watchlist<br/>filter macro noise"]
+  MF[("DATA_ROOT/subscriptions/manifest.yaml")] -->|"load_user_manifest; a missing user is enabled"| R
   WL[("config/entities/users/*.yaml")] --> R
-  R --> CK["checkpoint<br/>đã giao ngày này?"]
-  CK -->|"rồi"| SK["bỏ qua"]
-  CK -->|"chưa"| XL[("DATA_ROOT/users/output/user/YYYY-MM-DD.xlsx")]
-  OLD[("DATA_ROOT/users_output (cây cũ)")] -.->|"migrate_users_output.py --apply<br/>chạy khi daemon dừng"| XL
+  R --> CK["checkpoint<br/>already delivered for this day?"]
+  CK -->|"yes"| SK["skip"]
+  CK -->|"no"| XL[("DATA_ROOT/users/output/user/YYYY-MM-DD.xlsx")]
+  OLD[("DATA_ROOT/users_output (old tree)")] -.->|"migrate_users_output.py --apply<br/>run while the daemon is stopped"| XL
   XL --> PB["publish_day"]
   classDef pending fill:#ffffff,stroke:#111111,stroke-dasharray:4 3
   class OLD pending

@@ -1,22 +1,22 @@
-%% title: Ngữ cảnh hệ thống (C4 mức 1)
-%% desc: Ai và hệ thống ngoài nào tương tác với news-scape.
+%% title: System context (C4 level 1)
+%% desc: The people and external systems that interact with news-scape.
 flowchart LR
-  OP(["Người vận hành"])
-  AN(["Chuyên viên nhận tin<br/>AnPT, PhoHG, ThanhTD, VyPTT, UyenNNT"])
-  SRC["8 nguồn tin<br/>cafef, fireant, tnck, baodautu,<br/>vietstock, vneconomy, vietnambiz, tbtc"]
-  SYS["news-scape<br/>thu thập, phân tích, giao tin"]
-  LLM["Runner LLM<br/>1 agy, 2 opencode run, 3 OpenRouter<br/>DSH là conductor tương tác"]
+  OP(["Operator"])
+  AN(["Analysts receiving news<br/>AnPT, PhoHG, ThanhTD, VyPTT, UyenNNT"])
+  SRC["8 news sources<br/>cafef, fireant, tnck, baodautu,<br/>vietstock, vneconomy, vietnambiz, tbtc"]
+  SYS["news-scape<br/>collects, analyzes and delivers news"]
+  LLM["LLM runners<br/>1 agy, 2 opencode run, 3 OpenRouter<br/>DSH is the interactive conductor"]
   SP[("SharePoint sandbox<br/>FRA_DataIngestion")]
-  TG["Telegram<br/>bản tin và lệnh"]
-  GH["Git remote<br/>fpa và origin"]
+  TG["Telegram<br/>digests and commands"]
+  GH["Git remotes<br/>fpa and origin"]
 
   SRC -->|"HTML, RSS, API"| SYS
-  SYS <-->|"batch bài, kết quả JSON"| LLM
-  SYS -->|"publish_day, một chiều"| SP
-  SYS -->|"Excel theo người"| AN
-  AN -->|"hỏi bằng plugin fpts-market-intel"| SP
+  SYS <-->|"article batches, JSON results"| LLM
+  SYS -->|"publish_day, one way"| SP
+  SYS -->|"Excel per person"| AN
+  AN -->|"queries through the fpts-market-intel plugin"| SP
   OP -->|"/level, /run, /cancel"| TG
-  TG <-->|"cảnh báo, xác nhận"| SYS
+  TG <-->|"alerts, confirmations"| SYS
   OP -->|"harness_cli, session close"| GH
   classDef ext fill:#f4f4f2,stroke:#6b6b6b
   class SRC,LLM,SP,TG,GH ext

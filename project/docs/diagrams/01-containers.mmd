@@ -1,21 +1,21 @@
-%% title: Sáu lớp và kho dữ liệu (C4 mức 2)
-%% desc: Các container chính L0 đến L5 và kho dữ liệu dùng chung.
+%% title: Six layers and data stores (C4 level 2)
+%% desc: The main containers of layers L0 to L5 and the shared data stores.
 flowchart TB
-  subgraph L0["L0 Điều khiển"]
-    DM["ops_daemon<br/>sensor 120s"]
-    WF["wave_flow DBOS"]
+  subgraph L0["L0 Control"]
+    DM["ops_daemon<br/>sensor every 2 minutes"]
+    WF["wave_flow (DBOS)"]
   end
-  subgraph L1["L1 Thu thập Bronze"]
-    MO["morninger<br/>capture 10 phút"]
+  subgraph L1["L1 Capture (Bronze)"]
+    MO["morninger<br/>capture every 10 minutes"]
   end
   subgraph L2["L2 Silver"]
     SB["rederive, SilverBuilder,<br/>change_detect, story_cluster"]
   end
   subgraph L3["L3 Article Lane"]
     AR["article_run<br/>prepare, analyze, repair, finish"]
-    AP["article-processor<br/>runner LLM"]
+    AP["article-processor<br/>LLM runner"]
   end
-  subgraph L4["L4 Lakehouse và giao hàng"]
+  subgraph L4["L4 Lakehouse and delivery"]
     WU["write_user_output"]
     PB["publish.py<br/>publish_day"]
   end
@@ -29,14 +29,14 @@ flowchart TB
   SP[("SharePoint sandbox")]
 
   DM --> WF --> AR
-  DM -->|"giữ sống"| MO
+  DM -->|"keeps alive"| MO
   MO --> FS
   MO --> DB
   FS --> SB --> DB
   DB --> AR --> AP --> AR
-  AR -->|"ingest qua DoD"| DB
+  AR -->|"ingest through DoD"| DB
   DB --> WU --> XL
   XL --> PB
   DB --> PB --> SP
   DM --> OPS
-  HC -.->|"theo dõi thay đổi mã và tài liệu"| DM
+  HC -.->|"tracks code and document changes"| DM
