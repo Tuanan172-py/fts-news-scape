@@ -12,6 +12,7 @@ import yaml
 from loguru import logger as _LOG
 
 from src.core import paths
+from src.core.tickers import is_location_context
 from src.core.user_manifest import load_user_manifest
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -64,8 +65,6 @@ _CODE_RE = re.compile(r"\b[A-Z0-9]{3}\b")
 # Official disclosure news (CBTT): `VND: Báo cáo tình hình quản trị...`.
 # Exempts the code from CODE_STOPLIST when it starts the string and is followed by a colon.
 _DISCLOSURE_PREFIX_RE = re.compile(r"^([A-Z0-9]{3})\s*:")
-# Left context that makes a 3-character code not a ticker: `TP.HCM`, `UBND HCM`, `PGD Tân Bình`.
-_CODE_LEFT_BLOCK_RE = re.compile(r"(?:\bT\.?P\.?\s*|\bUBND\s*|\bkhu\s+vực\s*)$", re.IGNORECASE)
 _WS_RE = re.compile(r"\s+")
 
 # Group in the subscription file -> order of types tried when mapping a code to an entity_id.
@@ -308,7 +307,7 @@ class EntityRegistry:
             is_disclosure_prefix = (m.start() == 0 and _DISCLOSURE_PREFIX_RE.match(text))
             if code in CODE_STOPLIST and not is_disclosure_prefix:
                 continue
-            if _CODE_LEFT_BLOCK_RE.search(text[:m.start()]):
+            if is_location_context(text, m.start(), m.end()):
                 continue                       # `TP.HCM` and `UBND HCM` are not the HCM ticker
             # PGD guard: the PGD ticker (Khí thấp áp) is confused with the bank branch `Phòng giao dịch`.
             if code == "PGD":

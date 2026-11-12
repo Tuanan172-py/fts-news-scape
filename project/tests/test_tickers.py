@@ -32,3 +32,20 @@ def test_dedupe_preserves_order():
 def test_empty_input():
     assert tag_tickers("", WATCHLIST) == []
     assert tag_tickers("HPG", []) == []
+
+
+def test_location_context_not_tagged():
+    wl = WATCHLIST + ["HCM"]
+    for title in ("WB phê duyệt gói tín dụng 125 triệu USD cho TP.HCM",
+                  "Ông Tô Duy Lâm thôi giữ chức Giám đốc NHNN chi nhánh TP.HCM",
+                  "Nhà trọ TP HCM tăng giá", "Tp. HCM công bố quy hoạch",
+                  "Ông Lê Quốc Phong làm Chủ tịch UBND HCM",
+                  "Giá nhà ở Thành phố HCM tăng", "HCM City metro opens", "HCMC office market"):
+        assert tag_tickers(title, wl) == [], title
+
+
+def test_securities_ticker_still_tagged_next_to_city():
+    wl = WATCHLIST + ["HCM"]
+    assert tag_tickers("HCM báo lãi quý 3, TP.HCM tăng trưởng", wl) == ["HCM"]
+    assert tag_tickers("Cổ phiếu HCM tăng trần", wl) == ["HCM"]
+    assert tag_tickers("SSI, HCM, VND: dòng tiền vào nhóm chứng khoán", wl) == ["SSI", "HCM"]
