@@ -8,10 +8,11 @@
 
 ---
 
-## DQ-1. Mã HCM gán nhầm từ địa danh TP.HCM (US-038) — việc còn lại, 2026-11-12
+## DQ-1. Mã HCM gán nhầm từ địa danh TP.HCM (US-038) — ĐÃ XONG, 2026-11-12
 
-- [ ] Duyệt và chạy `python scripts/retag_location_symbols.py --apply` (cwd `project/`) khi không có đợt đang chạy: gỡ HCM khỏi 1.144 bài, nhật ký hoàn tác ở `project/data/state/retag_location_symbols_*.csv`.
-- [ ] Khởi động lại daemon/morninger từ checkout có mã US-038 để bài cào mới không còn bị gán HCM.
+- [x] `retag_location_symbols.py --apply` chạy 15:33: gỡ HCM khỏi 1.145 bài (còn 192 bài HCM là tin HSC), chạy lại cho 0 bài cần sửa. Nhật ký hoàn tác: `project/data/state/retag_location_symbols_20261112_153346.csv`.
+- [x] Mã US-038 đã đưa vào checkout daemon `C:\src
+ews-scraper` (commit 38ab5a2, nhánh `dev/us038`, chưa push) và daemon cùng morninger khởi động lại lúc 15:39 sau khi đợt W11121533 kết thúc.
 
 ## CON-1. Hợp đồng đầu ra thống nhất cho mọi provider (ADR 0017, US-034) — việc còn lại, 2026-10-05
 
