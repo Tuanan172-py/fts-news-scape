@@ -2,6 +2,8 @@
 
 <!-- Step 9 handoff. OVERWRITE this (never append) at the end of every session. Keep to one screen. -->
 
+> **Phiên 2026-11-12 (US-038, Tier 2):** mã HCM gán nhầm cho 1.144 bài tin TP.HCM. Nguồn là `tag_tickers` ở tầng cào (cột `articles.symbols`), không phải mô hình. Thêm guard địa danh dùng chung (`src/core/tickers.py::is_location_context`) cho tầng cào và `entities.py`. Dữ liệu cũ chưa sửa: chờ duyệt `scripts/retag_location_symbols.py --apply` (OPEN-ITEMS DQ-1). Test: 2 test mới xanh, phần còn lại khớp baseline (8 failed + 18 errors có sẵn do thiếu `entities.json`).
+
 > **Phiên OpenCode 2026-10-05 (Tier 2+3, DONE): đợt W10051122 HOÀN TẤT 500/500.**
 > - 5 vòng vá OpenRouter free $0 (256→36→30→11→0) rồi phát hiện packet cũ: đóng lúc Silver chưa có, trích RSS ngắn.
 > - Sửa lane đọc Silver trước (pack/runner/wp v1.1), `--repair` làm mới, expand dồn hàng cũ, ingest bỏ tệp rỗng. Finish 15:30: L1 100%, nội dung 100%.

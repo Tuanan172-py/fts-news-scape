@@ -11,6 +11,8 @@ import yaml
 
 from loguru import logger as _LOG
 
+from src.core.tickers import is_location_context
+
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 ENTITIES_JSON = PROJECT_ROOT / "data" / "entities" / "entities.json"
 USERS_DIR = PROJECT_ROOT / "config" / "entities" / "users"
@@ -60,8 +62,6 @@ _CODE_RE = re.compile(r"\b[A-Z0-9]{3}\b")
 # Tin công bố thông tin (CBTT) chính thức: "VND: Báo cáo tình hình quản trị..."
 # Cấp quyền miễn trừ khỏi CODE_STOPLIST nếu mã đứng ngay đầu chuỗi kèm dấu hai chấm.
 _DISCLOSURE_PREFIX_RE = re.compile(r"^([A-Z0-9]{3})\s*:")
-# Ngữ cảnh phía TRƯỚC khiến mã 3 ký tự không phải mã chứng khoán: "TP.HCM", "UBND HCM", "PGD Tân Bình".
-_CODE_LEFT_BLOCK_RE = re.compile(r"(?:\bT\.?P\.?\s*|\bUBND\s*|\bkhu\s+vực\s*)$", re.IGNORECASE)
 _WS_RE = re.compile(r"\s+")
 
 # Nhóm trong file đăng ký -> thứ tự type thử khi ánh xạ code sang entity_id.
@@ -301,7 +301,7 @@ class EntityRegistry:
             is_disclosure_prefix = (m.start() == 0 and _DISCLOSURE_PREFIX_RE.match(text))
             if code in CODE_STOPLIST and not is_disclosure_prefix:
                 continue
-            if _CODE_LEFT_BLOCK_RE.search(text[:m.start()]):
+            if is_location_context(text, m.start(), m.end()):
                 continue                       # "TP.HCM", "UBND HCM" không phải mã chứng khoán HCM
             # PGD guard: mã PGD (Khí thấp áp) bị nhầm với "Phòng giao dịch" của ngân hàng
             if code == "PGD":

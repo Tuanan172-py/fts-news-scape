@@ -8,6 +8,11 @@
 
 ---
 
+## DQ-1. Mã HCM gán nhầm từ địa danh TP.HCM (US-038) — việc còn lại, 2026-11-12
+
+- [ ] Duyệt và chạy `python scripts/retag_location_symbols.py --apply` (cwd `project/`) khi không có đợt đang chạy: gỡ HCM khỏi 1.144 bài, nhật ký hoàn tác ở `project/data/state/retag_location_symbols_*.csv`.
+- [ ] Khởi động lại daemon/morninger từ checkout có mã US-038 để bài cào mới không còn bị gán HCM.
+
 ## CON-1. Hợp đồng đầu ra thống nhất cho mọi provider (ADR 0017, US-034) — việc còn lại, 2026-10-05
 
 Đã làm: schema `article-compact-v2` và module `article_contract.py` (nguồn chân lý), bộ kiểm dùng chung cho agy, openrouter, opencode và bộ bung, gỡ mặc định ngữ nghĩa ở expander, một khung đầu vào, tham số chuẩn, meta bắt buộc, lô chuẩn 50, `--analyze` từ chối runner lạ, `provider_conformance.py`, prefix và rule 11.
