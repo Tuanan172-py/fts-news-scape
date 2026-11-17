@@ -39,6 +39,14 @@ Audit 2026-10-06 và lộ trình Đ1–Đ6 (5 mục P0 chặn mở lại vận h
 - **Đã sửa:** `publish_day` hoàn tất `latest.json` khi manifest ngày đủ mà `latest.json` còn trỏ ngày cũ (test `test_rerun_finishes_latest_after_interrupted_publish`). `latest.json` ngày 2026-11-11 đã ghi tay bằng `_write_latest`.
 - **Còn mở:** chọn cách kiểm tệp Office trên SharePoint: bỏ qua SHA với `.xlsx` sau khi chép, hoặc chỉ so kích thước và tên. Cần người vận hành quyết vì ADR 0020 yêu cầu ghi một lần, không ghi đè.
 
+## CAP-1. Kênh đối soát baodautu.vn hỏng phía nguồn, 2026-11-17
+
+- **Hiện tượng:** probe `capture_channels` đỏ từ 2026-11-11 với thông báo "đối soát baodautu.vn không có dữ liệu (lần cuối 23/10 17:19)".
+- **Nguyên nhân (đo 2026-11-17):** `https://baodautu.vn/sitemap.xml` vẫn liệt kê `sitemaps/news-YYYY-M.xml`, nhưng mọi tệp tháng trả HTTP 200 với chuỗi `Not found act function sitemap_month`. Không tìm thấy sitemap bài viết thay thế, `robots.txt` chỉ trỏ tới index.
+- **Ảnh hưởng:** chỉ mất lớp đối soát dự phòng; baodautu vẫn được cào qua phân trang listing (lượt 18:29 có 11 bài mới, không lỗi).
+- **Còn mở:** người vận hành chọn giữ cảnh báo cho tới khi nguồn sửa, hoặc tạm bỏ `baodautu.vn` khỏi `REFERENCE_DOMAINS` trong `project/src/pipeline/reconcile.py`.
+- **Sự cố liên quan đã đóng:** cào tin đứng từ 15:41 tới 18:28 ngày 2026-11-17 do kết nối dedup kẹt sau lỗi khóa (FACT-sqlite-failed-write-stalls-long-lived-connection). Đã sửa mã, khởi động lại `morninger`, 109 bài được cào bù trong chu kỳ đầu.
+
 ## CON-1. Hợp đồng đầu ra thống nhất cho mọi provider (ADR 0017, US-034) — việc còn lại, 2026-10-05
 
 Đã làm: schema `article-compact-v2` và module `article_contract.py` (nguồn chân lý), bộ kiểm dùng chung cho agy, openrouter, opencode và bộ bung, gỡ mặc định ngữ nghĩa ở expander, một khung đầu vào, tham số chuẩn, meta bắt buộc, lô chuẩn 50, `--analyze` từ chối runner lạ, `provider_conformance.py`, prefix và rule 11.
