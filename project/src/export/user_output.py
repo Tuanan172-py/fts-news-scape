@@ -237,17 +237,27 @@ class UserOutputWriter:
 
     # -- flatten --------------------------------------------------------------
     def _entity_ids(self, l1_json: str) -> set[str]:
-        """Extract the in-catalog entity ids from an L1 result.
+        """Extract the primary in-catalog entity ids from an L1 result.
+
+        Filters out `role == 'mentioned'` and `provenance == 'CODE_ONLY'` records
+        introduced in schema v1.1 so user workbooks remain focused on primary
+        subjects, while keeping legacy v1.0 records (without `role`) intact.
 
         Args:
             l1_json: JSON string of the L1 recognition result.
 
         Returns:
-            Set of entity ids marked `in_list`.
+            Set of primary entity ids marked `in_list`.
         """
         d = _loads(l1_json)
-        return {e.get("entity_id") for e in (d.get("entities") or [])
-                if e.get("in_list") and e.get("entity_id")}
+        return {
+            e.get("entity_id")
+            for e in (d.get("entities") or [])
+            if e.get("in_list")
+            and e.get("entity_id")
+            and (e.get("role") or "primary") == "primary"
+            and (e.get("provenance") or "BOTH") != "CODE_ONLY"
+        }
 
     def _codes(self, entity_ids) -> str:
         """Convert entity ids into a deduplicated string of codes.

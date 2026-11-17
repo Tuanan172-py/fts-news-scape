@@ -3,12 +3,59 @@ from __future__ import annotations
 
 import json
 import re
+import unicodedata
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 SCHEMA_PATH = Path(__file__).resolve().parents[2] / "schemas" / "article-compact-v2.schema.json"
 CONTRACT_VERSION = "article-compact-v2"
+
+
+# Folded (lowercase, no diacritics) words too common to prove that a summary describes the title.
+_ALIGN_STOPWORDS = frozenset({
+    "va", "cua", "cho", "la", "nhung", "cac", "mot", "trong", "voi", "duoc", "nay", "khi", "tai",
+    "den", "tu", "ve", "da", "se", "co", "khong", "nhieu", "hon", "sau", "truoc", "nam", "thang",
+    "ngay", "nguoi", "cung", "theo", "tren", "duoi", "dang", "can", "bi", "nen", "ra", "vao",
+    "lai", "van", "nhu", "ma", "the", "do", "thi", "rat", "moi", "toi", "cung", "gia",
+})
+ALIGN_MIN_TITLE_WORDS = 3
+_ALIGN_WORD_RE = re.compile(r"[a-z0-9]+")
+
+
+def _significant_words(text: str) -> set[str]:
+    """Return folded words of `text` that can prove topical overlap.
+
+    Args:
+        text: Title, summary or paragraph text.
+
+    Returns:
+        Set of lowercase diacritic-free words with at least 3 letters (or 2 digits), minus stopwords.
+    """
+    folded = unicodedata.normalize("NFD", (text or "").lower().replace("đ", "d"))
+    folded = "".join(ch for ch in folded if unicodedata.category(ch) != "Mn")
+    folded = re.sub(r"\btp\.?\s*hcm\b", "tphcm", folded)
+    return {w for w in _ALIGN_WORD_RE.findall(folded)
+            if (len(w) >= 3 or (w.isdigit() and len(w) >= 2)) and w not in _ALIGN_STOPWORDS}
+
+
+def title_summary_misaligned(title: str, evidence: list[str]) -> bool:
+    """Tell whether no significant title word appears in the evidence text.
+
+    Args:
+        title: Article title from the packet.
+        evidence: Summary, key points, implication, cited paragraphs and entity surfaces.
+
+    Returns:
+        True when the title has enough significant words and none of them occurs in the evidence.
+    """
+    title_words = _significant_words(title)
+    if len(title_words) < ALIGN_MIN_TITLE_WORDS:
+        return False
+    pool: set[str] = set()
+    for chunk in evidence:
+        pool |= _significant_words(chunk)
+    return title_words.isdisjoint(pool)
 
 
 def _load_schema() -> dict:
@@ -384,6 +431,12 @@ def validate_record(rec: dict, paragraphs: list[str],
             cited = sorted(set(raw_c))
             if len(cited) != len(raw_c):
                 cnt["dedup_c"] = cnt.get("dedup_c", 0) + 1
+            if len(cited) > C_MAX:
+                # Every index is valid evidence; extra ones are an overrun, not an error.
+                # Keep the model's first C_MAX picks: repair rounds repeated the overrun on long
+                # articles and parked whole backlog waves (W11121210, 2026-11-12).
+                cited = sorted(list(dict.fromkeys(raw_c))[:C_MAX])
+                cnt["trim_c"] = cnt.get("trim_c", 0) + 1
             need = min(C_MIN, len(eligible))
             if not need <= len(cited) <= C_MAX:
                 errs.append(f"count:c:{len(cited)}")
@@ -392,6 +445,12 @@ def validate_record(rec: dict, paragraphs: list[str],
                      or any(has_vietnamese_diacritics(p) for p in paragraphs[:3])):
         if not has_vietnamese_diacritics(summary) and not has_vietnamese_diacritics(implication):
             errs.append("lost_diacritics")
+
+    if not errs and title:
+        evidence = [summary, implication, *points, *(paragraphs[i] for i in cited if i < len(paragraphs)),
+                    *(surface for surface, _group in entities)]
+        if title_summary_misaligned(title, evidence):
+            errs.append("summary_title_mismatch")
 
     if errs:
         return None, errs

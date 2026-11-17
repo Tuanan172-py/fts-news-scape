@@ -87,3 +87,47 @@ def test_output_carrying_dod_pass_key_is_not_trusted(tmp_path, monkeypatch):
     rc, store, sha = _run(tmp_path, monkeypatch, out)
     assert rc == 1, "bản ghi bị DoD loại phải làm lệnh nạp thoát khác 0"
     assert store.get_agent_output("art1", sha)["dod_pass"] == 0
+
+
+def test_fail_threshold_tolerates_failure_rate_within_threshold(tmp_path, monkeypatch):
+    """Tỷ lệ trượt dưới hoặc bằng ngưỡng cho phép thì lệnh nạp thoát 0."""
+    db = tmp_path / "t.db"
+    store = ArticleStore(db_path=str(db))
+    _seed_work_item(tmp_path, store, "art1")
+    _seed_work_item(tmp_path, store, "art2")
+    monkeypatch.setattr(agent_ingest, "load_settings",
+                        lambda: {"database": {"path": str(db)}})
+
+    good = _output("art1")
+    bad = _output("art2")
+    bad["citations"] = [{"claim": "c", "source_span": "không có trong văn bản"}]
+
+    out = tmp_path / "mixed.json"
+    out.write_text(json.dumps([good, bad], ensure_ascii=False), encoding="utf-8")
+
+    # 1 fail out of 2 = 50% fail rate. Threshold 0.6 -> exits 0.
+    rc = agent_ingest.main([str(out), "--task-dir", str(tmp_path / "tasks"),
+                            "--no-archive", "--fail-threshold", "0.6"])
+    assert rc == 0
+
+
+def test_fail_threshold_exceeded_exits_one(tmp_path, monkeypatch):
+    """Tỷ lệ trượt vượt ngưỡng cho phép thì lệnh nạp thoát 1."""
+    db = tmp_path / "t.db"
+    store = ArticleStore(db_path=str(db))
+    _seed_work_item(tmp_path, store, "art1")
+    _seed_work_item(tmp_path, store, "art2")
+    monkeypatch.setattr(agent_ingest, "load_settings",
+                        lambda: {"database": {"path": str(db)}})
+
+    good = _output("art1")
+    bad = _output("art2")
+    bad["citations"] = [{"claim": "c", "source_span": "không có trong văn bản"}]
+
+    out = tmp_path / "mixed.json"
+    out.write_text(json.dumps([good, bad], ensure_ascii=False), encoding="utf-8")
+
+    # 1 fail out of 2 = 50% fail rate. Threshold 0.4 -> exits 1.
+    rc = agent_ingest.main([str(out), "--task-dir", str(tmp_path / "tasks"),
+                            "--no-archive", "--fail-threshold", "0.4"])
+    assert rc == 1

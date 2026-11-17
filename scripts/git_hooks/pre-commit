@@ -1,24 +1,40 @@
 #!/bin/sh
 # News-Scape Git Pre-Commit Hook (Mechanical Enforcement)
-# Chặn đứng commit nếu vi phạm AST hoặc chứa file cấm
+# Delegates from git dispatcher; runs quality gates on current branch
+
+PYTHON="${NEWS_SCAPE_PYTHON:-C:/venvs/news-scape/Scripts/python.exe}"
+if [ ! -f "$PYTHON" ]; then
+    PYTHON="python"
+fi
 
 echo "🔍 [GIT HOOK] Kiem tra chat luong code va ve sinh repo..."
-"C:/venvs/news-scape/Scripts/python.exe" scripts/harness_cli.py git verify
-
-STATUS=$?
-if [ $STATUS -ne 0 ]; then
-    echo "❌ [GIT HOOK FAILED] Harness git verify that bai (ma loi: $STATUS). Khong the commit!"
+"$PYTHON" scripts/harness_cli.py git verify
+if [ $? -ne 0 ]; then
+    echo "❌ [GIT HOOK FAILED] Harness git verify that bai. Khong the commit!"
     exit 1
 fi
 
-# Hook dung chung moi worktree; nhanh chua co ADR-0021 thi bo qua buoc nay.
 if [ -f scripts/knowledge.py ]; then
-    "C:/venvs/news-scape/Scripts/python.exe" scripts/harness_cli.py doc lint --staged
+    "$PYTHON" scripts/harness_cli.py doc lint --staged
     if [ $? -ne 0 ]; then
-        echo "[GIT HOOK FAILED] Tai lieu tri thuc vi pham hop dong ADR-0021 (docs/knowledge/README.md)."
+        echo "❌ [GIT HOOK FAILED] Tai lieu tri thuc vi pham hop dong (doc lint --staged)."
+        exit 1
+    fi
+
+    "$PYTHON" scripts/harness_cli.py doc index --check
+    if [ $? -ne 0 ]; then
+        echo "❌ [GIT HOOK FAILED] docs/INDEX.md bi lech (doc index --check). Chay 'harness_cli.py doc index' de dong bo!"
         exit 1
     fi
 fi
 
-echo "✅ [GIT HOOK PASSED] AST hop le, khong co tep cam."
+if [ -f project/scripts/docs/build_diagrams.py ]; then
+    (cd project && "$PYTHON" scripts/docs/build_diagrams.py --check)
+    if [ $? -ne 0 ]; then
+        echo "❌ [GIT HOOK FAILED] Diagrams bi cu (build_diagrams.py --check). Chay 'cd project && python scripts/docs/build_diagrams.py'!"
+        exit 1
+    fi
+fi
+
+echo "✅ [GIT HOOK PASSED] Code, tai lieu va diagram deu hop le."
 exit 0

@@ -468,6 +468,13 @@ class WaveSteps:
         Returns:
             True when the delivery process exits with 0.
         """
+        if ".." in (spec.target_date or ""):
+            # Backlog waves span many past dates; per-day user workbooks are not rebuilt for
+            # them. Research production reads the DB through research_publish instead.
+            self.store.emit("step.skipped", f"{spec.wave_id}: bỏ qua deliver cho đợt tồn đọng "
+                            f"{spec.target_date}", actor="wave", wave_id=spec.wave_id,
+                            step="deliver")
+            return True
         self.store.upsert_wave(spec.wave_id, step="deliver")
         self.store.emit("step.started", f"{spec.wave_id}: bắt đầu deliver",
                         actor="wave", wave_id=spec.wave_id, step="deliver")
@@ -489,6 +496,43 @@ class WaveSteps:
                             data={"rc": res.returncode, "outcome": res.outcome,
                                   "tail": res.tail[-1500:] if not res.ok else None})
             return res.ok
+
+    def _sync_intraday_master(self, spec: WaveSpec) -> None:
+        """Synchronize local `news_research_master.db` and fulfill pending priority requests on wave completion."""
+        monocle_db = self.paths.data_dir / "monocle.db"
+        master_db = self.paths.data_dir / "research_db" / "news_research_master.db"
+        if monocle_db.is_file():
+            try:
+                from src.research_db import master as research_master
+                sync_res = research_master.sync_master(monocle_db, master_db)
+                self.store.emit(
+                    "wave.master_synced",
+                    f"{spec.wave_id}: đồng bộ Entity DB +{sync_res.upserted} bài",
+                    actor="wave",
+                    wave_id=spec.wave_id,
+                    data={"upserted": sync_res.upserted, "dirty_days": sync_res.dirty_days},
+                )
+            except Exception as exc:  # noqa: BLE001 — master sync is best-effort and must not flip DONE
+                self.store.emit(
+                    "wave.master_sync_failed",
+                    f"{spec.wave_id}: {exc}"[:300],
+                    level="warn",
+                    actor="wave",
+                    wave_id=spec.wave_id,
+                )
+        try:
+            with self.store.conn() as c:
+                has_tbl = c.execute(
+                    "SELECT 1 FROM sqlite_master WHERE type='table' AND name='ops_priority_requests'"
+                ).fetchone()
+                if has_tbl:
+                    c.execute(
+                        "UPDATE ops_priority_requests SET status = 'fulfilled', fulfilled_wave_id = ? "
+                        "WHERE status = 'pending'",
+                        (spec.wave_id,),
+                    )
+        except Exception:  # noqa: BLE001
+            pass
 
     def finalize(self, spec: WaveSpec, status: str, reason: str, *,
                  resume_on_breaker: bool = False, counts_as_failure: bool = False,
@@ -528,17 +572,23 @@ class WaveSteps:
                         level=level, actor="wave", wave_id=spec.wave_id, data=summary)
         if status == "DONE":
             self.store.set_state("fail_streak", "0")
+            # A DONE wave (typically a /retry of the wave that failed) proves recovery, so the
+            # failure cooldown no longer holds new waves back (16:31-16:55 idle, 2026-11-12).
+            self.store.set_state("cooldown_until", None)
             if not clean:
                 return status
             streak_clean = int(self.store.get_state("clean_streak", "0") or 0) + 1
             self.store.set_state("clean_streak", str(streak_clean))
+            self._sync_intraday_master(spec)
             try:
                 delivered = self._deliver(spec)
             except Exception as exc:  # noqa: BLE001 — a delivery failure must not flip DONE
                 delivered = False
                 self.store.emit("wave.deliver_failed", f"{spec.wave_id}: {exc}"[:300],
                                 level="warn", actor="wave", wave_id=spec.wave_id)
-            if delivered:
+            if delivered and ".." in (spec.target_date or ""):
+                pass                              # backlog range: `_deliver` logged the skip
+            elif delivered:
                 self.store.emit("wave.delivered",
                                 f"{spec.wave_id}: đã giao xlsx ngày {spec.target_date}",
                                 actor="wave", wave_id=spec.wave_id)

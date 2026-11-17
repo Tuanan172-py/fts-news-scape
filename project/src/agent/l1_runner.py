@@ -242,7 +242,17 @@ class L1Runner:
         # docs/decisions/0003-code-first-l1-delivery.md
 
         title = task.get("title") or ""
-        ok, reasons = check_l1_dod(output, title, self.reg)
+        paragraphs: list[str] | None = None
+        if str(output.get("l1_output_version") or "1.0") != "1.0":
+            art = self.store.get_by_hash(aid)
+            if art is not None:
+                art_title = (getattr(art, "title", None) or "").strip()
+                if art_title:
+                    title = art_title
+                art_content = getattr(art, "content", None) or ""
+                if art_content:
+                    paragraphs = [art_content]
+        ok, reasons = check_l1_dod(output, title, self.reg, paragraphs=paragraphs)
 
         pm = output.get("processing_metadata") or {}
         self.store.insert_l1_output({

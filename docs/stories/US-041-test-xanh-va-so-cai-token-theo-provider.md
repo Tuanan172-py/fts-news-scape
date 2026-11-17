@@ -1,31 +1,59 @@
-# US-041 — Test xanh, sổ cái token theo provider, phân tích độ phủ thu thập
+---
+id: US-041
+type: story
+title: Green test suite, per-provider token ledger, and collection coverage analysis
+status: implemented
+lane: normal
+created: 2026-10-08
+updated: 2026-10-08
+lang: en
+authors: [An Pham Thanh, claude-opus-5-5]
+related: [US-038]
+evidence:
+  - test:tests/test_inherit.py
+  - test:tests/test_ledger_openrouter.py
+  - commit:ac9f22f
+verify: manual
+summary: Date-independent test suite, accurate per-provider token ledger accounting, and collection coverage analysis.
+---
+
+# US-041 — Green test suite, per-provider token ledger, and collection coverage analysis
 
 - **Status:** implemented
 - **Lane:** normal
-- **Parent / Epic:** Gỡ chặn sau migration (US-038)
+- **Parent / Epic:** Unblock post-migration (US-038)
 - **Intake date:** 2026-10-08
-- **Depends On:** US-038 (nhánh `dev/us038`)
+- **Depends On:** US-038 (`dev/us038`)
 
-## Product Contract
-Bộ test toàn phần chạy xanh không phụ thuộc ngày chạy. Sổ cái token ghi đúng chi phí cho từng provider kể cả khi một đợt dùng nhiều provider. Người vận hành biết vì sao thu thập thiếu và cần làm gì khi mở lại vận hành.
+## Contract
+
+Full regression test suite runs green independently of the calendar execution date. Token ledger correctly attributes cost and token metrics to each individual provider when a wave mixes multiple providers. Operators can audit missing collection coverage and identify actions to resume operations.
 
 ## Acceptance Criteria
-- [x] `test_inherit` không còn phụ thuộc ngày: `cluster_job.refresh` nhận `today`, test truyền ngày cố định (audit US-038 P1-10)
-- [x] Sổ cái tính từng tệp meta theo `agent_provider` của nó; đợt pha agy và openrouter ghi hai dòng
-- [x] Token đọc từ cache (`cache_read_tokens`, `prompt_tokens_details.cached_tokens`) vào `hit_tokens`, không cộng vào `miss_tokens`
-- [x] opencode-native được nhận; meta không có số token thì dòng ghi `usage=không ghi`
-- [x] Chạy lại `--finish` thay mọi dòng runner cũ của đợt, kể cả khi đổi provider
-- [x] `--finish` truyền `--source auto` khi không biết runner
-- [x] Phân tích độ phủ thu thập và lệnh xả tồn đọng ghi vào OPEN-ITEMS CAP-1
-- [ ] Adapter opencode ghi `usage` thật vào meta (ngoài phạm vi)
+
+- [x] `test_inherit` no longer depends on calendar execution date: `cluster_job.refresh` accepts fixed date.
+- [x] Token ledger calculates metadata per `agent_provider`; mixed waves record two separate rows.
+- [x] Cached tokens read from prompt details are accounted in `hit_tokens` and not added to `miss_tokens`.
+- [x] `opencode-native` recognized; metadata without token counts recorded with `usage=not recorded`.
+- [x] Running `--finish` replaces all stale runner rows for a wave, even when switching providers.
+- [x] `--finish` passes `--source auto` when runner source is unknown.
+- [x] Collection coverage gap analysis and backlog drainage command recorded in OPEN-ITEMS CAP-1.
+- [ ] Opencode adapter records actual usage in metadata (out of scope).
 
 ## Design Notes
-- E1 (lô vá trùng) đã được sửa trước story này bằng tập `claimed` trong `cmd_repair`; story chỉ đóng mục.
-- Không nâng giới hạn cào bù trong chu kỳ morninger: chu kỳ đã chiếm khoảng 7 trên 10 phút. Tồn đọng do dừng vận hành được xả một lần bằng lệnh tay ở bước mở lại.
-- Làm trên worktree riêng `C:\src\news-scape-us041`, nhánh `fix/us041-unblock-tests-ledger` tách từ `dev/us038`, không đụng worktree migration.
 
-## Validation
+- E1 duplicate patch batch was fixed prior to this story with claimed set in `cmd_repair`.
+- Compensatory crawling limit in morninger cycle is kept under 7 minutes to prevent overlap.
+- Developed on dedicated worktree `C:\src\news-scape-us041` on branch `fix/us041-unblock-tests-ledger` off `dev/us038`.
+
+## Verification
+
 | Tier | Command | Status | Evidence |
 |---|---|---|---|
 | Unit | `python -m pytest tests/test_inherit.py tests/test_ledger_openrouter.py -q` | pass | 2026-10-08 |
-| Full | `python -m pytest tests/ -q` | pass | 892 passed, 0 failed (mốc trước: 888 passed, 1 failed) |
+| Full | `python -m pytest tests/ -q` | pass | 892 passed, 0 failed |
+
+## Evidence
+
+- Unit tests `tests/test_inherit.py` and `tests/test_ledger_openrouter.py` pass cleanly.
+- Full test suite passed with 892 passed tests on 2026-10-08.

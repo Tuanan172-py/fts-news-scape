@@ -17,10 +17,26 @@ from src.db import registry
 VN_TZ = timezone(timedelta(hours=7))
 Fetch = Callable[[str], str | None]
 
-# Sources with a usable sitemap. Sources absent here (vietstock, vietnambiz,
-# thoibaotaichinhvietnam) have no independent reconciliation channel and the radar reports
-# them explicitly as "none".
-REFERENCE_DOMAINS = ("baodautu.vn", "tinnhanhchungkhoan.vn", "cafef.vn", "vneconomy.vn")
+# Sources with an independent reference channel: a sitemap, or for vietnambiz the dated
+# section listings. fireant.vn has none; its API pages back to a catch-up cutoff instead
+# (src/core/catchup.py).
+REFERENCE_DOMAINS = ("baodautu.vn", "tinnhanhchungkhoan.vn", "cafef.vn", "vneconomy.vn",
+                     "thoibaotaichinhvietnam.vn", "vietstock.vn", "vietnambiz.vn")
+# Minimum minutes between two reconciliations of one domain, on top of the caller's interval.
+# The vietstock sitemap is one 37 MB file without compression.
+REFERENCE_EVERY_MINUTES = {"vietstock.vn": 360, "vietnambiz.vn": 120}
+# Reference URLs that are not news: vietstock category 4511 is paid PR.
+REFERENCE_EXCLUDE = {"vietstock.vn": re.compile(r"-4511-\d+\.htm$")}
+# Request timeout in seconds for reference documents slower than the default 30 s.
+REFERENCE_TIMEOUT = {"vietstock.vn": 240}
+# vietnambiz sections, matching the RSS feeds the scraper reads.
+VIETNAMBIZ_SECTIONS = ("chung-khoan", "tai-chinh", "vi-mo", "doanh-nghiep", "nha-dat", "hang-hoa")
+VIETNAMBIZ_MAX_PAGES = 40
+_VNB_LINK = re.compile(r'href="(?:https://vietnambiz\.vn)?(/[a-z0-9-]+-\d{12,}\.htm)"')
+_VNB_IMG_DAY = re.compile(r"/images/(\d{4})/(\d{1,2})/(\d{1,2})/")
+_VNB_TIME = re.compile(r'need-get-timeago"\s+title="(\d{4}-\d{2}-\d{2})T')
+_FAST_URL = re.compile(r"<url>\s*<loc>\s*([^<\s]+)\s*</loc>(?:\s*<lastmod>\s*([^<\s]*)\s*</lastmod>)?")
+_FAST_PARSE_BYTES = 2_000_000
 
 _CAFEF_WINDOW = re.compile(r"sitemaps-(\d{4})-(\d{1,2})-(\d{1,2})-(\d{1,2})\.xml$")
 
@@ -34,6 +50,9 @@ def parse_urlset(xml: str) -> list[tuple[str, str]]:
     Returns:
         List of (url, lastmod); lastmod is an empty string when the sitemap omits it.
     """
+    if len(xml) > _FAST_PARSE_BYTES:
+        # ElementTree on the 37 MB vietstock sitemap costs seconds and hundreds of MB.
+        return [(loc, lastmod or "") for loc, lastmod in _FAST_URL.findall(xml)]
     try:
         root = ET.fromstring(xml)
     except ET.ParseError:
@@ -76,6 +95,11 @@ def sitemap_urls(domain: str, start: date, end: date, fetch: Fetch) -> list[str]
         return [f"https://www.tinnhanhchungkhoan.vn/sitemaps/news-{y}-{m}.xml" for y, m in months]
     if domain == "vneconomy.vn":
         return ["https://vneconomy.vn/sitemap/latest-news.xml"]
+    if domain == "thoibaotaichinhvietnam.vn":
+        return [f"https://thoibaotaichinhvietnam.vn/stores/lookssitemaps/site_1/sitemap-month-{y}-{m}.xml"
+                for y, m in months]
+    if domain == "vietstock.vn":
+        return ["https://vietstock.vn/sitemap.xml"]
     if domain == "cafef.vn":
         urls = ["https://cafef.vn/latest-news-sitemap.xml"]
         index = fetch("https://cafef.vn/sitemap.xml")
@@ -119,14 +143,17 @@ def collect_reference(domain: str, start: date, end: date, fetch: Fetch,
         Mapping of ISO day to {article key: URL}; only days inside the range.
     """
     today = today or datetime.now(VN_TZ).date()
+    if domain == "vietnambiz.vn":
+        return collect_vietnambiz(start, end, fetch)
     by_day: dict[str, dict[str, str]] = defaultdict(dict)
+    skip = REFERENCE_EXCLUDE.get(domain)
     for sm in sitemap_urls(domain, start, end, fetch):
         xml = fetch(sm)
         if not xml:
             logger.warning("[reconcile] không tải được {}", sm)
             continue
         for loc, lastmod in parse_urlset(xml):
-            if not _is_article_loc(loc):
+            if not _is_article_loc(loc) or (skip and skip.search(loc)):
                 continue
             day = _day_of(lastmod, today)
             if not (start.isoformat() <= day <= end.isoformat()):
@@ -134,6 +161,73 @@ def collect_reference(domain: str, start: date, end: date, fetch: Fetch,
             key = url_key(loc)
             if key:
                 by_day[day].setdefault(key, loc)
+    return by_day
+
+
+def parse_vietnambiz_listing(html: str) -> list[tuple[str, str]]:
+    """Extract (article URL, ISO day) pairs from the main list of a vietnambiz section page.
+
+    Only `div.list-news` items count; featured and sidebar blocks repeat other days. The day
+    comes from the item's timestamp, else from the thumbnail upload path `/images/YYYY/MM/DD/`.
+
+    Args:
+        html: HTML of the section page.
+
+    Returns:
+        Pairs in page order; items without a link or a day are skipped.
+    """
+    from bs4 import BeautifulSoup
+
+    out: list[tuple[str, str]] = []
+    for item in BeautifulSoup(html or "", "lxml").select("div.list-news div.item"):
+        block = str(item)
+        link = _VNB_LINK.search(block)
+        stamp = _VNB_TIME.search(block)
+        day = stamp.group(1) if stamp else ""
+        if not day:
+            img = _VNB_IMG_DAY.search(block)
+            if img:
+                try:
+                    day = date(*(int(g) for g in img.groups())).isoformat()
+                except ValueError:
+                    day = ""
+        if link and day:
+            out.append((f"https://vietnambiz.vn{link.group(1)}", day))
+    return out
+
+
+def collect_vietnambiz(start: date, end: date, fetch: Fetch,
+                       max_pages: int = VIETNAMBIZ_MAX_PAGES) -> dict[str, dict[str, str]]:
+    """Collect vietnambiz article URLs by day from its section listings.
+
+    vietnambiz publishes no sitemap. Each section pages back in time, so reading until a
+    whole page is older than `start` lists every article of the window.
+
+    Args:
+        start: First day of the range.
+        end: Last day of the range.
+        fetch: Function that downloads text from a URL.
+        max_pages: Safety cap on pages per section.
+
+    Returns:
+        Mapping of ISO day to {article key: URL}.
+    """
+    by_day: dict[str, dict[str, str]] = defaultdict(dict)
+    lo, hi = start.isoformat(), end.isoformat()
+    for section in VIETNAMBIZ_SECTIONS:
+        for page in range(1, max_pages + 1):
+            url = f"https://vietnambiz.vn/{section}/trang-{page}.htm"
+            items = parse_vietnambiz_listing(fetch(url) or "")
+            if not items:
+                if page == 1:
+                    logger.warning("[reconcile] vietnambiz {}: trang 1 không có bài", section)
+                break
+            for loc, day in items:
+                key = url_key(loc)
+                if key and lo <= day <= hi:
+                    by_day[day].setdefault(key, loc)
+            if max(day for _, day in items) < lo:
+                break
     return by_day
 
 

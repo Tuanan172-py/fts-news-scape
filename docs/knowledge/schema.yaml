@@ -1,40 +1,103 @@
-# Knowledge document contract (ADR-0021). Single source for scripts/knowledge.py and for agents.
-# Agents: read this file and docs/knowledge/README.md before writing any governed document.
-version: 1
+# Knowledge document contract v2 (Amended ADR-0021). Single source of truth.
+# Governs all repository documentation, reference architecture, ledgers, and external frontmatter.
+version: 2
 
-# Keys every governed document carries in its YAML frontmatter.
+# Top-level paths excluded from discovery and governance
+exclude:
+  - "**/__pycache__/**"
+  - "**/.git/**"
+  - "**/.pytest_cache/**"
+  - "**/node_modules/**"
+  - "**/scratch/**"
+  - "**/_archive/**"
+  - ".agents/teamwork/**"
+
 common:
+  # Mandatory frontmatter keys across all primary governed documents
   required: [id, type, title, status, created, updated, lang, summary]
   optional: [lane, authors, approvers, story, adr, plan, proposal, supersedes, superseded_by,
              amends, amended_by, related, evidence, tags, summary_vi, original, reconstructed,
-             retires, verified, verify, trigger, description, wave, branch]
-  # List-valued keys. A scalar is accepted and read as a one-item list.
+             retires, verified, verify, trigger, description, wave, branch, audience, canonical_for]
   lists: [authors, approvers, story, adr, plan, proposal, supersedes, superseded_by, amends,
-          amended_by, related, evidence, tags, retires]
+          amended_by, related, evidence, tags, retires, canonical_for]
   enums:
     lane: [tiny, normal, high-risk]
+    audience: [agent, operator, user]
   date_keys: [created, updated, reconstructed, verified]
-  # Allowed prefixes for entries in `evidence`.
   evidence_prefixes: ["commit:", "path:", "metric:", "test:", "wave:", "url:", "operator:", "trace:"]
-  # Keys whose values are document ids that must resolve.
   link_keys: [story, adr, plan, proposal, supersedes, superseded_by, amends, amended_by, related]
 
+control:
+  # Canonical topic ownership registry (Rule K18)
+  topics:
+    - architecture
+    - harness_workflow
+    - commit_standards
+    - decisions
+    - daily_operations
+    - entities
+    - glossary
+
+  # Deprecated / obsolete components and terms (Rule K19)
+  retired_terms:
+    - term: "l1_route"
+      replacement: "article_run / pipeline_radar"
+      reason: "Retired L1/Gold routing architecture (ADR-0010)"
+    - term: "agent_export"
+      replacement: "article_run --batch"
+      reason: "Retired export stage (ADR-0010)"
+    - term: "agent_gold"
+      replacement: "agent_article"
+      reason: "Unified cognitive agent (ADR-0010)"
+    - term: "24/7"
+      replacement: "scheduled waves / autonomous ops"
+      reason: "Autonomous ops runs in scheduled waves, not infinite spin"
+    - term: "24x7"
+      replacement: "scheduled waves / autonomous ops"
+      reason: "Autonomous ops runs in scheduled waves, not infinite spin"
+    - term: "standing order"
+      replacement: "mandate"
+      reason: "Legacy terminology replaced in GLOSSARY §6"
+    - term: "control room"
+      replacement: "Phòng điều khiển"
+      reason: "Legacy terminology replaced in GLOSSARY §6"
+
 language:
-  # Characters specific to Vietnamese. A line in a `lang: en` body that contains one of them
-  # is a finding unless it sits in a code span, a fenced block, a blockquote or double quotes.
-  vi_chars: "ăâđêôơưàáạảãằắặẳẵầấậẩẫèéẹẻẽềếệểễìíịỉĩòóọỏõồốộổỗờớợởỡùúụủũừứựửữỳýỵỷỹĂÂĐÊÔƠƯÀÁẠẢÃẰẮẶẲẴẦẤẬẨẪÈÉẸẺẼỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕỒỐỘỔỖỜỚỢỞỠÙÚỤỦŨỪỨỰỬỮỲÝỴỶỸ"
-  max_sentence_words: 35
-  banned_phrases: ["basically", "it is worth noting", "it should be noted", "needless to say",
-                   "in conclusion", "seamless", "seamlessly", "robust", "cutting-edge",
-                   "leverage", "comprehensive", "state-of-the-art", "game-changer"]
+  en:
+    vi_chars: "ăâđêôơưàáạảãằắặẳẵầấậẩẫèéẹẻẽềếệểễìíịỉĩòóọỏõồốộổỗờớợởỡùúụủũừứựửữỳýỵỷỹĂÂĐÊÔƠƯÀÁẠẢÃẰẮẶẲẴẦẤẬẨẪÈÉẸẺẼỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕỒỐỘỔỖỜỚỢỞỠÙÚỤỦŨỪỨỰỬỮỲÝỴỶỸ"
+    max_sentence_words: 35
+    banned_phrases: ["basically", "it is worth noting", "it should be noted", "needless to say",
+                     "in conclusion", "seamless", "seamlessly", "robust", "cutting-edge",
+                     "leverage", "comprehensive", "state-of-the-art", "game-changer"]
+  vi:
+    max_sentence_words: 25
+    banned_phrases: ["nhìn chung", "thông thường", "nói chung", "về cơ bản", "đáng chú ý",
+                     "cần lưu ý rằng", "đóng vai trò quan trọng", "toàn diện", "mạnh mẽ",
+                     "hiệu quả cao", "tối ưu nhất", "chúng ta", "tôi", "bạn có thể thấy rằng"]
+
+presentation:
+  python_globs:
+    - "project/src/ops/*.py"
+    - "project/scripts/ops_daemon.py"
+    - "project/scripts/ops_console.py"
+  html_globs:
+    - "project/src/ops/web/*.html"
+
+# Transitional warning configuration
+# In Wave W-B: all K14..K22 in warn.
+# In Wave W-D/W-E: remove K14, K17, K18, K22 (promoted to blocking).
+# In Wave W-F: empty warn list (all K00..K22 blocking).
+lint:
+  warn: [K14, K15, K16, K17, K18, K19, K20, K21, K22]
 
 types:
   adr:
     id_pattern: '^ADR-\d{4}$'
-    path_glob: docs/decisions/*.md
+    path_globs: ["docs/decisions/*.md"]
     filename: '{num:04d}-{slug}.md'
     statuses: [proposed, accepted, rejected, superseded]
     lang: [en]
+    audience: agent
     required: [lane, evidence, summary_vi]
     required_when:
       accepted: [approvers]
@@ -45,12 +108,14 @@ types:
       Alternatives: {min_table_rows: 2}
       Consequences: {min_words: 30}
       Rollback: {min_words: 15}
+
   story:
     id_pattern: '^US-\d{3}$'
-    path_glob: docs/stories/*.md
+    path_globs: ["docs/stories/*.md"]
     filename: 'US-{num:03d}-{slug}.md'
     statuses: [planned, in_progress, blocked, deferred, implemented, changed, retired]
     lang: [en]
+    audience: agent
     required: [lane, verify]
     required_when:
       in_progress: [branch]
@@ -58,12 +123,14 @@ types:
     floors:
       Contract: {min_words: 20}
       Acceptance Criteria: {min_list_items: 2}
+
   proposal:
     id_pattern: '^PRP-\d{8}-[a-z0-9-]+$'
-    path_glob: docs/proposals/*.md
+    path_globs: ["docs/proposals/*.md"]
     filename: '{date}-{slug}.md'
     statuses: [draft, decided, parked, rejected]
     lang: [en]
+    audience: agent
     required: [summary_vi]
     required_when:
       decided: [outcome_link]
@@ -71,54 +138,179 @@ types:
     floors:
       Findings: {min_words: 60}
       Options: {min_table_rows: 2}
+
   plan:
     id_pattern: '^PLN-\d{8}-\d{4}-[a-z0-9-]+$'
-    path_glob: plans/*/plan.md
+    path_globs: ["plans/*/plan.md"]
     filename: '{date}-{time}-{slug}/plan.md'
     statuses: [draft, approved, executing, done, superseded, parked]
     lang: [en]
+    audience: agent
     required: [lane]
     sections: [Context, Decisions, Design, Roadmap, Verification, Out of Scope, Risks]
     floors:
       Roadmap: {min_table_rows: 1}
+
   fact:
     id_pattern: '^FACT-[a-z0-9-]+$'
-    path_glob: docs/knowledge/facts/*.md
+    path_globs: ["docs/knowledge/facts/*.md"]
     filename: '{slug}.md'
     statuses: [active, stale, retired]
     lang: [en]
+    audience: agent
     required: [evidence, verified]
     sections: [Fact, Why, How to Apply]
     floors:
       Fact: {min_words: 10}
+
   rule:
     id_pattern: '^RULE-\d{2}$'
-    path_glob: .agents/rules/*.md
+    path_globs: [".agents/rules/*.md"]
     filename: '{num:02d}-{slug}.md'
     statuses: [active, retired]
     lang: [en]
+    audience: agent
     required: [adr]
     sections: [Scope, Rules, Verification]
+
   run:
     id_pattern: '^RUN-W[0-9A-Z]+$'
-    path_glob: docs/runs/*.md
+    path_globs: ["docs/runs/*.md"]
     filename: '{wave}.md'
     statuses: [open, closed]
     lang: [en]
+    audience: agent
     required: [wave]
     sections: [Summary, Metrics, Issues]
+
   runbook:
     id_pattern: '^RB-[a-z0-9-]+$'
-    path_glob: project/docs/operations/*.md
+    path_globs: ["project/docs/operations/*.md"]
     filename: '{slug}.md'
     statuses: [active, retired]
     lang: [en, vi]
+    audience: operator
     required: [adr]
     sections: [Purpose, Preconditions, Steps, Troubleshooting, Rollback, References]
-    # Operations hold reference pages too; only files that declare frontmatter are governed.
     opt_in: true
 
-# Status that ends a document's life. An accepted document superseded by another accepted
-# document must carry the terminal status of its type.
-superseded_status: {adr: superseded, plan: superseded, story: retired, rule: retired,
-                    fact: retired, runbook: retired, proposal: parked}
+  # New type in Schema v2: Reference Architecture, Guides and Pointers
+  reference:
+    id_pattern: '^REF-[a-z0-9-]+$'
+    path_globs:
+      - "docs/*.md"
+      - "project/docs/**/*.md"
+      - "project/domains/**/*.md"
+    exclude:
+      - "docs/INDEX.md"
+      - "docs/OPEN-ITEMS.md"
+      - "docs/SESSION-LATEST.md"
+      - "docs/templates/**"
+      - "docs/knowledge/**"
+      - "project/docs/operations/**"
+    filename: '{slug}.md'
+    statuses: [active, pointer, retired]
+    lang: [en, vi]
+    audience: [agent, operator, user]
+    required: [title, summary]
+    sections: [Overview, Details, References]
+    floors:
+      Overview: {min_words: 15}
+    opt_in: true
+
+  # New type in Schema v2: Operational Logs and Ledgers
+  ledger:
+    id_pattern: '^LDG-[a-z0-9-]+$'
+    path_globs:
+      - "docs/sessions/*.md"
+      - "docs/ledgers/*.md"
+      - "docs/ledgers/**/*.md"
+      - "docs/OPEN-ITEMS.md"
+      - "docs/SESSION-LATEST.md"
+    filename: '{slug}.md'
+    statuses: [active, archived]
+    lang: [en, vi]
+    audience: [agent, operator]
+    required: [title, summary]
+    sections: [Purpose, Ledger]
+    opt_in: true
+
+  # New type in Schema v2: External Agent Skills
+  skill:
+    id_pattern: '^[a-z0-9-]+$'
+    path_globs:
+      - ".agents/skills/*/SKILL.md"
+      - "plugins/**/skills/*/SKILL.md"
+    filename: 'SKILL.md'
+    statuses: [active, draft, retired]
+    lang: [en, vi]
+    audience: agent
+    external_schema: true
+    required: [name, description]
+    opt_in: true
+
+  # New type in Schema v2: Open Knowledge Framework Catalog
+  okf:
+    id_pattern: '^OKF-[a-z0-9-]+$'
+    path_globs:
+      - "okf/**/*.md"
+    filename: '{slug}.md'
+    statuses: [active, deprecated, retired]
+    lang: [en, vi]
+    audience: [agent, operator]
+    external_schema: true
+    required: []
+    opt_in: true
+
+superseded_status:
+  adr: superseded
+  plan: superseded
+  story: retired
+  rule: retired
+  fact: retired
+  runbook: retired
+  proposal: parked
+  reference: retired
+  ledger: archived
+  skill: retired
+  okf: retired
+
+# Explicitly exempted repository files (Rule K15)
+# Every entry MUST have a valid existing path and a non-empty rationale.
+exempt:
+  - path: "README.md"
+    rationale: "Repository root readme; entrypoint for GitHub viewers"
+  - path: "AGENTS.md"
+    rationale: "Universal root entrypoint for all agents and models"
+  - path: "CLAUDE.md"
+    rationale: "Agent pointer redirecting Claude to AGENTS.md"
+  - path: "GEMINI.md"
+    rationale: "Agent pointer redirecting Gemini to AGENTS.md"
+  - path: "docs/INDEX.md"
+    rationale: "Machine-generated index artifact created by doc index"
+  - path: "docs/knowledge/schema.yaml"
+    rationale: "Machine-readable contract definition file (ADR-0021)"
+  - path: "docs/knowledge/README.md"
+    rationale: "Knowledge contract documentation and specification"
+  - path: "docs/templates/adr.md"
+    rationale: "Template scaffold containing mustache variables"
+  - path: "docs/templates/story.md"
+    rationale: "Template scaffold containing mustache variables"
+  - path: "docs/templates/proposal.md"
+    rationale: "Template scaffold containing mustache variables"
+  - path: "docs/templates/plan.md"
+    rationale: "Template scaffold containing mustache variables"
+  - path: "docs/templates/fact.md"
+    rationale: "Template scaffold containing mustache variables"
+  - path: "docs/templates/rule.md"
+    rationale: "Template scaffold containing mustache variables"
+  - path: "docs/templates/run.md"
+    rationale: "Template scaffold containing mustache variables"
+  - path: "docs/templates/runbook.md"
+    rationale: "Template scaffold containing mustache variables"
+  - path: "docs/templates/reference.md"
+    rationale: "Template scaffold containing mustache variables"
+  - path: "docs/templates/ledger.md"
+    rationale: "Template scaffold containing mustache variables"
+  - path: "docs/templates/validation-report.md"
+    rationale: "Template scaffold containing mustache variables"

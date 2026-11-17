@@ -69,6 +69,11 @@ IND_GICS3:DIEN:
     - "điện toán"
     - "điện lạnh"
 
+# "xây dựng" là cụm động từ thông dụng ("xây dựng kế hoạch", "xây dựng pháp lý", "xây dựng niềm tin");
+# alias trần bị bỏ, chỉ các cụm mang đúng intent trong industries.yaml mới tính.
+IND_GICS3:XAY_DUNG:
+  drop_bare: true
+
 IND_GICS3:GIAY:
   drop_bare: true
   block_in:

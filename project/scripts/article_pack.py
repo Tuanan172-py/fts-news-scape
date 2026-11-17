@@ -174,6 +174,11 @@ def tier_of(title: str, reg, watched: set[str], industries: set[str]) -> tuple[i
 ANALYZED_L1 = analyzed_l1_sql("o")
 
 
+# Rowid (= id) of the newest work item that has a package, for the article in the outer query.
+_NEWEST_WORK_ITEM = ("(SELECT MAX(w2.rowid) FROM work_items w2 "
+                     "WHERE w2.article_id = a.url_title_hash AND w2.package_path IS NOT NULL)")
+
+
 def load_candidates(conn: sqlite3.Connection, *, date: str | None, limit: int,
                     only_pending: bool, exclude: set[str] | None = None,
                     with_content: bool = True,
@@ -182,7 +187,8 @@ def load_candidates(conn: sqlite3.Connection, *, date: str | None, limit: int,
 
     Args:
         conn: Database connection.
-        date: Publication date filter YYYY-MM-DD, or None for all dates.
+        date: Publication date filter YYYY-MM-DD, or an inclusive range FROM..TO, falling
+            back to the capture date when the publication time is empty; None for all dates.
         limit: Maximum number of articles.
         only_pending: Select only articles not yet analyzed to standard by the
             model.
@@ -209,7 +215,10 @@ def load_candidates(conn: sqlite3.Connection, *, date: str | None, limit: int,
             "       a.source_domain, w.package_path"
             + (", a.content_text" if with_content else ""),
             "FROM articles a",
-            "LEFT JOIN work_items w ON w.article_id = a.url_title_hash",
+            # Newest package only: a recaptured article has several work items, and joining
+            # all of them let GROUP BY pick an arbitrary (often stale) body. 9,846 articles
+            # had more than one on 2026-11-13.
+            "LEFT JOIN work_items w ON w.rowid = " + _NEWEST_WORK_ITEM,
             "WHERE (w.package_path IS NOT NULL OR (a.content_text IS NOT NULL AND length(a.content_text) > 100))",
         ]
     else:
@@ -217,13 +226,26 @@ def load_candidates(conn: sqlite3.Connection, *, date: str | None, limit: int,
             "SELECT a.url_title_hash AS article_id, a.title, a.published_at,",
             "       a.source_domain, w.package_path",
             "FROM articles a",
-            "JOIN work_items w ON w.article_id = a.url_title_hash",
+            "JOIN work_items w ON w.rowid = " + _NEWEST_WORK_ITEM,
             "WHERE w.package_path IS NOT NULL",
         ]
     params: list = []
     if only_pending:
-        sql.append(f"  AND NOT EXISTS (SELECT 1 FROM l1_outputs o "
-                   f"WHERE o.article_id = a.url_title_hash AND {ANALYZED_L1})")
+        has_agent_outputs = conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='agent_outputs'"
+        ).fetchone() is not None
+        if has_agent_outputs:
+            sql.append(
+                f"  AND NOT (EXISTS (SELECT 1 FROM l1_outputs o "
+                f"WHERE o.article_id = a.url_title_hash AND {ANALYZED_L1}) "
+                f"AND EXISTS (SELECT 1 FROM agent_outputs g "
+                f"WHERE g.article_id = a.url_title_hash AND g.dod_pass = 1))"
+            )
+        else:
+            sql.append(
+                f"  AND NOT EXISTS (SELECT 1 FROM l1_outputs o "
+                f"WHERE o.article_id = a.url_title_hash AND {ANALYZED_L1})"
+            )
         has_clusters = conn.execute(
             "SELECT 1 FROM sqlite_master WHERE type='table' AND name='cluster_members'").fetchone()
         if has_clusters:
@@ -235,8 +257,18 @@ def load_candidates(conn: sqlite3.Connection, *, date: str | None, limit: int,
                        "AND cm.decided_at >= ?)")
             params.append(hold_cutoff())
     if date:
-        sql.append("  AND substr(a.published_at,1,10) = ?")
-        params.append(date)
+        # An article without a publication time (a sitemap backfill whose page declared
+        # none) belongs to its capture day, so it still enters a wave.
+        day_expr = ("COALESCE(NULLIF(a.published_at, ''), a.fetched_at)" if "fetched_at" in cols
+                    else "a.published_at")
+        if ".." in date:
+            # Range form FROM..TO (backlog rule T4): one wave spans many sparse dates.
+            start, end = date.split("..", 1)
+            sql.append(f"  AND substr({day_expr},1,10) BETWEEN ? AND ?")
+            params.extend([start, end])
+        else:
+            sql.append(f"  AND substr({day_expr},1,10) = ?")
+            params.append(date)
     if exclude:
         conn.execute("CREATE TEMP TABLE IF NOT EXISTS _pack_exclude (id TEXT PRIMARY KEY)")
         conn.execute("DELETE FROM _pack_exclude")

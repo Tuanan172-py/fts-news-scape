@@ -147,8 +147,9 @@ class Morninger:
     def run_capture_gap(self) -> int:
         """Reconcile against the sitemap and backfill missing URLs right after capture (rule 10, ADR 0013).
 
-        The reconcile phase runs only when the previous one is older than `gap_reconcile_minutes`.
-        A failure does not block the cycle.
+        Each source reconciles only when its previous reconcile is older than
+        `gap_reconcile_minutes` (vietstock and vietnambiz have longer floors), over a window
+        that grows to cover the time since its last success. A failure does not block the cycle.
 
         Returns:
             Exit code of the child process, or -1 if it could not run.
@@ -161,10 +162,12 @@ class Morninger:
             proc = subprocess.run(
                 [sys.executable, str(script), "run", "--limit", str(limit),
                  "--budget", str(budget), "--min-interval-minutes", str(every)],
-                cwd=_project_root, capture_output=True, text=True, timeout=budget + 180,
+                # The reconcile phase may download the 37 MB vietstock sitemap (up to 240 s)
+                # before the backfill budget starts.
+                cwd=_project_root, capture_output=True, text=True, timeout=budget + 420,
                 encoding="utf-8", errors="replace",
             )
-            for line in (proc.stdout or "").strip().splitlines()[-5:]:
+            for line in (proc.stdout or "").strip().splitlines()[-12:]:
                 logger.info("[morninger] capture_gap: {}", line)
             if proc.returncode != 0:
                 logger.warning("[morninger] capture_gap exit={}: {}",

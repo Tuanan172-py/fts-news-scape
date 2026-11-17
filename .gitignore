@@ -66,6 +66,8 @@ scratch/
 **/scratch/
 .kilo/
 .opencode/
+.agents/teamwork/
+.agents/skills/issue-intake-strategist/
 **/exclude*.txt
 **/test1.py
 **/test_scratch*.py

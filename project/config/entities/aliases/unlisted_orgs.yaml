@@ -1,0 +1,94 @@
+# unlisted_orgs.yaml — Curated major unlisted enterprises and state economic groups.
+# Format: <CODE>: {canonical_name: ..., aliases: [...], parent_entity_id: optional}
+
+EVN:
+  canonical_name: "Tập đoàn Điện lực Việt Nam"
+  aliases: ["Tập đoàn Điện lực Việt Nam", "Điện lực Việt Nam", "EVN"]
+PVN:
+  canonical_name: "Tập đoàn Công nghiệp - Năng lượng Quốc gia Việt Nam"
+  aliases: ["Petrovietnam", "PetroVietnam", "Tập đoàn Dầu khí Việt Nam", "PVN"]
+TKV:
+  canonical_name: "Tập đoàn Công nghiệp Than - Khoáng sản Việt Nam"
+  aliases: ["Vinacomin", "Than - Khoáng sản Việt Nam", "TKV"]
+VIETTEL:
+  canonical_name: "Tập đoàn Công nghiệp - Viễn thông Quân đội"
+  aliases: ["Tập đoàn Viettel", "Viettel Group"]
+VNPT:
+  canonical_name: "Tập đoàn Bưu chính Viễn thông Việt Nam"
+  aliases: ["Tập đoàn VNPT", "Bưu chính Viễn thông Việt Nam", "VNPT"]
+MOBIFONE:
+  canonical_name: "Tổng công ty Viễn thông MobiFone"
+  aliases: ["MobiFone", "Tổng công ty MobiFone"]
+SCIC:
+  canonical_name: "Tổng công ty Đầu tư và Kinh doanh vốn nhà nước"
+  aliases: ["Tổng công ty Đầu tư và Kinh doanh vốn nhà nước", "SCIC"]
+AGRI:
+  canonical_name: "Ngân hàng Nông nghiệp và Phát triển Nông thôn Việt Nam"
+  aliases: ["Agribank", "Ngân hàng Nông nghiệp"]
+SUN_GROUP:
+  canonical_name: "Tập đoàn Sun Group"
+  aliases: ["Sun Group", "Tập đoàn Mặt Trời", "Sun World", "Sun Property"]
+THACO:
+  canonical_name: "Công ty Cổ phần Tập đoàn Trường Hải"
+  aliases: ["Thaco", "THACO", "Tập đoàn Trường Hải", "Thaco Auto", "Thaco Agri"]
+DOJI:
+  canonical_name: "Tập đoàn Vàng bạc Đá quý DOJI"
+  aliases: ["Tập đoàn DOJI", "Vàng bạc Đá quý DOJI", "DOJI"]
+SJC_CO:
+  canonical_name: "Công ty TNHH MTV Vàng bạc Đá quý Sài Gòn"
+  aliases: ["Công ty SJC", "Vàng bạc Đá quý Sài Gòn"]
+SOVICO:
+  canonical_name: "Tập đoàn Sovico"
+  aliases: ["Sovico", "Sovico Group", "Tập đoàn Sovico"]
+BRG:
+  canonical_name: "Tập đoàn BRG"
+  aliases: ["Tập đoàn BRG", "BRG Group"]
+TH_GROUP:
+  canonical_name: "Tập đoàn TH"
+  aliases: ["TH Group", "TH true MILK", "Tập đoàn TH"]
+MUONG_THANH:
+  canonical_name: "Tập đoàn Mường Thanh"
+  aliases: ["Tập đoàn Mường Thanh", "Khách sạn Mường Thanh"]
+MASTERISE:
+  canonical_name: "Tập đoàn Masterise"
+  aliases: ["Masterise", "Masterise Homes", "Masterise Group"]
+MIK_GROUP:
+  canonical_name: "Tập đoàn MIK Group"
+  aliases: ["MIK Group", "MIKGroup"]
+HIM_LAM:
+  canonical_name: "Công ty Cổ phần Him Lam"
+  aliases: ["Tập đoàn Him Lam", "Địa ốc Him Lam"]
+BITEXCO:
+  canonical_name: "Tập đoàn Bitexco"
+  aliases: ["Bitexco", "Tập đoàn Bitexco"]
+GELEXIMCO:
+  canonical_name: "Tập đoàn Geleximco"
+  aliases: ["Geleximco", "Tập đoàn Geleximco"]
+T_AND_T:
+  canonical_name: "Tập đoàn T&T"
+  aliases: ["T&T Group", "Tập đoàn T&T"]
+VNG_CORP:
+  canonical_name: "Công ty Cổ phần VNG"
+  aliases: ["Tập đoàn VNG", "Kỳ lân VNG", "ZaloPay"]
+MOMO:
+  canonical_name: "Công ty Cổ phần Dịch vụ Di động Trực tuyến"
+  aliases: ["Ví MoMo", "Siêu ứng dụng MoMo"]
+VN_POST:
+  canonical_name: "Tổng công ty Bưu điện Việt Nam"
+  aliases: ["Vietnam Post", "VNPost", "Bưu điện Việt Nam"]
+ACV_CORP:
+  canonical_name: "Tổng công ty Cảng hàng không Việt Nam"
+  aliases: ["Tổng công ty Cảng hàng không Việt Nam"]
+  parent_entity_id: "TICKER:ACV"
+VINFAST:
+  canonical_name: "Công ty Cổ phần Sản xuất và Kinh doanh VinFast"
+  aliases: ["VinFast", "VinFast Auto"]
+  parent_entity_id: "TICKER:VIC"
+BHX:
+  canonical_name: "Công ty Cổ phần Thương mại Bách Hóa Xanh"
+  aliases: ["Bách Hóa Xanh", "Chuỗi Bách Hóa Xanh"]
+  parent_entity_id: "TICKER:MWG"
+WINCOMMERCE:
+  canonical_name: "Công ty Cổ phần Dịch vụ Thương mại Tổng hợp WinCommerce"
+  aliases: ["WinCommerce", "Chuỗi WinMart"]
+  parent_entity_id: "TICKER:MSN"

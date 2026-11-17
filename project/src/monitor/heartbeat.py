@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import json
+
 from loguru import logger
 
 from src.core.models import ScrapeResult, now_vn_iso
+from src.core.pagination import CAP_MARK
 from src.db.store import ArticleStore
 
 
@@ -44,6 +47,10 @@ class Heartbeat:
     def record_result(self, result: ScrapeResult) -> None:
         """Record the scrape result, consecutive failures and performance metrics.
 
+        A pagination cap hit is also written to `pipeline_state` under
+        `pagination_cap:<scraper>` so the capture probe can alert on it; the cycle itself
+        still counts as ok.
+
         Args:
             result: Scrape cycle result with article counts, errors and run time.
         """
@@ -70,6 +77,13 @@ class Heartbeat:
                 "VALUES (?, ?, ?, ?, ?, ?)",
                 (now_vn_iso(), result.scraper, result.fetched, len(result.new),
                  len(result.errors), int(result.duration_s * 1000)))
+            caps = [e for e in result.errors if CAP_MARK in e]
+            if caps:
+                conn.execute(
+                    "INSERT OR REPLACE INTO pipeline_state (key, value, updated_at) VALUES (?, ?, ?)",
+                    (f"pagination_cap:{result.scraper}",
+                     json.dumps({"at": now_vn_iso(), "n": len(caps), "sample": caps[:3]},
+                                ensure_ascii=False), now_vn_iso()))
             conn.commit()
         finally:
             conn.close()

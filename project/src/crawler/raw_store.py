@@ -15,6 +15,35 @@ from loguru import logger
 from src.core import paths
 
 # Response headers to keep, so that no sensitive header is stored.
+# Anti-bot interstitials served with HTTP 200. cafef answers bursts with a short DDoS notice
+# page; extracting it produced "articles" whose whole text was the notice (2026-11-11).
+BLOCK_PAGE_MARKERS = (
+    "tấn công từ chối dịch vụ (ddos)",
+    "checking your browser", "vui lòng bật javascript", "please enable javascript",
+)
+_BLOCK_PAGE_MAX_BYTES = 20_000
+
+
+def looks_blocked(body: bytes | str) -> bool:
+    """Tell whether a page is an anti-bot interstitial rather than content.
+
+    Only short pages are checked, so a real article that mentions one of the phrases
+    is never rejected.
+
+    Args:
+        body: Raw response body or decoded page.
+
+    Returns:
+        True when the page is short and carries a block-page marker.
+    """
+    if isinstance(body, str):
+        body = body.encode("utf-8", errors="ignore")
+    if not body or len(body) > _BLOCK_PAGE_MAX_BYTES:
+        return False
+    low = body.decode("utf-8", errors="ignore").lower()
+    return any(m in low for m in BLOCK_PAGE_MARKERS)
+
+
 _HEADER_WHITELIST = ("content-type", "content-length", "last-modified",
                      "etag", "server", "date")
 # Image attributes tried in order when resolving the image URL.
@@ -262,6 +291,10 @@ class RawStore:
         cap["response_headers"] = self._filter_headers(getattr(response, "headers", {}))
 
         ok = status is not None and 200 <= status < 300 and len(body) > 0
+        blocked = ok and looks_blocked(body)
+        if blocked:
+            ok = False
+            protection = protection or "block_page"
         if not ok:
             # 404/410 means the source deleted the article (not a transient error). It is kept
             # separate so that (a) backfill_deferred does not retry it uselessly and (b) the
@@ -269,7 +302,8 @@ class RawStore:
             # (pipeline_radar).
             deleted_at_source = status in (404, 410)
             cap["error"] = {
-                "type": "deleted_at_source" if deleted_at_source else "http_error",
+                "type": ("deleted_at_source" if deleted_at_source
+                         else "blocked" if blocked else "http_error"),
                 "http_status": status,
                 "message": f"status {status}" if status is not None else "empty body",
                 "protection_mechanism": protection,

@@ -17,14 +17,17 @@ $LH = "$env:USERPROFILE\.gemini\config\plugins\fpts-market-intel\tools\lakehouse
 python $LH pulse --days 30 --grain day                 # toàn thị trường
 python $LH pulse --days 90 --grain week --target IND_GICS3:NGAN_HANG
 python $LH pulse --days 30 --target lai_suat            # theo chủ đề trong config/themes.json
+python $LH pulse --days 30 --universe vn30              # chỉ bài có mã thuộc rổ vn30
+python $LH pulse --days 30 --basis pub_date             # gom theo ngày đăng thay vì phiên giao dịch
 ```
-- `series`: mỗi kỳ có `n_articles`, `pos`, `neg`, `neu`, `net_sent` (từ -1 đến 1), `hot`, `hot_pos`, `hot_neg`, `hot_net_sent`.
+- `series`: mỗi kỳ có `n_articles`, `pos`, `neg`, `neu`, `net_sent` (từ -1 đến 1), `hot`, `hot_pos`, `hot_neg`, `hot_net_sent`, `effect_net_sent` (trọng số cấp thiết và `ln(1 + n_sources)` theo story).
+- Mặc định `--basis trade_date`: tin sau 14:45 ICT hoặc cuối tuần tính vào phiên giao dịch kế tiếp (chưa xét ngày lễ), nên kỳ cuối có thể là phiên chưa đủ dữ liệu.
 - `latest.net_sent_pctile`, `latest.hot_net_sent_pctile`: phân vị (0–100) của kỳ mới nhất trong `history`.
 - `sectors`: phân rã theo ngành GICS trong cửa sổ.
 - Không biết mã ngành: `python $LH lookup --text "ngan hang"`.
 
 ## 3. Phân tích
-1. Đọc xu hướng `net_sent` và `hot_net_sent` qua các kỳ, chỉ ra điểm đảo chiều.
+1. Đọc `hot_net_sent` và `effect_net_sent` trước, rồi đối chiếu `net_sent`; nêu rõ khi hai chuỗi phân kỳ (tâm lý chung khác tâm lý tin cấp thiết). Chỉ ra điểm đảo chiều.
 2. Diễn giải phân vị: ≥ 90 là lạc quan cực độ so với lịch sử, ≤ 10 là bi quan cực độ, giữa là bình thường.
 3. Chỉ ra 2–3 ngành kéo tâm lý lên/xuống mạnh nhất từ `sectors`.
 4. Muốn biết nguyên nhân của một kỳ cực trị: gọi `timeline` hoặc `urgent` để lấy tiêu đề làm bằng chứng.
@@ -43,3 +46,5 @@ python $LH pulse --days 30 --target lai_suat            # theo chủ đề trong
 ## 5. Lưu ý
 - Sentiment là sắc thái truyền thông của cả bài, không phải tín hiệu giá.
 - `history.periods_used` < 60 (ngày) hoặc < 12 (tuần) thì phải ghi rõ "phân vị chưa đủ tin cậy".
+- `coverage.history_starts_before_dense = true` nghĩa là phân vị 1 năm gồm cả giai đoạn dữ liệu thưa; ghi rõ phân vị thực chất tính trên giai đoạn từ `coverage.dense_data_from`.
+- Loại bài PR thương hiệu khỏi bằng chứng khi giải thích kỳ cực trị; đối chiếu phân kỳ Fed/DXY với NHNN theo hai truy vấn `--target` riêng (xem `rules/AGENTS.md` mục 8).

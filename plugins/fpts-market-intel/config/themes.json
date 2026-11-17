@@ -120,6 +120,30 @@
       "group": "hang_hoa",
       "entities": [],
       "keywords": ["giá thép", "thép"]
+    },
+    "khoi_ngoai_etf": {
+      "label": "Dòng vốn khối ngoại & ETF",
+      "group": "dong_tien",
+      "entities": [],
+      "keywords": ["khối ngoại", "mua ròng", "bán ròng", "quỹ ETF", "dòng vốn ngoại"]
+    },
+    "margin_thanh_khoan": {
+      "label": "Margin & thanh khoản thị trường",
+      "group": "dong_tien",
+      "entities": [],
+      "keywords": ["margin", "dư nợ cho vay ký quỹ", "thanh khoản thị trường", "giá trị giao dịch"]
+    },
+    "no_xau_ngan_hang": {
+      "label": "Nợ xấu ngân hàng",
+      "group": "dong_tien",
+      "entities": [],
+      "keywords": ["nợ xấu", "trích lập dự phòng", "nợ nhóm 2"]
+    },
+    "phap_ly_bds": {
+      "label": "Pháp lý bất động sản",
+      "group": "dong_tien",
+      "entities": [],
+      "keywords": ["pháp lý dự án", "vướng mắc pháp lý", "sổ đỏ", "giải phóng mặt bằng"]
     }
   }
 }

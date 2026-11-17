@@ -154,6 +154,56 @@ def probe_coverage(db_path: Path, red_pct: float = 2.0, days: int = 2) -> ProbeR
                        f"Thu thập thiếu so với sitemap: {worst}; {pending:,} URL chờ cào bù.")
 
 
+def probe_capture_channels(db_path: Path, *, stale_hours: float = 24.0, cap_hours: float = 6.0,
+                           now=None) -> ProbeResult:
+    """Check that every reference channel still reconciles and no listing hits its page cap.
+
+    `probe_coverage` reads only rows that exist, so a source whose sitemap broke would stay
+    silent forever. This probe looks for the missing rows instead.
+
+    Args:
+        db_path: Path of `monocle.db`.
+        stale_hours: A reference domain without a coverage row checked within this many hours is unhealthy.
+        cap_hours: A pagination cap hit within this many hours is unhealthy.
+        now: Reference time.
+
+    Returns:
+        The ProbeResult named `capture_channels`.
+    """
+    from src.pipeline.reconcile import REFERENCE_DOMAINS
+
+    now = now or now_vn()
+    try:
+        conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True, timeout=10)
+        try:
+            checked = dict(conn.execute(
+                "SELECT source_domain, MAX(checked_at) FROM capture_coverage GROUP BY 1").fetchall())
+            caps = conn.execute("SELECT key, value FROM pipeline_state "
+                                "WHERE key LIKE 'pagination_cap:%'").fetchall()
+        finally:
+            conn.close()
+    except sqlite3.Error as exc:
+        return ProbeResult("capture_channels", True, "info", f"Chưa đo được kênh đối soát: {exc}")
+    problems = []
+    for domain in REFERENCE_DOMAINS:
+        last = parse_iso(checked.get(domain) or "")
+        if last is None or (now - last).total_seconds() > stale_hours * 3600:
+            when = f"lần cuối {last:%d/%m %H:%M}" if last else "chưa từng chạy"
+            problems.append(f"đối soát {domain} không có dữ liệu ({when})")
+    for key, value in caps:
+        try:
+            info = json.loads(value or "{}")
+        except ValueError:
+            continue
+        at = parse_iso(info.get("at") or "")
+        if at and (now - at).total_seconds() <= cap_hours * 3600:
+            problems.append(f"{key.split(':', 1)[1]} chạm trần phân trang lúc {at:%H:%M}")
+    if not problems:
+        return ProbeResult("capture_channels", True, "warn",
+                           f"{len(REFERENCE_DOMAINS)} kênh đối soát hoạt động, không chạm trần phân trang.")
+    return ProbeResult("capture_channels", False, "warn", "; ".join(problems[:4]))
+
+
 def probe_order(order_path: Path) -> ProbeResult:
     """Check the expiry of the standing order.
 
@@ -195,7 +245,8 @@ def _onedrive_running() -> bool:
 
 def probe_publish(target: Path | None, cfg: dict,
                   onedrive_running: Callable[[], bool] = _onedrive_running,
-                  now: float | None = None) -> ProbeResult:
+                  now: float | None = None, *, name: str = "publish",
+                  write_test: bool = True) -> ProbeResult:
     """Check the health of the SharePoint publish directory per ADR 0020 section 2.6.
 
     Four conditions: OneDrive.exe is running; the target is writable (write then delete
@@ -207,13 +258,16 @@ def probe_publish(target: Path | None, cfg: dict,
         cfg: The `publish` section of the configuration.
         onedrive_running: Function that checks the OneDrive process; replaceable in tests.
         now: Epoch seconds; None uses the system time.
+        name: Probe name, `publish` for the sandbox and `research` for production.
+        write_test: Whether to test writability; production passes False so the probe never
+            creates files in the folder the Research team reads.
 
     Returns:
         The ProbeResult; unhealthy when at least one condition fails.
     """
     if target is None:
-        return ProbeResult("publish", False, "error",
-                           "Publisher bật nhưng chưa đặt NEWS_SCAPE_PUBLISH_DIR.")
+        return ProbeResult(name, False, "error",
+                           "Publisher bật nhưng chưa đặt thư mục đích.")
     now = time.time() if now is None else now
     problems = []
     try:
@@ -221,18 +275,19 @@ def probe_publish(target: Path | None, cfg: dict,
             problems.append("OneDrive.exe không chạy")
     except Exception as exc:  # noqa: BLE001
         problems.append(f"không kiểm được OneDrive.exe ({exc})")
-    probe = target / "_manifest" / ".probe"
-    try:
-        probe.parent.mkdir(parents=True, exist_ok=True)
-        probe.write_text("probe", encoding="utf-8")
-        probe.unlink()
-    except OSError as exc:
-        problems.append(f"đích không ghi được ({exc})")
+    if write_test:
+        probe = target / "_manifest" / ".probe"
+        try:
+            probe.parent.mkdir(parents=True, exist_ok=True)
+            probe.write_text("probe", encoding="utf-8")
+            probe.unlink()
+        except OSError as exc:
+            problems.append(f"đích không ghi được ({exc})")
     stale = []
     try:
         for p in target.rglob("*"):
-            name = p.name
-            if ("-DESKTOP-" in name or name.endswith(".partial")) and p.is_file()                     and now - p.stat().st_mtime > 2 * 3600:
+            fname = p.name
+            if ("-DESKTOP-" in fname or fname.endswith(".partial")) and p.is_file()                     and now - p.stat().st_mtime > 2 * 3600:
                 stale.append(p.relative_to(target).as_posix())
     except OSError:
         pass
@@ -253,8 +308,8 @@ def probe_publish(target: Path | None, cfg: dict,
         if age_h > limit_h:
             problems.append(f"latest.json cũ {age_h:.0f} giờ (> {limit_h:.0f})")
     if problems:
-        return ProbeResult("publish", False, "error", "Xuất bản: " + "; ".join(problems) + ".")
-    return ProbeResult("publish", True, "info", "Thư mục xuất bản khoẻ.")
+        return ProbeResult(name, False, "error", "Xuất bản: " + "; ".join(problems) + ".")
+    return ProbeResult(name, True, "info", "Thư mục xuất bản khoẻ.")
 
 
 # Operator action when a probe is abnormal, and the command to inspect further.
@@ -265,7 +320,11 @@ PROBE_ACTION = {
     "dead_letter": ("bài Bronze không vào được Silver", "xem pipeline_radar.py status", "/status"),
     "coverage": ("bài của một số nguồn chưa được thu thập đủ",
                  "chờ cào bù, xem capture_reconcile.py status", "/status"),
+    "capture_channels": ("tin bị sót sau sự cố không được phát hiện và cào bù",
+                         "chạy capture_reconcile.py status, kiểm sitemap nguồn bị nêu", "/status"),
     "order": ("daemon sắp về L0 và dừng tự mở đợt", "gia hạn bằng /order extend 30", "/mandate"),
+    "research": ("chuyên viên Research không thấy tin mới trên FRA - Data/news",
+                 "xem research_publish.py status, kiểm OneDrive", "/log 15"),
     "publish": ("chuyên viên không thấy dữ liệu mới trên SharePoint",
                 "xem docs/operations/publisher.md mục Xử lý sự cố", "/log 15"),
 }

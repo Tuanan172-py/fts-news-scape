@@ -11,9 +11,12 @@ import feedparser
 from loguru import logger
 
 from src.core.base_scraper import BaseScraper
+from src.core.catchup import catchup_cutoff, mark_complete, page_reaches
 from src.core.config import load_watchlist
 from src.core.models import Article
+from src.core.pagination import paginate_until_known
 from src.core.tickers import tag_tickers
+from src.core.urlnorm import url_key
 from src.processor.extractor import extract_text
 from src.scrapers import register
 from src.scrapers.capture_mixin import CaptureMixin
@@ -68,6 +71,7 @@ class CafeFScraper(CaptureMixin, BaseScraper):
                                 f"{self.BASE_URL}/du-lieu/Ajax/PageNew/News.ashx")
         self.params = api.get("params", {})
         self.headers = api.get("headers", {})
+        self.max_pages = int(api.get("max_pages", 10))
         detail = config.get("detail", {})
         self.content_selector = detail.get("content_selector", "div#mainContent")
         self.max_details = detail.get("max_details_per_cycle", 30)
@@ -79,29 +83,30 @@ class CafeFScraper(CaptureMixin, BaseScraper):
     def fetch_list(self) -> list[dict]:
         """Fetch raw articles from the per-ticker API and the category RSS feeds.
 
+        The API pages by `PageIndex` back to the catch-up cutoff, so articles published
+        while the machine was off are read.
+
         Returns:
             One dict of raw article data per entry.
         """
         self._details_fetched = 0
+        started = datetime.now(VN_TZ)
+        cutoff = catchup_cutoff(self.dedup.store, self.name, now=started)
+        n_errors = len(self.errors)
         items: list[dict] = []
         for sym in self.watchlist:
-            data = self.http.get_json(
-                self.endpoint,
-                params={**self.params, "symbol": sym.lower()},
-                referer=f"{self.BASE_URL}/",
-                headers=self.headers,
-                timeout=self.config.get("timeout", 30),
-            )
-            if not data:
-                self.errors.append(f"list fetch failed for symbol {sym}")
-                continue
-            rows = data.get("Data") or []
-            if not rows and data.get("Success") is False:
-                logger.warning("[cafef] {}: {}", sym, data.get("Message"))
-                continue
-            for it in rows:
+            for it in paginate_until_known(
+                    lambda page, sym=sym: self._api_page(sym, page),
+                    lambda it: url_key(urljoin(self.BASE_URL, it.get("LinkDetail") or "")),
+                    self.dedup.known_keys,
+                    max_pages=self.max_pages, errors=self.errors, label=f"cafef/{sym}",
+                    reached=lambda page: page_reaches(
+                        [parse_cafef_date(it.get("DeployDate") or "") or "" for it in page],
+                        cutoff)):
                 it["_symbol"] = sym
                 items.append(it)
+        if len(self.errors) == n_errors:
+            mark_complete(self.dedup.store, self.name, started)
         # Per-category RSS branch: adds news not tagged with a ticker.
         for feed_cfg in self.feeds:
             feed_url = feed_cfg["url"]
@@ -128,6 +133,31 @@ class CafeFScraper(CaptureMixin, BaseScraper):
                     "_feed_name": feed_name,
                 })
         return items
+
+    def _api_page(self, sym: str, page: int) -> list[dict] | None:
+        """Fetch one page of the per-ticker API.
+
+        Args:
+            sym: Stock ticker.
+            page: 1-based page number.
+
+        Returns:
+            Rows on the page, an empty list past the end, or None on failure.
+        """
+        data = self.http.get_json(
+            self.endpoint,
+            params={**self.params, "symbol": sym.lower(), "PageIndex": page},
+            referer=f"{self.BASE_URL}/",
+            headers=self.headers,
+            timeout=self.config.get("timeout", 30),
+        )
+        if not data:
+            self.errors.append(f"list fetch failed for symbol {sym}")
+            return None
+        rows = data.get("Data") or []
+        if not rows and data.get("Success") is False:
+            logger.warning("[cafef] {}: {}", sym, data.get("Message"))
+        return rows
 
     def parse_item(self, raw: dict) -> Article | None:
         """Parse a raw API or RSS record into an Article.

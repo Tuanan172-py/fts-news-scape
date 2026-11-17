@@ -24,13 +24,18 @@
           "surface": {"type": "string", "description": "chuỗi xuất hiện trong tiêu đề (PHẢI là substring của title)"},
           "entity_id": {"type": ["string", "null"], "description": "entity_id trong danh sách, null nếu ngoài danh sách"},
           "type": {"type": "string", "enum": [
-            "TICKER", "ETF", "SECURITY_OTHER", "INDEX", "EXCHANGE",
+            "TICKER", "ETF", "SECURITY_OTHER", "UNLISTED_ORG", "INDEX", "EXCHANGE",
             "INDUSTRY_GICS1", "INDUSTRY_GICS2", "INDUSTRY_GICS3",
             "MACRO_GEO", "MACRO_THEME", "ASSET_CLASS", "INSTITUTION", "UNKNOWN"
           ]},
           "method": {"type": "string", "enum": ["exact_code", "alias", "semantic"],
             "description": "exact_code/alias = code làm được; semantic = suy luận của agent"},
           "in_list": {"type": "boolean", "description": "có ánh xạ được vào danh sách entity không"},
+          "scope": {"type": "string", "enum": ["title", "body", "inferred"]},
+          "role": {"type": "string", "enum": ["primary", "mentioned"]},
+          "provenance": {"type": "string", "enum": ["BOTH", "LLM_ONLY", "CODE_ONLY"]},
+          "confidence_tier": {"type": "string", "enum": ["HIGH", "MEDIUM", "LOW"]},
+          "first_para_idx": {"type": ["integer", "null"]},
           "confidence": {"type": "number", "minimum": 0, "maximum": 1}
         }
       }

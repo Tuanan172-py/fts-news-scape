@@ -2,11 +2,11 @@
 id: US-039
 type: story
 title: Agent-first knowledge framework
-status: in_progress
+status: changed
 branch: feature/us039-knowledge-framework
 lane: high-risk
 created: 2026-10-06
-updated: 2026-10-08
+updated: 2026-10-23
 lang: en
 authors: [claude-opus-5-5]
 adr: [ADR-0021]
@@ -28,11 +28,13 @@ After this story, any agent (Claude, Codex, agy, opencode, an OpenRouter model) 
 - [x] `doc new` never reuses an id present on disk, on any git branch or in `harness.db`.
 - [x] The pre-commit hook rejects a staged governed document that fails `doc lint`.
 - [x] ADR-0001 to ADR-0019 pass `doc lint` with `original` and `reconstructed` recorded, ADR-0015 exists as rejected. ADR-0020 waits for US-038, which owns it.
-- [ ] `docs/knowledge/legacy.txt` is empty or every remaining entry has a phase owner in ADR-0021 follow-up.
+- [ ] `docs/knowledge/legacy.txt` is empty or every remaining entry has a phase owner in ADR-0021 follow-up (transferred to US-051 Waves W-A, W-D, W-F).
 - [x] Twenty Claude memory files exist as `FACT-*` documents.
-- [ ] Tool-private plans are moved into `plans/`, and `SESSION-LATEST.md` is split by lane (G5 remainder).
+- [ ] Tool-private plans are moved into `plans/`, and `SESSION-LATEST.md` is split by lane (G5 remainder; transferred to US-051 Waves W-D, W-F).
 - [x] Stories and proposals are migrated (G4): 37 story files, US-035 and US-036 collisions resolved, 10 proposals with verdicts, 2 wave checkpoints moved to type run.
-- [ ] Rules are migrated (G2 rules) and drift items are fixed (G6).
+- [ ] Rules are migrated (G2 rules) and drift items are fixed (G6; transferred to US-051 Waves W-D, W-E).
+
+> Note: Uncompleted tasks W2–W11 (from `plans/20261008-0923-us039-handoff-remaining-work/plan.md`) are transferred to tracking story US-051 (Waves W-A through W-F) under governing ADR-0029.
 
 ## Design Notes
 

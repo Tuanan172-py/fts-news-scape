@@ -168,7 +168,7 @@ def test_nhom_ten_nguoi_chua_co_bang_tra(resolver):
 
 def test_thuc_the_ngoai_danh_muc_khong_bi_bia(resolver):
     """Thực thể không có trong danh mục phải để trống định danh thay vì đoán."""
-    r = resolver.resolve_one("Sun Group", "COM", title="Sun Group khởi công")
+    r = resolver.resolve_one("Công ty Sao Mai Phương Bắc", "COM", title="Công ty Sao Mai Phương Bắc khởi công")
     assert r.entity_id is None
     assert r.in_list is False
 
@@ -182,8 +182,8 @@ def test_khu_trung_lap_khi_tra_hang_loat(resolver):
 def test_thong_ke_tra_cuu_theo_nhom(resolver):
     """Bộ đếm phải tách tỷ lệ tra cứu theo từng nhóm thay vì gộp chung."""
     rep = ResolveReport()
-    resolver.resolve_many([["Hòa Phát", "COM"], ["Sun Group", "COM"]],
-                          title="Hòa Phát và Sun Group", report=rep)
+    resolver.resolve_many([["Hòa Phát", "COM"], ["Công ty Sao Mai Phương Bắc", "COM"]],
+                          title="Hòa Phát và Công ty Sao Mai Phương Bắc", report=rep)
     assert rep.total["COM"] == 2
     assert rep.rate("COM") == 0.5
 
@@ -995,3 +995,18 @@ def test_drop_superseded_chi_giu_ban_ghi_moi_nhat(tmp_path, monkeypatch):
     assert json.loads((l1_dir / "b_new.output.json").read_text(encoding="utf-8")) == [new_row]
     assert results[0]["l1"] == 0
     assert results[1]["l1"] == 1
+
+
+def test_silver_newest_build_wins_over_publication_date_folder(tmp_path, monkeypatch):
+    import json
+
+    from src.agent import silver_source
+
+    monkeypatch.setattr(silver_source, "SILVER_ROOT", tmp_path)
+    aid = "c" * 64
+    for day, body in (("20260904", "Trang chặn DDoS."), ("20261111", "Thân bài đầy đủ sau cào lại.")):
+        d = tmp_path / "cafef.vn" / day
+        d.mkdir(parents=True)
+        (d / f"{aid}.json").write_text(json.dumps({"cleaned_text": body}), encoding="utf-8")
+    assert silver_source.read_silver_text("cafef.vn", "2026-09-04T09:48:00", aid) == \
+        "Thân bài đầy đủ sau cào lại."

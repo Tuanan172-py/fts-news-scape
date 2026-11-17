@@ -588,15 +588,16 @@ def cmd_audit(db_path: str = DEFAULT_DB_PATH, check_codebase: bool = False) -> d
         # 6. Schema health
         checks["schema_version"] = get_schema_version(conn)
 
-        # 6b. Knowledge document contract (ADR-0021)
+        # 6b. Knowledge document contract (ADR-0021 / Schema v2)
         try:
             sys.path.insert(0, str(Path(__file__).resolve().parent))
             import knowledge
 
             k_findings = knowledge.lint(knowledge.REPO_ROOT)
-            checks["knowledge_contract_findings"] = [str(f) for f in k_findings]
+            k_errors = [f for f in k_findings if f.severity == "error"]
+            checks["knowledge_contract_findings"] = [str(f) for f in k_errors]
             checks["knowledge_unmigrated"] = len(knowledge.legacy_files(knowledge.load_legacy(knowledge.REPO_ROOT)))
-            total_penalty += min(0.3, len(k_findings) * 0.02)
+            total_penalty += min(0.3, len(k_errors) * 0.02)
         except Exception as e:
             checks["knowledge_contract_error"] = str(e)
 
@@ -1241,8 +1242,26 @@ def cmd_doc(args: argparse.Namespace) -> dict[str, Any]:
     if args.doc_action == "lint":
         only = knowledge.staged_paths(root) if args.staged else None
         findings = knowledge.lint(root, only)
-        return {"status": "error" if findings else "success", "count": len(findings),
-                "findings": [str(f) for f in findings]}
+        errors = [f for f in findings if f.severity == "error"]
+        warnings = [f for f in findings if f.severity == "warning"]
+        if getattr(args, "summary", False):
+            by_code: dict[str, int] = {}
+            for f in findings:
+                by_code[f.code] = by_code.get(f.code, 0) + 1
+            return {
+                "status": "error" if errors else "success",
+                "total_files": len(knowledge.discover(root)),
+                "errors": len(errors),
+                "warnings": len(warnings),
+                "by_code": by_code,
+            }
+        return {
+            "status": "error" if errors else "success",
+            "count": len(findings),
+            "errors": len(errors),
+            "warnings": len(warnings),
+            "findings": [str(f) for f in findings],
+        }
     if args.doc_action == "index":
         return knowledge.write_index(root)
     if args.doc_action == "sync":
@@ -1399,6 +1418,7 @@ def build_parser() -> argparse.ArgumentParser:
     d_new.add_argument("--id", help="Adopt an adr or story id already registered in harness.db")
     d_lint = doc_sub.add_parser("lint", help="Validate governed documents against docs/knowledge/schema.yaml")
     d_lint.add_argument("--staged", action="store_true", help="Report only on staged files")
+    d_lint.add_argument("--summary", action="store_true", help="Print summary counts of errors and warnings")
     doc_sub.add_parser("index", help="Regenerate docs/INDEX.md from frontmatter")
     doc_sub.add_parser("sync", help="Upsert story and decision rows in harness.db from frontmatter")
 

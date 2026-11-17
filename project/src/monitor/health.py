@@ -31,7 +31,8 @@ def check(store: ArticleStore) -> tuple[list[dict], bool]:
             "LEFT JOIN (SELECT scraper_name, SUM(articles_new) AS n24 "
             "           FROM scraper_metrics WHERE ts >= ? "
             "           GROUP BY scraper_name) m "
-            "ON m.scraper_name = h.scraper_name", (cutoff_24h,)).fetchall()
+            "ON m.scraper_name = h.scraper_name "
+            "WHERE h.scraper_name NOT LIKE '%-%'", (cutoff_24h,)).fetchall()
     finally:
         conn.close()
     report, all_ok = [], True

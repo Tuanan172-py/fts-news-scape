@@ -14,12 +14,12 @@ def silver_package_path(source_domain: str | None, published_at: str | None,
     """Find the Silver package of an article by the store layout.
 
     The Silver layout is `<data_root>/silver/<domain>/<yyyymmdd>/<hash>.json`. The date
-    is the package build date, not the publication date, so the exact date is tried
-    first and the other dates of the same domain are scanned on a miss.
+    is the package build date, not the publication date, so every date of the domain is
+    scanned and the newest build is returned.
 
     Args:
         source_domain: Source domain, for example `vneconomy.vn`.
-        published_at: Publication timestamp, for example `2026-10-05T...`.
+        published_at: Publication timestamp; unused, kept for callers (the build date decides).
         article_id: Article identity hash (`url_title_hash`).
 
     Returns:
@@ -28,11 +28,9 @@ def silver_package_path(source_domain: str | None, published_at: str | None,
     try:
         if not source_domain or not article_id:
             return None
-        day = (published_at or "")[:10].replace("-", "")
-        if len(day) == 8 and day.isdigit():
-            candidate = SILVER_ROOT / source_domain / day / f"{article_id}.json"
-            if candidate.is_file():
-                return candidate
+        # Newest build wins. Returning the publication-date folder first served a stale
+        # package after a recapture (block page, later full body) rebuilt Silver under a
+        # newer build date (32 cafef articles stuck as thin, 2026-11-13).
         matches = sorted((SILVER_ROOT / source_domain).glob(f"*/{article_id}.json"))
         return matches[-1] if matches else None
     except (TypeError, ValueError, OSError):

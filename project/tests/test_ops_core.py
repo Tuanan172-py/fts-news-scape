@@ -89,7 +89,8 @@ def test_network_trips_after_threshold(env):
 
 def test_quota_opens_immediately_and_auth_waits_for_human(env):
     cfg, _, store = env
-    b = br.Breakers(store, cfg["breaker"])
+    # Default behaviour: no `auth_open_minutes`, so AUTH waits for /reset.
+    b = br.Breakers(store, {k: v for k, v in cfg["breaker"].items() if k != "auth_open_minutes"})
     assert b.record("agy", br.QUOTA) == "opened"
     assert b.get("agy").reopen_at is not None
     assert b.record("openrouter", br.AUTH) == "opened"
@@ -455,3 +456,20 @@ def test_manual_wave_does_not_block_auto_lane_and_stop_cancels_all(env):
     ctl = FakeController(cfg, paths, store)
     commands.execute("/stop confirm", ctl)
     assert store.get_state("cancel:WA") == "1" and store.get_state("cancel:WB") == "1"
+
+
+def test_agy_session_expiry_is_auth_not_fatal():
+    from src.ops.breakers import AUTH, classify_batch
+
+    msg = "Tiến trình agy thất bại: Authentication required. Please visit the URL to log in:"
+    assert classify_batch("FATAL", msg) == AUTH
+
+
+def test_auth_breaker_probes_again_when_configured(env):
+    _, _, store = env
+    manual = br.Breakers(store, {})
+    manual.record("openrouter", br.AUTH)
+    assert manual.get("openrouter").reopen_at is None          # default stays manual
+    timed = br.Breakers(store, {"auth_open_minutes": 60})
+    assert timed.record("agy", br.AUTH) == "opened"
+    assert timed.get("agy").reopen_at is not None              # half-open probe after 60 min

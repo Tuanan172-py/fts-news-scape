@@ -34,6 +34,11 @@ AUTOMATION_CLIS = [
     "scripts/article_run.py",
     "scripts/article_tick.py",
     "scripts/lakehouse_cli.py",
+    "scripts/db_snapshot.py",
+    "scripts/maintenance/release_stale_waves.py",
+    "scripts/maintenance/verify_ops_queue.py",
+    "scripts/maintenance/verify_wave_citations.py",
+    "scripts/maintenance/audit_m4_m5_integrity.py",
 ]
 
 

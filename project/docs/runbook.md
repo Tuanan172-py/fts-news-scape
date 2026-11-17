@@ -98,7 +98,7 @@ Chi tiết: [`docs/design/16-periodic-report-scraper.md`](design/16-periodic-rep
 >
 > Tham số job tự động nằm ở `project/config/settings.yaml` khối `morninger`:
 > `deferred_backfill_limit` (60) · `deferred_budget_seconds` (90) · `deferred_max_attempts` (5) ·
-> `deferred_retry_window_hours` (24).
+> `deferred_retry_window_hours` (336 = 14 ngày; bài mới nhất được bù trước).
 >
 > Bài thử đủ `max_attempts` lần được gắn `capture_giveup`; bài trả 404/410 được gắn
 > `source_deleted`. Cả hai bị loại khỏi hàng đợi để không fetch lại vô hạn — muốn ép thử lại phải

@@ -154,6 +154,18 @@ def test_nap_hong_thi_dot_khong_duoc_bao_hoan_tat(finish_env, capsys):
     assert "--only ingest" in out, "phải in đúng lệnh chạy lại bước hỏng"
 
 
+def test_nap_hong_che_do_backlog_cung_phai_that_bai(finish_env, capsys):
+    """Đợt backlog cũng không được bypass lỗi nạp: nạp hỏng phải thoát 1."""
+    article_run, calls, rcs = finish_env
+    rcs["l1_ingest.py"] = 1
+
+    assert article_run.cmd_finish(_finish_args(mode="backlog")) == 1
+    out = capsys.readouterr().out
+    assert "CHƯA HOÀN TẤT" in out
+    assert "✅  ĐỢT" not in out
+    assert "token_ledger.py" not in calls
+
+
 def test_db_khong_ghi_duoc_thi_dung_truoc_khi_nap(finish_env, monkeypatch, capsys):
     """Lỗi quyền ghi phải lộ ra trước bước nạp, kèm nguyên nhân thật."""
     from src.db.preflight import WriteProbe
@@ -199,8 +211,8 @@ def test_chi_nap_tep_cua_dung_dot(finish_env):
     article_run, _calls, _ = finish_env
 
     assert article_run.cmd_finish(_finish_args(only="expand,ingest")) == 0
-    assert article_run._argv["l1_ingest.py"] == ["article_W_01.output.json"]
-    assert article_run._argv["agent_ingest.py"] == ["article_W_01.output.json"]
+    assert article_run._argv["l1_ingest.py"] == ["article_W_01.output.json", "--fail-threshold", "0.1"]
+    assert article_run._argv["agent_ingest.py"] == ["article_W_01.output.json", "--fail-threshold", "0.1"]
     assert article_run._argv["article_expand.py"] == [
         "--wave", "W", "--default-provider", "dsh", "--default-model", "deepseek-flash"]
 
@@ -392,7 +404,7 @@ def test_nap_nhan_dien_cho_bai_article_lane_chua_co_l1_task(monkeypatch):
 
     seen_titles = []
     monkeypatch.setattr(l1_runner, "check_l1_dod",
-                        lambda out, title, reg: (seen_titles.append(title) or True, []))
+                        lambda out, title, reg, **_kw: (seen_titles.append(title) or True, []))
     store = _FakeStore(SimpleNamespace(title="Tiêu đề gốc", source_domain="cafef.vn"))
     runner = l1_runner.L1Runner(store, registry=object())
 

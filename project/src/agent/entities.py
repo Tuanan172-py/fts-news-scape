@@ -24,6 +24,11 @@ CONTEXT_GUARDS_YAML = PROJECT_ROOT / "config" / "entities" / "aliases" / "_conte
 CODE_STOPLIST = frozenset({
     "GDP", "CPI", "PMI", "FED", "USD", "EUR", "JPY", "CNY", "VND",
     "CEO", "CFO", "COO", "ETF", "IPO", "ROE", "ROA", "EPS", "OTC", "GMT",
+    # real tickers whose code equals a media abbreviation or a common word (HRC hot-rolled coil,
+    # VTV television, CVT/C21 product codes, MA1/BAX/AAH/UDJ measured as 400+ false hits in
+    # one quarter). Accepted only with a disclosure prefix (`MA1: Báo cáo...`) or a stock word
+    # directly before the code (`cổ phiếu HRC`).
+    "VTV", "CVT", "C21", "HRC", "MA1", "BAX", "AAH", "UDJ",
 })
 
 # Aliases that are too generic: place names, legal suffixes and generic trade descriptions.
@@ -50,18 +55,50 @@ GENERIC_ALIAS_STOPLIST = frozenset({
     # the spelling `trang` in `trang sức`, `Nha Trang`, `thời trang`. Measured on 1,787 real
     # titles: 21 of 21 matches were wrong (0% correct) and TFC is too small to offset them.
     "trang",
+    # generic words verified as high-noise ticker aliases in W365 audit (`OGC`, `NVB`).
+    "dai duong", "quoc dan",
 })
 
 # Security groups: aliases are generated from the legal name, so they pass through GENERIC_ALIAS_STOPLIST.
 SECURITY_TYPES = ("TICKER", "ETF", "SECURITY_OTHER")
+COMPANY_TYPES = ("TICKER", "ETF", "SECURITY_OTHER", "UNLISTED_ORG")
+
+_BANK_DISCLOSURE_PREFIXES = (
+    "VCB:", "BID:", "CTG:", "VPB:", "TCB:", "MBB:", "STB:", "HDB:", "TPB:",
+    "EIB:", "SHB:", "LPB:", "ACB:", "VIB:", "OCB:", "MSB:", "SSB:", "NAB:",
+    "BAB:", "ABB:", "BVB:", "NVB:", "KLB:", "PGB:", "VAB:", "VBB:", "SGB:",
+)
+
+_VN_TONE_PAIRS = (
+    ("oà", "òa"), ("oá", "óa"), ("oả", "ỏa"), ("oã", "õa"), ("oạ", "ọa"),
+    ("oè", "òe"), ("oé", "óe"), ("oẻ", "ỏe"), ("oẽ", "õe"), ("oẹ", "ọe"),
+    ("uỳ", "ùy"), ("uý", "úy"), ("uỷ", "ủy"), ("uỹ", "ũy"), ("uỵ", "ụy"),
+)
+
+
+def _normalize_vn_tones(s: str) -> str:
+    """Normalize old and new Vietnamese tone-mark placement in lowercase NFC text.
+
+    Args:
+        s: Input text.
+
+    Returns:
+        Lowercase NFC string with canonical tone placement.
+    """
+    low = unicodedata.normalize("NFC", s).lower()
+    for src, dst in _VN_TONE_PAIRS:
+        low = low.replace(src, dst)
+    return low
 
 # Important short words (2-3 characters) protected from the length filter.
 PROTECTED_SHORT_WORDS = frozenset({
     "quy", "my", "us", "eu", "fed", "vang", "dau", "cpi", "gdp",
-    "fomc", "sbv", "ecb", "boj", "omo", "noxh", "hrc", "ctck", "tctd", "bds",
+    "fomc", "sbv", "ecb", "boj", "omo", "noxh", "ctck", "tctd", "bds",
 })
 
 _CODE_RE = re.compile(r"\b[A-Z0-9]{3}\b")
+# A stock word directly before a code (`cổ phiếu HRC`, `mã MA1`) marks the code as a ticker.
+_STOCK_WORD_BEFORE_RE = re.compile(r"(?:cổ phiếu|\bcp|\bmã)\s+$", re.IGNORECASE)
 # Official disclosure news (CBTT): `VND: Báo cáo tình hình quản trị...`.
 # Exempts the code from CODE_STOPLIST when it starts the string and is followed by a colon.
 _DISCLOSURE_PREFIX_RE = re.compile(r"^([A-Z0-9]{3})\s*:")
@@ -304,7 +341,10 @@ class EntityRegistry:
         for m in _CODE_RE.finditer(text):
             code = m.group()
             # Exempt official CBTT disclosures at the start of a title (for example `VND: Báo cáo quản trị...`).
-            is_disclosure_prefix = (m.start() == 0 and _DISCLOSURE_PREFIX_RE.match(text))
+            is_disclosure_prefix = bool(
+                (m.start() == 0 and _DISCLOSURE_PREFIX_RE.match(text))
+                or _STOCK_WORD_BEFORE_RE.search(text[:m.start()])
+            )
             if code in CODE_STOPLIST and not is_disclosure_prefix:
                 continue
             if is_location_context(text, m.start(), m.end()):
@@ -316,17 +356,19 @@ class EntityRegistry:
                 is_bank_pgd = (
                     re.search(r"(?:thành\s+lập|đổi\s+tên|chi\s+nhánh|điểm|quản\s+lý|tên|[/\\])\s*$", left_text, re.IGNORECASE)
                     or re.match(r"^\s+[A-ZÀ-Ỹ0-9]", right_text)  # `PGD Chợ Tân Bình`, `PGD Quận 9`
-                    or any(b in text for b in ("MBB:", "TCB:", "VCB:", "BID:", "CTG:", "ACB:", "HDB:", "SHB:", "VPB:", "STB:", "TPB:", "LPB:", "MSB:", "VIB:", "OCB:", "EIB:"))
+                    or any(b in text for b in _BANK_DISCLOSURE_PREFIXES)
                 )
                 if is_bank_pgd:
                     continue
 
             # EXCHANGE is in the list so a code such as HNX in a title resolves to EXCHANGE:*
             # (consistent with process_l1_pipeline.py).
-            for etype in ("TICKER", "ETF", "SECURITY_OTHER", "INDEX", "EXCHANGE",
+            for etype in ("TICKER", "ETF", "SECURITY_OTHER", "UNLISTED_ORG", "INDEX", "EXCHANGE",
                           "MACRO_GEO", "MACRO_THEME", "ASSET_CLASS", "INSTITUTION"):
                 eid = f"{etype}:{code}"
                 if eid in self.entities and eid not in seen:
+                    if code == "BTC" and self._blocked_btc_context(eid, text):
+                        continue
                     ent_tier = self.entities[eid].get("attributes", {}).get("tier", 1)
                     if etype == "TICKER" and ent_tier == 2 and not is_disclosure_prefix:
                         continue
@@ -357,7 +399,7 @@ class EntityRegistry:
         cand.sort(key=lambda c: -((c[0][1] - c[0][0]) if c[0] else 0))
         taken: list[tuple[int, int]] = []
         for span, surface, eids, key in cand:
-            sec = [e for e in eids if self.entities[e]["type"] in SECURITY_TYPES]
+            sec = [e for e in eids if self.entities[e]["type"] in COMPANY_TYPES]
             if span and sec and any(t[0] <= span[0] and span[1] <= t[1] for t in taken):
                 eids = [e for e in eids if e not in sec]
                 if not eids:
@@ -464,8 +506,40 @@ class EntityRegistry:
                 # The next word is a personal-name token rather than a word from diplomatic or economic usage.
                 if next_w.lower() in {"rose", "pham", "nguyen", "tran", "le"} or (next_w[0].isupper() and next_w.lower() in {"hoang", "mai", "lan"}):
                     return True
+        if key == "btc" and self._blocked_btc_context(eid, raw):
+            return True
         return False
 
+    @staticmethod
+    def _blocked_btc_context(eid: str, raw: str) -> bool:
+        """Disambiguate `BTC` between Ministry of Finance, crypto, and organizing committees.
+
+        Args:
+            eid: Candidate entity identifier.
+            raw: Original text.
+
+        Returns:
+            True when surrounding cues contradict the candidate domain.
+        """
+        low = _normalize_vn_tones(raw)
+        has_fiscal = any(w in low for w in (
+            "bộ tài chính", "thông tư", "nghị định", "thuế", "ngân sách", "kho bạc", "hải quan",
+        ))
+        has_crypto = any(w in low for w in (
+            "bitcoin", "crypto", "tiền mã hóa", "tiền số", "blockchain", "eth", "usdt", "halving",
+        ))
+        has_committee = "ban tổ chức" in low
+        if eid == "ASSET_CLASS:TIEN_MA_HOA":
+            if has_committee and not has_crypto:
+                return True
+            if has_fiscal and not has_crypto:
+                return True
+        elif eid == "INSTITUTION:BO_TAI_CHINH":
+            if has_committee and not has_fiscal:
+                return True
+            if has_crypto and not has_fiscal:
+                return True
+        return False
 
     def _alias_match(self, key: str, raw: str) -> tuple[bool, str | None, tuple[int, int] | None]:
         """Confirm an alias match and extract the verbatim surface string.
@@ -478,20 +552,29 @@ class EntityRegistry:
             Tuple of the match flag, the surface string and the (start, end) span.
         """
         forms = self._alias_forms.get(key) or []
+        norm_raw: str | None = None
         for f in forms:
-            #  * Alias WITH diacritics: require the accented form, case-insensitive. Industry
-            #    names in industries.yaml that start with a capital (`Điện`, `Nước`) are still
-            #    common nouns; requiring the capital would wrongly block `giá điện` and `ngành điện`.
-            #  * SHORT uppercase ASCII symbols (<=3: US, EU, DXY): case must match, otherwise
-            #    `thẩm mỹ` would match MACRO_GEO:MY. Long symbols (HOSE, UPCOM) are not
-            #    ambiguous with common words, so case is ignored; the press often writes `HoSE`.
             flags = 0 if (f.isascii() and f.isupper() and len(f) <= 3) else re.IGNORECASE
             m = re.search(r"\b" + re.escape(f) + r"\b", raw, flags)
             if m:
                 return True, m.group(0), m.span()
+            if not f.isascii():
+                if norm_raw is None:
+                    norm_raw = _normalize_vn_tones(raw)
+                norm_f = _normalize_vn_tones(f)
+                m_tone = re.search(r"\b" + re.escape(norm_f) + r"\b", norm_raw)
+                if m_tone:
+                    s0, s1 = m_tone.span()
+                    return True, raw[s0:s1], (s0, s1)
         if " " not in key:
             return False, None, None
+        has_ascii_form = any(f.isascii() for f in forms)
         surface, span = _locate_folded(key, raw)
+        if surface is None:
+            return False, None, None
+        if not has_ascii_form and len(key.split()) < 3:
+            if not all(w[0].isupper() for w in surface.split() if w):
+                return False, None, None
         return True, surface, span
 
     # ---- text matching (backward compatible) -------------------------------
@@ -562,6 +645,65 @@ def _load_subscriptions(reg: EntityRegistry) -> tuple[dict, dict]:
     return subs, warnings
 
 
+def _apply_runtime_overlays(entities: list[dict]) -> list[dict]:
+    """Overlay curated ticker aliases, unlisted organizations, and E12 stock fix onto loaded entities.
+
+    Args:
+        entities: Raw entity list read from `entities.json`.
+
+    Returns:
+        Updated entity list with curated aliases and unlisted organizations merged.
+    """
+    aliases_dir = PROJECT_ROOT / "config" / "entities" / "aliases"
+    tickers_yaml = aliases_dir / "tickers.yaml"
+    unlisted_yaml = aliases_dir / "unlisted_orgs.yaml"
+    ticker_brands: dict[str, list[str]] = {}
+    if tickers_yaml.exists():
+        raw_t = yaml.safe_load(tickers_yaml.read_text(encoding="utf-8")) or {}
+        ticker_brands = {str(k).strip().upper(): list(v or []) for k, v in raw_t.items()}
+
+    by_id: dict[str, dict] = {}
+    for ent in entities:
+        e = dict(ent)
+        code = str(e.get("code") or "").strip().upper()
+        # Repair historical E12 misclassification before next offline catalog rebuild.
+        if e.get("entity_id") == "ETF:E12" or (e.get("type") == "ETF" and re.fullmatch(r"[A-Z][A-Z0-9]{2}", code)):
+            e["type"] = "TICKER"
+            e["entity_id"] = f"TICKER:{code}"
+        if e.get("type") == "TICKER" and code in ticker_brands:
+            merged = list(e.get("aliases") or [])
+            for alias in ticker_brands[code]:
+                clean_a = str(alias).strip()
+                if clean_a and clean_a not in merged:
+                    merged.append(clean_a)
+            e["aliases"] = merged
+        by_id[e["entity_id"]] = e
+
+    if unlisted_yaml.exists():
+        raw_u = yaml.safe_load(unlisted_yaml.read_text(encoding="utf-8")) or {}
+        for raw_code, info in raw_u.items():
+            info = info or {}
+            code = str(raw_code).strip().upper()
+            eid = f"UNLISTED_ORG:{code}"
+            if eid in by_id:
+                continue
+            canonical = str(info.get("canonical_name") or code).strip()
+            aliases = [str(a).strip() for a in (info.get("aliases") or [canonical]) if str(a).strip()]
+            attrs: dict = {"category": "unlisted_org", "listed_universe": False, "tier": 1, "is_active": True}
+            if info.get("parent_entity_id"):
+                attrs["parent_entity_id"] = str(info["parent_entity_id"]).strip()
+            by_id[eid] = {
+                "entity_id": eid,
+                "type": "UNLISTED_ORG",
+                "code": code,
+                "canonical_name": canonical,
+                "aliases": aliases,
+                "attributes": attrs,
+                "sources": ["config/entities/aliases/unlisted_orgs.yaml"],
+            }
+    return list(by_id.values())
+
+
 @lru_cache(maxsize=1)
 def load_registry() -> EntityRegistry:
     """Load and build the shared EntityRegistry instance from the standard data file.
@@ -569,7 +711,8 @@ def load_registry() -> EntityRegistry:
     Returns:
         Cached EntityRegistry with subscriptions and subscription warnings attached.
     """
-    entities = json.loads(ENTITIES_JSON.read_text(encoding="utf-8"))["entities"]
+    raw_entities = json.loads(ENTITIES_JSON.read_text(encoding="utf-8"))["entities"]
+    entities = _apply_runtime_overlays(raw_entities)
     reg = EntityRegistry(entities)                 # build the index first
     subs, warnings = _load_subscriptions(reg)      # then resolve user subscriptions (manifest-filtered)
     reg.subscriptions = subs

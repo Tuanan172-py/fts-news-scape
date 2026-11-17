@@ -18,6 +18,7 @@ python $LH buzz --top 10                         # ngày mới nhất, mã cổ 
 python $LH buzz --date 2026-05-15 --top 10
 python $LH buzz --kind IND_GICS3 --top 10        # theo ngành
 python $LH buzz --kind MACRO_THEME --min-articles 3
+python $LH buzz --universe vn30 --top 10         # chỉ mã thuộc rổ vn30 (config/universes.json)
 ```
 Mỗi dòng: `z` (độ lệch so với mức nền), `n_today`, `mean_n`, `hot_share` (tỷ lệ tin cấp thiết), `net_sent`, `base_sent`, `sent_delta`, `n_sources`, `n_stories`, `top_titles`, `flag` (`z ≥ 2`).
 
@@ -44,3 +45,5 @@ Khi cần thêm bằng chứng: `python $LH timeline --target <MÃ> --days 7 --g
 - `baseline.sufficient = false` (ít hơn 20 ngày nền): ghi rõ "mức nền mới có N ngày, z chỉ mang tính tham khảo".
 - Mức nền tính theo ngày có dữ liệu, không trừ ngày nghỉ lễ.
 - Đây là tín hiệu chú ý, không phải khuyến nghị mua/bán.
+- `z = (n_today - mean) / max(sd, 0.5, sqrt(mean + 1))`; `--min-articles` mặc định 3. Cờ đột biến chỉ bật khi `baseline.days_used` ≥ 7; nếu `baseline.warnings` có nội dung (mức nền ngắn hoặc mới đổi chế độ gán thực thể), báo cáo phải nêu cảnh báo và không kết luận "đột biến".
+- Mặc định chỉ tính thực thể `primary` nguồn `BOTH`/`LLM_ONLY`; mã khớp máy móc (`CODE_ONLY`) bị loại.

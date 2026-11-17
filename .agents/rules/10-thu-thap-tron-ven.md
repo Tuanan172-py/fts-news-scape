@@ -29,7 +29,14 @@ python scripts/capture_reconcile.py run --limit 100 --budget 600  # đối chi�
 python scripts/capture_reconcile.py recapture --limit 100        # phục hồi Bronze đã mất
 ```
 
-Morninger gọi `capture_reconcile.py run` sau mỗi chu kỳ capture. Nguồn chưa có sitemap dùng được (vietstock, vietnambiz, thoibaotaichinhvietnam) được radar ghi rõ là chưa có kênh đối chiếu.
+Morninger gọi `capture_reconcile.py run` sau mỗi chu kỳ capture. Từ 2026-11-11:
+
+- Kênh đối chiếu: sitemap của baodautu, tnck, cafef, vneconomy, thoibaotaichinhvietnam (sitemap theo tháng), vietstock (`sitemap.xml` 37 MB, tối đa 6 giờ một lần, bỏ chuyên mục PR 4511); vietnambiz dùng trang chuyên mục có ngày (`/<chuyên mục>/trang-N.htm`).
+- Cửa sổ đối chiếu tự giãn: `max(3, số ngày từ lần đối chiếu thành công trước + 2)`, tối đa 35 ngày. Máy tắt từ tối thứ Sáu thì sáng thứ Hai vẫn đối chiếu lại thứ Sáu.
+- fireant và nhánh API của cafef đọc lùi theo `offset`/`PageIndex` tới mốc lần chạy đủ trước trừ 2 giờ (`src/core/catchup.py`, tối đa 14 ngày).
+- Bài cào bù lấy ngày đăng từ `article:published_time` của trang (`src/core/htmldate.py`).
+- Probe `capture_channels` báo khi một nguồn đối chiếu không có dòng độ phủ mới trong 24 giờ, hoặc khi một bộ cào chạm trần phân trang trong 6 giờ.
+- Sitemap tháng của baodautu hỏng phía báo từ 2026-10-23 (trả "Not found act function sitemap_month"); baodautu chỉ còn phân trang theo mốc và probe sẽ báo đỏ cho tới khi báo sửa.
 
 ## 4. Phản mẫu đã gặp (2026-10-01)
 
@@ -38,5 +45,7 @@ Morninger gọi `capture_reconcile.py run` sau mỗi chu kỳ capture. Nguồn c
 | Loại bài theo `token_set_ratio ≥ 90` ở `base_scraper` | 439 bài bị loại trong 3 ngày, 202 bài loại nhầm, không có Bronze, không cào lại được |
 | `pages_per_cycle: 1` và chỉ cào một số chuyên mục | baodautu chỉ có khoảng 50% số bài trong sitemap chính thức, đều mỗi ngày |
 | Máy tắt 11–16 giờ, bộ cào chỉ đọc trang đầu | không có cơ chế bù khi chạy lại |
+| Bài nổi bật lặp trên mọi trang danh sách (2026-11) | phân trang theo mốc không bao giờ gặp trang "đã biết", baodautu chạm trần 107/475 chu kỳ |
+| Cào bù theo URL không đọc ngày đăng (2026-11) | 13.480 bài thiếu `published_at`, nằm ngoài mọi đợt theo ngày |
 | Đối chiếu sitemap chưa từng chạy | cafef thiếu 64% và tnck thiếu 68% so với sitemap mà không ai biết |
 | Bronze nằm trong thư mục đồng bộ OneDrive | 2.045 bài còn trong kho nhưng mất tệp raw, chưa rõ nguyên nhân |

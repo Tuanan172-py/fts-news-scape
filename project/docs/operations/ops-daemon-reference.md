@@ -61,7 +61,8 @@ Luật mở đợt (T1, T2, T3) định nghĩa trong [bảng thuật ngữ](../.
 - Bài đã vào một đợt được giữ chỗ cho tới khi đợt xong hoặc bị huỷ. Đợt tạm dừng hoặc lỗi vẫn giữ bài.
 - Mỗi bài được đóng gói tối đa `wave.max_attempts_per_article` lần (mặc định 2). Quá số đó mà chưa qua cổng DoD thì bài không tự thử lại.
 - `/cancel <đợt>` nhả bài của một đợt đã dừng.
-- Bài tồn đọng ngoài `sensor.lookback_days` không thuộc phạm vi tự động.
+- Phạm vi tự động là hôm nay và `sensor.lookback_days` ngày trước (mặc định 3). Bài không có ngày đăng tính theo ngày cào.
+- Luật T4 xử lý tồn đọng ngoài phạm vi trong `sensor.backlog.hours` (mặc định 19:00 đến 07:00) và cả ngày cuối tuần: mỗi đợt lấy dải `CŨ NHẤT..MỚI NHẤT` của mọi ngày tồn đọng nên đủ 100 bài, bài mới nhất trước; đợt dải bỏ qua bước giao xlsx; mỗi `sensor.backlog.pick_every_seconds` giây chọn tối đa một lần (mặc định 600, ops.yaml đặt 120). Bài mỏng không bao giờ qua DoD nên không được chọn.
 
 ## 6. Hành vi khi dừng
 

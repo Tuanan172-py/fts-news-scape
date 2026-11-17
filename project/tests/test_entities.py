@@ -226,3 +226,53 @@ def test_ecosystem_brand_aliases_match(reg):
         assert expected_eid in eids, f"Không khớp {expected_eid} cho: {text}"
 
 
+
+
+NOISY_CODES = ("HRC", "VTV", "CVT", "C21", "MA1", "BAX", "AAH", "UDJ")
+
+
+@pytest.fixture
+def noisy_reg():
+    entities = [
+        {"entity_id": f"TICKER:{c}", "type": "TICKER", "code": c,
+         "canonical_name": f"CTCP Giả lập {c}", "aliases": [f"Giả lập {c}"],
+         "attributes": {}, "sources": []}
+        for c in NOISY_CODES
+    ]
+    entities.append({"entity_id": "IND_GICS3:THEP", "type": "INDUSTRY_GICS3", "code": "THEP",
+                     "canonical_name": "Thép", "aliases": ["Thép", "HRC"],
+                     "attributes": {"parent": "x"}, "sources": []})
+    return EntityRegistry(entities)
+
+
+@pytest.mark.parametrize("code", NOISY_CODES)
+def test_noisy_codes_not_matched_in_running_text(noisy_reg, code):
+    """Mã trùng từ viết tắt/phổ thông không tự khớp khi chỉ xuất hiện giữa câu."""
+    eids = [d["entity_id"] for d in noisy_reg.detect(f"Thị trường chứng kiến nhiều biến động quanh {code} tuần này")]
+    assert f"TICKER:{code}" not in eids
+
+
+@pytest.mark.parametrize("title", [
+    "Cổ phiếu HRC bứt phá sau báo cáo quý 3",
+    "HRC: Báo cáo tình hình quản trị công ty 6 tháng đầu năm 2026",
+    "Nhà đầu tư chú ý mã HRC trong phiên chiều",
+])
+def test_noisy_code_accepted_with_stock_word_or_disclosure(noisy_reg, title):
+    """Mã chỉ được nhận khi có tiền tố CBTT hoặc từ chỉ cổ phiếu đứng ngay trước."""
+    assert "TICKER:HRC" in [d["entity_id"] for d in noisy_reg.detect(title)]
+
+
+def test_hrc_steel_price_maps_to_steel_not_ticker(noisy_reg):
+    """Thép HRC không còn được bảo vệ như alias của mã cổ phiếu HRC."""
+    eids = [d["entity_id"] for d in noisy_reg.detect("Giá thép HRC tăng mạnh trong tuần")]
+    assert "TICKER:HRC" not in eids
+    assert "IND_GICS3:THEP" in eids
+
+
+def test_xay_dung_context_guard_configured():
+    """`_context_guards.yaml` bỏ alias trần của IND_GICS3:XAY_DUNG và GIAY."""
+    import yaml
+    from src.agent.entities import CONTEXT_GUARDS_YAML
+    guards = yaml.safe_load(CONTEXT_GUARDS_YAML.read_text(encoding="utf-8"))
+    assert guards["IND_GICS3:XAY_DUNG"]["drop_bare"] is True
+    assert guards["IND_GICS3:GIAY"]["drop_bare"] is True

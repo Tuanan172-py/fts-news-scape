@@ -11,7 +11,7 @@ authors: [operator, claude]
 approvers: [operator 2026-10-21]
 story: [US-045]
 supersedes: []
-amends: [ADR-0012]
+amends: [ADR-0001, ADR-0011, ADR-0012, ADR-0017, ADR-0023]
 related: [ADR-0010, ADR-0017, ADR-0020, ADR-0023, ADR-0025]
 evidence:
   - path:project/src/ops/order.py

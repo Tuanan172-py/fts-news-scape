@@ -203,9 +203,9 @@ def classify_code(code: str, etf_codes: set[str]) -> str:
     Returns:
         One of `ETF`, `STOCK`, `OTHER`.
     """
-    if code in etf_codes or code.startswith(("E1", "FUE", "FUC")):
+    if code in etf_codes or (len(code) >= 6 and code.startswith(("E1VF", "FUE", "FUC"))):
         return "ETF"
-    # Vietnamese stock code = 3 chars [A-Z0-9] starting with a letter (e.g. HPG, A32, C32, L14).
+    # Vietnamese stock code = 3 chars [A-Z0-9] starting with a letter (e.g. HPG, A32, C32, E12, L14).
     if re.fullmatch(r"[A-Z][A-Z0-9]{2}", code):
         return "STOCK"
     # Everything else (closed-end funds, bonds, warrants) is OTHER.
@@ -254,14 +254,45 @@ def slug(s: str) -> str:
     return s.upper()
 
 
+def load_strict_yaml(path: Path) -> dict:
+    """Parse a YAML mapping file while rejecting duplicate keys.
+
+    Args:
+        path: YAML file path.
+
+    Returns:
+        Parsed top-level dictionary, or an empty dict if the file is absent.
+
+    Raises:
+        ValueError: If the YAML file contains duplicate mapping keys.
+    """
+    if not path.exists():
+        return {}
+    import yaml
+
+    class _StrictUniqueKeyLoader(yaml.SafeLoader):
+        pass
+
+    def _construct_mapping(loader: yaml.Loader, node: yaml.Node, deep: bool = False) -> dict:
+        mapping: dict = {}
+        for key_node, val_node in node.value:
+            key = loader.construct_object(key_node, deep=deep)
+            if key in mapping:
+                raise ValueError(f"Duplicate YAML key {key!r} in {path}")
+            mapping[key] = loader.construct_object(val_node, deep=deep)
+        return mapping
+
+    _StrictUniqueKeyLoader.add_constructor(
+        yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
+        _construct_mapping,
+    )
+    return yaml.load(path.read_text(encoding="utf-8"), Loader=_StrictUniqueKeyLoader) or {}
+
+
 def _load_yaml(path: Path) -> dict:
     if not path.exists():
         return {}
-    try:
-        import yaml
-        return yaml.safe_load(path.read_text(encoding="utf-8")) or {}
-    except Exception:
-        return {}
+    return load_strict_yaml(path)
 
 
 def _load_all_domain_aliases() -> dict:
@@ -274,6 +305,7 @@ def _load_all_domain_aliases() -> dict:
         "themes": {},
         "assets": {},
         "institutions": {},
+        "unlisted_orgs": {},
     }
     # Tickers
     t_path = aliases_dir / "tickers.yaml"
@@ -309,6 +341,9 @@ def _load_all_domain_aliases() -> dict:
 
     # Institutions
     res["institutions"] = _load_yaml(aliases_dir / "institutions.yaml")
+
+    # Unlisted organizations
+    res["unlisted_orgs"] = _load_yaml(aliases_dir / "unlisted_orgs.yaml")
 
     return res
 
@@ -538,6 +573,24 @@ def build(data_root: Path, out_dir: Path) -> dict:
             "aliases": aliases,
             "attributes": {"category": "institution"},
             "sources": ["config/entities/aliases/institutions.yaml"],
+        })
+
+    # --- 9) UNLISTED_ORG (curated major unlisted companies & state groups) --
+    for code, info in all_domain_aliases.get("unlisted_orgs", {}).items():
+        info = info or {}
+        canonical = info.get("canonical_name", code)
+        aliases = list(info.get("aliases", [canonical]))
+        attrs = {"category": "unlisted_org", "listed_universe": False, "tier": 1, "is_active": True}
+        if info.get("parent_entity_id"):
+            attrs["parent_entity_id"] = str(info["parent_entity_id"]).strip()
+        entities.append({
+            "entity_id": f"UNLISTED_ORG:{code}",
+            "type": "UNLISTED_ORG",
+            "code": code,
+            "canonical_name": canonical,
+            "aliases": aliases,
+            "attributes": attrs,
+            "sources": ["config/entities/aliases/unlisted_orgs.yaml"],
         })
 
 

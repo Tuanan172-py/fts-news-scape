@@ -3,12 +3,16 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime
 
 from loguru import logger
 
 from src.core.base_scraper import BaseScraper
+from src.core.catchup import VN_TZ, catchup_cutoff, mark_complete, page_reaches
 from src.core.config import load_secrets, load_watchlist
 from src.core.models import Article, now_vn_iso
+from src.core.pagination import paginate_until_known
+from src.core.urlnorm import url_key
 from src.processor.extractor import extract_text
 from src.scrapers import register
 from src.scrapers.capture_mixin import CaptureMixin
@@ -45,6 +49,7 @@ class FireAntScraper(CaptureMixin, BaseScraper):
         self.list_url = api.get("list_url", self.LIST_URL)
         self.detail_url = api.get("detail_url_template", self.DETAIL_URL)
         self.list_params = api.get("params", {"type": 1, "offset": 0, "limit": 20})
+        self.max_pages = int(api.get("max_pages", 15))   # 15 × 20 posts reach MAX_BACK for VCB
         detail = config.get("detail", {})
         self.max_details = detail.get("max_details_per_cycle", 30)
         self.watchlist = config.get("watchlist") or load_watchlist()
@@ -80,39 +85,64 @@ class FireAntScraper(CaptureMixin, BaseScraper):
 
     # -- pipeline -------------------------------------------------------------
     def fetch_list(self) -> list[dict]:
-        """Collect raw articles for each watched ticker.
+        """Collect raw articles for each watched ticker, paging back to the catch-up cutoff.
+
+        Each ticker pages by `offset` until a page brings nothing new and reaches the start
+        of the last complete run, so posts published while the machine was off are read.
 
         Returns:
             One dict of unprocessed article data per entry.
         """
         self._details_fetched = 0
+        started = datetime.now(VN_TZ)
+        cutoff = catchup_cutoff(self.dedup.store, self.name, now=started)
+        n_errors = len(self.errors)
+        limit = int(self.list_params.get("limit", 20))
         items: list[dict] = []
         for sym in self.watchlist:
             if self.disabled:
                 break
-            resp = self.http.get_response(
-                self.list_url,
-                params={**self.list_params, "symbol": sym},
-                headers=self._api_headers(),
-                timeout=self.config.get("timeout", 30),
-            )
-            if resp is None:
-                self.errors.append(f"list fetch failed for {sym}")
-                continue
-            if resp.status_code in (401, 403):
-                self._auth_failed(resp.status_code, f"list {sym}")
-                break
-            if resp.status_code != 200:
-                self.errors.append(f"list {sym}: HTTP {resp.status_code}")
-                continue
-            try:
-                posts = resp.json()
-            except ValueError:
-                self.errors.append(f"list {sym}: invalid JSON")
-                continue
-            if isinstance(posts, list):
-                items.extend(posts)
+            items.extend(paginate_until_known(
+                lambda page, sym=sym: self._list_page(sym, (page - 1) * limit),
+                lambda p: url_key(self.WEB_URL.format(post_id=p.get("postID") or p.get("post_id"))),
+                self.dedup.known_keys,
+                max_pages=self.max_pages, errors=self.errors, label=f"fireant/{sym}",
+                reached=lambda page: page_reaches([p.get("date") or "" for p in page], cutoff)))
+        if not self.disabled and len(self.errors) == n_errors:
+            mark_complete(self.dedup.store, self.name, started)
         return items
+
+    def _list_page(self, sym: str, offset: int) -> list[dict] | None:
+        """Fetch one page of posts for a ticker.
+
+        Args:
+            sym: Stock ticker.
+            offset: Number of newer posts to skip.
+
+        Returns:
+            Posts on the page, an empty list past the end, or None on failure.
+        """
+        resp = self.http.get_response(
+            self.list_url,
+            params={**self.list_params, "symbol": sym, "offset": offset},
+            headers=self._api_headers(),
+            timeout=self.config.get("timeout", 30),
+        )
+        if resp is None:
+            self.errors.append(f"list fetch failed for {sym}")
+            return None
+        if resp.status_code in (401, 403):
+            self._auth_failed(resp.status_code, f"list {sym}")
+            return None
+        if resp.status_code != 200:
+            self.errors.append(f"list {sym}: HTTP {resp.status_code}")
+            return None
+        try:
+            posts = resp.json()
+        except ValueError:
+            self.errors.append(f"list {sym}: invalid JSON")
+            return None
+        return posts if isinstance(posts, list) else []
 
     def parse_item(self, raw: dict) -> Article | None:
         """Convert raw article JSON into an Article.

@@ -39,7 +39,8 @@ def main(argv: list[str]) -> int:
         argv: Command-line arguments, excluding the program name.
 
     Returns:
-        0 on success, 1 when any record fails ingestion.
+        0 when failure rate is within threshold or on code-first drain,
+        1 when failure rate exceeds threshold, 2 on missing arguments.
     """
 
     import argparse
@@ -53,6 +54,8 @@ def main(argv: list[str]) -> int:
                     help="Vật chất hoá l1_tasks route=resolved (tra danh mục tất định) → l1_outputs")
     ap.add_argument("--limit", type=int, default=None, help="Giới hạn số task khi --code-first")
     ap.add_argument("--dry-run", action="store_true", help="Chỉ đếm, không ghi DB")
+    ap.add_argument("--fail-threshold", type=float, default=0.0,
+                    help="Tỷ lệ hỏng cho phép (0.0 = nghiêm ngặt, 0.05 = cho phép trượt tối đa 5%%)")
     args = ap.parse_args(argv)
 
     db_path = load_settings()["database"]["path"]
@@ -121,7 +124,9 @@ def main(argv: list[str]) -> int:
     print(f"\ningested: done={done} failed={failed}")
     # A record rejected by DoD or an unreadable file is an ingest error: return non-zero so
     # `article_run.py --finish` halts the batch instead of reporting completion.
-    return 1 if failed else 0
+    total = done + failed
+    fail_rate = (failed / total) if total else (1.0 if failed else 0.0)
+    return 1 if fail_rate > args.fail_threshold else 0
 
 
 if __name__ == "__main__":

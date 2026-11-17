@@ -125,19 +125,26 @@ class LocalOneDriveStorageAdapter(BaseStorageAdapter):
         norm_root = self._strip_extended_prefix(self.root_dir)
         return norm_target.relative_to(norm_root).as_posix()
 
-    def __init__(self, root_dir: str | Path) -> None:
+    def __init__(self, root_dir: str | Path, *, allow_official: bool = False,
+                 strict: bool = False) -> None:
         """Initialize the local storage adapter.
 
         Args:
             root_dir: Root directory used as the data store.
+            allow_official: Accept a root on the official site; only the production publisher
+                (ADR-0030) passes True.
+            strict: On a locked target, retry and then raise instead of writing a timestamped
+                side file, which a glob reader would count as a second copy of the partition.
 
         Raises:
-            PermissionError: If the root directory points to the official site, which ADR-0023 forbids.
+            PermissionError: If the root directory points to the official site and
+                `allow_official` is False (ADR-0023.D1).
         """
         from src.export.publisher import is_official_target
 
+        self.strict = strict
         resolved = Path(root_dir).resolve()
-        if is_official_target(resolved):
+        if is_official_target(resolved) and not allow_official:
             raise PermissionError(
                 f"Đích {resolved} thuộc site SharePoint chính thức (FRA - Data), bị cấm theo ADR-0023. "
                 f"Chỉ được phép sử dụng sandbox FRA_DataIngestion."
@@ -231,9 +238,14 @@ class LocalOneDriveStorageAdapter(BaseStorageAdapter):
                 os.fsync(f.fileno())
 
             # Step 3: replace the target atomically.
-            os.replace(tmp_path, target)
+            if self.strict:
+                self._replace_with_retry(tmp_path, target)
+            else:
+                os.replace(tmp_path, target)
             return self._to_rel_posix(target)
         except PermissionError:
+            if self.strict:
+                raise
             # Fallback: save a snapshot copy when another process holds an exclusive lock on the target.
             from datetime import datetime, timezone
             ts = datetime.now(timezone.utc).strftime("%H%M%S")
@@ -246,6 +258,32 @@ class LocalOneDriveStorageAdapter(BaseStorageAdapter):
                     tmp_path.unlink()
                 except Exception:
                     pass
+
+    @staticmethod
+    def _replace_with_retry(src: Path, dst: Path, attempts: int = 6) -> None:
+        """Replace a file, waiting out a reader that briefly holds the target open.
+
+        A DuckDB query keeps a Parquet file open for its duration and Windows then refuses the
+        rename; the wait doubles from 0.5 s, about 30 s in total.
+
+        Args:
+            src: Fully written temporary file.
+            dst: Target file.
+            attempts: Number of tries.
+
+        Raises:
+            PermissionError: If the target stays locked after every try.
+        """
+        import time
+
+        for i in range(attempts):
+            try:
+                os.replace(src, dst)
+                return
+            except PermissionError:
+                if i == attempts - 1:
+                    raise
+                time.sleep(0.5 * (2 ** i))
 
     def exists(self, path: str) -> bool:
         """Check whether a file or directory exists.

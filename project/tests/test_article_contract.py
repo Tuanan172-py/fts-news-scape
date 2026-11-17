@@ -64,8 +64,12 @@ def test_c_ngoai_pham_vi_hoac_doan_ngan_bi_tu_choi_khong_tu_bu():
 
 def test_c_toi_da_bon_chi_so_va_phai_la_so_nguyen():
     packet = {"a": [{"i": 0, "t": "t", "p": [LONG + str(n) for n in range(6)]}]}
-    out = ac.parse_and_validate(json.dumps([rec(c=[0, 1, 2, 3, 4])]), packet)
-    assert out.errors[0] == ["count:c:5"]
+    # Thừa chỉ số hợp lệ: giữ 4 lựa chọn đầu của mô hình, không từ chối cả bài.
+    out = ac.parse_and_validate(json.dumps([rec(c=[4, 0, 1, 2, 3])]), packet)
+    assert out.records[0]["c"] == [0, 1, 2, 4]
+    assert out.counters["trim_c"] == 1
+    out = ac.parse_and_validate(json.dumps([rec(c=[0, 1, 2, 3, 9])]), packet)
+    assert out.errors[0] == ["range:c:9"]       # chỉ số sai vẫn bị từ chối
     assert run(rec(c=["0", "1"])).errors[0] == ["type:c"]
     assert run(rec(c=[True, 1])).errors[0] == ["type:c"]
 
@@ -151,3 +155,31 @@ def test_analyze_tu_choi_runner_khong_ho_tro(tmp_path, monkeypatch):
     (tmp_path / "wave_W.json").write_text("{}", encoding="utf-8")
     args = argparse.Namespace(wave="W", runner="dsh", concurrency=0)
     assert article_run.cmd_analyze(args) == 2
+
+
+def _packet_with_title(title: str) -> dict:
+    para = "Đoạn văn đủ dài để làm chứng cứ trích dẫn trong bài viết này."
+    return {"d": "2026-10-05", "n": 1, "a": [{"i": 0, "t": title, "p": [para, para + " Hai."]}]}
+
+
+def test_tom_tat_lech_tieu_de_bi_tu_choi_de_vao_vong_va():
+    """Tóm tắt của bài khác ghép nhầm vào tiêu đề: không từ có nghĩa nào trùng thì bị từ chối."""
+    packet = _packet_with_title("Đắk Lắk kiểm soát giá vật liệu xây dựng")
+    wrong = rec(e=[["Trung Đông", "GEO"]], s="Giá dầu thô Brent tăng do căng thẳng Trung Đông.",
+                k=["Dầu Brent vượt 90 USD", "OPEC giữ nguyên sản lượng"],
+                im="Giá năng lượng tăng gây áp lực lạm phát toàn cầu trong quý tới.")
+    out = ac.parse_and_validate(json.dumps([wrong], ensure_ascii=False), packet)
+    assert out.errors[0] == ["summary_title_mismatch"] and 0 not in out.records
+
+
+def test_tom_tat_khop_tieu_de_duoc_nhan():
+    """Chỉ cần một từ có nghĩa của tiêu đề xuất hiện trong chứng cứ là qua cổng."""
+    packet = _packet_with_title("Đắk Lắk kiểm soát giá vật liệu xây dựng")
+    ok = rec(e=[["Đắk Lắk", "GEO"]], s="Tỉnh yêu cầu kiểm soát giá vật liệu trước mùa xây dựng cao điểm.")
+    out = ac.parse_and_validate(json.dumps([ok], ensure_ascii=False), packet)
+    assert 0 in out.records and not out.errors
+
+
+def test_tieu_de_qua_ngan_khong_bi_chan_nham():
+    """Tiêu đề dưới ba từ có nghĩa không đủ căn cứ để kết luận lệch."""
+    assert ac.title_summary_misaligned("Tin nhanh", ["Nội dung hoàn toàn khác"]) is False

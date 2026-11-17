@@ -14,6 +14,7 @@ Khi lọc hoặc tổng hợp thông tin theo mã cổ phiếu, Agent phải tô
 - **`BOTH`**: Cả hệ thống Code-First và mô hình ngôn ngữ cùng nhận diện (Độ tin cậy cao nhất).
 - **`LLM_ONLY`**: Được LLM trích xuất ngữ nghĩa sâu từ nội dung bài viết (Có thể là công ty con, đối tác chiến lược hoặc đối tượng hưởng lợi gián tiếp).
 - **`CODE_ONLY`**: Khớp từ khóa máy móc từ tiêu đề.
+- Mặc định mọi lens (`buzz`, `pulse`, `themes`, `cooccur`, `brief`) chỉ tính thực thể `role = primary` có nguồn `BOTH` hoặc `LLM_ONLY`. Thực thể `mentioned` và `CODE_ONLY` chỉ được đưa vào khi chạy với `--include-mentions` và phải ghi rõ trong báo cáo.
 
 ## 3. Quy Chuẩn Sắc Thái & Độ Nhạy Thời Gian
 - **Sắc thái (`sentiment`)**:
@@ -37,6 +38,16 @@ Khi lọc hoặc tổng hợp thông tin theo mã cổ phiếu, Agent phải tô
 - Các lens trả khối `baseline`, `coverage` hoặc `history`. Khi `sufficient = false`, `window_starts_before_data = true`, `state = "Chưa đủ lịch sử"` hoặc số kỳ lịch sử ít, Agent phải ghi rõ giới hạn đó ngay dưới bảng [Đo lường].
 - Đếm theo **story** (bài cùng tiêu đề chuẩn hoá giữa các báo) khi nói về số sự kiện; đếm theo **bài** khi nói về độ phủ truyền thông. Số nguồn (`n_sources`) là thước đo mức lan toả.
 
+- `coverage.window_starts_before_dense = true` hoặc `history_starts_before_dense = true`: cửa sổ lùi qua mốc `dense_data_from` (ngày kho đạt mật độ đủ dày, thường vài chục đến vài trăm bài/ngày). Dữ liệu trước mốc rất thưa, phải ghi "lịch sử thưa trước <ngày>" và không kết luận xu hướng dài hạn từ đoạn đó.
+- `baseline.regime_from` / `coverage.entity_regime_from`: pipeline gán thực thể đã đổi chế độ (`config/regimes.json`). `buzz` và `themes` chỉ so sánh với dữ liệu từ mốc này; khi `baseline.warnings` có nội dung hoặc `state = "Chưa đủ lịch sử"`, không nêu kết luận "tăng tốc" hay "đột biến" dựa trên chúng.
+- `pulse` gom theo phiên giao dịch (`coverage.basis = trade_date`): tin sau 14:45 ICT và tin cuối tuần thuộc phiên kế tiếp, nên một kỳ có thể gồm nhiều ngày lịch.
+
 ## 7. Phạm Vi Khuyến Nghị
 - Tín hiệu tin tức (đột biến, sentiment, phân vị) là chỉ báo chú ý, không phải khuyến nghị mua/bán và không phải tín hiệu giá.
 - Kết luận nhân quả (ví dụ nguyên nhân biến động giá, ai hưởng lợi) phải kèm trích dẫn bài và mức độ chắc chắn.
+
+## 8. Đọc Phân Kỳ và Phân Biệt Tin PR với Tin Xúc Tác
+- Luôn đọc `hot_net_sent` (tin cấp thiết) và `effect_net_sent` (trọng số cấp thiết và độ lan tỏa nguồn) trước `net_sent` (sắc thái truyền thông chung). Chênh lệch giữa `net_sent` và `hot_net_sent` là tín hiệu phân kỳ: tâm lý chung khác tâm lý của nhóm tin cấp thiết; phải nêu rõ và không gộp thành một kết luận.
+- Đối chiếu phân kỳ giữa bối cảnh quốc tế (thực thể Fed, DXY) và trong nước (NHNN, tỷ giá, lãi suất) bằng hai truy vấn riêng, không suy luận từ một con số tổng.
+- Tin PR thương hiệu, giải thưởng, lễ kỷ niệm không phải chất xúc tác định giá. Khi kết luận tác động thị trường, chỉ dựa vào tin có `implication` nêu cơ chế cụ thể (chính sách, kết quả kinh doanh, M&A, pháp lý) và loại bài PR khỏi bằng chứng. Cột phân loại sự kiện chưa có trong dữ liệu, nên việc lọc dựa trên đọc `title` và `implication`.
+- Khi diễn giải truyền dẫn theo ngành, đối chiếu `sectors` với các nhóm ngành trụ của rổ `--universe vn30` do analyst xác nhận; không tự gán cơ chế truyền dẫn không có trong bài báo.

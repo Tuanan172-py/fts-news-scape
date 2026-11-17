@@ -1,6 +1,7 @@
 """Release stale or failed waves in ops.db to unblock reserved articles."""
 from __future__ import annotations
 
+import argparse
 import sqlite3
 import sys
 from pathlib import Path
@@ -16,8 +17,11 @@ from src.ops.store import OpsStore
 force_utf8_stdio()
 
 
-def release_stale_waves() -> int:
+def release_stale_waves(*, include_active: bool = False) -> int:
     """Mark abandoned failed and parked waves as CANCELLED to release their articles.
+
+    Args:
+        include_active: Cancel all non-terminal waves if True; otherwise only FAILED and PARKED.
 
     Returns:
         Number of waves cancelled.
@@ -26,33 +30,48 @@ def release_stale_waves() -> int:
     store = OpsStore(paths.ops_db, log_dir=paths.log_dir)
 
     with store.conn() as c:
-        # Find stale failed or parked waves not opened today.
+        if include_active:
+            status_clause = "status NOT IN ('DONE', 'CANCELLED')"
+        else:
+            status_clause = "status IN ('FAILED', 'PARKED')"
+
         rows = c.execute(
-            "SELECT wave_id, status FROM ops_waves "
-            "WHERE status IN ('FAILED', 'PARKED') "
-            "AND wave_id NOT LIKE 'W1023%'"
+            f"SELECT wave_id, status FROM ops_waves WHERE {status_clause}"
         ).fetchall()
 
         if not rows:
-            print("Không có wave nào bị kẹt cần giải phóng.")
+            print("No stale waves found to release.")
+            reserved_left = store.reserved_article_ids()
+            print(f"Remaining reserved articles in queue: {len(reserved_left):,}")
             return 0
 
-        print(f"Tìm thấy {len(rows)} wave kẹt trong ops.db:")
+        print(f"Found {len(rows)} stale waves in ops.db:")
         for r in rows:
-            print(f"  • {r[0]}: {r[1]} -> CANCELLED")
+            print(f"  * {r[0]}: {r[1]} -> CANCELLED")
 
         c.execute(
-            "UPDATE ops_waves "
-            "SET status = 'CANCELLED', reason = 'Huỷ đợt cũ đã dừng để giải phóng bài tồn đọng' "
-            "WHERE status IN ('FAILED', 'PARKED') "
-            "AND wave_id NOT LIKE 'W1023%'"
+            f"UPDATE ops_waves "
+            f"SET status = 'CANCELLED', reason = 'Cancelled stale wave to release backlog articles' "
+            f"WHERE {status_clause}"
         )
 
-        reserved_left = store.reserved_article_ids()
-        print(f"\n✅ Đã chuyển {len(rows)} wave sang CANCELLED.")
-        print(f"Số bài còn bị khoá trong hàng đợi: {len(reserved_left):,} bài.")
-        return len(rows)
+    reserved_left = store.reserved_article_ids()
+    print(f"\nMarked {len(rows)} waves as CANCELLED.")
+    print(f"Remaining reserved articles in queue: {len(reserved_left):,}")
+    return len(rows)
+
+
+def main() -> None:
+    """Parse command-line arguments and release stale waves."""
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument(
+        "--all",
+        action="store_true",
+        help="Release all unfinished waves including stuck active states.",
+    )
+    args = parser.parse_args()
+    release_stale_waves(include_active=args.all)
 
 
 if __name__ == "__main__":
-    release_stale_waves()
+    main()

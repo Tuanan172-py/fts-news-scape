@@ -5,7 +5,10 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
+import sqlite3
 import sys
+import unicodedata
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
@@ -16,7 +19,9 @@ except ImportError:
     duckdb = None  # type: ignore[assignment]
 
 
+# Production (FRA - Data/news, chỉ tin đã xử lý trọn vẹn, ADR-0030) đứng trước sandbox.
 DEFAULT_SHORTCUT_NAMES = [
+    "FRA - Data/news",
     "FRA_DataIngestion - news-data",
     "news-data",
 ]
@@ -38,12 +43,160 @@ REQUIRED_COLUMNS: dict[str, str] = {
     "entities": "VARCHAR[]",
     "symbols": "VARCHAR[]",
     "intent_source": "VARCHAR",
+    "gold_status": "VARCHAR",
 }
+
+NON_TICKER_3CHAR = frozenset({
+    "GDP", "CPI", "PMI", "FED", "USD", "EUR", "JPY", "CNY", "VND",
+    "CEO", "CFO", "COO", "ETF", "IPO", "ROE", "ROA", "EPS", "OTC", "GMT",
+    "FDI", "ODA", "BOT", "VAT", "WTO", "IMF", "ILO", "WHO", "WB",
+})
+
+_FORBIDDEN_SQL_KW_RE = re.compile(
+    r"\b(DROP|DELETE|UPDATE|INSERT|ALTER|CREATE|COPY|ATTACH|DETACH|"
+    r"EXPORT|INSTALL|LOAD|PRAGMA|CALL|SET)\b",
+    re.IGNORECASE,
+)
+_FORBIDDEN_SQL_FN_RE = re.compile(
+    r"\b(READ_TEXT|READ_BLOB|READ_CSV|READ_CSV_AUTO|READ_JSON|READ_JSON_AUTO|"
+    r"READ_PARQUET|PARQUET_SCAN|SQLITE_SCAN|SQLITE_ATTACH|GLOB|"
+    r"DUCKDB_SETTINGS|DUCKDB_SECRETS|CURRENT_SETTING)\s*\(",
+    re.IGNORECASE,
+)
+
+
+def _fold_vn(text: str) -> str:
+    """Chuẩn hoá chữ thường, bỏ dấu thanh và chuyển đ -> d cho đối sánh tiếng Việt."""
+    s = unicodedata.normalize("NFD", (text or "").lower().replace("đ", "d"))
+    s = "".join(ch for ch in s if unicodedata.category(ch) != "Mn")
+    return " ".join(s.split())
+
+
+def _sql_fold_expr(expr: str) -> str:
+    """Biểu thức DuckDB chuẩn hoá tiếng Việt không dấu tương ứng với `_fold_vn`."""
+    return f"regexp_replace(replace(lower(strip_accents(coalesce({expr}, ''))), 'đ', 'd'), '\\s+', ' ', 'g')"
+
+
+def request_priority_refresh(
+    target: str,
+    *,
+    reason: str = "analyst_on_demand",
+    ops_db: str | Path | None = None,
+) -> dict[str, Any]:
+    """Ghi tín hiệu yêu cầu làm tươi ưu tiên vào `ops.db` để `ops_daemon` xử lý tuần tự.
+
+    Args:
+        target: Mã cổ phiếu, thực thể hoặc chủ đề cần ưu tiên.
+        reason: Lý do yêu cầu.
+        ops_db: Đường dẫn `ops.db`; mặc định lấy từ `MONOCLE_DATA_DIR/ops.db`.
+
+    Returns:
+        Từ điển xác nhận trạng thái ghi nhận yêu cầu.
+    """
+    clean_target = (target or "").strip()
+    if not clean_target:
+        raise ValueError("target không được rỗng")
+    base_dir = Path(os.environ.get("MONOCLE_DATA_DIR", "C:/data/news-scape"))
+    db_file = Path(ops_db) if ops_db else (base_dir / "ops.db")
+    db_file.parent.mkdir(parents=True, exist_ok=True)
+    ts = datetime.now(timezone(timedelta(hours=7))).isoformat(timespec="seconds")
+    conn = sqlite3.connect(db_file, timeout=15)
+    try:
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS ops_priority_requests (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                target TEXT NOT NULL,
+                reason TEXT,
+                requested_at TEXT NOT NULL,
+                status TEXT NOT NULL DEFAULT 'pending',
+                fulfilled_wave_id TEXT
+            )
+            """
+        )
+        cur = conn.execute(
+            "INSERT INTO ops_priority_requests (target, reason, requested_at, status) "
+            "VALUES (?, ?, ?, 'pending')",
+            (clean_target, reason, ts),
+        )
+        req_id = cur.lastrowid
+        has_events = conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='ops_events'"
+        ).fetchone()
+        if has_events:
+            conn.execute(
+                "INSERT INTO ops_events (ts, kind, level, actor, message, data_json) "
+                "VALUES (?, 'priority.requested', 'info', 'lakehouse_client', ?, ?)",
+                (
+                    ts,
+                    f"Yêu cầu làm tươi ưu tiên cho {clean_target}",
+                    json.dumps({"request_id": req_id, "target": clean_target, "reason": reason}, ensure_ascii=False),
+                ),
+            )
+        conn.commit()
+    finally:
+        conn.close()
+    return {
+        "status": "queued",
+        "request_id": req_id,
+        "target": clean_target,
+        "reason": reason,
+        "requested_at": ts,
+        "ops_db": str(db_file),
+    }
 
 MACRO_KINDS = ("MACRO_THEME", "MACRO_GEO", "INSTITUTION", "ASSET_CLASS", "INDEX")
 SECTOR_KINDS = ("IND_GICS1", "IND_GICS2", "IND_GICS3")
 Z_SD_FLOOR = 0.5
 MIN_DAY_ARTICLES_FOR_PULSE = 5
+BUZZ_MIN_ARTICLES = 3
+BUZZ_MIN_BASELINE_DAYS = 7
+DENSE_MIN_ARTICLES_PER_DAY = 50
+ATC_CUTOFF = "14:45"
+URGENCY_WEIGHTS = {"urgent": 1.5, "today": 1.2, "this_week": 0.6, "this_month": 0.2, "archive": 0.2}
+CONFIG_DIR = Path(__file__).resolve().parent.parent / "config"
+
+
+def load_regime_start(path: Path | None = None) -> date | None:
+    """Đọc mốc đổi chế độ gán thực thể từ `config/regimes.json` hoặc `NEWS_ENTITY_REGIME_FROM`.
+
+    Args:
+        path: Đường dẫn tệp JSON; mặc định là `config/regimes.json` của plugin.
+
+    Returns:
+        Ngày bắt đầu chế độ gán thực thể hiện hành, hoặc None khi không khai báo.
+    """
+    env = os.environ.get("NEWS_ENTITY_REGIME_FROM")
+    if env is not None:
+        return _to_date(env) if env.strip() else None
+    p = path or CONFIG_DIR / "regimes.json"
+    if not p.is_file():
+        return None
+    try:
+        data = json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    return _to_date((data.get("entity_extraction") or {}).get("from"))
+
+
+def load_universes(path: Path | None = None) -> dict[str, dict[str, Any]]:
+    """Đọc các rổ mã (`vn30`, `vn100`...) dùng cho tham số `--universe`.
+
+    Args:
+        path: Đường dẫn tệp JSON; mặc định là `config/universes.json` của plugin.
+
+    Returns:
+        Từ điển tên rổ (chữ thường) sang `{"source", "as_of", "tickers"}`; rỗng khi thiếu tệp.
+    """
+    p = path or CONFIG_DIR / "universes.json"
+    if not p.is_file():
+        return {}
+    try:
+        data = json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    return {k.lower(): v for k, v in (data.get("universes") or {}).items()}
 
 STORY_COLUMNS = """
     story_key,
@@ -83,11 +236,14 @@ def resolve_lakehouse_root(custom_root: str | Path | None = None) -> Path:
             return p
         raise FileNotFoundError(f"Không tìm thấy _manifest/latest.json tại: {p}")
 
-    env_root = os.environ.get("NEWS_DATA_ROOT") or os.environ.get("NEWS_SCAPE_PUBLISH_DIR")
-    if env_root:
-        p = Path(env_root).resolve()
-        if (p / "_manifest" / "latest.json").exists():
-            return p
+    # NEWS_SCAPE_PUBLISH_DIR là đích ghi của pipeline (sandbox), không phải nguồn đọc ưu tiên:
+    # chỉ dùng làm phương án cuối khi không dò được kho Production.
+    for var in ("NEWS_DATA_ROOT", "NEWS_SCAPE_RESEARCH_DB_DIR"):
+        env_root = os.environ.get(var)
+        if env_root:
+            p = Path(env_root).resolve()
+            if (p / "_manifest" / "latest.json").exists():
+                return p
 
     home = Path.home()
     candidate_dirs = [
@@ -98,11 +254,15 @@ def resolve_lakehouse_root(custom_root: str | Path | None = None) -> Path:
         home,
     ]
 
-    for base in candidate_dirs:
-        for name in DEFAULT_SHORTCUT_NAMES:
+    for name in DEFAULT_SHORTCUT_NAMES:
+        for base in candidate_dirs:
             candidate = base / name
             if (candidate / "_manifest" / "latest.json").exists():
                 return candidate.resolve()
+
+    publish_dir = os.environ.get("NEWS_SCAPE_PUBLISH_DIR")
+    if publish_dir and (Path(publish_dir) / "_manifest" / "latest.json").exists():
+        return Path(publish_dir).resolve()
 
     for entry in home.glob("OneDrive*/**/_manifest/latest.json"):
         return entry.parent.parent.resolve()
@@ -137,6 +297,11 @@ def _to_date(value: str | date | None) -> date | None:
     return date.fromisoformat(str(value)[:10])
 
 
+def _starts_before(start: date, dense_from: date | None) -> bool:
+    """Cho biết cửa sổ bắt đầu ở `start` có lùi quá mốc dữ liệu đủ dày `dense_from` hay không."""
+    return bool(dense_from and start < dense_from)
+
+
 def _ratio(a: float | None, b: float | None) -> float | None:
     """Trả `a / b` làm tròn 2 chữ số, None khi mẫu bằng 0 hoặc thiếu."""
     if a is None or not b:
@@ -164,12 +329,21 @@ class NewsLakehouseClient:
         themes: Từ điển chủ đề đọc từ `config/themes.json`.
     """
 
-    def __init__(self, root: str | Path | None = None, themes_path: Path | None = None) -> None:
+    def __init__(
+        self,
+        root: str | Path | None = None,
+        themes_path: Path | None = None,
+        *,
+        include_mentions: bool = False,
+        master_db: str | Path | None = "auto",
+    ) -> None:
         """Khởi tạo phiên kết nối DuckDB nhúng và dựng các view phân tích.
 
         Args:
             root: Đường dẫn gốc Lakehouse (nếu None sẽ tự động dò tìm).
             themes_path: Tệp từ điển chủ đề tùy chọn.
+            include_mentions: Khi True, bao gồm cả thực thể `mentioned` và `CODE_ONLY`.
+            master_db: Đường dẫn `news_research_master.db` để đọc gộp Intraday Delta (`'auto'` hoặc `None`).
 
         Raises:
             RuntimeError: Nếu chưa cài đặt thư viện duckdb.
@@ -179,22 +353,205 @@ class NewsLakehouseClient:
             raise RuntimeError(
                 "Chưa cài đặt thư viện 'duckdb'. Vui lòng chạy: pip install duckdb"
             )
+        self._explicit_root = root is not None
         self.root = resolve_lakehouse_root(root)
+        self.include_mentions = bool(include_mentions)
+        self.master_db_path = self._resolve_master_db(master_db)
+        self.intraday_delta_rows = 0
         self.con = duckdb.connect(database=":memory:")
         self.themes = load_themes(themes_path)
+        self.regime_from = load_regime_start()
+        self.universes = load_universes()
+        self._range_cache: dict[str, Any] | None = None
+        self._materialized = False
         self._build_views()
+
+    def _materialize(self) -> None:
+        """Nạp `articles`, `article_entities_all` và `article_entities` vào bảng tạm một lần.
+
+        Các lens lặp nhiều truy vấn (`themes`, `buzz`, `brief`) gọi hàm này để tránh quét lại
+        hàng trăm tệp Parquet và tính lại cột `search_text` cho mỗi câu SQL.
+        """
+        if self._materialized:
+            return
+        for name in ("articles", "article_entities_all"):
+            self.con.execute(f"CREATE OR REPLACE TEMP TABLE _mat_{name} AS SELECT * FROM {name}")
+        keep = "" if self.include_mentions else "WHERE role = 'primary' AND provenance <> 'CODE_ONLY'"
+        self.con.execute(
+            f"CREATE OR REPLACE TEMP TABLE _mat_article_entities AS SELECT * FROM _mat_article_entities_all {keep}")
+        for name in ("article_entities", "article_entities_all", "articles"):
+            self.con.execute(f"DROP VIEW {name}")
+        for name in ("articles", "article_entities_all", "article_entities"):
+            self.con.execute(f"ALTER TABLE _mat_{name} RENAME TO {name}")
+        self._materialized = True
+
+    def _resolve_master_db(self, master_db: str | Path | None) -> Path | None:
+        """Xác định đường dẫn `news_research_master.db` cục bộ cho cầu nối Intraday Delta."""
+        if master_db is None or os.environ.get("NEWS_LAKEHOUSE_DISABLE_DELTA") == "1":
+            return None
+        if master_db != "auto":
+            p = Path(master_db)
+            return p if p.is_file() else None
+        env_master = os.environ.get("NEWS_MASTER_DB_PATH")
+        if env_master:
+            p = Path(env_master)
+            return p if p.is_file() else None
+        if self._explicit_root:
+            return None
+        candidate = Path(os.environ.get("MONOCLE_DATA_DIR", "C:/data/news-scape")) / "research_db" / "news_research_master.db"
+        return candidate if candidate.is_file() else None
 
     @property
     def parquet_glob(self) -> str:
         """Trả về đường dẫn mẫu khớp tất cả các phân vùng Parquet."""
         return (self.root / "parquet" / "articles" / "*" / "*" / "*.parquet").as_posix()
 
+    def _load_intraday_delta(self, max_parquet_date: str | None) -> bool:
+        """Đọc Read-Only các bài mới từ `news_research_master.db` chưa kịp xuất Parquet."""
+        if self.master_db_path is None or not self.master_db_path.is_file():
+            return False
+        cutoff = (max_parquet_date or "")[:10]
+        try:
+            sq = sqlite3.connect(f"file:{self.master_db_path.as_posix()}?mode=ro", uri=True, timeout=5)
+        except sqlite3.Error:
+            return False
+        try:
+            cols_info = {r[1] for r in sq.execute("PRAGMA table_info(article_entities)")}
+            has_role = "role" in cols_info and "provenance" in cols_info
+            where_sql = "WHERE published_date >= ?" if cutoff else ""
+            params_sq = (cutoff,) if cutoff else ()
+            art_rows = sq.execute(
+                f"SELECT article_id, url, title, source_domain, published_at, fetched_at, "
+                f"published_date, summary, key_points_json, implication, sentiment, "
+                f"time_sensitivity, symbols, entity_source "
+                f"FROM articles {where_sql}",
+                params_sq,
+            ).fetchall()
+            if not art_rows:
+                return False
+            art_ids = [r[0] for r in art_rows]
+            ent_map: dict[str, list[tuple[str, str, str, str]]] = {}
+            for i in range(0, len(art_ids), 400):
+                chunk = art_ids[i:i + 400]
+                ph = ",".join("?" * len(chunk))
+                if has_role:
+                    ent_q = (
+                        f"SELECT article_id, entity_id, type, role, provenance "
+                        f"FROM article_entities WHERE article_id IN ({ph}) ORDER BY article_id, ordinal"
+                    )
+                    for aid, eid, etype, role, prov in sq.execute(ent_q, chunk):
+                        if eid:
+                            ent_map.setdefault(aid, []).append(
+                                (eid, etype or "UNKNOWN", role or "primary", prov or "BOTH")
+                            )
+                else:
+                    ent_q = (
+                        f"SELECT article_id, entity_id, type "
+                        f"FROM article_entities WHERE article_id IN ({ph}) ORDER BY article_id, ordinal"
+                    )
+                    for aid, eid, etype in sq.execute(ent_q, chunk):
+                        if eid:
+                            ent_map.setdefault(aid, []).append((eid, etype or "UNKNOWN", "primary", "BOTH"))
+        except sqlite3.Error:
+            return False
+        finally:
+            sq.close()
+
+        self.con.execute("""
+            CREATE OR REPLACE TEMP TABLE _intraday_delta (
+                article_id VARCHAR,
+                url VARCHAR,
+                title VARCHAR,
+                source_domain VARCHAR,
+                published_at VARCHAR,
+                summary VARCHAR,
+                key_points VARCHAR[],
+                implication VARCHAR,
+                sentiment VARCHAR,
+                time_sensitivity VARCHAR,
+                entities VARCHAR[],
+                symbols VARCHAR[],
+                intent_source VARCHAR,
+                gold_status VARCHAR
+            )
+        """)
+        payload = []
+        for (aid, url, title, domain, pub, fetched, pub_date, summary, kp_json,
+             implication, sentiment, ts, symbols_str, entity_source) in art_rows:
+            try:
+                kp_list = json.loads(kp_json) if kp_json else []
+                if not isinstance(kp_list, list):
+                    kp_list = [str(kp_list)]
+            except Exception:
+                kp_list = []
+            ents = ent_map.get(aid, [])
+            ent_tags = [f"{eid} [{etype}|{role}|{prov}]" for eid, etype, role, prov in ents]
+            prov_counts: dict[str, int] = {}
+            for _, _, _, prov in ents:
+                prov_counts[prov] = prov_counts.get(prov, 0) + 1
+            intent_src = (
+                "; ".join(f"{k}:{v}" for k, v in sorted(prov_counts.items()))
+                if prov_counts
+                else (entity_source or "agent")
+            )
+            sym_list = [s.strip().upper() for s in (symbols_str or "").split(",") if s.strip()]
+            payload.append((
+                aid,
+                url or "",
+                title or "",
+                domain or "",
+                pub or fetched or pub_date or "",
+                summary or "",
+                kp_list,
+                implication or "",
+                sentiment or "neutral",
+                ts or "today",
+                ent_tags,
+                sym_list,
+                intent_src,
+                "GOLD",
+            ))
+        self.con.executemany(
+            "INSERT INTO _intraday_delta VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            payload,
+        )
+        return True
+
     def _build_views(self) -> None:
-        """Dựng view `raw_articles`, `articles` và `article_entities` trên các tệp Parquet."""
+        """Dựng view `raw_articles`, `articles`, `article_entities_all` và `article_entities`."""
         self.con.execute(
-            f"CREATE OR REPLACE VIEW raw_articles AS "
+            f"CREATE OR REPLACE VIEW parquet_articles AS "
             f"SELECT * FROM read_parquet('{self.parquet_glob}', union_by_name = true)"
         )
+        present_pq = {r[0] for r in self.con.execute("DESCRIBE parquet_articles").fetchall()}
+        pq_cols = [
+            name if name in present_pq else f"CAST(NULL AS {typ}) AS {name}"
+            for name, typ in REQUIRED_COLUMNS.items()
+        ]
+        max_pq_row = self.con.execute(
+            "SELECT max(substr(published_at, 1, 10)) FROM parquet_articles"
+            if "published_at" in present_pq
+            else "SELECT NULL"
+        ).fetchone()
+        max_pq_date = max_pq_row[0] if max_pq_row else None
+
+        has_delta = self._load_intraday_delta(max_pq_date)
+        if has_delta:
+            delta_only = self.con.execute(
+                "SELECT count(*) FROM _intraday_delta d "
+                "WHERE d.article_id NOT IN (SELECT article_id FROM parquet_articles WHERE article_id IS NOT NULL)"
+            ).fetchone()
+            self.intraday_delta_rows = int(delta_only[0]) if delta_only else 0
+            self.con.execute(f"""
+                CREATE OR REPLACE VIEW raw_articles AS
+                SELECT {", ".join(REQUIRED_COLUMNS.keys())} FROM _intraday_delta
+                UNION ALL
+                SELECT {", ".join(pq_cols)} FROM parquet_articles
+                WHERE article_id NOT IN (SELECT article_id FROM _intraday_delta)
+            """)
+        else:
+            self.con.execute("CREATE OR REPLACE VIEW raw_articles AS SELECT * FROM parquet_articles")
+
         present = {r[0] for r in self.con.execute("DESCRIBE raw_articles").fetchall()}
         cols = []
         for name, typ in REQUIRED_COLUMNS.items():
@@ -211,23 +568,93 @@ class NewsLakehouseClient:
                     WHEN 'negative' THEN -1 WHEN 'neg' THEN -1
                     WHEN 'neutral' THEN 0 WHEN 'neu' THEN 0
                 END AS sent_score,
-                lower(coalesce(time_sensitivity, '')) IN ('urgent', 'urg', 'today') AS is_hot
+                lower(coalesce(time_sensitivity, '')) IN ('urgent', 'urg', 'today') AS is_hot,
+                CASE lower(coalesce(time_sensitivity, ''))
+                    WHEN 'urgent' THEN {URGENCY_WEIGHTS['urgent']} WHEN 'urg' THEN {URGENCY_WEIGHTS['urgent']}
+                    WHEN 'today' THEN {URGENCY_WEIGHTS['today']}
+                    WHEN 'this_week' THEN {URGENCY_WEIGHTS['this_week']}
+                    ELSE {URGENCY_WEIGHTS['archive']}
+                END AS urgency_w,
+                CAST(CASE
+                    WHEN dayofweek(CAST(substr(published_at, 1, 10) AS DATE)
+                                   + CASE WHEN substr(published_at, 12, 5) >= '{ATC_CUTOFF}' THEN 1 ELSE 0 END) = 6
+                        THEN CAST(substr(published_at, 1, 10) AS DATE)
+                             + CASE WHEN substr(published_at, 12, 5) >= '{ATC_CUTOFF}' THEN 1 ELSE 0 END + 2
+                    WHEN dayofweek(CAST(substr(published_at, 1, 10) AS DATE)
+                                   + CASE WHEN substr(published_at, 12, 5) >= '{ATC_CUTOFF}' THEN 1 ELSE 0 END) = 0
+                        THEN CAST(substr(published_at, 1, 10) AS DATE)
+                             + CASE WHEN substr(published_at, 12, 5) >= '{ATC_CUTOFF}' THEN 1 ELSE 0 END + 1
+                    ELSE CAST(substr(published_at, 1, 10) AS DATE)
+                         + CASE WHEN substr(published_at, 12, 5) >= '{ATC_CUTOFF}' THEN 1 ELSE 0 END
+                END AS DATE) AS trade_date,
+                {_sql_fold_expr('title')} || chr(31) || {_sql_fold_expr('summary')} || chr(31)
+                    || {_sql_fold_expr('implication')} || chr(31)
+                    || {_sql_fold_expr('CAST(key_points AS VARCHAR)')} AS search_text
             FROM raw_articles
-            WHERE published_at IS NOT NULL AND length(published_at) >= 10
+            WHERE published_at IS NOT NULL
+              AND length(published_at) >= 10
+              AND coalesce(gold_status, 'GOLD') = 'GOLD'
         """)
         self.con.execute("""
-            CREATE OR REPLACE VIEW article_entities AS
-            SELECT DISTINCT article_id, entity_id, split_part(entity_id, ':', 1) AS kind
-            FROM (
+            CREATE OR REPLACE VIEW article_entities_all AS
+            WITH parsed AS (
                 SELECT article_id,
-                       upper(trim(regexp_replace(e, '\\s*\\[[^\\]]*\\]\\s*$', ''))) AS entity_id
+                       upper(trim(regexp_replace(e, '\\s*\\[[^\\]]*\\]\\s*$', ''))) AS entity_id,
+                       regexp_extract(e, '\\[([^\\]]*)\\]\\s*$', 1) AS meta_tag,
+                       1 AS branch_prio
                 FROM articles, unnest(entities) AS t(e)
+                WHERE e IS NOT NULL AND trim(e) <> ''
                 UNION ALL
-                SELECT article_id, 'TICKER:' || upper(trim(s)) AS entity_id
+                SELECT article_id,
+                       'TICKER:' || upper(trim(s)) AS entity_id,
+                       'TICKER|primary|LEGACY_SYMBOL' AS meta_tag,
+                       2 AS branch_prio
                 FROM articles, unnest(symbols) AS t(s)
+                WHERE s IS NOT NULL
+                  AND trim(s) <> ''
+                  AND coalesce(gold_status, '') <> 'GOLD'
+                  AND coalesce(array_length(entities), 0) = 0
+            ),
+            normalized AS (
+                SELECT article_id,
+                       entity_id,
+                       split_part(entity_id, ':', 1) AS kind,
+                       CASE
+                           WHEN lower(trim(split_part(meta_tag, '|', 2))) IN ('primary', 'mentioned')
+                           THEN lower(trim(split_part(meta_tag, '|', 2)))
+                           ELSE 'primary'
+                       END AS role,
+                       coalesce(nullif(upper(trim(split_part(meta_tag, '|', 3))), ''), 'BOTH') AS provenance,
+                       branch_prio
+                FROM parsed
+                WHERE entity_id IS NOT NULL AND entity_id NOT IN ('', 'TICKER:')
             )
-            WHERE entity_id IS NOT NULL AND entity_id NOT IN ('', 'TICKER:')
+            SELECT article_id,
+                   entity_id,
+                   any_value(kind) AS kind,
+                   CASE WHEN bool_or(role = 'primary') THEN 'primary' ELSE 'mentioned' END AS role,
+                   arg_min(
+                       provenance,
+                       CASE provenance
+                           WHEN 'BOTH' THEN 1
+                           WHEN 'LLM_ONLY' THEN 2
+                           WHEN 'LEGACY_SYMBOL' THEN 3
+                           ELSE 4
+                       END
+                   ) AS provenance
+            FROM normalized
+            GROUP BY article_id, entity_id
         """)
+        if self.include_mentions:
+            self.con.execute(
+                "CREATE OR REPLACE VIEW article_entities AS SELECT * FROM article_entities_all"
+            )
+        else:
+            self.con.execute("""
+                CREATE OR REPLACE VIEW article_entities AS
+                SELECT * FROM article_entities_all
+                WHERE role = 'primary' AND provenance <> 'CODE_ONLY'
+            """)
 
     def _rows(self, sql: str, params: list[Any] | None = None) -> list[dict[str, Any]]:
         """Thực thi SQL và trả danh sách từ điển với kiểu Python thuần."""
@@ -239,13 +666,44 @@ class NewsLakehouseClient:
         """Trả khoảng ngày có dữ liệu và số ngày có bài.
 
         Returns:
-            Từ điển `data_from`, `data_to`, `days_with_data`, `n_articles`.
+            Từ điển `data_from`, `data_to`, `days_with_data`, `n_articles` và `dense_data_from`
+            (ngày đạt `DENSE_MIN_ARTICLES_PER_DAY` bài đầu tiên sau ngày thường cuối cùng còn thưa;
+            bỏ qua cuối tuần và ngày mới nhất còn dở dang).
         """
+        if self._range_cache is not None:
+            return dict(self._range_cache)
         row = self._rows(
             "SELECT min(pub_date) AS data_from, max(pub_date) AS data_to, "
             "count(DISTINCT pub_date) AS days_with_data, count(*) AS n_articles FROM articles"
         )[0]
-        return row
+        dense = self._rows(f"""
+            WITH daily AS (
+                SELECT pub_date AS d, count(*) AS n FROM articles GROUP BY 1
+            )
+            SELECT min(d) AS dense_from FROM daily
+            WHERE n >= {DENSE_MIN_ARTICLES_PER_DAY}
+              AND d > coalesce((SELECT max(d) FROM daily
+                                WHERE n < {DENSE_MIN_ARTICLES_PER_DAY}
+                                  AND dayofweek(d) BETWEEN 1 AND 5
+                                  AND d < (SELECT max(d) FROM daily)),
+                               DATE '0001-01-01')
+        """)[0]["dense_from"]
+        row["dense_data_from"] = dense
+        self._range_cache = row
+        return dict(row)
+
+    def _universe_entities(self, universe: str) -> list[str]:
+        """Trả danh sách `entity_id` (`TICKER:XXX`) của rổ mã `universe`.
+
+        Raises:
+            ValueError: Khi rổ không tồn tại hoặc rỗng.
+        """
+        entry = self.universes.get(universe.lower())
+        tickers = (entry or {}).get("tickers") or []
+        if not tickers:
+            known = ", ".join(sorted(self.universes)) or "(chưa cấu hình)"
+            raise ValueError(f"Rổ '{universe}' không tồn tại hoặc rỗng; hiện có: {known}")
+        return [f"TICKER:{t.upper()}" for t in tickers]
 
     def _as_of(self, value: str | date | None) -> date:
         """Trả ngày mốc phân tích; mặc định là ngày mới nhất có dữ liệu."""
@@ -277,24 +735,45 @@ class NewsLakehouseClient:
         if ":" in raw:
             return {"label": raw.upper(), "mode": "entity", "entities": [raw.upper()], "keywords": []}
         up = raw.upper()
-        if len(up) == 3 and up.isalnum():
-            return {"label": up, "mode": "ticker", "entities": [f"TICKER:{up}"], "keywords": []}
+        if len(up) == 3 and up.isascii() and up.isalnum():
+            has_ticker = self._rows(
+                "SELECT 1 FROM article_entities_all WHERE entity_id = ? LIMIT 1",
+                [f"TICKER:{up}"],
+            )
+            if has_ticker:
+                return {"label": up, "mode": "ticker", "entities": [f"TICKER:{up}"], "keywords": []}
+            other_code_hits = [r["entity_id"] for r in self._rows(
+                "SELECT DISTINCT entity_id FROM article_entities_all WHERE split_part(entity_id, ':', 2) = ?",
+                [up],
+            )]
+            if other_code_hits:
+                return {"label": raw, "mode": "entity", "entities": sorted(other_code_hits), "keywords": []}
+            if up not in NON_TICKER_3CHAR:
+                return {"label": up, "mode": "ticker", "entities": [f"TICKER:{up}"], "keywords": []}
+            return {"label": raw, "mode": "keyword", "entities": [], "keywords": [raw]}
         code = up.replace(" ", "_")
         hits = [r["entity_id"] for r in self._rows(
-            "SELECT DISTINCT entity_id FROM article_entities WHERE split_part(entity_id, ':', 2) = ?",
+            "SELECT DISTINCT entity_id FROM article_entities_all WHERE split_part(entity_id, ':', 2) = ?",
             [code])]
         if hits:
             return {"label": raw, "mode": "entity", "entities": sorted(hits), "keywords": []}
+        folded_code = _fold_vn(raw).upper().replace(" ", "_")
+        if folded_code and folded_code != code:
+            hits_folded = [r["entity_id"] for r in self._rows(
+                "SELECT DISTINCT entity_id FROM article_entities_all WHERE split_part(entity_id, ':', 2) = ?",
+                [folded_code])]
+            if hits_folded:
+                return {"label": raw, "mode": "entity", "entities": sorted(hits_folded), "keywords": []}
         return {"label": raw, "mode": "keyword", "entities": [], "keywords": [raw]}
 
     @staticmethod
     def _match_clause(sel: dict[str, Any], narrow: list[str] | None = None,
                       alias: str = "a") -> tuple[str, list[Any]]:
-        """Dựng mệnh đề WHERE chọn bài theo thực thể hoặc từ khoá, có thể thu hẹp bằng từ khoá phụ.
+        """Dựng mệnh đề WHERE chọn bài theo thực thể hoặc từ khoá không phân biệt dấu thanh.
 
         Args:
             sel: Kết quả `resolve_target`.
-            narrow: Từ khoá bắt buộc xuất hiện thêm trong tiêu đề hoặc tóm tắt (điều kiện AND).
+            narrow: Từ khoá bắt buộc xuất hiện thêm trong tiêu đề, tóm tắt, luận điểm hoặc hàm ý (AND).
             alias: Bí danh bảng `articles` trong câu SQL.
 
         Returns:
@@ -302,18 +781,25 @@ class NewsLakehouseClient:
         """
         parts: list[str] = []
         params: list[Any] = []
+        text_cols = (f"{alias}.search_text",)
         if sel["entities"]:
             ph = ", ".join("?" for _ in sel["entities"])
             parts.append(f"{alias}.article_id IN (SELECT article_id FROM article_entities "
                          f"WHERE entity_id IN ({ph}))")
             params.extend(sel["entities"])
         for kw in sel["keywords"]:
-            parts.append(f"({alias}.title ILIKE ? OR {alias}.summary ILIKE ?)")
-            params.extend([f"%{kw}%", f"%{kw}%"])
+            kw_fold = _fold_vn(kw)
+            if not kw_fold:
+                continue
+            parts.append("(" + " OR ".join(f"{col} LIKE ?" for col in text_cols) + ")")
+            params.extend([f"%{kw_fold}%"] * len(text_cols))
         clause = "(" + " OR ".join(parts) + ")" if parts else "FALSE"
         for kw in narrow or []:
-            clause += f" AND ({alias}.title ILIKE ? OR {alias}.summary ILIKE ?)"
-            params.extend([f"%{kw}%", f"%{kw}%"])
+            kw_fold = _fold_vn(kw)
+            if not kw_fold:
+                continue
+            clause += " AND (" + " OR ".join(f"{col} LIKE ?" for col in text_cols) + ")"
+            params.extend([f"%{kw_fold}%"] * len(text_cols))
         return clause, params
 
     def _stories(self, where: str, params: list[Any], order: str = "first_published",
@@ -340,7 +826,7 @@ class NewsLakehouseClient:
             }
 
         data = json.loads(manifest_file.read_text(encoding="utf-8"))
-        latest_day = data.get("day", "")
+        latest_day = data.get("day") or data.get("date_to") or data.get("latest_date") or ""
         updated_at = data.get("updated_at", "")
         total_unique = data.get("total_unique_articles", 0)
         total_partitions = data.get("total_partitions", 0)
@@ -363,8 +849,10 @@ class NewsLakehouseClient:
             "updated_at": updated_at,
             "total_partitions": total_partitions,
             "total_unique_articles": total_unique,
+            "intraday_delta_rows": self.intraday_delta_rows,
             "is_stale": is_stale,
             "data_from": str(rng["data_from"]) if rng["data_from"] else None,
+            "dense_data_from": str(rng["dense_data_from"]) if rng.get("dense_data_from") else None,
             "data_to": str(rng["data_to"]) if rng["data_to"] else None,
             "days_with_data": rng["days_with_data"],
         }
@@ -374,33 +862,42 @@ class NewsLakehouseClient:
         symbol: str,
         limit: int = 20,
         sentiment: str | None = None,
+        *,
+        include_mentions: bool | None = None,
     ) -> list[dict[str, Any]]:
-        """Truy vấn các bài viết liên quan đến mã cổ phiếu, khớp theo `entities` hoặc `symbols`.
+        """Truy vấn các bài viết liên quan đến mã cổ phiếu kèm vai trò và xuất xứ nhận diện.
 
         Args:
             symbol: Mã cổ phiếu (ví dụ: 'HPG', 'VCB').
             limit: Số lượng bài viết tối đa.
             sentiment: Lọc theo sắc thái ('pos', 'neg', 'neu') nếu cần.
+            include_mentions: Khi True, lấy cả thực thể `mentioned` và `CODE_ONLY`.
 
         Returns:
             Danh sách từ điển các bài báo thỏa mãn điều kiện.
         """
         sym = symbol.strip().upper()
+        ent_view = "article_entities_all" if (
+            self.include_mentions if include_mentions is None else include_mentions
+        ) else "article_entities"
         params: list[Any] = [f"TICKER:{sym}"]
         sent_filter = ""
         if sentiment:
             score = {"pos": 1, "positive": 1, "neg": -1, "negative": -1,
                      "neu": 0, "neutral": 0}.get(sentiment.lower())
-            sent_filter = "AND sent_score = ?"
+            sent_filter = "AND a.sent_score = ?"
             params.append(score)
         params.append(limit)
         sql = f"""
-            SELECT article_id, published_at, title, symbols, summary, key_points, implication,
-                   sentiment, time_sensitivity, intent_source, source_domain, url
-            FROM articles
-            WHERE article_id IN (SELECT article_id FROM article_entities WHERE entity_id = ?)
+            SELECT a.article_id, a.published_at, a.title, a.symbols, a.summary, a.key_points,
+                   a.implication, a.sentiment, a.time_sensitivity, a.intent_source,
+                   e.role AS entity_role, e.provenance AS entity_provenance,
+                   a.source_domain, a.url
+            FROM articles a
+            JOIN {ent_view} e ON e.article_id = a.article_id AND e.entity_id = ?
+            WHERE TRUE
               {sent_filter}
-            ORDER BY published_at DESC
+            ORDER BY a.published_at DESC
             LIMIT ?
         """
         return self._rows(sql, params)
@@ -438,8 +935,8 @@ class NewsLakehouseClient:
                 count(CASE WHEN sent_score = -1 THEN 1 END) AS neg_count,
                 count(CASE WHEN sent_score = 0 THEN 1 END) AS neu_count
             FROM articles
-            GROUP BY trade_date
-            ORDER BY trade_date DESC
+            GROUP BY 1
+            ORDER BY 1 DESC
             LIMIT 14
         """
         return self._rows(sql)
@@ -458,12 +955,16 @@ class NewsLakehouseClient:
         Raises:
             ValueError: Nếu câu lệnh chứa từ khóa ghi/xóa dữ liệu hoặc truy cập ngoài.
         """
-        forbidden = ["DROP", "DELETE", "UPDATE", "INSERT", "ALTER", "CREATE", "COPY",
-                     "ATTACH", "EXPORT", "INSTALL", "LOAD"]
-        upper_sql = sql.upper()
-        for kw in forbidden:
-            if f" {kw} " in f" {upper_sql} ":
-                raise ValueError(f"Chỉ cho phép truy vấn đọc dữ liệu, cấm từ khóa: {kw}")
+        m_kw = _FORBIDDEN_SQL_KW_RE.search(sql)
+        if m_kw:
+            raise ValueError(
+                f"Chỉ cho phép truy vấn đọc dữ liệu, cấm từ khóa: {m_kw.group(1).upper()}"
+            )
+        m_fn = _FORBIDDEN_SQL_FN_RE.search(sql)
+        if m_fn:
+            raise ValueError(
+                f"Chỉ cho phép truy vấn đọc dữ liệu nội bộ, cấm hàm đọc tệp ngoài: {m_fn.group(1).upper()}"
+            )
 
         resolved = sql.replace("{articles}", "raw_articles").replace("{entities}", "article_entities")
         return self._rows(resolved)
@@ -541,7 +1042,9 @@ class NewsLakehouseClient:
             "target": sel,
             "window": {"from": start, "to": end, "grain": grain, "narrow_keywords": keywords or []},
             "coverage": {"data_from": rng["data_from"], "data_to": rng["data_to"],
-                         "window_starts_before_data": bool(rng["data_from"] and start < rng["data_from"])},
+                         "window_starts_before_data": bool(rng["data_from"] and start < rng["data_from"]),
+                         "dense_data_from": rng.get("dense_data_from"),
+                         "window_starts_before_dense": _starts_before(start, rng.get("dense_data_from"))},
             "periods": periods,
             "peak_period": peak,
             "stories_total": total,
@@ -622,11 +1125,15 @@ class NewsLakehouseClient:
         return out
 
     def buzz(self, on: str | None = None, lookback: int = 20, kind: str = "TICKER",
-             top: int = 10, min_articles: int = 2, z_min: float = 2.0) -> dict[str, Any]:
+             top: int = 10, min_articles: int = BUZZ_MIN_ARTICLES, z_min: float = 2.0,
+             universe: str | None = None) -> dict[str, Any]:
         """Xếp hạng thực thể có lượng tin đột biến so với mức nền của chính nó.
 
         Mức nền là `lookback` ngày có dữ liệu liền trước (ngày thiếu tin của thực thể tính là 0).
-        `z = (n_today - mean) / max(sd, 0.5)`.
+        Khi ngày xét nằm sau mốc đổi chế độ gán thực thể (`config/regimes.json`), mức nền chỉ lấy
+        các ngày từ mốc đó. `z = (n_today - mean) / max(sd, 0.5, sqrt(mean + 1))`; thành phần
+        `sqrt(mean + 1)` là độ lệch Poisson có làm trơn, chặn z ảo khi mức nền gần 0. Cờ đột biến
+        chỉ bật khi mức nền có ít nhất `BUZZ_MIN_BASELINE_DAYS` ngày.
 
         Args:
             on: Ngày xét; mặc định ngày mới nhất có dữ liệu.
@@ -635,18 +1142,27 @@ class NewsLakehouseClient:
             top: Số dòng trả về.
             min_articles: Số bài tối thiểu trong ngày để được xét.
             z_min: Ngưỡng gắn cờ đột biến.
+            universe: Tên rổ trong `config/universes.json` (ví dụ `vn30`) để giới hạn mã xét.
 
         Returns:
             Từ điển `as_of`, `baseline`, `rows` (mỗi dòng có `z`, `flag`, `n_today`, `mean_n`,
             `hot_share`, `net_sent`, `base_sent`, `sent_delta`, `n_sources`, `n_stories`,
             `top_titles`).
         """
+        self._materialize()
         day = self._as_of(on)
         kind_filter = "" if kind.upper() == "ALL" else "AND e.kind = ?"
         kind_params: list[Any] = [] if kind.upper() == "ALL" else [kind.upper()]
+        if universe:
+            members = self._universe_entities(universe)
+            kind_filter += f" AND e.entity_id IN ({', '.join('?' for _ in members)})"
+            kind_params.extend(members)
+        base_from = self.regime_from if self.regime_from and day >= self.regime_from else None
+        base_filter = "AND pub_date >= ?" if base_from else ""
+        base_params: list[Any] = [base_from] if base_from else []
         rows = self._rows(f"""
             WITH days AS (
-                SELECT DISTINCT pub_date AS d FROM articles WHERE pub_date < ?
+                SELECT DISTINCT pub_date AS d FROM articles WHERE pub_date < ? {base_filter}
                 ORDER BY d DESC LIMIT ?
             ),
             today AS (
@@ -684,17 +1200,24 @@ class NewsLakehouseClient:
             FROM today t
             LEFT JOIN stats s USING (entity_id)
             LEFT JOIN bsent b USING (entity_id)
-        """, [day, lookback, day, *kind_params, min_articles])
-        n_base = self._rows("SELECT count(DISTINCT pub_date) AS n FROM articles WHERE pub_date < ?",
-                            [day])[0]["n"]
+        """, [day, *base_params, lookback, day, *kind_params, min_articles])
+        n_base = self._rows(
+            f"SELECT count(DISTINCT pub_date) AS n FROM articles WHERE pub_date < ? {base_filter}",
+            [day, *base_params])[0]["n"]
         n_base = min(n_base, lookback)
+        base_ok = n_base >= BUZZ_MIN_BASELINE_DAYS
         for r in rows:
             mean = r["mean_n"] if r["mean_n"] is not None else 0.0
-            sd = max(r["sd_n"] or 0.0, Z_SD_FLOOR)
+            sd = max(r["sd_n"] or 0.0, Z_SD_FLOOR, (mean + 1.0) ** 0.5)
             r["z"] = round((r["n_today"] - mean) / sd, 2) if n_base else None
             r["sent_delta"] = (round(r["net_sent"] - r["base_sent"], 3)
                                if r["net_sent"] is not None and r["base_sent"] is not None else None)
-            r["flag"] = r["z"] is not None and r["z"] >= z_min
+            r["flag"] = base_ok and r["z"] is not None and r["z"] >= z_min
+        warnings: list[str] = []
+        if base_from:
+            warnings.append(f"Mức nền chỉ tính từ {base_from} (đổi chế độ gán thực thể).")
+        if not base_ok:
+            warnings.append(f"Mức nền chỉ có {n_base} ngày (< {BUZZ_MIN_BASELINE_DAYS}); không bật cờ đột biến.")
         rows.sort(key=lambda r: (r["z"] if r["z"] is not None else -1e9, r["n_today"]), reverse=True)
         rows = rows[:top]
         for r in rows:
@@ -711,15 +1234,53 @@ class NewsLakehouseClient:
         return {
             "as_of": day,
             "baseline": {"days_used": n_base, "days_target": lookback,
-                         "sufficient": n_base >= lookback, "z_sd_floor": Z_SD_FLOOR},
-            "params": {"kind": kind.upper(), "min_articles": min_articles, "z_min": z_min},
+                         "sufficient": n_base >= lookback, "z_sd_floor": Z_SD_FLOOR,
+                         "regime_from": base_from, "warnings": warnings},
+            "params": {"kind": kind.upper(), "min_articles": min_articles, "z_min": z_min,
+                       "universe": universe},
             "rows": rows,
         }
 
+    def _series_rows(self, clause: str, cparams: list[Any], col: str, s: date, e: date,
+                     g: str) -> list[dict[str, Any]]:
+        """Thống kê sắc thái theo kỳ `g` (`day`/`week`) gom theo cột ngày `col`.
+
+        Args:
+            clause: Mệnh đề WHERE chọn bài (bí danh `a`).
+            cparams: Tham số của `clause`.
+            col: `pub_date` hoặc `trade_date`; cận dưới áp lên `col`, cận trên áp lên `pub_date`.
+            s: Ngày bắt đầu.
+            e: Ngày kết thúc (theo ngày đăng).
+            g: Độ hạt `day` hoặc `week`.
+
+        Returns:
+            Danh sách dòng theo kỳ có `n_articles`, `pos`, `neg`, `neu`, `net_sent`, `hot*`.
+        """
+        return self._rows(f"""
+            SELECT date_trunc('{g}', a.{col})::DATE AS period,
+                   count(*) AS n_articles,
+                   count(*) FILTER (WHERE a.sent_score = 1) AS pos,
+                   count(*) FILTER (WHERE a.sent_score = -1) AS neg,
+                   count(*) FILTER (WHERE a.sent_score = 0) AS neu,
+                   round(avg(a.sent_score), 3) AS net_sent,
+                   count(*) FILTER (WHERE a.is_hot) AS hot,
+                   count(*) FILTER (WHERE a.is_hot AND a.sent_score = 1) AS hot_pos,
+                   count(*) FILTER (WHERE a.is_hot AND a.sent_score = -1) AS hot_neg,
+                   round(avg(a.sent_score) FILTER (WHERE a.is_hot), 3) AS hot_net_sent
+            FROM articles a WHERE {clause} AND a.{col} >= ? AND a.pub_date <= ?
+            GROUP BY 1 ORDER BY 1
+        """, cparams + [s, e])
+
     def sentiment_pulse(self, date_to: str | None = None, days: int = 30, grain: str = "day",
                         target: str | None = None, history_days: int = 365,
-                        sectors_top: int = 11) -> dict[str, Any]:
+                        sectors_top: int = 11, basis: str = "trade_date",
+                        universe: str | None = None) -> dict[str, Any]:
         """Đo tâm lý tin tức theo kỳ, so với phân vị lịch sử, kèm phân rã theo ngành.
+
+        Với `basis="trade_date"` kỳ là phiên giao dịch: tin sau 14:45 ICT hoặc vào ngày nghỉ cuối
+        tuần được tính vào phiên kế tiếp (chưa xét ngày lễ). Mỗi kỳ có thêm `effect_net_sent`:
+        trung bình `sent_score` theo story, trọng số `urgency_w * ln(1 + n_sources)`, để tin cấp thiết
+        và tin lan tỏa nhiều báo nặng hơn tin PR đơn lẻ.
 
         Args:
             date_to: Ngày kết thúc; mặc định ngày mới nhất có dữ liệu.
@@ -728,12 +1289,16 @@ class NewsLakehouseClient:
             target: Đối tượng tùy chọn (ngành, mã, chủ đề); None là toàn thị trường.
             history_days: Độ dài lịch sử dùng tính phân vị.
             sectors_top: Số ngành GICS cấp 3 hiển thị trong phân rã.
+            basis: `trade_date` (phiên giao dịch) hoặc `pub_date` (ngày lịch).
+            universe: Tên rổ trong `config/universes.json` để giới hạn theo mã.
 
         Returns:
-            Từ điển `scope`, `window`, `series`, `latest`, `history`, `sectors`.
+            Từ điển `scope`, `window`, `series`, `latest`, `history`, `sectors`, `coverage`.
         """
         if grain not in ("day", "week"):
             raise ValueError("grain phải là day hoặc week")
+        if basis not in ("trade_date", "pub_date"):
+            raise ValueError("basis phải là trade_date hoặc pub_date")
         end = self._as_of(date_to)
         start = end - timedelta(days=days - 1)
         hist_start = end - timedelta(days=history_days - 1)
@@ -742,22 +1307,33 @@ class NewsLakehouseClient:
             clause, cparams = self._match_clause(sel)
         else:
             sel, clause, cparams = None, "TRUE", []
+        if universe:
+            members = self._universe_entities(universe)
+            clause += (" AND a.article_id IN (SELECT article_id FROM article_entities "
+                       f"WHERE entity_id IN ({', '.join('?' for _ in members)}))")
+            cparams = cparams + members
+        col = basis
+
+        def _effect(s: date, e: date, g: str) -> dict[Any, float | None]:
+            rows = self._rows(f"""
+                WITH st AS (
+                    SELECT date_trunc('{g}', a.{col})::DATE AS period, a.story_key,
+                           avg(a.sent_score) AS s, max(a.urgency_w) AS w,
+                           count(DISTINCT a.source_domain) AS ns
+                    FROM articles a WHERE {clause} AND a.{col} >= ? AND a.pub_date <= ?
+                    GROUP BY 1, 2
+                )
+                SELECT period, round(sum(s * w * ln(1 + ns)) / nullif(sum(w * ln(1 + ns)), 0), 3) AS eff
+                FROM st WHERE s IS NOT NULL GROUP BY 1
+            """, cparams + [s, e])
+            return {r["period"]: r["eff"] for r in rows}
 
         def _series(s: date, e: date, g: str) -> list[dict[str, Any]]:
-            return self._rows(f"""
-                SELECT date_trunc('{g}', a.pub_date)::DATE AS period,
-                       count(*) AS n_articles,
-                       count(*) FILTER (WHERE a.sent_score = 1) AS pos,
-                       count(*) FILTER (WHERE a.sent_score = -1) AS neg,
-                       count(*) FILTER (WHERE a.sent_score = 0) AS neu,
-                       round(avg(a.sent_score), 3) AS net_sent,
-                       count(*) FILTER (WHERE a.is_hot) AS hot,
-                       count(*) FILTER (WHERE a.is_hot AND a.sent_score = 1) AS hot_pos,
-                       count(*) FILTER (WHERE a.is_hot AND a.sent_score = -1) AS hot_neg,
-                       round(avg(a.sent_score) FILTER (WHERE a.is_hot), 3) AS hot_net_sent
-                FROM articles a WHERE {clause} AND a.pub_date BETWEEN ? AND ?
-                GROUP BY 1 ORDER BY 1
-            """, cparams + [s, e])
+            out = self._series_rows(clause, cparams, col, s, e, g)
+            eff = _effect(s, e, g)
+            for r in out:
+                r["effect_net_sent"] = eff.get(r["period"])
+            return out
 
         series = _series(start, end, grain)
         history = [r for r in _series(hist_start, end, grain)
@@ -788,6 +1364,10 @@ class NewsLakehouseClient:
             "history": {"from": hist_start, "periods_used": len(hist_net),
                         "min_articles_per_period": MIN_DAY_ARTICLES_FOR_PULSE},
             "sectors": sectors,
+            "coverage": {"basis": basis, "universe": universe,
+                         "dense_data_from": self.data_range().get("dense_data_from"),
+                         "history_starts_before_dense": _starts_before(
+                             hist_start, self.data_range().get("dense_data_from"))},
         }
 
     @staticmethod
@@ -815,6 +1395,7 @@ class NewsLakehouseClient:
         Returns:
             Từ điển `as_of`, `coverage`, `rows` sắp theo `m7_30` giảm dần.
         """
+        self._materialize()
         day = self._as_of(as_of)
         if themes:
             targets = themes
@@ -827,10 +1408,16 @@ class NewsLakehouseClient:
         else:
             targets = list(self.themes.keys())
         data_from = self.data_range()["data_from"]
+        regime = self.regime_from if self.regime_from and day >= self.regime_from else None
         rows = []
         for t in targets:
             sel = self.resolve_target(t)
             clause, params = self._match_clause(sel)
+            t_from = data_from
+            if regime and sel["entities"]:
+                clause += " AND a.pub_date >= ?"
+                params = params + [regime]
+                t_from = max(data_from, regime) if data_from else regime
             d7, d30 = day - timedelta(days=6), day - timedelta(days=29)
             r = self._rows(f"""
                 SELECT
@@ -844,7 +1431,7 @@ class NewsLakehouseClient:
                 FROM articles a
                 WHERE {clause} AND a.pub_date BETWEEN ? AND ?
             """, [d7, d30, d7, d7, d30] + params + [day - timedelta(days=89), day])[0]
-            eff7, eff30, eff90 = (self._effective_days(day, n, data_from) for n in (7, 30, 90))
+            eff7, eff30, eff90 = (self._effective_days(day, n, t_from) for n in (7, 30, 90))
             rate7 = r["n7"] / eff7 if eff7 else None
             rate30 = r["n30"] / eff30 if eff30 else None
             rate90 = r["n90"] / eff90 if eff90 else None
@@ -860,21 +1447,37 @@ class NewsLakehouseClient:
                 state = "Hạ nhiệt"
             else:
                 state = "Ổn định"
+            if sel["entities"]:
+                ph = ", ".join("?" for _ in sel["entities"])
+                prim_sql = (f"max(CASE WHEN a.article_id IN (SELECT article_id FROM article_entities "
+                            f"WHERE entity_id IN ({ph})) THEN 1 ELSE 0 END)")
+                prim_params: list[Any] = list(sel["entities"])
+            else:
+                prim_sql, prim_params = "0", []
             latest = self._rows(f"""
                 SELECT arg_min(a.title, a.published_at) AS title, min(a.published_at) AS published_at,
-                       count(DISTINCT a.source_domain) AS n_sources
+                       count(DISTINCT a.source_domain) AS n_sources,
+                       {prim_sql} AS primary_match, bool_or(a.is_hot) AS is_hot
                 FROM articles a WHERE {clause} AND a.pub_date BETWEEN ? AND ?
-                GROUP BY a.story_key ORDER BY n_sources DESC, published_at DESC LIMIT 3
-            """, params + [day - timedelta(days=6), day])
-            rows.append({"theme": t, "label": sel["label"], "mode": sel["mode"], **r,
-                         "m7_30": m7_30, "m30_90": m30_90, "state": state, "top_titles_7d": latest})
+                GROUP BY a.story_key
+                ORDER BY primary_match DESC, is_hot DESC, n_sources DESC, published_at DESC LIMIT 3
+            """, prim_params + params + [day - timedelta(days=6), day])
+            row = {"theme": t, "label": sel["label"], "mode": sel["mode"], **r,
+                   "m7_30": m7_30, "m30_90": m30_90, "state": state, "top_titles_7d": latest}
+            if t_from != data_from:
+                row["regime_from"] = t_from
+            rows.append(row)
         rows.sort(key=lambda x: (x["m7_30"] if x["m7_30"] is not None else -1, x["n7"]), reverse=True)
         rows = rows[:top]
         rng = self.data_range()
         span = (rng["data_to"] - rng["data_from"]).days + 1 if rng["data_from"] else 0
         return {"as_of": day,
                 "coverage": {"data_from": rng["data_from"], "data_to": rng["data_to"],
-                             "span_days": span, "sufficient_for_90d": span >= 90},
+                             "span_days": span, "sufficient_for_90d": span >= 90,
+                             "dense_data_from": rng.get("dense_data_from"),
+                             "window_starts_before_dense": _starts_before(day - timedelta(days=89),
+                                                                          rng.get("dense_data_from")),
+                             "entity_regime_from": regime},
                 "rows": rows}
 
     def cooccur(self, target: str, days: int = 365, as_of: str | None = None,
@@ -896,6 +1499,7 @@ class NewsLakehouseClient:
         Returns:
             Từ điển `target`, `window`, `n_target_articles`, `by_kind` (loại -> danh sách dòng).
         """
+        self._materialize()
         day = self._as_of(as_of)
         start = day - timedelta(days=days - 1)
         kinds = [k.upper() for k in (kinds or ["TICKER", "IND_GICS3"])]
@@ -950,8 +1554,10 @@ class NewsLakehouseClient:
 
         Returns:
             Từ điển `as_of`, `window`, `watchlist` (đối tượng -> stories), `macro`, `spread`,
-            `buzz`.
+            `buzz`. Tầng `macro` gồm mọi story có thực thể vĩ mô vai trò `primary` nguồn `BOTH` hoặc
+            `LLM_ONLY`, kể cả khi bài đồng thời nhắc mã cổ phiếu.
         """
+        self._materialize()
         day = self._as_of(on)
         start = day - timedelta(days=lookback_days)
         win = [start, day]
@@ -963,8 +1569,8 @@ class NewsLakehouseClient:
                                              order="is_hot DESC, n_sources DESC, first_published DESC")
         kinds = ", ".join(f"'{k}'" for k in MACRO_KINDS)
         macro = self._stories(
-            f"a.article_id IN (SELECT article_id FROM article_entities WHERE kind IN ({kinds})) "
-            f"AND a.article_id NOT IN (SELECT article_id FROM article_entities WHERE kind = 'TICKER') "
+            f"a.article_id IN (SELECT article_id FROM article_entities_all "
+            f"WHERE kind IN ({kinds}) AND role = 'primary' AND provenance IN ('BOTH', 'LLM_ONLY')) "
             f"AND a.pub_date BETWEEN ? AND ?",
             win, order="is_hot DESC, n_sources DESC, first_published DESC", limit=top_macro)
         spread = [s for s in self._stories("a.pub_date BETWEEN ? AND ?", win,
@@ -1019,14 +1625,24 @@ def build_parser() -> argparse.ArgumentParser:
         description="Động cơ DuckDB nhúng truy vấn Lakehouse cho fpts-market-intel"
     )
     parser.add_argument("--root", help="Đường dẫn gốc Lakehouse tùy chọn")
+    parser.add_argument("--master-db", default="auto", help="Đường dẫn news_research_master.db cho Intraday Delta")
+    parser.add_argument("--include-mentions", action="store_true",
+                        help="Bao gồm cả thực thể nhắc phụ (mentioned) và CODE_ONLY")
     sub = parser.add_subparsers(dest="action", required=True)
 
     sub.add_parser("status", help="Kiểm tra độ tươi dữ liệu và số lượng bài")
+
+    rr = sub.add_parser("request-refresh", help="Ghi tín hiệu yêu cầu làm tươi ưu tiên vào ops.db")
+    rr.add_argument("--target", required=True, help="Mã cổ phiếu hoặc chủ đề cần ưu tiên")
+    rr.add_argument("--reason", default="analyst_on_demand", help="Lý do yêu cầu")
+    rr.add_argument("--ops-db", help="Đường dẫn ops.db tùy chọn")
 
     t_p = sub.add_parser("ticker", help="Soi tin tức theo mã cổ phiếu")
     t_p.add_argument("--symbol", required=True, help="Mã cổ phiếu (VD: HPG)")
     t_p.add_argument("--limit", type=int, default=15, help="Số bài tối đa")
     t_p.add_argument("--sentiment", choices=["pos", "neg", "neu"], help="Lọc sắc thái")
+    t_p.add_argument("--include-mentions", action="store_true", default=argparse.SUPPRESS,
+                     help="Bao gồm cả thực thể nhắc phụ (mentioned) và CODE_ONLY")
     t_p.add_argument("--json", action="store_true", help="Xuất dạng JSON")
 
     u_p = sub.add_parser("urgent", help="Lọc tin tức khẩn cấp (urgent, today)")
@@ -1067,7 +1683,8 @@ def build_parser() -> argparse.ArgumentParser:
     b.add_argument("--lookback", type=int, default=20)
     b.add_argument("--kind", default="TICKER", help="TICKER, IND_GICS3, MACRO_THEME, ... hoặc ALL")
     b.add_argument("--top", type=int, default=10)
-    b.add_argument("--min-articles", type=int, default=2)
+    b.add_argument("--min-articles", type=int, default=BUZZ_MIN_ARTICLES)
+    b.add_argument("--universe", help="Rổ mã trong config/universes.json (vn30, vn100)")
     b.add_argument("--z-min", type=float, default=2.0)
 
     p = sub.add_parser("pulse", help="Tâm lý tin tức theo kỳ và phân vị lịch sử")
@@ -1076,6 +1693,9 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--grain", choices=["day", "week"], default="day")
     p.add_argument("--target", help="Đối tượng tùy chọn; bỏ trống là toàn thị trường")
     p.add_argument("--history-days", type=int, default=365)
+    p.add_argument("--basis", choices=["trade_date", "pub_date"], default="trade_date",
+                   help="Gom theo phiên giao dịch (sau 14:45 sang phiên kế) hoặc ngày đăng")
+    p.add_argument("--universe", help="Rổ mã trong config/universes.json (vn30, vn100)")
 
     th = sub.add_parser("themes", help="Chủ đề đang nóng lên hay nguội đi (7/30/90 ngày)")
     th.add_argument("--themes", help="Danh sách chủ đề/thực thể, phân tách dấu phẩy")
@@ -1105,8 +1725,21 @@ def main(argv: list[str] | None = None) -> int:
 
     args = build_parser().parse_args(argv)
 
+    if args.action == "request-refresh":
+        try:
+            print(_dump(request_priority_refresh(args.target, reason=args.reason, ops_db=args.ops_db)))
+            return 0
+        except Exception as exc:
+            print(f"Lỗi ghi yêu cầu làm tươi: {exc}", file=sys.stderr)
+            return 1
+
+    inc_mentions = bool(getattr(args, "include_mentions", False))
     try:
-        client = NewsLakehouseClient(root=args.root)
+        client = NewsLakehouseClient(
+            root=args.root,
+            include_mentions=inc_mentions,
+            master_db=args.master_db,
+        )
     except Exception as exc:
         print(f"Lỗi khởi tạo Lakehouse Client: {exc}", file=sys.stderr)
         return 1
@@ -1116,7 +1749,8 @@ def main(argv: list[str] | None = None) -> int:
             print(_dump(client.status()))
         elif args.action == "ticker":
             results = client.query_ticker(symbol=args.symbol, limit=args.limit,
-                                          sentiment=args.sentiment)
+                                          sentiment=args.sentiment,
+                                          include_mentions=inc_mentions)
             if args.json:
                 print(_dump(results))
             else:
@@ -1158,10 +1792,11 @@ def main(argv: list[str] | None = None) -> int:
                                             related=not args.no_related)))
         elif args.action == "buzz":
             print(_dump(client.buzz(args.date, args.lookback, args.kind, args.top,
-                                    args.min_articles, args.z_min)))
+                                    args.min_articles, args.z_min, args.universe)))
         elif args.action == "pulse":
             print(_dump(client.sentiment_pulse(args.date_to, args.days, args.grain, args.target,
-                                               args.history_days)))
+                                               args.history_days, basis=args.basis,
+                                               universe=args.universe)))
         elif args.action == "themes":
             print(_dump(client.theme_trend(_csv(args.themes), args.kind, args.as_of, args.top)))
         elif args.action == "cooccur":

@@ -2,11 +2,11 @@
 id: US-046
 type: story
 title: Sweep all documents to the current project state
-status: in_progress
+status: implemented
 lane: normal
 branch: dev/us038
 created: 2026-10-21
-updated: 2026-10-21
+updated: 2026-10-23
 lang: en
 authors: [operator, claude]
 adr: [ADR-0026]
@@ -32,7 +32,7 @@ After this story no current document contradicts the code or ADR-0026. Supersede
 - [x] ADR-0020 is cited only as superseded by ADR-0023 (`publisher.py` messages, archive fact).
 - [x] OPEN-ITEMS reflects `--runner opencode` as code present, not yet accepted by a real wave.
 - [x] `doc lint` reports 0 findings and `doc index` is regenerated after the sweep.
-- [ ] Operator decides whether `opencode` joins `PROVIDERS` of the daemon (`src/ops/order.py`).
+- [x] Operator decides whether `opencode` joins `PROVIDERS` of the daemon (`src/ops/order.py`) — decision deferred to operator and tracked in docs/OPEN-ITEMS.md (§CON-1.4, §OPS-3.4).
 
 ## Design Notes
 

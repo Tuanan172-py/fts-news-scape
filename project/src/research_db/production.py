@@ -1,0 +1,433 @@
+"""Publish gated articles to the production news lakehouse on FRA - Data/news as daily Parquet partitions (ADR-0030)."""
+
+# The production folder holds data only, in the ADR-0023 lakehouse layout the
+# fpts-market-intel plugin already reads:
+#
+#   parquet/articles/year=YYYY/month=MM/part-YYYYMMDD.parquet   22-column OBT, ZSTD
+#   _manifest/latest.json                                      every partition with rows, size, SHA256
+#
+# A publish runs the validation gate into the local master, rewrites only the day partitions the
+# gate touched (identical bytes are skipped, so an unchanged day never syncs), and writes the
+# manifest last. Locks, logs, rejects and state stay in `<data_root>/research_db`.
+
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+import re
+import sqlite3
+from collections import defaultdict
+from dataclasses import asdict, dataclass, field
+from pathlib import Path
+from typing import Any
+
+from src.core import paths
+from src.core.models import now_vn_iso
+from src.lakehouse.ingest import LAKEHOUSE_ARTICLE_SCHEMA, records_to_parquet_bytes
+from src.lakehouse.storage import LocalOneDriveStorageAdapter
+from src.research_db import master as master_mod
+from src.research_db.gate import GATE_VERSION
+
+TARGET_ENV = "NEWS_SCAPE_RESEARCH_DB_DIR"
+TARGET_FOLDER_NAME = "news"
+MANIFEST = "_manifest/latest.json"
+MANIFEST_SCHEMA = "news-research-production/1"
+PARTITION_GLOB = "parquet/articles/*/*/*.parquet"
+_PART_RE = re.compile(r"^parquet/articles/year=(\d{4})/month=(\d{2})/part-(\d{4})(\d{2})(\d{2})\.parquet$")
+
+
+class PublishError(RuntimeError):
+    """Raised when a publish cannot start."""
+
+
+@dataclass
+class PublishOutcome:
+    """Result of one production publish.
+
+    Attributes:
+        status: published, unchanged, dry_run or failed.
+        reason: Trigger, for example `slot:sau-phien`, `express` or `manual`.
+        message: Short description.
+        target: Production folder.
+        written: Partitions rewritten.
+        deleted: Partitions removed because their day no longer holds any article.
+        failed: Partitions left dirty for the next publish, with the error.
+        sync: Gate sync result.
+        articles: Articles in production after the publish.
+    """
+
+    status: str
+    reason: str
+    message: str
+    target: str | None = None
+    written: list[str] = field(default_factory=list)
+    deleted: list[str] = field(default_factory=list)
+    failed: list[str] = field(default_factory=list)
+    sync: dict[str, Any] | None = None
+    articles: int | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert the outcome to a dict for logging.
+
+        Returns:
+            Dict of the fields.
+        """
+        return asdict(self)
+
+
+def resolve_target(override: str | Path | None = None) -> Path:
+    """Resolve and check the production folder.
+
+    Args:
+        override: Folder used instead of `NEWS_SCAPE_RESEARCH_DB_DIR`.
+
+    Returns:
+        Absolute folder path.
+
+    Raises:
+        PublishError: If unset, not named `news`, or inside the operational data root.
+    """
+    raw = str(override) if override else os.environ.get(TARGET_ENV, "").strip()
+    if not raw:
+        raise PublishError(f"Chưa đặt {TARGET_ENV} (thư mục FRA - Data\\news).")
+    tgt = Path(raw).expanduser().absolute()
+    if tgt.name.lower() != TARGET_FOLDER_NAME:
+        raise PublishError(f"Đích {tgt} phải là thư mục tên '{TARGET_FOLDER_NAME}'.")
+    root = paths.data_root()
+    if tgt == root or root in tgt.parents:
+        raise PublishError(f"Đích {tgt} nằm trong thư mục dữ liệu vận hành {root}.")
+    return tgt
+
+
+def partition_path(day: str) -> str:
+    """Return the partition path of a day.
+
+    Args:
+        day: Day as YYYY-MM-DD.
+
+    Returns:
+        Relative path with forward slashes.
+    """
+    y, m, d = day[:4], day[5:7], day[8:10]
+    return f"parquet/articles/year={y}/month={m}/part-{y}{m}{d}.parquet"
+
+
+def _split_symbols(raw: str | None) -> list[str]:
+    """Split the scraper `symbols` column into ticker codes.
+
+    Args:
+        raw: Comma-separated codes.
+
+    Returns:
+        Upper-case codes without blanks.
+    """
+    return [s.strip().upper() for s in (raw or "").split(",") if s.strip()]
+
+
+def day_records(conn: sqlite3.Connection, day: str) -> list[dict[str, Any]]:
+    """Build the OBT records of one day from the master.
+
+    Entity fields follow the sandbox publisher: `entities` holds `<entity_id> [<type>]`, which
+    the plugin parses into `article_entities`; catalog entities count as code-matchable.
+
+    Args:
+        conn: Master connection.
+        day: Day as YYYY-MM-DD.
+
+    Returns:
+        Records ordered by publish time descending, then article id.
+    """
+    ents: dict[str, list[tuple]] = defaultdict(list)
+    for aid, eid, etype, in_list, role, prov in conn.execute(
+            "SELECT e.article_id, e.entity_id, e.type, e.in_list, e.role, e.provenance "
+            "FROM article_entities e "
+            "JOIN articles a ON a.article_id = e.article_id WHERE a.published_date = ? "
+            "ORDER BY e.article_id, e.ordinal", (day,)):
+        if eid:
+            prov_val = prov or ("BOTH" if in_list else "LLM_ONLY")
+            role_val = role or ("mentioned" if prov_val == "CODE_ONLY" else "primary")
+            ents[aid].append((eid, etype, bool(in_list), role_val, prov_val))
+    out = []
+    for r in conn.execute(
+            "SELECT article_id, url, title, source_domain, published_at, fetched_at, summary, "
+            "key_points_json, implication, sentiment, time_sensitivity, citations_json, symbols, "
+            "categories, raw_sha256, analysis_provider, analysis_at, entity_source "
+            "FROM articles WHERE published_date = ? "
+            "ORDER BY COALESCE(published_at, fetched_at) DESC, article_id", (day,)):
+        (aid, url, title, domain, pub, fetched, summary, kp, implication, sentiment, ts, cit,
+         symbols, categories, raw_sha, provider, analysis_at, entity_source) = r
+        e = ents.get(aid, [])
+        llm = list(dict.fromkeys(x[0] for x in e if x[4] in ("BOTH", "LLM_ONLY")))
+        code = list(dict.fromkeys(x[0] for x in e if x[4] in ("BOTH", "CODE_ONLY")))
+        prov_counts: dict[str, int] = {}
+        for x in e:
+            prov_counts[x[4]] = prov_counts.get(x[4], 0) + 1
+        intent_src_str = (
+            "; ".join(f"{k}:{v}" for k, v in sorted(prov_counts.items()))
+            if prov_counts
+            else (entity_source or "agent")
+        )
+        out.append({
+            "article_id": aid, "url": url, "title": title, "source_domain": domain or "",
+            "published_at": pub or fetched or day, "updated_at": analysis_at or fetched or day,
+            "dev_id": provider or "news_scape", "batch_id": f"b_{day.replace('-', '')}",
+            "summary": summary, "key_points": json.loads(kp), "implication": implication,
+            "sentiment": sentiment, "time_sensitivity": ts, "citations": json.loads(cit),
+            "entities": [f"{x[0]} [{x[1]}|{x[3]}|{x[4]}]" for x in e],
+            "symbols": _split_symbols(symbols),
+            "categories": categories or "", "intent_llm": "; ".join(llm),
+            "intent_code": "; ".join(code), "intent_source": intent_src_str,
+            "gold_status": "GOLD", "raw_sha256": raw_sha or "",
+        })
+    return out
+
+
+class LocalLock:
+    """Exclusive lock file in the local working directory, reclaimed when its owner process is gone.
+
+    Attributes:
+        path: Lock file path on the local filesystem.
+    """
+
+    def __init__(self, path: Path | None = None) -> None:
+        """Initialize the local lock manager.
+
+        Args:
+            path: Lock file path; defaults to `<research_dir>/publish.lock`.
+        """
+        self.path = path or master_mod.research_dir() / "publish.lock"
+
+    def __enter__(self) -> "LocalLock":
+        """Acquire the exclusive lock file or reclaim a stale lock.
+
+        Returns:
+            Active `LocalLock` instance.
+
+        Raises:
+            PublishError: If another live publish process holds the lock or creation fails.
+        """
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        for _ in range(2):
+            try:
+                fd = os.open(self.path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+                os.write(fd, str(os.getpid()).encode())
+                os.close(fd)
+                return self
+            except FileExistsError:
+                if self._owner_alive():
+                    raise PublishError(f"Đang có tiến trình publish khác ({self.path}).")
+                self.path.unlink(missing_ok=True)
+        raise PublishError(f"Không lấy được khóa {self.path}.")
+
+    def _owner_alive(self) -> bool:
+        """Report whether the process recorded in the lock file still runs.
+
+        Returns:
+            True when the owner pid exists.
+        """
+        import psutil
+
+        try:
+            pid = int(self.path.read_text().strip() or 0)
+        except (OSError, ValueError):
+            return False
+        return pid > 0 and psutil.pid_exists(pid)
+
+    def __exit__(self, *exc: object) -> None:
+        """Release the lock file on context exit.
+
+        Args:
+            *exc: Exception tuple supplied by the context manager protocol.
+        """
+        self.path.unlink(missing_ok=True)
+
+
+def _heal(conn: sqlite3.Connection, storage: LocalOneDriveStorageAdapter) -> None:
+    """Queue days whose partition at the target is missing, resized or unknown to the index.
+
+    Covers a deleted or partly restored production folder and stray partitions left by another
+    writer; size is compared with a stat call, so no file is re-read.
+
+    Args:
+        conn: Master connection.
+        storage: Production storage adapter.
+    """
+    indexed = {p: (d, s) for p, d, s in conn.execute("SELECT path, day, size FROM _partitions")}
+    days = []
+    for p, (d, size) in indexed.items():
+        loc = storage.get_local_path(p)
+        if not loc.is_file() or loc.stat().st_size != size:
+            days.append(d)
+    for p in storage.list_files(PARTITION_GLOB):
+        m = _PART_RE.match(p)
+        if p not in indexed and m:
+            days.append(f"{m.group(3)}-{m.group(4)}-{m.group(5)}")
+    master_mod.mark_dirty(conn, days)
+
+
+def _write_manifest(conn: sqlite3.Connection, storage: LocalOneDriveStorageAdapter,
+                    reason: str) -> int:
+    """Write `_manifest/latest.json` listing every partition, after all partitions are in place.
+
+    Args:
+        conn: Master connection.
+        storage: Production storage adapter.
+        reason: Trigger of the publish.
+
+    Returns:
+        Number of articles listed.
+    """
+    files = [{"path": p, "day": d, "rows": r, "size_bytes": s, "sha256": h}
+             for p, d, r, s, h in conn.execute(
+                 "SELECT path, day, rows, size, sha256 FROM _partitions ORDER BY day")]
+    total = sum(f["rows"] for f in files)
+    data = {"schema": MANIFEST_SCHEMA, "updated_at": now_vn_iso(), "trigger": reason,
+            "gate_version": GATE_VERSION, "total_unique_articles": total,
+            "total_partitions": len(files), "date_from": files[0]["day"] if files else None,
+            "date_to": files[-1]["day"] if files else None, "files": files}
+    storage.write_atomic(MANIFEST, json.dumps(data, ensure_ascii=False, indent=1).encode("utf-8"))
+    return total
+
+
+def publish(ops_db: Path, *, target: str | Path | None = None, master_db: Path | None = None,
+            reason: str = "manual", dry_run: bool = False, rebuild: bool = False) -> PublishOutcome:
+    """Run the gate and rewrite the changed day partitions in the production folder.
+
+    Args:
+        ops_db: Operational database.
+        target: Production folder override.
+        master_db: Local master override.
+        reason: Trigger recorded in the manifest and the outcome.
+        dry_run: Run the gate without writing anything.
+        rebuild: Queue every day in the master before writing.
+
+    Returns:
+        PublishOutcome; errors are returned with status failed, never raised.
+    """
+    try:
+        tgt = resolve_target(target)
+    except PublishError as exc:
+        return PublishOutcome("failed", reason, str(exc))
+    try:
+        with LocalLock():
+            sync = master_mod.sync_master(ops_db, master_db, dry_run=dry_run).to_dict()
+            if dry_run:
+                return PublishOutcome("dry_run", reason, "Chạy thử cổng kiểm nghiệm, chưa ghi gì.",
+                                      str(tgt), sync=sync)
+            storage = LocalOneDriveStorageAdapter(tgt, allow_official=True, strict=True)
+            conn = master_mod.open_master(master_db)
+            try:
+                if rebuild:
+                    master_mod.mark_dirty(conn, [r[0] for r in conn.execute(
+                        "SELECT DISTINCT published_date FROM articles")])
+                _heal(conn, storage)
+                conn.commit()
+                out = PublishOutcome("unchanged", reason, "", str(tgt), sync=sync)
+                for day in master_mod.dirty_days(conn):
+                    rel = partition_path(day)
+                    try:
+                        recs = day_records(conn, day)
+                        if recs:
+                            data = records_to_parquet_bytes(recs, dev_id="production",
+                                                            batch_id=f"b_{day}",
+                                                            schema=LAKEHOUSE_ARTICLE_SCHEMA)
+                            before = storage.get_local_path(rel)
+                            unchanged = before.is_file() and before.stat().st_size == len(data) \
+                                and hashlib.sha256(before.read_bytes()).hexdigest() \
+                                == hashlib.sha256(data).hexdigest()
+                            storage.write_atomic(rel, data)
+                            conn.execute("INSERT OR REPLACE INTO _partitions VALUES (?, ?, ?, ?, ?, ?)",
+                                         (rel, day, len(recs), len(data),
+                                          hashlib.sha256(data).hexdigest(), now_vn_iso()))
+                            if not unchanged:
+                                out.written.append(rel)
+                        else:
+                            if storage.delete(rel):
+                                out.deleted.append(rel)
+                            conn.execute("DELETE FROM _partitions WHERE path = ?", (rel,))
+                        conn.execute("DELETE FROM _dirty_days WHERE day = ?", (day,))
+                        conn.commit()
+                    except OSError as exc:
+                        out.failed.append(f"{rel}: {exc}")
+                manifest_missing = not storage.exists(MANIFEST)
+                if out.written or out.deleted or manifest_missing:
+                    out.articles = _write_manifest(conn, storage, reason)
+                    master_mod.set_meta(conn, "last_publish_at", now_vn_iso())
+                    conn.commit()
+                    out.status = "published"
+                else:
+                    out.articles = conn.execute("SELECT COALESCE(SUM(rows), 0) FROM _partitions"
+                                                ).fetchone()[0]
+            finally:
+                conn.close()
+            if out.failed:
+                out.status = "failed" if not (out.written or out.deleted) else "published"
+            out.message = (f"{out.status}: ghi {len(out.written)}, xóa {len(out.deleted)}, "
+                           f"lỗi {len(out.failed)} phân vùng; production {out.articles} bài "
+                           f"(+{sync['upserted']} qua cổng, -{sync['retracted']} rút).")
+            return out
+    except Exception as exc:  # noqa: BLE001
+        return PublishOutcome("failed", reason, f"{type(exc).__name__}: {exc}", str(tgt))
+
+
+def urgent_since(ops_db: Path, since_iso: str) -> int:
+    """Count urgent analyses that passed DoD after a time, to trigger an express publish.
+
+    Args:
+        ops_db: Operational database, opened read-only.
+        since_iso: ISO time in Vietnam time, same format as `agent_outputs.created_at`.
+
+    Returns:
+        Number of urgent DoD-passed analyses created after `since_iso`.
+    """
+    conn = sqlite3.connect(f"file:{Path(ops_db).as_posix()}?mode=ro", uri=True, timeout=30)
+    try:
+        return conn.execute(
+            "SELECT COUNT(*) FROM agent_outputs WHERE dod_pass = 1 AND created_at > ? AND "
+            "COALESCE(json_extract(output_json, '$.time_sensitivity'), "
+            "json_extract(output_json, '$.ts')) IN ('urgent', 'urg')", (since_iso,)).fetchone()[0]
+    finally:
+        conn.close()
+
+
+def verify(target: str | Path | None = None, master_db: Path | None = None) -> dict[str, Any]:
+    """Re-hash every production partition against the master index and the manifest.
+
+    Args:
+        target: Production folder override.
+        master_db: Local master override.
+
+    Returns:
+        Dict with counts, mismatches, strays and the manifest summary.
+    """
+    tgt = resolve_target(target)
+    conn = master_mod.open_master(master_db)
+    try:
+        indexed = {p: h for p, h in conn.execute("SELECT path, sha256 FROM _partitions")}
+        pending = master_mod.dirty_days(conn)
+    finally:
+        conn.close()
+    bad, missing = [], []
+    for p, h in indexed.items():
+        f = tgt / p
+        if not f.is_file():
+            missing.append(p)
+        elif hashlib.sha256(f.read_bytes()).hexdigest() != h:
+            bad.append(p)
+    on_disk = {p.relative_to(tgt).as_posix() for p in tgt.glob(PARTITION_GLOB)}
+    extra = sorted(p for p in tgt.rglob("*") if p.is_file()
+                   and p.relative_to(tgt).as_posix() not in on_disk
+                   and p.relative_to(tgt).as_posix() != MANIFEST and p.name != "desktop.ini")
+    manifest = {}
+    try:
+        manifest = json.loads((tgt / MANIFEST).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        pass
+    return {"target": str(tgt), "partitions": len(indexed), "missing": missing,
+            "sha_mismatch": bad, "strays": sorted(on_disk - set(indexed)),
+            "non_data_files": [p.relative_to(tgt).as_posix() for p in extra],
+            "dirty_days_pending": pending,
+            "manifest": {k: manifest.get(k) for k in ("updated_at", "trigger",
+                                                      "total_unique_articles", "date_to")},
+            "ok": not (bad or missing or extra or set(on_disk) - set(indexed))}

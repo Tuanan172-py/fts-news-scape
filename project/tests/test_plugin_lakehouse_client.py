@@ -14,6 +14,7 @@ import sys
 PLUGIN_TOOLS_DIR = Path(__file__).resolve().parents[2] / "plugins" / "fpts-market-intel" / "tools"
 sys.path.insert(0, str(PLUGIN_TOOLS_DIR))
 
+import lakehouse_client
 from lakehouse_client import NewsLakehouseClient, _dump, main, resolve_lakehouse_root
 
 
@@ -264,13 +265,17 @@ def test_timeline_groups_duplicate_titles(rich_lakehouse: Path):
     assert narrow["stories_total"] == 1
 
 
-def test_buzz_flags_spike_against_baseline(rich_lakehouse: Path):
-    """Kiểm tra z-score lượng tin so với mức nền 5 ngày và cờ mức nền chưa đủ."""
+def test_buzz_flags_spike_against_baseline(rich_lakehouse: Path, monkeypatch):
+    """Kiểm tra z-score Poisson làm trơn, cờ đột biến và cảnh báo mức nền ngắn."""
     client = NewsLakehouseClient(root=rich_lakehouse)
+    short = client.buzz(on="2026-10-06", lookback=5)
+    hpg0 = next(r for r in short["rows"] if r["entity_id"] == "TICKER:HPG")
+    assert hpg0["flag"] is False and short["baseline"]["warnings"]
+    monkeypatch.setattr(lakehouse_client, "BUZZ_MIN_BASELINE_DAYS", 5)
     res = client.buzz(on="2026-10-06", lookback=5)
     hpg = next(r for r in res["rows"] if r["entity_id"] == "TICKER:HPG")
     assert hpg["n_today"] == 4 and hpg["mean_n"] == 1.0
-    assert hpg["z"] == 6.0 and hpg["flag"] is True
+    assert hpg["z"] == round(3 / (2 ** 0.5), 2) and hpg["flag"] is True
     assert hpg["n_sources"] == 2 and hpg["n_stories"] == 3
     assert res["baseline"]["sufficient"] is True
     assert client.buzz(on="2026-10-06", lookback=20)["baseline"]["sufficient"] is False
@@ -318,8 +323,9 @@ def test_cooccur_lift(rich_lakehouse: Path):
     assert hpg["lift"] > 1
 
 
-def test_brief_three_tiers(rich_lakehouse: Path):
-    """Kiểm tra bản tin ba tầng: watchlist, vĩ mô không gắn mã, tin nhiều nguồn và mã nóng tin."""
+def test_brief_three_tiers(rich_lakehouse: Path, monkeypatch):
+    """Kiểm tra bản tin ba tầng: watchlist, vĩ mô, tin nhiều nguồn và mã nóng tin."""
+    monkeypatch.setattr(lakehouse_client, "BUZZ_MIN_BASELINE_DAYS", 3)
     client = NewsLakehouseClient(root=rich_lakehouse)
     b = client.brief(on="2026-10-06", watchlist=["HPG"])
     assert len(b["watchlist"]["HPG"]) == 3
@@ -349,3 +355,162 @@ def test_cli_lens_commands(rich_lakehouse: Path, capsys):
                  ["lookup", "--text", "thep"]):
         assert main(["--root", str(rich_lakehouse), *argv]) == 0
         json.loads(capsys.readouterr().out)
+
+
+def _write_lake(tmp_path: Path, rows: list[dict], day: str, manifest: dict | None = None) -> Path:
+    """Ghi Lakehouse tối giản từ các dòng `_art` và trả thư mục gốc."""
+    root = tmp_path / "news-data"
+    part = root / "parquet" / "articles" / "year=2026" / "month=10"
+    part.mkdir(parents=True)
+    schema = pa.schema([
+        ("article_id", pa.string()), ("url", pa.string()), ("title", pa.string()),
+        ("source_domain", pa.string()), ("published_at", pa.string()), ("summary", pa.string()),
+        ("key_points", pa.list_(pa.string())), ("implication", pa.string()),
+        ("sentiment", pa.string()), ("time_sensitivity", pa.string()),
+        ("entities", pa.list_(pa.string())), ("symbols", pa.list_(pa.string())),
+        ("intent_source", pa.string()),
+    ])
+    pq.write_table(pa.Table.from_pylist(rows, schema=schema), part / "part-x.parquet")
+    _write_manifest(root, day, len(rows))
+    if manifest:
+        (root / "_manifest" / "latest.json").write_text(json.dumps(manifest), encoding="utf-8")
+    return root
+
+
+def test_resolve_prefers_production_over_sandbox(tmp_path: Path, monkeypatch):
+    """Kho Production `FRA - Data/news` phải thắng kho Sandbox trong thư mục Shortcuts."""
+    od = tmp_path / "OneDrive - fpts.com.vn"
+    for rel in ("Shortcuts/FRA_DataIngestion - news-data", "FRA - Data/news"):
+        _write_manifest(od / rel, "2026-10-06", 1)
+    monkeypatch.setattr(Path, "home", classmethod(lambda cls: tmp_path))
+    monkeypatch.delenv("NEWS_DATA_ROOT", raising=False)
+    monkeypatch.delenv("NEWS_SCAPE_PUBLISH_DIR", raising=False)
+    monkeypatch.delenv("NEWS_SCAPE_RESEARCH_DB_DIR", raising=False)
+    assert resolve_lakehouse_root() == (od / "FRA - Data" / "news").resolve()
+
+
+def test_status_reads_production_manifest_date_to(tmp_path: Path):
+    """`status()` đọc `date_to` khi manifest Production không có trường `day`."""
+    rows = [_art("a1", "2026-10-06T09:00:00+07:00", "Tin", [])]
+    root = _write_lake(tmp_path, rows, "2026-10-06", manifest={
+        "schema": "news-research-production/1", "date_to": "2026-10-06",
+        "updated_at": "2026-10-06T10:00:00+07:00", "total_unique_articles": 1, "total_partitions": 1})
+    assert NewsLakehouseClient(root=root).status()["latest_day"] == "2026-10-06"
+
+
+def test_trade_date_maps_after_atc_and_weekend(tmp_path: Path):
+    """Tin sau 14:45 ICT và tin cuối tuần ánh xạ sang phiên giao dịch kế tiếp."""
+    cases = {
+        "t1": ("2026-10-02T13:00:00+07:00", "2026-10-02"),
+        "t2": ("2026-10-02T15:00:00+07:00", "2026-10-05"),
+        "t3": ("2026-10-03T10:00:00+07:00", "2026-10-05"),
+        "t4": ("2026-10-04T16:00:00+07:00", "2026-10-05"),
+        "t5": ("2026-10-05T14:45:00+07:00", "2026-10-06"),
+    }
+    rows = [_art(k, ts, k, []) for k, (ts, _) in cases.items()]
+    client = NewsLakehouseClient(root=_write_lake(tmp_path, rows, "2026-10-05"))
+    got = {r["article_id"]: str(r["trade_date"]) for r in
+           client.query_custom_sql("SELECT article_id, trade_date FROM articles")}
+    assert got == {k: v for k, (_, v) in cases.items()}
+
+
+def test_dense_data_from_ignores_sparse_history(tmp_path: Path):
+    """`dense_data_from` là ngày sau ngày thưa cuối cùng, bỏ qua ngày mới nhất còn dở dang."""
+    rows = [_art(f"s{d}", f"2026-09-{d:02d}T09:00:00+07:00", f"Thưa {d}", []) for d in range(1, 6)]
+    for d in range(6, 9):
+        rows += [_art(f"d{d}_{i}", f"2026-09-{d:02d}T09:00:00+07:00", f"Dày {d} {i}", []) for i in range(55)]
+    rows.append(_art("last", "2026-09-09T07:00:00+07:00", "Ngày mới nhất dở dang", []))
+    client = NewsLakehouseClient(root=_write_lake(tmp_path, rows, "2026-09-09"))
+    assert str(client.data_range()["dense_data_from"]) == "2026-09-06"
+    assert client.status()["dense_data_from"] == "2026-09-06"
+    tl = client.timeline("Dày", date_from="2026-09-01", date_to="2026-09-09")
+    assert tl["coverage"]["window_starts_before_dense"] is True
+
+
+def test_brief_macro_keeps_primary_macro_with_ticker_and_drops_code_only(tmp_path: Path):
+    """Tầng vĩ mô giữ bài vĩ mô primary có nhắc ngân hàng, bỏ bài chỉ khớp máy móc."""
+    rows = [
+        _art("m1", "2026-10-06T08:00:00+07:00", "NHNN điều chỉnh tỷ giá, VCB tăng huy động",
+             ["INSTITUTION:NHNN [INSTITUTION|primary|BOTH]", "TICKER:VCB [TICKER|primary|BOTH]"],
+             "neutral", "urgent"),
+        _art("m2", "2026-10-06T09:00:00+07:00", "Bài chỉ nhắc NHNN qua khớp máy",
+             ["INSTITUTION:NHNN [INSTITUTION|mentioned|CODE_ONLY]"], "neutral", "today"),
+    ]
+    client = NewsLakehouseClient(root=_write_lake(tmp_path, rows, "2026-10-06"))
+    titles = [s["title"] for s in client.brief(on="2026-10-06")["macro"]]
+    assert titles == ["NHNN điều chỉnh tỷ giá, VCB tăng huy động"]
+
+
+def test_buzz_universe_and_unknown_universe(rich_lakehouse: Path):
+    """`universe` giới hạn mã xét; rổ không tồn tại báo lỗi rõ ràng."""
+    client = NewsLakehouseClient(root=rich_lakehouse)
+    client.universes = {"vn30": {"tickers": ["VCB"]}}
+    assert client.buzz(on="2026-10-06", lookback=5, universe="vn30")["rows"] == []
+    client.universes = {"vn30": {"tickers": ["HPG"]}}
+    rows = client.buzz(on="2026-10-06", lookback=5, universe="vn30")["rows"]
+    assert {r["entity_id"] for r in rows} == {"TICKER:HPG"}
+    with pytest.raises(ValueError, match="không tồn tại"):
+        client.buzz(on="2026-10-06", universe="vn999")
+
+
+def test_regime_limits_buzz_baseline_and_themes(rich_lakehouse: Path):
+    """Sau mốc đổi chế độ, mức nền buzz và cửa sổ themes chỉ tính từ mốc đó."""
+    from datetime import date
+    client = NewsLakehouseClient(root=rich_lakehouse)
+    client.regime_from = date(2026, 9, 24)
+    res = client.buzz(on="2026-10-06", lookback=5)
+    assert res["baseline"]["days_used"] == 2 and res["baseline"]["regime_from"] == date(2026, 9, 24)
+    assert any("2026-09-24" in w for w in res["baseline"]["warnings"])
+    client.regime_from = date(2026, 10, 5)
+    th = client.theme_trend(["lai_suat"], as_of="2026-10-06")
+    assert th["rows"][0]["state"] == "Chưa đủ lịch sử"
+    assert th["coverage"]["entity_regime_from"] == date(2026, 10, 5)
+
+
+def test_theme_top_titles_prefer_primary_and_hot(tmp_path: Path):
+    """`top_titles_7d` đặt bài thực thể primary và hot trước bài khớp từ khoá nhiều nguồn."""
+    ty_gia = "MACRO_THEME:TY_GIA [MACRO_THEME|primary|BOTH]"
+    rows = [
+        _art("a1", "2026-10-06T09:00:00+07:00", "SHB mừng sinh nhật, giữ ổn định tỷ giá", [], "positive",
+             "this_month"),
+        _art("a2", "2026-10-06T09:10:00+07:00", "SHB mừng sinh nhật, giữ ổn định tỷ giá", [], "positive",
+             "this_month", source="vietstock.vn"),
+        _art("a3", "2026-10-06T10:00:00+07:00", "Tỷ giá USD/VND tăng mạnh", [ty_gia], "negative", "urgent"),
+    ]
+    client = NewsLakehouseClient(root=_write_lake(tmp_path, rows, "2026-10-06"))
+    th = client.theme_trend(["ty_gia"], as_of="2026-10-06")
+    assert th["rows"][0]["top_titles_7d"][0]["title"] == "Tỷ giá USD/VND tăng mạnh"
+    assert client._materialized is True
+
+
+def test_new_money_flow_themes_configured(rich_lakehouse: Path):
+    """`themes.json` có đủ bốn chủ đề dòng tiền mới."""
+    client = NewsLakehouseClient(root=rich_lakehouse)
+    for key in ("khoi_ngoai_etf", "margin_thanh_khoan", "no_xau_ngan_hang", "phap_ly_bds"):
+        assert key in client.themes and client.themes[key]["keywords"]
+
+
+def test_pulse_effect_score_and_basis(rich_lakehouse: Path):
+    """`sentiment_pulse` trả `effect_net_sent` có trọng số và kiểm tra tham số `basis`."""
+    client = NewsLakehouseClient(root=rich_lakehouse)
+    p = client.sentiment_pulse(date_to="2026-10-06", days=20)
+    assert p["coverage"]["basis"] == "trade_date"
+    assert any(r["effect_net_sent"] is not None for r in p["series"])
+    assert client.sentiment_pulse(date_to="2026-10-06", days=20, basis="pub_date")["coverage"]["basis"] == "pub_date"
+    with pytest.raises(ValueError):
+        client.sentiment_pulse(date_to="2026-10-06", basis="bad")
+
+
+def test_publish_dir_env_is_last_resort_not_first(tmp_path: Path, monkeypatch):
+    """`NEWS_SCAPE_PUBLISH_DIR` (đích ghi sandbox) chỉ là phương án cuối, sau Production và dò tự động."""
+    prod = tmp_path / "prod"
+    sandbox = tmp_path / "sandbox"
+    _write_manifest(prod, "2026-10-06", 1)
+    _write_manifest(sandbox, "2026-10-06", 1)
+    monkeypatch.setattr(Path, "home", classmethod(lambda cls: tmp_path / "empty-home"))
+    monkeypatch.delenv("NEWS_DATA_ROOT", raising=False)
+    monkeypatch.setenv("NEWS_SCAPE_PUBLISH_DIR", str(sandbox))
+    monkeypatch.setenv("NEWS_SCAPE_RESEARCH_DB_DIR", str(prod))
+    assert resolve_lakehouse_root() == prod.resolve()
+    monkeypatch.delenv("NEWS_SCAPE_RESEARCH_DB_DIR")
+    assert resolve_lakehouse_root() == sandbox.resolve()

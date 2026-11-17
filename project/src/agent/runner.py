@@ -131,6 +131,21 @@ class AgentRunner:
 
         conn = self.store.connect()
         try:
+            cur = conn.execute(
+                "SELECT * FROM work_items WHERE article_id=? AND raw_sha256=?",
+                (article_id, raw_sha256),
+            )
+            row = cur.fetchone()
+            if row:
+                if row["package_path"] != rel_path:
+                    conn.execute(
+                        "UPDATE work_items SET package_path=? WHERE id=?",
+                        (rel_path, row["id"]),
+                    )
+                    conn.commit()
+                    row = conn.execute("SELECT * FROM work_items WHERE id=?", (row["id"],)).fetchone()
+                return dict(row)
+
             cur = conn.execute("SELECT * FROM work_items WHERE article_id=?", (article_id,))
             row = cur.fetchone()
             if not row:
@@ -140,7 +155,10 @@ class AgentRunner:
                     (article_id, raw_sha256, article.source_domain or "", rel_path, now_vn_iso()),
                 )
                 conn.commit()
-                cur = conn.execute("SELECT * FROM work_items WHERE article_id=?", (article_id,))
+                cur = conn.execute(
+                    "SELECT * FROM work_items WHERE article_id=? AND raw_sha256=?",
+                    (article_id, raw_sha256),
+                )
                 row = cur.fetchone()
             elif row["package_path"] != rel_path or row["raw_sha256"] != raw_sha256:
                 conn.execute(

@@ -32,6 +32,13 @@ Audit 2026-10-06 và lộ trình Đ1–Đ6 (5 mục P0 chặn mở lại vận h
 
 ---
 
+## PUB-2. Tệp Excel trên thư văn SharePoint bị đổi byte sau khi tải lên, 2026-11-12
+
+- **Hiện tượng:** `users/output/<người dùng>/<ngày>.xlsx` ở đích mang SHA256 khác bản đã ghi trong manifest ngày, cùng giờ sửa. SharePoint chèn thuộc tính tài liệu vào tệp Office rồi OneDrive đồng bộ bản đã đổi về máy.
+- **Hệ quả:** `_manifest_complete` coi ngày đó là chưa đủ; chạy lại `publish.py` báo `conflict` cho mọi tệp Excel và trạng thái `partial`. Ngày 2026-11-11 bị dừng giữa manifest ngày và `latest.json` vì daemon khởi động lại, nên probe `publish` đỏ.
+- **Đã sửa:** `publish_day` hoàn tất `latest.json` khi manifest ngày đủ mà `latest.json` còn trỏ ngày cũ (test `test_rerun_finishes_latest_after_interrupted_publish`). `latest.json` ngày 2026-11-11 đã ghi tay bằng `_write_latest`.
+- **Còn mở:** chọn cách kiểm tệp Office trên SharePoint: bỏ qua SHA với `.xlsx` sau khi chép, hoặc chỉ so kích thước và tên. Cần người vận hành quyết vì ADR 0020 yêu cầu ghi một lần, không ghi đè.
+
 ## CON-1. Hợp đồng đầu ra thống nhất cho mọi provider (ADR 0017, US-034) — việc còn lại, 2026-10-05
 
 Đã làm: schema `article-compact-v2` và module `article_contract.py` (nguồn chân lý), bộ kiểm dùng chung cho agy, openrouter, opencode và bộ bung, gỡ mặc định ngữ nghĩa ở expander, một khung đầu vào, tham số chuẩn, meta bắt buộc, lô chuẩn 50, `--analyze` từ chối runner lạ, `provider_conformance.py`, prefix và rule 11.
@@ -73,7 +80,7 @@ Người vận hành làm hoặc quyết định:
 ecovered. Các điểm ghi exports, 
 otifications, staging, work_packages đã neo vào PROJECT_ROOT. Còn dùng đường dẫn tương đối nhưng thuộc lane L1/Gold đã ngừng: atch_handoff.py, l1_router.py, packet.py, 
 unner.py, l1_runner.py.
-2. **Ba nguồn chưa có kênh đối chiếu độc lập:** vietstock, vietnambiz, thoibaotaichinhvietnam. Sitemap của chúng cũ hoặc không có. Độ phủ của ba nguồn này chưa đo được.
+2. **[ĐÓNG 2026-11-11] Ba nguồn chưa có kênh đối chiếu độc lập:** thoibaotaichinhvietnam và vietstock đối chiếu bằng sitemap, vietnambiz bằng trang chuyên mục có ngày (rule 10 §3). Còn mở: sitemap baodautu hỏng phía báo từ 2026-10-23.
 3. **fireant là API, không cào bù được theo URL.** Bài fireant ở trạng thái `discovered` được lấy lại khi chúng xuất hiện lại trong danh sách API; nếu không, chúng sang `dead_letter` sau 5 lần thử.
 4. **Tải xử lý tăng.** Cào bù thêm vài trăm bài mỗi ngày cho ngày hôm nay và hôm qua. Daemon ở L1 sẽ tự đưa chúng vào đợt, nên token tăng tương ứng. Token là số ghi nhận, không phải cổng (ADR 0010).
 5. **P3 chế độ chênh** (ADR 0016 §2.8): cần quyết định đổi hợp đồng `agent-output-v2-lean` và một đợt thử có người duyệt mẫu `same_event_as`. Hiện bài `candidate` vẫn được phân tích đầy đủ, nên chưa tiết kiệm được phần này.
@@ -96,7 +103,7 @@ Người vận hành làm, theo thứ tự (runbook `project/docs/operations/ops
 1. **[ĐÓNG 2026-10-05] Telegram:** token đã thay (BotFather `/revoke`, 15:07). Daemon gửi được tin lúc 15:09. Token mới đã xuất hiện trong một phiên chat agent; muốn sạch hẳn thì `/revoke` lần nữa và tự chạy `ops_daemon.py telegram --token` ở terminal của mình.
 2. **Cấp quyền tự chủ (người vận hành tự cấp):** `/level L1` trên Telegram. Lần cấp 05/10 10:40 tự hạ về L0 sau 2 đợt hỏng (W10051042, W10051050, do packet cũ của ADR 0018, nay đã nhả).
 3. (Tuỳ chọn) healthchecks.io, period 1 ngày, nếu muốn biết khi máy tắt lâu.
-4. **Ngoài phạm vi (task riêng của người vận hành):** khoảng 10,9 nghìn bài tồn đọng ngoài `lookback_days`. Giao hàng xlsx cấu hình theo người dùng (D11) cũng là story riêng.
+4. **[ĐÓNG 2026-11-11] Tồn đọng ngoài `lookback_days`:** luật T4 của daemon xử lý ban đêm và cuối tuần. Đo 2026-11-11: 5.680 bài chờ, chỉ 697 bài không mỏng xử lý được. Giao hàng xlsx cấu hình theo người dùng (D11) cũng là story riêng.
 5. **ops-sentinel:** draft. Chấm 10 lần chẩn đoán thật để chuyển active (rule 07).
 6. **`max_tokens` của OpenRouter:** đã nâng 24000 → 32000 (CON-1 mục 11), vẫn là một trần; cần đo `PARTIAL`.
 7. **[ĐÓNG 2026-10-06] Khởi động lại daemon thoát oan:** sau `schtasks /End` + `/Run`, tiến trình con cũ còn giữ `ops_daemon.lock` vài giây nên bản mới thoát mã 3. Sửa: `acquire_single_instance` chờ ân hạn `daemon.lock_grace_seconds` (45 s). Test `tests/test_ops_restart_lock.py`, kiểm thật trên task.
@@ -133,6 +140,17 @@ Việc kỹ thuật còn treo (chưa làm trong US-031):
 3. **Chạy lô agy 50 bài một lần có tệp phản hồi thô** để biết nguyên nhân lô trả 0 bài; kết quả quyết định có hạ lô xuống 25 hay không (CON-1 mục 9 và 11).
 4. **Nghiệm thu `--runner opencode`** (CON-1 mục 4): chạy một đợt thật, xác nhận nhãn provider `opencode-native` trong sổ cái, rồi quyết định có thêm vào `PROVIDERS` của daemon hay không.
 5. **Cấp lại L1** khi đủ điều kiện ổn định (kế hoạch mục 5): ba đợt liền DONE, độ phủ thu thập thiếu dưới 2%, không đợt tay vô hình.
+
+## LENS-1. Plugin `fpts-market-intel` và nhiễu thực thể (US-053, ADR-0032) — việc còn lại, 2026-11-16
+
+| Mục | Ai | Việc | Trạng thái |
+|---|---|---|---|
+| A6 | Người | Quyết định chạy lại thực thể cho 01–12/11/2026 theo ADR-0031 (hiện `buzz`/`themes` chỉ so với dữ liệu từ 13/11) | Chờ quyết định |
+| D3 | Người | Duyệt ADR-0032 (nhãn `event_kind` do `article-processor` sinh, ghi vào `categories`) | Chờ duyệt |
+| R1 | Người | `refresh_aliases.py --dry-run` cập nhật 40 thực thể, toàn do alias YAML chưa commit của US-052; không cần cho US-053 (guard nạp lúc khởi tạo registry). Chạy khi chốt US-052 | Chờ US-052 |
+| R2 | Người | Thay rổ `vn30`/`vn100` (proxy vốn hóa) bằng danh sách 30 mã chính thức từ thông báo HOSE hiệu lực 03/08/2026 (báo chí chỉ nêu thêm MCH, TCX; loại TPB, PLX; proxy khớp các thay đổi này) | Chờ danh sách HOSE |
+| R3 | Người + agent | 174 bài Gold lệch tiêu đề–tóm tắt (từ 01/09) đã xuất ra `C:\data\news-scape\state\gold_title_summary_mismatch_20261116.csv`; chạy lại phân tích cần quyết định của người (tốn token, đổi bản ghi Gold) | Chờ quyết định |
+| R4 | Agent | 5 test hỏng có từ trước (`retag_location_symbols.py` ghép đường dẫn, chữ ký `check_l1_dod`, ba kiểm tra hàng đợi ops do wave PARKED 09/11 giữ 6 bài) | Xong 2026-11-16 |
 
 ## A0. RÀ SOÁT END-TO-END 2026-09-17 — mất dữ liệu âm thầm & ngõ cụt trạng thái
 

@@ -40,7 +40,8 @@ def main(argv: list[str]) -> int:
         argv: Command-line arguments, excluding the program name.
 
     Returns:
-        0 when every record passes, 1 when any record fails, 2 on missing arguments.
+        0 when failure rate is within threshold, 1 when failure rate exceeds threshold,
+        2 on missing arguments.
     """
     if not argv:
         print("usage: agent_ingest.py <output.json | dir> [--no-archive] [--task-dir DIR]")
@@ -53,6 +54,8 @@ def main(argv: list[str]) -> int:
     ap.add_argument("--task-dir", default=None,
                     help=f"Thư mục task packets (mặc định: {paths.agent_tasks_dir()})")
     ap.add_argument("--no-archive", action="store_true", help="Không tự động archive task packet khi DoD pass")
+    ap.add_argument("--fail-threshold", type=float, default=0.0,
+                    help="Tỷ lệ hỏng cho phép (0.0 = nghiêm ngặt, 0.05 = cho phép trượt tối đa 5%%)")
     args = ap.parse_args(argv)
 
     db_path = load_settings()["database"]["path"]
@@ -109,7 +112,9 @@ def main(argv: list[str]) -> int:
     print(f"\ningested: done={done} failed={failed}")
     # A record rejected by DoD or an unreadable file is an ingest error: return non-zero so
     # `article_run.py --finish` halts the batch instead of reporting completion.
-    return 1 if failed else 0
+    total = done + failed
+    fail_rate = (failed / total) if total else (1.0 if failed else 0.0)
+    return 1 if fail_rate > args.fail_threshold else 0
 
 
 if __name__ == "__main__":

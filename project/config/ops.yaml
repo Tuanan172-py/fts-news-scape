@@ -7,8 +7,13 @@ sensor:
   threshold: 100                 # T1: đủ bấy nhiêu bài chờ thì mở đợt (thay ngưỡng 50 của article_tick)
   max_age_minutes: 90            # T2: bài chờ lâu nhất vượt mức này thì vét
   age_rule_hours: [6, 22]        # T2 chỉ áp trong khung giờ này; ban đêm chỉ T1
-  flush_windows: ["07:15-07:45", "12:15-12:45", "15:15-15:45", "17:15-17:45"]   # T3
-  lookback_days: 1               # phạm vi tự động: hôm nay + N ngày trước; tồn đọng cũ xử lý riêng
+  flush_windows: ["07:15-07:45", "08:15-08:40", "12:15-12:45", "15:15-15:45", "17:15-17:45"]   # T3; mỗi khung đứng ngay trước một khung research_publish
+  lookback_days: 3               # phạm vi tự động: hôm nay + N ngày trước (đủ phủ cuối tuần); bài không có ngày đăng tính theo ngày cào
+  backlog:                       # T4: xử lý tồn đọng ngoài phạm vi, ngày mới nhất trước, bỏ qua bài mỏng
+    enabled: true
+    hours: [19, 7]               # khung giờ chạy, qua nửa đêm; ban ngày dành cho tin mới
+    weekend_all_day: true
+    pick_every_seconds: 120      # khoảng tối thiểu giữa hai lần chọn ngày tồn đọng
 
 wave:
   runner: agy
@@ -43,11 +48,12 @@ improvement:
 
 breaker:
   timeout_trip: 3
-  timeout_open_minutes: 30
+  timeout_open_minutes: 15
   network_trip: 3
   network_open_minutes: 10
   empty_trip: 2
-  quota_open_minutes: 300        # pool "Work Done" của Antigravity làm mới mỗi 5 giờ
+  quota_open_minutes: 15        # điều chỉnh từ 300 xuống 15 phút: hạn mức tự hồi phục sau vài phút, tránh tê liệt 5h
+  auth_open_minutes: 60          # lỗi đăng nhập: sau 60 phút cho một đợt thử lại (keyring agy có thể tự làm mới); bỏ trống = chỉ /reset tay
 
 daemon:
   lock_grace_seconds: 45        # chờ tiến trình cũ nhả khoá khi khởi động lại bằng schtasks /End + /Run
@@ -84,3 +90,18 @@ publish:                         # xuất bản một chiều lên SharePoint (A
   hour: 1                        # xuất bản ngày hôm qua sau giờ này
   keep_review_days: 7            # số bản review/monocle_review_<ngày>.db giữ lại ở đích
   stale_hours: 26                # latest.json cũ hơn mức này thì probe báo đỏ
+
+research_publish:                # production FRA - Data/news cho team Research (ADR-0030); đích là NEWS_SCAPE_RESEARCH_DB_DIR
+  enabled: true                  # bật 2026-11-11 (người vận hành duyệt); cần biến môi trường đích và khởi động lại daemon
+  slots:                         # giờ Việt Nam, áp dụng mọi ngày kể cả cuối tuần
+    - {name: sang-som, at: "07:50"}            # bản tin sáng: tin đêm qua và thị trường thế giới
+    - {name: truoc-ato, at: "08:45"}           # công bố thông tin trước ATO 9:00
+    - {name: truoc-phien-chieu, at: "12:50"}   # tin phiên sáng, trước phiên chiều 13:00
+    - {name: sau-phien, at: "15:50"}           # sau ATC 14:45 và thỏa thuận 15:00
+    - {name: cuoi-ngay, at: "17:50"}           # đọc buổi tối, chuẩn bị phiên sau
+  wait_wave_max_minutes: 15      # tới giờ mà đợt phân tích đang chạy thì chờ tối đa bấy nhiêu phút
+  catchup_lookback_hours: 24     # máy tắt lỡ khung thì đẩy bù một lần khi mở lại, trong phạm vi này
+  express:                       # đẩy ngoài khung khi có bài urgent vừa qua cổng
+    enabled: true
+    min_interval_minutes: 30
+  stale_hours: 12                # latest.json production cũ hơn mức này thì probe báo đỏ

@@ -242,3 +242,17 @@ def test_cli_exit_codes(env, monkeypatch, capsys):
     assert cli.main(["--date", "2026-10-04", "--target", str(env["target"])]) == 0
     assert (env["target"] / "_manifest" / "latest.json").exists()
     assert cli.main(["--date", "sai"]) == 1
+
+
+def test_rerun_finishes_latest_after_interrupted_publish(env):
+    import json
+
+    assert _run(env).status == "ok"
+    latest = env["target"] / "_manifest" / "latest.json"
+    stale = json.loads(latest.read_text(encoding="utf-8"))
+    stale["latest_date"] = "2026-10-03"          # stopped before latest.json was rewritten
+    latest.write_text(json.dumps(stale), encoding="utf-8")
+    res = _run(env)
+    assert res.status == "ok" and "latest.json" in res.message
+    assert json.loads(latest.read_text(encoding="utf-8"))["latest_date"] == DAY.isoformat()
+    assert "không làm lại" in _run(env).message

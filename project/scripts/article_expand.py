@@ -54,59 +54,185 @@ def now_vn_iso() -> str:
     return datetime.now(timezone(timedelta(hours=7))).isoformat(timespec="seconds")
 
 
+_SCOPE_RANK = {"title": 0, "body": 1, "inferred": 2}
+
+
+def collect_code_hits(title: str, paragraphs: list[str], reg) -> dict[str, dict]:
+    """Scan title and body paragraphs with the deterministic catalog matcher.
+
+    Args:
+        title: Article title.
+        paragraphs: Body paragraph strings.
+        reg: EntityRegistry instance.
+
+    Returns:
+        Mapping from `entity_id` to first-occurrence metadata (`scope`, `first_para_idx`, `para_count`, `surface`, `type`, `via`).
+    """
+    hits: dict[str, dict] = {}
+    for d in reg.detect(title or ""):
+        eid = d["entity_id"]
+        hits[eid] = {
+            "entity_id": eid,
+            "type": d["type"],
+            "via": d.get("via"),
+            "surface": d["surface"],
+            "scope": "title",
+            "first_para_idx": -1,
+            "para_count": 0,
+        }
+    for p_idx, para in enumerate(paragraphs or []):
+        if not para:
+            continue
+        for d in reg.detect(para):
+            eid = d["entity_id"]
+            if eid in hits:
+                hits[eid]["para_count"] += 1
+            else:
+                hits[eid] = {
+                    "entity_id": eid,
+                    "type": d["type"],
+                    "via": d.get("via"),
+                    "surface": d["surface"],
+                    "scope": "body",
+                    "first_para_idx": p_idx,
+                    "para_count": 1,
+                }
+    return hits
+
+
+def _classify_role_and_tier(scope: str, group: str, provenance: str,
+                            para_count: int, in_cited_para: bool) -> tuple[str, str]:
+    """Classify entity role (`primary` vs `mentioned`) and confidence tier.
+
+    Args:
+        scope: Occurrence scope (`title`, `body`, or `inferred`).
+        group: Model group code (`TIC`, `COM`, `IND`, etc.).
+        provenance: Reconciliation provenance (`BOTH`, `LLM_ONLY`, `CODE_ONLY`).
+        para_count: Number of body paragraphs containing the entity.
+        in_cited_para: True when the entity occurs inside a cited paragraph.
+
+    Returns:
+        Pair `(role, confidence_tier)`.
+    """
+    if provenance == "CODE_ONLY":
+        return "mentioned", "LOW"
+    if scope == "title":
+        return "primary", "HIGH"
+    if scope == "body" and (provenance == "BOTH" or para_count >= 2 or in_cited_para):
+        return "primary", "HIGH"
+    if scope == "inferred" and group == "IND":
+        return "primary", "HIGH"
+    return "mentioned", "MEDIUM"
+
+
 def build_l1_output(article_id: str, title: str, resolved: list,
                     labels: dict[str, str], *,
+                    code_hits: dict[str, dict] | None = None,
                     agent_provider: str = UNKNOWN_PROVENANCE,
                     model_used: str = UNKNOWN_PROVENANCE) -> dict:
-    """Build the entity recognition record in the `l1-entity-output-v1` schema.
+    """Build the multi-scope entity recognition record in `l1-entity-output-v1` (v1.1).
 
-    The schema requires every verbatim string to appear in the title, so only
-    entities found in the title are included. Entities the model found in the
-    body go to the side file built by :func:`build_mentions`: they help catalog
-    expansion but do not fit this schema.
+    Preserves grounded entities across `title`, `body`, and canonical `inferred`
+    industry classifications, annotating each record with `scope`, `role`,
+    `provenance`, `confidence_tier`, and `first_para_idx`.
 
     Args:
         article_id: Article identifier.
         title: Verbatim title.
-        resolved: Resolved entity list.
+        resolved: Resolved entity list from `IntentResolver`.
         labels: Reconciliation labels between the model and the code layer.
+        code_hits: Optional deterministic hits from `collect_code_hits`.
         agent_provider: Analysis runtime provider.
         model_used: Name of the model used.
 
     Returns:
-        Record dict conforming to the schema.
+        Record dict conforming to `l1-entity-output-v1` version `1.1`.
     """
-    in_title = [e for e in resolved if e.in_title and e.surface in title]
-
-    entities = []
-    for e in in_title:
+    best_by_eid: dict[str, object] = {}
+    ordered_eids: list[str] = []
+    for e in resolved:
         if not (e.in_list and e.entity_id and e.type):
             continue
-        entities.append({
+        scope = getattr(e, "scope", "title" if e.in_title else "ungrounded")
+        if scope not in _SCOPE_RANK:
+            continue
+        if scope == "title" and e.surface not in (title or ""):
+            continue
+        prev = best_by_eid.get(e.entity_id)
+        if prev is None:
+            best_by_eid[e.entity_id] = e
+            ordered_eids.append(e.entity_id)
+        elif _SCOPE_RANK[scope] < _SCOPE_RANK[getattr(prev, "scope", "body")]:
+            best_by_eid[e.entity_id] = e
+
+    entities: list[dict] = []
+    seen_eids: set[str] = set()
+    for eid in ordered_eids:
+        e = best_by_eid[eid]
+        seen_eids.add(eid)
+        scope = getattr(e, "scope", "title")
+        prov = labels.get(eid, "LLM_ONLY")
+        role, tier = _classify_role_and_tier(
+            scope,
+            getattr(e, "group", ""),
+            prov,
+            getattr(e, "para_count", 0),
+            getattr(e, "in_cited_para", False),
+        )
+        item: dict = {
             "surface": e.surface,
             "entity_id": e.entity_id,
             "type": e.type,
             "method": e.method,
             "in_list": True,
-        })
+            "scope": scope,
+            "role": role,
+            "provenance": prov,
+            "confidence_tier": tier,
+        }
+        first_idx = getattr(e, "first_para_idx", None)
+        if first_idx is not None:
+            item["first_para_idx"] = first_idx
+        entities.append(item)
+
+    for eid, ch in (code_hits or {}).items():
+        if eid in seen_eids:
+            continue
+        ch_scope = ch.get("scope") or "body"
+        if ch_scope == "title" and (ch.get("surface") or "") not in (title or ""):
+            continue
+        seen_eids.add(eid)
+        c_item: dict = {
+            "surface": ch["surface"],
+            "entity_id": eid,
+            "type": ch["type"],
+            "method": "exact_code" if ch.get("via") == "code" else "alias",
+            "in_list": True,
+            "scope": ch_scope,
+            "role": "mentioned",
+            "provenance": "CODE_ONLY",
+            "confidence_tier": "LOW",
+        }
+        if ch.get("first_para_idx") is not None:
+            c_item["first_para_idx"] = ch["first_para_idx"]
+        entities.append(c_item)
 
     unlisted = sorted({e.surface for e in resolved if not e.in_list and e.surface})
 
     groups = {TYPE_GROUP.get(e["type"]) for e in entities}
     recognized = bool(entities)
-    categories = {}
-    for key in CATEGORY_KEYS:
-        if key in groups:
-            categories[key] = "done"
-        elif recognized and unlisted:
-            categories[key] = "none"
-        else:
-            categories[key] = "none"
+    categories = {key: ("done" if key in groups else "none") for key in CATEGORY_KEYS}
 
-    citations = [{"source_span": entities[0]["surface"]}] if recognized else []
+    title_ents = [e for e in entities if e.get("scope") == "title"]
+    if title_ents:
+        citations = [{"source_span": title_ents[0]["surface"]}]
+    elif recognized:
+        citations = [{"source_span": entities[0]["surface"]}]
+    else:
+        citations = []
 
     return {
-        "l1_output_version": "1.0",
+        "l1_output_version": "1.1",
         "article_id": article_id,
         "title": title,
         "recognized": recognized,
@@ -332,11 +458,22 @@ def process_batch(batch_id: str, out_text: str, packet: dict, mapping: dict,
         title = src.get("t") or ""
         paragraphs = src.get("p") or []
 
-        resolved = resolver.resolve_many(rec.get("e") or [], title=title, report=report)
-        code_ids = {d["entity_id"] for d in reg.detect(title)}
-        labels = reconcile(resolved, code_ids)
+        cited_indices = {
+            c for c in (rec.get("c") or [])
+            if _is_index(c) and 0 <= c < len(paragraphs)
+        }
+        resolved = resolver.resolve_many(
+            rec.get("e") or [],
+            title=title,
+            paragraphs=paragraphs,
+            cited_indices=cited_indices,
+            report=report,
+        )
+        code_hits = collect_code_hits(title, paragraphs, reg)
+        labels = reconcile(resolved, set(code_hits))
 
         l1_rows.append(build_l1_output(article_id, title, resolved, labels,
+                                       code_hits=code_hits,
                                        agent_provider=batch_provider,
                                        model_used=batch_model))
 

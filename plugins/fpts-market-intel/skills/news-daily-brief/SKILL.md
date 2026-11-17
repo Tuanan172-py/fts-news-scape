@@ -19,7 +19,7 @@ python $LH brief --watchlist HPG,VCB,FPT,MWG                 # ngày mới nhấ
 python $LH brief --date 2026-10-19 --watchlist HPG,VCB --lookback-days 2   # sau cuối tuần
 ```
 - `watchlist`: story theo từng mã (tin cấp thiết và lan toả xếp trước).
-- `macro`: story vĩ mô, chính sách, địa chính trị, hàng hoá không gắn mã cụ thể.
+- `macro`: story có ít nhất một thực thể vĩ mô (`MACRO_THEME`, `MACRO_GEO`, `INSTITUTION`, `ASSET_CLASS`, `INDEX`) vai trò `primary` nguồn `BOTH`/`LLM_ONLY`, kể cả khi bài nhắc tên ngân hàng hay mã cổ phiếu (ví dụ tin NHNN kèm VCB).
 - `spread`: story được ≥ 2 báo cùng đăng, xếp theo `n_sources`.
 - `buzz`: mã có lượng tin đột biến (`z ≥ 2`); xem `buzz.baseline.sufficient`.
 - Không có watchlist: hỏi analyst danh mục, hoặc bỏ tầng 1 và ghi rõ.
@@ -56,3 +56,4 @@ python $LH brief --date 2026-10-19 --watchlist HPG,VCB --lookback-days 2   # sau
 ## 5. Lưu ý
 - `status.is_stale = true`: đặt cảnh báo dữ liệu cũ ở đầu bản tin.
 - Không đưa khuyến nghị mua/bán; chỉ tóm lược tin và hàm ý có trong dữ liệu.
+- Tầng `buzz` chỉ liệt kê mã có cờ đột biến; khi `buzz.baseline.warnings` có nội dung, ghi cảnh báo thay vì suy diễn. Loại bài PR thương hiệu khỏi phần nhận định tác động.

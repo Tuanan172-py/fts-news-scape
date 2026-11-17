@@ -382,7 +382,8 @@ def _build_obt_parquet(db: Path, day: date, out: Path) -> int:
         SELECT MAX(id) FROM agent_outputs WHERE article_id = a.article_id AND dod_pass = 1
     )
     LEFT JOIN l1_outputs l1 ON l1.id = (
-        SELECT MAX(id) FROM l1_outputs WHERE article_id = a.article_id AND dod_pass = 1
+        SELECT MAX(id) FROM l1_outputs
+        WHERE article_id = a.article_id AND dod_pass = 1 AND COALESCE(l1_source, 'agent') != 'code_first'
     )
     ORDER BY a.published_at DESC
     """
@@ -425,20 +426,38 @@ def _build_obt_parquet(db: Path, day: date, out: Path) -> int:
         entities_list = []
         if l1:
             matched_entities = l1.get("entities") or []
+            meta_labels = ((l1.get("processing_metadata") or {}).get("intent_source") or {})
+            if not isinstance(meta_labels, dict):
+                meta_labels = {}
             llm_ents, code_ents = [], []
+            prov_counts: dict[str, int] = {}
             for ent in matched_entities:
                 ename = ent.get("entity_id") or ent.get("name") or ""
                 etype = ent.get("type") or ""
+                src_flag = (
+                    ent.get("provenance")
+                    or (meta_labels.get(ename) if ename else None)
+                    or ent.get("source")
+                    or ("BOTH" if ent.get("in_list") else "LLM_ONLY")
+                )
+                role_flag = ent.get("role") or ("mentioned" if src_flag == "CODE_ONLY" else "primary")
                 if ename:
-                    entities_list.append(f"{ename} [{etype}]" if etype else str(ename))
-                src_flag = ent.get("source") or ("BOTH" if ent.get("in_list") else "LLM_ONLY")
+                    entities_list.append(
+                        f"{ename} [{etype}|{role_flag}|{src_flag}]" if etype else str(ename)
+                    )
+                    prov_counts[src_flag] = prov_counts.get(src_flag, 0) + 1
                 if src_flag in ("BOTH", "LLM_ONLY") and ename:
                     llm_ents.append(ename)
                 if src_flag in ("BOTH", "CODE_ONLY") and ename:
                     code_ents.append(ename)
             intent_llm = "; ".join(dict.fromkeys(llm_ents))
             intent_code = "; ".join(dict.fromkeys(code_ents))
-            intent_source = l1_src or ("BOTH" if (intent_llm and intent_code) else ("LLM_ONLY" if intent_llm else "CODE_ONLY"))
+            if prov_counts:
+                intent_source = "; ".join(f"{k}:{v}" for k, v in sorted(prov_counts.items()))
+            else:
+                intent_source = l1_src or (
+                    "BOTH" if (intent_llm and intent_code) else ("LLM_ONLY" if intent_llm else "CODE_ONLY")
+                )
 
         rec = {
             "article_id": art_id,
@@ -772,8 +791,16 @@ def _publish(day: date, tgt: Path, *, dry_run: bool, force: bool,
     existing = _day_manifests(tgt).get(_ymd(day)) if tgt.is_dir() else None
     old = (_load_json(existing[1]) or {}) if existing else {}
     if existing and not force and _manifest_complete(tgt, old):
+        manifest_rel = f"_manifest/{existing[1].name}"
+        latest = _load_json(tgt / "_manifest" / "latest.json") or {}
+        if str(latest.get("latest_date") or "") < iso_day:
+            # A run stopped between the day manifest and latest.json (daemon restart,
+            # sleep): the files are vouched for, so only the last step is missing.
+            _write_latest(tgt, day, manifest_rel, [])
+            return PublishResult("ok", iso_day, f"Ngày {iso_day} đã xuất bản; hoàn tất "
+                                 "latest.json còn dở.", target=str(tgt), manifest=manifest_rel)
         return PublishResult("ok", iso_day, f"Ngày {iso_day} đã xuất bản, không làm lại.",
-                             target=str(tgt), manifest=f"_manifest/{existing[1].name}")
+                             target=str(tgt), manifest=manifest_rel)
     plan = _plan(day, db, include_review=include_review, include_bronze=include_bronze)
     if dry_run:
         return PublishResult("ok", iso_day, f"Kế hoạch {len(plan)} tệp, chưa ghi gì.",

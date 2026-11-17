@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 from loguru import logger
 
 from src.crawler.backoff import SourceBackoff
-from src.crawler.raw_store import RawStore
+from src.crawler.raw_store import RawStore, looks_blocked
 from src.crawler.robots import RobotsGate
 
 # Markers that identify an error or empty page when downloading content.
@@ -122,7 +122,7 @@ class CaptureMixin:
         if len(html.encode("utf-8", errors="ignore")) < self.min_body_bytes:
             return False
         low = html[:4000].lower()
-        if any(m in low for m in _EMPTY_MARKERS):
+        if any(m in low for m in _EMPTY_MARKERS) or looks_blocked(html):
             return False
         try:
             node = BeautifulSoup(html, "lxml").select_one(selector)

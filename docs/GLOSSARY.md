@@ -61,7 +61,7 @@
 | **Vá (repair)** | Đóng gói lại đúng những bài chưa có bản ghi thành lô `_rNN` và chạy lại. Tối đa hai vòng mỗi đợt. |
 | **Giữ chỗ** | Bài thuộc đợt chưa xong (đang chạy, PARKED, FAILED) không được đóng gói vào đợt khác. Nhả khi đợt DONE hoặc CANCELLED. |
 | **Bài chờ** | Bài trong phạm vi tự động chưa có bản ghi phân tích đạt cổng DoD. Bản code-first không tính là đã phân tích. |
-| **Tồn đọng** | Bài chờ nằm ngoài phạm vi tự động (`lookback_days`). Xử lý bằng việc riêng của người vận hành. |
+| **Tồn đọng** | Bài chờ nằm ngoài phạm vi tự động (`lookback_days`). Daemon xử lý ban đêm và cuối tuần bằng luật T4 (`sensor.backlog`), ngày mới nhất trước. |
 | **Cổng DoD** | Kiểm định một bản ghi trước khi nạp DB: lược đồ, trích dẫn có căn cứ trong bài gốc, không chép nguyên văn vào luận điểm. |
 | **Độ phủ** | Tỷ lệ bài của đợt có bản ghi đạt ở mỗi lớp (nhận diện thực thể, phân tích nội dung). Ngưỡng nạp là 90%. |
 | **Hậu kiểm** | Bước `verify_wave` đối chiếu tập bài của đợt với DB sau khi nạp. |

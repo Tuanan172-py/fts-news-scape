@@ -39,19 +39,20 @@ bao quanh: phân loại việc, chọn ngữ cảnh, ghi lại điều đã xả
 tự cải tiến.
 
 Một yêu cầu có thể sinh 2 loại output:
+
 - **Product delta** — code, test, API, schema, docs sản phẩm.
 - **Harness delta** — docs/template/backlog/decision làm lần sau dễ hơn.
 
 ### 1.2 Sáu nguyên tắc thiết kế (xương sống mọi quyết định)
 
-| # | Nguyên tắc | Ý nghĩa khi dựng |
-|---|------------|------------------|
-| 1 | **Tách Policy ↔ Durable** | Markdown giữ *cách làm việc* (rule, vocab, template). Database giữ *điều đã xảy ra* (intake, story, trace). Đừng nhét state sống vào markdown. |
-| 2 | **Grows from friction** | Không thiết kế đủ mọi thứ trước. Gặp đau → ghi lại → lặp lại nhiều → mới nâng cấp. |
-| 3 | **Proof-driven** | "Chưa có bằng chứng = chưa implemented." Mọi claim phải có proof cơ học (test/lệnh verify). |
-| 4 | **Request-class authority gate** | Phân loại yêu cầu TRƯỚC: read-only không được đổi state; chỉ change/build/fix mới được mutate. High-risk phải dừng hỏi người. |
-| 5 | **Bounded context** | Chỉ đọc đúng ngữ cảnh phase + lane cần. Không nhồi tối đa. Có ngân sách token. |
-| 6 | **Verifiable maturity** | Một cấp độ chỉ "đạt" khi kiểm chứng được trong file/DB/benchmark. Không tự khen. |
+| # | Nguyên tắc                           | Ý nghĩa khi dựng                                                                                                                                               |
+| - | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | **Tách Policy ↔ Durable**      | Markdown giữ *cách làm việc* (rule, vocab, template). Database giữ *điều đã xảy ra* (intake, story, trace). Đừng nhét state sống vào markdown. |
+| 2 | **Grows from friction**          | Không thiết kế đủ mọi thứ trước. Gặp đau → ghi lại → lặp lại nhiều → mới nâng cấp.                                                           |
+| 3 | **Proof-driven**                 | "Chưa có bằng chứng = chưa implemented." Mọi claim phải có proof cơ học (test/lệnh verify).                                                            |
+| 4 | **Request-class authority gate** | Phân loại yêu cầu TRƯỚC: read-only không được đổi state; chỉ change/build/fix mới được mutate. High-risk phải dừng hỏi người.               |
+| 5 | **Bounded context**              | Chỉ đọc đúng ngữ cảnh phase + lane cần. Không nhồi tối đa. Có ngân sách token.                                                                     |
+| 6 | **Verifiable maturity**          | Một cấp độ chỉ "đạt" khi kiểm chứng được trong file/DB/benchmark. Không tự khen.                                                                    |
 
 Ý phụ quan trọng: **degrade-don't-fail** — năng lực tùy chọn thiếu là *một sự
 kiện được báo cáo*, không phải lỗi chặn đứng. Harness lõi vẫn chạy mượt trên máy
@@ -60,6 +61,7 @@ trắng.
 ### 1.3 Mục tiêu & kỳ vọng
 
 **Mục tiêu** của một harness tốt:
+
 1. Một agent mới, không biết dự án, đọc `AGENTS.md` là biết *phải làm gì trước*.
 2. Không bao giờ có thay đổi repo mà không phân loại rủi ro.
 3. Không bao giờ claim "xong" mà không có bằng chứng.
@@ -104,13 +106,13 @@ chặn theo bằng chứng (H4) → để harness tự đề xuất sửa mình,
 
 **Bảng file bắt buộc theo cấp:**
 
-| Cấp | File/hạ tầng mới xuất hiện |
-|-----|---------------------------|
+| Cấp         | File/hạ tầng mới xuất hiện                                                                                                                                                                   |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **H1** | `AGENTS.md`, `docs/HARNESS.md`, `docs/FEATURE_INTAKE.md`, `docs/ARCHITECTURE.md`, `docs/TEST_MATRIX.md`, `docs/GLOSSARY.md`, `docs/templates/{story,decision,validation-report}.md` |
-| **H2** | CLI + `scripts/schema/001-init.sql`, `docs/HARNESS_COMPONENTS.md`, `docs/HARNESS_MATURITY.md`, `docs/TRACE_SPEC.md`, `docs/CONTEXT_RULES.md` |
-| **H3** | scoring trace (`score-trace`/`score-context`), friction-by-component, backlog outcome loop |
-| **H4** | `docs/TOOL_REGISTRY.md`, story `verify_command`, cổng verify khi trace |
-| **H5** | `docs/HARNESS_AUDIT.md`, `docs/IMPROVEMENT_PROTOCOL.md`, `propose`, intervention |
+| **H2** | CLI + `scripts/schema/001-init.sql`, `docs/HARNESS_COMPONENTS.md`, `docs/HARNESS_MATURITY.md`, `docs/TRACE_SPEC.md`, `docs/CONTEXT_RULES.md`                                            |
+| **H3** | scoring trace (`score-trace`/`score-context`), friction-by-component, backlog outcome loop                                                                                                    |
+| **H4** | `docs/TOOL_REGISTRY.md`, story `verify_command`, cổng verify khi trace                                                                                                                       |
+| **H5** | `docs/HARNESS_AUDIT.md`, `docs/IMPROVEMENT_PROTOCOL.md`, `propose`, intervention                                                                                                            |
 
 > **Khuyến nghị mấu chốt:** Dựng **trọn H1 trước**, vận hành vài công việc thật,
 > rồi mới quyết định có cần H2 (database) không. Rất nhiều dự án nhỏ sống tốt ở
@@ -127,6 +129,7 @@ luật ngữ cảnh → template → (rồi mới) durable*.
 ### TẦNG H1 — Thuần markdown (làm 100% trước khi nghĩ tới database)
 
 #### File 1 — `docs/GLOSSARY.md`  *(viết ĐẦU TIÊN)*
+
 - **Logic:** Mọi file sau đều mượn từ vựng ở đây. Không có glossary, các doc sau
   sẽ định nghĩa chồng chéo, mâu thuẫn.
 - **Nội dung tối thiểu:** định nghĩa *Agent, Harness, Product Contract, Story
@@ -135,6 +138,7 @@ luật ngữ cảnh → template → (rồi mới) durable*.
 - **Kỳ vọng:** ngắn (1–2 trang), sẽ lớn dần khi thêm khái niệm.
 
 #### File 2 — `AGENTS.md`  *(entrypoint — cổng vào duy nhất)*
+
 - **Logic:** Đây là file agent đọc ĐẦU TIÊN mỗi phiên. Nó phải **chọn request
   class trước khi làm bất cứ gì**. Giữ nó NHỎ và ỔN ĐỊNH (shim), trỏ sang các doc
   chi tiết.
@@ -146,6 +150,7 @@ luật ngữ cảnh → template → (rồi mới) durable*.
   `@AGENTS.md` trong `CLAUDE.md` để import.
 
 #### File 3 — `docs/HARNESS.md`  *(mô hình cộng tác người ↔ agent)*
+
 - **Logic:** Giải thích vòng đời end-to-end: intent → intake → story → work loop
   → product delta → proof → harness delta. Định nghĩa **Request-Class Loops**
   (read-only vs change 8 bước) và **Done Definition**.
@@ -153,14 +158,15 @@ luật ngữ cảnh → template → (rồi mới) durable*.
 - **Kỳ vọng:** đây là doc "hiến pháp". Ổn định, ít sửa.
 
 #### File 4 — `docs/FEATURE_INTAKE.md`  *(máy phân loại rủi ro)*
+
 - **Logic:** Cổng phân loại. Định nghĩa **input types**, **risk checklist**,
   **luật chọn lane** (0–1 flag→tiny/normal; 2–3→normal; 4+→high-risk; hard gate→
   high-risk), và **yêu cầu từng lane**.
 - **Mục tiêu:** con người KHÔNG cần tự xếp rủi ro — harness làm, xác định được.
-- **Kỳ vọng:** kết thúc intake, agent nói được: `Lane / Reason / Docs / Story /
-  Validation`.
+- **Kỳ vọng:** kết thúc intake, agent nói được: `Lane / Reason / Docs / Story / Validation`.
 
 #### File 5 — `docs/ARCHITECTURE.md`  *(luật ranh giới của SẢN PHẨM)*
+
 - **Logic:** Đây là doc DUY NHẤT nói về *sản phẩm sẽ xây*, không phải về harness.
   Dùng **Discovery-Before-Shape** (khám phá surfaces/stack/domains/validation
   ladder trước khi định hình) và **Dependency Rule** (lớp trong không phụ thuộc
@@ -170,15 +176,17 @@ luật ngữ cảnh → template → (rồi mới) durable*.
   nhận được. Điền dần khi có code thật.
 
 #### File 6 — `docs/TEST_MATRIX.md`  *(từ vựng bằng chứng)*
+
 - **Logic:** Định nghĩa status enum **planned / in_progress / implemented /
   changed / retired** và 4 tầng proof **Unit / Integration / E2E / Platform**,
   cùng luật vàng *"chưa có evidence thì chưa implemented"*.
 - **Mục tiêu:** ngôn ngữ chung để nói về tiến độ + bằng chứng.
-- **Kỳ vọng:** ở H1 đây là bảng markdown tay; ở H2 nó chuyển vào DB (`query
-  matrix`) và file này chỉ còn giữ *vocabulary*.
+- **Kỳ vọng:** ở H1 đây là bảng markdown tay; ở H2 nó chuyển vào DB (`query matrix`) và file này chỉ còn giữ *vocabulary*.
 
 #### File 7–9 — Templates  *(khuôn tái sử dụng)*
+
 Viết 3 khuôn cốt lõi (bỏ qua khuôn nâng cao lúc đầu):
+
 - `docs/templates/story.md` — **quan trọng nhất**. Sections: Title (US-XXX),
   Status, Lane, Product Contract, Acceptance Criteria, Design Notes, bảng
   Validation (Unit/Integration/E2E/Platform), Harness Delta, Evidence.
@@ -193,6 +201,7 @@ Viết 3 khuôn cốt lõi (bỏ qua khuôn nâng cao lúc đầu):
 `docs/templates/high-risk-story/{overview,design,execplan,validation}.md`.
 
 #### File 10 — `docs/HARNESS_BACKLOG.md`  *(bồn chứa friction)*
+
 - **Logic:** Nơi ghi "năng lực harness còn thiếu" khi đang làm mà chưa muốn đổi
   quy trình ngay. Fields: Title, Discovered While, Current Pain, Suggested
   Improvement, Risk (lane), Status.
@@ -210,18 +219,21 @@ Viết 3 khuôn cốt lõi (bỏ qua khuôn nâng cao lúc đầu):
 Trước khi viết code, viết 4 doc định nghĩa tầng durable:
 
 #### File 11 — `docs/CONTEXT_RULES.md`  *(đọc đúng, đủ, biết dừng)*
+
 - **Logic:** Ma trận **phase × lane** (Intake/Planning/Implementation/Validation/
   Trace) mỗi ô Must/Should/Skip, + **ngân sách token** (tiny ~2K, normal ~5K,
   high-risk ~10K), + **retrieval triggers**.
 - **Mục tiêu:** ngăn agent nhồi context vô tội vạ; context selection đo được.
 
 #### File 12 — `docs/TRACE_SPEC.md`  *(chuẩn bằng chứng để lại)*
+
 - **Logic:** 3 tier **Minimal(1)/Standard(2)/Detailed(3)** map theo lane; định
   nghĩa từng field trace (`task_summary`, `outcome`, `actions_taken`,
   `files_read/changed`, `harness_friction`...).
 - **Mục tiêu:** trace hữu ích cho review + benchmark + tự cải tiến sau này.
 
 #### File 13–14 — `docs/HARNESS_COMPONENTS.md` + `docs/HARNESS_MATURITY.md`
+
 - **Logic:** Components = **11 trách nhiệm runtime** (task spec, context, tool
   access, memory, task state, observability, failure attribution, verification,
   permissions, entropy audit, intervention). Maturity = định nghĩa H0–H5.
@@ -230,6 +242,7 @@ Trước khi viết code, viết 4 doc định nghĩa tầng durable:
 - **Kỳ vọng:** dùng checklist 11 trách nhiệm ngay cả ở H1 để tự soi thiết kế.
 
 #### Rồi mới tới CODE — CLI + Schema (xem Phần 4 cho thứ tự bảng)
+
 - `scripts/schema/001-init.sql` + một CLI mỏng thao tác DB.
 - Quyết định lớn: **ngôn ngữ/engine**. Khung tham chiếu chọn **Rust prebuilt
   binary + SQLite** (xem quyết định 0004, 0005). Bạn có thể chọn khác (Python +
@@ -259,13 +272,13 @@ Chỉ đọc phần này khi bạn đã quyết leo H2. Đây là "viết bảng
 
 ### 4.1 Năm bảng lõi (migration 001 — đủ để VẬN HÀNH)
 
-| Bảng | Vai trò | Cột chính |
-|------|---------|-----------|
-| `schema_version` | Sổ ghi migration đã áp | `version PK`, `applied_at` |
-| `intake` | Phân loại việc đến | `input_type`(CHECK enum), `summary`, `risk_lane`, `risk_flags`(JSON), `story_id`(soft) |
-| `story` | Gói việc + proof (TRÁI TIM) | `id TEXT PK` (US-XXX), `status`(enum), `unit/integration/e2e/platform_proof`(INTEGER 0/1), `evidence` |
-| `decision` | ADR bền vững | `id TEXT PK`, `status`(enum), `doc_path`, `predicted_impact`, `actual_outcome` |
-| `trace` | Observability mỗi lần chạy | `task_summary`, `intake_id`→intake, `story_id`→story, `actions/files_*`(JSON), `outcome`(enum) |
+| Bảng              | Vai trò                       | Cột chính                                                                                                   |
+| ------------------ | ------------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| `schema_version` | Sổ ghi migration đã áp     | `version PK`, `applied_at`                                                                                |
+| `intake`         | Phân loại việc đến        | `input_type`(CHECK enum), `summary`, `risk_lane`, `risk_flags`(JSON), `story_id`(soft)              |
+| `story`          | Gói việc + proof (TRÁI TIM) | `id TEXT PK` (US-XXX), `status`(enum), `unit/integration/e2e/platform_proof`(INTEGER 0/1), `evidence` |
+| `decision`       | ADR bền vững                 | `id TEXT PK`, `status`(enum), `doc_path`, `predicted_impact`, `actual_outcome`                      |
+| `trace`          | Observability mỗi lần chạy  | `task_summary`, `intake_id`→intake, `story_id`→story, `actions/files_*`(JSON), `outcome`(enum)    |
 
 `backlog` cũng ở 001 nhưng là vòng tự-cải-tiến — hữu ích sớm, không bắt buộc để
 *vận hành*.
@@ -280,6 +293,7 @@ Chỉ đọc phần này khi bạn đã quyết leo H2. Đây là "viết bảng
                                                 │
    decision (độc lập)      backlog (độc lập ở v0)
 ```
+
 Ghi nhớ: `trace` là bảng đầu tiên có **FK thật** (vào `intake` + `story`).
 `intake.story_id` và `intervention.story_id` là **soft link** (TEXT, không FK).
 
@@ -302,19 +316,20 @@ Ghi nhớ: `trace` là bảng đầu tiên có **FK thật** (vào `intake` + `s
 > `trace`; `trace` trước `intervention`.**
 
 ### 4.4 Bảng nâng cao (thêm dần khi trưởng thành)
+
 `tool` (+ scan columns) → nhận biết tool · `intervention` → giám sát ·
 `changeset_applied` (+ sha) → phân phối content pack idempotent ·
 `story_dependency`/`story_hierarchy` → đồ thị công việc · cụm `uid` +
-`proposal_evidence_link` + `backlog_outcome_observation` + `audit_evidence_
-episode` + `legacy_evidence_snapshot` + `story_backlog_link` → hệ học khép kín
+`proposal_evidence_link` + `backlog_outcome_observation` + `audit_evidence_ episode` + `legacy_evidence_snapshot` + `story_backlog_link` → hệ học khép kín
 (chỉ đáng làm khi chạy nhiều trace và muốn *chứng minh* cải tiến có tác dụng).
 
 ### 4.5 CLI: bề mặt lệnh tối thiểu
-Nhóm theo mối quan tâm: `init/migrate` · `intake` · `story add/update/verify/
-complete` · `decision add` · `backlog add/close` · `trace`/`score-trace` ·
+
+Nhóm theo mối quan tâm: `init/migrate` · `intake` · `story add/update/verify/ complete` · `decision add` · `backlog add/close` · `trace`/`score-trace` ·
 `query matrix/stories/traces/...`. Đọc-chỉ tách biệt mutate.
 
 ### 4.6 Hợp đồng process (nếu có orchestrator ngoài)
+
 Nếu bạn muốn agent/tool bên ngoài lái CLI: áp dụng khung **discovery-before-
 mutation** — lệnh đầu tiên `query contract` trả `protocol_version`, dải schema,
 `database_state`, `capabilities`; consumer *verify chứ không suy từ semver*. Mỗi
@@ -327,6 +342,7 @@ message. Mutation timeout = *kết quả không xác định* → re-query state
 ## Phần 5 — Checklist thực thi cho agent MỚI TINH (làm theo thứ tự)
 
 ### Giai đoạn A — Dựng H1 (một buổi, thuần markdown)
+
 ```
 [ ] A1. Tạo cây thư mục:  docs/  docs/templates/  docs/stories/  docs/decisions/
 [ ] A2. Viết docs/GLOSSARY.md            (từ vựng lõi)
@@ -343,6 +359,7 @@ message. Mutation timeout = *kết quả không xác định* → re-query state
 ```
 
 ### Giai đoạn B — Vận hành thật & thu friction (vài ngày–tuần)
+
 ```
 [ ] B1. Chạy 3–5 công việc thật qua đúng quy trình intake→story→proof.
 [ ] B2. Mỗi lần đau/lặp/mơ hồ → ghi 1 dòng vào HARNESS_BACKLOG.md.
@@ -351,6 +368,7 @@ message. Mutation timeout = *kết quả không xác định* → re-query state
 ```
 
 ### Giai đoạn C — Leo H2 (chỉ khi B3 nói "đã đau")
+
 ```
 [ ] C1. Viết CONTEXT_RULES.md + TRACE_SPEC.md
 [ ] C2. Viết HARNESS_COMPONENTS.md + HARNESS_MATURITY.md
@@ -362,6 +380,7 @@ message. Mutation timeout = *kết quả không xác định* → re-query state
 ```
 
 ### Giai đoạn D — Leo H3→H5 (khi có đủ trace để đo)
+
 ```
 [ ] D1. score-trace/score-context; gom friction theo component        (H3)
 [ ] D2. TOOL_REGISTRY.md; story verify_command; cổng verify khi trace  (H4)
@@ -372,17 +391,17 @@ message. Mutation timeout = *kết quả không xác định* → re-query state
 
 ## Phần 6 — Cạm bẫy & anti-pattern (học từ thiết kế tham chiếu)
 
-| Anti-pattern | Vì sao sai | Làm đúng |
-|--------------|-----------|----------|
-| Dựng database ngay từ ngày 1 | H2 vô nghĩa khi chưa có công việc thật để lộ nhu cầu | H1 markdown trước, DB khi đau |
-| Nhét state sống vào markdown | Bảng tay dễ sai, không query được, mất observability | State → durable layer; markdown giữ *rule* |
-| Coi trace text = decision record | Trace là *evidence*, không *chứng minh* có bản ghi bền | High-risk: BẮT BUỘC cả file `decisions/NNNN.md` + row durable |
-| `story update --status implemented` | Bỏ qua proof tươi | Chỉ `story complete` (chạy proof + atomic) mới sang implemented |
-| Viết IMPROVEMENT_PROTOCOL/AUDIT sớm | Máy tự sửa mình khi chưa có dữ liệu = rỗng | Đợi đủ trace/records tích lũy |
-| Đọc mọi doc mỗi phiên | Phá bounded-context, tốn token | Đọc theo phase×lane, có ngân sách |
-| Proposal tự động apply | Harness tự viết lại policy không kiểm soát = scope creep | `propose` chỉ advisory, người duyệt 1 key |
-| Suy khả năng tương thích từ semver | Version cao ≠ có capability bạn cần | `query contract`: verify protocol+schema+capabilities |
-| Bootstrap/mutate khi chỉ được hỏi | Vi phạm authority gate | Read-only → chỉ đọc, tuyệt đối không đụng DB |
+| Anti-pattern                             | Vì sao sai                                                      | Làm đúng                                                          |
+| ---------------------------------------- | ---------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Dựng database ngay từ ngày 1          | H2 vô nghĩa khi chưa có công việc thật để lộ nhu cầu  | H1 markdown trước, DB khi đau                                     |
+| Nhét state sống vào markdown          | Bảng tay dễ sai, không query được, mất observability      | State → durable layer; markdown giữ *rule*                       |
+| Coi trace text = decision record         | Trace là *evidence*, không *chứng minh* có bản ghi bền | High-risk: BẮT BUỘC cả file `decisions/NNNN.md` + row durable   |
+| `story update --status implemented`    | Bỏ qua proof tươi                                             | Chỉ `story complete` (chạy proof + atomic) mới sang implemented |
+| Viết IMPROVEMENT_PROTOCOL/AUDIT sớm    | Máy tự sửa mình khi chưa có dữ liệu = rỗng              | Đợi đủ trace/records tích lũy                                  |
+| Đọc mọi doc mỗi phiên               | Phá bounded-context, tốn token                                 | Đọc theo phase×lane, có ngân sách                              |
+| Proposal tự động apply                | Harness tự viết lại policy không kiểm soát = scope creep   | `propose` chỉ advisory, người duyệt 1 key                      |
+| Suy khả năng tương thích từ semver | Version cao ≠ có capability bạn cần                          | `query contract`: verify protocol+schema+capabilities              |
+| Bootstrap/mutate khi chỉ được hỏi   | Vi phạm authority gate                                          | Read-only → chỉ đọc, tuyệt đối không đụng DB               |
 
 ---
 

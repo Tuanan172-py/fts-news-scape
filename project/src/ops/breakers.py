@@ -18,6 +18,7 @@ PROVIDER_CLASSES = (AUTH, QUOTA, NETWORK, TIMEOUT, EMPTY)
 _PATTERNS: list[tuple[str, re.Pattern]] = [
     (AUTH, re.compile(r"\b40[13]\b|unauthenticated|unauthori[sz]ed|permission[_ ]denied|"
                       r"not logged in|login required|please log ?in|re-?authenticate|"
+                      r"authentication required|visit the url to log ?in|"
                       r"invalid[_ ]credentials|token (?:has )?expired|đăng nhập", re.I)),
     (QUOTA, re.compile(r"\b429\b|resource[_ ]exhausted|quota|rate[_ ]?limit|hạn mức", re.I)),
     (NETWORK, re.compile(r"getaddrinfo|name resolution|connection (?:reset|refused|aborted|error)|"
@@ -201,7 +202,11 @@ class Breakers:
         s.last_class = cls
         minutes: int | None
         if cls == AUTH:
-            trip, minutes = True, None
+            # None keeps AUTH manual (/reset). A value lets one wave probe again later: the agy
+            # keyring login can refresh itself, and a manual-only breaker idled 2h20m on
+            # 2026-11-13 after the login had already recovered.
+            auth_minutes = self.cfg.get("auth_open_minutes")
+            trip, minutes = True, (int(auth_minutes) if auth_minutes else None)
         elif cls == QUOTA:
             trip, minutes = True, int(self.cfg.get("quota_open_minutes", 300))
         elif cls == NETWORK:

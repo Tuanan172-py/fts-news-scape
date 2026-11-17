@@ -10,10 +10,11 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from src.core import paths  # noqa: E402
 from src.core.tickers import _TICKER_RE, is_location_context  # noqa: E402
 
 DEFAULT_DB = Path(r"C:\data\news-scape\monocle.db")
-LOG_DIR = Path(__file__).resolve().parents[1] / "data" / "state"
+LOG_DIR = paths.state_dir()
 
 
 def location_only_codes(symbols: str, text: str) -> list[str]:

@@ -44,3 +44,7 @@ Mỗi dòng: `n7`, `n30`, `n90`, `stories7`, `m7_30` (tốc độ 7 ngày / tố
 ## 5. Lưu ý
 - `state = "Chưa đủ lịch sử"` hoặc `coverage.sufficient_for_90d = false`: nêu rõ, không kết luận vòng đời.
 - Chủ đề định nghĩa bằng thực thể và từ khoá trong `config/themes.json`; analyst có thể bổ sung.
+- Sau mốc đổi chế độ gán thực thể (`coverage.entity_regime_from`), chủ đề dựa trên thực thể chỉ so sánh với dữ liệu từ mốc đó; `state = "Chưa đủ lịch sử"` nghĩa là chưa đủ 7 ngày sau mốc, không được diễn giải là nóng lên hay nguội đi.
+- `top_titles_7d` xếp bài có thực thể chủ đề vai trò `primary` và tin cấp thiết lên trước (`primary_match`, `is_hot`); bài chỉ khớp từ khoá nằm sau. Vẫn phải loại bài PR thương hiệu khi nêu chất xúc tác.
+- `coverage.window_starts_before_dense = true`: cửa sổ 90 ngày lùi qua giai đoạn dữ liệu thưa, `m30_90` kém tin cậy.
+- Chủ đề dòng tiền mới: `khoi_ngoai_etf`, `margin_thanh_khoan`, `no_xau_ngan_hang`, `phap_ly_bds` (khớp theo từ khoá, chưa có thực thể).

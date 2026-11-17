@@ -143,8 +143,12 @@ def main(argv: list[str] | None = None) -> int:
         ]
         rc, out = run_command(pack_cmd, desc=f"Đóng gói bài viết đợt {wave_id}")
         if rc != 0:
-            print(f"❌ Đóng gói đợt {wave_id} thất bại. Dừng tiến trình.")
-            break
+            print(f"⚠️ Đóng gói đợt {wave_id} gặp trở ngại, chờ 15s để thử lại lần 2...")
+            time.sleep(15)
+            rc, out = run_command(pack_cmd, desc=f"Thử lại đóng gói đợt {wave_id}")
+            if rc != 0:
+                print(f"❌ Đóng gói đợt {wave_id} thất bại sau khi thử lại. Dừng tiến trình.")
+                break
 
         manifest_path = article_packets_dir() / f"wave_{wave_id}.json"
         if not manifest_path.exists():

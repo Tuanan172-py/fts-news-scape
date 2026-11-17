@@ -790,16 +790,18 @@ def cmd_finish(args: argparse.Namespace) -> int:
     # `failed` line of the ingest command with errors unrelated to the wave.
     if "ingest" in steps:
         failed = []
+        fail_thresh = round(1.0 - getattr(args, "min_coverage", MIN_COVERAGE), 4)
         for script, out_dir in (("l1_ingest.py", L1_OUT_DIR), ("agent_ingest.py", GOLD_OUT_DIR)):
             files = sorted(glob.glob(str(out_dir / f"article_{args.wave}_*.output.json")))
             if not files:
                 failed.append(f"không có tệp đầu ra nào của đợt trong {out_dir.name}/ "
                               f"— chạy bước expand trước")
                 continue
-            rc = run([PYTHON, str(SCRIPTS / script), *files], check=False)
+            cmd = [PYTHON, str(SCRIPTS / script), *files, "--fail-threshold", str(fail_thresh)]
+            rc = run(cmd, check=False)
             if rc != 0:
-                failed.append(f"{script} trả mã {rc}: có bản ghi bị DoD loại hoặc tệp "
-                              f"không đọc được, xem các dòng FAILED phía trên")
+                failed.append(f"{script} trả mã {rc}: tỷ lệ hỏng vượt ngưỡng {fail_thresh:.0%} "
+                              f"hoặc tệp không đọc được, xem các dòng FAILED phía trên")
         if failed:
             fail_banner(args.wave, failed, f"{rerun} ingest,verify,ledger,handoff")
             return 1

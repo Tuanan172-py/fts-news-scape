@@ -28,7 +28,7 @@ from src.core.models import VN_TZ, now_vn_iso
 from src.core.stdio import force_utf8_stdio
 from src.crawler.backoff import SourceBackoff
 from src.crawler.http_client import HTTPClient
-from src.crawler.raw_store import RawStore
+from src.crawler.raw_store import RawStore, looks_blocked
 from src.crawler.robots import RobotsGate
 from src.db.store import ArticleStore
 from src.pipeline.silver_builder import _html_from_json
@@ -84,6 +84,8 @@ def _find_bronze(domain: str, url_title_hash: str,
     for html_path in reversed(hits):      # newest first
         meta_path = html_path[:-len(".html")] + ".meta.json"
         try:
+            if looks_blocked(Path(html_path).read_bytes()):
+                continue                  # anti-bot interstitial stored as ok: fetch again
             status = json.loads(
                 Path(meta_path).read_text(encoding="utf-8")).get("capture_status")
         except (OSError, ValueError):
@@ -336,7 +338,8 @@ def main(domain: str | None, limit: int, do_fetch: bool, dry_run: bool,
     rows = conn.execute(
         f"SELECT id, url, url_title_hash, source_domain, summary, published_at, "
         f"metadata_json "
-        f"FROM articles {where} LIMIT ?", params).fetchall()
+        # Newest first: an old backlog must not starve today's deferred articles of the budget.
+        f"FROM articles {where} ORDER BY fetched_at DESC LIMIT ?", params).fetchall()
 
     logger.info("{} rows: {} (domain={}, selector={!r}, date_scope={!r})",
                 "date-repair" if dates_only else mode,

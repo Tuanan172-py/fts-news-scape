@@ -8,31 +8,35 @@ any governed document; open a body only when its summary is relevant.
 
 | ID | Status | Title | Summary |
 |---|---|---|---|
-| [ADR-0001](decisions/0001-harness-first-approach.md) | accepted (amended by ADR-0021, ADR-0022, ADR-0024) | Harness-first approach for agentic collaboration | Build the operating harness (intake gate, bounded context, mechanical proof, durable records) around the product before extending product features; every request passes risk classification first. |
+| [ADR-0001](decisions/0001-harness-first-approach.md) | accepted (amended by ADR-0021, ADR-0022, ADR-0024, ADR-0026) | Harness-first approach for agentic collaboration | Build the operating harness (intake gate, bounded context, mechanical proof, durable records) around the product before extending product features; every request passes risk classification first. |
 | [ADR-0002](decisions/0002-durable-layer-sqlite-python.md) | accepted (amended by ADR-0021) | Durable layer using SQLite and a Python CLI | Harness state (story, intake, decision, backlog, trace, intervention, tool) lives in a WAL-mode SQLite file harness.db, isolated from monocle.db, and is operated through the Python CLI scripts/harness_cli.py. |
 | [ADR-0003](decisions/0003-code-first-l1-delivery.md) | superseded (by ADR-0010) | Deterministic code-first L1 results are written to l1_outputs and delivered | Allowed catalog-lookup (code-first) L1 entity matches into l1_outputs, tagged l1_source='code_first', so deliveries no longer waited on an unrun LLM step; agent output may overwrite them. Superseded by ADR-0010. |
 | [ADR-0004](decisions/0004-gold-value-gate-va-du-lieu-gia-lap.md) | superseded (by ADR-0010) | Value gate for the Gold tier and handling of script-emulated data | Deleted the script that faked Gold analysis, added DoD predicates value_added and implication_specific, locked anti-emulation tests, and flagged 1,274 faked records dod_pass=0 while keeping output_json (option D1). Superseded by ADR-0010. |
-| [ADR-0005](decisions/0005-subscriber-gated-gold-va-morphological-l1-guard.md) | accepted (amended by ADR-0010) | Subscriber-gated Gold export and morphological L1 guard | Four token and precision fixes for the L1/Gold lane - Prefix and Capitalized Suffix guards for ambiguous aliases, subscriber-gated Gold export, a 3-pass 2,200-character pruner, and L1 review of missed articles only. |
+| [ADR-0005](decisions/0005-subscriber-gated-gold-va-morphological-l1-guard.md) | accepted (amended by ADR-0010, ADR-0031) | Subscriber-gated Gold export and morphological L1 guard | Four token and precision fixes for the L1/Gold lane - Prefix and Capitalized Suffix guards for ambiguous aliases, subscriber-gated Gold export, a 3-pass 2,200-character pruner, and L1 review of missed articles only. |
 | [ADR-0006](decisions/0006-agent-network-registry-pipeline-metrics.md) | accepted (amended by ADR-0010, ADR-0014) | Agent network with registry, pipeline DAG and per-agent KPI ledger | Three-class agent taxonomy (operator, cognitive, conductor), a machine-readable registry and pipeline DAG as source of truth, an agent_metrics KPI ledger in harness.db, and six draft cognitive agents. |
 | [ADR-0007](decisions/0007-silver-watermark-integrity-va-bang-silver-failures.md) | accepted | Silver watermark integrity and the silver_failures table | The Silver derive watermark becomes a low-water mark that never passes an unresolved failure; failures go to a new silver_failures table with a 5-attempt dead-letter threshold, and the radar must show dead-letters. |
 | [ADR-0008](decisions/0008-gold-activation-human-in-the-loop-va-tran-token.md) | superseded (by ADR-0010) | Human-in-the-loop Gold activation and token cap | Required explicit operator confirmation and a per-run token cap before any LLM runner spent tokens, and made failures loud; the gate and cap were voided on 2026-09-18 and by ADR-0010; only fail-loud survives. |
 | [ADR-0009](decisions/0009-deepseek-harness-runtime-dieu-phoi.md) | accepted (amended by ADR-0010, ADR-0011, ADR-0017) | DeepSeek Harness as orchestration runtime for the agent network | DSH became the orchestration runtime with cognitive agents as in-process subagents, DeepSeek Flash only, ADR-0008 gate with L1 60,000 and Gold 40,000 token caps, PTC conductor, agy kept as non-default option. |
-| [ADR-0010](decisions/0010-ngung-lane-l1-gold-article-lane-duy-nhat.md) | accepted (amended by ADR-0016, ADR-0018, ADR-0019) | Retire the two-tier L1/Gold lane; Article Lane is the only processing path | Article Lane becomes the single processing path; the L1/Gold lane, its preset rows, morninger job, pipeline stages and registry agents are retired, code-first rows never count as analysed, tokens are recorded only. |
-| [ADR-0011](decisions/0011-antigravity-cli-article-runner.md) | accepted (amended by ADR-0012, ADR-0017) | Antigravity CLI (agy) runner and headless conductor for Article Lane | Adds a headless agy runner beside DSH; Python conducts, agy is a stateless zero-tool single-turn function in an isolated worker profile, fed by stdin stream-json, validated in Python, triggered by article_tick.py, with no token ceiling. |
+| [ADR-0010](decisions/0010-ngung-lane-l1-gold-article-lane-duy-nhat.md) | accepted (amended by ADR-0016, ADR-0018, ADR-0019, ADR-0031) | Retire the two-tier L1/Gold lane; Article Lane is the only processing path | Article Lane becomes the single processing path; the L1/Gold lane, its preset rows, morninger job, pipeline stages and registry agents are retired, code-first rows never count as analysed, tokens are recorded only. |
+| [ADR-0011](decisions/0011-antigravity-cli-article-runner.md) | accepted (amended by ADR-0012, ADR-0017, ADR-0026) | Antigravity CLI (agy) runner and headless conductor for Article Lane | Adds a headless agy runner beside DSH; Python conducts, agy is a stateless zero-tool single-turn function in an isolated worker profile, fed by stdin stream-json, validated in Python, triggered by article_tick.py, with no token ceiling. |
 | [ADR-0012](decisions/0012-ops-daemon-van-hanh-tu-chu-24-7.md) | accepted (amended by ADR-0014, ADR-0026) | Autonomous ops daemon while the machine is on; ops_daemon, DBOS workflows, Telegram oversight | A deterministic Python ops_daemon with DBOS workflows, ops.db state, sensors, provider breakers, timeouts and Telegram oversight runs Article Lane waves while the machine is on; autonomy is L0 or L1 after the council amendment. |
 | [ADR-0013](decisions/0013-thu-thap-tron-ven-xu-ly-ve-sau.md) | accepted | Capture everything, process later | Capture is an unfiltered layer; every discovered URL enters a discovery ledger, crawlers paginate by watermark and backfill, sitemaps reconcile daily, duplicates are kept and clustered, and a capture-coverage gap above 2% per day is red. |
 | [ADR-0014](decisions/0014-giam-sat-multi-agent-phong-dieu-khien.md) | accepted | Multi-agent supervision; ops_spans traces, control room, Telegram oversight, self-renewing mandate | Adds runtime span traces in ops.db, a local read-only control room, a Telegram role change from approval to exception reporting, a 30-day conditionally self-renewing mandate replacing the 7-day standing order, and a deterministic improvement inbox. |
 | [ADR-0015](decisions/0015-cbtt-fuzzy-dedup-exemption.md) | rejected | Exempt CBTT disclosure titles from crawl-layer fuzzy dedup | Reserved number for exempting CBTT disclosure titles from crawl-layer fuzzy title dedup; never written and rejected as absorbed, because ADR-0013 removed fuzzy dedup from crawlers entirely. |
 | [ADR-0016](decisions/0016-cum-hoa-trung-lap-va-tin-hieu-insight.md) | accepted | Story clustering, result inheritance and insight signals | Cluster duplicate articles without deleting them; exact or 0.95-containment copies skip the model and inherit the canonical result as l1_source 'inherited'; derived signal tables measure coverage frequency and breadth. |
-| [ADR-0017](decisions/0017-hop-dong-dau-ra-article-lane-thong-nhat-moi-provider.md) | accepted | Unified Article Lane output contract for every provider | One JSON Schema and one parse_and_validate function govern the compact record for agy, OpenRouter, opencode and DSH; silent semantic defaults are banned, and new providers pass a 30-article golden set benchmarked on agy. |
+| [ADR-0017](decisions/0017-hop-dong-dau-ra-article-lane-thong-nhat-moi-provider.md) | accepted (amended by ADR-0026) | Unified Article Lane output contract for every provider | One JSON Schema and one parse_and_validate function govern the compact record for agy, OpenRouter, opencode and DSH; silent semantic defaults are banned, and new providers pass a 30-article golden set benchmarked on agy. |
 | [ADR-0018](decisions/0018-mot-trich-dan-cho-bai-mot-doan.md) | accepted | Silver body for the lane and one citation for one-paragraph articles | Packets, the thin filter and work packages read the full Silver body first; stale packets are re-packed from Silver; a truly one-paragraph article needs one citation, marked by citation_basis. |
 | [ADR-0019](decisions/0019-loai-bai-mong-khoi-packet-article-lane.md) | accepted | Exclude thin articles from Article Lane packets | Articles whose packet paragraphs contain fewer than two paragraphs of MIN_CITATION_CHARS are thin; load_candidates excludes them by default, radar counts them separately, and one threshold lives in article_contract.py. |
-| [ADR-0021](decisions/0021-agent-first-knowledge-framework.md) | accepted | Agent-first knowledge framework, model-agnostic | One frontmatter contract, one language (English), one id allocator and one lint gate for every knowledge document, so any model writes ADRs, stories, plans and facts the same way. |
+| [ADR-0021](decisions/0021-agent-first-knowledge-framework.md) | accepted (amended by ADR-0029) | Agent-first knowledge framework, model-agnostic | One frontmatter contract, one language (English), one id allocator and one lint gate for every knowledge document, so any model writes ADRs, stories, plans and facts the same way. |
 | [ADR-0022](decisions/0022-wip-one-per-worktree.md) | accepted (amended by ADR-0024) | WIP limit of one story per worktree | WIP=1 applies per git worktree, keyed by branch; agents on different worktrees work in parallel with equal authority, and lint blocks two in_progress stories on one branch. |
-| [ADR-0023](decisions/0023-cqrs-partitioned-lakehouse-sharepoint.md) | accepted | CQRS Partitioned Lakehouse on SharePoint Data Plane | Establishes CQRS Partitioned Lakehouse on SharePoint news-data sandbox with lock-free dropzone, DuckDB deduplication, and strictly isolates official FRA - Data site. |
-| [ADR-0024](decisions/0024-canonical-local-codebase-and-hybrid-workspace.md) | accepted | Canonical Local Codebase Standardization and Hybrid Workspace Governance | Establishes C:/src/news-scraper as the sole canonical worktree, isolates git database and virtual environment outside OneDrive, and deprecates development on cloud-synced folders. |
-| [ADR-0025](decisions/0025-unified-plugin-architecture-for-lakehouse-consumption.md) | accepted | Unified Plugin Architecture for Lakehouse Consumption on AGY and Gemini | Establishes the Unified Plugin packaging architecture (fpts-market-intel) for local Lakehouse data consumption across Antigravity (AGY) and Gemini CLI/IDE ecosystems, replacing fragmented standalone skills with a single-bundle distribution, zero-config path auto-discovery, and shared DuckDB vectorized tooling. |
+| [ADR-0023](decisions/0023-cqrs-partitioned-lakehouse-sharepoint.md) | accepted (amended by ADR-0026, ADR-0030) | CQRS Partitioned Lakehouse on SharePoint Data Plane | Establishes CQRS Partitioned Lakehouse on SharePoint news-data sandbox with lock-free dropzone, DuckDB deduplication, and strictly isolates official FRA - Data site. |
+| [ADR-0024](decisions/0024-canonical-local-codebase-and-hybrid-workspace.md) | accepted (amended by ADR-0029) | Canonical Local Codebase Standardization and Hybrid Workspace Governance | Establishes C:/src/news-scraper as the sole canonical worktree, isolates git database and virtual environment outside OneDrive, and deprecates development on cloud-synced folders. |
+| [ADR-0025](decisions/0025-unified-plugin-architecture-for-lakehouse-consumption.md) | accepted (amended by ADR-0031) | Unified Plugin Architecture for Lakehouse Consumption on AGY and Gemini | Establishes the Unified Plugin packaging architecture (fpts-market-intel) for local Lakehouse data consumption across Antigravity (AGY) and Gemini CLI/IDE ecosystems, replacing fragmented standalone skills with a single-bundle distribution, zero-config path auto-discovery, and shared DuckDB vectorized tooling. |
 | [ADR-0026](decisions/0026-canonical-publish-path-runner-order-l0-l1-levels.md) | accepted | Canonical publish path, runner order, L0/L1 levels, user manifest SSOT, users/output tree | Fixes six ambiguities found when mapping the architecture. One production publish path, ranked LLM runners without Claude, autonomy levels L0 and L1 only, one user manifest, one users/output tree for local and SharePoint, and harness tracking that never gates. |
+| [ADR-0029](decisions/0029-unified-documentation-lifecycle.md) | accepted | Unified documentation lifecycle | Every tracked markdown file belongs to one declared document class with one writer, one command and one mechanical check; one linter, one status writer, generated-file freshness checks, a dispatcher hook and one canonical document per topic. |
+| [ADR-0030](decisions/0030-production-research-news-database-on-fra-data-via.md) | proposed | Production Research news lakehouse on FRA Data with gated daily partitions and Research slots | Publish only fully processed articles to FRA - Data/news in the ADR-0023 Parquet layout, rewriting changed day partitions at five Research slots plus urgent express pushes; the folder holds data only. |
+| [ADR-0031](decisions/0031-multi-scope-entity-provenance-and-skill-workflow.md) | accepted | Multi-scope entity provenance database and two-speed skill workflow | Preserve title, body and inferred entities with role and provenance in a normalized entity database, isolate noisy scraper symbols, and run a two-speed CQRS workflow for analyst skills. |
+| [ADR-0032](decisions/0032-event-kind-label-in-the-article-contract-separates.md) | proposed | Event kind label in the article contract separates PR from valuation catalysts | Proposes a closed event_kind field produced by article-processor, stored in the existing categories column, so lenses can drop brand PR from market-impact conclusions without script heuristics. |
 
 ## story
 
@@ -76,15 +80,19 @@ any governed document; open a body only when its summary is relevant.
 | [US-036](stories/US-036-bronze-ghi-nham-goc-va-khoa-so-loi-silver.md) | implemented | Bronze written to the wrong root and Silver failure ledger keys | Captured articles are never reported lost because Bronze and other data products always resolve under project/data, a failed capture never overwrites a good one, and stale Silver failure rows no longer pin the watermark. |
 | [US-037](stories/US-037-pipeline-stabilization-orchestration-audit.md) | implemented | Pipeline stabilization after the orchestration audit | Self-running waves cannot drift after the 2026-10-05 audit; provider is locked per wave, repair rounds are capped, failed waves cool down, manual runs are registered, thin articles leave packets, and data leaves git. |
 | [US-038](stories/US-038-repo-to-chuc-va-data-plane.md) | implemented | Codebase len Research-FPA/news-scraper va data plane SharePoint | Transfer codebase to Research-FPA/news-scraper and decouple SharePoint data plane. |
-| [US-039](stories/US-039-agent-first-knowledge-framework.md) | in_progress | Agent-first knowledge framework | Every agent writes ADRs, stories, proposals, plans and facts through one English frontmatter contract with an id allocator and a blocking lint, and thin historical ADRs are rebuilt from commit evidence. |
+| [US-039](stories/US-039-agent-first-knowledge-framework.md) | changed | Agent-first knowledge framework | Every agent writes ADRs, stories, proposals, plans and facts through one English frontmatter contract with an id allocator and a blocking lint, and thin historical ADRs are rebuilt from commit evidence. |
 | [US-040](stories/US-040-guard-code-first-out-of-live-paths.md) | implemented | Guard code_first out of every live path | Code-first L1 rows never reach delivery, insight signals, selectors, counts, packet cleanup or Parquet exports. |
+| [US-041](stories/US-041-test-xanh-va-so-cai-token-theo-provider.md) | implemented | Green test suite, per-provider token ledger, and collection coverage analysis | Date-independent test suite, accurate per-provider token ledger accounting, and collection coverage analysis. |
 | [US-042](stories/US-042-cqrs-partitioned-lakehouse-data-plane.md) | implemented | CQRS Partitioned Lakehouse on SharePoint Data Plane | Implement lock-free dropzone ingestion and DuckDB consolidation for the SharePoint news-data sandbox. |
 | [US-043](stories/US-043-atomic-harness-session-closure-and-trace-guard.md) | implemented | Atomic Harness Session Closure and Trace Guard | Implement atomic harness session close command and C-Light git trace guard. |
 | [US-044](stories/US-044-analyst-use-case-skills-for-fpts-market-intel.md) | implemented | Analyst use-case skills for fpts-market-intel plugin | Analysts on the Fundamental, Market/Technical, Macro and Morning desks get twelve plugin skills backed by zero-token DuckDB lenses that filter by entity, group duplicate articles into stories and compare against baselines. |
 | [US-045](stories/US-045-unify-architecture-state-lane-docs-harness-tracking-publish.md) | blocked | Unify architecture state: lane docs, harness tracking, publish path, L0/L1, manifest SSOT, users/output | Brings docs, harness and code to one state - Article Lane docs, non-gating session close, one publish path, L0/L1 only, one user manifest, one users/output tree. |
-| [US-046](stories/US-046-sweep-all-documents-to-the-current-project-state.md) | in_progress | Sweep all documents to the current project state | Every current document (ADRs, facts, glossary, open items, design, AGENTS.md) states the same runner order, levels, publish path, manifest and output tree as the code. |
+| [US-046](stories/US-046-sweep-all-documents-to-the-current-project-state.md) | implemented | Sweep all documents to the current project state | Every current document (ADRs, facts, glossary, open items, design, AGENTS.md) states the same runner order, levels, publish path, manifest and output tree as the code. |
 | [US-047](stories/US-047-standardize-docstrings-to-english-google-style.md) | implemented | Standardize docstrings to English Google style | Every public module, class and function in project/src and project/scripts carries an English Google-style docstring, enforced by an AST linter and a phrase scanner. |
 | [US-048](stories/US-048-local-offline-workflow-diagrams-as-mermaid-sources.md) | implemented | Local offline workflow diagrams as Mermaid sources | The whole operating workflow opens offline as one self-contained HTML page with an interactive six-layer map and per-flow diagrams, replacing the Claude-only artifact. |
+| [US-051](stories/US-051-unified-documentation-lifecycle.md) | in_progress | Unified documentation lifecycle and contract governance | Every tracked markdown file belongs to one document class with one writer and one check, one linter and one story-status writer remain, and each topic has one canonical document. |
+| [US-052](stories/US-052-multi-scope-ner-entity-db-and-skill-workflow.md) | planned | Multi-scope NER provenance, normalized entity DB and two-speed skill workflow | Retain title, body and inferred entities with role and provenance in the normalized entity database, eliminate scraper symbol noise, and add fast intraday delta reads plus priority queueing for skills. |
+| [US-053](stories/US-053-lakehouse-plugin-lens-fixes-and-source-noise-guards.md) | blocked | Lakehouse plugin lens fixes and source noise guards | The market-intel lenses read the Production lakehouse by default, stop reporting false acceleration and buzz after the entity regime change, and the L1 matcher and output validator reject known noise. |
 
 ## proposal
 
@@ -144,6 +152,107 @@ any governed document; open a body only when its summary is relevant.
 |---|---|---|---|
 | [RUN-W1001NEMO01](runs/W1001NEMO01.md) | closed | Backlog wave W1001NEMO01 on OpenRouter Nemotron 3 Ultra free | W1001NEMO01 analysed 500 backlog articles on OpenRouter Nemotron 3 Ultra free in about 56 minutes with two repair rounds, 0 failures, 100% L1 and 99.4% content coverage. |
 | [RUN-W1001OPC01](runs/W1001OPC01.md) | closed | Backlog wave W1001OPC01 on OpenCode native with Muse Spark | W1001OPC01 analysed 500 backlog articles from before 2026-10-01 on OpenCode native with Muse Spark 1.3 in about 48 minutes, with 0 failures and 100% coverage on both layers. |
+
+## skill
+
+| ID | Status | Title | Summary |
+|---|---|---|---|
+| [None](../.agents/skills/adversarial-dod-verifier/SKILL.md) | None |  |  |
+| [None](../.agents/skills/arena/SKILL.md) | None |  |  |
+| [None](../.agents/skills/backlog-article-workflow/SKILL.md) | None |  |  |
+| [None](../.agents/skills/daily-brief-synthesizer/SKILL.md) | None |  |  |
+| [None](../.agents/skills/dod-gatekeeper/SKILL.md) | None |  |  |
+| [None](../.agents/skills/dsh-preflight-validator/SKILL.md) | None |  |  |
+| [None](../.agents/skills/entity-curator/SKILL.md) | None |  |  |
+| [None](../.agents/skills/evaluating-trade-offs/SKILL.md) | None |  |  |
+| [None](../.agents/skills/find-skills/SKILL.md) | None |  |  |
+| [None](../.agents/skills/git-codebase-governance/SKILL.md) | None |  |  |
+| [None](../.agents/skills/gold-financial-analyst/SKILL.md) | None |  |  |
+| [None](../.agents/skills/harness-auditor/SKILL.md) | None |  |  |
+| [None](../.agents/skills/how/SKILL.md) | None |  |  |
+| [None](../.agents/skills/issue-intake-strategist/SKILL.md) | None |  |  |
+| [None](../.agents/skills/l1-entity-matcher/SKILL.md) | None |  |  |
+| [None](../.agents/skills/materiality-triage/SKILL.md) | None |  |  |
+| [None](../.agents/skills/multi-agent-orchestrator-governance/SKILL.md) | None |  |  |
+| [None](../.agents/skills/news-scape-agent-operations/SKILL.md) | None |  |  |
+| [None](../.agents/skills/ops-sentinel/SKILL.md) | None |  |  |
+| [None](../.agents/skills/ops-supervision/SKILL.md) | None |  |  |
+| [None](../.agents/skills/pipeline-radar/SKILL.md) | None |  |  |
+| [None](../.agents/skills/sharepoint-git-hybrid-workspace/SKILL.md) | None |  |  |
+| [None](../.agents/skills/story-dedup-clusterer/SKILL.md) | None |  |  |
+| [None](../.agents/skills/teach/SKILL.md) | None |  |  |
+| [None](../.agents/skills/technical-writing/SKILL.md) | None |  |  |
+| [None](../.agents/skills/token-auditor/SKILL.md) | None |  |  |
+| [None](../.agents/skills/warehouse-backlog-observability/SKILL.md) | None |  |  |
+| [None](../.agents/skills/watchlist-curator/SKILL.md) | None |  |  |
+| [None](../.agents/skills/why/SKILL.md) | None |  |  |
+| [None](../plugins/fpts-market-intel/skills/news-buzz-radar/SKILL.md) | None |  |  |
+| [None](../plugins/fpts-market-intel/skills/news-catalyst-tracker/SKILL.md) | None |  |  |
+| [None](../plugins/fpts-market-intel/skills/news-daily-brief/SKILL.md) | None |  |  |
+| [None](../plugins/fpts-market-intel/skills/news-geo-link/SKILL.md) | None |  |  |
+| [None](../plugins/fpts-market-intel/skills/news-lakehouse-explorer/SKILL.md) | None |  |  |
+| [None](../plugins/fpts-market-intel/skills/news-macro-timeline/SKILL.md) | None |  |  |
+| [None](../plugins/fpts-market-intel/skills/news-price-explainer/SKILL.md) | None |  |  |
+| [None](../plugins/fpts-market-intel/skills/news-sector-impact/SKILL.md) | None |  |  |
+| [None](../plugins/fpts-market-intel/skills/news-sentiment-pulse/SKILL.md) | None |  |  |
+| [None](../plugins/fpts-market-intel/skills/news-theme-trend/SKILL.md) | None |  |  |
+| [None](../plugins/fpts-market-intel/skills/news-ticker-screener/SKILL.md) | None |  |  |
+| [None](../plugins/fpts-market-intel/skills/news-ticker-timeline/SKILL.md) | None |  |  |
+
+## okf
+
+| ID | Status | Title | Summary |
+|---|---|---|---|
+| [None](../okf/catalog/configurations/domain_sources.md) | stable | Domain Sources |  |
+| [None](../okf/catalog/configurations/entity_registry.md) | stable | Entity Registry |  |
+| [None](../okf/catalog/configurations/monocle_config.md) | stable | Secrets Configuration |  |
+| [None](../okf/catalog/configurations/notifications.md) | stable | Notifications |  |
+| [None](../okf/catalog/configurations/secrets.md) | stable | Secrets Configuration |  |
+| [None](../okf/catalog/configurations/settings.md) | stable | Global Settings |  |
+| [None](../okf/catalog/configurations/source_strategy.md) | stable | Chiến lược Nguồn tin (Source Strategy) |  |
+| [None](../okf/catalog/configurations/token_pricing.md) | stable | Token Pricing & Watch Thresholds |  |
+| [None](../okf/catalog/configurations/user_subscriptions.md) | stable | User Subscriptions |  |
+| [None](../okf/catalog/configurations/watchlist.md) | stable | Watchlist |  |
+| [None](../okf/catalog/datasets/bronze_periodic_reports.md) | stable | Bronze Periodic Reports |  |
+| [None](../okf/catalog/datasets/bronze_raw_html.md) | stable | Bronze Raw Store |  |
+| [None](../okf/catalog/datasets/silver_work_packages.md) | stable | Silver & Work Packages |  |
+| [None](../okf/catalog/datasets/user_deliverables.md) | stable | User Deliverables |  |
+| [None](../okf/catalog/datasets/web_monocle_db.md) | stable | Web Monocle DB |  |
+| [None](../okf/catalog/metrics/articles_per_day.md) | stable | Articles Per Day |  |
+| [None](../okf/catalog/metrics/cache_hit_floor.md) | stable | Sàn bộ nhớ đệm |  |
+| [None](../okf/catalog/metrics/dedup_rate.md) | stable | Dedup Rate |  |
+| [None](../okf/catalog/metrics/dod_pass_rate.md) | stable | DoD Pass Rate |  |
+| [None](../okf/catalog/metrics/scraper_health.md) | stable | Scraper Health |  |
+| [None](../okf/catalog/metrics/sentiment_distribution.md) | stable | Sentiment Distribution |  |
+| [None](../okf/catalog/metrics/silver_backlog.md) | stable | Silver Backlog & Handoff Queue |  |
+| [None](../okf/catalog/pipelines/agent_handoff.md) | stable | Agent Handoff (Vòng 3 — Gold 2 lớp) |  |
+| [None](../okf/catalog/pipelines/article_lane.md) | stable | Article Lane (Vòng 3 — một lượt gọi cho trọn lô) |  |
+| [None](../okf/catalog/pipelines/db_writer.md) | stable | DBWriter — Single-Writer Thread |  |
+| [None](../okf/catalog/pipelines/ingestion_scheduler.md) | stable | Capture Orchestrator (Vòng 1) |  |
+| [None](../okf/catalog/pipelines/morninger.md) | stable | Morninger — entrypoint prod |  |
+| [None](../okf/catalog/pipelines/periodic_reports.md) | stable | Periodic Reports (NSO) |  |
+| [None](../okf/catalog/pipelines/sentiment_pipeline.md) | deprecated | Sentiment Analysis Pipeline |  |
+| [None](../okf/catalog/pipelines/silver_derive.md) | stable | Silver Derive (Vòng 2) |  |
+| [None](../okf/catalog/pipelines/user_output.md) | stable | User Output Workflow |  |
+| [None](../okf/catalog/playbooks/daily_agent_run.md) | stable | Daily Agent Run — chu kỳ per-user |  |
+| [None](../okf/catalog/playbooks/deployment.md) | stable | Hướng dẫn Triển khai (Deployment) |  |
+| [None](../okf/catalog/playbooks/runbook.md) | stable | Runbook — Vận hành hệ thống |  |
+| [None](../okf/catalog/references/agent_contracts.md) | stable | Agent Contracts & DoD |  |
+| [None](../okf/catalog/references/architecture.md) | stable | Kiến trúc Hệ thống (System Architecture) |  |
+| [None](../okf/catalog/references/codebase.md) | stable | Cấu trúc Mã nguồn (Codebase Guide) |  |
+| [None](../okf/catalog/references/token_economy.md) | stable | Kinh tế token và bộ nhớ đệm |  |
+| [None](../okf/catalog/tables/agent_outputs.md) | stable | agent_outputs |  |
+| [None](../okf/catalog/tables/article_versions.md) | stable | article_versions |  |
+| [None](../okf/catalog/tables/articles.md) | stable | articles |  |
+| [None](../okf/catalog/tables/l1_outputs.md) | stable | l1_outputs |  |
+| [None](../okf/catalog/tables/l1_tasks.md) | stable | l1_tasks |  |
+| [None](../okf/catalog/tables/periodic_reports.md) | stable | periodic_reports |  |
+| [None](../okf/catalog/tables/pipeline_state.md) | stable | pipeline_state |  |
+| [None](../okf/catalog/tables/scraper_heartbeat.md) | stable | scraper_heartbeat |  |
+| [None](../okf/catalog/tables/scraper_metrics.md) | stable | scraper_metrics |  |
+| [None](../okf/catalog/tables/seen_articles.md) | stable | seen_articles |  |
+| [None](../okf/catalog/tables/token_ledger.md) | stable | token_ledger |  |
+| [None](../okf/catalog/tables/work_items.md) | stable | work_items |  |
 
 ## unmigrated
 

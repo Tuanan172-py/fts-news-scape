@@ -20,6 +20,7 @@ _CATEGORY_KEYS = (
 # Entity type -> group in the `categories` checklist of l1-entity-output-v1.
 TYPE_GROUP = {
     "TICKER": "ticker_company", "SECURITY_OTHER": "ticker_company",
+    "UNLISTED_ORG": "ticker_company",
     "ETF": "etf_fund", "INDEX": "index", "EXCHANGE": "exchange",
     "INDUSTRY_GICS1": "industry_sector", "INDUSTRY_GICS2": "industry_sector",
     "INDUSTRY_GICS3": "industry_sector",
@@ -170,17 +171,20 @@ def build_code_first_output(rec: dict, article_id: str) -> dict:
 # ---------------------------------------------------------------------------
 # DoD: gate for L1 agent output (machine-checkable checklist)
 # ---------------------------------------------------------------------------
-def check_l1_dod(output: dict, title: str, registry=None) -> tuple[bool, list[str]]:
+def check_l1_dod(output: dict, title: str, registry=None,
+                 paragraphs: list[str] | None = None) -> tuple[bool, list[str]]:
     """Check the DoD acceptance conditions of an L1 recognition result.
 
     Args:
         output: Output data to validate.
-        title: Article title used to verify citations.
+        title: Article title used to verify title-scoped citations and surfaces.
         registry: Optional EntityRegistry used to verify identifiers.
+        paragraphs: Optional body paragraphs used to verify body-scoped surfaces in v1.1+.
 
     Returns:
         Tuple of the pass flag and the list of violation reasons, if any.
     """
+    from src.agent.entities import _normalize_vn_tones
 
     reasons: list[str] = []
 
@@ -189,19 +193,53 @@ def check_l1_dod(output: dict, title: str, registry=None) -> tuple[bool, list[st
         reasons.append(f"schema_invalid: {errs[:2]}")
         return False, reasons  # later checks are meaningless on a wrong schema
 
+    ver = str(output.get("l1_output_version") or "1.0")
     recognized = output.get("recognized")
     ents = output.get("entities") or []
     cites = output.get("citations") or []
 
-    # Grounding: surface and citation must be substrings of the title.
-    for i, e in enumerate(ents):
-        s = (e or {}).get("surface", "")
-        if not s or s not in title:
-            reasons.append(f"entities[{i}].surface không phải chuỗi con của title")
-    for i, c in enumerate(cites):
-        span = (c or {}).get("source_span", "")
-        if not span or span not in title:
-            reasons.append(f"citations[{i}].source_span không phải chuỗi con của title")
+    if ver == "1.0":
+        # Legacy v1.0 grounding: every surface and citation must be a substring of the title.
+        for i, e in enumerate(ents):
+            s = (e or {}).get("surface", "")
+            if not s or s not in title:
+                reasons.append(f"entities[{i}].surface không phải chuỗi con của title")
+        for i, c in enumerate(cites):
+            span = (c or {}).get("source_span", "")
+            if not span or span not in title:
+                reasons.append(f"citations[{i}].source_span không phải chuỗi con của title")
+    else:
+        # Multi-scope v1.1+ grounding (ADR-0031.D1): validate each entity according to its scope.
+        norm_paras = [_normalize_vn_tones(p) for p in (paragraphs or []) if p]
+        has_title_ent = False
+        for i, e in enumerate(ents):
+            e_dict = e or {}
+            s = e_dict.get("surface", "")
+            scope = e_dict.get("scope") or "title"
+            if scope == "title":
+                has_title_ent = True
+                if not s or (s not in title and _normalize_vn_tones(s) not in _normalize_vn_tones(title)):
+                    reasons.append(f"entities[{i}].surface không phải chuỗi con của title")
+            elif scope == "body":
+                if not s:
+                    reasons.append(f"entities[{i}].surface rỗng ở scope=body")
+                elif paragraphs is not None:
+                    ns = _normalize_vn_tones(s)
+                    if not any(s in p or (ns and ns in np) for p, np in zip(paragraphs, norm_paras)):
+                        reasons.append(f"entities[{i}].surface không xuất hiện trong thân bài")
+            elif scope == "inferred":
+                if not e_dict.get("in_list") or not e_dict.get("entity_id"):
+                    reasons.append(f"entities[{i}] scope=inferred bắt buộc phải thuộc danh mục")
+        valid_body_surfaces = {(e or {}).get("surface", "") for e in ents if (e or {}).get("surface")}
+        for i, c in enumerate(cites):
+            span = (c or {}).get("source_span", "")
+            if not span:
+                reasons.append(f"citations[{i}].source_span rỗng")
+            elif has_title_ent and span not in title and span not in valid_body_surfaces:
+                reasons.append(f"citations[{i}].source_span không khớp title hoặc surface hợp lệ")
+            elif not has_title_ent and span not in title and span not in valid_body_surfaces:
+                if paragraphs is not None and not any(span in p for p in paragraphs if p):
+                    reasons.append(f"citations[{i}].source_span không khớp văn bản bài viết")
 
     # Consistency between recognized and entities/citations.
     if recognized and (len(ents) < 1 or len(cites) < 1):

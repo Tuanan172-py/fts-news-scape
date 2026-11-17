@@ -33,7 +33,8 @@ morninger:
                                   # Đo thực tế 2026-09-17: cycle capture ~335s, nên phần bù phải
                                   # bị chặn cứng nếu không sẽ kéo dài nhịp capture vô hạn định.
   deferred_max_attempts: 5       # thử tối đa 5 lần rồi gắn capture_giveup — chặn vòng lặp vô hạn
-  deferred_retry_window_hours: 24  # chỉ truy đuổi bài fetched_at trong 24h gần đây
+  deferred_retry_window_hours: 336  # truy đuổi bài fetched_at trong 14 ngày (bằng trần catch-up);
+                                  # 24h cũ bỏ rơi ~4.500 bài deferred tháng 8-10/2026 (phát hiện 2026-11-11)
   drift_hour: 6                  # giờ chạy drift report mỗi sáng (job 3)
   drift_minute: 0
   drift_limit: 100

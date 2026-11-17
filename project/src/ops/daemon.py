@@ -14,9 +14,9 @@ from src.ops.breakers import Breakers
 from src.ops.config import OpsPaths
 from src.ops.order import PROVIDERS, load_order
 from src.ops.present import alert_card
-from src.ops.probes import (apply_edges, probe_capture, probe_coverage, probe_db, probe_dead_letter,
-                            probe_disk, probe_order, probe_publish)
-from src.ops.sensor import cooldown_active, decide, read_pending
+from src.ops.probes import (apply_edges, probe_capture, probe_capture_channels, probe_coverage,
+                            probe_db, probe_dead_letter, probe_disk, probe_order, probe_publish)
+from src.ops.sensor import backlog_window, cooldown_active, decide, pick_backlog_date, read_pending
 from src.ops.store import ACTIVE_WAVE_STATUSES, OpsStore, iso, now_vn, parse_iso
 from src.ops.supervisor import CaptureSupervisor
 from src.ops.wave_flow import WaveSpec, WaveSteps, _default_db_probe
@@ -281,6 +281,7 @@ class OpsDaemon:
             ("mandate", 600, self.mandate_tick),
             ("improve", 3600, self.improve_tick),
             ("publish", 600, self.publish_tick),
+            ("research", 60, self.research_tick),
         ):
             if self._due(name, every):
                 try:
@@ -333,10 +334,19 @@ class OpsDaemon:
                     probe_dead_letter(self.monocle_db, self.store,
                                       int(p["dead_letter_alert_delta"])),
                     probe_coverage(self.monocle_db),
+                    probe_capture_channels(self.monocle_db),
                     probe_order(self.paths.standing_order)]
         if (self.cfg.get("publish") or {}).get("enabled"):
             from src.export.publisher import publish_target
             results.append(probe_publish(publish_target(), self.cfg["publish"]))
+        rcfg = self.cfg.get("research_publish") or {}
+        if rcfg.get("enabled"):
+            from src.research_db.production import PublishError, resolve_target
+            try:
+                rtarget = resolve_target()
+            except PublishError:
+                rtarget = None
+            results.append(probe_publish(rtarget, rcfg, name="research", write_test=False))
         apply_edges(self.store, results)
 
     def publish_tick(self) -> None:
@@ -371,6 +381,46 @@ class OpsDaemon:
                 self._publishing = False
 
         threading.Thread(target=work, name="publisher", daemon=True).start()
+
+    def research_tick(self) -> None:
+        """Publish gated articles to production FRA - Data/news at Research slots (ADR-0030).
+
+        Slot, catch-up and express rules live in `src.research_db.schedule`; the publish runs
+        on its own thread and a failure leaves its slots open for the next beat.
+        """
+        cfg = self.cfg.get("research_publish") or {}
+        if not cfg.get("enabled") or getattr(self, "_research_running", False):
+            return
+        from src.research_db import production, schedule
+
+        last_raw = self.store.get_state(schedule.LAST_PUBLISH_KEY)
+        last = parse_iso(last_raw) if last_raw else None
+        decision = schedule.decide(
+            now_vn(), cfg, is_done=lambda k: bool(self.store.get_state(k)),
+            wave_active=bool(self.store.active_wave()), last_publish_at=last,
+            urgent_since=lambda t: production.urgent_since(
+                self.monocle_db, t.isoformat(timespec="seconds")))
+        if decision is None:
+            return
+        self._research_running = True
+
+        def work() -> None:
+            try:
+                res = production.publish(self.monocle_db, reason=decision.reason)
+                if res.status in ("published", "unchanged") and not res.failed:
+                    stamp = iso()
+                    for key in decision.slot_keys:
+                        self.store.set_state(key, stamp)
+                    self.store.set_state(schedule.LAST_PUBLISH_KEY,
+                                         now_vn().isoformat(timespec="seconds"))
+                ok = res.status in ("published", "unchanged") and not res.failed
+                level = "info" if ok else "error"
+                self.store.emit(f"research.{res.status}", res.message, level=level,
+                                data=res.to_dict())
+            finally:
+                self._research_running = False
+
+        threading.Thread(target=work, name="research-publisher", daemon=True).start()
 
     def digest_tick(self) -> None:
         """Send the digest at the configured times, once per time slot per day."""
@@ -447,8 +497,14 @@ class OpsDaemon:
                                 f"chạy tiếp", wave_id=w["wave_id"])
                 self._retry_wave_locked(w["wave_id"])
                 return
+        target = reading.target_date
         if not fire:
-            return
+            backlog = self._backlog_target(exclude)
+            if backlog is None:
+                return
+            target, n = backlog
+            rule = "T4"
+            reason = f"Xử lý tồn đọng {target} ({n} bài chờ, ngoài phạm vi theo dõi)."
         provider = order.provider
         allowed, st = self.breakers.allow(provider)
         if not allowed:
@@ -475,8 +531,29 @@ class OpsDaemon:
                              dedup_key=f"l0:{now_vn():%Y%m%d%H}",
                              buttons=[[("Cấp mandate L1", "/level L1")]])
             return
-        self.open_wave(reading.target_date or now_vn().date().isoformat(),
+        self.open_wave(target or now_vn().date().isoformat(),
                        rule, level, provider, order.digest(), reason)
+
+    def _backlog_target(self, exclude: set[str]) -> tuple[str, int] | None:
+        """Pick the backlog date for rule T4, at most once per `backlog.pick_every_seconds`.
+
+        Args:
+            exclude: Article identifiers to skip.
+
+        Returns:
+            (date, pending count) inside the backlog window, otherwise None.
+        """
+        scfg = self.cfg["sensor"]
+        bcfg = scfg.get("backlog") or {}
+        every = int(bcfg.get("pick_every_seconds", 600))
+        if not backlog_window(now_vn(), bcfg) or not self._due("backlog_pick", every):
+            return None
+        picked = pick_backlog_date(self.monocle_db, int(scfg["lookback_days"]), exclude=exclude,
+                                   as_range=True)
+        self.store.set_state("sensor:backlog", json.dumps(
+            {"at": iso(), "date": picked[0] if picked else None,
+             "pending": picked[1] if picked else 0}, ensure_ascii=False))
+        return picked
 
     def open_wave(self, target_date: str, trigger: str, level: str, provider: str,
                   order_hash: str, reason: str) -> str:

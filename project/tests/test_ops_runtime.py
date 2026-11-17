@@ -454,3 +454,14 @@ def test_retry_refused_after_repair_cap(env):
     store.set_state("repair_rounds:W1", str(2 * cfg["wave"]["max_repair_rounds"]))
     reason = repair_cap_reason(store, cfg, "W1")
     assert reason and "/cancel W1" in reason
+
+
+def test_done_retry_clears_failure_cooldown(env, monkeypatch):
+    cfg, paths, store = env
+    steps = WaveSteps(store, cfg, paths, db_probe=lambda: (True, ""))
+    monkeypatch.setattr(steps, "_deliver", lambda spec: True)
+    steps.finalize(WaveSpec("W1", "2026-10-01", "T1", "L1"), "FAILED", "cổng đỏ",
+                   counts_as_failure=True)
+    assert store.get_state("cooldown_until")
+    steps.finalize(WaveSpec("W1", "2026-10-01", "retry", "L1"), "DONE", "98/98 bài")
+    assert store.get_state("cooldown_until") is None

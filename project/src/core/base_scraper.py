@@ -8,6 +8,7 @@ from urllib.parse import urlsplit
 
 from loguru import logger
 
+from src.core.htmldate import extract_published_at
 from src.core.htmltitle import extract_page_title
 from src.core.models import Article, ScrapeResult, now_vn_iso
 from src.crawler.http_client import HTTPClient
@@ -137,7 +138,8 @@ class BaseScraper(ABC):
             url: Article URL supplied by the discovery ledger or a reconciliation channel.
 
         Returns:
-            Article with a valid title, or None if the page cannot be fetched or no title is found.
+            Article with a valid title and the publication time the page declares, or None if
+            the page cannot be fetched or no title is found.
         """
         host = urlsplit(url).netloc.lower().removeprefix("www.")
         html = self.http.get(url, referer=f"https://{host}/",
@@ -148,6 +150,7 @@ class BaseScraper(ABC):
         if not title:
             return None
         return Article(url=url, title=title, source_domain=host,
+                       published_at=extract_published_at(html),
                        metadata={"language": self.config.get("language", "vi"),
                                  "backfill": True})
 
@@ -165,10 +168,13 @@ class BaseScraper(ABC):
             return None
         if hasattr(self, "_details_fetched"):
             self._details_fetched = 0
+        declared = article.published_at
         try:
             self.enrich(article)
         except Exception as e:
             logger.warning("[{}] backfill enrich failed for {}: {}", self.name, url, e)
             self.errors.append(f"backfill enrich {url}: {e}")
+        if not article.published_at:
+            article.published_at = declared
         article.processed_at = now_vn_iso()
         return article
