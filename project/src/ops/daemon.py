@@ -15,7 +15,8 @@ from src.ops.config import OpsPaths
 from src.ops.order import PROVIDERS, load_order
 from src.ops.present import alert_card
 from src.ops.probes import (apply_edges, probe_capture, probe_capture_channels, probe_coverage,
-                            probe_db, probe_dead_letter, probe_disk, probe_order, probe_publish)
+                            probe_db, probe_dead_letter, probe_disk, probe_order, probe_publish,
+                            probe_yield)
 from src.ops.sensor import backlog_window, cooldown_active, decide, pick_backlog_date, read_pending
 from src.ops.store import ACTIVE_WAVE_STATUSES, OpsStore, iso, now_vn, parse_iso
 from src.ops.supervisor import CaptureSupervisor
@@ -335,6 +336,7 @@ class OpsDaemon:
                                       int(p["dead_letter_alert_delta"])),
                     probe_coverage(self.monocle_db),
                     probe_capture_channels(self.monocle_db),
+                    probe_yield(self.monocle_db, p.get("yield")),
                     probe_order(self.paths.standing_order)]
         if (self.cfg.get("publish") or {}).get("enabled"):
             from src.export.publisher import publish_target
@@ -417,10 +419,29 @@ class OpsDaemon:
                 level = "info" if ok else "error"
                 self.store.emit(f"research.{res.status}", res.message, level=level,
                                 data=res.to_dict())
+                if ok and cfg.get("urgent_alerts", True):
+                    self._urgent_alert(production)
             finally:
                 self._research_running = False
 
         threading.Thread(target=work, name="research-publisher", daemon=True).start()
+
+    def _urgent_alert(self, production) -> None:
+        """Queue one Telegram alert for urgent stories that just reached production (ADR-0033).
+
+        Args:
+            production: The `src.research_db.production` module.
+        """
+        key = "research:urgent_alert_synced_at"
+        try:
+            text, mark = production.urgent_digest(self.store.get_state(key))
+        except Exception as exc:  # noqa: BLE001 — an alert failure must not fail the publish
+            self.store.emit("research.urgent_alert_failed", str(exc)[:300], level="warn")
+            return
+        if text:
+            self.store.alert("news", text, dedup_key=f"news:{mark}")
+        if mark:
+            self.store.set_state(key, mark)
 
     def digest_tick(self) -> None:
         """Send the digest at the configured times, once per time slot per day."""

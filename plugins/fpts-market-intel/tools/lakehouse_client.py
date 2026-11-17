@@ -18,6 +18,9 @@ try:
 except ImportError:
     duckdb = None  # type: ignore[assignment]
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import lakehouse_pit  # noqa: E402  (sibling module, ADR-0033)
+
 
 # Production (FRA - Data/news, chỉ tin đã xử lý trọn vẹn, ADR-0030) đứng trước sandbox.
 DEFAULT_SHORTCUT_NAMES = [
@@ -44,6 +47,13 @@ REQUIRED_COLUMNS: dict[str, str] = {
     "symbols": "VARCHAR[]",
     "intent_source": "VARCHAR",
     "gold_status": "VARCHAR",
+    # Point-in-time and story columns (ADR-0033); NULL in partitions written before obt/2.
+    "first_seen_at": "VARCHAR",
+    "published_at_precision": "VARCHAR",
+    "analyzed_at": "VARCHAR",
+    "story_id": "VARCHAR",
+    "story_role": "VARCHAR",
+    "story_n_sources": "INTEGER",
 }
 
 NON_TICKER_3CHAR = frozenset({
@@ -259,6 +269,42 @@ def universe_review_info(entry: dict[str, Any], policy: dict[str, Any],
     return {"as_of": as_of, "last_effective": last_eff, "next_effective": next_eff,
             "stale": stale, "review_window": in_window, "warnings": warnings}
 
+def published_precision(published_at: str | None) -> str:
+    """Phân loại độ chính xác của mốc xuất bản nguồn, cùng quy tắc với `src.lakehouse.ingest`.
+
+    Args:
+        published_at: Chuỗi ISO 8601 hoặc None.
+
+    Returns:
+        `missing`, `date` (không có giờ, hoặc đúng 00:00) hoặc `datetime`.
+    """
+    raw = (published_at or "").strip()
+    if len(raw) < 10:
+        return "missing"
+    time_part = raw[11:19] if len(raw) >= 16 else ""
+    return "date" if not time_part or time_part in ("00:00:00", "00:00") else "datetime"
+
+
+def normalize_cutoff(cutoff: str | None) -> str | None:
+    """Chuẩn hoá mốc cắt point-in-time về ISO có múi giờ Việt Nam.
+
+    Args:
+        cutoff: `YYYY-MM-DD`, `YYYY-MM-DDTHH:MM[:SS]` (hiểu là giờ ICT) hoặc chuỗi có múi giờ.
+
+    Returns:
+        Chuỗi ISO có offset, hoặc None khi không đặt.
+
+    Raises:
+        ValueError: Nếu chuỗi không đọc được.
+    """
+    if not cutoff:
+        return None
+    dt = datetime.fromisoformat(cutoff.strip().replace(" ", "T"))
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone(timedelta(hours=7)))
+    return dt.isoformat(timespec="seconds")
+
+
 STORY_COLUMNS = """
     story_key,
     arg_min(article_id, published_at) AS article_id,
@@ -397,6 +443,8 @@ class NewsLakehouseClient:
         *,
         include_mentions: bool = False,
         master_db: str | Path | None = "auto",
+        cutoff: str | None = None,
+        cache: bool = False,
     ) -> None:
         """Khởi tạo phiên kết nối DuckDB nhúng và dựng các view phân tích.
 
@@ -405,6 +453,8 @@ class NewsLakehouseClient:
             themes_path: Tệp từ điển chủ đề tùy chọn.
             include_mentions: Khi True, bao gồm cả thực thể `mentioned` và `CODE_ONLY`.
             master_db: Đường dẫn `news_research_master.db` để đọc gộp Intraday Delta (`'auto'` hoặc `None`).
+            cutoff: Mốc point-in-time ICT `YYYY-MM-DDTHH:MM[:SS]`; chỉ giữ bài có `available_at` trước mốc.
+            cache: Khi True, đọc/ghi bảng đã dựng vào tệp cache cục bộ (ADR-0033 D6).
 
         Raises:
             RuntimeError: Nếu chưa cài đặt thư viện duckdb.
@@ -426,7 +476,35 @@ class NewsLakehouseClient:
         self._universe_policy = load_universe_policy()
         self._range_cache: dict[str, Any] | None = None
         self._materialized = False
+        self.cutoff = normalize_cutoff(cutoff)
+        self.calendar = lakehouse_pit.load_trading_calendar()
+        self.cache_hit = False
+        self._open_session(cache)
+
+    def _open_session(self, cache: bool) -> None:
+        """Dựng view, ưu tiên đọc bảng đã dựng từ cache cục bộ khi khoá cache khớp.
+
+        Args:
+            cache: Có dùng cache cục bộ hay không.
+        """
+        key = path = None
+        if cache and os.environ.get("NEWS_LAKEHOUSE_DISABLE_CACHE") != "1":
+            parts = sorted(self.root.glob("parquet/articles/*/*/*.parquet"))
+            key = lakehouse_pit.cache_key(self.root, parts, self.master_db_path, {
+                "cutoff": self.cutoff, "calendar": self.calendar["sha"]})
+            path = lakehouse_pit.cache_path(self.root)
+            meta = lakehouse_pit.attach_cache(self.con, path, key)
+            if meta is not None:
+                self.cache_hit = True
+                self._materialized = True
+                self.intraday_delta_rows = int(meta.get("intraday_delta_rows") or 0)
+                self._entity_view()
+                return
         self._build_views()
+        if key and path:
+            self._materialize()
+            lakehouse_pit.save_cache(self.con, path, key,
+                                     {"intraday_delta_rows": self.intraday_delta_rows})
 
     def _materialize(self) -> None:
         """Nạp `articles`, `article_entities_all` và `article_entities` vào bảng tạm một lần.
@@ -485,10 +563,16 @@ class NewsLakehouseClient:
             art_rows = sq.execute(
                 f"SELECT article_id, url, title, source_domain, published_at, fetched_at, "
                 f"published_date, summary, key_points_json, implication, sentiment, "
-                f"time_sensitivity, symbols, entity_source "
+                f"time_sensitivity, symbols, entity_source, analysis_at "
                 f"FROM articles {where_sql}",
                 params_sq,
             ).fetchall()
+            story_map: dict[str, tuple] = {}
+            try:
+                story_map = {r[0]: r[1:] for r in sq.execute(
+                    "SELECT article_id, story_id, story_role, n_sources FROM article_story")}
+            except sqlite3.Error:
+                story_map = {}
             if not art_rows:
                 return False
             art_ids = [r[0] for r in art_rows]
@@ -534,12 +618,18 @@ class NewsLakehouseClient:
                 entities VARCHAR[],
                 symbols VARCHAR[],
                 intent_source VARCHAR,
-                gold_status VARCHAR
+                gold_status VARCHAR,
+                first_seen_at VARCHAR,
+                published_at_precision VARCHAR,
+                analyzed_at VARCHAR,
+                story_id VARCHAR,
+                story_role VARCHAR,
+                story_n_sources INTEGER
             )
         """)
         payload = []
         for (aid, url, title, domain, pub, fetched, pub_date, summary, kp_json,
-             implication, sentiment, ts, symbols_str, entity_source) in art_rows:
+             implication, sentiment, ts, symbols_str, entity_source, analysis_at) in art_rows:
             try:
                 kp_list = json.loads(kp_json) if kp_json else []
                 if not isinstance(kp_list, list):
@@ -572,9 +662,13 @@ class NewsLakehouseClient:
                 sym_list,
                 intent_src,
                 "GOLD",
+                fetched,
+                published_precision(pub),
+                analysis_at,
+                *(story_map.get(aid) or (None, None, None)),
             ))
         self.con.executemany(
-            "INSERT INTO _intraday_delta VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            f"INSERT INTO _intraday_delta VALUES ({', '.join('?' * 20)})",
             payload,
         )
         return True
@@ -623,12 +717,24 @@ class NewsLakehouseClient:
         cols = []
         for name, typ in REQUIRED_COLUMNS.items():
             cols.append(name if name in present else f"CAST(NULL AS {typ}) AS {name}")
+        lakehouse_pit.register_trading_map(self.con, self.calendar)
+        # available_at (ADR-0033 D1): the later of source publication and first capture, the
+        # only time a point-in-time question may filter on.
+        avail = ("greatest(TRY_CAST(published_at AS TIMESTAMPTZ), "
+                 "coalesce(TRY_CAST(first_seen_at AS TIMESTAMPTZ), TRY_CAST(published_at AS TIMESTAMPTZ)))")
+        cutoff_sql = (f"AND {avail} < TRY_CAST('{self.cutoff}' AS TIMESTAMPTZ)" if self.cutoff else "")
+        session = ("CAST(substr(published_at, 1, 10) AS DATE) + CASE WHEN "
+                   f"substr(published_at, 12, 5) >= '{ATC_CUTOFF}' THEN 1 ELSE 0 END")
         self.con.execute(f"""
             CREATE OR REPLACE VIEW articles AS
             SELECT
                 {", ".join(cols)},
+                {avail} AS available_at,
+                round(epoch(coalesce(TRY_CAST(first_seen_at AS TIMESTAMPTZ),
+                                     TRY_CAST(published_at AS TIMESTAMPTZ))
+                            - TRY_CAST(published_at AS TIMESTAMPTZ)) / 60.0, 1) AS capture_lag_min,
                 CAST(substr(published_at, 1, 10) AS DATE) AS pub_date,
-                coalesce(nullif(trim(lower(regexp_replace(coalesce(title, ''), '[^\\pL\\pN]+', ' ', 'g'))), ''),
+                coalesce(nullif(story_id, ''), nullif(trim(lower(regexp_replace(coalesce(title, ''), '[^\\pL\\pN]+', ' ', 'g'))), ''),
                          article_id) AS story_key,
                 CASE lower(coalesce(sentiment, ''))
                     WHEN 'positive' THEN 1 WHEN 'pos' THEN 1
@@ -642,7 +748,7 @@ class NewsLakehouseClient:
                     WHEN 'this_week' THEN {URGENCY_WEIGHTS['this_week']}
                     ELSE {URGENCY_WEIGHTS['archive']}
                 END AS urgency_w,
-                CAST(CASE
+                coalesce((SELECT t.trade_d FROM _trading_map t WHERE t.d = {session}), CAST(CASE
                     WHEN dayofweek(CAST(substr(published_at, 1, 10) AS DATE)
                                    + CASE WHEN substr(published_at, 12, 5) >= '{ATC_CUTOFF}' THEN 1 ELSE 0 END) = 6
                         THEN CAST(substr(published_at, 1, 10) AS DATE)
@@ -653,7 +759,7 @@ class NewsLakehouseClient:
                              + CASE WHEN substr(published_at, 12, 5) >= '{ATC_CUTOFF}' THEN 1 ELSE 0 END + 1
                     ELSE CAST(substr(published_at, 1, 10) AS DATE)
                          + CASE WHEN substr(published_at, 12, 5) >= '{ATC_CUTOFF}' THEN 1 ELSE 0 END
-                END AS DATE) AS trade_date,
+                END AS DATE)) AS trade_date,
                 nullif(regexp_extract(coalesce({cat_expr}, ''), '(?:^|,)ek:([A-Z_]+)', 1), '')
                     AS event_kind,
                 {_sql_fold_expr('title')} || chr(31) || {_sql_fold_expr('summary')} || chr(31)
@@ -663,6 +769,7 @@ class NewsLakehouseClient:
             WHERE published_at IS NOT NULL
               AND length(published_at) >= 10
               AND coalesce(gold_status, 'GOLD') = 'GOLD'
+              {cutoff_sql}
         """)
         self.con.execute("""
             CREATE OR REPLACE VIEW article_entities_all AS
@@ -714,6 +821,10 @@ class NewsLakehouseClient:
             FROM normalized
             GROUP BY article_id, entity_id
         """)
+        self._entity_view()
+
+    def _entity_view(self) -> None:
+        """Dựng view `article_entities` (mặc định chỉ thực thể `primary`, bỏ `CODE_ONLY`)."""
         if self.include_mentions:
             self.con.execute(
                 "CREATE OR REPLACE VIEW article_entities AS SELECT * FROM article_entities_all"
@@ -920,8 +1031,31 @@ class NewsLakehouseClient:
                 is_stale = False
 
         rng = self.data_range()
+        pit = self._rows("""
+            SELECT count(*) AS n,
+                   count(first_seen_at) AS n_first_seen,
+                   count(story_id) AS n_story,
+                   count(*) FILTER (WHERE published_at_precision = 'date') AS n_date_only,
+                   max(available_at) AS newest_available_at
+            FROM articles""")[0]
+        years = {d.year for d in (rng["data_from"], rng["data_to"]) if d}
+        if len(years) == 2:
+            years = set(range(min(years), max(years) + 1))
+        dense = rng.get("dense_data_from")
+        cal_years = {y for y in years if not dense or y >= dense.year}
         return {
             "status": "ok",
+            "obt_schema": data.get("obt_schema") or "obt/1",
+            "freshness": data.get("freshness"),
+            "cutoff": self.cutoff,
+            "cache_hit": self.cache_hit,
+            "pit_coverage": {
+                "first_seen_share": round(pit["n_first_seen"] / pit["n"], 4) if pit["n"] else None,
+                "story_share": round(pit["n_story"] / pit["n"], 4) if pit["n"] else None,
+                "date_only_articles": pit["n_date_only"],
+                "newest_available_at": str(pit["newest_available_at"]) if pit["newest_available_at"] else None,
+            },
+            "warnings": lakehouse_pit.calendar_warnings(self.calendar, cal_years),
             "storage_root": str(self.root),
             "latest_day": latest_day,
             "updated_at": updated_at,
@@ -1707,6 +1841,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--master-db", default="auto", help="Đường dẫn news_research_master.db cho Intraday Delta")
     parser.add_argument("--include-mentions", action="store_true",
                         help="Bao gồm cả thực thể nhắc phụ (mentioned) và CODE_ONLY")
+    parser.add_argument("--cutoff", help="Mốc point-in-time ICT YYYY-MM-DDTHH:MM; chỉ dùng bài có available_at trước mốc")
+    parser.add_argument("--no-cache", action="store_true", help="Không đọc/ghi cache cục bộ")
     sub = parser.add_subparsers(dest="action", required=True)
 
     sub.add_parser("status", help="Kiểm tra độ tươi dữ liệu và số lượng bài")
@@ -1818,6 +1954,8 @@ def main(argv: list[str] | None = None) -> int:
             root=args.root,
             include_mentions=inc_mentions,
             master_db=args.master_db,
+            cutoff=args.cutoff,
+            cache=not args.no_cache,
         )
     except Exception as exc:
         print(f"Lỗi khởi tạo Lakehouse Client: {exc}", file=sys.stderr)

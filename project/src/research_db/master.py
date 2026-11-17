@@ -87,6 +87,12 @@ CREATE TABLE IF NOT EXISTS _partitions (
   sha256 TEXT NOT NULL,
   written_at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS article_story (
+  article_id TEXT PRIMARY KEY REFERENCES articles(article_id) ON DELETE CASCADE,
+  story_id TEXT NOT NULL,
+  story_role TEXT NOT NULL,
+  n_sources INTEGER
+);
 CREATE TABLE IF NOT EXISTS _meta (
   key TEXT PRIMARY KEY,
   value TEXT NOT NULL
@@ -123,6 +129,7 @@ class SyncResult:
         retracted: Master records removed because their source no longer passes the gate.
         urgent: Upserted records whose time sensitivity is urgent.
         dirty_days: Day partitions waiting to be written after the sync.
+        stories_changed: Articles whose story id, role or source count changed (ADR-0033).
         rejects_file: Local JSONL file listing the new rejections, if any.
         dry_run: Whether the master was left untouched.
         reject_samples: Up to five new rejections with their reasons.
@@ -136,6 +143,7 @@ class SyncResult:
     retracted: int = 0
     urgent: int = 0
     dirty_days: int = 0
+    stories_changed: int = 0
     rejects_file: str | None = None
     dry_run: bool = False
     reject_samples: list[dict] = field(default_factory=list)
@@ -293,6 +301,42 @@ def _write_rejects(rejections: list[gate.Rejection]) -> str | None:
     return str(out)
 
 
+_STORY_SQL = """
+SELECT m.article_id, m.cluster_id, m.role, c.n_sources
+FROM cluster_members m LEFT JOIN story_clusters c ON c.cluster_id = m.cluster_id
+"""
+
+
+def sync_stories(src: sqlite3.Connection, master: sqlite3.Connection) -> int:
+    """Mirror story cluster membership of master articles from the operational DB (ADR-0033).
+
+    Cluster membership and source counts change after an article is gated, when later copies
+    arrive, so the mirror is compared in full on every sync and only the day partitions of
+    changed articles are queued. An operational DB without cluster tables changes nothing.
+
+    Args:
+        src: Read-only operational connection.
+        master: Master connection inside an open transaction.
+
+    Returns:
+        Number of articles whose story row was inserted, changed or removed.
+    """
+    try:
+        rows = src.execute(_STORY_SQL).fetchall()
+    except sqlite3.OperationalError:
+        return 0
+    days = dict(master.execute("SELECT article_id, published_date FROM articles"))
+    want = {aid: (cid, role, n) for aid, cid, role, n in rows if aid in days and cid}
+    have = {r[0]: (r[1], r[2], r[3]) for r in master.execute(
+        "SELECT article_id, story_id, story_role, n_sources FROM article_story")}
+    upsert = [(aid, *v) for aid, v in want.items() if have.get(aid) != v]
+    drop = [aid for aid in have if aid not in want]
+    master.executemany("INSERT OR REPLACE INTO article_story VALUES (?, ?, ?, ?)", upsert)
+    master.executemany("DELETE FROM article_story WHERE article_id = ?", [(a,) for a in drop])
+    mark_dirty(master, [days.get(a) for a in [u[0] for u in upsert] + drop])
+    return len(upsert) + len(drop)
+
+
 def sync_master(ops_db: Path, master_db: Path | None = None, *, dry_run: bool = False,
                 max_retract_ratio: float | None = None) -> SyncResult:
     """Run the validation gate over the operational database and apply the result to the master.
@@ -395,6 +439,7 @@ def sync_master(ops_db: Path, master_db: Path | None = None, *, dry_run: bool = 
                             "sample_article_id = excluded.sample_article_id",
                             (norm, sample, synced_at, synced_at, rec.article_id),
                         )
+            res.stories_changed = sync_stories(src, master)
             set_meta(master, "last_sync_at", synced_at)
         res.dirty_days = len(dirty_days(master))
         res.rejects_file = _write_rejects(rejected)

@@ -6,6 +6,7 @@ import json
 import shutil
 import sqlite3
 import time
+from datetime import timedelta
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
@@ -322,12 +323,102 @@ PROBE_ACTION = {
                  "chờ cào bù, xem capture_reconcile.py status", "/status"),
     "capture_channels": ("tin bị sót sau sự cố không được phát hiện và cào bù",
                          "chạy capture_reconcile.py status, kiểm sitemap nguồn bị nêu", "/status"),
+    "yield": ("một nguồn tin có thể đã đổi giao diện hoặc chặn truy cập, tin bị sót im lặng",
+              "xem domain_validator và nhật ký scraper của nguồn bị nêu", "/log 15"),
     "order": ("daemon sắp về L0 và dừng tự mở đợt", "gia hạn bằng /order extend 30", "/mandate"),
     "research": ("chuyên viên Research không thấy tin mới trên FRA - Data/news",
                  "xem research_publish.py status, kiểm OneDrive", "/log 15"),
     "publish": ("chuyên viên không thấy dữ liệu mới trên SharePoint",
                 "xem docs/operations/publisher.md mục Xử lý sự cố", "/log 15"),
 }
+
+
+def source_yield(conn: sqlite3.Connection, now, *, window_minutes: int = 120,
+                 lookback_days: int = 10) -> dict[str, tuple[int, list[int]]]:
+    """Count captured articles per source in a window and in the same window of past weekdays.
+
+    Capture time (`fetched_at`) measures the crawler, not the newsroom, so a source that
+    stops yielding is visible even when nothing raises an error.
+
+    Args:
+        conn: Read-only connection to `monocle.db`.
+        now: Window end, Vietnam time.
+        window_minutes: Window length.
+        lookback_days: Number of past weekdays in the baseline.
+
+    Returns:
+        Dict source_domain -> (current count, baseline counts, one per past weekday).
+    """
+    def counts(end) -> dict[str, int]:
+        start = end - timedelta(minutes=window_minutes)
+        return dict(conn.execute(
+            "SELECT source_domain, COUNT(*) FROM articles WHERE fetched_at >= ? AND fetched_at < ? "
+            "GROUP BY source_domain",
+            (start.isoformat(timespec="seconds"), end.isoformat(timespec="seconds"))).fetchall())
+
+    current = counts(now)
+    days: list[dict[str, int]] = []
+    d = now
+    while len(days) < lookback_days:
+        d -= timedelta(days=1)
+        if d.weekday() < 5:
+            days.append(counts(d))
+    domains = set(current).union(*days) if days else set(current)
+    return {dom: (current.get(dom, 0), [day.get(dom, 0) for day in days]) for dom in domains}
+
+
+def probe_yield(db_path: Path, cfg: dict | None = None, now=None) -> ProbeResult:
+    """Flag sources whose capture yield fell far below the same hours of past weekdays.
+
+    A source is flagged when its baseline mean is at least `min_mean` articles and either its
+    z-score is below `z_threshold` or the current count is zero while at most one baseline
+    day in ten was zero (bursty sources often have empty windows). The deviation floor is
+    `sqrt(mean)` (Poisson), so a quiet but regular source is not flagged by noise. The probe
+    runs on weekdays within `hours` only, since weekend and night yields are too low to judge.
+
+    Args:
+        db_path: Path of `monocle.db`.
+        cfg: The `yield` section of `probes`; keys `window_minutes`, `lookback_days`,
+            `min_mean`, `z_threshold`, `hours`.
+        now: Reference time.
+
+    Returns:
+        The ProbeResult named `yield`.
+    """
+    cfg = cfg or {}
+    now = now or now_vn()
+    h0, h1 = (cfg.get("hours") or [8, 17])[:2]
+    if now.weekday() >= 5 or not h0 <= now.hour < h1:
+        return ProbeResult("yield", True, "info", "Ngoài khung giờ đo sản lượng nguồn.")
+    min_mean = float(cfg.get("min_mean", 3))
+    z_thr = float(cfg.get("z_threshold", -2.5))
+    try:
+        conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True, timeout=10)
+        try:
+            data = source_yield(conn, now, window_minutes=int(cfg.get("window_minutes", 120)),
+                                lookback_days=int(cfg.get("lookback_days", 10)))
+        finally:
+            conn.close()
+    except sqlite3.Error as exc:
+        return ProbeResult("yield", True, "info", f"Chưa đo được sản lượng nguồn: {exc}")
+    low = []
+    for dom, (cur, base) in sorted(data.items()):
+        if not base:
+            continue
+        mean = sum(base) / len(base)
+        if mean < min_mean:
+            continue
+        var = sum((x - mean) ** 2 for x in base) / len(base)
+        sd = max(var ** 0.5, mean ** 0.5)
+        z = (cur - mean) / sd
+        zero_share = sum(1 for x in base if x == 0) / len(base)
+        if (cur == 0 and zero_share <= 0.1) or z < z_thr:
+            low.append((z, f"{dom} {cur} bài (thường {mean:.0f}, z={z:.1f})"))
+    if not low:
+        return ProbeResult("yield", True, "warn", f"{len(data)} nguồn có sản lượng bình thường.")
+    low.sort()
+    return ProbeResult("yield", False, "warn", "Sản lượng thấp bất thường: "
+                       + "; ".join(m for _, m in low[:5]))
 
 
 def apply_edges(store: OpsStore, results: list[ProbeResult]) -> list[ProbeResult]:

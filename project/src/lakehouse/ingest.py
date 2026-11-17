@@ -39,8 +39,44 @@ LAKEHOUSE_ARTICLE_SCHEMA = pa.schema(
         ("intent_source", pa.string()),
         ("gold_status", pa.string()),
         ("raw_sha256", pa.string()),
+        # Point-in-time and story columns (ADR-0033). Older partitions lack them; readers
+        # must fill NULL, which is why they are appended at the end of the schema.
+        ("first_seen_at", pa.string()),
+        ("published_at_precision", pa.string()),
+        ("analyzed_at", pa.string()),
+        ("story_id", pa.string()),
+        ("story_role", pa.string()),
+        ("story_n_sources", pa.int32()),
     ]
 )
+
+# Columns added by ADR-0033, in schema order.
+PIT_COLUMNS = (
+    "first_seen_at", "published_at_precision", "analyzed_at",
+    "story_id", "story_role", "story_n_sources",
+)
+PUBLISHED_PRECISIONS = frozenset({"datetime", "date", "missing"})
+
+
+def published_precision(published_at: str | None) -> str:
+    """Classify how precise a source publication timestamp is.
+
+    A time of exactly midnight is what date-only source pages produce after parsing, so it
+    is treated as a date without a time of day.
+
+    Args:
+        published_at: ISO 8601 timestamp from the source page, or None.
+
+    Returns:
+        `missing` without a value, `date` when no time of day is known, else `datetime`.
+    """
+    raw = (published_at or "").strip()
+    if len(raw) < 10:
+        return "missing"
+    time_part = raw[11:19] if len(raw) >= 16 else ""
+    if not time_part or time_part in ("00:00:00", "00:00"):
+        return "date"
+    return "datetime"
 
 
 def parse_date_components(date_str: str) -> tuple[str, str, str, str]:
@@ -148,7 +184,45 @@ def sanitize_article_record(
         "intent_source": str(record.get("intent_source") or "").strip(),
         "gold_status": str(record.get("gold_status") or "GOLD").strip(),
         "raw_sha256": str(record.get("raw_sha256") or "").strip(),
+        "first_seen_at": _opt_str(record.get("first_seen_at")),
+        "published_at_precision": (
+            str(record.get("published_at_precision")).strip()
+            if record.get("published_at_precision") in PUBLISHED_PRECISIONS else None),
+        "analyzed_at": _opt_str(record.get("analyzed_at")),
+        "story_id": _opt_str(record.get("story_id")),
+        "story_role": _opt_str(record.get("story_role")),
+        "story_n_sources": _opt_int(record.get("story_n_sources")),
     }
+
+
+def _opt_str(val: Any) -> str | None:
+    """Return a stripped string, or None for an empty value.
+
+    Args:
+        val: Any value.
+
+    Returns:
+        The stripped string or None.
+    """
+    text = str(val).strip() if val is not None else ""
+    return text or None
+
+
+def _opt_int(val: Any) -> int | None:
+    """Return an int, or None when the value is missing or not numeric.
+
+    Args:
+        val: Any value.
+
+    Returns:
+        The integer or None.
+    """
+    if val is None or isinstance(val, bool):
+        return None
+    try:
+        return int(val)
+    except (TypeError, ValueError):
+        return None
 
 
 def records_to_parquet_bytes(

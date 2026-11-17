@@ -51,3 +51,12 @@ Khi lọc hoặc tổng hợp thông tin theo mã cổ phiếu, Agent phải tô
 - Đối chiếu phân kỳ giữa bối cảnh quốc tế (thực thể Fed, DXY) và trong nước (NHNN, tỷ giá, lãi suất) bằng hai truy vấn riêng, không suy luận từ một con số tổng.
 - Tin PR thương hiệu, giải thưởng, lễ kỷ niệm không phải chất xúc tác định giá. Khi kết luận tác động thị trường, chỉ dựa vào tin có `implication` nêu cơ chế cụ thể (chính sách, kết quả kinh doanh, M&A, pháp lý) và loại bài PR khỏi bằng chứng. Cột phân loại sự kiện chưa có trong dữ liệu, nên việc lọc dựa trên đọc `title` và `implication`.
 - Khi diễn giải truyền dẫn theo ngành, đối chiếu `sectors` với các nhóm ngành trụ của rổ `--universe vn30` do analyst xác nhận; không tự gán cơ chế truyền dẫn không có trong bài báo.
+
+## 9. Mốc Point-in-Time, Câu Chuyện và Độ Tươi (ADR-0033)
+
+- Câu hỏi "tại thời điểm T đã biết gì" phải chạy với `--cutoff YYYY-MM-DDTHH:MM` (giờ ICT). Mốc cắt lọc theo `available_at` = muộn hơn giữa giờ báo đăng và giờ hệ thống cào được, không lọc theo `published_at`.
+- `capture_lag_min` là độ trễ cào (phút). Bài có `published_at_precision = 'date'` không có giờ trong ngày: không được xếp vào phiên sáng hay chiều.
+- Đếm câu chuyện bằng `story_key`: dùng `story_id` của cụm nội dung khi có, nếu không có thì dùng tiêu đề chuẩn hoá. `story_n_sources` là số nguồn cùng đưa tin, một tín hiệu độ lan toả.
+- `trade_date` theo lịch nghỉ HOSE trong `config/trading_calendar.json`. Khi `status` báo năm chưa đối chiếu (`verified=false`), phải ghi chú điều đó trong báo cáo có dùng phiên giao dịch.
+- Mở đầu mọi báo cáo bằng `status`: nêu `freshness.newest_analyzed_at`, số bài đã cào nhưng chưa lên production (`freshness.unpublished_captured`), và `pit_coverage`. Không khẳng định "không có tin" khi còn bài chưa lên production.
+- CLI dùng cache cục bộ ở `%LOCALAPPDATA%\fpts-market-intel\cache`. Thêm `--no-cache` khi nghi cache sai; cache tự làm mới khi dữ liệu đổi.

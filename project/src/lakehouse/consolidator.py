@@ -13,7 +13,7 @@ import duckdb
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from src.lakehouse.ingest import parse_date_components
+from src.lakehouse.ingest import LAKEHOUSE_ARTICLE_SCHEMA, parse_date_components
 from src.lakehouse.manifest import PartitionManifestEntry, write_manifests
 from src.lakehouse.storage import BaseStorageAdapter
 
@@ -41,6 +41,22 @@ class ConsolidationResult:
     sha256: str
     elapsed_ms: float
     partitions: list[PartitionManifestEntry] = field(default_factory=list)
+
+
+def _duck_type(arrow_type: pa.DataType) -> str:
+    """Map an Arrow type of the article schema to a DuckDB type name.
+
+    Args:
+        arrow_type: Arrow field type.
+
+    Returns:
+        DuckDB type name.
+    """
+    if pa.types.is_list(arrow_type):
+        return "VARCHAR[]"
+    if pa.types.is_integer(arrow_type):
+        return "INTEGER"
+    return "VARCHAR"
 
 
 def consolidate_dropzone(
@@ -117,7 +133,7 @@ def consolidate_dropzone(
 
         if len(local_paths) == len(all_input_files):
             # Fast path: read the files on disk directly through the DuckDB vectorized engine.
-            source_expr = "read_parquet(?)"
+            source_expr = "read_parquet(?, union_by_name = true)"
             query_params = [local_paths]
         else:
             # Fallback: read the data through the adapter read_bytes and load it into a PyArrow Table.
@@ -125,7 +141,7 @@ def consolidate_dropzone(
             for rel_f in all_input_files:
                 b = storage.read_bytes(rel_f)
                 arrow_tables.append(pq.read_table(io.BytesIO(b)))
-            combined_arrow = pa.concat_tables(arrow_tables)
+            combined_arrow = pa.concat_tables(arrow_tables, promote_options="default")
             con.register("raw_lakehouse_input", combined_arrow)
             source_expr = "raw_lakehouse_input"
             query_params = []
@@ -134,30 +150,16 @@ def consolidate_dropzone(
         count_sql = f"SELECT count(*) FROM {source_expr}"
         total_scanned = con.execute(count_sql, query_params).fetchone()[0]
 
+        # Older fragments lack the ADR-0033 columns; select NULL of the schema type for them
+        # so every partition carries the full schema.
+        present = {r[0] for r in con.execute(f"DESCRIBE SELECT * FROM {source_expr}",
+                                             query_params).fetchall()}
+        select_cols = ", ".join(
+            f.name if f.name in present else f"CAST(NULL AS {_duck_type(f.type)}) AS {f.name}"
+            for f in LAKEHOUSE_ARTICLE_SCHEMA)
         dedup_sql = f"""
-            SELECT 
-                article_id,
-                url,
-                title,
-                source_domain,
-                published_at,
-                updated_at,
-                dev_id,
-                batch_id,
-                summary,
-                key_points,
-                implication,
-                sentiment,
-                time_sensitivity,
-                citations,
-                entities,
-                symbols,
-                categories,
-                intent_llm,
-                intent_code,
-                intent_source,
-                gold_status,
-                raw_sha256
+            SELECT
+                {select_cols}
             FROM {source_expr}
             QUALIFY ROW_NUMBER() OVER (
                 PARTITION BY article_id 

@@ -3,7 +3,7 @@
 # The production folder holds data only, in the ADR-0023 lakehouse layout the
 # fpts-market-intel plugin already reads:
 #
-#   parquet/articles/year=YYYY/month=MM/part-YYYYMMDD.parquet   22-column OBT, ZSTD
+#   parquet/articles/year=YYYY/month=MM/part-YYYYMMDD.parquet   28-column OBT, ZSTD (ADR-0033)
 #   _manifest/latest.json                                      every partition with rows, size, SHA256
 #
 # A publish runs the validation gate into the local master, rewrites only the day partitions the
@@ -19,12 +19,14 @@ import re
 import sqlite3
 from collections import defaultdict
 from dataclasses import asdict, dataclass, field
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
 from src.core import paths
-from src.core.models import now_vn_iso
-from src.lakehouse.ingest import LAKEHOUSE_ARTICLE_SCHEMA, records_to_parquet_bytes
+from src.core.models import VN_TZ, now_vn_iso
+from src.lakehouse.ingest import (LAKEHOUSE_ARTICLE_SCHEMA, published_precision,
+                                  records_to_parquet_bytes)
 from src.lakehouse.storage import LocalOneDriveStorageAdapter
 from src.research_db import master as master_mod
 from src.research_db.gate import GATE_VERSION
@@ -33,6 +35,7 @@ TARGET_ENV = "NEWS_SCAPE_RESEARCH_DB_DIR"
 TARGET_FOLDER_NAME = "news"
 MANIFEST = "_manifest/latest.json"
 MANIFEST_SCHEMA = "news-research-production/1"
+OBT_SCHEMA = "obt/2"  # obt/2 adds the ADR-0033 point-in-time and story columns
 PARTITION_GLOB = "parquet/articles/*/*/*.parquet"
 _PART_RE = re.compile(r"^parquet/articles/year=(\d{4})/month=(\d{2})/part-(\d{4})(\d{2})(\d{2})\.parquet$")
 
@@ -130,6 +133,9 @@ def day_records(conn: sqlite3.Connection, day: str) -> list[dict[str, Any]]:
 
     Entity fields follow the sandbox publisher: `entities` holds `<entity_id> [<type>]`, which
     the plugin parses into `article_entities`; catalog entities count as code-matchable.
+    Point-in-time fields (ADR-0033): `first_seen_at` is the capture time, `analyzed_at` the
+    analysis time, and `published_at_precision` is computed from the source value before
+    the capture-time fallback fills `published_at`.
 
     Args:
         conn: Master connection.
@@ -150,13 +156,16 @@ def day_records(conn: sqlite3.Connection, day: str) -> list[dict[str, Any]]:
             ents[aid].append((eid, etype, bool(in_list), role_val, prov_val))
     out = []
     for r in conn.execute(
-            "SELECT article_id, url, title, source_domain, published_at, fetched_at, summary, "
-            "key_points_json, implication, sentiment, time_sensitivity, citations_json, symbols, "
-            "categories, raw_sha256, analysis_provider, analysis_at, entity_source "
-            "FROM articles WHERE published_date = ? "
-            "ORDER BY COALESCE(published_at, fetched_at) DESC, article_id", (day,)):
+            "SELECT a.article_id, a.url, a.title, a.source_domain, a.published_at, a.fetched_at, "
+            "a.summary, a.key_points_json, a.implication, a.sentiment, a.time_sensitivity, "
+            "a.citations_json, a.symbols, a.categories, a.raw_sha256, a.analysis_provider, "
+            "a.analysis_at, a.entity_source, s.story_id, s.story_role, s.n_sources "
+            "FROM articles a LEFT JOIN article_story s ON s.article_id = a.article_id "
+            "WHERE a.published_date = ? "
+            "ORDER BY COALESCE(a.published_at, a.fetched_at) DESC, a.article_id", (day,)):
         (aid, url, title, domain, pub, fetched, summary, kp, implication, sentiment, ts, cit,
-         symbols, categories, raw_sha, provider, analysis_at, entity_source) = r
+         symbols, categories, raw_sha, provider, analysis_at, entity_source,
+         story_id, story_role, n_sources) = r
         e = ents.get(aid, [])
         llm = list(dict.fromkeys(x[0] for x in e if x[4] in ("BOTH", "LLM_ONLY")))
         code = list(dict.fromkeys(x[0] for x in e if x[4] in ("BOTH", "CODE_ONLY")))
@@ -179,6 +188,9 @@ def day_records(conn: sqlite3.Connection, day: str) -> list[dict[str, Any]]:
             "categories": categories or "", "intent_llm": "; ".join(llm),
             "intent_code": "; ".join(code), "intent_source": intent_src_str,
             "gold_status": "GOLD", "raw_sha256": raw_sha or "",
+            "first_seen_at": fetched, "published_at_precision": published_precision(pub),
+            "analyzed_at": analysis_at, "story_id": story_id, "story_role": story_role,
+            "story_n_sources": n_sources,
         })
     return out
 
@@ -266,14 +278,57 @@ def _heal(conn: sqlite3.Connection, storage: LocalOneDriveStorageAdapter) -> Non
     master_mod.mark_dirty(conn, days)
 
 
+def freshness(conn: sqlite3.Connection, ops_db: Path | None = None,
+              backlog_hours: float = 48.0) -> dict[str, Any]:
+    """Describe how fresh the published data is, for the manifest (ADR-0033).
+
+    Args:
+        conn: Master connection.
+        ops_db: Operational database, opened read-only, used to count captured articles that
+            are not published yet; None skips the count.
+        backlog_hours: Capture window of the unpublished count.
+
+    Returns:
+        Dict with the newest publication, capture and analysis times, the share of articles
+        whose source gave only a date, and the unpublished capture count of the window.
+    """
+    newest_pub, newest_seen, newest_analysis, n_all, n_date_only = conn.execute(
+        "SELECT MAX(published_at), MAX(fetched_at), MAX(analysis_at), COUNT(*), "
+        "SUM(CASE WHEN published_at IS NULL OR length(published_at) < 16 "
+        "OR substr(published_at, 12, 8) IN ('00:00:00', '00:00') THEN 1 ELSE 0 END) "
+        "FROM articles").fetchone()
+    out: dict[str, Any] = {
+        "newest_published_at": newest_pub, "newest_first_seen_at": newest_seen,
+        "newest_analyzed_at": newest_analysis,
+        "date_only_share": round((n_date_only or 0) / n_all, 4) if n_all else None,
+        "unpublished_captured": None, "unpublished_window_hours": backlog_hours,
+    }
+    if ops_db is not None and Path(ops_db).is_file():
+        since = (datetime.now(VN_TZ) - timedelta(hours=backlog_hours)).isoformat(timespec="seconds")
+        try:
+            src = sqlite3.connect(f"file:{Path(ops_db).as_posix()}?mode=ro", uri=True, timeout=30)
+            try:
+                captured = {r[0] for r in src.execute(
+                    "SELECT url_title_hash FROM articles WHERE fetched_at >= ?", (since,))}
+            finally:
+                src.close()
+            published = {r[0] for r in conn.execute(
+                "SELECT article_id FROM articles WHERE fetched_at >= ?", (since,))}
+            out["unpublished_captured"] = len(captured - published)
+        except sqlite3.Error:
+            pass
+    return out
+
+
 def _write_manifest(conn: sqlite3.Connection, storage: LocalOneDriveStorageAdapter,
-                    reason: str) -> int:
+                    reason: str, ops_db: Path | None = None) -> int:
     """Write `_manifest/latest.json` listing every partition, after all partitions are in place.
 
     Args:
         conn: Master connection.
         storage: Production storage adapter.
         reason: Trigger of the publish.
+        ops_db: Operational database for the freshness block; None leaves the backlog unset.
 
     Returns:
         Number of articles listed.
@@ -285,7 +340,9 @@ def _write_manifest(conn: sqlite3.Connection, storage: LocalOneDriveStorageAdapt
     data = {"schema": MANIFEST_SCHEMA, "updated_at": now_vn_iso(), "trigger": reason,
             "gate_version": GATE_VERSION, "total_unique_articles": total,
             "total_partitions": len(files), "date_from": files[0]["day"] if files else None,
-            "date_to": files[-1]["day"] if files else None, "files": files}
+            "date_to": files[-1]["day"] if files else None,
+            "obt_schema": OBT_SCHEMA, "columns": [f.name for f in LAKEHOUSE_ARTICLE_SCHEMA],
+            "freshness": freshness(conn, ops_db), "files": files}
     storage.write_atomic(MANIFEST, json.dumps(data, ensure_ascii=False, indent=1).encode("utf-8"))
     return total
 
@@ -352,7 +409,7 @@ def publish(ops_db: Path, *, target: str | Path | None = None, master_db: Path |
                         out.failed.append(f"{rel}: {exc}")
                 manifest_missing = not storage.exists(MANIFEST)
                 if out.written or out.deleted or manifest_missing:
-                    out.articles = _write_manifest(conn, storage, reason)
+                    out.articles = _write_manifest(conn, storage, reason, ops_db)
                     master_mod.set_meta(conn, "last_publish_at", now_vn_iso())
                     conn.commit()
                     out.status = "published"
@@ -389,6 +446,61 @@ def urgent_since(ops_db: Path, since_iso: str) -> int:
             "json_extract(output_json, '$.ts')) IN ('urgent', 'urg')", (since_iso,)).fetchone()[0]
     finally:
         conn.close()
+
+
+def urgent_digest(since_iso: str | None, *, master_db: Path | None = None, now=None,
+                  max_age_hours: float = 12.0, limit: int = 8) -> tuple[str | None, str | None]:
+    """Build one alert text for urgent stories that reached production after a watermark.
+
+    Only the model label `time_sensitivity = urgent` selects an article; no keyword rule
+    is applied (AGENTS.md section 7.3). Articles are grouped by `story_id`, so copies of
+    one story produce one line. An article older than `max_age_hours` by capture time is
+    skipped, so a re-analysis of old articles does not alert again.
+
+    Args:
+        since_iso: Watermark on `synced_at`; None means no watermark yet.
+        master_db: Master database override.
+        now: Reference time.
+        max_age_hours: Oldest capture age that may still alert.
+        limit: Most stories listed in one alert.
+
+    Returns:
+        (alert text or None when nothing qualifies, new watermark or the old one).
+    """
+    now = now or datetime.now(VN_TZ)
+    fresh_from = (now - timedelta(hours=max_age_hours)).isoformat(timespec="seconds")
+    conn = master_mod.open_master(master_db)
+    try:
+        rows = conn.execute(
+            "SELECT a.article_id, a.title, a.source_domain, COALESCE(a.published_at, a.fetched_at), "
+            "a.implication, a.synced_at, COALESCE(s.story_id, a.article_id), s.n_sources "
+            "FROM articles a LEFT JOIN article_story s ON s.article_id = a.article_id "
+            "WHERE a.time_sensitivity = 'urgent' AND a.synced_at > ? AND a.fetched_at >= ? "
+            "ORDER BY COALESCE(a.published_at, a.fetched_at)",
+            (since_iso or "", fresh_from)).fetchall()
+        if not rows:
+            return None, since_iso
+        watermark = max(r[5] for r in rows)
+        stories: dict[str, tuple] = {}
+        for r in rows:
+            stories.setdefault(r[6], r)
+        lines = []
+        for aid, title, domain, pub, implication, _, _, n_src in list(stories.values())[:limit]:
+            tickers = [t for (t,) in conn.execute(
+                "SELECT DISTINCT entity_id FROM article_entities WHERE article_id = ? "
+                "AND role = 'primary' AND provenance <> 'CODE_ONLY' AND entity_id LIKE 'TICKER:%' "
+                "ORDER BY ordinal LIMIT 4", (aid,))]
+            tag = f" [{', '.join(t.split(':', 1)[1] for t in tickers)}]" if tickers else ""
+            src = f", {n_src} nguồn" if n_src and n_src > 1 else ""
+            lines.append(f"- {(pub or '')[11:16]} {title}{tag} ({domain}{src})\n"
+                         f"  {implication[:220]}")
+    finally:
+        conn.close()
+    more = len(stories) - len(lines)
+    head = f"{len(stories)} câu chuyện khẩn vừa lên production:"
+    tail = [f"... và {more} câu chuyện khác."] if more > 0 else []
+    text = "\n".join([head, *lines, *tail])
+    return text, watermark
 
 
 def verify(target: str | Path | None = None, master_db: Path | None = None) -> dict[str, Any]:

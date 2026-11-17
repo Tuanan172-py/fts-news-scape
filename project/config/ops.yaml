@@ -77,6 +77,12 @@ probes:
   capture_stale_minutes: 30
   capture_hours: [7, 22]
   dead_letter_alert_delta: 50
+  yield:                         # sản lượng từng nguồn so với cùng khung giờ 10 ngày làm việc trước (ADR-0033)
+    window_minutes: 120
+    lookback_days: 10
+    min_mean: 3
+    z_threshold: -2.5
+    hours: [8, 17]
 
 alerts:
   dedup_minutes: 30
@@ -105,3 +111,4 @@ research_publish:                # production FRA - Data/news cho team Research 
     enabled: true
     min_interval_minutes: 30
   stale_hours: 12                # latest.json production cũ hơn mức này thì probe báo đỏ
+  urgent_alerts: true            # sau mỗi lần đẩy, gửi Telegram các câu chuyện urgent mới (ADR-0033)

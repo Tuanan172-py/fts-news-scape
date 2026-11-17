@@ -15,7 +15,7 @@ def _round(x: float) -> int:
 
 # Alert levels: text labels, no icons.
 LEVEL_LABEL = {"critical": "KHẨN", "error": "LỖI", "warn": "CẢNH BÁO", "info": "THÔNG TIN",
-               "digest": "BẢN TIN"}
+               "digest": "BẢN TIN", "news": "TIN KHẨN"}
 
 WAVE_STATUS = {
     "SENSED": "Mới mở", "PREFLIGHT": "Kiểm tra trước", "PREPARED": "Đã đóng gói",
