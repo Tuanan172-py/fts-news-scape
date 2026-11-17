@@ -47,6 +47,8 @@ After this story an analyst using `fpts-market-intel` can ask what was known at 
 - D6 deviates from the proposal of publisher-side rollups: timing showed the Parquet scan costs 0.3 s and view building about 9 s (FACT-lakehouse-client-cost-is-view-building-not-parquet).
 - D7 selects only by the model label `urgent` (AGENTS.md section 7.3); a sub-minute alert on unlabelled captures was rejected in ADR-0033.
 - The first publish after deployment rewrites most day partitions because every `article_story` row is new; expect one large OneDrive sync.
+- The first urgent alert after deployment has no watermark yet, so it lists every urgent story captured in the last 12 hours; later alerts list only stories synced after the previous alert.
+- Cutoff sessions keep their own cache file, so a point-in-time query does not evict the live cache.
 - The yield probe runs every minute in about 0.15 s on `monocle.db` (11 indexed range counts).
 
 ## Verification
@@ -56,6 +58,9 @@ After this story an analyst using `fpts-market-intel` can ask what was known at 
 | Unit | `pytest tests/test_pit_export.py tests/test_plugin_pit.py` | pass (15 + 6) |
 | Integration | Full `project/tests` without the three `test_empirical_challenger*` modules, which fail to import on HEAD | 1124 passed, 0 failed |
 | Platform | Plugin lenses on production `FRA - Data/news` with cache; `probe_yield` on `monocle.db` at four sample times | timings above; probe flagged `thoibaotaichinhvietnam.vn` 2 articles against 30 usual on 2026-11-17 10:30 |
+| Deploy | `research_publish.py publish --rebuild` and `verify` on 2026-11-17 18:41; daemon restarted 18:39 | 916 partitions `obt/2`, 56,837 articles, verify ok; `pit_coverage` first_seen 1.0, story 0.679 |
+| Deploy | First wave on the new daemon, W11171840 | 100/100 analysed, express publish +100, one `news` alert with 10 urgent stories sent 18:44 |
+| Deploy | Installed plugin on production after the cache-slot fix | live `status` 0.45 s, `buzz` 1.2 s, `pulse` 1.3 s, `themes` 3.3 s; cutoff 10:00 returns 222 of 619 articles of the day, newest `available_at` 09:59:59 |
 
 ## Evidence
 

@@ -78,5 +78,5 @@ summary_vi: Parquet production bổ sung giờ thu thập, độ chính xác gi�
 ## Follow-up
 
 - [ ] Operator verifies the 2024 to 2026 holiday lists against HOSE notices and sets `verified: true`; add 2027 when HOSE publishes it.
-- [ ] After the first publish, re-measure `pit_coverage` in plugin `status` (expect `first_seen_share` and `story_share` near 1.0 for production rows).
+- [x] After the first publish, re-measure `pit_coverage` in plugin `status`: on 2026-11-17 `first_seen_share` is 1.0 and `story_share` 0.679, because story clusters cover only articles clustered since ADR-0016.
 - [ ] Update plugin lens SKILL.md files to prefer `--cutoff` for intraday questions and `story_key` for counts.

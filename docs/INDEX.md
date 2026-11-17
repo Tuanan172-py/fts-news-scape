@@ -175,6 +175,7 @@ any governed document; open a body only when its summary is relevant.
 | [None](../.agents/skills/gold-financial-analyst/SKILL.md) | None |  |  |
 | [None](../.agents/skills/harness-auditor/SKILL.md) | None |  |  |
 | [None](../.agents/skills/how/SKILL.md) | None |  |  |
+| [None](../.agents/skills/issue-intake-strategist/SKILL.md) | None |  |  |
 | [None](../.agents/skills/l1-entity-matcher/SKILL.md) | None |  |  |
 | [None](../.agents/skills/materiality-triage/SKILL.md) | None |  |  |
 | [None](../.agents/skills/multi-agent-orchestrator-governance/SKILL.md) | None |  |  |
