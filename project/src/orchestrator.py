@@ -123,33 +123,37 @@ class Orchestrator:
                 logger.info("[{}] disabled, skipping", name)
                 continue
             try:
-                primary = build_scraper(cfg, self.http, self.dedup)
-            except KeyError as e:
-                logger.error("{}", e)
+                try:
+                    primary = build_scraper(cfg, self.http, self.dedup)
+                except KeyError as e:
+                    logger.error("{}", e)
+                    continue
+
+                fallback = None
+                fb_method = cfg.get("fallback")
+                if fb_method and REGISTRY.get(f"_{fb_method}"):
+                    fallback = REGISTRY[f"_{fb_method}"](cfg, self.http, self.dedup)
+
+                self.heartbeat.record_start(name)
+                result = (
+                    run_with_fallback(primary, fallback)
+                    if fallback
+                    else run_with_retry(primary)
+                )
+                for a in result.new:
+                    # Rule-based sentiment (Vietnamese lexicon) is not part of this workflow stage:
+                    # the self-built lexicon has low value, and the real sentiment comes from the
+                    # agent in the output layer. The engine stays in src/processor/sentiment.py.
+                    for cat in classify_rule_based(a.title, a.content_text):
+                        if cat not in a.categories and cat != "uncategorized":
+                            a.categories.append(cat)
+                    self.writer.enqueue(a)
+                self.heartbeat.record_result(result)
+                results.append(result)
+                all_new.extend(result.new)
+            except Exception:  # noqa: BLE001 — one broken source must not end the cycle silently
+                logger.exception("[{}] domain run failed", name)
                 continue
-
-            fallback = None
-            fb_method = cfg.get("fallback")
-            if fb_method and REGISTRY.get(f"_{fb_method}"):
-                fallback = REGISTRY[f"_{fb_method}"](cfg, self.http, self.dedup)
-
-            self.heartbeat.record_start(name)
-            result = (
-                run_with_fallback(primary, fallback)
-                if fallback
-                else run_with_retry(primary)
-            )
-            for a in result.new:
-                # Rule-based sentiment (Vietnamese lexicon) is not part of this workflow stage:
-                # the self-built lexicon has low value, and the real sentiment comes from the
-                # agent in the output layer. The engine stays in src/processor/sentiment.py.
-                for cat in classify_rule_based(a.title, a.content_text):
-                    if cat not in a.categories and cat != "uncategorized":
-                        a.categories.append(cat)
-                self.writer.enqueue(a)
-            self.heartbeat.record_result(result)
-            results.append(result)
-            all_new.extend(result.new)
 
         try:
             self.notifier.notify_articles(all_new)

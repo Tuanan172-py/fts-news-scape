@@ -5,7 +5,10 @@ from __future__ import annotations
 import json
 import os
 import re
+import sqlite3
 import time
+from contextlib import contextmanager
+from typing import Iterator
 
 from loguru import logger
 
@@ -35,18 +38,46 @@ class DedupCache:
         self._conn = store._connect()
         self._migrate_legacy_json(legacy_json_path)
 
+    def _clear_stale(self) -> None:
+        """Roll back a transaction left open on the long-lived connection.
+
+        Python's sqlite3 opens a deferred transaction before a write. When that write fails
+        with `database is locked`, the transaction stays open, and the next read pins a WAL
+        snapshot. Every later write then fails at once with SQLITE_BUSY_SNAPSHOT, which
+        `busy_timeout` does not retry, so capture stalls until the process restarts.
+        """
+        if self._conn.in_transaction:
+            logger.warning("[dedup] rollback giao dịch bị bỏ lại trên kết nối dedup")
+            self._conn.rollback()
+
+    @contextmanager
+    def _write(self) -> Iterator[sqlite3.Connection]:
+        """Run a short write on the cache connection: commit on success, roll back on error.
+
+        Yields:
+            The cache connection.
+        """
+        self._clear_stale()
+        try:
+            yield self._conn
+            self._conn.commit()
+        except BaseException:
+            if self._conn.in_transaction:
+                self._conn.rollback()
+            raise
+
     def _migrate_legacy_json(self, path: str) -> None:
         if not path or not os.path.exists(path):
             return
         try:
             with open(path, encoding="utf-8") as f:
                 hashes: dict[str, float] = json.load(f)
-            self._conn.executemany(
-                "INSERT OR IGNORE INTO seen_articles (hash, title_norm, source_domain, seen_at) "
-                "VALUES (?, '', 'legacy', ?)",
-                [(h, ts) for h, ts in hashes.items()],
-            )
-            self._conn.commit()
+            with self._write() as conn:
+                conn.executemany(
+                    "INSERT OR IGNORE INTO seen_articles (hash, title_norm, source_domain, seen_at) "
+                    "VALUES (?, '', 'legacy', ?)",
+                    [(h, ts) for h, ts in hashes.items()],
+                )
             os.remove(path)
             logger.info("Migrated {} legacy dedup hashes from {} (file removed)",
                         len(hashes), path)
@@ -64,6 +95,7 @@ class DedupCache:
             True if the article is already in the cache.
         """
         h = sha256_hash(url, title)
+        self._clear_stale()
         row = self._conn.execute(
             "SELECT 1 FROM seen_articles WHERE hash=?", (h,)).fetchone()
         return row is not None
@@ -76,12 +108,12 @@ class DedupCache:
             title: Article title.
             source_domain: Domain of the news source.
         """
-        self._conn.execute(
-            "INSERT OR IGNORE INTO seen_articles (hash, title_norm, source_domain, seen_at) "
-            "VALUES (?, ?, ?, ?)",
-            (sha256_hash(url, title), normalize_title(title), source_domain, time.time()),
-        )
-        self._conn.commit()
+        with self._write() as conn:
+            conn.execute(
+                "INSERT OR IGNORE INTO seen_articles (hash, title_norm, source_domain, seen_at) "
+                "VALUES (?, ?, ?, ?)",
+                (sha256_hash(url, title), normalize_title(title), source_domain, time.time()),
+            )
 
     def discover(self, url: str, source_domain: str, via: str = "listing") -> tuple[str, bool, bool]:
         """Record a URL in the discovery ledger before any filter.
@@ -94,9 +126,8 @@ class DedupCache:
         Returns:
             Tuple of (article key, is new article, is a URL form different from the first one seen).
         """
-        res = registry.discover(self._conn, url, source_domain, via)
-        self._conn.commit()
-        return res
+        with self._write() as conn:
+            return registry.discover(conn, url, source_domain, via)
 
     def is_captured(self, key: str) -> bool:
         """Check whether the article with this key was already stored as an article.
@@ -107,6 +138,7 @@ class DedupCache:
         Returns:
             True if the discovery ledger records the captured state.
         """
+        self._clear_stale()
         return registry.is_captured(self._conn, key)
 
     def known_keys(self, keys: list[str]) -> set[str]:
@@ -118,6 +150,7 @@ class DedupCache:
         Returns:
             Keys already in the captured state, used as the pagination stop marker.
         """
+        self._clear_stale()
         return registry.known_keys(self._conn, keys)
 
     def cleanup(self, max_age_days: int = 30) -> int:
@@ -130,8 +163,8 @@ class DedupCache:
             Number of records deleted.
         """
         cutoff = time.time() - max_age_days * 86400
-        cur = self._conn.execute("DELETE FROM seen_articles WHERE seen_at < ?", (cutoff,))
-        self._conn.commit()
+        with self._write() as conn:
+            cur = conn.execute("DELETE FROM seen_articles WHERE seen_at < ?", (cutoff,))
         return cur.rowcount
 
     def count(self) -> int:

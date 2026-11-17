@@ -60,3 +60,4 @@ After this story an analyst using `fpts-market-intel` can ask what was known at 
 ## Evidence
 
 - Measurements in ADR-0033 and FACT-lakehouse-client-cost-is-view-building-not-parquet.
+- Deploy audit on 2026-11-17 found capture stalled since 15:41: the `morninger` dedup connection kept a failed transaction open after a lock (FACT-sqlite-failed-write-stalls-long-lived-connection). The fix rolls back failed writes in `DedupCache` and isolates errors per source in `Orchestrator.run_cycle` (`test_dedup_lock_recovery.py`).

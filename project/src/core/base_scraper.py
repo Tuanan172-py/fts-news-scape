@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sqlite3
 import time
 from abc import ABC, abstractmethod
 from urllib.parse import urlsplit
@@ -78,11 +79,20 @@ class BaseScraper(ABC):
         new = []
         seen_keys: set[str] = set()
         for a in articles:
-            key, _is_new, alias_form = self.dedup.discover(a.url, a.source_domain or self.name, via)
-            # A seen hash skips the article only when the discovery ledger confirms it reached the store.
-            # An article marked seen but without an `articles` row (old silent filter) is fetched again.
-            if self.dedup.is_duplicate(a.url, a.title) and (not key or self.dedup.is_captured(key)):
-                continue
+            try:
+                key, _is_new, alias_form = self.dedup.discover(
+                    a.url, a.source_domain or self.name, via)
+                # A seen hash skips the article only when the discovery ledger confirms it
+                # reached the store. An article marked seen but without an `articles` row (old
+                # silent filter) is fetched again.
+                if self.dedup.is_duplicate(a.url, a.title) and (
+                        not key or self.dedup.is_captured(key)):
+                    continue
+            except sqlite3.Error as e:
+                # Stop this run; the remaining items are listed again next cycle.
+                logger.error("[{}] discovery ledger failed: {}", self.name, e)
+                self.errors.append(f"discover: {e}")
+                break
             if key and (key in seen_keys or (alias_form and self.dedup.is_captured(key))):
                 logger.debug("[{}] url alias skipped: {}", self.name, a.url[:80])
                 continue
