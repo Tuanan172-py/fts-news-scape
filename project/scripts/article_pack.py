@@ -235,17 +235,29 @@ def load_candidates(conn: sqlite3.Connection, *, date: str | None, limit: int,
             "SELECT 1 FROM sqlite_master WHERE type='table' AND name='agent_outputs'"
         ).fetchone() is not None
         if has_agent_outputs:
+            analyzed = (f"(EXISTS (SELECT 1 FROM l1_outputs o "
+                        f"WHERE o.article_id = a.url_title_hash AND {ANALYZED_L1}) "
+                        f"AND EXISTS (SELECT 1 FROM agent_outputs g "
+                        f"WHERE g.article_id = a.url_title_hash AND g.dod_pass = 1))")
+        else:
+            analyzed = (f"EXISTS (SELECT 1 FROM l1_outputs o "
+                        f"WHERE o.article_id = a.url_title_hash AND {ANALYZED_L1})")
+        has_requests = has_agent_outputs and conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='reanalysis_requests'"
+        ).fetchone() is not None
+        if has_requests:
+            # US-054: an analysed article returns to the queue while a re-analysis request is
+            # open, that is until both layers hold a passing output newer than the request.
             sql.append(
-                f"  AND NOT (EXISTS (SELECT 1 FROM l1_outputs o "
-                f"WHERE o.article_id = a.url_title_hash AND {ANALYZED_L1}) "
-                f"AND EXISTS (SELECT 1 FROM agent_outputs g "
-                f"WHERE g.article_id = a.url_title_hash AND g.dod_pass = 1))"
+                f"  AND (NOT {analyzed} OR EXISTS (SELECT 1 FROM reanalysis_requests r "
+                f"WHERE r.article_id = a.url_title_hash AND NOT ("
+                f"EXISTS (SELECT 1 FROM l1_outputs o WHERE o.article_id = r.article_id "
+                f"AND {ANALYZED_L1} AND o.created_at >= r.requested_at) "
+                f"AND EXISTS (SELECT 1 FROM agent_outputs g WHERE g.article_id = r.article_id "
+                f"AND g.dod_pass = 1 AND g.created_at >= r.requested_at))))"
             )
         else:
-            sql.append(
-                f"  AND NOT EXISTS (SELECT 1 FROM l1_outputs o "
-                f"WHERE o.article_id = a.url_title_hash AND {ANALYZED_L1})"
-            )
+            sql.append(f"  AND NOT {analyzed}")
         has_clusters = conn.execute(
             "SELECT 1 FROM sqlite_master WHERE type='table' AND name='cluster_members'").fetchone()
         if has_clusters:

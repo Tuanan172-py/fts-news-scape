@@ -504,6 +504,25 @@ class OpsStore:
                           "updated_at = excluded.updated_at", (aid, wave_id, now))
         return len(article_ids)
 
+    def reset_attempts(self, article_ids: list[str]) -> int:
+        """Reset the attempt counter of articles that get a fresh analysis request.
+
+        Without the reset, an article that already used its attempts in an earlier wave would
+        be excluded from automatic waves and its re-analysis request would never run.
+
+        Args:
+            article_ids: Identifiers whose counter returns to zero.
+
+        Returns:
+            Number of counter rows changed.
+        """
+        changed = 0
+        with self.conn() as c:
+            for aid in article_ids:
+                changed += c.execute("UPDATE ops_article_attempts SET attempts = 0, updated_at = ? "
+                                     "WHERE article_id = ? AND attempts > 0", (iso(), aid)).rowcount
+        return changed
+
     def reserved_article_ids(self) -> set[str]:
         """List articles that belong to a wave with an unfinished lifecycle (running, PARKED, FAILED).
 

@@ -235,8 +235,11 @@ class L1Runner:
             return {"ok": False, "article_id": aid, "reason": "no l1_task"}
 
         # Idempotent replay: return the cached result when an agent output already passed DoD.
+        # An open re-analysis request (US-054) makes an output older than the request stale.
         cached = self.store.get_l1_output(aid)
-        if cached and cached.get("dod_pass") and cached.get("l1_source", "agent") != CODE_FIRST_PROVIDER:
+        since = self.store.reanalysis_since(aid) if hasattr(self.store, "reanalysis_since") else None
+        if (cached and cached.get("dod_pass") and cached.get("l1_source", "agent") != CODE_FIRST_PROVIDER
+                and not (since and (cached.get("created_at") or "") < since)):
             return {"ok": True, "article_id": aid, "cached": True, "dod_pass": True}
         # A code_first record is provisional: an agent may overwrite it, never the reverse.
         # docs/decisions/0003-code-first-l1-delivery.md

@@ -35,7 +35,7 @@ Trả về một mảng JSON, mỗi bài một phần tử, **đúng thứ tự 
 ```json
 [{"i":0,"e":[["<chuỗi nguyên văn>","<MÃ NHÓM>"]],"s":"<tóm tắt 1-3 câu>",
  "k":["<luận điểm 1>","<luận điểm 2>"],"im":"<hàm ý thị trường>",
- "sn":"pos|neg|neu","ts":"urg|today|week|month|arch","c":[0,2]}]
+ "sn":"pos|neg|neu","ts":"urg|today|week|month|arch","c":[0,2],"ek":"<MÃ SỰ KIỆN>"}]
 ```
 
 | Khoá | Nội dung | Ràng buộc |
@@ -47,10 +47,22 @@ Trả về một mảng JSON, mỗi bài một phần tử, **đúng thứ tự 
 | `im` | hàm ý với doanh thu, lợi nhuận, dòng tiền hoặc thị giá, tiếng Việt có dấu | tối thiểu 40 ký tự |
 | `sn` | `pos` tích cực, `neg` tiêu cực, `neu` trung tính | đúng 1 trong 3 |
 | `ts` | `urg` khẩn, `today` trong ngày, `week` trong tuần, `month` trong tháng, `arch` lưu trữ | đúng 1 trong 5 |
+| `ek` | bản chất sự kiện của bài, đúng 1 mã trong danh sách sáu mã bên dưới | tùy chọn; không chắc thì bỏ hẳn khoá này, đừng đoán |
 | `c` | **chỉ số** các đoạn `p` dùng làm chứng cứ, đếm từ 0, ví dụ `[0,2]` | 2 đến 4 số nguyên khác nhau, xếp tăng dần, mỗi số trỏ vào một đoạn có từ 20 ký tự trở lên; bài chỉ có một đoạn đủ dài thì ghi 1 số; không chép nội dung đoạn |
 
-Mọi khoá trong bảng đều bắt buộc, không có khoá nào khác. Giá trị ngoài danh sách
+Mọi khoá trong bảng đều bắt buộc trừ `ek`, không có khoá nào khác. Giá trị ngoài danh sách
 cho phép bị từ chối và bài đó phải làm lại. Không có giá trị mặc định thay cho bạn.
+
+Sáu mã `ek`, chọn theo **việc đang xảy ra**, không theo giọng văn của bài:
+
+| Mã | Dùng khi bài nói về |
+| --- | --- |
+| `MACRO_POLICY` | chính sách hoặc số liệu vĩ mô: lãi suất, tỷ giá, tín dụng, thuế, quy hoạch, luật mới ban hành |
+| `EARNINGS_FINANCE` | kết quả kinh doanh, báo cáo tài chính, cổ tức, kế hoạch lợi nhuận, huy động vốn |
+| `CORP_ACTION_MA` | mua bán sáp nhập, thoái vốn, phát hành, niêm yết, đổi lãnh đạo hay cổ đông lớn |
+| `LEGAL_RISK` | thanh tra, xử phạt, khởi tố, kiện tụng, nợ xấu, vi phạm công bố thông tin |
+| `MARKET_MICROSTRUCTURE` | diễn biến phiên giao dịch, thanh khoản, dòng tiền khối ngoại, margin, ETF cơ cấu danh mục |
+| `PR_BRANDING` | quảng bá thương hiệu, giải thưởng, kỷ niệm, sự kiện truyền thông, tài trợ, tuyển dụng, không đổi định giá |
 
 Không phát `article_id`, không chép lại tiêu đề, không sinh metadata, không sinh
 `categories`, không tự chấm điểm chất lượng. Hệ thống bên ngoài bù toàn bộ phần đó
@@ -300,13 +312,13 @@ Kết quả ra:
   "k":["Biên lợi nhuận gộp mở rộng lên 14,1% nhờ giá bán nội địa được thuế tự vệ hỗ trợ",
        "Sản lượng HRC tăng 32% cho thấy nhu cầu nội địa phục hồi"],
   "im":"Kết quả vượt kỳ vọng củng cố định giá ngắn hạn; cần theo dõi giá HRC quý 4 và tiến độ áp thuế chính thức.",
-  "sn":"pos","ts":"today","c":[0,1]},
+  "sn":"pos","ts":"today","c":[0,1],"ek":"EARNINGS_FINANCE"},
  {"i":1,"e":[["VND","TIC"]],
   "s":"VNDirect công bố báo cáo quản trị định kỳ 6 tháng, không có thay đổi nhân sự cấp cao.",
   "k":["Báo cáo mang tính tuân thủ nghĩa vụ công bố thông tin định kỳ",
        "Không có thay đổi nhân sự cấp cao nên không phát sinh rủi ro điều hành"],
   "im":"Không có tác động tới định giá; giá trị chủ yếu nằm ở hồ sơ tuân thủ của doanh nghiệp.",
-  "sn":"neu","ts":"arch","c":[0]}]
+  "sn":"neu","ts":"arch","c":[0],"ek":"LEGAL_RISK"}]
 ```
 
 Lưu ý trong ví dụ: ngành `Vận tải đường bộ & đường sắt` **không** xuất hiện nguyên

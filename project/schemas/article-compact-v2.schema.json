@@ -55,6 +55,10 @@
           "uniqueItems": true,
           "items": {"type": "integer", "minimum": 0},
           "description": "Chỉ số 0-based của các đoạn p làm chứng cứ."
+        },
+        "ek": {
+          "enum": ["MACRO_POLICY", "EARNINGS_FINANCE", "CORP_ACTION_MA", "LEGAL_RISK", "MARKET_MICROSTRUCTURE", "PR_BRANDING"],
+          "description": "Tùy chọn (ADR 0032): bản chất sự kiện. Thiếu khóa này vẫn hợp lệ."
         }
       }
     }

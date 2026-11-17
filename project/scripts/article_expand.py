@@ -20,6 +20,7 @@ from src.agent.intent_resolve import (                 # noqa: E402
     reconcile,
 )
 from src.agent.article_contract import (               # noqa: E402,F401
+    EVENT_KIND_CODES,
     MIN_CITATION_CHARS,
     SENTIMENT_MAP,
     TIME_MAP,
@@ -321,6 +322,8 @@ def build_gold_output(article_id: str, record: dict, paragraphs: list[str]) -> t
     }
     if need == 1:
         row["citation_basis"] = "single-paragraph"
+    if record.get("ek") in EVENT_KIND_CODES:
+        row["event_kind"] = record["ek"]
     return row, ""
 
 

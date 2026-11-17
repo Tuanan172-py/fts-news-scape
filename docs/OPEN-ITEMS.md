@@ -145,12 +145,13 @@ Việc kỹ thuật còn treo (chưa làm trong US-031):
 
 | Mục | Ai | Việc | Trạng thái |
 |---|---|---|---|
-| A6 | Người | Quyết định chạy lại thực thể cho 01–12/11/2026 theo ADR-0031 (hiện `buzz`/`themes` chỉ so với dữ liệu từ 13/11) | Chờ quyết định |
-| D3 | Người | Duyệt ADR-0032 (nhãn `event_kind` do `article-processor` sinh, ghi vào `categories`) | Chờ duyệt |
-| R1 | Người | `refresh_aliases.py --dry-run` cập nhật 40 thực thể, toàn do alias YAML chưa commit của US-052; không cần cho US-053 (guard nạp lúc khởi tạo registry). Chạy khi chốt US-052 | Chờ US-052 |
-| R2 | Người | Thay rổ `vn30`/`vn100` (proxy vốn hóa) bằng danh sách 30 mã chính thức từ thông báo HOSE hiệu lực 03/08/2026 (báo chí chỉ nêu thêm MCH, TCX; loại TPB, PLX; proxy khớp các thay đổi này) | Chờ danh sách HOSE |
-| R3 | Người + agent | 174 bài Gold lệch tiêu đề–tóm tắt (từ 01/09) đã xuất ra `C:\data\news-scape\state\gold_title_summary_mismatch_20261116.csv`; chạy lại phân tích cần quyết định của người (tốn token, đổi bản ghi Gold) | Chờ quyết định |
+| A6 | Agent | Chạy lại thực thể 01–12/11/2026 (9.720 bài) theo ADR-0031; người vận hành đồng ý 2026-11-17 | Đã mở yêu cầu (US-054, nhãn `us053-entities-1101-1112`); daemon xử lý theo luật T4, đọc tiến độ bằng `request_reanalysis.py --status` |
+| D3 | Agent | Nhãn `ek` (ADR-0032, đã duyệt 2026-11-17): schema, validator, bộ bung, cổng research, prefix, plugin `event_kind` | Xong; đợt W11171504 cho 38/38 bài đạt DoD, 33 bài có `ek`. Lens chưa loại `PR_BRANDING` cho tới khi đo độ khớp ≥90% (MACRO_POLICY chiếm 19/38 là dấu hiệu lệch) |
+| R1 | Agent | `refresh_aliases.py` áp 40 thực thể lên `entities.json` (người vận hành yêu cầu 2026-11-17); prefix và persona sinh lại, `--check` đạt | Xong 2026-11-17; bản sao lưu ở `C:\data\news-scape\state\backup_20261117` |
+| R2 | Người | Rổ `vn30`/`vn100` giữ proxy vốn hóa (đồng ý 2026-11-17); thêm `review_policy` (rà soát tháng 1/7, hiệu lực tháng 2/8) và cảnh báo quá hạn, `watch_flags` cho DGC | Xong; thay bằng danh sách chính thức khi có thông báo HOSE kỳ tháng 1/2027 |
+| R3 | Agent | 174 bài lệch tiêu đề–tóm tắt: phân tích lại (đồng ý 2026-11-17) | Đã mở yêu cầu (US-054, nhãn `us053-title-mismatch`) |
 | R4 | Agent | 5 test hỏng có từ trước (`retag_location_symbols.py` ghép đường dẫn, chữ ký `check_l1_dod`, ba kiểm tra hàng đợi ops do wave PARKED 09/11 giữ 6 bài) | Xong 2026-11-16 |
+| R5 | Daemon | Đóng 9.858 yêu cầu phân tích lại của US-054 (`us053-entities-1101-1112`: 9.684, `us053-title-mismatch`: 174); đo bằng `python scripts/maintenance/request_reanalysis.py --status` từ `project/`. Sau khi xong, chạy lại `buzz` và `themes` để kiểm tra nền chế độ thực thể | Đang chạy từ 2026-11-17 |
 
 ## A0. RÀ SOÁT END-TO-END 2026-09-17 — mất dữ liệu âm thầm & ngõ cụt trạng thái
 

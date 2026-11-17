@@ -2,13 +2,13 @@
 id: ADR-0032
 type: adr
 title: Event kind label in the article contract separates PR from valuation catalysts
-status: proposed
+status: accepted
 lane: high-risk
 created: 2026-11-16
-updated: 2026-11-16
+updated: 2026-11-17
 lang: en
 authors: [agent]
-approvers: []
+approvers: [operator]
 story: [US-053]
 supersedes: []
 amends: []
@@ -36,7 +36,7 @@ The plugin already mitigates the symptom with role and provenance filters and wi
 1. The compact record MUST gain one optional key `ek` with a closed enum of six values: `MACRO_POLICY`, `EARNINGS_FINANCE`, `CORP_ACTION_MA`, `LEGAL_RISK`, `MARKET_MICROSTRUCTURE`, `PR_BRANDING`.
 2. `article-processor` MUST produce `ek` in the same single turn; no extra model call and no script heuristic MAY derive it.
 3. The shared validator MUST reject any value outside the enum with the code `enum:ek:<value>` and MUST accept records without `ek` so legacy waves stay valid.
-4. `article_expand.py` MUST write the value into the existing `categories` column (no Parquet schema change) and the plugin MAY expose it as `event_kind`.
+4. The Gold record carries the value as `event_kind`; the research gate MUST append it to the existing `categories` column as the tag `ek:<KIND>` (no Parquet schema change), and the plugin exposes it as `event_kind`.
 5. Lenses SHOULD exclude `PR_BRANDING` from market-impact conclusions only after the golden set shows at least 90% agreement with a human-labelled sample.
 
 ## Alternatives
@@ -59,6 +59,7 @@ The plugin already mitigates the symptom with role and provenance filters and wi
 
 ## Follow-up
 
-- [ ] Operator approves or rejects this ADR; no code lands before approval.
-- [ ] After approval, extend `article-compact-v2.schema.json`, the validator, `article_expand.py` and the golden set in one story.
-- [ ] Decide whether to backfill existing Gold rows (see the open decision on the 2026-11-01 to 2026-11-12 entity re-derivation in US-053).
+- [x] Operator approved this ADR on 2026-11-17.
+- [x] Extended `article-compact-v2.schema.json`, the validator, `article_expand.py`, the research gate, the prefix generator and the plugin in US-053.
+- [x] Backfill decision: rows reprocessed for the 2026-11-01 to 2026-11-12 entity re-derivation and the title mismatch fix receive a label; other existing rows stay unlabelled.
+- [ ] Measure agreement against a human-labelled sample before any lens excludes `PR_BRANDING`.

@@ -198,6 +198,67 @@ def load_universes(path: Path | None = None) -> dict[str, dict[str, Any]]:
         return {}
     return {k.lower(): v for k, v in (data.get("universes") or {}).items()}
 
+
+def load_universe_policy(path: Path | None = None) -> dict[str, Any]:
+    """Đọc lịch rà soát rổ (`review_policy`) và cờ theo dõi (`watch_flags`) của `universes.json`.
+
+    Args:
+        path: Đường dẫn tệp JSON; mặc định là `config/universes.json` của plugin.
+
+    Returns:
+        `{"review_policy": {...}, "watch_flags": {...}}`; các khoá rỗng khi thiếu tệp.
+    """
+    p = path or CONFIG_DIR / "universes.json"
+    try:
+        data = json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {"review_policy": {}, "watch_flags": {}}
+    return {"review_policy": data.get("review_policy") or {}, "watch_flags": data.get("watch_flags") or {}}
+
+
+def _first_monday(year: int, month: int) -> date:
+    """Trả thứ Hai đầu tiên của tháng, ước lượng ngày rổ mới có hiệu lực."""
+    d = date(year, month, 1)
+    return d + timedelta(days=(7 - d.weekday()) % 7)
+
+
+def universe_review_info(entry: dict[str, Any], policy: dict[str, Any],
+                         flags: dict[str, str] | None = None, today: date | None = None) -> dict[str, Any]:
+    """Đánh giá độ cũ của một rổ so với lịch rà soát định kỳ của HOSE.
+
+    Args:
+        entry: Mục rổ trong `universes.json` (`source`, `as_of`, `tickers`).
+        policy: `review_policy` của tệp cấu hình.
+        flags: `watch_flags` (mã cần kiểm tra thêm).
+        today: Ngày tham chiếu; mặc định là hôm nay theo giờ Việt Nam.
+
+    Returns:
+        Từ điển gồm `as_of`, `last_effective`, `next_effective`, `stale`, `review_window` và `warnings`.
+    """
+    today = today or datetime.now(timezone(timedelta(hours=7))).date()
+    as_of = _to_date(entry.get("as_of"))
+    months = sorted(policy.get("effective_months") or [])
+    review_months = sorted(policy.get("periodic_review_months") or [])
+    announce_day = int(policy.get("announce_from_day") or 15)
+    effective = sorted(_first_monday(y, m) for y in (today.year - 1, today.year, today.year + 1) for m in months)
+    last_eff = max((d for d in effective if d <= today), default=None)
+    next_eff = min((d for d in effective if d > today), default=None)
+    warnings: list[str] = []
+    is_official = entry.get("source") not in ("market_cap_proxy", None, "")
+    stale = bool(last_eff and (as_of is None or as_of < last_eff))
+    if stale:
+        warnings.append(f"Danh sách rổ lập ngày {as_of or 'không rõ'} cũ hơn kỳ cơ cấu có hiệu lực {last_eff}; cập nhật trước khi kết luận.")
+    in_window = any(today.month == m and today.day >= announce_day for m in review_months)
+    if in_window and next_eff:
+        warnings.append(f"Đang trong kỳ rà soát định kỳ; rổ mới dự kiến hiệu lực khoảng {next_eff}.")
+    if not is_official:
+        warnings.append("Rổ là proxy vốn hóa, không phải danh sách chính thức của HOSE.")
+    for code, note in (flags or {}).items():
+        if code.upper() in {str(t).upper() for t in entry.get("tickers") or []}:
+            warnings.append(f"{code}: {note}")
+    return {"as_of": as_of, "last_effective": last_eff, "next_effective": next_eff,
+            "stale": stale, "review_window": in_window, "warnings": warnings}
+
 STORY_COLUMNS = """
     story_key,
     arg_min(article_id, published_at) AS article_id,
@@ -362,6 +423,7 @@ class NewsLakehouseClient:
         self.themes = load_themes(themes_path)
         self.regime_from = load_regime_start()
         self.universes = load_universes()
+        self._universe_policy = load_universe_policy()
         self._range_cache: dict[str, Any] | None = None
         self._materialized = False
         self._build_views()
@@ -528,6 +590,9 @@ class NewsLakehouseClient:
             name if name in present_pq else f"CAST(NULL AS {typ}) AS {name}"
             for name, typ in REQUIRED_COLUMNS.items()
         ]
+        # `categories` carries the model event kind as an `ek:<KIND>` tag (ADR 0032); the
+        # intraday delta never has it, so both branches expose the column explicitly.
+        pq_cols.append("categories" if "categories" in present_pq else "CAST(NULL AS VARCHAR) AS categories")
         max_pq_row = self.con.execute(
             "SELECT max(substr(published_at, 1, 10)) FROM parquet_articles"
             if "published_at" in present_pq
@@ -544,7 +609,8 @@ class NewsLakehouseClient:
             self.intraday_delta_rows = int(delta_only[0]) if delta_only else 0
             self.con.execute(f"""
                 CREATE OR REPLACE VIEW raw_articles AS
-                SELECT {", ".join(REQUIRED_COLUMNS.keys())} FROM _intraday_delta
+                SELECT {", ".join(REQUIRED_COLUMNS.keys())}, CAST(NULL AS VARCHAR) AS categories
+                FROM _intraday_delta
                 UNION ALL
                 SELECT {", ".join(pq_cols)} FROM parquet_articles
                 WHERE article_id NOT IN (SELECT article_id FROM _intraday_delta)
@@ -553,6 +619,7 @@ class NewsLakehouseClient:
             self.con.execute("CREATE OR REPLACE VIEW raw_articles AS SELECT * FROM parquet_articles")
 
         present = {r[0] for r in self.con.execute("DESCRIBE raw_articles").fetchall()}
+        cat_expr = "CAST(categories AS VARCHAR)" if "categories" in present else "CAST(NULL AS VARCHAR)"
         cols = []
         for name, typ in REQUIRED_COLUMNS.items():
             cols.append(name if name in present else f"CAST(NULL AS {typ}) AS {name}")
@@ -587,6 +654,8 @@ class NewsLakehouseClient:
                     ELSE CAST(substr(published_at, 1, 10) AS DATE)
                          + CASE WHEN substr(published_at, 12, 5) >= '{ATC_CUTOFF}' THEN 1 ELSE 0 END
                 END AS DATE) AS trade_date,
+                nullif(regexp_extract(coalesce({cat_expr}, ''), '(?:^|,)ek:([A-Z_]+)', 1), '')
+                    AS event_kind,
                 {_sql_fold_expr('title')} || chr(31) || {_sql_fold_expr('summary')} || chr(31)
                     || {_sql_fold_expr('implication')} || chr(31)
                     || {_sql_fold_expr('CAST(key_points AS VARCHAR)')} AS search_text
@@ -704,6 +773,15 @@ class NewsLakehouseClient:
             known = ", ".join(sorted(self.universes)) or "(chưa cấu hình)"
             raise ValueError(f"Rổ '{universe}' không tồn tại hoặc rỗng; hiện có: {known}")
         return [f"TICKER:{t.upper()}" for t in tickers]
+
+    def universe_info(self, universe: str | None, today: date | None = None) -> dict[str, Any] | None:
+        """Trả thông tin độ cũ và cảnh báo của rổ `universe`, hoặc None khi không dùng rổ."""
+        if not universe:
+            return None
+        entry = self.universes.get(universe.lower()) or {}
+        info = universe_review_info(entry, self._universe_policy["review_policy"],
+                                    self._universe_policy["watch_flags"], today)
+        return {"name": universe.lower(), "source": entry.get("source"), **info}
 
     def _as_of(self, value: str | date | None) -> date:
         """Trả ngày mốc phân tích; mặc định là ngày mới nhất có dữ liệu."""
@@ -1237,7 +1315,7 @@ class NewsLakehouseClient:
                          "sufficient": n_base >= lookback, "z_sd_floor": Z_SD_FLOOR,
                          "regime_from": base_from, "warnings": warnings},
             "params": {"kind": kind.upper(), "min_articles": min_articles, "z_min": z_min,
-                       "universe": universe},
+                       "universe": universe, "universe_info": self.universe_info(universe)},
             "rows": rows,
         }
 
@@ -1365,6 +1443,7 @@ class NewsLakehouseClient:
                         "min_articles_per_period": MIN_DAY_ARTICLES_FOR_PULSE},
             "sectors": sectors,
             "coverage": {"basis": basis, "universe": universe,
+                         "universe_info": self.universe_info(universe),
                          "dense_data_from": self.data_range().get("dense_data_from"),
                          "history_starts_before_dense": _starts_before(
                              hist_start, self.data_range().get("dense_data_from"))},

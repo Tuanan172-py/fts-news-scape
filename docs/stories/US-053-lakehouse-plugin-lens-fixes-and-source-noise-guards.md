@@ -2,10 +2,10 @@
 id: US-053
 type: story
 title: Lakehouse plugin lens fixes and source noise guards
-status: blocked
+status: implemented
 lane: normal
 created: 2026-11-16
-updated: 2026-11-16
+updated: 2026-11-17
 lang: en
 authors: [agent]
 adr: [ADR-0032]
@@ -24,7 +24,7 @@ summary: The market-intel lenses read the Production lakehouse by default, stop 
 
 ## Contract
 
-After this story an analyst running any `fpts-market-intel` lens reads the Production lakehouse (`FRA - Data/news`) by default. The lenses give warnings, not false "acceleration" or "spike" signals, when the entity-labelling regime changed or history is sparse. The `brief` macro tier keeps macro stories that also mention a bank. The L1 matcher no longer tags known abbreviation codes, and the output validator rejects a summary that does not describe its title. The story is `blocked` only on two human decisions: approval of ADR-0032 (event kind label, item D3) and whether to re-derive entities for 2026-11-01 to 2026-11-12 (item A6).
+After this story an analyst running any `fpts-market-intel` lens reads the Production lakehouse (`FRA - Data/news`) by default. The lenses give warnings, not false "acceleration" or "spike" signals, when the entity-labelling regime changed or history is sparse. The `brief` macro tier keeps macro stories that also mention a bank. The L1 matcher no longer tags known abbreviation codes, and the output validator rejects a summary that does not describe its title. The operator approved ADR-0032 and the entity re-derivation on 2026-11-17; the re-derivation runs through US-054 in the daemon backlog.
 
 ## Acceptance Criteria
 
@@ -40,8 +40,10 @@ After this story an analyst running any `fpts-market-intel` lens reads the Produ
 - [x] P5: plugin `rules/AGENTS.md` section 8 and the pulse, buzz, themes and brief `SKILL.md` files document divergence reading, PR exclusion and the new warnings.
 - [x] D1: `CODE_STOPLIST` gains `VTV, CVT, C21, HRC, MA1, BAX, AAH, UDJ` (accepted with a CBTT prefix or a stock word before the code), `hrc` leaves `PROTECTED_SHORT_WORDS`, and `IND_GICS3:XAY_DUNG` has `drop_bare`.
 - [x] D2: `validate_record` returns `summary_title_mismatch` when no significant title word appears in the summary, key points, implication, cited paragraphs or entity surfaces.
-- [ ] D3: event kind label in the Gold layer, awaiting approval of ADR-0032.
-- [ ] A6: decide whether to re-derive entities for 2026-11-01 to 2026-11-12 under ADR-0031 (operator decision).
+- [x] D3: optional `ek` key in the compact schema, validator, expander, research gate (`ek:<KIND>` tag in `categories`), prefix generator and plugin column `event_kind`; wave W11171504 returned 38 valid records.
+- [x] A6: re-analysis requests opened through US-054 for 9,720 articles of 2026-11-01 to 2026-11-12 and the 174 title mismatches; completion is tracked by `request_reanalysis.py --status`.
+- [x] R1: `refresh_aliases.py` applied (40 entities), prefix regenerated and the preset persona synced with `build_article_prefix.py --sync-preset`.
+- [x] R2: universes keep the market-cap proxy and gain `review_policy`, staleness warnings and `watch_flags`.
 
 ## Design Notes
 

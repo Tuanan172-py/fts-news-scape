@@ -321,6 +321,26 @@ CREATE TABLE IF NOT EXISTS cluster_members (
 );
 CREATE INDEX IF NOT EXISTS idx_cm_cluster ON cluster_members(cluster_id, role);
 
+-- Yêu cầu phân tích lại một bài đã đạt DoD (US-054). Bài vẫn giữ kết quả cũ cho tới khi có
+-- kết quả mới đạt DoD với created_at >= requested_at; khi đó yêu cầu tự đóng, không cần cờ.
+CREATE TABLE IF NOT EXISTS reanalysis_requests (
+  article_id TEXT PRIMARY KEY,
+  requested_at TEXT NOT NULL,
+  reason TEXT NOT NULL,
+  batch_tag TEXT NOT NULL
+);
+-- Bản chụp kết quả cũ trước khi bị ghi đè, để kiểm toán và khôi phục.
+CREATE TABLE IF NOT EXISTS reanalysis_archive (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  article_id TEXT NOT NULL,
+  layer TEXT NOT NULL,               -- agent | l1
+  output_json TEXT NOT NULL,
+  created_at TEXT,
+  archived_at TEXT NOT NULL,
+  batch_tag TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_reanalysis_archive_article ON reanalysis_archive(article_id);
+
 -- Tín hiệu insight (ADR 0016). Bảng phái sinh: xoá được, dựng lại bằng signal_build.py.
 CREATE TABLE IF NOT EXISTS signal_daily (
   entity_id TEXT NOT NULL,
@@ -600,8 +620,132 @@ class ArticleStore:
         finally:
             conn.close()
 
+    @staticmethod
+    def _open_request_since(conn: sqlite3.Connection, article_id: str) -> str | None:
+        """Return `requested_at` when the article has an open re-analysis request, else None.
+
+        A request is open until BOTH layers hold a passing output created at or after it.
+        A database without the request table has no open requests.
+
+        Args:
+            conn: Open SQLite connection.
+            article_id: Article identifier.
+
+        Returns:
+            ISO timestamp of the open request, or None.
+        """
+        try:
+            req = conn.execute("SELECT requested_at FROM reanalysis_requests WHERE article_id=?",
+                               (article_id,)).fetchone()
+            if not req:
+                return None
+            since = req[0]
+            l1_done = conn.execute(
+                "SELECT 1 FROM l1_outputs WHERE article_id=? AND dod_pass=1 AND created_at>=? "
+                "AND COALESCE(l1_source,'agent')<>'code_first'", (article_id, since)).fetchone()
+            ag_done = conn.execute(
+                "SELECT 1 FROM agent_outputs WHERE article_id=? AND dod_pass=1 AND created_at>=?",
+                (article_id, since)).fetchone()
+        except sqlite3.OperationalError:
+            return None
+        return None if (l1_done and ag_done) else since
+
+    def reanalysis_since(self, article_id: str) -> str | None:
+        """Return the open re-analysis request time of an article, or None when there is none.
+
+        Args:
+            article_id: Article identifier.
+
+        Returns:
+            ISO timestamp of the request while the article still awaits a fresh analysis.
+        """
+        conn = self._connect_ro()
+        try:
+            return self._open_request_since(conn, article_id)
+        finally:
+            conn.close()
+
+    def request_reanalysis(self, article_ids: list[str], reason: str, batch_tag: str,
+                           now: str, chunk: int = 20) -> dict:
+        """Open re-analysis requests, archiving the current passing outputs first.
+
+        The old outputs stay valid, so the article stays published until a new output passes
+        the DoD. Articles with no passing output are skipped because the normal selector
+        already queues them. Articles with a request still open are left untouched.
+
+        Args:
+            article_ids: Articles to analyse again.
+            reason: Why the analysis is repeated, kept for audit.
+            batch_tag: Label that groups one decision, used to report progress.
+            now: ISO timestamp of the request.
+            chunk: Articles per write transaction.
+
+        Returns:
+            Counts: `requested`, `already_open`, `no_passing_output`.
+        """
+        counts = {"requested": 0, "already_open": 0, "no_passing_output": 0}
+        ids = list(dict.fromkeys(article_ids))
+        conn = self._connect()
+        try:
+            # Short IMMEDIATE transactions per chunk: a deferred transaction that reads first
+            # cannot upgrade to a write lock while the daemon writes in WAL mode, and
+            # busy_timeout does not retry that upgrade.
+            for start in range(0, len(ids), chunk):
+                conn.execute("BEGIN IMMEDIATE")
+                try:
+                    self._request_chunk(conn, ids[start:start + chunk], reason, batch_tag, now,
+                                        counts)
+                    conn.execute("COMMIT")
+                except BaseException:
+                    conn.execute("ROLLBACK")
+                    raise
+        finally:
+            conn.close()
+        return counts
+
+    def _request_chunk(self, conn: sqlite3.Connection, ids: list[str], reason: str,
+                       batch_tag: str, now: str, counts: dict) -> None:
+        """Archive outputs and open requests for one chunk inside an open transaction.
+
+        Args:
+            conn: Connection holding an IMMEDIATE transaction.
+            ids: Article ids of the chunk.
+            reason: Why the analysis is repeated.
+            batch_tag: Label that groups one decision.
+            now: ISO timestamp of the request.
+            counts: Counters updated in place.
+        """
+        for aid in ids:
+            if self._open_request_since(conn, aid):
+                counts["already_open"] += 1
+                continue
+            layers = conn.execute(
+                "SELECT 'l1', output_json, created_at FROM l1_outputs WHERE article_id=? "
+                "AND dod_pass=1 AND COALESCE(l1_source,'agent')<>'code_first' "
+                "UNION ALL SELECT 'agent', output_json, created_at FROM agent_outputs "
+                "WHERE article_id=? AND dod_pass=1 ORDER BY 3 DESC", (aid, aid)).fetchall()
+            if not layers:
+                counts["no_passing_output"] += 1
+                continue
+            seen: set[str] = set()
+            for layer, out_json, created in layers:
+                if layer in seen:
+                    continue
+                seen.add(layer)
+                conn.execute(
+                    "INSERT INTO reanalysis_archive(article_id, layer, output_json, "
+                    "created_at, archived_at, batch_tag) VALUES (?,?,?,?,?,?)",
+                    (aid, layer, out_json, created, now, batch_tag))
+            conn.execute(
+                "INSERT OR REPLACE INTO reanalysis_requests(article_id, requested_at, "
+                "reason, batch_tag) VALUES (?,?,?,?)", (aid, now, reason, batch_tag))
+            counts["requested"] += 1
+
     def insert_agent_output(self, row: dict) -> int:
         """Upsert one output by UNIQUE(article_id, raw_sha256).
+
+        While a re-analysis request is open, a failing new output never replaces an older
+        passing one: the article keeps its published analysis and stays queued.
 
         Args:
             row: Column values keyed by `agent_outputs` column name.
@@ -623,6 +767,15 @@ class ArticleStore:
         )
         conn = self._connect()
         try:
+            if not row.get("dod_pass"):
+                since = self._open_request_since(conn, row["article_id"])
+                kept = since and conn.execute(
+                    "SELECT id FROM agent_outputs WHERE article_id=? AND dod_pass=1 AND created_at<?",
+                    (row["article_id"], since)).fetchone()
+                if kept:
+                    logger.info("[reanalysis] giữ kết quả cũ của {}: bản mới không đạt DoD",
+                                row["article_id"])
+                    return int(kept[0])
             conn.execute(
                 f"INSERT OR REPLACE INTO agent_outputs ({', '.join(cols)}) "
                 f"VALUES ({', '.join('?' for _ in cols)})",
@@ -710,6 +863,16 @@ class ArticleStore:
         row = {**row, "l1_source": row.get("l1_source") or "agent"}
         conn = self._connect()
         try:
+            if not row.get("dod_pass"):
+                since = self._open_request_since(conn, row["article_id"])
+                kept = since and conn.execute(
+                    "SELECT 1 FROM l1_outputs WHERE article_id=? AND dod_pass=1 AND created_at<? "
+                    "AND COALESCE(l1_source,'agent')<>'code_first'",
+                    (row["article_id"], since)).fetchone()
+                if kept:
+                    logger.info("[reanalysis] giữ lớp thực thể cũ của {}: bản mới không đạt DoD",
+                                row["article_id"])
+                    return
             conn.execute(
                 f"INSERT OR REPLACE INTO l1_outputs ({', '.join(cols)}) "
                 f"VALUES ({', '.join('?' for _ in cols)})",

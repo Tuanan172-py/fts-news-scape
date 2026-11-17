@@ -1,5 +1,19 @@
 {
   "_doc": "Rổ mã dùng cho --universe. Đây là PROXY theo vốn hóa (top 30/100 mã 3 ký tự) từ FRA - Data/trading_data/market_caps.parquet, KHÔNG phải rổ chính thức của HOSE; analyst thay danh sách bằng rổ chính thức khi có.",
+  "review_policy": {
+    "_doc": "Lịch rà soát rổ chỉ số HOSE (VN30, VN100). Ngày hiệu lực là ước lượng: thứ Hai đầu tiên của tháng hiệu lực (khớp 03/02/2025 và 03/08/2026). Rổ có thể đổi ngoài kỳ khi mã bị kiểm soát, hủy niêm yết hoặc M&A.",
+    "periodic_review_months": [
+      1,
+      7
+    ],
+    "effective_months": [
+      2,
+      8
+    ],
+    "announce_from_day": 15,
+    "ad_hoc_changes": "Mã bị đưa vào diện kiểm soát tự động rời VN30/VN100; mã dự phòng thay theo thứ tự ưu tiên.",
+    "reference": "HOSE-Index Rules 4.0; thông báo HOSE từng kỳ"
+  },
   "universes": {
     "vn30": {
       "source": "market_cap_proxy",
@@ -161,5 +175,8 @@
         "DGC"
       ]
     }
+  },
+  "watch_flags": {
+    "DGC": "Bị đưa vào diện kiểm soát từ 05/2026 nên rời VN30/VN100 chính thức; proxy vốn hóa vẫn có mã này. Kiểm tra tình trạng kiểm soát trước khi kết luận."
   }
 }

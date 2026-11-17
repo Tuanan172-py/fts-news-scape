@@ -71,6 +71,9 @@ SCHEMA = _load_schema()
 _REC = SCHEMA["$defs"]["record"]["properties"]
 
 REQUIRED_KEYS = tuple(SCHEMA["$defs"]["record"]["required"])
+# Optional keys are accepted when absent so legacy waves stay valid (ADR 0032).
+OPTIONAL_KEYS = tuple(k for k in _REC if k not in REQUIRED_KEYS)
+EVENT_KIND_CODES = tuple(_REC["ek"]["enum"])
 GROUP_CODES = tuple(_REC["e"]["items"]["prefixItems"][1]["enum"])
 SENTIMENT_CODES = tuple(_REC["sn"]["enum"])
 TIME_CODES = tuple(_REC["ts"]["enum"])
@@ -364,7 +367,7 @@ def validate_record(rec: dict, paragraphs: list[str],
     errs: list[str] = []
 
     for key in rec:
-        if key not in REQUIRED_KEYS:
+        if key not in REQUIRED_KEYS and key not in OPTIONAL_KEYS:
             errs.append(f"unknown_key:{key}")
     for key in REQUIRED_KEYS:
         if key not in rec:
@@ -416,6 +419,8 @@ def validate_record(rec: dict, paragraphs: list[str],
         errs.append(f"enum:sn:{rec['sn']!r}")
     if rec["ts"] not in TIME_CODES:
         errs.append(f"enum:ts:{rec['ts']!r}")
+    if "ek" in rec and rec["ek"] not in EVENT_KIND_CODES:
+        errs.append(f"enum:ek:{rec['ek']!r}")
 
     cited: list[int] = []
     raw_c = rec["c"]
@@ -454,7 +459,7 @@ def validate_record(rec: dict, paragraphs: list[str],
 
     if errs:
         return None, errs
-    return {
+    out = {
         "i": rec["i"],
         "e": entities,
         "s": summary.strip(),
@@ -463,7 +468,10 @@ def validate_record(rec: dict, paragraphs: list[str],
         "sn": rec["sn"],
         "ts": rec["ts"],
         "c": cited,
-    }, []
+    }
+    if "ek" in rec:
+        out["ek"] = rec["ek"]
+    return out, []
 
 
 def parse_and_validate(text: str, packet: dict) -> BatchResult:

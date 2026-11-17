@@ -163,6 +163,31 @@ def _str_list(value: Any) -> list[str]:
     return out
 
 
+EVENT_KIND_PREFIX = "ek:"
+
+
+def _with_event_kind(categories: str | None, event_kind: object) -> str:
+    """Merge the model event kind into the comma-separated `categories` column (ADR 0032).
+
+    The scraper section tags stay untouched; the label is appended as `ek:<KIND>` so the
+    Parquet column needs no schema change. Any previous `ek:` tag is replaced, which keeps
+    the merge idempotent when a record is gated again.
+
+    Args:
+        categories: Scraper section categories, comma separated.
+        event_kind: `event_kind` of the gold record, or None for legacy records.
+
+    Returns:
+        The categories string, with one `ek:` tag when the record carries a valid label.
+    """
+    from src.agent.article_contract import EVENT_KIND_CODES
+
+    parts = [c for c in (categories or "").split(",") if c and not c.startswith(EVENT_KIND_PREFIX)]
+    if isinstance(event_kind, str) and event_kind in EVENT_KIND_CODES:
+        parts.append(EVENT_KIND_PREFIX + event_kind)
+    return ",".join(parts)
+
+
 def validate_row(row: tuple) -> tuple[GatedArticle | None, list[str]]:
     """Validate one joined candidate row and build its Research record.
 
@@ -283,7 +308,7 @@ def validate_row(row: tuple) -> tuple[GatedArticle | None, list[str]]:
         "time_sensitivity": time_sens,
         "citations_json": json.dumps(citations, ensure_ascii=False),
         "symbols": symbols or "",
-        "categories": categories or "",
+        "categories": _with_event_kind(categories, ag.get("event_kind")),
         "raw_sha256": raw_sha or "",
         "analysis_provider": ag_provider or "",
         "analysis_model": ag_model or "",

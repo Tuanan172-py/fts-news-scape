@@ -133,6 +133,8 @@ def test_prefix_khop_hop_dong():
     for code in ac.SENTIMENT_CODES + ac.TIME_CODES:
         assert code in text
     assert "|".join(ac.SENTIMENT_CODES) in text and "|".join(ac.TIME_CODES) in text
+    for code in ac.EVENT_KIND_CODES:
+        assert f"`{code}`" in text
     assert article_expand.SENTIMENT_MAP is ac.SENTIMENT_MAP
 
 
@@ -183,3 +185,52 @@ def test_tom_tat_khop_tieu_de_duoc_nhan():
 def test_tieu_de_qua_ngan_khong_bi_chan_nham():
     """Tiêu đề dưới ba từ có nghĩa không đủ căn cứ để kết luận lệch."""
     assert ac.title_summary_misaligned("Tin nhanh", ["Nội dung hoàn toàn khác"]) is False
+
+
+def test_ek_la_khoa_tuy_chon_va_giu_nguyen_khi_hop_le():
+    """ADR 0032: thiếu `ek` vẫn hợp lệ, `ek` trong enum được giữ, ngoài enum bị từ chối."""
+    assert ac.EVENT_KIND_CODES == (
+        "MACRO_POLICY", "EARNINGS_FINANCE", "CORP_ACTION_MA", "LEGAL_RISK",
+        "MARKET_MICROSTRUCTURE", "PR_BRANDING")
+    assert "ek" not in ac.REQUIRED_KEYS and "ek" in ac.OPTIONAL_KEYS
+    ok = run(rec(ek="PR_BRANDING"), rec(i=1))
+    assert ok.errors == {}
+    assert ok.records[0]["ek"] == "PR_BRANDING" and "ek" not in ok.records[1]
+    bad = run(rec(ek="NEWS"))
+    assert bad.errors[0] == ["enum:ek:'NEWS'"] and 0 not in bad.records
+
+
+def test_gold_output_mang_event_kind_chi_khi_hop_le():
+    paras = PACKET["a"][0]["p"]
+    row, _ = article_expand.build_gold_output("a", {**rec(), "ek": "LEGAL_RISK"}, paras)
+    assert row["event_kind"] == "LEGAL_RISK"
+    row, _ = article_expand.build_gold_output("a", rec(), paras)
+    assert "event_kind" not in row
+
+
+def test_gate_ghep_event_kind_vao_categories_khong_mat_the_cu():
+    from src.research_db.gate import _with_event_kind
+    assert _with_event_kind("kinh-doanh,tai-chinh", "MACRO_POLICY") == "kinh-doanh,tai-chinh,ek:MACRO_POLICY"
+    assert _with_event_kind("kinh-doanh,ek:PR_BRANDING", "LEGAL_RISK") == "kinh-doanh,ek:LEGAL_RISK"
+    assert _with_event_kind("kinh-doanh", None) == "kinh-doanh"
+    assert _with_event_kind(None, "NOT_A_KIND") == ""
+
+
+
+def test_sync_preset_ghi_persona_khop_prefix_va_giu_cac_row_khac(tmp_path):
+    from src.agent.prefix import compare_persona
+
+    preset = tmp_path / "agent.cordis.yml"
+    lines = [
+        "- id: other", "  config:", "    persona: keep",
+        "- id: tool-subagent-article", "  config:", "    toolName: agent_article",
+        "    persona: |", "      cũ dòng một", "", "      cũ dòng hai",
+        "    agentOptions:", "      model: x", "- id: tail", "",
+    ]
+    preset.write_text("\n".join(lines), encoding="utf-8")
+    content = "# Tiêu đề\n\nDòng một\nDòng hai\n"
+    assert build_article_prefix.sync_preset(content, preset)
+    assert compare_persona(content, preset)[0]
+    text = preset.read_text(encoding="utf-8")
+    assert "    persona: keep\n" in text
+    assert "    agentOptions:\n      model: x\n- id: tail" in text

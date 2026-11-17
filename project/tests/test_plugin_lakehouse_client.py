@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from datetime import date
 from pathlib import Path
 
 import pyarrow as pa
@@ -514,3 +515,49 @@ def test_publish_dir_env_is_last_resort_not_first(tmp_path: Path, monkeypatch):
     assert resolve_lakehouse_root() == prod.resolve()
     monkeypatch.delenv("NEWS_SCAPE_RESEARCH_DB_DIR")
     assert resolve_lakehouse_root() == sandbox.resolve()
+
+
+def test_event_kind_doc_tu_the_ek_trong_categories(tmp_path: Path):
+    """ADR 0032: `articles.event_kind` lấy thẻ `ek:` trong `categories`; thiếu cột thì NULL."""
+    rows = [_art("e1", "2026-10-06T09:00:00+07:00", "Tin chính sách", []),
+            _art("e2", "2026-10-06T09:05:00+07:00", "Tin PR", [])]
+    # Lake không có cột categories: event_kind phải là NULL, không được lỗi.
+    root = _write_lake(tmp_path, rows, "2026-10-06")
+    client = NewsLakehouseClient(root=root)
+    assert client.query_custom_sql("SELECT count(*) AS n FROM articles WHERE event_kind IS NOT NULL")[0]["n"] == 0
+    # Lake có cột categories với thẻ ek.
+    root2 = tmp_path / "with-cat"
+    part = root2 / "parquet" / "articles" / "year=2026" / "month=10"
+    part.mkdir(parents=True)
+    tagged = [{**rows[0], "categories": "kinh-doanh,ek:MACRO_POLICY"}, {**rows[1], "categories": "ek:PR_BRANDING"},
+              {**_art("e3", "2026-10-06T09:10:00+07:00", "Tin cũ", []), "categories": "kinh-doanh"}]
+    pq.write_table(pa.Table.from_pylist(tagged), part / "part-x.parquet")
+    _write_manifest(root2, "2026-10-06", 3)
+    got = {r["article_id"]: r["event_kind"] for r in NewsLakehouseClient(root=root2).query_custom_sql(
+        "SELECT article_id, event_kind FROM articles")}
+    assert got == {"e1": "MACRO_POLICY", "e2": "PR_BRANDING", "e3": None}
+
+
+def test_universe_review_schedule_flags_stale_proxy_and_review_window():
+    """R2: rổ cũ hơn kỳ cơ cấu gần nhất bị đánh dấu; kỳ rà soát tháng 1/7 và mã bị kiểm soát có cảnh báo."""
+    from lakehouse_client import universe_review_info
+    policy = {"periodic_review_months": [1, 7], "effective_months": [2, 8], "announce_from_day": 15}
+    entry = {"source": "market_cap_proxy", "as_of": "2026-11-16", "tickers": ["HPG", "DGC"]}
+    flags = {"DGC": "bị kiểm soát"}
+    fresh = universe_review_info(entry, policy, flags, today=date(2026, 11, 17))
+    assert fresh["last_effective"] == date(2026, 8, 3) and fresh["next_effective"] == date(2027, 2, 1)
+    assert not fresh["stale"] and not fresh["review_window"]
+    assert any("proxy" in w for w in fresh["warnings"]) and any(w.startswith("DGC") for w in fresh["warnings"])
+    later = universe_review_info(entry, policy, flags, today=date(2027, 2, 10))
+    assert later["stale"] and any("cũ hơn kỳ cơ cấu" in w for w in later["warnings"])
+    window = universe_review_info({**entry, "as_of": "2027-01-10"}, policy, flags, today=date(2027, 1, 20))
+    assert window["review_window"] and not window["stale"]
+
+
+def test_buzz_and_pulse_expose_universe_info(rich_lakehouse: Path):
+    client = NewsLakehouseClient(root=rich_lakehouse)
+    client.universes["tiny"] = {"source": "market_cap_proxy", "as_of": "2026-10-06", "tickers": ["HPG"]}
+    info = client.buzz(on="2026-10-06", lookback=5, universe="tiny")["params"]["universe_info"]
+    assert info["name"] == "tiny" and info["source"] == "market_cap_proxy"
+    cov = client.sentiment_pulse(date_to="2026-10-06", universe="tiny")["coverage"]
+    assert cov["universe_info"]["name"] == "tiny"

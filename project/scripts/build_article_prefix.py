@@ -205,7 +205,7 @@ def build(items: list[dict], *, with_tickers: bool = False) -> str:
     add("```json")
     add('[{"i":0,"e":[["<chuỗi nguyên văn>","<MÃ NHÓM>"]],"s":"<tóm tắt 1-3 câu>",')
     add(' "k":["<luận điểm 1>","<luận điểm 2>"],"im":"<hàm ý thị trường>",')
-    add(' "sn":"pos|neg|neu","ts":"urg|today|week|month|arch","c":[0,2]}]')
+    add(' "sn":"pos|neg|neu","ts":"urg|today|week|month|arch","c":[0,2],"ek":"<MÃ SỰ KIỆN>"}]')
     add("```")
     add("")
     add("| Khoá | Nội dung | Ràng buộc |")
@@ -217,10 +217,22 @@ def build(items: list[dict], *, with_tickers: bool = False) -> str:
     add("| `im` | hàm ý với doanh thu, lợi nhuận, dòng tiền hoặc thị giá, tiếng Việt có dấu | tối thiểu 40 ký tự |")
     add("| `sn` | `pos` tích cực, `neg` tiêu cực, `neu` trung tính | đúng 1 trong 3 |")
     add("| `ts` | `urg` khẩn, `today` trong ngày, `week` trong tuần, `month` trong tháng, `arch` lưu trữ | đúng 1 trong 5 |")
+    add("| `ek` | bản chất sự kiện của bài, đúng 1 mã trong danh sách sáu mã bên dưới | tùy chọn; không chắc thì bỏ hẳn khoá này, đừng đoán |")
     add("| `c` | **chỉ số** các đoạn `p` dùng làm chứng cứ, đếm từ 0, ví dụ `[0,2]` | 2 đến 4 số nguyên khác nhau, xếp tăng dần, mỗi số trỏ vào một đoạn có từ 20 ký tự trở lên; bài chỉ có một đoạn đủ dài thì ghi 1 số; không chép nội dung đoạn |")
     add("")
-    add("Mọi khoá trong bảng đều bắt buộc, không có khoá nào khác. Giá trị ngoài danh sách")
+    add("Mọi khoá trong bảng đều bắt buộc trừ `ek`, không có khoá nào khác. Giá trị ngoài danh sách")
     add("cho phép bị từ chối và bài đó phải làm lại. Không có giá trị mặc định thay cho bạn.")
+    add("")
+    add("Sáu mã `ek`, chọn theo **việc đang xảy ra**, không theo giọng văn của bài:")
+    add("")
+    add("| Mã | Dùng khi bài nói về |")
+    add("| --- | --- |")
+    add("| `MACRO_POLICY` | chính sách hoặc số liệu vĩ mô: lãi suất, tỷ giá, tín dụng, thuế, quy hoạch, luật mới ban hành |")
+    add("| `EARNINGS_FINANCE` | kết quả kinh doanh, báo cáo tài chính, cổ tức, kế hoạch lợi nhuận, huy động vốn |")
+    add("| `CORP_ACTION_MA` | mua bán sáp nhập, thoái vốn, phát hành, niêm yết, đổi lãnh đạo hay cổ đông lớn |")
+    add("| `LEGAL_RISK` | thanh tra, xử phạt, khởi tố, kiện tụng, nợ xấu, vi phạm công bố thông tin |")
+    add("| `MARKET_MICROSTRUCTURE` | diễn biến phiên giao dịch, thanh khoản, dòng tiền khối ngoại, margin, ETF cơ cấu danh mục |")
+    add("| `PR_BRANDING` | quảng bá thương hiệu, giải thưởng, kỷ niệm, sự kiện truyền thông, tài trợ, tuyển dụng, không đổi định giá |")
     add("")
     add("Không phát `article_id`, không chép lại tiêu đề, không sinh metadata, không sinh")
     add("`categories`, không tự chấm điểm chất lượng. Hệ thống bên ngoài bù toàn bộ phần đó")
@@ -306,13 +318,13 @@ def build(items: list[dict], *, with_tickers: bool = False) -> str:
     add('  "k":["Biên lợi nhuận gộp mở rộng lên 14,1% nhờ giá bán nội địa được thuế tự vệ hỗ trợ",')
     add('       "Sản lượng HRC tăng 32% cho thấy nhu cầu nội địa phục hồi"],')
     add('  "im":"Kết quả vượt kỳ vọng củng cố định giá ngắn hạn; cần theo dõi giá HRC quý 4 và tiến độ áp thuế chính thức.",')
-    add('  "sn":"pos","ts":"today","c":[0,1]},')
+    add('  "sn":"pos","ts":"today","c":[0,1],"ek":"EARNINGS_FINANCE"},')
     add(' {"i":1,"e":[["VND","TIC"]],')
     add('  "s":"VNDirect công bố báo cáo quản trị định kỳ 6 tháng, không có thay đổi nhân sự cấp cao.",')
     add('  "k":["Báo cáo mang tính tuân thủ nghĩa vụ công bố thông tin định kỳ",')
     add('       "Không có thay đổi nhân sự cấp cao nên không phát sinh rủi ro điều hành"],')
     add('  "im":"Không có tác động tới định giá; giá trị chủ yếu nằm ở hồ sơ tuân thủ của doanh nghiệp.",')
-    add('  "sn":"neu","ts":"arch","c":[0]}]')
+    add('  "sn":"neu","ts":"arch","c":[0],"ek":"LEGAL_RISK"}]')
     add("```")
     add("")
     add("Lưu ý trong ví dụ: ngành `Vận tải đường bộ & đường sắt` **không** xuất hiện nguyên")
@@ -371,6 +383,38 @@ def check_preset(content: str, preset: Path) -> bool:
     return False
 
 
+def sync_preset(content: str, preset: Path) -> bool:
+    """Write the prefix into the `persona` block of the worker row in the preset.
+
+    The persona must equal the prefix file byte for byte (see `src/agent/prefix.py`), so the
+    block is replaced as a whole. Only the lines of the block scalar change; the rest of the
+    preset is untouched.
+
+    Args:
+        content: Reference prefix content.
+        preset: Path of the preset file.
+
+    Returns:
+        True when the block was found and rewritten, otherwise False.
+    """
+    text = preset.read_text(encoding="utf-8")
+    lines = text.split("\n")
+    try:
+        row = next(i for i, ln in enumerate(lines) if ln.strip() == "- id: tool-subagent-article")
+        head = next(i for i in range(row, len(lines)) if lines[i] == "    persona: |")
+    except StopIteration:
+        return False
+    end = head + 1
+    while end < len(lines) and (lines[end].strip() == "" or lines[end].startswith("      ")):
+        end += 1
+    while end > head + 1 and lines[end - 1].strip() == "":
+        end -= 1
+    block = [("      " + ln) if ln.strip() else "" for ln in content.strip().split("\n")]
+    new_lines = lines[:head + 1] + block + lines[end:] if end < len(lines) else lines[:head + 1] + block
+    preset.write_text("\n".join(new_lines), encoding="utf-8", newline="")
+    return True
+
+
 def main(argv=None) -> int:
     """Run the prefix generation command line.
 
@@ -389,6 +433,8 @@ def main(argv=None) -> int:
                     help="Kiểm tệp còn khớp catalog VÀ persona còn khớp tệp, không ghi đè")
     ap.add_argument("--check-preset", action="store_true",
                     help="Chỉ kiểm persona trong preset còn khớp tệp prefix trên đĩa")
+    ap.add_argument("--sync-preset", action="store_true",
+                    help="Sinh prefix rồi ghi trọn nó vào `persona` của preset, thay bước dán tay")
     ap.add_argument("--with-tickers", action="store_true",
                     help="Nạp thêm danh mục mã chứng khoán vào prefix (biến thể thí "
                          "nghiệm, xem plan §13). Biến thể được ghi vào tệp mô tả nên "
@@ -457,6 +503,12 @@ def main(argv=None) -> int:
         base = len(build(items, with_tickers=False)) // 3
         print(f"   biến thể digest mã chứng khoán: +{approx_tokens - base:,} token mỗi "
               f"lượt gọi, trúng bộ nhớ đệm từ lượt thứ hai")
+    if args.sync_preset:
+        if not sync_preset(content, preset_path):
+            print(f"❌ Không tìm thấy khối `persona` của row `tool-subagent-article` trong {preset_path}")
+            return 1
+        print(f"✅ Đã ghi persona vào {preset_path}")
+        return 0 if check_preset(content, preset_path) else 1
     print(f"   Dán nội dung tệp này vào `persona` của row `tool-subagent-article`,")
     print(f"   rồi kiểm lại bằng `build_article_prefix.py --check` trước mỗi đợt.")
     return 0

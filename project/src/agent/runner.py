@@ -352,8 +352,10 @@ class AgentRunner:
         raw_sha256 = item["raw_sha256"]
 
         # Idempotent replay: return the cached result when an output already passed DoD.
+        # An open re-analysis request (US-054) makes an output older than the request stale.
         cached = self.store.get_agent_output(article_id, raw_sha256)
-        if cached and cached.get("dod_pass"):
+        since = self.store.reanalysis_since(article_id) if hasattr(self.store, "reanalysis_since") else None
+        if cached and cached.get("dod_pass") and not (since and (cached.get("created_at") or "") < since):
             return {"ok": True, "article_id": article_id, "cached": True,
                     "dod_pass": True, "work_item_id": item["id"]}
 
