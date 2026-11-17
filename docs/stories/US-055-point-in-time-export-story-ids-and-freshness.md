@@ -39,7 +39,7 @@ After this story an analyst using `fpts-market-intel` can ask what was known at 
 - [x] D5: the manifest carries `obt_schema`, `columns` and `freshness`; plugin `status` shows them with `pit_coverage` and calendar warnings.
 - [x] D6: the CLI caches built tables locally; on production `status` 0.9 s, `buzz` 2.2 s, `pulse` 2.3 s, `themes` 7.7 s on a hit.
 - [x] D7: after a successful publish the daemon queues one `news` alert listing urgent stories grouped by `story_id`, captured within 12 hours, with a watermark so nothing repeats.
-- [ ] Operator verifies the holiday lists (ADR-0033 follow-up).
+- [x] Holiday lists 2024 to 2026 match the HOSE notices; 2026-01-02 and 2026-08-31 were added (`test_calendar_matches_hose_notices`).
 
 ## Design Notes
 

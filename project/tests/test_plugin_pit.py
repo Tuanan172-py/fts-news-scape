@@ -93,7 +93,7 @@ def test_status_reports_pit_coverage_and_calendar(lake):
     assert st["obt_schema"] == "obt/2" and st["freshness"]["newest_first_seen_at"]
     assert st["pit_coverage"]["first_seen_share"] == 0.75
     assert st["pit_coverage"]["story_share"] == 0.5
-    assert any("2026" in w for w in st["warnings"])
+    assert not any("2026" in w for w in st["warnings"])  # 2026 is verified against HOSE
 
 
 def test_cache_miss_then_hit_and_invalidation(lake, tmp_path, monkeypatch):
@@ -113,3 +113,14 @@ def test_cache_miss_then_hit_and_invalidation(lake, tmp_path, monkeypatch):
     # A cutoff session must not evict the live cache.
     assert _client(lake, cache=True).cache_hit
     assert _client(lake, cache=True, cutoff="2026-05-04T10:00").cache_hit
+
+
+def test_calendar_matches_hose_notices():
+    """Spot checks against the HOSE notices of 2024 to 2026 (ADR-0033 follow-up)."""
+    cal = lakehouse_pit.load_trading_calendar()
+    assert not cal["unverified"] and {2024, 2025, 2026} <= cal["years"]
+    for d in ("2024-04-18", "2024-04-29", "2025-04-07", "2025-05-02", "2026-01-02", "2026-08-31"):
+        assert date.fromisoformat(d) in cal["holidays"], d
+    rows = dict(lakehouse_pit.next_trading_rows(cal["holidays"], start=date(2026, 8, 28),
+                                                end=date(2026, 9, 3)))
+    assert rows[date(2026, 8, 29)] == date(2026, 9, 3)
