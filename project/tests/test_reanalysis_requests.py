@@ -137,3 +137,26 @@ def test_cli_dry_run_khong_ghi(store, tmp_path, capsys):
     assert rc == 0 and "DRY-RUN" in capsys.readouterr().out
     assert rr.progress(store, "t1") == []
     assert rr.ids_from_range(store, "2026-11-10..2026-11-10") == ["a1", "a2"]
+
+
+def test_goi_viec_cu_tu_rss_duoc_dung_lai_tu_silver_khi_phan_tich_lai(store, tmp_path, monkeypatch):
+    """Sự cố W11171902: gói việc cũ giữ đoạn trích RSS, mô hình đọc Silver đầy đủ, mọi trích dẫn hỏng."""
+    from src.agent import runner as runner_mod
+    from src.agent import silver_source
+    from src.core import paths
+
+    monkeypatch.setattr(paths, "work_packages_dir", lambda: tmp_path / "wp")
+    monkeypatch.setattr(runner_mod, "verify_preconditions", lambda wp: (True, []))
+    monkeypatch.setattr(runner_mod, "check_dod", lambda out, wp: (
+        out["span"] in wp["cleaned_text"], [] if out["span"] in wp["cleaned_text"] else ["not grounded"]))
+    full = "Đoạn mở đầu. " + "Câu chỉ có trong bản Silver đầy đủ về lợi nhuận quý ba. " * 3
+    monkeypatch.setattr(silver_source, "read_silver_text", lambda *a: "")
+    runner = runner_mod.AgentRunner(store, task_dir=tmp_path / "tasks")
+    item = runner._register_article_lane_item("a1")          # lần đầu: chỉ có văn bản RSS
+    assert "Silver" not in (tmp_path / "wp" / "a1.json").read_text(encoding="utf-8")
+
+    monkeypatch.setattr(silver_source, "read_silver_text", lambda *a: full)
+    store.request_reanalysis(["a1"], "r", "t1", REQ)
+    res = runner.ingest_output({"article_id": "a1", "span": "Câu chỉ có trong bản Silver đầy đủ"})
+    assert res["dod_pass"], res
+    assert res["work_item_id"] == item["id"]

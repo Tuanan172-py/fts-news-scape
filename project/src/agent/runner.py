@@ -67,6 +67,27 @@ class AgentRunner:
     # on the next ingest.
     WORK_PACKAGE_VERSION = "1.1"
 
+    def _silver_differs(self, wp: dict, article_id: str) -> bool:
+        """Tell whether full Silver text exists and differs from the package text.
+
+        Args:
+            wp: Loaded work package.
+            article_id: Identity hash of the article.
+
+        Returns:
+            True when the package must be rebuilt from Silver before the DoD check.
+        """
+        if wp.get("text_source") == "silver":
+            return False
+        from src.agent.silver_source import read_silver_text
+
+        article = self.store.get_by_hash(article_id)
+        if article is None:
+            return False
+        silver = read_silver_text(getattr(article, "source_domain", None),
+                                  getattr(article, "published_at", None), article_id)
+        return bool(silver) and silver != (wp.get("cleaned_text") or "")
+
     def _register_article_lane_item(self, article_id: str) -> dict | None:
         """Register the work_item and work_package of an Article Lane article when missing.
 
@@ -114,7 +135,11 @@ class AgentRunner:
                 kept = json.loads(wp_file.read_text(encoding="utf-8")) or {}
             except (OSError, ValueError):
                 kept = {}
-            if kept.get("work_package_version") != self.WORK_PACKAGE_VERSION:
+            # Rewrite an old version, or a package whose text is no longer what the packer
+            # sends: the packer reads full Silver first, so a package kept from an RSS
+            # excerpt would fail every citation of a re-analysis (US-054).
+            stale_text = bool(silver_text) and kept.get("cleaned_text") != silver_text
+            if kept.get("work_package_version") != self.WORK_PACKAGE_VERSION or stale_text:
                 kept["work_package_version"] = self.WORK_PACKAGE_VERSION
                 kept["cleaned_text"] = content
                 kept["text_source"] = "silver" if silver_text else "rss"
@@ -364,8 +389,9 @@ class AgentRunner:
         except (OSError, json.JSONDecodeError) as e:
             return {"ok": False, "article_id": article_id, "reason": f"package_unreadable: {e}"}
 
-        # Rebuild an old package (not yet Article Lane 1.1) as version 1.1 (ADR 0018).
-        if wp.get("work_package_version") != self.WORK_PACKAGE_VERSION:
+        # Rebuild an old package (not yet Article Lane 1.1) as version 1.1 (ADR 0018), or one
+        # whose text differs from the full Silver body the model was given.
+        if wp.get("work_package_version") != self.WORK_PACKAGE_VERSION                 or self._silver_differs(wp, article_id):
             upgraded = self._register_article_lane_item(article_id)
             if upgraded:
                 item = upgraded
