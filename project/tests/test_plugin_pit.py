@@ -109,3 +109,7 @@ def test_cache_miss_then_hit_and_invalidation(lake, tmp_path, monkeypatch):
     second.con.close()
     other_cutoff = _client(lake, cache=True, cutoff="2026-05-04T10:00")
     assert not other_cutoff.cache_hit
+    other_cutoff.con.close()
+    # A cutoff session must not evict the live cache.
+    assert _client(lake, cache=True).cache_hit
+    assert _client(lake, cache=True, cutoff="2026-05-04T10:00").cache_hit

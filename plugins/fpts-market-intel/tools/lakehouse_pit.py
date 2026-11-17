@@ -167,17 +167,23 @@ def cache_key(root: Path, partitions: list[Path], master_db: Path | None,
     return hashlib.sha256(json.dumps(payload, sort_keys=True, default=str).encode()).hexdigest()
 
 
-def cache_path(key_root: Path) -> Path:
-    """Return the cache file of one Lakehouse root.
+def cache_path(key_root: Path, slot: str = "live") -> Path:
+    """Return the cache file of one Lakehouse root and session slot.
+
+    Live sessions and cutoff sessions use separate files, so a point-in-time query does not
+    evict the cache of the current view. Each slot holds one key; a new cutoff replaces the
+    previous cutoff only.
 
     Args:
         key_root: Lakehouse root.
+        slot: `live` or `cutoff`.
 
     Returns:
         Path of the DuckDB cache file.
     """
     tag = hashlib.sha256(str(key_root).lower().encode()).hexdigest()[:12]
-    return cache_dir() / f"lakehouse_{tag}.duckdb"
+    suffix = "" if slot == "live" else f"_{slot}"
+    return cache_dir() / f"lakehouse_{tag}{suffix}.duckdb"
 
 
 def attach_cache(con: Any, path: Path, key: str) -> dict[str, str] | None:

@@ -492,7 +492,7 @@ class NewsLakehouseClient:
             parts = sorted(self.root.glob("parquet/articles/*/*/*.parquet"))
             key = lakehouse_pit.cache_key(self.root, parts, self.master_db_path, {
                 "cutoff": self.cutoff, "calendar": self.calendar["sha"]})
-            path = lakehouse_pit.cache_path(self.root)
+            path = lakehouse_pit.cache_path(self.root, "cutoff" if self.cutoff else "live")
             meta = lakehouse_pit.attach_cache(self.con, path, key)
             if meta is not None:
                 self.cache_hit = True
