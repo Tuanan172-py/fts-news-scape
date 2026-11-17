@@ -156,6 +156,10 @@ class AgentRunner:
 
         conn = self.store.connect()
         try:
+            # Take the write lock before reading: a deferred transaction that reads first
+            # cannot upgrade while the crawler or the daemon commits in WAL mode, and
+            # busy_timeout does not retry that upgrade (FACT-sqlite-failed-write-stalls-...).
+            conn.execute("BEGIN IMMEDIATE")
             cur = conn.execute(
                 "SELECT * FROM work_items WHERE article_id=? AND raw_sha256=?",
                 (article_id, raw_sha256),
