@@ -335,7 +335,9 @@ class OpsDaemon:
                     probe_dead_letter(self.monocle_db, self.store,
                                       int(p["dead_letter_alert_delta"])),
                     probe_coverage(self.monocle_db),
-                    probe_capture_channels(self.monocle_db),
+                    probe_capture_channels(
+                        self.monocle_db,
+                        paused=(p.get("capture_channels") or {}).get("paused")),
                     probe_yield(self.monocle_db, p.get("yield")),
                     probe_order(self.paths.standing_order)]
         if (self.cfg.get("publish") or {}).get("enabled"):

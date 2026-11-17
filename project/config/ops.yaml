@@ -83,6 +83,9 @@ probes:
     min_mean: 3
     z_threshold: -2.5
     hours: [8, 17]
+  capture_channels:
+    paused:                      # nguồn tự làm hỏng kênh đối soát; gỡ khi probe báo đối soát lại được (OPEN-ITEMS CAP-1)
+      baodautu.vn: "sitemap tháng trả 'Not found act function sitemap_month' từ 23/10/2026; vẫn cào qua listing"
 
 alerts:
   dedup_minutes: 30

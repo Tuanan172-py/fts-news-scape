@@ -156,7 +156,7 @@ def probe_coverage(db_path: Path, red_pct: float = 2.0, days: int = 2) -> ProbeR
 
 
 def probe_capture_channels(db_path: Path, *, stale_hours: float = 24.0, cap_hours: float = 6.0,
-                           now=None) -> ProbeResult:
+                           now=None, paused: dict[str, str] | None = None) -> ProbeResult:
     """Check that every reference channel still reconciles and no listing hits its page cap.
 
     `probe_coverage` reads only rows that exist, so a source whose sitemap broke would stay
@@ -167,6 +167,9 @@ def probe_capture_channels(db_path: Path, *, stale_hours: float = 24.0, cap_hour
         stale_hours: A reference domain without a coverage row checked within this many hours is unhealthy.
         cap_hours: A pagination cap hit within this many hours is unhealthy.
         now: Reference time.
+        paused: Reference domains the operator paused because the source broke its own
+            channel, mapped to the reason. They are reported, not counted as unhealthy, and
+            the message asks to unpause one that reconciles again.
 
     Returns:
         The ProbeResult named `capture_channels`.
@@ -186,9 +189,16 @@ def probe_capture_channels(db_path: Path, *, stale_hours: float = 24.0, cap_hour
     except sqlite3.Error as exc:
         return ProbeResult("capture_channels", True, "info", f"Chưa đo được kênh đối soát: {exc}")
     problems = []
+    paused = paused or {}
+    notes = []
     for domain in REFERENCE_DOMAINS:
         last = parse_iso(checked.get(domain) or "")
-        if last is None or (now - last).total_seconds() > stale_hours * 3600:
+        fresh = last is not None and (now - last).total_seconds() <= stale_hours * 3600
+        if domain in paused:
+            notes.append(f"{domain} đối soát lại được, gỡ khỏi paused" if fresh
+                         else f"tạm dừng {domain}: {paused[domain]}")
+            continue
+        if not fresh:
             when = f"lần cuối {last:%d/%m %H:%M}" if last else "chưa từng chạy"
             problems.append(f"đối soát {domain} không có dữ liệu ({when})")
     for key, value in caps:
@@ -200,8 +210,10 @@ def probe_capture_channels(db_path: Path, *, stale_hours: float = 24.0, cap_hour
         if at and (now - at).total_seconds() <= cap_hours * 3600:
             problems.append(f"{key.split(':', 1)[1]} chạm trần phân trang lúc {at:%H:%M}")
     if not problems:
+        active = len(REFERENCE_DOMAINS) - len([d for d in REFERENCE_DOMAINS if d in paused])
+        msg = f"{active} kênh đối soát hoạt động, không chạm trần phân trang."
         return ProbeResult("capture_channels", True, "warn",
-                           f"{len(REFERENCE_DOMAINS)} kênh đối soát hoạt động, không chạm trần phân trang.")
+                           msg + (" " + "; ".join(notes) + "." if notes else ""))
     return ProbeResult("capture_channels", False, "warn", "; ".join(problems[:4]))
 
 

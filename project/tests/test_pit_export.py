@@ -162,3 +162,26 @@ def test_urgent_digest_groups_by_story_and_moves_watermark(env):
 def _agent(aid: str, **over) -> str:
     from tests.test_research_production import _agent_doc
     return _agent_doc(aid, **over)
+
+
+def test_capture_channels_paused_source_is_reported_not_red(tmp_path):
+    """CAP-1: an operator-paused reference channel does not keep the probe red."""
+    import sqlite3
+    from datetime import datetime
+
+    from src.ops.probes import probe_capture_channels
+    from src.pipeline.reconcile import REFERENCE_DOMAINS
+
+    db = tmp_path / "m.db"
+    conn = sqlite3.connect(db)
+    conn.execute("CREATE TABLE capture_coverage (source_domain TEXT, checked_at TEXT)")
+    conn.execute("CREATE TABLE pipeline_state (key TEXT, value TEXT)")
+    for d in REFERENCE_DOMAINS:
+        if d != "baodautu.vn":
+            conn.execute("INSERT INTO capture_coverage VALUES (?, '2026-11-17T18:00:00+07:00')", (d,))
+    conn.commit()
+    conn.close()
+    now = datetime.fromisoformat("2026-11-17T19:00:00+07:00")
+    assert not probe_capture_channels(db, now=now).ok
+    res = probe_capture_channels(db, now=now, paused={"baodautu.vn": "sitemap hỏng"})
+    assert res.ok and "tạm dừng baodautu.vn" in res.message
