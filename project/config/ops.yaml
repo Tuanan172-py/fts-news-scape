@@ -27,7 +27,7 @@ wave:
   min_free_gb: 5
   deadlines_minutes:
     preflight: 2
-    prepare: 5
+    prepare: 10                  # backlog T4 quét 2023..nay mất 200–300 s (18/11), 5 phút làm hỏng đợt
     analyze: 45
     repair: 25
     finish: 30                   # nạp DB không nhận lệnh dừng; deadline chỉ dành cho treo thật
