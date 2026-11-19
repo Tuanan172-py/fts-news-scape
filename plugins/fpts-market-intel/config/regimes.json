@@ -1,7 +1,7 @@
 {
   "_doc": "Các mốc đổi chế độ pipeline làm gãy so sánh theo thời gian. Lens dựa trên thực thể (buzz, themes) chỉ dùng dữ liệu từ mốc này khi ngày xét nằm sau mốc. Thêm mốc mới khi pipeline đổi cách gán thực thể; có thể ghi đè bằng biến NEWS_ENTITY_REGIME_FROM.",
   "entity_extraction": {
-    "from": "2026-11-13",
-    "note": "US-052/ADR-0031: multi-scope NER; tỷ lệ bài có thực thể nhảy 28% -> 97% (12-13/11/2026)"
+    "from": "2026-11-01",
+    "note": "US-052/ADR-0031: multi-scope NER từ 13/11/2026; US-054 phân tích lại 01-12/11 (xong 19/11/2026): tỷ lệ bài có thực thể trên production 80-89% từ 01/11, so với 25-33% đến 31/10"
   }
 }

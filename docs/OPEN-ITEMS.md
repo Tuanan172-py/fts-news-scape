@@ -159,7 +159,7 @@ Việc kỹ thuật còn treo (chưa làm trong US-031):
 | R2 | Người | Rổ `vn30`/`vn100` giữ proxy vốn hóa (đồng ý 2026-11-17); thêm `review_policy` (rà soát tháng 1/7, hiệu lực tháng 2/8) và cảnh báo quá hạn, `watch_flags` cho DGC | Xong; thay bằng danh sách chính thức khi có thông báo HOSE kỳ tháng 1/2027 |
 | R3 | Agent | 174 bài lệch tiêu đề–tóm tắt: phân tích lại (đồng ý 2026-11-17) | Đã mở yêu cầu (US-054, nhãn `us053-title-mismatch`) |
 | R4 | Agent | 5 test hỏng có từ trước (`retag_location_symbols.py` ghép đường dẫn, chữ ký `check_l1_dod`, ba kiểm tra hàng đợi ops do wave PARKED 09/11 giữ 6 bài) | Xong 2026-11-16 |
-| R5 | Daemon | Đóng 9.858 yêu cầu phân tích lại của US-054 (`us053-entities-1101-1112`: 9.684, `us053-title-mismatch`: 174); đo bằng `python scripts/maintenance/request_reanalysis.py --status` từ `project/`. Sau khi xong, chạy lại `buzz` và `themes` để kiểm tra nền chế độ thực thể | Đang chạy từ 2026-11-17 |
+| R5 | Daemon | Đóng 9.858 yêu cầu phân tích lại của US-054 (`us053-entities-1101-1112`: 9.684, `us053-title-mismatch`: 174); đo bằng `python scripts/maintenance/request_reanalysis.py --status` từ `project/`. Sau khi xong, chạy lại `buzz` và `themes` để kiểm tra nền chế độ thực thể | Xong 2026-11-19: 9.684/9.684 và 173/173 (1 yêu cầu có bài gốc đã bị xoá được đóng tay); tỷ lệ bài có thực thể 01–12/11 lên 80–89%, mốc `config/regimes.json` dời về 2026-11-01, `buzz` có 18 ngày nền |
 
 ## A0. RÀ SOÁT END-TO-END 2026-09-17 — mất dữ liệu âm thầm & ngõ cụt trạng thái
 
