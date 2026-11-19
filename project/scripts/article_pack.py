@@ -254,7 +254,10 @@ def load_candidates(conn: sqlite3.Connection, *, date: str | None, limit: int,
                 f"EXISTS (SELECT 1 FROM l1_outputs o WHERE o.article_id = r.article_id "
                 f"AND {ANALYZED_L1} AND o.created_at >= r.requested_at) "
                 f"AND EXISTS (SELECT 1 FROM agent_outputs g WHERE g.article_id = r.article_id "
-                f"AND g.dod_pass = 1 AND g.created_at >= r.requested_at))))"
+                # Unary `+` keeps the planner on the article_id index; on the (dod_pass,
+                # created_at) index each open request scanned every newer output, and the
+                # T4 prepare took 200-600 s on 2026-11-18 (FACT-sqlite-correlated-range-index).
+                f"AND +g.dod_pass = 1 AND +g.created_at >= r.requested_at))))"
             )
         else:
             sql.append(f"  AND NOT {analyzed}")

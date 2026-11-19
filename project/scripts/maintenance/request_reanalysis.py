@@ -95,7 +95,7 @@ def progress(store: ArticleStore, tag: str | None) -> list[dict]:
                 f"EXISTS (SELECT 1 FROM l1_outputs o WHERE o.article_id = r.article_id AND "
                 f"{analyzed_l1_sql('o')} AND o.created_at >= r.requested_at) AND "
                 "EXISTS (SELECT 1 FROM agent_outputs g WHERE g.article_id = r.article_id AND "
-                "g.dod_pass = 1 AND g.created_at >= r.requested_at) THEN 1 ELSE 0 END) "
+                "+g.dod_pass = 1 AND +g.created_at >= r.requested_at) THEN 1 ELSE 0 END) "  # see article_pack
                 "FROM reanalysis_requests r "
                 + ("WHERE r.batch_tag = ? " if tag else "") + "GROUP BY r.batch_tag",
                 (tag,) if tag else ()).fetchall()
