@@ -332,6 +332,14 @@ def reconcile(conn, fetch: Fetch, *, domains: tuple[str, ...] = REFERENCE_DOMAIN
         if not ref and domain == "baodautu.vn":
             # The sitemap returns an error page since 2026-10-23; fall back to the listings,
             # and return to the sitemap by itself once the source fixes it.
+            # Listing pages reach weeks back; dating those URLs from the store avoids detail fetches.
+            for url, day in conn.execute(
+                    "SELECT url, substr(COALESCE(NULLIF(published_at, ''), fetched_at), 1, 10) "
+                    "FROM articles WHERE source_domain = ? AND substr(fetched_at,1,10) >= ?",
+                    (domain, (start - timedelta(days=30)).isoformat())):
+                k = url_key(url)
+                if k:
+                    known_day.setdefault(k, day or "")
             ref = collect_baodautu(start, today, fetch, known_day)
         report[domain] = {}
         for day, items in sorted(ref.items()):

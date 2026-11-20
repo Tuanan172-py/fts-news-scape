@@ -39,7 +39,9 @@ Audit 2026-10-06 và lộ trình Đ1–Đ6 (5 mục P0 chặn mở lại vận h
 - **Đã sửa:** `publish_day` hoàn tất `latest.json` khi manifest ngày đủ mà `latest.json` còn trỏ ngày cũ (test `test_rerun_finishes_latest_after_interrupted_publish`). `latest.json` ngày 2026-11-11 đã ghi tay bằng `_write_latest`.
 - **Còn mở:** chọn cách kiểm tệp Office trên SharePoint: bỏ qua SHA với `.xlsx` sau khi chép, hoặc chỉ so kích thước và tên. Cần người vận hành quyết vì ADR 0020 yêu cầu ghi một lần, không ghi đè.
 
-## CAP-1. Kênh đối soát baodautu.vn hỏng phía nguồn, 2026-11-17
+## CAP-1. Kênh đối soát baodautu.vn hỏng phía nguồn, 2026-11-17 — ĐÓNG 2026-11-20
+
+- **Đóng 2026-11-20:** đối soát production chạy qua listing (tham chiếu 107 bài/3 ngày, thiếu 0); `paused` đã gỡ khỏi `project/config/ops.yaml`, probe `capture_channels` báo 7 kênh hoạt động.
 
 - **Hiện tượng:** probe `capture_channels` đỏ từ 2026-11-11 với thông báo "đối soát baodautu.vn không có dữ liệu (lần cuối 23/10 17:19)".
 - **Nguyên nhân (đo 2026-11-17):** `https://baodautu.vn/sitemap.xml` vẫn liệt kê `sitemaps/news-YYYY-M.xml`, nhưng mọi tệp tháng trả HTTP 200 với chuỗi `Not found act function sitemap_month`. Không tìm thấy sitemap bài viết thay thế, `robots.txt` chỉ trỏ tới index.

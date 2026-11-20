@@ -84,8 +84,8 @@ probes:
     z_threshold: -2.5
     hours: [8, 17]
   capture_channels:
-    paused:                      # nguồn tự làm hỏng kênh đối soát; gỡ khi probe báo đối soát lại được (OPEN-ITEMS CAP-1)
-      baodautu.vn: "sitemap tháng trả 'Not found act function sitemap_month' từ 23/10/2026 (mọi tháng, kiểm lại 20/11); listing không có ngày đăng nên không thay được kênh đối soát; vẫn cào qua listing"
+    paused: {}                   # nguồn tự làm hỏng kênh đối soát; gỡ khi probe báo đối soát lại được (OPEN-ITEMS CAP-1)
+      # baodautu.vn gỡ 2026-11-20: đối soát qua listing chuyên mục khi sitemap tháng hỏng (reconcile.collect_baodautu)
 
 alerts:
   dedup_minutes: 30
