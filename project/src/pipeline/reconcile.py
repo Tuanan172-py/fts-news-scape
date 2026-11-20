@@ -328,8 +328,11 @@ def reconcile(conn, fetch: Fetch, *, domains: tuple[str, ...] = REFERENCE_DOMAIN
     now = datetime.now(VN_TZ).isoformat(timespec="seconds")
     report: dict[str, dict[str, dict]] = {}
     for domain in domains:
-        ref = (collect_baodautu(start, today, fetch, known_day) if domain == "baodautu.vn"
-               else collect_reference(domain, start, today, fetch, today))
+        ref = collect_reference(domain, start, today, fetch, today)
+        if not ref and domain == "baodautu.vn":
+            # The sitemap returns an error page since 2026-10-23; fall back to the listings,
+            # and return to the sitemap by itself once the source fixes it.
+            ref = collect_baodautu(start, today, fetch, known_day)
         report[domain] = {}
         for day, items in sorted(ref.items()):
             missing = {k: u for k, u in items.items() if k not in have}
