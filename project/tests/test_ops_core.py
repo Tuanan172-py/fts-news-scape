@@ -450,6 +450,37 @@ def test_probe_coverage_ignores_snapshot_gap_once_backfill_captured(tmp_path):
     assert not bad.ok and "a.vn thiếu 3%" in bad.message
 
 
+def test_probe_coverage_gives_the_backfill_a_grace_period(tmp_path):
+    import sqlite3
+    from datetime import timedelta
+
+    from src.ops.probes import probe_coverage
+    from src.ops.store import now_vn
+
+    db = tmp_path / "m.db"
+    conn = sqlite3.connect(db)
+    conn.executescript("""
+        CREATE TABLE capture_coverage(day TEXT, source_domain TEXT, ref_n INT, in_db_n INT,
+            missing_n INT, backfilled_n INT, checked_at TEXT);
+        CREATE TABLE discovered_urls(url_canonical TEXT, source_domain TEXT, state TEXT,
+            first_seen_at TEXT, last_seen_at TEXT);""")
+    now = now_vn()
+    conn.execute("INSERT INTO capture_coverage VALUES (?,?,?,?,?,0,'x')",
+                 (now.date().isoformat(), "a.vn", 100, 95, 5))
+    fresh = (now - timedelta(minutes=5)).isoformat(timespec="seconds")
+    conn.executemany("INSERT INTO discovered_urls VALUES (?,?,?,?,?)",
+                     [(f"k{i}", "a.vn", "discovered", fresh, fresh) for i in range(5)])
+    conn.commit()
+    conn.close()
+    assert probe_coverage(db).ok                      # found 5 minutes ago: backfill pending
+    old = (now - timedelta(minutes=45)).isoformat(timespec="seconds")
+    conn = sqlite3.connect(db)
+    conn.execute("UPDATE discovered_urls SET first_seen_at = ?", (old,))
+    conn.commit()
+    conn.close()
+    assert not probe_coverage(db).ok                  # still missing after the grace period
+
+
 def test_probe_coverage_flags_gap_and_passes_when_complete(tmp_path):
     import sqlite3
 

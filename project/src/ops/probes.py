@@ -123,13 +123,16 @@ def probe_dead_letter(db_path: Path, store: OpsStore, delta_alert: int) -> Probe
                        f"Xem: pipeline_radar.py status.")
 
 
-def probe_coverage(db_path: Path, red_pct: float = 2.0, days: int = 2) -> ProbeResult:
+def probe_coverage(db_path: Path, red_pct: float = 2.0, days: int = 2,
+                   grace_minutes: float = 30.0) -> ProbeResult:
     """Measure capture coverage against the sitemap (rule 10: missing more than 2% in one day is red).
 
     Args:
         db_path: Path of `monocle.db`.
         red_pct: Threshold percentage of missing articles.
         days: Number of most recent days to examine.
+        grace_minutes: A URL found by reconcile counts as missing only after the backfill
+            had this long to capture it.
 
     Returns:
         The ProbeResult; unhealthy when a (day, source) pair exceeds the missing threshold.
@@ -149,11 +152,17 @@ def probe_coverage(db_path: Path, red_pct: float = 2.0, days: int = 2) -> ProbeR
             cols = {r[1] for r in conn.execute("PRAGMA table_info(discovered_urls)")}
             still: dict[str, int] | None = None
             if "last_seen_at" in cols:
+                from datetime import timedelta
+
+                from src.ops.store import now_vn
+                cutoff = (now_vn() - timedelta(minutes=grace_minutes)).isoformat(timespec="seconds")
+                aged = "AND first_seen_at <= ? " if "first_seen_at" in cols else ""
                 still = dict(conn.execute(
                     "SELECT source_domain, COUNT(*) FROM discovered_urls "
                     "WHERE state IN ('discovered', 'dead_letter') "
-                    "AND substr(last_seen_at, 1, 10) >= date('now', ?, 'localtime') "
-                    "GROUP BY source_domain", (f"-{days - 1} days",)).fetchall())
+                    "AND substr(last_seen_at, 1, 10) >= date('now', ?, 'localtime') " + aged
+                    + "GROUP BY source_domain",
+                    (f"-{days - 1} days",) + ((cutoff,) if aged else ())).fetchall())
         finally:
             conn.close()
     except sqlite3.Error:
