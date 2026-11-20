@@ -143,10 +143,23 @@ def probe_coverage(db_path: Path, red_pct: float = 2.0, days: int = 2) -> ProbeR
                 (f"-{days - 1} days",)).fetchall()
             pending = conn.execute("SELECT COUNT(*) FROM discovered_urls "
                                    "WHERE state = 'discovered'").fetchone()[0]
+            # `missing_n` is a snapshot taken when reconcile ran: it counts articles published
+            # minutes earlier that the backfill captures right after. Only URLs of the window
+            # that are still not captured count as a gap, so normal crawl lag stays green.
+            cols = {r[1] for r in conn.execute("PRAGMA table_info(discovered_urls)")}
+            still: dict[str, int] | None = None
+            if "last_seen_at" in cols:
+                still = dict(conn.execute(
+                    "SELECT source_domain, COUNT(*) FROM discovered_urls "
+                    "WHERE state IN ('discovered', 'dead_letter') "
+                    "AND substr(last_seen_at, 1, 10) >= date('now', ?, 'localtime') "
+                    "GROUP BY source_domain", (f"-{days - 1} days",)).fetchall())
         finally:
             conn.close()
     except sqlite3.Error:
         return ProbeResult("coverage", True, "info", "Chưa có bảng độ phủ thu thập.")
+    if still is not None:
+        rows = [(d, r, min(m or 0, still.get(d, 0))) for d, r, m in rows]
     bad = [(d, 100.0 * m / r) for d, r, m in rows if r and 100.0 * m / r > red_pct]
     if not bad:
         return ProbeResult("coverage", True, "warn", f"Độ phủ đạt, {pending:,} URL chờ cào bù.")

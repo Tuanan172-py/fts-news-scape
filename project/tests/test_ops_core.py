@@ -419,6 +419,37 @@ def test_path_like_command_is_rejected_and_not_audited_as_command(env):
     assert store.get_state("paused") != "1"
 
 
+def test_probe_coverage_ignores_snapshot_gap_once_backfill_captured(tmp_path):
+    import sqlite3
+
+    from src.ops.probes import probe_coverage
+    from src.ops.store import now_vn
+
+    db = tmp_path / "m.db"
+    conn = sqlite3.connect(db)
+    conn.executescript("""
+        CREATE TABLE capture_coverage(day TEXT, source_domain TEXT, ref_n INT, in_db_n INT,
+            missing_n INT, backfilled_n INT, checked_at TEXT);
+        CREATE TABLE discovered_urls(url_canonical TEXT, source_domain TEXT, state TEXT,
+            last_seen_at TEXT);""")
+    now = now_vn()
+    today = now.date().isoformat()
+    conn.execute("INSERT INTO capture_coverage VALUES (?,?,?,?,?,0,'x')", (today, "a.vn", 100, 90, 10))
+    # Reconcile saw 10 URLs missing; the backfill has since captured 9 of them.
+    conn.executemany("INSERT INTO discovered_urls VALUES (?,?,?,?)",
+                     [(f"k{i}", "a.vn", "captured" if i else "discovered", now.isoformat())
+                      for i in range(10)])
+    conn.commit()
+    conn.close()
+    assert probe_coverage(db).ok
+    conn = sqlite3.connect(db)
+    conn.execute("UPDATE discovered_urls SET state = 'dead_letter' WHERE url_canonical IN ('k1','k2')")
+    conn.commit()
+    conn.close()
+    bad = probe_coverage(db)
+    assert not bad.ok and "a.vn thiếu 3%" in bad.message
+
+
 def test_probe_coverage_flags_gap_and_passes_when_complete(tmp_path):
     import sqlite3
 
