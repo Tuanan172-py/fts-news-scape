@@ -21,6 +21,8 @@ from src.ops.wave_flow import DirectOps, WaveSpec, WaveSteps, drive_wave
 @pytest.fixture
 def env(tmp_path):
     cfg = load_config()
+    # Preflight checks real free disk space; pin it so the result does not depend on the runner's temp drive.
+    cfg["wave"]["min_free_gb"] = 0
     paths = resolve_paths(tmp_path / "data")
     paths.data_dir.mkdir(parents=True, exist_ok=True)
     return cfg, paths, OpsStore(paths.ops_db, log_dir=paths.log_dir)
