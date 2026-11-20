@@ -32,6 +32,12 @@ REFERENCE_TIMEOUT = {"vietstock.vn": 240}
 # vietnambiz sections, matching the RSS feeds the scraper reads.
 VIETNAMBIZ_SECTIONS = ("chung-khoan", "tai-chinh", "vi-mo", "doanh-nghiep", "nha-dat", "hang-hoa")
 VIETNAMBIZ_MAX_PAGES = 40
+# baodautu: monthly sitemaps return "Not found act function sitemap_month" since 2026-10-23,
+# so its category listings are the reference. Listings carry no date: the day comes from the
+# store for known URLs and from the detail page for the few unknown ones.
+BAODAUTU_MAX_PAGES = 6
+BAODAUTU_MAX_DETAIL = 40
+_BDT_LINK = re.compile(r'href="(?:https://baodautu\.vn)?(/[a-z0-9-]+-d\d+\.html)"')
 _VNB_LINK = re.compile(r'href="(?:https://vietnambiz\.vn)?(/[a-z0-9-]+-\d{12,}\.htm)"')
 _VNB_IMG_DAY = re.compile(r"/images/(\d{4})/(\d{1,2})/(\d{1,2})/")
 _VNB_TIME = re.compile(r'need-get-timeago"\s+title="(\d{4}-\d{2}-\d{2})T')
@@ -231,6 +237,64 @@ def collect_vietnambiz(start: date, end: date, fetch: Fetch,
     return by_day
 
 
+def collect_baodautu(start: date, end: date, fetch: Fetch, known_day: dict[str, str], *,
+                     max_pages: int = BAODAUTU_MAX_PAGES,
+                     max_detail: int = BAODAUTU_MAX_DETAIL) -> dict[str, dict[str, str]]:
+    """Collect baodautu article URLs by day from its category listings.
+
+    Args:
+        start: First day of the range.
+        end: Last day of the range.
+        fetch: Function that downloads text from a URL.
+        known_day: Article key to ISO day for articles already in the store.
+        max_pages: Safety cap on pages per category.
+        max_detail: Cap on detail pages fetched to date unknown URLs in one run.
+
+    Returns:
+        Mapping of ISO day to {article key: URL}.
+    """
+    from src.core.config import load_domain_config
+    from src.scrapers.baodautu import _parse_detail_date
+
+    cfg = load_domain_config("baodautu")
+    cats = (cfg.get("listing") or {}).get("categories") or []
+    scope = (cfg.get("detail") or {}).get("date_scope_selector", "span.post-time")
+    by_day: dict[str, dict[str, str]] = defaultdict(dict)
+    lo, hi = start.isoformat(), end.isoformat()
+    seen: set[str] = set()
+    details = 0
+    for cat in cats:
+        for page in range(1, max_pages + 1):
+            url = (f"https://baodautu.vn/{cat['slug']}-d{cat['id']}/" if page == 1
+                   else f"https://baodautu.vn/{cat['slug']}-d{cat['id']}/p{page}")
+            links = list(dict.fromkeys(_BDT_LINK.findall(fetch(url) or "")))
+            if not links:
+                if page == 1:
+                    logger.warning("[reconcile] baodautu {}: trang 1 không có bài", cat["slug"])
+                break
+            days: list[str] = []
+            for path in links:
+                loc = f"https://baodautu.vn{path}"
+                key = url_key(loc)
+                if not key or key in seen:
+                    continue
+                seen.add(key)
+                day = known_day.get(key, "")
+                if not day and details < max_detail:
+                    details += 1
+                    day = _parse_detail_date(fetch(loc) or "", scope)[:10]
+                if not day:
+                    continue
+                days.append(day)
+                if lo <= day <= hi:
+                    by_day[day].setdefault(key, loc)
+            if days and max(days) < lo:
+                break
+    if details >= max_detail:
+        logger.warning("[reconcile] baodautu: chạm trần {} trang chi tiết", max_detail)
+    return by_day
+
+
 def reconcile(conn, fetch: Fetch, *, domains: tuple[str, ...] = REFERENCE_DOMAINS,
               days: int = 3, today: date | None = None) -> dict[str, dict[str, dict]]:
     """Reconcile the store with sitemaps, record missing URLs in the discovery ledger and update coverage.
@@ -249,11 +313,14 @@ def reconcile(conn, fetch: Fetch, *, domains: tuple[str, ...] = REFERENCE_DOMAIN
     start = today - timedelta(days=days - 1)
     since = (start - timedelta(days=3)).isoformat()
     have: set[str] = set()
-    for (url,) in conn.execute(
-            "SELECT url FROM articles WHERE substr(fetched_at,1,10) >= ?", (since,)):
+    known_day: dict[str, str] = {}
+    for url, day in conn.execute(
+            "SELECT url, substr(COALESCE(NULLIF(published_at, ''), fetched_at), 1, 10) "
+            "FROM articles WHERE substr(fetched_at,1,10) >= ?", (since,)):
         k = url_key(url)
         if k:
             have.add(k)
+            known_day[k] = day or ""
     for (k,) in conn.execute(
             "SELECT url_canonical FROM discovered_urls WHERE state IN ('captured','gone')"):
         have.add(k)
@@ -261,7 +328,8 @@ def reconcile(conn, fetch: Fetch, *, domains: tuple[str, ...] = REFERENCE_DOMAIN
     now = datetime.now(VN_TZ).isoformat(timespec="seconds")
     report: dict[str, dict[str, dict]] = {}
     for domain in domains:
-        ref = collect_reference(domain, start, today, fetch, today)
+        ref = (collect_baodautu(start, today, fetch, known_day) if domain == "baodautu.vn"
+               else collect_reference(domain, start, today, fetch, today))
         report[domain] = {}
         for day, items in sorted(ref.items()):
             missing = {k: u for k, u in items.items() if k not in have}

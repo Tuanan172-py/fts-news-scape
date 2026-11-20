@@ -45,7 +45,8 @@ Audit 2026-10-06 và lộ trình Đ1–Đ6 (5 mục P0 chặn mở lại vận h
 - **Nguyên nhân (đo 2026-11-17):** `https://baodautu.vn/sitemap.xml` vẫn liệt kê `sitemaps/news-YYYY-M.xml`, nhưng mọi tệp tháng trả HTTP 200 với chuỗi `Not found act function sitemap_month`. Không tìm thấy sitemap bài viết thay thế, `robots.txt` chỉ trỏ tới index.
 - **Ảnh hưởng:** chỉ mất lớp đối soát dự phòng; baodautu vẫn được cào qua phân trang listing (lượt 18:29 có 11 bài mới, không lỗi).
 - **Đã xử lý 2026-11-17:** `probes.capture_channels.paused` trong `project/config/ops.yaml` tạm dừng `baodautu.vn` kèm lý do; probe báo tên nguồn tạm dừng thay vì đỏ, đối soát vẫn thử mỗi chu kỳ và probe nhắc gỡ khi nguồn trả bài trở lại.
-- **Kiểm lại 2026-11-20:** mọi sitemap tháng (2025-11 đến 2026-11) vẫn trả chuỗi lỗi. Không thay được bằng listing như vietnambiz vì listing baodautu không có ngày đăng, nên không chia được theo ngày nếu không mở từng bài. Chỉ gỡ `paused` khi nguồn sửa sitemap; probe sẽ nhắc.
+- **Kiểm lại 2026-11-20:** mọi sitemap tháng (2025-11 đến 2026-11) vẫn trả chuỗi lỗi.
+- **Đã thay kênh 2026-11-20:** `reconcile.collect_baodautu` đọc 6 trang đầu mỗi chuyên mục trong `config/domains/baodautu.yaml`. Ngày lấy từ kho với URL đã có, từ `span.post-time` của trang chi tiết với URL lạ (tối đa 40 trang mỗi lượt). Chạy thử: khoảng 46 bài/ngày, khớp số bài trong kho, và tìm ra 8 bài listing có mà kho chưa có. Khi đối soát có dữ liệu trở lại thì gỡ `paused`.
 - **Probe `coverage` (2026-11-20):** chỉ tính URL của cửa sổ vẫn chưa cào được (`discovered`, `dead_letter`), không tính ảnh chụp `missing_n` lúc đối soát; nhờ vậy độ trễ cào vài phút không còn làm probe vàng.
 - **Sự cố liên quan đã đóng:** cào tin đứng từ 15:41 tới 18:28 ngày 2026-11-17 do kết nối dedup kẹt sau lỗi khóa (FACT-sqlite-failed-write-stalls-long-lived-connection). Đã sửa mã, khởi động lại `morninger`, 109 bài được cào bù trong chu kỳ đầu.
 

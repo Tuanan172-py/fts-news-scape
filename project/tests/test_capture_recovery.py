@@ -345,3 +345,34 @@ def test_candidates_use_the_newest_package_of_a_recaptured_article(tmp_path):
     conn.close()
     assert [(r["article_id"], r["package_path"]) for r in rows] == [
         ("cu", "work_packages/d/20261111/cu.json")]
+
+
+def test_collect_baodautu_dates_listing_urls_from_store_then_detail():
+    from datetime import date
+
+    from src.pipeline.reconcile import collect_baodautu
+
+    def art(i):
+        return f'<article><a href="/bai-so-{i}-d{i}.html">Bai {i}</a></article>'
+
+    pages = {
+        "https://baodautu.vn/toan-canh-dau-tu-d2/": art(101) + art(102) + art(103),
+        "https://baodautu.vn/toan-canh-dau-tu-d2/p2": art(690) + art(691),
+        "https://baodautu.vn/bai-so-102-d102.html": '<span class="post-time">19/11/2026 08:30</span>',
+    }
+    fetched = []
+
+    def fetch(url):
+        fetched.append(url)
+        return pages.get(url)
+
+    known = {"baodautu.vn#101": "2026-11-20", "baodautu.vn#103": "2026-11-17",
+             "baodautu.vn#690": "2026-11-10", "baodautu.vn#691": "2026-11-11"}
+    ref = collect_baodautu(date(2026, 11, 18), date(2026, 11, 20), fetch, known)
+    assert set(ref["2026-11-20"]) == {"baodautu.vn#101"}
+    assert ref["2026-11-19"] == {"baodautu.vn#102": "https://baodautu.vn/bai-so-102-d102.html"}
+    assert "2026-11-17" not in ref
+    # Page 2 is wholly older than the window, so paging stops there for this category.
+    assert "https://baodautu.vn/toan-canh-dau-tu-d2/p3" not in fetched
+    # Only the unknown URL needs a detail page.
+    assert [u for u in fetched if u.endswith(".html")] == ["https://baodautu.vn/bai-so-102-d102.html"]
