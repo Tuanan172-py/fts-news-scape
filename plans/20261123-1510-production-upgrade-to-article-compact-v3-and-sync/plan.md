@@ -303,7 +303,10 @@ Acceptance:
 - [ ] Clean publish (operator's step 3 in issue #9), one criterion on FRA - Data/news: every `research.published` event from the restart to the end of 2026-11-25 reports 0 partition errors. The day mixes rows from before and after the restart; the operator accepts it as the evidence.
 - [ ] The FRA - Data/news manifest lists `entities.json` with the SHA-256 from P4.
 
-Evidence: _(operator fills in)_
+Evidence (window opened 2026-11-23 after the 17:50 research slot, under the operator's overlap pacing):
+- Baseline, waves opened 2026-11-16 to 23 (`ops.db`, read-only): 422 DONE, 2 CANCELLED, 16,478 articles; 160 waves (38%) needed `repair1`. Replay baseline for `entities`: see P3.
+- Procedure: `ops_daemon.py send /pause`; wait for no active wave; `git merge --ff-only m1/us057-adr0027` in `C:\src\news-scraper`; `schtasks /End` then `/Run` on `news-scape-ops`; `send /resume`.
+- Rollback recipe: `send /pause`; in `C:\src\news-scraper` revert the code commits `fb365a1 cfb4115 f85eba4 ece8f62` (newest first); run `build_article_prefix.py --sync-preset`; restart the task; mark the days published since the restart dirty (`master.mark_dirty`) so the research publisher rewrites them; `send /resume`.
 
 ## P7 — `agy` cost sample (operator-run)
 
