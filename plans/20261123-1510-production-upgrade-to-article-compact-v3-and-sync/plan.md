@@ -44,6 +44,17 @@ State at audit time (2026-11-23):
 - ADR-0027 is `accepted` (2026-11-15) on `main`; DucNN's comments still say "proposed". The M1 message states the real status.
 - `main` carries the v3 contract and the prefix generator (`build_article_prefix.py --impacts` writes `ARTICLE_SYSTEM_CORE_V3.md`), but no runner wiring, no stamps and no reader flag. The wiring is new work on this side (P5).
 
+Thread history that binds this plan (news-scraper issues):
+
+| Thread | State | What it leaves for this plan |
+|---|---|---|
+| #5 satellite integration, PR #7 handback | Both open | PR #7 (`task/monorepo-satellite-init`) predates the one-way flow (D2) and is superseded by the step-2 sync. Its contract hardening already sits in `main`'s `ingest.py` and `consolidator.py`, so P3 brings it in (P2 class b). |
+| #8 ADR-0027 landed | Open, unanswered | Four asks: check the prefix against the live catalog (P4); publish `entities.json` with its SHA-256 in the manifest; notify dropzone producers; re-consolidate published partitions. P8 answers all four. |
+| #9 ADR-0028 approval | Closed | The operator's own step 3: ADR-0027 is live when one publish day through `publish.py` passes without error (P6). Step 4: v3 is enabled only after the `agy` measurement at real volume and operator approval (P7, P9). The 429 was a spending limit, so P7 spends real money. |
+| #10 step 2 and roadmap | Open | M1 to M3 above; the 5-point `x` spec. |
+
+The live catalog `C:\data\news-scape\entities\entities.json` dates from 2026-11-17. The sandbox copy DucNN rebuilt from dates from 2026-09-14. `publish.py` does not publish the catalog, so fpa-toolkit cannot run the catalog side of `--check-prefix` for M2 without it.
+
 ## Decisions
 
 - D1. Keep ADR-0027: `entities` carries only model-named ids; `CODE_ONLY` stays in `intent_code`. ADR-0031.D4 is amended to match.
@@ -56,6 +67,7 @@ State at audit time (2026-11-23):
 - D8. "Real volume" (ADR-0028 condition 3) means v3 runs on every article of one real production window, not on a sample projected to a day. The v2 arm comes from the live traces of the same articles after P6, so v2 is not rerun.
 - D9. Reader rule from the ADR-0028 approval (agreed 5-point spec, item 5): `lakehouse_client` flags `direction` on non-ticker entities in `x` as `low-confidence`. This is part of M1 (P5). The new gold set stays out of scope.
 - D10. Gate load fits 4.5 days. Two independent reviews: R1 (P1, P3, P4) and R2 (P5). Operator gates: G0, G6 (window), G7 (start of the measurement), G8 ("gửi"), G9.
+- D11. The catalog travels with M1. The M1 message gives the SHA-256 of the live `entities.json` the prefix was built from. Whether `publish.py` also publishes the catalog (issue #8) is an operator decision at G0; publishing it lets M2 run the catalog side of `--check-prefix`.
 
 ## Design
 
@@ -124,7 +136,7 @@ Tasks:
 2. Open stories with `harness_cli.py doc new --type story`: US-A test safety (P1a, P1b), US-B ADR-0027 on production (P2-P4, P6), US-C article-compact-v3 on production (P5, P6b, P7, P9). Write their ids into `story:` above.
 3. Commit this plan on a branch and merge it into `dev/us038`; remove the untracked copy from the production worktree `C:\src\news-scraper` afterwards.
 4. Push `dev/us038` (`3d85247`) to `fpa` and `origin`.
-5. Not gating M1: open the PR `import/clean-20261120` → news-scraper `main` (merge commit, no squash), as promised in issue #10 answer 3.
+5. Not gating M1: settle PR #7 first. It is superseded by the step-2 sync, and its content reaches production through P3. Draft a closing note for PR #7 and issue #5; post after "gửi". Then open the PR `import/clean-20261120` → news-scraper `main` (merge commit, no squash), as promised in issue #10 answer 3.
 
 Done already: the M1 date reply on issue #10 (comment `7095092085`, 2026-11-23).
 
@@ -177,6 +189,13 @@ Tasks:
 4. Classify each extra change. (a) Safe: take it. (b) Changes production behaviour: needs a check in P3 or P6. (c) Imports a module missing on `dev/us038`: needs that module or an operator decision.
 5. Check imports of every copied file resolve on `dev/us038`.
 6. Check that the imported ADR-0027 and ADR-0028 (ids issued in fpa-toolkit; this repo has 0029-0033 but no 0027/0028) pass `harness_cli.py doc lint` and appear in `doc index`, and that `doc new --type adr` still allocates 0034.
+7. Known class (b) items, from the PR #7 hardening carried in `main`'s `ingest.py` and `consolidator.py`:
+   - an unanalysed row gets `sentiment = ""` instead of `"neutral"`, and `gold_status` from the record instead of a `"GOLD"` default;
+   - an empty `article_id` gets a hash fallback instead of collapsing in deduplication;
+   - fragment file names get a timestamp suffix;
+   - DuckDB runs with `TimeZone = 'UTC'`, and `updated_at` is ordered through `TRY_CAST`.
+
+   Each one changes published rows read by the per-user Excel delivery and by Research, so each gets a replay check in P3.
 
 Acceptance:
 - [ ] Inventory table (file, extra commits, class, check needed) added under Evidence.
@@ -197,6 +216,7 @@ Acceptance:
 - [ ] `test_lakehouse_model_entities.py`, `test_ner_entity_db_v2.py`, `test_article_lane_hardening.py`, `test_plugin_lakehouse_client.py` pass.
 - [ ] Replay report attached; no model-named id lost.
 - [ ] `4e93cfe7` check from P2 run on the same replay: partition dates unchanged, or every change explained.
+- [ ] The same replay compares `sentiment`, `gold_status`, `article_id` and the row count per day. Every difference is explained, and the operator accepts the published-output change before P6.
 
 Evidence: _(implementer fills in)_
 
@@ -212,6 +232,7 @@ Tasks:
 Acceptance:
 - [ ] `--check-prefix` green; meta hash matches the `.md`.
 - [ ] The three files committed together in one commit.
+- [ ] SHA-256 and date of the live `entities.json` recorded under Evidence (D11).
 
 Evidence: _(implementer fills in)_
 
@@ -251,6 +272,7 @@ Tasks:
 Acceptance:
 - [ ] Two waves DONE, no new failure class in traces.
 - [ ] Before/after numbers recorded.
+- [ ] One publish day through `publish.py` passes without error after the restart (operator's step 3 in issue #9). The first eligible publish window is 2026-11-25 or the morning of 2026-11-26.
 
 Evidence: _(operator fills in)_
 
@@ -294,10 +316,16 @@ Tasks:
 2. Restore `docs/SESSION-LATEST.md` and the machine-local `.gitignore` lines to their `f1d655c` versions, one commit.
 3. Run `~/.claude/skills/issue-reply-workflow/scripts/overlap.py` against base `f1d655c` and the current fpa-toolkit `main`; expected conflict only `scripts/git_hooks/pre-commit`.
 4. Push to `fpa`. Draft the issue #10 message with the four items DucNN asked for: files changed, tests run and results, files changed on both sides, decisions needed. Attach the P7 report; state that ADR-0027 is `accepted`, that v3 stays off until M3, and that the HSG xfail can be removed.
-5. Post after "gửi".
+5. Draft one reply on issue #8 that closes its four asks:
+   - prefix checked against the live catalog, with the catalog SHA-256 (D11);
+   - catalog publishing, as decided at G0;
+   - the dropzone producers notified (list or "none besides this pipeline");
+   - re-consolidation of history: out of scope here, own story.
+6. Post both messages after "gửi".
 
 Acceptance:
 - [ ] Overlap numbers in the message match the script output.
+- [ ] Issue #8 reply drafted with all four asks answered.
 - [ ] Message reviewed by the operator before posting.
 
 Evidence: _(implementer fills in)_
@@ -344,6 +372,10 @@ Evidence: _(operator fills in)_
 | P7 competes with the daemon for `agy` quota (5 quota/429 events in the 7 days to 2026-11-23) | Throttle, breaker watch, stop rule (safety rule 9) |
 | Low volume after P6 gives a thin v3 set | Projection to the 6,077 peak; cut-off may extend to Thu 26 14:00 |
 | `obt/3` reaches Research readers unannounced | Notice drafted in P5, posted before P6b |
+| Copied `ingest.py`/`consolidator.py` change `sentiment`, `gold_status` and dedup on published rows | P2 class (b) list; P3 replay on those columns; operator accepts before P6 |
+| M2 `--check-prefix` cannot run without the catalog | D11: catalog SHA-256 in the M1 message; publishing decision at G0 |
+| The P7 v3 run spends real money (the earlier 429 was a spending limit) | Bounded to one window of articles; spend reported with the cost figures |
+| PR #7 merged by mistake on news-scraper `main` | P0 closes it as superseded before the `import/clean` PR opens |
 | Laptop sleep or update during P6, P6b, P7, P9 | Disable sleep and defer updates for the window |
 | Numbers measured on the laptop differ after the server move | Report names the host; rerun a small A/B after the move |
 
@@ -353,3 +385,6 @@ Evidence: _(operator fills in)_
 2. Confirm the windows: P6 Wed 25 13:00-15:00, P6b Thu 26 13:00-14:00, P7 Thu 26 14:00 - Fri 27 10:00.
 3. Who posts the Research notice for `obt/3`, and to which channel.
 4. P2 class (c) items: decide per item when the inventory is ready (by Tue 24 12:00).
+5. Catalog publishing (issue #8, D11): should `publish.py` also publish `entities.json` with its SHA-256 in the manifest, in M1 or later?
+6. PR #7 and issue #5: close both as superseded by the step-2 sync?
+7. Dropzone producers (issue #8): is this pipeline the only producer, or were others (for example `dev_id antigravity`) notified?
