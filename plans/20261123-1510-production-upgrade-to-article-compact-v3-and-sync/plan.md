@@ -53,13 +53,13 @@ The project runs directly on FRA - Data/news (operator, 2026-11-23); the sandbox
 | **Research lakehouse (ADR-0030)** | `src/research_db/production.py`, five slots a day plus express, about every 30 min | `NEWS_SCAPE_RESEARCH_DB_DIR` (FRA - Data/news) | **The live target.** Users read it through skills. |
 | Sandbox lakehouse | `scripts/publish.py` through `src/lakehouse/ingest.py` and `consolidator.py`, daily at 01:00 | `NEWS_SCAPE_PUBLISH_DIR` (sandbox) | Legacy. Unchanged in M1; its code is copied for sync parity and covered by tests only. |
 
-The research path builds `entities` straight from `article_entities` and never calls `sanitize_article_record`. Copying `ingest.py` and `consolidator.py` from `main` therefore does not apply ADR-0027 to FRA - Data/news; P3 adds it there.
+Correction found in P3 (2026-11-23): the research path builds its records in `day_records`, then `records_to_parquet_bytes` passes every record through `sanitize_article_record` (`ingest.py:297`). Copying `ingest.py` from `main` therefore applies ADR-0027 to FRA - Data/news without a further change. The planning-time claim that the research path bypasses `ingest` was wrong.
 
 FRA - Data/news is the lakehouse that keeps updating, and users read it through skills. No distribution feature is needed in this phase.
 
 ## Decisions
 
-- D1. Keep ADR-0027: `entities` carries only model-named ids; `CODE_ONLY` stays in `intent_code`. It applies to FRA - Data/news (P3 task 2) and, through the copied files, to the sandbox path. ADR-0031.D4 is amended to match.
+- D1. Keep ADR-0027: `entities` carries only model-named ids; `CODE_ONLY` stays in `intent_code`. Through the copied `ingest.py`, it applies to both FRA - Data/news and the sandbox path. ADR-0031.D4 is amended to match.
 - D2. One-way flow: `dev/us038` → `import/clean-<date>` → news-scraper `main`. Never merge fpa-toolkit `main` or news-scraper `main` back into `dev/us038`. For M1 only, `import/clean-20261127` is the `dev/us038` head plus a merge of the P5 branch. P5 reaches `dev/us038` at M3 by a merge of that same branch, never by cherry-pick or rebase. Every later fix to P5 is committed on the P5 branch, so the next sync sees each change once.
 - D3. Port by whole-file copy from `main`. Every other `main` change a copied file brings is listed and checked (P2).
 - D4. `x` is stored as a nullable JSON string. Four new columns go last in `LAKEHOUSE_ARTICLE_SCHEMA`: `x`, `contract_version`, `rubric_version`, `prompt_hash`. `processed_at`, `runner` and `model` reuse `analyzed_at`, `agent_provider` and `model_used`. `OBT_SCHEMA` moves `obt/2` → `obt/3`; old partitions read NULL.
@@ -68,7 +68,7 @@ FRA - Data/news is the lakehouse that keeps updating, and users read it through 
 - D7. P7 measures v3 on a stratified sample of about 400 real articles, at the live wave size and concurrency. The report states N and projects to a day. The first live waves at M3 confirm the figures at full volume.
 - D8. Reviews R1 and R2 run on `agy` with `gemini-4-hydrogen-high`, a different family from the implementer (Claude), as in the v3 rubric evaluation. The `agy` quota allows only `gemini-4-hydrogen` and `gemini-3.8-flash` in this plan.
 - D9. The live catalog is published in M1 to FRA - Data/news. The research publisher copies `entities.json` next to the partitions and records its path, size and SHA-256 in `_manifest/latest.json` (issue #8, operator 2026-11-23).
-- D10. P3 replay thresholds, on the FRA - Data/news output: P6 is blocked only by a lost row or a lost model-named entity. Any other difference is recorded with its cause. The PR #7 changes in the copied files touch the legacy sandbox path; they are recorded, not replayed.
+- D10. P3 replay thresholds, on the FRA - Data/news output: P6 is blocked only by a lost row or a lost model-named entity. Any other difference is recorded with its cause. The PR #7 changes in `ingest.py` also reach the research path, so the replay measures them.
 
 ## Design
 
@@ -128,6 +128,8 @@ Reviews copy the method of the v3 rubric evaluation (fpa-toolkit `eval-u12-rubri
 | P7 | `agy` cost sample | high-risk | 1 d | P6, R2 | Thu 26 14:00 - Fri 27 10:00 | Cost report |
 | P8 | M1 package and SHA | normal | 0.5 d | P1-P7 | Fri 27 | SHA posted by 17:00 |
 
+Pacing (operator, 2026-11-23): phases overlap. Each phase starts as soon as its dependencies pass; the windows and due times are latest-by deadlines, not start times. Flush windows still apply to daemon stops.
+
 Parallel lanes: P1b, P3 and P4 run in one worktree lane (they feed R1). P5 runs in its own worktree from Tuesday morning and is the critical path.
 
 ---
@@ -151,10 +153,10 @@ Tasks:
 2. Commit straight on `dev/us038` before any other phase branch is cut.
 
 Acceptance:
-- [ ] `grep -rn "audit_and_truncate_wal" project/tests` shows only `tmp_path` targets.
-- [ ] The rewritten test passes, run alone.
+- [x] `grep -rn "audit_and_truncate_wal" project/tests` shows only `tmp_path` targets.
+- [x] The rewritten test passes, run alone.
 
-Evidence: _(implementer fills in)_
+Evidence: commit `1ff2dc5` on `dev/us038` (pushed with P0 later). The grep missed one more live write, the `audit_m4_m5_integrity.py` CLI run by a challenger test; P1b fixes it.
 
 ## P1b — Test safety, rest (US-A)
 
@@ -167,12 +169,15 @@ Tasks:
 6. Optional, only if Tuesday has time: extend the conftest guard to subprocesses through a `sitecustomize.py` on the `PYTHONPATH` that conftest sets.
 
 Acceptance:
-- [ ] In the five challenger files, every `sqlite3.connect` on a live path uses `mode=ro`, and no `OpsStore(` runs on a live path (`grep`).
+- [x] In the five challenger files, every `sqlite3.connect` on a live path uses `mode=ro`, and no `OpsStore(` runs on a live path (`grep`).
 - [ ] Full suite passes; result recorded in `docs/TEST_MATRIX.md`.
-- [ ] `grep -rn "Users\\\\anpt" project/` returns nothing.
-- [ ] With `NEWS_SCAPE_PRODUCTION_HOST` unset, the five challenger files skip their live tests.
+- [x] No personal path remains in code, tests or config under `project/`. Two how-to documents and the reference folder `thamkhao/` still name the operator's machine paths; they are documentation, not code.
+- [x] With `NEWS_SCAPE_PRODUCTION_HOST` unset, the five challenger files skip their live tests (21 skipped, 60 passed on the touched files).
 
-Evidence: _(implementer fills in)_
+Evidence: commits `cdc60ad` (cherry-pick of `86b1e1a`) and `8753312` on `m1/us056-test-safety`.
+- Three more live writers fixed: the `audit_m4_m5_integrity.py` CLI gains `--read-only`; `verify_ops_queue.py` and the reservation test query `ops.db` read-only instead of building an `OpsStore`; the snapshot check reads an existing snapshot only.
+- With `NEWS_SCAPE_PRODUCTION_HOST=1` the two `m3_m5` live tests pass on this host; the live WAL was not truncated.
+- The marker lives in `conftest.py` (no `pytest.ini` exists). The optional subprocess guard (task 6) was not built.
 
 ## P2 — Port inventory
 
@@ -186,32 +191,61 @@ Tasks:
    - The merged `project/assets/prefix/ARTICLE_SYSTEM_CORE.md`.
 3. For each file, list every commit in `f1d655c..origin/main` besides `9229581f` and `01e117c2`. Known: `4e93cfe7` (naive timestamps as UTC), `4e216b47`, `06c05682`, `454c162d`, `90f4a403`.
 4. Classify each extra change. (a) Safe: take it. (b) Changes production behaviour: needs a check in P3. (c) Imports a module missing on `dev/us038`: needs that module or an operator decision.
-5. Known class (b), from the PR #7 hardening in `main`'s `ingest.py` and `consolidator.py`: `sentiment = ""` and no `"GOLD"` default for unanalysed rows; a hash fallback for an empty `article_id`; a timestamp suffix on fragment files; DuckDB in `TimeZone = 'UTC'` with `TRY_CAST` ordering. They touch the legacy sandbox path. Check whether the research path depends on any of them: it imports `LAKEHOUSE_ARTICLE_SCHEMA` and `published_precision` from `ingest.py`.
+5. Known class (b), from the PR #7 hardening in `main`'s `ingest.py` and `consolidator.py`: `sentiment = ""` and no `"GOLD"` default for unanalysed rows; a hash fallback for an empty `article_id`; a timestamp suffix on fragment files; DuckDB in `TimeZone = 'UTC'` with `TRY_CAST` ordering. The `ingest.py` items reach the research path through `records_to_parquet_bytes`; the P3 replay measures them. The `consolidator.py` items touch only the sandbox path.
 6. Check imports of every copied file resolve on `dev/us038`. Check that ADR-0027 and ADR-0028 pass `doc lint`, appear in `doc index`, and that `doc new --type adr` still allocates 0034.
 7. Decide where P3 and P4 copy and where P5 copies: `article_contract.py`, `build_article_prefix.py` and `lakehouse_client.py` belong to P5 (v3 branch) unless a P3/P4 change needs them; record the split.
 
 Acceptance:
-- [ ] Inventory table (file, extra commits, class, check, phase) under Evidence.
-- [ ] Class (c) items handled as approved at G0: sent to the operator in one message by Tue 24 12:00. Until decided, that file is not copied and its phase continues without it.
+- [x] Inventory table (file, extra commits, class, check, phase) under Evidence.
+- [x] Class (c) items handled as approved at G0: none found, so no operator message is needed.
 
-Evidence: _(implementer fills in)_
+Evidence (2026-11-23, fpa-toolkit `main` `7c582c80`; `packages/news` unchanged since `26abbd8d`):
+
+| File | Extra commits besides `9229581f`/`01e117c2` | Class | Check | Phase |
+|---|---|---|---|---|
+| `project/src/lakehouse/ingest.py` | `90f4a403` (PR #7: `sentiment ""`, `gold_status RAW`, `article_id` hash, fragment suffix) | b, both outputs | Research records pass through `sanitize_article_record`; measured by the P3 replay | P3 |
+| `project/src/lakehouse/consolidator.py` | `90f4a403`, `4e93cfe7` (UTC) | b, sandbox only | Not used by the research path; covered by its tests | P3 |
+| `docs/decisions/0027-*.md` | `a4b48bc9`, `4c8b7422` (accepted) | a | `doc lint` | P3 |
+| `project/tests/test_lakehouse_model_entities.py` | none | a | runs in P3 | P3 |
+| `project/scripts/build_article_prefix.py` | `454c162d` (sector rule and few-shot), merge resolutions | b, live prompt | v2 prompt gains the sector rule; prefix rebuilt and checked in P4. Drops production's trailing newline on the meta file (whitespace) | **P4** (needed for the v2 prefix) |
+| `project/src/agent/article_contract.py` | `4e216b47`, `06c05682` (misassignment checks) | b, live validation | Lands with P5; live only at M3 | P5 |
+| `project/src/agent/impact_contract.py`, `project/scripts/impact_labels.py` | none | a | v3 tests | P5 |
+| `plugins/fpts-market-intel/tools/lakehouse_client.py`, `project/tests/test_plugin_lakehouse_client.py` | merge resolutions (`table` parameter) | a | plugin tests | P5 |
+| `docs/decisions/0028-*.md` | ADR text commits only | a | `doc lint` | P5 |
+| `project/tests/test_impact_contract.py`, `test_impact_labels.py` | none | a | run in P5 | P5 |
+| `project/assets/prefix/ARTICLE_SYSTEM_CORE.md` | `078c1174` (regenerated on the sandbox catalog) | — | Not copied: P4 regenerates it from the live catalog | P4 |
+
+Every `src`, `scripts` and `tools` import of the copied files resolves on `dev/us038`. No class (c) item.
 
 ## P3 — ADR-0027 on FRA - Data/news (US-B)
 
 Tasks:
 1. Copy the ADR-0027 set per P2, one commit.
-2. Apply `keep_model_entities` to the `entities` list in `src/research_db/production.py` `day_records`, using the row's `intent_llm` and `intent_code`. Add a test on a fixture day.
+2. Not needed: the research path already calls `keep_model_entities` through `records_to_parquet_bytes`. The HSG test in task 3 publishes through `production.publish` and proves it.
 3. Change `test_master_db_migration_candidates_log_and_user_routing` (`project/tests/test_ner_entity_db_v2.py:259`): HSG is readable through `intent_code`; `include_mentions=True` does not return HSG. No xfail.
 4. Amend ADR-0031.D4: `include_mentions` widens only to model-named `role = 'mentioned'` ids and never returns `CODE_ONLY` ids; cite ADR-0027.
 5. Replay on a copy: the latest week of analysed records in a temp `MONOCLE_DATA_DIR`. Run the research publisher with old and new code into a temp `NEWS_SCAPE_RESEARCH_DB_DIR` and compare.
 
 Acceptance:
-- [ ] `test_lakehouse_model_entities.py`, `test_ner_entity_db_v2.py`, `test_article_lane_hardening.py`, the new research_db test pass.
-- [ ] Replay report on the research output: rows per day, articles whose `entities` changed, `CODE_ONLY` ids removed, 10 hand-checked articles.
-- [ ] D10 holds: no lost row and no lost model-named id; other differences listed with their cause.
-- [ ] The PR #7 changes to the sandbox path (P2 task 5) listed under Evidence, with the tests that cover them.
+- [x] `test_lakehouse_model_entities.py`, `test_ner_entity_db_v2.py`, `test_article_lane_hardening.py`, `test_research_production.py` pass (72 tests with the lakehouse files).
+- [x] Replay report on the research output: rows per day, articles whose `entities` changed, `CODE_ONLY` ids removed, 10 hand-checked articles.
+- [x] D10 holds: no lost row and no lost model-named id; no other field changed.
+- [x] The PR #7 changes listed under Evidence, with the tests that cover them.
 
-Evidence: _(implementer fills in)_
+Evidence: commits `ece8f62` (whole-file copy) and `f85eba4` (HSG test, ADR-0034) on `m1/us057-adr0027`.
+- ADR-0031 is accepted, so its body is frozen (K-R8). The D4 amendment is ADR-0034 (`amends: [ADR-0031]`), approved by the operator's commitment on issue #10.
+- Replay: the live research master (read-only), days 2026-11-17 to 23, the same records through `sanitize_article_record` at `8753312` and at `ece8f62`.
+
+| Measure | Value |
+|---|---|
+| Rows | 4,665 in, 4,665 out |
+| Articles whose `entities` changed | 4,368 (94%) |
+| Ids removed | 27,960, every one `CODE_ONLY` with role `mentioned` |
+| Model-named ids lost | 0 |
+| `sentiment`, `gold_status`, `article_id`, other fields changed | 0 |
+
+- Hand check of 10 articles: removed ids are mostly matcher noise (`TICKER:MA1`, `TICKER:BAX`, `TICKER:HAN` on a housing story, sectors matched by keyword). A few plausible ids also go, such as `MACRO_GEO:DONG_NAM_A` on an ASEAN story; they stay in `intent_code`, the recall cost ADR-0027 accepts.
+- PR #7 items: `day_records` always sets `sentiment`, `gold_status` and `article_id`, so the new defaults never fire on research rows. Covered by `test_lakehouse_contract_fixes.py`, copied from `main` in `ece8f62`.
 
 ## P4 — Prefix files and catalog publish (US-B)
 
@@ -224,11 +258,14 @@ Tasks:
 4. Catalog publish (D9): the research publisher (`src/research_db/production.py`) copies `entities.json` to the FRA - Data/news target and adds its path, size and SHA-256 to `_manifest/latest.json`. The copy is skipped when the SHA-256 is unchanged. Test it on a temp target.
 
 Acceptance:
-- [ ] `--check-prefix` green; meta hash matches the `.md`; the three prefix files in one commit.
-- [ ] SHA-256 and date of the live `entities.json` recorded under Evidence.
-- [ ] A publish to a temp target lists `entities.json` with the same SHA-256.
+- [x] `--check-prefix` green; meta hash matches the `.md`; the three prefix files in one commit.
+- [x] SHA-256 and date of the live `entities.json` recorded under Evidence.
+- [x] A publish to a temp target lists `entities.json` with the same SHA-256.
 
-Evidence: _(implementer fills in)_
+Evidence: commits `cfb4115` (prefix) and `fb365a1` (catalog publish) on `m1/us057-adr0027`.
+- Live catalog: `entities.json` modified 2026-11-17 15:03, SHA-256 `485b4650a79fe7193363d46656b2ada9cf6dcbf6f4e89f82f1e5f9b9e1ffe81e`.
+- New prefix hash `80c6edfe7891330b`, 20,972 characters. Its committed blob equals `main`'s `ARTICLE_SYSTEM_CORE.md` (`c54fd690`), so M2 needs only the new `.meta.json`.
+- The catalog goes to `_catalog/entities.json` on FRA - Data/news; the manifest gains a `catalog` block. Tests: two new cases in `test_research_production.py` (16 pass).
 
 ## P5 — v3 code, `x` columns, flag (US-C)
 
@@ -297,7 +334,7 @@ Tasks:
 4. Push to `fpa`. Draft one message on issue #10 with:
    - the four items DucNN asked for: files changed, tests run and results, files changed on both sides, decisions needed;
    - the P7 report; v3 stays off until M3; the HSG xfail can be removed; ADR-0027 is `accepted`;
-   - ADR-0027 coverage: the `keep_model_entities` calls in `ingest.py` and `consolidator.py` do not reach FRA - Data/news, because `research_db/production.py` builds `entities` without `ingest`. P3 adds the call there, which is why `production.py` changes in this sync;
+   - ADR-0027 coverage: the research path reaches `keep_model_entities` through `records_to_parquet_bytes`, so `main`'s code applies to FRA - Data/news unchanged. `production.py` changes in this sync only for the catalog publish (D9);
    - one line each on side threads. Issue #8: catalog published to FRA - Data/news with its SHA-256; no external dropzone producer, since `dev_id` is the analysis runner name. PR #7 and issue #5: content now in production through P3, so both can close.
 5. Post after "gửi".
 
@@ -338,7 +375,7 @@ Evidence: _(implementer fills in)_
 | No buffer: any slip moves M1 | Split checkpoint Thu 26 12:00 (D6); issue table updated the same day |
 | P5 wiring larger than estimated | Exact touch list; starts Tue morning in its own worktree; R2 scoped to that list |
 | A test writes live data from a subprocess | P1a first; P1b removes the known live writers and checks the rest by `grep`; subprocess guard optional |
-| ADR-0027 copied but FRA - Data/news unchanged | P3 task 2 on `research_db/production.py`; replay on both outputs |
+| ADR-0027 removes more than expected on FRA - Data/news | P3 replay on the research records: only `CODE_ONLY` ids removed |
 | Copied files change published rows (`sentiment`, `gold_status`, dedup) | P2 class (b); P3 replay; D10 thresholds |
 | P7 competes with the daemon for `agy` quota and spends money | N ≈ 400; breaker watch and stop rule; spend in the report |
 | A sample is challenged as not "real volume" | D7: live sizing and concurrency, projection to the peak, live confirmation at M3 |
