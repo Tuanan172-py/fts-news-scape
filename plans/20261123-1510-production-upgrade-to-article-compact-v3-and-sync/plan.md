@@ -9,7 +9,7 @@ updated: 2026-11-23
 lang: en
 authors: [agent]
 adr: [ADR-0030, ADR-0031, ADR-0033]
-story: []
+story: [US-056, US-057, US-058]
 evidence:
   - "url: https://github.com/Research-FPA/news-scraper/issues/10#issuecomment-7090987629 (roadmap M0-M3)"
   - "url: https://github.com/Research-FPA/news-scraper/issues/10#issuecomment-7095092085 (AnPT commits M1 to 2026-11-27, agrees to the 5-point x spec)"
@@ -136,7 +136,7 @@ Parallel lanes: P1b, P3 and P4 run in one worktree lane (they feed R1). P5 runs 
 
 Tasks:
 1. Done 2026-11-23: operator approved (G0 PASS).
-2. Open stories with `harness_cli.py doc new --type story`: US-A test safety (P1a, P1b), US-B ADR-0027 and catalog on production (P2-P4, P6), US-C article-compact-v3 code and cost (P5, P7). Write their ids into `story:` above.
+2. Done 2026-11-23, stories opened: US-056 test safety (P1a, P1b), US-057 ADR-0027 and catalog on FRA - Data/news (P2-P4, P6), US-058 article-compact-v3 code and cost (P5, P7).
 3. Merge this plan into `dev/us038`; remove the untracked copy from `C:\src\news-scraper` afterwards.
 4. Push `dev/us038` to `fpa` and `origin`.
 
