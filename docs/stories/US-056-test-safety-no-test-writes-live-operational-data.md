@@ -2,7 +2,8 @@
 id: US-056
 type: story
 title: Test safety, no test writes live operational data
-status: planned
+status: in_progress
+branch: m1/us056-test-safety
 lane: high-risk
 created: 2026-11-23
 updated: 2026-11-23

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+import sqlite3
 import subprocess
 import sys
 from pathlib import Path
@@ -104,32 +105,29 @@ def test_wave_status_marked_done_in_ops_db() -> None:
     assert f"WAVE_DONE_OK {TARGET_WAVE} DONE 498 0" in proc.stdout
 
 
-def test_monocle_db_integrity_and_journal_mode() -> None:
-    """Verify PRAGMA integrity_check and journal mode on monocle.db via audit_and_truncate_wal."""
-    code = (
-        "from src.core.stdio import force_utf8_stdio; force_utf8_stdio()\n"
-        "from pathlib import Path\n"
-        "from scripts.maintenance.audit_m4_m5_integrity import audit_and_truncate_wal\n"
-        "db = Path(r'C:\\data\\news-scape\\monocle.db')\n"
-        "assert db.exists(), 'monocle.db not found'\n"
-        "res = audit_and_truncate_wal(db)\n"
-        "assert res['integrity_check'] == 'ok', f'Integrity check failed: {res[\"integrity_check\"]}'\n"
-        "assert res['checkpoint']['busy'] == 0, f'Checkpoint busy: {res[\"checkpoint\"][\"busy\"]}'\n"
-        "assert res['clean_wal_truncated'] is True, f'Expected clean WAL truncation: {res}'\n"
-        "print('MONOCLE_INTEGRITY_OK', res['integrity_check'], res['wal_size_bytes'])\n"
-    )
-    proc = subprocess.run(
-        [sys.executable, "-c", code],
-        cwd=str(PROJECT_ROOT),
-        env=clean_ops_env(),
-        capture_output=True,
-        text=True,
-        timeout=90,
-        encoding="utf-8",
-        errors="replace",
-    )
-    assert proc.returncode == 0, f"Query failed:\n{proc.stderr}"
-    assert "MONOCLE_INTEGRITY_OK ok 0" in proc.stdout
+def test_monocle_db_integrity_and_journal_mode(tmp_path: Path) -> None:
+    """Verify integrity_check and WAL truncation through audit_and_truncate_wal on a synthetic DB.
+
+    The audit writes (it checkpoints and truncates the WAL), so it never runs on the live
+    monocle.db (FACT-tests-must-not-write-operational-db); a WAL-mode copy in tmp_path stands in.
+    """
+    from scripts.maintenance.audit_m4_m5_integrity import audit_and_truncate_wal
+
+    db = tmp_path / "monocle.db"
+    conn = sqlite3.connect(str(db))
+    try:
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("CREATE TABLE articles (id INTEGER PRIMARY KEY, title TEXT)")
+        conn.executemany("INSERT INTO articles (title) VALUES (?)", [(f"t{i}",) for i in range(200)])
+        conn.commit()
+    finally:
+        conn.close()
+
+    res = audit_and_truncate_wal(db)
+    assert res["integrity_check"] == "ok"
+    assert res["checkpoint"]["busy"] == 0
+    assert res["clean_wal_truncated"] is True
+    assert res["wal_size_bytes"] == 0
 
 
 def test_ops_db_integrity_and_journal_mode() -> None:
