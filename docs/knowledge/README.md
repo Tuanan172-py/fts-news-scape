@@ -84,4 +84,3 @@ Binding for every agent and model (Claude, Codex, agy, opencode, OpenRouter) tha
 ## 7. Context Pack for Models Without File Access
 
 Runners that call a model over an API (OpenRouter) cannot open files. They pass the model `docs/knowledge/README.md`, `docs/INDEX.md` and only the documents whose ids the task cites.
-

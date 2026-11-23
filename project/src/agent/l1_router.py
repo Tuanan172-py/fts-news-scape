@@ -281,4 +281,3 @@ def check_l1_dod(output: dict, title: str, registry=None,
             reasons.append(f"processing_metadata.{k} missing")
 
     return (not reasons), reasons
-

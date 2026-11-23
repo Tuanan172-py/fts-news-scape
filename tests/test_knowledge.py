@@ -515,4 +515,3 @@ def test_k19_superseded_and_archived_excluded(repo: Path) -> None:
     doc_superseded = VALID_ADR.replace("status: accepted", "status: superseded").replace("Nothing.", "Contains l1_route here.")
     _write(repo, "docs/decisions/0001-sample.md", doc_superseded)
     assert "K19" not in _codes(repo)
-

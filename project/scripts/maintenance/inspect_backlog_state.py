@@ -56,7 +56,7 @@ def main() -> None:
         rows_pending = cur.execute("""
             SELECT a.url_title_hash, a.title FROM articles a
             WHERE NOT EXISTS (
-                SELECT 1 FROM agent_outputs g 
+                SELECT 1 FROM agent_outputs g
                 WHERE g.article_id = a.url_title_hash AND g.dod_pass = 1
             )
         """).fetchall()

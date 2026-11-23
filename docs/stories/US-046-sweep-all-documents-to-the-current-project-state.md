@@ -50,4 +50,3 @@ After this story no current document contradicts the code or ADR-0026. Supersede
 ## Evidence
 
 - Stale-term grep over current docs for `users_output`, `entities/manifest.yaml`, `L2/L3`, `ADR-0020` found only the items fixed here and historical files.
-

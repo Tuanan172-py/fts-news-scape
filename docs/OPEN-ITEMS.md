@@ -89,9 +89,9 @@ Số đo lúc bắt đầu (02/10, so với sitemap): cafef thiếu 64%, tnck 68
 
 Người vận hành làm hoặc quyết định:
 
-1. **Bronze ghi sai gốc: đã gộp, còn chờ khởi động lại morninger (US-036, 2026-10-05; mã US-035 cũ đã đổi theo ADR-0021 G4).** 2.750 tệp ở <gốc repo>/data/raw_html đã chuyển vào project/data/raw_html. 1.607 tệp trùng tên khác nội dung nằm ở C:\data\news-scape\recovered\root_raw_html_conflicts_20261005. RawStore nay neo vào PROJECT_ROOT, lần cào lỗi không ghi đè bản tốt, khoá silver_failures được chuẩn hoá. **Người vận hành:** khởi động lại python -m src.morninger (PID 42208, chạy từ 02/10) để nhận mã mới, rồi kiểm pipeline_radar.py status: dòng Bronze kẹt phải về 0. Phần còn lại của <gốc repo>/data đã dọn theo phương án E: silver, work_packages, gent_tasks, gent_outputs* (259 tệp) sang C:\data\news-scape\recovered\root_data_20261005; 4 CSV exports chưa có ở project đã gộp vào project/data/exports, 1 CSV trùng tên giữ ở 
-ecovered. Các điểm ghi exports, 
-otifications, staging, work_packages đã neo vào PROJECT_ROOT. Còn dùng đường dẫn tương đối nhưng thuộc lane L1/Gold đã ngừng: atch_handoff.py, l1_router.py, packet.py, 
+1. **Bronze ghi sai gốc: đã gộp, còn chờ khởi động lại morninger (US-036, 2026-10-05; mã US-035 cũ đã đổi theo ADR-0021 G4).** 2.750 tệp ở <gốc repo>/data/raw_html đã chuyển vào project/data/raw_html. 1.607 tệp trùng tên khác nội dung nằm ở C:\data\news-scape\recovered\root_raw_html_conflicts_20261005. RawStore nay neo vào PROJECT_ROOT, lần cào lỗi không ghi đè bản tốt, khoá silver_failures được chuẩn hoá. **Người vận hành:** khởi động lại python -m src.morninger (PID 42208, chạy từ 02/10) để nhận mã mới, rồi kiểm pipeline_radar.py status: dòng Bronze kẹt phải về 0. Phần còn lại của <gốc repo>/data đã dọn theo phương án E: silver, work_packages, gent_tasks, gent_outputs* (259 tệp) sang C:\data\news-scape\recovered\root_data_20261005; 4 CSV exports chưa có ở project đã gộp vào project/data/exports, 1 CSV trùng tên giữ ở
+ecovered. Các điểm ghi exports,
+otifications, staging, work_packages đã neo vào PROJECT_ROOT. Còn dùng đường dẫn tương đối nhưng thuộc lane L1/Gold đã ngừng: atch_handoff.py, l1_router.py, packet.py,
 unner.py, l1_runner.py.
 2. **[ĐÓNG 2026-11-11] Ba nguồn chưa có kênh đối chiếu độc lập:** thoibaotaichinhvietnam và vietstock đối chiếu bằng sitemap, vietnambiz bằng trang chuyên mục có ngày (rule 10 §3). Còn mở: sitemap baodautu hỏng phía báo từ 2026-10-23.
 3. **fireant là API, không cào bù được theo URL.** Bài fireant ở trạng thái `discovered` được lấy lại khi chúng xuất hiện lại trong danh sách API; nếu không, chúng sang `dead_letter` sau 5 lần thử.
@@ -495,4 +495,3 @@ qua subprocess, bổ sung sau sự cố 3 lỗi sản xuất vô hình với tes
 **Hệ quả:** Thời gian wave ~56 phút vs 48 phút Muse Spark.
 
 **Workaround:** Chạy sequential waves, hoặc dùng paid tier nếu cần throughput cao.
-

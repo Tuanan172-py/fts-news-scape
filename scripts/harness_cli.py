@@ -174,14 +174,14 @@ def query_matrix(db_path: str = DEFAULT_DB_PATH, active_only: bool = False, summ
         if active_only:
             query += " WHERE status IN ('planned', 'in_progress')"
         query += " ORDER BY id ASC"
-        
+
         rows = conn.execute(query).fetchall()
         stories = [dict(r) for r in rows]
-        
+
         counts = {"planned": 0, "in_progress": 0, "implemented": 0, "blocked": 0, "deferred": 0, "retired": 0}
         for s in stories:
             counts[s["status"]] = counts.get(s["status"], 0) + 1
-            
+
         result = {
             "stories": stories,
             "counts": counts,
@@ -204,7 +204,7 @@ def cmd_intake(args: argparse.Namespace) -> dict[str, Any]:
         if isinstance(flags_json, str) and not flags_json.startswith("["):
             flags_list = [f.strip() for f in flags_json.split(",") if f.strip()]
             flags_json = json.dumps(flags_list, ensure_ascii=False)
-            
+
         cur = conn.execute(
             """
             INSERT INTO intake (input_type, summary, risk_lane, risk_flags, story_id, created_at)
@@ -236,7 +236,7 @@ def cmd_story_add(args: argparse.Namespace) -> dict[str, Any]:
         ts = now_iso()
         conn.execute(
             """
-            INSERT INTO story (id, title, parent_epic, status, lane, product_contract, 
+            INSERT INTO story (id, title, parent_epic, status, lane, product_contract,
                               acceptance_criteria, verify_command, created_at, updated_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
@@ -255,7 +255,7 @@ def cmd_story_update(args: argparse.Namespace) -> dict[str, Any]:
     try:
         fields = []
         params = []
-        
+
         if args.title is not None:
             fields.append("title = ?")
             params.append(args.title)
@@ -286,13 +286,13 @@ def cmd_story_update(args: argparse.Namespace) -> dict[str, Any]:
         if args.verify_cmd is not None:
             fields.append("verify_command = ?")
             params.append(args.verify_cmd)
-            
+
         fields.append("updated_at = ?")
         params.append(now_iso())
-        
+
         params.append(args.id)
         sql = f"UPDATE story SET {', '.join(fields)} WHERE id = ?"
-        
+
         cur = conn.execute(sql, params)
         conn.commit()
         if cur.rowcount == 0:
@@ -308,9 +308,9 @@ def cmd_story_complete(args: argparse.Namespace) -> dict[str, Any]:
         story = conn.execute("SELECT * FROM story WHERE id = ?", (args.id,)).fetchone()
         if not story:
             return {"status": "error", "message": f"Story {args.id} not found"}
-        
+
         verify_cmd = args.verify_cmd or story["verify_command"]
-        
+
         # If verify command is specified, run it
         if args.run_verify and verify_cmd:
             print(f"[*] Running verification command: {verify_cmd}", file=sys.stderr)
@@ -331,7 +331,7 @@ def cmd_story_complete(args: argparse.Namespace) -> dict[str, Any]:
         integ = int(args.integ_proof) if args.integ_proof is not None else story["integration_proof"]
         e2e = int(args.e2e_proof) if args.e2e_proof is not None else story["e2e_proof"]
         platform = int(args.platform_proof) if args.platform_proof is not None else story["platform_proof"]
-        
+
         # Golden Rule: No proof = not implemented
         if unit == 0 and integ == 0 and e2e == 0 and platform == 0:
             return {
@@ -473,14 +473,14 @@ def cmd_trace(args: argparse.Namespace) -> dict[str, Any]:
         actions_json = args.actions if args.actions.startswith("[") else json.dumps([a.strip() for a in args.actions.split(",") if a.strip()], ensure_ascii=False)
         read_json = args.files_read if args.files_read.startswith("[") else json.dumps([f.strip() for f in args.files_read.split(",") if f.strip()], ensure_ascii=False)
         changed_json = args.files_changed if args.files_changed.startswith("[") else json.dumps([f.strip() for f in args.files_changed.split(",") if f.strip()], ensure_ascii=False)
-        
+
         actions_list = json.loads(actions_json)
         read_list = json.loads(read_json)
         changed_list = json.loads(changed_json)
-        
+
         score_t = calculate_score_trace(args.summary, actions_list, read_list, changed_list, args.outcome)
         score_c = calculate_score_context(args.lane or "normal", len(read_list))
-        
+
         git_commit = get_git_head_commit()
         git_branch = get_git_branch()
         cur = conn.execute(
@@ -496,7 +496,7 @@ def cmd_trace(args: argparse.Namespace) -> dict[str, Any]:
         )
         conn.commit()
         trace_id = cur.lastrowid
-        
+
         # If there's an intervention/error, log it
         if args.error or args.outcome == "blocked":
             conn.execute(
@@ -507,7 +507,7 @@ def cmd_trace(args: argparse.Namespace) -> dict[str, Any]:
                 (trace_id, args.story or None, args.error or "Blocked execution", args.friction or "Pending resolution", now_iso())
             )
             conn.commit()
-            
+
         return {
             "status": "success",
             "trace_id": trace_id,
@@ -531,14 +531,14 @@ def cmd_audit(db_path: str = DEFAULT_DB_PATH, check_codebase: bool = False) -> d
     try:
         checks = {}
         total_penalty = 0.0
-        
+
         # 1. Orphaned / Unproven stories marked implemented
         unproven = conn.execute(
             "SELECT id FROM story WHERE status = 'implemented' AND unit_proof=0 AND integration_proof=0 AND e2e_proof=0 AND platform_proof=0"
         ).fetchall()
         checks["unproven_implemented_stories"] = [r["id"] for r in unproven]
         total_penalty += len(unproven) * 0.2
-        
+
         # 2. In-progress story count (WIP = 1 check)
         in_prog = conn.execute("SELECT id FROM story WHERE status = 'in_progress'").fetchall()
         checks["in_progress_count"] = len(in_prog)
@@ -557,7 +557,7 @@ def cmd_audit(db_path: str = DEFAULT_DB_PATH, check_codebase: bool = False) -> d
             checks["wip_unattributed"] = [r["id"] for r in in_prog if r["id"] not in attributed]
         except Exception as e:
             checks["wip_check_error"] = str(e)
-            
+
         # 3. Missing traces for stories
         no_trace = conn.execute(
             """
@@ -568,13 +568,13 @@ def cmd_audit(db_path: str = DEFAULT_DB_PATH, check_codebase: bool = False) -> d
         ).fetchall()
         checks["stories_missing_traces"] = [r["id"] for r in no_trace]
         total_penalty += len(no_trace) * 0.1
-        
+
         # 4. Open friction / backlog count
         open_backlog = conn.execute("SELECT COUNT(*) as n FROM backlog WHERE status = 'open'").fetchone()["n"]
         checks["open_backlog_count"] = open_backlog
         if open_backlog > 5:
             total_penalty += 0.15
-            
+
         # 5. Missing decision records for high-risk stories
         high_risk_no_adr = conn.execute(
             """
@@ -584,7 +584,7 @@ def cmd_audit(db_path: str = DEFAULT_DB_PATH, check_codebase: bool = False) -> d
         ).fetchall()
         checks["high_risk_missing_adr_gate"] = [r["id"] for r in high_risk_no_adr]
         total_penalty += len(high_risk_no_adr) * 0.15
-        
+
         # 6. Schema health
         checks["schema_version"] = get_schema_version(conn)
 
@@ -612,7 +612,7 @@ def cmd_audit(db_path: str = DEFAULT_DB_PATH, check_codebase: bool = False) -> d
                     audit_script = cli_repo_root / "project" / "scripts" / "maintenance" / "audit_codebase.py"
                     if audit_script.exists():
                         repo_root = cli_repo_root
-                
+
                 if audit_script.exists():
                     spec = importlib.util.spec_from_file_location("audit_codebase_module", str(audit_script))
                     if spec and spec.loader:
@@ -633,10 +633,10 @@ def cmd_audit(db_path: str = DEFAULT_DB_PATH, check_codebase: bool = False) -> d
                     checks["codebase_hygiene_warning"] = f"Script audit not found at {audit_script}"
             except Exception as e:
                 checks["codebase_hygiene_error"] = str(e)
-        
+
         health_score = max(0.0, min(1.0, 1.0 - total_penalty))
         entropy_score = round(1.0 - health_score, 2)
-        
+
         return {
             "status": "success",
             "health_score": round(health_score, 2),
@@ -661,7 +661,7 @@ def cmd_propose(db_path: str = DEFAULT_DB_PATH) -> dict[str, Any]:
             ORDER BY cnt DESC
             """
         ).fetchall()
-        
+
         proposals = []
         for r in rows:
             proposals.append({
@@ -1273,26 +1273,26 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="News-Scape Harness CLI (H2-H5 Durable Layer)")
     parser.add_argument("--db", default=DEFAULT_DB_PATH, help="Path to harness.db SQLite file")
     parser.add_argument("--json", action="store_true", help="Output results in raw JSON format")
-    
+
     subparsers = parser.add_subparsers(dest="command", required=True)
-    
+
     # init
     init_parser = subparsers.add_parser("init", help="Initialize the durable database schema")
     init_parser.add_argument("--schema-dir", default=DEFAULT_SCHEMA_DIR, help="Directory containing schema sql files")
-    
+
     # query
     query_parser = subparsers.add_parser("query", help="Query durable layer data")
     query_sub = query_parser.add_subparsers(dest="query_target", required=True)
-    
+
     query_sub.add_parser("contract", help="Query harness orchestration contract capabilities")
-    
+
     matrix_p = query_sub.add_parser("matrix", help="Query test proof matrix")
     matrix_p.add_argument("--active", action="store_true", help="Only show active/in_progress stories")
     matrix_p.add_argument("--summary", action="store_true", help="Show summary counts only")
 
     am_p = query_sub.add_parser("agent-metrics", help="Query per-agent KPI rollup (Spine 3)")
     am_p.add_argument("--agent", help="Filter by a specific agent_id from registry.yaml")
-    
+
     # intake
     intake_p = subparsers.add_parser("intake", help="Classify and record a new task request")
     intake_p.add_argument("--type", required=True, choices=["new_spec", "spec_slice", "change_request", "new_initiative", "maintenance", "harness_improvement", "qa_inquiry", "diagnostic", "exploration"])
@@ -1300,11 +1300,11 @@ def build_parser() -> argparse.ArgumentParser:
     intake_p.add_argument("--lane", required=True, choices=["tiny", "normal", "high-risk"])
     intake_p.add_argument("--flags", default="[]", help="JSON array or comma-separated list of risk flags")
     intake_p.add_argument("--story", help="Associated story ID")
-    
+
     # story
     story_p = subparsers.add_parser("story", help="Manage stories")
     story_sub = story_p.add_subparsers(dest="story_action", required=True)
-    
+
     s_add = story_sub.add_parser("add", help="Add a new story")
     s_add.add_argument("--id", required=True, help="Story ID (e.g. US-001)")
     s_add.add_argument("--title", required=True, help="Story title")
@@ -1314,7 +1314,7 @@ def build_parser() -> argparse.ArgumentParser:
     s_add.add_argument("--contract", help="Product contract definition")
     s_add.add_argument("--criteria", help="Acceptance criteria")
     s_add.add_argument("--verify-cmd", help="Verification command to run for proof")
-    
+
     s_up = story_sub.add_parser("update", help="Update an existing story")
     s_up.add_argument("--id", required=True, help="Story ID")
     s_up.add_argument("--title", help="New title")
@@ -1327,7 +1327,7 @@ def build_parser() -> argparse.ArgumentParser:
     s_up.add_argument("--platform-proof", type=int, choices=[0, 1])
     s_up.add_argument("--evidence", help="Evidence text")
     s_up.add_argument("--verify-cmd", help="Verification command")
-    
+
     s_comp = story_sub.add_parser("complete", help="Complete a story with proof gate")
     s_comp.add_argument("--id", required=True, help="Story ID")
     s_comp.add_argument("--unit-proof", type=int, choices=[0, 1])
@@ -1338,7 +1338,7 @@ def build_parser() -> argparse.ArgumentParser:
     s_comp.add_argument("--verify-cmd", help="Verification command override")
     s_comp.add_argument("--run-verify", action="store_true", help="Execute the verify command live")
     s_comp.add_argument("--commit", action="store_true", help="Automatically commit modified files with Conventional Commit msg (US-XXX)")
-    
+
     # decision
     dec_p = subparsers.add_parser("decision", help="Manage ADR decision records")
     dec_sub = dec_p.add_subparsers(dest="decision_action", required=True)
@@ -1349,7 +1349,7 @@ def build_parser() -> argparse.ArgumentParser:
     d_add.add_argument("--status", choices=["proposed", "accepted", "superseded", "rejected"], default="accepted")
     d_add.add_argument("--impact", help="Predicted impact")
     d_add.add_argument("--outcome", help="Actual measured outcome")
-    
+
     # backlog
     bl_p = subparsers.add_parser("backlog", help="Manage friction backlog")
     bl_sub = bl_p.add_subparsers(dest="backlog_action", required=True)
@@ -1360,11 +1360,11 @@ def build_parser() -> argparse.ArgumentParser:
     b_add.add_argument("--lane", choices=["tiny", "normal", "high-risk"], default="normal")
     b_add.add_argument("--component", help="Component area")
     b_add.add_argument("--discovered-while", help="Context where discovered")
-    
+
     b_close = bl_sub.add_parser("close", help="Close a resolved backlog item")
     b_close.add_argument("--id", type=int, required=True, help="Backlog item ID")
     b_close.add_argument("--outcome", required=True, help="Resolution outcome")
-    
+
     # trace
     tr_p = subparsers.add_parser("trace", help="Record execution trace")
     tr_p.add_argument("--summary", required=True, help="Task summary")
@@ -1377,7 +1377,7 @@ def build_parser() -> argparse.ArgumentParser:
     tr_p.add_argument("--lane", choices=["tiny", "normal", "high-risk"], default="normal")
     tr_p.add_argument("--friction", help="Friction notes")
     tr_p.add_argument("--error", help="Error message if any")
-    
+
     # metric (Spine 3 — per-agent KPI ledger)
     met_p = subparsers.add_parser("metric", help="Record a per-agent KPI row for one processing wave")
     met_p.add_argument("--agent", required=True, help="agent_id matching registry.yaml")
@@ -1426,7 +1426,7 @@ def build_parser() -> argparse.ArgumentParser:
     audit_p = subparsers.add_parser("audit", help="Run harness drift & entropy audit")
     audit_p.add_argument("--codebase", action="store_true", help="Include Git codebase and AST hygiene audit")
     subparsers.add_parser("propose", help="Generate self-improvement proposals from backlog friction")
-    
+
     # session (Hybrid Strategy B: Atomic Closure)
     sess_p = subparsers.add_parser("session", help="Manage agent session lifecycle")
     sess_sub = sess_p.add_subparsers(dest="session_action", required=True)
@@ -1457,7 +1457,7 @@ def format_matrix_table(matrix_data: dict[str, Any]) -> str:
         p = "1" if s["platform_proof"] else "—"
         ev = (s["evidence"] or "")[:40].replace("\n", " ")
         lines.append(f"| {s['id']} | {s['parent_epic'] or '—'} | `{s['status']}` | {u} | {i} | {e} | {p} | {ev} |")
-    
+
     lines.append("")
     cnt = matrix_data["counts"]
     lines.append(f"Summary: Total: {matrix_data['total']} | Implemented: {cnt.get('implemented', 0)} | In-Progress: {cnt.get('in_progress', 0)} | Planned: {cnt.get('planned', 0)} | Blocked: {cnt.get('blocked', 0)}")
@@ -1477,7 +1477,7 @@ def main() -> None:
     _force_utf8_stdio()
     parser = build_parser()
     args = parser.parse_args()
-    
+
     try:
         if args.command == "init":
             res = init_db(args.db, args.schema_dir)
@@ -1536,7 +1536,7 @@ def main() -> None:
         else:
             parser.print_help()
             sys.exit(1)
-            
+
         print(json.dumps(res, indent=2, ensure_ascii=False))
         if res.get("status") == "error":
             sys.exit(1)

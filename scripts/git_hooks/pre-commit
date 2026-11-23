@@ -14,6 +14,23 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+# Same whitespace rules as the fpa-toolkit hooks (trailing whitespace, final newline),
+# so packages/news stays byte-identical to this repo across satellite syncs.
+if ! git diff --cached --check; then
+    echo "❌ [GIT HOOK FAILED] Khoang trang cuoi dong hoac dong trong o cuoi tep."
+    exit 1
+fi
+NO_EOL=$(git diff --cached --name-only --diff-filter=ACMR -z | while IFS= read -r -d '' f; do
+    if git diff --cached --numstat -- "$f" | grep -qv '^-'; then
+        [ -n "$(git cat-file -p ":$f" | tail -c 1)" ] && echo "$f"
+    fi
+done)
+if [ -n "$NO_EOL" ]; then
+    echo "❌ [GIT HOOK FAILED] Thieu newline cuoi tep:"
+    echo "$NO_EOL"
+    exit 1
+fi
+
 if [ -f scripts/knowledge.py ]; then
     "$PYTHON" scripts/harness_cli.py doc lint --staged
     if [ $? -ne 0 ]; then

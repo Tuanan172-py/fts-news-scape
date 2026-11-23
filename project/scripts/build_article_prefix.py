@@ -493,7 +493,7 @@ def main(argv=None) -> int:
         "variants": {"tickers": bool(tickers)},
         "source": paths.to_data_relative(ENTITIES_JSON),
     }
-    meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
+    meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
     print(f"✅ Đã sinh prefix: {out_path}")
     print(f"   hash={content_digest} · {len(content):,} ký tự · ~{approx_tokens:,} token")
