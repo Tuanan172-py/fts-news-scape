@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import io
 import json
 import re
@@ -136,6 +137,42 @@ def _normalize_string_list(val: Any) -> list[str]:
     return [str(val)]
 
 
+_TYPE_TAG = re.compile(r"\s*\[[^\]]*\]\s*$")
+
+
+def _entity_id(item: str) -> str:
+    return _TYPE_TAG.sub("", item).strip().upper()
+
+
+def keep_model_entities(entities: list[str], intent_llm: str, intent_code: str) -> list[str]:
+    """Keep only the ``entities`` items whose id the model named (ADR: model ids only in ``entities``).
+
+    The deterministic matcher cross-checks the model and never adds results (AGENTS.md section 7), so ids it
+    found alone stay visible in ``intent_code`` and leave ``entities``. Ids compare in full (``IND_GICS2`` and
+    ``IND_GICS3`` share codes), with ``[TYPE]`` tags stripped; a bare code the model wrote without its kind
+    (``HPG``) matches that code under any kind.
+
+    Args:
+        entities: ``KIND:CODE [TYPE]`` items as produced.
+        intent_llm: ``"; "``-separated ids the model named.
+        intent_code: ``"; "``-separated ids the code layer found.
+
+    Returns:
+        The model's items in their original order; ``entities`` unchanged when the row carries no provenance
+        (both intent columns empty, as in records from before the intent columns existed).
+    """
+    if not intent_llm.strip() and not intent_code.strip():
+        return entities
+    named = {_entity_id(x) for x in intent_llm.split(";") if x.strip()}
+    bare = {n for n in named if ":" not in n}
+
+    def is_named(item: str) -> bool:
+        eid = _entity_id(item)
+        return eid in named or eid.split(":", 1)[-1] in bare
+
+    return [e for e in entities if is_named(e)]
+
+
 def sanitize_article_record(
     record: dict[str, Any],
     dev_id: str,
@@ -161,8 +198,20 @@ def sanitize_article_record(
     raw_symbols = _normalize_string_list(record.get("symbols"))
     clean_symbols = [s.upper() for s in raw_symbols if s and s.strip()]
 
+    raw_art_id = str(record.get("article_id") or "").strip()
+    if not raw_art_id:
+        ref_val = str(record.get("url") or record.get("raw_sha256") or record.get("title") or "").strip()
+        if ref_val:
+            raw_art_id = hashlib.sha256(ref_val.encode("utf-8")).hexdigest()[:16]
+
+    raw_sentiment = record.get("sentiment")
+    clean_sentiment = str(raw_sentiment).strip().lower() if raw_sentiment is not None and str(raw_sentiment).strip() else ""
+
+    raw_gold = record.get("gold_status")
+    clean_gold = str(raw_gold).strip() if raw_gold is not None and str(raw_gold).strip() else "RAW"
+
     return {
-        "article_id": str(record.get("article_id") or "").strip(),
+        "article_id": raw_art_id,
         "url": str(record.get("url") or "").strip(),
         "title": str(record.get("title") or "").strip(),
         "source_domain": str(record.get("source_domain") or "").strip(),
@@ -173,16 +222,17 @@ def sanitize_article_record(
         "summary": str(record.get("summary") or "").strip(),
         "key_points": _normalize_string_list(record.get("key_points")),
         "implication": str(record.get("implication") or "").strip(),
-        "sentiment": str(record.get("sentiment") or "neutral").strip().lower(),
+        "sentiment": clean_sentiment,
         "time_sensitivity": str(record.get("time_sensitivity") or "today").strip().lower(),
         "citations": _normalize_string_list(record.get("citations")),
-        "entities": _normalize_string_list(record.get("entities")),
+        "entities": keep_model_entities(_normalize_string_list(record.get("entities")),
+                                        str(record.get("intent_llm") or ""), str(record.get("intent_code") or "")),
         "symbols": clean_symbols,
         "categories": str(record.get("categories") or "").strip(),
         "intent_llm": str(record.get("intent_llm") or "").strip(),
         "intent_code": str(record.get("intent_code") or "").strip(),
         "intent_source": str(record.get("intent_source") or "").strip(),
-        "gold_status": str(record.get("gold_status") or "GOLD").strip(),
+        "gold_status": clean_gold,
         "raw_sha256": str(record.get("raw_sha256") or "").strip(),
         "first_seen_at": _opt_str(record.get("first_seen_at")),
         "published_at_precision": (
@@ -286,8 +336,11 @@ def publish_batch(
         raise ValueError("Mã định danh dev_id và batch_id là bắt buộc.")
 
     year, month, day, yyyymmdd = parse_date_components(date_str)
-    filename = f"part-{yyyymmdd}-{dev_id}-{batch_id}.parquet"
-    rel_path = f"{base_dir}/{year}/{month}/{day}/{filename}"
+    base_filename = f"part-{yyyymmdd}-{dev_id}-{batch_id}"
+    rel_path = f"{base_dir}/{year}/{month}/{day}/{base_filename}.parquet"
+    if storage.exists(rel_path):
+        ts_suffix = datetime.now(timezone.utc).strftime("%H%M%S%f")
+        rel_path = f"{base_dir}/{year}/{month}/{day}/{base_filename}-{ts_suffix}.parquet"
 
     parquet_bytes = records_to_parquet_bytes(records, dev_id=dev_id, batch_id=batch_id)
     saved_path = storage.write_atomic(rel_path, parquet_bytes)

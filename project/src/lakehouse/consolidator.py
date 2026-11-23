@@ -13,7 +13,11 @@ import duckdb
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from src.lakehouse.ingest import LAKEHOUSE_ARTICLE_SCHEMA, parse_date_components
+from src.lakehouse.ingest import (
+    LAKEHOUSE_ARTICLE_SCHEMA,
+    keep_model_entities,
+    parse_date_components,
+)
 from src.lakehouse.manifest import PartitionManifestEntry, write_manifests
 from src.lakehouse.storage import BaseStorageAdapter
 
@@ -123,6 +127,9 @@ def consolidate_dropzone(
     try:
         con.execute("PRAGMA threads = 4;")
         con.execute("PRAGMA memory_limit = '2GB';")
+        # Stamps without an offset are UTC; otherwise DuckDB reads them in the host zone and the latest-wins
+        # order changes with the machine (an ICT host ranked 09:30 naive before 08:00Z).
+        con.execute("SET TimeZone = 'UTC';")
 
         # Use local paths when possible; otherwise read the bytes into a PyArrow Table.
         local_paths: list[str] = []
@@ -162,12 +169,30 @@ def consolidate_dropzone(
                 {select_cols}
             FROM {source_expr}
             QUALIFY ROW_NUMBER() OVER (
-                PARTITION BY article_id 
-                ORDER BY updated_at DESC, batch_id DESC
+                PARTITION BY CASE
+                    WHEN article_id IS NOT NULL AND trim(article_id) != '' THEN trim(article_id)
+                    WHEN url IS NOT NULL AND trim(url) != '' THEN trim(url)
+                    ELSE md5(COALESCE(title, '') || COALESCE(published_at, '') || COALESCE(raw_sha256, ''))
+                END
+                ORDER BY
+                    COALESCE(
+                        TRY_CAST(updated_at AS TIMESTAMP WITH TIME ZONE),
+                        TRY_CAST(updated_at AS TIMESTAMP),
+                        '1970-01-01'::TIMESTAMP
+                    ) DESC,
+                    updated_at DESC,
+                    batch_id DESC
             ) = 1
             ORDER BY published_at DESC, article_id ASC;
         """
         result_arrow = con.execute(dedup_sql, query_params).to_arrow_table()
+        # Dropzone files can be written without the ingest normalizer, so the entities rule holds here too.
+        cols = result_arrow.to_pydict()
+        kept = [keep_model_entities(list(e or []), llm or "", code or "")
+                for e, llm, code in zip(cols["entities"], cols["intent_llm"], cols["intent_code"])]
+        idx = result_arrow.schema.get_field_index("entities")
+        result_arrow = result_arrow.set_column(idx, result_arrow.schema.field(idx),
+                                               pa.array(kept, type=result_arrow.schema.field(idx).type))
         unique_articles = len(result_arrow)
 
         # Convert the result to ZSTD-compressed Parquet.
