@@ -46,6 +46,8 @@ A tier is `1` (passed, evidence recorded), `0` (not passed/not run), or `—` (N
 | [US-013](stories/US-013-radar-false-404-and-bronze-guard-rail.md) | Bronze Ingestion Pipeline | `implemented` | 1 | — | — | — | 403/403 passed · guard rail chứng minh RED/GREEN thật trên znews.yaml · radar cảnh báo 404 giả theo domain |
 | [US-014](stories/US-014-context-budget-counts-orchestrator-reads-only.md) | Harness policy | `implemented` | 1 | — | — | — | CONTEXT_RULES §1 + TRACE_SPEC §3 · backlog #6 resolved · trace #46-48 đạt score_context 1.0 |
 | [US-015](stories/US-015-production-audit-cli-blind-spot-and-schema-regression.md) | Bronze Ingestion Pipeline | `implemented` | 1 | 1 | 1 | **1** | 413/413 passed · 5 lỗi sống phát hiện bằng chạy thật · **Platform proof đầu tiên**: morninger `capture/10min` + auto-drain `fetched=14 deleted_at_source=1` |
+| [US-056](stories/US-056-test-safety-no-test-writes-live-operational-data.md) | M1 sync (PLN-20261123-1510) | `in_progress` | 1 | 1 | — | — | Full suite at `8753312`: 1175 passed, 21 skipped (production_host) · touched files 60 passed, 21 skipped · live read-only audit and snapshot tests pass on the production host |
+| [US-057](stories/US-057-adr-0027-and-the-entity-catalog-on-fra.md) | M1 sync (PLN-20261123-1510) | `in_progress` | 1 | 1 | — | — | Lakehouse and research tests 72 passed · replay 4,665 research rows: 27,960 `CODE_ONLY` ids removed, 0 rows and 0 model-named ids lost · `--check-prefix` green, hash `80c6edfe7891330b` · R1 pass |
 
 > Rule reminder: Stories reach `implemented` ONLY after validation commands run and results are recorded. Never hand-flip.
 

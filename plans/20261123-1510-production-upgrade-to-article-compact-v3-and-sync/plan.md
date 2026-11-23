@@ -107,7 +107,7 @@ Reviews copy the method of the v3 rubric evaluation (fpa-toolkit `eval-u12-rubri
 | Gate | Covers | Status | Due | Note |
 |---|---|---|---|---|
 | G0 | Plan approval | **PASS** | 2026-11-23 | Operator approved scope, target, reviewers, windows and class (c) handling |
-| R1 | Review of P1a, P1b, P3, P4 | pending | 2026-11-25 11:00 | `gemini-4-hydrogen-high`, D8 |
+| R1 | Review of P1a, P1b, P3, P4 | **PASS** | 2026-11-23 | `gemini-4-hydrogen-high`. Round 1: fail, 1 blocking (PR #7 defaults), 4 minor. Objection round with quotes and replay: all withdrawn. The ruling saw the quotes, not the diff again |
 | G6 | P6 window, ADR-0027 live | pending | 2026-11-25 13:00-15:00 | operator-run |
 | R2 | Review of P5 | pending | 2026-11-26 12:00 | `gemini-4-hydrogen-high`, D8; split checkpoint (D6) |
 | G7 | P7 start | pending | 2026-11-26 14:00 | operator-run |
@@ -170,7 +170,7 @@ Tasks:
 
 Acceptance:
 - [x] In the five challenger files, every `sqlite3.connect` on a live path uses `mode=ro`, and no `OpsStore(` runs on a live path (`grep`).
-- [ ] Full suite passes; result recorded in `docs/TEST_MATRIX.md`.
+- [x] Full suite passes; result recorded in `docs/TEST_MATRIX.md` (1175 passed, 21 skipped at `8753312`).
 - [x] No personal path remains in code, tests or config under `project/`. Two how-to documents and the reference folder `thamkhao/` still name the operator's machine paths; they are documentation, not code.
 - [x] With `NEWS_SCAPE_PRODUCTION_HOST` unset, the five challenger files skip their live tests (21 skipped, 60 passed on the touched files).
 
