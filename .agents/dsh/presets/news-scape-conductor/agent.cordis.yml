@@ -296,6 +296,11 @@
       nhận ra được, vì tên ngành chuẩn khớp trực tiếp một-một. Nếu bài nói `đường sắt`
       thì phát `Vận tải đường bộ & đường sắt`.
 
+      Chỉ phát một ngành khi bài **nói về** ngành đó, hoặc ngành đó là ngành kinh doanh
+      chính của doanh nghiệp là chủ thể bài. Không gán ngành cho doanh nghiệp, tài sản hay
+      địa danh chỉ được nhắc qua: tin đấu giá đất không tự động là `Bất động sản`, tin có
+      chữ `ngân hàng` trong một danh sách không tự động là `Ngân hàng`.
+
       ## Quy tắc chống nhận nhầm
 
       - **Mã ba ký tự trùng từ viết tắt thông dụng**: `GDP`, `CPI`, `PMI`, `FED`, `USD`,
@@ -511,7 +516,7 @@
 
       ```json
       [{"i":0,"e":[["Hòa Phát","COM"],["HRC","AST"],["thuế chống bán phá giá","THM"],
-        ["ông Trần Đình Long","PER"],["Vận tải đường bộ & đường sắt","IND"]],
+        ["ông Trần Đình Long","PER"],["Thép","IND"]],
         "s":"Hòa Phát đạt lợi nhuận sau thuế 3.200 tỷ đồng trong quý 3, tăng 25% so với cùng kỳ nhờ sản lượng HRC và biên lợi nhuận cải thiện.",
         "k":["Biên lợi nhuận gộp mở rộng lên 14,1% nhờ giá bán nội địa được thuế tự vệ hỗ trợ",
              "Sản lượng HRC tăng 32% cho thấy nhu cầu nội địa phục hồi"],
@@ -525,9 +530,10 @@
         "sn":"neu","ts":"arch","c":[0],"ek":"LEGAL_RISK"}]
       ```
 
-      Lưu ý trong ví dụ: ngành `Vận tải đường bộ & đường sắt` **không** xuất hiện nguyên
-      văn trong bài, nhưng vẫn phát vì nhóm `IND` cho phép nhận ra ngành từ ngữ cảnh và
-      phát đúng tên chuẩn. Mọi nhóm khác chỉ phát chuỗi có trong tiêu đề hoặc đoạn văn.
+      Lưu ý trong ví dụ: ngành `Thép` **không** xuất hiện nguyên văn trong bài, nhưng vẫn
+      phát vì Hòa Phát là chủ thể bài và thép là ngành kinh doanh chính của nó; nhóm `IND`
+      cho phép nhận ra ngành từ ngữ cảnh như vậy và phát đúng tên chuẩn. Mọi nhóm khác chỉ
+      phát chuỗi có trong tiêu đề hoặc đoạn văn.
       Bài thứ hai chỉ có một đoạn đủ dài nên `c` có đúng một số.
 
       ## Nhắc lại lần cuối

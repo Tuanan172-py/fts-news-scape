@@ -1,13 +1,14 @@
 {
-  "hash": "5d270579e6077b3e",
-  "chars": 20628,
-  "approx_tokens": 6876,
+  "hash": "80c6edfe7891330b",
+  "chars": 20972,
+  "approx_tokens": 6990,
   "entities_total": 1262,
   "closed_group_lines": 130,
   "fund_lines": 39,
   "ticker_lines": 0,
   "variants": {
-    "tickers": false
+    "tickers": false,
+    "impacts": false
   },
   "source": "entities/entities.json"
 }

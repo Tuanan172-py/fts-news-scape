@@ -63,6 +63,60 @@ GROUP_CODES = [
     ("INS", "định chế hoặc cơ quan quản lý", "NHNN, Fed, Bộ Tài chính"),
 ]
 
+# The monorepo's news-watch impact rubric, adapted from (article, subject) pairs to the entities of `e`.
+# r2 was validated at direction kappa 0.77; r3 (decision U12) adds the derived-effect and speaker rules,
+# the sev 2 ownership clause and a market-wrap example. Kept in English, the language it was measured in.
+# The monorepo test `tests/news_watch/test_rubric_parity.py` pins the anchors against drift.
+IMPACT_SECTION = [
+    "## Đánh giá tác động `x` (rubric r3)",
+    "",
+    "Rate the effect of the article on every entity pair you put in `e`, one `x` item per pair:",
+    "`[surface, group, dir, sev, horizon, channel, why]`, with `surface` and `group` copied exactly from `e`.",
+    "Judge only from the article text. Do not invent facts or numbers.",
+    "Do not put an institution in `e` when it appears only as the speaker or the source of a quote.",
+    "",
+    "Who the entity stands for:",
+    "- A ticker or company (`TIC`, `COM`): that company's earnings, valuation, financing and share flows.",
+    "- A sector (`IND`): the listed companies of that sector as a group.",
+    "- A macro theme, institution, country, asset, index, exchange, fund or person: Vietnamese listed equities broadly. Rate the effect on the whole market, not on one sector: lower lending rates are `+` for the market even though they squeeze bank margins. Name the most exposed sector in `why`.",
+    "",
+    "First decide whether the article is about the entity. Give `sev` 0 and `dir` `0` when:",
+    "- the entity appears only in a list, a market wrap, a price or rate table, or a line saying its shares rose, fell or supported the index;",
+    "- the article is about something else that shares a word with the entity (a domestic tax cut is not trade tariffs; a loan collateral note is not news about the lender);",
+    "- the title and the paragraphs describe different events: the text is unreliable, so do not rate it;",
+    "- the entity is a sector, macro theme, institution, country or asset, and its only link to the article is one company's news: one company's results, contract, export order, financing or legal case does not move its sector or the market, so rate that company and give the entity sev 0;",
+    "- the entity is an institution that appears only as the speaker or the source of a quote: a minister describing the economy does not make the ministry the entity.",
+    "",
+    "Example, a market wrap. Title `Chứng khoán chiều 5/9: VN-Index tăng 6 điểm, nhóm ngân hàng dẫn dắt`, paragraph `VCB và CTG tăng hơn 2%, khối ngoại mua ròng 300 tỷ đồng, tập trung ở FPT.`",
+    "Every entity gets `sev` 0 and `dir` `0`, including the ones the title names. A session's price moves and net buying or selling are not news about any of them:",
+    '`[["VN-Index","IDX","0",0,"s","flows","Bản tin phiên giao dịch, chỉ nêu biến động điểm số."],["Ngân hàng","IND","0",0,"s","flows","Nhóm ngành chỉ được nêu là dẫn dắt chỉ số trong phiên."],["VCB","TIC","0",0,"s","flows","Cổ phiếu chỉ xuất hiện trong danh sách tăng giá của phiên."],["CTG","TIC","0",0,"s","flows","Cổ phiếu chỉ xuất hiện trong danh sách tăng giá của phiên."],["FPT","TIC","0",0,"s","flows","Giao dịch mua ròng trong một phiên, không có thông tin mới về doanh nghiệp."]]`',
+    "",
+    "Direction `dir`:",
+    "- `+` the news is good for the entity, `-` bad, `0` neutral, unclear, or only a passing mention.",
+    "- When effects pull both ways, give the net direction and name the other side in `why`.",
+    "",
+    "Severity `sev`, an integer with these anchors:",
+    "- sev 0: the entity is only mentioned. No plausible effect on its earnings, valuation, financing or flows. Examples: one name in a market wrap, a routine administrative filing, a list of top gainers. `sev 0` always has `dir` `0`.",
+    "- sev 1: minor. Routine or small items: governance and personnel filings, small contracts, an effect under about 2% of annual profit, sentiment that fades within days.",
+    "- sev 2: material. An analyst covering the entity should comment. It needs a decision, a reported number or a priced deal that belongs to the entity itself: its own results, issuance or contract, a figure for the whole sector, a policy addressed to it. A number that belongs to someone else, such as a state budget the entity's companies may bid for, is at most sev 1 for the entity. Opinions, forecasts, commentary and promotional pieces are at most sev 1. Examples: quarterly results against expectations, dividend or share issuance decisions, contracts or cost changes worth about 2% to 10% of annual profit, a regulatory change that touches a revenue line, a credible report of a corporate action.",
+    "- sev 3: major. It changes the investment case. Examples: more than about 10% of annual profit or of net asset value, M&A, delisting or a major restructuring, legal action against the company or its leaders, a bond default, a policy that resets the sector's economics.",
+    "",
+    "Horizon: `s` short (sentiment, flows, days to weeks) or `l` long (earnings, assets, competitive position).",
+    "",
+    "Channel, exactly one of: `earnings`, `dividend`, `capital` (issuance, debt, M&A), `legal`, `policy`, `flows` (foreign or retail trading, index changes), `operations`, `other`.",
+    "",
+    "`why`: one sentence in Vietnamese, at most 30 words and 240 characters, naming the mechanism: what changes, and for whom.",
+    "",
+]
+
+IMPACT_EXAMPLE_0 = [
+    '  "x":[["Hòa Phát","COM","+",2,"l","earnings","Lợi nhuận quý 3 tăng 25% nhờ sản lượng HRC và biên gộp mở rộng, nâng kỳ vọng lợi nhuận cả năm của Hòa Phát."],',
+    '       ["HRC","AST","+",1,"s","policy","Thuế chống bán phá giá hỗ trợ giá HRC nội địa, có lợi cho nhóm thép trong ngắn hạn."],',
+    '       ["thuế chống bán phá giá","THM","+",1,"l","policy","Thuế bảo hộ giúp thép nội địa giữ giá bán; ngành thép hưởng lợi nhiều nhất."],',
+    '       ["ông Trần Đình Long","PER","0",0,"s","other","Chỉ được trích lời bình luận, không có thay đổi nào liên quan trực tiếp."],',
+    '       ["Thép","IND","+",1,"l","policy","Thuế chống bán phá giá giữ giá HRC nội địa, hỗ trợ biên lợi nhuận ngành thép; lợi nhuận riêng của Hòa Phát không tính cho ngành."]]},',
+]
+
 
 def load_catalog() -> list[dict]:
     """Load the active entity catalog.
@@ -145,13 +199,16 @@ def ticker_lines(items: list[dict]) -> list[str]:
     return out
 
 
-def build(items: list[dict], *, with_tickers: bool = False) -> str:
+def build(items: list[dict], *, with_tickers: bool = False, impacts: bool = False) -> str:
     """Build the full text of the static worker prefix.
 
     Args:
         items: Full entity catalog.
         with_tickers: Whether to add the ticker catalog to the prefix. See
             :func:`ticker_lines` for why this is a variant and not the default.
+        impacts: Emit the ``article-compact-v3`` variant (draft ADR-0028): the record gains
+            key ``x`` and the prefix carries the impact rubric (``IMPACT_SECTION``). Off by default, so the v2 prefix is
+            byte-identical.
 
     Returns:
         Prefix content as Markdown.
@@ -205,7 +262,11 @@ def build(items: list[dict], *, with_tickers: bool = False) -> str:
     add("```json")
     add('[{"i":0,"e":[["<chuỗi nguyên văn>","<MÃ NHÓM>"]],"s":"<tóm tắt 1-3 câu>",')
     add(' "k":["<luận điểm 1>","<luận điểm 2>"],"im":"<hàm ý thị trường>",')
-    add(' "sn":"pos|neg|neu","ts":"urg|today|week|month|arch","c":[0,2],"ek":"<MÃ SỰ KIỆN>"}]')
+    if impacts:
+        add(' "sn":"pos|neg|neu","ts":"urg|today|week|month|arch","c":[0,2],"ek":"<MÃ SỰ KIỆN>",')
+        add(' "x":[["<chuỗi nguyên văn>","<MÃ NHÓM>","+|-|0",0,"s|l","<kênh>","<lý do>"]]}]')
+    else:
+        add(' "sn":"pos|neg|neu","ts":"urg|today|week|month|arch","c":[0,2],"ek":"<MÃ SỰ KIỆN>"}]')
     add("```")
     add("")
     add("| Khoá | Nội dung | Ràng buộc |")
@@ -219,6 +280,8 @@ def build(items: list[dict], *, with_tickers: bool = False) -> str:
     add("| `ts` | `urg` khẩn, `today` trong ngày, `week` trong tuần, `month` trong tháng, `arch` lưu trữ | đúng 1 trong 5 |")
     add("| `ek` | bản chất sự kiện của bài, đúng 1 mã trong danh sách sáu mã bên dưới | tùy chọn; không chắc thì bỏ hẳn khoá này, đừng đoán |")
     add("| `c` | **chỉ số** các đoạn `p` dùng làm chứng cứ, đếm từ 0, ví dụ `[0,2]` | 2 đến 4 số nguyên khác nhau, xếp tăng dần, mỗi số trỏ vào một đoạn có từ 20 ký tự trở lên; bài chỉ có một đoạn đủ dài thì ghi 1 số; không chép nội dung đoạn |")
+    if impacts:
+        add("| `x` | mỗi cặp trong `e` một mục `[chuỗi, mã nhóm, dir, sev, horizon, channel, why]`, theo mục \"Đánh giá tác động\" | chuỗi và mã nhóm chép đúng một cặp trong `e`; mỗi cặp tối đa một mục; mảng rỗng khi `e` rỗng |")
     add("")
     add("Mọi khoá trong bảng đều bắt buộc trừ `ek`, không có khoá nào khác. Giá trị ngoài danh sách")
     add("cho phép bị từ chối và bài đó phải làm lại. Không có giá trị mặc định thay cho bạn.")
@@ -252,6 +315,11 @@ def build(items: list[dict], *, with_tickers: bool = False) -> str:
     add("Riêng nhóm `IND`, hãy phát **đúng tên ngành chuẩn** trong bảng ngành phía dưới nếu")
     add("nhận ra được, vì tên ngành chuẩn khớp trực tiếp một-một. Nếu bài nói `đường sắt`")
     add("thì phát `Vận tải đường bộ & đường sắt`.")
+    add("")
+    add("Chỉ phát một ngành khi bài **nói về** ngành đó, hoặc ngành đó là ngành kinh doanh")
+    add("chính của doanh nghiệp là chủ thể bài. Không gán ngành cho doanh nghiệp, tài sản hay")
+    add("địa danh chỉ được nhắc qua: tin đấu giá đất không tự động là `Bất động sản`, tin có")
+    add("chữ `ngân hàng` trong một danh sách không tự động là `Ngân hàng`.")
     add("")
     add("## Quy tắc chống nhận nhầm")
     add("")
@@ -295,6 +363,8 @@ def build(items: list[dict], *, with_tickers: bool = False) -> str:
         parts.extend(tickers)
         add("```")
         add("")
+    if impacts:
+        parts.extend(IMPACT_SECTION)
     add("## Ví dụ mẫu")
     add("")
     add("Packet vào:")
@@ -313,23 +383,33 @@ def build(items: list[dict], *, with_tickers: bool = False) -> str:
     add("")
     add("```json")
     add('[{"i":0,"e":[["Hòa Phát","COM"],["HRC","AST"],["thuế chống bán phá giá","THM"],')
-    add('  ["ông Trần Đình Long","PER"],["Vận tải đường bộ & đường sắt","IND"]],')
+    add('  ["ông Trần Đình Long","PER"],["Thép","IND"]],')
     add('  "s":"Hòa Phát đạt lợi nhuận sau thuế 3.200 tỷ đồng trong quý 3, tăng 25% so với cùng kỳ nhờ sản lượng HRC và biên lợi nhuận cải thiện.",')
     add('  "k":["Biên lợi nhuận gộp mở rộng lên 14,1% nhờ giá bán nội địa được thuế tự vệ hỗ trợ",')
     add('       "Sản lượng HRC tăng 32% cho thấy nhu cầu nội địa phục hồi"],')
     add('  "im":"Kết quả vượt kỳ vọng củng cố định giá ngắn hạn; cần theo dõi giá HRC quý 4 và tiến độ áp thuế chính thức.",')
-    add('  "sn":"pos","ts":"today","c":[0,1],"ek":"EARNINGS_FINANCE"},')
+    if impacts:
+        add('  "sn":"pos","ts":"today","c":[0,1],"ek":"EARNINGS_FINANCE",')
+        for line in IMPACT_EXAMPLE_0:
+            add(line)
+    else:
+        add('  "sn":"pos","ts":"today","c":[0,1],"ek":"EARNINGS_FINANCE"},')
     add(' {"i":1,"e":[["VND","TIC"]],')
     add('  "s":"VNDirect công bố báo cáo quản trị định kỳ 6 tháng, không có thay đổi nhân sự cấp cao.",')
     add('  "k":["Báo cáo mang tính tuân thủ nghĩa vụ công bố thông tin định kỳ",')
     add('       "Không có thay đổi nhân sự cấp cao nên không phát sinh rủi ro điều hành"],')
     add('  "im":"Không có tác động tới định giá; giá trị chủ yếu nằm ở hồ sơ tuân thủ của doanh nghiệp.",')
-    add('  "sn":"neu","ts":"arch","c":[0],"ek":"LEGAL_RISK"}]')
+    if impacts:
+        add('  "sn":"neu","ts":"arch","c":[0],"ek":"LEGAL_RISK",')
+        add('  "x":[["VND","TIC","0",0,"l","other","Báo cáo quản trị định kỳ, không đổi nhân sự cấp cao nên không tác động tới VNDirect."]]}]')
+    else:
+        add('  "sn":"neu","ts":"arch","c":[0],"ek":"LEGAL_RISK"}]')
     add("```")
     add("")
-    add("Lưu ý trong ví dụ: ngành `Vận tải đường bộ & đường sắt` **không** xuất hiện nguyên")
-    add("văn trong bài, nhưng vẫn phát vì nhóm `IND` cho phép nhận ra ngành từ ngữ cảnh và")
-    add("phát đúng tên chuẩn. Mọi nhóm khác chỉ phát chuỗi có trong tiêu đề hoặc đoạn văn.")
+    add("Lưu ý trong ví dụ: ngành `Thép` **không** xuất hiện nguyên văn trong bài, nhưng vẫn")
+    add("phát vì Hòa Phát là chủ thể bài và thép là ngành kinh doanh chính của nó; nhóm `IND`")
+    add("cho phép nhận ra ngành từ ngữ cảnh như vậy và phát đúng tên chuẩn. Mọi nhóm khác chỉ")
+    add("phát chuỗi có trong tiêu đề hoặc đoạn văn.")
     add("Bài thứ hai chỉ có một đoạn đủ dài nên `c` có đúng một số.")
     add("")
     add("## Nhắc lại lần cuối")
@@ -439,7 +519,12 @@ def main(argv=None) -> int:
                     help="Nạp thêm danh mục mã chứng khoán vào prefix (biến thể thí "
                          "nghiệm, xem plan §13). Biến thể được ghi vào tệp mô tả nên "
                          "chế độ kiểm tự dựng lại đúng biến thể ấy")
+    ap.add_argument("--impacts", action="store_true",
+                    help="Biến thể article-compact-v3 (ADR-0028, đề xuất): thêm khoá x và "
+                         "rubric tác động. Mặc định ghi ARTICLE_SYSTEM_CORE_V3.md")
     args = ap.parse_args(argv)
+    if args.impacts and args.out == ap.get_default("out"):
+        args.out = str(OUT_DIR / "ARTICLE_SYSTEM_CORE_V3.md")
 
     out_path = Path(args.out)
     preset_path = Path(args.preset)
@@ -459,7 +544,8 @@ def main(argv=None) -> int:
     if (args.check and not args.with_tickers
             and read_variants(meta_path).get("tickers")):
         with_tickers = True
-    content = build(items, with_tickers=with_tickers)
+    impacts = args.impacts or (args.check and bool(read_variants(meta_path).get("impacts")))
+    content = build(items, with_tickers=with_tickers, impacts=impacts)
     content_digest = digest(content)
 
     if args.check:
@@ -490,10 +576,10 @@ def main(argv=None) -> int:
         "closed_group_lines": len(digest_lines(items, CLOSED_TYPES)),
         "fund_lines": len(digest_lines(items, FUND_TYPES)),
         "ticker_lines": len(tickers),
-        "variants": {"tickers": bool(tickers)},
+        "variants": {"tickers": bool(tickers), "impacts": impacts},
         "source": paths.to_data_relative(ENTITIES_JSON),
     }
-    meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
 
     print(f"✅ Đã sinh prefix: {out_path}")
     print(f"   hash={content_digest} · {len(content):,} ký tự · ~{approx_tokens:,} token")
