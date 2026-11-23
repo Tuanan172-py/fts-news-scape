@@ -118,7 +118,7 @@ any governed document; open a body only when its summary is relevant.
 | ID | Status | Title | Summary |
 |---|---|---|---|
 | [PLN-20261008-0923-us039-handoff-remaining-work](../plans/20261008-0923-us039-handoff-remaining-work/plan.md) | executing | US-039 handoff, remaining knowledge framework work | Compact state of the ADR-0021 knowledge framework after G1-G4, and the work packages another agent can pick up without this conversation. |
-| [PLN-20261123-1510-production-upgrade-to-article-compact-v3-and-sync](../plans/20261123-1510-production-upgrade-to-article-compact-v3-and-sync/plan.md) | draft | Production upgrade to article-compact-v3 and sync M1 for fpa-toolkit | Plan for every open AnPT item from news-scraper issue 10, in gated phases from test safety through the M1 sync SHA on 2026-11-27 to v3 enabled in ops_daemon, written for handoff to implementing agents. |
+| [PLN-20261123-1510-production-upgrade-to-article-compact-v3-and-sync](../plans/20261123-1510-production-upgrade-to-article-compact-v3-and-sync/plan.md) | draft | Production upgrade to article-compact-v3 and sync M1 for fpa-toolkit | Lean plan to the M1 sync SHA on 2026-11-27 (ADR-0027 live, prefix and catalog, test safety, v3 code with flag off, agy cost sample), with gates, reviewers and a split rule; M3 work moves to a follow-up plan. |
 
 ## fact
 
