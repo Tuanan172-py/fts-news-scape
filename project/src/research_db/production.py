@@ -34,6 +34,7 @@ from src.research_db.gate import GATE_VERSION
 TARGET_ENV = "NEWS_SCAPE_RESEARCH_DB_DIR"
 TARGET_FOLDER_NAME = "news"
 MANIFEST = "_manifest/latest.json"
+CATALOG = "_catalog/entities.json"  # the entity catalog the article prefix is built from (issue #8)
 MANIFEST_SCHEMA = "news-research-production/1"
 OBT_SCHEMA = "obt/2"  # obt/2 adds the ADR-0033 point-in-time and story columns
 PARTITION_GLOB = "parquet/articles/*/*/*.parquet"
@@ -320,8 +321,38 @@ def freshness(conn: sqlite3.Connection, ops_db: Path | None = None,
     return out
 
 
+def _publish_catalog(storage: LocalOneDriveStorageAdapter,
+                     source: Path | None = None) -> tuple[dict[str, Any] | None, bool]:
+    """Copy the live entity catalog next to the partitions when its content changed.
+
+    Consumers that rebuild or check the article prefix need the catalog the pipeline runs
+    on; the manifest records its SHA-256 so they can tell which one it is.
+
+    Args:
+        storage: Production storage adapter.
+        source: Catalog file; defaults to `entities.json` under the data root.
+
+    Returns:
+        Tuple of (catalog entry for the manifest or None when there is no catalog,
+        True when the file was written).
+    """
+    src = Path(source) if source else paths.entities_dir() / "entities.json"
+    if not src.is_file():
+        return None, False
+    data = src.read_bytes()
+    digest = hashlib.sha256(data).hexdigest()
+    entry = {"path": CATALOG, "size_bytes": len(data), "sha256": digest,
+             "source_modified_at": datetime.fromtimestamp(src.stat().st_mtime, VN_TZ).isoformat()}
+    current = storage.get_local_path(CATALOG)
+    if current is not None and current.is_file()             and hashlib.sha256(current.read_bytes()).hexdigest() == digest:
+        return entry, False
+    storage.write_atomic(CATALOG, data)
+    return entry, True
+
+
 def _write_manifest(conn: sqlite3.Connection, storage: LocalOneDriveStorageAdapter,
-                    reason: str, ops_db: Path | None = None) -> int:
+                    reason: str, ops_db: Path | None = None,
+                    catalog: dict[str, Any] | None = None) -> int:
     """Write `_manifest/latest.json` listing every partition, after all partitions are in place.
 
     Args:
@@ -329,6 +360,7 @@ def _write_manifest(conn: sqlite3.Connection, storage: LocalOneDriveStorageAdapt
         storage: Production storage adapter.
         reason: Trigger of the publish.
         ops_db: Operational database for the freshness block; None leaves the backlog unset.
+        catalog: Entity catalog entry from `_publish_catalog`; None omits the block.
 
     Returns:
         Number of articles listed.
@@ -342,7 +374,7 @@ def _write_manifest(conn: sqlite3.Connection, storage: LocalOneDriveStorageAdapt
             "total_partitions": len(files), "date_from": files[0]["day"] if files else None,
             "date_to": files[-1]["day"] if files else None,
             "obt_schema": OBT_SCHEMA, "columns": [f.name for f in LAKEHOUSE_ARTICLE_SCHEMA],
-            "freshness": freshness(conn, ops_db), "files": files}
+            "freshness": freshness(conn, ops_db), "catalog": catalog, "files": files}
     storage.write_atomic(MANIFEST, json.dumps(data, ensure_ascii=False, indent=1).encode("utf-8"))
     return total
 
@@ -407,9 +439,10 @@ def publish(ops_db: Path, *, target: str | Path | None = None, master_db: Path |
                         conn.commit()
                     except OSError as exc:
                         out.failed.append(f"{rel}: {exc}")
+                catalog, catalog_written = _publish_catalog(storage)
                 manifest_missing = not storage.exists(MANIFEST)
-                if out.written or out.deleted or manifest_missing:
-                    out.articles = _write_manifest(conn, storage, reason, ops_db)
+                if out.written or out.deleted or manifest_missing or catalog_written:
+                    out.articles = _write_manifest(conn, storage, reason, ops_db, catalog)
                     master_mod.set_meta(conn, "last_publish_at", now_vn_iso())
                     conn.commit()
                     out.status = "published"

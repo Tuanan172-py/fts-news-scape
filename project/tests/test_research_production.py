@@ -239,3 +239,34 @@ def test_express_needs_urgent_news_and_interval():
     assert _decide(_at(10, 0), done, last=_at(9, 50), urgent=3) is None
     assert _decide(_at(10, 30), done, last=_at(9, 50), urgent=0) is None
     assert _decide(_at(10, 30), done, last=_at(9, 50), urgent=2).reason == "express"
+
+
+def test_catalog_is_published_with_its_sha256(env):
+    """The live entity catalog travels with the partitions, its SHA-256 in the manifest (US-057)."""
+    import hashlib
+    cat = Path(os.environ["MONOCLE_DATA_DIR"]) / "entities" / "entities.json"
+    cat.parent.mkdir(parents=True, exist_ok=True)
+    cat.write_bytes(b'{"entities": []}')
+    out = _publish(env)
+    assert out.status == "published", out.message
+    assert production.CATALOG in _files(env["target"])
+    assert (env["target"] / production.CATALOG).read_bytes() == cat.read_bytes()
+    man = json.loads((env["target"] / production.MANIFEST).read_text(encoding="utf-8"))
+    assert man["catalog"]["sha256"] == hashlib.sha256(cat.read_bytes()).hexdigest()
+    assert man["catalog"]["path"] == production.CATALOG
+
+    manifest_mtime = (env["target"] / production.MANIFEST).stat().st_mtime_ns
+    assert _publish(env).status == "unchanged"
+    assert (env["target"] / production.MANIFEST).stat().st_mtime_ns == manifest_mtime
+
+    cat.write_bytes(b'{"entities": [1]}')
+    assert _publish(env).status == "published"
+    man = json.loads((env["target"] / production.MANIFEST).read_text(encoding="utf-8"))
+    assert man["catalog"]["sha256"] == hashlib.sha256(b'{"entities": [1]}').hexdigest()
+
+
+def test_no_catalog_leaves_the_manifest_block_empty(env):
+    out = _publish(env)
+    assert out.status == "published", out.message
+    man = json.loads((env["target"] / production.MANIFEST).read_text(encoding="utf-8"))
+    assert man["catalog"] is None
