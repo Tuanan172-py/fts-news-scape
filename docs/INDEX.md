@@ -96,6 +96,9 @@ any governed document; open a body only when its summary is relevant.
 | [US-053](stories/US-053-lakehouse-plugin-lens-fixes-and-source-noise-guards.md) | implemented | Lakehouse plugin lens fixes and source noise guards | The market-intel lenses read the Production lakehouse by default, stop reporting false acceleration and buzz after the entity regime change, and the L1 matcher and output validator reject known noise. |
 | [US-054](stories/US-054-scoped-re-analysis-requests-for-already-analysed-articles.md) | implemented | Scoped re-analysis requests for already-analysed articles | An operator can request a fresh analysis for articles that already passed the DoD, while the old result stays published until a better one replaces it. |
 | [US-055](stories/US-055-point-in-time-export-story-ids-and-freshness.md) | implemented | Point-in-time export, story ids and freshness for Research users | Research users query production news as it was known at any minute, count stories by content cluster, see holiday-correct sessions and data freshness, get faster lenses, and receive urgent stories on Telegram. |
+| [US-056](stories/US-056-test-safety-no-test-writes-live-operational-data.md) | planned | Test safety, no test writes live operational data | The test suite no longer writes the live monocle.db or ops.db, and tests that read live data skip unless the production host flag is set. |
+| [US-057](stories/US-057-adr-0027-and-the-entity-catalog-on-fra.md) | planned | ADR-0027 and the entity catalog on FRA - Data news | The entities column on FRA - Data/news carries only ids the model named, the article prefix is rebuilt from the live catalog, and the catalog is published with its SHA-256. |
+| [US-058](stories/US-058-article-compact-v3-code-behind-a-flag-and.md) | planned | Article-compact-v3 code behind a flag and agy cost sample | Production code can run article-compact-v3 behind a flag that stays off, writes the x and provenance columns under obt/3, and has a measured agy cost. |
 
 ## proposal
 
@@ -118,6 +121,7 @@ any governed document; open a body only when its summary is relevant.
 | ID | Status | Title | Summary |
 |---|---|---|---|
 | [PLN-20261008-0923-us039-handoff-remaining-work](../plans/20261008-0923-us039-handoff-remaining-work/plan.md) | executing | US-039 handoff, remaining knowledge framework work | Compact state of the ADR-0021 knowledge framework after G1-G4, and the work packages another agent can pick up without this conversation. |
+| [PLN-20261123-1510-production-upgrade-to-article-compact-v3-and-sync](../plans/20261123-1510-production-upgrade-to-article-compact-v3-and-sync/plan.md) | approved | Production upgrade to article-compact-v3 and sync M1 for fpa-toolkit | Approved lean plan to the M1 sync SHA on 2026-11-27, run directly on FRA - Data/news (ADR-0027 live, prefix and catalog, test safety, v3 code with flag off, agy cost sample), with gates, reviewers and a split rule. |
 
 ## fact
 
@@ -145,7 +149,7 @@ any governed document; open a body only when its summary is relevant.
 | [FACT-ops-daemon-scheduler-pitfalls](knowledge/facts/ops-daemon-scheduler-pitfalls.md) | active | ops_daemon Task Scheduler pitfalls | ops_daemon only behaves under Task Scheduler with priority 4, suspended job attach, resolve_agy, a localhost control room without SO_REUSEADDR, and levels L0 and L1 only. |
 | [FACT-ops-operator-decisions-2026-10-01](knowledge/facts/ops-operator-decisions-2026-10-01.md) | active | Operator decisions for ops_daemon on 2026-10-01 | The operator chose Telegram, full article text to every provider, running only while the machine is on, no per-wave approval, and per-user delivery separate from waves. |
 | [FACT-prohibition-needs-zero-token-command](knowledge/facts/prohibition-needs-zero-token-command.md) | active | A prohibition needs a zero-token command | Forbidding agents to probe for something only works when a zero-token command answers that exact question; otherwise the rule is advice. |
-| [FACT-sqlite-correlated-range-index](knowledge/facts/sqlite-correlated-range-index.md) | active | A correlated range on an indexed timestamp can pick the wrong SQLite index | In a correlated subquery like `g.article_id = r.article_id AND g.dod_pass = 1 AND g.created_at >= r.requested_at`, SQLite chose the (dod_pass, created_at) index and scanned every newer output per outer row; prefix the non-key columns with unary `+` to keep it on the article_id index. |
+| [FACT-sqlite-correlated-range-index](knowledge/facts/sqlite-correlated-range-index.md) | active | A correlated range on an indexed timestamp can pick the wrong SQLite index | In a correlated subquery that filters by id and by a timestamp range, SQLite chose the range index and scanned all newer rows per outer row; unary `+` on the non-key columns fixes the plan. |
 | [FACT-sqlite-failed-write-stalls-long-lived-connection](knowledge/facts/sqlite-failed-write-stalls-long-lived-connection.md) | active | A failed write on a long-lived SQLite connection stalls capture | After one `database is locked` error, a long-lived Python sqlite3 connection keeps its deferred transaction open, so every later write fails at once until the process restarts; roll back on error. |
 | [FACT-sqlite-readonly-needs-real-write](knowledge/facts/sqlite-readonly-needs-real-write.md) | active | SQLite read-only detection needs a real write | BEGIN IMMEDIATE succeeds on a read-only SQLite file, so a write probe MUST perform a real write such as CREATE TABLE and then ROLLBACK. |
 | [FACT-tests-must-not-write-operational-db](knowledge/facts/tests-must-not-write-operational-db.md) | active | Tests must not write the operational DB | The full pytest run writes DDL to the operational DB through test_cli_entrypoints.py, and simulated wave output once landed in it, so tests and simulations MUST use a temporary DB. |
@@ -176,7 +180,6 @@ any governed document; open a body only when its summary is relevant.
 | [None](../.agents/skills/gold-financial-analyst/SKILL.md) | None |  |  |
 | [None](../.agents/skills/harness-auditor/SKILL.md) | None |  |  |
 | [None](../.agents/skills/how/SKILL.md) | None |  |  |
-| [None](../.agents/skills/issue-intake-strategist/SKILL.md) | None |  |  |
 | [None](../.agents/skills/l1-entity-matcher/SKILL.md) | None |  |  |
 | [None](../.agents/skills/materiality-triage/SKILL.md) | None |  |  |
 | [None](../.agents/skills/multi-agent-orchestrator-governance/SKILL.md) | None |  |  |
