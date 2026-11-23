@@ -212,12 +212,46 @@ def audit_and_truncate_wal(db_file: Path) -> dict[str, Any]:
     }
 
 
-def run_full_audit(wave_id: str = "W_BKL_01_10301528", *, as_json: bool = False) -> tuple[bool, dict[str, Any]]:
+def audit_integrity_readonly(db_file: Path) -> dict[str, Any]:
+    """Run PRAGMA integrity_check on a read-only connection, without any checkpoint.
+
+    The read-only counterpart of `audit_and_truncate_wal` for checks against a live
+    database: it never writes, so the WAL is reported as found, not truncated.
+
+    Args:
+        db_file: Path to the SQLite file.
+
+    Returns:
+        Audit dictionary shaped like `audit_and_truncate_wal`, with `checkpoint` None
+        and `clean_wal_truncated` None.
+    """
+    conn = sqlite3.connect(f"file:{db_file.as_posix()}?mode=ro", uri=True, timeout=60.0)
+    try:
+        integrity_result = conn.execute("PRAGMA integrity_check").fetchone()[0]
+    finally:
+        conn.close()
+    wal_file = db_file.parent / f"{db_file.name}-wal"
+    shm_file = db_file.parent / f"{db_file.name}-shm"
+    return {
+        "integrity_check": integrity_result,
+        "checkpoint": None,
+        "wal_file_exists": wal_file.exists(),
+        "wal_size_bytes": wal_file.stat().st_size if wal_file.exists() else 0,
+        "shm_file_exists": shm_file.exists(),
+        "shm_size_bytes": shm_file.stat().st_size if shm_file.exists() else 0,
+        "clean_wal_truncated": None,
+    }
+
+
+def run_full_audit(wave_id: str = "W_BKL_01_10301528", *, as_json: bool = False,
+                   read_only: bool = False) -> tuple[bool, dict[str, Any]]:
     """Run full audit for Milestones 4 and 5 and print forensic report.
 
     Args:
         wave_id: Identifier of wave to audit.
         as_json: If True, suppress prose and print JSON output only.
+        read_only: If True, check integrity without checkpointing or truncating the WAL,
+            so the audit is safe against a live database.
 
     Returns:
         Tuple of (success boolean, report dictionary).
@@ -233,17 +267,17 @@ def run_full_audit(wave_id: str = "W_BKL_01_10301528", *, as_json: bool = False)
     # 3. DoD Quality Gate in agent_outputs
     db_audit = audit_agent_outputs_table(db_file, wave_id)
 
-    # 4. PRAGMA integrity_check & wal_checkpoint(TRUNCATE)
-    wal_audit = audit_and_truncate_wal(db_file)
+    # 4. PRAGMA integrity_check, then wal_checkpoint(TRUNCATE) unless read-only
+    wal_audit = audit_integrity_readonly(db_file) if read_only else audit_and_truncate_wal(db_file)
+    wal_ok = wal_audit["integrity_check"] == "ok" and (
+        read_only or (wal_audit["checkpoint"]["busy"] == 0 and wal_audit["clean_wal_truncated"]))
 
     success = (
         path_audit["valid"]
         and v2_audit["adherence_pct"] == 100.0
         and db_audit["overall_rate_pct"] >= 95.0
         and (not db_audit.get("wave_metrics") or db_audit["wave_metrics"]["wave_dod_pass_rate"] >= 95.0)
-        and wal_audit["integrity_check"] == "ok"
-        and wal_audit["checkpoint"]["busy"] == 0
-        and wal_audit["clean_wal_truncated"]
+        and wal_ok
     )
 
     report = {
@@ -290,8 +324,11 @@ def run_full_audit(wave_id: str = "W_BKL_01_10301528", *, as_json: bool = False)
     print("\n[4] DATABASE INTEGRITY & WAL TRUNCATE CHECKPOINT")
     print(f"  PRAGMA integrity_check: {wal_audit['integrity_check']}")
     cp = wal_audit["checkpoint"]
-    print(f"  Checkpoint busy status: {cp['busy']} (0 = no lock contention)")
-    print(f"  Log pages / checkpntd : {cp['log_pages']} / {cp['checkpointed_pages']}")
+    if cp is None:
+        print("  Checkpoint            : skipped (read-only)")
+    else:
+        print(f"  Checkpoint busy status: {cp['busy']} (0 = no lock contention)")
+        print(f"  Log pages / checkpntd : {cp['log_pages']} / {cp['checkpointed_pages']}")
     print(f"  WAL file size         : {wal_audit['wal_size_bytes']} bytes (Truncated = {wal_audit['clean_wal_truncated']})")
     print(f"  SHM file size         : {wal_audit['shm_size_bytes']} bytes")
 
@@ -310,8 +347,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--wave", default="W_BKL_01_10301528", help="Wave ID to audit")
     parser.add_argument("--json", action="store_true", help="Print output in JSON format")
+    parser.add_argument("--read-only", action="store_true",
+                        help="Check integrity without checkpointing or truncating the WAL")
     args = parser.parse_args()
-    success, _ = run_full_audit(args.wave, as_json=args.json)
+    success, _ = run_full_audit(args.wave, as_json=args.json, read_only=args.read_only)
     sys.exit(0 if success else 1)
 
 

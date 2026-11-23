@@ -91,3 +91,27 @@ sqlite3.connect = _guarded_connect
 def fast_tests(monkeypatch):
     """Disable backoff sleep during tests to run suite instantaneously."""
     monkeypatch.setattr(SourceBackoff, "before_fetch", lambda self, domain: None)
+
+
+# Tests that read live production data (US-056). They run only on the production host
+# with NEWS_SCAPE_PRODUCTION_HOST=1 and the live DB present; elsewhere they skip, so the
+# suite passes on Linux and in fpa-toolkit. A marked test may only read live data.
+_LIVE_DB = Path(r"C:\data\news-scape\monocle.db")
+
+
+def pytest_configure(config):
+    """Register the `production_host` marker."""
+    config.addinivalue_line(
+        "markers",
+        "production_host: reads live production data; runs only with NEWS_SCAPE_PRODUCTION_HOST=1",
+    )
+
+
+def pytest_collection_modifyitems(config, items):
+    """Skip `production_host` tests unless the production host flag is set and the live DB exists."""
+    if os.environ.get("NEWS_SCAPE_PRODUCTION_HOST") == "1" and _LIVE_DB.exists():
+        return
+    skip = pytest.mark.skip(reason="production_host: set NEWS_SCAPE_PRODUCTION_HOST=1 on the production host")
+    for item in items:
+        if "production_host" in item.keywords:
+            item.add_marker(skip)

@@ -12,7 +12,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from src.core.stdio import force_utf8_stdio
 from src.ops.config import resolve_paths
-from src.ops.store import OpsStore, RELEASED_WAVE_STATUSES
+from src.ops.store import RELEASED_WAVE_STATUSES
 
 force_utf8_stdio()
 
@@ -59,9 +59,13 @@ def check_ops_queue() -> bool:
         print("\n=== RESERVATION QUEUE STATUS ===")
         print(f"  Unreleased reserved articles (SQL): {unreleased_articles:,}")
 
-        store = OpsStore(paths.ops_db, log_dir=paths.log_dir)
-        store_reserved = store.reserved_article_ids()
-        print(f"  Store reserved_article_ids() count : {len(store_reserved):,}")
+        # Same query as OpsStore.reserved_article_ids(), on the read-only connection:
+        # building an OpsStore runs PRAGMA and CREATE statements on the live ops.db.
+        store_reserved = {r[0] for r in c.execute(
+            "SELECT DISTINCT a.article_id FROM ops_wave_articles a "
+            "JOIN ops_waves w ON w.wave_id = a.wave_id "
+            f"WHERE w.status NOT IN ({marks})", RELEASED_WAVE_STATUSES).fetchall()}
+        print(f"  Reserved article ids (read-only)   : {len(store_reserved):,}")
 
         if unreleased_articles == 0 and len(store_reserved) == 0:
             print("\nVERDICT: QUEUE UNBLOCKED (0 reserved articles). READY FOR PROCESSING.")

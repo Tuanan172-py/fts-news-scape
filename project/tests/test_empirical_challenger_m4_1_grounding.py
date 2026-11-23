@@ -44,6 +44,7 @@ def clean_ops_env() -> dict[str, str]:
     return env
 
 
+@pytest.mark.production_host
 @pytest.mark.parametrize("wave_id", EXECUTED_WAVES)
 def test_verify_wave_citations_cli_verdict(wave_id: str) -> None:
     """Verify that verify_wave_citations CLI returns APPROVE with 100% grounding and 0% copy."""
@@ -81,6 +82,7 @@ def test_verify_wave_citations_cli_verdict(wave_id: str) -> None:
     assert imp.get("avg_length", 0) >= 100
 
 
+@pytest.mark.production_host
 def test_no_stubs_or_placeholders_in_wave_agent_outputs() -> None:
     """Audit all records in agent_outputs across executed waves for stubs or placeholders."""
     code = (
@@ -125,6 +127,7 @@ def test_no_stubs_or_placeholders_in_wave_agent_outputs() -> None:
     assert "STUB_AUDIT_OK" in proc.stdout
 
 
+@pytest.mark.production_host
 def test_market_implication_depth_and_anti_boilerplate() -> None:
     """Assert all implications have length >= 40 and zero boilerplate across all wave outputs."""
     code = (
@@ -169,6 +172,7 @@ def test_market_implication_depth_and_anti_boilerplate() -> None:
     assert "IMPLICATION_AUDIT_OK" in proc.stdout
 
 
+@pytest.mark.production_host
 def test_semantic_enums_and_group_codes() -> None:
     """Verify sentiment and time_sensitivity conform to valid enum specifications."""
     code = (

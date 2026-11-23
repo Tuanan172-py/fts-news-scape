@@ -7,6 +7,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 TARGET_WAVE = "W_BKL_01_11021118"
 
@@ -27,6 +29,7 @@ def clean_ops_env() -> dict[str, str]:
     return env
 
 
+@pytest.mark.production_host
 def test_verify_ops_queue_cli_unblocked() -> None:
     """Verify that verify_ops_queue CLI exits 0 and reports zero reserved articles."""
     script_path = PROJECT_ROOT / "scripts" / "maintenance" / "verify_ops_queue.py"
@@ -42,18 +45,27 @@ def test_verify_ops_queue_cli_unblocked() -> None:
     )
     assert proc.returncode == 0, f"verify_ops_queue failed:\n{proc.stderr}"
     assert "Unreleased reserved articles (SQL): 0" in proc.stdout
-    assert "Store reserved_article_ids() count : 0" in proc.stdout
+    assert "Reserved article ids (read-only)   : 0" in proc.stdout
     assert "VERDICT: QUEUE UNBLOCKED (0 reserved articles). READY FOR PROCESSING." in proc.stdout
 
 
+@pytest.mark.production_host
 def test_ops_store_reservation_queue_zero_held_in_ops_db() -> None:
-    """Verify via clean subprocess that OpsStore returns zero reserved articles."""
+    """Verify via clean subprocess that no article is held by an unreleased wave in ops.db.
+
+    Runs the query of OpsStore.reserved_article_ids() on a read-only connection: building an
+    OpsStore runs PRAGMA and CREATE statements, which would write the live ops.db (US-056).
+    """
     code = (
         "from src.core.stdio import force_utf8_stdio; force_utf8_stdio()\n"
-        "from src.ops.config import resolve_paths; from src.ops.store import OpsStore\n"
+        "import sqlite3; from src.ops.config import resolve_paths\n"
+        "from src.ops.store import RELEASED_WAVE_STATUSES\n"
         "paths = resolve_paths()\n"
-        "store = OpsStore(paths.ops_db, log_dir=paths.log_dir)\n"
-        "reserved = store.reserved_article_ids()\n"
+        "conn = sqlite3.connect(f'file:{paths.ops_db.as_posix()}?mode=ro', uri=True)\n"
+        "marks = ','.join('?' * len(RELEASED_WAVE_STATUSES))\n"
+        "reserved = {r[0] for r in conn.execute('SELECT DISTINCT a.article_id FROM ops_wave_articles a '\n"
+        "    'JOIN ops_waves w ON w.wave_id = a.wave_id WHERE w.status NOT IN (' + marks + ')',\n"
+        "    RELEASED_WAVE_STATUSES).fetchall()}\n"
         "assert len(reserved) == 0, f'Reserved articles count is {len(reserved)}'\n"
         "print('STORE_RESERVED_OK', len(reserved))\n"
     )
@@ -71,6 +83,7 @@ def test_ops_store_reservation_queue_zero_held_in_ops_db() -> None:
     assert "STORE_RESERVED_OK 0" in proc.stdout
 
 
+@pytest.mark.production_host
 def test_wave_status_marked_done_in_ops_db() -> None:
     """Verify that wave W_BKL_01_11021118 is marked DONE and articles are cataloged."""
     code = (
@@ -130,6 +143,7 @@ def test_monocle_db_integrity_and_journal_mode(tmp_path: Path) -> None:
     assert res["wal_size_bytes"] == 0
 
 
+@pytest.mark.production_host
 def test_ops_db_integrity_and_journal_mode() -> None:
     """Verify PRAGMA integrity_check and journal mode on ops.db."""
     code = (
@@ -159,6 +173,7 @@ def test_ops_db_integrity_and_journal_mode() -> None:
     assert "OPS_INTEGRITY_OK ok wal" in proc.stdout
 
 
+@pytest.mark.production_host
 def test_wave_articles_ingested_dod_passed_in_monocle() -> None:
     """Verify that articles in wave W_BKL_01_11021118 satisfy DoD pass requirements."""
     code = (
@@ -192,6 +207,7 @@ def test_wave_articles_ingested_dod_passed_in_monocle() -> None:
     assert "WAVE_DOD_OK" in proc.stdout
 
 
+@pytest.mark.production_host
 def test_concurrent_read_stress_under_multi_threading() -> None:
     """Stress test concurrent reader connections to monocle.db and ops.db."""
     code = (

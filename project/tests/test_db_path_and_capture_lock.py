@@ -37,7 +37,7 @@ def test_duong_dan_tuong_doi_khong_phu_thuoc_cwd(no_db_env, tmp_path, monkeypatc
 @pytest.mark.parametrize("raw", [
     "data/monocle.db",
     "src/data/monocle.db",
-    r"C:\Users\anpt\OneDrive - fpts.com.vn\bat_ky\monocle.db",
+    r"C:\Users\someone\OneDrive - fpts.com.vn\bat_ky\monocle.db",
 ])
 def test_db_trong_onedrive_hoac_kho_ma_bi_tu_choi(no_db_env, raw):
     with pytest.raises(UnsafeDatabasePathError, match="MONOCLE_DB_PATH"):

@@ -41,6 +41,7 @@ def clean_ops_env() -> dict[str, str]:
     return env
 
 
+@pytest.mark.production_host
 def test_verify_ops_queue_cli_unblocked():
     """Verify that verify_ops_queue.py confirms the queue is unblocked with 0 reserved articles."""
     cmd = [
@@ -59,10 +60,11 @@ def test_verify_ops_queue_cli_unblocked():
     )
     assert proc.returncode == 0, f"verify_ops_queue.py failed with code {proc.returncode}:\n{proc.stderr}"
     assert "Unreleased reserved articles (SQL): 0" in proc.stdout
-    assert "Store reserved_article_ids() count : 0" in proc.stdout
+    assert "Reserved article ids (read-only)   : 0" in proc.stdout
     assert "QUEUE UNBLOCKED (0 reserved articles). READY FOR PROCESSING." in proc.stdout
 
 
+@pytest.mark.production_host
 def test_wave_w_bkl_01_is_marked_done_in_ops_db():
     """Verify via subprocess query that wave W_BKL_01_10301528 is marked DONE in production ops.db."""
     code = (
@@ -88,6 +90,7 @@ def test_wave_w_bkl_01_is_marked_done_in_ops_db():
     assert f"STATUS_OK {WAVE_DONE_ID} DONE" in proc.stdout
 
 
+@pytest.mark.production_host
 def test_manifest_priority_queue_ordering():
     """Verify that packed wave manifest maintains Tier 1 priority over Tier 2/3."""
     manifest_path = Path(r"C:\data\news-scape\agent_tasks\article\wave_W_BKL_01_10301528.json")

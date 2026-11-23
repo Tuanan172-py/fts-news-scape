@@ -77,11 +77,11 @@ def test_v2_lean_schema_validation_synthetic_invariants():
 
 def test_database_path_isolation_synthetic_logic():
     """Verify that path isolation correctly identifies OneDrive/SharePoint paths vs local paths."""
-    onedrive_path = Path(r"C:\Users\anpt\OneDrive - Corporate\news-scape\monocle.db")
+    onedrive_path = Path(r"C:\Users\someone\OneDrive - Corporate\news-scape\monocle.db")
     audit_od = audit_operational_db_path(onedrive_path)
     assert audit_od["isolated_from_onedrive"] is False
 
-    sharepoint_path = Path(r"C:\Users\anpt\SharePoint\news-scape\monocle.db")
+    sharepoint_path = Path(r"C:\Users\someone\SharePoint\news-scape\monocle.db")
     audit_sp = audit_operational_db_path(sharepoint_path)
     assert audit_sp["isolated_from_onedrive"] is False
 
@@ -111,6 +111,7 @@ def test_wal_checkpoint_truncate_synthetic(tmp_path):
         conn.close()
 
 
+@pytest.mark.production_host
 def test_operational_cli_audit_m4_m5():
     """Empirically audit operational monocle.db and wave W_BKL_01_10301528 via audit_m4_m5_integrity.py."""
     cmd = [
@@ -119,6 +120,7 @@ def test_operational_cli_audit_m4_m5():
         "--wave",
         WAVE_ID,
         "--json",
+        "--read-only",
     ]
     proc = subprocess.run(
         cmd,
@@ -160,17 +162,27 @@ def test_operational_cli_audit_m4_m5():
     # [4] Integrity & WAL Checkpoint
     wal_info = report["database_integrity_and_wal"]
     assert wal_info["integrity_check"] == "ok"
-    assert wal_info["checkpoint"]["busy"] == 0
-    assert wal_info["clean_wal_truncated"] is True
-    assert wal_info["wal_size_bytes"] == 0
+    # --read-only: the live WAL is checked, never checkpointed or truncated (US-056).
+    assert wal_info["checkpoint"] is None
+    assert wal_info["clean_wal_truncated"] is None
 
 
+@pytest.mark.production_host
 def test_operational_cli_db_snapshot_check():
-    """Verify that db_snapshot.py --check confirms snapshot readiness and integrity ok."""
+    """Verify that db_snapshot.py --check confirms snapshot readiness and integrity ok.
+
+    `--check` only reads an existing snapshot; when it is missing the script creates one
+    under the live data directory, so the test skips instead (US-056).
+    """
+    snapshot = Path(r"C:\data\news-scape\snapshots\monocle_review.db")
+    if not snapshot.exists():
+        pytest.skip("no snapshot to check; creating one would write the live data directory")
     cmd = [
         sys.executable,
         str(PROJECT_ROOT / "scripts" / "db_snapshot.py"),
         "--check",
+        "--out",
+        str(snapshot),
     ]
     proc = subprocess.run(
         cmd,

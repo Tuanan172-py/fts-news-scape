@@ -86,6 +86,7 @@ def test_anti_copy_gate_synthetic_invariants():
 OPERATIONAL_WAVES = ["W_BKL_01_10301528", "W_BKL_01_11021118"]
 
 
+@pytest.mark.production_host
 @pytest.mark.parametrize("wave_id", OPERATIONAL_WAVES)
 def test_verify_wave_citations_cli_operational_wave(wave_id: str):
     """Empirically audit operational backlog waves via verify_wave_citations.py CLI.
@@ -132,6 +133,7 @@ def test_verify_wave_citations_cli_operational_wave(wave_id: str):
     assert implications["min_length"] >= 40
 
 
+@pytest.mark.production_host
 @pytest.mark.parametrize("wave_id", OPERATIONAL_WAVES)
 def test_article_run_verify_cli_operational_wave(wave_id: str):
     """Verify that article_run.py verify mode reports >= 99% coverage for operational waves.
