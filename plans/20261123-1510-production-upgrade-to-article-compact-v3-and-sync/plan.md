@@ -20,7 +20,7 @@ evidence:
   - "path: project/src/research_db/production.py day_records (builds entities from article_entities, bypasses lakehouse ingest)"
   - "path: project/tests/test_empirical_challenger_m2_2_wave_concurrency.py:108 (truncates the live WAL from a subprocess, outside the conftest sqlite guard)"
   - "metric: ops.db, agy DONE articles per day 2026-11-16..23: 2003, 5497, 6077, 685, 794, (none 21-22), 1183; waves of ~60 articles take 2-5 min"
-  - "operator: 2026-11-23 scope cut to M1, reviewers from the agy model family, catalog published in M1, 01:00 publish of 2026-11-26 accepted as the clean-publish evidence"
+  - "operator: 2026-11-23 scope cut to M1, reviewers from the agy model family, catalog published in M1, a clean day 2026-11-25 on FRA - Data/news accepted as the clean-publish evidence"
   - "operator: 2026-11-23 the project runs directly on FRA - Data/news (sandbox retired as a target); agy quota limits models to gemini-4-hydrogen and gemini-3.8-flash; G0 windows and class (c) handling approved as proposed"
   - "metric: ops.db 2026-11-23, research.published about every 30 min with 0 partition errors; sandbox publish.ok once a day"
 summary: Approved lean plan to the M1 sync SHA on 2026-11-27, run directly on FRA - Data/news (ADR-0027 live, prefix and catalog, test safety, v3 code with flag off, agy cost sample), with gates, reviewers and a split rule.
@@ -60,7 +60,7 @@ FRA - Data/news is the lakehouse that keeps updating, and users read it through 
 ## Decisions
 
 - D1. Keep ADR-0027: `entities` carries only model-named ids; `CODE_ONLY` stays in `intent_code`. It applies to FRA - Data/news (P3 task 2) and, through the copied files, to the sandbox path. ADR-0031.D4 is amended to match.
-- D2. One-way flow: `dev/us038` → `import/clean-<date>` → news-scraper `main`. Never merge fpa-toolkit `main` or news-scraper `main` back into `dev/us038`. For M1 only, `import/clean-20261127` is the `dev/us038` head plus a merge of the P5 branch. P5 reaches `dev/us038` at M3.
+- D2. One-way flow: `dev/us038` → `import/clean-<date>` → news-scraper `main`. Never merge fpa-toolkit `main` or news-scraper `main` back into `dev/us038`. For M1 only, `import/clean-20261127` is the `dev/us038` head plus a merge of the P5 branch. P5 reaches `dev/us038` at M3 by a merge of that same branch, never by cherry-pick or rebase. Every later fix to P5 is committed on the P5 branch, so the next sync sees each change once.
 - D3. Port by whole-file copy from `main`. Every other `main` change a copied file brings is listed and checked (P2).
 - D4. `x` is stored as a nullable JSON string. Four new columns go last in `LAKEHOUSE_ARTICLE_SCHEMA`: `x`, `contract_version`, `rubric_version`, `prompt_hash`. `processed_at`, `runner` and `model` reuse `analyzed_at`, `agent_provider` and `model_used`. `OBT_SCHEMA` moves `obt/2` → `obt/3`; old partitions read NULL.
 - D5. v3 replaces the v2 pass (no extra run), stays inside the L1 batch limit, and is off by default behind one config flag.
@@ -120,11 +120,11 @@ Reviews copy the method of the v3 rubric evaluation (fpa-toolkit `eval-u12-rubri
 | P0 | Approval and intake | tiny | 1 h | — | Mon 23 PM | Stories open, plan committed, `dev/us038` pushed |
 | P1a | WAL test hotfix | high-risk | 1 h | P0 | Mon 23 PM | No test writes the live `monocle.db` |
 | P2 | Port inventory | normal | 0.5 d | P0 | Mon 23 PM - Tue 24 12:00 | Every incoming `main` change classified |
-| P1b | Test safety, rest | high-risk | 0.5 d | P1a | Tue 24 | Guard covers subprocesses; markers set |
+| P1b | Test safety, rest | high-risk | 0.5 d | P1a | Tue 24 | Markers set; no marked test writes live data |
 | P3 | ADR-0027 on FRA - Data/news | high-risk | 0.5 d | P1a, P2 | Tue 24 | HSG test without xfail; replay within D10 |
 | P4 | Prefix files and catalog publish | normal | 0.5 d | P2 | Tue 24 PM | `--check-prefix` green; catalog in the FRA - Data/news manifest |
 | P5 | v3 code, `x` columns, flag | high-risk | 2 d | P1a, P2 | Tue 24 - Thu 26 12:00 | v2 path unchanged with flag off |
-| P6 | ADR-0027 live | high-risk | 0.5 d | R1 | Wed 25 13:00-15:00 | Two waves DONE; day 2026-11-25 published clean by 01:00 Thu 26 |
+| P6 | ADR-0027 live | high-risk | 0.5 d | R1 | Wed 25 13:00-15:00 | Two waves DONE; 0 partition errors from restart to end of 25/11 |
 | P7 | `agy` cost sample | high-risk | 1 d | P6, R2 | Thu 26 14:00 - Fri 27 10:00 | Cost report |
 | P8 | M1 package and SHA | normal | 0.5 d | P1-P7 | Fri 27 | SHA posted by 17:00 |
 
@@ -160,14 +160,15 @@ Evidence: _(implementer fills in)_
 
 Tasks:
 1. Cherry-pick `86b1e1a` (PARKED fixture, `min_free_gb = 0`).
-2. Extend the conftest guard to subprocesses: a `sitecustomize.py` on the `PYTHONPATH` that conftest sets, applying the same `_is_protected` check. Also refuse `open` in a write mode under the protected roots.
+2. Remove the remaining live writes in marked tests. `test_ops_store_reservation_queue_zero_held_in_ops_db` builds `OpsStore(paths.ops_db)` in a subprocess, which runs `PRAGMA journal_mode=WAL` and `executescript(SCHEMA)` on the live `ops.db`. Replace it with a `mode=ro` query. List the CLI scripts run through `clean_ops_env()` (`test_empirical_challenger_m2.py`) and confirm each only reads, or mark and stub it.
 3. Register a `production_host` marker in `pytest.ini`. A marked test runs only when `NEWS_SCAPE_PRODUCTION_HOST=1` and the live DB exists, otherwise it skips with a reason. A marked test only reads.
 4. Mark the tests that read a live path in the five challenger files (`test_empirical_challenger_m2.py`, `_m2_2_wave_concurrency.py`, `_m2_ops_queue.py`, `_m3_m5.py`, `_m4_1_grounding.py`).
 5. Remove the personal OneDrive and SharePoint paths (`test_empirical_challenger_m3_m5.py:80-84`); resolve paths through `src.core.paths`.
+6. Optional, only if Tuesday has time: extend the conftest guard to subprocesses through a `sitecustomize.py` on the `PYTHONPATH` that conftest sets.
 
 Acceptance:
-- [ ] A regression test shows a subprocess write and an `open(..., "w")` under a protected root both fail under pytest.
-- [ ] Full suite passes with the guard; result recorded in `docs/TEST_MATRIX.md`.
+- [ ] In the five challenger files, every `sqlite3.connect` on a live path uses `mode=ro`, and no `OpsStore(` runs on a live path (`grep`).
+- [ ] Full suite passes; result recorded in `docs/TEST_MATRIX.md`.
 - [ ] `grep -rn "Users\\\\anpt" project/` returns nothing.
 - [ ] With `NEWS_SCAPE_PRODUCTION_HOST` unset, the five challenger files skip their live tests.
 
@@ -262,7 +263,7 @@ Tasks:
 Acceptance:
 - [ ] Two waves DONE, no new failure class in traces.
 - [ ] Before/after numbers recorded.
-- [ ] Day 2026-11-25 is published clean on FRA - Data/news by 01:00 on Thu 26 (operator's step 3 in issue #9). Every `research.published` event after the restart reports 0 partition errors, and the manifest lists partition 2026-11-25. The day mixes rows from before and after the restart; the operator accepts it as the evidence.
+- [ ] Clean publish (operator's step 3 in issue #9), one criterion on FRA - Data/news: every `research.published` event from the restart to the end of 2026-11-25 reports 0 partition errors. The day mixes rows from before and after the restart; the operator accepts it as the evidence.
 - [ ] The FRA - Data/news manifest lists `entities.json` with the SHA-256 from P4.
 
 Evidence: _(operator fills in)_
@@ -275,10 +276,11 @@ Tasks:
 1. Set `NEWS_SCAPE_RESEARCH_DB_DIR` and `NEWS_SCAPE_PUBLISH_DIR` to temp directories (safety rule 10). Pick N ≈ 400 articles from DONE waves opened after the P6 restart and before Thu 26 12:00, stratified by source in proportion to live volume. Copy them read-only into the temp directory.
 2. Run v3 through `agy` (`gemini-3.8-flash-low`, the production runner) in batches of the live wave size, at the daemon's concurrency, inside the L1 batch limit.
 3. From the agent span attrs (`usage.input_tokens`, `output_tokens`, `total_tokens`, `latency_s`, `runner_status`, `attempts`) and repair steps: per-article tokens, time per article, contract failure, repair and retry rates, for v2 and v3.
+   Tokens are the primary measure. Time per article is a reference only: v2 comes from live daemon waves, and v3 runs as a separate batch beside the running daemon.
 4. Project to one day at the measured volume and at the 2026-11-18 peak (6,077 articles); state N, the host, the model and the spend.
 
 Acceptance:
-- [ ] Report with N, source spread, per-article and per-day figures at both volumes, failure rates, host and spend.
+- [ ] Report with N, source spread, per-article and per-day figures at both volumes, failure rates, host and spend; tokens marked primary and time marked as reference, with the measurement conditions.
 - [ ] No write to the live data directory (guard from P1b; temp `MONOCLE_DATA_DIR`).
 - [ ] Breaker stayed `CLOSED` and no live wave ended `PARKED`, or the stop is recorded.
 
@@ -295,6 +297,7 @@ Tasks:
 4. Push to `fpa`. Draft one message on issue #10 with:
    - the four items DucNN asked for: files changed, tests run and results, files changed on both sides, decisions needed;
    - the P7 report; v3 stays off until M3; the HSG xfail can be removed; ADR-0027 is `accepted`;
+   - ADR-0027 coverage: the `keep_model_entities` calls in `ingest.py` and `consolidator.py` do not reach FRA - Data/news, because `research_db/production.py` builds `entities` without `ingest`. P3 adds the call there, which is why `production.py` changes in this sync;
    - one line each on side threads. Issue #8: catalog published to FRA - Data/news with its SHA-256; no external dropzone producer, since `dev_id` is the analysis runner name. PR #7 and issue #5: content now in production through P3, so both can close.
 5. Post after "gửi".
 
@@ -315,7 +318,7 @@ Evidence: _(implementer fills in)_
 ## Verification
 
 - Each phase: touched test files, then one full-suite run before its review, recorded in `docs/TEST_MATRIX.md`.
-- Data safety: the P1b guard runs in every test session; P7 writes only to a temp directory.
+- Data safety: P1a and P1b remove every live write from tests; P7 writes only to temp directories.
 - Schedule: gate due times; split decision recorded at the R2 row on Thu 26 12:00.
 - Sync: P8 overlap result; M2 result from DucNN (`--check-prefix` green, HSG xfail removed).
 
@@ -334,7 +337,7 @@ Evidence: _(implementer fills in)_
 |---|---|
 | No buffer: any slip moves M1 | Split checkpoint Thu 26 12:00 (D6); issue table updated the same day |
 | P5 wiring larger than estimated | Exact touch list; starts Tue morning in its own worktree; R2 scoped to that list |
-| A test writes live data from a subprocess | P1a first; P1b guard covers subprocesses and file writes |
+| A test writes live data from a subprocess | P1a first; P1b removes the known live writers and checks the rest by `grep`; subprocess guard optional |
 | ADR-0027 copied but FRA - Data/news unchanged | P3 task 2 on `research_db/production.py`; replay on both outputs |
 | Copied files change published rows (`sentiment`, `gold_status`, dedup) | P2 class (b); P3 replay; D10 thresholds |
 | P7 competes with the daemon for `agy` quota and spends money | N ≈ 400; breaker watch and stop rule; spend in the report |
