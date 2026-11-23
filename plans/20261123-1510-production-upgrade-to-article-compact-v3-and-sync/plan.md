@@ -108,8 +108,8 @@ Reviews copy the method of the v3 rubric evaluation (fpa-toolkit `eval-u12-rubri
 |---|---|---|---|---|
 | G0 | Plan approval | **PASS** | 2026-11-23 | Operator approved scope, target, reviewers, windows and class (c) handling |
 | R1 | Review of P1a, P1b, P3, P4 | **PASS** | 2026-11-23 | `gemini-4-hydrogen-high`. Round 1: fail, 1 blocking (PR #7 defaults), 4 minor. Objection round with quotes and replay: all withdrawn. The ruling saw the quotes, not the diff again |
-| G6 | P6 window, ADR-0027 live | pending | 2026-11-25 13:00-15:00 | operator-run |
-| R2 | Review of P5 | pending | 2026-11-26 12:00 | `gemini-4-hydrogen-high`, D8; split checkpoint (D6) |
+| G6 | P6 window, ADR-0027 live | in progress | 2026-11-23 18:05 | Daemon restarted on `31a5ad4` at 18:05:45 after the 17:50 slot; watching waves |
+| R2 | Review of P5 | **PASS** | 2026-11-23 | `gemini-4-hydrogen-high`, round 1: pass, 1 minor (flag reader), fixed in `e3c63db`. Split checkpoint (D6) not needed |
 | G7 | P7 start | pending | 2026-11-26 14:00 | operator-run |
 | G8 | P8 SHA posted | pending | 2026-11-27 17:00 | operator posts ("gửi") |
 
@@ -300,7 +300,7 @@ Tasks:
 Acceptance:
 - [ ] Two waves DONE, no new failure class in traces.
 - [ ] Before/after numbers recorded.
-- [ ] Clean publish (operator's step 3 in issue #9), one criterion on FRA - Data/news: every `research.published` event from the restart to the end of 2026-11-25 reports 0 partition errors. The day mixes rows from before and after the restart; the operator accepts it as the evidence.
+- [ ] Clean publish (operator's step 3 in issue #9), one criterion on FRA - Data/news: every `research.published` event from the restart to the end of the restart day reports 0 partition errors. The window ran on 2026-11-23, so the day is 2026-11-23. The day mixes rows from before and after the restart; the operator accepts it as the evidence.
 - [ ] The FRA - Data/news manifest lists `entities.json` with the SHA-256 from P4.
 
 Evidence (window opened 2026-11-23 after the 17:50 research slot, under the operator's overlap pacing):
