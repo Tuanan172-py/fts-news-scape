@@ -110,7 +110,7 @@ Reviews copy the method of the v3 rubric evaluation (fpa-toolkit `eval-u12-rubri
 | R1 | Review of P1a, P1b, P3, P4 | **PASS** | 2026-11-23 | `gemini-4-hydrogen-high`. Round 1: fail, 1 blocking (PR #7 defaults), 4 minor. Objection round with quotes and replay: all withdrawn. The ruling saw the quotes, not the diff again |
 | G6 | P6 window, ADR-0027 live | in progress | 2026-11-23 18:05 | Daemon restarted on `31a5ad4` at 18:05:45 after the 17:50 slot; watching waves |
 | R2 | Review of P5 | **PASS** | 2026-11-23 | `gemini-4-hydrogen-high`, round 1: pass, 1 minor (flag reader), fixed in `e3c63db`. Split checkpoint (D6) not needed |
-| G7 | P7 start | pending | 2026-11-26 14:00 | operator-run |
+| G7 | P7 start | **done** | 2026-11-23 22:34 | Ran when 400 post-restart articles existed (overlap pacing) |
 | G8 | P8 SHA posted | pending | 2026-11-27 17:00 | operator posts ("gửi") |
 
 ## Roadmap
@@ -324,11 +324,30 @@ Tasks:
 4. Project to one day at the measured volume and at the 2026-11-18 peak (6,077 articles); state N, the host, the model and the spend.
 
 Acceptance:
-- [ ] Report with N, source spread, per-article and per-day figures at both volumes, failure rates, host and spend; tokens marked primary and time marked as reference, with the measurement conditions.
-- [ ] No write to the live data directory (guard from P1b; temp `MONOCLE_DATA_DIR`).
-- [ ] Breaker stayed `CLOSED` and no live wave ended `PARKED`, or the stop is recorded.
+- [x] Report with N, source spread, per-article and per-day figures at both volumes, failure rates, host and spend; tokens marked primary and time marked as reference, with the measurement conditions.
+- [x] No write to the live data directory (guard from P1b; temp `MONOCLE_DATA_DIR`).
+- [x] Breaker stayed `CLOSED` and no live wave ended `PARKED`, or the stop is recorded.
 
-Evidence: _(operator fills in)_
+Evidence (run 2026-11-23 22:34-22:47, laptop production host, `agy` `gemini-3.8-flash-low`, v3 prefix `6df41447b856aa83`):
+- Sample: every batch of the 18 DONE waves opened after the P6 restart (18:05:45) until N reached 400. N = 484 articles in 23 batches, the live batch sizes, concurrency 2.
+- Source spread: cafef 327, thoibaotaichinhvietnam 47, vietstock 38, vneconomy 34, tinnhanhchungkhoan 18, baodautu 8, vietnambiz 8, fireant 4. Live evening volume, not stratified: batches mix sources, so a batch-level sample cannot be stratified.
+- v2 arm: the live first-pass meta of the same 23 batches (prefix `80c6edfe7891330b`). v3 arm: the same task packets, rerun in a temp data root by `p7_cost.py`.
+
+| Measure (first pass) | v2 | v3 | Change |
+|---|---|---|---|
+| Input tokens | 680,380 | 741,082 | +8.9% |
+| Output tokens | 116,837 | 109,967 | -5.9% |
+| Total tokens | 797,217 | 851,049 | +6.8% |
+| Tokens per article | 1,647 | 1,758 | +111 |
+| Items valid | 371 / 484 (76.7%) | 341 / 484 (70.5%) | -6.2 points |
+| Batches OK | 16 / 23 | 15 / 23 | |
+| Batch latency per article (reference only) | 1.98 s | 1.93 s | |
+
+- Projection per day, total tokens: at 1,183 articles (2026-11-23) v2 1.95 M, v3 2.08 M; at the 6,077 peak (2026-11-18) v2 10.0 M, v3 10.7 M. First pass only; repairs come on top.
+- v3 failures: `missing:x` 27 records (the model omitted `x`), 2 enum errors in `x` (`horizon 'm'`, a `PR_BRANDING` group), and two batches that returned too few records (`W11232228_01` 5/50, `W11232113_02` 26/37). v2 failures in the same batches: `dup_i` 31, `missing` 9. A lower v3 first-pass rate means more repair calls; their cost was not measured here.
+- Time is a reference only: v2 ran inside live waves, v3 as a separate batch beside the running daemon.
+- Spend: tokens on the `agy` subscription; no money figure is reported by `agy`.
+- Safety: written only under the scratchpad; 0 `P7_` files under the live data root; the `agy` breaker stayed `CLOSED` and no live wave ended `PARKED`.
 
 ## P8 — M1 package and SHA
 
