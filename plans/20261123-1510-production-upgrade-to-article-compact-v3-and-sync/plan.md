@@ -108,7 +108,7 @@ Reviews copy the method of the v3 rubric evaluation (fpa-toolkit `eval-u12-rubri
 |---|---|---|---|---|
 | G0 | Plan approval | **PASS** | 2026-11-23 | Operator approved scope, target, reviewers, windows and class (c) handling |
 | R1 | Review of P1a, P1b, P3, P4 | **PASS** | 2026-11-23 | `gemini-4-hydrogen-high`. Round 1: fail, 1 blocking (PR #7 defaults), 4 minor. Objection round with quotes and replay: all withdrawn. The ruling saw the quotes, not the diff again |
-| G6 | P6 window, ADR-0027 live | in progress | 2026-11-23 18:05 | Daemon restarted on `31a5ad4` at 18:05:45 after the 17:50 slot; watching waves |
+| G6 | P6 window, ADR-0027 live | **PASS** | 2026-11-24 00:01 | Restart 2026-11-23 18:05:45 on `31a5ad4`; two waves DONE; 6 research publishes to the end of the day, all with 0 partition errors |
 | R2 | Review of P5 | **PASS** | 2026-11-23 | `gemini-4-hydrogen-high`, round 1: pass, 1 minor (flag reader), fixed in `e3c63db`. Split checkpoint (D6) not needed |
 | G7 | P7 start | **done** | 2026-11-23 22:34 | Ran when 400 post-restart articles existed (overlap pacing) |
 | G8 | P8 SHA posted | pending | 2026-11-27 17:00 | operator posts ("gửi") |
@@ -300,8 +300,8 @@ Tasks:
 Acceptance:
 - [x] Two waves DONE, no new failure class in traces.
 - [x] Before/after numbers recorded.
-- [ ] Clean publish (operator's step 3 in issue #9), one criterion on FRA - Data/news: every `research.published` event from the restart to the end of the restart day reports 0 partition errors. The window ran on 2026-11-23, so the day is 2026-11-23. The day mixes rows from before and after the restart; the operator accepts it as the evidence.
-- [ ] The FRA - Data/news manifest lists `entities.json` with the SHA-256 from P4.
+- [x] Clean publish (operator's step 3 in issue #9), one criterion on FRA - Data/news: every `research.published` event from the restart to the end of the restart day reports 0 partition errors. The window ran on 2026-11-23, so the day is 2026-11-23. The day mixes rows from before and after the restart; the operator accepts it as the evidence.
+- [x] The FRA - Data/news manifest lists `entities.json` with the SHA-256 from P4.
 
 Evidence (window opened 2026-11-23 after the 17:50 research slot, under the operator's overlap pacing):
 - Baseline, waves opened 2026-11-16 to 23 (`ops.db`, read-only): 422 DONE, 2 CANCELLED, 16,478 articles; 160 waves (38%) needed `repair1`. Replay baseline for `entities`: see P3.
@@ -310,7 +310,7 @@ Evidence (window opened 2026-11-23 after the 17:50 research slot, under the oper
 - Window: `/pause` at 18:05:26 with no active wave, `dev/us038` fast-forwarded to `31a5ad4`, `--check-prefix` green, task restarted at 18:05:45, `/resume`; pushed to both remotes.
 - Waves after the restart: W11231849 (79 articles) and W11231900 (4), both DONE on prefix `80c6edfe7891330b`. W11231849 needed `repair1` and `repair2`; the errors were `dup_i` and `missing:c`, both seen in the previous week (1 and 24 of 867 batch metas), so no new class.
 - FRA - Data/news partition 2026-11-23 after the 18:53 publish (read-only): 458 rows, 1,512 entity items, 0 `CODE_ONLY`, so 3.3 ids per article. The replay of that day removed 7.9 ids per article (P3). The manifest carries the catalog, SHA-256 `485b4650a79f...`.
-- Clean publish: the 18:53 `research.published` reported 0 partition errors; the check to the end of the day is still open.
+- Clean publish: 6 `research.published` events from the restart to the end of 2026-11-23 (18:53, 19:24, 21:17, 22:20, 22:51, 23:49), all with 0 partition errors.
 
 ## P7 — `agy` cost sample (operator-run)
 
