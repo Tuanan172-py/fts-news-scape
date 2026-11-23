@@ -368,7 +368,12 @@ Acceptance:
 - [ ] Overlap numbers in the message match the script output.
 - [ ] Message reviewed by the operator before posting.
 
-Evidence: _(implementer fills in)_
+Evidence (2026-11-23):
+- Branch `import/clean-20261123`, head `c99f755`, pushed to `fpa`: `dev/us038` `3d4a782` plus a merge of `m1/us058-v3` (and its later fix `61c2230`), plus `3b07c07` restoring `SESSION-LATEST.md` and `.gitignore` to `f1d655c`.
+- Full suite on the branch: 1250 passed, 21 skipped (`production_host`). `--check-prefix` green. The first push carried one failing path-rule test in the new cost script; fixed on the P5 branch and re-merged before the message.
+- Overlap with `overlap.py`, base `f1d655c`, fpa-toolkit `main` `4b702b91`: 67 files changed on production, 117 on `main`, 38 on both, 32 clean, 6 conflicts.
+- The conflicts are `INDEX.md`, ADR-0028, `article_expand.py`, `article_contract.py`, `test_ner_entity_db_v2.py` and `pre-commit`; the message gives a merge rule for each.
+- Message drafted in the scratchpad; it waits for the operator's "gửi".
 
 ## After M1 (follow-up plan, not in scope)
 
