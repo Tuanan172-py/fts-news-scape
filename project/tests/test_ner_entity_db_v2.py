@@ -388,18 +388,22 @@ def test_master_db_migration_candidates_log_and_user_routing(tmp_path: Path, mon
     routed_ids = writer._entity_ids(json.dumps(l1_doc, ensure_ascii=False))
     assert routed_ids == {"TICKER:HPG"}
 
-    # Verify Lakehouse client isolates noisy scraper `symbols=["HCM"]` on GOLD rows,
-    # filters mentioned/CODE_ONLY by default, and exposes them under include_mentions=True.
+    # Verify Lakehouse client isolates noisy scraper `symbols=["HCM"]` on GOLD rows and
+    # filters mentioned/CODE_ONLY by default.
     client_default = NewsLakehouseClient(root=target_news)
     assert client_default.query_ticker("HCM") == []
     assert len(client_default.query_ticker("HPG")) == 1
     assert client_default.query_ticker("HSG") == []
 
+    # ADR-0027 with ADR-0031.D4 as amended: `entities` keeps only ids the model named, so
+    # include_mentions=True never returns the CODE_ONLY HSG; the matcher's HSG stays readable
+    # through `intent_code`.
     client_all = NewsLakehouseClient(root=target_news, include_mentions=True)
-    hsg_rows = client_all.query_ticker("HSG")
-    assert len(hsg_rows) == 1
-    assert hsg_rows[0]["entity_role"] == "mentioned"
-    assert hsg_rows[0]["entity_provenance"] == "CODE_ONLY"
+    assert client_all.query_ticker("HSG") == []
+    code_rows = client_all.query_custom_sql(
+        "SELECT intent_code, entities FROM {articles} WHERE intent_code LIKE '%HSG%'")
+    assert len(code_rows) == 1
+    assert not any("HSG" in str(e) for e in (code_rows[0]["entities"] or []))
 
 
 def test_lakehouse_client_target_resolution_accents_security_and_intraday_delta(tmp_path: Path) -> None:

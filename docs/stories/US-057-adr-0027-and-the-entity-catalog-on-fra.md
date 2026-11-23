@@ -2,7 +2,8 @@
 id: US-057
 type: story
 title: ADR-0027 and the entity catalog on FRA - Data news
-status: planned
+status: in_progress
+branch: m1/us057-adr0027
 lane: high-risk
 created: 2026-11-23
 updated: 2026-11-23
