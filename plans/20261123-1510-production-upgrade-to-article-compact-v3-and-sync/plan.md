@@ -298,8 +298,8 @@ Tasks:
 3. Watch 2 waves and the next research publishes: wave status, contract failures, publish errors, entities per article against the baseline.
 
 Acceptance:
-- [ ] Two waves DONE, no new failure class in traces.
-- [ ] Before/after numbers recorded.
+- [x] Two waves DONE, no new failure class in traces.
+- [x] Before/after numbers recorded.
 - [ ] Clean publish (operator's step 3 in issue #9), one criterion on FRA - Data/news: every `research.published` event from the restart to the end of the restart day reports 0 partition errors. The window ran on 2026-11-23, so the day is 2026-11-23. The day mixes rows from before and after the restart; the operator accepts it as the evidence.
 - [ ] The FRA - Data/news manifest lists `entities.json` with the SHA-256 from P4.
 
@@ -307,6 +307,10 @@ Evidence (window opened 2026-11-23 after the 17:50 research slot, under the oper
 - Baseline, waves opened 2026-11-16 to 23 (`ops.db`, read-only): 422 DONE, 2 CANCELLED, 16,478 articles; 160 waves (38%) needed `repair1`. Replay baseline for `entities`: see P3.
 - Procedure: `ops_daemon.py send /pause`; wait for no active wave; `git merge --ff-only m1/us057-adr0027` in `C:\src\news-scraper`; `schtasks /End` then `/Run` on `news-scape-ops`; `send /resume`.
 - Rollback recipe: `send /pause`; in `C:\src\news-scraper` revert the code commits `fb365a1 cfb4115 f85eba4 ece8f62` (newest first); run `build_article_prefix.py --sync-preset`; restart the task; mark the days published since the restart dirty (`master.mark_dirty`) so the research publisher rewrites them; `send /resume`.
+- Window: `/pause` at 18:05:26 with no active wave, `dev/us038` fast-forwarded to `31a5ad4`, `--check-prefix` green, task restarted at 18:05:45, `/resume`; pushed to both remotes.
+- Waves after the restart: W11231849 (79 articles) and W11231900 (4), both DONE on prefix `80c6edfe7891330b`. W11231849 needed `repair1` and `repair2`; the errors were `dup_i` and `missing:c`, both seen in the previous week (1 and 24 of 867 batch metas), so no new class.
+- FRA - Data/news partition 2026-11-23 after the 18:53 publish (read-only): 458 rows, 1,512 entity items, 0 `CODE_ONLY`, so 3.3 ids per article. The replay of that day removed 7.9 ids per article (P3). The manifest carries the catalog, SHA-256 `485b4650a79f...`.
+- Clean publish: the 18:53 `research.published` reported 0 partition errors; the check to the end of the day is still open.
 
 ## P7 — `agy` cost sample (operator-run)
 
