@@ -101,6 +101,7 @@ any governed document; open a body only when its summary is relevant.
 | [US-056](stories/US-056-test-safety-no-test-writes-live-operational-data.md) | implemented | Test safety, no test writes live operational data | The test suite no longer writes the live monocle.db or ops.db, and tests that read live data skip unless the production host flag is set. |
 | [US-057](stories/US-057-adr-0027-and-the-entity-catalog-on-fra.md) | implemented | ADR-0027 and the entity catalog on FRA - Data news | The entities column on FRA - Data/news carries only ids the model named, the article prefix is rebuilt from the live catalog, and the catalog is published with its SHA-256. |
 | [US-058](stories/US-058-article-compact-v3-code-behind-a-flag-and.md) | planned | Article-compact-v3 code behind a flag and agy cost sample | Production code can run article-compact-v3 behind a flag that stays off, writes the x and provenance columns under obt/3, and has a measured agy cost. |
+| [US-059](stories/US-059-prevent-ops-daemon-repair-cap-deadlock-and-empty.md) | implemented | Prevent ops daemon repair-cap deadlock and empty agy stream-json partial writes | A capped parked wave no longer deadlocks the ops daemon sensor loop, agy stream-json errors never write empty PARTIAL outputs, and provider outages do not burn wave repair rounds. |
 
 ## proposal
 
