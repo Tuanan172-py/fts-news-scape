@@ -555,3 +555,89 @@ def test_repair_mode_does_not_burn_cap_on_provider_outage(env, monkeypatch):
     assert out_model.worst == br.EMPTY
     assert store.get_state("repair_rounds:W1") == "1"
     assert store.exhausted_article_ids(1) == {"a1"}
+
+
+def test_daemon_publish_tick_honors_include_review_false(env, monkeypatch, tmp_path):
+    """publish_tick passes publish.include_review from ops.yaml to publish_day."""
+    from src.export import publisher as pub_mod
+    from src.ops.daemon import OpsDaemon
+
+    cfg, paths, _ = env
+    cfg["publish"] = {
+        "enabled": True,
+        "hour": 0,
+        "include_review": False,
+        "keep_review_days": 7,
+        "stale_hours": 26,
+    }
+    monkeypatch.setenv("MONOCLE_DATA_DIR", str(paths.data_dir))
+    monkeypatch.setenv("NEWS_SCAPE_PUBLISH_DIR", str(tmp_path / "sandbox"))
+    d = OpsDaemon(cfg, paths, {})
+
+    seen: list[dict] = []
+
+    def fake_publish_day(day, **kw):
+        seen.append({"day": day, **kw})
+        return pub_mod.PublishResult("ok", day.isoformat(), "ok", target=str(tmp_path / "sandbox"))
+
+    monkeypatch.setattr(pub_mod, "publish_day", fake_publish_day)
+    d.publish_tick()
+    # Wait briefly for the daemon worker thread to finish.
+    import time as time_mod
+    for _ in range(50):
+        if seen and not getattr(d, "_publishing", False):
+            break
+        time_mod.sleep(0.02)
+
+    assert len(seen) == 1
+    assert seen[0]["include_review"] is False
+    assert seen[0]["keep_review_days"] == 7
+
+
+def test_daemon_run_probes_throttles_publish_write_test(env, monkeypatch, tmp_path):
+    """run_probes runs write_test=True once per interval and write_test=False on subsequent beats."""
+    from src.ops import daemon as daemon_mod
+    from src.ops.daemon import OpsDaemon
+    from src.ops.probes import ProbeResult
+
+    cfg, paths, _ = env
+    cfg["publish"] = {
+        "enabled": True,
+        "hour": 1,
+        "include_review": False,
+        "keep_review_days": 7,
+        "write_probe_interval_minutes": 360,
+        "stale_hours": 26,
+    }
+    cfg["research_publish"] = {"enabled": False}
+    monkeypatch.setenv("MONOCLE_DATA_DIR", str(paths.data_dir))
+    monkeypatch.setenv("NEWS_SCAPE_PUBLISH_DIR", str(tmp_path / "sandbox"))
+
+    d = OpsDaemon(cfg, paths, {})
+    ok = lambda name: ProbeResult(name, True, "info", "ok")
+    monkeypatch.setattr(daemon_mod, "probe_capture", lambda *a, **kw: ok("capture"))
+    monkeypatch.setattr(daemon_mod, "probe_db", lambda *a, **kw: ok("db"))
+    monkeypatch.setattr(daemon_mod, "probe_disk", lambda *a, **kw: ok("disk"))
+    monkeypatch.setattr(daemon_mod, "probe_dead_letter", lambda *a, **kw: ok("dead_letter"))
+    monkeypatch.setattr(daemon_mod, "probe_coverage", lambda *a, **kw: ok("coverage"))
+    monkeypatch.setattr(daemon_mod, "probe_capture_channels", lambda *a, **kw: ok("capture_channels"))
+    monkeypatch.setattr(daemon_mod, "probe_yield", lambda *a, **kw: ok("yield"))
+    monkeypatch.setattr(daemon_mod, "probe_order", lambda *a, **kw: ok("order"))
+
+    write_flags: list[bool] = []
+
+    def spy_probe_publish(target, pcfg, **kw):
+        write_flags.append(bool(kw.get("write_test", True)))
+        return ok("publish")
+
+    monkeypatch.setattr(daemon_mod, "probe_publish", spy_probe_publish)
+
+    clock = [100.0]
+    monkeypatch.setattr(daemon_mod.time, "monotonic", lambda: clock[0])
+    d.run_probes()
+    clock[0] = 160.0
+    d.run_probes()
+    clock[0] = 100.0 + 360 * 60 + 1.0
+    d.run_probes()
+
+    assert write_flags == [True, False, True]

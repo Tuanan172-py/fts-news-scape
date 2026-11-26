@@ -256,3 +256,39 @@ def test_rerun_finishes_latest_after_interrupted_publish(env):
     assert res.status == "ok" and "latest.json" in res.message
     assert json.loads(latest.read_text(encoding="utf-8"))["latest_date"] == DAY.isoformat()
     assert "không làm lại" in _run(env).message
+
+
+def test_publish_without_review_skips_sqlite_snapshot(env):
+    """Omitting the SQLite review copy still publishes Parquet, Bronze, users and manifests."""
+    res = _run(env, include_review=False)
+    assert res.status == "ok", res.message
+    t = env["target"]
+    assert not (t / "review").exists()
+    manifest = json.loads((t / "_manifest" / "2026-10-04.json").read_text(encoding="utf-8"))
+    kinds = sorted({f["kind"] for f in manifest["files"]})
+    assert kinds == ["bronze", "parquet", "users"]
+    assert (t / "_manifest" / "latest.json").is_file()
+
+
+def test_probe_publish_detects_hostname_conflict_and_missing_dir(tmp_path, monkeypatch):
+    """probe_publish detects local hostname OneDrive conflicts and missing targets when write_test=False."""
+    import socket as socket_mod
+
+    missing = tmp_path / "does_not_exist"
+    res_missing = probe_publish(missing, {"stale_hours": 26}, onedrive_running=lambda: True,
+                                write_test=False)
+    assert not res_missing.ok and "không tồn tại" in res_missing.message
+
+    target = tmp_path / "publish"
+    (target / "_manifest").mkdir(parents=True)
+    pub._write_json_replace(target / "_manifest" / "latest.json",
+                            {"updated_at": "2099-01-01T00:00:00+07:00"})
+    monkeypatch.setattr(socket_mod, "gethostname", lambda: "FPA-ANPT")
+    conflict = target / "users" / "2026-11-26-FPA-ANPT.xlsx"
+    conflict.parent.mkdir(parents=True)
+    conflict.write_bytes(b"dup")
+    old = time.time() - 3 * 3600
+    os.utime(conflict, (old, old))
+    bad = probe_publish(target, {"stale_hours": 26}, onedrive_running=lambda: True,
+                        write_test=False)
+    assert not bad.ok and "2026-11-26-FPA-ANPT.xlsx" in bad.message

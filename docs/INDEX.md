@@ -102,6 +102,7 @@ any governed document; open a body only when its summary is relevant.
 | [US-057](stories/US-057-adr-0027-and-the-entity-catalog-on-fra.md) | implemented | ADR-0027 and the entity catalog on FRA - Data news | The entities column on FRA - Data/news carries only ids the model named, the article prefix is rebuilt from the live catalog, and the catalog is published with its SHA-256. |
 | [US-058](stories/US-058-article-compact-v3-code-behind-a-flag-and.md) | planned | Article-compact-v3 code behind a flag and agy cost sample | Production code can run article-compact-v3 behind a flag that stays off, writes the x and provenance columns under obt/3, and has a measured agy cost. |
 | [US-059](stories/US-059-prevent-ops-daemon-repair-cap-deadlock-and-empty.md) | implemented | Prevent ops daemon repair-cap deadlock and empty agy stream-json partial writes | A capped parked wave no longer deadlocks the ops daemon sensor loop, agy stream-json errors never write empty PARTIAL outputs, and provider outages do not burn wave repair rounds. |
+| [US-060](stories/US-060-eliminate-onedrive-sync-churn-from-review-db-uploads.md) | implemented | Eliminate OneDrive sync churn from review DB uploads and per-minute publish probe | Stop nightly 2.75 GB review DB uploads to SharePoint, throttle per-minute OneDrive .probe file churn, and detect workstation-named OneDrive conflicts. |
 
 ## proposal
 
@@ -148,6 +149,7 @@ any governed document; open a body only when its summary is relevant.
 | [FACT-lakehouse-symbols-column-is-sparse-filter-tickers-by](knowledge/facts/lakehouse-symbols-column-is-sparse-filter-tickers-by.md) | active | Lakehouse symbols column is sparse, filter tickers by entities | The OBT symbols column covers about 8% of articles and disagrees with entities, so plugin lenses select tickers through the article_entities view that unions both columns. |
 | [FACT-llm-owns-semantic-work](knowledge/facts/llm-owns-semantic-work.md) | active | LLM owns all semantic work | The LLM alone recognizes entities and summarizes; code only does mechanical work such as catalog lookup, packing, schema expansion and token measurement. |
 | [FACT-llm-runtimes-are-interchangeable](knowledge/facts/llm-runtimes-are-interchangeable.md) | active | LLM runtimes are interchangeable options | DSH, agy, opencode and OpenRouter are optional LLM runtimes for Article Lane tasks, ranked agy, opencode run, OpenRouter; none is retired and Claude is never a replacement runtime. |
+| [FACT-onedrive-sync-quota-limits-per-minute-probe-churn](knowledge/facts/onedrive-sync-quota-limits-per-minute-probe-churn.md) | active | OneDrive sync quota limits, per-minute probe churn, and CloudFiles shortcut safety | Syncing multi-GB SQLite review DBs exhausts SharePoint quota (ItemCannotFitInQuota), 60-second .probe writes wake OneDrive every minute, and AddToOneDrive shortcuts use CloudFiles reparse tag 0x9000601a. |
 | [FACT-opencode-install-layout](knowledge/facts/opencode-install-layout.md) | active | opencode install layout on the operator machine | The first opencode on the user PATH is a hand-copied binary that npm does not update; FreeTierError means an old client; opencode2 is a third-party fork. |
 | [FACT-ops-daemon-scheduler-pitfalls](knowledge/facts/ops-daemon-scheduler-pitfalls.md) | active | ops_daemon Task Scheduler pitfalls | ops_daemon only behaves under Task Scheduler with priority 4, suspended job attach, resolve_agy, a localhost control room without SO_REUSEADDR, and levels L0 and L1 only. |
 | [FACT-ops-operator-decisions-2026-10-01](knowledge/facts/ops-operator-decisions-2026-10-01.md) | active | Operator decisions for ops_daemon on 2026-10-01 | The operator chose Telegram, full article text to every provider, running only while the machine is on, no per-wave approval, and per-user delivery separate from waves. |
@@ -183,6 +185,7 @@ any governed document; open a body only when its summary is relevant.
 | [None](../.agents/skills/gold-financial-analyst/SKILL.md) | None |  |  |
 | [None](../.agents/skills/harness-auditor/SKILL.md) | None |  |  |
 | [None](../.agents/skills/how/SKILL.md) | None |  |  |
+| [None](../.agents/skills/issue-intake-strategist/SKILL.md) | None |  |  |
 | [None](../.agents/skills/l1-entity-matcher/SKILL.md) | None |  |  |
 | [None](../.agents/skills/materiality-triage/SKILL.md) | None |  |  |
 | [None](../.agents/skills/multi-agent-orchestrator-governance/SKILL.md) | None |  |  |

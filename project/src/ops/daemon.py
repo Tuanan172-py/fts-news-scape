@@ -229,7 +229,8 @@ class OpsDaemon:
     # ── main loop ────────────────────────────────────────────────────────────
     def _due(self, name: str, every_s: float) -> bool:
         now = time.monotonic()
-        if now - self._last.get(name, 0.0) >= every_s:
+        last = self._last.get(name)
+        if last is None or now - last >= every_s:
             self._last[name] = now
             return True
         return False
@@ -340,9 +341,12 @@ class OpsDaemon:
                         paused=(p.get("capture_channels") or {}).get("paused")),
                     probe_yield(self.monocle_db, p.get("yield")),
                     probe_order(self.paths.standing_order)]
-        if (self.cfg.get("publish") or {}).get("enabled"):
+        pcfg = self.cfg.get("publish") or {}
+        if pcfg.get("enabled"):
             from src.export.publisher import publish_target
-            results.append(probe_publish(publish_target(), self.cfg["publish"]))
+            probe_min = int(pcfg.get("write_probe_interval_minutes", 360))
+            do_write = probe_min > 0 and self._due("publish_write_probe", probe_min * 60)
+            results.append(probe_publish(publish_target(), pcfg, write_test=do_write))
         rcfg = self.cfg.get("research_publish") or {}
         if rcfg.get("enabled"):
             from src.research_db.production import PublishError, resolve_target
@@ -375,7 +379,11 @@ class OpsDaemon:
 
         def work() -> None:
             try:
-                res = publish_day(day, keep_review_days=int(cfg.get("keep_review_days", 7)))
+                res = publish_day(
+                    day,
+                    keep_review_days=int(cfg.get("keep_review_days", 7)),
+                    include_review=bool(cfg.get("include_review", True)),
+                )
                 self.store.set_state(key, res.status)
                 level = {"ok": "info", "partial": "warn", "disabled": "info"}.get(
                     res.status, "error")

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import shutil
+import socket
 import sqlite3
 import time
 from datetime import timedelta
@@ -284,9 +285,10 @@ def probe_publish(target: Path | None, cfg: dict,
                   write_test: bool = True) -> ProbeResult:
     """Check the health of the SharePoint publish directory per ADR 0020 section 2.6.
 
-    Four conditions: OneDrive.exe is running; the target is writable (write then delete
-    `_manifest/.probe`); no `*-DESKTOP-*` or `*.partial` file is older than 2 hours; and
-    `latest.json` is not older than `stale_hours`.
+    Four conditions: OneDrive.exe is running; the target directory exists (and passes a
+    write/delete check on `_manifest/.probe` when `write_test` is enabled); no OneDrive
+    conflict fork (`-DESKTOP-` or `-<hostname>`) or `*.partial` file is older than 2 hours;
+    and `latest.json` is not older than `stale_hours`.
 
     Args:
         target: Target directory; None when `NEWS_SCAPE_PUBLISH_DIR` is not set.
@@ -318,11 +320,17 @@ def probe_publish(target: Path | None, cfg: dict,
             probe.unlink()
         except OSError as exc:
             problems.append(f"đích không ghi được ({exc})")
+    elif not target.is_dir():
+        problems.append("thư mục đích không tồn tại")
     stale = []
+    host_upper = socket.gethostname().upper()
+    host_markers = (f"-{host_upper}.", f"-{host_upper}-") if host_upper else ()
     try:
         for p in target.rglob("*"):
             fname = p.name
-            if ("-DESKTOP-" in fname or fname.endswith(".partial")) and p.is_file()                     and now - p.stat().st_mtime > 2 * 3600:
+            upper = fname.upper()
+            is_conflict = "-DESKTOP-" in upper or any(m in upper for m in host_markers)
+            if (is_conflict or fname.endswith(".partial")) and p.is_file() and now - p.stat().st_mtime > 2 * 3600:
                 stale.append(p.relative_to(target).as_posix())
     except OSError:
         pass
