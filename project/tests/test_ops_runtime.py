@@ -467,3 +467,91 @@ def test_done_retry_clears_failure_cooldown(env, monkeypatch):
     assert store.get_state("cooldown_until")
     steps.finalize(WaveSpec("W1", "2026-10-01", "retry", "L1"), "DONE", "98/98 bài")
     assert store.get_state("cooldown_until") is None
+
+
+def test_sensor_tick_clears_capped_parked_wave_and_opens_new_wave(env, monkeypatch, tmp_path):
+    """A parked wave at the repair cap must clear resume_on_breaker and never block new waves."""
+    from datetime import timedelta
+
+    from src.ops import daemon as daemon_mod
+    from src.ops.daemon import OpsDaemon
+    from src.ops.sensor import SensorReading
+    from src.ops.store import now_vn
+
+    cfg, paths, _ = env
+    monkeypatch.setenv("MONOCLE_DATA_DIR", str(paths.data_dir))
+    save_order(paths.standing_order, extend(StandingOrder(level="L1"), 7, 7))
+    d = OpsDaemon(cfg, paths, {})
+    d._dbos_ready = True
+    d.store.upsert_wave(
+        "W_CAP", workflow_id="W_CAP-0", status="PARKED", trigger="T3",
+        target_date="2026-11-25", level="L1", provider="agy", attempt=4,
+        reason="Độ phủ phân tích 0% < 90% (lỗi AUTH).", resume_on_breaker=1,
+    )
+    cap = 2 * int(cfg["wave"]["max_repair_rounds"])
+    d.store.set_state("repair_rounds:W_CAP", str(cap))
+
+    reading = SensorReading(
+        per_date=[("2026-11-26", 120)], oldest_fetched_at=now_vn(),
+    )
+    monkeypatch.setattr(daemon_mod, "read_pending", lambda *a, **kw: reading)
+    monkeypatch.setattr(daemon_mod, "decide", lambda *a, **kw: (True, "T1", "Đủ 120 bài"))
+    monkeypatch.setattr(d, "reconcile", lambda: None)
+    opened: list[tuple] = []
+    monkeypatch.setattr(d, "open_wave", lambda *a, **kw: (opened.append(a), "W_NEW")[1])
+
+    d.sensor_tick()
+
+    assert d.store.wave("W_CAP")["resume_on_breaker"] == 0
+    assert d.store.parked_for_breaker() == []
+    assert len(opened) == 1 and opened[0][0] == "2026-11-26"
+    refused = [e for e in d.store.events(limit=20) if e["kind"] == "wave.retry_refused"]
+    auto_resumed = [e for e in d.store.events(limit=20) if e["kind"] == "wave.auto_resume"]
+    assert len(refused) == 1
+    assert auto_resumed == []
+
+    # Second tick must not re-emit wave.retry_refused for the cleared wave.
+    d.sensor_tick()
+    refused_after = [e for e in d.store.events(limit=20) if e["kind"] == "wave.retry_refused"]
+    assert len(refused_after) == 1
+
+
+def test_repair_mode_does_not_burn_cap_on_provider_outage(env, monkeypatch):
+    """AUTH and QUOTA failures during repair with zero progress must not increment repair_rounds."""
+    from scripts import article_run as ar
+
+    cfg, paths, store = env
+    monkeypatch.setattr(ar, "wave_article_ids", lambda w: ["a1"])
+    monkeypatch.setattr(ar, "wave_received_ids", lambda w: set())
+
+    out_dir = paths.data_dir / "agent_outputs_article"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    (out_dir / "article_W1_01.output.json").write_text("[]", encoding="utf-8")
+
+    tails = [
+        "  ⚠️ article_W1_01_r01: FATAL (0 bài) Tiến trình agy thất bại: Authentication required.",
+        "  ⚠️ article_W1_01_r02: QUOTA (0 bài) Hạn mức phiên chạm ngưỡng 429 Resource Exhausted.",
+        "  ⚠️ article_W1_01_r03: SOFT_FAIL (0 bài) Bóc tách JSON thất bại.",
+    ]
+
+    def fake_exec(cmd, **kw):
+        return StepResult(1, "failed", 1.0, tails.pop(0), kw["log_path"])
+
+    steps = WaveSteps(store, cfg, paths, executor=fake_exec, db_probe=lambda: (True, ""))
+    steps.out_dir = out_dir
+    spec = WaveSpec("W1", "2026-11-25", "T1", "L1", "agy", 1)
+
+    out_auth = steps.analyze(spec, 0)
+    assert out_auth.worst == br.AUTH
+    assert store.get_state("repair_rounds:W1") is None
+    assert store.exhausted_article_ids(1) == set()
+
+    out_quota = steps.analyze(spec, 1)
+    assert out_quota.worst == br.QUOTA
+    assert store.get_state("repair_rounds:W1") is None
+    assert store.exhausted_article_ids(1) == set()
+
+    out_model = steps.analyze(spec, 2)
+    assert out_model.worst == br.EMPTY
+    assert store.get_state("repair_rounds:W1") == "1"
+    assert store.exhausted_article_ids(1) == {"a1"}

@@ -516,6 +516,24 @@ class OpsDaemon:
                 break
             allowed, _ = self.breakers.allow(w["provider"] or "agy")
             if allowed:
+                blocked = repair_cap_reason(self.store, self.cfg, w["wave_id"])
+                if blocked:
+                    self.store.upsert_wave(w["wave_id"], resume_on_breaker=0)
+                    self.store.emit("wave.retry_refused", f"{w['wave_id']}: {blocked}",
+                                    level="warn", wave_id=w["wave_id"])
+                    self.store.alert(
+                        "warn",
+                        alert_card(
+                            "warn",
+                            f"Đợt {w['wave_id']} đã chạm trần vòng vá, dừng tự chạy lại",
+                            "bài của đợt vẫn giữ chỗ cho tới khi huỷ; các bài chờ khác tiếp tục bình thường",
+                            f"dùng /cancel {w['wave_id']} để trả bài về hàng chờ",
+                            "/status",
+                        ),
+                        dedup_key=f"retry_refused:{w['wave_id']}",
+                        buttons=[[("Huỷ đợt", f"/cancel {w['wave_id']}"), ("Trạng thái", "/status")]],
+                    )
+                    continue
                 self.store.emit("wave.auto_resume", f"{w['wave_id']}: provider hồi phục, "
                                 f"chạy tiếp", wave_id=w["wave_id"])
                 self._retry_wave_locked(w["wave_id"])
@@ -652,6 +670,7 @@ class OpsDaemon:
             return f"Đang có đợt tự động {active['wave_id']} chạy."
         blocked = repair_cap_reason(self.store, self.cfg, wave_id)
         if blocked:
+            self.store.upsert_wave(wave_id, resume_on_breaker=0)
             self.store.emit("wave.retry_refused", f"{wave_id}: {blocked}", level="warn",
                             wave_id=wave_id)
             return blocked

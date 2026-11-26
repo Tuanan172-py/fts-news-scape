@@ -234,3 +234,93 @@ def test_agy_runner_soft_fail_luu_phan_hoi_tho(tmp_path, monkeypatch):
     text = Path(res.raw_ref).read_text(encoding="utf-8")
     assert "Xin lỗi" in text and "sk-abcdefghijklmnop1234" not in text and "cảnh báo" in text
     assert Path(res.raw_ref).parent.name == "raw" and "W99990000" in res.raw_ref
+
+
+def test_agy_runner_empty_stream_json_result_is_soft_fail_without_output_file(tmp_path, monkeypatch):
+    """Empty stream-json result with exit 0 must return SOFT_FAIL and never write an empty output file."""
+    monkeypatch.setenv("MONOCLE_DATA_DIR", str(tmp_path / "data"))
+    monkeypatch.delenv("OPS_TRACE_WAVE", raising=False)
+    task_dir, out_dir = tmp_path / "tasks", tmp_path / "outputs"
+    task_dir.mkdir()
+    out_dir.mkdir()
+    batch_id = "article_W11250821_01"
+    task_path = task_dir / f"{batch_id}.task.json"
+    task_path.write_text(json.dumps({"a": [{"i": 0, "t": "Tiêu đề", "p": ["Đoạn một.", "Đoạn hai."]}]}),
+                         encoding="utf-8")
+    events = [
+        {"event": "init", "init": {"model": "gemini-3.8-flash-low", "tools": []}},
+        {"event": "result", "result": {"status": "SUCCESS", "response": "", "usage": {"total_tokens": 0}}},
+    ]
+    out = "\n".join(json.dumps(e) for e in events) + "\n"
+
+    def mock_sp(cmd, stdin_data, env, cwd):
+        return MockProcessResult(stdout=out, stderr="", returncode=0)
+
+    runner = AgyRunner(profile_root=tmp_path / "profiles", work_root=tmp_path / "work")
+    res = runner.run_batch(batch_id, task_path, out_dir, core_text="CORE", mock_subprocess=mock_sp)
+    assert res.ok is False
+    assert res.status == "SOFT_FAIL"
+    assert res.raw_ref is not None and Path(res.raw_ref).exists()
+    assert not (out_dir / f"{batch_id}.output.json").exists()
+    assert not (out_dir / f"{batch_id}.meta.json").exists()
+
+
+def test_agy_runner_stream_json_exit0_429_is_quota_without_output_file(tmp_path, monkeypatch):
+    """Stream-json exit 0 carrying a 429 error must classify as QUOTA and write no output file."""
+    monkeypatch.setenv("MONOCLE_DATA_DIR", str(tmp_path / "data"))
+    monkeypatch.delenv("OPS_TRACE_WAVE", raising=False)
+    task_dir, out_dir = tmp_path / "tasks", tmp_path / "outputs"
+    task_dir.mkdir()
+    out_dir.mkdir()
+    batch_id = "article_W11250821_02"
+    task_path = task_dir / f"{batch_id}.task.json"
+    task_path.write_text(json.dumps({"a": [{"i": 0, "t": "Tiêu đề", "p": ["Đoạn một.", "Đoạn hai."]}]}),
+                         encoding="utf-8")
+    events = [
+        {"event": "init", "init": {"model": "gemini-3.8-flash-low", "tools": []}},
+        {
+            "event": "result",
+            "result": {
+                "status": "ERROR",
+                "response": "",
+                "error": "RESOURCE_EXHAUSTED (code 429): Your project has reached its spending limit.",
+            },
+        },
+    ]
+    out = "\n".join(json.dumps(e) for e in events) + "\n"
+
+    def mock_sp(cmd, stdin_data, env, cwd):
+        return MockProcessResult(stdout=out, stderr="", returncode=0)
+
+    runner = AgyRunner(profile_root=tmp_path / "profiles", work_root=tmp_path / "work")
+    res = runner.run_batch(batch_id, task_path, out_dir, core_text="CORE", mock_subprocess=mock_sp)
+    assert res.ok is False
+    assert res.status == "QUOTA"
+    assert not (out_dir / f"{batch_id}.output.json").exists()
+
+
+def test_agy_runner_non_article_json_without_i_is_soft_fail(tmp_path, monkeypatch):
+    """JSON objects lacking the article index key `i` must return SOFT_FAIL, not PARTIAL."""
+    monkeypatch.setenv("MONOCLE_DATA_DIR", str(tmp_path / "data"))
+    monkeypatch.delenv("OPS_TRACE_WAVE", raising=False)
+    task_dir, out_dir = tmp_path / "tasks", tmp_path / "outputs"
+    task_dir.mkdir()
+    out_dir.mkdir()
+    batch_id = "article_W11250821_03"
+    task_path = task_dir / f"{batch_id}.task.json"
+    task_path.write_text(json.dumps({"a": [{"i": 0, "t": "Tiêu đề", "p": ["Đoạn một.", "Đoạn hai."]}]}),
+                         encoding="utf-8")
+    events = [
+        {"event": "init", "init": {"model": "gemini-3.8-flash-low", "tools": []}},
+        {"event": "result", "result": {"status": "SUCCESS", "response": '{"event":"init","status":"ok"}'}},
+    ]
+    out = "\n".join(json.dumps(e) for e in events) + "\n"
+
+    def mock_sp(cmd, stdin_data, env, cwd):
+        return MockProcessResult(stdout=out, stderr="", returncode=0)
+
+    runner = AgyRunner(profile_root=tmp_path / "profiles", work_root=tmp_path / "work")
+    res = runner.run_batch(batch_id, task_path, out_dir, core_text="CORE", mock_subprocess=mock_sp)
+    assert res.ok is False
+    assert res.status == "SOFT_FAIL"
+    assert not (out_dir / f"{batch_id}.output.json").exists()

@@ -497,6 +497,8 @@ class AgyRunner:
         usage_data: dict[str, int] = {}
         tool_invoked = False
         denied_actions = False
+        stream_error = ""
+        result_status = ""
 
         for line in (stdout_text or "").splitlines():
             line_str = line.strip()
@@ -521,23 +523,77 @@ class AgyRunner:
                     step = ev.get("step_update") or ev.get("step", {})
                     if step.get("type") == "tool" or step.get("tool_name"):
                         tool_invoked = True
+                elif ev_type == "error":
+                    err_obj = ev.get("error") or ev.get("data") or ev
+                    stream_error = (
+                        err_obj.get("message") if isinstance(err_obj, dict) else str(err_obj)
+                    ) or stream_error
                 elif ev_type == "result":
                     res_data = ev.get("result") or ev.get("data", {}) or ev
                     raw_response = res_data.get("response") or res_data.get("content") or ""
                     usage_data = res_data.get("usage") or {}
+                    result_status = str(res_data.get("status") or "").upper()
+                    res_err = res_data.get("error")
+                    if res_err:
+                        stream_error = (
+                            res_err.get("message") if isinstance(res_err, dict) else str(res_err)
+                        )
                     if res_data.get("denied_actions"):
                         denied_actions = True
             except json.JSONDecodeError:
                 continue
 
+        # Level 6b: stream-json may exit 0 while reporting a provider or executor error.
+        err_signal = "\n".join(part for part in (stream_error, stderr_text) if part).strip()
+        err_signal_lower = err_signal.lower()
+        if not raw_response.strip():
+            if "429" in err_signal_lower or "resource_exhausted" in err_signal_lower or "quota" in err_signal_lower:
+                return AgyExecutionResult(
+                    ok=False,
+                    batch_id=batch_id,
+                    status="QUOTA",
+                    exit_code=return_code,
+                    latency_seconds=latency,
+                    error_message="Hạn mức phiên chạm ngưỡng 429 Resource Exhausted.",
+                    raw_ref=dump_raw_response(batch_id, stdout_text, stderr_text, raw_response),
+                )
+            if (
+                "authentication required" in err_signal_lower
+                or "not logged into antigravity" in err_signal_lower
+                or "visit the url to log" in err_signal_lower
+            ):
+                return AgyExecutionResult(
+                    ok=False,
+                    batch_id=batch_id,
+                    status="FATAL",
+                    exit_code=return_code,
+                    latency_seconds=latency,
+                    error_message=f"Tiến trình agy thất bại: {err_signal[:300]}",
+                    raw_ref=dump_raw_response(batch_id, stdout_text, stderr_text, raw_response),
+                )
+            if result_status in ("ERROR", "FAILED", "CANCELLED", "TIMEOUT") or stream_error:
+                return AgyExecutionResult(
+                    ok=False,
+                    batch_id=batch_id,
+                    status="SOFT_FAIL",
+                    exit_code=return_code,
+                    latency_seconds=latency,
+                    error_message=f"Phiên stream-json trả lỗi ({result_status or 'ERROR'}): {err_signal[:240]}",
+                    raw_ref=dump_raw_response(batch_id, stdout_text, stderr_text, raw_response),
+                )
+
         # Levels 7-8: unwrap and validate the contract with the validator shared by all providers.
-        parsed = validate_response(raw_response or stdout_text, packet_items)
+        # Never fall back to raw NDJSON protocol stdout when structured events were parsed.
+        payload_text = raw_response if events else stdout_text
+        parsed = validate_response(payload_text, packet_items)
         json_salvage_error: Exception | None = None
-        if parsed.counters.get("raw_records", 0) == 0:
-            json_salvage_error = ValueError("Không bóc được bản ghi JSON nào từ phản hồi.")
+        raw_count = parsed.counters.get("raw_records", 0)
+        no_i_count = parsed.counters.get("no_i", 0)
         valid_recs = list(parsed.records.values())
         contract_meta = result_meta(parsed)
         domain_errors = contract_meta["domain_errors"]
+        if raw_count == 0 or (not valid_recs and not domain_errors and no_i_count >= raw_count):
+            json_salvage_error = ValueError("Không bóc được bản ghi JSON nào từ phản hồi.")
 
         # Level 5: check for tool-call violations.
         tool_warning: str | None = None

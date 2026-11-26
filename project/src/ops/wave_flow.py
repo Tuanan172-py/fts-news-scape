@@ -221,12 +221,15 @@ class WaveSteps:
         received = len(ar.wave_received_ids(wave_id))
         return received, total
 
-    def _count_repair_round(self, wave_id: str) -> None:
-        """Record one repair round in the durable counters of the wave and of each missing article."""
+    def _missing_ids(self, wave_id: str) -> list[str]:
         from scripts import article_run as ar
 
-        missing = sorted(set(ar.wave_article_ids(wave_id)) - set(ar.wave_received_ids(wave_id)))
-        self.store.bump_attempts(missing, wave_id)
+        return sorted(set(ar.wave_article_ids(wave_id)) - set(ar.wave_received_ids(wave_id)))
+
+    def _count_repair_round(self, wave_id: str, missing: list[str] | None = None) -> None:
+        """Record one repair round in the durable counters of the wave and of each missing article."""
+        ids = self._missing_ids(wave_id) if missing is None else missing
+        self.store.bump_attempts(ids, wave_id)
         key = f"repair_rounds:{wave_id}"
         self.store.set_state(key, str(int(self.store.get_state(key, "0") or 0) + 1))
 
@@ -352,12 +355,11 @@ class WaveSteps:
         Returns:
             The AnalyzeOutcome.
         """
-        received, total = self._coverage(spec.wave_id)
-        if total and received >= total:
-            return AnalyzeOutcome("skip", "ok", received, total, br.OK)
+        received_before, total = self._coverage(spec.wave_id)
+        if total and received_before >= total:
+            return AnalyzeOutcome("skip", "ok", received_before, total, br.OK)
         mode = "repair" if self._has_outputs(spec.wave_id) else "analyze"
-        if mode == "repair":
-            self._count_repair_round(spec.wave_id)
+        missing_before = self._missing_ids(spec.wave_id) if mode == "repair" else []
         self.store.upsert_wave(spec.wave_id, status="REPAIRING" if mode == "repair"
                                else "ANALYZING")
         w = self.cfg["wave"]
@@ -408,11 +410,15 @@ class WaveSteps:
                         wave_id=spec.wave_id, step=step,
                         data={"rc": res.returncode, "outcome": res.outcome})
         received, total = self._coverage(spec.wave_id)
+        worst_cls = br.worst(classes)
+        provider_outage = worst_cls in (br.AUTH, br.QUOTA, br.NETWORK) and received <= received_before
+        if mode == "repair" and res.outcome != "cancelled" and not provider_outage:
+            self._count_repair_round(spec.wave_id, missing=missing_before)
         tr.finish(sid, "ok" if res.ok else {"timeout": "timeout", "stalled": "timeout",
                                              "cancelled": "cancelled"}.get(res.outcome, "fail"),
                   rc=res.returncode, outcome=res.outcome, received=received, total=total,
-                  worst=br.worst(classes), batches=len(batches))
-        return AnalyzeOutcome(mode, res.outcome, received, total, br.worst(classes), batches)
+                  worst=worst_cls, batches=len(batches))
+        return AnalyzeOutcome(mode, res.outcome, received, total, worst_cls, batches)
 
     def _record_breaker(self, spec: WaveSpec, cls: str, detail: str) -> None:
         change = self.breakers.record(spec.provider, cls)
