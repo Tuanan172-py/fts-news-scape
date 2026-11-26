@@ -377,11 +377,12 @@ Acceptance:
 - [ ] Overlap numbers in the message match the script output.
 - [ ] Message reviewed by the operator before posting.
 
-Evidence (2026-11-23, superseded 2026-11-26):
-- Prior branch `import/clean-20261123` (`c99f755`) is superseded by `import/clean-20261126` to carry `US-059`, `v3_cost_sample.py` cleanup, ADR-0028 linkage, and updated M1 docs.
-- Prior `import/clean-20261123` (`c99f755`) passed 1,250 tests with 21 skipped (`production_host`) and green `--check-prefix`. Its `overlap.py` check against `fpa-toolkit` `main` `4b702b91` showed 67 production files, 117 `main` files, 38 on both, 32 clean, and 6 conflicts.
-- Exact `import/clean-20261126` SHA, full-suite results, and refreshed `overlap.py` counts against current `fpa-toolkit` `main` will be recorded right after `import/clean-20261126` is pushed to `fpa`.
-- Message draft waits for the operator's "gửi" after the refreshed `import/clean-20261126` numbers land.
+Evidence (2026-11-26):
+- Frozen M1 branch `import/clean-20261126` pushed to `fpa` at `e925b6b` (`e925b6bdaf1d199043ea8afe902494a6a7315e12`), superseding `import/clean-20261123` (`c99f755`, left untouched).
+- Includes `m1/docs-20261126` (`7a81a28`, built on live `dev/us038` `7133448` with `US-059`), merge of `m1/us058-v3` (`d4ec23e` -> `2a14522`, with `ADR-0028` `related: [ADR-0027]`), and machine-local restore to `f1d655c` (`e925b6b`).
+- Verification on `e925b6b` (`NEWS_SCAPE_PRODUCTION_HOST=""`): full `pytest project/tests/ -q` 1,255 passed, 21 skipped (`production_host`), 0 failed (491.06s); `--check-prefix` green (`80c6edfe7891330b`); piped `v3_cost_sample.py --help` exit 0; `doc lint` 0 errors; C2 gate 0-byte diff on `.gitignore` and `SESSION-LATEST.md` and single `US-059` code commit (`a78ed30`).
+- Live `overlap.py` (base `f1d655c`, `e925b6b` vs `fpa-toolkit` `main` `0f997a72`): 74 production files, 122 `main` files, 40 on both, 34 clean (22 byte-identical), and 6 conflicts (`docs/INDEX.md`, `docs/decisions/0028-*.md`, `article_expand.py`, `article_contract.py`, `test_ner_entity_db_v2.py`, `pre-commit`).
+- Final drafts for Issue #10 and Issue #8 wait for the operator's "gửi" gate (G8).
 
 ## After M1 (follow-up plan, not in scope)
 
