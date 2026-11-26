@@ -48,6 +48,7 @@ A tier is `1` (passed, evidence recorded), `0` (not passed/not run), or `—` (N
 | [US-015](stories/US-015-production-audit-cli-blind-spot-and-schema-regression.md) | Bronze Ingestion Pipeline | `implemented` | 1 | 1 | 1 | **1** | 413/413 passed · 5 lỗi sống phát hiện bằng chạy thật · **Platform proof đầu tiên**: morninger `capture/10min` + auto-drain `fetched=14 deleted_at_source=1` |
 | [US-056](stories/US-056-test-safety-no-test-writes-live-operational-data.md) | M1 sync (PLN-20261123-1510) | `implemented` | 1 | 1 | — | 1 | Full suite at `8753312`: 1175 passed, 21 skipped (production_host) · touched files 60 passed, 21 skipped · live read-only audit and snapshot tests pass on the production host |
 | [US-057](stories/US-057-adr-0027-and-the-entity-catalog-on-fra.md) | M1 sync (PLN-20261123-1510) | `implemented` | 1 | 1 | — | 1 | Lakehouse and research tests 72 passed · replay 4,665 research rows: 27,960 `CODE_ONLY` ids removed, 0 rows and 0 model-named ids lost · `--check-prefix` green, hash `80c6edfe7891330b` · R1 pass |
+| [US-059](stories/US-059-prevent-ops-daemon-repair-cap-deadlock-and-empty.md) | Autonomous Ops | `implemented` | 1 | 1 | — | 1 | Targeted ops and runner suite 99 passed · full suite 1,195 passed, 21 skipped (`a78ed30`) · real-process `ops_daemon.py status` and 14/14 post-unblock recovery waves DONE (`W11261015`..`W11261123`, 1,048 articles) |
 
 > Rule reminder: Stories reach `implemented` ONLY after validation commands run and results are recorded. Never hand-flip.
 

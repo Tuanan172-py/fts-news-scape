@@ -1,0 +1,42 @@
+{
+ "since": "2026-11-23T18:05:45",
+ "picked_articles": 484,
+ "source_spread": {
+  "baodautu.vn": 8,
+  "cafef.vn": 327,
+  "fireant.vn": 4,
+  "thoibaotaichinhvietnam.vn": 47,
+  "tinnhanhchungkhoan.vn": 18,
+  "vietnambiz.vn": 8,
+  "vietstock.vn": 38,
+  "vneconomy.vn": 34
+ },
+ "v2": {
+  "batches": 23,
+  "articles": 484,
+  "input_tokens": 680380,
+  "output_tokens": 116837,
+  "thinking_tokens": 0,
+  "total_tokens": 797217,
+  "latency_s": 957.69,
+  "items_total": 484,
+  "items_valid": 371,
+  "attempts": 23,
+  "status_ok": 16
+ },
+ "v3": {
+  "batches": 23,
+  "articles": 484,
+  "input_tokens": 741082,
+  "output_tokens": 109967,
+  "thinking_tokens": 0,
+  "total_tokens": 851049,
+  "latency_s": 935.8400000000001,
+  "items_total": 484,
+  "items_valid": 341,
+  "attempts": 23,
+  "status_ok": 15
+ },
+ "v3_model": "gemini-3.8-flash-low",
+ "v3_prefix_hash": "6df41447b856aa83"
+}
