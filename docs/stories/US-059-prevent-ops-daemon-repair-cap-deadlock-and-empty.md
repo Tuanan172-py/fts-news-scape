@@ -12,8 +12,8 @@ authors: [agent]
 adr: [ADR-0011, ADR-0012, ADR-0017]
 plan: []
 evidence:
-  - "commit: a78ed30 (fix/ops-deadlock-agy-partial), 56f8cb7 (m1/us058-v3)"
-  - "metric: 99 passed targeted ops+runner suite; 1195 passed, 21 skipped full suite; 124 passed on m1/us058-v3"
+  - "commit: a78ed30 (fix/ops-deadlock-agy-partial)"
+  - "metric: 99 passed targeted ops+runner suite; 1195 passed, 21 skipped full suite"
   - "wave: W11250821 (incident), W11261015..W11261038 (unblocked recovery waves DONE)"
 verify: "C:/venvs/news-scape/Scripts/python.exe -m pytest project/tests/test_agy_runner.py project/tests/test_ops_runtime.py project/tests/test_ops_core.py project/tests/test_ops_council_fixes.py -q"
 summary: A capped parked wave no longer deadlocks the ops daemon sensor loop, agy stream-json errors never write empty PARTIAL outputs, and provider outages do not burn wave repair rounds.
@@ -44,11 +44,11 @@ Fixes three cascading defects uncovered during the 2026-11-25 `W11250821` outage
 | Tier | Command or check | Result |
 |---|---|---|
 | Unit | `pytest project/tests/test_agy_runner.py project/tests/test_ops_runtime.py project/tests/test_ops_core.py project/tests/test_ops_council_fixes.py -q` | 99 passed |
-| Integration | Full `pytest project/tests/ -q` on `fix/ops-deadlock-agy-partial`; ops+v3 targeted on `m1/us058-v3` | 1195 passed, 21 skipped (`fix/ops-deadlock-agy-partial`); 124 passed (`m1/us058-v3`) |
+| Integration | Full `pytest project/tests/ -q` on `fix/ops-deadlock-agy-partial` | 1195 passed, 21 skipped |
 | Platform | Real-process `ops_daemon.py status` from fix worktree + live unblock (`W11261015`..`W11261038` DONE) | pass |
 
 ## Evidence
 
 - Root-cause incident: `W11250821` (2026-11-25 10:53..2026-11-26 10:13).
-- Commits: `a78ed30` (`fix/ops-deadlock-agy-partial`), `56f8cb7` (`m1/us058-v3`).
+- Commit: `a78ed30` (`fix/ops-deadlock-agy-partial`, sole code commit per D2).
 - AST docstring linter (100% coverage) and banned phrase scanner (0 violations) passed on `daemon.py`, `wave_flow.py`, `agy_runner.py`.

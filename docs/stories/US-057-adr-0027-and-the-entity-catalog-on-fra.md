@@ -6,7 +6,7 @@ status: implemented
 branch: m1/us057-adr0027
 lane: high-risk
 created: 2026-11-23
-updated: 2026-11-23
+updated: 2026-11-26
 lang: en
 authors: [agent]
 adr: [ADR-0027, ADR-0030, ADR-0031, ADR-0034]
@@ -36,7 +36,7 @@ Users reading FRA - Data/news through skills see in `entities` only ids the mode
 
 ## Design Notes
 
-Plan PLN-20261123-1510, phases P2, P3, P4 and P6. Decisions D1, D9, D10. The research path does not call `sanitize_article_record`, so the copied `ingest.py` alone does not reach FRA - Data/news.
+Plan PLN-20261123-1510, phases P2, P3, P4 and P6. Decisions D1, D9, D10. The research path reaches `keep_model_entities` because `records_to_parquet_bytes` calls `sanitize_article_record`, so copying `ingest.py` covers FRA - Data/news directly.
 
 ## Verification
 

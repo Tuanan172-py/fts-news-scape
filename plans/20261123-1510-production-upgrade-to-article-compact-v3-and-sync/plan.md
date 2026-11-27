@@ -5,7 +5,7 @@ title: Production upgrade to article-compact-v3 and sync M1 for fpa-toolkit
 status: approved
 lane: high-risk
 created: 2026-11-23
-updated: 2026-11-23
+updated: 2026-11-26
 lang: en
 authors: [agent]
 adr: [ADR-0030, ADR-0031, ADR-0033]
@@ -282,11 +282,14 @@ Tasks:
 8. Tests: flag off gives byte-identical v2 output; flag on validates `x` and fills the stamps; `obt/2` and `obt/3` partitions read together (`union_by_name = true`).
 
 Acceptance:
-- [ ] All touched test files pass; full suite once before R2.
-- [ ] Flag off: a replayed v2 batch gives the same rows as before P5, except the four new columns.
-- [ ] R2 confirms new columns last, default `v2`, and no remaining hardcoded v2 prefix path.
+- [x] All touched test files pass; full suite once before R2.
+- [x] Flag off: a replayed v2 batch gives the same rows as before P5, except the four new columns.
+- [x] R2 confirms new columns last, default `v2`, and no remaining hardcoded v2 prefix path.
 
-Evidence: _(implementer fills in)_
+Evidence: commits `803a861`, `07a592f`, `4c314a1`, `e3c63db`, `5cd299a`, `61c2230`, plus `v3_cost_sample.py` cleanup on `m1/us058-v3`.
+- R2 review (`gemini-4-hydrogen-high`): PASS on round 1; 1 minor finding (flag reader) fixed in `e3c63db`.
+- Flag-off replay (`replay_p5.json`): 2,343 rows byte-identical to pre-P5 output, except the four trailing columns (`x`, `contract_version`, `rubric_version`, `prompt_hash`).
+- Tests: 92 passed on v3 test files; full suite 1,250 passed and 21 skipped (`production_host`) on `c99f755`.
 
 ## P6 — ADR-0027 live (operator-run)
 
@@ -329,9 +332,9 @@ Acceptance:
 - [x] Breaker stayed `CLOSED` and no live wave ended `PARKED`, or the stop is recorded.
 
 Evidence (run 2026-11-23 22:34-22:47, laptop production host, `agy` `gemini-3.8-flash-low`, v3 prefix `6df41447b856aa83`):
-- Sample: every batch of the 18 DONE waves opened after the P6 restart (18:05:45) until N reached 400. N = 484 articles in 23 batches, the live batch sizes, concurrency 2.
-- Source spread: cafef 327, thoibaotaichinhvietnam 47, vietstock 38, vneconomy 34, tinnhanhchungkhoan 18, baodautu 8, vietnambiz 8, fireant 4. Live evening volume, not stratified: batches mix sources, so a batch-level sample cannot be stratified.
-- v2 arm: the live first-pass meta of the same 23 batches (prefix `80c6edfe7891330b`). v3 arm: the same task packets, rerun in a temp data root by `p7_cost.py`.
+- Sample: every batch of the 19 DONE waves (`W11231849..W11232228`) opened after the P6 restart (18:05:45) until N reached 400. N = 484 articles in 23 batches, live batch sizes, concurrency 2.
+- Source spread: cafef 327, thoibaotaichinhvietnam 47, vietstock 38, vneconomy 34, tinnhanhchungkhoan 18, baodautu 8, vietnambiz 8, fireant 4. Live evening volume, not stratified: batches mix sources, and 15 of 23 batches are small evening batches (`n = 1..29`).
+- v2 arm: live first-pass meta of the same 23 batches (prefix `80c6edfe7891330b`). v3 arm: the same task packets rerun in a temp data root by `project/scripts/maintenance/v3_cost_sample.py`.
 
 | Measure (first pass) | v2 | v3 | Change |
 |---|---|---|---|
@@ -339,15 +342,21 @@ Evidence (run 2026-11-23 22:34-22:47, laptop production host, `agy` `gemini-3.8-
 | Output tokens | 116,837 | 109,967 | -5.9% |
 | Total tokens | 797,217 | 851,049 | +6.8% |
 | Tokens per article | 1,647 | 1,758 | +111 |
+| Tokens per valid article | 2,149 | 2,496 | +16.1% |
 | Items valid | 371 / 484 (76.7%) | 341 / 484 (70.5%) | -6.2 points |
 | Batches OK | 16 / 23 | 15 / 23 | |
 | Batch latency per article (reference only) | 1.98 s | 1.93 s | |
 
-- Projection per day, total tokens: at 1,183 articles (2026-11-23) v2 1.95 M, v3 2.08 M; at the 6,077 peak (2026-11-18) v2 10.0 M, v3 10.7 M. First pass only; repairs come on top.
-- v3 failures: `missing:x` 27 records (the model omitted `x`), 2 enum errors in `x` (`horizon 'm'`, a `PR_BRANDING` group), and two batches that returned too few records (`W11232228_01` 5/50, `W11232113_02` 26/37). v2 failures in the same batches: `dup_i` 31, `missing` 9. A lower v3 first-pass rate means more repair calls; their cost was not measured here.
+- Forensic note on `-5.9%` output: v3 output fell only because six large batches truncated, returning 73 fewer raw records (`370` vs `443`) and 30 fewer valid items.
+- v3 failures (`143 / 484`): 114 missing records across six large batches (`W11232228_01` 5/50, `W11232228_02` 16/50, `W11232113_02` 26/37, `W11231849_01` 33/40, `W11231849_02` 31/39, `W11231920_01` 31/40). Two batches hit `missing:x` schema collapse (`W11231912_01` 15/20, `W11232025_01` 12/30; 27 records), plus 2 enum errors (`horizon 'm'`, `PR_BRANDING`). v2 failures in the same batches: `dup_i` 31, `missing` 9.
+- Paired-OK delta (14 batches where both arms passed 100% OK, `N = 140`): input `+14.9%`, output `+17.3%`, uncached total `+15.2%`, cache-normalized total (`in + cache_read + out`) `+8.45%`. Across all 23 batches, first-pass cost per valid item rose `+16.1%` (`2,149 -> 2,496`).
+- Live `v2` repair overhead (`ops_spans`): the 19 P7 waves burned `+27.0%` repair tokens (`2,092 tok/art` all-in). On the 2026-11-18 peak (`6,077` DONE articles / `6,198` spans), live `v2` burned `8.30 M` first pass plus `4.77 M` repair (`+57.5%`) = `13.08 M` all-in (`2,110 tok/art`).
+- Daily projection: first-pass only gives `1.95 M` (v2) vs `2.08 M` (v3) at 1,183 articles, and `10.0 M` vs `10.7 M` at peak. Including measured repair overhead and higher v3 failure rates projects realistic `v3` peak burn at `~15.5-17.5 M` tokens/day.
+- Raw artifacts archived at `plans/20261123-1510-production-upgrade-to-article-compact-v3-and-sync/artifacts/` (`p7_results.json`, `p7_summary.json`) and persistently at `C:\data\news-scape\reports\p7_20261123\`.
+- Four M3 gates before enabling `article.contract: v3`: fix `missing:x` batch collapse, and test batch size 25 vs 50 to cut repair overhead. Run a stratified repair-inclusive benchmark confirming `agy` quota headroom or a fallback runner, and land the ADR-0028 `low-confidence` consumer rule.
 - Time is a reference only: v2 ran inside live waves, v3 as a separate batch beside the running daemon.
 - Spend: tokens on the `agy` subscription; no money figure is reported by `agy`.
-- Safety: written only under the scratchpad; 0 `P7_` files under the live data root; the `agy` breaker stayed `CLOSED` and no live wave ended `PARKED`.
+- Safety: written only under the temp work directory; 0 `P7_` files under the live data root; the `agy` breaker stayed `CLOSED` and no live wave ended `PARKED`.
 
 ## P8 — M1 package and SHA
 
@@ -368,12 +377,12 @@ Acceptance:
 - [ ] Overlap numbers in the message match the script output.
 - [ ] Message reviewed by the operator before posting.
 
-Evidence (2026-11-23):
-- Branch `import/clean-20261123`, head `c99f755`, pushed to `fpa`: `dev/us038` `3d4a782` plus a merge of `m1/us058-v3` (and its later fix `61c2230`), plus `3b07c07` restoring `SESSION-LATEST.md` and `.gitignore` to `f1d655c`.
-- Full suite on the branch: 1250 passed, 21 skipped (`production_host`). `--check-prefix` green. The first push carried one failing path-rule test in the new cost script; fixed on the P5 branch and re-merged before the message.
-- Overlap with `overlap.py`, base `f1d655c`, fpa-toolkit `main` `4b702b91`: 67 files changed on production, 117 on `main`, 38 on both, 32 clean, 6 conflicts.
-- The conflicts are `INDEX.md`, ADR-0028, `article_expand.py`, `article_contract.py`, `test_ner_entity_db_v2.py` and `pre-commit`; the message gives a merge rule for each.
-- Message drafted in the scratchpad; it waits for the operator's "gửi".
+Evidence (2026-11-26):
+- Frozen M1 branch `import/clean-20261126` pushed to `fpa` at `e925b6b` (`e925b6bdaf1d199043ea8afe902494a6a7315e12`), superseding `import/clean-20261123` (`c99f755`, left untouched).
+- Includes `m1/docs-20261126` (`7a81a28`, built on live `dev/us038` `7133448` with `US-059`), merge of `m1/us058-v3` (`d4ec23e` -> `2a14522`, with `ADR-0028` `related: [ADR-0027]`), and machine-local restore to `f1d655c` (`e925b6b`).
+- Verification on `e925b6b` (`NEWS_SCAPE_PRODUCTION_HOST=""`): full `pytest project/tests/ -q` 1,255 passed, 21 skipped (`production_host`), 0 failed (491.06s); `--check-prefix` green (`80c6edfe7891330b`); piped `v3_cost_sample.py --help` exit 0; `doc lint` 0 errors; C2 gate 0-byte diff on `.gitignore` and `SESSION-LATEST.md` and single `US-059` code commit (`a78ed30`).
+- Live `overlap.py` (base `f1d655c`, `e925b6b` vs `fpa-toolkit` `main` `0f997a72`): 74 production files, 122 `main` files, 40 on both, 34 clean (22 byte-identical), and 6 conflicts (`docs/INDEX.md`, `docs/decisions/0028-*.md`, `article_expand.py`, `article_contract.py`, `test_ner_entity_db_v2.py`, `pre-commit`).
+- Final drafts for Issue #10 and Issue #8 wait for the operator's "gửi" gate (G8).
 
 ## After M1 (follow-up plan, not in scope)
 
