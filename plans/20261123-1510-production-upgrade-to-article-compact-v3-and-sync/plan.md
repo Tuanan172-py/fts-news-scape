@@ -111,7 +111,7 @@ Reviews copy the method of the v3 rubric evaluation (fpa-toolkit `eval-u12-rubri
 | G6 | P6 window, ADR-0027 live | **PASS** | 2026-11-24 00:01 | Restart 2026-11-23 18:05:45 on `31a5ad4`; two waves DONE; 6 research publishes to the end of the day, all with 0 partition errors |
 | R2 | Review of P5 | **PASS** | 2026-11-23 | `gemini-4-hydrogen-high`, round 1: pass, 1 minor (flag reader), fixed in `e3c63db`. Split checkpoint (D6) not needed |
 | G7 | P7 start | **done** | 2026-11-23 22:34 | Ran when 400 post-restart articles existed (overlap pacing) |
-| G8 | P8 SHA posted | pending | 2026-11-27 17:00 | operator posts ("gửi") |
+| G8 | P8 SHA posted | **PASS** | 2026-11-27 17:00 | Posted 2026-11-27 14:59 after operator approval: Issue #10 `#issuecomment-7213026174` & Issue #8 `#issuecomment-7213025511` (`import/clean-20261126` @ `e925b6b`) |
 
 ## Roadmap
 
@@ -374,15 +374,18 @@ Tasks:
 5. Post after "gửi".
 
 Acceptance:
-- [ ] Overlap numbers in the message match the script output.
-- [ ] Message reviewed by the operator before posting.
+- [x] Overlap numbers in the message match the script output.
+- [x] Message reviewed by the operator before posting.
 
-Evidence (2026-11-26):
+Evidence (2026-11-27):
 - Frozen M1 branch `import/clean-20261126` pushed to `fpa` at `e925b6b` (`e925b6bdaf1d199043ea8afe902494a6a7315e12`), superseding `import/clean-20261123` (`c99f755`, left untouched).
 - Includes `m1/docs-20261126` (`7a81a28`, built on live `dev/us038` `7133448` with `US-059`), merge of `m1/us058-v3` (`d4ec23e` -> `2a14522`, with `ADR-0028` `related: [ADR-0027]`), and machine-local restore to `f1d655c` (`e925b6b`).
-- Verification on `e925b6b` (`NEWS_SCAPE_PRODUCTION_HOST=""`): full `pytest project/tests/ -q` 1,255 passed, 21 skipped (`production_host`), 0 failed (491.06s); `--check-prefix` green (`80c6edfe7891330b`); piped `v3_cost_sample.py --help` exit 0; `doc lint` 0 errors; C2 gate 0-byte diff on `.gitignore` and `SESSION-LATEST.md` and single `US-059` code commit (`a78ed30`).
-- Live `overlap.py` (base `f1d655c`, `e925b6b` vs `fpa-toolkit` `main` `0f997a72`): 74 production files, 122 `main` files, 40 on both, 34 clean (22 byte-identical), and 6 conflicts (`docs/INDEX.md`, `docs/decisions/0028-*.md`, `article_expand.py`, `article_contract.py`, `test_ner_entity_db_v2.py`, `pre-commit`).
-- Final drafts for Issue #10 and Issue #8 wait for the operator's "gửi" gate (G8).
+- Verification on `e925b6b` (`NEWS_SCAPE_PRODUCTION_HOST=""`): full `pytest project/tests/ -q` 1,255 passed, 21 skipped (`production_host`), 0 failed (491.06s).
+- Additional checks on `e925b6b`: `--check-prefix` green (`80c6edfe7891330b`), AST isolation 382 `.py` files / 0 forbidden imports, piped `v3_cost_sample.py --help` exit 0, `doc lint` 0 errors, and C2 gate pass (0-byte `.gitignore`/`SESSION-LATEST.md` diff; single `US-059` code commit `a78ed30`).
+- Live `overlap.py` (true Git merge-base `3931ac9`, `e925b6b` vs `fpa-toolkit` `main` `7e62c439`): 73 production files, 129 `main` files, 44 on both, 38 clean (24 byte-identical + 14 3-way clean), and 6 conflicts (`docs/INDEX.md`, `docs/decisions/0028-*.md`, `article_expand.py` KEEP BOTH, `article_contract.py`, `test_ner_entity_db_v2.py`, `pre-commit`). Against `f1d655c` directly: 74 / 122 / 40 / 34 / 6 with the same 6 conflicts.
+- Posted after operator approval (Gate G8 PASS, 2026-11-27 14:59, 0 PII):
+  - Issue #8: `https://github.com/Research-FPA/news-scraper/issues/8#issuecomment-7213025511`
+  - Issue #10: `https://github.com/Research-FPA/news-scraper/issues/10#issuecomment-7213026174`
 
 ## After M1 (follow-up plan, not in scope)
 
